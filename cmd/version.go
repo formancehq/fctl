@@ -18,10 +18,12 @@ func PrintVersion(cmd *cobra.Command, args []string) {
 	fmt.Printf("Commit: %s \n", Commit)
 }
 
-func NewVersion() *cobra.Command {
-	return &cobra.Command{
-		Use:   "version",
-		Short: "Get version",
-		Run:   PrintVersion,
-	}
+var versionCommand = &cobra.Command{
+	Use:   "version",
+	Short: "Get version",
+	Run:   PrintVersion,
+}
+
+func init() {
+	rootCommand.AddCommand(versionCommand)
 }

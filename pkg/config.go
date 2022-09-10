@@ -1,23 +1,80 @@
 package fctl
 
+import (
+	"encoding/json"
+	"os"
+	"path"
+)
+
+const (
+	DefaultBaseUri       = "https://dev.formance.cloud"
+	DefaultMemberShipUri = "https://membership.dev.formance.cloud"
+)
+
 type Config struct {
-	Profiles map[string]Profile `json:"profiles"`
+	Profiles map[string]*Profile `json:"profiles"`
 }
 
-type Profile struct {
-	Mode        string      `json:"mode"`
-	Production  bool        `json:"production"`
-	URI         string      `json:"uri"`
-	Credentials Credentials `json:"credentials"`
+func (c *Config) GetProfile(name string) *Profile {
+	return c.Profiles[name]
 }
 
-type Credentials struct {
-	AccessKeyId     string `json:"access_key_id"`
-	AccessKeySecret string `json:"access_key_secret"`
+func (c *Config) GetProfileOrDefault(name string, f *Profile) *Profile {
+	p := c.GetProfile(name)
+	if p == nil {
+		if c.Profiles == nil {
+			c.Profiles = map[string]*Profile{}
+		}
+		c.Profiles[name] = f
+		return f
+	}
+	return p
 }
 
-type CurrentProfile = Profile
+type ConfigManager struct {
+	configFilePath string
+}
 
-type CurrentProfileName = string
+func (m *ConfigManager) Load() (*Config, error) {
 
-type GetCurrentProfile = func() (*CurrentProfile, CurrentProfileName, error)
+	f, err := os.Open(m.configFilePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return &Config{}, nil
+		}
+		return nil, err
+	}
+	defer f.Close()
+
+	cfg := &Config{}
+	if err := json.NewDecoder(f).Decode(cfg); err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+}
+
+func (m *ConfigManager) UpdateConfig(config *Config) error {
+	if err := os.MkdirAll(path.Dir(m.configFilePath), 0700); err != nil {
+		return err
+	}
+
+	f, err := os.OpenFile(m.configFilePath, os.O_RDWR|os.O_CREATE, 0600)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(config); err != nil {
+		return err
+	}
+	return nil
+}
+
+func NewConfigManager(configFilePath string) *ConfigManager {
+	return &ConfigManager{
+		configFilePath: configFilePath,
+	}
+}

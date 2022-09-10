@@ -1,30 +1,32 @@
 package fctl
 
-type Stack struct {
-	Version  string     `json:"version"`
-	Services []*Service `json:"services"`
-}
+import (
+	"fmt"
+	"net/url"
+)
 
-type Service struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-	Status  string `json:"status"`
-}
-
-func NewStack() *Stack {
-	stack := Stack{
-		Services: []*Service{},
+func ServicesBaseUrl(profile *Profile, organization, stack string) (*url.URL, error) {
+	baseUrl, err := url.Parse(profile.BaseServiceURI)
+	if err != nil {
+		return nil, err
 	}
+	baseUrl.Host = fmt.Sprintf("%s-%s.%s", organization, stack, baseUrl.Host)
+	return baseUrl, nil
+}
 
-	stack.Services = append(
-		stack.Services,
-		&Service{
-			Name: "ledger",
-		},
-		&Service{
-			Name: "payments",
-		},
-	)
+func ApiUrl(profile *Profile, organization, stack, service string) (*url.URL, error) {
+	url, err := ServicesBaseUrl(profile, organization, stack)
+	if err != nil {
+		return nil, err
+	}
+	url.Path = "/api/" + service
+	return url, nil
+}
 
-	return &stack
+func MustApiUrl(profile *Profile, organization, stack, service string) *url.URL {
+	url, err := ApiUrl(profile, organization, stack, service)
+	if err != nil {
+		panic(err)
+	}
+	return url
 }
