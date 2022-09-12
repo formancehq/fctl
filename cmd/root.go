@@ -7,7 +7,7 @@ import (
 
 	fctl "github.com/numary/fctl/pkg"
 	"github.com/numary/fctl/pkg/membership"
-	membershipclient "github.com/numary/membership-api/client"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -25,7 +25,6 @@ var (
 	currentProfile     *fctl.Profile
 	configManager      *fctl.ConfigManager
 	config             *fctl.Config
-	apiClient          *membershipclient.APIClient
 )
 
 var rootCommand = &cobra.Command{
@@ -36,19 +35,22 @@ var rootCommand = &cobra.Command{
 		if err = viper.BindPFlags(cmd.Flags()); err != nil {
 			return err
 		}
-
 		configManager = fctl.NewConfigManager(viper.GetString(configFileFlag))
 		currentProfileName = viper.GetString(profileFlag)
 
-		if config, err = configManager.Load(); err != nil {
+		config, err = configManager.Load()
+		if err != nil {
 			return err
 		}
 		currentProfile = config.GetProfileOrDefault(currentProfileName, &fctl.Profile{
 			MembershipURI:  viper.GetString(membershipUriFlag),
 			BaseServiceURI: viper.GetString(baseServiceUriFlag),
 		})
-		apiClient = membership.NewClient(*currentProfile, viper.GetBool(debugFlag))
+		if !currentProfile.Token.Valid() {
+			return errors.New("not connected")
+		}
 
+		apiClient = membership.NewClient(*currentProfile, viper.GetBool(debugFlag))
 		return nil
 	},
 }

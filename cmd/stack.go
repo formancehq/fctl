@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	fctl "github.com/numary/fctl/pkg"
-	"github.com/numary/membership-api/client"
+	membershipclient "github.com/numary/membership-api/client"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -14,6 +14,10 @@ import (
 const (
 	organizationFlag = "organization"
 	stackNameFlag    = "name"
+)
+
+var (
+	apiClient *membershipclient.APIClient
 )
 
 var stacksCommand = &cobra.Command{
@@ -32,7 +36,7 @@ var createStackCommand = &cobra.Command{
 			return err
 		}
 
-		stack, _, err := apiClient.DefaultApi.CreateStack(cmd.Context(), organization).Body(client.StackData{
+		stack, _, err := apiClient.DefaultApi.CreateStack(cmd.Context(), organization).Body(membershipclient.StackData{
 			Name: args[0],
 		}).Execute()
 		if err != nil {
