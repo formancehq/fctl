@@ -14,7 +14,7 @@ import (
 func printTransaction(cmd *cobra.Command, tx ledgerclient.Transaction) {
 	fmt.Fprintf(cmd.OutOrStdout(), "Date: %s\r\n", tx.Timestamp.Format(time.RFC3339))
 	if tx.Reference != nil && *tx.Reference != "" {
-		fmt.Fprintf(cmd.OutOrStdout(), "Reference: %s", *tx.Reference)
+		fmt.Fprintf(cmd.OutOrStdout(), "Reference: %s\r\n", *tx.Reference)
 	}
 	fmt.Fprintln(cmd.OutOrStdout(), "Pre commit volumes:")
 	for account, v := range *tx.PreCommitVolumes {
