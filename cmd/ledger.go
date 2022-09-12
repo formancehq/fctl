@@ -5,6 +5,7 @@ import (
 
 	"github.com/numary/fctl/pkg/ledger"
 	ledgerclient "github.com/numary/ledger/client"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -25,4 +26,15 @@ func getLedgerClient(ctx context.Context) (*ledgerclient.APIClient, error) {
 	}
 
 	return ledger.NewClient(currentProfile, viper.GetBool(debugFlag), organization, stack), nil
+}
+
+var ledgerCommand = &cobra.Command{
+	Use: "ledger",
+}
+
+func init() {
+	ledgerCommand.PersistentFlags().String(stackFlag, "", "Specific stack (not required if only one stack is present)")
+	ledgerCommand.PersistentFlags().String(ledgerFlag, "default", "Specific ledger ")
+
+	rootCommand.AddCommand(ledgerCommand)
 }

@@ -71,8 +71,6 @@ var installStripeConnectorCommand = &cobra.Command{
 func init() {
 	installStripeConnectorCommand.Flags().String(stripeApiKeyFlag, "", "Stripe API key")
 	installConnectorCommand.AddCommand(installStripeConnectorCommand)
-	connectorsCommand.PersistentFlags().String(stackFlag, "", "Specific stack (not required if only one stack is present)")
-	connectorsCommand.PersistentFlags().String(ledgerFlag, "default", "Specific ledger")
 	connectorsCommand.AddCommand(connectorsGetConfigCommand, installConnectorCommand)
-	rootCommand.AddCommand(connectorsCommand)
+	paymentsCommand.AddCommand(connectorsCommand)
 }

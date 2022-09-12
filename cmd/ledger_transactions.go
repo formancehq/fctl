@@ -96,9 +96,6 @@ var showTransactionCommand = &cobra.Command{
 }
 
 func init() {
-	transactionsCommand.PersistentFlags().String(stackFlag, "", "Specific stack (not required if only one stack is present)")
-	transactionsCommand.PersistentFlags().String(ledgerFlag, "default", "Specific ledger ")
-
 	transactionsCommand.AddCommand(revertTransactionCommand, showTransactionCommand)
-	rootCommand.AddCommand(transactionsCommand)
+	ledgerCommand.AddCommand(transactionsCommand)
 }

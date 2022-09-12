@@ -85,9 +85,6 @@ var showAccountCommand = &cobra.Command{
 }
 
 func init() {
-	//TODO: Factorize
-	accountsCommand.PersistentFlags().String(stackFlag, "", "Specific stack (not required if only one stack is present)")
-	accountsCommand.PersistentFlags().String(ledgerFlag, "default", "Specific ledger ")
 	accountsCommand.AddCommand(listAccountsCommand, showAccountCommand)
-	rootCommand.AddCommand(accountsCommand)
+	ledgerCommand.AddCommand(accountsCommand)
 }
