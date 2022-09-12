@@ -13,6 +13,7 @@ var loginCommand = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		currentProfile.Token, err = membershiplogin.LogIn(cmd.Context(), membershiplogin.DialogFn(func(uri, code string) {
 			fmt.Fprintln(cmd.OutOrStdout(), "Please enter the following code on your browser:", code)
+			fmt.Fprintln(cmd.OutOrStdout(), "Link:", uri)
 		}), currentProfile.MembershipURI)
 		if err != nil {
 			return err

@@ -24,7 +24,7 @@ var connectorsGetConfigCommand = &cobra.Command{
 
 		config, _, err := client.DefaultApi.ReadConnectorConfig(cmd.Context(), args[0]).Execute()
 		if err != nil {
-			return err
+			return errors.Wrap(err, "reding connector config")
 		}
 		switch args[0] {
 		case "stripe":
