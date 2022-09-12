@@ -1,0 +1,25 @@
+FROM --platform=$BUILDPLATFORM golang:1.18 AS builder
+# 1. Precompile the entire go standard library into the first Docker cache layer: useful for other projects too!
+ARG APP_SHA
+ARG VERSION
+WORKDIR /go/src/github.com/numary/fctl
+# get deps first so it's cached
+COPY go.mod .
+COPY go.sum .
+RUN --mount=type=cache,id=gomod,target=/go/fctl/mod \
+    --mount=type=cache,id=gobuild,target=/root/.cache/go-build \
+    go mod download
+COPY . .
+RUN --mount=type=cache,id=gomod,target=/go/fctl/mod \
+    --mount=type=cache,id=gobuild,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=linux \
+    go build -o fctl \
+    -ldflags="-X github.com/numary/fctl/cmd.Version=${VERSION} \
+    -X github.com/numary/fctl/cmd.BuildDate=$(date +%s) \
+    -X github.com/numary/fctl/cmd.Commit=${APP_SHA}" ./
+
+FROM ubuntu:jammy
+RUN apt update && apt install -y ca-certificates curl && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /go/src/github.com/numary/fctl/fctl /usr/local/bin/fctl
+EXPOSE 8080
+ENTRYPOINT ["fctl"]
