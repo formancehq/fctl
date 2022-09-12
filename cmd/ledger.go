@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/numary/fctl/pkg/ledger"
-	ledgerclient "github.com/numary/numary-sdk-go"
+	ledgerclient "github.com/numary/ledger/client"
 	"github.com/spf13/viper"
 )
 

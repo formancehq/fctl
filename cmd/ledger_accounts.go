@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	ledgerclient "github.com/numary/numary-sdk-go"
+	ledgerclient "github.com/numary/ledger/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

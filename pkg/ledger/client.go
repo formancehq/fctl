@@ -2,7 +2,7 @@ package ledger
 
 import (
 	fctl "github.com/numary/fctl/pkg"
-	ledgerclient "github.com/numary/numary-sdk-go"
+	ledgerclient "github.com/numary/ledger/client"
 )
 
 func NewClient(profile *fctl.Profile, debug bool, organization, stack string) *ledgerclient.APIClient {

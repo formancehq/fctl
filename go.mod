@@ -3,12 +3,14 @@ module github.com/numary/fctl
 go 1.18
 
 require (
+	github.com/numary/ledger/client v0.0.0-20220912105324-6153d9ee752f
 	github.com/numary/membership-api v0.0.0-20220911122658-b8087892ffcc
 	github.com/numary/membership-api/client v0.0.0-20220911122658-b8087892ffcc
-	github.com/numary/numary-sdk-go v1.7.0-beta.1
+	github.com/numary/payments/client v0.0.0-20220912091851-92e6ed3de087
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.13.0
+	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1
 )
 
 require (
@@ -23,7 +25,6 @@ require (
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/numary/go-libs v1.0.1 // indirect
-	github.com/numary/payments/client v0.0.0-20220912091851-92e6ed3de087 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
 	github.com/r3labs/sse v0.0.0-20210224172625-26fe804710bc // indirect
@@ -40,7 +41,6 @@ require (
 	go.uber.org/zap v1.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
 	golang.org/x/net v0.0.0-20220909164309-bea034e7d591 // indirect
-	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1 // indirect
 	golang.org/x/sys v0.0.0-20220909162455-aba9fc2a8ff2 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
