@@ -75,7 +75,7 @@ func init() {
 	listTransactionsCommand.Flags().String(listTransactionsReferenceFlag, "", "Filter on reference")
 
 	// SDK not generating correct requests
-	listTransactionsCommand.Flags().MarkHidden(listTransactionsMetadataFlag)
+	_ = listTransactionsCommand.Flags().MarkHidden(listTransactionsMetadataFlag)
 
 	transactionsCommand.AddCommand(listTransactionsCommand)
 }
