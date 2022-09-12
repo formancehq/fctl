@@ -23,7 +23,7 @@ require (
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/numary/go-libs v1.0.1 // indirect
-	github.com/numary/payments/client v0.0.0-20220912071847-13ef9b4ad101 // indirect
+	github.com/numary/payments/client v0.0.0-20220912091851-92e6ed3de087 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
 	github.com/r3labs/sse v0.0.0-20210224172625-26fe804710bc // indirect
