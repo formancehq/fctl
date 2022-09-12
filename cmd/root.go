@@ -64,8 +64,8 @@ func init() {
 	rootCommand.PersistentFlags().String(membershipUriFlag, fctl.DefaultMemberShipUri, "service url")
 	rootCommand.PersistentFlags().String(baseServiceUriFlag, fctl.DefaultBaseUri, "service url")
 	rootCommand.PersistentFlags().BoolP(debugFlag, "d", false, "Debug mode")
-	rootCommand.PersistentFlags().MarkHidden(membershipUriFlag)
-	rootCommand.PersistentFlags().MarkHidden(baseServiceUriFlag)
+	_ = rootCommand.PersistentFlags().MarkHidden(membershipUriFlag)
+	_ = rootCommand.PersistentFlags().MarkHidden(baseServiceUriFlag)
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 	viper.AutomaticEnv()
