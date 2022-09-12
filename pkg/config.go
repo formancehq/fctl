@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	DefaultBaseUri       = "https://dev.formance.cloud"
-	DefaultMemberShipUri = "https://membership.dev.formance.cloud"
+	DefaultBaseUri       = "https://sandbox.formance.cloud"
+	DefaultMemberShipUri = "https://membership.formance.cloud"
 )
 
 type Config struct {
