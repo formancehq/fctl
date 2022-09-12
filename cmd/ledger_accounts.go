@@ -51,11 +51,11 @@ var listAccountsCommand = &cobra.Command{
 
 		fmt.Fprintln(cmd.OutOrStdout(), "Accounts: ")
 		for _, account := range rsp.Cursor.Data {
-			fmt.Fprintf(cmd.OutOrStdout(), "-> Account: %account\r\n", account.Address)
+			fmt.Fprintf(cmd.OutOrStdout(), "-> Account: %s\r\n", account.Address)
 			if account.Metadata != nil && len(*account.Metadata) > 0 {
 				fmt.Fprintln(cmd.OutOrStdout(), "Metadata:")
 				for k, v := range *account.Metadata {
-					fmt.Fprintf(cmd.OutOrStdout(), "\t- %account: %account\r\n", k, v)
+					fmt.Fprintf(cmd.OutOrStdout(), "\t- %s: %s\r\n", k, v)
 				}
 			}
 		}

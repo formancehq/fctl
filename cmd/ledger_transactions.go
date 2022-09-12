@@ -15,7 +15,7 @@ import (
 
 func printTransaction(cmd *cobra.Command, tx ledgerclient.Transaction) {
 	if tx.Reference != nil && *tx.Reference != "" {
-		fmt.Fprintf(cmd.OutOrStdout(), "Reference: %s", tx.Reference)
+		fmt.Fprintf(cmd.OutOrStdout(), "Reference: %s", *tx.Reference)
 	}
 	fmt.Fprintln(cmd.OutOrStdout(), "Pre commit volumes:")
 	for account, v := range *tx.PreCommitVolumes {
@@ -198,14 +198,6 @@ var showTransactionCommand = &cobra.Command{
 		}
 		printTransaction(cmd, rsp.Data)
 		return nil
-	},
-}
-
-var addMetadata = &cobra.Command{
-	Use:   "add-metadata",
-	Short: "Add a metadata on a transaction",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return errors.New("not yet implemented")
 	},
 }
 
