@@ -9,7 +9,9 @@ import (
 
 func NewClient(profile fctl.Profile, debug bool) *client.APIClient {
 	configuration := client.NewConfiguration()
-	configuration.AddDefaultHeader("Authorization", fmt.Sprintf("Bearer %s", profile.Token.AccessToken))
+	if profile.Token != nil {
+		configuration.AddDefaultHeader("Authorization", fmt.Sprintf("Bearer %s", profile.Token.AccessToken))
+	}
 	configuration.Servers[0].URL = profile.MembershipURI
 	configuration.Debug = debug
 	return client.NewAPIClient(configuration)
