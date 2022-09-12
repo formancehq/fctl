@@ -2,6 +2,7 @@ package fctl
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path"
 )
@@ -29,6 +30,15 @@ func (c *Config) GetProfileOrDefault(name string, f *Profile) *Profile {
 		return f
 	}
 	return p
+}
+
+func (c *Config) DeleteProfile(s string) error {
+	_, ok := c.Profiles[s]
+	if !ok {
+		return errors.New("not found")
+	}
+	delete(c.Profiles, s)
+	return nil
 }
 
 type ConfigManager struct {
@@ -59,7 +69,7 @@ func (m *ConfigManager) UpdateConfig(config *Config) error {
 		return err
 	}
 
-	f, err := os.OpenFile(m.configFilePath, os.O_RDWR|os.O_CREATE, 0600)
+	f, err := os.OpenFile(m.configFilePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		return err
 	}

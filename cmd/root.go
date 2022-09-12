@@ -7,7 +7,6 @@ import (
 
 	fctl "github.com/numary/fctl/pkg"
 	"github.com/numary/fctl/pkg/membership"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -46,9 +45,6 @@ var rootCommand = &cobra.Command{
 			MembershipURI:  viper.GetString(membershipUriFlag),
 			BaseServiceURI: viper.GetString(baseServiceUriFlag),
 		})
-		if !currentProfile.Token.Valid() {
-			return errors.New("not connected")
-		}
 
 		apiClient = membership.NewClient(*currentProfile, viper.GetBool(debugFlag))
 		return nil
