@@ -6,6 +6,12 @@ on:
     types: [ assigned, opened, synchronize, reopened ]
   release:
     types: [ prereleased, released ]
+  workflow_call:
+    secrets:
+      NUMARY_GITHUB_TOKEN:
+        required: true
+      FURY_TOKEN:
+        required: true
 
 name: Main
 jobs:
@@ -112,9 +118,6 @@ jobs:
       with:
         version: latest
         args: release --parallelism 4 --rm-dist --skip-validate
-    secrets:
-      FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
-      NUMARY_GITHUB_TOKEN: ${{ secrets.NUMARY_GITHUB_TOKEN }}
     needs:
       - Lint
       - Test
