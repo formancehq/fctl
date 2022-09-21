@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	fctl "github.com/numary/fctl/pkg"
-	"github.com/numary/fctl/pkg/membership"
+	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/pkg/membership"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

@@ -1,7 +1,7 @@
 package ledger
 
 import (
-	fctl "github.com/numary/fctl/pkg"
+	fctl "github.com/formancehq/fctl/pkg"
 	ledgerclient "github.com/numary/ledger/client"
 )
 

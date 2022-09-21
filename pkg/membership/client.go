@@ -3,7 +3,7 @@ package membership
 import (
 	"fmt"
 
-	fctl "github.com/numary/fctl/pkg"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/numary/membership-api/client"
 )
 

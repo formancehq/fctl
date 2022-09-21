@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/numary/fctl/cmd"
+	"github.com/formancehq/fctl/cmd"
 )
 
 func main() {

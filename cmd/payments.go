@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 
-	"github.com/numary/fctl/pkg/payments"
+	"github.com/formancehq/fctl/pkg/payments"
 	"github.com/numary/payments/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

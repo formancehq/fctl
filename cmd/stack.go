@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	fctl "github.com/numary/fctl/pkg"
+	fctl "github.com/formancehq/fctl/pkg"
 	membershipclient "github.com/numary/membership-api/client"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"

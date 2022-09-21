@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 
-	"github.com/numary/fctl/pkg/ledger"
+	"github.com/formancehq/fctl/pkg/ledger"
 	ledgerclient "github.com/numary/ledger/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

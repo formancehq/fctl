@@ -1,4 +1,4 @@
-module github.com/numary/fctl
+module github.com/formancehq/fctl
 
 go 1.18
 
