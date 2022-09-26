@@ -1,14 +1,19 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/fctl/pkg/membership"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/zitadel/oidc/pkg/client/rp"
+	"golang.org/x/oauth2"
 )
 
 const (
@@ -35,18 +40,63 @@ var rootCommand = &cobra.Command{
 			return err
 		}
 		configManager = fctl.NewConfigManager(viper.GetString(configFileFlag))
-		currentProfileName = viper.GetString(profileFlag)
 
 		config, err = configManager.Load()
 		if err != nil {
 			return err
 		}
+
+		currentProfileName = config.CurrentProfile
+		if currentProfileName == "" {
+			currentProfileName = "default"
+			config.CurrentProfile = currentProfileName
+		}
+		debugln(cmd.OutOrStdout(), "Current profile:", currentProfileName)
+		if selectedProfile := viper.GetString(profileFlag); selectedProfile != "" {
+			debugln(cmd.OutOrStdout(), "Override profile by flag:", selectedProfile)
+			currentProfileName = selectedProfile
+		}
+
 		currentProfile = config.GetProfileOrDefault(currentProfileName, &fctl.Profile{
 			MembershipURI:  viper.GetString(membershipUriFlag),
 			BaseServiceURI: viper.GetString(baseServiceUriFlag),
 		})
+		debugln(cmd.OutOrStdout(), "Selected profile membership uri:", currentProfile.MembershipURI)
+		debugln(cmd.OutOrStdout(), "Selected base service uri:", currentProfile.BaseServiceURI)
 
-		apiClient = membership.NewClient(*currentProfile, viper.GetBool(debugFlag))
+		httpClient := &http.Client{}
+		ifDebug(func() {
+			debugln(cmd.OutOrStdout(), "Configure http round tripper logger")
+			httpClient.Transport = fctl.DebugRoundTripper(http.DefaultTransport)
+		})
+		if currentProfile.Token != nil {
+			if currentProfile.Token.Expiry.Before(time.Now()) {
+				debugln(cmd.OutOrStdout(), "Detect expired auth token against membership, trying to refresh token")
+				relyingParty, err := rp.NewRelyingPartyOIDC(currentProfile.MembershipURI, authClient, "",
+					"", []string{"openid", "email", "offline_access"}, rp.WithHTTPClient(httpClient))
+				if err != nil {
+					return err
+				}
+
+				newToken, err := relyingParty.OAuthConfig().
+					TokenSource(context.WithValue(context.TODO(), oauth2.HTTPClient, httpClient), currentProfile.Token).
+					Token()
+				if err != nil {
+					return err
+				}
+
+				currentProfile.Token = newToken
+
+				if err := configManager.UpdateConfig(config); err != nil {
+					return err
+				}
+
+			} else {
+				debugln(cmd.OutOrStdout(), "Detect active auth token against membership, reuse it")
+			}
+		}
+
+		apiClient = membership.NewClient(*currentProfile, httpClient, viper.GetBool(debugFlag))
 		return nil
 	},
 }
@@ -57,7 +107,7 @@ func init() {
 		panic(err)
 	}
 
-	rootCommand.PersistentFlags().StringP(profileFlag, "p", "default", "config profile to use")
+	rootCommand.PersistentFlags().StringP(profileFlag, "p", "", "config profile to use")
 	rootCommand.PersistentFlags().StringP(configFileFlag, "c", fmt.Sprintf("%s/.formance/fctl.config", homedir), "Debug mode")
 	rootCommand.PersistentFlags().String(membershipUriFlag, fctl.DefaultMemberShipUri, "service url")
 	rootCommand.PersistentFlags().String(baseServiceUriFlag, fctl.DefaultBaseUri, "service url")

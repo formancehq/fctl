@@ -13,7 +13,8 @@ const (
 )
 
 type Config struct {
-	Profiles map[string]*Profile `json:"profiles"`
+	CurrentProfile string              `json:"currentProfile"`
+	Profiles       map[string]*Profile `json:"profiles"`
 }
 
 func (c *Config) GetProfile(name string) *Profile {

@@ -55,6 +55,7 @@ var createStackCommand = &cobra.Command{
 		fmt.Fprintf(cmd.OutOrStdout(), "Ledger: %s/api/ledger\r\n", baseUrlStr)
 		fmt.Fprintf(cmd.OutOrStdout(), "Payments: %s/api/payments\n", baseUrlStr)
 		fmt.Fprintf(cmd.OutOrStdout(), "Search: %s/api/search\n", baseUrlStr)
+		fmt.Fprintf(cmd.OutOrStdout(), "Auth: %s/api/auth\n", baseUrlStr)
 
 		return nil
 	},

@@ -36,10 +36,12 @@ var uiCommand = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
 		stackUrl, err := fctl.ServicesBaseUrl(currentProfile, organization, stack)
 		if err != nil {
 			return err
 		}
+
 		return errors.Wrapf(openUrl(stackUrl.String()), "opening url: %s", stackUrl.String())
 	},
 }

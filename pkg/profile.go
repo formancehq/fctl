@@ -1,13 +1,13 @@
 package fctl
 
 import (
-	"github.com/zitadel/oidc/pkg/oidc"
+	"golang.org/x/oauth2"
 )
 
 type Profile struct {
-	MembershipURI  string       `json:"membershipURI"`
-	BaseServiceURI string       `json:"baseServiceURI"`
-	Tokens         *oidc.Tokens `json:"tokens"`
+	MembershipURI  string        `json:"membershipURI"`
+	BaseServiceURI string        `json:"baseServiceURI"`
+	Token          *oauth2.Token `json:"token"`
 }
 
 type CurrentProfile Profile
