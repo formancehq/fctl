@@ -37,7 +37,7 @@ var uiCommand = &cobra.Command{
 			return err
 		}
 
-		stackUrl, err := fctl.ServicesBaseUrl(currentProfile, organization, stack)
+		stackUrl, err := fctl.ServicesBaseUrl(*currentProfile, organization, stack)
 		if err != nil {
 			return err
 		}

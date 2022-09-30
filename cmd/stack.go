@@ -43,7 +43,7 @@ var createStackCommand = &cobra.Command{
 			return errors.Wrap(err, "creating stack")
 		}
 
-		baseUrl, err := fctl.ServicesBaseUrl(currentProfile, stack.Data.OrganizationId, stack.Data.Id)
+		baseUrl, err := fctl.ServicesBaseUrl(*currentProfile, stack.Data.OrganizationId, stack.Data.Id)
 		if err != nil {
 			return err
 		}

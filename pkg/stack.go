@@ -5,7 +5,7 @@ import (
 	"net/url"
 )
 
-func ServicesBaseUrl(profile *Profile, organization, stack string) (*url.URL, error) {
+func ServicesBaseUrl(profile Profile, organization, stack string) (*url.URL, error) {
 	baseUrl, err := url.Parse(profile.BaseServiceURI)
 	if err != nil {
 		return nil, err
@@ -14,7 +14,7 @@ func ServicesBaseUrl(profile *Profile, organization, stack string) (*url.URL, er
 	return baseUrl, nil
 }
 
-func ApiUrl(profile *Profile, organization, stack, service string) (*url.URL, error) {
+func ApiUrl(profile Profile, organization, stack, service string) (*url.URL, error) {
 	url, err := ServicesBaseUrl(profile, organization, stack)
 	if err != nil {
 		return nil, err
@@ -23,7 +23,7 @@ func ApiUrl(profile *Profile, organization, stack, service string) (*url.URL, er
 	return url, nil
 }
 
-func MustApiUrl(profile *Profile, organization, stack, service string) *url.URL {
+func MustApiUrl(profile Profile, organization, stack, service string) *url.URL {
 	url, err := ApiUrl(profile, organization, stack, service)
 	if err != nil {
 		panic(err)

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/formancehq/fctl/pkg/payments"
+	"github.com/formancehq/fctl/pkg/stack"
 	"github.com/numary/payments/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -15,12 +16,17 @@ func getPaymentsClient(ctx context.Context) (*client.APIClient, error) {
 		return nil, err
 	}
 
-	stack, err := findStackId(ctx, organization)
+	stackId, err := findStackId(ctx, organization)
 	if err != nil {
 		return nil, err
 	}
 
-	return payments.NewClient(currentProfile, viper.GetBool(debugFlag), organization, stack), nil
+	token, err := stack.GetToken(ctx, *currentProfile, organization, stackId)
+	if err != nil {
+		return nil, err
+	}
+
+	return payments.NewClient(currentProfile, viper.GetBool(debugFlag), organization, stackId, token), nil
 }
 
 var paymentsCommand = &cobra.Command{

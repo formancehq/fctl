@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/formancehq/fctl/pkg/ledger"
+	"github.com/formancehq/fctl/pkg/stack"
 	ledgerclient "github.com/numary/ledger/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -20,12 +21,17 @@ func getLedgerClient(ctx context.Context) (*ledgerclient.APIClient, error) {
 		return nil, err
 	}
 
-	stack, err := findStackId(ctx, organization)
+	stackId, err := findStackId(ctx, organization)
 	if err != nil {
 		return nil, err
 	}
 
-	return ledger.NewClient(currentProfile, viper.GetBool(debugFlag), organization, stack), nil
+	token, err := stack.GetToken(ctx, *currentProfile, organization, stackId)
+	if err != nil {
+		return nil, err
+	}
+
+	return ledger.NewClient(*currentProfile, viper.GetBool(debugFlag), organization, stackId, token), nil
 }
 
 var ledgerCommand = &cobra.Command{
