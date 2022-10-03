@@ -13,22 +13,22 @@ import (
 
 const (
 	organizationFlag = "organization"
-	stackNameFlag    = "name"
+	sandboxNameFlag  = "name"
 )
 
 var (
 	apiClient *membershipclient.APIClient
 )
 
-var stacksCommand = &cobra.Command{
-	Use:   "stacks",
-	Short: "manage your organization stacks",
+var sandboxsCommand = &cobra.Command{
+	Use:   "sandbox",
+	Short: "manage your sandbox",
 }
 
 var createStackCommand = &cobra.Command{
 	Use:   "create",
 	Args:  cobra.ExactArgs(1),
-	Short: "create a new stack",
+	Short: "create a new sandbox",
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		organization, err := findOrganizationId(cmd.Context())
@@ -36,22 +36,22 @@ var createStackCommand = &cobra.Command{
 			return err
 		}
 
-		stack, _, err := apiClient.DefaultApi.CreateStack(cmd.Context(), organization).Body(membershipclient.StackData{
+		sandbox, _, err := apiClient.DefaultApi.CreateStack(cmd.Context(), organization).Body(membershipclient.StackData{
 			Name: args[0],
 		}).Execute()
 		if err != nil {
-			return errors.Wrap(err, "creating stack")
+			return errors.Wrap(err, "creating sandbox")
 		}
 
-		baseUrl, err := fctl.ServicesBaseUrl(*currentProfile, stack.Data.OrganizationId, stack.Data.Id)
+		baseUrl, err := fctl.ServicesBaseUrl(*currentProfile, sandbox.Data.OrganizationId, sandbox.Data.Id)
 		if err != nil {
 			return err
 		}
 		baseUrlStr := baseUrl.String()
 
-		fmt.Fprintf(cmd.OutOrStdout(), "Stack created with ID: %s\r\n", stack.Data.Id)
+		fmt.Fprintf(cmd.OutOrStdout(), "Stack created with ID: %s\r\n", sandbox.Data.Id)
 		fmt.Fprintf(cmd.OutOrStdout(), "Your dashboard will be reachable on: %s\r\n", baseUrlStr)
-		fmt.Fprintln(cmd.OutOrStdout(), "You can access your stack apis using following urls :")
+		fmt.Fprintln(cmd.OutOrStdout(), "You can access your sandbox apis using following urls :")
 		fmt.Fprintf(cmd.OutOrStdout(), "Ledger: %s/api/ledger\r\n", baseUrlStr)
 		fmt.Fprintf(cmd.OutOrStdout(), "Payments: %s/api/payments\n", baseUrlStr)
 		fmt.Fprintf(cmd.OutOrStdout(), "Search: %s/api/search\n", baseUrlStr)
@@ -64,7 +64,7 @@ var createStackCommand = &cobra.Command{
 var deleteStackCommand = &cobra.Command{
 	Use:   "delete [STACK_ID] | --name=[NAME]",
 	Args:  cobra.MaximumNArgs(1),
-	Short: "delete a stack",
+	Short: "delete a sandbox",
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		organization, err := findOrganizationId(cmd.Context())
@@ -72,33 +72,33 @@ var deleteStackCommand = &cobra.Command{
 			return errors.Wrap(err, "searching default organization")
 		}
 
-		var stackId string
+		var sandboxId string
 		if len(args) == 1 {
-			if viper.GetString(stackNameFlag) != "" {
+			if viper.GetString(sandboxNameFlag) != "" {
 				return errors.New("need either an id of a name spefified using --name flag")
 			}
-			stackId = args[0]
+			sandboxId = args[0]
 		} else {
-			if viper.GetString(stackNameFlag) == "" {
+			if viper.GetString(sandboxNameFlag) == "" {
 				return errors.New("need either an id of a name spefified using --name flag")
 			}
-			stacks, _, err := apiClient.DefaultApi.ListStacks(context.Background(), organization).Execute()
+			sandboxs, _, err := apiClient.DefaultApi.ListStacks(context.Background(), organization).Execute()
 			if err != nil {
-				return errors.Wrap(err, "listing stacks")
+				return errors.Wrap(err, "listing sandboxs")
 			}
-			for _, s := range stacks.Data {
-				if s.Name == viper.GetString(stackNameFlag) {
-					stackId = s.Id
+			for _, s := range sandboxs.Data {
+				if s.Name == viper.GetString(sandboxNameFlag) {
+					sandboxId = s.Id
 					break
 				}
 			}
-			if stackId == "" {
-				return errors.New("stack not found")
+			if sandboxId == "" {
+				return errors.New("sandbox not found")
 			}
 		}
 
-		if _, err := apiClient.DefaultApi.DeleteStack(cmd.Context(), organization, stackId).Execute(); err != nil {
-			return errors.Wrap(err, "deleting stack")
+		if _, err := apiClient.DefaultApi.DeleteStack(cmd.Context(), organization, sandboxId).Execute(); err != nil {
+			return errors.Wrap(err, "deleting sandbox")
 		}
 
 		fmt.Fprintln(cmd.OutOrStdout(), "Stack deleted.")
@@ -109,7 +109,7 @@ var deleteStackCommand = &cobra.Command{
 
 var listStacks = &cobra.Command{
 	Use:   "list",
-	Short: "list stacks",
+	Short: "list sandboxs",
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		organization, err := findOrganizationId(cmd.Context())
@@ -119,11 +119,11 @@ var listStacks = &cobra.Command{
 
 		rsp, _, err := apiClient.DefaultApi.ListStacks(cmd.Context(), organization).Execute()
 		if err != nil {
-			return errors.Wrap(err, "listing stacks")
+			return errors.Wrap(err, "listing sandboxs")
 		}
 
 		if len(rsp.Data) == 0 {
-			fmt.Fprintln(cmd.OutOrStdout(), "No stacks found.")
+			fmt.Fprintln(cmd.OutOrStdout(), "No sandboxs found.")
 			return nil
 		}
 
@@ -136,8 +136,8 @@ var listStacks = &cobra.Command{
 }
 
 func init() {
-	deleteStackCommand.Flags().StringP(stackNameFlag, "n", "", "Stack name to delete")
-	stacksCommand.PersistentFlags().String(organizationFlag, "", "Specific organization to target")
-	stacksCommand.AddCommand(createStackCommand, deleteStackCommand, listStacks)
-	rootCommand.AddCommand(stacksCommand)
+	deleteStackCommand.Flags().StringP(sandboxNameFlag, "n", "", "Stack name to delete")
+	sandboxsCommand.PersistentFlags().String(organizationFlag, "", "Specific organization to target")
+	sandboxsCommand.AddCommand(createStackCommand, deleteStackCommand, listStacks)
+	rootCommand.AddCommand(sandboxsCommand)
 }
