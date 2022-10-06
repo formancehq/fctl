@@ -2,12 +2,14 @@ package cmd
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/fctl/pkg/membership"
 	"github.com/spf13/cobra"
@@ -20,6 +22,7 @@ const (
 	profileFlag        = "profile"
 	configFileFlag     = "config"
 	debugFlag          = "debug"
+	insecureTlsFlag    = "insecure-tls"
 	membershipUriFlag  = "membership-uri"
 	baseServiceUriFlag = "service-uri"
 )
@@ -29,6 +32,9 @@ var (
 	currentProfile     *fctl.Profile
 	configManager      *fctl.ConfigManager
 	config             *fctl.Config
+	httpClient         = &http.Client{
+		Transport: http.DefaultTransport,
+	}
 )
 
 var rootCommand = &cobra.Command{
@@ -39,6 +45,17 @@ var rootCommand = &cobra.Command{
 		if err = viper.BindPFlags(cmd.Flags()); err != nil {
 			return err
 		}
+
+		if viper.GetBool(insecureTlsFlag) {
+			httpTransport := http.DefaultTransport.(*http.Transport)
+			httpTransport.TLSClientConfig = &tls.Config{
+				InsecureSkipVerify: true,
+			}
+			httpClient = &http.Client{
+				Transport: httpTransport,
+			}
+		}
+
 		configManager = fctl.NewConfigManager(viper.GetString(configFileFlag))
 
 		config, err = configManager.Load()
@@ -64,12 +81,12 @@ var rootCommand = &cobra.Command{
 		debugln(cmd.OutOrStdout(), "Selected profile membership uri:", currentProfile.MembershipURI)
 		debugln(cmd.OutOrStdout(), "Selected base service uri:", currentProfile.BaseServiceURI)
 
-		httpClient := &http.Client{}
 		ifDebug(func() {
 			debugln(cmd.OutOrStdout(), "Configure http round tripper logger")
-			httpClient.Transport = fctl.DebugRoundTripper(http.DefaultTransport)
+			httpClient.Transport = fctl.DebugRoundTripper(httpClient.Transport)
 		})
 		if currentProfile.Token != nil {
+			spew.Dump(currentProfile)
 			if currentProfile.Token.Expiry.Before(time.Now()) {
 				debugln(cmd.OutOrStdout(), "Detect expired auth token against membership, trying to refresh token")
 				relyingParty, err := rp.NewRelyingPartyOIDC(currentProfile.MembershipURI, authClient, "",
@@ -112,6 +129,7 @@ func init() {
 	rootCommand.PersistentFlags().String(membershipUriFlag, fctl.DefaultMemberShipUri, "service url")
 	rootCommand.PersistentFlags().String(baseServiceUriFlag, fctl.DefaultBaseUri, "service url")
 	rootCommand.PersistentFlags().BoolP(debugFlag, "d", false, "Debug mode")
+	rootCommand.PersistentFlags().Bool(insecureTlsFlag, false, "Insecure TLS")
 	_ = rootCommand.PersistentFlags().MarkHidden(membershipUriFlag)
 	_ = rootCommand.PersistentFlags().MarkHidden(baseServiceUriFlag)
 

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -23,9 +24,11 @@ func GetToken(ctx context.Context, profile fctl.Profile, organization, stack str
 		"scope":      []string{"openid email"},
 	}
 
-	discoveryConfiguration, err := client.Discover(apiUrl.String(), &http.Client{
+	httpClient := &http.Client{
 		Transport: fctl.DebugRoundTripper(http.DefaultTransport),
-	})
+	}
+	fmt.Println(apiUrl.String())
+	discoveryConfiguration, err := client.Discover(apiUrl.String(), httpClient)
 	if err != nil {
 		return "", err
 	}
@@ -38,7 +41,7 @@ func GetToken(ctx context.Context, profile fctl.Profile, organization, stack str
 	req.SetBasicAuth("fctl", "")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	ret, err := http.DefaultClient.Do(req)
+	ret, err := httpClient.Do(req)
 	if err != nil {
 		return "", err
 	}
