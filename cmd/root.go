@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/fctl/pkg/membership"
 	"github.com/spf13/cobra"
@@ -86,7 +85,6 @@ var rootCommand = &cobra.Command{
 			httpClient.Transport = fctl.DebugRoundTripper(httpClient.Transport)
 		})
 		if currentProfile.Token != nil {
-			spew.Dump(currentProfile)
 			if currentProfile.Token.Expiry.Before(time.Now()) {
 				debugln(cmd.OutOrStdout(), "Detect expired auth token against membership, trying to refresh token")
 				relyingParty, err := rp.NewRelyingPartyOIDC(currentProfile.MembershipURI, authClient, "",
