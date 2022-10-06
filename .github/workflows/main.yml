@@ -17,7 +17,7 @@ name: Main
 jobs:
   Pr:
     if: github.event_name == 'pull_request'
-    uses: numary/gh-workflows/.github/workflows/pr-style.yml@main
+    uses: formancehq/gh-workflows/.github/workflows/pr-style.yml@main
 
   Lint:
     runs-on: ubuntu-latest
@@ -165,7 +165,7 @@ jobs:
         context: .
         platforms: linux/amd64,linux/arm64
         push: true
-        tags: ghcr.io/numary/fctl:latest,ghcr.io/numary/fctl:${{ github.event.release.tag_name }}
+        tags: ghcr.io/formancehq/fctl:latest,ghcr.io/formancehq/fctl:${{ github.event.release.tag_name }}
         build-args: |
           APP_SHA=${{ github.sha }}
           VERSION=${{ github.event.release.tag_name }}
@@ -176,7 +176,7 @@ jobs:
         context: .
         platforms: linux/amd64,linux/arm64
         push: true
-        tags: ghcr.io/numary/fctl:${{ github.event.release.tag_name }}
+        tags: ghcr.io/formancehq/fctl:${{ github.event.release.tag_name }}
         build-args: |
           APP_SHA=${{ github.sha }}
           VERSION=${{ github.event.release.tag_name }}
@@ -187,7 +187,7 @@ jobs:
         context: .
         platforms: linux/amd64
         push: true
-        tags: ghcr.io/numary/fctl:${{ github.sha }}
+        tags: ghcr.io/formancehq/fctl:${{ github.sha }}
         build-args: |
           APP_SHA=${{ github.sha }}
           VERSION=develop

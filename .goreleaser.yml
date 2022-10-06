@@ -10,9 +10,9 @@ builds:
   - binary: fctl
     id: fctl
     ldflags:
-      - -X github.com/numary/fctl/cmd.BuildDate={{ .Date }}
-      - -X github.com/numary/fctl/cmd.Version={{ .Version }}
-      - -X github.com/numary/fctl/cmd.Commit={{ .ShortCommit }}
+      - -X github.com/formancehq/fctl/cmd.BuildDate={{ .Date }}
+      - -X github.com/formancehq/fctl/cmd.Version={{ .Version }}
+      - -X github.com/formancehq/fctl/cmd.Commit={{ .ShortCommit }}
       - -extldflags "-static"
     env:
       - CGO_ENABLED=0
@@ -66,7 +66,7 @@ changelog:
 release:
   prerelease: auto
   footer: |
-    **Full Changelog**: https://github.com/numary/fctl/compare/{{ .PreviousTag }}...{{ .Tag }}
+    **Full Changelog**: https://github.com/formancehq/fctl/compare/{{ .PreviousTag }}...{{ .Tag }}
     ## What to do next?
     - Join our [Discord server](https://discord.gg/xyHvcbzk4w)
 
