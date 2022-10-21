@@ -58,6 +58,8 @@ github.com/envoyproxy/go-control-plane v0.9.7/go.mod h1:cwu0lG7PUMfa9snN8LXBig5y
 github.com/envoyproxy/go-control-plane v0.9.9-0.20201210154907-fd9021fe5dad/go.mod h1:cXg6YxExXjJnVBQHBLXeUAgxn2UodCpnH306RInaBQk=
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/felixge/httpsnoop v1.0.1/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
+github.com/formancehq/auth/authclient v0.0.0-20221003212526-20761562e41e h1:xyGoTOdmJWZ/smTcZll4stLS+ZzBWMjhyVqovjQpcUA=
+github.com/formancehq/auth/authclient v0.0.0-20221003212526-20761562e41e/go.mod h1:CDNcMi+yakTL4py/Lr96QrP4To3fBJYg1QMI0hi8+YU=
 github.com/formancehq/oidc v0.0.0-20220922145049-a6daec727711 h1:FlfsWVuJWpIA+FasyDRNExFSp9VnmuR+BlIT6Tyjabw=
 github.com/formancehq/oidc v0.0.0-20220922145049-a6daec727711/go.mod h1:vcDdyFgHzwPIPgoXO1u1UCJQjv2gJBq832VZx13sWBE=
 github.com/frankban/quicktest v1.14.3 h1:FJKSZTDHjyhriyC81FLQ0LY93eSai0ZyR/ZIkd3ZUKE=
@@ -171,6 +173,8 @@ github.com/numary/membership-api/client v0.0.0-20220922152823-7ff9760a306c/go.mo
 github.com/numary/payments/client v0.0.0-20220912091851-92e6ed3de087 h1:ZER+3J+R+L6KilJFyzNJE+5aqheAFtdcEQSC5mRkH3s=
 github.com/numary/payments/client v0.0.0-20220912091851-92e6ed3de087/go.mod h1:PusoOsZSGFQe4/kOBwYGbSZjIhJGaWA7+6imlgyLtgk=
 github.com/pascaldekloe/name v1.0.0/go.mod h1:Z//MfYJnH4jVpQ9wkclwu2I2MkHmXTlT9wR5UZScttM=
+github.com/pborman/indent v1.1.1 h1:pqXSUg4KX/1sjXRMgaJrL3m22YsF2nxfsuDEMOR8MTk=
+github.com/pborman/indent v1.1.1/go.mod h1:FitS+t35kIYtB5xWTZAPhnmrxcciEEOdbyrrpz5K6Vw=
 github.com/pborman/uuid v1.2.1/go.mod h1:X/NO0urCmaxf9VXbdlT7C2Yzkj2IKimNn4k+gtPdI/k=
 github.com/pelletier/go-toml v1.9.5 h1:4yBQzkHv+7BHq2PQUZF3Mx0IYxG7LsP222s7Agd3ve8=
 github.com/pelletier/go-toml v1.9.5/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=

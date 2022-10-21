@@ -8,17 +8,17 @@ import (
 )
 
 func NewPaymentsClientFromContext(ctx context.Context) (*client.APIClient, error) {
+	token, err := CurrentProfileFromContext(ctx).GetStackToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	organization, err := FindOrganizationId(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	stackId, err := FindStackId(ctx, organization)
-	if err != nil {
-		return nil, err
-	}
-
-	token, err := GetToken(ctx, *CurrentProfileFromContext(ctx), organization, stackId)
+	stack, err := FindStackId(ctx, organization)
 	if err != nil {
 		return nil, err
 	}
@@ -26,10 +26,10 @@ func NewPaymentsClientFromContext(ctx context.Context) (*client.APIClient, error
 	profile := CurrentProfileFromContext(ctx)
 	config := client.NewConfiguration()
 	config.Servers = client.ServerConfigurations{{
-		URL: MustApiUrl(*profile, organization, StackFromContext(ctx), "payments").String(),
+		URL: MustApiUrl(*profile, organization, stack, "payments").String(),
 	}}
 	config.AddDefaultHeader("Authorization", fmt.Sprintf("Bearer %s", token))
-	config.HTTPClient = HttpClientFromContext(ctx)
+	config.HTTPClient = NewHTTPClientFromContext(ctx)
 
 	return client.NewAPIClient(config), nil
 }

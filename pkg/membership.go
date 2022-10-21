@@ -10,10 +10,12 @@ import (
 func NewMembershipClientFromContext(ctx context.Context) *client.APIClient {
 	profile := CurrentProfileFromContext(ctx)
 	configuration := client.NewConfiguration()
-	if profile.Token != nil {
-		configuration.AddDefaultHeader("Authorization", fmt.Sprintf("Bearer %s", profile.Token.AccessToken))
+	token, err := profile.GetToken(ctx)
+	if err != nil {
+		panic(err)
 	}
-	configuration.HTTPClient = HttpClientFromContext(ctx)
+	configuration.AddDefaultHeader("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
+	configuration.HTTPClient = NewHTTPClientFromContext(ctx)
 	configuration.Servers[0].URL = profile.MembershipURI
 	return client.NewAPIClient(configuration)
 }

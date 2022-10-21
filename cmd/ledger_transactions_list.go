@@ -69,7 +69,7 @@ func newLedgerTransactionsListCommand() *cobra.Command {
 			fmt.Fprintln(cmd.OutOrStdout(), "Transactions: ")
 			for _, s := range rsp.Cursor.Data {
 				fmt.Fprintf(cmd.OutOrStdout(), "-> Transaction: %d\r\n", s.Txid)
-				printTransaction(cmd, s)
+				fctl.PrintLedgerTransaction(cmd.OutOrStdout(), s)
 			}
 			return nil
 		}),

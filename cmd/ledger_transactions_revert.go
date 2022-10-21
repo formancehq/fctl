@@ -29,7 +29,8 @@ func newLedgerTransactionsRevertCommand() *cobra.Command {
 			if err != nil {
 				return errors.Wrapf(err, "reverting transaction")
 			}
-			printTransaction(cmd, rsp.Data)
+
+			fctl.PrintLedgerTransaction(cmd.OutOrStdout(), rsp.Data)
 			return nil
 		}),
 	)

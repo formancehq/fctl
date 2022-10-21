@@ -132,17 +132,29 @@ func withSilenceUsage() commandOptionFn {
 
 func withPersistentPreRunE(fn func(cmd *cobra.Command, args []string) error) commandOptionFn {
 	return func(cmd *cobra.Command) {
+		oldPersistentPreRunE := cmd.PersistentPreRunE
 		cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+			if oldPersistentPreRunE != nil {
+				if err := oldPersistentPreRunE(cmd, args); err != nil {
+					return err
+				}
+			}
 			if err := fn(cmd, args); err != nil {
 				return err
 			}
+			originalCommand := cmd
+			ctx := cmd.Context()
 			for {
 				cmd = cmd.Parent()
 				if cmd == nil {
 					return nil
 				}
 				if cmd.PersistentPreRunE != nil {
-					return cmd.PersistentPreRunE(cmd, args)
+					cmd.SetContext(ctx)
+					if err := cmd.PersistentPreRunE(cmd, args); err != nil {
+						return err
+					}
+					originalCommand.SetContext(cmd.Context())
 				}
 			}
 		}

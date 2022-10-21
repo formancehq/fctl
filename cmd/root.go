@@ -1,25 +1,13 @@
 package cmd
 
 import (
-	"context"
-	"crypto/tls"
 	"fmt"
-	"net/http"
 	"os"
-	"strings"
-	"time"
 
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/zitadel/oidc/pkg/client/rp"
-	"golang.org/x/oauth2"
 )
-
-func init() {
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
-	viper.AutomaticEnv()
-}
 
 func newRootCommand() *cobra.Command {
 	homedir, err := os.UserHomeDir()
@@ -38,26 +26,15 @@ func newRootCommand() *cobra.Command {
 		withShortDescription("Formance Control CLI"),
 		withSilenceUsage(),
 		withPersistentPreRunE(func(cmd *cobra.Command, args []string) (err error) {
-			if err = viper.BindPFlags(cmd.Flags()); err != nil {
+			if err := viper.BindPFlags(cmd.Flags()); err != nil {
 				return err
 			}
 
 			var (
-				httpClient         = http.DefaultClient
 				config             *fctl.Config
 				configManager      *fctl.ConfigManager
 				currentProfileName string
 			)
-
-			if viper.GetBool(insecureTlsFlag) {
-				httpTransport := http.DefaultTransport.(*http.Transport)
-				httpTransport.TLSClientConfig = &tls.Config{
-					InsecureSkipVerify: true,
-				}
-				httpClient = &http.Client{
-					Transport: httpTransport,
-				}
-			}
 
 			configManager = fctl.NewConfigManager(viper.GetString(configFileFlag))
 
@@ -84,39 +61,7 @@ func newRootCommand() *cobra.Command {
 			fctl.DebugLn(cmd.Context(), cmd.OutOrStdout(), "Selected profile membership uri:", currentProfile.MembershipURI)
 			fctl.DebugLn(cmd.Context(), cmd.OutOrStdout(), "Selected base service uri:", currentProfile.BaseServiceURI)
 
-			fctl.IfDebug(cmd.Context(), func() {
-				fctl.DebugLn(cmd.Context(), cmd.OutOrStdout(), "Configure http round tripper logger")
-				httpClient.Transport = fctl.DebugRoundTripper(httpClient.Transport)
-			})
-			if currentProfile.Token != nil {
-				if currentProfile.Token.Expiry.Before(time.Now()) {
-					fctl.DebugLn(cmd.Context(), cmd.OutOrStdout(), "Detect expired auth token against membership, trying to refresh token")
-					relyingParty, err := rp.NewRelyingPartyOIDC(currentProfile.MembershipURI, authClient, "",
-						"", []string{"openid", "email", "offline_access"}, rp.WithHTTPClient(httpClient))
-					if err != nil {
-						return err
-					}
-
-					newToken, err := relyingParty.OAuthConfig().
-						TokenSource(context.WithValue(context.TODO(), oauth2.HTTPClient, httpClient), currentProfile.Token).
-						Token()
-					if err != nil {
-						return err
-					}
-
-					currentProfile.Token = newToken
-
-					if err := configManager.UpdateConfig(config); err != nil {
-						return err
-					}
-
-				} else {
-					fctl.DebugLn(cmd.Context(), cmd.OutOrStdout(), "Detect active auth token against membership, reuse it")
-				}
-			}
-
 			ctx := cmd.Context()
-			ctx = fctl.WithHttpClient(ctx, httpClient)
 			ctx = fctl.WithCurrentProfile(ctx, currentProfile)
 			ctx = fctl.WithConfig(ctx, config)
 			ctx = fctl.WithConfigManager(ctx, configManager)
@@ -134,6 +79,7 @@ func newRootCommand() *cobra.Command {
 			newUICommand(),
 			newVersionCommand(),
 			newLoginCommand(),
+			newAuthCommand(),
 		),
 		withPersistentStringPFlag(profileFlag, "p", "", "config profile to use"),
 		withPersistentStringPFlag(configFileFlag, "c", fmt.Sprintf("%s/.formance/fctl.config", homedir), "Debug mode"),

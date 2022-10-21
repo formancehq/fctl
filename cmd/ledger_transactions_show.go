@@ -29,7 +29,8 @@ func newLedgerTransactionsShowCommand() *cobra.Command {
 			if err != nil {
 				return errors.Wrapf(err, "retrieving transaction")
 			}
-			printTransaction(cmd, rsp.Data)
+
+			fctl.PrintLedgerTransaction(cmd.OutOrStdout(), rsp.Data)
 			return nil
 		}),
 	)

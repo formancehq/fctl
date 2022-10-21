@@ -120,7 +120,8 @@ func newLedgerTransactionsNumscriptCommand() *cobra.Command {
 				return errors.New(*rsp.ErrorCode)
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "Created transaction ID: %d\r\n", rsp.Transaction.Txid)
-			printTransaction(cmd, *rsp.Transaction)
+
+			fctl.PrintLedgerTransaction(cmd.OutOrStdout(), *rsp.Transaction)
 
 			return nil
 		}),

@@ -2,7 +2,6 @@ package fctl
 
 import (
 	"context"
-	"net/http"
 )
 
 type configKeySymbol struct{}
@@ -85,22 +84,6 @@ func IsDebugFromContext(ctx context.Context) bool {
 	return v.(bool)
 }
 
-type httpClientKeySymbol struct{}
-
-var httpClientContextKey = httpClientKeySymbol{}
-
-func WithHttpClient(ctx context.Context, client *http.Client) context.Context {
-	return context.WithValue(ctx, httpClientContextKey, client)
-}
-
-func HttpClientFromContext(ctx context.Context) *http.Client {
-	v := ctx.Value(httpClientContextKey)
-	if v == nil {
-		return http.DefaultClient
-	}
-	return v.(*http.Client)
-}
-
 type organizationKeySymbol struct{}
 
 var organizationContextKey = organizationKeySymbol{}
@@ -131,4 +114,20 @@ func StackFromContext(ctx context.Context) string {
 		panic("no stack selected")
 	}
 	return v.(string)
+}
+
+type insecureTLSKeySymbol struct{}
+
+var insecureTLSContextKey = insecureTLSKeySymbol{}
+
+func WithInsecureTLS(ctx context.Context, insecureTLS bool) context.Context {
+	return context.WithValue(ctx, insecureTLSContextKey, insecureTLS)
+}
+
+func InsecureTLSFromContext(ctx context.Context) bool {
+	v := ctx.Value(insecureTLSContextKey)
+	if v == nil {
+		return false
+	}
+	return v.(bool)
 }

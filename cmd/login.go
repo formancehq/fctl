@@ -13,9 +13,6 @@ import (
 const (
 	membershipUriFlag  = "membership-uri"
 	baseServiceUriFlag = "service-uri"
-
-	// TODO: Make configurable at build
-	authClient = "fctl"
 )
 
 func newLoginCommand() *cobra.Command {
@@ -25,7 +22,7 @@ func newLoginCommand() *cobra.Command {
 		withHiddenFlag(membershipUriFlag),
 		withHiddenFlag(baseServiceUriFlag),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			relyingParty, err := rp.NewRelyingPartyOIDC(fctl.CurrentProfileFromContext(cmd.Context()).MembershipURI, authClient, "",
+			relyingParty, err := rp.NewRelyingPartyOIDC(fctl.CurrentProfileFromContext(cmd.Context()).MembershipURI, fctl.AuthClient, "",
 				"", []string{"openid", "email", "offline_access"})
 			if err != nil {
 				return err
