@@ -28,24 +28,21 @@ func openUrl(url string) error {
 	return exec.Command(cmd, args...).Start()
 }
 
-var uiCommand = &cobra.Command{
-	Use:   "ui",
-	Short: "Open UI",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		organization, stack, err := findDefaultStackAndOrganizationId(cmd.Context())
-		if err != nil {
-			return err
-		}
+func newUICommand() *cobra.Command {
+	return newStackCommand("ui",
+		withShortDescription("Open UI"),
+		withRunE(func(cmd *cobra.Command, args []string) error {
+			organization, stack, err := findDefaultStackAndOrganizationId(cmd.Context())
+			if err != nil {
+				return err
+			}
 
-		stackUrl, err := fctl.ServicesBaseUrl(*currentProfile, organization, stack)
-		if err != nil {
-			return err
-		}
+			stackUrl, err := fctl.ServicesBaseUrl(*currentProfile, organization, stack)
+			if err != nil {
+				return err
+			}
 
-		return errors.Wrapf(openUrl(stackUrl.String()), "opening url: %s", stackUrl.String())
-	},
-}
-
-func init() {
-	rootCommand.AddCommand(uiCommand)
+			return errors.Wrapf(openUrl(stackUrl.String()), "opening url: %s", stackUrl.String())
+		}),
+	)
 }

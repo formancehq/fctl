@@ -12,18 +12,13 @@ var (
 	Commit    = "-"
 )
 
-func PrintVersion(cmd *cobra.Command, args []string) {
-	fmt.Printf("Version: %s \n", Version)
-	fmt.Printf("Date: %s \n", BuildDate)
-	fmt.Printf("Commit: %s \n", Commit)
-}
-
-var versionCommand = &cobra.Command{
-	Use:   "version",
-	Short: "Get version",
-	Run:   PrintVersion,
-}
-
-func init() {
-	rootCommand.AddCommand(versionCommand)
+func newVersionCommand() *cobra.Command {
+	return newCommand("version",
+		withShortDescription("Get version"),
+		withRun(func(cmd *cobra.Command, args []string) {
+			fmt.Printf("Version: %s \n", Version)
+			fmt.Printf("Date: %s \n", BuildDate)
+			fmt.Printf("Commit: %s \n", Commit)
+		}),
+	)
 }

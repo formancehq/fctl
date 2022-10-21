@@ -37,10 +37,13 @@ func printTransaction(cmd *cobra.Command, tx ledgerclient.Transaction) {
 	}
 }
 
-var transactionsCommand = &cobra.Command{
-	Use: "transactions",
-}
-
-func init() {
-	ledgerCommand.AddCommand(transactionsCommand)
+func newLedgerTransactionsCommand() *cobra.Command {
+	return newCommand("transactions",
+		withChildCommands(
+			newLedgerTransactionsListCommand(),
+			newLedgerTransactionsNumscriptCommand(),
+			newLedgerTransactionsRevertCommand(),
+			newLedgerTransactionsShowCommand(),
+		),
+	)
 }

@@ -11,7 +11,6 @@ import (
 )
 
 const (
-	stackFlag  = "stack"
 	ledgerFlag = "ledger"
 )
 
@@ -34,13 +33,13 @@ func getLedgerClient(ctx context.Context) (*ledgerclient.APIClient, error) {
 	return ledger.NewClient(*currentProfile, viper.GetBool(debugFlag), organization, stackId, token), nil
 }
 
-var ledgerCommand = &cobra.Command{
-	Use: "ledger",
-}
-
-func init() {
-	ledgerCommand.PersistentFlags().String(stackFlag, "", "Specific stack (not required if only one stack is present)")
-	ledgerCommand.PersistentFlags().String(ledgerFlag, "default", "Specific ledger ")
-
-	rootCommand.AddCommand(ledgerCommand)
+func newLedgerCommand() *cobra.Command {
+	return newStackCommand("ledger",
+		withPersistentStringFlag(ledgerFlag, "default", "Specific ledger"),
+		withChildCommands(
+			newLedgerTransactionsCommand(),
+			newLedgerBalancesCommand(),
+			newLedgerAccountsCommand(),
+		),
+	)
 }

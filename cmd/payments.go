@@ -29,13 +29,10 @@ func getPaymentsClient(ctx context.Context) (*client.APIClient, error) {
 	return payments.NewClient(currentProfile, viper.GetBool(debugFlag), organization, stackId, token), nil
 }
 
-var paymentsCommand = &cobra.Command{
-	Use: "payments",
-}
-
-func init() {
-	paymentsCommand.PersistentFlags().String(stackFlag, "", "Specific stack (not required if only one stack is present)")
-	paymentsCommand.PersistentFlags().String(ledgerFlag, "default", "Specific ledger ")
-
-	rootCommand.AddCommand(paymentsCommand)
+func newPaymentsCommand() *cobra.Command {
+	return newStackCommand("payments",
+		withChildCommands(
+			newPaymentsConnectorsCommand(),
+		),
+	)
 }

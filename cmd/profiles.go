@@ -4,10 +4,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var profilesCommand = &cobra.Command{
-	Use: "profiles",
-}
-
-func init() {
-	rootCommand.AddCommand(profilesCommand)
+func newProfilesCommand() *cobra.Command {
+	return newCommand("profiles",
+		withChildCommands(
+			newProfilesDeleteCommand(),
+			newProfilesListCommand(),
+			newProfilesRenameCommand(),
+			newProfilesShowCommand(),
+			newProfilesUseCommand(),
+		),
+	)
 }
