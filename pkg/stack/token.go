@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -27,7 +26,6 @@ func GetToken(ctx context.Context, profile fctl.Profile, organization, stack str
 	httpClient := &http.Client{
 		Transport: fctl.DebugRoundTripper(http.DefaultTransport),
 	}
-	fmt.Println(apiUrl.String())
 	discoveryConfiguration, err := client.Discover(apiUrl.String(), httpClient)
 	if err != nil {
 		return "", err
