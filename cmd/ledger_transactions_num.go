@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/formancehq/fctl/pkg"
 	ledgerclient "github.com/numary/ledger/client"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -31,7 +32,7 @@ func newLedgerTransactionsNumscriptCommand() *cobra.Command {
 		withStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
 		withStringFlag(referenceFlag, "", "Reference to add to the generated transaction"),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			ledgerClient, err := getLedgerClient(cmd.Context())
+			ledgerClient, err := fctl.NewLedgerClientFromContext(cmd.Context())
 			if err != nil {
 				return err
 			}

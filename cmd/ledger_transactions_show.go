@@ -3,6 +3,7 @@ package cmd
 import (
 	"strconv"
 
+	"github.com/formancehq/fctl/pkg"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -13,7 +14,7 @@ func newLedgerTransactionsShowCommand() *cobra.Command {
 		withShortDescription("print a transaction"),
 		withArgs(cobra.ExactArgs(1)),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			ledgerClient, err := getLedgerClient(cmd.Context())
+			ledgerClient, err := fctl.NewLedgerClientFromContext(cmd.Context())
 			if err != nil {
 				return err
 			}

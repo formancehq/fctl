@@ -1,4 +1,4 @@
-package stack
+package fctl
 
 import (
 	"bytes"
@@ -9,14 +9,13 @@ import (
 	"net/http"
 	"net/url"
 
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/zitadel/oidc/pkg/client"
 	"golang.org/x/oauth2"
 )
 
-func GetToken(ctx context.Context, profile fctl.Profile, organization, stack string) (string, error) {
+func GetToken(ctx context.Context, profile Profile, organization, stack string) (string, error) {
 
-	apiUrl := fctl.MustApiUrl(profile, organization, stack, "auth")
+	apiUrl := MustApiUrl(profile, organization, stack, "auth")
 	form := url.Values{
 		"grant_type": []string{"urn:ietf:params:oauth:grant-type:jwt-bearer"},
 		"assertion":  []string{profile.Token.AccessToken},
@@ -24,7 +23,7 @@ func GetToken(ctx context.Context, profile fctl.Profile, organization, stack str
 	}
 
 	httpClient := &http.Client{
-		Transport: fctl.DebugRoundTripper(http.DefaultTransport),
+		Transport: DebugRoundTripper(http.DefaultTransport),
 	}
 	discoveryConfiguration, err := client.Discover(apiUrl.String(), httpClient)
 	if err != nil {

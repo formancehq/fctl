@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/formancehq/fctl/pkg"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -19,10 +20,12 @@ func newSandboxDeleteCommand() *cobra.Command {
 		withArgs(cobra.MaximumNArgs(1)),
 		withStringFlag(sandboxNameFlag, "", "Sandbox to remove"),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			organization, err := findOrganizationId(cmd.Context())
+			organization, err := fctl.FindOrganizationId(cmd.Context())
 			if err != nil {
 				return errors.Wrap(err, "searching default organization")
 			}
+
+			apiClient := fctl.NewMembershipClientFromContext(cmd.Context())
 
 			var sandboxId string
 			if len(args) == 1 {

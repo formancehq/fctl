@@ -10,30 +10,10 @@ import (
 	"time"
 
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/fctl/pkg/membership"
-	membershipclient "github.com/numary/membership-api/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/zitadel/oidc/pkg/client/rp"
 	"golang.org/x/oauth2"
-)
-
-const (
-	profileFlag     = "profile"
-	configFileFlag  = "config"
-	debugFlag       = "debug"
-	insecureTlsFlag = "insecure-tls"
-)
-
-var (
-	currentProfileName string
-	currentProfile     *fctl.Profile
-	configManager      *fctl.ConfigManager
-	config             *fctl.Config
-	httpClient         = &http.Client{
-		Transport: http.DefaultTransport,
-	}
-	apiClient *membershipclient.APIClient
 )
 
 func init() {
@@ -47,6 +27,13 @@ func newRootCommand() *cobra.Command {
 		panic(err)
 	}
 
+	const (
+		profileFlag     = "profile"
+		configFileFlag  = "config"
+		debugFlag       = "debug"
+		insecureTlsFlag = "insecure-tls"
+	)
+
 	return newCommand("fctl",
 		withShortDescription("Formance Control CLI"),
 		withSilenceUsage(),
@@ -54,6 +41,13 @@ func newRootCommand() *cobra.Command {
 			if err = viper.BindPFlags(cmd.Flags()); err != nil {
 				return err
 			}
+
+			var (
+				httpClient         = http.DefaultClient
+				config             *fctl.Config
+				configManager      *fctl.ConfigManager
+				currentProfileName string
+			)
 
 			if viper.GetBool(insecureTlsFlag) {
 				httpTransport := http.DefaultTransport.(*http.Transport)
@@ -77,26 +71,26 @@ func newRootCommand() *cobra.Command {
 				currentProfileName = "default"
 				config.CurrentProfile = currentProfileName
 			}
-			debugln(cmd.OutOrStdout(), "Current profile:", currentProfileName)
+			fctl.DebugLn(cmd.Context(), cmd.OutOrStdout(), "Current profile:", currentProfileName)
 			if selectedProfile := viper.GetString(profileFlag); selectedProfile != "" {
-				debugln(cmd.OutOrStdout(), "Override profile by flag:", selectedProfile)
+				fctl.DebugLn(cmd.Context(), cmd.OutOrStdout(), "Override profile by flag:", selectedProfile)
 				currentProfileName = selectedProfile
 			}
 
-			currentProfile = config.GetProfileOrDefault(currentProfileName, &fctl.Profile{
+			currentProfile := config.GetProfileOrDefault(currentProfileName, &fctl.Profile{
 				MembershipURI:  viper.GetString(membershipUriFlag),
 				BaseServiceURI: viper.GetString(baseServiceUriFlag),
 			})
-			debugln(cmd.OutOrStdout(), "Selected profile membership uri:", currentProfile.MembershipURI)
-			debugln(cmd.OutOrStdout(), "Selected base service uri:", currentProfile.BaseServiceURI)
+			fctl.DebugLn(cmd.Context(), cmd.OutOrStdout(), "Selected profile membership uri:", currentProfile.MembershipURI)
+			fctl.DebugLn(cmd.Context(), cmd.OutOrStdout(), "Selected base service uri:", currentProfile.BaseServiceURI)
 
-			ifDebug(func() {
-				debugln(cmd.OutOrStdout(), "Configure http round tripper logger")
+			fctl.IfDebug(cmd.Context(), func() {
+				fctl.DebugLn(cmd.Context(), cmd.OutOrStdout(), "Configure http round tripper logger")
 				httpClient.Transport = fctl.DebugRoundTripper(httpClient.Transport)
 			})
 			if currentProfile.Token != nil {
 				if currentProfile.Token.Expiry.Before(time.Now()) {
-					debugln(cmd.OutOrStdout(), "Detect expired auth token against membership, trying to refresh token")
+					fctl.DebugLn(cmd.Context(), cmd.OutOrStdout(), "Detect expired auth token against membership, trying to refresh token")
 					relyingParty, err := rp.NewRelyingPartyOIDC(currentProfile.MembershipURI, authClient, "",
 						"", []string{"openid", "email", "offline_access"}, rp.WithHTTPClient(httpClient))
 					if err != nil {
@@ -117,11 +111,19 @@ func newRootCommand() *cobra.Command {
 					}
 
 				} else {
-					debugln(cmd.OutOrStdout(), "Detect active auth token against membership, reuse it")
+					fctl.DebugLn(cmd.Context(), cmd.OutOrStdout(), "Detect active auth token against membership, reuse it")
 				}
 			}
 
-			apiClient = membership.NewClient(*currentProfile, httpClient, viper.GetBool(debugFlag))
+			ctx := cmd.Context()
+			ctx = fctl.WithHttpClient(ctx, httpClient)
+			ctx = fctl.WithCurrentProfile(ctx, currentProfile)
+			ctx = fctl.WithConfig(ctx, config)
+			ctx = fctl.WithConfigManager(ctx, configManager)
+			ctx = fctl.WithCurrentProfileName(ctx, currentProfileName)
+			ctx = fctl.WithDebug(ctx, viper.GetBool(debugFlag))
+			cmd.SetContext(ctx)
+
 			return nil
 		}),
 		withChildCommands(

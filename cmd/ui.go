@@ -32,12 +32,12 @@ func newUICommand() *cobra.Command {
 	return newStackCommand("ui",
 		withShortDescription("Open UI"),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			organization, stack, err := findDefaultStackAndOrganizationId(cmd.Context())
+			organization, stack, err := fctl.FindDefaultStackAndOrganizationId(cmd.Context())
 			if err != nil {
 				return err
 			}
 
-			stackUrl, err := fctl.ServicesBaseUrl(*currentProfile, organization, stack)
+			stackUrl, err := fctl.ServicesBaseUrl(*fctl.CurrentProfileFromContext(cmd.Context()), organization, stack)
 			if err != nil {
 				return err
 			}

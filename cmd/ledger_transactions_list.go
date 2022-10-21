@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -34,7 +35,7 @@ func newLedgerTransactionsListCommand() *cobra.Command {
 		// SDK not generating correct requests
 		withHiddenFlag(listTransactionsMetadataFlag),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			ledgerClient, err := getLedgerClient(cmd.Context())
+			ledgerClient, err := fctl.NewLedgerClientFromContext(cmd.Context())
 			if err != nil {
 				return err
 			}

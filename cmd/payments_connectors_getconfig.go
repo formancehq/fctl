@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -11,7 +12,8 @@ func newPaymentsConnectorsGetConfigCommand() *cobra.Command {
 	return newCommand("get-config [CONNECTOR_NAME]",
 		withArgs(cobra.ExactArgs(1)),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			client, err := getPaymentsClient(cmd.Context())
+
+			client, err := fctl.NewPaymentsClientFromContext(cmd.Context())
 			if err != nil {
 				return err
 			}

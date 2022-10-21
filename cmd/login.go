@@ -25,7 +25,7 @@ func newLoginCommand() *cobra.Command {
 		withHiddenFlag(membershipUriFlag),
 		withHiddenFlag(baseServiceUriFlag),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			relyingParty, err := rp.NewRelyingPartyOIDC(currentProfile.MembershipURI, authClient, "",
+			relyingParty, err := rp.NewRelyingPartyOIDC(fctl.CurrentProfileFromContext(cmd.Context()).MembershipURI, authClient, "",
 				"", []string{"openid", "email", "offline_access"})
 			if err != nil {
 				return err
@@ -38,10 +38,11 @@ func newLoginCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			currentProfile.Token = ret.Token
-			config.CurrentProfile = currentProfileName
+			fctl.CurrentProfileFromContext(cmd.Context()).Token = ret.Token
+			fctl.ConfigFromContext(cmd.Context()).CurrentProfile = fctl.CurrentProfileNameFromContext(cmd.Context())
 
-			if err := configManager.UpdateConfig(config); err != nil {
+			if err := fctl.ConfigManagerFromContext(cmd.Context()).
+				UpdateConfig(fctl.ConfigFromContext(cmd.Context())); err != nil {
 				return errors.Wrap(err, "updating config")
 			}
 			fmt.Fprintln(cmd.OutOrStdout(), "Logged!")

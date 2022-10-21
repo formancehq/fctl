@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -130,7 +132,20 @@ func withSilenceUsage() commandOptionFn {
 
 func withPersistentPreRunE(fn func(cmd *cobra.Command, args []string) error) commandOptionFn {
 	return func(cmd *cobra.Command) {
-		cmd.PersistentPreRunE = fn
+		cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+			if err := fn(cmd, args); err != nil {
+				return err
+			}
+			for {
+				cmd = cmd.Parent()
+				if cmd == nil {
+					return nil
+				}
+				if cmd.PersistentPreRunE != nil {
+					return cmd.PersistentPreRunE(cmd, args)
+				}
+			}
+		}
 	}
 }
 
@@ -141,10 +156,15 @@ func withSilenceErrors() commandOptionFn {
 }
 
 func newStackCommand(use string, opts ...commandOption) *cobra.Command {
-	return newCommand(use,
+	return newMembershipCommand(use,
 		append(opts,
-			withPersistentStringFlag(organizationFlag, "", "Selected organization (not required if only one organization is present)"),
 			withPersistentStringFlag(stackFlag, "", "Specific stack (not required if only one stack is present)"),
+			withPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
+				ctx := cmd.Context()
+				ctx = fctl.WithStack(ctx, viper.GetString(stackFlag))
+				cmd.SetContext(ctx)
+				return nil
+			}),
 		)...,
 	)
 }
@@ -153,6 +173,12 @@ func newMembershipCommand(use string, opts ...commandOption) *cobra.Command {
 	return newCommand(use,
 		append(opts,
 			withPersistentStringFlag(organizationFlag, "", "Selected organization (not required if only one organization is present)"),
+			withPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
+				ctx := cmd.Context()
+				ctx = fctl.WithOrganization(ctx, viper.GetString(organizationFlag))
+				cmd.SetContext(ctx)
+				return nil
+			}),
 		)...,
 	)
 }
