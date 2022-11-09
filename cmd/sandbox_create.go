@@ -21,7 +21,10 @@ func newSandboxCreateCommand() *cobra.Command {
 				return err
 			}
 
-			apiClient := fctl.NewMembershipClientFromContext(cmd.Context())
+			apiClient, err := fctl.NewMembershipClientFromContext(cmd.Context())
+			if err != nil {
+				return err
+			}
 			sandbox, _, err := apiClient.DefaultApi.CreateStack(cmd.Context(), organization).Body(membershipclient.StackData{
 				Name: args[0],
 			}).Execute()

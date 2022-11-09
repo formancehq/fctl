@@ -80,6 +80,7 @@ func newRootCommand() *cobra.Command {
 			newVersionCommand(),
 			newLoginCommand(),
 			newAuthCommand(),
+			newOrganizationsCommand(),
 		),
 		withPersistentStringPFlag(profileFlag, "p", "", "config profile to use"),
 		withPersistentStringPFlag(configFileFlag, "c", fmt.Sprintf("%s/.formance/fctl.config", homedir), "Debug mode"),

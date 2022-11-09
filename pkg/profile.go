@@ -15,6 +15,23 @@ import (
 	"golang.org/x/oauth2"
 )
 
+type refreshFailError struct {
+	error
+}
+
+func (r refreshFailError) Error() string {
+	return r.error.Error()
+}
+
+func (r refreshFailError) Is(err error) bool {
+	_, ok := err.(refreshFailError)
+	return ok
+}
+
+func IsAuthenticationError(err error) bool {
+	return errors.Is(refreshFailError{}, err)
+}
+
 type Profile struct {
 	MembershipURI  string        `json:"membershipURI"`
 	BaseServiceURI string        `json:"baseServiceURI"`
@@ -36,7 +53,7 @@ func (p *Profile) GetToken(ctx context.Context) (*oauth2.Token, error) {
 			TokenSource(context.WithValue(context.TODO(), oauth2.HTTPClient, httpClient), p.Token).
 			Token()
 		if err != nil {
-			return nil, err
+			return nil, refreshFailError{err}
 		}
 
 		p.Token = newToken

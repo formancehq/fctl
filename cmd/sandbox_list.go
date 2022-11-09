@@ -17,7 +17,10 @@ func newSandboxListCommand() *cobra.Command {
 				return errors.Wrap(err, "searching default organization")
 			}
 
-			apiClient := fctl.NewMembershipClientFromContext(cmd.Context())
+			apiClient, err := fctl.NewMembershipClientFromContext(cmd.Context())
+			if err != nil {
+				return err
+			}
 
 			rsp, _, err := apiClient.DefaultApi.ListStacks(cmd.Context(), organization).Execute()
 			if err != nil {

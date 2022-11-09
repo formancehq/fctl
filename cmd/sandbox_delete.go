@@ -28,7 +28,10 @@ func newSandboxDeleteCommand() *cobra.Command {
 				return errors.Wrap(err, "searching default organization")
 			}
 
-			apiClient := fctl.NewMembershipClientFromContext(cmd.Context())
+			apiClient, err := fctl.NewMembershipClientFromContext(cmd.Context())
+			if err != nil {
+				return err
+			}
 
 			var sandboxId string
 			if len(args) == 1 {

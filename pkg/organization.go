@@ -2,14 +2,20 @@ package fctl
 
 import (
 	"context"
+	"fmt"
+	"io"
 
+	membershipclient "github.com/numary/membership-api/client"
 	"github.com/pkg/errors"
 )
 
 func FindOrganizationId(ctx context.Context) (string, error) {
 	organization := OrganizationFromContext(ctx)
 	if organization == "" {
-		apiClient := NewMembershipClientFromContext(ctx)
+		apiClient, err := NewMembershipClientFromContext(ctx)
+		if err != nil {
+			return "", err
+		}
 		organizations, _, err := apiClient.DefaultApi.ListOrganizations(ctx).Execute()
 		if err != nil {
 			return "", errors.Wrap(err, "listing organizations")
@@ -28,7 +34,10 @@ func FindOrganizationId(ctx context.Context) (string, error) {
 func FindStackId(ctx context.Context, organization string) (string, error) {
 	stack := StackFromContext(ctx)
 	if stack == "" {
-		apiClient := NewMembershipClientFromContext(ctx)
+		apiClient, err := NewMembershipClientFromContext(ctx)
+		if err != nil {
+			return "", err
+		}
 		stacks, _, err := apiClient.DefaultApi.ListStacks(ctx, organization).Execute()
 		if err != nil {
 			return "", errors.Wrap(err, "listing stacks")
@@ -55,4 +64,9 @@ func FindDefaultStackAndOrganizationId(ctx context.Context) (string, string, err
 		return "", "", err
 	}
 	return organization, stack, nil
+}
+
+func PrintOrganization(out io.Writer, o membershipclient.Organization) {
+	fmt.Fprintf(out, "Name: %s\r\n", o.Name)
+	fmt.Fprintf(out, "Owner ID: %s\r\n", o.OwnerId)
 }
