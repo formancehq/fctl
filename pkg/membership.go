@@ -16,6 +16,6 @@ func NewMembershipClientFromContext(ctx context.Context, profile *Profile, httpC
 	}
 	configuration.AddDefaultHeader("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
 	configuration.HTTPClient = httpClient
-	configuration.Servers[0].URL = profile.MembershipURI
+	configuration.Servers[0].URL = profile.membershipURI
 	return client.NewAPIClient(configuration), nil
 }

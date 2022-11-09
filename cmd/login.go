@@ -5,7 +5,6 @@ import (
 
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/numary/membership-api/pkg/membershiplogin"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/zitadel/oidc/pkg/client/rp"
 )
@@ -28,7 +27,7 @@ func newLoginCommand() *cobra.Command {
 				return err
 			}
 
-			relyingParty, err := rp.NewRelyingPartyOIDC(profile.MembershipURI, fctl.AuthClient, "",
+			relyingParty, err := rp.NewRelyingPartyOIDC(profile.GetMembershipURI(), fctl.AuthClient, "",
 				"", []string{"openid", "email", "offline_access"})
 			if err != nil {
 				return err
@@ -46,7 +45,8 @@ func newLoginCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			currentProfile.Token = ret.Token
+
+			currentProfile.UpdateToken(ret.Token)
 
 			currentProfileName, err := getCurrentProfileName()
 			if err != nil {
@@ -57,12 +57,9 @@ func newLoginCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			config.Profiles[currentProfileName] = currentProfile
-			config.CurrentProfile = currentProfileName
 
-			if err := getConfigManager().UpdateConfig(config); err != nil {
-				return errors.Wrap(err, "updating config")
-			}
+			config.SetCurrentProfile(currentProfileName, currentProfile)
+
 			fmt.Fprintln(cmd.OutOrStdout(), "Logged!")
 			return nil
 		}),

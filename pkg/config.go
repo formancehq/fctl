@@ -12,34 +12,91 @@ const (
 	DefaultMemberShipUri = "https://app.formance.cloud/api"
 )
 
-type Config struct {
+type persistedConfig struct {
 	CurrentProfile string              `json:"currentProfile"`
 	Profiles       map[string]*Profile `json:"profiles"`
 }
 
-func (c *Config) GetProfile(name string) *Profile {
-	return c.Profiles[name]
+type Config struct {
+	currentProfile string
+	profiles       map[string]*Profile
+	manager        *ConfigManager
 }
 
-func (c *Config) GetProfileOrDefault(name string, f *Profile) *Profile {
+func (c *Config) MarshalJSON() ([]byte, error) {
+	return json.Marshal(persistedConfig{
+		CurrentProfile: c.currentProfile,
+		Profiles:       c.profiles,
+	})
+}
+
+func (c *Config) UnmarshalJSON(data []byte) error {
+	cfg := &persistedConfig{}
+	if err := json.Unmarshal(data, cfg); err != nil {
+		return err
+	}
+	*c = Config{
+		currentProfile: cfg.CurrentProfile,
+		profiles:       cfg.Profiles,
+	}
+	return nil
+}
+
+func (c *Config) GetProfile(name string) *Profile {
+	p := c.profiles[name]
+	p.config = c
+	return p
+}
+
+func (c *Config) GetProfileOrDefault(name string, membershipUri, baseServiceUri string) *Profile {
 	p := c.GetProfile(name)
 	if p == nil {
-		if c.Profiles == nil {
-			c.Profiles = map[string]*Profile{}
+		if c.profiles == nil {
+			c.profiles = map[string]*Profile{}
 		}
-		c.Profiles[name] = f
+		f := &Profile{
+			membershipURI:  membershipUri,
+			baseServiceURI: baseServiceUri,
+			config:         c,
+		}
+		c.profiles[name] = f
 		return f
 	}
 	return p
 }
 
 func (c *Config) DeleteProfile(s string) error {
-	_, ok := c.Profiles[s]
+	_, ok := c.profiles[s]
 	if !ok {
 		return errors.New("not found")
 	}
-	delete(c.Profiles, s)
+	delete(c.profiles, s)
 	return nil
+}
+
+func (c *Config) Persist() error {
+	return c.manager.UpdateConfig(c)
+}
+
+func (c *Config) SetCurrentProfile(name string, profile *Profile) {
+	c.profiles[name] = profile
+	c.currentProfile = name
+}
+
+func (c *Config) SetProfile(name string, profile *Profile) {
+	c.profiles[name] = profile
+}
+
+func (c *Config) GetProfiles() map[string]*Profile {
+	return c.profiles
+}
+
+func (c *Config) GetCurrentProfileName() string {
+	return c.currentProfile
+}
+
+func (c *Config) SetCurrentProfileName(s string) {
+	c.currentProfile = s
 }
 
 type ConfigManager struct {
@@ -61,6 +118,7 @@ func (m *ConfigManager) Load() (*Config, error) {
 	if err := json.NewDecoder(f).Decode(cfg); err != nil {
 		return nil, err
 	}
+	cfg.manager = m
 
 	return cfg, nil
 }

@@ -6,7 +6,7 @@ import (
 )
 
 func ServicesBaseUrl(profile Profile, organization, stack string) (*url.URL, error) {
-	baseUrl, err := url.Parse(profile.BaseServiceURI)
+	baseUrl, err := url.Parse(profile.baseServiceURI)
 	if err != nil {
 		return nil, err
 	}

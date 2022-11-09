@@ -20,8 +20,8 @@ func newProfilesShowCommand() *cobra.Command {
 			if p == nil {
 				return errors.New("not found")
 			}
-			fmt.Fprintln(cmd.OutOrStdout(), "Domain:", p.BaseServiceURI)
-			fmt.Fprintln(cmd.OutOrStdout(), "Membership:", p.MembershipURI)
+			fmt.Fprintln(cmd.OutOrStdout(), "Domain:", p.GetBaseServiceURI())
+			fmt.Fprintln(cmd.OutOrStdout(), "Membership:", p.GetMembershipURI())
 			return nil
 		}),
 	)

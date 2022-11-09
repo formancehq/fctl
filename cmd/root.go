@@ -28,11 +28,14 @@ func getConfig() (*fctl.Config, error) {
 }
 
 func getCurrentProfileName() (string, error) {
+	if profile := viper.GetString(profileFlag); profile != "" {
+		return profile, nil
+	}
 	config, err := getConfig()
 	if err != nil {
 		return "", err
 	}
-	currentProfileName := config.CurrentProfile
+	currentProfileName := config.GetCurrentProfileName()
 	if currentProfileName == "" {
 		currentProfileName = "default"
 	}
@@ -48,10 +51,8 @@ func getCurrentProfile() (*fctl.Profile, error) {
 	if err != nil {
 		return nil, err
 	}
-	return config.GetProfileOrDefault(profileName, &fctl.Profile{
-		MembershipURI:  viper.GetString(membershipUriFlag),
-		BaseServiceURI: viper.GetString(baseServiceUriFlag),
-	}), nil
+	return config.GetProfileOrDefault(profileName, viper.GetString(membershipUriFlag),
+		viper.GetString(baseServiceUriFlag)), nil
 }
 
 func newMembershipClient(cmd *cobra.Command) (*membershipclient.APIClient, error) {

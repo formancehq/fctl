@@ -17,18 +17,21 @@ func newProfilesRenameCommand() *cobra.Command {
 				return err
 			}
 
-			p, ok := config.Profiles[oldName]
-			if !ok {
+			p := config.GetProfile(oldName)
+			if p == nil {
 				return errors.New("profile not found")
 			}
 
-			config.Profiles[newName] = p
-			delete(config.Profiles, oldName)
-			if config.CurrentProfile == oldName {
-				config.CurrentProfile = newName
+			if err := config.DeleteProfile(oldName); err != nil {
+				return err
+			}
+			if config.GetCurrentProfileName() == oldName {
+				config.SetCurrentProfile(newName, p)
+			} else {
+				config.SetProfile(newName, p)
 			}
 
-			return errors.Wrap(getConfigManager().UpdateConfig(config), "Updating config")
+			return errors.Wrap(config.Persist(), "Updating config")
 		}),
 	)
 }

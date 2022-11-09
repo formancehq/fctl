@@ -15,18 +15,57 @@ import (
 	"golang.org/x/oauth2"
 )
 
-type Profile struct {
+type persistedProfile struct {
 	MembershipURI  string        `json:"membershipURI"`
 	BaseServiceURI string        `json:"baseServiceURI"`
 	Token          *oauth2.Token `json:"token"`
+}
 
-	httpClient *http.Client
+type Profile struct {
+	membershipURI  string
+	baseServiceURI string
+	token          *oauth2.Token
+
+	config *Config
+}
+
+func (p *Profile) UpdateToken(token *oauth2.Token) {
+	p.token = token
+}
+
+func (p *Profile) MarshalJSON() ([]byte, error) {
+	return json.Marshal(persistedProfile{
+		MembershipURI:  p.membershipURI,
+		BaseServiceURI: p.baseServiceURI,
+		Token:          p.token,
+	})
+}
+
+func (p *Profile) UnmarshalJSON(data []byte) error {
+	cfg := &persistedProfile{}
+	if err := json.Unmarshal(data, cfg); err != nil {
+		return err
+	}
+	*p = Profile{
+		membershipURI:  p.membershipURI,
+		baseServiceURI: p.baseServiceURI,
+		token:          p.token,
+	}
+	return nil
+}
+
+func (p *Profile) GetMembershipURI() string {
+	return p.membershipURI
+}
+
+func (p *Profile) GetBaseServiceURI() string {
+	return p.baseServiceURI
 }
 
 func (p *Profile) GetToken(ctx context.Context, httpClient *http.Client) (*oauth2.Token, error) {
 
-	if p.Token != nil && p.Token.Expiry.Before(time.Now()) {
-		relyingParty, err := rp.NewRelyingPartyOIDC(p.MembershipURI, AuthClient, "",
+	if p.token != nil && p.token.Expiry.Before(time.Now()) {
+		relyingParty, err := rp.NewRelyingPartyOIDC(p.membershipURI, AuthClient, "",
 			"", []string{"openid", "email", "offline_access"}, rp.WithHTTPClient(httpClient))
 		if err != nil {
 			return nil, err
@@ -34,28 +73,25 @@ func (p *Profile) GetToken(ctx context.Context, httpClient *http.Client) (*oauth
 
 		newToken, err := relyingParty.
 			OAuthConfig().
-			TokenSource(context.WithValue(ctx, oauth2.HTTPClient, httpClient), p.Token).
+			TokenSource(context.WithValue(ctx, oauth2.HTTPClient, httpClient), p.token).
 			Token()
 		if err != nil {
 			return nil, err
 		}
 
-		p.Token = newToken
-
-		// TODO: Persist config at upper level
-		//if err := configManager.
-		//	UpdateConfig(ConfigFromContext(ctx)); err != nil {
-		//	return nil, err
-		//}
+		p.token = newToken
+		if err := p.config.Persist(); err != nil {
+			return nil, err
+		}
 	}
-	return p.Token, nil
+	return p.token, nil
 }
 
 func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, organizationID, stackID string) (string, error) {
 	apiUrl := MustApiUrl(*p, organizationID, stackID, "auth")
 	form := url.Values{
 		"grant_type": []string{"urn:ietf:params:oauth:grant-type:jwt-bearer"},
-		"assertion":  []string{p.Token.AccessToken},
+		"assertion":  []string{p.token.AccessToken},
 		"scope":      []string{"openid email"},
 	}
 

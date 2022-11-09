@@ -20,7 +20,7 @@ func newProfilesDeleteCommand() *cobra.Command {
 				return err
 			}
 
-			if err := getConfigManager().UpdateConfig(config); err != nil {
+			if err := config.Persist(); err != nil {
 				return errors.Wrap(err, "updating config")
 			}
 			fmt.Fprintln(cmd.OutOrStdout(), "Profile deleted.")

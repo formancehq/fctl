@@ -13,8 +13,8 @@ func newProfilesUseCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			config.CurrentProfile = args[0]
-			return errors.Wrap(getConfigManager().UpdateConfig(config), "Updating config")
+			config.SetCurrentProfileName(args[0])
+			return errors.Wrap(config.Persist(), "Updating config")
 		}),
 	)
 }
