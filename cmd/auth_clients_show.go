@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	fctl "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/cmd/internal"
 	"github.com/spf13/cobra"
 )
 

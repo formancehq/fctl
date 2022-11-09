@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/cmd/internal"
 	membershipclient "github.com/numary/membership-api/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -19,11 +19,11 @@ const (
 	insecureTlsFlag = "insecure-tls"
 )
 
-func getConfigManager() *fctl.ConfigManager {
-	return fctl.NewConfigManager(viper.GetString(configFileFlag))
+func getConfigManager() *internal.ConfigManager {
+	return internal.NewConfigManager(viper.GetString(configFileFlag))
 }
 
-func getConfig() (*fctl.Config, error) {
+func getConfig() (*internal.Config, error) {
 	return getConfigManager().Load()
 }
 
@@ -42,7 +42,7 @@ func getCurrentProfileName() (string, error) {
 	return currentProfileName, nil
 }
 
-func getCurrentProfile() (*fctl.Profile, error) {
+func getCurrentProfile() (*internal.Profile, error) {
 	config, err := getConfig()
 	if err != nil {
 		return nil, err
@@ -60,11 +60,11 @@ func newMembershipClient(cmd *cobra.Command) (*membershipclient.APIClient, error
 	if err != nil {
 		return nil, err
 	}
-	return fctl.NewMembershipClientFromContext(cmd.Context(), profile, getHttpClient())
+	return internal.NewMembershipClientFromContext(cmd.Context(), profile, getHttpClient())
 }
 
 func getHttpClient() *http.Client {
-	return fctl.NewHTTPClient(viper.GetBool(insecureTlsFlag), viper.GetBool(debugFlag))
+	return internal.NewHTTPClient(viper.GetBool(insecureTlsFlag), viper.GetBool(debugFlag))
 }
 
 func newRootCommand() *cobra.Command {
@@ -91,6 +91,7 @@ func newRootCommand() *cobra.Command {
 			newLoginCommand(),
 			newAuthCommand(),
 			newOrganizationsCommand(),
+			newWhoamiCommand(),
 		),
 		withPersistentStringPFlag(profileFlag, "p", "", "config profile to use"),
 		withPersistentStringPFlag(configFileFlag, "c", fmt.Sprintf("%s/.formance/fctl.config", homedir), "Debug mode"),

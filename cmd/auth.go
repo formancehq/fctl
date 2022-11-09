@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/formancehq/auth/authclient"
-	fctl "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/cmd/internal"
 	"github.com/spf13/cobra"
 )
 

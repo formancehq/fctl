@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/numary/membership-api/pkg/membershiplogin"
 	"github.com/spf13/cobra"
 	"github.com/zitadel/oidc/pkg/client/rp"
@@ -14,10 +14,16 @@ const (
 	baseServiceUriFlag = "service-uri"
 )
 
+func getRelyingParty(profile *internal.Profile) (rp.RelyingParty, error) {
+	return rp.NewRelyingPartyOIDC(profile.GetMembershipURI(), internal.AuthClient, "",
+		"", []string{"openid", "email", "offline_access"}, rp.WithHTTPClient(getHttpClient()))
+
+}
+
 func newLoginCommand() *cobra.Command {
 	return newCommand("login",
-		withStringFlag(membershipUriFlag, fctl.DefaultMemberShipUri, "service url"),
-		withStringFlag(baseServiceUriFlag, fctl.DefaultBaseUri, "service url"),
+		withStringFlag(membershipUriFlag, internal.DefaultMemberShipUri, "service url"),
+		withStringFlag(baseServiceUriFlag, internal.DefaultBaseUri, "service url"),
 		withHiddenFlag(membershipUriFlag),
 		withHiddenFlag(baseServiceUriFlag),
 		withRunE(func(cmd *cobra.Command, args []string) error {
@@ -27,8 +33,7 @@ func newLoginCommand() *cobra.Command {
 				return err
 			}
 
-			relyingParty, err := rp.NewRelyingPartyOIDC(profile.GetMembershipURI(), fctl.AuthClient, "",
-				"", []string{"openid", "email", "offline_access"})
+			relyingParty, err := getRelyingParty(profile)
 			if err != nil {
 				return err
 			}
@@ -61,7 +66,7 @@ func newLoginCommand() *cobra.Command {
 			config.SetCurrentProfile(currentProfileName, currentProfile)
 
 			fmt.Fprintln(cmd.OutOrStdout(), "Logged!")
-			return nil
+			return config.Persist()
 		}),
 	)
 }

@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	fctl "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/cmd/internal"
 	ledgerclient "github.com/numary/ledger/client"
 	"github.com/spf13/cobra"
 )

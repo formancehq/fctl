@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/cmd/internal"
 	ledgerclient "github.com/numary/ledger/client"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -121,7 +121,7 @@ func newLedgerTransactionsNumscriptCommand() *cobra.Command {
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "Created transaction ID: %d\r\n", rsp.Transaction.Txid)
 
-			fctl.PrintLedgerTransaction(cmd.OutOrStdout(), *rsp.Transaction)
+			internal.PrintLedgerTransaction(cmd.OutOrStdout(), *rsp.Transaction)
 
 			return nil
 		}),

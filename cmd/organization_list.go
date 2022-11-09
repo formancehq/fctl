@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +24,7 @@ func newOrganizationsListCommand() *cobra.Command {
 			fmt.Fprintln(cmd.OutOrStdout(), "Organizations: ")
 			for _, o := range organizations.Data {
 				fmt.Fprintf(cmd.OutOrStdout(), "-> Organization: %s\r\n", o.Id)
-				fctl.PrintOrganization(cmd.OutOrStdout(), o)
+				internal.PrintOrganization(cmd.OutOrStdout(), o)
 			}
 			return nil
 		}),

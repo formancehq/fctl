@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -69,7 +69,7 @@ func newLedgerTransactionsListCommand() *cobra.Command {
 			fmt.Fprintln(cmd.OutOrStdout(), "Transactions: ")
 			for _, s := range rsp.Cursor.Data {
 				fmt.Fprintf(cmd.OutOrStdout(), "-> Transaction: %d\r\n", s.Txid)
-				fctl.PrintLedgerTransaction(cmd.OutOrStdout(), s)
+				internal.PrintLedgerTransaction(cmd.OutOrStdout(), s)
 			}
 			return nil
 		}),

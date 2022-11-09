@@ -1,4 +1,4 @@
-package fctl
+package internal
 
 import (
 	"crypto/tls"

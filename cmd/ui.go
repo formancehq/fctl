@@ -4,7 +4,7 @@ import (
 	"os/exec"
 	"runtime"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/cmd/internal"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )

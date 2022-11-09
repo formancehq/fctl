@@ -3,7 +3,7 @@ package cmd
 import (
 	"strconv"
 
-	"github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,7 +30,7 @@ func newLedgerTransactionsRevertCommand() *cobra.Command {
 				return errors.Wrapf(err, "reverting transaction")
 			}
 
-			fctl.PrintLedgerTransaction(cmd.OutOrStdout(), rsp.Data)
+			internal.PrintLedgerTransaction(cmd.OutOrStdout(), rsp.Data)
 			return nil
 		}),
 	)

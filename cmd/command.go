@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -24,7 +24,7 @@ func resolveOrganizationID(cmd *cobra.Command) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fctl.FindOrganizationID(cmd.Context(), client)
+	return internal.FindOrganizationID(cmd.Context(), client)
 }
 
 func getSelectedStack() string {
@@ -39,7 +39,7 @@ func resolveStackID(cmd *cobra.Command, organizationID string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fctl.FindStackID(cmd.Context(), client, organizationID)
+	return internal.FindStackID(cmd.Context(), client, organizationID)
 }
 
 type commandOption interface {

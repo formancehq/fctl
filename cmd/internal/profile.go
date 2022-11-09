@@ -1,9 +1,10 @@
-package fctl
+package internal
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -12,6 +13,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/zitadel/oidc/pkg/client"
 	"github.com/zitadel/oidc/pkg/client/rp"
+	httphelper "github.com/zitadel/oidc/pkg/http"
+	"github.com/zitadel/oidc/pkg/oidc"
 	"golang.org/x/oauth2"
 )
 
@@ -31,6 +34,7 @@ type Profile struct {
 
 func (p *Profile) UpdateToken(token *oauth2.Token) {
 	p.token = token
+	p.token.Expiry = p.token.Expiry.UTC()
 }
 
 func (p *Profile) MarshalJSON() ([]byte, error) {
@@ -47,9 +51,9 @@ func (p *Profile) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	*p = Profile{
-		membershipURI:  p.membershipURI,
-		baseServiceURI: p.baseServiceURI,
-		token:          p.token,
+		membershipURI:  cfg.MembershipURI,
+		baseServiceURI: cfg.BaseServiceURI,
+		token:          cfg.Token,
 	}
 	return nil
 }
@@ -63,7 +67,6 @@ func (p *Profile) GetBaseServiceURI() string {
 }
 
 func (p *Profile) GetToken(ctx context.Context, httpClient *http.Client) (*oauth2.Token, error) {
-
 	if p.token != nil && p.token.Expiry.Before(time.Now()) {
 		relyingParty, err := rp.NewRelyingPartyOIDC(p.membershipURI, AuthClient, "",
 			"", []string{"openid", "email", "offline_access"}, rp.WithHTTPClient(httpClient))
@@ -79,12 +82,32 @@ func (p *Profile) GetToken(ctx context.Context, httpClient *http.Client) (*oauth
 			return nil, err
 		}
 
-		p.token = newToken
+		p.UpdateToken(newToken)
 		if err := p.config.Persist(); err != nil {
 			return nil, err
 		}
 	}
 	return p.token, nil
+}
+
+func (p *Profile) GetUserInfo(ctx context.Context, relyingParty rp.RelyingParty) (oidc.UserInfo, error) {
+
+	req, err := http.NewRequest(http.MethodGet, relyingParty.UserinfoEndpoint(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	token, err := p.GetToken(ctx, relyingParty.HttpClient())
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.TokenType, token.AccessToken))
+	userinfo := oidc.NewUserInfo()
+	if err := httphelper.HttpRequest(relyingParty.HttpClient(), req, &userinfo); err != nil {
+		return nil, err
+	}
+	return userinfo, nil
 }
 
 func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, organizationID, stackID string) (string, error) {

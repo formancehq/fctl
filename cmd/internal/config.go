@@ -1,4 +1,4 @@
-package fctl
+package internal
 
 import (
 	"encoding/json"
@@ -44,7 +44,9 @@ func (c *Config) UnmarshalJSON(data []byte) error {
 
 func (c *Config) GetProfile(name string) *Profile {
 	p := c.profiles[name]
-	p.config = c
+	if p != nil {
+		p.config = c
+	}
 	return p
 }
 
@@ -108,7 +110,10 @@ func (m *ConfigManager) Load() (*Config, error) {
 	f, err := os.Open(m.configFilePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return &Config{}, nil
+			return &Config{
+				profiles: map[string]*Profile{},
+				manager:  m,
+			}, nil
 		}
 		return nil, err
 	}
@@ -119,6 +124,9 @@ func (m *ConfigManager) Load() (*Config, error) {
 		return nil, err
 	}
 	cfg.manager = m
+	if cfg.profiles == nil {
+		cfg.profiles = map[string]*Profile{}
+	}
 
 	return cfg, nil
 }

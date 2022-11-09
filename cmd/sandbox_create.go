@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/cmd/internal"
 	membershipclient "github.com/numary/membership-api/client"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
