@@ -35,7 +35,7 @@ func newLedgerTransactionsListCommand() *cobra.Command {
 		// SDK not generating correct requests
 		withHiddenFlag(listTransactionsMetadataFlag),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			ledgerClient, err := fctl.NewLedgerClientFromContext(cmd.Context())
+			ledgerClient, err := newLedgerClient(cmd)
 			if err != nil {
 				return err
 			}

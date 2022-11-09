@@ -22,7 +22,13 @@ func newLoginCommand() *cobra.Command {
 		withHiddenFlag(membershipUriFlag),
 		withHiddenFlag(baseServiceUriFlag),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			relyingParty, err := rp.NewRelyingPartyOIDC(fctl.CurrentProfileFromContext(cmd.Context()).MembershipURI, fctl.AuthClient, "",
+
+			profile, err := getCurrentProfile()
+			if err != nil {
+				return err
+			}
+
+			relyingParty, err := rp.NewRelyingPartyOIDC(profile.MembershipURI, fctl.AuthClient, "",
 				"", []string{"openid", "email", "offline_access"})
 			if err != nil {
 				return err
@@ -35,11 +41,26 @@ func newLoginCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fctl.CurrentProfileFromContext(cmd.Context()).Token = ret.Token
-			fctl.ConfigFromContext(cmd.Context()).CurrentProfile = fctl.CurrentProfileNameFromContext(cmd.Context())
 
-			if err := fctl.ConfigManagerFromContext(cmd.Context()).
-				UpdateConfig(fctl.ConfigFromContext(cmd.Context())); err != nil {
+			currentProfile, err := getCurrentProfile()
+			if err != nil {
+				return err
+			}
+			currentProfile.Token = ret.Token
+
+			currentProfileName, err := getCurrentProfileName()
+			if err != nil {
+				return err
+			}
+
+			config, err := getConfig()
+			if err != nil {
+				return err
+			}
+			config.Profiles[currentProfileName] = currentProfile
+			config.CurrentProfile = currentProfileName
+
+			if err := getConfigManager().UpdateConfig(config); err != nil {
 				return errors.Wrap(err, "updating config")
 			}
 			fmt.Fprintln(cmd.OutOrStdout(), "Logged!")

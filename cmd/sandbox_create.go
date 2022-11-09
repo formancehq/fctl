@@ -16,15 +16,16 @@ func newSandboxCreateCommand() *cobra.Command {
 		withPersistentStringFlag(organizationFlag, "", "Specific organization to target"),
 		withRunE(func(cmd *cobra.Command, args []string) error {
 
-			organization, err := fctl.FindOrganizationId(cmd.Context())
+			organization, err := resolveOrganizationID(cmd)
 			if err != nil {
 				return err
 			}
 
-			apiClient, err := fctl.NewMembershipClientFromContext(cmd.Context())
+			apiClient, err := newMembershipClient(cmd)
 			if err != nil {
 				return err
 			}
+
 			sandbox, _, err := apiClient.DefaultApi.CreateStack(cmd.Context(), organization).Body(membershipclient.StackData{
 				Name: args[0],
 			}).Execute()
@@ -32,7 +33,12 @@ func newSandboxCreateCommand() *cobra.Command {
 				return errors.Wrap(err, "creating sandbox")
 			}
 
-			baseUrl, err := fctl.ServicesBaseUrl(*fctl.CurrentProfileFromContext(cmd.Context()), sandbox.Data.OrganizationId, sandbox.Data.Id)
+			profile, err := getCurrentProfile()
+			if err != nil {
+				return err
+			}
+
+			baseUrl, err := fctl.ServicesBaseUrl(*profile, sandbox.Data.OrganizationId, sandbox.Data.Id)
 			if err != nil {
 				return err
 			}

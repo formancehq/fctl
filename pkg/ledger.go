@@ -4,34 +4,24 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"time"
 
 	"github.com/numary/ledger/client"
 )
 
-func NewLedgerClientFromContext(ctx context.Context) (*client.APIClient, error) {
-	token, err := CurrentProfileFromContext(ctx).GetStackToken(ctx)
+func NewLedgerClientFromContext(ctx context.Context, profile *Profile, httpClient *http.Client, organizationID, stackID string) (*client.APIClient, error) {
+	token, err := profile.GetStackToken(ctx, httpClient, organizationID, stackID)
 	if err != nil {
 		return nil, err
 	}
 
-	organization, err := FindOrganizationId(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	stack, err := FindStackId(ctx, organization)
-	if err != nil {
-		return nil, err
-	}
-
-	profile := CurrentProfileFromContext(ctx)
 	config := client.NewConfiguration()
 	config.Servers = client.ServerConfigurations{{
-		URL: MustApiUrl(*profile, organization, stack, "ledger").String(),
+		URL: MustApiUrl(*profile, organizationID, stackID, "ledger").String(),
 	}}
 	config.AddDefaultHeader("Authorization", fmt.Sprintf("Bearer %s", token))
-	config.HTTPClient = NewHTTPClientFromContext(ctx)
+	config.HTTPClient = httpClient
 
 	return client.NewAPIClient(config), nil
 }

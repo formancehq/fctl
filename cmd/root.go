@@ -2,12 +2,69 @@ package cmd
 
 import (
 	"fmt"
+	"net/http"
 	"os"
+	"strings"
 
 	fctl "github.com/formancehq/fctl/pkg"
+	membershipclient "github.com/numary/membership-api/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+const (
+	profileFlag     = "profile"
+	configFileFlag  = "config"
+	debugFlag       = "debug"
+	insecureTlsFlag = "insecure-tls"
+)
+
+func getConfigManager() *fctl.ConfigManager {
+	return fctl.NewConfigManager(viper.GetString(configFileFlag))
+}
+
+func getConfig() (*fctl.Config, error) {
+	return getConfigManager().Load()
+}
+
+func getCurrentProfileName() (string, error) {
+	config, err := getConfig()
+	if err != nil {
+		return "", err
+	}
+	currentProfileName := config.CurrentProfile
+	if currentProfileName == "" {
+		currentProfileName = "default"
+	}
+	return currentProfileName, nil
+}
+
+func getCurrentProfile() (*fctl.Profile, error) {
+	config, err := getConfig()
+	if err != nil {
+		return nil, err
+	}
+	profileName, err := getCurrentProfileName()
+	if err != nil {
+		return nil, err
+	}
+	return config.GetProfileOrDefault(profileName, &fctl.Profile{
+		MembershipURI:  viper.GetString(membershipUriFlag),
+		BaseServiceURI: viper.GetString(baseServiceUriFlag),
+	}), nil
+}
+
+func newMembershipClient(cmd *cobra.Command) (*membershipclient.APIClient, error) {
+	profile, err := getCurrentProfile()
+	if err != nil {
+		return nil, err
+	}
+	return fctl.NewMembershipClientFromContext(cmd.Context(), profile, getHttpClient())
+}
+
+func getHttpClient() *http.Client {
+	return fctl.NewHTTPClient(viper.GetBool(insecureTlsFlag), viper.GetBool(debugFlag))
+}
 
 func newRootCommand() *cobra.Command {
 	homedir, err := os.UserHomeDir()
@@ -15,61 +72,13 @@ func newRootCommand() *cobra.Command {
 		panic(err)
 	}
 
-	const (
-		profileFlag     = "profile"
-		configFileFlag  = "config"
-		debugFlag       = "debug"
-		insecureTlsFlag = "insecure-tls"
-	)
-
 	return newCommand("fctl",
 		withShortDescription("Formance Control CLI"),
 		withSilenceUsage(),
 		withPersistentPreRunE(func(cmd *cobra.Command, args []string) (err error) {
-			if err := viper.BindPFlags(cmd.Flags()); err != nil {
-				return err
-			}
-
-			var (
-				config             *fctl.Config
-				configManager      *fctl.ConfigManager
-				currentProfileName string
-			)
-
-			configManager = fctl.NewConfigManager(viper.GetString(configFileFlag))
-
-			config, err = configManager.Load()
-			if err != nil {
-				return err
-			}
-
-			currentProfileName = config.CurrentProfile
-			if currentProfileName == "" {
-				currentProfileName = "default"
-				config.CurrentProfile = currentProfileName
-			}
-			fctl.DebugLn(cmd.Context(), cmd.OutOrStdout(), "Current profile:", currentProfileName)
-			if selectedProfile := viper.GetString(profileFlag); selectedProfile != "" {
-				fctl.DebugLn(cmd.Context(), cmd.OutOrStdout(), "Override profile by flag:", selectedProfile)
-				currentProfileName = selectedProfile
-			}
-
-			currentProfile := config.GetProfileOrDefault(currentProfileName, &fctl.Profile{
-				MembershipURI:  viper.GetString(membershipUriFlag),
-				BaseServiceURI: viper.GetString(baseServiceUriFlag),
-			})
-			fctl.DebugLn(cmd.Context(), cmd.OutOrStdout(), "Selected profile membership uri:", currentProfile.MembershipURI)
-			fctl.DebugLn(cmd.Context(), cmd.OutOrStdout(), "Selected base service uri:", currentProfile.BaseServiceURI)
-
-			ctx := cmd.Context()
-			ctx = fctl.WithCurrentProfile(ctx, currentProfile)
-			ctx = fctl.WithConfig(ctx, config)
-			ctx = fctl.WithConfigManager(ctx, configManager)
-			ctx = fctl.WithCurrentProfileName(ctx, currentProfileName)
-			ctx = fctl.WithDebug(ctx, viper.GetBool(debugFlag))
-			cmd.SetContext(ctx)
-
-			return nil
+			viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_", ".", "_"))
+			viper.AutomaticEnv()
+			return viper.BindPFlags(cmd.Flags())
 		}),
 		withChildCommands(
 			newLedgerCommand(),

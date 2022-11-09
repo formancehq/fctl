@@ -11,6 +11,37 @@ const (
 	organizationFlag = "organization"
 )
 
+func getSelectedOrganization() string {
+	return viper.GetString(organizationFlag)
+}
+
+func resolveOrganizationID(cmd *cobra.Command) (string, error) {
+	if id := getSelectedOrganization(); id != "" {
+		return id, nil
+	}
+
+	client, err := newMembershipClient(cmd)
+	if err != nil {
+		return "", err
+	}
+	return fctl.FindOrganizationID(cmd.Context(), client)
+}
+
+func getSelectedStack() string {
+	return viper.GetString(stackFlag)
+}
+
+func resolveStackID(cmd *cobra.Command, organizationID string) (string, error) {
+	if id := getSelectedStack(); id != "" {
+		return id, nil
+	}
+	client, err := newMembershipClient(cmd)
+	if err != nil {
+		return "", err
+	}
+	return fctl.FindStackID(cmd.Context(), client, organizationID)
+}
+
 type commandOption interface {
 	apply(cmd *cobra.Command)
 }
@@ -171,12 +202,6 @@ func newStackCommand(use string, opts ...commandOption) *cobra.Command {
 	return newMembershipCommand(use,
 		append(opts,
 			withPersistentStringFlag(stackFlag, "", "Specific stack (not required if only one stack is present)"),
-			withPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
-				ctx := cmd.Context()
-				ctx = fctl.WithStack(ctx, viper.GetString(stackFlag))
-				cmd.SetContext(ctx)
-				return nil
-			}),
 		)...,
 	)
 }
@@ -185,12 +210,6 @@ func newMembershipCommand(use string, opts ...commandOption) *cobra.Command {
 	return newCommand(use,
 		append(opts,
 			withPersistentStringFlag(organizationFlag, "", "Selected organization (not required if only one organization is present)"),
-			withPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
-				ctx := cmd.Context()
-				ctx = fctl.WithOrganization(ctx, viper.GetString(organizationFlag))
-				cmd.SetContext(ctx)
-				return nil
-			}),
 		)...,
 	)
 }

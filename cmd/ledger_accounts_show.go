@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/formancehq/fctl/pkg"
 	ledgerclient "github.com/numary/ledger/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -31,7 +30,7 @@ func newLedgerAccountsShowCommand() *cobra.Command {
 		withShortDescription("display account"),
 		withArgs(cobra.ExactArgs(1)),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			ledgerClient, err := fctl.NewLedgerClientFromContext(cmd.Context())
+			ledgerClient, err := newLedgerClient(cmd)
 			if err != nil {
 				return err
 			}

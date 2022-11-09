@@ -14,7 +14,7 @@ func newLedgerTransactionsShowCommand() *cobra.Command {
 		withShortDescription("print a transaction"),
 		withArgs(cobra.ExactArgs(1)),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			ledgerClient, err := fctl.NewLedgerClientFromContext(cmd.Context())
+			ledgerClient, err := newLedgerClient(cmd)
 			if err != nil {
 				return err
 			}

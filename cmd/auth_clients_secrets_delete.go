@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 )
 
@@ -11,7 +10,7 @@ func newAuthClientsSecretsDeleteCommand() *cobra.Command {
 	return newCommand("delete [CLIENT_ID] [SECRET_ID]",
 		withArgs(cobra.ExactArgs(2)),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			authClient, err := fctl.NewAuthClientFromContext(cmd.Context())
+			authClient, err := newAuthClient(cmd)
 			if err != nil {
 				return err
 			}

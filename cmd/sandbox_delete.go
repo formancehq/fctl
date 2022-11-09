@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/formancehq/fctl/pkg"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -23,12 +22,12 @@ func newSandboxDeleteCommand() *cobra.Command {
 			return viper.BindPFlags(cmd.Flags())
 		}),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			organization, err := fctl.FindOrganizationId(cmd.Context())
+			organization, err := resolveOrganizationID(cmd)
 			if err != nil {
 				return errors.Wrap(err, "searching default organization")
 			}
 
-			apiClient, err := fctl.NewMembershipClientFromContext(cmd.Context())
+			apiClient, err := newMembershipClient(cmd)
 			if err != nil {
 				return err
 			}

@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/formancehq/fctl/pkg"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -12,12 +11,12 @@ func newSandboxListCommand() *cobra.Command {
 	return newMembershipCommand("list",
 		withShortDescription("list sandboxes"),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			organization, err := fctl.FindOrganizationId(cmd.Context())
+			organization, err := resolveOrganizationID(cmd)
 			if err != nil {
 				return errors.Wrap(err, "searching default organization")
 			}
 
-			apiClient, err := fctl.NewMembershipClientFromContext(cmd.Context())
+			apiClient, err := newMembershipClient(cmd)
 			if err != nil {
 				return err
 			}

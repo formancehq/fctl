@@ -9,7 +9,7 @@ func newAuthClientsShowCommand() *cobra.Command {
 	return newCommand("show [CLIENT_ID]",
 		withArgs(cobra.ExactArgs(1)),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			authClient, err := fctl.NewAuthClientFromContext(cmd.Context())
+			authClient, err := newAuthClient(cmd)
 			if err != nil {
 				return err
 			}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 
 	"github.com/formancehq/auth/authclient"
 )
@@ -11,29 +12,19 @@ import (
 // TODO: Make configurable at build
 const AuthClient = "fctl"
 
-func NewAuthClientFromContext(ctx context.Context) (*authclient.APIClient, error) {
-	token, err := CurrentProfileFromContext(ctx).GetStackToken(ctx)
+func NewAuthClientFromContext(ctx context.Context, profile *Profile, httpClient *http.Client, organizationID, stackID string) (*authclient.APIClient, error) {
+
+	token, err := profile.GetStackToken(ctx, httpClient, organizationID, stackID)
 	if err != nil {
 		return nil, err
 	}
 
-	organization, err := FindOrganizationId(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	stack, err := FindStackId(ctx, organization)
-	if err != nil {
-		return nil, err
-	}
-
-	profile := CurrentProfileFromContext(ctx)
 	config := authclient.NewConfiguration()
 	config.Servers = authclient.ServerConfigurations{{
-		URL: MustApiUrl(*profile, organization, stack, "auth").String(),
+		URL: MustApiUrl(*profile, organizationID, stackID, "auth").String(),
 	}}
 	config.AddDefaultHeader("Authorization", fmt.Sprintf("Bearer %s", token))
-	config.HTTPClient = NewHTTPClientFromContext(ctx)
+	config.HTTPClient = httpClient
 
 	return authclient.NewAPIClient(config), nil
 }

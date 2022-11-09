@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -17,7 +16,7 @@ func newLedgerBalancesCommand() *cobra.Command {
 		withStringFlag(addressFlag, "", "Filter on specific address"),
 		withStringFlag(afterFlag, "", "Filter after specific address"),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			client, err := fctl.NewLedgerClientFromContext(cmd.Context())
+			client, err := newLedgerClient(cmd)
 			if err != nil {
 				return err
 			}

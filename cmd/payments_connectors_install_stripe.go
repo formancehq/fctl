@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/numary/payments/client"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -16,7 +15,7 @@ func newPaymentsConnectorsInstallStripeCommand() *cobra.Command {
 		withArgs(cobra.ExactArgs(1)),
 		withStringFlag(stripeApiKeyFlag, "", "Stripe API key"),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			paymentsClient, err := fctl.NewPaymentsClientFromContext(cmd.Context())
+			paymentsClient, err := newPaymentsClient(cmd)
 			if err != nil {
 				return err
 			}

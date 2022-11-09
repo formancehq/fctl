@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/formancehq/fctl/pkg"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -12,7 +11,12 @@ func newProfilesShowCommand() *cobra.Command {
 	return newCommand("show",
 		withArgs(cobra.ExactArgs(1)),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			p := fctl.ConfigFromContext(cmd.Context()).GetProfile(args[0])
+
+			config, err := getConfig()
+			if err != nil {
+				return err
+			}
+			p := config.GetProfile(args[0])
 			if p == nil {
 				return errors.New("not found")
 			}

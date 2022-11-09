@@ -11,7 +11,7 @@ func newOrganizationsListCommand() *cobra.Command {
 	return newCommand("list",
 		withShortDescription("list organizations"),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			apiClient, err := fctl.NewMembershipClientFromContext(cmd.Context())
+			apiClient, err := newMembershipClient(cmd)
 			if err != nil {
 				return err
 			}

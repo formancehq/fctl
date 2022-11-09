@@ -15,33 +15,17 @@ import (
 	"golang.org/x/oauth2"
 )
 
-type refreshFailError struct {
-	error
-}
-
-func (r refreshFailError) Error() string {
-	return r.error.Error()
-}
-
-func (r refreshFailError) Is(err error) bool {
-	_, ok := err.(refreshFailError)
-	return ok
-}
-
-func IsAuthenticationError(err error) bool {
-	return errors.Is(refreshFailError{}, err)
-}
-
 type Profile struct {
 	MembershipURI  string        `json:"membershipURI"`
 	BaseServiceURI string        `json:"baseServiceURI"`
 	Token          *oauth2.Token `json:"token"`
+
+	httpClient *http.Client
 }
 
-func (p *Profile) GetToken(ctx context.Context) (*oauth2.Token, error) {
+func (p *Profile) GetToken(ctx context.Context, httpClient *http.Client) (*oauth2.Token, error) {
 
 	if p.Token != nil && p.Token.Expiry.Before(time.Now()) {
-		httpClient := NewHTTPClientFromContext(ctx)
 		relyingParty, err := rp.NewRelyingPartyOIDC(p.MembershipURI, AuthClient, "",
 			"", []string{"openid", "email", "offline_access"}, rp.WithHTTPClient(httpClient))
 		if err != nil {
@@ -50,41 +34,31 @@ func (p *Profile) GetToken(ctx context.Context) (*oauth2.Token, error) {
 
 		newToken, err := relyingParty.
 			OAuthConfig().
-			TokenSource(context.WithValue(context.TODO(), oauth2.HTTPClient, httpClient), p.Token).
+			TokenSource(context.WithValue(ctx, oauth2.HTTPClient, httpClient), p.Token).
 			Token()
 		if err != nil {
-			return nil, refreshFailError{err}
+			return nil, err
 		}
 
 		p.Token = newToken
 
-		if err := ConfigManagerFromContext(ctx).
-			UpdateConfig(ConfigFromContext(ctx)); err != nil {
-			return nil, err
-		}
+		// TODO: Persist config at upper level
+		//if err := configManager.
+		//	UpdateConfig(ConfigFromContext(ctx)); err != nil {
+		//	return nil, err
+		//}
 	}
 	return p.Token, nil
 }
 
-func (p *Profile) GetStackToken(ctx context.Context) (string, error) {
-
-	organization, err := FindOrganizationId(ctx)
-	if err != nil {
-		return "", err
-	}
-	stack, err := FindStackId(ctx, organization)
-	if err != nil {
-		return "", err
-	}
-
-	apiUrl := MustApiUrl(*p, organization, stack, "auth")
+func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, organizationID, stackID string) (string, error) {
+	apiUrl := MustApiUrl(*p, organizationID, stackID, "auth")
 	form := url.Values{
 		"grant_type": []string{"urn:ietf:params:oauth:grant-type:jwt-bearer"},
 		"assertion":  []string{p.Token.AccessToken},
 		"scope":      []string{"openid email"},
 	}
 
-	httpClient := NewHTTPClientFromContext(ctx)
 	discoveryConfiguration, err := client.Discover(apiUrl.String(), httpClient)
 	if err != nil {
 		return "", err

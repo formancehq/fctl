@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	fctl "github.com/formancehq/fctl/pkg"
+	ledgerclient "github.com/numary/ledger/client"
 	"github.com/spf13/cobra"
 )
 
@@ -17,4 +19,13 @@ func newLedgerCommand() *cobra.Command {
 			newLedgerAccountsCommand(),
 		),
 	)
+}
+
+func newLedgerClient(cmd *cobra.Command) (*ledgerclient.APIClient, error) {
+	profile, err := getCurrentProfile()
+	if err != nil {
+		return nil, err
+	}
+	return fctl.NewLedgerClientFromContext(cmd.Context(), profile, getHttpClient(),
+		getSelectedOrganization(), getSelectedStack())
 }

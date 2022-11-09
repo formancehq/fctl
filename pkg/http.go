@@ -1,7 +1,6 @@
 package fctl
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
 	"net/http"
@@ -37,13 +36,13 @@ func debugRoundTripper(rt http.RoundTripper) RoundTripperFn {
 	}
 }
 
-func NewHTTPClientFromContext(ctx context.Context) *http.Client {
+func NewHTTPClient(insecureTLS, debug bool) *http.Client {
 	var transport http.RoundTripper = &http.Transport{
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: InsecureTLSFromContext(ctx),
+			InsecureSkipVerify: insecureTLS,
 		},
 	}
-	if IsDebugFromContext(ctx) {
+	if debug {
 		transport = debugRoundTripper(transport)
 	}
 	return &http.Client{

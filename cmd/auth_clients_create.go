@@ -23,7 +23,7 @@ func newAuthClientsCreateCommand() *cobra.Command {
 		withStringSliceFlag(redirectUriFlag, []string{}, "Redirect URIS"),
 		withStringSliceFlag(postLogoutRedirectUriFlag, []string{}, "Post logout redirect uris"),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			authClient, err := fctl.NewAuthClientFromContext(cmd.Context())
+			authClient, err := newAuthClient(cmd)
 			if err != nil {
 				return err
 			}

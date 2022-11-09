@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	cmdctx "github.com/formancehq/fctl/pkg"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -13,19 +12,23 @@ func newProfilesRenameCommand() *cobra.Command {
 			oldName := args[0]
 			newName := args[1]
 
-			p, ok := cmdctx.ConfigFromContext(cmd.Context()).Profiles[oldName]
+			config, err := getConfig()
+			if err != nil {
+				return err
+			}
+
+			p, ok := config.Profiles[oldName]
 			if !ok {
 				return errors.New("profile not found")
 			}
 
-			cmdctx.ConfigFromContext(cmd.Context()).Profiles[newName] = p
-			delete(cmdctx.ConfigFromContext(cmd.Context()).Profiles, oldName)
-			if cmdctx.ConfigFromContext(cmd.Context()).CurrentProfile == oldName {
-				cmdctx.ConfigFromContext(cmd.Context()).CurrentProfile = newName
+			config.Profiles[newName] = p
+			delete(config.Profiles, oldName)
+			if config.CurrentProfile == oldName {
+				config.CurrentProfile = newName
 			}
 
-			return errors.Wrap(cmdctx.ConfigManagerFromContext(cmd.Context()).
-				UpdateConfig(cmdctx.ConfigFromContext(cmd.Context())), "Updating config")
+			return errors.Wrap(getConfigManager().UpdateConfig(config), "Updating config")
 		}),
 	)
 }
