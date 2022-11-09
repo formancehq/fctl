@@ -19,5 +19,14 @@ func newAuthClient(cmd *cobra.Command) (*authclient.APIClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return fctl.NewAuthClientFromContext(cmd.Context(), profile, getHttpClient(), getSelectedOrganization(), getSelectedStack())
+	organizationID, err := resolveOrganizationID(cmd)
+	if err != nil {
+		return nil, err
+	}
+	stackID, err := resolveStackID(cmd, organizationID)
+	if err != nil {
+		return nil, err
+	}
+	return fctl.NewAuthClientFromContext(cmd.Context(), profile, getHttpClient(),
+		organizationID, stackID)
 }

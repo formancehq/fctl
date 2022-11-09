@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -11,13 +10,13 @@ import (
 
 func newSandboxDeleteCommand() *cobra.Command {
 	const (
-		sandboxNameFlag = "name"
+		stackNameFlag = "name"
 	)
 
 	return newMembershipCommand("delete [STACK_ID] | --name=[NAME]",
 		withShortDescription("delete a sandbox"),
 		withArgs(cobra.MaximumNArgs(1)),
-		withStringFlag(sandboxNameFlag, "", "Sandbox to remove"),
+		withStringFlag(stackNameFlag, "", "Sandbox to remove"),
 		withPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
 			return viper.BindPFlags(cmd.Flags())
 		}),
@@ -32,32 +31,32 @@ func newSandboxDeleteCommand() *cobra.Command {
 				return err
 			}
 
-			var sandboxId string
+			var stackID string
 			if len(args) == 1 {
-				if viper.GetString(sandboxNameFlag) == "" {
+				if viper.GetString(stackNameFlag) == "" {
 					return errors.New("need either an id of a name spefified using --name flag")
 				}
-				sandboxId = args[0]
+				stackID = args[0]
 			} else {
-				if viper.GetString(sandboxNameFlag) == "" {
-					return errors.New("need either an id of a name spefified using --name flag")
+				if viper.GetString(stackNameFlag) == "" {
+					return errors.New("need either an id of a name specified using --name flag")
 				}
-				sandboxs, _, err := apiClient.DefaultApi.ListStacks(context.Background(), organization).Execute()
+				stacks, _, err := apiClient.DefaultApi.ListStacks(cmd.Context(), organization).Execute()
 				if err != nil {
-					return errors.Wrap(err, "listing sandboxs")
+					return errors.Wrap(err, "listing stacks")
 				}
-				for _, s := range sandboxs.Data {
-					if s.Name == viper.GetString(sandboxNameFlag) {
-						sandboxId = s.Id
+				for _, s := range stacks.Data {
+					if s.Name == viper.GetString(stackNameFlag) {
+						stackID = s.Id
 						break
 					}
 				}
-				if sandboxId == "" {
+				if stackID == "" {
 					return errors.New("sandbox not found")
 				}
 			}
 
-			if _, err := apiClient.DefaultApi.DeleteStack(cmd.Context(), organization, sandboxId).Execute(); err != nil {
+			if _, err := apiClient.DefaultApi.DeleteStack(cmd.Context(), organization, stackID).Execute(); err != nil {
 				return errors.Wrap(err, "deleting sandbox")
 			}
 

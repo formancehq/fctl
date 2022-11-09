@@ -6,6 +6,7 @@ import (
 
 func newOrganizationsCommand() *cobra.Command {
 	return newStackCommand("organizations",
+		withAliases("org"),
 		withChildCommands(
 			newOrganizationsListCommand(),
 		),

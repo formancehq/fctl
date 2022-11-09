@@ -81,6 +81,12 @@ func withBoolFlag(name string, defaultValue bool, help string) commandOptionFn {
 	}
 }
 
+func withAliases(aliases ...string) commandOptionFn {
+	return func(cmd *cobra.Command) {
+		cmd.Aliases = aliases
+	}
+}
+
 func withBoolPFlag(name, short string, defaultValue bool, help string) commandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.Flags().BoolP(name, short, defaultValue, help)

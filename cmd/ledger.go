@@ -26,6 +26,14 @@ func newLedgerClient(cmd *cobra.Command) (*ledgerclient.APIClient, error) {
 	if err != nil {
 		return nil, err
 	}
+	organizationID, err := resolveOrganizationID(cmd)
+	if err != nil {
+		return nil, err
+	}
+	stackID, err := resolveStackID(cmd, organizationID)
+	if err != nil {
+		return nil, err
+	}
 	return fctl.NewLedgerClientFromContext(cmd.Context(), profile, getHttpClient(),
-		getSelectedOrganization(), getSelectedStack())
+		organizationID, stackID)
 }

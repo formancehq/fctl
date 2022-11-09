@@ -67,6 +67,9 @@ func (p *Profile) GetBaseServiceURI() string {
 }
 
 func (p *Profile) GetToken(ctx context.Context, httpClient *http.Client) (*oauth2.Token, error) {
+	if p.token == nil {
+		return nil, errors.New("not authenticated")
+	}
 	if p.token != nil && p.token.Expiry.Before(time.Now()) {
 		relyingParty, err := rp.NewRelyingPartyOIDC(p.membershipURI, AuthClient, "",
 			"", []string{"openid", "email", "offline_access"}, rp.WithHTTPClient(httpClient))

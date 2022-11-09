@@ -37,22 +37,9 @@ func newSandboxCreateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			baseUrl, err := fctl.ServicesBaseUrl(*profile, sandbox.Data.OrganizationId, sandbox.Data.Id)
-			if err != nil {
-				return err
-			}
-			baseUrlStr := baseUrl.String()
-
 			fmt.Fprintf(cmd.OutOrStdout(), "Stack created with ID: %s\r\n", sandbox.Data.Id)
-			fmt.Fprintf(cmd.OutOrStdout(), "Your dashboard will be reachable on: %s\r\n", baseUrlStr)
-			fmt.Fprintln(cmd.OutOrStdout(), "You can access your sandbox apis using following urls :")
-			fmt.Fprintf(cmd.OutOrStdout(), "Ledger: %s/api/ledger\r\n", baseUrlStr)
-			fmt.Fprintf(cmd.OutOrStdout(), "Payments: %s/api/payments\n", baseUrlStr)
-			fmt.Fprintf(cmd.OutOrStdout(), "Search: %s/api/search\n", baseUrlStr)
-			fmt.Fprintf(cmd.OutOrStdout(), "Auth: %s/api/auth\n", baseUrlStr)
 
-			return nil
+			return fctl.PrintStackInformation(cmd.OutOrStdout(), profile, sandbox.Data)
 		}),
 	)
 }
