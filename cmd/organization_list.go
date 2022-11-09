@@ -11,7 +11,12 @@ func newOrganizationsListCommand() *cobra.Command {
 	return newCommand("list",
 		withShortDescription("list organizations"),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			apiClient, err := newMembershipClient(cmd)
+			config, err := getConfig()
+			if err != nil {
+				return err
+			}
+
+			apiClient, err := newMembershipClient(cmd, config)
 			if err != nil {
 				return err
 			}

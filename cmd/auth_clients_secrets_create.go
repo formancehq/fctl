@@ -10,7 +10,11 @@ func newAuthClientsSecretsCreateCommand() *cobra.Command {
 	return newCommand("create [CLIENT_ID] [SECRET_NAME]",
 		withArgs(cobra.ExactArgs(2)),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			authClient, err := newAuthClient(cmd)
+			config, err := getConfig()
+			if err != nil {
+				return err
+			}
+			authClient, err := newAuthClient(cmd, config)
 			if err != nil {
 				return err
 			}

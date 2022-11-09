@@ -15,7 +15,11 @@ func newPaymentsConnectorsInstallStripeCommand() *cobra.Command {
 		withArgs(cobra.ExactArgs(1)),
 		withStringFlag(stripeApiKeyFlag, "", "Stripe API key"),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			paymentsClient, err := newPaymentsClient(cmd)
+			config, err := getConfig()
+			if err != nil {
+				return err
+			}
+			paymentsClient, err := newPaymentsClient(cmd, config)
 			if err != nil {
 				return err
 			}

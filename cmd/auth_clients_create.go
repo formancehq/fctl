@@ -23,7 +23,11 @@ func newAuthClientsCreateCommand() *cobra.Command {
 		withStringSliceFlag(redirectUriFlag, []string{}, "Redirect URIS"),
 		withStringSliceFlag(postLogoutRedirectUriFlag, []string{}, "Post logout redirect uris"),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			authClient, err := newAuthClient(cmd)
+			config, err := getConfig()
+			if err != nil {
+				return err
+			}
+			authClient, err := newAuthClient(cmd, config)
 			if err != nil {
 				return err
 			}

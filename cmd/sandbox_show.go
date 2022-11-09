@@ -18,12 +18,16 @@ func newSandboxShowCommand() *cobra.Command {
 		withArgs(cobra.MaximumNArgs(1)),
 		withStringFlag(stackNameFlag, "", ""),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			organization, err := resolveOrganizationID(cmd)
+			config, err := getConfig()
+			if err != nil {
+				return err
+			}
+			organization, err := resolveOrganizationID(cmd, config)
 			if err != nil {
 				return errors.Wrap(err, "searching default organization")
 			}
 
-			apiClient, err := newMembershipClient(cmd)
+			apiClient, err := newMembershipClient(cmd, config)
 			if err != nil {
 				return err
 			}
@@ -59,7 +63,7 @@ func newSandboxShowCommand() *cobra.Command {
 				return nil
 			}
 
-			profile, err := getCurrentProfile()
+			profile, err := getCurrentProfile(config)
 			if err != nil {
 				return err
 			}

@@ -28,7 +28,12 @@ func newLoginCommand() *cobra.Command {
 		withHiddenFlag(baseServiceUriFlag),
 		withRunE(func(cmd *cobra.Command, args []string) error {
 
-			profile, err := getCurrentProfile()
+			config, err := getConfig()
+			if err != nil {
+				return err
+			}
+
+			profile, err := getCurrentProfile(config)
 			if err != nil {
 				return err
 			}
@@ -46,24 +51,14 @@ func newLoginCommand() *cobra.Command {
 				return err
 			}
 
-			currentProfile, err := getCurrentProfile()
-			if err != nil {
-				return err
-			}
-
-			currentProfile.UpdateToken(ret.Token)
+			profile.UpdateToken(ret.Token)
 
 			currentProfileName, err := getCurrentProfileName()
 			if err != nil {
 				return err
 			}
 
-			config, err := getConfig()
-			if err != nil {
-				return err
-			}
-
-			config.SetCurrentProfile(currentProfileName, currentProfile)
+			config.SetCurrentProfile(currentProfileName, profile)
 
 			fmt.Fprintln(cmd.OutOrStdout(), "Logged!")
 			return config.Persist()

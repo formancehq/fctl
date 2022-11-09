@@ -9,7 +9,13 @@ import (
 func newWhoamiCommand() *cobra.Command {
 	return newCommand("whoami",
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			profile, err := getCurrentProfile()
+
+			config, err := getConfig()
+			if err != nil {
+				return err
+			}
+
+			profile, err := getCurrentProfile(config)
 			if err != nil {
 				return err
 			}

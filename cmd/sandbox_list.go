@@ -11,12 +11,17 @@ func newSandboxListCommand() *cobra.Command {
 	return newMembershipCommand("list",
 		withShortDescription("list sandboxes"),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			organization, err := resolveOrganizationID(cmd)
+			config, err := getConfig()
+			if err != nil {
+				return err
+			}
+
+			organization, err := resolveOrganizationID(cmd, config)
 			if err != nil {
 				return errors.Wrap(err, "searching default organization")
 			}
 
-			apiClient, err := newMembershipClient(cmd)
+			apiClient, err := newMembershipClient(cmd, config)
 			if err != nil {
 				return err
 			}

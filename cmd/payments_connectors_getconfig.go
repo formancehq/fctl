@@ -12,18 +12,23 @@ func newPaymentsConnectorsGetConfigCommand() *cobra.Command {
 		withArgs(cobra.ExactArgs(1)),
 		withRunE(func(cmd *cobra.Command, args []string) error {
 
-			client, err := newPaymentsClient(cmd)
+			config, err := getConfig()
 			if err != nil {
 				return err
 			}
 
-			config, _, err := client.DefaultApi.ReadConnectorConfig(cmd.Context(), args[0]).Execute()
+			client, err := newPaymentsClient(cmd, config)
+			if err != nil {
+				return err
+			}
+
+			connectorConfig, _, err := client.DefaultApi.ReadConnectorConfig(cmd.Context(), args[0]).Execute()
 			if err != nil {
 				return errors.Wrap(err, "reding connector config")
 			}
 			switch args[0] {
 			case "stripe":
-				config := config.StripeConfig
+				config := connectorConfig.StripeConfig
 				fmt.Fprintln(cmd.OutOrStdout(), "Api key:", config.ApiKey)
 				fmt.Fprintln(cmd.OutOrStdout(), "Polling period:", config.PollingPeriod)
 				fmt.Fprintln(cmd.OutOrStdout(), "Page size:", config.PageSize)

@@ -10,7 +10,12 @@ func newAuthClientsSecretsDeleteCommand() *cobra.Command {
 	return newCommand("delete [CLIENT_ID] [SECRET_ID]",
 		withArgs(cobra.ExactArgs(2)),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			authClient, err := newAuthClient(cmd)
+			config, err := getConfig()
+			if err != nil {
+				return err
+			}
+
+			authClient, err := newAuthClient(cmd, config)
 			if err != nil {
 				return err
 			}

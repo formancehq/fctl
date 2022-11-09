@@ -16,7 +16,11 @@ func newLedgerBalancesCommand() *cobra.Command {
 		withStringFlag(addressFlag, "", "Filter on specific address"),
 		withStringFlag(afterFlag, "", "Filter after specific address"),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			client, err := newLedgerClient(cmd)
+			config, err := getConfig()
+			if err != nil {
+				return err
+			}
+			client, err := newLedgerClient(cmd, config)
 			if err != nil {
 				return err
 			}

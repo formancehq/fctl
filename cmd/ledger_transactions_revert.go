@@ -14,7 +14,11 @@ func newLedgerTransactionsRevertCommand() *cobra.Command {
 		withShortDescription("revert a transaction"),
 		withArgs(cobra.ExactArgs(1)),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			ledgerClient, err := newLedgerClient(cmd)
+			config, err := getConfig()
+			if err != nil {
+				return err
+			}
+			ledgerClient, err := newLedgerClient(cmd, config)
 			if err != nil {
 				return err
 			}

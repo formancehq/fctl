@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/formancehq/fctl/cmd/internal"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -15,31 +16,56 @@ func getSelectedOrganization() string {
 	return viper.GetString(organizationFlag)
 }
 
-func resolveOrganizationID(cmd *cobra.Command) (string, error) {
+func resolveOrganizationID(cmd *cobra.Command, config *internal.Config) (string, error) {
 	if id := getSelectedOrganization(); id != "" {
 		return id, nil
 	}
 
-	client, err := newMembershipClient(cmd)
+	client, err := newMembershipClient(cmd, config)
 	if err != nil {
 		return "", err
 	}
-	return internal.FindOrganizationID(cmd.Context(), client)
+
+	organizations, _, err := client.DefaultApi.ListOrganizations(cmd.Context()).Execute()
+	if err != nil {
+		return "", errors.Wrap(err, "listing organizations")
+	}
+
+	if len(organizations.Data) == 0 {
+		return "", errors.New("no organizations found")
+	}
+
+	if len(organizations.Data) > 1 {
+		return "", errors.New("found more than one organization and no organization specified")
+	}
+
+	return organizations.Data[0].Id, nil
 }
 
 func getSelectedStack() string {
 	return viper.GetString(stackFlag)
 }
 
-func resolveStackID(cmd *cobra.Command, organizationID string) (string, error) {
+func resolveStackID(cmd *cobra.Command, config *internal.Config, organizationID string) (string, error) {
 	if id := getSelectedStack(); id != "" {
 		return id, nil
 	}
-	client, err := newMembershipClient(cmd)
+	client, err := newMembershipClient(cmd, config)
 	if err != nil {
 		return "", err
 	}
-	return internal.FindStackID(cmd.Context(), client, organizationID)
+
+	stacks, _, err := client.DefaultApi.ListStacks(cmd.Context(), organizationID).Execute()
+	if err != nil {
+		return "", errors.Wrap(err, "listing stacks")
+	}
+	if len(stacks.Data) == 0 {
+		return "", errors.New("no stacks found")
+	}
+	if len(stacks.Data) > 1 {
+		return "", errors.New("found more than one stack and no stack specified")
+	}
+	return stacks.Data[0].Id, nil
 }
 
 type commandOption interface {

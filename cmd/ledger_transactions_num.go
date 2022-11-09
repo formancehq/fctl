@@ -32,7 +32,11 @@ func newLedgerTransactionsNumscriptCommand() *cobra.Command {
 		withStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
 		withStringFlag(referenceFlag, "", "Reference to add to the generated transaction"),
 		withRunE(func(cmd *cobra.Command, args []string) error {
-			ledgerClient, err := newLedgerClient(cmd)
+			config, err := getConfig()
+			if err != nil {
+				return err
+			}
+			ledgerClient, err := newLedgerClient(cmd, config)
 			if err != nil {
 				return err
 			}

@@ -32,17 +32,22 @@ func newUICommand() *cobra.Command {
 		withShortDescription("Open UI"),
 		withRunE(func(cmd *cobra.Command, args []string) error {
 
-			organization, err := resolveOrganizationID(cmd)
+			config, err := getConfig()
 			if err != nil {
 				return err
 			}
 
-			stack, err := resolveStackID(cmd, organization)
+			organization, err := resolveOrganizationID(cmd, config)
 			if err != nil {
 				return err
 			}
 
-			profile, err := getCurrentProfile()
+			stack, err := resolveStackID(cmd, config, organization)
+			if err != nil {
+				return err
+			}
+
+			profile, err := getCurrentProfile(config)
 			if err != nil {
 				return err
 			}

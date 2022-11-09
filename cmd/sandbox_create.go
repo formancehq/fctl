@@ -16,12 +16,16 @@ func newSandboxCreateCommand() *cobra.Command {
 		withPersistentStringFlag(organizationFlag, "", "Specific organization to target"),
 		withRunE(func(cmd *cobra.Command, args []string) error {
 
-			organization, err := resolveOrganizationID(cmd)
+			config, err := getConfig()
+			if err != nil {
+				return err
+			}
+			organization, err := resolveOrganizationID(cmd, config)
 			if err != nil {
 				return err
 			}
 
-			apiClient, err := newMembershipClient(cmd)
+			apiClient, err := newMembershipClient(cmd, config)
 			if err != nil {
 				return err
 			}
@@ -33,7 +37,7 @@ func newSandboxCreateCommand() *cobra.Command {
 				return errors.Wrap(err, "creating sandbox")
 			}
 
-			profile, err := getCurrentProfile()
+			profile, err := getCurrentProfile(config)
 			if err != nil {
 				return err
 			}

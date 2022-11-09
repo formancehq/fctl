@@ -17,6 +17,8 @@ const (
 	configFileFlag  = "config"
 	debugFlag       = "debug"
 	insecureTlsFlag = "insecure-tls"
+	// TODO: Make configurable at build
+
 )
 
 func getConfigManager() *internal.ConfigManager {
@@ -42,11 +44,7 @@ func getCurrentProfileName() (string, error) {
 	return currentProfileName, nil
 }
 
-func getCurrentProfile() (*internal.Profile, error) {
-	config, err := getConfig()
-	if err != nil {
-		return nil, err
-	}
+func getCurrentProfile(config *internal.Config) (*internal.Profile, error) {
 	profileName, err := getCurrentProfileName()
 	if err != nil {
 		return nil, err
@@ -55,12 +53,22 @@ func getCurrentProfile() (*internal.Profile, error) {
 		viper.GetString(baseServiceUriFlag)), nil
 }
 
-func newMembershipClient(cmd *cobra.Command) (*membershipclient.APIClient, error) {
-	profile, err := getCurrentProfile()
+func newMembershipClient(cmd *cobra.Command, config *internal.Config) (*membershipclient.APIClient, error) {
+	profile, err := getCurrentProfile(config)
 	if err != nil {
 		return nil, err
 	}
-	return internal.NewMembershipClientFromContext(cmd.Context(), profile, getHttpClient())
+
+	httpClient := getHttpClient()
+	configuration := membershipclient.NewConfiguration()
+	token, err := profile.GetToken(cmd.Context(), httpClient)
+	if err != nil {
+		return nil, err
+	}
+	configuration.AddDefaultHeader("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
+	configuration.HTTPClient = httpClient
+	configuration.Servers[0].URL = profile.GetMembershipURI()
+	return membershipclient.NewAPIClient(configuration), nil
 }
 
 func getHttpClient() *http.Client {

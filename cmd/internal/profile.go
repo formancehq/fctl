@@ -18,6 +18,8 @@ import (
 	"golang.org/x/oauth2"
 )
 
+const AuthClient = "fctl"
+
 type persistedProfile struct {
 	MembershipURI  string        `json:"membershipURI"`
 	BaseServiceURI string        `json:"baseServiceURI"`
