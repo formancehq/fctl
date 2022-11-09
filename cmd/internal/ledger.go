@@ -18,7 +18,7 @@ func NewLedgerClientFromContext(ctx context.Context, profile *Profile, httpClien
 
 	config := client.NewConfiguration()
 	config.Servers = client.ServerConfigurations{{
-		URL: MustApiUrl(*profile, organizationID, stackID, "ledger").String(),
+		URL: profile.ApiUrl(organizationID, stackID, "ledger").String(),
 	}}
 	config.AddDefaultHeader("Authorization", fmt.Sprintf("Bearer %s", token))
 	config.HTTPClient = httpClient

@@ -4,7 +4,6 @@ import (
 	"os/exec"
 	"runtime"
 
-	fctl "github.com/formancehq/fctl/cmd/internal"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -48,10 +47,7 @@ func newUICommand() *cobra.Command {
 				return err
 			}
 
-			stackUrl, err := fctl.ServicesBaseUrl(*profile, organization, stack)
-			if err != nil {
-				return err
-			}
+			stackUrl := profile.ServicesBaseUrl(organization, stack)
 
 			return errors.Wrapf(openUrl(stackUrl.String()), "opening url: %s", stackUrl.String())
 		}),

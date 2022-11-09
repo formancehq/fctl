@@ -21,7 +21,7 @@ func NewAuthClientFromContext(ctx context.Context, profile *Profile, httpClient 
 
 	config := authclient.NewConfiguration()
 	config.Servers = authclient.ServerConfigurations{{
-		URL: MustApiUrl(*profile, organizationID, stackID, "auth").String(),
+		URL: profile.ApiUrl(organizationID, stackID, "auth").String(),
 	}}
 	config.AddDefaultHeader("Authorization", fmt.Sprintf("Bearer %s", token))
 	config.HTTPClient = httpClient

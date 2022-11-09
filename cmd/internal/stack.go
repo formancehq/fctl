@@ -8,11 +8,7 @@ import (
 )
 
 func PrintStackInformation(out io.Writer, profile *Profile, stack *client.Stack) error {
-	baseUrl, err := ServicesBaseUrl(*profile, stack.OrganizationId, stack.Id)
-	if err != nil {
-		return err
-	}
-	baseUrlStr := baseUrl.String()
+	baseUrlStr := profile.ServicesBaseUrl(stack.OrganizationId, stack.Id).String()
 
 	fmt.Fprintf(out, "Your dashboard will be reachable on: %s\r\n", baseUrlStr)
 	fmt.Fprintln(out, "You can access your sandbox apis using following urls :")

@@ -16,7 +16,7 @@ func NewPaymentsClientFromContext(ctx context.Context, profile *Profile, httpCli
 
 	config := client.NewConfiguration()
 	config.Servers = client.ServerConfigurations{{
-		URL: MustApiUrl(*profile, organizationID, stackID, "payments").String(),
+		URL: profile.ApiUrl(organizationID, stackID, "payments").String(),
 	}}
 	config.AddDefaultHeader("Authorization", fmt.Sprintf("Bearer %s", token))
 	config.HTTPClient = httpClient

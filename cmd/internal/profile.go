@@ -32,6 +32,21 @@ type Profile struct {
 	config *Config
 }
 
+func (p *Profile) ServicesBaseUrl(organization, stack string) *url.URL {
+	baseUrl, err := url.Parse(p.baseServiceURI)
+	if err != nil {
+		panic(err)
+	}
+	baseUrl.Host = fmt.Sprintf("%s-%s.%s", organization, stack, baseUrl.Host)
+	return baseUrl
+}
+
+func (p *Profile) ApiUrl(organization, stack, service string) *url.URL {
+	url := p.ServicesBaseUrl(organization, stack)
+	url.Path = "/api/" + service
+	return url
+}
+
 func (p *Profile) UpdateToken(token *oauth2.Token) {
 	p.token = token
 	p.token.Expiry = p.token.Expiry.UTC()
@@ -114,7 +129,7 @@ func (p *Profile) GetUserInfo(ctx context.Context, relyingParty rp.RelyingParty)
 }
 
 func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, organizationID, stackID string) (string, error) {
-	apiUrl := MustApiUrl(*p, organizationID, stackID, "auth")
+	apiUrl := p.ApiUrl(organizationID, stackID, "auth")
 	form := url.Values{
 		"grant_type": []string{"urn:ietf:params:oauth:grant-type:jwt-bearer"},
 		"assertion":  []string{p.token.AccessToken},
