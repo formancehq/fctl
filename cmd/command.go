@@ -133,10 +133,7 @@ func withStringSliceFlag(name string, defaultValue []string, help string) comman
 
 func withHiddenFlag(name string) commandOptionFn {
 	return func(cmd *cobra.Command) {
-		err := cmd.Flags().MarkHidden(name)
-		if err != nil {
-			return
-		}
+		_ = cmd.Flags().MarkHidden(name)
 	}
 }
 

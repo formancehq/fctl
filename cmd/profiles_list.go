@@ -8,6 +8,7 @@ import (
 
 func newProfilesListCommand() *cobra.Command {
 	return newCommand("list",
+		withAliases("l"),
 		withRunE(func(cmd *cobra.Command, args []string) error {
 
 			config, err := getConfig()

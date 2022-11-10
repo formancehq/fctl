@@ -6,6 +6,7 @@ import (
 
 func newProfilesCommand() *cobra.Command {
 	return newCommand("profiles",
+		withAliases("p"),
 		withChildCommands(
 			newProfilesDeleteCommand(),
 			newProfilesListCommand(),

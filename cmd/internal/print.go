@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/formancehq/auth/authclient"
+	"github.com/formancehq/fctl/membershipclient"
 	ledgerclient "github.com/numary/ledger/client"
-	membershipclient "github.com/numary/membership-api/client"
 )
 
 func PrintStackInformation(out io.Writer, profile *Profile, stack *membershipclient.Stack) error {

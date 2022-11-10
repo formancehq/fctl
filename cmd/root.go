@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/formancehq/fctl/cmd/internal"
-	membershipclient "github.com/numary/membership-api/client"
+	"github.com/formancehq/fctl/membershipclient"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

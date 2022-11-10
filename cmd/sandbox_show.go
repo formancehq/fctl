@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/formancehq/fctl/cmd/internal"
-	"github.com/numary/membership-api/client"
+	"github.com/formancehq/fctl/membershipclient"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -32,7 +32,7 @@ func newSandboxShowCommand() *cobra.Command {
 				return err
 			}
 
-			var stack *client.Stack
+			var stack *membershipclient.Stack
 			if len(args) == 1 {
 				if viper.GetString(stackNameFlag) == "" {
 					return errors.New("need either an id of a name spefified using --name flag")
