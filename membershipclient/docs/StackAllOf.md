@@ -4,8 +4,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Id** | **string** | Stack ID |
-**OrganizationId** | **string** | Organization ID |
+**Id** | **string** | Stack ID | 
+**OrganizationId** | **string** | Organization ID | 
 
 ## Methods
 
@@ -68,3 +68,5 @@ SetOrganizationId sets OrganizationId field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
+
+

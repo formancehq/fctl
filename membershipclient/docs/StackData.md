@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Name** | **string** | Stack name |
+**Name** | **string** | Stack name | 
 **Region** | Pointer to **string** | Region | [optional] [default to "eu-west-1"]
 
 ## Methods
@@ -73,3 +73,5 @@ HasRegion returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
+
+

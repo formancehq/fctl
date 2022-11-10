@@ -1,4 +1,6 @@
-# Config from https://goangle.medium.com/golang-improving-your-go-project-with-pre-commit-hooks-a265fad0e02f
+exclude: membershipclient
+fail_fast: true
+
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v3.2.0
@@ -10,11 +12,14 @@ repos:
 - repo: https://github.com/dnephin/pre-commit-golang
   rev: v0.5.0
   hooks:
+  - id: go-generate
+    files: membership-swagger.yaml
+    args:
+    - .
   - id: go-fmt
   - id: go-imports
   - id: no-go-testing
   - id: golangci-lint
-  - id: go-unit-tests
 - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
   rev: v8.0.0
   hooks:

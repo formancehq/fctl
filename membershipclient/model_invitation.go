@@ -17,12 +17,12 @@ import (
 
 // Invitation struct for Invitation
 type Invitation struct {
-	Id             *string    `json:"id,omitempty"`
-	OrganizationId *string    `json:"organizationId,omitempty"`
-	Email          *string    `json:"email,omitempty"`
-	Status         *string    `json:"status,omitempty"`
-	CreatedAt      *time.Time `json:"createdAt,omitempty"`
-	UpdatedAt      *time.Time `json:"updatedAt,omitempty"`
+	Id *string `json:"id,omitempty"`
+	OrganizationId *string `json:"organizationId,omitempty"`
+	Email *string `json:"email,omitempty"`
+	Status *string `json:"status,omitempty"`
+	CreatedAt *time.Time `json:"createdAt,omitempty"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
 }
 
 // NewInvitation instantiates a new Invitation object
@@ -292,3 +292,5 @@ func (v *NullableInvitation) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+
