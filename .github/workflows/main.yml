@@ -36,10 +36,6 @@ jobs:
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-go-
-    - name: Configure git for private modules
-      env:
-        TOKEN: ${{ secrets.NUMARY_GITHUB_TOKEN }}
-      run: git config --global url."https://numarybot:${TOKEN}@github.com".insteadOf "https://github.com"
     - name: get deps
       run: go mod download
     - name: golangci-lint
@@ -58,10 +54,6 @@ jobs:
       with:
         go-version-file: 'go.mod'
         cache: true
-    - name: Configure git for private modules
-      env:
-        TOKEN: ${{ secrets.NUMARY_GITHUB_TOKEN }}
-      run: git config --global url."https://numarybot:${TOKEN}@github.com".insteadOf "https://github.com"
     - name: Run tests
       run: task tests
     - name: Upload coverage to Codecov
@@ -77,10 +69,6 @@ jobs:
       with:
         go-version-file: 'go.mod'
         cache: true
-    - name: Configure git for private modules
-      env:
-        TOKEN: ${{ secrets.NUMARY_GITHUB_TOKEN }}
-      run: git config --global url."https://numarybot:${TOKEN}@github.com".insteadOf "https://github.com"
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@v2
       with:
@@ -104,10 +92,6 @@ jobs:
       with:
         go-version-file: 'go.mod'
         cache: true
-    - name: Configure git for private modules
-      env:
-        TOKEN: ${{ secrets.NUMARY_GITHUB_TOKEN }}
-      run: git config --global url."https://numarybot:${TOKEN}@github.com".insteadOf "https://github.com"
     - name: Run GoReleaser
       env:
         GITHUB_TOKEN: ${{ secrets.NUMARY_GITHUB_TOKEN }}
@@ -150,10 +134,6 @@ jobs:
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-go-
-    - name: Configure git for private modules
-      env:
-        TOKEN: ${{ secrets.NUMARY_GITHUB_TOKEN }}
-      run: git config --global url."https://numarybot:${TOKEN}@github.com".insteadOf "https://github.com"
     - name: Download dependencies
       run: go mod vendor
     - name: Build and push Released
