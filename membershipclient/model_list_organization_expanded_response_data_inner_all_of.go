@@ -17,7 +17,7 @@ import (
 // ListOrganizationExpandedResponseDataInnerAllOf struct for ListOrganizationExpandedResponseDataInnerAllOf
 type ListOrganizationExpandedResponseDataInnerAllOf struct {
 	TotalStacks *int32 `json:"totalStacks,omitempty"`
-	TotalUsers *int32 `json:"totalUsers,omitempty"`
+	TotalUsers  *int32 `json:"totalUsers,omitempty"`
 }
 
 // NewListOrganizationExpandedResponseDataInnerAllOf instantiates a new ListOrganizationExpandedResponseDataInnerAllOf object
@@ -147,5 +147,3 @@ func (v *NullableListOrganizationExpandedResponseDataInnerAllOf) UnmarshalJSON(s
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

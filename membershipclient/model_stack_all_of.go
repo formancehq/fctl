@@ -55,7 +55,7 @@ func (o *StackAllOf) GetId() string {
 // and a boolean to check if the value has been set.
 func (o *StackAllOf) GetIdOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.Id, true
 }
@@ -79,7 +79,7 @@ func (o *StackAllOf) GetOrganizationId() string {
 // and a boolean to check if the value has been set.
 func (o *StackAllOf) GetOrganizationIdOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.OrganizationId, true
 }
@@ -135,5 +135,3 @@ func (v *NullableStackAllOf) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

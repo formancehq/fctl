@@ -1,28 +1,19 @@
 exclude: membershipclient
 fail_fast: true
-
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v3.2.0
+  rev: v4.3.0
   hooks:
   - id: trailing-whitespace
   - id: end-of-file-fixer
   - id: check-yaml
   - id: check-added-large-files
-- repo: https://github.com/dnephin/pre-commit-golang
-  rev: v0.5.0
+- repo: https://github.com/formancehq/pre-commit-hooks
+  rev: dc1528945a75d2ff359024d0034820848a86dc1e
   hooks:
-  - id: go-generate
-    files: membership-swagger.yaml
-    args:
-    - .
-  - id: go-fmt
-  - id: go-imports
-  - id: no-go-testing
+  - id: gomodtidy
+  - id: gofmt
+  - id: goimports
   - id: golangci-lint
-- repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
-  rev: v8.0.0
-  hooks:
+  - id: gotests
   - id: commitlint
-    stages: [commit-msg]
-    additional_dependencies: ['@commitlint/config-conventional']

@@ -21,9 +21,9 @@ type ListOrganizationExpandedResponseDataInner struct {
 	// Organization ID
 	Id string `json:"id"`
 	// Owner ID
-	OwnerId string `json:"ownerId"`
+	OwnerId     string `json:"ownerId"`
 	TotalStacks *int32 `json:"totalStacks,omitempty"`
-	TotalUsers *int32 `json:"totalUsers,omitempty"`
+	TotalUsers  *int32 `json:"totalUsers,omitempty"`
 }
 
 // NewListOrganizationExpandedResponseDataInner instantiates a new ListOrganizationExpandedResponseDataInner object
@@ -60,7 +60,7 @@ func (o *ListOrganizationExpandedResponseDataInner) GetName() string {
 // and a boolean to check if the value has been set.
 func (o *ListOrganizationExpandedResponseDataInner) GetNameOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.Name, true
 }
@@ -84,7 +84,7 @@ func (o *ListOrganizationExpandedResponseDataInner) GetId() string {
 // and a boolean to check if the value has been set.
 func (o *ListOrganizationExpandedResponseDataInner) GetIdOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.Id, true
 }
@@ -108,7 +108,7 @@ func (o *ListOrganizationExpandedResponseDataInner) GetOwnerId() string {
 // and a boolean to check if the value has been set.
 func (o *ListOrganizationExpandedResponseDataInner) GetOwnerIdOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.OwnerId, true
 }
@@ -237,5 +237,3 @@ func (v *NullableListOrganizationExpandedResponseDataInner) UnmarshalJSON(src []
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

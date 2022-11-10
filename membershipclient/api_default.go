@@ -19,13 +19,12 @@ import (
 	"strings"
 )
 
-
 // DefaultApiService DefaultApi service
 type DefaultApiService service
 
 type ApiAcceptInvitationRequest struct {
-	ctx context.Context
-	ApiService *DefaultApiService
+	ctx          context.Context
+	ApiService   *DefaultApiService
 	invitationId string
 }
 
@@ -42,8 +41,8 @@ AcceptInvitation Accept invitation
 */
 func (a *DefaultApiService) AcceptInvitation(ctx context.Context, invitationId string) ApiAcceptInvitationRequest {
 	return ApiAcceptInvitationRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:   a,
+		ctx:          ctx,
 		invitationId: invitationId,
 	}
 }
@@ -51,9 +50,9 @@ func (a *DefaultApiService) AcceptInvitation(ctx context.Context, invitationId s
 // Execute executes the request
 func (a *DefaultApiService) AcceptInvitationExecute(r ApiAcceptInvitationRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.AcceptInvitation")
@@ -114,10 +113,10 @@ func (a *DefaultApiService) AcceptInvitationExecute(r ApiAcceptInvitationRequest
 }
 
 type ApiCreateInvitationRequest struct {
-	ctx context.Context
-	ApiService *DefaultApiService
+	ctx            context.Context
+	ApiService     *DefaultApiService
 	organizationId string
-	email *string
+	email          *string
 }
 
 func (r ApiCreateInvitationRequest) Email(email string) ApiCreateInvitationRequest {
@@ -138,8 +137,8 @@ CreateInvitation Create invitation
 */
 func (a *DefaultApiService) CreateInvitation(ctx context.Context, organizationId string) ApiCreateInvitationRequest {
 	return ApiCreateInvitationRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:     a,
+		ctx:            ctx,
 		organizationId: organizationId,
 	}
 }
@@ -148,10 +147,10 @@ func (a *DefaultApiService) CreateInvitation(ctx context.Context, organizationId
 //  @return CreateInvitationResponse
 func (a *DefaultApiService) CreateInvitationExecute(r ApiCreateInvitationRequest) (*CreateInvitationResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CreateInvitationResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CreateInvitationResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.CreateInvitation")
@@ -225,9 +224,9 @@ func (a *DefaultApiService) CreateInvitationExecute(r ApiCreateInvitationRequest
 }
 
 type ApiCreateOrganizationRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultApiService
-	body *OrganizationData
+	body       *OrganizationData
 }
 
 func (r ApiCreateOrganizationRequest) Body(body OrganizationData) ApiCreateOrganizationRequest {
@@ -248,7 +247,7 @@ CreateOrganization Create organization
 func (a *DefaultApiService) CreateOrganization(ctx context.Context) ApiCreateOrganizationRequest {
 	return ApiCreateOrganizationRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
@@ -256,10 +255,10 @@ func (a *DefaultApiService) CreateOrganization(ctx context.Context) ApiCreateOrg
 //  @return CreateOrganizationResponse
 func (a *DefaultApiService) CreateOrganizationExecute(r ApiCreateOrganizationRequest) (*CreateOrganizationResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CreateOrganizationResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CreateOrganizationResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.CreateOrganization")
@@ -330,10 +329,10 @@ func (a *DefaultApiService) CreateOrganizationExecute(r ApiCreateOrganizationReq
 }
 
 type ApiCreateStackRequest struct {
-	ctx context.Context
-	ApiService *DefaultApiService
+	ctx            context.Context
+	ApiService     *DefaultApiService
 	organizationId string
-	body *StackData
+	body           *StackData
 }
 
 func (r ApiCreateStackRequest) Body(body StackData) ApiCreateStackRequest {
@@ -354,8 +353,8 @@ CreateStack Create stack
 */
 func (a *DefaultApiService) CreateStack(ctx context.Context, organizationId string) ApiCreateStackRequest {
 	return ApiCreateStackRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:     a,
+		ctx:            ctx,
 		organizationId: organizationId,
 	}
 }
@@ -364,10 +363,10 @@ func (a *DefaultApiService) CreateStack(ctx context.Context, organizationId stri
 //  @return CreateStackResponse
 func (a *DefaultApiService) CreateStackExecute(r ApiCreateStackRequest) (*CreateStackResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CreateStackResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CreateStackResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.CreateStack")
@@ -439,8 +438,8 @@ func (a *DefaultApiService) CreateStackExecute(r ApiCreateStackRequest) (*Create
 }
 
 type ApiDeclineInvitationRequest struct {
-	ctx context.Context
-	ApiService *DefaultApiService
+	ctx          context.Context
+	ApiService   *DefaultApiService
 	invitationId string
 }
 
@@ -457,8 +456,8 @@ DeclineInvitation Decline invitation
 */
 func (a *DefaultApiService) DeclineInvitation(ctx context.Context, invitationId string) ApiDeclineInvitationRequest {
 	return ApiDeclineInvitationRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:   a,
+		ctx:          ctx,
 		invitationId: invitationId,
 	}
 }
@@ -466,9 +465,9 @@ func (a *DefaultApiService) DeclineInvitation(ctx context.Context, invitationId 
 // Execute executes the request
 func (a *DefaultApiService) DeclineInvitationExecute(r ApiDeclineInvitationRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.DeclineInvitation")
@@ -529,8 +528,8 @@ func (a *DefaultApiService) DeclineInvitationExecute(r ApiDeclineInvitationReque
 }
 
 type ApiDeleteOrganizationRequest struct {
-	ctx context.Context
-	ApiService *DefaultApiService
+	ctx            context.Context
+	ApiService     *DefaultApiService
 	organizationId string
 }
 
@@ -547,8 +546,8 @@ DeleteOrganization Delete organization
 */
 func (a *DefaultApiService) DeleteOrganization(ctx context.Context, organizationId string) ApiDeleteOrganizationRequest {
 	return ApiDeleteOrganizationRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:     a,
+		ctx:            ctx,
 		organizationId: organizationId,
 	}
 }
@@ -556,9 +555,9 @@ func (a *DefaultApiService) DeleteOrganization(ctx context.Context, organization
 // Execute executes the request
 func (a *DefaultApiService) DeleteOrganizationExecute(r ApiDeleteOrganizationRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodDelete
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.DeleteOrganization")
@@ -619,10 +618,10 @@ func (a *DefaultApiService) DeleteOrganizationExecute(r ApiDeleteOrganizationReq
 }
 
 type ApiDeleteStackRequest struct {
-	ctx context.Context
-	ApiService *DefaultApiService
+	ctx            context.Context
+	ApiService     *DefaultApiService
 	organizationId string
-	stackId string
+	stackId        string
 }
 
 func (r ApiDeleteStackRequest) Execute() (*http.Response, error) {
@@ -639,19 +638,19 @@ DeleteStack Delete stack
 */
 func (a *DefaultApiService) DeleteStack(ctx context.Context, organizationId string, stackId string) ApiDeleteStackRequest {
 	return ApiDeleteStackRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:     a,
+		ctx:            ctx,
 		organizationId: organizationId,
-		stackId: stackId,
+		stackId:        stackId,
 	}
 }
 
 // Execute executes the request
 func (a *DefaultApiService) DeleteStackExecute(r ApiDeleteStackRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodDelete
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.DeleteStack")
@@ -713,7 +712,7 @@ func (a *DefaultApiService) DeleteStackExecute(r ApiDeleteStackRequest) (*http.R
 }
 
 type ApiListInvitationsRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultApiService
 }
 
@@ -730,7 +729,7 @@ ListInvitations List invitations of the user
 func (a *DefaultApiService) ListInvitations(ctx context.Context) ApiListInvitationsRequest {
 	return ApiListInvitationsRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
@@ -738,10 +737,10 @@ func (a *DefaultApiService) ListInvitations(ctx context.Context) ApiListInvitati
 //  @return []Invitation
 func (a *DefaultApiService) ListInvitationsExecute(r ApiListInvitationsRequest) ([]Invitation, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []Invitation
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []Invitation
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ListInvitations")
@@ -810,8 +809,8 @@ func (a *DefaultApiService) ListInvitationsExecute(r ApiListInvitationsRequest) 
 }
 
 type ApiListOrganizationInvitationsRequest struct {
-	ctx context.Context
-	ApiService *DefaultApiService
+	ctx            context.Context
+	ApiService     *DefaultApiService
 	organizationId string
 }
 
@@ -828,8 +827,8 @@ ListOrganizationInvitations List invitations of the organization
 */
 func (a *DefaultApiService) ListOrganizationInvitations(ctx context.Context, organizationId string) ApiListOrganizationInvitationsRequest {
 	return ApiListOrganizationInvitationsRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:     a,
+		ctx:            ctx,
 		organizationId: organizationId,
 	}
 }
@@ -838,10 +837,10 @@ func (a *DefaultApiService) ListOrganizationInvitations(ctx context.Context, org
 //  @return []Invitation
 func (a *DefaultApiService) ListOrganizationInvitationsExecute(r ApiListOrganizationInvitationsRequest) ([]Invitation, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []Invitation
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []Invitation
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ListOrganizationInvitations")
@@ -911,7 +910,7 @@ func (a *DefaultApiService) ListOrganizationInvitationsExecute(r ApiListOrganiza
 }
 
 type ApiListOrganizationsRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultApiService
 }
 
@@ -928,7 +927,7 @@ ListOrganizations List organizations of the connected user
 func (a *DefaultApiService) ListOrganizations(ctx context.Context) ApiListOrganizationsRequest {
 	return ApiListOrganizationsRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
@@ -936,10 +935,10 @@ func (a *DefaultApiService) ListOrganizations(ctx context.Context) ApiListOrgani
 //  @return ListOrganizationResponse
 func (a *DefaultApiService) ListOrganizationsExecute(r ApiListOrganizationsRequest) (*ListOrganizationResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ListOrganizationResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ListOrganizationResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ListOrganizations")
@@ -1008,7 +1007,7 @@ func (a *DefaultApiService) ListOrganizationsExecute(r ApiListOrganizationsReque
 }
 
 type ApiListOrganizationsExpandedRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultApiService
 }
 
@@ -1025,7 +1024,7 @@ ListOrganizationsExpanded List organizations of the connected user with expanded
 func (a *DefaultApiService) ListOrganizationsExpanded(ctx context.Context) ApiListOrganizationsExpandedRequest {
 	return ApiListOrganizationsExpandedRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
@@ -1033,10 +1032,10 @@ func (a *DefaultApiService) ListOrganizationsExpanded(ctx context.Context) ApiLi
 //  @return ListOrganizationExpandedResponse
 func (a *DefaultApiService) ListOrganizationsExpandedExecute(r ApiListOrganizationsExpandedRequest) (*ListOrganizationExpandedResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ListOrganizationExpandedResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ListOrganizationExpandedResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ListOrganizationsExpanded")
@@ -1105,8 +1104,8 @@ func (a *DefaultApiService) ListOrganizationsExpandedExecute(r ApiListOrganizati
 }
 
 type ApiListStacksRequest struct {
-	ctx context.Context
-	ApiService *DefaultApiService
+	ctx            context.Context
+	ApiService     *DefaultApiService
 	organizationId string
 }
 
@@ -1123,8 +1122,8 @@ ListStacks List stacks
 */
 func (a *DefaultApiService) ListStacks(ctx context.Context, organizationId string) ApiListStacksRequest {
 	return ApiListStacksRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:     a,
+		ctx:            ctx,
 		organizationId: organizationId,
 	}
 }
@@ -1133,10 +1132,10 @@ func (a *DefaultApiService) ListStacks(ctx context.Context, organizationId strin
 //  @return ListStacksResponse
 func (a *DefaultApiService) ListStacksExecute(r ApiListStacksRequest) (*ListStacksResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ListStacksResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ListStacksResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ListStacks")
@@ -1206,8 +1205,8 @@ func (a *DefaultApiService) ListStacksExecute(r ApiListStacksRequest) (*ListStac
 }
 
 type ApiReadOrganizationRequest struct {
-	ctx context.Context
-	ApiService *DefaultApiService
+	ctx            context.Context
+	ApiService     *DefaultApiService
 	organizationId string
 }
 
@@ -1224,8 +1223,8 @@ ReadOrganization Read organization
 */
 func (a *DefaultApiService) ReadOrganization(ctx context.Context, organizationId string) ApiReadOrganizationRequest {
 	return ApiReadOrganizationRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:     a,
+		ctx:            ctx,
 		organizationId: organizationId,
 	}
 }
@@ -1234,10 +1233,10 @@ func (a *DefaultApiService) ReadOrganization(ctx context.Context, organizationId
 //  @return CreateOrganizationResponse
 func (a *DefaultApiService) ReadOrganizationExecute(r ApiReadOrganizationRequest) (*CreateOrganizationResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CreateOrganizationResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CreateOrganizationResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ReadOrganization")
@@ -1307,10 +1306,10 @@ func (a *DefaultApiService) ReadOrganizationExecute(r ApiReadOrganizationRequest
 }
 
 type ApiReadStackRequest struct {
-	ctx context.Context
-	ApiService *DefaultApiService
+	ctx            context.Context
+	ApiService     *DefaultApiService
 	organizationId string
-	stackId string
+	stackId        string
 }
 
 func (r ApiReadStackRequest) Execute() (*CreateStackResponse, *http.Response, error) {
@@ -1327,10 +1326,10 @@ ReadStack Read stack
 */
 func (a *DefaultApiService) ReadStack(ctx context.Context, organizationId string, stackId string) ApiReadStackRequest {
 	return ApiReadStackRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:     a,
+		ctx:            ctx,
 		organizationId: organizationId,
-		stackId: stackId,
+		stackId:        stackId,
 	}
 }
 
@@ -1338,10 +1337,10 @@ func (a *DefaultApiService) ReadStack(ctx context.Context, organizationId string
 //  @return CreateStackResponse
 func (a *DefaultApiService) ReadStackExecute(r ApiReadStackRequest) (*CreateStackResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CreateStackResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CreateStackResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ReadStack")

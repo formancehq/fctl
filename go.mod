@@ -3,9 +3,8 @@ module github.com/formancehq/fctl
 go 1.18
 
 require (
-	github.com/davecgh/go-spew v1.1.1
 	github.com/formancehq/auth/authclient v0.0.0-20221003212526-20761562e41e
-	github.com/formancehq/fctl/membershipclient v0.0.0-00010101000000-000000000000
+	github.com/formancehq/fctl/membershipclient v0.0.0-20221110205214-79a725a64b70
 	github.com/numary/ledger/client v0.0.0-20220912105324-6153d9ee752f
 	github.com/numary/payments/client v0.0.0-20220912091851-92e6ed3de087
 	github.com/pborman/indent v1.1.1

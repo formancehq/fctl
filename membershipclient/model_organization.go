@@ -58,7 +58,7 @@ func (o *Organization) GetName() string {
 // and a boolean to check if the value has been set.
 func (o *Organization) GetNameOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.Name, true
 }
@@ -82,7 +82,7 @@ func (o *Organization) GetId() string {
 // and a boolean to check if the value has been set.
 func (o *Organization) GetIdOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.Id, true
 }
@@ -106,7 +106,7 @@ func (o *Organization) GetOwnerId() string {
 // and a boolean to check if the value has been set.
 func (o *Organization) GetOwnerIdOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.OwnerId, true
 }
@@ -165,5 +165,3 @@ func (v *NullableOrganization) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-
