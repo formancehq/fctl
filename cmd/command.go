@@ -89,12 +89,6 @@ func withStringFlag(name, defaultValue, help string) commandOptionFn {
 	}
 }
 
-func withStringPFlag(name, short, defaultValue, help string) commandOptionFn {
-	return func(cmd *cobra.Command) {
-		cmd.Flags().StringP(name, short, defaultValue, help)
-	}
-}
-
 func withPersistentStringPFlag(name, short, defaultValue, help string) commandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.PersistentFlags().StringP(name, short, defaultValue, help)
@@ -110,12 +104,6 @@ func withBoolFlag(name string, defaultValue bool, help string) commandOptionFn {
 func withAliases(aliases ...string) commandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.Aliases = aliases
-	}
-}
-
-func withBoolPFlag(name, short string, defaultValue bool, help string) commandOptionFn {
-	return func(cmd *cobra.Command) {
-		cmd.Flags().BoolP(name, short, defaultValue, help)
 	}
 }
 
@@ -145,7 +133,10 @@ func withStringSliceFlag(name string, defaultValue []string, help string) comman
 
 func withHiddenFlag(name string) commandOptionFn {
 	return func(cmd *cobra.Command) {
-		cmd.Flags().MarkHidden(name)
+		err := cmd.Flags().MarkHidden(name)
+		if err != nil {
+			return
+		}
 	}
 }
 
@@ -221,12 +212,6 @@ func withPersistentPreRunE(fn func(cmd *cobra.Command, args []string) error) com
 				}
 			}
 		}
-	}
-}
-
-func withSilenceErrors() commandOptionFn {
-	return func(cmd *cobra.Command) {
-		cmd.SilenceErrors = true
 	}
 }
 
