@@ -16,7 +16,7 @@ const (
 
 func getRelyingParty(profile *internal.Profile) (rp.RelyingParty, error) {
 	return rp.NewRelyingPartyOIDC(profile.GetMembershipURI(), internal.AuthClient, "",
-		"", []string{"openid", "email", "offline_access"}, rp.WithHTTPClient(getHttpClient()))
+		"", []string{"openid", "email", "offline_access", "supertoken"}, rp.WithHTTPClient(getHttpClient()))
 
 }
 

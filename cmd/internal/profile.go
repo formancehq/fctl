@@ -89,7 +89,7 @@ func (p *Profile) GetToken(ctx context.Context, httpClient *http.Client) (*oauth
 	}
 	if p.token != nil && p.token.Expiry.Before(time.Now()) {
 		relyingParty, err := rp.NewRelyingPartyOIDC(p.membershipURI, AuthClient, "",
-			"", []string{"openid", "email", "offline_access"}, rp.WithHTTPClient(httpClient))
+			"", []string{"openid", "email", "offline_access", "supertoken"}, rp.WithHTTPClient(httpClient))
 		if err != nil {
 			return nil, err
 		}
@@ -131,27 +131,28 @@ func (p *Profile) GetUserInfo(ctx context.Context, relyingParty rp.RelyingParty)
 }
 
 func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, organizationID, stackID string) (string, error) {
-	apiUrl := p.ApiUrl(organizationID, stackID, "auth")
+
 	form := url.Values{
-		"grant_type": []string{"urn:ietf:params:oauth:grant-type:jwt-bearer"},
-		"assertion":  []string{p.token.AccessToken},
-		"scope":      []string{"openid email"},
+		"grant_type":         []string{string(oidc.GrantTypeTokenExchange)},
+		"audience":           []string{fmt.Sprintf("stack://%s/%s", organizationID, stackID)},
+		"subject_token":      []string{p.token.AccessToken},
+		"subject_token_type": []string{"urn:ietf:params:oauth:token-type:access_token"},
 	}
 
-	discoveryConfiguration, err := client.Discover(apiUrl.String(), httpClient)
+	membershipDiscoveryConfiguration, err := client.Discover(p.membershipURI, httpClient)
 	if err != nil {
 		return "", err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, discoveryConfiguration.TokenEndpoint,
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, membershipDiscoveryConfiguration.TokenEndpoint,
 		bytes.NewBufferString(form.Encode()))
 	if err != nil {
 		return "", err
 	}
-	req.SetBasicAuth("fctl", "")
+	req.SetBasicAuth(AuthClient, "")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	ret, err := httpClient.Do(req)
+	ret, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -164,12 +165,50 @@ func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, or
 		return "", errors.New(string(data))
 	}
 
-	token := oauth2.Token{}
-	if err := json.NewDecoder(ret.Body).Decode(&token); err != nil {
+	securityToken := oauth2.Token{}
+	if err := json.NewDecoder(ret.Body).Decode(&securityToken); err != nil {
 		return "", err
 	}
 
-	return token.AccessToken, nil
+	apiUrl := p.ApiUrl(organizationID, stackID, "auth")
+	form = url.Values{
+		"grant_type": []string{"urn:ietf:params:oauth:grant-type:jwt-bearer"},
+		"assertion":  []string{securityToken.AccessToken},
+		"scope":      []string{"openid email"},
+	}
+
+	stackDiscoveryConfiguration, err := client.Discover(apiUrl.String(), httpClient)
+	if err != nil {
+		return "", err
+	}
+
+	req, err = http.NewRequestWithContext(ctx, http.MethodPost, stackDiscoveryConfiguration.TokenEndpoint,
+		bytes.NewBufferString(form.Encode()))
+	if err != nil {
+		return "", err
+	}
+	req.SetBasicAuth("fctl", "")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	ret, err = httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	if ret.StatusCode != http.StatusOK {
+		data, err := io.ReadAll(ret.Body)
+		if err != nil {
+			panic(err)
+		}
+		return "", errors.New(string(data))
+	}
+
+	stackToken := oauth2.Token{}
+	if err := json.NewDecoder(ret.Body).Decode(&stackToken); err != nil {
+		return "", err
+	}
+
+	return stackToken.AccessToken, nil
 }
 
 type CurrentProfile Profile
