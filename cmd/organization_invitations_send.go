@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/cobra"
 )
 
@@ -28,14 +27,13 @@ func newOrganizationsInvitationsSendCommand() *cobra.Command {
 				return err
 			}
 
-			invitation, _, err := apiClient.DefaultApi.
+			_, _, err = apiClient.DefaultApi.
 				CreateInvitation(cmd.Context(), organizationID).
 				Email(args[0]).
 				Execute()
 			if err != nil {
 				return err
 			}
-			spew.Dump(invitation)
 
 			fmt.Fprintf(cmd.OutOrStdout(), "Invitation sent\r\n")
 			return nil
