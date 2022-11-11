@@ -13,6 +13,7 @@ func NewShowCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("show [TXID]",
 		cmdbuilder.WithShortDescription("Print a transaction"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
+		cmdbuilder.WithValidArgs("last"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()
 			if err != nil {

@@ -13,6 +13,7 @@ func NewRevertCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("revert [TXID]",
 		cmdbuilder.WithShortDescription("Revert a transaction"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
+		cmdbuilder.WithValidArgs("last"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()
 			if err != nil {

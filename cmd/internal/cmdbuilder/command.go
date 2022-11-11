@@ -187,6 +187,12 @@ func WithArgs(p cobra.PositionalArgs) commandOptionFn {
 	}
 }
 
+func WithValidArgs(validArgs ...string) commandOptionFn {
+	return func(cmd *cobra.Command) {
+		cmd.ValidArgs = validArgs
+	}
+}
+
 func WithDescription(v string) commandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.Long = v

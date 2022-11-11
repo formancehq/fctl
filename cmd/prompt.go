@@ -72,9 +72,14 @@ func startPrompt(ctx context.Context, prompt string, opts ...goprompt.Option) st
 				break
 			}
 			parts := strings.SplitN(line, "\t", 2)
+			text := parts[0]
+			description := ""
+			if len(parts) == 2 {
+				description = parts[1]
+			}
 			suggestions = append(suggestions, goprompt.Suggest{
-				Text:        parts[0],
-				Description: parts[1],
+				Text:        text,
+				Description: description,
 			})
 		}
 

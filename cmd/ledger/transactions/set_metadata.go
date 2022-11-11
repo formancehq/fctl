@@ -12,6 +12,7 @@ func NewSetMetadataCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("set-metadata [TRANSACTION] [METADATA_KEY]=[METADATA_VALUE]...",
 		cmdbuilder.WithShortDescription("Set metadata on transaction"),
 		cmdbuilder.WithAliases("sm", "set-meta"),
+		cmdbuilder.WithValidArgs("last"),
 		cmdbuilder.WithArgs(cobra.MinimumNArgs(2)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
