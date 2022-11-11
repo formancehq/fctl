@@ -101,7 +101,7 @@ func NewLoginCommand() *cobra.Command {
 
 			cfg.SetCurrentProfile(currentProfileName, profile)
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Logged!")
+			cmdbuilder.Success(cmd.OutOrStdout(), "Logged!")
 			return cfg.Persist()
 		}),
 	)

@@ -7,6 +7,7 @@ import (
 
 func NewCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("secrets",
+		cmdbuilder.WithAliases("sec"),
 		cmdbuilder.WithShortDescription("Secrets management"),
 		cmdbuilder.WithChildCommands(
 			NewCreateCommand(),

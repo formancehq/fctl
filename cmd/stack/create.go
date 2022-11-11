@@ -1,8 +1,6 @@
 package stack
 
 import (
-	"fmt"
-
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/internal/membership"
@@ -15,7 +13,7 @@ import (
 func NewCreateCommand() *cobra.Command {
 	return cmdbuilder.NewMembershipCommand("create",
 		cmdbuilder.WithShortDescription("Create a new sandbox"),
-		cmdbuilder.WithAliases("c"),
+		cmdbuilder.WithAliases("c", "cr"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
@@ -23,6 +21,7 @@ func NewCreateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
+
 			organization, err := cmdbuilder.ResolveOrganizationID(cmd.Context(), cfg)
 			if err != nil {
 				return err
@@ -33,16 +32,20 @@ func NewCreateCommand() *cobra.Command {
 				return err
 			}
 
-			sandbox, _, err := apiClient.DefaultApi.CreateStack(cmd.Context(), organization).Body(membershipclient.StackData{
+			stack, _, err := apiClient.DefaultApi.CreateStack(cmd.Context(), organization).Body(membershipclient.StackData{
 				Name: args[0],
 			}).Execute()
 			if err != nil {
 				return errors.Wrap(err, "creating sandbox")
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "Stack created with ID: %s\r\n", sandbox.Data.Id)
+			profile := config.GetCurrentProfile(cfg)
 
-			return internal.PrintStackInformation(cmd.OutOrStdout(), config.GetCurrentProfile(cfg), sandbox.Data)
+			cmdbuilder.Highlightln(cmd.OutOrStdout(), "Your dashboard will be reachable on: %s",
+				profile.ServicesBaseUrl(stack.Data.OrganizationId, stack.Data.Id).String())
+			cmdbuilder.Highlightln(cmd.OutOrStdout(), "You can access your sandbox apis using following urls :")
+
+			return internal.PrintStackInformation(cmd.OutOrStdout(), profile, stack.Data)
 		}),
 	)
 }

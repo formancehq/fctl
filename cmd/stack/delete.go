@@ -1,8 +1,6 @@
 package stack
 
 import (
-	"fmt"
-
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/internal/membership"
@@ -18,6 +16,7 @@ func NewDeleteCommand() *cobra.Command {
 
 	return cmdbuilder.NewMembershipCommand("delete [STACK_ID] | --name=[NAME]",
 		cmdbuilder.WithShortDescription("Delete a sandbox"),
+		cmdbuilder.WithAliases("del", "d"),
 		cmdbuilder.WithArgs(cobra.MaximumNArgs(1)),
 		cmdbuilder.WithStringFlag(stackNameFlag, "", "Sandbox to remove"),
 		cmdbuilder.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
@@ -59,15 +58,15 @@ func NewDeleteCommand() *cobra.Command {
 					}
 				}
 				if stackID == "" {
-					return errors.New("sandbox not found")
+					return errors.New("stack not found")
 				}
 			}
 
 			if _, err := apiClient.DefaultApi.DeleteStack(cmd.Context(), organization, stackID).Execute(); err != nil {
-				return errors.Wrap(err, "deleting sandbox")
+				return errors.Wrap(err, "deleting stack")
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Stack deleted.")
+			cmdbuilder.Success(cmd.OutOrStdout(), "Stack deleted.")
 
 			return nil
 		}),

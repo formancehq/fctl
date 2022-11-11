@@ -1,8 +1,6 @@
 package invitations
 
 import (
-	"fmt"
-
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/internal/membership"
@@ -38,7 +36,7 @@ func NewSendCommand() *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "Invitation sent\r\n")
+			cmdbuilder.Success(cmd.OutOrStdout(), "Invitation sent")
 			return nil
 		}),
 	)

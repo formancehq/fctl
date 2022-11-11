@@ -9,7 +9,7 @@ import (
 
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
-	internal2 "github.com/formancehq/fctl/cmd/ledger/internal"
+	"github.com/formancehq/fctl/cmd/ledger/internal"
 	ledgerclient "github.com/numary/ledger/client"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -38,7 +38,7 @@ func NewLedgerTransactionsNumscriptCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			ledgerClient, err := internal2.NewLedgerClient(cmd, cfg)
+			ledgerClient, err := internal.NewLedgerClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -107,8 +107,8 @@ func NewLedgerTransactionsNumscriptCommand() *cobra.Command {
 				metadata[parts[0]] = parts[1]
 			}
 
-			ledger := viper.GetString(internal2.LedgerFlag)
-			rsp, _, err := ledgerClient.ScriptApi.
+			ledger := viper.GetString(internal.LedgerFlag)
+			response, _, err := ledgerClient.ScriptApi.
 				RunScript(cmd.Context(), ledger).
 				Script(ledgerclient.Script{
 					Plain:     script,
@@ -123,17 +123,14 @@ func NewLedgerTransactionsNumscriptCommand() *cobra.Command {
 			if err != nil {
 				return errors.Wrapf(err, "executing numscript")
 			}
-			if rsp.ErrorCode != nil && *rsp.ErrorCode != "" {
-				if rsp.ErrorMessage != nil {
-					return errors.New(*rsp.ErrorMessage)
+			if response.ErrorCode != nil && *response.ErrorCode != "" {
+				if response.ErrorMessage != nil {
+					return errors.New(*response.ErrorMessage)
 				}
-				return errors.New(*rsp.ErrorCode)
+				return errors.New(*response.ErrorCode)
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "Created transaction ID: %d\r\n", rsp.Transaction.Txid)
 
-			internal2.PrintLedgerTransaction(cmd.OutOrStdout(), *rsp.Transaction)
-
-			return nil
+			return internal.PrintTransaction(cmd.OutOrStdout(), *response.Transaction)
 		}),
 	)
 }

@@ -34,7 +34,7 @@ func NewPaymentsClient(cmd *cobra.Command, cfg *config.Config) (*client.APIClien
 	apiConfig.Servers = client.ServerConfigurations{{
 		URL: profile.ApiUrl(organizationID, stackID, "payments").String(),
 	}}
-	apiConfig.AddDefaultHeader("Authorization", fmt.Sprintf("Bearer %s", token))
+	apiConfig.AddDefaultHeader("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
 	apiConfig.HTTPClient = httpClient
 
 	return client.NewAPIClient(apiConfig), nil

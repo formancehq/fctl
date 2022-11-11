@@ -9,6 +9,7 @@ import (
 
 func NewCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("clients",
+		cmdbuilder.WithAliases("client", "c"),
 		cmdbuilder.WithShortDescription("Clients management"),
 		cmdbuilder.WithChildCommands(
 			NewListCommand(),

@@ -5,11 +5,13 @@ import (
 	"github.com/formancehq/fctl/cmd/auth/internal"
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewCreateCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("create [CLIENT_ID] [SECRET_NAME]",
+		cmdbuilder.WithAliases("c"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(2)),
 		cmdbuilder.WithShortDescription("Create secret"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
@@ -34,9 +36,14 @@ func NewCreateCommand() *cobra.Command {
 				return err
 			}
 
-			internal.PrintAuthClientSecret(cmd.OutOrStdout(), response.Data)
-
-			return nil
+			tableData := pterm.TableData{}
+			tableData = append(tableData, []string{pterm.LightCyan("ID"), response.Data.Id})
+			tableData = append(tableData, []string{pterm.LightCyan("Name"), response.Data.Name})
+			tableData = append(tableData, []string{pterm.LightCyan("Clear"), response.Data.Clear})
+			return pterm.DefaultTable.
+				WithWriter(cmd.OutOrStdout()).
+				WithData(tableData).
+				Render()
 		}),
 	)
 }

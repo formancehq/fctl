@@ -1,9 +1,8 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -16,10 +15,15 @@ var (
 func NewVersionCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("version",
 		cmdbuilder.WithShortDescription("Get version"),
-		cmdbuilder.WithRun(func(cmd *cobra.Command, args []string) {
-			fmt.Printf("Version: %s \n", Version)
-			fmt.Printf("Date: %s \n", BuildDate)
-			fmt.Printf("Commit: %s \n", Commit)
+		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
+			tableData := pterm.TableData{}
+			tableData = append(tableData, []string{pterm.LightCyan("Version"), Version})
+			tableData = append(tableData, []string{pterm.LightCyan("Date"), BuildDate})
+			tableData = append(tableData, []string{pterm.LightCyan("Commit"), Commit})
+			return pterm.DefaultTable.
+				WithWriter(cmd.OutOrStdout()).
+				WithData(tableData).
+				Render()
 		}),
 	)
 }

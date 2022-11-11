@@ -1,8 +1,6 @@
 package profiles
 
 import (
-	"fmt"
-
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/pkg/errors"
@@ -26,7 +24,7 @@ func NewDeleteCommand() *cobra.Command {
 			if err := config.Persist(); err != nil {
 				return errors.Wrap(err, "updating config")
 			}
-			fmt.Fprintln(cmd.OutOrStdout(), "Profile deleted.")
+			cmdbuilder.Success(cmd.OutOrStdout(), "Profile deleted!")
 			return nil
 		}),
 	)

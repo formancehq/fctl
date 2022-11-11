@@ -1,8 +1,6 @@
 package secrets
 
 import (
-	"fmt"
-
 	"github.com/formancehq/fctl/cmd/auth/internal"
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
@@ -12,6 +10,7 @@ import (
 func NewDeleteCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("delete [CLIENT_ID] [SECRET_ID]",
 		cmdbuilder.WithArgs(cobra.ExactArgs(2)),
+		cmdbuilder.WithAliases("d"),
 		cmdbuilder.WithShortDescription("Delete secret"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()
@@ -31,7 +30,7 @@ func NewDeleteCommand() *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Secret deleted!")
+			cmdbuilder.Success(cmd.OutOrStdout(), "Secret deleted!")
 
 			return nil
 		}),

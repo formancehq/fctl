@@ -20,7 +20,11 @@ func NewSetDefaultOrganizationCommand() *cobra.Command {
 
 			config.GetCurrentProfile(cfg).SetDefaultOrganization(args[0])
 
-			return errors.Wrap(cfg.Persist(), "Updating config")
+			if err := cfg.Persist(); err != nil {
+				return errors.Wrap(err, "Updating config")
+			}
+			cmdbuilder.Success(cmd.OutOrStdout(), "Default organization updated!")
+			return nil
 		}),
 	)
 }

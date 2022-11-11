@@ -6,17 +6,22 @@ import (
 
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/membershipclient"
+	"github.com/pterm/pterm"
 )
 
 func PrintStackInformation(out io.Writer, profile *config.Profile, stack *membershipclient.Stack) error {
 	baseUrlStr := profile.ServicesBaseUrl(stack.OrganizationId, stack.Id).String()
 
-	fmt.Fprintf(out, "Your dashboard will be reachable on: %s\r\n", baseUrlStr)
-	fmt.Fprintln(out, "You can access your sandbox apis using following urls :")
-	fmt.Fprintf(out, "Ledger: %s/api/ledger\r\n", baseUrlStr)
-	fmt.Fprintf(out, "Payments: %s/api/payments\n", baseUrlStr)
-	fmt.Fprintf(out, "Search: %s/api/search\n", baseUrlStr)
-	fmt.Fprintf(out, "Auth: %s/api/auth\n", baseUrlStr)
-
-	return nil
+	tableData := pterm.TableData{}
+	tableData = append(tableData, []string{pterm.LightCyan("ID"), stack.Id})
+	tableData = append(tableData, []string{pterm.LightCyan("Name"), stack.Name})
+	tableData = append(tableData, []string{pterm.LightCyan("Region"), *stack.Region})
+	tableData = append(tableData, []string{pterm.LightCyan("Ledger URI"), fmt.Sprintf("%s/api/ledger", baseUrlStr)})
+	tableData = append(tableData, []string{pterm.LightCyan("Payments URI"), fmt.Sprintf("%s/api/payments", baseUrlStr)})
+	tableData = append(tableData, []string{pterm.LightCyan("Search URI"), fmt.Sprintf("%s/api/search", baseUrlStr)})
+	tableData = append(tableData, []string{pterm.LightCyan("Auth URI"), fmt.Sprintf("%s/api/auth", baseUrlStr)})
+	return pterm.DefaultTable.
+		WithWriter(out).
+		WithData(tableData).
+		Render()
 }

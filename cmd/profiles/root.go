@@ -7,7 +7,7 @@ import (
 
 func NewCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("profiles",
-		cmdbuilder.WithAliases("p"),
+		cmdbuilder.WithAliases("p", "prof"),
 		cmdbuilder.WithShortDescription("Profiles management"),
 		cmdbuilder.WithChildCommands(
 			NewDeleteCommand(),

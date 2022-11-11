@@ -1,17 +1,17 @@
 package connectors
 
 import (
-	"fmt"
-
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/payments/internal"
 	"github.com/pkg/errors"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewPaymentsConnectorsGetConfigCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("get-config [CONNECTOR_NAME]",
+		cmdbuilder.WithAliases("getconfig", "getconf", "gc", "get", "g"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithShortDescription("Read a connector config"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
@@ -28,17 +28,23 @@ func NewPaymentsConnectorsGetConfigCommand() *cobra.Command {
 
 			connectorConfig, _, err := client.DefaultApi.ReadConnectorConfig(cmd.Context(), args[0]).Execute()
 			if err != nil {
-				return errors.Wrap(err, "reding connector config")
+				return errors.Wrap(err, "reading connector config")
 			}
 			switch args[0] {
 			case "stripe":
 				config := connectorConfig.StripeConfig
-				fmt.Fprintln(cmd.OutOrStdout(), "Api key:", config.ApiKey)
-				fmt.Fprintln(cmd.OutOrStdout(), "Polling period:", config.PollingPeriod)
-				fmt.Fprintln(cmd.OutOrStdout(), "Page size:", config.PageSize)
+
+				tableData := pterm.TableData{}
+				tableData = append(tableData, []string{pterm.LightCyan("Api key:"), config.ApiKey})
+
+				if err := pterm.DefaultTable.
+					WithWriter(cmd.OutOrStdout()).
+					WithData(tableData).
+					Render(); err != nil {
+					return err
+				}
 			default:
-				fmt.Fprintln(cmd.OutOrStdout(), "No specific output defined for connector", args[0])
-				fmt.Fprintln(cmd.OutOrStdout(), cfg)
+				cmdbuilder.Error(cmd.ErrOrStderr(), "Connection unknown.")
 			}
 			return nil
 		}),

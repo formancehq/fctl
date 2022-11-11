@@ -25,6 +25,7 @@ func NewRootCommand() *cobra.Command {
 	}
 
 	return cmdbuilder.NewCommand("fctl",
+		cmdbuilder.WithSilenceError(),
 		cmdbuilder.WithShortDescription("Formance Control CLI"),
 		cmdbuilder.WithSilenceUsage(),
 		cmdbuilder.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) (err error) {
@@ -53,5 +54,8 @@ func NewRootCommand() *cobra.Command {
 }
 
 func Execute() {
-	_ = NewRootCommand().Execute()
+	err := NewRootCommand().Execute()
+	if err != nil {
+		cmdbuilder.Error(os.Stderr, err.Error())
+	}
 }

@@ -34,7 +34,10 @@ func NewRenameCommand() *cobra.Command {
 				config.SetProfile(newName, p)
 			}
 
-			return errors.Wrap(config.Persist(), "Updating config")
+			if err := config.Persist(); err != nil {
+				return errors.Wrap(config.Persist(), "Updating config")
+			}
+			return nil
 		}),
 	)
 }

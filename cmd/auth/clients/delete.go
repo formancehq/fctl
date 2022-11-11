@@ -1,8 +1,6 @@
 package clients
 
 import (
-	"fmt"
-
 	"github.com/formancehq/fctl/cmd/auth/internal"
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
@@ -12,6 +10,7 @@ import (
 func NewDeleteCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("delete [CLIENT_ID]",
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
+		cmdbuilder.WithAliases("d", "del"),
 		cmdbuilder.WithShortDescription("Delete client"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()
@@ -28,7 +27,8 @@ func NewDeleteCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Fprintln(cmd.OutOrStdout(), "Client deleted!")
+
+			cmdbuilder.Success(cmd.OutOrStdout(), "Client deleted!")
 			return nil
 		}),
 	)

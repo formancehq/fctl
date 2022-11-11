@@ -16,8 +16,13 @@ func NewUseCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
+
 			config.SetCurrentProfileName(args[0])
-			return errors.Wrap(config.Persist(), "Updating config")
+			if err := config.Persist(); err != nil {
+				return errors.Wrap(err, "Updating config")
+			}
+			cmdbuilder.Success(cmd.OutOrStdout(), "Selected profile updated!")
+			return nil
 		}),
 	)
 }

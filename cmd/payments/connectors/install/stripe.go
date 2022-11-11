@@ -36,6 +36,8 @@ func NewPaymentsConnectorsInstallStripeCommand() *cobra.Command {
 				}).
 				Execute()
 
+			cmdbuilder.Success(cmd.OutOrStdout(), "Connector installed!")
+
 			return errors.Wrap(err, "installing connector")
 		}),
 	)

@@ -199,6 +199,12 @@ func WithSilenceUsage() commandOptionFn {
 	}
 }
 
+func WithSilenceError() commandOptionFn {
+	return func(cmd *cobra.Command) {
+		cmd.SilenceErrors = true
+	}
+}
+
 func WithPersistentPreRunE(fn func(cmd *cobra.Command, args []string) error) commandOptionFn {
 	return func(cmd *cobra.Command) {
 		oldPersistentPreRunE := cmd.PersistentPreRunE

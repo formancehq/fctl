@@ -14,6 +14,7 @@ import (
 
 func NewListCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("list",
+		cmdbuilder.WithAliases("ls", "l"),
 		cmdbuilder.WithShortDescription("List clients"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()
@@ -42,7 +43,7 @@ func NewListCommand() *cobra.Command {
 						return ""
 					}(),
 					strings.Join(o.Scopes, ","),
-					cmdbuilder.BoolToString(o.Public),
+					cmdbuilder.BoolPointerToString(o.Public),
 				}
 			})
 			tableData = collections.Prepend(tableData, []string{"ID", "Name", "Description", "Scopes", "Public"})

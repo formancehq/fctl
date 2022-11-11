@@ -1,8 +1,6 @@
 package invitations
 
 import (
-	"fmt"
-
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/internal/membership"
@@ -30,7 +28,7 @@ func NewDeclineCommand() *cobra.Command {
 				return err
 			}
 
-			fmt.Println("Invitation declined!")
+			cmdbuilder.Success(cmd.OutOrStdout(), "Invitation declined!")
 			return nil
 		}),
 	)

@@ -1,16 +1,16 @@
 package me
 
 import (
-	"fmt"
-
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/internal/membership"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewInfoCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("info",
+		cmdbuilder.WithAliases("i"),
 		cmdbuilder.WithShortDescription("Display user information"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
@@ -31,10 +31,14 @@ func NewInfoCommand() *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "Subject: %s\r\n", userInfo.GetSubject())
-			fmt.Fprintf(cmd.OutOrStdout(), "Email: %s\r\n", userInfo.GetEmail())
+			tableData := pterm.TableData{}
+			tableData = append(tableData, []string{pterm.LightCyan("Subject"), userInfo.GetSubject()})
+			tableData = append(tableData, []string{pterm.LightCyan("Email"), userInfo.GetEmail()})
 
-			return nil
+			return pterm.DefaultTable.
+				WithWriter(cmd.OutOrStdout()).
+				WithData(tableData).
+				Render()
 		}),
 	)
 }

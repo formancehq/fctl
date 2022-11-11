@@ -5,28 +5,11 @@ import (
 
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
-	internal2 "github.com/formancehq/fctl/cmd/ledger/internal"
-	ledgerclient "github.com/numary/ledger/client"
+	"github.com/formancehq/fctl/cmd/ledger/internal"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
-
-func printAccount(cmd *cobra.Command, account ledgerclient.AccountWithVolumesAndBalances) {
-	if account.Volumes != nil {
-		fmt.Fprintln(cmd.OutOrStdout(), "Volumes:")
-		for asset, v := range *account.Volumes {
-			fmt.Fprintf(cmd.OutOrStdout(), "\t\tAsset: %s\t\tInput: %d\tOutput: %d\tBalance: %d\r\n",
-				asset, v["input"], v["output"], v["balance"])
-		}
-	}
-
-	if account.Metadata != nil && len(*account.Metadata) > 0 {
-		fmt.Fprintln(cmd.OutOrStdout(), "Metadata:")
-		for k, v := range *account.Metadata {
-			fmt.Fprintf(cmd.OutOrStdout(), "\t- %s: %s\r\n", k, v)
-		}
-	}
-}
 
 func NewLedgerAccountsShowCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("show [ADDRESS]",
@@ -38,18 +21,41 @@ func NewLedgerAccountsShowCommand() *cobra.Command {
 				return err
 			}
 
-			ledgerClient, err := internal2.NewLedgerClient(cmd, cfg)
+			ledgerClient, err := internal.NewLedgerClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			ledger := viper.GetString(internal2.LedgerFlag)
+			ledger := viper.GetString(internal.LedgerFlag)
 			rsp, _, err := ledgerClient.AccountsApi.GetAccount(cmd.Context(), ledger, args[0]).Execute()
 			if err != nil {
 				return err
 			}
 
-			printAccount(cmd, rsp.Data)
+			if rsp.Data.Volumes != nil {
+				cmdbuilder.Highlightln(cmd.OutOrStdout(), "Volumes :")
+				tableData := pterm.TableData{}
+				tableData = append(tableData, []string{"", "Input", "Output"})
+				for asset, volumes := range *rsp.Data.Volumes {
+					input := volumes["input"]
+					output := volumes["output"]
+					tableData = append(tableData, []string{pterm.LightCyan(asset), fmt.Sprint(input), fmt.Sprint(output)})
+				}
+				if err := pterm.DefaultTable.
+					WithHasHeader(true).
+					WithWriter(cmd.OutOrStdout()).
+					WithData(tableData).
+					Render(); err != nil {
+					return err
+				}
+			}
+
+			fmt.Fprintln(cmd.OutOrStdout())
+
+			if err := internal.PrintMetadata(cmd.OutOrStdout(), *rsp.Data.Metadata); err != nil {
+				return err
+			}
+
 			return nil
 		}),
 	)

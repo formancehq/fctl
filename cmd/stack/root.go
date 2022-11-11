@@ -8,7 +8,7 @@ import (
 func NewCommand() *cobra.Command {
 	return cmdbuilder.NewMembershipCommand("sandbox",
 		cmdbuilder.WithShortDescription("Manage your sandbox"),
-		cmdbuilder.WithAliases("stack", "stacks", "s"),
+		cmdbuilder.WithAliases("stack", "stacks", "s", "st"),
 		cmdbuilder.WithChildCommands(
 			NewCreateCommand(),
 			NewListCommand(),

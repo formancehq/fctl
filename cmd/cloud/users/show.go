@@ -1,11 +1,10 @@
 package users
 
 import (
-	"fmt"
-
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/internal/membership"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -35,10 +34,14 @@ func NewShowCommand() *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "User: ")
-			fmt.Fprintf(cmd.OutOrStdout(), "-> User: %s\r\n", userResponse.Data.Id)
-			fmt.Fprintf(cmd.OutOrStdout(), "Email: %s\r\n", userResponse.Data.Email)
-			return nil
+			tableData := pterm.TableData{}
+			tableData = append(tableData, []string{pterm.LightCyan("ID"), userResponse.Data.Id})
+			tableData = append(tableData, []string{pterm.LightCyan("Email"), userResponse.Data.Email})
+
+			return pterm.DefaultTable.
+				WithWriter(cmd.OutOrStdout()).
+				WithData(tableData).
+				Render()
 		}),
 	)
 }

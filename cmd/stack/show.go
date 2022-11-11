@@ -1,8 +1,6 @@
 package stack
 
 import (
-	"fmt"
-
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	config "github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/internal/membership"
@@ -14,10 +12,10 @@ import (
 )
 
 func NewShowCommand() *cobra.Command {
-	const stackNameFlag = "stack"
+	const stackNameFlag = "name"
 
 	return cmdbuilder.NewMembershipCommand("show",
-		cmdbuilder.WithAliases("s"),
+		cmdbuilder.WithAliases("s", "sh"),
 		cmdbuilder.WithShortDescription("Show sandbox"),
 		cmdbuilder.WithArgs(cobra.MaximumNArgs(1)),
 		cmdbuilder.WithStringFlag(stackNameFlag, "", ""),
@@ -63,8 +61,7 @@ func NewShowCommand() *cobra.Command {
 			}
 
 			if stack == nil {
-				fmt.Fprintln(cmd.OutOrStdout(), "Not found.")
-				return nil
+				return errors.New("Not found.")
 			}
 
 			return internal.PrintStackInformation(cmd.OutOrStdout(), config.GetCurrentProfile(cfg), stack)
