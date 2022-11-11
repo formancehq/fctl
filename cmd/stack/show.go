@@ -25,7 +25,7 @@ func newSandboxShowCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			organization, err := cmdbuilder.ResolveOrganizationID(cmd, config)
+			organization, err := cmdbuilder.ResolveOrganizationID(cmd.Context(), config)
 			if err != nil {
 				return errors.Wrap(err, "searching default organization")
 			}

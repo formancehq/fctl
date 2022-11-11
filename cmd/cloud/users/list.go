@@ -1,4 +1,4 @@
-package invitations
+package users
 
 import (
 	"fmt"
@@ -9,11 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewOrganizationsInvitationsSendCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("send",
-		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
-		cmdbuilder.WithShortDescription("invite on organization by email"),
-		cmdbuilder.WithAliases("s"),
+func NewListCommand() *cobra.Command {
+	return cmdbuilder.NewCommand("list",
+		cmdbuilder.WithAliases("ls", "l"),
+		cmdbuilder.WithShortDescription("list users"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()
 			if err != nil {
@@ -30,15 +29,16 @@ func NewOrganizationsInvitationsSendCommand() *cobra.Command {
 				return err
 			}
 
-			_, _, err = apiClient.DefaultApi.
-				CreateInvitation(cmd.Context(), organizationID).
-				Email(args[0]).
-				Execute()
+			usersResponse, _, err := apiClient.DefaultApi.ListUsers(cmd.Context(), organizationID).Execute()
 			if err != nil {
 				return err
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "Invitation sent\r\n")
+			fmt.Fprintln(cmd.OutOrStdout(), "User: ")
+			for _, o := range usersResponse.Data {
+				fmt.Fprintf(cmd.OutOrStdout(), "-> User: %s\r\n", o.Id)
+				fmt.Fprintf(cmd.OutOrStdout(), "Email: %s\r\n", o.Email)
+			}
 			return nil
 		}),
 	)

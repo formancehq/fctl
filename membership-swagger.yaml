@@ -75,6 +75,45 @@ paths:
       responses:
         204:
           description: Organization deleted
+  /organizations/{organizationId}/users:
+    get:
+      summary: List users
+      operationId: listUsers
+      parameters:
+      - name: organizationId
+        in: path
+        schema:
+          type: string
+        required: true
+      responses:
+        200:
+          description: List of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListUsersResponse'
+  /organizations/{organizationId}/users/{userId}:
+    get:
+      summary: Read user
+      operationId: readUser
+      parameters:
+      - name: organizationId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: userId
+        in: path
+        schema:
+          type: string
+        required: true
+      responses:
+        200:
+          description: Read a user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadUserResponse'
   /organizations/{organizationId}/stacks:
     get:
       summary: List stacks
@@ -291,6 +330,23 @@ components:
           organizationId:
             type: string
             description: Organization ID
+    UserData:
+      type: object
+      properties:
+        email:
+          type: string
+      required:
+      - email
+    User:
+      allOf:
+      - $ref: '#/components/schemas/UserData'
+      - type: object
+        required:
+        - id
+        properties:
+          id:
+            type: string
+            description: User ID
     OrganizationArray:
       type: array
       items:
@@ -299,6 +355,10 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/Stack'
+    UserArray:
+      type: array
+      items:
+        $ref: '#/components/schemas/User'
     ListOrganizationResponse:
       type: object
       properties:
@@ -318,6 +378,11 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/StackArray'
+    ListUsersResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/UserArray'
     CreateStackRequest:
       $ref: '#/components/schemas/StackData'
     CreateStackResponse:
@@ -327,6 +392,11 @@ components:
           $ref: '#/components/schemas/Stack'
     ReadStackResponse:
       $ref: '#/components/schemas/CreateStackResponse'
+    ReadUserResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/User'
     ListInvitationsResponse:
       type: object
       properties:

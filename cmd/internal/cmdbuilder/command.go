@@ -1,6 +1,8 @@
 package cmdbuilder
 
 import (
+	"context"
+
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/internal/membership"
 	"github.com/pkg/errors"
@@ -17,17 +19,17 @@ func GetSelectedOrganization() string {
 	return viper.GetString(organizationFlag)
 }
 
-func ResolveOrganizationID(cmd *cobra.Command, cfg *config.Config) (string, error) {
+func ResolveOrganizationID(ctx context.Context, cfg *config.Config) (string, error) {
 	if id := GetSelectedOrganization(); id != "" {
 		return id, nil
 	}
 
-	client, err := membership.NewClient(cmd.Context(), cfg)
+	client, err := membership.NewClient(ctx, cfg)
 	if err != nil {
 		return "", err
 	}
 
-	organizations, _, err := client.DefaultApi.ListOrganizations(cmd.Context()).Execute()
+	organizations, _, err := client.DefaultApi.ListOrganizations(ctx).Execute()
 	if err != nil {
 		return "", errors.Wrap(err, "listing organizations")
 	}

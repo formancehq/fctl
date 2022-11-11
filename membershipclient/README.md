@@ -90,8 +90,10 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**ListOrganizations**](docs/DefaultApi.md#listorganizations) | **Get** /organizations | List organizations of the connected user
 *DefaultApi* | [**ListOrganizationsExpanded**](docs/DefaultApi.md#listorganizationsexpanded) | **Get** /organizations/expanded | List organizations of the connected user with expanded data
 *DefaultApi* | [**ListStacks**](docs/DefaultApi.md#liststacks) | **Get** /organizations/{organizationId}/stacks | List stacks
+*DefaultApi* | [**ListUsers**](docs/DefaultApi.md#listusers) | **Get** /organizations/{organizationId}/users | List users
 *DefaultApi* | [**ReadOrganization**](docs/DefaultApi.md#readorganization) | **Get** /organizations/{organizationId} | Read organization
 *DefaultApi* | [**ReadStack**](docs/DefaultApi.md#readstack) | **Get** /organizations/{organizationId}/stacks/{stackId} | Read stack
+*DefaultApi* | [**ReadUser**](docs/DefaultApi.md#readuser) | **Get** /organizations/{organizationId}/users/{userId} | Read user
 
 
 ## Documentation For Models
@@ -106,12 +108,17 @@ Class | Method | HTTP request | Description
  - [ListOrganizationExpandedResponseDataInnerAllOf](docs/ListOrganizationExpandedResponseDataInnerAllOf.md)
  - [ListOrganizationResponse](docs/ListOrganizationResponse.md)
  - [ListStacksResponse](docs/ListStacksResponse.md)
+ - [ListUsersResponse](docs/ListUsersResponse.md)
  - [Organization](docs/Organization.md)
  - [OrganizationAllOf](docs/OrganizationAllOf.md)
  - [OrganizationData](docs/OrganizationData.md)
+ - [ReadUserResponse](docs/ReadUserResponse.md)
  - [Stack](docs/Stack.md)
  - [StackAllOf](docs/StackAllOf.md)
  - [StackData](docs/StackData.md)
+ - [User](docs/User.md)
+ - [UserAllOf](docs/UserAllOf.md)
+ - [UserData](docs/UserData.md)
 
 
 ## Documentation For Authorization

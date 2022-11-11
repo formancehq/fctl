@@ -79,6 +79,51 @@ paths:
                 $ref: '#/components/schemas/ReadOrganizationResponse'
           description: OK
       summary: Read organization
+  /organizations/{organizationId}/users:
+    get:
+      operationId: listUsers
+      parameters:
+      - explode: false
+        in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListUsersResponse'
+          description: List of users
+      summary: List users
+  /organizations/{organizationId}/users/{userId}:
+    get:
+      operationId: readUser
+      parameters:
+      - explode: false
+        in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadUserResponse'
+          description: Read a user
+      summary: Read user
   /organizations/{organizationId}/stacks:
     get:
       operationId: listStacks
@@ -288,6 +333,17 @@ components:
       allOf:
       - $ref: '#/components/schemas/StackData'
       - $ref: '#/components/schemas/Stack_allOf'
+    UserData:
+      properties:
+        email:
+          type: string
+      required:
+      - email
+      type: object
+    User:
+      allOf:
+      - $ref: '#/components/schemas/UserData'
+      - $ref: '#/components/schemas/User_allOf'
     OrganizationArray:
       items:
         $ref: '#/components/schemas/Organization'
@@ -295,6 +351,10 @@ components:
     StackArray:
       items:
         $ref: '#/components/schemas/Stack'
+      type: array
+    UserArray:
+      items:
+        $ref: '#/components/schemas/User'
       type: array
     ListOrganizationResponse:
       example:
@@ -329,6 +389,17 @@ components:
             $ref: '#/components/schemas/Stack'
           type: array
       type: object
+    ListUsersResponse:
+      example:
+        data:
+        - null
+        - null
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/User'
+          type: array
+      type: object
     CreateStackRequest:
       $ref: '#/components/schemas/StackData'
     CreateStackResponse:
@@ -340,6 +411,13 @@ components:
       type: object
     ReadStackResponse:
       $ref: '#/components/schemas/CreateStackResponse'
+    ReadUserResponse:
+      example:
+        data: null
+      properties:
+        data:
+          $ref: '#/components/schemas/User'
+      type: object
     ListInvitationsResponse:
       example:
         data:
@@ -443,6 +521,15 @@ components:
       required:
       - id
       - organizationId
+      type: object
+      example: null
+    User_allOf:
+      properties:
+        id:
+          description: User ID
+          type: string
+      required:
+      - id
       type: object
       example: null
     ListOrganizationExpandedResponse_data_inner_allOf:

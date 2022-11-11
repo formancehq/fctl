@@ -16,7 +16,7 @@ func NewPaymentsClient(cmd *cobra.Command, cfg *config.Config) (*client.APIClien
 		return nil, err
 	}
 
-	organizationID, err := cmdbuilder.ResolveOrganizationID(cmd, cfg)
+	organizationID, err := cmdbuilder.ResolveOrganizationID(cmd.Context(), cfg)
 	if err != nil {
 		return nil, err
 	}

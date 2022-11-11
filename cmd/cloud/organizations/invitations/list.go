@@ -34,7 +34,7 @@ func NewOrganizationsInvitationsListCommand() *cobra.Command {
 				return err
 			}
 
-			organizationID, err := cmdbuilder.ResolveOrganizationID(cmd, cfg)
+			organizationID, err := cmdbuilder.ResolveOrganizationID(cmd.Context(), cfg)
 			if err != nil {
 				return err
 			}

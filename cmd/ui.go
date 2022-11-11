@@ -39,7 +39,7 @@ func NewUICommand() *cobra.Command {
 				return err
 			}
 
-			organization, err := cmdbuilder.ResolveOrganizationID(cmd, cfg)
+			organization, err := cmdbuilder.ResolveOrganizationID(cmd.Context(), cfg)
 			if err != nil {
 				return err
 			}
