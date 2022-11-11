@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewAuthClientsSecretsDeleteCommand() *cobra.Command {
+func NewDeleteCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("delete [CLIENT_ID] [SECRET_ID]",
 		cmdbuilder.WithArgs(cobra.ExactArgs(2)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
@@ -18,7 +18,7 @@ func NewAuthClientsSecretsDeleteCommand() *cobra.Command {
 				return err
 			}
 
-			authClient, err := internal.NewAuthClient(cmd, cfg)
+			authClient, err := internal.NewAuthClient(cmd.Context(), cfg)
 			if err != nil {
 				return err
 			}

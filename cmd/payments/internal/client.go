@@ -21,7 +21,7 @@ func NewPaymentsClient(cmd *cobra.Command, cfg *config.Config) (*client.APIClien
 		return nil, err
 	}
 
-	stackID, err := cmdbuilder.ResolveStackID(cmd, cfg, organizationID)
+	stackID, err := cmdbuilder.ResolveStackID(cmd.Context(), cfg, organizationID)
 	if err != nil {
 		return nil, err
 	}

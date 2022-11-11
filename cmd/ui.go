@@ -44,7 +44,7 @@ func NewUICommand() *cobra.Command {
 				return err
 			}
 
-			stack, err := cmdbuilder.ResolveStackID(cmd, cfg, organization)
+			stack, err := cmdbuilder.ResolveStackID(cmd.Context(), cfg, organization)
 			if err != nil {
 				return err
 			}

@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewAuthClientsShowCommand() *cobra.Command {
+func NewShowCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("show [CLIENT_ID]",
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
@@ -16,7 +16,7 @@ func NewAuthClientsShowCommand() *cobra.Command {
 				return err
 			}
 
-			authClient, err := internal2.NewAuthClient(cmd, cfg)
+			authClient, err := internal2.NewAuthClient(cmd.Context(), cfg)
 			if err != nil {
 				return err
 			}

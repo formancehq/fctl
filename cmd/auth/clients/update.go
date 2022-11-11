@@ -12,7 +12,7 @@ import (
 // TODO: This command is a copy/paste of the create command
 // We should handle membership side the patch of the client OR
 // We should get the client before updating it to get replace informations
-func NewAuthClientsUpdateCommand() *cobra.Command {
+func NewUpdateCommand() *cobra.Command {
 	const (
 		publicFlag                = "public"
 		trustedFlag               = "trusted"
@@ -33,7 +33,7 @@ func NewAuthClientsUpdateCommand() *cobra.Command {
 				return err
 			}
 
-			authClient, err := internal2.NewAuthClient(cmd, cfg)
+			authClient, err := internal2.NewAuthClient(cmd.Context(), cfg)
 			if err != nil {
 				return err
 			}

@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newSandboxCreateCommand() *cobra.Command {
+func NewCreateCommand() *cobra.Command {
 	return cmdbuilder.NewMembershipCommand("create",
 		cmdbuilder.WithShortDescription("create a new sandbox"),
 		cmdbuilder.WithAliases("c"),

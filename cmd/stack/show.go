@@ -13,10 +13,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-func newSandboxShowCommand() *cobra.Command {
+func NewShowCommand() *cobra.Command {
 	const stackNameFlag = "stack"
 
 	return cmdbuilder.NewMembershipCommand("show",
+		cmdbuilder.WithAliases("s"),
 		cmdbuilder.WithShortDescription("show sandbox"),
 		cmdbuilder.WithArgs(cobra.MaximumNArgs(1)),
 		cmdbuilder.WithStringFlag(stackNameFlag, "", ""),
@@ -37,7 +38,7 @@ func newSandboxShowCommand() *cobra.Command {
 
 			var stack *membershipclient.Stack
 			if len(args) == 1 {
-				if viper.GetString(stackNameFlag) == "" {
+				if viper.GetString(stackNameFlag) != "" {
 					return errors.New("need either an id of a name spefified using --name flag")
 				}
 				stackResponse, _, err := apiClient.DefaultApi.ReadStack(cmd.Context(), organization, args[0]).Execute()

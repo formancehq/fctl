@@ -1,34 +1,34 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/formancehq/auth/authclient"
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/internal/debugutil"
-	"github.com/spf13/cobra"
 )
 
-func NewAuthClient(cmd *cobra.Command, cfg *config.Config) (*authclient.APIClient, error) {
+func NewAuthClient(ctx context.Context, cfg *config.Config) (*authclient.APIClient, error) {
 	profile, err := config.GetCurrentProfile(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	organizationID, err := cmdbuilder.ResolveOrganizationID(cmd.Context(), cfg)
+	organizationID, err := cmdbuilder.ResolveOrganizationID(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	stackID, err := cmdbuilder.ResolveStackID(cmd, cfg, organizationID)
+	stackID, err := cmdbuilder.ResolveStackID(ctx, cfg, organizationID)
 	if err != nil {
 		return nil, err
 	}
 
 	httpClient := debugutil.GetHttpClient()
 
-	token, err := profile.GetStackToken(cmd.Context(), httpClient, organizationID, stackID)
+	token, err := profile.GetStackToken(ctx, httpClient, organizationID, stackID)
 	if err != nil {
 		return nil, err
 	}

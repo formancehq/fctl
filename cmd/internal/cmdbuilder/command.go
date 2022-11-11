@@ -57,16 +57,16 @@ func GetSelectedStack() string {
 	return viper.GetString(stackFlag)
 }
 
-func ResolveStackID(cmd *cobra.Command, cfg *config.Config, organizationID string) (string, error) {
+func ResolveStackID(ctx context.Context, cfg *config.Config, organizationID string) (string, error) {
 	if id := GetSelectedStack(); id != "" {
 		return id, nil
 	}
-	client, err := membership.NewClient(cmd.Context(), cfg)
+	client, err := membership.NewClient(ctx, cfg)
 	if err != nil {
 		return "", err
 	}
 
-	stacks, _, err := client.DefaultApi.ListStacks(cmd.Context(), organizationID).Execute()
+	stacks, _, err := client.DefaultApi.ListStacks(ctx, organizationID).Execute()
 	if err != nil {
 		return "", errors.Wrap(err, "listing stacks")
 	}

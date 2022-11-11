@@ -2,19 +2,21 @@ package clients
 
 import (
 	"github.com/formancehq/fctl/cmd/auth/clients/secrets"
+	"github.com/formancehq/fctl/cmd/auth/users"
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/spf13/cobra"
 )
 
-func NewAuthClientsCommand() *cobra.Command {
+func NewCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("clients",
 		cmdbuilder.WithChildCommands(
-			NewAuthClientsListCommand(),
-			NewAuthClientsCreateCommand(),
-			NewAuthClientsDeleteCommand(),
-			NewAuthClientsUpdateCommand(),
-			secrets.NewAuthClientsSecretsCommand(),
-			NewAuthClientsShowCommand(),
+			NewListCommand(),
+			NewCreateCommand(),
+			NewDeleteCommand(),
+			NewUpdateCommand(),
+			NewShowCommand(),
+			secrets.NewCommand(),
+			users.NewCommand(),
 		),
 	)
 }

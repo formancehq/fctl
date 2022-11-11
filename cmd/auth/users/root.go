@@ -1,4 +1,4 @@
-package secrets
+package users
 
 import (
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
@@ -6,10 +6,11 @@ import (
 )
 
 func NewCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("secrets",
+	return cmdbuilder.NewCommand("users",
+		cmdbuilder.WithAliases("u"),
 		cmdbuilder.WithChildCommands(
-			NewCreateCommand(),
-			NewDeleteCommand(),
+			NewListCommand(),
+			NewShowCommand(),
 		),
 	)
 }

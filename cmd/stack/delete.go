@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func newSandboxDeleteCommand() *cobra.Command {
+func NewDeleteCommand() *cobra.Command {
 	const (
 		stackNameFlag = "name"
 	)

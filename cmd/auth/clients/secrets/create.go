@@ -2,13 +2,13 @@ package secrets
 
 import (
 	"github.com/formancehq/auth/authclient"
-	internal2 "github.com/formancehq/fctl/cmd/auth/internal"
+	"github.com/formancehq/fctl/cmd/auth/internal"
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/spf13/cobra"
 )
 
-func NewAuthClientsSecretsCreateCommand() *cobra.Command {
+func NewCreateCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("create [CLIENT_ID] [SECRET_NAME]",
 		cmdbuilder.WithArgs(cobra.ExactArgs(2)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
@@ -17,7 +17,7 @@ func NewAuthClientsSecretsCreateCommand() *cobra.Command {
 				return err
 			}
 
-			authClient, err := internal2.NewAuthClient(cmd, cfg)
+			authClient, err := internal.NewAuthClient(cmd.Context(), cfg)
 			if err != nil {
 				return err
 			}
@@ -33,7 +33,7 @@ func NewAuthClientsSecretsCreateCommand() *cobra.Command {
 				return err
 			}
 
-			internal2.PrintAuthClientSecret(cmd.OutOrStdout(), response.Data)
+			internal.PrintAuthClientSecret(cmd.OutOrStdout(), response.Data)
 
 			return nil
 		}),

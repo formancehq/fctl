@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func NewAuthClientsCreateCommand() *cobra.Command {
+func NewCreateCommand() *cobra.Command {
 	const (
 		publicFlag                = "public"
 		trustedFlag               = "trusted"
@@ -30,7 +30,7 @@ func NewAuthClientsCreateCommand() *cobra.Command {
 				return err
 			}
 
-			authClient, err := internal2.NewAuthClient(cmd, cfg)
+			authClient, err := internal2.NewAuthClient(cmd.Context(), cfg)
 			if err != nil {
 				return err
 			}
