@@ -1,11 +1,12 @@
 package users
 
 import (
-	"fmt"
-
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/collections"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/internal/membership"
+	"github.com/formancehq/fctl/membershipclient"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -34,12 +35,18 @@ func NewListCommand() *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "User: ")
-			for _, o := range usersResponse.Data {
-				fmt.Fprintf(cmd.OutOrStdout(), "-> User: %s\r\n", o.Id)
-				fmt.Fprintf(cmd.OutOrStdout(), "Email: %s\r\n", o.Email)
-			}
-			return nil
+			tableData := collections.Map(usersResponse.Data, func(i membershipclient.User) []string {
+				return []string{
+					i.Id,
+					i.Email,
+				}
+			})
+			tableData = collections.Prepend(tableData, []string{"ID", "Email"})
+			return pterm.DefaultTable.
+				WithHasHeader().
+				WithWriter(cmd.OutOrStdout()).
+				WithData(tableData).
+				Render()
 		}),
 	)
 }

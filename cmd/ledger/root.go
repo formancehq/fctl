@@ -10,6 +10,7 @@ import (
 
 func NewCommand() *cobra.Command {
 	return cmdbuilder.NewStackCommand("ledger",
+		cmdbuilder.WithAliases("l"),
 		cmdbuilder.WithPersistentStringFlag(internal.LedgerFlag, "default", "Specific ledger"),
 		cmdbuilder.WithShortDescription("Ledger management"),
 		cmdbuilder.WithChildCommands(

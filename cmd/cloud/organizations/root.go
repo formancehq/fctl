@@ -12,7 +12,7 @@ func NewCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("Organizations management"),
 		cmdbuilder.WithChildCommands(
 			NewListCommand(),
-			invitations.NewOrganizationsInvitationsCommand(),
+			invitations.NewCommand(),
 		),
 	)
 }

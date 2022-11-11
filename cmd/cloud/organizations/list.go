@@ -1,11 +1,12 @@
 package organizations
 
 import (
-	"fmt"
-
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/collections"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/internal/membership"
+	"github.com/formancehq/fctl/membershipclient"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -29,12 +30,17 @@ func NewListCommand() *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Organizations: ")
-			for _, o := range organizations.Data {
-				fmt.Fprintf(cmd.OutOrStdout(), "-> Organization: %s\r\n", o.Id)
-				PrintOrganization(cmd.OutOrStdout(), o)
-			}
-			return nil
+			tableData := collections.Map(organizations.Data, func(o membershipclient.Organization) []string {
+				return []string{
+					o.Id, o.Name, o.OwnerId,
+				}
+			})
+			tableData = collections.Prepend(tableData, []string{"ID", "Name", "Owner ID"})
+			return pterm.DefaultTable.
+				WithHasHeader().
+				WithWriter(cmd.OutOrStdout()).
+				WithData(tableData).
+				Render()
 		}),
 	)
 }

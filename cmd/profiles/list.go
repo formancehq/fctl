@@ -1,10 +1,10 @@
 package profiles
 
 import (
-	"fmt"
-
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/collections"
 	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -21,13 +21,19 @@ func NewListCommand() *cobra.Command {
 
 			currentProfileName := config.GetCurrentProfileName(cfg)
 
-			for p := range cfg.GetProfiles() {
-				fmt.Fprint(cmd.OutOrStdout(), "- ", p)
-				if currentProfileName == p {
-					fmt.Fprint(cmd.OutOrStdout(), " *")
+			profiles := collections.MapKeys(cfg.GetProfiles())
+			tableData := collections.Map(profiles, func(p string) []string {
+				isCurrent := "No"
+				if p == currentProfileName {
+					isCurrent = "Yes"
 				}
-				fmt.Fprintln(cmd.OutOrStdout())
-			}
-			return nil
+				return []string{p, isCurrent}
+			})
+			tableData = collections.Prepend(tableData, []string{"Name", "Active"})
+			return pterm.DefaultTable.
+				WithHasHeader().
+				WithWriter(cmd.OutOrStdout()).
+				WithData(tableData).
+				Render()
 		}))
 }

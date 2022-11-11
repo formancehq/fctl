@@ -5,13 +5,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewOrganizationsInvitationsCommand() *cobra.Command {
+func NewCommand() *cobra.Command {
 	return cmdbuilder.NewStackCommand("invitations",
 		cmdbuilder.WithAliases("invit", "inv", "i"),
 		cmdbuilder.WithShortDescription("Invitations management"),
 		cmdbuilder.WithChildCommands(
-			NewOrganizationsInvitationsSendCommand(),
-			NewOrganizationsInvitationsListCommand(),
+			NewSendCommand(),
+			NewListCommand(),
 		),
 	)
 }

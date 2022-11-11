@@ -1,21 +1,16 @@
 package invitations
 
 import (
-	"fmt"
-	"io"
+	"time"
 
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/collections"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/internal/membership"
 	"github.com/formancehq/fctl/membershipclient"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
-
-func PrintInvitation(out io.Writer, invitation membershipclient.Invitation) {
-	fmt.Fprintf(out, "Email: '%s'\r\n", invitation.UserEmail)
-	fmt.Fprintf(out, "CreatedAt: '%s'\r\n", invitation.CreationDate)
-	fmt.Fprintf(out, "Status: '%s'\r\n", invitation.Status)
-}
 
 func NewListCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("list",
@@ -36,14 +31,20 @@ func NewListCommand() *cobra.Command {
 				return err
 			}
 
-			for _, invitation := range listInvitationsResponse.Data {
-				if invitation.Status != "PENDING" {
-					continue
+			tableData := collections.Map(listInvitationsResponse.Data, func(i membershipclient.Invitation) []string {
+				return []string{
+					i.Id,
+					i.UserEmail,
+					i.Status,
+					i.CreationDate.Format(time.RFC3339),
 				}
-				fmt.Fprintf(cmd.OutOrStdout(), "Invitation '%s'\r\n", invitation.Id)
-				PrintInvitation(cmd.OutOrStdout(), invitation)
-			}
-			return nil
+			})
+			tableData = collections.Prepend(tableData, []string{"ID", "Email", "Status", "CreationDate"})
+			return pterm.DefaultTable.
+				WithHasHeader().
+				WithWriter(cmd.OutOrStdout()).
+				WithData(tableData).
+				Render()
 		}),
 	)
 }

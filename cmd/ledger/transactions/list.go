@@ -3,10 +3,14 @@ package transactions
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/collections"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	internal2 "github.com/formancehq/fctl/cmd/ledger/internal"
+	ledgerclient "github.com/numary/ledger/client"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -25,6 +29,7 @@ func NewLedgerTransactionsListCommand() *cobra.Command {
 	)
 
 	return cmdbuilder.NewCommand("list",
+		cmdbuilder.WithAliases("ls", "l"),
 		cmdbuilder.WithShortDescription("List transactions"),
 		cmdbuilder.WithStringFlag(listTransactionAccountFlag, "", "Filter on account"),
 		cmdbuilder.WithStringFlag(listTransactionDestinationFlag, "", "Filter on destination account"),
@@ -73,17 +78,25 @@ func NewLedgerTransactionsListCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if len(rsp.Cursor.Data) == 0 {
-				fmt.Fprintln(cmd.OutOrStdout(), "No transactions found.")
-				return nil
-			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Transactions: ")
-			for _, s := range rsp.Cursor.Data {
-				fmt.Fprintf(cmd.OutOrStdout(), "-> Transaction: %d\r\n", s.Txid)
-				internal2.PrintLedgerTransaction(cmd.OutOrStdout(), s)
-			}
-			return nil
+			tableData := collections.Map(rsp.Cursor.Data, func(tx ledgerclient.Transaction) []string {
+				return []string{
+					fmt.Sprintf("%d", tx.Txid),
+					func() string {
+						if tx.Reference == nil {
+							return ""
+						}
+						return *tx.Reference
+					}(),
+					tx.Timestamp.Format(time.RFC3339),
+				}
+			})
+			tableData = collections.Prepend(tableData, []string{"ID", "Reference", "Date"})
+			return pterm.DefaultTable.
+				WithHasHeader().
+				WithWriter(cmd.OutOrStdout()).
+				WithData(tableData).
+				Render()
 		}),
 	)
 }

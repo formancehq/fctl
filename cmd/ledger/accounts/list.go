@@ -1,17 +1,19 @@
 package accounts
 
 import (
-	"fmt"
-
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/collections"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	internal2 "github.com/formancehq/fctl/cmd/ledger/internal"
+	ledgerclient "github.com/numary/ledger/client"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 func NewLedgerAccountsListCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("list",
+		cmdbuilder.WithAliases("ls", "l"),
 		cmdbuilder.WithShortDescription("List accounts"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
@@ -30,22 +32,18 @@ func NewLedgerAccountsListCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if len(rsp.Cursor.Data) == 0 {
-				fmt.Fprintln(cmd.OutOrStdout(), "No accounts found.")
-				return nil
-			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Accounts: ")
-			for _, account := range rsp.Cursor.Data {
-				fmt.Fprintf(cmd.OutOrStdout(), "-> Account: %s\r\n", account.Address)
-				if account.Metadata != nil && len(*account.Metadata) > 0 {
-					fmt.Fprintln(cmd.OutOrStdout(), "Metadata:")
-					for k, v := range *account.Metadata {
-						fmt.Fprintf(cmd.OutOrStdout(), "\t- %s: %s\r\n", k, v)
-					}
+			tableData := collections.Map(rsp.Cursor.Data, func(account ledgerclient.Account) []string {
+				return []string{
+					account.Address,
 				}
-			}
-			return nil
+			})
+			tableData = collections.Prepend(tableData, []string{"Address"})
+			return pterm.DefaultTable.
+				WithHasHeader().
+				WithWriter(cmd.OutOrStdout()).
+				WithData(tableData).
+				Render()
 		}),
 	)
 }

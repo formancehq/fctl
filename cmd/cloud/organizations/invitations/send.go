@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewOrganizationsInvitationsSendCommand() *cobra.Command {
+func NewSendCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("send",
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithShortDescription("Invite a user by email"),
