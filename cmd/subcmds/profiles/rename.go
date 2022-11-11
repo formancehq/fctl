@@ -14,7 +14,7 @@ func newProfilesRenameCommand() *cobra.Command {
 			oldName := args[0]
 			newName := args[1]
 
-			config, err := config.GetConfig()
+			config, err := config.Get()
 			if err != nil {
 				return err
 			}

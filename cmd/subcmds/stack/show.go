@@ -21,7 +21,7 @@ func newSandboxShowCommand() *cobra.Command {
 		cmdbuilder.WithArgs(cobra.MaximumNArgs(1)),
 		cmdbuilder.WithStringFlag(stackNameFlag, "", ""),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			config, err := internal2.GetConfig()
+			config, err := internal2.Get()
 			if err != nil {
 				return err
 			}
@@ -30,7 +30,7 @@ func newSandboxShowCommand() *cobra.Command {
 				return errors.Wrap(err, "searching default organization")
 			}
 
-			apiClient, err := membership.NewMembershipClient(cmd, config)
+			apiClient, err := membership.NewClient(cmd.Context(), config)
 			if err != nil {
 				return err
 			}

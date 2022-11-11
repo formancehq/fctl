@@ -38,7 +38,7 @@ func NewLedgerTransactionsListCommand() *cobra.Command {
 		// SDK not generating correct requests
 		cmdbuilder.WithHiddenFlag(listTransactionsMetadataFlag),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.GetConfig()
+			cfg, err := config.Get()
 			if err != nil {
 				return err
 			}

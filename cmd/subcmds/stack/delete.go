@@ -24,7 +24,7 @@ func newSandboxDeleteCommand() *cobra.Command {
 			return viper.BindPFlags(cmd.Flags())
 		}),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.GetConfig()
+			cfg, err := config.Get()
 			if err != nil {
 				return err
 			}
@@ -33,7 +33,7 @@ func newSandboxDeleteCommand() *cobra.Command {
 				return errors.Wrap(err, "searching default organization")
 			}
 
-			apiClient, err := membership.NewMembershipClient(cmd, cfg)
+			apiClient, err := membership.NewClient(cmd.Context(), cfg)
 			if err != nil {
 				return err
 			}

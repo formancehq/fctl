@@ -1,15 +1,16 @@
-package auth
+package me
 
 import (
 	"github.com/formancehq/fctl/cmd/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/subcmds/auth/clients"
+	"github.com/formancehq/fctl/cmd/subcmds/cloud/me/invitations"
 	"github.com/spf13/cobra"
 )
 
 func NewCommand() *cobra.Command {
-	return cmdbuilder.NewStackCommand("auth",
+	return cmdbuilder.NewCommand("me",
 		cmdbuilder.WithChildCommands(
-			clients.NewAuthClientsCommand(),
+			invitations.NewCommand(),
+			NewInfoCommand(),
 		),
 	)
 }

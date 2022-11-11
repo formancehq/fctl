@@ -8,14 +8,14 @@ Name | Type | Description | Notes
 **OrganizationId** | **string** |  | 
 **UserEmail** | **string** |  | 
 **Status** | **string** |  | 
-**CreatedAt** | **time.Time** |  | 
+**CreationDate** | **time.Time** |  | 
 **UpdatedAt** | Pointer to **time.Time** |  | [optional] 
 
 ## Methods
 
 ### NewInvitation
 
-`func NewInvitation(id string, organizationId string, userEmail string, status string, createdAt time.Time, ) *Invitation`
+`func NewInvitation(id string, organizationId string, userEmail string, status string, creationDate time.Time, ) *Invitation`
 
 NewInvitation instantiates a new Invitation object
 This constructor will assign default values to properties that have it defined,
@@ -110,24 +110,24 @@ and a boolean to check if the value has been set.
 SetStatus sets Status field to given value.
 
 
-### GetCreatedAt
+### GetCreationDate
 
-`func (o *Invitation) GetCreatedAt() time.Time`
+`func (o *Invitation) GetCreationDate() time.Time`
 
-GetCreatedAt returns the CreatedAt field if non-nil, zero value otherwise.
+GetCreationDate returns the CreationDate field if non-nil, zero value otherwise.
 
-### GetCreatedAtOk
+### GetCreationDateOk
 
-`func (o *Invitation) GetCreatedAtOk() (*time.Time, bool)`
+`func (o *Invitation) GetCreationDateOk() (*time.Time, bool)`
 
-GetCreatedAtOk returns a tuple with the CreatedAt field if it's non-nil, zero value otherwise
+GetCreationDateOk returns a tuple with the CreationDate field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetCreatedAt
+### SetCreationDate
 
-`func (o *Invitation) SetCreatedAt(v time.Time)`
+`func (o *Invitation) SetCreationDate(v time.Time)`
 
-SetCreatedAt sets CreatedAt field to given value.
+SetCreationDate sets CreationDate field to given value.
 
 
 ### GetUpdatedAt

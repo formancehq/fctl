@@ -14,7 +14,7 @@ func newProfilesDeleteCommand() *cobra.Command {
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			config, err := config.GetConfig()
+			config, err := config.Get()
 			if err != nil {
 				return err
 			}

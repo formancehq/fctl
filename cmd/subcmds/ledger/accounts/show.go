@@ -33,7 +33,7 @@ func NewLedgerAccountsShowCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("display account"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.GetConfig()
+			cfg, err := config.Get()
 			if err != nil {
 				return err
 			}

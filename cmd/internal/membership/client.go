@@ -1,15 +1,15 @@
 package membership
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/formancehq/fctl/cmd/config"
 	"github.com/formancehq/fctl/cmd/internal/debugutil"
 	"github.com/formancehq/fctl/membershipclient"
-	"github.com/spf13/cobra"
 )
 
-func NewMembershipClient(cmd *cobra.Command, cfg *config.Config) (*membershipclient.APIClient, error) {
+func NewClient(ctx context.Context, cfg *config.Config) (*membershipclient.APIClient, error) {
 	profile, err := config.GetCurrentProfile(cfg)
 	if err != nil {
 		return nil, err
@@ -17,7 +17,7 @@ func NewMembershipClient(cmd *cobra.Command, cfg *config.Config) (*membershipcli
 
 	httpClient := debugutil.GetHttpClient()
 	configuration := membershipclient.NewConfiguration()
-	token, err := profile.GetToken(cmd.Context(), httpClient)
+	token, err := profile.GetToken(ctx, httpClient)
 	if err != nil {
 		return nil, err
 	}

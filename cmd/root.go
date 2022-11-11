@@ -9,8 +9,9 @@ import (
 	"github.com/formancehq/fctl/cmd/config"
 	"github.com/formancehq/fctl/cmd/subcmds"
 	"github.com/formancehq/fctl/cmd/subcmds/auth"
+	"github.com/formancehq/fctl/cmd/subcmds/cloud"
+	"github.com/formancehq/fctl/cmd/subcmds/cloud/me"
 	"github.com/formancehq/fctl/cmd/subcmds/ledger"
-	"github.com/formancehq/fctl/cmd/subcmds/organizations"
 	"github.com/formancehq/fctl/cmd/subcmds/payments"
 	"github.com/formancehq/fctl/cmd/subcmds/profiles"
 	"github.com/formancehq/fctl/cmd/subcmds/stack"
@@ -33,16 +34,16 @@ func newRootCommand() *cobra.Command {
 			return viper.BindPFlags(cmd.Flags())
 		}),
 		cmdbuilder.WithChildCommands(
-			ledger.NewLedgerCommand(),
-			payments.NewPaymentsCommand(),
-			profiles.NewProfilesCommand(),
-			stack.NewSandboxCommand(),
+			ledger.NewCommand(),
+			payments.NewCommand(),
+			profiles.NewCommand(),
+			stack.NewCommand(),
 			subcmds.NewUICommand(),
 			subcmds.NewVersionCommand(),
 			subcmds.NewLoginCommand(),
-			auth.NewAuthCommand(),
-			organizations.NewOrganizationsCommand(),
-			subcmds.NewWhoamiCommand(),
+			auth.NewCommand(),
+			cloud.NewCommand(),
+			me.NewInfoCommand(),
 		),
 		cmdbuilder.WithPersistentStringPFlag(config.ProfileFlag, "p", "", "config profile to use"),
 		cmdbuilder.WithPersistentStringPFlag(config.FileFlag, "c", fmt.Sprintf("%s/.formance/fctl.config", homedir), "Debug mode"),

@@ -15,12 +15,12 @@ func NewOrganizationsInvitationsSendCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("invite on organization by email"),
 		cmdbuilder.WithAliases("s"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.GetConfig()
+			cfg, err := config.Get()
 			if err != nil {
 				return err
 			}
 
-			apiClient, err := membership.NewMembershipClient(cmd, cfg)
+			apiClient, err := membership.NewClient(cmd.Context(), cfg)
 			if err != nil {
 				return err
 			}

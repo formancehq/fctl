@@ -9,16 +9,11 @@ import (
 
 	"github.com/formancehq/fctl/cmd/cmdbuilder"
 	internal2 "github.com/formancehq/fctl/cmd/config"
-	"github.com/formancehq/fctl/cmd/internal/debugutil"
+	"github.com/formancehq/fctl/cmd/internal/membership"
 	"github.com/spf13/cobra"
 	"github.com/zitadel/oidc/pkg/client/rp"
 	"github.com/zitadel/oidc/pkg/oidc"
 )
-
-func getRelyingParty(profile *internal2.Profile) (rp.RelyingParty, error) {
-	return rp.NewRelyingPartyOIDC(profile.GetMembershipURI(), internal2.AuthClient, "",
-		"", []string{"openid", "email", "offline_access", "supertoken"}, rp.WithHTTPClient(debugutil.GetHttpClient()))
-}
 
 func open(url string) error {
 	var (
@@ -79,7 +74,7 @@ func NewLoginCommand() *cobra.Command {
 		cmdbuilder.WithHiddenFlag(internal2.BaseServiceUriFlag),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			config, err := internal2.GetConfig()
+			config, err := internal2.Get()
 			if err != nil {
 				return err
 			}
@@ -89,7 +84,7 @@ func NewLoginCommand() *cobra.Command {
 				return err
 			}
 
-			relyingParty, err := getRelyingParty(profile)
+			relyingParty, err := membership.GetRelyingParty(profile)
 			if err != nil {
 				return err
 			}

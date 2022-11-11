@@ -4,21 +4,22 @@ import (
 	"fmt"
 
 	"github.com/formancehq/fctl/cmd/cmdbuilder"
-	internal2 "github.com/formancehq/fctl/cmd/config"
+	config "github.com/formancehq/fctl/cmd/config"
 	"github.com/formancehq/fctl/cmd/internal/membership"
 	"github.com/spf13/cobra"
 )
 
-func NewOrganizationsListCommand() *cobra.Command {
+func NewListCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("list",
+		cmdbuilder.WithAliases("ls", "l"),
 		cmdbuilder.WithShortDescription("list organizations"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			config, err := internal2.GetConfig()
+			cfg, err := config.Get()
 			if err != nil {
 				return err
 			}
 
-			apiClient, err := membership.NewMembershipClient(cmd, config)
+			apiClient, err := membership.NewClient(cmd.Context(), cfg)
 			if err != nil {
 				return err
 			}

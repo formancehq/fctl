@@ -11,7 +11,7 @@ func newProfilesUseCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("use",
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			config, err := config.GetConfig()
+			config, err := config.Get()
 			if err != nil {
 				return err
 			}

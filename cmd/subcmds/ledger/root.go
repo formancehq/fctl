@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewLedgerCommand() *cobra.Command {
+func NewCommand() *cobra.Command {
 	return cmdbuilder.NewStackCommand("ledger",
 		cmdbuilder.WithPersistentStringFlag(internal.LedgerFlag, "default", "Specific ledger"),
 		cmdbuilder.WithChildCommands(

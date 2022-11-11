@@ -344,15 +344,15 @@ components:
       example:
         data:
         - organizationId: organizationId
-          createdAt: 2000-01-23T04:56:07.000+00:00
           userEmail: userEmail
           id: id
+          creationDate: 2000-01-23T04:56:07.000+00:00
           status: pending
           updatedAt: 2000-01-23T04:56:07.000+00:00
         - organizationId: organizationId
-          createdAt: 2000-01-23T04:56:07.000+00:00
           userEmail: userEmail
           id: id
+          creationDate: 2000-01-23T04:56:07.000+00:00
           status: pending
           updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
@@ -365,9 +365,9 @@ components:
       example:
         data:
           organizationId: organizationId
-          createdAt: 2000-01-23T04:56:07.000+00:00
           userEmail: userEmail
           id: id
+          creationDate: 2000-01-23T04:56:07.000+00:00
           status: pending
           updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
@@ -377,9 +377,9 @@ components:
     Invitation:
       example:
         organizationId: organizationId
-        createdAt: 2000-01-23T04:56:07.000+00:00
         userEmail: userEmail
         id: id
+        creationDate: 2000-01-23T04:56:07.000+00:00
         status: pending
         updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
@@ -395,14 +395,14 @@ components:
           - accepted
           - rejected
           type: string
-        createdAt:
+        creationDate:
           format: date-time
           type: string
         updatedAt:
           format: date-time
           type: string
       required:
-      - createdAt
+      - creationDate
       - id
       - organizationId
       - status

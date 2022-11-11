@@ -13,7 +13,7 @@ import (
 
 func PrintInvitation(out io.Writer, invitation membershipclient.Invitation) {
 	fmt.Fprintf(out, "Email: '%s'\r\n", invitation.UserEmail)
-	fmt.Fprintf(out, "CreatedAt: '%s'\r\n", invitation.CreatedAt)
+	fmt.Fprintf(out, "CreatedAt: '%s'\r\n", invitation.CreationDate)
 	fmt.Fprintf(out, "Status: '%s'\r\n", invitation.Status)
 }
 
@@ -24,12 +24,12 @@ func NewOrganizationsInvitationsListCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("list invitations"),
 		cmdbuilder.WithAliases("s"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.GetConfig()
+			cfg, err := config.Get()
 			if err != nil {
 				return err
 			}
 
-			apiClient, err := membership.NewMembershipClient(cmd, cfg)
+			apiClient, err := membership.NewClient(cmd.Context(), cfg)
 			if err != nil {
 				return err
 			}
@@ -54,7 +54,6 @@ func NewOrganizationsInvitationsListCommand() *cobra.Command {
 				PrintInvitation(cmd.OutOrStdout(), invitation)
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "Invitation sent\r\n")
 			return nil
 		}),
 	)

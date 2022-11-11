@@ -96,7 +96,7 @@ func (c *Config) SetCurrentProfileName(s string) {
 	c.currentProfile = s
 }
 
-func GetConfig() (*Config, error) {
+func Get() (*Config, error) {
 	return GetConfigManager().Load()
 }
 
@@ -108,7 +108,7 @@ func GetCurrentProfileName() (string, error) {
 	if profile := viper.GetString(ProfileFlag); profile != "" {
 		return profile, nil
 	}
-	config, err := GetConfig()
+	config, err := Get()
 	if err != nil {
 		return "", err
 	}

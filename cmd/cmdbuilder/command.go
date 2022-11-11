@@ -22,7 +22,7 @@ func ResolveOrganizationID(cmd *cobra.Command, cfg *config.Config) (string, erro
 		return id, nil
 	}
 
-	client, err := membership.NewMembershipClient(cmd, cfg)
+	client, err := membership.NewClient(cmd.Context(), cfg)
 	if err != nil {
 		return "", err
 	}
@@ -51,7 +51,7 @@ func ResolveStackID(cmd *cobra.Command, cfg *config.Config, organizationID strin
 	if id := GetSelectedStack(); id != "" {
 		return id, nil
 	}
-	client, err := membership.NewMembershipClient(cmd, cfg)
+	client, err := membership.NewClient(cmd.Context(), cfg)
 	if err != nil {
 		return "", err
 	}

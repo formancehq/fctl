@@ -1,18 +1,19 @@
-package subcmds
+package me
 
 import (
 	"fmt"
 
 	"github.com/formancehq/fctl/cmd/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/config"
+	"github.com/formancehq/fctl/cmd/internal/membership"
 	"github.com/spf13/cobra"
 )
 
-func NewWhoamiCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("whoami",
+func NewInfoCommand() *cobra.Command {
+	return cmdbuilder.NewCommand("info",
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.GetConfig()
+			cfg, err := config.Get()
 			if err != nil {
 				return err
 			}
@@ -22,7 +23,7 @@ func NewWhoamiCommand() *cobra.Command {
 				return err
 			}
 
-			relyingParty, err := getRelyingParty(profile)
+			relyingParty, err := membership.GetRelyingParty(profile)
 			if err != nil {
 				return err
 			}

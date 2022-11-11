@@ -1,14 +1,17 @@
-package clients
+package invitations
 
 import (
+	"fmt"
+
 	"github.com/formancehq/fctl/cmd/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/config"
-	"github.com/formancehq/fctl/cmd/subcmds/auth/internal"
+	"github.com/formancehq/fctl/cmd/internal/membership"
 	"github.com/spf13/cobra"
 )
 
-func NewAuthClientsShowCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("show [CLIENT_ID]",
+func NewAcceptCommand() *cobra.Command {
+	return cmdbuilder.NewCommand("accept",
+		cmdbuilder.WithAliases("a"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()
@@ -16,17 +19,17 @@ func NewAuthClientsShowCommand() *cobra.Command {
 				return err
 			}
 
-			authClient, err := internal.NewAuthClient(cmd, cfg)
+			client, err := membership.NewClient(cmd.Context(), cfg)
 			if err != nil {
 				return err
 			}
 
-			response, _, err := authClient.DefaultApi.ReadClient(cmd.Context(), args[0]).Execute()
+			_, err = client.DefaultApi.AcceptInvitation(cmd.Context(), args[0]).Execute()
 			if err != nil {
 				return err
 			}
-			internal.PrintAuthClient(cmd.OutOrStdout(), *response.Data)
 
+			fmt.Println("Invitation accepted!")
 			return nil
 		}),
 	)

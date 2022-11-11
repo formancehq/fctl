@@ -21,7 +21,7 @@ type Invitation struct {
 	OrganizationId string `json:"organizationId"`
 	UserEmail string `json:"userEmail"`
 	Status string `json:"status"`
-	CreatedAt time.Time `json:"createdAt"`
+	CreationDate time.Time `json:"creationDate"`
 	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
 }
 
@@ -29,13 +29,13 @@ type Invitation struct {
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewInvitation(id string, organizationId string, userEmail string, status string, createdAt time.Time) *Invitation {
+func NewInvitation(id string, organizationId string, userEmail string, status string, creationDate time.Time) *Invitation {
 	this := Invitation{}
 	this.Id = id
 	this.OrganizationId = organizationId
 	this.UserEmail = userEmail
 	this.Status = status
-	this.CreatedAt = createdAt
+	this.CreationDate = creationDate
 	return &this
 }
 
@@ -143,28 +143,28 @@ func (o *Invitation) SetStatus(v string) {
 	o.Status = v
 }
 
-// GetCreatedAt returns the CreatedAt field value
-func (o *Invitation) GetCreatedAt() time.Time {
+// GetCreationDate returns the CreationDate field value
+func (o *Invitation) GetCreationDate() time.Time {
 	if o == nil {
 		var ret time.Time
 		return ret
 	}
 
-	return o.CreatedAt
+	return o.CreationDate
 }
 
-// GetCreatedAtOk returns a tuple with the CreatedAt field value
+// GetCreationDateOk returns a tuple with the CreationDate field value
 // and a boolean to check if the value has been set.
-func (o *Invitation) GetCreatedAtOk() (*time.Time, bool) {
+func (o *Invitation) GetCreationDateOk() (*time.Time, bool) {
 	if o == nil {
     return nil, false
 	}
-	return &o.CreatedAt, true
+	return &o.CreationDate, true
 }
 
-// SetCreatedAt sets field value
-func (o *Invitation) SetCreatedAt(v time.Time) {
-	o.CreatedAt = v
+// SetCreationDate sets field value
+func (o *Invitation) SetCreationDate(v time.Time) {
+	o.CreationDate = v
 }
 
 // GetUpdatedAt returns the UpdatedAt field value if set, zero value otherwise.
@@ -214,7 +214,7 @@ func (o Invitation) MarshalJSON() ([]byte, error) {
 		toSerialize["status"] = o.Status
 	}
 	if true {
-		toSerialize["createdAt"] = o.CreatedAt
+		toSerialize["creationDate"] = o.CreationDate
 	}
 	if !isNil(o.UpdatedAt) {
 		toSerialize["updatedAt"] = o.UpdatedAt

@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewPaymentsCommand() *cobra.Command {
+func NewCommand() *cobra.Command {
 	return cmdbuilder.NewStackCommand("payments",
 		cmdbuilder.WithChildCommands(
 			connectors.NewPaymentsConnectorsCommand(),

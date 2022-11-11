@@ -34,7 +34,7 @@ func NewLedgerTransactionsNumscriptCommand() *cobra.Command {
 		cmdbuilder.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
 		cmdbuilder.WithStringFlag(referenceFlag, "", "Reference to add to the generated transaction"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.GetConfig()
+			cfg, err := config.Get()
 			if err != nil {
 				return err
 			}

@@ -15,7 +15,7 @@ func NewLedgerAccountsListCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("list accounts"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.GetConfig()
+			cfg, err := config.Get()
 			if err != nil {
 				return err
 			}

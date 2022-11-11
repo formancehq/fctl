@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewProfilesCommand() *cobra.Command {
+func NewCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("profiles",
 		cmdbuilder.WithAliases("p"),
 		cmdbuilder.WithChildCommands(
