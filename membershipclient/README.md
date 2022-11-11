@@ -100,6 +100,7 @@ Class | Method | HTTP request | Description
  - [CreateOrganizationResponse](docs/CreateOrganizationResponse.md)
  - [CreateStackResponse](docs/CreateStackResponse.md)
  - [Invitation](docs/Invitation.md)
+ - [ListInvitationsResponse](docs/ListInvitationsResponse.md)
  - [ListOrganizationExpandedResponse](docs/ListOrganizationExpandedResponse.md)
  - [ListOrganizationExpandedResponseDataInner](docs/ListOrganizationExpandedResponseDataInner.md)
  - [ListOrganizationExpandedResponseDataInnerAllOf](docs/ListOrganizationExpandedResponseDataInnerAllOf.md)

@@ -111,3 +111,5 @@ func (v *NullableListOrganizationExpandedResponse) UnmarshalJSON(src []byte) err
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

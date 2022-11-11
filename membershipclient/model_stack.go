@@ -64,7 +64,7 @@ func (o *Stack) GetName() string {
 // and a boolean to check if the value has been set.
 func (o *Stack) GetNameOk() (*string, bool) {
 	if o == nil {
-		return nil, false
+    return nil, false
 	}
 	return &o.Name, true
 }
@@ -120,7 +120,7 @@ func (o *Stack) GetId() string {
 // and a boolean to check if the value has been set.
 func (o *Stack) GetIdOk() (*string, bool) {
 	if o == nil {
-		return nil, false
+    return nil, false
 	}
 	return &o.Id, true
 }
@@ -144,7 +144,7 @@ func (o *Stack) GetOrganizationId() string {
 // and a boolean to check if the value has been set.
 func (o *Stack) GetOrganizationIdOk() (*string, bool) {
 	if o == nil {
-		return nil, false
+    return nil, false
 	}
 	return &o.OrganizationId, true
 }
@@ -206,3 +206,5 @@ func (v *NullableStack) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

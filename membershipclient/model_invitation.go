@@ -17,20 +17,25 @@ import (
 
 // Invitation struct for Invitation
 type Invitation struct {
-	Id             *string    `json:"id,omitempty"`
-	OrganizationId *string    `json:"organizationId,omitempty"`
-	Email          *string    `json:"email,omitempty"`
-	Status         *string    `json:"status,omitempty"`
-	CreatedAt      *time.Time `json:"createdAt,omitempty"`
-	UpdatedAt      *time.Time `json:"updatedAt,omitempty"`
+	Id string `json:"id"`
+	OrganizationId string `json:"organizationId"`
+	UserEmail string `json:"userEmail"`
+	Status string `json:"status"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
 }
 
 // NewInvitation instantiates a new Invitation object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewInvitation() *Invitation {
+func NewInvitation(id string, organizationId string, userEmail string, status string, createdAt time.Time) *Invitation {
 	this := Invitation{}
+	this.Id = id
+	this.OrganizationId = organizationId
+	this.UserEmail = userEmail
+	this.Status = status
+	this.CreatedAt = createdAt
 	return &this
 }
 
@@ -42,164 +47,124 @@ func NewInvitationWithDefaults() *Invitation {
 	return &this
 }
 
-// GetId returns the Id field value if set, zero value otherwise.
+// GetId returns the Id field value
 func (o *Invitation) GetId() string {
-	if o == nil || isNil(o.Id) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.Id
+
+	return o.Id
 }
 
-// GetIdOk returns a tuple with the Id field value if set, nil otherwise
+// GetIdOk returns a tuple with the Id field value
 // and a boolean to check if the value has been set.
 func (o *Invitation) GetIdOk() (*string, bool) {
-	if o == nil || isNil(o.Id) {
-		return nil, false
+	if o == nil {
+    return nil, false
 	}
-	return o.Id, true
+	return &o.Id, true
 }
 
-// HasId returns a boolean if a field has been set.
-func (o *Invitation) HasId() bool {
-	if o != nil && !isNil(o.Id) {
-		return true
-	}
-
-	return false
-}
-
-// SetId gets a reference to the given string and assigns it to the Id field.
+// SetId sets field value
 func (o *Invitation) SetId(v string) {
-	o.Id = &v
+	o.Id = v
 }
 
-// GetOrganizationId returns the OrganizationId field value if set, zero value otherwise.
+// GetOrganizationId returns the OrganizationId field value
 func (o *Invitation) GetOrganizationId() string {
-	if o == nil || isNil(o.OrganizationId) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.OrganizationId
+
+	return o.OrganizationId
 }
 
-// GetOrganizationIdOk returns a tuple with the OrganizationId field value if set, nil otherwise
+// GetOrganizationIdOk returns a tuple with the OrganizationId field value
 // and a boolean to check if the value has been set.
 func (o *Invitation) GetOrganizationIdOk() (*string, bool) {
-	if o == nil || isNil(o.OrganizationId) {
-		return nil, false
+	if o == nil {
+    return nil, false
 	}
-	return o.OrganizationId, true
+	return &o.OrganizationId, true
 }
 
-// HasOrganizationId returns a boolean if a field has been set.
-func (o *Invitation) HasOrganizationId() bool {
-	if o != nil && !isNil(o.OrganizationId) {
-		return true
-	}
-
-	return false
-}
-
-// SetOrganizationId gets a reference to the given string and assigns it to the OrganizationId field.
+// SetOrganizationId sets field value
 func (o *Invitation) SetOrganizationId(v string) {
-	o.OrganizationId = &v
+	o.OrganizationId = v
 }
 
-// GetEmail returns the Email field value if set, zero value otherwise.
-func (o *Invitation) GetEmail() string {
-	if o == nil || isNil(o.Email) {
+// GetUserEmail returns the UserEmail field value
+func (o *Invitation) GetUserEmail() string {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.Email
+
+	return o.UserEmail
 }
 
-// GetEmailOk returns a tuple with the Email field value if set, nil otherwise
+// GetUserEmailOk returns a tuple with the UserEmail field value
 // and a boolean to check if the value has been set.
-func (o *Invitation) GetEmailOk() (*string, bool) {
-	if o == nil || isNil(o.Email) {
-		return nil, false
+func (o *Invitation) GetUserEmailOk() (*string, bool) {
+	if o == nil {
+    return nil, false
 	}
-	return o.Email, true
+	return &o.UserEmail, true
 }
 
-// HasEmail returns a boolean if a field has been set.
-func (o *Invitation) HasEmail() bool {
-	if o != nil && !isNil(o.Email) {
-		return true
-	}
-
-	return false
+// SetUserEmail sets field value
+func (o *Invitation) SetUserEmail(v string) {
+	o.UserEmail = v
 }
 
-// SetEmail gets a reference to the given string and assigns it to the Email field.
-func (o *Invitation) SetEmail(v string) {
-	o.Email = &v
-}
-
-// GetStatus returns the Status field value if set, zero value otherwise.
+// GetStatus returns the Status field value
 func (o *Invitation) GetStatus() string {
-	if o == nil || isNil(o.Status) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.Status
+
+	return o.Status
 }
 
-// GetStatusOk returns a tuple with the Status field value if set, nil otherwise
+// GetStatusOk returns a tuple with the Status field value
 // and a boolean to check if the value has been set.
 func (o *Invitation) GetStatusOk() (*string, bool) {
-	if o == nil || isNil(o.Status) {
-		return nil, false
+	if o == nil {
+    return nil, false
 	}
-	return o.Status, true
+	return &o.Status, true
 }
 
-// HasStatus returns a boolean if a field has been set.
-func (o *Invitation) HasStatus() bool {
-	if o != nil && !isNil(o.Status) {
-		return true
-	}
-
-	return false
-}
-
-// SetStatus gets a reference to the given string and assigns it to the Status field.
+// SetStatus sets field value
 func (o *Invitation) SetStatus(v string) {
-	o.Status = &v
+	o.Status = v
 }
 
-// GetCreatedAt returns the CreatedAt field value if set, zero value otherwise.
+// GetCreatedAt returns the CreatedAt field value
 func (o *Invitation) GetCreatedAt() time.Time {
-	if o == nil || isNil(o.CreatedAt) {
+	if o == nil {
 		var ret time.Time
 		return ret
 	}
-	return *o.CreatedAt
+
+	return o.CreatedAt
 }
 
-// GetCreatedAtOk returns a tuple with the CreatedAt field value if set, nil otherwise
+// GetCreatedAtOk returns a tuple with the CreatedAt field value
 // and a boolean to check if the value has been set.
 func (o *Invitation) GetCreatedAtOk() (*time.Time, bool) {
-	if o == nil || isNil(o.CreatedAt) {
-		return nil, false
+	if o == nil {
+    return nil, false
 	}
-	return o.CreatedAt, true
+	return &o.CreatedAt, true
 }
 
-// HasCreatedAt returns a boolean if a field has been set.
-func (o *Invitation) HasCreatedAt() bool {
-	if o != nil && !isNil(o.CreatedAt) {
-		return true
-	}
-
-	return false
-}
-
-// SetCreatedAt gets a reference to the given time.Time and assigns it to the CreatedAt field.
+// SetCreatedAt sets field value
 func (o *Invitation) SetCreatedAt(v time.Time) {
-	o.CreatedAt = &v
+	o.CreatedAt = v
 }
 
 // GetUpdatedAt returns the UpdatedAt field value if set, zero value otherwise.
@@ -236,19 +201,19 @@ func (o *Invitation) SetUpdatedAt(v time.Time) {
 
 func (o Invitation) MarshalJSON() ([]byte, error) {
 	toSerialize := map[string]interface{}{}
-	if !isNil(o.Id) {
+	if true {
 		toSerialize["id"] = o.Id
 	}
-	if !isNil(o.OrganizationId) {
+	if true {
 		toSerialize["organizationId"] = o.OrganizationId
 	}
-	if !isNil(o.Email) {
-		toSerialize["email"] = o.Email
+	if true {
+		toSerialize["userEmail"] = o.UserEmail
 	}
-	if !isNil(o.Status) {
+	if true {
 		toSerialize["status"] = o.Status
 	}
-	if !isNil(o.CreatedAt) {
+	if true {
 		toSerialize["createdAt"] = o.CreatedAt
 	}
 	if !isNil(o.UpdatedAt) {
@@ -292,3 +257,5 @@ func (v *NullableInvitation) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

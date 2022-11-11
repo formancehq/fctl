@@ -341,16 +341,33 @@ components:
     ReadStackResponse:
       $ref: '#/components/schemas/CreateStackResponse'
     ListInvitationsResponse:
-      items:
-        $ref: '#/components/schemas/Invitation'
-      type: array
+      example:
+        data:
+        - organizationId: organizationId
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          userEmail: userEmail
+          id: id
+          status: pending
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        - organizationId: organizationId
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          userEmail: userEmail
+          id: id
+          status: pending
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/Invitation'
+          type: array
+      type: object
     CreateInvitationResponse:
       example:
         data:
           organizationId: organizationId
           createdAt: 2000-01-23T04:56:07.000+00:00
+          userEmail: userEmail
           id: id
-          email: email
           status: pending
           updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
@@ -361,8 +378,8 @@ components:
       example:
         organizationId: organizationId
         createdAt: 2000-01-23T04:56:07.000+00:00
+        userEmail: userEmail
         id: id
-        email: email
         status: pending
         updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
@@ -370,7 +387,7 @@ components:
           type: string
         organizationId:
           type: string
-        email:
+        userEmail:
           type: string
         status:
           enum:
@@ -384,6 +401,12 @@ components:
         updatedAt:
           format: date-time
           type: string
+      required:
+      - createdAt
+      - id
+      - organizationId
+      - status
+      - userEmail
       type: object
     ListOrganizationExpandedResponse:
       example:

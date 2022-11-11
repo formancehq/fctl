@@ -9,6 +9,7 @@ func newOrganizationsInvitationsCommand() *cobra.Command {
 		withAliases("invit", "inv", "i"),
 		withChildCommands(
 			newOrganizationsInvitationsSendCommand(),
+			newOrganizationsInvitationsListCommand(),
 		),
 	)
 }

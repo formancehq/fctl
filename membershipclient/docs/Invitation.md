@@ -4,18 +4,18 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Id** | Pointer to **string** |  | [optional] 
-**OrganizationId** | Pointer to **string** |  | [optional] 
-**Email** | Pointer to **string** |  | [optional] 
-**Status** | Pointer to **string** |  | [optional] 
-**CreatedAt** | Pointer to **time.Time** |  | [optional] 
+**Id** | **string** |  | 
+**OrganizationId** | **string** |  | 
+**UserEmail** | **string** |  | 
+**Status** | **string** |  | 
+**CreatedAt** | **time.Time** |  | 
 **UpdatedAt** | Pointer to **time.Time** |  | [optional] 
 
 ## Methods
 
 ### NewInvitation
 
-`func NewInvitation() *Invitation`
+`func NewInvitation(id string, organizationId string, userEmail string, status string, createdAt time.Time, ) *Invitation`
 
 NewInvitation instantiates a new Invitation object
 This constructor will assign default values to properties that have it defined,
@@ -49,11 +49,6 @@ and a boolean to check if the value has been set.
 
 SetId sets Id field to given value.
 
-### HasId
-
-`func (o *Invitation) HasId() bool`
-
-HasId returns a boolean if a field has been set.
 
 ### GetOrganizationId
 
@@ -74,36 +69,26 @@ and a boolean to check if the value has been set.
 
 SetOrganizationId sets OrganizationId field to given value.
 
-### HasOrganizationId
 
-`func (o *Invitation) HasOrganizationId() bool`
+### GetUserEmail
 
-HasOrganizationId returns a boolean if a field has been set.
+`func (o *Invitation) GetUserEmail() string`
 
-### GetEmail
+GetUserEmail returns the UserEmail field if non-nil, zero value otherwise.
 
-`func (o *Invitation) GetEmail() string`
+### GetUserEmailOk
 
-GetEmail returns the Email field if non-nil, zero value otherwise.
+`func (o *Invitation) GetUserEmailOk() (*string, bool)`
 
-### GetEmailOk
-
-`func (o *Invitation) GetEmailOk() (*string, bool)`
-
-GetEmailOk returns a tuple with the Email field if it's non-nil, zero value otherwise
+GetUserEmailOk returns a tuple with the UserEmail field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetEmail
+### SetUserEmail
 
-`func (o *Invitation) SetEmail(v string)`
+`func (o *Invitation) SetUserEmail(v string)`
 
-SetEmail sets Email field to given value.
+SetUserEmail sets UserEmail field to given value.
 
-### HasEmail
-
-`func (o *Invitation) HasEmail() bool`
-
-HasEmail returns a boolean if a field has been set.
 
 ### GetStatus
 
@@ -124,11 +109,6 @@ and a boolean to check if the value has been set.
 
 SetStatus sets Status field to given value.
 
-### HasStatus
-
-`func (o *Invitation) HasStatus() bool`
-
-HasStatus returns a boolean if a field has been set.
 
 ### GetCreatedAt
 
@@ -149,11 +129,6 @@ and a boolean to check if the value has been set.
 
 SetCreatedAt sets CreatedAt field to given value.
 
-### HasCreatedAt
-
-`func (o *Invitation) HasCreatedAt() bool`
-
-HasCreatedAt returns a boolean if a field has been set.
 
 ### GetUpdatedAt
 

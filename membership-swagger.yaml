@@ -328,9 +328,12 @@ components:
     ReadStackResponse:
       $ref: '#/components/schemas/CreateStackResponse'
     ListInvitationsResponse:
-      type: array
-      items:
-        $ref: '#/components/schemas/Invitation'
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Invitation'
     CreateInvitationResponse:
       type: object
       properties:
@@ -343,7 +346,7 @@ components:
           type: string
         organizationId:
           type: string
-        email:
+        userEmail:
           type: string
         status:
           type: string
@@ -357,6 +360,12 @@ components:
         updatedAt:
           type: string
           format: date-time
+      required:
+      - createdAt
+      - status
+      - userEmail
+      - organizationId
+      - id
     ListOrganizationExpandedResponse:
       type: object
       properties:
@@ -364,10 +373,10 @@ components:
           type: array
           items:
             allOf:
-              - $ref: '#/components/schemas/Organization'
-              - type: object
-                properties:
-                  totalStacks:
-                    type: integer
-                  totalUsers:
-                    type: integer
+            - $ref: '#/components/schemas/Organization'
+            - type: object
+              properties:
+                totalStacks:
+                  type: integer
+                totalUsers:
+                  type: integer

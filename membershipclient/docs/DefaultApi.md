@@ -494,7 +494,7 @@ Name | Type | Description  | Notes
 
 ## ListInvitations
 
-> []Invitation ListInvitations(ctx).Execute()
+> ListInvitationsResponse ListInvitations(ctx).Execute()
 
 List invitations of the user
 
@@ -519,7 +519,7 @@ func main() {
         fmt.Fprintf(os.Stderr, "Error when calling `DefaultApi.ListInvitations``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
-    // response from `ListInvitations`: []Invitation
+    // response from `ListInvitations`: ListInvitationsResponse
     fmt.Fprintf(os.Stdout, "Response from `DefaultApi.ListInvitations`: %v\n", resp)
 }
 ```
@@ -535,7 +535,7 @@ Other parameters are passed through a pointer to a apiListInvitationsRequest str
 
 ### Return type
 
-[**[]Invitation**](Invitation.md)
+[**ListInvitationsResponse**](ListInvitationsResponse.md)
 
 ### Authorization
 
@@ -553,7 +553,7 @@ Other parameters are passed through a pointer to a apiListInvitationsRequest str
 
 ## ListOrganizationInvitations
 
-> []Invitation ListOrganizationInvitations(ctx, organizationId).Execute()
+> ListInvitationsResponse ListOrganizationInvitations(ctx, organizationId).Execute()
 
 List invitations of the organization
 
@@ -579,7 +579,7 @@ func main() {
         fmt.Fprintf(os.Stderr, "Error when calling `DefaultApi.ListOrganizationInvitations``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
-    // response from `ListOrganizationInvitations`: []Invitation
+    // response from `ListOrganizationInvitations`: ListInvitationsResponse
     fmt.Fprintf(os.Stdout, "Response from `DefaultApi.ListOrganizationInvitations`: %v\n", resp)
 }
 ```
@@ -603,7 +603,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**[]Invitation**](Invitation.md)
+[**ListInvitationsResponse**](ListInvitationsResponse.md)
 
 ### Authorization
 
