@@ -105,7 +105,6 @@ func NewPromptCommand() *cobra.Command {
 			promptColor := goprompt.Blue
 			history := make([]string, 0)
 
-		l:
 			for {
 				if err := viper.BindPFlags(cmd.Flags()); err != nil {
 					panic(err)
@@ -130,8 +129,6 @@ func NewPromptCommand() *cobra.Command {
 					goprompt.OptionPrefixTextColor(promptColor),
 					goprompt.OptionHistory(history),
 					goprompt.OptionCompletionOnDown()); t {
-				case "q", "quit", "exit":
-					break l
 				case "":
 					promptColor = goprompt.Blue
 				default:
@@ -145,8 +142,6 @@ func NewPromptCommand() *cobra.Command {
 					history = append(history, t)
 				}
 			}
-
-			return nil
 		}),
 	)
 }
