@@ -65,10 +65,10 @@ func startPrompt(ctx context.Context, prompt string, opts ...goprompt.Option) st
 
 		suggestions := make([]goprompt.Suggest, 0)
 		scanner := bufio.NewScanner(subCommandOut)
-		// optionally, resize scanner's capacity for lines over 64K, see next example
+
 		for scanner.Scan() {
 			line := scanner.Text()
-			if strings.HasPrefix(line, ":") {
+			if strings.HasPrefix(line, ":") || strings.HasPrefix(line, "[Debug]") {
 				break
 			}
 			parts := strings.SplitN(line, "\t", 2)

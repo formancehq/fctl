@@ -31,7 +31,7 @@ func NewSetMetadataCommand() *cobra.Command {
 				return err
 			}
 
-			transactionID, err := internal.TransactionIDOrLast(cmd.Context(), ledgerClient,
+			transactionID, err := internal.TransactionIDOrLastN(cmd.Context(), ledgerClient,
 				viper.GetString(internal.LedgerFlag), args[0])
 			if err != nil {
 				return err

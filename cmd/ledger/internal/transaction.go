@@ -4,12 +4,22 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"strings"
 
 	ledgerclient "github.com/numary/ledger/client"
 )
 
-func TransactionIDOrLast(ctx context.Context, ledgerClient *ledgerclient.APIClient, ledger, id string) (int64, error) {
-	if id == "last" {
+func TransactionIDOrLastN(ctx context.Context, ledgerClient *ledgerclient.APIClient, ledger, id string) (int64, error) {
+	if strings.HasPrefix(id, "last") {
+		id = strings.TrimPrefix(id, "last")
+		sub := int64(0)
+		if id != "" {
+			var err error
+			sub, err = strconv.ParseInt(id, 10, 32)
+			if err != nil {
+				return 0, err
+			}
+		}
 		response, _, err := ledgerClient.TransactionsApi.
 			ListTransactions(ctx, ledger).
 			PageSize(1).
@@ -20,7 +30,7 @@ func TransactionIDOrLast(ctx context.Context, ledgerClient *ledgerclient.APIClie
 		if len(response.Cursor.Data) == 0 {
 			return 0, errors.New("no transaction found")
 		}
-		return int64(response.Cursor.Data[0].Txid), nil
+		return int64(response.Cursor.Data[0].Txid) + sub, nil
 	}
 
 	return strconv.ParseInt(id, 10, 32)

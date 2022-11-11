@@ -25,7 +25,7 @@ func NewRevertCommand() *cobra.Command {
 			}
 
 			ledger := viper.GetString(internal.LedgerFlag)
-			txId, err := internal.TransactionIDOrLast(cmd.Context(), ledgerClient, ledger, args[0])
+			txId, err := internal.TransactionIDOrLastN(cmd.Context(), ledgerClient, ledger, args[0])
 			if err != nil {
 				return err
 			}

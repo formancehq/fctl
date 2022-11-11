@@ -13,6 +13,7 @@ func NewShowCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("show [TXID]",
 		cmdbuilder.WithShortDescription("Print a transaction"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
+		cmdbuilder.WithAliases("sh"),
 		cmdbuilder.WithValidArgs("last"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()
@@ -26,7 +27,7 @@ func NewShowCommand() *cobra.Command {
 			}
 
 			ledger := viper.GetString(internal.LedgerFlag)
-			txId, err := internal.TransactionIDOrLast(cmd.Context(), ledgerClient, ledger, args[0])
+			txId, err := internal.TransactionIDOrLastN(cmd.Context(), ledgerClient, ledger, args[0])
 			if err != nil {
 				return err
 			}

@@ -39,7 +39,7 @@ func NewListCommand() *cobra.Command {
 		cmdbuilder.WithStringFlag(listTransactionSourceFlag, "", "Filter on source account"),
 		cmdbuilder.WithStringFlag(listTransactionsReferenceFlag, "", "Filter on reference"),
 		cmdbuilder.WithStringSliceFlag(listTransactionsMetadataFlag, []string{}, "Filter transactions with metadata"),
-		cmdbuilder.WithIntFlag(listTransactionsPageSizeFlag, 15, "Page size"),
+		cmdbuilder.WithIntFlag(listTransactionsPageSizeFlag, 5, "Page size"),
 		// SDK not generating correct requests
 		cmdbuilder.WithHiddenFlag(listTransactionsMetadataFlag),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
