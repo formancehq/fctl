@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newProfilesListCommand() *cobra.Command {
+func NewListCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("list",
 		cmdbuilder.WithAliases("l"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {

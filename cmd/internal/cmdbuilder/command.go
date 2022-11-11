@@ -24,6 +24,14 @@ func ResolveOrganizationID(ctx context.Context, cfg *config.Config) (string, err
 		return id, nil
 	}
 
+	currentProfile, err := config.GetCurrentProfile(cfg)
+	if err != nil {
+		return "", err
+	}
+	if defaultOrganization := currentProfile.GetDefaultOrganization(); defaultOrganization != "" {
+		return defaultOrganization, nil
+	}
+
 	client, err := membership.NewClient(ctx, cfg)
 	if err != nil {
 		return "", err

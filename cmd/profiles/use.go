@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newProfilesUseCommand() *cobra.Command {
+func NewUseCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("use",
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {

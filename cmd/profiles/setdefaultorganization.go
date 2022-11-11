@@ -1,32 +1,29 @@
 package profiles
 
 import (
-	"fmt"
-
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
-func NewDeleteCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("delete",
+func NewSetDefaultOrganizationCommand() *cobra.Command {
+	return cmdbuilder.NewCommand("set-default-organization",
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
+		cmdbuilder.WithAliases("sdo"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-
-			config, err := config.Get()
+			cfg, err := config.Get()
 			if err != nil {
 				return err
 			}
-			if err := config.DeleteProfile(args[0]); err != nil {
+
+			profile, err := config.GetCurrentProfile(cfg)
+			if err != nil {
 				return err
 			}
+			profile.SetDefaultOrganization(args[0])
 
-			if err := config.Persist(); err != nil {
-				return errors.Wrap(err, "updating config")
-			}
-			fmt.Fprintln(cmd.OutOrStdout(), "Profile deleted.")
-			return nil
+			return errors.Wrap(cfg.Persist(), "Updating config")
 		}),
 	)
 }

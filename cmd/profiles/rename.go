@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newProfilesRenameCommand() *cobra.Command {
+func NewRenameCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("rename",
 		cmdbuilder.WithArgs(cobra.ExactArgs(2)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {

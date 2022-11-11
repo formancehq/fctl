@@ -9,11 +9,12 @@ func NewCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("profiles",
 		cmdbuilder.WithAliases("p"),
 		cmdbuilder.WithChildCommands(
-			newProfilesDeleteCommand(),
-			newProfilesListCommand(),
-			newProfilesRenameCommand(),
-			newProfilesShowCommand(),
-			newProfilesUseCommand(),
+			NewDeleteCommand(),
+			NewListCommand(),
+			NewRenameCommand(),
+			NewShowCommand(),
+			NewUseCommand(),
+			NewSetDefaultOrganizationCommand(),
 		),
 	)
 }

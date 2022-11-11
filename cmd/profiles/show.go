@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newProfilesShowCommand() *cobra.Command {
+func NewShowCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("show",
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
@@ -24,6 +24,7 @@ func newProfilesShowCommand() *cobra.Command {
 			}
 			fmt.Fprintln(cmd.OutOrStdout(), "Domain:", p.GetBaseServiceURI())
 			fmt.Fprintln(cmd.OutOrStdout(), "Membership:", p.GetMembershipURI())
+			fmt.Fprintln(cmd.OutOrStdout(), "Default organization:", p.GetDefaultOrganization())
 			return nil
 		}),
 	)

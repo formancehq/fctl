@@ -21,17 +21,18 @@ import (
 const AuthClient = "fctl"
 
 type persistedProfile struct {
-	MembershipURI  string        `json:"membershipURI"`
-	BaseServiceURI string        `json:"baseServiceURI"`
-	Token          *oauth2.Token `json:"token"`
+	MembershipURI       string        `json:"membershipURI"`
+	BaseServiceURI      string        `json:"baseServiceURI"`
+	Token               *oauth2.Token `json:"token"`
+	DefaultOrganization string        `json:"defaultOrganization"`
 }
 
 type Profile struct {
-	membershipURI  string
-	baseServiceURI string
-	token          *oauth2.Token
-
-	config *Config
+	membershipURI       string
+	baseServiceURI      string
+	token               *oauth2.Token
+	defaultOrganization string
+	config              *Config
 }
 
 func (p *Profile) ServicesBaseUrl(organization, stack string) *url.URL {
@@ -56,9 +57,10 @@ func (p *Profile) UpdateToken(token *oauth2.Token) {
 
 func (p *Profile) MarshalJSON() ([]byte, error) {
 	return json.Marshal(persistedProfile{
-		MembershipURI:  p.membershipURI,
-		BaseServiceURI: p.baseServiceURI,
-		Token:          p.token,
+		MembershipURI:       p.membershipURI,
+		BaseServiceURI:      p.baseServiceURI,
+		Token:               p.token,
+		DefaultOrganization: p.defaultOrganization,
 	})
 }
 
@@ -68,9 +70,10 @@ func (p *Profile) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	*p = Profile{
-		membershipURI:  cfg.MembershipURI,
-		baseServiceURI: cfg.BaseServiceURI,
-		token:          cfg.Token,
+		membershipURI:       cfg.MembershipURI,
+		baseServiceURI:      cfg.BaseServiceURI,
+		token:               cfg.Token,
+		defaultOrganization: cfg.DefaultOrganization,
 	}
 	return nil
 }
@@ -81,6 +84,10 @@ func (p *Profile) GetMembershipURI() string {
 
 func (p *Profile) GetBaseServiceURI() string {
 	return p.baseServiceURI
+}
+
+func (p *Profile) GetDefaultOrganization() string {
+	return p.defaultOrganization
 }
 
 func (p *Profile) GetToken(ctx context.Context, httpClient *http.Client) (*oauth2.Token, error) {
@@ -209,6 +216,10 @@ func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, or
 	}
 
 	return stackToken.AccessToken, nil
+}
+
+func (p *Profile) SetDefaultOrganization(o string) {
+	p.defaultOrganization = o
 }
 
 type CurrentProfile Profile
