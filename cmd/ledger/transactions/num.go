@@ -98,13 +98,9 @@ func NewLedgerTransactionsNumscriptCommand() *cobra.Command {
 
 			reference := viper.GetString(referenceFlag)
 
-			metadata := map[string]interface{}{}
-			for _, v := range viper.GetStringSlice(metadataFlag) {
-				parts := strings.SplitN(v, "=", 2)
-				if len(parts) == 1 {
-					return fmt.Errorf("malformed metadata: %s", v)
-				}
-				metadata[parts[0]] = parts[1]
+			metadata, err := internal.ParseMetadata(viper.GetStringSlice(metadataFlag))
+			if err != nil {
+				return err
 			}
 
 			ledger := viper.GetString(internal.LedgerFlag)

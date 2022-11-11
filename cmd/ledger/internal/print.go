@@ -38,7 +38,6 @@ func PrintTransaction(out io.Writer, transaction ledgerclient.Transaction) error
 	tableData = append(tableData, []string{pterm.LightCyan("Reference"), cmdbuilder.StringPointerToString(transaction.Reference)})
 	tableData = append(tableData, []string{pterm.LightCyan("Date"), transaction.Timestamp.Format(time.RFC3339)})
 
-	cmdbuilder.Highlightln(out, "Information :")
 	if err := pterm.DefaultTable.
 		WithWriter(out).
 		WithData(tableData).

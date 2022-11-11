@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func NewLedgerBalancesCommand() *cobra.Command {
+func NewBalancesCommand() *cobra.Command {
 	const (
 		afterFlag   = "after"
 		addressFlag = "address"

@@ -14,8 +14,9 @@ func NewCommand() *cobra.Command {
 		cmdbuilder.WithPersistentStringFlag(internal.LedgerFlag, "default", "Specific ledger"),
 		cmdbuilder.WithShortDescription("Ledger management"),
 		cmdbuilder.WithChildCommands(
+			NewBalancesCommand(),
+			NewSendCommand(),
 			transactions.NewLedgerTransactionsCommand(),
-			NewLedgerBalancesCommand(),
 			accounts.NewLedgerAccountsCommand(),
 		),
 	)
