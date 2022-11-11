@@ -1,7 +1,7 @@
 package membership
 
 import (
-	"github.com/formancehq/fctl/cmd/config"
+	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/internal/debugutil"
 	"github.com/zitadel/oidc/pkg/client/rp"
 )

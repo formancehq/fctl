@@ -5,16 +5,15 @@ import (
 	"os"
 	"strings"
 
-	"github.com/formancehq/fctl/cmd/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/config"
-	"github.com/formancehq/fctl/cmd/subcmds"
-	"github.com/formancehq/fctl/cmd/subcmds/auth"
-	"github.com/formancehq/fctl/cmd/subcmds/cloud"
-	"github.com/formancehq/fctl/cmd/subcmds/cloud/me"
-	"github.com/formancehq/fctl/cmd/subcmds/ledger"
-	"github.com/formancehq/fctl/cmd/subcmds/payments"
-	"github.com/formancehq/fctl/cmd/subcmds/profiles"
-	"github.com/formancehq/fctl/cmd/subcmds/stack"
+	"github.com/formancehq/fctl/cmd/auth"
+	"github.com/formancehq/fctl/cmd/cloud"
+	"github.com/formancehq/fctl/cmd/cloud/me"
+	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/formancehq/fctl/cmd/ledger"
+	"github.com/formancehq/fctl/cmd/payments"
+	"github.com/formancehq/fctl/cmd/profiles"
+	"github.com/formancehq/fctl/cmd/stack"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -38,9 +37,9 @@ func newRootCommand() *cobra.Command {
 			payments.NewCommand(),
 			profiles.NewCommand(),
 			stack.NewCommand(),
-			subcmds.NewUICommand(),
-			subcmds.NewVersionCommand(),
-			subcmds.NewLoginCommand(),
+			NewUICommand(),
+			NewVersionCommand(),
+			NewLoginCommand(),
 			auth.NewCommand(),
 			cloud.NewCommand(),
 			me.NewInfoCommand(),

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 
-	"github.com/formancehq/fctl/cmd/config"
+	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/spf13/viper"
 )
 

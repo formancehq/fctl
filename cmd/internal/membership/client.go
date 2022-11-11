@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/formancehq/fctl/cmd/config"
+	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/internal/debugutil"
 	"github.com/formancehq/fctl/membershipclient"
 )
