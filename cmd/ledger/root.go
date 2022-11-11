@@ -17,6 +17,7 @@ func NewCommand() *cobra.Command {
 			NewBalancesCommand(),
 			NewSendCommand(),
 			NewStatsCommand(),
+			NewServerInfoCommand(),
 			transactions.NewLedgerTransactionsCommand(),
 			accounts.NewLedgerAccountsCommand(),
 		),
