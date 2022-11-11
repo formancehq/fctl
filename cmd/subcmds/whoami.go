@@ -1,0 +1,41 @@
+package subcmds
+
+import (
+	"fmt"
+
+	"github.com/formancehq/fctl/cmd/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/config"
+	"github.com/spf13/cobra"
+)
+
+func NewWhoamiCommand() *cobra.Command {
+	return cmdbuilder.NewCommand("whoami",
+		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
+
+			cfg, err := config.GetConfig()
+			if err != nil {
+				return err
+			}
+
+			profile, err := config.GetCurrentProfile(cfg)
+			if err != nil {
+				return err
+			}
+
+			relyingParty, err := getRelyingParty(profile)
+			if err != nil {
+				return err
+			}
+
+			userInfo, err := profile.GetUserInfo(cmd.Context(), relyingParty)
+			if err != nil {
+				return err
+			}
+
+			fmt.Fprintf(cmd.OutOrStdout(), "Subject: %s\r\n", userInfo.GetSubject())
+			fmt.Fprintf(cmd.OutOrStdout(), "Email: %s\r\n", userInfo.GetEmail())
+
+			return nil
+		}),
+	)
+}
