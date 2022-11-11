@@ -12,6 +12,7 @@ import (
 func NewDeleteCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("delete",
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
+		cmdbuilder.WithShortDescription("Delete a profile"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
 			config, err := config.Get()

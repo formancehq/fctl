@@ -11,6 +11,7 @@ import (
 func NewCommand() *cobra.Command {
 	return cmdbuilder.NewStackCommand("ledger",
 		cmdbuilder.WithPersistentStringFlag(internal.LedgerFlag, "default", "Specific ledger"),
+		cmdbuilder.WithShortDescription("Ledger management"),
 		cmdbuilder.WithChildCommands(
 			transactions.NewLedgerTransactionsCommand(),
 			NewLedgerBalancesCommand(),

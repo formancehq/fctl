@@ -9,6 +9,7 @@ import (
 
 func NewCommand() *cobra.Command {
 	return cmdbuilder.NewStackCommand("auth",
+		cmdbuilder.WithShortDescription("Auth server management"),
 		cmdbuilder.WithChildCommands(
 			clients.NewCommand(),
 			users.NewCommand(),

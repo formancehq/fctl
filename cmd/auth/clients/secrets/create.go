@@ -11,6 +11,7 @@ import (
 func NewCreateCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("create [CLIENT_ID] [SECRET_NAME]",
 		cmdbuilder.WithArgs(cobra.ExactArgs(2)),
+		cmdbuilder.WithShortDescription("Create secret"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()
 			if err != nil {

@@ -11,6 +11,7 @@ import (
 
 func NewInfoCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("info",
+		cmdbuilder.WithShortDescription("Display user information"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
 			cfg, err := config.Get()
@@ -18,10 +19,7 @@ func NewInfoCommand() *cobra.Command {
 				return err
 			}
 
-			profile, err := config.GetCurrentProfile(cfg)
-			if err != nil {
-				return err
-			}
+			profile := config.GetCurrentProfile(cfg)
 
 			relyingParty, err := membership.GetRelyingParty(profile)
 			if err != nil {

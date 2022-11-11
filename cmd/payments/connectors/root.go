@@ -8,7 +8,7 @@ import (
 
 func NewPaymentsConnectorsCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("connectors",
-		cmdbuilder.WithShortDescription("Handle payments service connectors"),
+		cmdbuilder.WithShortDescription("Connectors management"),
 		cmdbuilder.WithChildCommands(
 			NewPaymentsConnectorsGetConfigCommand(),
 			install.NewPaymentsConnectorsInstallCommand(),

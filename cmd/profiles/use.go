@@ -10,6 +10,7 @@ import (
 func NewUseCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("use",
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
+		cmdbuilder.WithShortDescription("Use profile"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			config, err := config.Get()
 			if err != nil {

@@ -8,6 +8,7 @@ import (
 func NewOrganizationsInvitationsCommand() *cobra.Command {
 	return cmdbuilder.NewStackCommand("invitations",
 		cmdbuilder.WithAliases("invit", "inv", "i"),
+		cmdbuilder.WithShortDescription("Invitations management"),
 		cmdbuilder.WithChildCommands(
 			NewOrganizationsInvitationsSendCommand(),
 			NewOrganizationsInvitationsListCommand(),

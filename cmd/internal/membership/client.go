@@ -10,11 +10,7 @@ import (
 )
 
 func NewClient(ctx context.Context, cfg *config.Config) (*membershipclient.APIClient, error) {
-	profile, err := config.GetCurrentProfile(cfg)
-	if err != nil {
-		return nil, err
-	}
-
+	profile := config.GetCurrentProfile(cfg)
 	httpClient := debugutil.GetHttpClient()
 	configuration := membershipclient.NewConfiguration()
 	token, err := profile.GetToken(ctx, httpClient)

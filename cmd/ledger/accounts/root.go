@@ -7,7 +7,7 @@ import (
 
 func NewLedgerAccountsCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("accounts",
-		cmdbuilder.WithShortDescription("handle ledger accounts"),
+		cmdbuilder.WithShortDescription("Accounts management"),
 		cmdbuilder.WithChildCommands(
 			NewLedgerAccountsListCommand(),
 			NewLedgerAccountsShowCommand(),

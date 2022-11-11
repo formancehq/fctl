@@ -25,7 +25,7 @@ func NewLedgerTransactionsNumscriptCommand() *cobra.Command {
 		referenceFlag  = "reference"
 	)
 	return cmdbuilder.NewCommand("num -|[FILENAME]",
-		cmdbuilder.WithShortDescription("execute a numscript script on a ledger"),
+		cmdbuilder.WithShortDescription("Execute a numscript script on a ledger"),
 		cmdbuilder.WithDescription(`More help on variables can be found here: https://docs.formance.com/oss/ledger/reference/numscript/variables`),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithStringSliceFlag(amountVarFlag, []string{""}, "Pass a variable of type 'amount'"),

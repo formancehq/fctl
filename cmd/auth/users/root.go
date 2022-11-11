@@ -7,6 +7,7 @@ import (
 
 func NewCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("users",
+		cmdbuilder.WithShortDescription("Users management"),
 		cmdbuilder.WithAliases("u"),
 		cmdbuilder.WithChildCommands(
 			NewListCommand(),

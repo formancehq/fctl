@@ -12,7 +12,7 @@ import (
 
 func NewLedgerAccountsListCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("list",
-		cmdbuilder.WithShortDescription("list accounts"),
+		cmdbuilder.WithShortDescription("List accounts"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
 			cfg, err := config.Get()

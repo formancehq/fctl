@@ -11,10 +11,7 @@ import (
 )
 
 func NewAuthClient(ctx context.Context, cfg *config.Config) (*authclient.APIClient, error) {
-	profile, err := config.GetCurrentProfile(cfg)
-	if err != nil {
-		return nil, err
-	}
+	profile := config.GetCurrentProfile(cfg)
 
 	organizationID, err := cmdbuilder.ResolveOrganizationID(ctx, cfg)
 	if err != nil {

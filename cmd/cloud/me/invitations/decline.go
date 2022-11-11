@@ -12,6 +12,7 @@ import (
 func NewDeclineCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("decline",
 		cmdbuilder.WithAliases("dec", "d"),
+		cmdbuilder.WithShortDescription("Decline invitation"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()

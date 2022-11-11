@@ -12,7 +12,7 @@ import (
 func NewListCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("list",
 		cmdbuilder.WithAliases("ls", "l"),
-		cmdbuilder.WithShortDescription("list organizations"),
+		cmdbuilder.WithShortDescription("List organizations"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()
 			if err != nil {

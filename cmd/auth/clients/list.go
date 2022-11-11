@@ -12,6 +12,7 @@ import (
 
 func NewListCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("list",
+		cmdbuilder.WithShortDescription("List clients"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()
 			if err != nil {

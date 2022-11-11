@@ -13,7 +13,7 @@ import (
 
 func NewLedgerTransactionsShowCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("show [TXID]",
-		cmdbuilder.WithShortDescription("print a transaction"),
+		cmdbuilder.WithShortDescription("Print a transaction"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()

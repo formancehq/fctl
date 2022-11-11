@@ -21,7 +21,7 @@ func NewOrganizationsInvitationsListCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("list",
 		cmdbuilder.WithAliases("ls"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(0)),
-		cmdbuilder.WithShortDescription("list invitations"),
+		cmdbuilder.WithShortDescription("List invitations"),
 		cmdbuilder.WithAliases("s"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()

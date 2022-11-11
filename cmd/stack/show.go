@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	internal2 "github.com/formancehq/fctl/cmd/internal/config"
+	config "github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/internal/membership"
 	"github.com/formancehq/fctl/cmd/stack/internal"
 	"github.com/formancehq/fctl/membershipclient"
@@ -18,20 +18,20 @@ func NewShowCommand() *cobra.Command {
 
 	return cmdbuilder.NewMembershipCommand("show",
 		cmdbuilder.WithAliases("s"),
-		cmdbuilder.WithShortDescription("show sandbox"),
+		cmdbuilder.WithShortDescription("Show sandbox"),
 		cmdbuilder.WithArgs(cobra.MaximumNArgs(1)),
 		cmdbuilder.WithStringFlag(stackNameFlag, "", ""),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			config, err := internal2.Get()
+			cfg, err := config.Get()
 			if err != nil {
 				return err
 			}
-			organization, err := cmdbuilder.ResolveOrganizationID(cmd.Context(), config)
+			organization, err := cmdbuilder.ResolveOrganizationID(cmd.Context(), cfg)
 			if err != nil {
 				return errors.Wrap(err, "searching default organization")
 			}
 
-			apiClient, err := membership.NewClient(cmd.Context(), config)
+			apiClient, err := membership.NewClient(cmd.Context(), cfg)
 			if err != nil {
 				return err
 			}
@@ -67,12 +67,7 @@ func NewShowCommand() *cobra.Command {
 				return nil
 			}
 
-			profile, err := internal2.GetCurrentProfile(config)
-			if err != nil {
-				return err
-			}
-
-			return internal.PrintStackInformation(cmd.OutOrStdout(), profile, stack)
+			return internal.PrintStackInformation(cmd.OutOrStdout(), config.GetCurrentProfile(cfg), stack)
 		}),
 	)
 }

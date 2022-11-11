@@ -3,8 +3,11 @@ module github.com/formancehq/fctl
 go 1.18
 
 require (
+	github.com/athul/shelby v1.0.6
+	github.com/c-bata/go-prompt v0.2.6
 	github.com/formancehq/auth/authclient v0.0.0-20221003212526-20761562e41e
 	github.com/formancehq/fctl/membershipclient v0.0.0-20221110205214-79a725a64b70
+	github.com/mattn/go-shellwords v1.0.12
 	github.com/numary/ledger/client v0.0.0-20220912105324-6153d9ee752f
 	github.com/numary/payments/client v0.0.0-20220912091851-92e6ed3de087
 	github.com/pborman/indent v1.1.1
@@ -25,15 +28,21 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
+	github.com/mattn/go-colorable v0.1.12 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/mattn/go-runewidth v0.0.9 // indirect
+	github.com/mattn/go-tty v0.0.3 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
+	github.com/pkg/term v1.2.0-beta.2 // indirect
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
+	github.com/talal/go-bits v0.0.0-20200204154716-071e9f3e66e1 // indirect
 	golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be // indirect
 	golang.org/x/net v0.0.0-20220927155233-aa73b2587036 // indirect
 	golang.org/x/sys v0.0.0-20220926163933-8cfa568d3c25 // indirect

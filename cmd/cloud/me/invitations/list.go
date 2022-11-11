@@ -20,6 +20,7 @@ func PrintInvitation(out io.Writer, invitation membershipclient.Invitation) {
 func NewListCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("list",
 		cmdbuilder.WithAliases("ls", "l"),
+		cmdbuilder.WithShortDescription("List invitations"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()
 			if err != nil {

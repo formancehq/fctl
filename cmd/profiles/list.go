@@ -11,6 +11,7 @@ import (
 func NewListCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("list",
 		cmdbuilder.WithAliases("l"),
+		cmdbuilder.WithShortDescription("List profiles"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
 			cfg, err := config.Get()
@@ -18,10 +19,7 @@ func NewListCommand() *cobra.Command {
 				return err
 			}
 
-			currentProfileName, err := config.GetCurrentProfileName()
-			if err != nil {
-				return err
-			}
+			currentProfileName := config.GetCurrentProfileName(cfg)
 
 			for p := range cfg.GetProfiles() {
 				fmt.Fprint(cmd.OutOrStdout(), "- ", p)

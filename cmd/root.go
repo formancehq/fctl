@@ -18,7 +18,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func newRootCommand() *cobra.Command {
+func NewRootCommand() *cobra.Command {
 	homedir, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
@@ -33,13 +33,14 @@ func newRootCommand() *cobra.Command {
 			return viper.BindPFlags(cmd.Flags())
 		}),
 		cmdbuilder.WithChildCommands(
+			NewUICommand(),
+			NewVersionCommand(),
+			NewLoginCommand(),
+			NewPromptCommand(),
 			ledger.NewCommand(),
 			payments.NewCommand(),
 			profiles.NewCommand(),
 			stack.NewCommand(),
-			NewUICommand(),
-			NewVersionCommand(),
-			NewLoginCommand(),
 			auth.NewCommand(),
 			cloud.NewCommand(),
 			me.NewInfoCommand(),
@@ -52,5 +53,5 @@ func newRootCommand() *cobra.Command {
 }
 
 func Execute() {
-	_ = newRootCommand().Execute()
+	_ = NewRootCommand().Execute()
 }

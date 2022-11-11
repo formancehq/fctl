@@ -2,3 +2,4 @@ vendor
 .idea
 *.num
 dist/
+autocomplete.*

@@ -8,6 +8,7 @@ import (
 
 func NewCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("me",
+		cmdbuilder.WithShortDescription("Current use management"),
 		cmdbuilder.WithChildCommands(
 			invitations.NewCommand(),
 			NewInfoCommand(),

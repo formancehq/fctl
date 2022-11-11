@@ -13,7 +13,7 @@ import (
 
 func NewLedgerTransactionsRevertCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("revert [TXID]",
-		cmdbuilder.WithShortDescription("revert a transaction"),
+		cmdbuilder.WithShortDescription("Revert a transaction"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()

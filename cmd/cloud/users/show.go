@@ -12,7 +12,7 @@ import (
 func NewShowCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("show",
 		cmdbuilder.WithAliases("s"),
-		cmdbuilder.WithShortDescription("show user by id"),
+		cmdbuilder.WithShortDescription("Show user by id"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()

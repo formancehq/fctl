@@ -12,6 +12,7 @@ import (
 func NewShowCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("show",
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
+		cmdbuilder.WithShortDescription("Show profile"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
 			config, err := config.Get()

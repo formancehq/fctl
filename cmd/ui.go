@@ -49,11 +49,7 @@ func NewUICommand() *cobra.Command {
 				return err
 			}
 
-			profile, err := config.GetCurrentProfile(cfg)
-			if err != nil {
-				return err
-			}
-
+			profile := config.GetCurrentProfile(cfg)
 			stackUrl := profile.ServicesBaseUrl(organization, stack)
 
 			return errors.Wrapf(openUrl(stackUrl.String()), "opening url: %s", stackUrl.String())

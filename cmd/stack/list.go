@@ -13,7 +13,7 @@ import (
 func NewListCommand() *cobra.Command {
 	return cmdbuilder.NewMembershipCommand("list",
 		cmdbuilder.WithAliases("ls", "l"),
-		cmdbuilder.WithShortDescription("list sandboxes"),
+		cmdbuilder.WithShortDescription("List sandboxes"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()
 			if err != nil {

@@ -12,6 +12,7 @@ import (
 func NewAcceptCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("accept",
 		cmdbuilder.WithAliases("a"),
+		cmdbuilder.WithShortDescription("Accept invitation"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()

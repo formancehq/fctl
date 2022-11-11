@@ -8,7 +8,7 @@ import (
 	"runtime"
 
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	config2 "github.com/formancehq/fctl/cmd/internal/config"
+	config "github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/internal/membership"
 	"github.com/spf13/cobra"
 	"github.com/zitadel/oidc/pkg/client/rp"
@@ -68,21 +68,19 @@ func LogIn(ctx context.Context, dialog Dialog, relyingParty rp.RelyingParty) (*o
 
 func NewLoginCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("login",
-		cmdbuilder.WithStringFlag(config2.MembershipUriFlag, config2.DefaultMemberShipUri, "service url"),
-		cmdbuilder.WithStringFlag(config2.BaseServiceUriFlag, config2.DefaultBaseUri, "service url"),
-		cmdbuilder.WithHiddenFlag(config2.MembershipUriFlag),
-		cmdbuilder.WithHiddenFlag(config2.BaseServiceUriFlag),
+		cmdbuilder.WithStringFlag(config.MembershipUriFlag, config.DefaultMemberShipUri, "service url"),
+		cmdbuilder.WithStringFlag(config.BaseServiceUriFlag, config.DefaultBaseUri, "service url"),
+		cmdbuilder.WithHiddenFlag(config.MembershipUriFlag),
+		cmdbuilder.WithHiddenFlag(config.BaseServiceUriFlag),
+		cmdbuilder.WithShortDescription("Login"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			config, err := config2.Get()
+			cfg, err := config.Get()
 			if err != nil {
 				return err
 			}
 
-			profile, err := config2.GetCurrentProfile(config)
-			if err != nil {
-				return err
-			}
+			profile := config.GetCurrentProfile(cfg)
 
 			relyingParty, err := membership.GetRelyingParty(profile)
 			if err != nil {
@@ -99,15 +97,12 @@ func NewLoginCommand() *cobra.Command {
 
 			profile.UpdateToken(ret.Token)
 
-			currentProfileName, err := config2.GetCurrentProfileName()
-			if err != nil {
-				return err
-			}
+			currentProfileName := config.GetCurrentProfileName(cfg)
 
-			config.SetCurrentProfile(currentProfileName, profile)
+			cfg.SetCurrentProfile(currentProfileName, profile)
 
 			fmt.Fprintln(cmd.OutOrStdout(), "Logged!")
-			return config.Persist()
+			return cfg.Persist()
 		}),
 	)
 }

@@ -10,6 +10,7 @@ import (
 func NewShowCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("show [CLIENT_ID]",
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
+		cmdbuilder.WithShortDescription("Show client"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()
 			if err != nil {

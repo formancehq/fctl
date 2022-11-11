@@ -14,7 +14,7 @@ import (
 
 func NewCreateCommand() *cobra.Command {
 	return cmdbuilder.NewMembershipCommand("create",
-		cmdbuilder.WithShortDescription("create a new sandbox"),
+		cmdbuilder.WithShortDescription("Create a new sandbox"),
 		cmdbuilder.WithAliases("c"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
@@ -40,13 +40,9 @@ func NewCreateCommand() *cobra.Command {
 				return errors.Wrap(err, "creating sandbox")
 			}
 
-			profile, err := config.GetCurrentProfile(cfg)
-			if err != nil {
-				return err
-			}
 			fmt.Fprintf(cmd.OutOrStdout(), "Stack created with ID: %s\r\n", sandbox.Data.Id)
 
-			return internal.PrintStackInformation(cmd.OutOrStdout(), profile, sandbox.Data)
+			return internal.PrintStackInformation(cmd.OutOrStdout(), config.GetCurrentProfile(cfg), sandbox.Data)
 		}),
 	)
 }

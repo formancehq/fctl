@@ -7,6 +7,7 @@ import (
 
 func NewCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("invitations",
+		cmdbuilder.WithShortDescription("Invitations management"),
 		cmdbuilder.WithAliases("invit", "i"),
 		cmdbuilder.WithChildCommands(
 			NewListCommand(),

@@ -104,26 +104,18 @@ func GetConfigManager() *ConfigManager {
 	return NewConfigManager(viper.GetString(FileFlag))
 }
 
-func GetCurrentProfileName() (string, error) {
+func GetCurrentProfileName(config *Config) string {
 	if profile := viper.GetString(ProfileFlag); profile != "" {
-		return profile, nil
-	}
-	config, err := Get()
-	if err != nil {
-		return "", err
+		return profile
 	}
 	currentProfileName := config.GetCurrentProfileName()
 	if currentProfileName == "" {
 		currentProfileName = "default"
 	}
-	return currentProfileName, nil
+	return currentProfileName
 }
 
-func GetCurrentProfile(cfg *Config) (*Profile, error) {
-	profileName, err := GetCurrentProfileName()
-	if err != nil {
-		return nil, err
-	}
-	return cfg.GetProfileOrDefault(profileName, viper.GetString(MembershipUriFlag),
-		viper.GetString(BaseServiceUriFlag)), nil
+func GetCurrentProfile(cfg *Config) *Profile {
+	return cfg.GetProfileOrDefault(GetCurrentProfileName(cfg), viper.GetString(MembershipUriFlag),
+		viper.GetString(BaseServiceUriFlag))
 }

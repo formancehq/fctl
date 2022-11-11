@@ -25,7 +25,7 @@ func NewLedgerTransactionsListCommand() *cobra.Command {
 	)
 
 	return cmdbuilder.NewCommand("list",
-		cmdbuilder.WithShortDescription("list transactions"),
+		cmdbuilder.WithShortDescription("List transactions"),
 		cmdbuilder.WithStringFlag(listTransactionAccountFlag, "", "Filter on account"),
 		cmdbuilder.WithStringFlag(listTransactionDestinationFlag, "", "Filter on destination account"),
 		cmdbuilder.WithStringFlag(listTransactionsAfterFlag, "", "Filter results after given tx id"),

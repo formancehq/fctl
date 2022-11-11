@@ -12,6 +12,7 @@ import (
 func NewDeleteCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("delete [CLIENT_ID]",
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
+		cmdbuilder.WithShortDescription("Delete client"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()
 			if err != nil {

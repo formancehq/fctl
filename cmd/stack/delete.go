@@ -17,7 +17,7 @@ func NewDeleteCommand() *cobra.Command {
 	)
 
 	return cmdbuilder.NewMembershipCommand("delete [STACK_ID] | --name=[NAME]",
-		cmdbuilder.WithShortDescription("delete a sandbox"),
+		cmdbuilder.WithShortDescription("Delete a sandbox"),
 		cmdbuilder.WithArgs(cobra.MaximumNArgs(1)),
 		cmdbuilder.WithStringFlag(stackNameFlag, "", "Sandbox to remove"),
 		cmdbuilder.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {

@@ -11,10 +11,7 @@ import (
 )
 
 func NewLedgerClient(cmd *cobra.Command, cfg *config.Config) (*client.APIClient, error) {
-	profile, err := config.GetCurrentProfile(cfg)
-	if err != nil {
-		return nil, err
-	}
+	profile := config.GetCurrentProfile(cfg)
 
 	organizationID, err := cmdbuilder.ResolveOrganizationID(cmd.Context(), cfg)
 	if err != nil {

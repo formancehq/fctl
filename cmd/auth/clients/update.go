@@ -22,6 +22,7 @@ func NewUpdateCommand() *cobra.Command {
 	)
 	return cmdbuilder.NewCommand("update [CLIENT_ID]",
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
+		cmdbuilder.WithShortDescription("Update client"),
 		cmdbuilder.WithBoolFlag(publicFlag, false, "Is client public"),
 		cmdbuilder.WithBoolFlag(trustedFlag, false, "Is the client trusted"),
 		cmdbuilder.WithStringFlag(descriptionFlag, "", "Client description"),

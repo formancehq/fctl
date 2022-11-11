@@ -7,6 +7,7 @@ import (
 
 func NewPaymentsConnectorsInstallCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("install",
+		cmdbuilder.WithShortDescription("Install a connector"),
 		cmdbuilder.WithChildCommands(
 			NewPaymentsConnectorsInstallStripeCommand(),
 		),

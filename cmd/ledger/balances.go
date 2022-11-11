@@ -18,6 +18,7 @@ func NewLedgerBalancesCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("balances",
 		cmdbuilder.WithStringFlag(addressFlag, "", "Filter on specific address"),
 		cmdbuilder.WithStringFlag(afterFlag, "", "Filter after specific address"),
+		cmdbuilder.WithShortDescription("Read balances"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()
 			if err != nil {

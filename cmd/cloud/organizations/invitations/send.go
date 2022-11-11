@@ -12,7 +12,7 @@ import (
 func NewOrganizationsInvitationsSendCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("send",
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
-		cmdbuilder.WithShortDescription("invite on organization by email"),
+		cmdbuilder.WithShortDescription("Invite a user by email"),
 		cmdbuilder.WithAliases("s"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()

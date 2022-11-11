@@ -7,6 +7,7 @@ import (
 
 func NewLedgerTransactionsCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("transactions",
+		cmdbuilder.WithShortDescription("Transactions management"),
 		cmdbuilder.WithChildCommands(
 			NewLedgerTransactionsListCommand(),
 			NewLedgerTransactionsNumscriptCommand(),

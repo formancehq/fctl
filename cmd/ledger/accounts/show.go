@@ -30,7 +30,7 @@ func printAccount(cmd *cobra.Command, account ledgerclient.AccountWithVolumesAnd
 
 func NewLedgerAccountsShowCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("show [ADDRESS]",
-		cmdbuilder.WithShortDescription("display account"),
+		cmdbuilder.WithShortDescription("Show account"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()

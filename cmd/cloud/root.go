@@ -10,7 +10,8 @@ import (
 
 func NewCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("cloud",
-		cmdbuilder.WithAliases("c"),
+		//cmdbuilder.WithAliases("c"),
+		cmdbuilder.WithShortDescription("Cloud management"),
 		cmdbuilder.WithChildCommands(
 			organizations.NewCommand(),
 			me.NewCommand(),

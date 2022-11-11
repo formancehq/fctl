@@ -24,6 +24,7 @@ func NewCreateCommand() *cobra.Command {
 		cmdbuilder.WithStringFlag(descriptionFlag, "", "Client description"),
 		cmdbuilder.WithStringSliceFlag(redirectUriFlag, []string{}, "Redirect URIS"),
 		cmdbuilder.WithStringSliceFlag(postLogoutRedirectUriFlag, []string{}, "Post logout redirect uris"),
+		cmdbuilder.WithShortDescription("Create client"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()
 			if err != nil {

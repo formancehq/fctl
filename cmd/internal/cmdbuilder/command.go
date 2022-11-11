@@ -15,21 +15,28 @@ const (
 	organizationFlag = "organization"
 )
 
+var (
+	ErrOrganizationNotSpecified = errors.New("organization not specified")
+)
+
 func GetSelectedOrganization() string {
 	return viper.GetString(organizationFlag)
 }
 
-func ResolveOrganizationID(ctx context.Context, cfg *config.Config) (string, error) {
+func RetrieveOrganizationIDFromFlagOrProfile(cfg *config.Config) (string, error) {
 	if id := GetSelectedOrganization(); id != "" {
 		return id, nil
 	}
 
-	currentProfile, err := config.GetCurrentProfile(cfg)
-	if err != nil {
-		return "", err
-	}
-	if defaultOrganization := currentProfile.GetDefaultOrganization(); defaultOrganization != "" {
+	if defaultOrganization := config.GetCurrentProfile(cfg).GetDefaultOrganization(); defaultOrganization != "" {
 		return defaultOrganization, nil
+	}
+	return "", ErrOrganizationNotSpecified
+}
+
+func ResolveOrganizationID(ctx context.Context, cfg *config.Config) (string, error) {
+	if id, err := RetrieveOrganizationIDFromFlagOrProfile(cfg); err == nil {
+		return id, nil
 	}
 
 	client, err := membership.NewClient(ctx, cfg)
