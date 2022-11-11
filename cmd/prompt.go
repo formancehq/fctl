@@ -37,7 +37,7 @@ func startPrompt(ctx context.Context, prompt string, opts ...goprompt.Option) st
 	return goprompt.Input(prompt, func(d goprompt.Document) []goprompt.Suggest {
 
 		completionsArgs := make([]string, 0)
-		if strings.HasSuffix(d.Text, " ") || d.Text == "" {
+		if d.Text == "" {
 			completionsArgs = append(completionsArgs, "")
 		} else {
 			parse, err := shellwords.Parse(d.Text)
@@ -46,6 +46,9 @@ func startPrompt(ctx context.Context, prompt string, opts ...goprompt.Option) st
 			}
 
 			completionsArgs = append(completionsArgs, parse...)
+			if strings.HasSuffix(d.Text, " ") {
+				completionsArgs = append(completionsArgs, "")
+			}
 		}
 
 		subCommandOut := bytes.NewBufferString("")
