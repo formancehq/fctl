@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func NewLedgerTransactionsListCommand() *cobra.Command {
+func NewListCommand() *cobra.Command {
 	const (
 		listTransactionsPageSizeFlag   = "page-size"
 		listTransactionsMetadataFlag   = "metadata"

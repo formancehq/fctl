@@ -1,8 +1,6 @@
 package transactions
 
 import (
-	"strconv"
-
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/ledger/internal"
@@ -11,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func NewLedgerTransactionsShowCommand() *cobra.Command {
+func NewShowCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("show [TXID]",
 		cmdbuilder.WithShortDescription("Print a transaction"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
@@ -26,12 +24,12 @@ func NewLedgerTransactionsShowCommand() *cobra.Command {
 				return err
 			}
 
-			txId, err := strconv.ParseInt(args[0], 10, 32)
+			ledger := viper.GetString(internal.LedgerFlag)
+			txId, err := internal.TransactionIDOrLast(cmd.Context(), ledgerClient, ledger, args[0])
 			if err != nil {
-				return errors.Wrapf(err, "parsing txid")
+				return err
 			}
 
-			ledger := viper.GetString(internal.LedgerFlag)
 			rsp, _, err := ledgerClient.TransactionsApi.GetTransaction(cmd.Context(), ledger, int32(txId)).Execute()
 			if err != nil {
 				return errors.Wrapf(err, "retrieving transaction")

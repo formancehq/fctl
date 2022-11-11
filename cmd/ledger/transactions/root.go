@@ -10,10 +10,11 @@ func NewLedgerTransactionsCommand() *cobra.Command {
 		cmdbuilder.WithAliases("t", "txs", "tx"),
 		cmdbuilder.WithShortDescription("Transactions management"),
 		cmdbuilder.WithChildCommands(
-			NewLedgerTransactionsListCommand(),
-			NewLedgerTransactionsNumscriptCommand(),
-			NewLedgerTransactionsRevertCommand(),
-			NewLedgerTransactionsShowCommand(),
+			NewListCommand(),
+			NewCommand(),
+			NewRevertCommand(),
+			NewShowCommand(),
+			NewSetMetadataCommand(),
 		),
 	)
 }

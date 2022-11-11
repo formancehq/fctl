@@ -10,8 +10,9 @@ func NewLedgerAccountsCommand() *cobra.Command {
 		cmdbuilder.WithAliases("acc", "a", "account"),
 		cmdbuilder.WithShortDescription("Accounts management"),
 		cmdbuilder.WithChildCommands(
-			NewLedgerAccountsListCommand(),
-			NewLedgerAccountsShowCommand(),
+			NewListCommand(),
+			NewShowCommand(),
+			NewSetMetadataCommand(),
 		),
 	)
 }

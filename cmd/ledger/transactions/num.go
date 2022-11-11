@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func NewLedgerTransactionsNumscriptCommand() *cobra.Command {
+func NewCommand() *cobra.Command {
 	const (
 		amountVarFlag  = "amount-var"
 		portionVarFlag = "portion-var"

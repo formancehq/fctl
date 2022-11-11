@@ -11,10 +11,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-func NewLedgerAccountsShowCommand() *cobra.Command {
+func NewShowCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("show [ADDRESS]",
 		cmdbuilder.WithShortDescription("Show account"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
+		cmdbuilder.WithAliases("sh", "s"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get()
 			if err != nil {
@@ -33,7 +34,6 @@ func NewLedgerAccountsShowCommand() *cobra.Command {
 			}
 
 			if rsp.Data.Volumes != nil {
-				cmdbuilder.Highlightln(cmd.OutOrStdout(), "Volumes :")
 				tableData := pterm.TableData{}
 				tableData = append(tableData, []string{"", "Input", "Output"})
 				for asset, volumes := range *rsp.Data.Volumes {

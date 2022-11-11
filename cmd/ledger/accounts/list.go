@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func NewLedgerAccountsListCommand() *cobra.Command {
+func NewListCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("list",
 		cmdbuilder.WithAliases("ls", "l"),
 		cmdbuilder.WithShortDescription("List accounts"),

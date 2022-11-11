@@ -1,8 +1,6 @@
 package transactions
 
 import (
-	"strconv"
-
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/ledger/internal"
@@ -11,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func NewLedgerTransactionsRevertCommand() *cobra.Command {
+func NewRevertCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("revert [TXID]",
 		cmdbuilder.WithShortDescription("Revert a transaction"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
@@ -25,12 +23,12 @@ func NewLedgerTransactionsRevertCommand() *cobra.Command {
 				return err
 			}
 
-			txId, err := strconv.ParseInt(args[0], 10, 32)
+			ledger := viper.GetString(internal.LedgerFlag)
+			txId, err := internal.TransactionIDOrLast(cmd.Context(), ledgerClient, ledger, args[0])
 			if err != nil {
-				return errors.Wrapf(err, "parsing txid")
+				return err
 			}
 
-			ledger := viper.GetString(internal.LedgerFlag)
 			rsp, _, err := ledgerClient.TransactionsApi.RevertTransaction(cmd.Context(), ledger, int32(txId)).Execute()
 			if err != nil {
 				return errors.Wrapf(err, "reverting transaction")
