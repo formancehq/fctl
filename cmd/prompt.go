@@ -1,18 +1,15 @@
 package cmd
 
 import (
-	"bufio"
-	"bytes"
-	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 
 	_ "github.com/athul/shelby/mods"
 	goprompt "github.com/c-bata/go-prompt"
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/collections"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/mattn/go-shellwords"
 	_ "github.com/mattn/go-shellwords"
@@ -33,7 +30,7 @@ func newOverrideCommand() *cobra.Command {
 	return subCommand
 }
 
-func startPrompt(ctx context.Context, prompt string, opts ...goprompt.Option) string {
+func startPrompt(prompt string, opts ...goprompt.Option) string {
 	return goprompt.Input(prompt, func(d goprompt.Document) []goprompt.Suggest {
 		subCommand := newOverrideCommand()
 
@@ -65,38 +62,22 @@ func startPrompt(ctx context.Context, prompt string, opts ...goprompt.Option) st
 			}
 		}
 
-		subCommandOut := bytes.NewBufferString("")
-
-		subCommand.SetArgs(append([]string{
-			cobra.ShellCompRequestCmd,
-		}, completionsArgs...))
-		subCommand.SetOut(subCommandOut)
-		subCommand.SetErr(io.Discard)
-		if err := subCommand.ExecuteContext(ctx); err != nil {
-			panic(err)
+		_, completions, _, err := subCommand.GetCompletions(completionsArgs)
+		if err != nil {
+			return []goprompt.Suggest{}
 		}
 
-		suggestions := make([]goprompt.Suggest, 0)
-		scanner := bufio.NewScanner(subCommandOut)
-
-		for scanner.Scan() {
-			line := scanner.Text()
-			if strings.HasPrefix(line, ":") || strings.HasPrefix(line, "[Debug]") {
-				break
-			}
-			parts := strings.SplitN(line, "\t", 2)
-			text := parts[0]
+		return goprompt.FilterHasPrefix(collections.Map(completions, func(src string) goprompt.Suggest {
+			parts := strings.SplitN(src, "\t", 2)
 			description := ""
-			if len(parts) == 2 {
+			if len(parts) > 1 {
 				description = parts[1]
 			}
-			suggestions = append(suggestions, goprompt.Suggest{
-				Text:        text,
+			return goprompt.Suggest{
+				Text:        parts[0],
 				Description: description,
-			})
-		}
-
-		return goprompt.FilterHasPrefix(suggestions, d.GetWordBeforeCursor(), true)
+			}
+		}), d.GetWordBeforeCursor(), true)
 	}, opts...)
 }
 
@@ -143,7 +124,7 @@ func NewPromptCommand() *cobra.Command {
 				}
 				prompt = fmt.Sprintf("%s / %s", config.GetCurrentProfileName(cfg), prompt)
 
-				switch t := startPrompt(cmd.Context(), prompt,
+				switch t := startPrompt(prompt,
 					goprompt.OptionPrefixTextColor(promptColor),
 					goprompt.OptionHistory(history),
 					goprompt.OptionCompletionOnDown()); t {

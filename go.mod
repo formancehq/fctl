@@ -14,7 +14,7 @@ require (
 	github.com/numary/payments/client v0.0.0-20220912091851-92e6ed3de087
 	github.com/pkg/errors v0.9.1
 	github.com/pterm/pterm v0.12.49
-	github.com/spf13/cobra v1.5.0
+	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.13.0
 	github.com/zitadel/oidc v1.8.0
 	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1
@@ -69,3 +69,5 @@ require (
 replace github.com/zitadel/oidc => github.com/formancehq/oidc v0.0.0-20220922145049-a6daec727711
 
 replace github.com/formancehq/fctl/membershipclient => ./membershipclient
+
+replace github.com/spf13/cobra v1.6.1 => github.com/formancehq/cobra v0.0.0-20221112160629-60a6d6d55ef9
