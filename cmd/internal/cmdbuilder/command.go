@@ -193,6 +193,12 @@ func WithValidArgs(validArgs ...string) commandOptionFn {
 	}
 }
 
+func WithValidArgsFunction(fn func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective)) commandOptionFn {
+	return func(cmd *cobra.Command) {
+		cmd.ValidArgsFunction = fn
+	}
+}
+
 func WithDescription(v string) commandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.Long = v
