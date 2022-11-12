@@ -1,17 +1,19 @@
 package me
 
 import (
+	"errors"
+
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
-	"github.com/formancehq/fctl/cmd/internal/membership"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewInfoCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("info",
-		cmdbuilder.WithAliases("i"),
+		cmdbuilder.WithAliases("i", "in"),
 		cmdbuilder.WithShortDescription("Display user information"),
+		cmdbuilder.WithArgs(cobra.ExactArgs(0)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
 			cfg, err := config.Get(cmd.Context())
@@ -20,13 +22,11 @@ func NewInfoCommand() *cobra.Command {
 			}
 
 			profile := config.GetCurrentProfile(cmd.Context(), cfg)
-
-			relyingParty, err := membership.GetRelyingParty(cmd.Context(), profile)
-			if err != nil {
-				return err
+			if !profile.IsConnected() {
+				return errors.New("Not logged. Use 'login' command before.")
 			}
 
-			userInfo, err := profile.GetUserInfo(cmd.Context(), relyingParty)
+			userInfo, err := profile.GetUserInfo(cmd.Context())
 			if err != nil {
 				return err
 			}

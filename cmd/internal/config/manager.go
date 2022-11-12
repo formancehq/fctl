@@ -16,7 +16,6 @@ type ConfigManager struct {
 }
 
 func (m *ConfigManager) Load() (*Config, error) {
-
 	f, err := os.Open(m.configFilePath)
 	if err != nil {
 		if os.IsNotExist(err) {

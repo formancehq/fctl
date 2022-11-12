@@ -12,6 +12,7 @@ func NewSetDefaultOrganizationCommand() *cobra.Command {
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithAliases("sdo"),
 		cmdbuilder.WithShortDescription("Set default organization"),
+		cmdbuilder.WithValidArgsFunction(ProfileNamesAutoCompletion),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get(cmd.Context())
 			if err != nil {

@@ -9,7 +9,6 @@ import (
 
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	config "github.com/formancehq/fctl/cmd/internal/config"
-	"github.com/formancehq/fctl/cmd/internal/membership"
 	"github.com/spf13/cobra"
 	"github.com/zitadel/oidc/pkg/client/rp"
 	"github.com/zitadel/oidc/pkg/oidc"
@@ -82,7 +81,7 @@ func NewLoginCommand() *cobra.Command {
 
 			profile := config.GetCurrentProfile(cmd.Context(), cfg)
 
-			relyingParty, err := membership.GetRelyingParty(cmd.Context(), profile)
+			relyingParty, err := config.GetAuthRelyingParty(cmd.Context(), profile)
 			if err != nil {
 				return err
 			}

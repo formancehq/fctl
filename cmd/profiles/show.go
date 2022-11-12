@@ -13,6 +13,7 @@ func NewShowCommand() *cobra.Command {
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithAliases("s"),
 		cmdbuilder.WithShortDescription("Show profile"),
+		cmdbuilder.WithValidArgsFunction(ProfileNamesAutoCompletion),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
 			config, err := config.Get(cmd.Context())

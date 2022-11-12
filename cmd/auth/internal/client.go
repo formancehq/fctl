@@ -7,7 +7,6 @@ import (
 	"github.com/formancehq/auth/authclient"
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
-	"github.com/formancehq/fctl/cmd/internal/debugutils"
 )
 
 func NewAuthClient(ctx context.Context, cfg *config.Config) (*authclient.APIClient, error) {
@@ -23,7 +22,7 @@ func NewAuthClient(ctx context.Context, cfg *config.Config) (*authclient.APIClie
 		return nil, err
 	}
 
-	httpClient := debugutils.GetHttpClient(ctx)
+	httpClient := config.GetHttpClient(ctx)
 
 	token, err := profile.GetStackToken(ctx, httpClient, organizationID, stackID)
 	if err != nil {

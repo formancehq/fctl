@@ -4,7 +4,6 @@ import (
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	config "github.com/formancehq/fctl/cmd/internal/config"
-	"github.com/formancehq/fctl/cmd/internal/membership"
 	"github.com/formancehq/fctl/cmd/stack/internal"
 	"github.com/formancehq/fctl/membershipclient"
 	"github.com/pkg/errors"
@@ -29,7 +28,7 @@ func NewShowCommand() *cobra.Command {
 				return errors.Wrap(err, "searching default organization")
 			}
 
-			apiClient, err := membership.NewClient(cmd.Context(), cfg)
+			apiClient, err := config.NewClient(cmd.Context(), cfg)
 			if err != nil {
 				return err
 			}

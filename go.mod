@@ -9,6 +9,7 @@ require (
 	github.com/formancehq/fctl/membershipclient v0.0.0-20221110205214-79a725a64b70
 	github.com/formancehq/search/client v0.0.0-20221112130150-832c2c17043b
 	github.com/formancehq/webhooks/client v0.0.0-20221112150350-abea13654995
+	github.com/iancoleman/strcase v0.2.0
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/numary/ledger/client v0.0.0-20220912105324-6153d9ee752f
 	github.com/numary/payments/client v0.0.0-20220912091851-92e6ed3de087

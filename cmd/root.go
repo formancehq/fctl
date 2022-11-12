@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"runtime/debug"
-	"strings"
 
 	"github.com/formancehq/fctl/cmd/auth"
 	"github.com/formancehq/fctl/cmd/cloud"
@@ -33,9 +32,7 @@ func NewRootCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("Formance Control CLI"),
 		cmdbuilder.WithSilenceUsage(),
 		cmdbuilder.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) (err error) {
-			cmdutils.Viper(cmd.Context()).SetEnvKeyReplacer(strings.NewReplacer("-", "_", ".", "_"))
-			cmdutils.Viper(cmd.Context()).AutomaticEnv()
-			return cmdutils.Viper(cmd.Context()).BindPFlags(cmd.Flags())
+			return cmdutils.BindFlags(cmd)
 		}),
 		cmdbuilder.WithChildCommands(
 			NewUICommand(),

@@ -3,7 +3,6 @@ package organizations
 import (
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
-	"github.com/formancehq/fctl/cmd/internal/membership"
 	"github.com/formancehq/fctl/membershipclient"
 	"github.com/spf13/cobra"
 )
@@ -19,7 +18,7 @@ func NewCreateCommand() *cobra.Command {
 				return err
 			}
 
-			apiClient, err := membership.NewClient(cmd.Context(), cfg)
+			apiClient, err := config.NewClient(cmd.Context(), cfg)
 			if err != nil {
 				return err
 			}

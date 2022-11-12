@@ -10,7 +10,6 @@ import (
 	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/collections"
 	"github.com/formancehq/fctl/cmd/internal/config"
-	"github.com/formancehq/fctl/cmd/internal/debugutils"
 	searchclient "github.com/formancehq/search/client"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -29,7 +28,7 @@ func newSearchClient(cmd *cobra.Command, cfg *config.Config) (*searchclient.APIC
 		return nil, err
 	}
 
-	httpClient := debugutils.GetHttpClient(cmd.Context())
+	httpClient := config.GetHttpClient(cmd.Context())
 
 	token, err := profile.GetStackToken(cmd.Context(), httpClient, organizationID, stackID)
 	if err != nil {

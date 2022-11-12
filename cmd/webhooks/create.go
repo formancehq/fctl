@@ -8,7 +8,6 @@ import (
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/config"
-	"github.com/formancehq/fctl/cmd/internal/debugutils"
 	webhookclient "github.com/formancehq/webhooks/client"
 	"github.com/spf13/cobra"
 )
@@ -26,7 +25,7 @@ func newWebhookClient(cmd *cobra.Command, cfg *config.Config) (*webhookclient.AP
 		return nil, err
 	}
 
-	httpClient := debugutils.GetHttpClient(cmd.Context())
+	httpClient := config.GetHttpClient(cmd.Context())
 
 	token, err := profile.GetStackToken(cmd.Context(), httpClient, organizationID, stackID)
 	if err != nil {

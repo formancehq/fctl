@@ -1,17 +1,15 @@
-package membership
+package config
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/formancehq/fctl/cmd/internal/config"
-	"github.com/formancehq/fctl/cmd/internal/debugutils"
 	"github.com/formancehq/fctl/membershipclient"
 )
 
-func NewClient(ctx context.Context, cfg *config.Config) (*membershipclient.APIClient, error) {
-	profile := config.GetCurrentProfile(ctx, cfg)
-	httpClient := debugutils.GetHttpClient(ctx)
+func NewClient(ctx context.Context, cfg *Config) (*membershipclient.APIClient, error) {
+	profile := GetCurrentProfile(ctx, cfg)
+	httpClient := GetHttpClient(ctx)
 	configuration := membershipclient.NewConfiguration()
 	token, err := profile.GetToken(ctx, httpClient)
 	if err != nil {

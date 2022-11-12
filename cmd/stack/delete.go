@@ -4,7 +4,6 @@ import (
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/config"
-	"github.com/formancehq/fctl/cmd/internal/membership"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -29,7 +28,7 @@ func NewDeleteCommand() *cobra.Command {
 				return errors.Wrap(err, "searching default organization")
 			}
 
-			apiClient, err := membership.NewClient(cmd.Context(), cfg)
+			apiClient, err := config.NewClient(cmd.Context(), cfg)
 			if err != nil {
 				return err
 			}

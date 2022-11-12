@@ -5,7 +5,6 @@ import (
 
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
-	"github.com/formancehq/fctl/cmd/internal/debugutils"
 	"github.com/numary/ledger/client"
 	"github.com/spf13/cobra"
 )
@@ -23,7 +22,7 @@ func NewLedgerClient(cmd *cobra.Command, cfg *config.Config) (*client.APIClient,
 		return nil, err
 	}
 
-	httpClient := debugutils.GetHttpClient(cmd.Context())
+	httpClient := config.GetHttpClient(cmd.Context())
 
 	token, err := profile.GetStackToken(cmd.Context(), httpClient, organizationID, stackID)
 	if err != nil {

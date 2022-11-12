@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -117,7 +119,12 @@ func (p *Profile) GetToken(ctx context.Context, httpClient *http.Client) (*oauth
 	return p.token, nil
 }
 
-func (p *Profile) GetUserInfo(ctx context.Context, relyingParty rp.RelyingParty) (oidc.UserInfo, error) {
+func (p *Profile) GetUserInfo(ctx context.Context) (oidc.UserInfo, error) {
+
+	relyingParty, err := GetAuthRelyingParty(ctx, p)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest(http.MethodGet, relyingParty.UserinfoEndpoint(), nil)
 	if err != nil {
@@ -222,4 +229,24 @@ func (p *Profile) SetDefaultOrganization(o string) {
 	p.defaultOrganization = o
 }
 
+func (p *Profile) IsConnected() bool {
+	return p.token != nil
+}
+
 type CurrentProfile Profile
+
+func ListProfiles(ctx context.Context, toComplete string) ([]string, error) {
+	config, err := Get(ctx)
+	if err != nil {
+		return []string{}, nil
+	}
+
+	ret := make([]string, 0)
+	for p := range config.GetProfiles() {
+		if strings.HasPrefix(p, toComplete) {
+			ret = append(ret, p)
+		}
+	}
+	sort.Strings(ret)
+	return ret, nil
+}

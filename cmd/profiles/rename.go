@@ -11,6 +11,7 @@ func NewRenameCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("rename",
 		cmdbuilder.WithArgs(cobra.ExactArgs(2)),
 		cmdbuilder.WithShortDescription("Rename a profile"),
+		cmdbuilder.WithValidArgsFunction(ProfileNamesAutoCompletion),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			oldName := args[0]
 			newName := args[1]

@@ -1,4 +1,4 @@
-package debugutils
+package config
 
 import (
 	"context"
@@ -8,13 +8,12 @@ import (
 	"net/http/httputil"
 
 	"github.com/formancehq/fctl/cmd/internal/cmdutils"
-	"github.com/formancehq/fctl/cmd/internal/config"
 )
 
 func GetHttpClient(ctx context.Context) *http.Client {
 	return NewHTTPClient(
-		cmdutils.Viper(ctx).GetBool(config.InsecureTlsFlag),
-		cmdutils.Viper(ctx).GetBool(config.DebugFlag))
+		cmdutils.Viper(ctx).GetBool(InsecureTlsFlag),
+		cmdutils.Viper(ctx).GetBool(DebugFlag))
 }
 
 type RoundTripperFn func(req *http.Request) (*http.Response, error)
