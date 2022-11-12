@@ -12,6 +12,8 @@ func NewCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("Organizations management"),
 		cmdbuilder.WithChildCommands(
 			NewListCommand(),
+			NewCreateCommand(),
+			NewDeleteCommand(),
 			invitations.NewCommand(),
 		),
 	)
