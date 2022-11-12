@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/collections"
@@ -55,6 +56,7 @@ func NewListCommand() *cobra.Command {
 
 			metadata := map[string]interface{}{}
 			for _, v := range cmdutils.GetStringSlice(cmd, listTransactionsMetadataFlag) {
+				spew.Dump(v)
 				parts := strings.SplitN(v, "=", 2)
 				if len(parts) == 1 {
 					return fmt.Errorf("malformed metadata: %s", v)

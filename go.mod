@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/athul/shelby v1.0.6
 	github.com/c-bata/go-prompt v0.2.6
+	github.com/davecgh/go-spew v1.1.1
 	github.com/formancehq/auth/authclient v0.0.0-20221003212526-20761562e41e
 	github.com/formancehq/fctl/membershipclient v0.0.0-20221110205214-79a725a64b70
 	github.com/formancehq/search/client v0.0.0-20221112130150-832c2c17043b

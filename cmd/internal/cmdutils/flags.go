@@ -29,7 +29,11 @@ func GetString(cmd *cobra.Command, flagName string) string {
 func GetStringSlice(cmd *cobra.Command, flagName string) []string {
 	v, err := cmd.Flags().GetStringSlice(flagName)
 	if err != nil || len(v) == 0 {
-		return strings.Split(os.Getenv(strcase.ToScreamingSnake(flagName)), " ")
+		envVar := os.Getenv(strcase.ToScreamingSnake(flagName))
+		if envVar == "" {
+			return []string{}
+		}
+		return strings.Split(envVar, " ")
 	}
 	return v
 }

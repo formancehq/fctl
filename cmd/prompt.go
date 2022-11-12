@@ -91,7 +91,7 @@ func (p *prompt) startPrompt(prompt string, cfg *config.Config, opts ...goprompt
 		default:
 			parse, err := shellwords.Parse(d.Text)
 			if err != nil {
-				panic(err)
+				return []goprompt.Suggest{}
 			}
 
 			if strings.HasSuffix(d.Text, " ") || len(parse) == 0 {
@@ -132,8 +132,9 @@ func (p *prompt) executePromptCommand(cmd *cobra.Command, t string) error {
 			if v := parts[0]; v != config.ProfileFlag && v != config.DebugFlag && v != config.InsecureTlsFlag {
 				return fmt.Errorf("unknown configuration: %s", v)
 			}
-			cmdbuilder.Success(cmd.OutOrStdout(), "Set %s=%s", parts[0], parts[1])
+			_ = cmd.Flags().Set(parts[0], parts[1])
 			os.Setenv(strcase.ToScreamingSnake(parts[0]), parts[1])
+			cmdbuilder.Success(cmd.OutOrStdout(), "Set %s=%s", parts[0], parts[1])
 		}
 	default:
 		return errors.New("malformed command")
@@ -156,7 +157,8 @@ func (p *prompt) refreshUserEmail(cmd *cobra.Command, cfg *config.Config) error 
 	}
 	userInfo, err := profile.GetUserInfo(cmd)
 	if err != nil {
-		return err
+		p.userEmail = ""
+		return nil
 	}
 	p.userEmail = userInfo.GetEmail()
 	return nil
@@ -166,13 +168,9 @@ func (p *prompt) displayHeader(cmd *cobra.Command, cfg *config.Config) error {
 	header := config.GetCurrentProfileName(cmd, cfg)
 	if p.userEmail != "" {
 		header += " / " + p.userEmail
-	}
-	organizationID, err := cmdbuilder.RetrieveOrganizationIDFromFlagOrProfile(cmd, cfg)
-	if err != nil && !errors.Is(err, cmdbuilder.ErrOrganizationNotSpecified) {
-		return err
-	}
-	if organizationID != "" {
-		header += " / " + organizationID
+		if organizationID := config.GetCurrentProfile(cmd, cfg).GetDefaultOrganization(); organizationID != "" {
+			header += " / " + organizationID
+		}
 	}
 	header += " #"
 	cmdbuilder.Highlightln(cmd.OutOrStdout(), header)
@@ -187,9 +185,8 @@ func (p *prompt) nextCommand(cmd *cobra.Command) error {
 	}
 
 	currentProfileName := config.GetCurrentProfileName(cmd, cfg)
-	if currentProfileName != p.actualProfile {
-		err := p.refreshUserEmail(cmd, cfg)
-		if err != nil {
+	if currentProfileName != p.actualProfile || p.userEmail == "" {
+		if err := p.refreshUserEmail(cmd, cfg); err != nil {
 			return err
 		}
 		p.actualProfile = currentProfileName
@@ -227,7 +224,7 @@ func (p *prompt) nextCommand(cmd *cobra.Command) error {
 func (p *prompt) run(cmd *cobra.Command) error {
 	for {
 		if err := p.nextCommand(cmd); err != nil {
-			cmdbuilder.Error(cmd.ErrOrStderr(), "%s", err)
+			return err
 		}
 	}
 }
