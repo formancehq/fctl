@@ -15,7 +15,7 @@ func NewUseCommand() *cobra.Command {
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithShortDescription("Use profile"),
 		cmdbuilder.WithValidArgsFunction(func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-			config, err := config.Get()
+			config, err := config.Get(cmd.Context())
 			if err != nil {
 				return []string{}, cobra.ShellCompDirectiveError
 			}
@@ -29,7 +29,7 @@ func NewUseCommand() *cobra.Command {
 			return ret, cobra.ShellCompDirectiveDefault
 		}),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			config, err := config.Get()
+			config, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}

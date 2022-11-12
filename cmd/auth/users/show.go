@@ -13,7 +13,7 @@ func NewShowCommand() *cobra.Command {
 		cmdbuilder.WithAliases("s"),
 		cmdbuilder.WithShortDescription("Show user"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}

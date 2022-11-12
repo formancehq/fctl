@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/ledger/internal"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func NewStatsCommand() *cobra.Command {
@@ -17,7 +17,7 @@ func NewStatsCommand() *cobra.Command {
 		cmdbuilder.WithAliases("st"),
 		cmdbuilder.WithShortDescription("Read ledger stats"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}
@@ -26,7 +26,7 @@ func NewStatsCommand() *cobra.Command {
 				return err
 			}
 
-			response, _, err := ledgerClient.StatsApi.ReadStats(cmd.Context(), viper.GetString(internal.LedgerFlag)).Execute()
+			response, _, err := ledgerClient.StatsApi.ReadStats(cmd.Context(), cmdutils.Viper(cmd.Context()).GetString(internal.LedgerFlag)).Execute()
 			if err != nil {
 				return err
 			}

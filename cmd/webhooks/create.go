@@ -6,15 +6,15 @@ import (
 	"strings"
 
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/config"
-	"github.com/formancehq/fctl/cmd/internal/debugutil"
+	"github.com/formancehq/fctl/cmd/internal/debugutils"
 	webhookclient "github.com/formancehq/webhooks/client"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func newWebhookClient(cmd *cobra.Command, cfg *config.Config) (*webhookclient.APIClient, error) {
-	profile := config.GetCurrentProfile(cfg)
+	profile := config.GetCurrentProfile(cmd.Context(), cfg)
 
 	organizationID, err := cmdbuilder.ResolveOrganizationID(cmd.Context(), cfg)
 	if err != nil {
@@ -26,7 +26,7 @@ func newWebhookClient(cmd *cobra.Command, cfg *config.Config) (*webhookclient.AP
 		return nil, err
 	}
 
-	httpClient := debugutil.GetHttpClient()
+	httpClient := debugutils.GetHttpClient(cmd.Context())
 
 	token, err := profile.GetStackToken(cmd.Context(), httpClient, organizationID, stackID)
 	if err != nil {
@@ -53,7 +53,7 @@ func NewCreateCommand() *cobra.Command {
 		cmdbuilder.WithArgs(cobra.MinimumNArgs(2)),
 		cmdbuilder.WithStringFlag(secretFlag, "", "Webhook secret"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}
@@ -66,7 +66,7 @@ func NewCreateCommand() *cobra.Command {
 				return err
 			}
 
-			secret := viper.GetString(secretFlag)
+			secret := cmdutils.Viper(cmd.Context()).GetString(secretFlag)
 
 			response, _, err := webhookClient.ConfigsApi.InsertOneConfig(cmd.Context()).ConfigUser(webhookclient.ConfigUser{
 				Endpoint:   &args[0],

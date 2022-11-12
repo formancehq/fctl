@@ -1,10 +1,11 @@
 package config
 
 import (
+	"context"
 	"encoding/json"
 
+	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/pkg/errors"
-	"github.com/spf13/viper"
 )
 
 type persistedConfig struct {
@@ -96,16 +97,16 @@ func (c *Config) SetCurrentProfileName(s string) {
 	c.currentProfile = s
 }
 
-func Get() (*Config, error) {
-	return GetConfigManager().Load()
+func Get(ctx context.Context) (*Config, error) {
+	return GetConfigManager(ctx).Load()
 }
 
-func GetConfigManager() *ConfigManager {
-	return NewConfigManager(viper.GetString(FileFlag))
+func GetConfigManager(ctx context.Context) *ConfigManager {
+	return NewConfigManager(cmdutils.Viper(ctx).GetString(FileFlag))
 }
 
-func GetCurrentProfileName(config *Config) string {
-	if profile := viper.GetString(ProfileFlag); profile != "" {
+func GetCurrentProfileName(ctx context.Context, config *Config) string {
+	if profile := cmdutils.Viper(ctx).GetString(ProfileFlag); profile != "" {
 		return profile
 	}
 	currentProfileName := config.GetCurrentProfileName()
@@ -115,7 +116,7 @@ func GetCurrentProfileName(config *Config) string {
 	return currentProfileName
 }
 
-func GetCurrentProfile(cfg *Config) *Profile {
-	return cfg.GetProfileOrDefault(GetCurrentProfileName(cfg), viper.GetString(MembershipUriFlag),
-		viper.GetString(BaseServiceUriFlag))
+func GetCurrentProfile(ctx context.Context, cfg *Config) *Profile {
+	return cfg.GetProfileOrDefault(GetCurrentProfileName(ctx, cfg), cmdutils.Viper(ctx).GetString(MembershipUriFlag),
+		cmdutils.Viper(ctx).GetString(BaseServiceUriFlag))
 }

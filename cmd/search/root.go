@@ -7,17 +7,17 @@ import (
 	"strings"
 
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/collections"
 	"github.com/formancehq/fctl/cmd/internal/config"
-	"github.com/formancehq/fctl/cmd/internal/debugutil"
+	"github.com/formancehq/fctl/cmd/internal/debugutils"
 	searchclient "github.com/formancehq/search/client"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func newSearchClient(cmd *cobra.Command, cfg *config.Config) (*searchclient.APIClient, error) {
-	profile := config.GetCurrentProfile(cfg)
+	profile := config.GetCurrentProfile(cmd.Context(), cfg)
 
 	organizationID, err := cmdbuilder.ResolveOrganizationID(cmd.Context(), cfg)
 	if err != nil {
@@ -29,7 +29,7 @@ func newSearchClient(cmd *cobra.Command, cfg *config.Config) (*searchclient.APIC
 		return nil, err
 	}
 
-	httpClient := debugutil.GetHttpClient()
+	httpClient := debugutils.GetHttpClient(cmd.Context())
 
 	token, err := profile.GetStackToken(cmd.Context(), httpClient, organizationID, stackID)
 	if err != nil {
@@ -58,7 +58,7 @@ func NewCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("Search in all services"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}
@@ -76,7 +76,7 @@ func NewCommand() *cobra.Command {
 			if len(args) > 1 {
 				terms = args[1:]
 			}
-			size := int32(viper.GetInt(sizeFlag))
+			size := int32(cmdutils.Viper(cmd.Context()).GetInt(sizeFlag))
 
 			response, _, err := searchClient.DefaultApi.Search(cmd.Context()).Query(searchclient.Query{
 				Size:   &size,

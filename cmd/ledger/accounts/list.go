@@ -2,13 +2,13 @@ package accounts
 
 import (
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/collections"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	internal2 "github.com/formancehq/fctl/cmd/ledger/internal"
 	ledgerclient "github.com/numary/ledger/client"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func NewListCommand() *cobra.Command {
@@ -17,7 +17,7 @@ func NewListCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("List accounts"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}
@@ -27,7 +27,7 @@ func NewListCommand() *cobra.Command {
 				return err
 			}
 
-			ledger := viper.GetString(internal2.LedgerFlag)
+			ledger := cmdutils.Viper(cmd.Context()).GetString(internal2.LedgerFlag)
 			rsp, _, err := ledgerClient.AccountsApi.ListAccounts(cmd.Context(), ledger).Execute()
 			if err != nil {
 				return err

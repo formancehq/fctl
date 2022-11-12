@@ -8,12 +8,12 @@ import (
 	"strings"
 
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/ledger/internal"
 	ledgerclient "github.com/numary/ledger/client"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func NewCommand() *cobra.Command {
@@ -34,7 +34,7 @@ func NewCommand() *cobra.Command {
 		cmdbuilder.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
 		cmdbuilder.WithStringFlag(referenceFlag, "", "Reference to add to the generated transaction"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}
@@ -60,21 +60,21 @@ func NewCommand() *cobra.Command {
 			}
 
 			vars := map[string]interface{}{}
-			for _, v := range viper.GetStringSlice(accountVarFlag) {
+			for _, v := range cmdutils.Viper(cmd.Context()).GetStringSlice(accountVarFlag) {
 				parts := strings.SplitN(v, "=", 2)
 				if len(parts) == 1 {
 					return fmt.Errorf("malformed var: %s", v)
 				}
 				vars[parts[0]] = parts[1]
 			}
-			for _, v := range viper.GetStringSlice(portionVarFlag) {
+			for _, v := range cmdutils.Viper(cmd.Context()).GetStringSlice(portionVarFlag) {
 				parts := strings.SplitN(v, "=", 2)
 				if len(parts) == 1 {
 					return fmt.Errorf("malformed var: %s", v)
 				}
 				vars[parts[0]] = parts[1]
 			}
-			for _, v := range viper.GetStringSlice(amountVarFlag) {
+			for _, v := range cmdutils.Viper(cmd.Context()).GetStringSlice(amountVarFlag) {
 				parts := strings.SplitN(v, "=", 2)
 				if len(parts) == 1 {
 					return fmt.Errorf("malformed var: %s", v)
@@ -96,14 +96,14 @@ func NewCommand() *cobra.Command {
 				}
 			}
 
-			reference := viper.GetString(referenceFlag)
+			reference := cmdutils.Viper(cmd.Context()).GetString(referenceFlag)
 
-			metadata, err := internal.ParseMetadata(viper.GetStringSlice(metadataFlag))
+			metadata, err := internal.ParseMetadata(cmdutils.Viper(cmd.Context()).GetStringSlice(metadataFlag))
 			if err != nil {
 				return err
 			}
 
-			ledger := viper.GetString(internal.LedgerFlag)
+			ledger := cmdutils.Viper(cmd.Context()).GetString(internal.LedgerFlag)
 			response, _, err := ledgerClient.ScriptApi.
 				RunScript(cmd.Context(), ledger).
 				Script(ledgerclient.Script{

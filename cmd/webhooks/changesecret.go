@@ -13,7 +13,7 @@ func NewChangeSecretCommand() *cobra.Command {
 		cmdbuilder.WithAliases("cs"),
 		cmdbuilder.WithArgs(cobra.RangeArgs(1, 2)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}

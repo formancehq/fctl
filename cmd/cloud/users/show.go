@@ -14,7 +14,7 @@ func NewShowCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("Show user by id"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}

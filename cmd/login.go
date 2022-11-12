@@ -75,14 +75,14 @@ func NewLoginCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("Login"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}
 
-			profile := config.GetCurrentProfile(cfg)
+			profile := config.GetCurrentProfile(cmd.Context(), cfg)
 
-			relyingParty, err := membership.GetRelyingParty(profile)
+			relyingParty, err := membership.GetRelyingParty(cmd.Context(), profile)
 			if err != nil {
 				return err
 			}
@@ -97,7 +97,7 @@ func NewLoginCommand() *cobra.Command {
 
 			profile.UpdateToken(ret.Token)
 
-			currentProfileName := config.GetCurrentProfileName(cfg)
+			currentProfileName := config.GetCurrentProfileName(cmd.Context(), cfg)
 
 			cfg.SetCurrentProfile(currentProfileName, profile)
 

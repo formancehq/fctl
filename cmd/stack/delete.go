@@ -2,11 +2,11 @@ package stack
 
 import (
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/internal/membership"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func NewDeleteCommand() *cobra.Command {
@@ -19,11 +19,8 @@ func NewDeleteCommand() *cobra.Command {
 		cmdbuilder.WithAliases("del", "d"),
 		cmdbuilder.WithArgs(cobra.MaximumNArgs(1)),
 		cmdbuilder.WithStringFlag(stackNameFlag, "", "Sandbox to remove"),
-		cmdbuilder.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
-			return viper.BindPFlags(cmd.Flags())
-		}),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}
@@ -39,12 +36,12 @@ func NewDeleteCommand() *cobra.Command {
 
 			var stackID string
 			if len(args) == 1 {
-				if viper.GetString(stackNameFlag) == "" {
+				if cmdutils.Viper(cmd.Context()).GetString(stackNameFlag) == "" {
 					return errors.New("need either an id of a name spefified using --name flag")
 				}
 				stackID = args[0]
 			} else {
-				if viper.GetString(stackNameFlag) == "" {
+				if cmdutils.Viper(cmd.Context()).GetString(stackNameFlag) == "" {
 					return errors.New("need either an id of a name specified using --name flag")
 				}
 				stacks, _, err := apiClient.DefaultApi.ListStacks(cmd.Context(), organization).Execute()
@@ -52,7 +49,7 @@ func NewDeleteCommand() *cobra.Command {
 					return errors.Wrap(err, "listing stacks")
 				}
 				for _, s := range stacks.Data {
-					if s.Name == viper.GetString(stackNameFlag) {
+					if s.Name == cmdutils.Viper(cmd.Context()).GetString(stackNameFlag) {
 						stackID = s.Id
 						break
 					}

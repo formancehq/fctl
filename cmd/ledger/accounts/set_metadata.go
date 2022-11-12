@@ -2,10 +2,10 @@ package accounts
 
 import (
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/ledger/internal"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func NewSetMetadataCommand() *cobra.Command {
@@ -20,7 +20,7 @@ func NewSetMetadataCommand() *cobra.Command {
 				return err
 			}
 
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}
@@ -33,7 +33,7 @@ func NewSetMetadataCommand() *cobra.Command {
 			account := args[0]
 
 			_, err = ledgerClient.AccountsApi.
-				AddMetadataToAccount(cmd.Context(), viper.GetString(internal.LedgerFlag), account).
+				AddMetadataToAccount(cmd.Context(), cmdutils.Viper(cmd.Context()).GetString(internal.LedgerFlag), account).
 				RequestBody(metadata).
 				Execute()
 			if err != nil {

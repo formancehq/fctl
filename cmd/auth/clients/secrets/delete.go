@@ -13,7 +13,7 @@ func NewDeleteCommand() *cobra.Command {
 		cmdbuilder.WithAliases("d"),
 		cmdbuilder.WithShortDescription("Delete secret"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}

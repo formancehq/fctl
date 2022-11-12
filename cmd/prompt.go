@@ -9,6 +9,7 @@ import (
 	_ "github.com/athul/shelby/mods"
 	goprompt "github.com/c-bata/go-prompt"
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/collections"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/mattn/go-shellwords"
@@ -87,13 +88,16 @@ func executeCommand(cmd *cobra.Command, t string) error {
 		panic(err)
 	}
 
+	ctx := cmdutils.ContextWithViper(cmd.Context(), viper.New())
+
 	subCommand := newOverrideCommand()
 	subCommand.SetArgs(parse)
 	subCommand.SetOut(cmd.OutOrStdout())
 	subCommand.SetErr(cmd.ErrOrStderr())
 	subCommand.SilenceErrors = true
 	subCommand.SilenceUsage = true
-	return subCommand.ExecuteContext(cmd.Context())
+
+	return subCommand.ExecuteContext(ctx)
 }
 
 func NewPromptCommand() *cobra.Command {
@@ -105,24 +109,20 @@ func NewPromptCommand() *cobra.Command {
 			history := make([]string, 0)
 
 			for {
-				if err := viper.BindPFlags(cmd.Flags()); err != nil {
-					panic(err)
-				}
-
-				cfg, err := config.Get()
+				cfg, err := config.Get(cmd.Context())
 				if err != nil {
 					return err
 				}
 
 				prompt := "> "
-				organizationID, err := cmdbuilder.RetrieveOrganizationIDFromFlagOrProfile(cfg)
+				organizationID, err := cmdbuilder.RetrieveOrganizationIDFromFlagOrProfile(cmd.Context(), cfg)
 				if err != nil && !errors.Is(err, cmdbuilder.ErrOrganizationNotSpecified) {
 					return err
 				}
 				if organizationID != "" {
 					prompt = fmt.Sprintf("%s %s", organizationID, prompt)
 				}
-				prompt = fmt.Sprintf("%s / %s", config.GetCurrentProfileName(cfg), prompt)
+				prompt = fmt.Sprintf("%s / %s", config.GetCurrentProfileName(cmd.Context(), cfg), prompt)
 
 				switch t := startPrompt(prompt,
 					goprompt.OptionPrefixTextColor(promptColor),

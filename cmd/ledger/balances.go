@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	internal2 "github.com/formancehq/fctl/cmd/ledger/internal"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func NewBalancesCommand() *cobra.Command {
@@ -22,7 +22,7 @@ func NewBalancesCommand() *cobra.Command {
 		cmdbuilder.WithStringFlag(afterFlag, "", "Filter after specific address"),
 		cmdbuilder.WithShortDescription("Read balances"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}
@@ -33,9 +33,9 @@ func NewBalancesCommand() *cobra.Command {
 			}
 
 			balances, _, err := client.BalancesApi.
-				GetBalances(cmd.Context(), viper.GetString(internal2.LedgerFlag)).
-				After(viper.GetString(afterFlag)).
-				Address(viper.GetString(addressFlag)).
+				GetBalances(cmd.Context(), cmdutils.Viper(cmd.Context()).GetString(internal2.LedgerFlag)).
+				After(cmdutils.Viper(cmd.Context()).GetString(afterFlag)).
+				Address(cmdutils.Viper(cmd.Context()).GetString(addressFlag)).
 				Execute()
 			if err != nil {
 				return err

@@ -18,12 +18,12 @@ func NewListCommand() *cobra.Command {
 		cmdbuilder.WithAliases("ls", "l"),
 		cmdbuilder.WithShortDescription("List sandboxes"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}
 
-			profile := config.GetCurrentProfile(cfg)
+			profile := config.GetCurrentProfile(cmd.Context(), cfg)
 
 			organization, err := cmdbuilder.ResolveOrganizationID(cmd.Context(), cfg)
 			if err != nil {

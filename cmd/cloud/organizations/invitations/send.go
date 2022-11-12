@@ -13,7 +13,7 @@ func NewSendCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("Invite a user by email"),
 		cmdbuilder.WithAliases("s"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}

@@ -2,13 +2,13 @@ package stack
 
 import (
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	config "github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/internal/membership"
 	"github.com/formancehq/fctl/cmd/stack/internal"
 	"github.com/formancehq/fctl/membershipclient"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func NewShowCommand() *cobra.Command {
@@ -20,7 +20,7 @@ func NewShowCommand() *cobra.Command {
 		cmdbuilder.WithArgs(cobra.MaximumNArgs(1)),
 		cmdbuilder.WithStringFlag(stackNameFlag, "", ""),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}
@@ -36,7 +36,7 @@ func NewShowCommand() *cobra.Command {
 
 			var stack *membershipclient.Stack
 			if len(args) == 1 {
-				if viper.GetString(stackNameFlag) != "" {
+				if cmdutils.Viper(cmd.Context()).GetString(stackNameFlag) != "" {
 					return errors.New("need either an id of a name spefified using --name flag")
 				}
 				stackResponse, _, err := apiClient.DefaultApi.ReadStack(cmd.Context(), organization, args[0]).Execute()
@@ -45,7 +45,7 @@ func NewShowCommand() *cobra.Command {
 				}
 				stack = stackResponse.Data
 			} else {
-				if viper.GetString(stackNameFlag) == "" {
+				if cmdutils.Viper(cmd.Context()).GetString(stackNameFlag) == "" {
 					return errors.New("need either an id of a name specified using --name flag")
 				}
 				stacksResponse, _, err := apiClient.DefaultApi.ListStacks(cmd.Context(), organization).Execute()
@@ -53,7 +53,7 @@ func NewShowCommand() *cobra.Command {
 					return errors.Wrap(err, "listing stacks")
 				}
 				for _, s := range stacksResponse.Data {
-					if s.Name == viper.GetString(stackNameFlag) {
+					if s.Name == cmdutils.Viper(cmd.Context()).GetString(stackNameFlag) {
 						stack = &s
 						break
 					}
@@ -64,7 +64,7 @@ func NewShowCommand() *cobra.Command {
 				return errors.New("Not found.")
 			}
 
-			return internal.PrintStackInformation(cmd.OutOrStdout(), config.GetCurrentProfile(cfg), stack)
+			return internal.PrintStackInformation(cmd.OutOrStdout(), config.GetCurrentProfile(cmd.Context(), cfg), stack)
 		}),
 	)
 }

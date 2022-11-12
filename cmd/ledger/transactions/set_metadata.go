@@ -2,10 +2,10 @@ package transactions
 
 import (
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/ledger/internal"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func NewSetMetadataCommand() *cobra.Command {
@@ -21,7 +21,7 @@ func NewSetMetadataCommand() *cobra.Command {
 				return err
 			}
 
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}
@@ -32,13 +32,13 @@ func NewSetMetadataCommand() *cobra.Command {
 			}
 
 			transactionID, err := internal.TransactionIDOrLastN(cmd.Context(), ledgerClient,
-				viper.GetString(internal.LedgerFlag), args[0])
+				cmdutils.Viper(cmd.Context()).GetString(internal.LedgerFlag), args[0])
 			if err != nil {
 				return err
 			}
 
 			_, err = ledgerClient.TransactionsApi.
-				AddMetadataOnTransaction(cmd.Context(), viper.GetString(internal.LedgerFlag), int32(transactionID)).
+				AddMetadataOnTransaction(cmd.Context(), cmdutils.Viper(cmd.Context()).GetString(internal.LedgerFlag), int32(transactionID)).
 				RequestBody(metadata).
 				Execute()
 			if err != nil {

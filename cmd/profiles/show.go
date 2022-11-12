@@ -15,7 +15,7 @@ func NewShowCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("Show profile"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			config, err := config.Get()
+			config, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}

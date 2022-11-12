@@ -14,14 +14,14 @@ func NewInfoCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("Display user information"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}
 
-			profile := config.GetCurrentProfile(cfg)
+			profile := config.GetCurrentProfile(cmd.Context(), cfg)
 
-			relyingParty, err := membership.GetRelyingParty(profile)
+			relyingParty, err := membership.GetRelyingParty(cmd.Context(), profile)
 			if err != nil {
 				return err
 			}

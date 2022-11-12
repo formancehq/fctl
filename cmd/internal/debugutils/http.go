@@ -1,17 +1,20 @@
-package debugutil
+package debugutils
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
 
+	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/config"
-	"github.com/spf13/viper"
 )
 
-func GetHttpClient() *http.Client {
-	return NewHTTPClient(viper.GetBool(config.InsecureTlsFlag), viper.GetBool(config.DebugFlag))
+func GetHttpClient(ctx context.Context) *http.Client {
+	return NewHTTPClient(
+		cmdutils.Viper(ctx).GetBool(config.InsecureTlsFlag),
+		cmdutils.Viper(ctx).GetBool(config.DebugFlag))
 }
 
 type RoundTripperFn func(req *http.Request) (*http.Response, error)

@@ -34,7 +34,7 @@ func NewUICommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("Open UI"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}
@@ -49,7 +49,7 @@ func NewUICommand() *cobra.Command {
 				return err
 			}
 
-			profile := config.GetCurrentProfile(cfg)
+			profile := config.GetCurrentProfile(cmd.Context(), cfg)
 			stackUrl := profile.ServicesBaseUrl(organization, stack)
 
 			return errors.Wrapf(openUrl(stackUrl.String()), "opening url: %s", stackUrl.String())

@@ -14,7 +14,7 @@ func NewDeleteCommand() *cobra.Command {
 		cmdbuilder.WithAliases("del"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}

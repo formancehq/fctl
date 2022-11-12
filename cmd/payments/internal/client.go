@@ -5,13 +5,13 @@ import (
 
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
-	"github.com/formancehq/fctl/cmd/internal/debugutil"
+	"github.com/formancehq/fctl/cmd/internal/debugutils"
 	"github.com/numary/payments/client"
 	"github.com/spf13/cobra"
 )
 
 func NewPaymentsClient(cmd *cobra.Command, cfg *config.Config) (*client.APIClient, error) {
-	profile := config.GetCurrentProfile(cfg)
+	profile := config.GetCurrentProfile(cmd.Context(), cfg)
 
 	organizationID, err := cmdbuilder.ResolveOrganizationID(cmd.Context(), cfg)
 	if err != nil {
@@ -23,7 +23,7 @@ func NewPaymentsClient(cmd *cobra.Command, cfg *config.Config) (*client.APIClien
 		return nil, err
 	}
 
-	httpClient := debugutil.GetHttpClient()
+	httpClient := debugutils.GetHttpClient(cmd.Context())
 
 	token, err := profile.GetToken(cmd.Context(), httpClient)
 	if err != nil {

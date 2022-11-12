@@ -13,12 +13,12 @@ func NewSetDefaultOrganizationCommand() *cobra.Command {
 		cmdbuilder.WithAliases("sdo"),
 		cmdbuilder.WithShortDescription("Set default organization"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}
 
-			config.GetCurrentProfile(cfg).SetDefaultOrganization(args[0])
+			config.GetCurrentProfile(cmd.Context(), cfg).SetDefaultOrganization(args[0])
 
 			if err := cfg.Persist(); err != nil {
 				return errors.Wrap(err, "Updating config")

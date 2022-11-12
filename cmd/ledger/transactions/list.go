@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/collections"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	internal2 "github.com/formancehq/fctl/cmd/ledger/internal"
 	ledgerclient "github.com/numary/ledger/client"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func NewListCommand() *cobra.Command {
@@ -43,7 +43,7 @@ func NewListCommand() *cobra.Command {
 		// SDK not generating correct requests
 		cmdbuilder.WithHiddenFlag(listTransactionsMetadataFlag),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}
@@ -54,7 +54,7 @@ func NewListCommand() *cobra.Command {
 			}
 
 			metadata := map[string]interface{}{}
-			for _, v := range viper.GetStringSlice(listTransactionsMetadataFlag) {
+			for _, v := range cmdutils.Viper(cmd.Context()).GetStringSlice(listTransactionsMetadataFlag) {
 				parts := strings.SplitN(v, "=", 2)
 				if len(parts) == 1 {
 					return fmt.Errorf("malformed metadata: %s", v)
@@ -62,17 +62,17 @@ func NewListCommand() *cobra.Command {
 				metadata[parts[0]] = parts[1]
 			}
 
-			ledger := viper.GetString(internal2.LedgerFlag)
+			ledger := cmdutils.Viper(cmd.Context()).GetString(internal2.LedgerFlag)
 			rsp, _, err := ledgerClient.TransactionsApi.
 				ListTransactions(cmd.Context(), ledger).
-				PageSize(int32(viper.GetInt(listTransactionsPageSizeFlag))).
-				Reference(viper.GetString(listTransactionsReferenceFlag)).
-				Account(viper.GetString(listTransactionAccountFlag)).
-				Destination(viper.GetString(listTransactionDestinationFlag)).
-				Source(viper.GetString(listTransactionSourceFlag)).
-				After(viper.GetString(listTransactionsAfterFlag)).
-				EndTime(viper.GetString(listTransactionsEndTimeFlag)).
-				StartTime(viper.GetString(listTransactionsStartTimeFlag)).
+				PageSize(int32(cmdutils.Viper(cmd.Context()).GetInt(listTransactionsPageSizeFlag))).
+				Reference(cmdutils.Viper(cmd.Context()).GetString(listTransactionsReferenceFlag)).
+				Account(cmdutils.Viper(cmd.Context()).GetString(listTransactionAccountFlag)).
+				Destination(cmdutils.Viper(cmd.Context()).GetString(listTransactionDestinationFlag)).
+				Source(cmdutils.Viper(cmd.Context()).GetString(listTransactionSourceFlag)).
+				After(cmdutils.Viper(cmd.Context()).GetString(listTransactionsAfterFlag)).
+				EndTime(cmdutils.Viper(cmd.Context()).GetString(listTransactionsEndTimeFlag)).
+				StartTime(cmdutils.Viper(cmd.Context()).GetString(listTransactionsStartTimeFlag)).
 				Metadata(metadata).
 				Execute()
 			if err != nil {

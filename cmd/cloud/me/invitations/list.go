@@ -17,7 +17,7 @@ func NewListCommand() *cobra.Command {
 		cmdbuilder.WithAliases("ls", "l"),
 		cmdbuilder.WithShortDescription("List invitations"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}

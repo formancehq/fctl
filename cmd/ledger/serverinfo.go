@@ -17,7 +17,7 @@ func NewServerInfoCommand() *cobra.Command {
 		cmdbuilder.WithAliases("si"),
 		cmdbuilder.WithShortDescription("Read server info"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}

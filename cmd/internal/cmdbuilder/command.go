@@ -3,11 +3,11 @@ package cmdbuilder
 import (
 	"context"
 
+	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/internal/membership"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 const (
@@ -19,23 +19,23 @@ var (
 	ErrOrganizationNotSpecified = errors.New("organization not specified")
 )
 
-func GetSelectedOrganization() string {
-	return viper.GetString(organizationFlag)
+func GetSelectedOrganization(ctx context.Context) string {
+	return cmdutils.Viper(ctx).GetString(organizationFlag)
 }
 
-func RetrieveOrganizationIDFromFlagOrProfile(cfg *config.Config) (string, error) {
-	if id := GetSelectedOrganization(); id != "" {
+func RetrieveOrganizationIDFromFlagOrProfile(ctx context.Context, cfg *config.Config) (string, error) {
+	if id := GetSelectedOrganization(ctx); id != "" {
 		return id, nil
 	}
 
-	if defaultOrganization := config.GetCurrentProfile(cfg).GetDefaultOrganization(); defaultOrganization != "" {
+	if defaultOrganization := config.GetCurrentProfile(ctx, cfg).GetDefaultOrganization(); defaultOrganization != "" {
 		return defaultOrganization, nil
 	}
 	return "", ErrOrganizationNotSpecified
 }
 
 func ResolveOrganizationID(ctx context.Context, cfg *config.Config) (string, error) {
-	if id, err := RetrieveOrganizationIDFromFlagOrProfile(cfg); err == nil {
+	if id, err := RetrieveOrganizationIDFromFlagOrProfile(ctx, cfg); err == nil {
 		return id, nil
 	}
 
@@ -60,12 +60,12 @@ func ResolveOrganizationID(ctx context.Context, cfg *config.Config) (string, err
 	return organizations.Data[0].Id, nil
 }
 
-func GetSelectedStack() string {
-	return viper.GetString(stackFlag)
+func GetSelectedStack(ctx context.Context) string {
+	return cmdutils.Viper(ctx).GetString(stackFlag)
 }
 
 func ResolveStackID(ctx context.Context, cfg *config.Config, organizationID string) (string, error) {
-	if id := GetSelectedStack(); id != "" {
+	if id := GetSelectedStack(ctx); id != "" {
 		return id, nil
 	}
 	client, err := membership.NewClient(ctx, cfg)

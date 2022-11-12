@@ -2,11 +2,11 @@ package transactions
 
 import (
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/ledger/internal"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func NewShowCommand() *cobra.Command {
@@ -16,7 +16,7 @@ func NewShowCommand() *cobra.Command {
 		cmdbuilder.WithAliases("sh"),
 		cmdbuilder.WithValidArgs("last"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}
@@ -26,7 +26,7 @@ func NewShowCommand() *cobra.Command {
 				return err
 			}
 
-			ledger := viper.GetString(internal.LedgerFlag)
+			ledger := cmdutils.Viper(cmd.Context()).GetString(internal.LedgerFlag)
 			txId, err := internal.TransactionIDOrLastN(cmd.Context(), ledgerClient, ledger, args[0])
 			if err != nil {
 				return err

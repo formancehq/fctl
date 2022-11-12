@@ -13,7 +13,7 @@ func NewDeleteCommand() *cobra.Command {
 		cmdbuilder.WithAliases("d", "del"),
 		cmdbuilder.WithShortDescription("Delete client"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get()
+			cfg, err := config.Get(cmd.Context())
 			if err != nil {
 				return err
 			}
