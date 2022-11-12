@@ -35,11 +35,25 @@ func newOverrideCommand() *cobra.Command {
 
 func startPrompt(ctx context.Context, prompt string, opts ...goprompt.Option) string {
 	return goprompt.Input(prompt, func(d goprompt.Document) []goprompt.Suggest {
+		subCommand := newOverrideCommand()
 
 		completionsArgs := make([]string, 0)
-		if d.Text == "" {
+		switch {
+		case d.Text == "":
 			completionsArgs = append(completionsArgs, "")
-		} else {
+		case strings.HasPrefix(d.Text, "/"):
+			command := strings.TrimPrefix(d.Text, "/")
+			command = strings.Replace(command, "/", " ", -1)
+			args := strings.Split(command, " ")
+			retrievedCommand, _, err := subCommand.Find(args)
+			if err != nil {
+				panic(err)
+			}
+			for _, c := range retrievedCommand.Commands() {
+				completionsArgs = append(completionsArgs, c.Use)
+			}
+
+		default:
 			parse, err := shellwords.Parse(d.Text)
 			if err != nil {
 				panic(err)
@@ -53,7 +67,6 @@ func startPrompt(ctx context.Context, prompt string, opts ...goprompt.Option) st
 
 		subCommandOut := bytes.NewBufferString("")
 
-		subCommand := newOverrideCommand()
 		subCommand.SetArgs(append([]string{
 			cobra.ShellCompRequestCmd,
 		}, completionsArgs...))

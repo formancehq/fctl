@@ -3,17 +3,19 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"runtime/debug"
 	"strings"
 
 	"github.com/formancehq/fctl/cmd/auth"
 	"github.com/formancehq/fctl/cmd/cloud"
-	"github.com/formancehq/fctl/cmd/cloud/me"
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/ledger"
 	"github.com/formancehq/fctl/cmd/payments"
 	"github.com/formancehq/fctl/cmd/profiles"
+	"github.com/formancehq/fctl/cmd/search"
 	"github.com/formancehq/fctl/cmd/stack"
+	"github.com/formancehq/fctl/cmd/webhooks"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -44,7 +46,8 @@ func NewRootCommand() *cobra.Command {
 			stack.NewCommand(),
 			auth.NewCommand(),
 			cloud.NewCommand(),
-			me.NewInfoCommand(),
+			search.NewCommand(),
+			webhooks.NewCommand(),
 		),
 		cmdbuilder.WithPersistentStringPFlag(config.ProfileFlag, "p", "", "config profile to use"),
 		cmdbuilder.WithPersistentStringPFlag(config.FileFlag, "c", fmt.Sprintf("%s/.formance/fctl.config", homedir), "Debug mode"),
@@ -54,6 +57,14 @@ func NewRootCommand() *cobra.Command {
 }
 
 func Execute() {
+	defer func() {
+		if e := recover(); e != nil {
+			cmdbuilder.Error(os.Stderr, "%s", e)
+			if viper.GetBool(config.DebugFlag) {
+				debug.PrintStack()
+			}
+		}
+	}()
 	err := NewRootCommand().Execute()
 	if err != nil {
 		cmdbuilder.Error(os.Stderr, err.Error())

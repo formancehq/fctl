@@ -1,4 +1,4 @@
-package stack
+package webhooks
 
 import (
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
@@ -6,14 +6,16 @@ import (
 )
 
 func NewCommand() *cobra.Command {
-	return cmdbuilder.NewMembershipCommand("sandbox",
-		cmdbuilder.WithShortDescription("Manage your sandbox"),
-		cmdbuilder.WithAliases("stack", "stacks", "st"),
+	return cmdbuilder.NewCommand("webhooks",
+		cmdbuilder.WithAliases("web", "wh"),
+		cmdbuilder.WithShortDescription("Webhooks management"),
 		cmdbuilder.WithChildCommands(
 			NewCreateCommand(),
 			NewListCommand(),
+			NewDeactivateCommand(),
+			NewActivateCommand(),
 			NewDeleteCommand(),
-			NewShowCommand(),
+			NewChangeSecretCommand(),
 		),
 	)
 }

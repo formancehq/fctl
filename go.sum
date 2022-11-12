@@ -82,6 +82,10 @@ github.com/formancehq/auth/authclient v0.0.0-20221003212526-20761562e41e h1:xyGo
 github.com/formancehq/auth/authclient v0.0.0-20221003212526-20761562e41e/go.mod h1:CDNcMi+yakTL4py/Lr96QrP4To3fBJYg1QMI0hi8+YU=
 github.com/formancehq/oidc v0.0.0-20220922145049-a6daec727711 h1:FlfsWVuJWpIA+FasyDRNExFSp9VnmuR+BlIT6Tyjabw=
 github.com/formancehq/oidc v0.0.0-20220922145049-a6daec727711/go.mod h1:vcDdyFgHzwPIPgoXO1u1UCJQjv2gJBq832VZx13sWBE=
+github.com/formancehq/search/client v0.0.0-20221112130150-832c2c17043b h1:CZo0jrzP1un4vxYN9YBoUI2pg46oTW6p3FqZGklGdPc=
+github.com/formancehq/search/client v0.0.0-20221112130150-832c2c17043b/go.mod h1:YxKkr7X9sOXSyFCSgUtZ/T/k3dRKkvFNl6qQGlohOn0=
+github.com/formancehq/webhooks/client v0.0.0-20221112150350-abea13654995 h1:T5l5YagX9XQoaMXVQTV5Ro8Ryj6oSS6dtFtNShCF5/U=
+github.com/formancehq/webhooks/client v0.0.0-20221112150350-abea13654995/go.mod h1:3b617X2DZolcF0A6RXnHZnFrqZSbAo/4wPRTVEFi3OE=
 github.com/frankban/quicktest v1.14.3 h1:FJKSZTDHjyhriyC81FLQ0LY93eSai0ZyR/ZIkd3ZUKE=
 github.com/fsnotify/fsnotify v1.5.4 h1:jRbGcIw6P2Meqdwuo0H1p6JVLbL5DHKAKlYndzMwVZI=
 github.com/fsnotify/fsnotify v1.5.4/go.mod h1:OVB6XrOHzAwXMpEM7uPOzcehqUV2UqJxmVXmkdnm1bU=
