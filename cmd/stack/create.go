@@ -16,17 +16,17 @@ func NewCreateCommand() *cobra.Command {
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			organization, err := cmdbuilder.ResolveOrganizationID(cmd.Context(), cfg)
+			organization, err := cmdbuilder.ResolveOrganizationID(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			apiClient, err := config.NewClient(cmd.Context(), cfg)
+			apiClient, err := config.NewClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -38,7 +38,7 @@ func NewCreateCommand() *cobra.Command {
 				return errors.Wrap(err, "creating sandbox")
 			}
 
-			profile := config.GetCurrentProfile(cmd.Context(), cfg)
+			profile := config.GetCurrentProfile(cmd, cfg)
 
 			cmdbuilder.Highlightln(cmd.OutOrStdout(), "Your dashboard will be reachable on: %s",
 				profile.ServicesBaseUrl(stack.Data.OrganizationId, stack.Data.Id).String())

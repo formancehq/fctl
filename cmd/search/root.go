@@ -16,19 +16,19 @@ import (
 )
 
 func newSearchClient(cmd *cobra.Command, cfg *config.Config) (*searchclient.APIClient, error) {
-	profile := config.GetCurrentProfile(cmd.Context(), cfg)
+	profile := config.GetCurrentProfile(cmd, cfg)
 
-	organizationID, err := cmdbuilder.ResolveOrganizationID(cmd.Context(), cfg)
+	organizationID, err := cmdbuilder.ResolveOrganizationID(cmd, cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	stackID, err := cmdbuilder.ResolveStackID(cmd.Context(), cfg, organizationID)
+	stackID, err := cmdbuilder.ResolveStackID(cmd, cfg, organizationID)
 	if err != nil {
 		return nil, err
 	}
 
-	httpClient := config.GetHttpClient(cmd.Context())
+	httpClient := config.GetHttpClient(cmd)
 
 	token, err := profile.GetStackToken(cmd.Context(), httpClient, organizationID, stackID)
 	if err != nil {
@@ -57,7 +57,7 @@ func NewCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("Search in all services"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
@@ -75,7 +75,7 @@ func NewCommand() *cobra.Command {
 			if len(args) > 1 {
 				terms = args[1:]
 			}
-			size := int32(cmdutils.Viper(cmd.Context()).GetInt(sizeFlag))
+			size := int32(cmdutils.GetInt(cmd, sizeFlag))
 
 			response, _, err := searchClient.DefaultApi.Search(cmd.Context()).Query(searchclient.Query{
 				Size:   &size,

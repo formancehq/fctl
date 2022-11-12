@@ -13,19 +13,19 @@ import (
 )
 
 func newWebhookClient(cmd *cobra.Command, cfg *config.Config) (*webhookclient.APIClient, error) {
-	profile := config.GetCurrentProfile(cmd.Context(), cfg)
+	profile := config.GetCurrentProfile(cmd, cfg)
 
-	organizationID, err := cmdbuilder.ResolveOrganizationID(cmd.Context(), cfg)
+	organizationID, err := cmdbuilder.ResolveOrganizationID(cmd, cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	stackID, err := cmdbuilder.ResolveStackID(cmd.Context(), cfg, organizationID)
+	stackID, err := cmdbuilder.ResolveStackID(cmd, cfg, organizationID)
 	if err != nil {
 		return nil, err
 	}
 
-	httpClient := config.GetHttpClient(cmd.Context())
+	httpClient := config.GetHttpClient(cmd)
 
 	token, err := profile.GetStackToken(cmd.Context(), httpClient, organizationID, stackID)
 	if err != nil {
@@ -52,7 +52,7 @@ func NewCreateCommand() *cobra.Command {
 		cmdbuilder.WithArgs(cobra.MinimumNArgs(2)),
 		cmdbuilder.WithStringFlag(secretFlag, "", "Webhook secret"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
@@ -65,7 +65,7 @@ func NewCreateCommand() *cobra.Command {
 				return err
 			}
 
-			secret := cmdutils.Viper(cmd.Context()).GetString(secretFlag)
+			secret := cmdutils.GetString(cmd, secretFlag)
 
 			response, _, err := webhookClient.ConfigsApi.InsertOneConfig(cmd.Context()).ConfigUser(webhookclient.ConfigUser{
 				Endpoint:   &args[0],

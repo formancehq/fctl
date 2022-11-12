@@ -1,17 +1,17 @@
 package config
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/formancehq/fctl/membershipclient"
+	"github.com/spf13/cobra"
 )
 
-func NewClient(ctx context.Context, cfg *Config) (*membershipclient.APIClient, error) {
-	profile := GetCurrentProfile(ctx, cfg)
-	httpClient := GetHttpClient(ctx)
+func NewClient(cmd *cobra.Command, cfg *Config) (*membershipclient.APIClient, error) {
+	profile := GetCurrentProfile(cmd, cfg)
+	httpClient := GetHttpClient(cmd)
 	configuration := membershipclient.NewConfiguration()
-	token, err := profile.GetToken(ctx, httpClient)
+	token, err := profile.GetToken(cmd.Context(), httpClient)
 	if err != nil {
 		return nil, err
 	}

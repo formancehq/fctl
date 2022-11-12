@@ -16,17 +16,17 @@ func NewInfoCommand() *cobra.Command {
 		cmdbuilder.WithArgs(cobra.ExactArgs(0)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			profile := config.GetCurrentProfile(cmd.Context(), cfg)
+			profile := config.GetCurrentProfile(cmd, cfg)
 			if !profile.IsConnected() {
 				return errors.New("Not logged. Use 'login' command before.")
 			}
 
-			userInfo, err := profile.GetUserInfo(cmd.Context())
+			userInfo, err := profile.GetUserInfo(cmd)
 			if err != nil {
 				return err
 			}

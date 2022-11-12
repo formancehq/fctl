@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"sort"
 	"strings"
@@ -10,13 +11,11 @@ import (
 	_ "github.com/athul/shelby/mods"
 	goprompt "github.com/c-bata/go-prompt"
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/collections"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/iancoleman/strcase"
 	"github.com/mattn/go-shellwords"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func (p *prompt) newOverrideCommand() *cobra.Command {
@@ -33,7 +32,6 @@ func (p *prompt) newOverrideCommand() *cobra.Command {
 }
 
 func (p *prompt) completionsFromCommand(subCommand *cobra.Command, completionsArgs []string, d goprompt.Document) []goprompt.Suggest {
-	subCommand.SetContext(cmdutils.ContextWithViper(context.TODO(), viper.New()))
 	_, completions, _, err := subCommand.GetCompletions(completionsArgs)
 	if err != nil {
 		return []goprompt.Suggest{}
@@ -126,7 +124,7 @@ func (p *prompt) executeCommand(cmd *cobra.Command, t string) error {
 	subCommand.SetErr(cmd.ErrOrStderr())
 	subCommand.SilenceErrors = true
 	subCommand.SilenceUsage = true
-	return subCommand.ExecuteContext(cmdutils.ContextWithViper(context.TODO(), viper.New()))
+	return subCommand.ExecuteContext(context.TODO())
 }
 
 func (p *prompt) executePromptCommand(cmd *cobra.Command, t string) error {
@@ -139,8 +137,10 @@ func (p *prompt) executePromptCommand(cmd *cobra.Command, t string) error {
 		if len(parts) != 2 {
 			return errors.New("malformed command")
 		} else {
+			if v := parts[0]; v != config.ProfileFlag && v != config.DebugFlag && v != config.InsecureTlsFlag {
+				return fmt.Errorf("unknown configuration: %s", v)
+			}
 			cmdbuilder.Success(cmd.OutOrStdout(), "Set %s=%s", parts[0], parts[1])
-			cmdutils.Viper(cmd.Context()).Set(parts[0], parts[1])
 			os.Setenv(strcase.ToScreamingSnake(parts[0]), parts[1])
 		}
 	default:
@@ -156,13 +156,13 @@ type prompt struct {
 	actualProfile string
 }
 
-func (p *prompt) refreshUserEmail(ctx context.Context, cfg *config.Config) error {
-	profile := config.GetCurrentProfile(ctx, cfg)
+func (p *prompt) refreshUserEmail(cmd *cobra.Command, cfg *config.Config) error {
+	profile := config.GetCurrentProfile(cmd, cfg)
 	if !profile.IsConnected() {
 		p.userEmail = ""
 		return nil
 	}
-	userInfo, err := profile.GetUserInfo(ctx)
+	userInfo, err := profile.GetUserInfo(cmd)
 	if err != nil {
 		return err
 	}
@@ -171,11 +171,11 @@ func (p *prompt) refreshUserEmail(ctx context.Context, cfg *config.Config) error
 }
 
 func (p *prompt) displayHeader(cmd *cobra.Command, cfg *config.Config) error {
-	header := config.GetCurrentProfileName(cmd.Context(), cfg)
+	header := config.GetCurrentProfileName(cmd, cfg)
 	if p.userEmail != "" {
 		header += " / " + p.userEmail
 	}
-	organizationID, err := cmdbuilder.RetrieveOrganizationIDFromFlagOrProfile(cmd.Context(), cfg)
+	organizationID, err := cmdbuilder.RetrieveOrganizationIDFromFlagOrProfile(cmd, cfg)
 	if err != nil && !errors.Is(err, cmdbuilder.ErrOrganizationNotSpecified) {
 		return err
 	}
@@ -189,14 +189,14 @@ func (p *prompt) displayHeader(cmd *cobra.Command, cfg *config.Config) error {
 
 func (p *prompt) nextCommand(cmd *cobra.Command) error {
 
-	cfg, err := config.Get(cmd.Context())
+	cfg, err := config.Get(cmd)
 	if err != nil {
 		return err
 	}
 
-	currentProfileName := config.GetCurrentProfileName(cmd.Context(), cfg)
+	currentProfileName := config.GetCurrentProfileName(cmd, cfg)
 	if currentProfileName != p.actualProfile {
-		err := p.refreshUserEmail(cmd.Context(), cfg)
+		err := p.refreshUserEmail(cmd, cfg)
 		if err != nil {
 			return err
 		}

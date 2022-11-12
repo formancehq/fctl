@@ -1,13 +1,51 @@
 package cmdutils
 
 import (
+	"os"
+	"strconv"
 	"strings"
 
+	"github.com/iancoleman/strcase"
 	"github.com/spf13/cobra"
 )
 
-func BindFlags(cmd *cobra.Command) error {
-	Viper(cmd.Context()).SetEnvKeyReplacer(strings.NewReplacer("-", "_", ".", "_"))
-	Viper(cmd.Context()).AutomaticEnv()
-	return Viper(cmd.Context()).BindPFlags(cmd.Flags())
+func GetBool(cmd *cobra.Command, flagName string) bool {
+	v, err := cmd.Flags().GetBool(flagName)
+	if err != nil {
+		fromEnv := strings.ToLower(os.Getenv(strcase.ToScreamingSnake(flagName)))
+		return fromEnv == "true" || fromEnv == "1"
+	}
+	return v
+}
+
+func GetString(cmd *cobra.Command, flagName string) string {
+	v, err := cmd.Flags().GetString(flagName)
+	if err != nil || v == "" {
+		return os.Getenv(strcase.ToScreamingSnake(flagName))
+	}
+	return v
+}
+
+func GetStringSlice(cmd *cobra.Command, flagName string) []string {
+	v, err := cmd.Flags().GetStringSlice(flagName)
+	if err != nil || len(v) == 0 {
+		return strings.Split(os.Getenv(strcase.ToScreamingSnake(flagName)), " ")
+	}
+	return v
+}
+
+func GetInt(cmd *cobra.Command, flagName string) int {
+	v, err := cmd.Flags().GetInt(flagName)
+	if err != nil {
+		v := os.Getenv(strcase.ToScreamingSnake(flagName))
+		if v != "" {
+			v, err := strconv.ParseInt(v, 10, 64)
+			if err != nil {
+				return 0
+			}
+			return int(v)
+		}
+		return 0
+	}
+	return v
 }

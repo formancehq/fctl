@@ -12,12 +12,12 @@ func NewDeclineCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("Decline invitation"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			client, err := config.NewClient(cmd.Context(), cfg)
+			client, err := config.NewClient(cmd, cfg)
 			if err != nil {
 				return err
 			}

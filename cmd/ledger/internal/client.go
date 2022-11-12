@@ -10,19 +10,19 @@ import (
 )
 
 func NewLedgerClient(cmd *cobra.Command, cfg *config.Config) (*client.APIClient, error) {
-	profile := config.GetCurrentProfile(cmd.Context(), cfg)
+	profile := config.GetCurrentProfile(cmd, cfg)
 
-	organizationID, err := cmdbuilder.ResolveOrganizationID(cmd.Context(), cfg)
+	organizationID, err := cmdbuilder.ResolveOrganizationID(cmd, cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	stackID, err := cmdbuilder.ResolveStackID(cmd.Context(), cfg, organizationID)
+	stackID, err := cmdbuilder.ResolveStackID(cmd, cfg, organizationID)
 	if err != nil {
 		return nil, err
 	}
 
-	httpClient := config.GetHttpClient(cmd.Context())
+	httpClient := config.GetHttpClient(cmd)
 
 	token, err := profile.GetStackToken(cmd.Context(), httpClient, organizationID, stackID)
 	if err != nil {

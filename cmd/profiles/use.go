@@ -2,17 +2,13 @@ package profiles
 
 import (
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 func ProfileNamesAutoCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	if err := cmdutils.BindFlags(cmd); err != nil {
-		return []string{}, 0
-	}
-	ret, err := config.ListProfiles(cmd.Context(), toComplete)
+	ret, err := config.ListProfiles(cmd, toComplete)
 	if err != nil {
 		return []string{}, cobra.ShellCompDirectiveError
 	}
@@ -27,7 +23,7 @@ func NewUseCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("Use profile"),
 		cmdbuilder.WithValidArgsFunction(ProfileNamesAutoCompletion),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			config, err := config.Get(cmd.Context())
+			config, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}

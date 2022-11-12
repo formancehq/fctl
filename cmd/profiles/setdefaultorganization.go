@@ -14,12 +14,12 @@ func NewSetDefaultOrganizationCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("Set default organization"),
 		cmdbuilder.WithValidArgsFunction(ProfileNamesAutoCompletion),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			config.GetCurrentProfile(cmd.Context(), cfg).SetDefaultOrganization(args[0])
+			config.GetCurrentProfile(cmd, cfg).SetDefaultOrganization(args[0])
 
 			if err := cfg.Persist(); err != nil {
 				return errors.Wrap(err, "Updating config")

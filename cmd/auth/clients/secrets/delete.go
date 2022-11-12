@@ -13,12 +13,12 @@ func NewDeleteCommand() *cobra.Command {
 		cmdbuilder.WithAliases("d"),
 		cmdbuilder.WithShortDescription("Delete secret"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			authClient, err := internal.NewAuthClient(cmd.Context(), cfg)
+			authClient, err := internal.NewAuthClient(cmd, cfg)
 			if err != nil {
 				return err
 			}

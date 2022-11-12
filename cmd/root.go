@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -9,7 +8,6 @@ import (
 	"github.com/formancehq/fctl/cmd/auth"
 	"github.com/formancehq/fctl/cmd/cloud"
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/ledger"
 	"github.com/formancehq/fctl/cmd/payments"
@@ -18,7 +16,6 @@ import (
 	"github.com/formancehq/fctl/cmd/stack"
 	"github.com/formancehq/fctl/cmd/webhooks"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func NewRootCommand() *cobra.Command {
@@ -31,9 +28,6 @@ func NewRootCommand() *cobra.Command {
 		cmdbuilder.WithSilenceError(),
 		cmdbuilder.WithShortDescription("Formance Control CLI"),
 		cmdbuilder.WithSilenceUsage(),
-		cmdbuilder.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) (err error) {
-			return cmdutils.BindFlags(cmd)
-		}),
 		cmdbuilder.WithChildCommands(
 			NewUICommand(),
 			NewVersionCommand(),
@@ -56,17 +50,13 @@ func NewRootCommand() *cobra.Command {
 }
 
 func Execute() {
-	ctx := context.TODO()
-	ctx = cmdutils.ContextWithViper(ctx, viper.New())
 	defer func() {
 		if e := recover(); e != nil {
 			cmdbuilder.Error(os.Stderr, "%s", e)
-			if cmdutils.Viper(ctx).GetBool(config.DebugFlag) {
-				debug.PrintStack()
-			}
+			debug.PrintStack()
 		}
 	}()
-	err := NewRootCommand().ExecuteContext(ctx)
+	err := NewRootCommand().Execute()
 	if err != nil {
 		cmdbuilder.Error(os.Stderr, err.Error())
 	}

@@ -15,12 +15,12 @@ func NewListCommand() *cobra.Command {
 		cmdbuilder.WithAliases("ls", "l"),
 		cmdbuilder.WithShortDescription("List users"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			client, err := internal.NewAuthClient(cmd.Context(), cfg)
+			client, err := internal.NewAuthClient(cmd, cfg)
 			if err != nil {
 				return err
 			}

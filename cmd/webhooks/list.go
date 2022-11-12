@@ -17,7 +17,7 @@ func NewListCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("List configs"),
 		cmdbuilder.WithAliases("ls", "l"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}

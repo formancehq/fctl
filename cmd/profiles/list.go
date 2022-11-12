@@ -14,12 +14,12 @@ func NewListCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("List profiles"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			currentProfileName := config.GetCurrentProfileName(cmd.Context(), cfg)
+			currentProfileName := config.GetCurrentProfileName(cmd, cfg)
 
 			profiles := collections.MapKeys(cfg.GetProfiles())
 			tableData := collections.Map(profiles, func(p string) []string {

@@ -1,11 +1,11 @@
 package config
 
 import (
-	"context"
 	"encoding/json"
 
 	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 )
 
 type persistedConfig struct {
@@ -97,16 +97,16 @@ func (c *Config) SetCurrentProfileName(s string) {
 	c.currentProfile = s
 }
 
-func Get(ctx context.Context) (*Config, error) {
-	return GetConfigManager(ctx).Load()
+func Get(cmd *cobra.Command) (*Config, error) {
+	return GetConfigManager(cmd).Load()
 }
 
-func GetConfigManager(ctx context.Context) *ConfigManager {
-	return NewConfigManager(cmdutils.Viper(ctx).GetString(FileFlag))
+func GetConfigManager(cmd *cobra.Command) *ConfigManager {
+	return NewConfigManager(cmdutils.GetString(cmd, FileFlag))
 }
 
-func GetCurrentProfileName(ctx context.Context, config *Config) string {
-	if profile := cmdutils.Viper(ctx).GetString(ProfileFlag); profile != "" {
+func GetCurrentProfileName(cmd *cobra.Command, config *Config) string {
+	if profile := cmdutils.GetString(cmd, ProfileFlag); profile != "" {
 		return profile
 	}
 	currentProfileName := config.GetCurrentProfileName()
@@ -116,7 +116,7 @@ func GetCurrentProfileName(ctx context.Context, config *Config) string {
 	return currentProfileName
 }
 
-func GetCurrentProfile(ctx context.Context, cfg *Config) *Profile {
-	return cfg.GetProfileOrDefault(GetCurrentProfileName(ctx, cfg), cmdutils.Viper(ctx).GetString(MembershipUriFlag),
-		cmdutils.Viper(ctx).GetString(BaseServiceUriFlag))
+func GetCurrentProfile(cmd *cobra.Command, cfg *Config) *Profile {
+	return cfg.GetProfileOrDefault(GetCurrentProfileName(cmd, cfg), cmdutils.GetString(cmd, MembershipUriFlag),
+		cmdutils.GetString(cmd, BaseServiceUriFlag))
 }

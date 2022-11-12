@@ -17,7 +17,7 @@ func NewListCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("List accounts"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
@@ -27,7 +27,7 @@ func NewListCommand() *cobra.Command {
 				return err
 			}
 
-			ledger := cmdutils.Viper(cmd.Context()).GetString(internal2.LedgerFlag)
+			ledger := cmdutils.GetString(cmd, internal2.LedgerFlag)
 			rsp, _, err := ledgerClient.AccountsApi.ListAccounts(cmd.Context(), ledger).Execute()
 			if err != nil {
 				return err

@@ -14,7 +14,7 @@ func NewDeleteCommand() *cobra.Command {
 		cmdbuilder.WithValidArgsFunction(ProfileNamesAutoCompletion),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			config, err := config.Get(cmd.Context())
+			config, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}

@@ -17,7 +17,7 @@ func NewShowCommand() *cobra.Command {
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithAliases("sh", "s"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
@@ -27,7 +27,7 @@ func NewShowCommand() *cobra.Command {
 				return err
 			}
 
-			ledger := cmdutils.Viper(cmd.Context()).GetString(internal.LedgerFlag)
+			ledger := cmdutils.GetString(cmd, internal.LedgerFlag)
 			rsp, _, err := ledgerClient.AccountsApi.GetAccount(cmd.Context(), ledger, args[0]).Execute()
 			if err != nil {
 				return err

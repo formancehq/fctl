@@ -17,7 +17,7 @@ func NewStatsCommand() *cobra.Command {
 		cmdbuilder.WithAliases("st"),
 		cmdbuilder.WithShortDescription("Read ledger stats"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
@@ -26,7 +26,7 @@ func NewStatsCommand() *cobra.Command {
 				return err
 			}
 
-			response, _, err := ledgerClient.StatsApi.ReadStats(cmd.Context(), cmdutils.Viper(cmd.Context()).GetString(internal.LedgerFlag)).Execute()
+			response, _, err := ledgerClient.StatsApi.ReadStats(cmd.Context(), cmdutils.GetString(cmd, internal.LedgerFlag)).Execute()
 			if err != nil {
 				return err
 			}

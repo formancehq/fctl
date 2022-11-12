@@ -34,7 +34,7 @@ func NewCommand() *cobra.Command {
 		cmdbuilder.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
 		cmdbuilder.WithStringFlag(referenceFlag, "", "Reference to add to the generated transaction"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
@@ -60,21 +60,21 @@ func NewCommand() *cobra.Command {
 			}
 
 			vars := map[string]interface{}{}
-			for _, v := range cmdutils.Viper(cmd.Context()).GetStringSlice(accountVarFlag) {
+			for _, v := range cmdutils.GetStringSlice(cmd, accountVarFlag) {
 				parts := strings.SplitN(v, "=", 2)
 				if len(parts) == 1 {
 					return fmt.Errorf("malformed var: %s", v)
 				}
 				vars[parts[0]] = parts[1]
 			}
-			for _, v := range cmdutils.Viper(cmd.Context()).GetStringSlice(portionVarFlag) {
+			for _, v := range cmdutils.GetStringSlice(cmd, portionVarFlag) {
 				parts := strings.SplitN(v, "=", 2)
 				if len(parts) == 1 {
 					return fmt.Errorf("malformed var: %s", v)
 				}
 				vars[parts[0]] = parts[1]
 			}
-			for _, v := range cmdutils.Viper(cmd.Context()).GetStringSlice(amountVarFlag) {
+			for _, v := range cmdutils.GetStringSlice(cmd, amountVarFlag) {
 				parts := strings.SplitN(v, "=", 2)
 				if len(parts) == 1 {
 					return fmt.Errorf("malformed var: %s", v)
@@ -96,14 +96,14 @@ func NewCommand() *cobra.Command {
 				}
 			}
 
-			reference := cmdutils.Viper(cmd.Context()).GetString(referenceFlag)
+			reference := cmdutils.GetString(cmd, referenceFlag)
 
-			metadata, err := internal.ParseMetadata(cmdutils.Viper(cmd.Context()).GetStringSlice(metadataFlag))
+			metadata, err := internal.ParseMetadata(cmdutils.GetStringSlice(cmd, metadataFlag))
 			if err != nil {
 				return err
 			}
 
-			ledger := cmdutils.Viper(cmd.Context()).GetString(internal.LedgerFlag)
+			ledger := cmdutils.GetString(cmd, internal.LedgerFlag)
 			response, _, err := ledgerClient.ScriptApi.
 				RunScript(cmd.Context(), ledger).
 				Script(ledgerclient.Script{

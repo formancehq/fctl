@@ -16,7 +16,7 @@ func NewRenameCommand() *cobra.Command {
 			oldName := args[0]
 			newName := args[1]
 
-			config, err := config.Get(cmd.Context())
+			config, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}

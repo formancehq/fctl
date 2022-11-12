@@ -21,7 +21,7 @@ func NewSetMetadataCommand() *cobra.Command {
 				return err
 			}
 
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
@@ -32,13 +32,13 @@ func NewSetMetadataCommand() *cobra.Command {
 			}
 
 			transactionID, err := internal.TransactionIDOrLastN(cmd.Context(), ledgerClient,
-				cmdutils.Viper(cmd.Context()).GetString(internal.LedgerFlag), args[0])
+				cmdutils.GetString(cmd, internal.LedgerFlag), args[0])
 			if err != nil {
 				return err
 			}
 
 			_, err = ledgerClient.TransactionsApi.
-				AddMetadataOnTransaction(cmd.Context(), cmdutils.Viper(cmd.Context()).GetString(internal.LedgerFlag), int32(transactionID)).
+				AddMetadataOnTransaction(cmd.Context(), cmdutils.GetString(cmd, internal.LedgerFlag), int32(transactionID)).
 				RequestBody(metadata).
 				Execute()
 			if err != nil {

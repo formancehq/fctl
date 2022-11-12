@@ -1,8 +1,6 @@
 package cmdbuilder
 
 import (
-	"context"
-
 	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/pkg/errors"
@@ -15,35 +13,36 @@ const (
 )
 
 var (
-	ErrOrganizationNotSpecified = errors.New("organization not specified")
+	ErrOrganizationNotSpecified   = errors.New("organization not specified")
+	ErrMultipleOrganizationsFound = errors.New("found more than one organization and no organization specified")
 )
 
-func GetSelectedOrganization(ctx context.Context) string {
-	return cmdutils.Viper(ctx).GetString(organizationFlag)
+func GetSelectedOrganization(cmd *cobra.Command) string {
+	return cmdutils.GetString(cmd, organizationFlag)
 }
 
-func RetrieveOrganizationIDFromFlagOrProfile(ctx context.Context, cfg *config.Config) (string, error) {
-	if id := GetSelectedOrganization(ctx); id != "" {
+func RetrieveOrganizationIDFromFlagOrProfile(cmd *cobra.Command, cfg *config.Config) (string, error) {
+	if id := GetSelectedOrganization(cmd); id != "" {
 		return id, nil
 	}
 
-	if defaultOrganization := config.GetCurrentProfile(ctx, cfg).GetDefaultOrganization(); defaultOrganization != "" {
+	if defaultOrganization := config.GetCurrentProfile(cmd, cfg).GetDefaultOrganization(); defaultOrganization != "" {
 		return defaultOrganization, nil
 	}
 	return "", ErrOrganizationNotSpecified
 }
 
-func ResolveOrganizationID(ctx context.Context, cfg *config.Config) (string, error) {
-	if id, err := RetrieveOrganizationIDFromFlagOrProfile(ctx, cfg); err == nil {
+func ResolveOrganizationID(cmd *cobra.Command, cfg *config.Config) (string, error) {
+	if id, err := RetrieveOrganizationIDFromFlagOrProfile(cmd, cfg); err == nil {
 		return id, nil
 	}
 
-	client, err := config.NewClient(ctx, cfg)
+	client, err := config.NewClient(cmd, cfg)
 	if err != nil {
 		return "", err
 	}
 
-	organizations, _, err := client.DefaultApi.ListOrganizations(ctx).Execute()
+	organizations, _, err := client.DefaultApi.ListOrganizations(cmd.Context()).Execute()
 	if err != nil {
 		return "", errors.Wrap(err, "listing organizations")
 	}
@@ -53,26 +52,26 @@ func ResolveOrganizationID(ctx context.Context, cfg *config.Config) (string, err
 	}
 
 	if len(organizations.Data) > 1 {
-		return "", errors.New("found more than one organization and no organization specified")
+		return "", ErrMultipleOrganizationsFound
 	}
 
 	return organizations.Data[0].Id, nil
 }
 
-func GetSelectedStack(ctx context.Context) string {
-	return cmdutils.Viper(ctx).GetString(stackFlag)
+func GetSelectedStack(cmd *cobra.Command) string {
+	return cmdutils.GetString(cmd, stackFlag)
 }
 
-func ResolveStackID(ctx context.Context, cfg *config.Config, organizationID string) (string, error) {
-	if id := GetSelectedStack(ctx); id != "" {
+func ResolveStackID(cmd *cobra.Command, cfg *config.Config, organizationID string) (string, error) {
+	if id := GetSelectedStack(cmd); id != "" {
 		return id, nil
 	}
-	client, err := config.NewClient(ctx, cfg)
+	client, err := config.NewClient(cmd, cfg)
 	if err != nil {
 		return "", err
 	}
 
-	stacks, _, err := client.DefaultApi.ListStacks(ctx, organizationID).Execute()
+	stacks, _, err := client.DefaultApi.ListStacks(cmd.Context(), organizationID).Execute()
 	if err != nil {
 		return "", errors.Wrap(err, "listing stacks")
 	}

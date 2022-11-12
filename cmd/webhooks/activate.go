@@ -14,7 +14,7 @@ func NewActivateCommand() *cobra.Command {
 		cmdbuilder.WithAliases("ac", "a"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}

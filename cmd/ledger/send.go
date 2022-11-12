@@ -23,7 +23,7 @@ func NewSendCommand() *cobra.Command {
 		cmdbuilder.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
 		cmdbuilder.WithStringFlag(referenceFlag, "", "Reference to add to the generated transaction"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
@@ -51,14 +51,14 @@ func NewSendCommand() *cobra.Command {
 				return err
 			}
 
-			metadata, err := internal.ParseMetadata(cmdutils.Viper(cmd.Context()).GetStringSlice(metadataFlag))
+			metadata, err := internal.ParseMetadata(cmdutils.GetStringSlice(cmd, metadataFlag))
 			if err != nil {
 				return err
 			}
 
-			reference := cmdutils.Viper(cmd.Context()).GetString(referenceFlag)
+			reference := cmdutils.GetString(cmd, referenceFlag)
 			response, _, err := ledgerClient.TransactionsApi.
-				CreateTransaction(cmd.Context(), cmdutils.Viper(cmd.Context()).GetString(internal.LedgerFlag)).
+				CreateTransaction(cmd.Context(), cmdutils.GetString(cmd, internal.LedgerFlag)).
 				TransactionData(client.TransactionData{
 					Postings: []client.Posting{{
 						Amount:      int32(amount),

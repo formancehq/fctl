@@ -1,19 +1,19 @@
 package config
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
 
 	"github.com/formancehq/fctl/cmd/internal/cmdutils"
+	"github.com/spf13/cobra"
 )
 
-func GetHttpClient(ctx context.Context) *http.Client {
+func GetHttpClient(cmd *cobra.Command) *http.Client {
 	return NewHTTPClient(
-		cmdutils.Viper(ctx).GetBool(InsecureTlsFlag),
-		cmdutils.Viper(ctx).GetBool(DebugFlag))
+		cmdutils.GetBool(cmd, InsecureTlsFlag),
+		cmdutils.GetBool(cmd, DebugFlag))
 }
 
 type RoundTripperFn func(req *http.Request) (*http.Response, error)

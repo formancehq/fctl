@@ -34,22 +34,22 @@ func NewUICommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("Open UI"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			organization, err := cmdbuilder.ResolveOrganizationID(cmd.Context(), cfg)
+			organization, err := cmdbuilder.ResolveOrganizationID(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			stack, err := cmdbuilder.ResolveStackID(cmd.Context(), cfg, organization)
+			stack, err := cmdbuilder.ResolveStackID(cmd, cfg, organization)
 			if err != nil {
 				return err
 			}
 
-			profile := config.GetCurrentProfile(cmd.Context(), cfg)
+			profile := config.GetCurrentProfile(cmd, cfg)
 			stackUrl := profile.ServicesBaseUrl(organization, stack)
 
 			return errors.Wrapf(openUrl(stackUrl.String()), "opening url: %s", stackUrl.String())

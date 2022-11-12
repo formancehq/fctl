@@ -22,7 +22,7 @@ func NewBalancesCommand() *cobra.Command {
 		cmdbuilder.WithStringFlag(afterFlag, "", "Filter after specific address"),
 		cmdbuilder.WithShortDescription("Read balances"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
@@ -33,9 +33,9 @@ func NewBalancesCommand() *cobra.Command {
 			}
 
 			balances, _, err := client.BalancesApi.
-				GetBalances(cmd.Context(), cmdutils.Viper(cmd.Context()).GetString(internal2.LedgerFlag)).
-				After(cmdutils.Viper(cmd.Context()).GetString(afterFlag)).
-				Address(cmdutils.Viper(cmd.Context()).GetString(addressFlag)).
+				GetBalances(cmd.Context(), cmdutils.GetString(cmd, internal2.LedgerFlag)).
+				After(cmdutils.GetString(cmd, afterFlag)).
+				Address(cmdutils.GetString(cmd, addressFlag)).
 				Execute()
 			if err != nil {
 				return err

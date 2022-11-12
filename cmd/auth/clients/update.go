@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/formancehq/auth/authclient"
-	internal2 "github.com/formancehq/fctl/cmd/auth/internal"
+	internal "github.com/formancehq/fctl/cmd/auth/internal"
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/config"
@@ -33,27 +33,27 @@ func NewUpdateCommand() *cobra.Command {
 		cmdbuilder.WithStringSliceFlag(redirectUriFlag, []string{}, "Redirect URIS"),
 		cmdbuilder.WithStringSliceFlag(postLogoutRedirectUriFlag, []string{}, "Post logout redirect uris"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			authClient, err := internal2.NewAuthClient(cmd.Context(), cfg)
+			authClient, err := internal.NewAuthClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			public := cmdutils.Viper(cmd.Context()).GetBool(publicFlag)
-			trusted := cmdutils.Viper(cmd.Context()).GetBool(trustedFlag)
-			description := cmdutils.Viper(cmd.Context()).GetString(descriptionFlag)
+			public := cmdutils.GetBool(cmd, publicFlag)
+			trusted := cmdutils.GetBool(cmd, trustedFlag)
+			description := cmdutils.GetString(cmd, descriptionFlag)
 
 			response, _, err := authClient.DefaultApi.UpdateClient(cmd.Context(), args[0]).Body(authclient.ClientOptions{
 				Public:                 &public,
-				RedirectUris:           cmdutils.Viper(cmd.Context()).GetStringSlice(redirectUriFlag),
+				RedirectUris:           cmdutils.GetStringSlice(cmd, redirectUriFlag),
 				Description:            &description,
 				Name:                   args[0],
 				Trusted:                &trusted,
-				PostLogoutRedirectUris: cmdutils.Viper(cmd.Context()).GetStringSlice(postLogoutRedirectUriFlag),
+				PostLogoutRedirectUris: cmdutils.GetStringSlice(cmd, postLogoutRedirectUriFlag),
 			}).Execute()
 			if err != nil {
 				return err

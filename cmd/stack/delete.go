@@ -19,28 +19,28 @@ func NewDeleteCommand() *cobra.Command {
 		cmdbuilder.WithArgs(cobra.MaximumNArgs(1)),
 		cmdbuilder.WithStringFlag(stackNameFlag, "", "Sandbox to remove"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
-			organization, err := cmdbuilder.ResolveOrganizationID(cmd.Context(), cfg)
+			organization, err := cmdbuilder.ResolveOrganizationID(cmd, cfg)
 			if err != nil {
 				return errors.Wrap(err, "searching default organization")
 			}
 
-			apiClient, err := config.NewClient(cmd.Context(), cfg)
+			apiClient, err := config.NewClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
 			var stackID string
 			if len(args) == 1 {
-				if cmdutils.Viper(cmd.Context()).GetString(stackNameFlag) == "" {
+				if cmdutils.GetString(cmd, stackNameFlag) == "" {
 					return errors.New("need either an id of a name spefified using --name flag")
 				}
 				stackID = args[0]
 			} else {
-				if cmdutils.Viper(cmd.Context()).GetString(stackNameFlag) == "" {
+				if cmdutils.GetString(cmd, stackNameFlag) == "" {
 					return errors.New("need either an id of a name specified using --name flag")
 				}
 				stacks, _, err := apiClient.DefaultApi.ListStacks(cmd.Context(), organization).Execute()
@@ -48,7 +48,7 @@ func NewDeleteCommand() *cobra.Command {
 					return errors.Wrap(err, "listing stacks")
 				}
 				for _, s := range stacks.Data {
-					if s.Name == cmdutils.Viper(cmd.Context()).GetString(stackNameFlag) {
+					if s.Name == cmdutils.GetString(cmd, stackNameFlag) {
 						stackID = s.Id
 						break
 					}

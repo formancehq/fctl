@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 	"github.com/zitadel/oidc/pkg/client"
 	"github.com/zitadel/oidc/pkg/client/rp"
 	httphelper "github.com/zitadel/oidc/pkg/http"
@@ -119,9 +120,9 @@ func (p *Profile) GetToken(ctx context.Context, httpClient *http.Client) (*oauth
 	return p.token, nil
 }
 
-func (p *Profile) GetUserInfo(ctx context.Context) (oidc.UserInfo, error) {
+func (p *Profile) GetUserInfo(cmd *cobra.Command) (oidc.UserInfo, error) {
 
-	relyingParty, err := GetAuthRelyingParty(ctx, p)
+	relyingParty, err := GetAuthRelyingParty(cmd, p)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +132,7 @@ func (p *Profile) GetUserInfo(ctx context.Context) (oidc.UserInfo, error) {
 		return nil, err
 	}
 
-	token, err := p.GetToken(ctx, relyingParty.HttpClient())
+	token, err := p.GetToken(cmd.Context(), relyingParty.HttpClient())
 	if err != nil {
 		return nil, err
 	}
@@ -235,8 +236,8 @@ func (p *Profile) IsConnected() bool {
 
 type CurrentProfile Profile
 
-func ListProfiles(ctx context.Context, toComplete string) ([]string, error) {
-	config, err := Get(ctx)
+func ListProfiles(cmd *cobra.Command, toComplete string) ([]string, error) {
+	config, err := Get(cmd)
 	if err != nil {
 		return []string{}, nil
 	}

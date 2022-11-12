@@ -43,7 +43,7 @@ func NewListCommand() *cobra.Command {
 		// SDK not generating correct requests
 		cmdbuilder.WithHiddenFlag(listTransactionsMetadataFlag),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
@@ -54,7 +54,7 @@ func NewListCommand() *cobra.Command {
 			}
 
 			metadata := map[string]interface{}{}
-			for _, v := range cmdutils.Viper(cmd.Context()).GetStringSlice(listTransactionsMetadataFlag) {
+			for _, v := range cmdutils.GetStringSlice(cmd, listTransactionsMetadataFlag) {
 				parts := strings.SplitN(v, "=", 2)
 				if len(parts) == 1 {
 					return fmt.Errorf("malformed metadata: %s", v)
@@ -62,17 +62,17 @@ func NewListCommand() *cobra.Command {
 				metadata[parts[0]] = parts[1]
 			}
 
-			ledger := cmdutils.Viper(cmd.Context()).GetString(internal2.LedgerFlag)
+			ledger := cmdutils.GetString(cmd, internal2.LedgerFlag)
 			rsp, _, err := ledgerClient.TransactionsApi.
 				ListTransactions(cmd.Context(), ledger).
-				PageSize(int32(cmdutils.Viper(cmd.Context()).GetInt(listTransactionsPageSizeFlag))).
-				Reference(cmdutils.Viper(cmd.Context()).GetString(listTransactionsReferenceFlag)).
-				Account(cmdutils.Viper(cmd.Context()).GetString(listTransactionAccountFlag)).
-				Destination(cmdutils.Viper(cmd.Context()).GetString(listTransactionDestinationFlag)).
-				Source(cmdutils.Viper(cmd.Context()).GetString(listTransactionSourceFlag)).
-				After(cmdutils.Viper(cmd.Context()).GetString(listTransactionsAfterFlag)).
-				EndTime(cmdutils.Viper(cmd.Context()).GetString(listTransactionsEndTimeFlag)).
-				StartTime(cmdutils.Viper(cmd.Context()).GetString(listTransactionsStartTimeFlag)).
+				PageSize(int32(cmdutils.GetInt(cmd, listTransactionsPageSizeFlag))).
+				Reference(cmdutils.GetString(cmd, listTransactionsReferenceFlag)).
+				Account(cmdutils.GetString(cmd, listTransactionAccountFlag)).
+				Destination(cmdutils.GetString(cmd, listTransactionDestinationFlag)).
+				Source(cmdutils.GetString(cmd, listTransactionSourceFlag)).
+				After(cmdutils.GetString(cmd, listTransactionsAfterFlag)).
+				EndTime(cmdutils.GetString(cmd, listTransactionsEndTimeFlag)).
+				StartTime(cmdutils.GetString(cmd, listTransactionsStartTimeFlag)).
 				Metadata(metadata).
 				Execute()
 			if err != nil {

@@ -20,7 +20,7 @@ func NewSetMetadataCommand() *cobra.Command {
 				return err
 			}
 
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
@@ -33,7 +33,7 @@ func NewSetMetadataCommand() *cobra.Command {
 			account := args[0]
 
 			_, err = ledgerClient.AccountsApi.
-				AddMetadataToAccount(cmd.Context(), cmdutils.Viper(cmd.Context()).GetString(internal.LedgerFlag), account).
+				AddMetadataToAccount(cmd.Context(), cmdutils.GetString(cmd, internal.LedgerFlag), account).
 				RequestBody(metadata).
 				Execute()
 			if err != nil {

@@ -13,12 +13,12 @@ func NewCreateCommand() *cobra.Command {
 		cmdbuilder.WithShortDescription("Create organization"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd.Context())
+			cfg, err := config.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			apiClient, err := config.NewClient(cmd.Context(), cfg)
+			apiClient, err := config.NewClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
