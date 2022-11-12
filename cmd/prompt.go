@@ -18,19 +18,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (p *prompt) newOverrideCommand() *cobra.Command {
-	subCommand := NewRootCommand()
-	subCommand.AddCommand(cmdbuilder.NewCommand("exit",
-		cmdbuilder.WithAliases("q", "quit"),
-		cmdbuilder.WithShortDescription("Exit prompt"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			os.Exit(0)
-			return nil
-		}),
-	))
-	return subCommand
-}
-
 func (p *prompt) completionsFromCommand(subCommand *cobra.Command, completionsArgs []string, d goprompt.Document) []goprompt.Suggest {
 	_, completions, _, err := subCommand.GetCompletions(completionsArgs)
 	if err != nil {
@@ -83,6 +70,9 @@ func (p *prompt) completions(cfg *config.Config, d goprompt.Document) []goprompt
 		suggestions = append(suggestions, goprompt.Suggest{
 			Text:        ":set",
 			Description: "Set config",
+		}, goprompt.Suggest{
+			Text:        ":exit",
+			Description: "Exit terminal",
 		})
 	}
 
@@ -91,7 +81,7 @@ func (p *prompt) completions(cfg *config.Config, d goprompt.Document) []goprompt
 
 func (p *prompt) startPrompt(prompt string, cfg *config.Config, opts ...goprompt.Option) string {
 	return goprompt.Input(prompt, func(d goprompt.Document) []goprompt.Suggest {
-		subCommand := p.newOverrideCommand()
+		subCommand := NewRootCommand()
 
 		switch {
 		case d.Text == "":
@@ -118,7 +108,7 @@ func (p *prompt) executeCommand(cmd *cobra.Command, t string) error {
 		panic(err)
 	}
 
-	subCommand := p.newOverrideCommand()
+	subCommand := NewRootCommand()
 	subCommand.SetArgs(parse)
 	subCommand.SetOut(cmd.OutOrStdout())
 	subCommand.SetErr(cmd.ErrOrStderr())
@@ -129,6 +119,8 @@ func (p *prompt) executeCommand(cmd *cobra.Command, t string) error {
 
 func (p *prompt) executePromptCommand(cmd *cobra.Command, t string) error {
 	switch {
+	case strings.TrimRight(t, " ") == ":exit":
+		os.Exit(0)
 	case strings.HasPrefix(t, ":set "):
 		v := strings.TrimPrefix(t, ":set ")
 		v = strings.TrimLeft(v, " ")
