@@ -13,7 +13,8 @@ import (
 func GetHttpClient(cmd *cobra.Command) *http.Client {
 	return NewHTTPClient(
 		cmdutils.GetBool(cmd, InsecureTlsFlag),
-		cmdutils.GetBool(cmd, DebugFlag))
+		cmdutils.GetBool(cmd, DebugFlag),
+	)
 }
 
 type RoundTripperFn func(req *http.Request) (*http.Response, error)
