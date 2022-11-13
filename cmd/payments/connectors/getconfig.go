@@ -13,6 +13,7 @@ func NewPaymentsConnectorsGetConfigCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("get-config [CONNECTOR_NAME]",
 		cmdbuilder.WithAliases("getconfig", "getconf", "gc", "get", "g"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
+		cmdbuilder.WithValidArgs("stripe"),
 		cmdbuilder.WithShortDescription("Read a connector config"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
