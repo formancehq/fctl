@@ -3,6 +3,7 @@ package cmdbuilder
 import (
 	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/formancehq/fctl/membershipclient"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -58,30 +59,35 @@ func ResolveOrganizationID(cmd *cobra.Command, cfg *config.Config) (string, erro
 	return organizations.Data[0].Id, nil
 }
 
-func GetSelectedStack(cmd *cobra.Command) string {
+func GetSelectedStackID(cmd *cobra.Command) string {
 	return cmdutils.GetString(cmd, stackFlag)
 }
 
-func ResolveStackID(cmd *cobra.Command, cfg *config.Config, organizationID string) (string, error) {
-	if id := GetSelectedStack(cmd); id != "" {
-		return id, nil
-	}
+func ResolveStack(cmd *cobra.Command, cfg *config.Config, organizationID string) (*membershipclient.Stack, error) {
 	client, err := config.NewClient(cmd, cfg)
 	if err != nil {
-		return "", err
+		return nil, err
+	}
+	if id := GetSelectedStackID(cmd); id != "" {
+		response, _, err := client.DefaultApi.ReadStack(cmd.Context(), organizationID, id).Execute()
+		if err != nil {
+			return nil, err
+		}
+
+		return response.Data, nil
 	}
 
 	stacks, _, err := client.DefaultApi.ListStacks(cmd.Context(), organizationID).Execute()
 	if err != nil {
-		return "", errors.Wrap(err, "listing stacks")
+		return nil, errors.Wrap(err, "listing stacks")
 	}
 	if len(stacks.Data) == 0 {
-		return "", errors.New("no stacks found")
+		return nil, errors.New("no stacks found")
 	}
 	if len(stacks.Data) > 1 {
-		return "", errors.New("found more than one stack and no stack specified")
+		return nil, errors.New("found more than one stack and no stack specified")
 	}
-	return stacks.Data[0].Id, nil
+	return &(stacks.Data[0]), nil
 }
 
 type commandOption interface {

@@ -24,19 +24,22 @@ type Stack struct {
 	Id string `json:"id"`
 	// Organization ID
 	OrganizationId string `json:"organizationId"`
+	// Base stack uri
+	Uri string `json:"uri"`
 }
 
 // NewStack instantiates a new Stack object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewStack(name string, id string, organizationId string) *Stack {
+func NewStack(name string, id string, organizationId string, uri string) *Stack {
 	this := Stack{}
 	this.Name = name
 	var region string = "eu-west-1"
 	this.Region = &region
 	this.Id = id
 	this.OrganizationId = organizationId
+	this.Uri = uri
 	return &this
 }
 
@@ -154,6 +157,30 @@ func (o *Stack) SetOrganizationId(v string) {
 	o.OrganizationId = v
 }
 
+// GetUri returns the Uri field value
+func (o *Stack) GetUri() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Uri
+}
+
+// GetUriOk returns a tuple with the Uri field value
+// and a boolean to check if the value has been set.
+func (o *Stack) GetUriOk() (*string, bool) {
+	if o == nil {
+    return nil, false
+	}
+	return &o.Uri, true
+}
+
+// SetUri sets field value
+func (o *Stack) SetUri(v string) {
+	o.Uri = v
+}
+
 func (o Stack) MarshalJSON() ([]byte, error) {
 	toSerialize := map[string]interface{}{}
 	if true {
@@ -167,6 +194,9 @@ func (o Stack) MarshalJSON() ([]byte, error) {
 	}
 	if true {
 		toSerialize["organizationId"] = o.OrganizationId
+	}
+	if true {
+		toSerialize["uri"] = o.Uri
 	}
 	return json.Marshal(toSerialize)
 }

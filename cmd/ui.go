@@ -44,13 +44,13 @@ func NewUICommand() *cobra.Command {
 				return err
 			}
 
-			stack, err := cmdbuilder.ResolveStackID(cmd, cfg, organization)
+			stack, err := cmdbuilder.ResolveStack(cmd, cfg, organization)
 			if err != nil {
 				return err
 			}
 
 			profile := config.GetCurrentProfile(cmd, cfg)
-			stackUrl := profile.ServicesBaseUrl(organization, stack)
+			stackUrl := profile.ServicesBaseUrl(stack)
 
 			return errors.Wrapf(openUrl(stackUrl.String()), "opening url: %s", stackUrl.String())
 		}),

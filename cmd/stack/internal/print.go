@@ -10,7 +10,7 @@ import (
 )
 
 func PrintStackInformation(out io.Writer, profile *config.Profile, stack *membershipclient.Stack) error {
-	baseUrlStr := profile.ServicesBaseUrl(stack.OrganizationId, stack.Id).String()
+	baseUrlStr := profile.ServicesBaseUrl(stack).String()
 
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("ID"), stack.Id})

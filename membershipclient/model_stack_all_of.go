@@ -20,16 +20,19 @@ type StackAllOf struct {
 	Id string `json:"id"`
 	// Organization ID
 	OrganizationId string `json:"organizationId"`
+	// Base stack uri
+	Uri string `json:"uri"`
 }
 
 // NewStackAllOf instantiates a new StackAllOf object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewStackAllOf(id string, organizationId string) *StackAllOf {
+func NewStackAllOf(id string, organizationId string, uri string) *StackAllOf {
 	this := StackAllOf{}
 	this.Id = id
 	this.OrganizationId = organizationId
+	this.Uri = uri
 	return &this
 }
 
@@ -89,6 +92,30 @@ func (o *StackAllOf) SetOrganizationId(v string) {
 	o.OrganizationId = v
 }
 
+// GetUri returns the Uri field value
+func (o *StackAllOf) GetUri() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Uri
+}
+
+// GetUriOk returns a tuple with the Uri field value
+// and a boolean to check if the value has been set.
+func (o *StackAllOf) GetUriOk() (*string, bool) {
+	if o == nil {
+    return nil, false
+	}
+	return &o.Uri, true
+}
+
+// SetUri sets field value
+func (o *StackAllOf) SetUri(v string) {
+	o.Uri = v
+}
+
 func (o StackAllOf) MarshalJSON() ([]byte, error) {
 	toSerialize := map[string]interface{}{}
 	if true {
@@ -96,6 +123,9 @@ func (o StackAllOf) MarshalJSON() ([]byte, error) {
 	}
 	if true {
 		toSerialize["organizationId"] = o.OrganizationId
+	}
+	if true {
+		toSerialize["uri"] = o.Uri
 	}
 	return json.Marshal(toSerialize)
 }

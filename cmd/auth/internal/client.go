@@ -17,21 +17,21 @@ func NewAuthClient(cmd *cobra.Command, cfg *config.Config) (*authclient.APIClien
 		return nil, err
 	}
 
-	stackID, err := cmdbuilder.ResolveStackID(cmd, cfg, organizationID)
+	stack, err := cmdbuilder.ResolveStack(cmd, cfg, organizationID)
 	if err != nil {
 		return nil, err
 	}
 
 	httpClient := config.GetHttpClient(cmd)
 
-	token, err := profile.GetStackToken(cmd.Context(), httpClient, organizationID, stackID)
+	token, err := profile.GetStackToken(cmd.Context(), httpClient, stack)
 	if err != nil {
 		return nil, err
 	}
 
 	apiConfig := authclient.NewConfiguration()
 	apiConfig.Servers = authclient.ServerConfigurations{{
-		URL: profile.ApiUrl(organizationID, stackID, "auth").String(),
+		URL: profile.ApiUrl(stack, "auth").String(),
 	}}
 	apiConfig.AddDefaultHeader("Authorization", fmt.Sprintf("Bearer %s", token))
 	apiConfig.HTTPClient = httpClient

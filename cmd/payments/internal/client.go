@@ -17,7 +17,7 @@ func NewPaymentsClient(cmd *cobra.Command, cfg *config.Config) (*client.APIClien
 		return nil, err
 	}
 
-	stackID, err := cmdbuilder.ResolveStackID(cmd, cfg, organizationID)
+	stack, err := cmdbuilder.ResolveStack(cmd, cfg, organizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func NewPaymentsClient(cmd *cobra.Command, cfg *config.Config) (*client.APIClien
 
 	apiConfig := client.NewConfiguration()
 	apiConfig.Servers = client.ServerConfigurations{{
-		URL: profile.ApiUrl(organizationID, stackID, "payments").String(),
+		URL: profile.ApiUrl(stack, "payments").String(),
 	}}
 	apiConfig.AddDefaultHeader("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
 	apiConfig.HTTPClient = httpClient

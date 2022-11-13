@@ -7,7 +7,6 @@ import (
 )
 
 const (
-	DefaultBaseUri       = "https://sandbox.formance.cloud"
 	DefaultMemberShipUri = "https://app.formance.cloud/api"
 )
 

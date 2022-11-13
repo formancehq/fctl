@@ -6,12 +6,13 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Id** | **string** | Stack ID | 
 **OrganizationId** | **string** | Organization ID | 
+**Uri** | **string** | Base stack uri | 
 
 ## Methods
 
 ### NewStackAllOf
 
-`func NewStackAllOf(id string, organizationId string, ) *StackAllOf`
+`func NewStackAllOf(id string, organizationId string, uri string, ) *StackAllOf`
 
 NewStackAllOf instantiates a new StackAllOf object
 This constructor will assign default values to properties that have it defined,
@@ -64,6 +65,26 @@ and a boolean to check if the value has been set.
 `func (o *StackAllOf) SetOrganizationId(v string)`
 
 SetOrganizationId sets OrganizationId field to given value.
+
+
+### GetUri
+
+`func (o *StackAllOf) GetUri() string`
+
+GetUri returns the Uri field if non-nil, zero value otherwise.
+
+### GetUriOk
+
+`func (o *StackAllOf) GetUriOk() (*string, bool)`
+
+GetUriOk returns a tuple with the Uri field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetUri
+
+`func (o *StackAllOf) SetUri(v string)`
+
+SetUri sets Uri field to given value.
 
 
 

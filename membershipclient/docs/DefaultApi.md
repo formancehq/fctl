@@ -496,7 +496,7 @@ Name | Type | Description  | Notes
 
 ## ListInvitations
 
-> ListInvitationsResponse ListInvitations(ctx).Execute()
+> ListInvitationsResponse ListInvitations(ctx).Status(status).Organization(organization).Execute()
 
 List invitations of the user
 
@@ -513,10 +513,12 @@ import (
 )
 
 func main() {
+    status := "status_example" // string | Status of organizations (optional)
+    organization := "organization_example" // string | Status of organizations (optional)
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.DefaultApi.ListInvitations(context.Background()).Execute()
+    resp, r, err := apiClient.DefaultApi.ListInvitations(context.Background()).Status(status).Organization(organization).Execute()
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error when calling `DefaultApi.ListInvitations``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -528,12 +530,17 @@ func main() {
 
 ### Path Parameters
 
-This endpoint does not need any parameter.
+
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiListInvitationsRequest struct via the builder pattern
 
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **status** | **string** | Status of organizations | 
+ **organization** | **string** | Status of organizations | 
 
 ### Return type
 
@@ -555,7 +562,7 @@ Other parameters are passed through a pointer to a apiListInvitationsRequest str
 
 ## ListOrganizationInvitations
 
-> ListInvitationsResponse ListOrganizationInvitations(ctx, organizationId).Execute()
+> ListInvitationsResponse ListOrganizationInvitations(ctx, organizationId).Status(status).Execute()
 
 List invitations of the organization
 
@@ -573,10 +580,11 @@ import (
 
 func main() {
     organizationId := "organizationId_example" // string | 
+    status := "status_example" // string | Status of organizations (optional)
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.DefaultApi.ListOrganizationInvitations(context.Background(), organizationId).Execute()
+    resp, r, err := apiClient.DefaultApi.ListOrganizationInvitations(context.Background(), organizationId).Status(status).Execute()
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error when calling `DefaultApi.ListOrganizationInvitations``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -602,6 +610,7 @@ Other parameters are passed through a pointer to a apiListOrganizationInvitation
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
+ **status** | **string** | Status of organizations | 
 
 ### Return type
 

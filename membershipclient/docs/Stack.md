@@ -8,12 +8,13 @@ Name | Type | Description | Notes
 **Region** | Pointer to **string** | Region | [optional] [default to "eu-west-1"]
 **Id** | **string** | Stack ID | 
 **OrganizationId** | **string** | Organization ID | 
+**Uri** | **string** | Base stack uri | 
 
 ## Methods
 
 ### NewStack
 
-`func NewStack(name string, id string, organizationId string, ) *Stack`
+`func NewStack(name string, id string, organizationId string, uri string, ) *Stack`
 
 NewStack instantiates a new Stack object
 This constructor will assign default values to properties that have it defined,
@@ -111,6 +112,26 @@ and a boolean to check if the value has been set.
 `func (o *Stack) SetOrganizationId(v string)`
 
 SetOrganizationId sets OrganizationId field to given value.
+
+
+### GetUri
+
+`func (o *Stack) GetUri() string`
+
+GetUri returns the Uri field if non-nil, zero value otherwise.
+
+### GetUriOk
+
+`func (o *Stack) GetUriOk() (*string, bool)`
+
+GetUriOk returns a tuple with the Uri field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetUri
+
+`func (o *Stack) SetUri(v string)`
+
+SetUri sets Uri field to given value.
 
 
 

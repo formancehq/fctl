@@ -725,6 +725,20 @@ func (a *DefaultApiService) DeleteStackExecute(r ApiDeleteStackRequest) (*http.R
 type ApiListInvitationsRequest struct {
 	ctx context.Context
 	ApiService *DefaultApiService
+	status *string
+	organization *string
+}
+
+// Status of organizations
+func (r ApiListInvitationsRequest) Status(status string) ApiListInvitationsRequest {
+	r.status = &status
+	return r
+}
+
+// Status of organizations
+func (r ApiListInvitationsRequest) Organization(organization string) ApiListInvitationsRequest {
+	r.organization = &organization
+	return r
 }
 
 func (r ApiListInvitationsRequest) Execute() (*ListInvitationsResponse, *http.Response, error) {
@@ -765,6 +779,12 @@ func (a *DefaultApiService) ListInvitationsExecute(r ApiListInvitationsRequest) 
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
+	if r.status != nil {
+		localVarQueryParams.Add("status", parameterToString(*r.status, ""))
+	}
+	if r.organization != nil {
+		localVarQueryParams.Add("organization", parameterToString(*r.organization, ""))
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -823,6 +843,13 @@ type ApiListOrganizationInvitationsRequest struct {
 	ctx context.Context
 	ApiService *DefaultApiService
 	organizationId string
+	status *string
+}
+
+// Status of organizations
+func (r ApiListOrganizationInvitationsRequest) Status(status string) ApiListOrganizationInvitationsRequest {
+	r.status = &status
+	return r
 }
 
 func (r ApiListOrganizationInvitationsRequest) Execute() (*ListInvitationsResponse, *http.Response, error) {
@@ -866,6 +893,9 @@ func (a *DefaultApiService) ListOrganizationInvitationsExecute(r ApiListOrganiza
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
+	if r.status != nil {
+		localVarQueryParams.Add("status", parameterToString(*r.status, ""))
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 

@@ -68,9 +68,7 @@ func LogIn(ctx context.Context, dialog Dialog, relyingParty rp.RelyingParty) (*o
 func NewLoginCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("login",
 		cmdbuilder.WithStringFlag(config.MembershipUriFlag, config.DefaultMemberShipUri, "service url"),
-		cmdbuilder.WithStringFlag(config.BaseServiceUriFlag, config.DefaultBaseUri, "service url"),
 		cmdbuilder.WithHiddenFlag(config.MembershipUriFlag),
-		cmdbuilder.WithHiddenFlag(config.BaseServiceUriFlag),
 		cmdbuilder.WithShortDescription("Login"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 

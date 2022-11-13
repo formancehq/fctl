@@ -222,6 +222,23 @@ paths:
   /me/invitations:
     get:
       operationId: listInvitations
+      parameters:
+      - description: Status of organizations
+        explode: true
+        in: query
+        name: status
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Status of organizations
+        explode: true
+        in: query
+        name: organization
+        required: false
+        schema:
+          type: string
+        style: form
       responses:
         "200":
           content:
@@ -271,6 +288,14 @@ paths:
         schema:
           type: string
         style: simple
+      - description: Status of organizations
+        explode: true
+        in: query
+        name: status
+        required: false
+        schema:
+          type: string
+        style: form
       responses:
         "200":
           content:
@@ -533,9 +558,13 @@ components:
         organizationId:
           description: Organization ID
           type: string
+        uri:
+          description: Base stack uri
+          type: string
       required:
       - id
       - organizationId
+      - uri
       type: object
       example: null
     User_allOf:

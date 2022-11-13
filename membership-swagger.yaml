@@ -201,6 +201,19 @@ paths:
     get:
       summary: List invitations of the user
       operationId: listInvitations
+      parameters:
+      - in: query
+        name: status
+        required: false
+        description: Status of organizations
+        schema:
+          type: string
+      - in: query
+        name: organization
+        required: false
+        description: Status of organizations
+        schema:
+          type: string
       responses:
         200:
           description: List of the invitations for the connected user
@@ -244,6 +257,12 @@ paths:
         schema:
           type: string
         required: true
+      - in: query
+        name: status
+        required: false
+        description: Status of organizations
+        schema:
+          type: string
       responses:
         200:
           description: List of the invitations for the organization
@@ -329,6 +348,7 @@ components:
         required:
         - id
         - organizationId
+        - uri
         properties:
           id:
             type: string
@@ -336,6 +356,9 @@ components:
           organizationId:
             type: string
             description: Organization ID
+          uri:
+            type: string
+            description: Base stack uri
     UserData:
       type: object
       properties:

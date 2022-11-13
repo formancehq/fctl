@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/formancehq/fctl/cmd/internal/collections"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/membershipclient"
@@ -12,11 +13,15 @@ import (
 )
 
 func NewListCommand() *cobra.Command {
+	const (
+		statusFlag = "status"
+	)
 	return cmdbuilder.NewCommand("list",
 		cmdbuilder.WithAliases("ls", "l"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(0)),
 		cmdbuilder.WithShortDescription("List invitations"),
 		cmdbuilder.WithAliases("s"),
+		cmdbuilder.WithStringFlag(statusFlag, "", "Filter invitations by status"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Get(cmd)
 			if err != nil {
@@ -35,6 +40,7 @@ func NewListCommand() *cobra.Command {
 
 			listInvitationsResponse, _, err := apiClient.DefaultApi.
 				ListOrganizationInvitations(cmd.Context(), organizationID).
+				Status(cmdutils.GetString(cmd, statusFlag)).
 				Execute()
 			if err != nil {
 				return err
@@ -48,7 +54,7 @@ func NewListCommand() *cobra.Command {
 					i.CreationDate.Format(time.RFC3339),
 				}
 			})
-			tableData = collections.Prepend(tableData, []string{"ID", "Email", "Status", "CreationDate"})
+			tableData = collections.Prepend(tableData, []string{"ID", "Email", "Status", "Creation date"})
 			return pterm.DefaultTable.
 				WithHasHeader().
 				WithWriter(cmd.OutOrStdout()).

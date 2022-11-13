@@ -17,21 +17,21 @@ func NewLedgerClient(cmd *cobra.Command, cfg *config.Config) (*client.APIClient,
 		return nil, err
 	}
 
-	stackID, err := cmdbuilder.ResolveStackID(cmd, cfg, organizationID)
+	stack, err := cmdbuilder.ResolveStack(cmd, cfg, organizationID)
 	if err != nil {
 		return nil, err
 	}
 
 	httpClient := config.GetHttpClient(cmd)
 
-	token, err := profile.GetStackToken(cmd.Context(), httpClient, organizationID, stackID)
+	token, err := profile.GetStackToken(cmd.Context(), httpClient, stack)
 	if err != nil {
 		return nil, err
 	}
 
 	apiConfig := client.NewConfiguration()
 	apiConfig.Servers = client.ServerConfigurations{{
-		URL: profile.ApiUrl(organizationID, stackID, "ledger").String(),
+		URL: profile.ApiUrl(stack, "ledger").String(),
 	}}
 	apiConfig.AddDefaultHeader("Authorization", fmt.Sprintf("Bearer %s", token))
 	apiConfig.HTTPClient = httpClient

@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/formancehq/fctl/membershipclient"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/zitadel/oidc/pkg/client"
@@ -25,30 +26,27 @@ const AuthClient = "fctl"
 
 type persistedProfile struct {
 	MembershipURI       string        `json:"membershipURI"`
-	BaseServiceURI      string        `json:"baseServiceURI"`
 	Token               *oauth2.Token `json:"token"`
 	DefaultOrganization string        `json:"defaultOrganization"`
 }
 
 type Profile struct {
 	membershipURI       string
-	baseServiceURI      string
 	token               *oauth2.Token
 	defaultOrganization string
 	config              *Config
 }
 
-func (p *Profile) ServicesBaseUrl(organization, stack string) *url.URL {
-	baseUrl, err := url.Parse(p.baseServiceURI)
+func (p *Profile) ServicesBaseUrl(stack *membershipclient.Stack) *url.URL {
+	baseUrl, err := url.Parse(stack.Uri)
 	if err != nil {
 		panic(err)
 	}
-	baseUrl.Host = fmt.Sprintf("%s-%s.%s", organization, stack, baseUrl.Host)
 	return baseUrl
 }
 
-func (p *Profile) ApiUrl(organization, stack, service string) *url.URL {
-	url := p.ServicesBaseUrl(organization, stack)
+func (p *Profile) ApiUrl(stack *membershipclient.Stack, service string) *url.URL {
+	url := p.ServicesBaseUrl(stack)
 	url.Path = "/api/" + service
 	return url
 }
@@ -61,7 +59,6 @@ func (p *Profile) UpdateToken(token *oauth2.Token) {
 func (p *Profile) MarshalJSON() ([]byte, error) {
 	return json.Marshal(persistedProfile{
 		MembershipURI:       p.membershipURI,
-		BaseServiceURI:      p.baseServiceURI,
 		Token:               p.token,
 		DefaultOrganization: p.defaultOrganization,
 	})
@@ -74,7 +71,6 @@ func (p *Profile) UnmarshalJSON(data []byte) error {
 	}
 	*p = Profile{
 		membershipURI:       cfg.MembershipURI,
-		baseServiceURI:      cfg.BaseServiceURI,
 		token:               cfg.Token,
 		defaultOrganization: cfg.DefaultOrganization,
 	}
@@ -83,10 +79,6 @@ func (p *Profile) UnmarshalJSON(data []byte) error {
 
 func (p *Profile) GetMembershipURI() string {
 	return p.membershipURI
-}
-
-func (p *Profile) GetBaseServiceURI() string {
-	return p.baseServiceURI
 }
 
 func (p *Profile) GetDefaultOrganization() string {
@@ -145,11 +137,11 @@ func (p *Profile) GetUserInfo(cmd *cobra.Command) (oidc.UserInfo, error) {
 	return userinfo, nil
 }
 
-func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, organizationID, stackID string) (string, error) {
+func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, stack *membershipclient.Stack) (string, error) {
 
 	form := url.Values{
 		"grant_type":         []string{string(oidc.GrantTypeTokenExchange)},
-		"audience":           []string{fmt.Sprintf("stack://%s/%s", organizationID, stackID)},
+		"audience":           []string{fmt.Sprintf("stack://%s/%s", stack.OrganizationId, stack.Id)},
 		"subject_token":      []string{p.token.AccessToken},
 		"subject_token_type": []string{"urn:ietf:params:oauth:token-type:access_token"},
 	}
@@ -185,7 +177,7 @@ func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, or
 		return "", err
 	}
 
-	apiUrl := p.ApiUrl(organizationID, stackID, "auth")
+	apiUrl := p.ApiUrl(stack, "auth")
 	form = url.Values{
 		"grant_type": []string{"urn:ietf:params:oauth:grant-type:jwt-bearer"},
 		"assertion":  []string{securityToken.AccessToken},

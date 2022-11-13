@@ -49,7 +49,7 @@ func NewCreateCommand() *cobra.Command {
 			}
 
 			cmdbuilder.Highlightln(cmd.OutOrStdout(), "Your dashboard will be reachable on: %s",
-				profile.ServicesBaseUrl(stack.Data.OrganizationId, stack.Data.Id).String())
+				profile.ServicesBaseUrl(stack.Data).String())
 			cmdbuilder.Highlightln(cmd.OutOrStdout(), "You can access your sandbox apis using following urls :")
 
 			return internal.PrintStackInformation(cmd.OutOrStdout(), profile, stack.Data)
@@ -58,7 +58,7 @@ func NewCreateCommand() *cobra.Command {
 }
 
 func waitStackReady(cmd *cobra.Command, profile *config.Profile, stack *membershipclient.Stack) error {
-	baseUrlStr := profile.ServicesBaseUrl(stack.OrganizationId, stack.Id).String()
+	baseUrlStr := profile.ServicesBaseUrl(stack).String()
 	authServerUrl := fmt.Sprintf("%s/api/auth", baseUrlStr)
 	for {
 		req, err := http.NewRequestWithContext(cmd.Context(), http.MethodGet,

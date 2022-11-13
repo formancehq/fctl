@@ -27,7 +27,6 @@ func NewShowCommand() *cobra.Command {
 			}
 
 			tableData := pterm.TableData{}
-			tableData = append(tableData, []string{pterm.LightCyan("Service URI"), p.GetBaseServiceURI()})
 			tableData = append(tableData, []string{pterm.LightCyan("Membership URI"), p.GetMembershipURI()})
 			tableData = append(tableData, []string{pterm.LightCyan("Default organization"), p.GetDefaultOrganization()})
 			return pterm.DefaultTable.

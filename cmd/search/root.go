@@ -23,21 +23,21 @@ func newSearchClient(cmd *cobra.Command, cfg *config.Config) (*searchclient.APIC
 		return nil, err
 	}
 
-	stackID, err := cmdbuilder.ResolveStackID(cmd, cfg, organizationID)
+	stack, err := cmdbuilder.ResolveStack(cmd, cfg, organizationID)
 	if err != nil {
 		return nil, err
 	}
 
 	httpClient := config.GetHttpClient(cmd)
 
-	token, err := profile.GetStackToken(cmd.Context(), httpClient, organizationID, stackID)
+	token, err := profile.GetStackToken(cmd.Context(), httpClient, stack)
 	if err != nil {
 		return nil, err
 	}
 
 	apiConfig := searchclient.NewConfiguration()
 	apiConfig.Servers = searchclient.ServerConfigurations{{
-		URL: profile.ApiUrl(organizationID, stackID, "search").String(),
+		URL: profile.ApiUrl(stack, "search").String(),
 	}}
 	apiConfig.AddDefaultHeader("Authorization", fmt.Sprintf("Bearer %s", token))
 	apiConfig.HTTPClient = httpClient

@@ -46,16 +46,15 @@ func (c *Config) GetProfile(name string) *Profile {
 	return p
 }
 
-func (c *Config) GetProfileOrDefault(name string, membershipUri, baseServiceUri string) *Profile {
+func (c *Config) GetProfileOrDefault(name string, membershipUri string) *Profile {
 	p := c.GetProfile(name)
 	if p == nil {
 		if c.profiles == nil {
 			c.profiles = map[string]*Profile{}
 		}
 		f := &Profile{
-			membershipURI:  membershipUri,
-			baseServiceURI: baseServiceUri,
-			config:         c,
+			membershipURI: membershipUri,
+			config:        c,
 		}
 		c.profiles[name] = f
 		return f
@@ -117,6 +116,5 @@ func GetCurrentProfileName(cmd *cobra.Command, config *Config) string {
 }
 
 func GetCurrentProfile(cmd *cobra.Command, cfg *Config) *Profile {
-	return cfg.GetProfileOrDefault(GetCurrentProfileName(cmd, cfg), cmdutils.GetString(cmd, MembershipUriFlag),
-		cmdutils.GetString(cmd, BaseServiceUriFlag))
+	return cfg.GetProfileOrDefault(GetCurrentProfileName(cmd, cfg), cmdutils.GetString(cmd, MembershipUriFlag))
 }

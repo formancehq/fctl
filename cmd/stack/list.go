@@ -54,7 +54,7 @@ func NewListCommand() *cobra.Command {
 						}
 						return *stack.Region
 					}(),
-					profile.ServicesBaseUrl(stack.OrganizationId, stack.Id).String(),
+					profile.ServicesBaseUrl(&stack).String(),
 				}
 			})
 			tableData = collections.Prepend(tableData, []string{"ID", "Name", "Region", "Dashboard"})
