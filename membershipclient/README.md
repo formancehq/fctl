@@ -101,6 +101,7 @@ Class | Method | HTTP request | Description
  - [CreateInvitationResponse](docs/CreateInvitationResponse.md)
  - [CreateOrganizationResponse](docs/CreateOrganizationResponse.md)
  - [CreateStackResponse](docs/CreateStackResponse.md)
+ - [Error](docs/Error.md)
  - [Invitation](docs/Invitation.md)
  - [ListInvitationsResponse](docs/ListInvitationsResponse.md)
  - [ListOrganizationExpandedResponse](docs/ListOrganizationExpandedResponse.md)

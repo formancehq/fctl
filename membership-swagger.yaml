@@ -152,6 +152,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateStackResponse'
+        400:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /organizations/{organizationId}/stacks/{stackId}:
     get:
       summary: Read stack
@@ -409,6 +415,15 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/Invitation'
+    Error:
+      type: object
+      properties:
+        error_code:
+          type: string
+        error_message:
+          type: string
+      required:
+      - error_code
     Invitation:
       type: object
       properties:

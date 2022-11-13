@@ -1,6 +1,8 @@
 package stack
 
 import (
+	"net/http"
+
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	config "github.com/formancehq/fctl/cmd/internal/config"
@@ -9,6 +11,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
+
+var errStackNotFound = errors.New("stack not found")
 
 func NewShowCommand() *cobra.Command {
 	const stackNameFlag = "name"
@@ -38,8 +42,11 @@ func NewShowCommand() *cobra.Command {
 				if cmdutils.GetString(cmd, stackNameFlag) != "" {
 					return errors.New("need either an id of a name spefified using --name flag")
 				}
-				stackResponse, _, err := apiClient.DefaultApi.ReadStack(cmd.Context(), organization, args[0]).Execute()
+				stackResponse, httpResponse, err := apiClient.DefaultApi.ReadStack(cmd.Context(), organization, args[0]).Execute()
 				if err != nil {
+					if httpResponse.StatusCode == http.StatusNotFound {
+						return errStackNotFound
+					}
 					return errors.Wrap(err, "listing stacks")
 				}
 				stack = stackResponse.Data
@@ -60,7 +67,7 @@ func NewShowCommand() *cobra.Command {
 			}
 
 			if stack == nil {
-				return errors.New("Not found.")
+				return errStackNotFound
 			}
 
 			return internal.PrintStackInformation(cmd.OutOrStdout(), config.GetCurrentProfile(cmd, cfg), stack)

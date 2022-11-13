@@ -7,9 +7,9 @@ import (
 
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/formancehq/fctl/cmd/internal/openapi"
 	"github.com/formancehq/fctl/cmd/stack/internal"
 	"github.com/formancehq/fctl/membershipclient"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +39,7 @@ func NewCreateCommand() *cobra.Command {
 				Name: args[0],
 			}).Execute()
 			if err != nil {
-				return errors.Wrap(err, "creating sandbox")
+				return openapi.WrapError(err, "creating sandbox")
 			}
 
 			profile := config.GetCurrentProfile(cmd, cfg)

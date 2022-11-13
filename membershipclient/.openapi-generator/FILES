@@ -9,6 +9,7 @@ docs/CreateInvitationResponse.md
 docs/CreateOrganizationResponse.md
 docs/CreateStackResponse.md
 docs/DefaultApi.md
+docs/Error.md
 docs/Invitation.md
 docs/ListInvitationsResponse.md
 docs/ListOrganizationExpandedResponse.md
@@ -33,6 +34,7 @@ go.sum
 model_create_invitation_response.go
 model_create_organization_response.go
 model_create_stack_response.go
+model_error.go
 model_invitation.go
 model_list_invitations_response.go
 model_list_organization_expanded_response.go

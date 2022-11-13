@@ -165,6 +165,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/CreateStackResponse'
           description: Created stack
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
       summary: Create stack
   /organizations/{organizationId}/stacks/{stackId}:
     delete:
@@ -451,6 +457,15 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/Invitation'
+      type: object
+    Error:
+      properties:
+        error_code:
+          type: string
+        error_message:
+          type: string
+      required:
+      - error_code
       type: object
     Invitation:
       example:
