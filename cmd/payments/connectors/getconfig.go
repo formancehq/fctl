@@ -3,8 +3,8 @@ package connectors
 import (
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/formancehq/fctl/cmd/internal/openapi"
 	"github.com/formancehq/fctl/cmd/payments/internal"
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -28,7 +28,7 @@ func NewPaymentsConnectorsGetConfigCommand() *cobra.Command {
 
 			connectorConfig, _, err := client.DefaultApi.ReadConnectorConfig(cmd.Context(), args[0]).Execute()
 			if err != nil {
-				return errors.Wrap(err, "reading connector config")
+				return openapi.WrapError(err, "reading connector config")
 			}
 			switch args[0] {
 			case "stripe":
