@@ -10,7 +10,7 @@ func NewCommand() *cobra.Command {
 	return cmdbuilder.NewStackCommand("payments",
 		cmdbuilder.WithShortDescription("Payments management"),
 		cmdbuilder.WithChildCommands(
-			connectors.NewPaymentsConnectorsCommand(),
+			connectors.NewConnectorsCommand(),
 		),
 	)
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewPaymentsConnectorsGetConfigCommand() *cobra.Command {
+func NewGetConfigCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("get-config [CONNECTOR_NAME]",
 		cmdbuilder.WithAliases("getconfig", "getconf", "gc", "get", "g"),
 		cmdbuilder.WithArgs(cobra.ExactArgs(1)),

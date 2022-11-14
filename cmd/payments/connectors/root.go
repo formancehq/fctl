@@ -6,12 +6,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewPaymentsConnectorsCommand() *cobra.Command {
+func NewConnectorsCommand() *cobra.Command {
 	return cmdbuilder.NewCommand("connectors",
+		cmdbuilder.WithAliases("c", "co", "con"),
 		cmdbuilder.WithShortDescription("Connectors management"),
 		cmdbuilder.WithChildCommands(
-			NewPaymentsConnectorsGetConfigCommand(),
-			install.NewPaymentsConnectorsInstallCommand(),
+			NewGetConfigCommand(),
+			NewUninstallCommand(),
+			install.NewInstallCommand(),
 		),
 	)
 }

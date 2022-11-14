@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewPaymentsConnectorsInstallStripeCommand() *cobra.Command {
+func NewStripeCommand() *cobra.Command {
 	const (
 		stripeApiKeyFlag = "api-key"
 	)

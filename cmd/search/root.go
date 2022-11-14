@@ -53,7 +53,7 @@ func NewCommand() *cobra.Command {
 		cmdbuilder.WithAliases("se"),
 		cmdbuilder.WithArgs(cobra.MinimumNArgs(1)),
 		cmdbuilder.WithIntFlag(sizeFlag, 5, "Number of items to fetch"),
-		cmdbuilder.WithValidArgs("ANY", "ACCOUNT", "TRANSACTION", "ASSET"),
+		cmdbuilder.WithValidArgs("ANY", "ACCOUNT", "TRANSACTION", "ASSET", "PAYMENT"),
 		cmdbuilder.WithShortDescription("Search in all services"),
 		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
 
@@ -121,10 +121,36 @@ func NewCommand() *cobra.Command {
 				err = displayAccounts(cmd.OutOrStdout(), response.Cursor.Data)
 			case "ASSET":
 				err = displayAssets(cmd.OutOrStdout(), response.Cursor.Data)
+			case "PAYMENT":
+				err = displayPayments(cmd.OutOrStdout(), response.Cursor.Data)
 			}
 			return err
 		}),
 	)
+}
+
+func displayPayments(out io.Writer, payments []map[string]interface{}) error {
+	tableData := make([][]string, 0)
+	for _, payment := range payments {
+		tableData = append(tableData, []string{
+			payment["provider"].(string),
+			payment["reference"].(string),
+			fmt.Sprint(payment["amount"].(float64)),
+			payment["asset"].(string),
+			payment["createdAt"].(string),
+			payment["scheme"].(string),
+			payment["status"].(string),
+			payment["type"].(string),
+		})
+	}
+	tableData = collections.Prepend(tableData, []string{"Provider", "Reference", "Account",
+		"Asset", "Created at", "Scheme", "Status", "Type"})
+
+	return pterm.DefaultTable.
+		WithHasHeader().
+		WithWriter(out).
+		WithData(tableData).
+		Render()
 }
 
 func displayAssets(out io.Writer, assets []map[string]interface{}) error {
