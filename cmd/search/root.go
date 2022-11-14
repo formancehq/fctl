@@ -49,7 +49,7 @@ func NewCommand() *cobra.Command {
 	const (
 		sizeFlag = "size"
 	)
-	return cmdbuilder.NewCommand("search",
+	return cmdbuilder.NewStackCommand("search",
 		cmdbuilder.WithAliases("se"),
 		cmdbuilder.WithArgs(cobra.MinimumNArgs(1)),
 		cmdbuilder.WithIntFlag(sizeFlag, 5, "Number of items to fetch"),
