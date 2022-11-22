@@ -187,8 +187,8 @@ github.com/mattn/go-shellwords v1.0.12/go.mod h1:EZzvwXDESEeg03EKmM+RmDnNOPKG4lL
 github.com/mattn/go-tty v0.0.3 h1:5OfyWorkyO7xP52Mq7tB36ajHDG5OHrmBGIS/DtakQI=
 github.com/mattn/go-tty v0.0.3/go.mod h1:ihxohKRERHTVzN+aSVRwACLCeqIoZAWpoICkkvrWyR0=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
-github.com/numary/ledger/client v0.0.0-20220912105324-6153d9ee752f h1:mo60QrVI0j5i2K9HtJc3cFjzpT/pf2/RPa2Bi9Ug2cg=
-github.com/numary/ledger/client v0.0.0-20220912105324-6153d9ee752f/go.mod h1:8EqqeSbFt6zHLEBbgmMXtH6aGfek+MyZcg8b/HiDvp4=
+github.com/numary/ledger/client v0.0.0-20221122120003-a06568501a4c h1:iMfKG8+KpSGUa3MCRFik8B8iB5wUTIAkPt3EP3gPaOA=
+github.com/numary/ledger/client v0.0.0-20221122120003-a06568501a4c/go.mod h1:8EqqeSbFt6zHLEBbgmMXtH6aGfek+MyZcg8b/HiDvp4=
 github.com/numary/payments/client v0.0.0-20220912091851-92e6ed3de087 h1:ZER+3J+R+L6KilJFyzNJE+5aqheAFtdcEQSC5mRkH3s=
 github.com/numary/payments/client v0.0.0-20220912091851-92e6ed3de087/go.mod h1:PusoOsZSGFQe4/kOBwYGbSZjIhJGaWA7+6imlgyLtgk=
 github.com/pascaldekloe/name v1.0.0/go.mod h1:Z//MfYJnH4jVpQ9wkclwu2I2MkHmXTlT9wR5UZScttM=
