@@ -4,7 +4,7 @@ import (
 	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
 	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/cmd/payments/internal"
-	"github.com/numary/payments/client"
+	"github.com/formancehq/payments/client"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
