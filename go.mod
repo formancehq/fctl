@@ -7,12 +7,12 @@ require (
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/formancehq/auth/authclient v0.0.0-20221003212526-20761562e41e
 	github.com/formancehq/fctl/membershipclient v0.0.0-20221110205214-79a725a64b70
+	github.com/formancehq/payments/client v0.0.0-20221122203707-e41feb711635
 	github.com/formancehq/search/client v0.0.0-20221113191621-1f6854b1e5dd
 	github.com/formancehq/webhooks/client v0.0.0-20221113191112-15660877c6c0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/numary/ledger/client v0.0.0-20221122120003-a06568501a4c
-	github.com/numary/payments/client v0.0.0-20220912091851-92e6ed3de087
 	github.com/pkg/errors v0.9.1
 	github.com/pterm/pterm v0.12.49
 	github.com/spf13/cobra v1.6.1
