@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime/debug"
 	"sort"
 	"strings"
 
@@ -19,6 +20,19 @@ import (
 )
 
 func (p *prompt) completionsFromCommand(subCommand *cobra.Command, completionsArgs []string, d goprompt.Document) []goprompt.Suggest {
+
+	defer func() {
+		// The autocompletion library sometimes panic
+		// As it is not critical, we just catch the error and display it only when debug enabled
+		if err := recover(); err != nil {
+			isDebug, _ := subCommand.Flags().GetBool(config.DebugFlag)
+			if isDebug {
+				fmt.Println(err)
+				debug.PrintStack()
+			}
+		}
+	}()
+
 	_, completions, _, err := subCommand.GetCompletions(completionsArgs)
 	if err != nil {
 		return []goprompt.Suggest{}
