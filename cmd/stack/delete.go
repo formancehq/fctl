@@ -35,7 +35,7 @@ func NewDeleteCommand() *cobra.Command {
 
 			var stackID string
 			if len(args) == 1 {
-				if cmdutils.GetString(cmd, stackNameFlag) == "" {
+				if cmdutils.GetString(cmd, stackNameFlag) != "" {
 					return errors.New("need either an id of a name spefified using --name flag")
 				}
 				stackID = args[0]
