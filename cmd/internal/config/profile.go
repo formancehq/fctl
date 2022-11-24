@@ -56,6 +56,10 @@ func (p *Profile) UpdateToken(token *oauth2.Token) {
 	p.token.Expiry = p.token.Expiry.UTC()
 }
 
+func (p *Profile) SetMembershipURI(v string) {
+	p.membershipURI = v
+}
+
 func (p *Profile) MarshalJSON() ([]byte, error) {
 	return json.Marshal(persistedProfile{
 		MembershipURI:       p.membershipURI,
@@ -114,7 +118,7 @@ func (p *Profile) GetToken(ctx context.Context, httpClient *http.Client) (*oauth
 
 func (p *Profile) GetUserInfo(cmd *cobra.Command) (oidc.UserInfo, error) {
 
-	relyingParty, err := GetAuthRelyingParty(cmd, p)
+	relyingParty, err := GetAuthRelyingParty(cmd, p.GetMembershipURI())
 	if err != nil {
 		return nil, err
 	}

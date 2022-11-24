@@ -78,8 +78,15 @@ func NewLoginCommand() *cobra.Command {
 			}
 
 			profile := config.GetCurrentProfile(cmd, cfg)
+			membershipUri, err := cmd.Flags().GetString(config.MembershipUriFlag)
+			if err != nil {
+				return err
+			}
+			if membershipUri == "" {
+				membershipUri = profile.GetMembershipURI()
+			}
 
-			relyingParty, err := config.GetAuthRelyingParty(cmd, profile)
+			relyingParty, err := config.GetAuthRelyingParty(cmd, membershipUri)
 			if err != nil {
 				return err
 			}
@@ -92,6 +99,7 @@ func NewLoginCommand() *cobra.Command {
 				return err
 			}
 
+			profile.SetMembershipURI(membershipUri)
 			profile.UpdateToken(ret.Token)
 
 			currentProfileName := config.GetCurrentProfileName(cmd, cfg)
