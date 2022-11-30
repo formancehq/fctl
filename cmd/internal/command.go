@@ -1,8 +1,6 @@
-package cmdbuilder
+package internal
 
 import (
-	"github.com/formancehq/fctl/cmd/internal/cmdutils"
-	"github.com/formancehq/fctl/cmd/internal/config"
 	"github.com/formancehq/fctl/membershipclient"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -19,26 +17,26 @@ var (
 )
 
 func GetSelectedOrganization(cmd *cobra.Command) string {
-	return cmdutils.GetString(cmd, organizationFlag)
+	return GetString(cmd, organizationFlag)
 }
 
-func RetrieveOrganizationIDFromFlagOrProfile(cmd *cobra.Command, cfg *config.Config) (string, error) {
+func RetrieveOrganizationIDFromFlagOrProfile(cmd *cobra.Command, cfg *Config) (string, error) {
 	if id := GetSelectedOrganization(cmd); id != "" {
 		return id, nil
 	}
 
-	if defaultOrganization := config.GetCurrentProfile(cmd, cfg).GetDefaultOrganization(); defaultOrganization != "" {
+	if defaultOrganization := GetCurrentProfile(cmd, cfg).GetDefaultOrganization(); defaultOrganization != "" {
 		return defaultOrganization, nil
 	}
 	return "", ErrOrganizationNotSpecified
 }
 
-func ResolveOrganizationID(cmd *cobra.Command, cfg *config.Config) (string, error) {
+func ResolveOrganizationID(cmd *cobra.Command, cfg *Config) (string, error) {
 	if id, err := RetrieveOrganizationIDFromFlagOrProfile(cmd, cfg); err == nil {
 		return id, nil
 	}
 
-	client, err := config.NewClient(cmd, cfg)
+	client, err := NewMembershipClient(cmd, cfg)
 	if err != nil {
 		return "", err
 	}
@@ -60,11 +58,11 @@ func ResolveOrganizationID(cmd *cobra.Command, cfg *config.Config) (string, erro
 }
 
 func GetSelectedStackID(cmd *cobra.Command) string {
-	return cmdutils.GetString(cmd, stackFlag)
+	return GetString(cmd, stackFlag)
 }
 
-func ResolveStack(cmd *cobra.Command, cfg *config.Config, organizationID string) (*membershipclient.Stack, error) {
-	client, err := config.NewClient(cmd, cfg)
+func ResolveStack(cmd *cobra.Command, cfg *Config, organizationID string) (*membershipclient.Stack, error) {
+	client, err := NewMembershipClient(cmd, cfg)
 	if err != nil {
 		return nil, err
 	}

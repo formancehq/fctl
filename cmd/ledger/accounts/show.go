@@ -3,31 +3,29 @@ package accounts
 import (
 	"fmt"
 
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/cmdutils"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	internal2 "github.com/formancehq/fctl/cmd/internal"
 	"github.com/formancehq/fctl/cmd/ledger/internal"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewShowCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("show [ADDRESS]",
-		cmdbuilder.WithShortDescription("Show account"),
-		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
-		cmdbuilder.WithAliases("sh", "s"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd)
+	return internal2.NewCommand("show [ADDRESS]",
+		internal2.WithShortDescription("Show account"),
+		internal2.WithArgs(cobra.ExactArgs(1)),
+		internal2.WithAliases("sh", "s"),
+		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := internal2.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			ledgerClient, err := internal.NewLedgerClient(cmd, cfg)
+			ledgerClient, err := internal2.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			ledger := cmdutils.GetString(cmd, internal.LedgerFlag)
+			ledger := internal2.GetString(cmd, internal.LedgerFlag)
 			rsp, _, err := ledgerClient.AccountsApi.GetAccount(cmd.Context(), ledger, args[0]).Execute()
 			if err != nil {
 				return err
@@ -52,7 +50,7 @@ func NewShowCommand() *cobra.Command {
 
 			fmt.Fprintln(cmd.OutOrStdout())
 
-			if err := internal.PrintMetadata(cmd.OutOrStdout(), *rsp.Data.Metadata); err != nil {
+			if err := internal.PrintMetadata(cmd.OutOrStdout(), rsp.Data.Metadata); err != nil {
 				return err
 			}
 

@@ -1,36 +1,33 @@
 package connectors
 
 import (
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/config"
-	"github.com/formancehq/fctl/cmd/internal/openapi"
-	"github.com/formancehq/fctl/cmd/payments/internal"
+	internal2 "github.com/formancehq/fctl/cmd/internal"
 	"github.com/spf13/cobra"
 )
 
 func NewUninstallCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("uninstall connector",
-		cmdbuilder.WithAliases("uninstall", "u", "un"),
-		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
-		cmdbuilder.WithValidArgs("stripe"),
-		cmdbuilder.WithShortDescription("Uninstall a connector"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
+	return internal2.NewCommand("uninstall connector",
+		internal2.WithAliases("uninstall", "u", "un"),
+		internal2.WithArgs(cobra.ExactArgs(1)),
+		internal2.WithValidArgs("stripe"),
+		internal2.WithShortDescription("Uninstall a connector"),
+		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.Get(cmd)
+			cfg, err := internal2.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			client, err := internal.NewPaymentsClient(cmd, cfg)
+			client, err := internal2.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			_, err = client.DefaultApi.UninstallConnector(cmd.Context(), args[0]).Execute()
+			_, err = client.PaymentsApi.UninstallConnector(cmd.Context(), args[0]).Execute()
 			if err != nil {
-				return openapi.WrapError(err, "uninstalling connector")
+				return internal2.WrapError(err, "uninstalling connector")
 			}
-			cmdbuilder.Success(cmd.OutOrStdout(), "Connector '%s' uninstalled!", args[0])
+			internal2.Success(cmd.OutOrStdout(), "Connector '%s' uninstalled!", args[0])
 			return nil
 		}),
 	)

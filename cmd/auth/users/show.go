@@ -1,29 +1,27 @@
 package users
 
 import (
-	"github.com/formancehq/fctl/cmd/auth/internal"
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	internal2 "github.com/formancehq/fctl/cmd/internal"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewShowCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("show",
-		cmdbuilder.WithAliases("s"),
-		cmdbuilder.WithShortDescription("Show user"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd)
+	return internal2.NewCommand("show",
+		internal2.WithAliases("s"),
+		internal2.WithShortDescription("Show user"),
+		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := internal2.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			client, err := internal.NewAuthClient(cmd, cfg)
+			client, err := internal2.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			readUserResponse, _, err := client.DefaultApi.ReadUser(cmd.Context(), args[0]).Execute()
+			readUserResponse, _, err := client.UsersApi.ReadUser(cmd.Context(), args[0]).Execute()
 			if err != nil {
 				return err
 			}

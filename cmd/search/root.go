@@ -6,63 +6,30 @@ import (
 	"io"
 	"strings"
 
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/cmdutils"
-	"github.com/formancehq/fctl/cmd/internal/collections"
-	"github.com/formancehq/fctl/cmd/internal/config"
-	searchclient "github.com/formancehq/search/client"
+	"github.com/formancehq/fctl/cmd/internal"
+	"github.com/formancehq/formance-sdk-go"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
-
-func newSearchClient(cmd *cobra.Command, cfg *config.Config) (*searchclient.APIClient, error) {
-	profile := config.GetCurrentProfile(cmd, cfg)
-
-	organizationID, err := cmdbuilder.ResolveOrganizationID(cmd, cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	stack, err := cmdbuilder.ResolveStack(cmd, cfg, organizationID)
-	if err != nil {
-		return nil, err
-	}
-
-	httpClient := config.GetHttpClient(cmd)
-
-	token, err := profile.GetStackToken(cmd.Context(), httpClient, stack)
-	if err != nil {
-		return nil, err
-	}
-
-	apiConfig := searchclient.NewConfiguration()
-	apiConfig.Servers = searchclient.ServerConfigurations{{
-		URL: profile.ApiUrl(stack, "search").String(),
-	}}
-	apiConfig.AddDefaultHeader("Authorization", fmt.Sprintf("Bearer %s", token))
-	apiConfig.HTTPClient = httpClient
-
-	return searchclient.NewAPIClient(apiConfig), nil
-}
 
 func NewCommand() *cobra.Command {
 	const (
 		sizeFlag = "size"
 	)
-	return cmdbuilder.NewStackCommand("search",
-		cmdbuilder.WithAliases("se"),
-		cmdbuilder.WithArgs(cobra.MinimumNArgs(1)),
-		cmdbuilder.WithIntFlag(sizeFlag, 5, "Number of items to fetch"),
-		cmdbuilder.WithValidArgs("ANY", "ACCOUNT", "TRANSACTION", "ASSET", "PAYMENT"),
-		cmdbuilder.WithShortDescription("Search in all services"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
+	return internal.NewStackCommand("search",
+		internal.WithAliases("se"),
+		internal.WithArgs(cobra.MinimumNArgs(1)),
+		internal.WithIntFlag(sizeFlag, 5, "Number of items to fetch"),
+		internal.WithValidArgs("ANY", "ACCOUNT", "TRANSACTION", "ASSET", "PAYMENT"),
+		internal.WithShortDescription("Search in all services"),
+		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.Get(cmd)
+			cfg, err := internal.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			searchClient, err := newSearchClient(cmd, cfg)
+			searchClient, err := internal.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -75,9 +42,9 @@ func NewCommand() *cobra.Command {
 			if len(args) > 1 {
 				terms = args[1:]
 			}
-			size := int32(cmdutils.GetInt(cmd, sizeFlag))
+			size := int32(internal.GetInt(cmd, sizeFlag))
 
-			response, _, err := searchClient.DefaultApi.Search(cmd.Context()).Query(searchclient.Query{
+			response, _, err := searchClient.SearchApi.Search(cmd.Context()).Query(formance.Query{
 				Size:   &size,
 				Terms:  terms,
 				Target: &target,
@@ -105,7 +72,7 @@ func NewCommand() *cobra.Command {
 						})
 					}
 				}
-				tableData = collections.Prepend(tableData, []string{"Kind", "Object"})
+				tableData = internal.Prepend(tableData, []string{"Kind", "Object"})
 
 				return pterm.DefaultTable.
 					WithHasHeader().
@@ -129,9 +96,10 @@ func NewCommand() *cobra.Command {
 	)
 }
 
-func displayPayments(out io.Writer, payments []map[string]interface{}) error {
+func displayPayments(out io.Writer, payments []interface{}) error {
 	tableData := make([][]string, 0)
 	for _, payment := range payments {
+		payment := payment.(map[string]any)
 		tableData = append(tableData, []string{
 			payment["provider"].(string),
 			payment["reference"].(string),
@@ -143,7 +111,7 @@ func displayPayments(out io.Writer, payments []map[string]interface{}) error {
 			payment["type"].(string),
 		})
 	}
-	tableData = collections.Prepend(tableData, []string{"Provider", "Reference", "Account",
+	tableData = internal.Prepend(tableData, []string{"Provider", "Reference", "Account",
 		"Asset", "Created at", "Scheme", "Status", "Type"})
 
 	return pterm.DefaultTable.
@@ -153,9 +121,10 @@ func displayPayments(out io.Writer, payments []map[string]interface{}) error {
 		Render()
 }
 
-func displayAssets(out io.Writer, assets []map[string]interface{}) error {
+func displayAssets(out io.Writer, assets []interface{}) error {
 	tableData := make([][]string, 0)
 	for _, asset := range assets {
+		asset := asset.(map[string]any)
 		tableData = append(tableData, []string{
 			asset["ledger"].(string),
 			asset["name"].(string),
@@ -164,7 +133,7 @@ func displayAssets(out io.Writer, assets []map[string]interface{}) error {
 			fmt.Sprint(asset["output"].(float64)),
 		})
 	}
-	tableData = collections.Prepend(tableData, []string{"Ledger", "Asset", "Account", "Input", "Output"})
+	tableData = internal.Prepend(tableData, []string{"Ledger", "Asset", "Account", "Input", "Output"})
 
 	return pterm.DefaultTable.
 		WithHasHeader().
@@ -173,16 +142,17 @@ func displayAssets(out io.Writer, assets []map[string]interface{}) error {
 		Render()
 }
 
-func displayAccounts(out io.Writer, accounts []map[string]interface{}) error {
+func displayAccounts(out io.Writer, accounts []interface{}) error {
 	tableData := make([][]string, 0)
 	for _, account := range accounts {
+		account := account.(map[string]any)
 		tableData = append(tableData, []string{
 			// TODO: Missing property 'ledger' on api response
 			//account["ledger"].(string),
 			account["address"].(string),
 		})
 	}
-	tableData = collections.Prepend(tableData, []string{ /*"Ledger",*/ "Address"})
+	tableData = internal.Prepend(tableData, []string{ /*"Ledger",*/ "Address"})
 
 	return pterm.DefaultTable.
 		WithHasHeader().
@@ -191,9 +161,10 @@ func displayAccounts(out io.Writer, accounts []map[string]interface{}) error {
 		Render()
 }
 
-func displayTransactions(out io.Writer, txs []map[string]interface{}) error {
+func displayTransactions(out io.Writer, txs []interface{}) error {
 	tableData := make([][]string, 0)
 	for _, tx := range txs {
+		tx := tx.(map[string]any)
 		tableData = append(tableData, []string{
 			tx["ledger"].(string),
 			fmt.Sprint(tx["txid"].(float64)),
@@ -201,7 +172,7 @@ func displayTransactions(out io.Writer, txs []map[string]interface{}) error {
 			tx["timestamp"].(string),
 		})
 	}
-	tableData = collections.Prepend(tableData, []string{"Ledger", "ID", "Reference", "Date"})
+	tableData = internal.Prepend(tableData, []string{"Ledger", "ID", "Reference", "Date"})
 
 	return pterm.DefaultTable.
 		WithHasHeader().

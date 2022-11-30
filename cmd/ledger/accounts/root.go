@@ -1,15 +1,15 @@
 package accounts
 
 import (
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/spf13/cobra"
 )
 
 func NewLedgerAccountsCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("accounts",
-		cmdbuilder.WithAliases("acc", "a", "ac", "account"),
-		cmdbuilder.WithShortDescription("Accounts management"),
-		cmdbuilder.WithChildCommands(
+	return internal.NewCommand("accounts",
+		internal.WithAliases("acc", "a", "ac", "account"),
+		internal.WithShortDescription("Accounts management"),
+		internal.WithChildCommands(
 			NewListCommand(),
 			NewShowCommand(),
 			NewSetMetadataCommand(),

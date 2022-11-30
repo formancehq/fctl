@@ -1,29 +1,28 @@
 package users
 
 import (
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewShowCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("show",
-		cmdbuilder.WithAliases("s"),
-		cmdbuilder.WithShortDescription("Show user by id"),
-		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd)
+	return internal.NewCommand("show",
+		internal.WithAliases("s"),
+		internal.WithShortDescription("Show user by id"),
+		internal.WithArgs(cobra.ExactArgs(1)),
+		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := internal.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			apiClient, err := config.NewClient(cmd, cfg)
+			apiClient, err := internal.NewMembershipClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			organizationID, err := cmdbuilder.ResolveOrganizationID(cmd, cfg)
+			organizationID, err := internal.ResolveOrganizationID(cmd, cfg)
 			if err != nil {
 				return err
 			}

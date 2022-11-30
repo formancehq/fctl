@@ -3,32 +3,29 @@ package clients
 import (
 	"fmt"
 
-	"github.com/formancehq/auth/authclient"
-	"github.com/formancehq/fctl/cmd/auth/internal"
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/collections"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	internal2 "github.com/formancehq/fctl/cmd/internal"
+	"github.com/formancehq/formance-sdk-go"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewShowCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("show [CLIENT_ID]",
-		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
-		cmdbuilder.WithAliases("s"),
-		cmdbuilder.WithShortDescription("Show client"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd)
+	return internal2.NewCommand("show [CLIENT_ID]",
+		internal2.WithArgs(cobra.ExactArgs(1)),
+		internal2.WithAliases("s"),
+		internal2.WithShortDescription("Show client"),
+		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := internal2.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			authClient, err := internal.NewAuthClient(cmd, cfg)
+			authClient, err := internal2.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			response, _, err := authClient.DefaultApi.ReadClient(cmd.Context(), args[0]).Execute()
+			response, _, err := authClient.ClientsApi.ReadClient(cmd.Context(), args[0]).Execute()
 			if err != nil {
 				return err
 			}
@@ -36,10 +33,10 @@ func NewShowCommand() *cobra.Command {
 			tableData := pterm.TableData{}
 			tableData = append(tableData, []string{pterm.LightCyan("ID"), response.Data.Id})
 			tableData = append(tableData, []string{pterm.LightCyan("Name"), response.Data.Name})
-			tableData = append(tableData, []string{pterm.LightCyan("Description"), cmdbuilder.StringPointerToString(response.Data.Description)})
-			tableData = append(tableData, []string{pterm.LightCyan("Public"), cmdbuilder.BoolPointerToString(response.Data.Public)})
+			tableData = append(tableData, []string{pterm.LightCyan("Description"), internal2.StringPointerToString(response.Data.Description)})
+			tableData = append(tableData, []string{pterm.LightCyan("Public"), internal2.BoolPointerToString(response.Data.Public)})
 
-			cmdbuilder.Highlightln(cmd.OutOrStdout(), "Information :")
+			internal2.Highlightln(cmd.OutOrStdout(), "Information :")
 			if err := pterm.DefaultTable.
 				WithWriter(cmd.OutOrStdout()).
 				WithData(tableData).
@@ -49,8 +46,8 @@ func NewShowCommand() *cobra.Command {
 			fmt.Fprintln(cmd.OutOrStdout(), "")
 
 			if len(response.Data.RedirectUris) > 0 {
-				cmdbuilder.Highlightln(cmd.OutOrStdout(), "Redirect URIs :")
-				if err := pterm.DefaultBulletList.WithWriter(cmd.OutOrStdout()).WithItems(collections.Map(response.Data.RedirectUris, func(redirectURI string) pterm.BulletListItem {
+				internal2.Highlightln(cmd.OutOrStdout(), "Redirect URIs :")
+				if err := pterm.DefaultBulletList.WithWriter(cmd.OutOrStdout()).WithItems(internal2.Map(response.Data.RedirectUris, func(redirectURI string) pterm.BulletListItem {
 					return pterm.BulletListItem{
 						Text:        redirectURI,
 						TextStyle:   pterm.NewStyle(pterm.FgDefault),
@@ -62,8 +59,8 @@ func NewShowCommand() *cobra.Command {
 			}
 
 			if len(response.Data.PostLogoutRedirectUris) > 0 {
-				cmdbuilder.Highlightln(cmd.OutOrStdout(), "Post logout redirect URIs :")
-				if err := pterm.DefaultBulletList.WithWriter(cmd.OutOrStdout()).WithItems(collections.Map(response.Data.PostLogoutRedirectUris, func(redirectURI string) pterm.BulletListItem {
+				internal2.Highlightln(cmd.OutOrStdout(), "Post logout redirect URIs :")
+				if err := pterm.DefaultBulletList.WithWriter(cmd.OutOrStdout()).WithItems(internal2.Map(response.Data.PostLogoutRedirectUris, func(redirectURI string) pterm.BulletListItem {
 					return pterm.BulletListItem{
 						Text:        redirectURI,
 						TextStyle:   pterm.NewStyle(pterm.FgDefault),
@@ -75,13 +72,13 @@ func NewShowCommand() *cobra.Command {
 			}
 
 			if len(response.Data.Secrets) > 0 {
-				cmdbuilder.Highlightln(cmd.OutOrStdout(), "Secrets :")
+				internal2.Highlightln(cmd.OutOrStdout(), "Secrets :")
 
 				if err := pterm.DefaultTable.
 					WithWriter(cmd.OutOrStdout()).
 					WithHasHeader(true).
-					WithData(collections.Prepend(
-						collections.Map(response.Data.Secrets, func(secret authclient.ClientSecret) []string {
+					WithData(internal2.Prepend(
+						internal2.Map(response.Data.Secrets, func(secret formance.ClientSecret) []string {
 							return []string{
 								secret.Id, secret.Name, secret.LastDigits,
 							}

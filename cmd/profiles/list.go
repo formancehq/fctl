@@ -1,35 +1,33 @@
 package profiles
 
 import (
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/collections"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewListCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("list",
-		cmdbuilder.WithAliases("l"),
-		cmdbuilder.WithShortDescription("List profiles"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
+	return internal.NewCommand("list",
+		internal.WithAliases("l"),
+		internal.WithShortDescription("List profiles"),
+		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.Get(cmd)
+			cfg, err := internal.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			currentProfileName := config.GetCurrentProfileName(cmd, cfg)
+			currentProfileName := internal.GetCurrentProfileName(cmd, cfg)
 
-			profiles := collections.MapKeys(cfg.GetProfiles())
-			tableData := collections.Map(profiles, func(p string) []string {
+			profiles := internal.MapKeys(cfg.GetProfiles())
+			tableData := internal.Map(profiles, func(p string) []string {
 				isCurrent := "No"
 				if p == currentProfileName {
 					isCurrent = "Yes"
 				}
 				return []string{p, isCurrent}
 			})
-			tableData = collections.Prepend(tableData, []string{"Name", "Active"})
+			tableData = internal.Prepend(tableData, []string{"Name", "Active"})
 			return pterm.DefaultTable.
 				WithHasHeader().
 				WithWriter(cmd.OutOrStdout()).

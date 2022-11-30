@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -13,9 +13,9 @@ var (
 )
 
 func NewVersionCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("version",
-		cmdbuilder.WithShortDescription("Get version"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
+	return internal.NewCommand("version",
+		internal.WithShortDescription("Get version"),
+		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
 			tableData := pterm.TableData{}
 			tableData = append(tableData, []string{pterm.LightCyan("Version"), Version})
 			tableData = append(tableData, []string{pterm.LightCyan("Date"), BuildDate})

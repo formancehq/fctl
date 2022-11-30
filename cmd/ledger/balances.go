@@ -3,10 +3,8 @@ package ledger
 import (
 	"fmt"
 
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/cmdutils"
-	"github.com/formancehq/fctl/cmd/internal/config"
-	internal2 "github.com/formancehq/fctl/cmd/ledger/internal"
+	internal2 "github.com/formancehq/fctl/cmd/internal"
+	internal "github.com/formancehq/fctl/cmd/ledger/internal"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -16,26 +14,26 @@ func NewBalancesCommand() *cobra.Command {
 		afterFlag   = "after"
 		addressFlag = "address"
 	)
-	return cmdbuilder.NewCommand("balances",
-		cmdbuilder.WithAliases("balance", "bal", "b"),
-		cmdbuilder.WithStringFlag(addressFlag, "", "Filter on specific address"),
-		cmdbuilder.WithStringFlag(afterFlag, "", "Filter after specific address"),
-		cmdbuilder.WithShortDescription("Read balances"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd)
+	return internal2.NewCommand("balances",
+		internal2.WithAliases("balance", "bal", "b"),
+		internal2.WithStringFlag(addressFlag, "", "Filter on specific address"),
+		internal2.WithStringFlag(afterFlag, "", "Filter after specific address"),
+		internal2.WithShortDescription("Read balances"),
+		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := internal2.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			client, err := internal2.NewLedgerClient(cmd, cfg)
+			client, err := internal2.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
 			balances, _, err := client.BalancesApi.
-				GetBalances(cmd.Context(), cmdutils.GetString(cmd, internal2.LedgerFlag)).
-				After(cmdutils.GetString(cmd, afterFlag)).
-				Address(cmdutils.GetString(cmd, addressFlag)).
+				GetBalances(cmd.Context(), internal2.GetString(cmd, internal.LedgerFlag)).
+				After(internal2.GetString(cmd, afterFlag)).
+				Address(internal2.GetString(cmd, addressFlag)).
 				Execute()
 			if err != nil {
 				return err

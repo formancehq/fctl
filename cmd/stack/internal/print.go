@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/formancehq/fctl/membershipclient"
 	"github.com/pterm/pterm"
 )
 
-func PrintStackInformation(out io.Writer, profile *config.Profile, stack *membershipclient.Stack) error {
+func PrintStackInformation(out io.Writer, profile *internal.Profile, stack *membershipclient.Stack) error {
 	baseUrlStr := profile.ServicesBaseUrl(stack).String()
 
 	tableData := pterm.TableData{}

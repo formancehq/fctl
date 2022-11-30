@@ -1,4 +1,4 @@
-package config
+package internal
 
 import (
 	"crypto/tls"
@@ -6,14 +6,13 @@ import (
 	"net/http"
 	"net/http/httputil"
 
-	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/spf13/cobra"
 )
 
 func GetHttpClient(cmd *cobra.Command) *http.Client {
 	return NewHTTPClient(
-		cmdutils.GetBool(cmd, InsecureTlsFlag),
-		cmdutils.GetBool(cmd, DebugFlag),
+		GetBool(cmd, InsecureTlsFlag),
+		GetBool(cmd, DebugFlag),
 	)
 }
 

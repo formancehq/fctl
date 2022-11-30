@@ -1,28 +1,27 @@
 package invitations
 
 import (
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/spf13/cobra"
 )
 
 func NewSendCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("send",
-		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
-		cmdbuilder.WithShortDescription("Invite a user by email"),
-		cmdbuilder.WithAliases("s"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd)
+	return internal.NewCommand("send",
+		internal.WithArgs(cobra.ExactArgs(1)),
+		internal.WithShortDescription("Invite a user by email"),
+		internal.WithAliases("s"),
+		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := internal.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			apiClient, err := config.NewClient(cmd, cfg)
+			apiClient, err := internal.NewMembershipClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			organizationID, err := cmdbuilder.ResolveOrganizationID(cmd, cfg)
+			organizationID, err := internal.ResolveOrganizationID(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -35,7 +34,7 @@ func NewSendCommand() *cobra.Command {
 				return err
 			}
 
-			cmdbuilder.Success(cmd.OutOrStdout(), "Invitation sent")
+			internal.Success(cmd.OutOrStdout(), "Invitation sent")
 			return nil
 		}),
 	)

@@ -1,20 +1,19 @@
 package profiles
 
 import (
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 func NewDeleteCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("delete",
-		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
-		cmdbuilder.WithShortDescription("Delete a profile"),
-		cmdbuilder.WithValidArgsFunction(ProfileNamesAutoCompletion),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
+	return internal.NewCommand("delete",
+		internal.WithArgs(cobra.ExactArgs(1)),
+		internal.WithShortDescription("Delete a profile"),
+		internal.WithValidArgsFunction(ProfileNamesAutoCompletion),
+		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			config, err := config.Get(cmd)
+			config, err := internal.Get(cmd)
 			if err != nil {
 				return err
 			}
@@ -25,7 +24,7 @@ func NewDeleteCommand() *cobra.Command {
 			if err := config.Persist(); err != nil {
 				return errors.Wrap(err, "updating config")
 			}
-			cmdbuilder.Success(cmd.OutOrStdout(), "Profile deleted!")
+			internal.Success(cmd.OutOrStdout(), "Profile deleted!")
 			return nil
 		}),
 	)

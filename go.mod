@@ -5,19 +5,16 @@ go 1.18
 require (
 	github.com/athul/shelby v1.0.6
 	github.com/c-bata/go-prompt v0.2.6
-	github.com/formancehq/auth/authclient v0.0.0-20221003212526-20761562e41e
 	github.com/formancehq/fctl/membershipclient v0.0.0-20221110205214-79a725a64b70
-	github.com/formancehq/payments/client v0.0.0-20221122203707-e41feb711635
-	github.com/formancehq/search/client v0.0.0-20221113191621-1f6854b1e5dd
+	github.com/formancehq/formance-sdk-go v0.0.0-20221130135628-3b146cf3abe0
 	github.com/formancehq/webhooks/client v0.0.0-20221113191112-15660877c6c0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/mattn/go-shellwords v1.0.12
-	github.com/numary/ledger/client v0.0.0-20221122120003-a06568501a4c
 	github.com/pkg/errors v0.9.1
 	github.com/pterm/pterm v0.12.49
 	github.com/spf13/cobra v1.6.1
 	github.com/zitadel/oidc v1.8.0
-	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1
+	golang.org/x/oauth2 v0.2.0
 )
 
 require (
@@ -42,9 +39,9 @@ require (
 	github.com/talal/go-bits v0.0.0-20200204154716-071e9f3e66e1 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
-	golang.org/x/net v0.1.0 // indirect
+	golang.org/x/net v0.2.0 // indirect
 	golang.org/x/sys v0.2.0 // indirect
-	golang.org/x/term v0.1.0 // indirect
+	golang.org/x/term v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect

@@ -1,24 +1,23 @@
 package organizations
 
 import (
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/formancehq/fctl/membershipclient"
 	"github.com/spf13/cobra"
 )
 
 func NewCreateCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("create",
-		cmdbuilder.WithAliases("cr", "c"),
-		cmdbuilder.WithShortDescription("Create organization"),
-		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd)
+	return internal.NewCommand("create",
+		internal.WithAliases("cr", "c"),
+		internal.WithShortDescription("Create organization"),
+		internal.WithArgs(cobra.ExactArgs(1)),
+		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := internal.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			apiClient, err := config.NewClient(cmd, cfg)
+			apiClient, err := internal.NewMembershipClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -32,7 +31,7 @@ func NewCreateCommand() *cobra.Command {
 				return err
 			}
 
-			cmdbuilder.Success(cmd.OutOrStdout(), "Organization '%s' created with ID: %s", args[0], response.Data.Id)
+			internal.Success(cmd.OutOrStdout(), "Organization '%s' created with ID: %s", args[0], response.Data.Id)
 
 			return nil
 		}),

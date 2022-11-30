@@ -3,9 +3,7 @@ package stack
 import (
 	"net/http"
 
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/cmdutils"
-	config "github.com/formancehq/fctl/cmd/internal/config"
+	internal2 "github.com/formancehq/fctl/cmd/internal"
 	"github.com/formancehq/fctl/cmd/stack/internal"
 	"github.com/formancehq/fctl/membershipclient"
 	"github.com/pkg/errors"
@@ -17,29 +15,29 @@ var errStackNotFound = errors.New("stack not found")
 func NewShowCommand() *cobra.Command {
 	const stackNameFlag = "name"
 
-	return cmdbuilder.NewMembershipCommand("show",
-		cmdbuilder.WithAliases("s", "sh"),
-		cmdbuilder.WithShortDescription("Show sandbox"),
-		cmdbuilder.WithArgs(cobra.MaximumNArgs(1)),
-		cmdbuilder.WithStringFlag(stackNameFlag, "", ""),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd)
+	return internal2.NewMembershipCommand("show",
+		internal2.WithAliases("s", "sh"),
+		internal2.WithShortDescription("Show sandbox"),
+		internal2.WithArgs(cobra.MaximumNArgs(1)),
+		internal2.WithStringFlag(stackNameFlag, "", ""),
+		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := internal2.Get(cmd)
 			if err != nil {
 				return err
 			}
-			organization, err := cmdbuilder.ResolveOrganizationID(cmd, cfg)
+			organization, err := internal2.ResolveOrganizationID(cmd, cfg)
 			if err != nil {
 				return errors.Wrap(err, "searching default organization")
 			}
 
-			apiClient, err := config.NewClient(cmd, cfg)
+			apiClient, err := internal2.NewMembershipClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
 			var stack *membershipclient.Stack
 			if len(args) == 1 {
-				if cmdutils.GetString(cmd, stackNameFlag) != "" {
+				if internal2.GetString(cmd, stackNameFlag) != "" {
 					return errors.New("need either an id of a name spefified using --name flag")
 				}
 				stackResponse, httpResponse, err := apiClient.DefaultApi.ReadStack(cmd.Context(), organization, args[0]).Execute()
@@ -51,7 +49,7 @@ func NewShowCommand() *cobra.Command {
 				}
 				stack = stackResponse.Data
 			} else {
-				if cmdutils.GetString(cmd, stackNameFlag) == "" {
+				if internal2.GetString(cmd, stackNameFlag) == "" {
 					return errors.New("need either an id of a name specified using --name flag")
 				}
 				stacksResponse, _, err := apiClient.DefaultApi.ListStacks(cmd.Context(), organization).Execute()
@@ -59,7 +57,7 @@ func NewShowCommand() *cobra.Command {
 					return errors.Wrap(err, "listing stacks")
 				}
 				for _, s := range stacksResponse.Data {
-					if s.Name == cmdutils.GetString(cmd, stackNameFlag) {
+					if s.Name == internal2.GetString(cmd, stackNameFlag) {
 						stack = &s
 						break
 					}
@@ -70,7 +68,7 @@ func NewShowCommand() *cobra.Command {
 				return errStackNotFound
 			}
 
-			return internal.PrintStackInformation(cmd.OutOrStdout(), config.GetCurrentProfile(cmd, cfg), stack)
+			return internal.PrintStackInformation(cmd.OutOrStdout(), internal2.GetCurrentProfile(cmd, cfg), stack)
 		}),
 	)
 }

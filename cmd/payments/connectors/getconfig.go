@@ -1,35 +1,32 @@
 package connectors
 
 import (
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/config"
-	"github.com/formancehq/fctl/cmd/internal/openapi"
-	"github.com/formancehq/fctl/cmd/payments/internal"
+	internal2 "github.com/formancehq/fctl/cmd/internal"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewGetConfigCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("get-config [CONNECTOR_NAME]",
-		cmdbuilder.WithAliases("getconfig", "getconf", "gc", "get", "g"),
-		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
-		cmdbuilder.WithValidArgs("stripe"),
-		cmdbuilder.WithShortDescription("Read a connector config"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
+	return internal2.NewCommand("get-config [CONNECTOR_NAME]",
+		internal2.WithAliases("getconfig", "getconf", "gc", "get", "g"),
+		internal2.WithArgs(cobra.ExactArgs(1)),
+		internal2.WithValidArgs("stripe"),
+		internal2.WithShortDescription("Read a connector config"),
+		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.Get(cmd)
+			cfg, err := internal2.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			client, err := internal.NewPaymentsClient(cmd, cfg)
+			client, err := internal2.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			connectorConfig, _, err := client.DefaultApi.ReadConnectorConfig(cmd.Context(), args[0]).Execute()
+			connectorConfig, _, err := client.PaymentsApi.ReadConnectorConfig(cmd.Context(), args[0]).Execute()
 			if err != nil {
-				return openapi.WrapError(err, "reading connector config")
+				return internal2.WrapError(err, "reading connector config")
 			}
 			switch args[0] {
 			case "stripe":
@@ -45,7 +42,7 @@ func NewGetConfigCommand() *cobra.Command {
 					return err
 				}
 			default:
-				cmdbuilder.Error(cmd.ErrOrStderr(), "Connection unknown.")
+				internal2.Error(cmd.ErrOrStderr(), "Connection unknown.")
 			}
 			return nil
 		}),

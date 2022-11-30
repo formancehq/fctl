@@ -1,32 +1,30 @@
 package transactions
 
 import (
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/cmdutils"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	internal2 "github.com/formancehq/fctl/cmd/internal"
 	"github.com/formancehq/fctl/cmd/ledger/internal"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 func NewShowCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("show [TXID]",
-		cmdbuilder.WithShortDescription("Print a transaction"),
-		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
-		cmdbuilder.WithAliases("sh"),
-		cmdbuilder.WithValidArgs("last"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd)
+	return internal2.NewCommand("show [TXID]",
+		internal2.WithShortDescription("Print a transaction"),
+		internal2.WithArgs(cobra.ExactArgs(1)),
+		internal2.WithAliases("sh"),
+		internal2.WithValidArgs("last"),
+		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := internal2.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			ledgerClient, err := internal.NewLedgerClient(cmd, cfg)
+			ledgerClient, err := internal2.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			ledger := cmdutils.GetString(cmd, internal.LedgerFlag)
+			ledger := internal2.GetString(cmd, internal.LedgerFlag)
 			txId, err := internal.TransactionIDOrLastN(cmd.Context(), ledgerClient, ledger, args[0])
 			if err != nil {
 				return err
