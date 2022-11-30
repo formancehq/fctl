@@ -3,11 +3,9 @@ package ledger
 import (
 	"strconv"
 
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/cmdutils"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	internal2 "github.com/formancehq/fctl/cmd/internal"
 	"github.com/formancehq/fctl/cmd/ledger/internal"
-	"github.com/numary/ledger/client"
+	"github.com/formancehq/formance-sdk-go"
 	"github.com/spf13/cobra"
 )
 
@@ -16,19 +14,19 @@ func NewSendCommand() *cobra.Command {
 		metadataFlag  = "metadata"
 		referenceFlag = "reference"
 	)
-	return cmdbuilder.NewCommand("send [SOURCE] [DESTINATION] [AMOUNT] [ASSET]",
-		cmdbuilder.WithAliases("s", "se"),
-		cmdbuilder.WithShortDescription("Send from one account to another"),
-		cmdbuilder.WithArgs(cobra.RangeArgs(3, 4)),
-		cmdbuilder.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
-		cmdbuilder.WithStringFlag(referenceFlag, "", "Reference to add to the generated transaction"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd)
+	return internal2.NewCommand("send [SOURCE] [DESTINATION] [AMOUNT] [ASSET]",
+		internal2.WithAliases("s", "se"),
+		internal2.WithShortDescription("Send from one account to another"),
+		internal2.WithArgs(cobra.RangeArgs(3, 4)),
+		internal2.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
+		internal2.WithStringFlag(referenceFlag, "", "Reference to add to the generated transaction"),
+		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := internal2.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			ledgerClient, err := internal.NewLedgerClient(cmd, cfg)
+			ledgerClient, err := internal2.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -51,16 +49,16 @@ func NewSendCommand() *cobra.Command {
 				return err
 			}
 
-			metadata, err := internal.ParseMetadata(cmdutils.GetStringSlice(cmd, metadataFlag))
+			metadata, err := internal.ParseMetadata(internal2.GetStringSlice(cmd, metadataFlag))
 			if err != nil {
 				return err
 			}
 
-			reference := cmdutils.GetString(cmd, referenceFlag)
+			reference := internal2.GetString(cmd, referenceFlag)
 			response, _, err := ledgerClient.TransactionsApi.
-				CreateTransaction(cmd.Context(), cmdutils.GetString(cmd, internal.LedgerFlag)).
-				TransactionData(client.TransactionData{
-					Postings: []client.Posting{{
+				CreateTransaction(cmd.Context(), internal2.GetString(cmd, internal.LedgerFlag)).
+				PostTransaction(formance.PostTransaction{
+					Postings: []formance.Posting{{
 						Amount:      int32(amount),
 						Asset:       asset,
 						Destination: destination,

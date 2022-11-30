@@ -7,8 +7,7 @@ import (
 
 	"github.com/formancehq/fctl/cmd/auth"
 	"github.com/formancehq/fctl/cmd/cloud"
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/formancehq/fctl/cmd/ledger"
 	"github.com/formancehq/fctl/cmd/payments"
 	"github.com/formancehq/fctl/cmd/profiles"
@@ -24,11 +23,11 @@ func NewRootCommand() *cobra.Command {
 		panic(err)
 	}
 
-	return cmdbuilder.NewCommand("fctl",
-		cmdbuilder.WithSilenceError(),
-		cmdbuilder.WithShortDescription("Formance Control CLI"),
-		cmdbuilder.WithSilenceUsage(),
-		cmdbuilder.WithChildCommands(
+	return internal.NewCommand("fctl",
+		internal.WithSilenceError(),
+		internal.WithShortDescription("Formance Control CLI"),
+		internal.WithSilenceUsage(),
+		internal.WithChildCommands(
 			NewUICommand(),
 			NewVersionCommand(),
 			NewLoginCommand(),
@@ -42,22 +41,22 @@ func NewRootCommand() *cobra.Command {
 			search.NewCommand(),
 			webhooks.NewCommand(),
 		),
-		cmdbuilder.WithPersistentStringPFlag(config.ProfileFlag, "p", "", "config profile to use"),
-		cmdbuilder.WithPersistentStringPFlag(config.FileFlag, "c", fmt.Sprintf("%s/.formance/fctl.config", homedir), "Debug mode"),
-		cmdbuilder.WithPersistentBoolPFlag(config.DebugFlag, "d", false, "Debug mode"),
-		cmdbuilder.WithPersistentBoolFlag(config.InsecureTlsFlag, false, "Insecure TLS"),
+		internal.WithPersistentStringPFlag(internal.ProfileFlag, "p", "", "config profile to use"),
+		internal.WithPersistentStringPFlag(internal.FileFlag, "c", fmt.Sprintf("%s/.formance/fctl.config", homedir), "Debug mode"),
+		internal.WithPersistentBoolPFlag(internal.DebugFlag, "d", false, "Debug mode"),
+		internal.WithPersistentBoolFlag(internal.InsecureTlsFlag, false, "Insecure TLS"),
 	)
 }
 
 func Execute() {
 	defer func() {
 		if e := recover(); e != nil {
-			cmdbuilder.Error(os.Stderr, "%s", e)
+			internal.Error(os.Stderr, "%s", e)
 			debug.PrintStack()
 		}
 	}()
 	err := NewRootCommand().Execute()
 	if err != nil {
-		cmdbuilder.Error(os.Stderr, err.Error())
+		internal.Error(os.Stderr, err.Error())
 	}
 }

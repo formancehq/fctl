@@ -3,25 +3,24 @@ package me
 import (
 	"errors"
 
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewInfoCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("info",
-		cmdbuilder.WithAliases("i", "in"),
-		cmdbuilder.WithShortDescription("Display user information"),
-		cmdbuilder.WithArgs(cobra.ExactArgs(0)),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
+	return internal.NewCommand("info",
+		internal.WithAliases("i", "in"),
+		internal.WithShortDescription("Display user information"),
+		internal.WithArgs(cobra.ExactArgs(0)),
+		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.Get(cmd)
+			cfg, err := internal.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			profile := config.GetCurrentProfile(cmd, cfg)
+			profile := internal.GetCurrentProfile(cmd, cfg)
 			if !profile.IsConnected() {
 				return errors.New("Not logged. Use 'login' command before.")
 			}

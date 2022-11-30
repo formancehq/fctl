@@ -3,9 +3,7 @@ package stack
 import (
 	"fmt"
 
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/collections"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/formancehq/fctl/membershipclient"
 	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
@@ -13,23 +11,23 @@ import (
 )
 
 func NewListCommand() *cobra.Command {
-	return cmdbuilder.NewMembershipCommand("list",
-		cmdbuilder.WithAliases("ls", "l"),
-		cmdbuilder.WithShortDescription("List sandboxes"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd)
+	return internal.NewMembershipCommand("list",
+		internal.WithAliases("ls", "l"),
+		internal.WithShortDescription("List sandboxes"),
+		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := internal.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			profile := config.GetCurrentProfile(cmd, cfg)
+			profile := internal.GetCurrentProfile(cmd, cfg)
 
-			organization, err := cmdbuilder.ResolveOrganizationID(cmd, cfg)
+			organization, err := internal.ResolveOrganizationID(cmd, cfg)
 			if err != nil {
 				return errors.Wrap(err, "searching default organization")
 			}
 
-			apiClient, err := config.NewClient(cmd, cfg)
+			apiClient, err := internal.NewMembershipClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -44,7 +42,7 @@ func NewListCommand() *cobra.Command {
 				return nil
 			}
 
-			tableData := collections.Map(rsp.Data, func(stack membershipclient.Stack) []string {
+			tableData := internal.Map(rsp.Data, func(stack membershipclient.Stack) []string {
 				return []string{
 					stack.Id,
 					stack.Name,
@@ -57,7 +55,7 @@ func NewListCommand() *cobra.Command {
 					profile.ServicesBaseUrl(&stack).String(),
 				}
 			})
-			tableData = collections.Prepend(tableData, []string{"ID", "Name", "Region", "Dashboard"})
+			tableData = internal.Prepend(tableData, []string{"ID", "Name", "Region", "Dashboard"})
 			return pterm.DefaultTable.
 				WithHasHeader().
 				WithWriter(cmd.OutOrStdout()).

@@ -1,36 +1,34 @@
 package secrets
 
 import (
-	"github.com/formancehq/fctl/cmd/auth/internal"
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	internal2 "github.com/formancehq/fctl/cmd/internal"
 	"github.com/spf13/cobra"
 )
 
 func NewDeleteCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("delete [CLIENT_ID] [SECRET_ID]",
-		cmdbuilder.WithArgs(cobra.ExactArgs(2)),
-		cmdbuilder.WithAliases("d"),
-		cmdbuilder.WithShortDescription("Delete secret"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd)
+	return internal2.NewCommand("delete [CLIENT_ID] [SECRET_ID]",
+		internal2.WithArgs(cobra.ExactArgs(2)),
+		internal2.WithAliases("d"),
+		internal2.WithShortDescription("Delete secret"),
+		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := internal2.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			authClient, err := internal.NewAuthClient(cmd, cfg)
+			authClient, err := internal2.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			_, err = authClient.DefaultApi.
+			_, err = authClient.ClientsApi.
 				DeleteSecret(cmd.Context(), args[0], args[1]).
 				Execute()
 			if err != nil {
 				return err
 			}
 
-			cmdbuilder.Success(cmd.OutOrStdout(), "Secret deleted!")
+			internal2.Success(cmd.OutOrStdout(), "Secret deleted!")
 
 			return nil
 		}),

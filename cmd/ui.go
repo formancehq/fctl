@@ -4,8 +4,7 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -30,26 +29,26 @@ func openUrl(url string) error {
 }
 
 func NewUICommand() *cobra.Command {
-	return cmdbuilder.NewStackCommand("ui",
-		cmdbuilder.WithShortDescription("Open UI"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
+	return internal.NewStackCommand("ui",
+		internal.WithShortDescription("Open UI"),
+		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.Get(cmd)
+			cfg, err := internal.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			organization, err := cmdbuilder.ResolveOrganizationID(cmd, cfg)
+			organization, err := internal.ResolveOrganizationID(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			stack, err := cmdbuilder.ResolveStack(cmd, cfg, organization)
+			stack, err := internal.ResolveStack(cmd, cfg, organization)
 			if err != nil {
 				return err
 			}
 
-			profile := config.GetCurrentProfile(cmd, cfg)
+			profile := internal.GetCurrentProfile(cmd, cfg)
 			stackUrl := profile.ServicesBaseUrl(stack)
 
 			return errors.Wrapf(openUrl(stackUrl.String()), "opening url: %s", stackUrl.String())

@@ -1,24 +1,10 @@
-package cmdbuilder
+package internal
 
 import (
 	"io"
 
 	"github.com/pterm/pterm"
 )
-
-func BoolPointerToString(v *bool) string {
-	if v == nil || !*v {
-		return "No"
-	}
-	return "Yes"
-}
-
-func StringPointerToString(v *string) string {
-	if v == nil {
-		return ""
-	}
-	return *v
-}
 
 func TextWriter(out io.Writer) *pterm.BasicTextPrinter {
 	return pterm.DefaultBasicText.WithWriter(out)

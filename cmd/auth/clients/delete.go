@@ -1,34 +1,32 @@
 package clients
 
 import (
-	"github.com/formancehq/fctl/cmd/auth/internal"
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	internal2 "github.com/formancehq/fctl/cmd/internal"
 	"github.com/spf13/cobra"
 )
 
 func NewDeleteCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("delete [CLIENT_ID]",
-		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
-		cmdbuilder.WithAliases("d", "del"),
-		cmdbuilder.WithShortDescription("Delete client"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd)
+	return internal2.NewCommand("delete [CLIENT_ID]",
+		internal2.WithArgs(cobra.ExactArgs(1)),
+		internal2.WithAliases("d", "del"),
+		internal2.WithShortDescription("Delete client"),
+		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := internal2.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			authClient, err := internal.NewAuthClient(cmd, cfg)
+			authClient, err := internal2.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			_, err = authClient.DefaultApi.DeleteClient(cmd.Context(), args[0]).Execute()
+			_, err = authClient.ClientsApi.DeleteClient(cmd.Context(), args[0]).Execute()
 			if err != nil {
 				return err
 			}
 
-			cmdbuilder.Success(cmd.OutOrStdout(), "Client deleted!")
+			internal2.Success(cmd.OutOrStdout(), "Client deleted!")
 			return nil
 		}),
 	)

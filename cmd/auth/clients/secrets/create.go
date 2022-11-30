@@ -1,33 +1,31 @@
 package secrets
 
 import (
-	"github.com/formancehq/auth/authclient"
-	"github.com/formancehq/fctl/cmd/auth/internal"
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	internal2 "github.com/formancehq/fctl/cmd/internal"
+	"github.com/formancehq/formance-sdk-go"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewCreateCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("create [CLIENT_ID] [SECRET_NAME]",
-		cmdbuilder.WithAliases("c"),
-		cmdbuilder.WithArgs(cobra.ExactArgs(2)),
-		cmdbuilder.WithShortDescription("Create secret"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd)
+	return internal2.NewCommand("create [CLIENT_ID] [SECRET_NAME]",
+		internal2.WithAliases("c"),
+		internal2.WithArgs(cobra.ExactArgs(2)),
+		internal2.WithShortDescription("Create secret"),
+		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := internal2.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			authClient, err := internal.NewAuthClient(cmd, cfg)
+			authClient, err := internal2.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			response, _, err := authClient.DefaultApi.
+			response, _, err := authClient.ClientsApi.
 				CreateSecret(cmd.Context(), args[0]).
-				Body(authclient.SecretOptions{
+				Body(formance.SecretOptions{
 					Name:     args[1],
 					Metadata: nil,
 				}).

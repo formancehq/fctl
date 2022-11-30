@@ -6,17 +6,17 @@ import (
 	"io"
 	"time"
 
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	ledgerclient "github.com/numary/ledger/client"
+	"github.com/formancehq/fctl/cmd/internal"
+	"github.com/formancehq/formance-sdk-go"
 	"github.com/pterm/pterm"
 )
 
 func PrintMetadata(out io.Writer, metadata map[string]any) error {
 	if len(metadata) == 0 {
-		cmdbuilder.Highlightln(out, "Metadata : <empty>")
+		internal.Highlightln(out, "Metadata : <empty>")
 		return nil
 	}
-	cmdbuilder.Highlightln(out, "Metadata :")
+	internal.Highlightln(out, "Metadata :")
 	tableData := pterm.TableData{}
 	for k, v := range metadata {
 		data, err := json.Marshal(v)
@@ -32,10 +32,10 @@ func PrintMetadata(out io.Writer, metadata map[string]any) error {
 		Render()
 }
 
-func PrintTransaction(out io.Writer, transaction ledgerclient.Transaction) error {
+func PrintTransaction(out io.Writer, transaction formance.Transaction) error {
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("ID"), fmt.Sprint(transaction.Txid)})
-	tableData = append(tableData, []string{pterm.LightCyan("Reference"), cmdbuilder.StringPointerToString(transaction.Reference)})
+	tableData = append(tableData, []string{pterm.LightCyan("Reference"), internal.StringPointerToString(transaction.Reference)})
 	tableData = append(tableData, []string{pterm.LightCyan("Date"), transaction.Timestamp.Format(time.RFC3339)})
 
 	if err := pterm.DefaultTable.

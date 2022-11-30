@@ -1,25 +1,23 @@
 package organizations
 
 import (
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/collections"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/formancehq/fctl/membershipclient"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewListCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("list",
-		cmdbuilder.WithAliases("ls", "l"),
-		cmdbuilder.WithShortDescription("List organizations"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd)
+	return internal.NewCommand("list",
+		internal.WithAliases("ls", "l"),
+		internal.WithShortDescription("List organizations"),
+		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := internal.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			apiClient, err := config.NewClient(cmd, cfg)
+			apiClient, err := internal.NewMembershipClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -29,12 +27,12 @@ func NewListCommand() *cobra.Command {
 				return err
 			}
 
-			tableData := collections.Map(organizations.Data, func(o membershipclient.Organization) []string {
+			tableData := internal.Map(organizations.Data, func(o membershipclient.Organization) []string {
 				return []string{
 					o.Id, o.Name, o.OwnerId,
 				}
 			})
-			tableData = collections.Prepend(tableData, []string{"ID", "Name", "Owner ID"})
+			tableData = internal.Prepend(tableData, []string{"ID", "Name", "Owner ID"})
 			return pterm.DefaultTable.
 				WithHasHeader().
 				WithWriter(cmd.OutOrStdout()).

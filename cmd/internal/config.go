@@ -1,9 +1,8 @@
-package config
+package internal
 
 import (
 	"encoding/json"
 
-	"github.com/formancehq/fctl/cmd/internal/cmdutils"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -101,11 +100,11 @@ func Get(cmd *cobra.Command) (*Config, error) {
 }
 
 func GetConfigManager(cmd *cobra.Command) *ConfigManager {
-	return NewConfigManager(cmdutils.GetString(cmd, FileFlag))
+	return NewConfigManager(GetString(cmd, FileFlag))
 }
 
 func GetCurrentProfileName(cmd *cobra.Command, config *Config) string {
-	if profile := cmdutils.GetString(cmd, ProfileFlag); profile != "" {
+	if profile := GetString(cmd, ProfileFlag); profile != "" {
 		return profile
 	}
 	currentProfileName := config.GetCurrentProfileName()
@@ -116,5 +115,5 @@ func GetCurrentProfileName(cmd *cobra.Command, config *Config) string {
 }
 
 func GetCurrentProfile(cmd *cobra.Command, cfg *Config) *Profile {
-	return cfg.GetProfileOrDefault(GetCurrentProfileName(cmd, cfg), cmdutils.GetString(cmd, MembershipUriFlag))
+	return cfg.GetProfileOrDefault(GetCurrentProfileName(cmd, cfg), GetString(cmd, MembershipUriFlag))
 }

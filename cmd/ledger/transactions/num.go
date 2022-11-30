@@ -7,11 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/cmdutils"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	internal2 "github.com/formancehq/fctl/cmd/internal"
 	"github.com/formancehq/fctl/cmd/ledger/internal"
-	ledgerclient "github.com/numary/ledger/client"
+	"github.com/formancehq/formance-sdk-go"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -24,21 +22,21 @@ func NewCommand() *cobra.Command {
 		metadataFlag   = "metadata"
 		referenceFlag  = "reference"
 	)
-	return cmdbuilder.NewCommand("num -|[FILENAME]",
-		cmdbuilder.WithShortDescription("Execute a numscript script on a ledger"),
-		cmdbuilder.WithDescription(`More help on variables can be found here: https://docs.formance.com/oss/ledger/reference/numscript/variables`),
-		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
-		cmdbuilder.WithStringSliceFlag(amountVarFlag, []string{""}, "Pass a variable of type 'amount'"),
-		cmdbuilder.WithStringSliceFlag(portionVarFlag, []string{""}, "Pass a variable of type 'portion'"),
-		cmdbuilder.WithStringSliceFlag(accountVarFlag, []string{""}, "Pass a variable of type 'account'"),
-		cmdbuilder.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
-		cmdbuilder.WithStringFlag(referenceFlag, "", "Reference to add to the generated transaction"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd)
+	return internal2.NewCommand("num -|[FILENAME]",
+		internal2.WithShortDescription("Execute a numscript script on a ledger"),
+		internal2.WithDescription(`More help on variables can be found here: https://docs.formance.com/oss/ledger/reference/numscript/variables`),
+		internal2.WithArgs(cobra.ExactArgs(1)),
+		internal2.WithStringSliceFlag(amountVarFlag, []string{""}, "Pass a variable of type 'amount'"),
+		internal2.WithStringSliceFlag(portionVarFlag, []string{""}, "Pass a variable of type 'portion'"),
+		internal2.WithStringSliceFlag(accountVarFlag, []string{""}, "Pass a variable of type 'account'"),
+		internal2.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
+		internal2.WithStringFlag(referenceFlag, "", "Reference to add to the generated transaction"),
+		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := internal2.Get(cmd)
 			if err != nil {
 				return err
 			}
-			ledgerClient, err := internal.NewLedgerClient(cmd, cfg)
+			ledgerClient, err := internal2.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -60,21 +58,21 @@ func NewCommand() *cobra.Command {
 			}
 
 			vars := map[string]interface{}{}
-			for _, v := range cmdutils.GetStringSlice(cmd, accountVarFlag) {
+			for _, v := range internal2.GetStringSlice(cmd, accountVarFlag) {
 				parts := strings.SplitN(v, "=", 2)
 				if len(parts) == 1 {
 					return fmt.Errorf("malformed var: %s", v)
 				}
 				vars[parts[0]] = parts[1]
 			}
-			for _, v := range cmdutils.GetStringSlice(cmd, portionVarFlag) {
+			for _, v := range internal2.GetStringSlice(cmd, portionVarFlag) {
 				parts := strings.SplitN(v, "=", 2)
 				if len(parts) == 1 {
 					return fmt.Errorf("malformed var: %s", v)
 				}
 				vars[parts[0]] = parts[1]
 			}
-			for _, v := range cmdutils.GetStringSlice(cmd, amountVarFlag) {
+			for _, v := range internal2.GetStringSlice(cmd, amountVarFlag) {
 				parts := strings.SplitN(v, "=", 2)
 				if len(parts) == 1 {
 					return fmt.Errorf("malformed var: %s", v)
@@ -96,20 +94,20 @@ func NewCommand() *cobra.Command {
 				}
 			}
 
-			reference := cmdutils.GetString(cmd, referenceFlag)
+			reference := internal2.GetString(cmd, referenceFlag)
 
-			metadata, err := internal.ParseMetadata(cmdutils.GetStringSlice(cmd, metadataFlag))
+			metadata, err := internal.ParseMetadata(internal2.GetStringSlice(cmd, metadataFlag))
 			if err != nil {
 				return err
 			}
 
-			ledger := cmdutils.GetString(cmd, internal.LedgerFlag)
+			ledger := internal2.GetString(cmd, internal.LedgerFlag)
 			response, _, err := ledgerClient.ScriptApi.
 				RunScript(cmd.Context(), ledger).
-				Script(ledgerclient.Script{
+				Script(formance.Script{
 					Plain:     script,
 					Metadata:  metadata,
-					Vars:      &vars,
+					Vars:      vars,
 					Reference: &reference,
 				}).
 				Execute()

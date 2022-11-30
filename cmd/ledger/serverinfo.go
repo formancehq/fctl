@@ -3,26 +3,23 @@ package ledger
 import (
 	"fmt"
 
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/collections"
-	"github.com/formancehq/fctl/cmd/internal/config"
-	"github.com/formancehq/fctl/cmd/ledger/internal"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewServerInfoCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("server-infos",
-		cmdbuilder.WithArgs(cobra.ExactArgs(0)),
-		cmdbuilder.WithAliases("si"),
-		cmdbuilder.WithShortDescription("Read server info"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd)
+	return internal.NewCommand("server-infos",
+		internal.WithArgs(cobra.ExactArgs(0)),
+		internal.WithAliases("si"),
+		internal.WithShortDescription("Read server info"),
+		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := internal.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			ledgerClient, err := internal.NewLedgerClient(cmd, cfg)
+			ledgerClient, err := internal.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -44,10 +41,10 @@ func NewServerInfoCommand() *cobra.Command {
 				return err
 			}
 
-			cmdbuilder.Highlightln(cmd.OutOrStdout(), "Ledgers :")
+			internal.Highlightln(cmd.OutOrStdout(), "Ledgers :")
 			if err := pterm.DefaultBulletList.
 				WithWriter(cmd.OutOrStdout()).
-				WithItems(collections.Map(response.Data.Config.Storage.Ledgers, func(ledger string) pterm.BulletListItem {
+				WithItems(internal.Map(response.Data.Config.Storage.Ledgers, func(ledger string) pterm.BulletListItem {
 					return pterm.BulletListItem{
 						Text:        ledger,
 						TextStyle:   pterm.NewStyle(pterm.FgDefault),

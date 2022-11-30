@@ -1,4 +1,4 @@
-package cmdutils
+package internal
 
 import (
 	"os"
@@ -7,6 +7,14 @@ import (
 
 	"github.com/iancoleman/strcase"
 	"github.com/spf13/cobra"
+)
+
+const (
+	MembershipUriFlag = "membership-uri"
+	FileFlag          = "config"
+	ProfileFlag       = "profile"
+	DebugFlag         = "debug"
+	InsecureTlsFlag   = "insecure-tls"
 )
 
 func GetBool(cmd *cobra.Command, flagName string) bool {

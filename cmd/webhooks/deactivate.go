@@ -3,22 +3,21 @@ package webhooks
 import (
 	"net/url"
 
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/spf13/cobra"
 )
 
 func NewDeactivateCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("deactivate",
-		cmdbuilder.WithShortDescription("Deactivate a webhook"),
-		cmdbuilder.WithAliases("deac"),
-		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd)
+	return internal.NewCommand("deactivate",
+		internal.WithShortDescription("Deactivate a webhook"),
+		internal.WithAliases("deac"),
+		internal.WithArgs(cobra.ExactArgs(1)),
+		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := internal.Get(cmd)
 			if err != nil {
 				return err
 			}
-			webhookClient, err := newWebhookClient(cmd, cfg)
+			webhookClient, err := NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -32,7 +31,7 @@ func NewDeactivateCommand() *cobra.Command {
 				return err
 			}
 
-			cmdbuilder.Success(cmd.OutOrStdout(), "Config deactivated")
+			internal.Success(cmd.OutOrStdout(), "Config deactivated")
 			return nil
 		}),
 	)

@@ -5,32 +5,30 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/config"
-	"github.com/formancehq/fctl/cmd/internal/openapi"
+	internal2 "github.com/formancehq/fctl/cmd/internal"
 	"github.com/formancehq/fctl/cmd/stack/internal"
 	"github.com/formancehq/fctl/membershipclient"
 	"github.com/spf13/cobra"
 )
 
 func NewCreateCommand() *cobra.Command {
-	return cmdbuilder.NewMembershipCommand("create",
-		cmdbuilder.WithShortDescription("Create a new sandbox"),
-		cmdbuilder.WithAliases("c", "cr"),
-		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
+	return internal2.NewMembershipCommand("create",
+		internal2.WithShortDescription("Create a new sandbox"),
+		internal2.WithAliases("c", "cr"),
+		internal2.WithArgs(cobra.ExactArgs(1)),
+		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.Get(cmd)
+			cfg, err := internal2.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			organization, err := cmdbuilder.ResolveOrganizationID(cmd, cfg)
+			organization, err := internal2.ResolveOrganizationID(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			apiClient, err := config.NewClient(cmd, cfg)
+			apiClient, err := internal2.NewMembershipClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -39,25 +37,25 @@ func NewCreateCommand() *cobra.Command {
 				Name: args[0],
 			}).Execute()
 			if err != nil {
-				return openapi.WrapError(err, "creating sandbox")
+				return internal2.WrapError(err, "creating sandbox")
 			}
 
-			profile := config.GetCurrentProfile(cmd, cfg)
+			profile := internal2.GetCurrentProfile(cmd, cfg)
 
 			if err := waitStackReady(cmd, profile, stack.Data); err != nil {
 				return err
 			}
 
-			cmdbuilder.Highlightln(cmd.OutOrStdout(), "Your dashboard will be reachable on: %s",
+			internal2.Highlightln(cmd.OutOrStdout(), "Your dashboard will be reachable on: %s",
 				profile.ServicesBaseUrl(stack.Data).String())
-			cmdbuilder.Highlightln(cmd.OutOrStdout(), "You can access your sandbox apis using following urls :")
+			internal2.Highlightln(cmd.OutOrStdout(), "You can access your sandbox apis using following urls :")
 
 			return internal.PrintStackInformation(cmd.OutOrStdout(), profile, stack.Data)
 		}),
 	)
 }
 
-func waitStackReady(cmd *cobra.Command, profile *config.Profile, stack *membershipclient.Stack) error {
+func waitStackReady(cmd *cobra.Command, profile *internal2.Profile, stack *membershipclient.Stack) error {
 	baseUrlStr := profile.ServicesBaseUrl(stack).String()
 	authServerUrl := fmt.Sprintf("%s/api/auth", baseUrlStr)
 	for {
@@ -66,7 +64,7 @@ func waitStackReady(cmd *cobra.Command, profile *config.Profile, stack *membersh
 		if err != nil {
 			return err
 		}
-		rsp, err := config.GetHttpClient(cmd).Do(req)
+		rsp, err := internal2.GetHttpClient(cmd).Do(req)
 		if err == nil && rsp.StatusCode == http.StatusOK {
 			break
 		}

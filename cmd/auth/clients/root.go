@@ -3,15 +3,15 @@ package clients
 import (
 	"github.com/formancehq/fctl/cmd/auth/clients/secrets"
 	"github.com/formancehq/fctl/cmd/auth/users"
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/spf13/cobra"
 )
 
 func NewCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("clients",
-		cmdbuilder.WithAliases("client", "c"),
-		cmdbuilder.WithShortDescription("Clients management"),
-		cmdbuilder.WithChildCommands(
+	return internal.NewCommand("clients",
+		internal.WithAliases("client", "c"),
+		internal.WithShortDescription("Clients management"),
+		internal.WithChildCommands(
 			NewListCommand(),
 			NewCreateCommand(),
 			NewDeleteCommand(),

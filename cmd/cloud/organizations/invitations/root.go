@@ -1,15 +1,15 @@
 package invitations
 
 import (
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/spf13/cobra"
 )
 
 func NewCommand() *cobra.Command {
-	return cmdbuilder.NewStackCommand("invitations",
-		cmdbuilder.WithAliases("invit", "inv", "i"),
-		cmdbuilder.WithShortDescription("Invitations management"),
-		cmdbuilder.WithChildCommands(
+	return internal.NewStackCommand("invitations",
+		internal.WithAliases("invit", "inv", "i"),
+		internal.WithShortDescription("Invitations management"),
+		internal.WithChildCommands(
 			NewSendCommand(),
 			NewListCommand(),
 		),

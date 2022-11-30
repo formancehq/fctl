@@ -7,8 +7,7 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	config "github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/spf13/cobra"
 	"github.com/zitadel/oidc/pkg/client/rp"
 	"github.com/zitadel/oidc/pkg/oidc"
@@ -66,19 +65,19 @@ func LogIn(ctx context.Context, dialog Dialog, relyingParty rp.RelyingParty) (*o
 }
 
 func NewLoginCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("login",
-		cmdbuilder.WithStringFlag(config.MembershipUriFlag, config.DefaultMemberShipUri, "service url"),
-		cmdbuilder.WithHiddenFlag(config.MembershipUriFlag),
-		cmdbuilder.WithShortDescription("Login"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
+	return internal.NewCommand("login",
+		internal.WithStringFlag(internal.MembershipUriFlag, internal.DefaultMemberShipUri, "service url"),
+		internal.WithHiddenFlag(internal.MembershipUriFlag),
+		internal.WithShortDescription("Login"),
+		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := config.Get(cmd)
+			cfg, err := internal.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			profile := config.GetCurrentProfile(cmd, cfg)
-			membershipUri, err := cmd.Flags().GetString(config.MembershipUriFlag)
+			profile := internal.GetCurrentProfile(cmd, cfg)
+			membershipUri, err := cmd.Flags().GetString(internal.MembershipUriFlag)
 			if err != nil {
 				return err
 			}
@@ -86,7 +85,7 @@ func NewLoginCommand() *cobra.Command {
 				membershipUri = profile.GetMembershipURI()
 			}
 
-			relyingParty, err := config.GetAuthRelyingParty(cmd, membershipUri)
+			relyingParty, err := internal.GetAuthRelyingParty(cmd, membershipUri)
 			if err != nil {
 				return err
 			}
@@ -102,11 +101,11 @@ func NewLoginCommand() *cobra.Command {
 			profile.SetMembershipURI(membershipUri)
 			profile.UpdateToken(ret.Token)
 
-			currentProfileName := config.GetCurrentProfileName(cmd, cfg)
+			currentProfileName := internal.GetCurrentProfileName(cmd, cfg)
 
 			cfg.SetCurrentProfile(currentProfileName, profile)
 
-			cmdbuilder.Success(cmd.OutOrStdout(), "Logged!")
+			internal.Success(cmd.OutOrStdout(), "Logged!")
 			return cfg.Persist()
 		}),
 	)

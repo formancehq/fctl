@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"strings"
 
-	ledgerclient "github.com/numary/ledger/client"
+	"github.com/formancehq/formance-sdk-go"
 )
 
-func TransactionIDOrLastN(ctx context.Context, ledgerClient *ledgerclient.APIClient, ledger, id string) (int64, error) {
+func TransactionIDOrLastN(ctx context.Context, ledgerClient *formance.APIClient, ledger, id string) (int64, error) {
 	if strings.HasPrefix(id, "last") {
 		id = strings.TrimPrefix(id, "last")
 		sub := int64(0)

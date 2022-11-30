@@ -5,27 +5,25 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/cmdutils"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/formancehq/fctl/cmd/internal"
 	webhookclient "github.com/formancehq/webhooks/client"
 	"github.com/spf13/cobra"
 )
 
-func newWebhookClient(cmd *cobra.Command, cfg *config.Config) (*webhookclient.APIClient, error) {
-	profile := config.GetCurrentProfile(cmd, cfg)
+func NewStackClient(cmd *cobra.Command, cfg *internal.Config) (*webhookclient.APIClient, error) {
+	profile := internal.GetCurrentProfile(cmd, cfg)
 
-	organizationID, err := cmdbuilder.ResolveOrganizationID(cmd, cfg)
+	organizationID, err := internal.ResolveOrganizationID(cmd, cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	stack, err := cmdbuilder.ResolveStack(cmd, cfg, organizationID)
+	stack, err := internal.ResolveStack(cmd, cfg, organizationID)
 	if err != nil {
 		return nil, err
 	}
 
-	httpClient := config.GetHttpClient(cmd)
+	httpClient := internal.GetHttpClient(cmd)
 
 	token, err := profile.GetStackToken(cmd.Context(), httpClient, stack)
 	if err != nil {
@@ -46,17 +44,17 @@ func NewCreateCommand() *cobra.Command {
 	const (
 		secretFlag = "secret"
 	)
-	return cmdbuilder.NewCommand("create",
-		cmdbuilder.WithShortDescription("Create a new webhook"),
-		cmdbuilder.WithAliases("cr"),
-		cmdbuilder.WithArgs(cobra.MinimumNArgs(2)),
-		cmdbuilder.WithStringFlag(secretFlag, "", "Webhook secret"),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Get(cmd)
+	return internal.NewCommand("create",
+		internal.WithShortDescription("Create a new webhook"),
+		internal.WithAliases("cr"),
+		internal.WithArgs(cobra.MinimumNArgs(2)),
+		internal.WithStringFlag(secretFlag, "", "Webhook secret"),
+		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := internal.Get(cmd)
 			if err != nil {
 				return err
 			}
-			webhookClient, err := newWebhookClient(cmd, cfg)
+			webhookClient, err := NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -65,7 +63,7 @@ func NewCreateCommand() *cobra.Command {
 				return err
 			}
 
-			secret := cmdutils.GetString(cmd, secretFlag)
+			secret := internal.GetString(cmd, secretFlag)
 
 			response, _, err := webhookClient.ConfigsApi.InsertOneConfig(cmd.Context()).ConfigUser(webhookclient.ConfigUser{
 				Endpoint:   &args[0],
@@ -76,7 +74,7 @@ func NewCreateCommand() *cobra.Command {
 				return err
 			}
 
-			cmdbuilder.Success(cmd.OutOrStdout(), "Config created with ID: %s", strings.TrimSuffix(response, "\n"))
+			internal.Success(cmd.OutOrStdout(), "Config created with ID: %s", strings.TrimSuffix(response, "\n"))
 			return nil
 		}),
 	)

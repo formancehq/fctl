@@ -1,14 +1,13 @@
 package profiles
 
 import (
-	"github.com/formancehq/fctl/cmd/internal/cmdbuilder"
-	"github.com/formancehq/fctl/cmd/internal/config"
+	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 func ProfileNamesAutoCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	ret, err := config.ListProfiles(cmd, toComplete)
+	ret, err := internal.ListProfiles(cmd, toComplete)
 	if err != nil {
 		return []string{}, cobra.ShellCompDirectiveError
 	}
@@ -17,13 +16,13 @@ func ProfileNamesAutoCompletion(cmd *cobra.Command, args []string, toComplete st
 }
 
 func NewUseCommand() *cobra.Command {
-	return cmdbuilder.NewCommand("use",
-		cmdbuilder.WithAliases("u"),
-		cmdbuilder.WithArgs(cobra.ExactArgs(1)),
-		cmdbuilder.WithShortDescription("Use profile"),
-		cmdbuilder.WithValidArgsFunction(ProfileNamesAutoCompletion),
-		cmdbuilder.WithRunE(func(cmd *cobra.Command, args []string) error {
-			config, err := config.Get(cmd)
+	return internal.NewCommand("use",
+		internal.WithAliases("u"),
+		internal.WithArgs(cobra.ExactArgs(1)),
+		internal.WithShortDescription("Use profile"),
+		internal.WithValidArgsFunction(ProfileNamesAutoCompletion),
+		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
+			config, err := internal.Get(cmd)
 			if err != nil {
 				return err
 			}
@@ -32,7 +31,7 @@ func NewUseCommand() *cobra.Command {
 			if err := config.Persist(); err != nil {
 				return errors.Wrap(err, "Updating config")
 			}
-			cmdbuilder.Success(cmd.OutOrStdout(), "Selected profile updated!")
+			internal.Success(cmd.OutOrStdout(), "Selected profile updated!")
 			return nil
 		}),
 	)
