@@ -5,26 +5,27 @@ import (
 	"time"
 
 	"github.com/formancehq/fctl/cmd/internal"
-	webhookclient "github.com/formancehq/webhooks/client"
+	"github.com/formancehq/formance-sdk-go"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewListCommand() *cobra.Command {
 	return internal.NewCommand("list",
-		internal.WithShortDescription("List configs"),
+		internal.WithShortDescription("List all configs"),
 		internal.WithAliases("ls", "l"),
 		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := internal.Get(cmd)
 			if err != nil {
 				return err
 			}
-			webhookClient, err := NewStackClient(cmd, cfg)
+
+			webhookClient, err := internal.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			response, _, err := webhookClient.ConfigsApi.GetManyConfigs(cmd.Context()).Execute()
+			res, _, err := webhookClient.WebhooksApi.GetManyConfigs(cmd.Context()).Execute()
 			if err != nil {
 				return err
 			}
@@ -34,17 +35,17 @@ func NewListCommand() *cobra.Command {
 				WithWriter(cmd.OutOrStdout()).
 				WithData(
 					internal.Prepend(
-						internal.Map(response.Cursor.Data, func(src webhookclient.Config) []string {
-							return []string{
-								*src.Id,
-								src.CreatedAt.Format(time.RFC3339),
-								internal.StringPointerToString(src.Secret),
-								*src.Endpoint,
-								internal.BoolPointerToString(src.Active),
-								strings.Join(src.EventTypes, ","),
-							}
-						}),
-						[]string{"ID", "Created at", "Secret", "Endpoint", "Active", "Event types"},
+						internal.Map(res.Cursor.Data,
+							func(src formance.ConfigActivated) []string {
+								return []string{
+									src.CreatedAt.Format(time.RFC3339),
+									internal.StringPointerToString(src.Secret),
+									*src.Endpoint,
+									internal.BoolPointerToString(src.Active),
+									strings.Join(src.EventTypes, ","),
+								}
+							}),
+						[]string{"Created at", "Secret", "Endpoint", "Active", "Event types"},
 					),
 				).Render()
 		}),

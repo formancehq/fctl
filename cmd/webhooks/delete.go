@@ -17,7 +17,8 @@ func NewDeleteCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			webhookClient, err := NewStackClient(cmd, cfg)
+
+			webhookClient, err := internal.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -26,12 +27,12 @@ func NewDeleteCommand() *cobra.Command {
 				return err
 			}
 
-			_, err = webhookClient.ConfigsApi.DeleteOneConfig(cmd.Context(), args[0]).Execute()
+			_, err = webhookClient.WebhooksApi.DeleteOneConfig(cmd.Context(), args[0]).Execute()
 			if err != nil {
 				return err
 			}
 
-			internal.Success(cmd.OutOrStdout(), "Config deleted")
+			internal.Success(cmd.OutOrStdout(), "Config deleted successfully")
 			return nil
 		}),
 	)
