@@ -9,7 +9,7 @@ import (
 
 func NewDeactivateCommand() *cobra.Command {
 	return internal.NewCommand("deactivate",
-		internal.WithShortDescription("Deactivate a webhook"),
+		internal.WithShortDescription("Deactivate one config"),
 		internal.WithAliases("deac"),
 		internal.WithArgs(cobra.ExactArgs(1)),
 		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
@@ -17,7 +17,8 @@ func NewDeactivateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			webhookClient, err := NewStackClient(cmd, cfg)
+
+			client, err := internal.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -26,12 +27,12 @@ func NewDeactivateCommand() *cobra.Command {
 				return err
 			}
 
-			_, _, err = webhookClient.ConfigsApi.DeactivateOneConfig(cmd.Context(), args[0]).Execute()
+			_, _, err = client.WebhooksApi.DeactivateOneConfig(cmd.Context(), args[0]).Execute()
 			if err != nil {
 				return err
 			}
 
-			internal.Success(cmd.OutOrStdout(), "Config deactivated")
+			internal.Success(cmd.OutOrStdout(), "Config deactivated successfully")
 			return nil
 		}),
 	)

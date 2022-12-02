@@ -2,13 +2,13 @@ package webhooks
 
 import (
 	"github.com/formancehq/fctl/cmd/internal"
-	"github.com/formancehq/webhooks/client"
+	"github.com/formancehq/formance-sdk-go"
 	"github.com/spf13/cobra"
 )
 
 func NewChangeSecretCommand() *cobra.Command {
 	return internal.NewCommand("change-secret CONFIG_ID [SECRET]",
-		internal.WithShortDescription("Change the secret of a webhook"),
+		internal.WithShortDescription("Change the signing secret of a config"),
 		internal.WithAliases("cs"),
 		internal.WithArgs(cobra.RangeArgs(1, 2)),
 		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
@@ -17,7 +17,7 @@ func NewChangeSecretCommand() *cobra.Command {
 				return err
 			}
 
-			webhookClient, err := NewStackClient(cmd, cfg)
+			client, err := internal.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -28,19 +28,19 @@ func NewChangeSecretCommand() *cobra.Command {
 				secret = args[1]
 			}
 
-			response, _, err := webhookClient.ConfigsApi.
+			res, _, err := client.WebhooksApi.
 				ChangeOneConfigSecret(cmd.Context(), configID).
-				ChangeOneConfigSecretRequest(client.ChangeOneConfigSecretRequest{
-					Secret: &secret,
-				}).
+				ChangeOneConfigSecretRequest(
+					formance.ChangeOneConfigSecretRequest{
+						Secret: secret,
+					}).
 				Execute()
 			if err != nil {
 				return err
 			}
 
-			newSecret := *response.Cursor.Data[0].Secret
-
-			internal.Success(cmd.OutOrStdout(), "Config updated with secret: %s", newSecret)
+			internal.Success(cmd.OutOrStdout(),
+				"Config updated successfully with new secret: %s", *res.Data.Secret)
 			return nil
 		}),
 	)

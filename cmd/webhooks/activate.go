@@ -9,7 +9,7 @@ import (
 
 func NewActivateCommand() *cobra.Command {
 	return internal.NewCommand("activate",
-		internal.WithShortDescription("Activate a webhook"),
+		internal.WithShortDescription("Activate one config"),
 		internal.WithAliases("ac", "a"),
 		internal.WithArgs(cobra.ExactArgs(1)),
 		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
@@ -17,7 +17,8 @@ func NewActivateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			webhookClient, err := NewStackClient(cmd, cfg)
+
+			client, err := internal.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -26,12 +27,12 @@ func NewActivateCommand() *cobra.Command {
 				return err
 			}
 
-			_, _, err = webhookClient.ConfigsApi.ActivateOneConfig(cmd.Context(), args[0]).Execute()
+			_, _, err = client.WebhooksApi.ActivateOneConfig(cmd.Context(), args[0]).Execute()
 			if err != nil {
 				return err
 			}
 
-			internal.Success(cmd.OutOrStdout(), "Config activated")
+			internal.Success(cmd.OutOrStdout(), "Config activated successfully")
 			return nil
 		}),
 	)
