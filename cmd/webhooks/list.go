@@ -36,8 +36,9 @@ func NewListCommand() *cobra.Command {
 				WithData(
 					internal.Prepend(
 						internal.Map(res.Cursor.Data,
-							func(src formance.ConfigActivated) []string {
+							func(src formance.WebhooksConfig) []string {
 								return []string{
+									*src.Id,
 									src.CreatedAt.Format(time.RFC3339),
 									internal.StringPointerToString(src.Secret),
 									*src.Endpoint,
@@ -45,7 +46,7 @@ func NewListCommand() *cobra.Command {
 									strings.Join(src.EventTypes, ","),
 								}
 							}),
-						[]string{"Created at", "Secret", "Endpoint", "Active", "Event types"},
+						[]string{"ID", "Created at", "Secret", "Endpoint", "Active", "Event types"},
 					),
 				).Render()
 		}),

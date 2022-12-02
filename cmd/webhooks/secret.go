@@ -40,7 +40,7 @@ func NewChangeSecretCommand() *cobra.Command {
 			}
 
 			internal.Success(cmd.OutOrStdout(),
-				"Config updated successfully with secret: %s", *res.Data.Secret)
+				"Config updated successfully with new secret: %s", *res.Data.Secret)
 			return nil
 		}),
 	)

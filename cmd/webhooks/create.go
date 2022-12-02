@@ -45,7 +45,7 @@ func NewCreateCommand() *cobra.Command {
 			}
 
 			internal.Success(cmd.OutOrStdout(),
-				"Config created successfully with endpoint: %s", *res.Data.Endpoint)
+				"Config created successfully with ID: %s", *res.Data.Id)
 			return nil
 		}),
 	)
