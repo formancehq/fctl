@@ -3,8 +3,8 @@ package ledger
 import (
 	"strconv"
 
-	internal2 "github.com/formancehq/fctl/cmd/internal"
 	"github.com/formancehq/fctl/cmd/ledger/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go"
 	"github.com/spf13/cobra"
 )
@@ -14,19 +14,19 @@ func NewSendCommand() *cobra.Command {
 		metadataFlag  = "metadata"
 		referenceFlag = "reference"
 	)
-	return internal2.NewCommand("send [SOURCE] [DESTINATION] [AMOUNT] [ASSET]",
-		internal2.WithAliases("s", "se"),
-		internal2.WithShortDescription("Send from one account to another"),
-		internal2.WithArgs(cobra.RangeArgs(3, 4)),
-		internal2.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
-		internal2.WithStringFlag(referenceFlag, "", "Reference to add to the generated transaction"),
-		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := internal2.Get(cmd)
+	return fctl.NewCommand("send [SOURCE] [DESTINATION] [AMOUNT] [ASSET]",
+		fctl.WithAliases("s", "se"),
+		fctl.WithShortDescription("Send from one account to another"),
+		fctl.WithArgs(cobra.RangeArgs(3, 4)),
+		fctl.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
+		fctl.WithStringFlag(referenceFlag, "", "Reference to add to the generated transaction"),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := fctl.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			ledgerClient, err := internal2.NewStackClient(cmd, cfg)
+			ledgerClient, err := fctl.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -49,14 +49,14 @@ func NewSendCommand() *cobra.Command {
 				return err
 			}
 
-			metadata, err := internal.ParseMetadata(internal2.GetStringSlice(cmd, metadataFlag))
+			metadata, err := internal.ParseMetadata(fctl.GetStringSlice(cmd, metadataFlag))
 			if err != nil {
 				return err
 			}
 
-			reference := internal2.GetString(cmd, referenceFlag)
+			reference := fctl.GetString(cmd, referenceFlag)
 			response, _, err := ledgerClient.TransactionsApi.
-				CreateTransaction(cmd.Context(), internal2.GetString(cmd, internal.LedgerFlag)).
+				CreateTransaction(cmd.Context(), fctl.GetString(cmd, internal.LedgerFlag)).
 				PostTransaction(formance.PostTransaction{
 					Postings: []formance.Posting{{
 						Amount:      int32(amount),

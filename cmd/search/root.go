@@ -6,7 +6,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -16,20 +16,20 @@ func NewCommand() *cobra.Command {
 	const (
 		sizeFlag = "size"
 	)
-	return internal.NewStackCommand("search",
-		internal.WithAliases("se"),
-		internal.WithArgs(cobra.MinimumNArgs(1)),
-		internal.WithIntFlag(sizeFlag, 5, "Number of items to fetch"),
-		internal.WithValidArgs("ANY", "ACCOUNT", "TRANSACTION", "ASSET", "PAYMENT"),
-		internal.WithShortDescription("Search in all services"),
-		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
+	return fctl.NewStackCommand("search",
+		fctl.WithAliases("se"),
+		fctl.WithArgs(cobra.MinimumNArgs(1)),
+		fctl.WithIntFlag(sizeFlag, 5, "Number of items to fetch"),
+		fctl.WithValidArgs("ANY", "ACCOUNT", "TRANSACTION", "ASSET", "PAYMENT"),
+		fctl.WithShortDescription("Search in all services"),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := internal.Get(cmd)
+			cfg, err := fctl.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			searchClient, err := internal.NewStackClient(cmd, cfg)
+			searchClient, err := fctl.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -42,7 +42,7 @@ func NewCommand() *cobra.Command {
 			if len(args) > 1 {
 				terms = args[1:]
 			}
-			size := int32(internal.GetInt(cmd, sizeFlag))
+			size := int32(fctl.GetInt(cmd, sizeFlag))
 
 			response, _, err := searchClient.SearchApi.Search(cmd.Context()).Query(formance.Query{
 				Size:   &size,
@@ -72,7 +72,7 @@ func NewCommand() *cobra.Command {
 						})
 					}
 				}
-				tableData = internal.Prepend(tableData, []string{"Kind", "Object"})
+				tableData = fctl.Prepend(tableData, []string{"Kind", "Object"})
 
 				return pterm.DefaultTable.
 					WithHasHeader().
@@ -111,7 +111,7 @@ func displayPayments(out io.Writer, payments []interface{}) error {
 			payment["type"].(string),
 		})
 	}
-	tableData = internal.Prepend(tableData, []string{"Provider", "Reference", "Account",
+	tableData = fctl.Prepend(tableData, []string{"Provider", "Reference", "Account",
 		"Asset", "Created at", "Scheme", "Status", "Type"})
 
 	return pterm.DefaultTable.
@@ -133,7 +133,7 @@ func displayAssets(out io.Writer, assets []interface{}) error {
 			fmt.Sprint(asset["output"].(float64)),
 		})
 	}
-	tableData = internal.Prepend(tableData, []string{"Ledger", "Asset", "Account", "Input", "Output"})
+	tableData = fctl.Prepend(tableData, []string{"Ledger", "Asset", "Account", "Input", "Output"})
 
 	return pterm.DefaultTable.
 		WithHasHeader().
@@ -152,7 +152,7 @@ func displayAccounts(out io.Writer, accounts []interface{}) error {
 			account["address"].(string),
 		})
 	}
-	tableData = internal.Prepend(tableData, []string{ /*"Ledger",*/ "Address"})
+	tableData = fctl.Prepend(tableData, []string{ /*"Ledger",*/ "Address"})
 
 	return pterm.DefaultTable.
 		WithHasHeader().
@@ -172,7 +172,7 @@ func displayTransactions(out io.Writer, txs []interface{}) error {
 			tx["timestamp"].(string),
 		})
 	}
-	tableData = internal.Prepend(tableData, []string{"Ledger", "ID", "Reference", "Date"})
+	tableData = fctl.Prepend(tableData, []string{"Ledger", "ID", "Reference", "Date"})
 
 	return pterm.DefaultTable.
 		WithHasHeader().

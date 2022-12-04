@@ -6,17 +6,17 @@ import (
 	"io"
 	"time"
 
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go"
 	"github.com/pterm/pterm"
 )
 
 func PrintMetadata(out io.Writer, metadata map[string]any) error {
 	if len(metadata) == 0 {
-		internal.Highlightln(out, "Metadata : <empty>")
+		fctl.Highlightln(out, "Metadata : <empty>")
 		return nil
 	}
-	internal.Highlightln(out, "Metadata :")
+	fctl.Highlightln(out, "Metadata :")
 	tableData := pterm.TableData{}
 	for k, v := range metadata {
 		data, err := json.Marshal(v)
@@ -35,7 +35,7 @@ func PrintMetadata(out io.Writer, metadata map[string]any) error {
 func PrintTransaction(out io.Writer, transaction formance.Transaction) error {
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("ID"), fmt.Sprint(transaction.Txid)})
-	tableData = append(tableData, []string{pterm.LightCyan("Reference"), internal.StringPointerToString(transaction.Reference)})
+	tableData = append(tableData, []string{pterm.LightCyan("Reference"), fctl.StringPointerToString(transaction.Reference)})
 	tableData = append(tableData, []string{pterm.LightCyan("Date"), transaction.Timestamp.Format(time.RFC3339)})
 
 	if err := pterm.DefaultTable.

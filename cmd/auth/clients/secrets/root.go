@@ -1,15 +1,15 @@
 package secrets
 
 import (
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 )
 
 func NewCommand() *cobra.Command {
-	return internal.NewCommand("secrets",
-		internal.WithAliases("sec"),
-		internal.WithShortDescription("Secrets management"),
-		internal.WithChildCommands(
+	return fctl.NewCommand("secrets",
+		fctl.WithAliases("sec"),
+		fctl.WithShortDescription("Secrets management"),
+		fctl.WithChildCommands(
 			NewCreateCommand(),
 			NewDeleteCommand(),
 		),

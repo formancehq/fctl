@@ -1,4 +1,4 @@
-package internal
+package fctl
 
 func BoolPointerToString(v *bool) string {
 	if v == nil || !*v {

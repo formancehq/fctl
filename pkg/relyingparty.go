@@ -1,4 +1,4 @@
-package internal
+package fctl
 
 import (
 	"github.com/spf13/cobra"

@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 	"github.com/zitadel/oidc/pkg/client/rp"
 	"github.com/zitadel/oidc/pkg/oidc"
@@ -65,19 +65,19 @@ func LogIn(ctx context.Context, dialog Dialog, relyingParty rp.RelyingParty) (*o
 }
 
 func NewLoginCommand() *cobra.Command {
-	return internal.NewCommand("login",
-		internal.WithStringFlag(internal.MembershipUriFlag, internal.DefaultMemberShipUri, "service url"),
-		internal.WithHiddenFlag(internal.MembershipUriFlag),
-		internal.WithShortDescription("Login"),
-		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
+	return fctl.NewCommand("login",
+		fctl.WithStringFlag(fctl.MembershipUriFlag, fctl.DefaultMemberShipUri, "service url"),
+		fctl.WithHiddenFlag(fctl.MembershipUriFlag),
+		fctl.WithShortDescription("Login"),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := internal.Get(cmd)
+			cfg, err := fctl.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			profile := internal.GetCurrentProfile(cmd, cfg)
-			membershipUri, err := cmd.Flags().GetString(internal.MembershipUriFlag)
+			profile := fctl.GetCurrentProfile(cmd, cfg)
+			membershipUri, err := cmd.Flags().GetString(fctl.MembershipUriFlag)
 			if err != nil {
 				return err
 			}
@@ -85,7 +85,7 @@ func NewLoginCommand() *cobra.Command {
 				membershipUri = profile.GetMembershipURI()
 			}
 
-			relyingParty, err := internal.GetAuthRelyingParty(cmd, membershipUri)
+			relyingParty, err := fctl.GetAuthRelyingParty(cmd, membershipUri)
 			if err != nil {
 				return err
 			}
@@ -101,11 +101,11 @@ func NewLoginCommand() *cobra.Command {
 			profile.SetMembershipURI(membershipUri)
 			profile.UpdateToken(ret.Token)
 
-			currentProfileName := internal.GetCurrentProfileName(cmd, cfg)
+			currentProfileName := fctl.GetCurrentProfileName(cmd, cfg)
 
 			cfg.SetCurrentProfile(currentProfileName, profile)
 
-			internal.Success(cmd.OutOrStdout(), "Logged!")
+			fctl.Success(cmd.OutOrStdout(), "Logged!")
 			return cfg.Persist()
 		}),
 	)

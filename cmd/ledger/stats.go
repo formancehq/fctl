@@ -3,28 +3,28 @@ package ledger
 import (
 	"fmt"
 
-	internal2 "github.com/formancehq/fctl/cmd/internal"
 	"github.com/formancehq/fctl/cmd/ledger/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewStatsCommand() *cobra.Command {
-	return internal2.NewCommand("stats",
-		internal2.WithArgs(cobra.ExactArgs(0)),
-		internal2.WithAliases("st"),
-		internal2.WithShortDescription("Read ledger stats"),
-		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := internal2.Get(cmd)
+	return fctl.NewCommand("stats",
+		fctl.WithArgs(cobra.ExactArgs(0)),
+		fctl.WithAliases("st"),
+		fctl.WithShortDescription("Read ledger stats"),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := fctl.Get(cmd)
 			if err != nil {
 				return err
 			}
-			ledgerClient, err := internal2.NewStackClient(cmd, cfg)
+			ledgerClient, err := fctl.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			response, _, err := ledgerClient.StatsApi.ReadStats(cmd.Context(), internal2.GetString(cmd, internal.LedgerFlag)).Execute()
+			response, _, err := ledgerClient.StatsApi.ReadStats(cmd.Context(), fctl.GetString(cmd, internal.LedgerFlag)).Execute()
 			if err != nil {
 				return err
 			}

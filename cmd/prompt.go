@@ -11,7 +11,7 @@ import (
 
 	_ "github.com/athul/shelby/mods"
 	goprompt "github.com/c-bata/go-prompt"
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/iancoleman/strcase"
 	"github.com/mattn/go-shellwords"
 	"github.com/spf13/cobra"
@@ -23,7 +23,7 @@ func (p *prompt) completionsFromCommand(subCommand *cobra.Command, completionsAr
 		// The autocompletion library sometimes panic
 		// As it is not critical, we just catch the error and display it only when debug enabled
 		if err := recover(); err != nil {
-			isDebug, _ := subCommand.Flags().GetBool(internal.DebugFlag)
+			isDebug, _ := subCommand.Flags().GetBool(fctl.DebugFlag)
 			if isDebug {
 				fmt.Println(err)
 				debug.PrintStack()
@@ -36,7 +36,7 @@ func (p *prompt) completionsFromCommand(subCommand *cobra.Command, completionsAr
 		return []goprompt.Suggest{}
 	}
 
-	return goprompt.FilterHasPrefix(internal.Map(completions, func(src string) goprompt.Suggest {
+	return goprompt.FilterHasPrefix(fctl.Map(completions, func(src string) goprompt.Suggest {
 		parts := strings.SplitN(src, "\t", 2)
 		description := ""
 		if len(parts) > 1 {
@@ -49,11 +49,11 @@ func (p *prompt) completionsFromCommand(subCommand *cobra.Command, completionsAr
 	}), d.GetWordBeforeCursor(), true)
 }
 
-func (p *prompt) completions(cfg *internal.Config, d goprompt.Document) []goprompt.Suggest {
+func (p *prompt) completions(cfg *fctl.Config, d goprompt.Document) []goprompt.Suggest {
 	suggestions := make([]goprompt.Suggest, 0)
 	switch {
-	case strings.HasPrefix(d.Text, ":set "+internal.ProfileFlag):
-		profiles := internal.MapKeys(cfg.GetProfiles())
+	case strings.HasPrefix(d.Text, ":set "+fctl.ProfileFlag):
+		profiles := fctl.MapKeys(cfg.GetProfiles())
 		sort.Strings(profiles)
 		for _, p := range profiles {
 			suggestions = append(suggestions, goprompt.Suggest{
@@ -61,7 +61,7 @@ func (p *prompt) completions(cfg *internal.Config, d goprompt.Document) []goprom
 				Description: "Select profile",
 			})
 		}
-	case strings.HasPrefix(d.Text, ":set "+internal.DebugFlag) || strings.HasPrefix(d.Text, ":set "+internal.InsecureTlsFlag):
+	case strings.HasPrefix(d.Text, ":set "+fctl.DebugFlag) || strings.HasPrefix(d.Text, ":set "+fctl.InsecureTlsFlag):
 		suggestions = append(suggestions, goprompt.Suggest{
 			Text: "true",
 		}, goprompt.Suggest{
@@ -69,13 +69,13 @@ func (p *prompt) completions(cfg *internal.Config, d goprompt.Document) []goprom
 		})
 	case strings.HasPrefix(d.Text, ":set"):
 		suggestions = append(suggestions, goprompt.Suggest{
-			Text:        internal.ProfileFlag,
+			Text:        fctl.ProfileFlag,
 			Description: "Select profile",
 		}, goprompt.Suggest{
-			Text:        internal.DebugFlag,
+			Text:        fctl.DebugFlag,
 			Description: "Set debug",
 		}, goprompt.Suggest{
-			Text:        internal.InsecureTlsFlag,
+			Text:        fctl.InsecureTlsFlag,
 			Description: "Set insecure TLS",
 		})
 	default:
@@ -91,7 +91,7 @@ func (p *prompt) completions(cfg *internal.Config, d goprompt.Document) []goprom
 	return goprompt.FilterHasPrefix(suggestions, d.GetWordBeforeCursor(), true)
 }
 
-func (p *prompt) startPrompt(prompt string, cfg *internal.Config, opts ...goprompt.Option) string {
+func (p *prompt) startPrompt(prompt string, cfg *fctl.Config, opts ...goprompt.Option) string {
 	return goprompt.Input(prompt, func(d goprompt.Document) []goprompt.Suggest {
 		subCommand := NewRootCommand()
 
@@ -141,12 +141,12 @@ func (p *prompt) executePromptCommand(cmd *cobra.Command, t string) error {
 		if len(parts) != 2 {
 			return errors.New("malformed command")
 		} else {
-			if v := parts[0]; v != internal.ProfileFlag && v != internal.DebugFlag && v != internal.InsecureTlsFlag {
+			if v := parts[0]; v != fctl.ProfileFlag && v != fctl.DebugFlag && v != fctl.InsecureTlsFlag {
 				return fmt.Errorf("unknown configuration: %s", v)
 			}
 			_ = cmd.Flags().Set(parts[0], parts[1])
 			os.Setenv(strcase.ToScreamingSnake(parts[0]), parts[1])
-			internal.Success(cmd.OutOrStdout(), "Set %s=%s", parts[0], parts[1])
+			fctl.Success(cmd.OutOrStdout(), "Set %s=%s", parts[0], parts[1])
 		}
 	default:
 		return errors.New("malformed command")
@@ -161,8 +161,8 @@ type prompt struct {
 	actualProfile string
 }
 
-func (p *prompt) refreshUserEmail(cmd *cobra.Command, cfg *internal.Config) error {
-	profile := internal.GetCurrentProfile(cmd, cfg)
+func (p *prompt) refreshUserEmail(cmd *cobra.Command, cfg *fctl.Config) error {
+	profile := fctl.GetCurrentProfile(cmd, cfg)
 	if !profile.IsConnected() {
 		p.userEmail = ""
 		return nil
@@ -176,27 +176,27 @@ func (p *prompt) refreshUserEmail(cmd *cobra.Command, cfg *internal.Config) erro
 	return nil
 }
 
-func (p *prompt) displayHeader(cmd *cobra.Command, cfg *internal.Config) error {
-	header := internal.GetCurrentProfileName(cmd, cfg)
+func (p *prompt) displayHeader(cmd *cobra.Command, cfg *fctl.Config) error {
+	header := fctl.GetCurrentProfileName(cmd, cfg)
 	if p.userEmail != "" {
 		header += " / " + p.userEmail
-		if organizationID := internal.GetCurrentProfile(cmd, cfg).GetDefaultOrganization(); organizationID != "" {
+		if organizationID := fctl.GetCurrentProfile(cmd, cfg).GetDefaultOrganization(); organizationID != "" {
 			header += " / " + organizationID
 		}
 	}
 	header += " #"
-	internal.Highlightln(cmd.OutOrStdout(), header)
+	fctl.Highlightln(cmd.OutOrStdout(), header)
 	return nil
 }
 
 func (p *prompt) nextCommand(cmd *cobra.Command) error {
 
-	cfg, err := internal.Get(cmd)
+	cfg, err := fctl.Get(cmd)
 	if err != nil {
 		return err
 	}
 
-	currentProfileName := internal.GetCurrentProfileName(cmd, cfg)
+	currentProfileName := fctl.GetCurrentProfileName(cmd, cfg)
 	if currentProfileName != p.actualProfile || p.userEmail == "" {
 		if err := p.refreshUserEmail(cmd, cfg); err != nil {
 			return err
@@ -222,7 +222,7 @@ func (p *prompt) nextCommand(cmd *cobra.Command) error {
 			err = p.executeCommand(cmd, t)
 		}
 		if err != nil {
-			internal.Error(cmd.ErrOrStderr(), "%s", err)
+			fctl.Error(cmd.ErrOrStderr(), "%s", err)
 			p.promptColor = goprompt.Red
 		} else {
 			p.promptColor = goprompt.Blue
@@ -242,9 +242,9 @@ func (p *prompt) run(cmd *cobra.Command) error {
 }
 
 func NewPromptCommand() *cobra.Command {
-	return internal.NewCommand("prompt",
-		internal.WithShortDescription("Start a prompt"),
-		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
+	return fctl.NewCommand("prompt",
+		fctl.WithShortDescription("Start a prompt"),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			return (&prompt{
 				promptColor: goprompt.Blue,
 				history:     make([]string, 0),

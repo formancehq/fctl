@@ -1,15 +1,15 @@
 package install
 
 import (
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 )
 
 func NewInstallCommand() *cobra.Command {
-	return internal.NewCommand("install",
-		internal.WithAliases("i"),
-		internal.WithShortDescription("Install a connector"),
-		internal.WithChildCommands(
+	return fctl.NewCommand("install",
+		fctl.WithAliases("i"),
+		fctl.WithShortDescription("Install a connector"),
+		fctl.WithChildCommands(
 			NewStripeCommand(),
 		),
 	)

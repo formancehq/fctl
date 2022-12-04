@@ -1,22 +1,22 @@
 package secrets
 
 import (
-	internal2 "github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 )
 
 func NewDeleteCommand() *cobra.Command {
-	return internal2.NewCommand("delete [CLIENT_ID] [SECRET_ID]",
-		internal2.WithArgs(cobra.ExactArgs(2)),
-		internal2.WithAliases("d"),
-		internal2.WithShortDescription("Delete secret"),
-		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := internal2.Get(cmd)
+	return fctl.NewCommand("delete [CLIENT_ID] [SECRET_ID]",
+		fctl.WithArgs(cobra.ExactArgs(2)),
+		fctl.WithAliases("d"),
+		fctl.WithShortDescription("Delete secret"),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := fctl.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			authClient, err := internal2.NewStackClient(cmd, cfg)
+			authClient, err := fctl.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -28,7 +28,7 @@ func NewDeleteCommand() *cobra.Command {
 				return err
 			}
 
-			internal2.Success(cmd.OutOrStdout(), "Secret deleted!")
+			fctl.Success(cmd.OutOrStdout(), "Secret deleted!")
 
 			return nil
 		}),

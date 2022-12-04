@@ -1,23 +1,23 @@
 package users
 
 import (
-	internal2 "github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewListCommand() *cobra.Command {
-	return internal2.NewCommand("list",
-		internal2.WithAliases("ls", "l"),
-		internal2.WithShortDescription("List users"),
-		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := internal2.Get(cmd)
+	return fctl.NewCommand("list",
+		fctl.WithAliases("ls", "l"),
+		fctl.WithShortDescription("List users"),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := fctl.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			client, err := internal2.NewStackClient(cmd, cfg)
+			client, err := fctl.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -27,14 +27,14 @@ func NewListCommand() *cobra.Command {
 				return err
 			}
 
-			tableData := internal2.Map(listUsersResponse.Data, func(o formance.User) []string {
+			tableData := fctl.Map(listUsersResponse.Data, func(o formance.User) []string {
 				return []string{
 					*o.Id,
 					*o.Subject,
 					*o.Email,
 				}
 			})
-			tableData = internal2.Prepend(tableData, []string{"ID", "Subject", "Email"})
+			tableData = fctl.Prepend(tableData, []string{"ID", "Subject", "Email"})
 			return pterm.DefaultTable.
 				WithHasHeader().
 				WithWriter(cmd.OutOrStdout()).

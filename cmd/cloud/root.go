@@ -4,15 +4,15 @@ import (
 	"github.com/formancehq/fctl/cmd/cloud/me"
 	"github.com/formancehq/fctl/cmd/cloud/organizations"
 	"github.com/formancehq/fctl/cmd/cloud/users"
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 )
 
 func NewCommand() *cobra.Command {
-	return internal.NewCommand("cloud",
-		internal.WithAliases("c"),
-		internal.WithShortDescription("Cloud management"),
-		internal.WithChildCommands(
+	return fctl.NewCommand("cloud",
+		fctl.WithAliases("c"),
+		fctl.WithShortDescription("Cloud management"),
+		fctl.WithChildCommands(
 			organizations.NewCommand(),
 			me.NewCommand(),
 			users.NewCommand(),

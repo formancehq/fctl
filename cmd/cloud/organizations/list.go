@@ -1,23 +1,23 @@
 package organizations
 
 import (
-	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/formancehq/fctl/membershipclient"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewListCommand() *cobra.Command {
-	return internal.NewCommand("list",
-		internal.WithAliases("ls", "l"),
-		internal.WithShortDescription("List organizations"),
-		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := internal.Get(cmd)
+	return fctl.NewCommand("list",
+		fctl.WithAliases("ls", "l"),
+		fctl.WithShortDescription("List organizations"),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := fctl.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			apiClient, err := internal.NewMembershipClient(cmd, cfg)
+			apiClient, err := fctl.NewMembershipClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -27,12 +27,12 @@ func NewListCommand() *cobra.Command {
 				return err
 			}
 
-			tableData := internal.Map(organizations.Data, func(o membershipclient.Organization) []string {
+			tableData := fctl.Map(organizations.Data, func(o membershipclient.Organization) []string {
 				return []string{
 					o.Id, o.Name, o.OwnerId,
 				}
 			})
-			tableData = internal.Prepend(tableData, []string{"ID", "Name", "Owner ID"})
+			tableData = fctl.Prepend(tableData, []string{"ID", "Name", "Owner ID"})
 			return pterm.DefaultTable.
 				WithHasHeader().
 				WithWriter(cmd.OutOrStdout()).

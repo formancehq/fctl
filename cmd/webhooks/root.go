@@ -1,15 +1,15 @@
 package webhooks
 
 import (
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 )
 
 func NewCommand() *cobra.Command {
-	return internal.NewCommand("webhooks",
-		internal.WithAliases("web", "wh"),
-		internal.WithShortDescription("Webhooks management"),
-		internal.WithChildCommands(
+	return fctl.NewCommand("webhooks",
+		fctl.WithAliases("web", "wh"),
+		fctl.WithShortDescription("Webhooks management"),
+		fctl.WithChildCommands(
 			NewCreateCommand(),
 			NewListCommand(),
 			NewDeactivateCommand(),

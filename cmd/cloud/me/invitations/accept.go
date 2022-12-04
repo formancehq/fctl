@@ -1,22 +1,22 @@
 package invitations
 
 import (
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 )
 
 func NewAcceptCommand() *cobra.Command {
-	return internal.NewCommand("accept",
-		internal.WithAliases("a"),
-		internal.WithShortDescription("Accept invitation"),
-		internal.WithArgs(cobra.ExactArgs(1)),
-		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := internal.Get(cmd)
+	return fctl.NewCommand("accept",
+		fctl.WithAliases("a"),
+		fctl.WithShortDescription("Accept invitation"),
+		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := fctl.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			client, err := internal.NewMembershipClient(cmd, cfg)
+			client, err := fctl.NewMembershipClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -26,7 +26,7 @@ func NewAcceptCommand() *cobra.Command {
 				return err
 			}
 
-			internal.Success(cmd.OutOrStdout(), "Invitation accepted!")
+			fctl.Success(cmd.OutOrStdout(), "Invitation accepted!")
 			return nil
 		}),
 	)

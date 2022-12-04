@@ -1,24 +1,24 @@
 package secrets
 
 import (
-	internal2 "github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewCreateCommand() *cobra.Command {
-	return internal2.NewCommand("create [CLIENT_ID] [SECRET_NAME]",
-		internal2.WithAliases("c"),
-		internal2.WithArgs(cobra.ExactArgs(2)),
-		internal2.WithShortDescription("Create secret"),
-		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := internal2.Get(cmd)
+	return fctl.NewCommand("create [CLIENT_ID] [SECRET_NAME]",
+		fctl.WithAliases("c"),
+		fctl.WithArgs(cobra.ExactArgs(2)),
+		fctl.WithShortDescription("Create secret"),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := fctl.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			authClient, err := internal2.NewStackClient(cmd, cfg)
+			authClient, err := fctl.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}

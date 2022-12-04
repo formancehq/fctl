@@ -1,41 +1,41 @@
 package accounts
 
 import (
-	internal2 "github.com/formancehq/fctl/cmd/internal"
 	internal "github.com/formancehq/fctl/cmd/ledger/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewListCommand() *cobra.Command {
-	return internal2.NewCommand("list",
-		internal2.WithAliases("ls", "l"),
-		internal2.WithShortDescription("List accounts"),
-		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
+	return fctl.NewCommand("list",
+		fctl.WithAliases("ls", "l"),
+		fctl.WithShortDescription("List accounts"),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := internal2.Get(cmd)
+			cfg, err := fctl.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			ledgerClient, err := internal2.NewStackClient(cmd, cfg)
+			ledgerClient, err := fctl.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			ledger := internal2.GetString(cmd, internal.LedgerFlag)
+			ledger := fctl.GetString(cmd, internal.LedgerFlag)
 			rsp, _, err := ledgerClient.AccountsApi.ListAccounts(cmd.Context(), ledger).Execute()
 			if err != nil {
 				return err
 			}
 
-			tableData := internal2.Map(rsp.Cursor.Data, func(account formance.Account) []string {
+			tableData := fctl.Map(rsp.Cursor.Data, func(account formance.Account) []string {
 				return []string{
 					account.Address,
 				}
 			})
-			tableData = internal2.Prepend(tableData, []string{"Address"})
+			tableData = fctl.Prepend(tableData, []string{"Address"})
 			return pterm.DefaultTable.
 				WithHasHeader().
 				WithWriter(cmd.OutOrStdout()).

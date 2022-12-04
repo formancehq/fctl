@@ -3,22 +3,22 @@ package webhooks
 import (
 	"net/url"
 
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 )
 
 func NewDeleteCommand() *cobra.Command {
-	return internal.NewCommand("delete",
-		internal.WithShortDescription("Delete a config"),
-		internal.WithAliases("del"),
-		internal.WithArgs(cobra.ExactArgs(1)),
-		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := internal.Get(cmd)
+	return fctl.NewCommand("delete",
+		fctl.WithShortDescription("Delete a config"),
+		fctl.WithAliases("del"),
+		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := fctl.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			webhookClient, err := internal.NewStackClient(cmd, cfg)
+			webhookClient, err := fctl.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -32,7 +32,7 @@ func NewDeleteCommand() *cobra.Command {
 				return err
 			}
 
-			internal.Success(cmd.OutOrStdout(), "Config deleted successfully")
+			fctl.Success(cmd.OutOrStdout(), "Config deleted successfully")
 			return nil
 		}),
 	)

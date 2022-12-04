@@ -1,22 +1,22 @@
 package clients
 
 import (
-	internal2 "github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 )
 
 func NewDeleteCommand() *cobra.Command {
-	return internal2.NewCommand("delete [CLIENT_ID]",
-		internal2.WithArgs(cobra.ExactArgs(1)),
-		internal2.WithAliases("d", "del"),
-		internal2.WithShortDescription("Delete client"),
-		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := internal2.Get(cmd)
+	return fctl.NewCommand("delete [CLIENT_ID]",
+		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithAliases("d", "del"),
+		fctl.WithShortDescription("Delete client"),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := fctl.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			authClient, err := internal2.NewStackClient(cmd, cfg)
+			authClient, err := fctl.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -26,7 +26,7 @@ func NewDeleteCommand() *cobra.Command {
 				return err
 			}
 
-			internal2.Success(cmd.OutOrStdout(), "Client deleted!")
+			fctl.Success(cmd.OutOrStdout(), "Client deleted!")
 			return nil
 		}),
 	)

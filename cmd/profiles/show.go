@@ -1,21 +1,21 @@
 package profiles
 
 import (
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewShowCommand() *cobra.Command {
-	return internal.NewCommand("show",
-		internal.WithArgs(cobra.ExactArgs(1)),
-		internal.WithAliases("s"),
-		internal.WithShortDescription("Show profile"),
-		internal.WithValidArgsFunction(ProfileNamesAutoCompletion),
-		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
+	return fctl.NewCommand("show",
+		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithAliases("s"),
+		fctl.WithShortDescription("Show profile"),
+		fctl.WithValidArgsFunction(ProfileNamesAutoCompletion),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			config, err := internal.Get(cmd)
+			config, err := fctl.Get(cmd)
 			if err != nil {
 				return err
 			}

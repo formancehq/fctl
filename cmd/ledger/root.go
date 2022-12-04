@@ -1,10 +1,10 @@
 package ledger
 
 import (
-	internal2 "github.com/formancehq/fctl/cmd/internal"
 	"github.com/formancehq/fctl/cmd/ledger/accounts"
 	"github.com/formancehq/fctl/cmd/ledger/internal"
 	"github.com/formancehq/fctl/cmd/ledger/transactions"
+	internal2 "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 )
 

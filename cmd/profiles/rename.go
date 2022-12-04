@@ -1,21 +1,21 @@
 package profiles
 
 import (
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 func NewRenameCommand() *cobra.Command {
-	return internal.NewCommand("rename",
-		internal.WithArgs(cobra.ExactArgs(2)),
-		internal.WithShortDescription("Rename a profile"),
-		internal.WithValidArgsFunction(ProfileNamesAutoCompletion),
-		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
+	return fctl.NewCommand("rename",
+		fctl.WithArgs(cobra.ExactArgs(2)),
+		fctl.WithShortDescription("Rename a profile"),
+		fctl.WithValidArgsFunction(ProfileNamesAutoCompletion),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			oldName := args[0]
 			newName := args[1]
 
-			config, err := internal.Get(cmd)
+			config, err := fctl.Get(cmd)
 			if err != nil {
 				return err
 			}

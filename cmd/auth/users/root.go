@@ -1,15 +1,15 @@
 package users
 
 import (
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 )
 
 func NewCommand() *cobra.Command {
-	return internal.NewCommand("users",
-		internal.WithShortDescription("Users management"),
-		internal.WithAliases("u", "user"),
-		internal.WithChildCommands(
+	return fctl.NewCommand("users",
+		fctl.WithShortDescription("Users management"),
+		fctl.WithAliases("u", "user"),
+		fctl.WithChildCommands(
 			NewListCommand(),
 			NewShowCommand(),
 		),

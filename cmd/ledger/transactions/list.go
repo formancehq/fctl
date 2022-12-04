@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	internal2 "github.com/formancehq/fctl/cmd/internal"
 	internal "github.com/formancehq/fctl/cmd/ledger/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -25,33 +25,33 @@ func NewListCommand() *cobra.Command {
 		listTransactionsStartTimeFlag  = "start"
 	)
 
-	return internal2.NewCommand("list",
-		internal2.WithAliases("ls", "l"),
-		internal2.WithShortDescription("List transactions"),
-		internal2.WithStringFlag(listTransactionAccountFlag, "", "Filter on account"),
-		internal2.WithStringFlag(listTransactionDestinationFlag, "", "Filter on destination account"),
-		internal2.WithStringFlag(listTransactionsAfterFlag, "", "Filter results after given tx id"),
-		internal2.WithStringFlag(listTransactionsEndTimeFlag, "", "Consider transactions before date"),
-		internal2.WithStringFlag(listTransactionsStartTimeFlag, "", "Consider transactions after date"),
-		internal2.WithStringFlag(listTransactionSourceFlag, "", "Filter on source account"),
-		internal2.WithStringFlag(listTransactionsReferenceFlag, "", "Filter on reference"),
-		internal2.WithStringSliceFlag(listTransactionsMetadataFlag, []string{}, "Filter transactions with metadata"),
-		internal2.WithIntFlag(listTransactionsPageSizeFlag, 5, "Page size"),
+	return fctl.NewCommand("list",
+		fctl.WithAliases("ls", "l"),
+		fctl.WithShortDescription("List transactions"),
+		fctl.WithStringFlag(listTransactionAccountFlag, "", "Filter on account"),
+		fctl.WithStringFlag(listTransactionDestinationFlag, "", "Filter on destination account"),
+		fctl.WithStringFlag(listTransactionsAfterFlag, "", "Filter results after given tx id"),
+		fctl.WithStringFlag(listTransactionsEndTimeFlag, "", "Consider transactions before date"),
+		fctl.WithStringFlag(listTransactionsStartTimeFlag, "", "Consider transactions after date"),
+		fctl.WithStringFlag(listTransactionSourceFlag, "", "Filter on source account"),
+		fctl.WithStringFlag(listTransactionsReferenceFlag, "", "Filter on reference"),
+		fctl.WithStringSliceFlag(listTransactionsMetadataFlag, []string{}, "Filter transactions with metadata"),
+		fctl.WithIntFlag(listTransactionsPageSizeFlag, 5, "Page size"),
 		// SDK not generating correct requests
-		internal2.WithHiddenFlag(listTransactionsMetadataFlag),
-		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := internal2.Get(cmd)
+		fctl.WithHiddenFlag(listTransactionsMetadataFlag),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := fctl.Get(cmd)
 			if err != nil {
 				return err
 			}
 
-			ledgerClient, err := internal2.NewStackClient(cmd, cfg)
+			ledgerClient, err := fctl.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
 			metadata := map[string]interface{}{}
-			for _, v := range internal2.GetStringSlice(cmd, listTransactionsMetadataFlag) {
+			for _, v := range fctl.GetStringSlice(cmd, listTransactionsMetadataFlag) {
 				parts := strings.SplitN(v, "=", 2)
 				if len(parts) == 1 {
 					return fmt.Errorf("malformed metadata: %s", v)
@@ -59,24 +59,24 @@ func NewListCommand() *cobra.Command {
 				metadata[parts[0]] = parts[1]
 			}
 
-			ledger := internal2.GetString(cmd, internal.LedgerFlag)
+			ledger := fctl.GetString(cmd, internal.LedgerFlag)
 			rsp, _, err := ledgerClient.TransactionsApi.
 				ListTransactions(cmd.Context(), ledger).
-				PageSize(int32(internal2.GetInt(cmd, listTransactionsPageSizeFlag))).
-				Reference(internal2.GetString(cmd, listTransactionsReferenceFlag)).
-				Account(internal2.GetString(cmd, listTransactionAccountFlag)).
-				Destination(internal2.GetString(cmd, listTransactionDestinationFlag)).
-				Source(internal2.GetString(cmd, listTransactionSourceFlag)).
-				After(internal2.GetString(cmd, listTransactionsAfterFlag)).
-				EndTime(internal2.GetString(cmd, listTransactionsEndTimeFlag)).
-				StartTime(internal2.GetString(cmd, listTransactionsStartTimeFlag)).
+				PageSize(int32(fctl.GetInt(cmd, listTransactionsPageSizeFlag))).
+				Reference(fctl.GetString(cmd, listTransactionsReferenceFlag)).
+				Account(fctl.GetString(cmd, listTransactionAccountFlag)).
+				Destination(fctl.GetString(cmd, listTransactionDestinationFlag)).
+				Source(fctl.GetString(cmd, listTransactionSourceFlag)).
+				After(fctl.GetString(cmd, listTransactionsAfterFlag)).
+				EndTime(fctl.GetString(cmd, listTransactionsEndTimeFlag)).
+				StartTime(fctl.GetString(cmd, listTransactionsStartTimeFlag)).
 				Metadata(metadata).
 				Execute()
 			if err != nil {
 				return err
 			}
 
-			tableData := internal2.Map(rsp.Cursor.Data, func(tx formance.Transaction) []string {
+			tableData := fctl.Map(rsp.Cursor.Data, func(tx formance.Transaction) []string {
 				return []string{
 					fmt.Sprintf("%d", tx.Txid),
 					func() string {
@@ -88,7 +88,7 @@ func NewListCommand() *cobra.Command {
 					tx.Timestamp.Format(time.RFC3339),
 				}
 			})
-			tableData = internal2.Prepend(tableData, []string{"ID", "Reference", "Date"})
+			tableData = fctl.Prepend(tableData, []string{"ID", "Reference", "Date"})
 			return pterm.DefaultTable.
 				WithHasHeader().
 				WithWriter(cmd.OutOrStdout()).
