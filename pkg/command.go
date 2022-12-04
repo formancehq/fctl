@@ -88,88 +88,88 @@ func ResolveStack(cmd *cobra.Command, cfg *Config, organizationID string) (*memb
 	return &(stacks.Data[0]), nil
 }
 
-type commandOption interface {
+type CommandOption interface {
 	apply(cmd *cobra.Command)
 }
-type commandOptionFn func(cmd *cobra.Command)
+type CommandOptionFn func(cmd *cobra.Command)
 
-func (fn commandOptionFn) apply(cmd *cobra.Command) {
+func (fn CommandOptionFn) apply(cmd *cobra.Command) {
 	fn(cmd)
 }
 
-func WithPersistentStringFlag(name, defaultValue, help string) commandOptionFn {
+func WithPersistentStringFlag(name, defaultValue, help string) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.PersistentFlags().String(name, defaultValue, help)
 	}
 }
 
-func WithStringFlag(name, defaultValue, help string) commandOptionFn {
+func WithStringFlag(name, defaultValue, help string) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.Flags().String(name, defaultValue, help)
 	}
 }
 
-func WithPersistentStringPFlag(name, short, defaultValue, help string) commandOptionFn {
+func WithPersistentStringPFlag(name, short, defaultValue, help string) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.PersistentFlags().StringP(name, short, defaultValue, help)
 	}
 }
 
-func WithBoolFlag(name string, defaultValue bool, help string) commandOptionFn {
+func WithBoolFlag(name string, defaultValue bool, help string) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.Flags().Bool(name, defaultValue, help)
 	}
 }
 
-func WithAliases(aliases ...string) commandOptionFn {
+func WithAliases(aliases ...string) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.Aliases = aliases
 	}
 }
 
-func WithPersistentBoolPFlag(name, short string, defaultValue bool, help string) commandOptionFn {
+func WithPersistentBoolPFlag(name, short string, defaultValue bool, help string) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.PersistentFlags().BoolP(name, short, defaultValue, help)
 	}
 }
 
-func WithPersistentBoolFlag(name string, defaultValue bool, help string) commandOptionFn {
+func WithPersistentBoolFlag(name string, defaultValue bool, help string) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.PersistentFlags().Bool(name, defaultValue, help)
 	}
 }
 
-func WithIntFlag(name string, defaultValue int, help string) commandOptionFn {
+func WithIntFlag(name string, defaultValue int, help string) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.Flags().Int(name, defaultValue, help)
 	}
 }
 
-func WithStringSliceFlag(name string, defaultValue []string, help string) commandOptionFn {
+func WithStringSliceFlag(name string, defaultValue []string, help string) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.Flags().StringSlice(name, defaultValue, help)
 	}
 }
 
-func WithHiddenFlag(name string) commandOptionFn {
+func WithHiddenFlag(name string) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		_ = cmd.Flags().MarkHidden(name)
 	}
 }
 
-func WithRunE(fn func(cmd *cobra.Command, args []string) error) commandOptionFn {
+func WithRunE(fn func(cmd *cobra.Command, args []string) error) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.RunE = fn
 	}
 }
 
-func WithRun(fn func(cmd *cobra.Command, args []string)) commandOptionFn {
+func WithRun(fn func(cmd *cobra.Command, args []string)) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.Run = fn
 	}
 }
 
-func WithChildCommands(cmds ...*cobra.Command) commandOptionFn {
+func WithChildCommands(cmds ...*cobra.Command) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		for _, child := range cmds {
 			cmd.AddCommand(child)
@@ -177,55 +177,55 @@ func WithChildCommands(cmds ...*cobra.Command) commandOptionFn {
 	}
 }
 
-func WithShortDescription(v string) commandOptionFn {
+func WithShortDescription(v string) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.Short = v
 	}
 }
 
-func WithArgs(p cobra.PositionalArgs) commandOptionFn {
+func WithArgs(p cobra.PositionalArgs) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.Args = p
 	}
 }
 
-func WithValidArgs(validArgs ...string) commandOptionFn {
+func WithValidArgs(validArgs ...string) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.ValidArgs = validArgs
 	}
 }
 
-func WithValidArgsFunction(fn func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective)) commandOptionFn {
+func WithValidArgsFunction(fn func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective)) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.ValidArgsFunction = fn
 	}
 }
 
-func WithDescription(v string) commandOptionFn {
+func WithDescription(v string) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.Long = v
 	}
 }
 
-func WithSilenceUsage() commandOptionFn {
+func WithSilenceUsage() CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.SilenceUsage = true
 	}
 }
 
-func WithSilenceError() commandOptionFn {
+func WithSilenceError() CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.SilenceErrors = true
 	}
 }
 
-func WithPersistentPreRunE(fn func(cmd *cobra.Command, args []string) error) commandOptionFn {
+func WithPersistentPreRunE(fn func(cmd *cobra.Command, args []string) error) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.PersistentPreRunE = fn
 	}
 }
 
-func NewStackCommand(use string, opts ...commandOption) *cobra.Command {
+func NewStackCommand(use string, opts ...CommandOption) *cobra.Command {
 	return NewMembershipCommand(use,
 		append(opts,
 			WithPersistentStringFlag(stackFlag, "", "Specific stack (not required if only one stack is present)"),
@@ -233,7 +233,7 @@ func NewStackCommand(use string, opts ...commandOption) *cobra.Command {
 	)
 }
 
-func NewMembershipCommand(use string, opts ...commandOption) *cobra.Command {
+func NewMembershipCommand(use string, opts ...CommandOption) *cobra.Command {
 	return NewCommand(use,
 		append(opts,
 			WithPersistentStringFlag(organizationFlag, "", "Selected organization (not required if only one organization is present)"),
@@ -241,7 +241,7 @@ func NewMembershipCommand(use string, opts ...commandOption) *cobra.Command {
 	)
 }
 
-func NewCommand(use string, opts ...commandOption) *cobra.Command {
+func NewCommand(use string, opts ...CommandOption) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: use,
 	}
