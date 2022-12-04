@@ -24,7 +24,7 @@ func NewCommand() *cobra.Command {
 		fctl.WithShortDescription("Search in all services"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := fctl.Get(cmd)
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}

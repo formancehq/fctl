@@ -11,7 +11,7 @@ func NewSendCommand() *cobra.Command {
 		fctl.WithShortDescription("Invite a user by email"),
 		fctl.WithAliases("s"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := fctl.Get(cmd)
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}

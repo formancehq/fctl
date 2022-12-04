@@ -11,7 +11,7 @@ func NewGeneratePersonalTokenCommand() *cobra.Command {
 	return fctl.NewCommand("generate-personal-token",
 		fctl.WithDescription("Generate a personal bearer token"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := fctl.Get(cmd)
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}

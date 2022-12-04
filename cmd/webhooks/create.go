@@ -18,7 +18,7 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithArgs(cobra.MinimumNArgs(2)),
 		fctl.WithStringFlag(secretFlag, "", "Webhooks signing secret"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := fctl.Get(cmd)
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}

@@ -13,7 +13,7 @@ func NewDeleteCommand() *cobra.Command {
 		fctl.WithValidArgsFunction(ProfileNamesAutoCompletion),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			config, err := fctl.Get(cmd)
+			config, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}

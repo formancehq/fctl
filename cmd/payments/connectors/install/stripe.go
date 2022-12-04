@@ -16,7 +16,7 @@ func NewStripeCommand() *cobra.Command {
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithStringFlag(stripeApiKeyFlag, "", "Stripe API key"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := fctl.Get(cmd)
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}

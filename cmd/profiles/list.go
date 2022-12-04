@@ -12,7 +12,7 @@ func NewListCommand() *cobra.Command {
 		fctl.WithShortDescription("List profiles"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := fctl.Get(cmd)
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}

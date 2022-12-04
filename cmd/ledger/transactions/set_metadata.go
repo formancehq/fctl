@@ -19,7 +19,7 @@ func NewSetMetadataCommand() *cobra.Command {
 				return err
 			}
 
-			cfg, err := fctl.Get(cmd)
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}

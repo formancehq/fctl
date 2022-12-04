@@ -30,7 +30,7 @@ func NewUpdateCommand() *cobra.Command {
 		fctl.WithStringSliceFlag(redirectUriFlag, []string{}, "Redirect URIS"),
 		fctl.WithStringSliceFlag(postLogoutRedirectUriFlag, []string{}, "Post logout redirect uris"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := fctl.Get(cmd)
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}

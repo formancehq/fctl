@@ -191,7 +191,7 @@ func (p *prompt) displayHeader(cmd *cobra.Command, cfg *fctl.Config) error {
 
 func (p *prompt) nextCommand(cmd *cobra.Command) error {
 
-	cfg, err := fctl.Get(cmd)
+	cfg, err := fctl.GetConfig(cmd)
 	if err != nil {
 		return err
 	}

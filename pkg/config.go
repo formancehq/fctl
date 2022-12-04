@@ -95,7 +95,7 @@ func (c *Config) SetCurrentProfileName(s string) {
 	c.currentProfile = s
 }
 
-func Get(cmd *cobra.Command) (*Config, error) {
+func GetConfig(cmd *cobra.Command) (*Config, error) {
 	return GetConfigManager(cmd).Load()
 }
 

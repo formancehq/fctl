@@ -33,7 +33,7 @@ func NewUICommand() *cobra.Command {
 		fctl.WithShortDescription("Open UI"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := fctl.Get(cmd)
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}

@@ -20,7 +20,7 @@ func NewListCommand() *cobra.Command {
 		fctl.WithAliases("s"),
 		fctl.WithStringFlag(statusFlag, "", "Filter invitations by status"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := fctl.Get(cmd)
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}

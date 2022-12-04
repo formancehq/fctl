@@ -21,7 +21,7 @@ func NewSendCommand() *cobra.Command {
 		fctl.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
 		fctl.WithStringFlag(referenceFlag, "", "Reference to add to the generated transaction"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := fctl.Get(cmd)
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}

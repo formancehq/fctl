@@ -233,7 +233,7 @@ func (p *Profile) IsConnected() bool {
 type CurrentProfile Profile
 
 func ListProfiles(cmd *cobra.Command, toComplete string) ([]string, error) {
-	config, err := Get(cmd)
+	config, err := GetConfig(cmd)
 	if err != nil {
 		return []string{}, nil
 	}

@@ -12,7 +12,7 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithShortDescription("Create organization"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := fctl.Get(cmd)
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}

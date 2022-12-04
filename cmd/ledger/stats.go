@@ -15,7 +15,7 @@ func NewStatsCommand() *cobra.Command {
 		fctl.WithAliases("st"),
 		fctl.WithShortDescription("Read ledger stats"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := fctl.Get(cmd)
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}

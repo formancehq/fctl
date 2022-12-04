@@ -17,7 +17,7 @@ func NewDeleteCommand() *cobra.Command {
 		fctl.WithArgs(cobra.MaximumNArgs(1)),
 		fctl.WithStringFlag(stackNameFlag, "", "Sandbox to remove"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := fctl.Get(cmd)
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}
