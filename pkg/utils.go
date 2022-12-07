@@ -1,4 +1,4 @@
-package internal
+package fctl
 
 func Map[SRC any, DST any](srcs []SRC, mapper func(SRC) DST) []DST {
 	ret := make([]DST, 0)

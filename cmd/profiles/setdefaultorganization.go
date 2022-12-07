@@ -1,29 +1,29 @@
 package profiles
 
 import (
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 func NewSetDefaultOrganizationCommand() *cobra.Command {
-	return internal.NewCommand("set-default-organization",
-		internal.WithArgs(cobra.ExactArgs(1)),
-		internal.WithAliases("sdo"),
-		internal.WithShortDescription("Set default organization"),
-		internal.WithValidArgsFunction(ProfileNamesAutoCompletion),
-		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := internal.Get(cmd)
+	return fctl.NewCommand("set-default-organization",
+		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithAliases("sdo"),
+		fctl.WithShortDescription("Set default organization"),
+		fctl.WithValidArgsFunction(ProfileNamesAutoCompletion),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}
 
-			internal.GetCurrentProfile(cmd, cfg).SetDefaultOrganization(args[0])
+			fctl.GetCurrentProfile(cmd, cfg).SetDefaultOrganization(args[0])
 
 			if err := cfg.Persist(); err != nil {
 				return errors.Wrap(err, "Updating config")
 			}
-			internal.Success(cmd.OutOrStdout(), "Default organization updated!")
+			fctl.Success(cmd.OutOrStdout(), "Default organization updated!")
 			return nil
 		}),
 	)

@@ -2,14 +2,14 @@ package me
 
 import (
 	"github.com/formancehq/fctl/cmd/cloud/me/invitations"
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 )
 
 func NewCommand() *cobra.Command {
-	return internal.NewCommand("me",
-		internal.WithShortDescription("Current use management"),
-		internal.WithChildCommands(
+	return fctl.NewCommand("me",
+		fctl.WithShortDescription("Current use management"),
+		fctl.WithChildCommands(
 			invitations.NewCommand(),
 			NewInfoCommand(),
 		),

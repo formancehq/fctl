@@ -3,7 +3,7 @@ package webhooks
 import (
 	"net/url"
 
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go"
 	"github.com/spf13/cobra"
 )
@@ -12,18 +12,18 @@ func NewCreateCommand() *cobra.Command {
 	const (
 		secretFlag = "secret"
 	)
-	return internal.NewCommand("create",
-		internal.WithShortDescription("Create a new config"),
-		internal.WithAliases("cr"),
-		internal.WithArgs(cobra.MinimumNArgs(2)),
-		internal.WithStringFlag(secretFlag, "", "Webhooks signing secret"),
-		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := internal.Get(cmd)
+	return fctl.NewCommand("create",
+		fctl.WithShortDescription("Create a new config"),
+		fctl.WithAliases("cr"),
+		fctl.WithArgs(cobra.MinimumNArgs(2)),
+		fctl.WithStringFlag(secretFlag, "", "Webhooks signing secret"),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}
 
-			client, err := internal.NewStackClient(cmd, cfg)
+			client, err := fctl.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -32,7 +32,7 @@ func NewCreateCommand() *cobra.Command {
 				return err
 			}
 
-			secret := internal.GetString(cmd, secretFlag)
+			secret := fctl.GetString(cmd, secretFlag)
 
 			res, _, err := client.WebhooksApi.InsertOneConfig(cmd.Context()).
 				ConfigUser(formance.ConfigUser{
@@ -44,7 +44,7 @@ func NewCreateCommand() *cobra.Command {
 				return err
 			}
 
-			internal.Success(cmd.OutOrStdout(),
+			fctl.Success(cmd.OutOrStdout(),
 				"Config created successfully with ID: %s", *res.Data.Id)
 			return nil
 		}),

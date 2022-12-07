@@ -4,7 +4,7 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -29,26 +29,26 @@ func openUrl(url string) error {
 }
 
 func NewUICommand() *cobra.Command {
-	return internal.NewStackCommand("ui",
-		internal.WithShortDescription("Open UI"),
-		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
+	return fctl.NewStackCommand("ui",
+		fctl.WithShortDescription("Open UI"),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			cfg, err := internal.Get(cmd)
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}
 
-			organization, err := internal.ResolveOrganizationID(cmd, cfg)
+			organization, err := fctl.ResolveOrganizationID(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			stack, err := internal.ResolveStack(cmd, cfg, organization)
+			stack, err := fctl.ResolveStack(cmd, cfg, organization)
 			if err != nil {
 				return err
 			}
 
-			profile := internal.GetCurrentProfile(cmd, cfg)
+			profile := fctl.GetCurrentProfile(cmd, cfg)
 			stackUrl := profile.ServicesBaseUrl(stack)
 
 			return errors.Wrapf(openUrl(stackUrl.String()), "opening url: %s", stackUrl.String())

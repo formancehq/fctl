@@ -3,23 +3,23 @@ package ledger
 import (
 	"fmt"
 
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewServerInfoCommand() *cobra.Command {
-	return internal.NewCommand("server-infos",
-		internal.WithArgs(cobra.ExactArgs(0)),
-		internal.WithAliases("si"),
-		internal.WithShortDescription("Read server info"),
-		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := internal.Get(cmd)
+	return fctl.NewCommand("server-infos",
+		fctl.WithArgs(cobra.ExactArgs(0)),
+		fctl.WithAliases("si"),
+		fctl.WithShortDescription("Read server info"),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}
 
-			ledgerClient, err := internal.NewStackClient(cmd, cfg)
+			ledgerClient, err := fctl.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -41,10 +41,10 @@ func NewServerInfoCommand() *cobra.Command {
 				return err
 			}
 
-			internal.Highlightln(cmd.OutOrStdout(), "Ledgers :")
+			fctl.Highlightln(cmd.OutOrStdout(), "Ledgers :")
 			if err := pterm.DefaultBulletList.
 				WithWriter(cmd.OutOrStdout()).
-				WithItems(internal.Map(response.Data.Config.Storage.Ledgers, func(ledger string) pterm.BulletListItem {
+				WithItems(fctl.Map(response.Data.Config.Storage.Ledgers, func(ledger string) pterm.BulletListItem {
 					return pterm.BulletListItem{
 						Text:        ledger,
 						TextStyle:   pterm.NewStyle(pterm.FgDefault),

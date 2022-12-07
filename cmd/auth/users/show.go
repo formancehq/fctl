@@ -1,22 +1,22 @@
 package users
 
 import (
-	internal2 "github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewShowCommand() *cobra.Command {
-	return internal2.NewCommand("show",
-		internal2.WithAliases("s"),
-		internal2.WithShortDescription("Show user"),
-		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := internal2.Get(cmd)
+	return fctl.NewCommand("show",
+		fctl.WithAliases("s"),
+		fctl.WithShortDescription("Show user"),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}
 
-			client, err := internal2.NewStackClient(cmd, cfg)
+			client, err := fctl.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}

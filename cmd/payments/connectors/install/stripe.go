@@ -1,7 +1,7 @@
 package install
 
 import (
-	internal2 "github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -11,17 +11,17 @@ func NewStripeCommand() *cobra.Command {
 	const (
 		stripeApiKeyFlag = "api-key"
 	)
-	return internal2.NewCommand("stripe [API_KEY]",
-		internal2.WithShortDescription("Install a stripe connector"),
-		internal2.WithArgs(cobra.ExactArgs(1)),
-		internal2.WithStringFlag(stripeApiKeyFlag, "", "Stripe API key"),
-		internal2.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := internal2.Get(cmd)
+	return fctl.NewCommand("stripe [API_KEY]",
+		fctl.WithShortDescription("Install a stripe connector"),
+		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithStringFlag(stripeApiKeyFlag, "", "Stripe API key"),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}
 
-			paymentsClient, err := internal2.NewStackClient(cmd, cfg)
+			paymentsClient, err := fctl.NewStackClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -34,7 +34,7 @@ func NewStripeCommand() *cobra.Command {
 				}).
 				Execute()
 
-			internal2.Success(cmd.OutOrStdout(), "Connector installed!")
+			fctl.Success(cmd.OutOrStdout(), "Connector installed!")
 
 			return errors.Wrap(err, "installing connector")
 		}),

@@ -1,22 +1,22 @@
 package organizations
 
 import (
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 )
 
 func NewDeleteCommand() *cobra.Command {
-	return internal.NewCommand("delete",
-		internal.WithAliases("del", "d"),
-		internal.WithShortDescription("Delete organization"),
-		internal.WithArgs(cobra.ExactArgs(1)),
-		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := internal.Get(cmd)
+	return fctl.NewCommand("delete",
+		fctl.WithAliases("del", "d"),
+		fctl.WithShortDescription("Delete organization"),
+		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}
 
-			apiClient, err := internal.NewMembershipClient(cmd, cfg)
+			apiClient, err := fctl.NewMembershipClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
@@ -28,7 +28,7 @@ func NewDeleteCommand() *cobra.Command {
 				return err
 			}
 
-			internal.Success(cmd.OutOrStdout(), "Organization '%s' deleted", args[0])
+			fctl.Success(cmd.OutOrStdout(), "Organization '%s' deleted", args[0])
 
 			return nil
 		}),

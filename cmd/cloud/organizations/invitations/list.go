@@ -3,8 +3,8 @@ package invitations
 import (
 	"time"
 
-	"github.com/formancehq/fctl/cmd/internal"
 	"github.com/formancehq/fctl/membershipclient"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -13,37 +13,37 @@ func NewListCommand() *cobra.Command {
 	const (
 		statusFlag = "status"
 	)
-	return internal.NewCommand("list",
-		internal.WithAliases("ls", "l"),
-		internal.WithArgs(cobra.ExactArgs(0)),
-		internal.WithShortDescription("List invitations"),
-		internal.WithAliases("s"),
-		internal.WithStringFlag(statusFlag, "", "Filter invitations by status"),
-		internal.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := internal.Get(cmd)
+	return fctl.NewCommand("list",
+		fctl.WithAliases("ls", "l"),
+		fctl.WithArgs(cobra.ExactArgs(0)),
+		fctl.WithShortDescription("List invitations"),
+		fctl.WithAliases("s"),
+		fctl.WithStringFlag(statusFlag, "", "Filter invitations by status"),
+		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
+			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}
 
-			apiClient, err := internal.NewMembershipClient(cmd, cfg)
+			apiClient, err := fctl.NewMembershipClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
-			organizationID, err := internal.ResolveOrganizationID(cmd, cfg)
+			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg)
 			if err != nil {
 				return err
 			}
 
 			listInvitationsResponse, _, err := apiClient.DefaultApi.
 				ListOrganizationInvitations(cmd.Context(), organizationID).
-				Status(internal.GetString(cmd, statusFlag)).
+				Status(fctl.GetString(cmd, statusFlag)).
 				Execute()
 			if err != nil {
 				return err
 			}
 
-			tableData := internal.Map(listInvitationsResponse.Data, func(i membershipclient.Invitation) []string {
+			tableData := fctl.Map(listInvitationsResponse.Data, func(i membershipclient.Invitation) []string {
 				return []string{
 					i.Id,
 					i.UserEmail,
@@ -51,7 +51,7 @@ func NewListCommand() *cobra.Command {
 					i.CreationDate.Format(time.RFC3339),
 				}
 			})
-			tableData = internal.Prepend(tableData, []string{"ID", "Email", "Status", "Creation date"})
+			tableData = fctl.Prepend(tableData, []string{"ID", "Email", "Status", "Creation date"})
 			return pterm.DefaultTable.
 				WithHasHeader().
 				WithWriter(cmd.OutOrStdout()).

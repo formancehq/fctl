@@ -1,15 +1,15 @@
 package transactions
 
 import (
-	"github.com/formancehq/fctl/cmd/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 )
 
 func NewLedgerTransactionsCommand() *cobra.Command {
-	return internal.NewCommand("transactions",
-		internal.WithAliases("t", "txs", "tx"),
-		internal.WithShortDescription("Transactions management"),
-		internal.WithChildCommands(
+	return fctl.NewCommand("transactions",
+		fctl.WithAliases("t", "txs", "tx"),
+		fctl.WithShortDescription("Transactions management"),
+		fctl.WithChildCommands(
 			NewListCommand(),
 			NewCommand(),
 			NewRevertCommand(),
