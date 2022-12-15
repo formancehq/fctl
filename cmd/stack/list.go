@@ -48,9 +48,15 @@ func NewListCommand() *cobra.Command {
 					stack.Name,
 					profile.ServicesBaseUrl(&stack).String(),
 					fctl.BoolPointerToString(stack.Production),
+					func() string {
+						if stack.BoundRegion == nil {
+							return ""
+						}
+						return stack.BoundRegion.Id
+					}(),
 				}
 			})
-			tableData = fctl.Prepend(tableData, []string{"ID", "Name", "Dashboard", "Production"})
+			tableData = fctl.Prepend(tableData, []string{"ID", "Name", "Dashboard", "Production", "Bound region"})
 			return pterm.DefaultTable.
 				WithHasHeader().
 				WithWriter(cmd.OutOrStdout()).
