@@ -13,7 +13,7 @@ import (
 func NewListCommand() *cobra.Command {
 	return fctl.NewMembershipCommand("list",
 		fctl.WithAliases("ls", "l"),
-		fctl.WithShortDescription("List sandboxes"),
+		fctl.WithShortDescription("List stacks"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
@@ -34,11 +34,11 @@ func NewListCommand() *cobra.Command {
 
 			rsp, _, err := apiClient.DefaultApi.ListStacks(cmd.Context(), organization).Execute()
 			if err != nil {
-				return errors.Wrap(err, "listing sandboxs")
+				return errors.Wrap(err, "listing stacks")
 			}
 
 			if len(rsp.Data) == 0 {
-				fmt.Fprintln(cmd.OutOrStdout(), "No sandboxs found.")
+				fmt.Fprintln(cmd.OutOrStdout(), "No stacks found.")
 				return nil
 			}
 
@@ -53,9 +53,10 @@ func NewListCommand() *cobra.Command {
 						return *stack.Region
 					}(),
 					profile.ServicesBaseUrl(&stack).String(),
+					fctl.BoolPointerToString(stack.Production),
 				}
 			})
-			tableData = fctl.Prepend(tableData, []string{"ID", "Name", "Region", "Dashboard"})
+			tableData = fctl.Prepend(tableData, []string{"ID", "Name", "Region", "Dashboard", "Production"})
 			return pterm.DefaultTable.
 				WithHasHeader().
 				WithWriter(cmd.OutOrStdout()).

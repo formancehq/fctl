@@ -329,6 +329,17 @@ paths:
                 $ref: '#/components/schemas/CreateInvitationResponse'
           description: Invitation created
       summary: Create invitation
+  /regions:
+    get:
+      operationId: listRegions
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListRegionsResponse'
+          description: List of the regions
+      summary: List regions
 components:
   schemas:
     OrganizationData:
@@ -347,18 +358,22 @@ components:
       - $ref: '#/components/schemas/Organization_allOf'
     StackData:
       example:
+        production: true
         name: name
-        region: eu-west-1
+        tags:
+          key: ""
       properties:
         name:
           description: Stack name
           type: string
-        region:
-          default: eu-west-1
-          description: Region
-          type: string
+        production:
+          type: boolean
+        tags:
+          additionalProperties: true
+          type: object
       required:
       - name
+      - production
       type: object
     Stack:
       allOf:
@@ -526,6 +541,21 @@ components:
       - status
       - userEmail
       type: object
+    Region:
+      example:
+        id: id
+        tags:
+          key: ""
+      properties:
+        id:
+          type: string
+        tags:
+          additionalProperties: true
+          type: object
+      required:
+      - id
+      - tags
+      type: object
     ListOrganizationExpandedResponse:
       example:
         data:
@@ -535,6 +565,21 @@ components:
         data:
           items:
             $ref: '#/components/schemas/ListOrganizationExpandedResponse_data_inner'
+          type: array
+      type: object
+    ListRegionsResponse:
+      example:
+        data:
+        - id: id
+          tags:
+            key: ""
+        - id: id
+          tags:
+            key: ""
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/Region'
           type: array
       type: object
     Organization_allOf:
@@ -561,6 +606,8 @@ components:
         uri:
           description: Base stack uri
           type: string
+        boundRegion:
+          $ref: '#/components/schemas/Region'
       required:
       - id
       - organizationId

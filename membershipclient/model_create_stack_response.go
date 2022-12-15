@@ -14,6 +14,9 @@ import (
 	"encoding/json"
 )
 
+// checks if the CreateStackResponse type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &CreateStackResponse{}
+
 // CreateStackResponse struct for CreateStackResponse
 type CreateStackResponse struct {
 	Data *Stack `json:"data,omitempty"`
@@ -69,11 +72,19 @@ func (o *CreateStackResponse) SetData(v Stack) {
 }
 
 func (o CreateStackResponse) MarshalJSON() ([]byte, error) {
+	toSerialize,err := o.ToMap()
+	if err != nil {
+		return []byte{}, err
+	}
+	return json.Marshal(toSerialize)
+}
+
+func (o CreateStackResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	if !isNil(o.Data) {
 		toSerialize["data"] = o.Data
 	}
-	return json.Marshal(toSerialize)
+	return toSerialize, nil
 }
 
 type NullableCreateStackResponse struct {

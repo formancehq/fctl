@@ -14,6 +14,9 @@ import (
 	"encoding/json"
 )
 
+// checks if the UserData type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &UserData{}
+
 // UserData struct for UserData
 type UserData struct {
 	Email string `json:"email"`
@@ -51,7 +54,7 @@ func (o *UserData) GetEmail() string {
 // and a boolean to check if the value has been set.
 func (o *UserData) GetEmailOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.Email, true
 }
@@ -62,11 +65,17 @@ func (o *UserData) SetEmail(v string) {
 }
 
 func (o UserData) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["email"] = o.Email
+	toSerialize,err := o.ToMap()
+	if err != nil {
+		return []byte{}, err
 	}
 	return json.Marshal(toSerialize)
+}
+
+func (o UserData) ToMap() (map[string]interface{}, error) {
+	toSerialize := map[string]interface{}{}
+	toSerialize["email"] = o.Email
+	return toSerialize, nil
 }
 
 type NullableUserData struct {

@@ -12,10 +12,12 @@ import (
 )
 
 func NewCreateCommand() *cobra.Command {
+	const productionFlag = "production"
 	return fctl.NewMembershipCommand("create",
-		fctl.WithShortDescription("Create a new sandbox"),
+		fctl.WithShortDescription("Create a new stack"),
 		fctl.WithAliases("c", "cr"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithBoolFlag(productionFlag, false, ""),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 
 			cfg, err := fctl.GetConfig(cmd)
@@ -33,11 +35,13 @@ func NewCreateCommand() *cobra.Command {
 				return err
 			}
 
+			production := fctl.GetBool(cmd, productionFlag)
 			stack, _, err := apiClient.DefaultApi.CreateStack(cmd.Context(), organization).Body(membershipclient.StackData{
-				Name: args[0],
+				Name:       args[0],
+				Production: &production,
 			}).Execute()
 			if err != nil {
-				return fctl.WrapError(err, "creating sandbox")
+				return fctl.WrapError(err, "creating stack")
 			}
 
 			profile := fctl.GetCurrentProfile(cmd, cfg)
@@ -48,7 +52,7 @@ func NewCreateCommand() *cobra.Command {
 
 			fctl.Highlightln(cmd.OutOrStdout(), "Your dashboard will be reachable on: %s",
 				profile.ServicesBaseUrl(stack.Data).String())
-			fctl.Highlightln(cmd.OutOrStdout(), "You can access your sandbox apis using following urls :")
+			fctl.Highlightln(cmd.OutOrStdout(), "You can access your stack apis using following urls :")
 
 			return internal.PrintStackInformation(cmd.OutOrStdout(), profile, stack.Data)
 		}),

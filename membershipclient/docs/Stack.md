@@ -5,16 +5,18 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Name** | **string** | Stack name | 
-**Region** | Pointer to **string** | Region | [optional] [default to "eu-west-1"]
+**Production** | **bool** |  | 
+**Tags** | Pointer to **map[string]interface{}** |  | [optional] 
 **Id** | **string** | Stack ID | 
 **OrganizationId** | **string** | Organization ID | 
 **Uri** | **string** | Base stack uri | 
+**BoundRegion** | Pointer to [**Region**](Region.md) |  | [optional] 
 
 ## Methods
 
 ### NewStack
 
-`func NewStack(name string, id string, organizationId string, uri string, ) *Stack`
+`func NewStack(name string, production bool, id string, organizationId string, uri string, ) *Stack`
 
 NewStack instantiates a new Stack object
 This constructor will assign default values to properties that have it defined,
@@ -49,30 +51,50 @@ and a boolean to check if the value has been set.
 SetName sets Name field to given value.
 
 
-### GetRegion
+### GetProduction
 
-`func (o *Stack) GetRegion() string`
+`func (o *Stack) GetProduction() bool`
 
-GetRegion returns the Region field if non-nil, zero value otherwise.
+GetProduction returns the Production field if non-nil, zero value otherwise.
 
-### GetRegionOk
+### GetProductionOk
 
-`func (o *Stack) GetRegionOk() (*string, bool)`
+`func (o *Stack) GetProductionOk() (*bool, bool)`
 
-GetRegionOk returns a tuple with the Region field if it's non-nil, zero value otherwise
+GetProductionOk returns a tuple with the Production field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetRegion
+### SetProduction
 
-`func (o *Stack) SetRegion(v string)`
+`func (o *Stack) SetProduction(v bool)`
 
-SetRegion sets Region field to given value.
+SetProduction sets Production field to given value.
 
-### HasRegion
 
-`func (o *Stack) HasRegion() bool`
+### GetTags
 
-HasRegion returns a boolean if a field has been set.
+`func (o *Stack) GetTags() map[string]interface{}`
+
+GetTags returns the Tags field if non-nil, zero value otherwise.
+
+### GetTagsOk
+
+`func (o *Stack) GetTagsOk() (*map[string]interface{}, bool)`
+
+GetTagsOk returns a tuple with the Tags field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetTags
+
+`func (o *Stack) SetTags(v map[string]interface{})`
+
+SetTags sets Tags field to given value.
+
+### HasTags
+
+`func (o *Stack) HasTags() bool`
+
+HasTags returns a boolean if a field has been set.
 
 ### GetId
 
@@ -133,6 +155,31 @@ and a boolean to check if the value has been set.
 
 SetUri sets Uri field to given value.
 
+
+### GetBoundRegion
+
+`func (o *Stack) GetBoundRegion() Region`
+
+GetBoundRegion returns the BoundRegion field if non-nil, zero value otherwise.
+
+### GetBoundRegionOk
+
+`func (o *Stack) GetBoundRegionOk() (*Region, bool)`
+
+GetBoundRegionOk returns a tuple with the BoundRegion field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetBoundRegion
+
+`func (o *Stack) SetBoundRegion(v Region)`
+
+SetBoundRegion sets BoundRegion field to given value.
+
+### HasBoundRegion
+
+`func (o *Stack) HasBoundRegion() bool`
+
+HasBoundRegion returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

@@ -5,13 +5,14 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Name** | **string** | Stack name | 
-**Region** | Pointer to **string** | Region | [optional] [default to "eu-west-1"]
+**Production** | **bool** |  | 
+**Tags** | Pointer to **map[string]interface{}** |  | [optional] 
 
 ## Methods
 
 ### NewStackData
 
-`func NewStackData(name string, ) *StackData`
+`func NewStackData(name string, production bool, ) *StackData`
 
 NewStackData instantiates a new StackData object
 This constructor will assign default values to properties that have it defined,
@@ -46,30 +47,50 @@ and a boolean to check if the value has been set.
 SetName sets Name field to given value.
 
 
-### GetRegion
+### GetProduction
 
-`func (o *StackData) GetRegion() string`
+`func (o *StackData) GetProduction() bool`
 
-GetRegion returns the Region field if non-nil, zero value otherwise.
+GetProduction returns the Production field if non-nil, zero value otherwise.
 
-### GetRegionOk
+### GetProductionOk
 
-`func (o *StackData) GetRegionOk() (*string, bool)`
+`func (o *StackData) GetProductionOk() (*bool, bool)`
 
-GetRegionOk returns a tuple with the Region field if it's non-nil, zero value otherwise
+GetProductionOk returns a tuple with the Production field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetRegion
+### SetProduction
 
-`func (o *StackData) SetRegion(v string)`
+`func (o *StackData) SetProduction(v bool)`
 
-SetRegion sets Region field to given value.
+SetProduction sets Production field to given value.
 
-### HasRegion
 
-`func (o *StackData) HasRegion() bool`
+### GetTags
 
-HasRegion returns a boolean if a field has been set.
+`func (o *StackData) GetTags() map[string]interface{}`
+
+GetTags returns the Tags field if non-nil, zero value otherwise.
+
+### GetTagsOk
+
+`func (o *StackData) GetTagsOk() (*map[string]interface{}, bool)`
+
+GetTagsOk returns a tuple with the Tags field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetTags
+
+`func (o *StackData) SetTags(v map[string]interface{})`
+
+SetTags sets Tags field to given value.
+
+### HasTags
+
+`func (o *StackData) HasTags() bool`
+
+HasTags returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

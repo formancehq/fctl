@@ -291,6 +291,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateInvitationResponse'
+  /regions:
+    get:
+      summary: List regions
+      operationId: listRegions
+      responses:
+        200:
+          description: List of the regions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListRegionsResponse'
 
 security:
 - oauth2: []
@@ -333,14 +344,16 @@ components:
       type: object
       required:
       - name
+      - production
       properties:
         name:
           type: string
           description: Stack name
-        region:
-          type: string
-          description: Region
-          default: eu-west-1
+        production:
+          type: boolean
+        tags:
+          type: object
+          additionalProperties: true
     Stack:
       allOf:
       - $ref: '#/components/schemas/StackData'
@@ -359,6 +372,8 @@ components:
           uri:
             type: string
             description: Base stack uri
+          boundRegion:
+            $ref: '#/components/schemas/Region'
     UserData:
       type: object
       properties:
@@ -474,6 +489,17 @@ components:
       - userEmail
       - organizationId
       - id
+    Region:
+      type: object
+      properties:
+        id:
+          type: string
+        tags:
+          type: object
+          additionalProperties: true
+      required:
+      - id
+      - tags
     ListOrganizationExpandedResponse:
       type: object
       properties:
@@ -488,3 +514,10 @@ components:
                   type: integer
                 totalUsers:
                   type: integer
+    ListRegionsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Region'

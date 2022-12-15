@@ -14,6 +14,9 @@ import (
 	"encoding/json"
 )
 
+// checks if the ListOrganizationExpandedResponseDataInnerAllOf type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &ListOrganizationExpandedResponseDataInnerAllOf{}
+
 // ListOrganizationExpandedResponseDataInnerAllOf struct for ListOrganizationExpandedResponseDataInnerAllOf
 type ListOrganizationExpandedResponseDataInnerAllOf struct {
 	TotalStacks *int32 `json:"totalStacks,omitempty"`
@@ -102,6 +105,14 @@ func (o *ListOrganizationExpandedResponseDataInnerAllOf) SetTotalUsers(v int32) 
 }
 
 func (o ListOrganizationExpandedResponseDataInnerAllOf) MarshalJSON() ([]byte, error) {
+	toSerialize,err := o.ToMap()
+	if err != nil {
+		return []byte{}, err
+	}
+	return json.Marshal(toSerialize)
+}
+
+func (o ListOrganizationExpandedResponseDataInnerAllOf) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	if !isNil(o.TotalStacks) {
 		toSerialize["totalStacks"] = o.TotalStacks
@@ -109,7 +120,7 @@ func (o ListOrganizationExpandedResponseDataInnerAllOf) MarshalJSON() ([]byte, e
 	if !isNil(o.TotalUsers) {
 		toSerialize["totalUsers"] = o.TotalUsers
 	}
-	return json.Marshal(toSerialize)
+	return toSerialize, nil
 }
 
 type NullableListOrganizationExpandedResponseDataInnerAllOf struct {

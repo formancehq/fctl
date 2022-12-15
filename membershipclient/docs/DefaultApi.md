@@ -15,6 +15,7 @@ Method | HTTP request | Description
 [**ListOrganizationInvitations**](DefaultApi.md#ListOrganizationInvitations) | **Get** /organizations/{organizationId}/invitations | List invitations of the organization
 [**ListOrganizations**](DefaultApi.md#ListOrganizations) | **Get** /organizations | List organizations of the connected user
 [**ListOrganizationsExpanded**](DefaultApi.md#ListOrganizationsExpanded) | **Get** /organizations/expanded | List organizations of the connected user with expanded data
+[**ListRegions**](DefaultApi.md#ListRegions) | **Get** /regions | List regions
 [**ListStacks**](DefaultApi.md#ListStacks) | **Get** /organizations/{organizationId}/stacks | List stacks
 [**ListUsers**](DefaultApi.md#ListUsers) | **Get** /organizations/{organizationId}/users | List users
 [**ReadOrganization**](DefaultApi.md#ReadOrganization) | **Get** /organizations/{organizationId} | Read organization
@@ -733,6 +734,65 @@ Other parameters are passed through a pointer to a apiListOrganizationsExpandedR
 ### Return type
 
 [**ListOrganizationExpandedResponse**](ListOrganizationExpandedResponse.md)
+
+### Authorization
+
+[oauth2](../README.md#oauth2)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## ListRegions
+
+> ListRegionsResponse ListRegions(ctx).Execute()
+
+List regions
+
+### Example
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "./openapi"
+)
+
+func main() {
+
+    configuration := openapiclient.NewConfiguration()
+    apiClient := openapiclient.NewAPIClient(configuration)
+    resp, r, err := apiClient.DefaultApi.ListRegions(context.Background()).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `DefaultApi.ListRegions``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `ListRegions`: ListRegionsResponse
+    fmt.Fprintf(os.Stdout, "Response from `DefaultApi.ListRegions`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+This endpoint does not need any parameter.
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiListRegionsRequest struct via the builder pattern
+
+
+### Return type
+
+[**ListRegionsResponse**](ListRegionsResponse.md)
 
 ### Authorization
 

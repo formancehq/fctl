@@ -12,10 +12,10 @@ func NewDeleteCommand() *cobra.Command {
 	)
 
 	return fctl.NewMembershipCommand("delete [STACK_ID] | --name=[NAME]",
-		fctl.WithShortDescription("Delete a sandbox"),
+		fctl.WithShortDescription("Delete a stack"),
 		fctl.WithAliases("del", "d"),
 		fctl.WithArgs(cobra.MaximumNArgs(1)),
-		fctl.WithStringFlag(stackNameFlag, "", "Sandbox to remove"),
+		fctl.WithStringFlag(stackNameFlag, "", "Stack to remove"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
