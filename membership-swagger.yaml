@@ -343,17 +343,24 @@ components:
     StackData:
       type: object
       required:
-      - name
+      - metadata
       - production
+      - name
       properties:
         name:
           type: string
           description: Stack name
-        production:
-          type: boolean
+        environment:
+          type: string
         tags:
           type: object
           additionalProperties: true
+        production:
+          type: bool
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
     Stack:
       allOf:
       - $ref: '#/components/schemas/StackData'

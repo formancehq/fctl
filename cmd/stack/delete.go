@@ -1,6 +1,7 @@
 package stack
 
 import (
+	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -12,6 +13,7 @@ func NewDeleteCommand() *cobra.Command {
 	)
 
 	return fctl.NewMembershipCommand("delete [STACK_ID] | --name=[NAME]",
+		fctl.WithConfirmFlag(),
 		fctl.WithShortDescription("Delete a stack"),
 		fctl.WithAliases("del", "d"),
 		fctl.WithArgs(cobra.MaximumNArgs(1)),
@@ -31,12 +33,17 @@ func NewDeleteCommand() *cobra.Command {
 				return err
 			}
 
-			var stackID string
+			var stack *membershipclient.Stack
 			if len(args) == 1 {
 				if fctl.GetString(cmd, stackNameFlag) != "" {
 					return errors.New("need either an id of a name spefified using --name flag")
 				}
-				stackID = args[0]
+
+				rsp, _, err := apiClient.DefaultApi.ReadStack(cmd.Context(), organization, args[0]).Execute()
+				if err != nil {
+					return err
+				}
+				stack = rsp.Data
 			} else {
 				if fctl.GetString(cmd, stackNameFlag) == "" {
 					return errors.New("need either an id of a name specified using --name flag")
@@ -47,17 +54,20 @@ func NewDeleteCommand() *cobra.Command {
 				}
 				for _, s := range stacks.Data {
 					if s.Name == fctl.GetString(cmd, stackNameFlag) {
-						stackID = s.Id
+						stack = &s
 						break
 					}
 				}
-				if stackID == "" {
-					return errors.New("stack not found")
-				}
+			}
+			if stack == nil {
+				return errors.New("Stack not found")
 			}
 
-			if _, err := apiClient.DefaultApi.DeleteStack(cmd.Context(), organization, stackID).Execute(); err != nil {
+			if err := fctl.WithApproval(cmd, stack, func() error {
+				_, err := apiClient.DefaultApi.DeleteStack(cmd.Context(), organization, stack.Id).Execute()
 				return errors.Wrap(err, "deleting stack")
+			}); err != nil {
+				return err
 			}
 
 			fctl.Success(cmd.OutOrStdout(), "Stack deleted.")

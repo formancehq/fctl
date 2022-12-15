@@ -21,18 +21,21 @@ var _ MappedNullable = &StackData{}
 type StackData struct {
 	// Stack name
 	Name string `json:"name"`
-	Production bool `json:"production"`
+	Environment *string `json:"environment,omitempty"`
 	Tags map[string]interface{} `json:"tags,omitempty"`
+	Production bool `json:"production"`
+	Metadata map[string]string `json:"metadata"`
 }
 
 // NewStackData instantiates a new StackData object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewStackData(name string, production bool) *StackData {
+func NewStackData(name string, production bool, metadata map[string]string) *StackData {
 	this := StackData{}
 	this.Name = name
 	this.Production = production
+	this.Metadata = metadata
 	return &this
 }
 
@@ -68,28 +71,36 @@ func (o *StackData) SetName(v string) {
 	o.Name = v
 }
 
-// GetProduction returns the Production field value
-func (o *StackData) GetProduction() bool {
-	if o == nil {
-		var ret bool
+// GetEnvironment returns the Environment field value if set, zero value otherwise.
+func (o *StackData) GetEnvironment() string {
+	if o == nil || isNil(o.Environment) {
+		var ret string
 		return ret
 	}
-
-	return o.Production
+	return *o.Environment
 }
 
-// GetProductionOk returns a tuple with the Production field value
+// GetEnvironmentOk returns a tuple with the Environment field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *StackData) GetProductionOk() (*bool, bool) {
-	if o == nil {
+func (o *StackData) GetEnvironmentOk() (*string, bool) {
+	if o == nil || isNil(o.Environment) {
 		return nil, false
 	}
-	return &o.Production, true
+	return o.Environment, true
 }
 
-// SetProduction sets field value
-func (o *StackData) SetProduction(v bool) {
-	o.Production = v
+// HasEnvironment returns a boolean if a field has been set.
+func (o *StackData) HasEnvironment() bool {
+	if o != nil && !isNil(o.Environment) {
+		return true
+	}
+
+	return false
+}
+
+// SetEnvironment gets a reference to the given string and assigns it to the Environment field.
+func (o *StackData) SetEnvironment(v string) {
+	o.Environment = &v
 }
 
 // GetTags returns the Tags field value if set, zero value otherwise.
@@ -124,6 +135,54 @@ func (o *StackData) SetTags(v map[string]interface{}) {
 	o.Tags = v
 }
 
+// GetProduction returns the Production field value
+func (o *StackData) GetProduction() bool {
+	if o == nil {
+		var ret bool
+		return ret
+	}
+
+	return o.Production
+}
+
+// GetProductionOk returns a tuple with the Production field value
+// and a boolean to check if the value has been set.
+func (o *StackData) GetProductionOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Production, true
+}
+
+// SetProduction sets field value
+func (o *StackData) SetProduction(v bool) {
+	o.Production = v
+}
+
+// GetMetadata returns the Metadata field value
+func (o *StackData) GetMetadata() map[string]string {
+	if o == nil {
+		var ret map[string]string
+		return ret
+	}
+
+	return o.Metadata
+}
+
+// GetMetadataOk returns a tuple with the Metadata field value
+// and a boolean to check if the value has been set.
+func (o *StackData) GetMetadataOk() (*map[string]string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Metadata, true
+}
+
+// SetMetadata sets field value
+func (o *StackData) SetMetadata(v map[string]string) {
+	o.Metadata = v
+}
+
 func (o StackData) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -135,10 +194,14 @@ func (o StackData) MarshalJSON() ([]byte, error) {
 func (o StackData) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["name"] = o.Name
-	toSerialize["production"] = o.Production
+	if !isNil(o.Environment) {
+		toSerialize["environment"] = o.Environment
+	}
 	if !isNil(o.Tags) {
 		toSerialize["tags"] = o.Tags
 	}
+	toSerialize["production"] = o.Production
+	toSerialize["metadata"] = o.Metadata
 	return toSerialize, nil
 }
 

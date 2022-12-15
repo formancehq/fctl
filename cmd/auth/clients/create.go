@@ -18,6 +18,7 @@ func NewCreateCommand() *cobra.Command {
 		postLogoutRedirectUriFlag = "post-logout-redirect-uri"
 	)
 	return fctl.NewCommand("create",
+		fctl.WithConfirmFlag(),
 		fctl.WithAliases("c"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithBoolFlag(publicFlag, false, "Is client public"),

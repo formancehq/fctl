@@ -219,10 +219,15 @@ func WithSilenceError() CommandOptionFn {
 	}
 }
 
-func WithPersistentPreRunE(fn func(cmd *cobra.Command, args []string) error) CommandOptionFn {
-	return func(cmd *cobra.Command) {
-		cmd.PersistentPreRunE = fn
-	}
+func WithConfirmFlag() CommandOptionFn {
+	return WithBoolFlag(confirmFlag, false, "Confirm action")
+}
+
+func NewStackProtectedCommand(use string, opts ...CommandOption) *cobra.Command {
+	return NewStackCommand(use, append(
+		opts,
+		WithConfirmFlag())...,
+	)
 }
 
 func NewStackCommand(use string, opts ...CommandOption) *cobra.Command {
@@ -249,4 +254,24 @@ func NewCommand(use string, opts ...CommandOption) *cobra.Command {
 		opt.apply(cmd)
 	}
 	return cmd
+}
+
+const (
+	ProtectedStackMetadata = "github.com/formancehq/fctl/protected"
+	confirmFlag            = "confirm"
+)
+
+func IsProtectedStack(stack *membershipclient.Stack) bool {
+	return stack.Metadata != nil && (*stack.Metadata)[ProtectedStackMetadata] == "Yes"
+}
+
+func WithApproval(cmd *cobra.Command, stack *membershipclient.Stack, callback func() error) error {
+	if !IsProtectedStack(stack) {
+		return callback()
+	}
+	if GetBool(cmd, confirmFlag) {
+		return callback()
+	}
+	// TODO: Ask interactively
+	return errors.New("need approval")
 }

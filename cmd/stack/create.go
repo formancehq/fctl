@@ -12,12 +12,16 @@ import (
 )
 
 func NewCreateCommand() *cobra.Command {
-	const productionFlag = "production"
+	const (
+		productionFlag = "production"
+		unprotectFlag  = "unprotect"
+	)
 	return fctl.NewMembershipCommand("create",
 		fctl.WithShortDescription("Create a new stack"),
 		fctl.WithAliases("c", "cr"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithBoolFlag(productionFlag, false, ""),
+		fctl.WithBoolFlag(unprotectFlag, false, ""),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 
 			cfg, err := fctl.GetConfig(cmd)
@@ -36,9 +40,14 @@ func NewCreateCommand() *cobra.Command {
 			}
 
 			production := fctl.GetBool(cmd, productionFlag)
+			protected := !fctl.GetBool(cmd, unprotectFlag)
+			metadata := map[string]string{
+				fctl.ProtectedStackMetadata: fctl.BoolPointerToString(&protected),
+			}
 			stack, _, err := apiClient.DefaultApi.CreateStack(cmd.Context(), organization).Body(membershipclient.StackData{
 				Name:       args[0],
 				Production: &production,
+				Metadata:   &metadata,
 			}).Execute()
 			if err != nil {
 				return fctl.WrapError(err, "creating stack")

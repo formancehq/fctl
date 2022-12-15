@@ -358,7 +358,10 @@ components:
       - $ref: '#/components/schemas/Organization_allOf'
     StackData:
       example:
-        production: true
+        environment: environment
+        metadata:
+          key: metadata
+        production: ""
         name: name
         tags:
           key: ""
@@ -366,12 +369,19 @@ components:
         name:
           description: Stack name
           type: string
-        production:
-          type: boolean
+        environment:
+          type: string
         tags:
           additionalProperties: true
           type: object
+        production:
+          type: bool
+        metadata:
+          additionalProperties:
+            type: string
+          type: object
       required:
+      - metadata
       - name
       - production
       type: object

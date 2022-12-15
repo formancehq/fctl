@@ -15,7 +15,6 @@ func PrintStackInformation(out io.Writer, profile *fctl.Profile, stack *membersh
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("ID"), stack.Id})
 	tableData = append(tableData, []string{pterm.LightCyan("Name"), stack.Name})
-	tableData = append(tableData, []string{pterm.LightCyan("Region"), *stack.Region})
 	tableData = append(tableData, []string{pterm.LightCyan("Ledger URI"), fmt.Sprintf("%s/api/ledger", baseUrlStr)})
 	tableData = append(tableData, []string{pterm.LightCyan("Payments URI"), fmt.Sprintf("%s/api/payments", baseUrlStr)})
 	tableData = append(tableData, []string{pterm.LightCyan("Search URI"), fmt.Sprintf("%s/api/search", baseUrlStr)})
