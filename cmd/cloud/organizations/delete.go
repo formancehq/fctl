@@ -10,6 +10,7 @@ func NewDeleteCommand() *cobra.Command {
 		fctl.WithAliases("del", "d"),
 		fctl.WithShortDescription("Delete organization"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithConfirmFlag(),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
@@ -19,6 +20,10 @@ func NewDeleteCommand() *cobra.Command {
 			apiClient, err := fctl.NewMembershipClient(cmd, cfg)
 			if err != nil {
 				return err
+			}
+
+			if !fctl.CheckOrganizationApprobation(cmd, "You are about to delete an organization") {
+				return fctl.ErrMissingApproval
 			}
 
 			_, err = apiClient.DefaultApi.

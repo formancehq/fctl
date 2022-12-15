@@ -11,6 +11,7 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithAliases("cr", "c"),
 		fctl.WithShortDescription("Create organization"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithConfirmFlag(),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
@@ -20,6 +21,10 @@ func NewCreateCommand() *cobra.Command {
 			apiClient, err := fctl.NewMembershipClient(cmd, cfg)
 			if err != nil {
 				return err
+			}
+
+			if !fctl.CheckOrganizationApprobation(cmd, "You are about to create a new organization") {
+				return fctl.ErrMissingApproval
 			}
 
 			response, _, err := apiClient.DefaultApi.

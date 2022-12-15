@@ -10,6 +10,7 @@ func NewSendCommand() *cobra.Command {
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithShortDescription("Invite a user by email"),
 		fctl.WithAliases("s"),
+		fctl.WithConfirmFlag(),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
@@ -24,6 +25,10 @@ func NewSendCommand() *cobra.Command {
 			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg)
 			if err != nil {
 				return err
+			}
+
+			if !fctl.CheckOrganizationApprobation(cmd, "You are about to send an invitation") {
+				return fctl.ErrMissingApproval
 			}
 
 			_, _, err = apiClient.DefaultApi.

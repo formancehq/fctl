@@ -10,6 +10,7 @@ func NewAcceptCommand() *cobra.Command {
 		fctl.WithAliases("a"),
 		fctl.WithShortDescription("Accept invitation"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithConfirmFlag(),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
@@ -19,6 +20,10 @@ func NewAcceptCommand() *cobra.Command {
 			client, err := fctl.NewMembershipClient(cmd, cfg)
 			if err != nil {
 				return err
+			}
+
+			if !fctl.CheckOrganizationApprobation(cmd, "You are about to accept an invitation") {
+				return fctl.ErrMissingApproval
 			}
 
 			_, err = client.DefaultApi.AcceptInvitation(cmd.Context(), args[0]).Execute()
