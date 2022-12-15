@@ -47,7 +47,12 @@ func NewListCommand() *cobra.Command {
 					stack.Id,
 					stack.Name,
 					profile.ServicesBaseUrl(&stack).String(),
-					fctl.BoolPointerToString(&stack.Production),
+					func() string {
+						if stack.Production {
+							return pterm.LightMagenta("Production")
+						}
+						return pterm.LightGreen("Sandbox")
+					}(),
 					func() string {
 						if stack.BoundRegion == nil {
 							return ""
@@ -56,7 +61,7 @@ func NewListCommand() *cobra.Command {
 					}(),
 				}
 			})
-			tableData = fctl.Prepend(tableData, []string{"ID", "Name", "Dashboard", "Production", "Bound region"})
+			tableData = fctl.Prepend(tableData, []string{"ID", "Name", "Dashboard", "Kind", "Bound region"})
 			return pterm.DefaultTable.
 				WithHasHeader().
 				WithWriter(cmd.OutOrStdout()).
