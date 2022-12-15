@@ -24,6 +24,7 @@ func NewUpdateCommand() *cobra.Command {
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithShortDescription("Update client"),
 		fctl.WithAliases("u", "upd"),
+		fctl.WithConfirmFlag(),
 		fctl.WithBoolFlag(publicFlag, false, "Is client public"),
 		fctl.WithBoolFlag(trustedFlag, false, "Is the client trusted"),
 		fctl.WithStringFlag(descriptionFlag, "", "Client description"),
@@ -43,6 +44,10 @@ func NewUpdateCommand() *cobra.Command {
 			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
 			if err != nil {
 				return err
+			}
+
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to delete an OAuth2 client") {
+				return fctl.ErrMissingApproval
 			}
 
 			authClient, err := fctl.NewStackClient(cmd, cfg, stack)

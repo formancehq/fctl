@@ -15,6 +15,7 @@ func NewCreateCommand() *cobra.Command {
 	return fctl.NewCommand("create",
 		fctl.WithShortDescription("Create a new config"),
 		fctl.WithAliases("cr"),
+		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.MinimumNArgs(2)),
 		fctl.WithStringFlag(secretFlag, "", "Webhooks signing secret"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
@@ -31,6 +32,10 @@ func NewCreateCommand() *cobra.Command {
 			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
 			if err != nil {
 				return err
+			}
+
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to create a webhook") {
+				return fctl.ErrMissingApproval
 			}
 
 			client, err := fctl.NewStackClient(cmd, cfg, stack)

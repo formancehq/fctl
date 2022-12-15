@@ -57,6 +57,13 @@ func Execute() {
 	}()
 	err := NewRootCommand().Execute()
 	if err != nil {
-		fctl.Error(os.Stderr, err.Error())
+		switch err {
+		case fctl.ErrMissingApproval:
+			fctl.Error(os.Stderr, "Command aborted as you didn't approve.")
+			os.Exit(1)
+		default:
+			fctl.Error(os.Stderr, err.Error())
+			os.Exit(255)
+		}
 	}
 }

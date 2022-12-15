@@ -10,6 +10,7 @@ func NewSetMetadataCommand() *cobra.Command {
 	return fctl.NewCommand("set-metadata [TRANSACTION] [METADATA_KEY]=[METADATA_VALUE]...",
 		fctl.WithShortDescription("Set metadata on transaction"),
 		fctl.WithAliases("sm", "set-meta"),
+		fctl.WithConfirmFlag(),
 		fctl.WithValidArgs("last"),
 		fctl.WithArgs(cobra.MinimumNArgs(2)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
@@ -43,6 +44,10 @@ func NewSetMetadataCommand() *cobra.Command {
 				fctl.GetString(cmd, internal.LedgerFlag), args[0])
 			if err != nil {
 				return err
+			}
+
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to set a metadata on transaction %d", transactionID) {
+				return fctl.ErrMissingApproval
 			}
 
 			_, err = ledgerClient.TransactionsApi.

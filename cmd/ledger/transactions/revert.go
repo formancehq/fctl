@@ -9,6 +9,7 @@ import (
 
 func NewRevertCommand() *cobra.Command {
 	return fctl.NewCommand("revert [TXID]",
+		fctl.WithConfirmFlag(),
 		fctl.WithShortDescription("Revert a transaction"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgs("last"),
@@ -26,6 +27,10 @@ func NewRevertCommand() *cobra.Command {
 			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
 			if err != nil {
 				return err
+			}
+
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to revert transaction %s", args[0]) {
+				return fctl.ErrMissingApproval
 			}
 
 			ledgerClient, err := fctl.NewStackClient(cmd, cfg, stack)

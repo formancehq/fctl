@@ -9,6 +9,7 @@ import (
 func NewChangeSecretCommand() *cobra.Command {
 	return fctl.NewCommand("change-secret CONFIG_ID [SECRET]",
 		fctl.WithShortDescription("Change the signing secret of a config"),
+		fctl.WithConfirmFlag(),
 		fctl.WithAliases("cs"),
 		fctl.WithArgs(cobra.RangeArgs(1, 2)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
@@ -25,6 +26,10 @@ func NewChangeSecretCommand() *cobra.Command {
 			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
 			if err != nil {
 				return err
+			}
+
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to change a webhook secret") {
+				return fctl.ErrMissingApproval
 			}
 
 			client, err := fctl.NewStackClient(cmd, cfg, stack)

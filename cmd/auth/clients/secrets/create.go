@@ -12,6 +12,7 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithAliases("c"),
 		fctl.WithArgs(cobra.ExactArgs(2)),
 		fctl.WithShortDescription("Create secret"),
+		fctl.WithConfirmFlag(),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
@@ -26,6 +27,10 @@ func NewCreateCommand() *cobra.Command {
 			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
 			if err != nil {
 				return err
+			}
+
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to create a new client secret") {
+				return fctl.ErrMissingApproval
 			}
 
 			authClient, err := fctl.NewStackClient(cmd, cfg, stack)

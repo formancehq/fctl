@@ -17,6 +17,7 @@ func NewSendCommand() *cobra.Command {
 	return fctl.NewCommand("send [SOURCE] [DESTINATION] [AMOUNT] [ASSET]",
 		fctl.WithAliases("s", "se"),
 		fctl.WithShortDescription("Send from one account to another"),
+		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.RangeArgs(3, 4)),
 		fctl.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
 		fctl.WithStringFlag(referenceFlag, "", "Reference to add to the generated transaction"),
@@ -34,6 +35,10 @@ func NewSendCommand() *cobra.Command {
 			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
 			if err != nil {
 				return err
+			}
+
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to create a new transaction") {
+				return fctl.ErrMissingApproval
 			}
 
 			ledgerClient, err := fctl.NewStackClient(cmd, cfg, stack)

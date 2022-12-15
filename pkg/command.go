@@ -1,8 +1,11 @@
 package fctl
 
 import (
+	"strings"
+
 	"github.com/formancehq/fctl/membershipclient"
 	"github.com/pkg/errors"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -265,13 +268,17 @@ func IsProtectedStack(stack *membershipclient.Stack) bool {
 	return stack.Metadata != nil && (*stack.Metadata)[ProtectedStackMetadata] == "Yes"
 }
 
-func WithApproval(cmd *cobra.Command, stack *membershipclient.Stack, callback func() error) error {
+func CheckStackApprobation(cmd *cobra.Command, stack *membershipclient.Stack, disclaimer string, args ...any) bool {
 	if !IsProtectedStack(stack) {
-		return callback()
+		return true
 	}
 	if GetBool(cmd, confirmFlag) {
-		return callback()
+		return true
 	}
-	// TODO: Ask interactively
-	return errors.New("need approval")
+
+	result, err := pterm.DefaultInteractiveContinue.WithDefaultText(disclaimer + ".\r\n" + pterm.DefaultInteractiveContinue.DefaultText).Show()
+	if err != nil {
+		panic(err)
+	}
+	return strings.ToLower(result) == "yes"
 }

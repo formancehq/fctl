@@ -11,6 +11,7 @@ func NewActivateCommand() *cobra.Command {
 	return fctl.NewCommand("activate",
 		fctl.WithShortDescription("Activate one config"),
 		fctl.WithAliases("ac", "a"),
+		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
@@ -26,6 +27,10 @@ func NewActivateCommand() *cobra.Command {
 			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
 			if err != nil {
 				return err
+			}
+
+			if !fctl.CheckStackApprobation(cmd, stack, "You are bout to activate a webhook") {
+				return fctl.ErrMissingApproval
 			}
 
 			client, err := fctl.NewStackClient(cmd, cfg, stack)

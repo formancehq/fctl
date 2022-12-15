@@ -13,6 +13,7 @@ func NewStripeCommand() *cobra.Command {
 	)
 	return fctl.NewCommand("stripe [API_KEY]",
 		fctl.WithShortDescription("Install a stripe connector"),
+		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithStringFlag(stripeApiKeyFlag, "", "Stripe API key"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
@@ -29,6 +30,10 @@ func NewStripeCommand() *cobra.Command {
 			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
 			if err != nil {
 				return err
+			}
+
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to install connector '%s'") {
+				return fctl.ErrMissingApproval
 			}
 
 			paymentsClient, err := fctl.NewStackClient(cmd, cfg, stack)

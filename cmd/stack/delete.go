@@ -63,11 +63,12 @@ func NewDeleteCommand() *cobra.Command {
 				return errors.New("Stack not found")
 			}
 
-			if err := fctl.WithApproval(cmd, stack, func() error {
-				_, err := apiClient.DefaultApi.DeleteStack(cmd.Context(), organization, stack.Id).Execute()
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to delete stack '%s'", stack.Name) {
+				return fctl.ErrMissingApproval
+			}
+
+			if _, err := apiClient.DefaultApi.DeleteStack(cmd.Context(), organization, stack.Id).Execute(); err != nil {
 				return errors.Wrap(err, "deleting stack")
-			}); err != nil {
-				return err
 			}
 
 			fctl.Success(cmd.OutOrStdout(), "Stack deleted.")

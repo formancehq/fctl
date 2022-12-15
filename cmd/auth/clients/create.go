@@ -18,9 +18,9 @@ func NewCreateCommand() *cobra.Command {
 		postLogoutRedirectUriFlag = "post-logout-redirect-uri"
 	)
 	return fctl.NewCommand("create",
-		fctl.WithConfirmFlag(),
 		fctl.WithAliases("c"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithConfirmFlag(),
 		fctl.WithBoolFlag(publicFlag, false, "Is client public"),
 		fctl.WithBoolFlag(trustedFlag, false, "Is the client trusted"),
 		fctl.WithStringFlag(descriptionFlag, "", "Client description"),
@@ -41,6 +41,10 @@ func NewCreateCommand() *cobra.Command {
 			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
 			if err != nil {
 				return err
+			}
+
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to create a new OAuth2 client") {
+				return fctl.ErrMissingApproval
 			}
 
 			authClient, err := fctl.NewStackClient(cmd, cfg, stack)
