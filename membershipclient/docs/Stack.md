@@ -5,9 +5,8 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Name** | **string** | Stack name | 
-**Environment** | Pointer to **string** |  | [optional] 
-**Tags** | Pointer to **map[string]interface{}** |  | [optional] 
-**Production** | Pointer to **bool** |  | [optional] 
+**Tags** | **map[string]string** |  | 
+**Production** | **bool** |  | 
 **Metadata** | Pointer to **map[string]string** |  | [optional] 
 **Id** | **string** | Stack ID | 
 **OrganizationId** | **string** | Organization ID | 
@@ -18,7 +17,7 @@ Name | Type | Description | Notes
 
 ### NewStack
 
-`func NewStack(name string, id string, organizationId string, uri string, ) *Stack`
+`func NewStack(name string, tags map[string]string, production bool, id string, organizationId string, uri string, ) *Stack`
 
 NewStack instantiates a new Stack object
 This constructor will assign default values to properties that have it defined,
@@ -53,55 +52,25 @@ and a boolean to check if the value has been set.
 SetName sets Name field to given value.
 
 
-### GetEnvironment
-
-`func (o *Stack) GetEnvironment() string`
-
-GetEnvironment returns the Environment field if non-nil, zero value otherwise.
-
-### GetEnvironmentOk
-
-`func (o *Stack) GetEnvironmentOk() (*string, bool)`
-
-GetEnvironmentOk returns a tuple with the Environment field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetEnvironment
-
-`func (o *Stack) SetEnvironment(v string)`
-
-SetEnvironment sets Environment field to given value.
-
-### HasEnvironment
-
-`func (o *Stack) HasEnvironment() bool`
-
-HasEnvironment returns a boolean if a field has been set.
-
 ### GetTags
 
-`func (o *Stack) GetTags() map[string]interface{}`
+`func (o *Stack) GetTags() map[string]string`
 
 GetTags returns the Tags field if non-nil, zero value otherwise.
 
 ### GetTagsOk
 
-`func (o *Stack) GetTagsOk() (*map[string]interface{}, bool)`
+`func (o *Stack) GetTagsOk() (*map[string]string, bool)`
 
 GetTagsOk returns a tuple with the Tags field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetTags
 
-`func (o *Stack) SetTags(v map[string]interface{})`
+`func (o *Stack) SetTags(v map[string]string)`
 
 SetTags sets Tags field to given value.
 
-### HasTags
-
-`func (o *Stack) HasTags() bool`
-
-HasTags returns a boolean if a field has been set.
 
 ### GetProduction
 
@@ -122,11 +91,6 @@ and a boolean to check if the value has been set.
 
 SetProduction sets Production field to given value.
 
-### HasProduction
-
-`func (o *Stack) HasProduction() bool`
-
-HasProduction returns a boolean if a field has been set.
 
 ### GetMetadata
 

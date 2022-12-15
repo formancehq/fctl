@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"runtime/debug"
 
 	"github.com/formancehq/fctl/cmd/auth"
@@ -55,7 +57,9 @@ func Execute() {
 			debug.PrintStack()
 		}
 	}()
-	err := NewRootCommand().Execute()
+
+	ctx, _ := signal.NotifyContext(context.TODO(), os.Interrupt)
+	err := NewRootCommand().ExecuteContext(ctx)
 	if err != nil {
 		switch err {
 		case fctl.ErrMissingApproval:

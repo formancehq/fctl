@@ -21,9 +21,8 @@ var _ MappedNullable = &Stack{}
 type Stack struct {
 	// Stack name
 	Name string `json:"name"`
-	Environment *string `json:"environment,omitempty"`
-	Tags map[string]interface{} `json:"tags,omitempty"`
-	Production *bool `json:"production,omitempty"`
+	Tags map[string]string `json:"tags"`
+	Production bool `json:"production"`
 	Metadata *map[string]string `json:"metadata,omitempty"`
 	// Stack ID
 	Id string `json:"id"`
@@ -38,9 +37,11 @@ type Stack struct {
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewStack(name string, id string, organizationId string, uri string) *Stack {
+func NewStack(name string, tags map[string]string, production bool, id string, organizationId string, uri string) *Stack {
 	this := Stack{}
 	this.Name = name
+	this.Tags = tags
+	this.Production = production
 	this.Id = id
 	this.OrganizationId = organizationId
 	this.Uri = uri
@@ -79,100 +80,52 @@ func (o *Stack) SetName(v string) {
 	o.Name = v
 }
 
-// GetEnvironment returns the Environment field value if set, zero value otherwise.
-func (o *Stack) GetEnvironment() string {
-	if o == nil || isNil(o.Environment) {
-		var ret string
+// GetTags returns the Tags field value
+func (o *Stack) GetTags() map[string]string {
+	if o == nil {
+		var ret map[string]string
 		return ret
 	}
-	return *o.Environment
-}
 
-// GetEnvironmentOk returns a tuple with the Environment field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *Stack) GetEnvironmentOk() (*string, bool) {
-	if o == nil || isNil(o.Environment) {
-		return nil, false
-	}
-	return o.Environment, true
-}
-
-// HasEnvironment returns a boolean if a field has been set.
-func (o *Stack) HasEnvironment() bool {
-	if o != nil && !isNil(o.Environment) {
-		return true
-	}
-
-	return false
-}
-
-// SetEnvironment gets a reference to the given string and assigns it to the Environment field.
-func (o *Stack) SetEnvironment(v string) {
-	o.Environment = &v
-}
-
-// GetTags returns the Tags field value if set, zero value otherwise.
-func (o *Stack) GetTags() map[string]interface{} {
-	if o == nil || isNil(o.Tags) {
-		var ret map[string]interface{}
-		return ret
-	}
 	return o.Tags
 }
 
-// GetTagsOk returns a tuple with the Tags field value if set, nil otherwise
+// GetTagsOk returns a tuple with the Tags field value
 // and a boolean to check if the value has been set.
-func (o *Stack) GetTagsOk() (map[string]interface{}, bool) {
-	if o == nil || isNil(o.Tags) {
-		return map[string]interface{}{}, false
+func (o *Stack) GetTagsOk() (*map[string]string, bool) {
+	if o == nil {
+		return nil, false
 	}
-	return o.Tags, true
+	return &o.Tags, true
 }
 
-// HasTags returns a boolean if a field has been set.
-func (o *Stack) HasTags() bool {
-	if o != nil && !isNil(o.Tags) {
-		return true
-	}
-
-	return false
-}
-
-// SetTags gets a reference to the given map[string]interface{} and assigns it to the Tags field.
-func (o *Stack) SetTags(v map[string]interface{}) {
+// SetTags sets field value
+func (o *Stack) SetTags(v map[string]string) {
 	o.Tags = v
 }
 
-// GetProduction returns the Production field value if set, zero value otherwise.
+// GetProduction returns the Production field value
 func (o *Stack) GetProduction() bool {
-	if o == nil || isNil(o.Production) {
+	if o == nil {
 		var ret bool
 		return ret
 	}
-	return *o.Production
+
+	return o.Production
 }
 
-// GetProductionOk returns a tuple with the Production field value if set, nil otherwise
+// GetProductionOk returns a tuple with the Production field value
 // and a boolean to check if the value has been set.
 func (o *Stack) GetProductionOk() (*bool, bool) {
-	if o == nil || isNil(o.Production) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Production, true
+	return &o.Production, true
 }
 
-// HasProduction returns a boolean if a field has been set.
-func (o *Stack) HasProduction() bool {
-	if o != nil && !isNil(o.Production) {
-		return true
-	}
-
-	return false
-}
-
-// SetProduction gets a reference to the given bool and assigns it to the Production field.
+// SetProduction sets field value
 func (o *Stack) SetProduction(v bool) {
-	o.Production = &v
+	o.Production = v
 }
 
 // GetMetadata returns the Metadata field value if set, zero value otherwise.
@@ -322,15 +275,8 @@ func (o Stack) MarshalJSON() ([]byte, error) {
 func (o Stack) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["name"] = o.Name
-	if !isNil(o.Environment) {
-		toSerialize["environment"] = o.Environment
-	}
-	if !isNil(o.Tags) {
-		toSerialize["tags"] = o.Tags
-	}
-	if !isNil(o.Production) {
-		toSerialize["production"] = o.Production
-	}
+	toSerialize["tags"] = o.Tags
+	toSerialize["production"] = o.Production
 	if !isNil(o.Metadata) {
 		toSerialize["metadata"] = o.Metadata
 	}

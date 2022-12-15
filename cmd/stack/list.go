@@ -47,7 +47,7 @@ func NewListCommand() *cobra.Command {
 					stack.Id,
 					stack.Name,
 					profile.ServicesBaseUrl(&stack).String(),
-					fctl.BoolPointerToString(stack.Production),
+					fctl.BoolPointerToString(&stack.Production),
 					func() string {
 						if stack.BoundRegion == nil {
 							return ""

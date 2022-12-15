@@ -344,15 +344,17 @@ components:
       type: object
       required:
       - name
+      - tags
+      - production
+      - metadata
       properties:
         name:
           type: string
           description: Stack name
-        environment:
-          type: string
         tags:
           type: object
-          additionalProperties: true
+          additionalProperties:
+            type: string
         production:
           type: bool
         metadata:

@@ -1,6 +1,7 @@
 package fctl
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/formancehq/fctl/membershipclient"
@@ -27,6 +28,8 @@ func CheckStackApprobation(cmd *cobra.Command, stack *membershipclient.Stack, di
 	if GetBool(cmd, confirmFlag) {
 		return true
 	}
+
+	disclaimer = fmt.Sprintf(disclaimer, args...)
 
 	result, err := pterm.DefaultInteractiveContinue.WithDefaultText(disclaimer + ".\r\n" + pterm.DefaultInteractiveContinue.DefaultText).Show()
 	if err != nil {

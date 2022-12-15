@@ -5,16 +5,15 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Name** | **string** | Stack name | 
-**Environment** | Pointer to **string** |  | [optional] 
-**Tags** | Pointer to **map[string]interface{}** |  | [optional] 
-**Production** | Pointer to **bool** |  | [optional] 
+**Tags** | **map[string]string** |  | 
+**Production** | **bool** |  | 
 **Metadata** | Pointer to **map[string]string** |  | [optional] 
 
 ## Methods
 
 ### NewStackData
 
-`func NewStackData(name string, ) *StackData`
+`func NewStackData(name string, tags map[string]string, production bool, ) *StackData`
 
 NewStackData instantiates a new StackData object
 This constructor will assign default values to properties that have it defined,
@@ -49,55 +48,25 @@ and a boolean to check if the value has been set.
 SetName sets Name field to given value.
 
 
-### GetEnvironment
-
-`func (o *StackData) GetEnvironment() string`
-
-GetEnvironment returns the Environment field if non-nil, zero value otherwise.
-
-### GetEnvironmentOk
-
-`func (o *StackData) GetEnvironmentOk() (*string, bool)`
-
-GetEnvironmentOk returns a tuple with the Environment field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetEnvironment
-
-`func (o *StackData) SetEnvironment(v string)`
-
-SetEnvironment sets Environment field to given value.
-
-### HasEnvironment
-
-`func (o *StackData) HasEnvironment() bool`
-
-HasEnvironment returns a boolean if a field has been set.
-
 ### GetTags
 
-`func (o *StackData) GetTags() map[string]interface{}`
+`func (o *StackData) GetTags() map[string]string`
 
 GetTags returns the Tags field if non-nil, zero value otherwise.
 
 ### GetTagsOk
 
-`func (o *StackData) GetTagsOk() (*map[string]interface{}, bool)`
+`func (o *StackData) GetTagsOk() (*map[string]string, bool)`
 
 GetTagsOk returns a tuple with the Tags field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetTags
 
-`func (o *StackData) SetTags(v map[string]interface{})`
+`func (o *StackData) SetTags(v map[string]string)`
 
 SetTags sets Tags field to given value.
 
-### HasTags
-
-`func (o *StackData) HasTags() bool`
-
-HasTags returns a boolean if a field has been set.
 
 ### GetProduction
 
@@ -118,11 +87,6 @@ and a boolean to check if the value has been set.
 
 SetProduction sets Production field to given value.
 
-### HasProduction
-
-`func (o *StackData) HasProduction() bool`
-
-HasProduction returns a boolean if a field has been set.
 
 ### GetMetadata
 

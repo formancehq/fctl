@@ -1,8 +1,10 @@
 package stack
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/formancehq/fctl/cmd/stack/internal"
@@ -15,13 +17,15 @@ func NewCreateCommand() *cobra.Command {
 	const (
 		productionFlag = "production"
 		unprotectFlag  = "unprotect"
+		tagFlag        = "tag"
 	)
 	return fctl.NewMembershipCommand("create",
 		fctl.WithShortDescription("Create a new stack"),
 		fctl.WithAliases("c", "cr"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithBoolFlag(productionFlag, false, ""),
-		fctl.WithBoolFlag(unprotectFlag, false, ""),
+		fctl.WithBoolFlag(productionFlag, false, "Create a production stack"),
+		fctl.WithBoolFlag(unprotectFlag, false, "Unprotect stacks (no confirmation on write commands)"),
+		fctl.WithStringSliceFlag(tagFlag, []string{}, "Tags to use to find matching region"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 
 			cfg, err := fctl.GetConfig(cmd)
@@ -44,10 +48,19 @@ func NewCreateCommand() *cobra.Command {
 			metadata := map[string]string{
 				fctl.ProtectedStackMetadata: fctl.BoolPointerToString(&protected),
 			}
+			tags := make(map[string]string)
+			for _, tagFlagValue := range fctl.GetStringSlice(cmd, tagFlag) {
+				parts := strings.SplitN(tagFlagValue, "=", 2)
+				if len(parts) < 2 {
+					return errors.New("malformed flag --tag")
+				}
+				tags[parts[0]] = parts[1]
+			}
 			stack, _, err := apiClient.DefaultApi.CreateStack(cmd.Context(), organization).Body(membershipclient.StackData{
 				Name:       args[0],
-				Production: &production,
+				Production: production,
 				Metadata:   &metadata,
+				Tags:       tags,
 			}).Execute()
 			if err != nil {
 				return fctl.WrapError(err, "creating stack")
@@ -83,6 +96,7 @@ func waitStackReady(cmd *cobra.Command, profile *fctl.Profile, stack *membership
 		}
 		select {
 		case <-cmd.Context().Done():
+			return cmd.Context().Err()
 		case <-time.After(time.Second):
 		}
 	}
