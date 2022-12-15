@@ -7,13 +7,13 @@ Name | Type | Description | Notes
 **Name** | **string** | Stack name | 
 **Tags** | **map[string]string** |  | 
 **Production** | **bool** |  | 
-**Metadata** | Pointer to **map[string]string** |  | [optional] 
+**Metadata** | **map[string]string** |  | 
 
 ## Methods
 
 ### NewStackData
 
-`func NewStackData(name string, tags map[string]string, production bool, ) *StackData`
+`func NewStackData(name string, tags map[string]string, production bool, metadata map[string]string, ) *StackData`
 
 NewStackData instantiates a new StackData object
 This constructor will assign default values to properties that have it defined,
@@ -107,11 +107,6 @@ and a boolean to check if the value has been set.
 
 SetMetadata sets Metadata field to given value.
 
-### HasMetadata
-
-`func (o *StackData) HasMetadata() bool`
-
-HasMetadata returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

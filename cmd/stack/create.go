@@ -59,7 +59,7 @@ func NewCreateCommand() *cobra.Command {
 			stack, _, err := apiClient.DefaultApi.CreateStack(cmd.Context(), organization).Body(membershipclient.StackData{
 				Name:       args[0],
 				Production: production,
-				Metadata:   &metadata,
+				Metadata:   metadata,
 				Tags:       tags,
 			}).Execute()
 			if err != nil {

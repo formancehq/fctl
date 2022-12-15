@@ -23,18 +23,19 @@ type StackData struct {
 	Name string `json:"name"`
 	Tags map[string]string `json:"tags"`
 	Production bool `json:"production"`
-	Metadata *map[string]string `json:"metadata,omitempty"`
+	Metadata map[string]string `json:"metadata"`
 }
 
 // NewStackData instantiates a new StackData object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewStackData(name string, tags map[string]string, production bool) *StackData {
+func NewStackData(name string, tags map[string]string, production bool, metadata map[string]string) *StackData {
 	this := StackData{}
 	this.Name = name
 	this.Tags = tags
 	this.Production = production
+	this.Metadata = metadata
 	return &this
 }
 
@@ -118,36 +119,28 @@ func (o *StackData) SetProduction(v bool) {
 	o.Production = v
 }
 
-// GetMetadata returns the Metadata field value if set, zero value otherwise.
+// GetMetadata returns the Metadata field value
 func (o *StackData) GetMetadata() map[string]string {
-	if o == nil || isNil(o.Metadata) {
+	if o == nil {
 		var ret map[string]string
 		return ret
 	}
-	return *o.Metadata
+
+	return o.Metadata
 }
 
-// GetMetadataOk returns a tuple with the Metadata field value if set, nil otherwise
+// GetMetadataOk returns a tuple with the Metadata field value
 // and a boolean to check if the value has been set.
 func (o *StackData) GetMetadataOk() (*map[string]string, bool) {
-	if o == nil || isNil(o.Metadata) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Metadata, true
+	return &o.Metadata, true
 }
 
-// HasMetadata returns a boolean if a field has been set.
-func (o *StackData) HasMetadata() bool {
-	if o != nil && !isNil(o.Metadata) {
-		return true
-	}
-
-	return false
-}
-
-// SetMetadata gets a reference to the given map[string]string and assigns it to the Metadata field.
+// SetMetadata sets field value
 func (o *StackData) SetMetadata(v map[string]string) {
-	o.Metadata = &v
+	o.Metadata = v
 }
 
 func (o StackData) MarshalJSON() ([]byte, error) {
@@ -163,9 +156,7 @@ func (o StackData) ToMap() (map[string]interface{}, error) {
 	toSerialize["name"] = o.Name
 	toSerialize["tags"] = o.Tags
 	toSerialize["production"] = o.Production
-	if !isNil(o.Metadata) {
-		toSerialize["metadata"] = o.Metadata
-	}
+	toSerialize["metadata"] = o.Metadata
 	return toSerialize, nil
 }
 

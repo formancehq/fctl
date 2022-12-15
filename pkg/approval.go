@@ -12,13 +12,22 @@ import (
 
 var ErrMissingApproval = errors.New("Missing approval.")
 
+var interactiveContinue = pterm.InteractiveContinuePrinter{
+	DefaultValueIndex: 0,
+	DefaultText:       "Do you want to continue",
+	TextStyle:         &pterm.ThemeDefault.PrimaryStyle,
+	Options:           []string{"yes", "no"},
+	OptionsStyle:      &pterm.ThemeDefault.SuccessMessageStyle,
+	SuffixStyle:       &pterm.ThemeDefault.SecondaryStyle,
+}
+
 const (
 	ProtectedStackMetadata = "github.com/formancehq/fctl/protected"
 	confirmFlag            = "confirm"
 )
 
 func IsProtectedStack(stack *membershipclient.Stack) bool {
-	return stack.Metadata != nil && (*stack.Metadata)[ProtectedStackMetadata] == "Yes"
+	return stack.Metadata != nil && (stack.Metadata)[ProtectedStackMetadata] == "Yes"
 }
 
 func CheckStackApprobation(cmd *cobra.Command, stack *membershipclient.Stack, disclaimer string, args ...any) bool {
@@ -31,7 +40,7 @@ func CheckStackApprobation(cmd *cobra.Command, stack *membershipclient.Stack, di
 
 	disclaimer = fmt.Sprintf(disclaimer, args...)
 
-	result, err := pterm.DefaultInteractiveContinue.WithDefaultText(disclaimer + ".\r\n" + pterm.DefaultInteractiveContinue.DefaultText).Show()
+	result, err := interactiveContinue.WithDefaultText(disclaimer + ".\r\n" + pterm.DefaultInteractiveContinue.DefaultText).Show()
 	if err != nil {
 		panic(err)
 	}
@@ -43,7 +52,7 @@ func CheckOrganizationApprobation(cmd *cobra.Command, disclaimer string, args ..
 		return true
 	}
 
-	result, err := pterm.DefaultInteractiveContinue.WithDefaultText(disclaimer + ".\r\n" + pterm.DefaultInteractiveContinue.DefaultText).Show()
+	result, err := interactiveContinue.WithDefaultText(disclaimer + ".\r\n" + pterm.DefaultInteractiveContinue.DefaultText).Show()
 	if err != nil {
 		panic(err)
 	}

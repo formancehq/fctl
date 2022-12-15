@@ -7,7 +7,7 @@ Name | Type | Description | Notes
 **Name** | **string** | Stack name | 
 **Tags** | **map[string]string** |  | 
 **Production** | **bool** |  | 
-**Metadata** | Pointer to **map[string]string** |  | [optional] 
+**Metadata** | **map[string]string** |  | 
 **Id** | **string** | Stack ID | 
 **OrganizationId** | **string** | Organization ID | 
 **Uri** | **string** | Base stack uri | 
@@ -17,7 +17,7 @@ Name | Type | Description | Notes
 
 ### NewStack
 
-`func NewStack(name string, tags map[string]string, production bool, id string, organizationId string, uri string, ) *Stack`
+`func NewStack(name string, tags map[string]string, production bool, metadata map[string]string, id string, organizationId string, uri string, ) *Stack`
 
 NewStack instantiates a new Stack object
 This constructor will assign default values to properties that have it defined,
@@ -111,11 +111,6 @@ and a boolean to check if the value has been set.
 
 SetMetadata sets Metadata field to given value.
 
-### HasMetadata
-
-`func (o *Stack) HasMetadata() bool`
-
-HasMetadata returns a boolean if a field has been set.
 
 ### GetId
 
