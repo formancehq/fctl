@@ -7,8 +7,8 @@ Name | Type | Description | Notes
 **Name** | **string** | Stack name | 
 **Environment** | Pointer to **string** |  | [optional] 
 **Tags** | Pointer to **map[string]interface{}** |  | [optional] 
-**Production** | **bool** |  | 
-**Metadata** | **map[string]string** |  | 
+**Production** | Pointer to **bool** |  | [optional] 
+**Metadata** | Pointer to **map[string]string** |  | [optional] 
 **Id** | **string** | Stack ID | 
 **OrganizationId** | **string** | Organization ID | 
 **Uri** | **string** | Base stack uri | 
@@ -18,7 +18,7 @@ Name | Type | Description | Notes
 
 ### NewStack
 
-`func NewStack(name string, production bool, metadata map[string]string, id string, organizationId string, uri string, ) *Stack`
+`func NewStack(name string, id string, organizationId string, uri string, ) *Stack`
 
 NewStack instantiates a new Stack object
 This constructor will assign default values to properties that have it defined,
@@ -122,6 +122,11 @@ and a boolean to check if the value has been set.
 
 SetProduction sets Production field to given value.
 
+### HasProduction
+
+`func (o *Stack) HasProduction() bool`
+
+HasProduction returns a boolean if a field has been set.
 
 ### GetMetadata
 
@@ -142,6 +147,11 @@ and a boolean to check if the value has been set.
 
 SetMetadata sets Metadata field to given value.
 
+### HasMetadata
+
+`func (o *Stack) HasMetadata() bool`
+
+HasMetadata returns a boolean if a field has been set.
 
 ### GetId
 

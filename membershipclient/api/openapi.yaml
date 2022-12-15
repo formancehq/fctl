@@ -381,9 +381,7 @@ components:
             type: string
           type: object
       required:
-      - metadata
       - name
-      - production
       type: object
     Stack:
       allOf:
@@ -553,16 +551,21 @@ components:
       type: object
     Region:
       example:
+        baseUrl: baseUrl
         id: id
         tags:
-          key: ""
+          key: tags
       properties:
         id:
           type: string
         tags:
-          additionalProperties: true
+          additionalProperties:
+            type: string
           type: object
+        baseUrl:
+          type: string
       required:
+      - baseUrl
       - id
       - tags
       type: object
@@ -580,12 +583,14 @@ components:
     ListRegionsResponse:
       example:
         data:
-        - id: id
+        - baseUrl: baseUrl
+          id: id
           tags:
-            key: ""
-        - id: id
+            key: tags
+        - baseUrl: baseUrl
+          id: id
           tags:
-            key: ""
+            key: tags
       properties:
         data:
           items:

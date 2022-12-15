@@ -5,13 +5,14 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Id** | **string** |  | 
-**Tags** | **map[string]interface{}** |  | 
+**Tags** | **map[string]string** |  | 
+**BaseUrl** | **string** |  | 
 
 ## Methods
 
 ### NewRegion
 
-`func NewRegion(id string, tags map[string]interface{}, ) *Region`
+`func NewRegion(id string, tags map[string]string, baseUrl string, ) *Region`
 
 NewRegion instantiates a new Region object
 This constructor will assign default values to properties that have it defined,
@@ -48,22 +49,42 @@ SetId sets Id field to given value.
 
 ### GetTags
 
-`func (o *Region) GetTags() map[string]interface{}`
+`func (o *Region) GetTags() map[string]string`
 
 GetTags returns the Tags field if non-nil, zero value otherwise.
 
 ### GetTagsOk
 
-`func (o *Region) GetTagsOk() (*map[string]interface{}, bool)`
+`func (o *Region) GetTagsOk() (*map[string]string, bool)`
 
 GetTagsOk returns a tuple with the Tags field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetTags
 
-`func (o *Region) SetTags(v map[string]interface{})`
+`func (o *Region) SetTags(v map[string]string)`
 
 SetTags sets Tags field to given value.
+
+
+### GetBaseUrl
+
+`func (o *Region) GetBaseUrl() string`
+
+GetBaseUrl returns the BaseUrl field if non-nil, zero value otherwise.
+
+### GetBaseUrlOk
+
+`func (o *Region) GetBaseUrlOk() (*string, bool)`
+
+GetBaseUrlOk returns a tuple with the BaseUrl field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetBaseUrl
+
+`func (o *Region) SetBaseUrl(v string)`
+
+SetBaseUrl sets BaseUrl field to given value.
 
 
 

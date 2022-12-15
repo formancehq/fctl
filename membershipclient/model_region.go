@@ -20,17 +20,19 @@ var _ MappedNullable = &Region{}
 // Region struct for Region
 type Region struct {
 	Id string `json:"id"`
-	Tags map[string]interface{} `json:"tags"`
+	Tags map[string]string `json:"tags"`
+	BaseUrl string `json:"baseUrl"`
 }
 
 // NewRegion instantiates a new Region object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewRegion(id string, tags map[string]interface{}) *Region {
+func NewRegion(id string, tags map[string]string, baseUrl string) *Region {
 	this := Region{}
 	this.Id = id
 	this.Tags = tags
+	this.BaseUrl = baseUrl
 	return &this
 }
 
@@ -67,9 +69,9 @@ func (o *Region) SetId(v string) {
 }
 
 // GetTags returns the Tags field value
-func (o *Region) GetTags() map[string]interface{} {
+func (o *Region) GetTags() map[string]string {
 	if o == nil {
-		var ret map[string]interface{}
+		var ret map[string]string
 		return ret
 	}
 
@@ -78,16 +80,40 @@ func (o *Region) GetTags() map[string]interface{} {
 
 // GetTagsOk returns a tuple with the Tags field value
 // and a boolean to check if the value has been set.
-func (o *Region) GetTagsOk() (map[string]interface{}, bool) {
+func (o *Region) GetTagsOk() (*map[string]string, bool) {
 	if o == nil {
-		return map[string]interface{}{}, false
+		return nil, false
 	}
-	return o.Tags, true
+	return &o.Tags, true
 }
 
 // SetTags sets field value
-func (o *Region) SetTags(v map[string]interface{}) {
+func (o *Region) SetTags(v map[string]string) {
 	o.Tags = v
+}
+
+// GetBaseUrl returns the BaseUrl field value
+func (o *Region) GetBaseUrl() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.BaseUrl
+}
+
+// GetBaseUrlOk returns a tuple with the BaseUrl field value
+// and a boolean to check if the value has been set.
+func (o *Region) GetBaseUrlOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.BaseUrl, true
+}
+
+// SetBaseUrl sets field value
+func (o *Region) SetBaseUrl(v string) {
+	o.BaseUrl = v
 }
 
 func (o Region) MarshalJSON() ([]byte, error) {
@@ -102,6 +128,7 @@ func (o Region) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
 	toSerialize["tags"] = o.Tags
+	toSerialize["baseUrl"] = o.BaseUrl
 	return toSerialize, nil
 }
 

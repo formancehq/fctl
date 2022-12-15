@@ -343,8 +343,6 @@ components:
     StackData:
       type: object
       required:
-      - metadata
-      - production
       - name
       properties:
         name:
@@ -498,15 +496,19 @@ components:
       - id
     Region:
       type: object
+      required:
+      - id
+      - baseUrl
+      - tags
       properties:
         id:
           type: string
         tags:
           type: object
-          additionalProperties: true
-      required:
-      - id
-      - tags
+          additionalProperties:
+            type: string
+        baseUrl:
+          type: string
     ListOrganizationExpandedResponse:
       type: object
       properties:
