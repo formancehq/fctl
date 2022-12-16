@@ -2,11 +2,13 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
 	"runtime/debug"
 
+	"github.com/Masterminds/semver"
 	"github.com/formancehq/fctl/cmd/auth"
 	"github.com/formancehq/fctl/cmd/cloud"
 	"github.com/formancehq/fctl/cmd/ledger"
@@ -15,8 +17,14 @@ import (
 	"github.com/formancehq/fctl/cmd/search"
 	"github.com/formancehq/fctl/cmd/stack"
 	"github.com/formancehq/fctl/cmd/webhooks"
+	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+)
+
+const (
+	MaxVersionShift = 2
 )
 
 func NewRootCommand() *cobra.Command {
@@ -25,7 +33,7 @@ func NewRootCommand() *cobra.Command {
 		panic(err)
 	}
 
-	return fctl.NewCommand("fctl",
+	cmd := fctl.NewCommand("fctl",
 		fctl.WithSilenceError(),
 		fctl.WithShortDescription("Formance Control CLI"),
 		fctl.WithSilenceUsage(),
@@ -48,6 +56,44 @@ func NewRootCommand() *cobra.Command {
 		fctl.WithPersistentBoolPFlag(fctl.DebugFlag, "d", false, "Debug mode"),
 		fctl.WithPersistentBoolFlag(fctl.InsecureTlsFlag, false, "Insecure TLS"),
 	)
+	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+
+		cfg, err := fctl.GetConfig(cmd)
+		if err != nil {
+			return err
+		}
+
+		profile := fctl.GetCurrentProfile(cmd, cfg)
+		httpClient := fctl.GetHttpClient(cmd)
+		configuration := membershipclient.NewConfiguration()
+		configuration.HTTPClient = httpClient
+		configuration.Servers[0].URL = profile.GetMembershipURI()
+		client := membershipclient.NewAPIClient(configuration)
+		serverInfo, _, err := client.DefaultApi.GetServerInfo(cmd.Context()).Execute()
+		if err != nil {
+			return err
+		}
+
+		serverVersion, err := semver.NewVersion(serverInfo.Version)
+		if err != nil {
+			pterm.Warning.Printf("Server version is not semver, skip version checks: %s\r\n", err)
+			return nil
+		}
+		fctlVersion, err := semver.NewVersion(Version)
+		if err != nil {
+			pterm.Warning.Printf("FCTL version is not semver, skip version checks: %s\r\n", err)
+			return nil
+		}
+
+		if serverVersion.Major() != fctlVersion.Major() {
+			return errors.New("you use an incompatible version of FCTL, please upgrade\r\n")
+		}
+		if serverVersion.Minor()-fctlVersion.Minor() >= MaxVersionShift {
+			return errors.New("")
+		}
+		return nil
+	}
+	return cmd
 }
 
 func Execute() {

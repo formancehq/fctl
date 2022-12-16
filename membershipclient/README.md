@@ -85,6 +85,7 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**DeclineInvitation**](docs/DefaultApi.md#declineinvitation) | **Post** /me/invitations/{invitationId}/reject | Decline invitation
 *DefaultApi* | [**DeleteOrganization**](docs/DefaultApi.md#deleteorganization) | **Delete** /organizations/{organizationId} | Delete organization
 *DefaultApi* | [**DeleteStack**](docs/DefaultApi.md#deletestack) | **Delete** /organizations/{organizationId}/stacks/{stackId} | Delete stack
+*DefaultApi* | [**GetServerInfo**](docs/DefaultApi.md#getserverinfo) | **Get** /_info | Get server info
 *DefaultApi* | [**ListInvitations**](docs/DefaultApi.md#listinvitations) | **Get** /me/invitations | List invitations of the user
 *DefaultApi* | [**ListOrganizationInvitations**](docs/DefaultApi.md#listorganizationinvitations) | **Get** /organizations/{organizationId}/invitations | List invitations of the organization
 *DefaultApi* | [**ListOrganizations**](docs/DefaultApi.md#listorganizations) | **Get** /organizations | List organizations of the connected user
@@ -117,6 +118,7 @@ Class | Method | HTTP request | Description
  - [OrganizationData](docs/OrganizationData.md)
  - [ReadUserResponse](docs/ReadUserResponse.md)
  - [Region](docs/Region.md)
+ - [ServerInfo](docs/ServerInfo.md)
  - [Stack](docs/Stack.md)
  - [StackAllOf](docs/StackAllOf.md)
  - [StackData](docs/StackData.md)

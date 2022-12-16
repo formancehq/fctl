@@ -9,6 +9,17 @@ servers:
   description: Local server
 
 paths:
+  /_info:
+    get:
+      summary: Get server info
+      operationId: getServerInfo
+      responses:
+        200:
+          description: Server information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerInfo'
   /organizations:
     get:
       summary: List organizations of the connected user
@@ -532,3 +543,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Region'
+    ServerInfo:
+      type: object
+      required:
+      - version
+      properties:
+        version:
+          type: string

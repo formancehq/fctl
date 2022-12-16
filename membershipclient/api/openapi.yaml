@@ -9,6 +9,17 @@ servers:
 security:
 - oauth2: []
 paths:
+  /_info:
+    get:
+      operationId: getServerInfo
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerInfo'
+          description: Server information
+      summary: Get server info
   /organizations:
     get:
       operationId: listOrganizations
@@ -597,6 +608,15 @@ components:
           items:
             $ref: '#/components/schemas/Region'
           type: array
+      type: object
+    ServerInfo:
+      example:
+        version: version
+      properties:
+        version:
+          type: string
+      required:
+      - version
       type: object
     Organization_allOf:
       properties:
