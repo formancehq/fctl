@@ -1,14 +1,13 @@
 package webhooks
 
 import (
-	"net/url"
-
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 func NewDeleteCommand() *cobra.Command {
-	return fctl.NewCommand("delete",
+	return fctl.NewCommand("delete [CONFIG_ID]",
 		fctl.WithShortDescription("Delete a config"),
 		fctl.WithConfirmFlag(),
 		fctl.WithAliases("del"),
@@ -16,7 +15,7 @@ func NewDeleteCommand() *cobra.Command {
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "fctl.GetConfig")
 			}
 
 			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg)
@@ -35,16 +34,12 @@ func NewDeleteCommand() *cobra.Command {
 
 			webhookClient, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
-				return err
-			}
-
-			if _, err := url.Parse(args[0]); err != nil {
-				return err
+				return errors.Wrap(err, "fctl.NewStackClient")
 			}
 
 			_, err = webhookClient.WebhooksApi.DeleteOneConfig(cmd.Context(), args[0]).Execute()
 			if err != nil {
-				return err
+				return errors.Wrap(err, "deleting config")
 			}
 
 			fctl.Success(cmd.OutOrStdout(), "Config deleted successfully")

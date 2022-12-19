@@ -3,19 +3,20 @@ package webhooks
 import (
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 func NewChangeSecretCommand() *cobra.Command {
 	return fctl.NewCommand("change-secret CONFIG_ID [SECRET]",
-		fctl.WithShortDescription("Change the signing secret of a config"),
+		fctl.WithShortDescription("Change the signing secret of a config. You can bring your own secret. If not passed or empty, a secret is automatically generated. The format is a string of bytes of size 24, base64 encoded. (larger size after encoding)"),
 		fctl.WithConfirmFlag(),
 		fctl.WithAliases("cs"),
 		fctl.WithArgs(cobra.RangeArgs(1, 2)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "fctl.GetConfig")
 			}
 
 			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg)
@@ -34,24 +35,23 @@ func NewChangeSecretCommand() *cobra.Command {
 
 			client, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "fctl.NewStackClient")
 			}
 
-			configID := args[0]
 			secret := ""
 			if len(args) > 1 {
 				secret = args[1]
 			}
 
 			res, _, err := client.WebhooksApi.
-				ChangeOneConfigSecret(cmd.Context(), configID).
+				ChangeOneConfigSecret(cmd.Context(), args[0]).
 				ChangeOneConfigSecretRequest(
 					formance.ChangeOneConfigSecretRequest{
 						Secret: secret,
 					}).
 				Execute()
 			if err != nil {
-				return err
+				return errors.Wrap(err, "changing secret")
 			}
 
 			fctl.Success(cmd.OutOrStdout(),

@@ -6,6 +6,7 @@ import (
 
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go"
+	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -17,7 +18,7 @@ func NewListCommand() *cobra.Command {
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "fctl.GetConfig")
 			}
 
 			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg)
@@ -32,15 +33,15 @@ func NewListCommand() *cobra.Command {
 
 			webhookClient, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "fctl.NewStackClient")
 			}
 
 			res, _, err := webhookClient.WebhooksApi.GetManyConfigs(cmd.Context()).Execute()
 			if err != nil {
-				return err
+				return errors.Wrap(err, "listing all configs")
 			}
 
-			return pterm.DefaultTable.
+			if err := pterm.DefaultTable.
 				WithHasHeader(true).
 				WithWriter(cmd.OutOrStdout()).
 				WithData(
@@ -58,7 +59,11 @@ func NewListCommand() *cobra.Command {
 							}),
 						[]string{"ID", "Created at", "Secret", "Endpoint", "Active", "Event types"},
 					),
-				).Render()
+				).Render(); err != nil {
+				return errors.Wrap(err, "rendering table")
+			}
+
+			return nil
 		}),
 	)
 }

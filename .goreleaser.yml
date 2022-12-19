@@ -100,4 +100,4 @@ publishers:
     ids:
       - packages
     dir: "{{ dir .ArtifactPath }}"
-    cmd: curl -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN }}@push.fury.io/numary/
+    cmd: curl -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN_FORMANCE }}@push.fury.io/formance/
