@@ -1,14 +1,13 @@
 package webhooks
 
 import (
-	"net/url"
-
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 func NewDeactivateCommand() *cobra.Command {
-	return fctl.NewCommand("deactivate",
+	return fctl.NewCommand("deactivate [CONFIG_ID]",
 		fctl.WithShortDescription("Deactivate one config"),
 		fctl.WithConfirmFlag(),
 		fctl.WithAliases("deac"),
@@ -16,7 +15,7 @@ func NewDeactivateCommand() *cobra.Command {
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "fctl.GetConfig")
 			}
 
 			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg)
@@ -35,16 +34,12 @@ func NewDeactivateCommand() *cobra.Command {
 
 			client, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
-				return err
-			}
-
-			if _, err := url.Parse(args[0]); err != nil {
-				return err
+				return errors.Wrap(err, "fctl.NewStackClient")
 			}
 
 			_, _, err = client.WebhooksApi.DeactivateOneConfig(cmd.Context(), args[0]).Execute()
 			if err != nil {
-				return err
+				return errors.Wrap(err, "deactivating config")
 			}
 
 			fctl.Success(cmd.OutOrStdout(), "Config deactivated successfully")
