@@ -1,6 +1,7 @@
 package connectors
 
 import (
+	"github.com/formancehq/fctl/cmd/payments/connectors/internal"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 )
@@ -10,7 +11,7 @@ func NewUninstallCommand() *cobra.Command {
 		fctl.WithAliases("uninstall", "u", "un"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithValidArgs("stripe"),
+		fctl.WithValidArgs(internal.AllConnectors...),
 		fctl.WithShortDescription("Uninstall a connector"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 

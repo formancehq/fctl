@@ -8,15 +8,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewStripeCommand() *cobra.Command {
+func NewModulrCommand() *cobra.Command {
 	const (
-		stripeApiKeyFlag = "api-key"
+		endpointFlag = "endpoint"
+
+		defaultEndpoint = "https://api-sandbox.modulrfinance.com"
 	)
-	return fctl.NewCommand(internal.StripeConnector+" API_KEY",
-		fctl.WithShortDescription("Install a stripe connector"),
-		fctl.WithConfirmFlag(),
-		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithStringFlag(stripeApiKeyFlag, "", "Stripe API key"),
+	return fctl.NewCommand(internal.ModulrConnector+" API_KEY API_SECRET",
+		fctl.WithShortDescription("Install a Modulr connector"),
+		fctl.WithArgs(cobra.ExactArgs(2)),
+		fctl.WithStringFlag(endpointFlag, defaultEndpoint, "API endpoint"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
@@ -33,7 +34,7 @@ func NewStripeCommand() *cobra.Command {
 				return err
 			}
 
-			if !fctl.CheckStackApprobation(cmd, stack, "You are about to install connector '%s'", internal.StripeConnector) {
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to install connector '%s'", internal.ModulrConnector) {
 				return fctl.ErrMissingApproval
 			}
 
@@ -42,10 +43,17 @@ func NewStripeCommand() *cobra.Command {
 				return err
 			}
 
-			_, err = paymentsClient.PaymentsApi.InstallConnector(cmd.Context(), internal.StripeConnector).
+			var endpoint *string
+			if e := fctl.GetString(cmd, endpointFlag); e != "" {
+				endpoint = &e
+			}
+
+			_, err = paymentsClient.PaymentsApi.InstallConnector(cmd.Context(), internal.ModulrConnector).
 				ConnectorConfig(formance.ConnectorConfig{
-					StripeConfig: &formance.StripeConfig{
-						ApiKey: args[0],
+					ModulrConfig: &formance.ModulrConfig{
+						ApiKey:    args[0],
+						ApiSecret: args[1],
+						Endpoint:  endpoint,
 					},
 				}).
 				Execute()

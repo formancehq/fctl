@@ -8,15 +8,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewStripeCommand() *cobra.Command {
+func NewCurrencyCloudCommand() *cobra.Command {
 	const (
-		stripeApiKeyFlag = "api-key"
+		endpointFlag    = "endpoint"
+		defaultEndpoint = "https://devapi.currencycloud.com"
 	)
-	return fctl.NewCommand(internal.StripeConnector+" API_KEY",
-		fctl.WithShortDescription("Install a stripe connector"),
-		fctl.WithConfirmFlag(),
-		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithStringFlag(stripeApiKeyFlag, "", "Stripe API key"),
+	return fctl.NewCommand(internal.CurrencyCloudConnector+" LOGIN_ID API_KEY",
+		fctl.WithShortDescription("Install a Currency Cloud connector"),
+		fctl.WithArgs(cobra.ExactArgs(2)),
+		fctl.WithStringFlag(endpointFlag, defaultEndpoint, "API endpoint"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
@@ -33,7 +33,7 @@ func NewStripeCommand() *cobra.Command {
 				return err
 			}
 
-			if !fctl.CheckStackApprobation(cmd, stack, "You are about to install connector '%s'", internal.StripeConnector) {
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to install connector '%s'", internal.CurrencyCloudConnector) {
 				return fctl.ErrMissingApproval
 			}
 
@@ -42,10 +42,17 @@ func NewStripeCommand() *cobra.Command {
 				return err
 			}
 
-			_, err = paymentsClient.PaymentsApi.InstallConnector(cmd.Context(), internal.StripeConnector).
+			var endpoint *string
+			if e := fctl.GetString(cmd, endpointFlag); e != "" {
+				endpoint = &e
+			}
+
+			_, err = paymentsClient.PaymentsApi.InstallConnector(cmd.Context(), internal.CurrencyCloudConnector).
 				ConnectorConfig(formance.ConnectorConfig{
-					StripeConfig: &formance.StripeConfig{
-						ApiKey: args[0],
+					CurrencyCloudConfig: &formance.CurrencyCloudConfig{
+						ApiKey:   args[1],
+						LoginID:  args[0],
+						Endpoint: endpoint,
 					},
 				}).
 				Execute()

@@ -8,15 +8,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewStripeCommand() *cobra.Command {
-	const (
-		stripeApiKeyFlag = "api-key"
-	)
-	return fctl.NewCommand(internal.StripeConnector+" API_KEY",
-		fctl.WithShortDescription("Install a stripe connector"),
-		fctl.WithConfirmFlag(),
+func NewWiseCommand() *cobra.Command {
+	return fctl.NewCommand(internal.WiseConnector+" API_KEY",
+		fctl.WithShortDescription("Install a Wise connector"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithStringFlag(stripeApiKeyFlag, "", "Stripe API key"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
@@ -33,7 +28,7 @@ func NewStripeCommand() *cobra.Command {
 				return err
 			}
 
-			if !fctl.CheckStackApprobation(cmd, stack, "You are about to install connector '%s'", internal.StripeConnector) {
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to install connector '%s'", internal.WiseConnector) {
 				return fctl.ErrMissingApproval
 			}
 
@@ -42,10 +37,10 @@ func NewStripeCommand() *cobra.Command {
 				return err
 			}
 
-			_, err = paymentsClient.PaymentsApi.InstallConnector(cmd.Context(), internal.StripeConnector).
+			_, err = paymentsClient.PaymentsApi.InstallConnector(cmd.Context(), internal.WiseConnector).
 				ConnectorConfig(formance.ConnectorConfig{
-					StripeConfig: &formance.StripeConfig{
-						ApiKey: args[0],
+					WiseConfig: &formance.WiseConfig{
+						ApiKey: args[1],
 					},
 				}).
 				Execute()
