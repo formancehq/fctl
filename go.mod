@@ -3,7 +3,6 @@ module github.com/formancehq/fctl
 go 1.18
 
 require (
-	github.com/Masterminds/semver v1.5.0
 	github.com/athul/shelby v1.0.6
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/formancehq/fctl/membershipclient v0.0.0-00010101000000-000000000000
