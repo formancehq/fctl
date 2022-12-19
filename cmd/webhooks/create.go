@@ -16,6 +16,7 @@ func NewCreateCommand() *cobra.Command {
 	return fctl.NewCommand("create [ENDPOINT] [EVENT_TYPE1] [EVENT_TYPE2,optional]...",
 		fctl.WithShortDescription("Create a new config. At least one event type is required."),
 		fctl.WithAliases("cr"),
+		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.MinimumNArgs(2)),
 		fctl.WithStringFlag(secretFlag, "", "Bring your own webhooks signing secret. If not passed or empty, a secret is automatically generated. The format is a string of bytes of size 24, base64 encoded. (larger size after encoding)"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
@@ -24,7 +25,21 @@ func NewCreateCommand() *cobra.Command {
 				return errors.Wrap(err, "fctl.GetConfig")
 			}
 
-			client, err := fctl.NewStackClient(cmd, cfg)
+			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg)
+			if err != nil {
+				return err
+			}
+
+			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
+			if err != nil {
+				return err
+			}
+
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to create a webhook") {
+				return fctl.ErrMissingApproval
+			}
+
+			client, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
 				return errors.Wrap(err, "fctl.NewStackClient")
 			}

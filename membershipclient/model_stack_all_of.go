@@ -14,6 +14,9 @@ import (
 	"encoding/json"
 )
 
+// checks if the StackAllOf type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &StackAllOf{}
+
 // StackAllOf struct for StackAllOf
 type StackAllOf struct {
 	// Stack ID
@@ -22,6 +25,7 @@ type StackAllOf struct {
 	OrganizationId string `json:"organizationId"`
 	// Base stack uri
 	Uri string `json:"uri"`
+	BoundRegion *Region `json:"boundRegion,omitempty"`
 }
 
 // NewStackAllOf instantiates a new StackAllOf object
@@ -58,7 +62,7 @@ func (o *StackAllOf) GetId() string {
 // and a boolean to check if the value has been set.
 func (o *StackAllOf) GetIdOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.Id, true
 }
@@ -82,7 +86,7 @@ func (o *StackAllOf) GetOrganizationId() string {
 // and a boolean to check if the value has been set.
 func (o *StackAllOf) GetOrganizationIdOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.OrganizationId, true
 }
@@ -106,7 +110,7 @@ func (o *StackAllOf) GetUri() string {
 // and a boolean to check if the value has been set.
 func (o *StackAllOf) GetUriOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.Uri, true
 }
@@ -116,18 +120,55 @@ func (o *StackAllOf) SetUri(v string) {
 	o.Uri = v
 }
 
+// GetBoundRegion returns the BoundRegion field value if set, zero value otherwise.
+func (o *StackAllOf) GetBoundRegion() Region {
+	if o == nil || isNil(o.BoundRegion) {
+		var ret Region
+		return ret
+	}
+	return *o.BoundRegion
+}
+
+// GetBoundRegionOk returns a tuple with the BoundRegion field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *StackAllOf) GetBoundRegionOk() (*Region, bool) {
+	if o == nil || isNil(o.BoundRegion) {
+		return nil, false
+	}
+	return o.BoundRegion, true
+}
+
+// HasBoundRegion returns a boolean if a field has been set.
+func (o *StackAllOf) HasBoundRegion() bool {
+	if o != nil && !isNil(o.BoundRegion) {
+		return true
+	}
+
+	return false
+}
+
+// SetBoundRegion gets a reference to the given Region and assigns it to the BoundRegion field.
+func (o *StackAllOf) SetBoundRegion(v Region) {
+	o.BoundRegion = &v
+}
+
 func (o StackAllOf) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["id"] = o.Id
-	}
-	if true {
-		toSerialize["organizationId"] = o.OrganizationId
-	}
-	if true {
-		toSerialize["uri"] = o.Uri
+	toSerialize,err := o.ToMap()
+	if err != nil {
+		return []byte{}, err
 	}
 	return json.Marshal(toSerialize)
+}
+
+func (o StackAllOf) ToMap() (map[string]interface{}, error) {
+	toSerialize := map[string]interface{}{}
+	toSerialize["id"] = o.Id
+	toSerialize["organizationId"] = o.OrganizationId
+	toSerialize["uri"] = o.Uri
+	if !isNil(o.BoundRegion) {
+		toSerialize["boundRegion"] = o.BoundRegion
+	}
+	return toSerialize, nil
 }
 
 type NullableStackAllOf struct {

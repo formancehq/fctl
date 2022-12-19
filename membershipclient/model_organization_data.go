@@ -14,6 +14,9 @@ import (
 	"encoding/json"
 )
 
+// checks if the OrganizationData type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &OrganizationData{}
+
 // OrganizationData struct for OrganizationData
 type OrganizationData struct {
 	// Organization name
@@ -52,7 +55,7 @@ func (o *OrganizationData) GetName() string {
 // and a boolean to check if the value has been set.
 func (o *OrganizationData) GetNameOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.Name, true
 }
@@ -63,11 +66,17 @@ func (o *OrganizationData) SetName(v string) {
 }
 
 func (o OrganizationData) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["name"] = o.Name
+	toSerialize,err := o.ToMap()
+	if err != nil {
+		return []byte{}, err
 	}
 	return json.Marshal(toSerialize)
+}
+
+func (o OrganizationData) ToMap() (map[string]interface{}, error) {
+	toSerialize := map[string]interface{}{}
+	toSerialize["name"] = o.Name
+	return toSerialize, nil
 }
 
 type NullableOrganizationData struct {

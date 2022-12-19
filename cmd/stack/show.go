@@ -17,7 +17,7 @@ func NewShowCommand() *cobra.Command {
 
 	return fctl.NewMembershipCommand("show",
 		fctl.WithAliases("s", "sh"),
-		fctl.WithShortDescription("Show sandbox"),
+		fctl.WithShortDescription("Show stack"),
 		fctl.WithArgs(cobra.MaximumNArgs(1)),
 		fctl.WithStringFlag(stackNameFlag, "", ""),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {

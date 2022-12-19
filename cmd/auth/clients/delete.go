@@ -7,6 +7,7 @@ import (
 
 func NewDeleteCommand() *cobra.Command {
 	return fctl.NewCommand("delete [CLIENT_ID]",
+		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithAliases("d", "del"),
 		fctl.WithShortDescription("Delete client"),
@@ -16,7 +17,21 @@ func NewDeleteCommand() *cobra.Command {
 				return err
 			}
 
-			authClient, err := fctl.NewStackClient(cmd, cfg)
+			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg)
+			if err != nil {
+				return err
+			}
+
+			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
+			if err != nil {
+				return err
+			}
+
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to delete an OAuth2 client") {
+				return fctl.ErrMissingApproval
+			}
+
+			authClient, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
 				return err
 			}

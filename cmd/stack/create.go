@@ -1,21 +1,34 @@
 package stack
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/formancehq/fctl/cmd/stack/internal"
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 func NewCreateCommand() *cobra.Command {
+	const (
+		productionFlag = "production"
+		unprotectFlag  = "unprotect"
+		tagFlag        = "tag"
+		nowaitFlag     = "no-wait"
+	)
 	return fctl.NewMembershipCommand("create",
-		fctl.WithShortDescription("Create a new sandbox"),
+		fctl.WithShortDescription("Create a new stack"),
 		fctl.WithAliases("c", "cr"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithBoolFlag(productionFlag, false, "Create a production stack"),
+		fctl.WithBoolFlag(unprotectFlag, false, "Unprotect stacks (no confirmation on write commands)"),
+		fctl.WithStringSliceFlag(tagFlag, []string{}, "Tags to use to find matching region"),
+		fctl.WithBoolFlag(nowaitFlag, false, "Not wait stack availability"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 
 			cfg, err := fctl.GetConfig(cmd)
@@ -33,22 +46,49 @@ func NewCreateCommand() *cobra.Command {
 				return err
 			}
 
+			production := fctl.GetBool(cmd, productionFlag)
+			protected := !fctl.GetBool(cmd, unprotectFlag)
+			metadata := map[string]string{
+				fctl.ProtectedStackMetadata: fctl.BoolPointerToString(&protected),
+			}
+			tags := make(map[string]string)
+			for _, tagFlagValue := range fctl.GetStringSlice(cmd, tagFlag) {
+				parts := strings.SplitN(tagFlagValue, "=", 2)
+				if len(parts) < 2 {
+					return errors.New("malformed flag --tag")
+				}
+				tags[parts[0]] = parts[1]
+			}
 			stack, _, err := apiClient.DefaultApi.CreateStack(cmd.Context(), organization).Body(membershipclient.StackData{
-				Name: args[0],
+				Name:       args[0],
+				Production: production,
+				Metadata:   metadata,
+				Tags:       tags,
 			}).Execute()
 			if err != nil {
-				return fctl.WrapError(err, "creating sandbox")
+				return fctl.WrapError(err, "creating stack")
 			}
 
 			profile := fctl.GetCurrentProfile(cmd, cfg)
 
-			if err := waitStackReady(cmd, profile, stack.Data); err != nil {
-				return err
+			if !fctl.GetBool(cmd, nowaitFlag) {
+				spinner, err := pterm.DefaultSpinner.Start("Waiting services availability")
+				if err != nil {
+					return err
+				}
+
+				if err := waitStackReady(cmd, profile, stack.Data); err != nil {
+					return err
+				}
+
+				if err := spinner.Stop(); err != nil {
+					return err
+				}
 			}
 
 			fctl.Highlightln(cmd.OutOrStdout(), "Your dashboard will be reachable on: %s",
 				profile.ServicesBaseUrl(stack.Data).String())
-			fctl.Highlightln(cmd.OutOrStdout(), "You can access your sandbox apis using following urls :")
+			fctl.Highlightln(cmd.OutOrStdout(), "You can access your stack apis using following urls :")
 
 			return internal.PrintStackInformation(cmd.OutOrStdout(), profile, stack.Data)
 		}),
@@ -70,6 +110,7 @@ func waitStackReady(cmd *cobra.Command, profile *fctl.Profile, stack *membership
 		}
 		select {
 		case <-cmd.Context().Done():
+			return cmd.Context().Err()
 		case <-time.After(time.Second):
 		}
 	}

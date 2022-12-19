@@ -14,29 +14,35 @@ import (
 	"encoding/json"
 )
 
+// checks if the Stack type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &Stack{}
+
 // Stack struct for Stack
 type Stack struct {
 	// Stack name
 	Name string `json:"name"`
-	// Region
-	Region *string `json:"region,omitempty"`
+	Tags map[string]string `json:"tags"`
+	Production bool `json:"production"`
+	Metadata map[string]string `json:"metadata"`
 	// Stack ID
 	Id string `json:"id"`
 	// Organization ID
 	OrganizationId string `json:"organizationId"`
 	// Base stack uri
 	Uri string `json:"uri"`
+	BoundRegion *Region `json:"boundRegion,omitempty"`
 }
 
 // NewStack instantiates a new Stack object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewStack(name string, id string, organizationId string, uri string) *Stack {
+func NewStack(name string, tags map[string]string, production bool, metadata map[string]string, id string, organizationId string, uri string) *Stack {
 	this := Stack{}
 	this.Name = name
-	var region string = "eu-west-1"
-	this.Region = &region
+	this.Tags = tags
+	this.Production = production
+	this.Metadata = metadata
 	this.Id = id
 	this.OrganizationId = organizationId
 	this.Uri = uri
@@ -48,8 +54,6 @@ func NewStack(name string, id string, organizationId string, uri string) *Stack 
 // but it doesn't guarantee that properties required by API are set
 func NewStackWithDefaults() *Stack {
 	this := Stack{}
-	var region string = "eu-west-1"
-	this.Region = &region
 	return &this
 }
 
@@ -67,7 +71,7 @@ func (o *Stack) GetName() string {
 // and a boolean to check if the value has been set.
 func (o *Stack) GetNameOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.Name, true
 }
@@ -77,36 +81,76 @@ func (o *Stack) SetName(v string) {
 	o.Name = v
 }
 
-// GetRegion returns the Region field value if set, zero value otherwise.
-func (o *Stack) GetRegion() string {
-	if o == nil || isNil(o.Region) {
-		var ret string
+// GetTags returns the Tags field value
+func (o *Stack) GetTags() map[string]string {
+	if o == nil {
+		var ret map[string]string
 		return ret
 	}
-	return *o.Region
+
+	return o.Tags
 }
 
-// GetRegionOk returns a tuple with the Region field value if set, nil otherwise
+// GetTagsOk returns a tuple with the Tags field value
 // and a boolean to check if the value has been set.
-func (o *Stack) GetRegionOk() (*string, bool) {
-	if o == nil || isNil(o.Region) {
+func (o *Stack) GetTagsOk() (*map[string]string, bool) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Region, true
+	return &o.Tags, true
 }
 
-// HasRegion returns a boolean if a field has been set.
-func (o *Stack) HasRegion() bool {
-	if o != nil && !isNil(o.Region) {
-		return true
+// SetTags sets field value
+func (o *Stack) SetTags(v map[string]string) {
+	o.Tags = v
+}
+
+// GetProduction returns the Production field value
+func (o *Stack) GetProduction() bool {
+	if o == nil {
+		var ret bool
+		return ret
 	}
 
-	return false
+	return o.Production
 }
 
-// SetRegion gets a reference to the given string and assigns it to the Region field.
-func (o *Stack) SetRegion(v string) {
-	o.Region = &v
+// GetProductionOk returns a tuple with the Production field value
+// and a boolean to check if the value has been set.
+func (o *Stack) GetProductionOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Production, true
+}
+
+// SetProduction sets field value
+func (o *Stack) SetProduction(v bool) {
+	o.Production = v
+}
+
+// GetMetadata returns the Metadata field value
+func (o *Stack) GetMetadata() map[string]string {
+	if o == nil {
+		var ret map[string]string
+		return ret
+	}
+
+	return o.Metadata
+}
+
+// GetMetadataOk returns a tuple with the Metadata field value
+// and a boolean to check if the value has been set.
+func (o *Stack) GetMetadataOk() (*map[string]string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Metadata, true
+}
+
+// SetMetadata sets field value
+func (o *Stack) SetMetadata(v map[string]string) {
+	o.Metadata = v
 }
 
 // GetId returns the Id field value
@@ -123,7 +167,7 @@ func (o *Stack) GetId() string {
 // and a boolean to check if the value has been set.
 func (o *Stack) GetIdOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.Id, true
 }
@@ -147,7 +191,7 @@ func (o *Stack) GetOrganizationId() string {
 // and a boolean to check if the value has been set.
 func (o *Stack) GetOrganizationIdOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.OrganizationId, true
 }
@@ -171,7 +215,7 @@ func (o *Stack) GetUri() string {
 // and a boolean to check if the value has been set.
 func (o *Stack) GetUriOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.Uri, true
 }
@@ -181,24 +225,59 @@ func (o *Stack) SetUri(v string) {
 	o.Uri = v
 }
 
+// GetBoundRegion returns the BoundRegion field value if set, zero value otherwise.
+func (o *Stack) GetBoundRegion() Region {
+	if o == nil || isNil(o.BoundRegion) {
+		var ret Region
+		return ret
+	}
+	return *o.BoundRegion
+}
+
+// GetBoundRegionOk returns a tuple with the BoundRegion field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Stack) GetBoundRegionOk() (*Region, bool) {
+	if o == nil || isNil(o.BoundRegion) {
+		return nil, false
+	}
+	return o.BoundRegion, true
+}
+
+// HasBoundRegion returns a boolean if a field has been set.
+func (o *Stack) HasBoundRegion() bool {
+	if o != nil && !isNil(o.BoundRegion) {
+		return true
+	}
+
+	return false
+}
+
+// SetBoundRegion gets a reference to the given Region and assigns it to the BoundRegion field.
+func (o *Stack) SetBoundRegion(v Region) {
+	o.BoundRegion = &v
+}
+
 func (o Stack) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["name"] = o.Name
-	}
-	if !isNil(o.Region) {
-		toSerialize["region"] = o.Region
-	}
-	if true {
-		toSerialize["id"] = o.Id
-	}
-	if true {
-		toSerialize["organizationId"] = o.OrganizationId
-	}
-	if true {
-		toSerialize["uri"] = o.Uri
+	toSerialize,err := o.ToMap()
+	if err != nil {
+		return []byte{}, err
 	}
 	return json.Marshal(toSerialize)
+}
+
+func (o Stack) ToMap() (map[string]interface{}, error) {
+	toSerialize := map[string]interface{}{}
+	toSerialize["name"] = o.Name
+	toSerialize["tags"] = o.Tags
+	toSerialize["production"] = o.Production
+	toSerialize["metadata"] = o.Metadata
+	toSerialize["id"] = o.Id
+	toSerialize["organizationId"] = o.OrganizationId
+	toSerialize["uri"] = o.Uri
+	if !isNil(o.BoundRegion) {
+		toSerialize["boundRegion"] = o.BoundRegion
+	}
+	return toSerialize, nil
 }
 
 type NullableStack struct {

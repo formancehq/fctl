@@ -7,6 +7,7 @@ Name | Type | Description | Notes
 **Id** | **string** | Stack ID | 
 **OrganizationId** | **string** | Organization ID | 
 **Uri** | **string** | Base stack uri | 
+**BoundRegion** | Pointer to [**Region**](Region.md) |  | [optional] 
 
 ## Methods
 
@@ -86,6 +87,31 @@ and a boolean to check if the value has been set.
 
 SetUri sets Uri field to given value.
 
+
+### GetBoundRegion
+
+`func (o *StackAllOf) GetBoundRegion() Region`
+
+GetBoundRegion returns the BoundRegion field if non-nil, zero value otherwise.
+
+### GetBoundRegionOk
+
+`func (o *StackAllOf) GetBoundRegionOk() (*Region, bool)`
+
+GetBoundRegionOk returns a tuple with the BoundRegion field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetBoundRegion
+
+`func (o *StackAllOf) SetBoundRegion(v Region)`
+
+SetBoundRegion sets BoundRegion field to given value.
+
+### HasBoundRegion
+
+`func (o *StackAllOf) HasBoundRegion() bool`
+
+HasBoundRegion returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

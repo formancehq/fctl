@@ -14,6 +14,9 @@ import (
 	"encoding/json"
 )
 
+// checks if the CreateOrganizationResponse type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &CreateOrganizationResponse{}
+
 // CreateOrganizationResponse struct for CreateOrganizationResponse
 type CreateOrganizationResponse struct {
 	Data *Organization `json:"data,omitempty"`
@@ -69,11 +72,19 @@ func (o *CreateOrganizationResponse) SetData(v Organization) {
 }
 
 func (o CreateOrganizationResponse) MarshalJSON() ([]byte, error) {
+	toSerialize,err := o.ToMap()
+	if err != nil {
+		return []byte{}, err
+	}
+	return json.Marshal(toSerialize)
+}
+
+func (o CreateOrganizationResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	if !isNil(o.Data) {
 		toSerialize["data"] = o.Data
 	}
-	return json.Marshal(toSerialize)
+	return toSerialize, nil
 }
 
 type NullableCreateOrganizationResponse struct {

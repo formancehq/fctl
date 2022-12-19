@@ -19,7 +19,18 @@ func NewStatsCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			ledgerClient, err := fctl.NewStackClient(cmd, cfg)
+
+			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg)
+			if err != nil {
+				return err
+			}
+
+			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
+			if err != nil {
+				return err
+			}
+
+			ledgerClient, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
 				return err
 			}

@@ -26,6 +26,7 @@ func NewCommand() *cobra.Command {
 		fctl.WithShortDescription("Execute a numscript script on a ledger"),
 		fctl.WithDescription(`More help on variables can be found here: https://docs.formance.com/oss/ledger/reference/numscript/variables`),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithConfirmFlag(),
 		fctl.WithStringSliceFlag(amountVarFlag, []string{""}, "Pass a variable of type 'amount'"),
 		fctl.WithStringSliceFlag(portionVarFlag, []string{""}, "Pass a variable of type 'portion'"),
 		fctl.WithStringSliceFlag(accountVarFlag, []string{""}, "Pass a variable of type 'account'"),
@@ -36,7 +37,22 @@ func NewCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			ledgerClient, err := fctl.NewStackClient(cmd, cfg)
+
+			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg)
+			if err != nil {
+				return err
+			}
+
+			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
+			if err != nil {
+				return err
+			}
+
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to apply a numscript") {
+				return fctl.ErrMissingApproval
+			}
+
+			ledgerClient, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
 				return err
 			}

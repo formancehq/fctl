@@ -219,10 +219,15 @@ func WithSilenceError() CommandOptionFn {
 	}
 }
 
-func WithPersistentPreRunE(fn func(cmd *cobra.Command, args []string) error) CommandOptionFn {
-	return func(cmd *cobra.Command) {
-		cmd.PersistentPreRunE = fn
-	}
+func WithConfirmFlag() CommandOptionFn {
+	return WithBoolFlag(confirmFlag, false, "Confirm action")
+}
+
+func NewStackProtectedCommand(use string, opts ...CommandOption) *cobra.Command {
+	return NewStackCommand(use, append(
+		opts,
+		WithConfirmFlag())...,
+	)
 }
 
 func NewStackCommand(use string, opts ...CommandOption) *cobra.Command {

@@ -20,6 +20,7 @@ func NewCreateCommand() *cobra.Command {
 	return fctl.NewCommand("create",
 		fctl.WithAliases("c"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithConfirmFlag(),
 		fctl.WithBoolFlag(publicFlag, false, "Is client public"),
 		fctl.WithBoolFlag(trustedFlag, false, "Is the client trusted"),
 		fctl.WithStringFlag(descriptionFlag, "", "Client description"),
@@ -32,7 +33,21 @@ func NewCreateCommand() *cobra.Command {
 				return err
 			}
 
-			authClient, err := fctl.NewStackClient(cmd, cfg)
+			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg)
+			if err != nil {
+				return err
+			}
+
+			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
+			if err != nil {
+				return err
+			}
+
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to create a new OAuth2 client") {
+				return fctl.ErrMissingApproval
+			}
+
+			authClient, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
 				return err
 			}

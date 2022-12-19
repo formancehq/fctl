@@ -85,10 +85,12 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**DeclineInvitation**](docs/DefaultApi.md#declineinvitation) | **Post** /me/invitations/{invitationId}/reject | Decline invitation
 *DefaultApi* | [**DeleteOrganization**](docs/DefaultApi.md#deleteorganization) | **Delete** /organizations/{organizationId} | Delete organization
 *DefaultApi* | [**DeleteStack**](docs/DefaultApi.md#deletestack) | **Delete** /organizations/{organizationId}/stacks/{stackId} | Delete stack
+*DefaultApi* | [**GetServerInfo**](docs/DefaultApi.md#getserverinfo) | **Get** /_info | Get server info
 *DefaultApi* | [**ListInvitations**](docs/DefaultApi.md#listinvitations) | **Get** /me/invitations | List invitations of the user
 *DefaultApi* | [**ListOrganizationInvitations**](docs/DefaultApi.md#listorganizationinvitations) | **Get** /organizations/{organizationId}/invitations | List invitations of the organization
 *DefaultApi* | [**ListOrganizations**](docs/DefaultApi.md#listorganizations) | **Get** /organizations | List organizations of the connected user
 *DefaultApi* | [**ListOrganizationsExpanded**](docs/DefaultApi.md#listorganizationsexpanded) | **Get** /organizations/expanded | List organizations of the connected user with expanded data
+*DefaultApi* | [**ListRegions**](docs/DefaultApi.md#listregions) | **Get** /regions | List regions
 *DefaultApi* | [**ListStacks**](docs/DefaultApi.md#liststacks) | **Get** /organizations/{organizationId}/stacks | List stacks
 *DefaultApi* | [**ListUsers**](docs/DefaultApi.md#listusers) | **Get** /organizations/{organizationId}/users | List users
 *DefaultApi* | [**ReadOrganization**](docs/DefaultApi.md#readorganization) | **Get** /organizations/{organizationId} | Read organization
@@ -108,12 +110,15 @@ Class | Method | HTTP request | Description
  - [ListOrganizationExpandedResponseDataInner](docs/ListOrganizationExpandedResponseDataInner.md)
  - [ListOrganizationExpandedResponseDataInnerAllOf](docs/ListOrganizationExpandedResponseDataInnerAllOf.md)
  - [ListOrganizationResponse](docs/ListOrganizationResponse.md)
+ - [ListRegionsResponse](docs/ListRegionsResponse.md)
  - [ListStacksResponse](docs/ListStacksResponse.md)
  - [ListUsersResponse](docs/ListUsersResponse.md)
  - [Organization](docs/Organization.md)
  - [OrganizationAllOf](docs/OrganizationAllOf.md)
  - [OrganizationData](docs/OrganizationData.md)
  - [ReadUserResponse](docs/ReadUserResponse.md)
+ - [Region](docs/Region.md)
+ - [ServerInfo](docs/ServerInfo.md)
  - [Stack](docs/Stack.md)
  - [StackAllOf](docs/StackAllOf.md)
  - [StackData](docs/StackData.md)

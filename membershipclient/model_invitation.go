@@ -15,6 +15,9 @@ import (
 	"time"
 )
 
+// checks if the Invitation type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &Invitation{}
+
 // Invitation struct for Invitation
 type Invitation struct {
 	Id string `json:"id"`
@@ -61,7 +64,7 @@ func (o *Invitation) GetId() string {
 // and a boolean to check if the value has been set.
 func (o *Invitation) GetIdOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.Id, true
 }
@@ -85,7 +88,7 @@ func (o *Invitation) GetOrganizationId() string {
 // and a boolean to check if the value has been set.
 func (o *Invitation) GetOrganizationIdOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.OrganizationId, true
 }
@@ -109,7 +112,7 @@ func (o *Invitation) GetUserEmail() string {
 // and a boolean to check if the value has been set.
 func (o *Invitation) GetUserEmailOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.UserEmail, true
 }
@@ -133,7 +136,7 @@ func (o *Invitation) GetStatus() string {
 // and a boolean to check if the value has been set.
 func (o *Invitation) GetStatusOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.Status, true
 }
@@ -157,7 +160,7 @@ func (o *Invitation) GetCreationDate() time.Time {
 // and a boolean to check if the value has been set.
 func (o *Invitation) GetCreationDateOk() (*time.Time, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.CreationDate, true
 }
@@ -200,26 +203,24 @@ func (o *Invitation) SetUpdatedAt(v time.Time) {
 }
 
 func (o Invitation) MarshalJSON() ([]byte, error) {
+	toSerialize,err := o.ToMap()
+	if err != nil {
+		return []byte{}, err
+	}
+	return json.Marshal(toSerialize)
+}
+
+func (o Invitation) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["id"] = o.Id
-	}
-	if true {
-		toSerialize["organizationId"] = o.OrganizationId
-	}
-	if true {
-		toSerialize["userEmail"] = o.UserEmail
-	}
-	if true {
-		toSerialize["status"] = o.Status
-	}
-	if true {
-		toSerialize["creationDate"] = o.CreationDate
-	}
+	toSerialize["id"] = o.Id
+	toSerialize["organizationId"] = o.OrganizationId
+	toSerialize["userEmail"] = o.UserEmail
+	toSerialize["status"] = o.Status
+	toSerialize["creationDate"] = o.CreationDate
 	if !isNil(o.UpdatedAt) {
 		toSerialize["updatedAt"] = o.UpdatedAt
 	}
-	return json.Marshal(toSerialize)
+	return toSerialize, nil
 }
 
 type NullableInvitation struct {

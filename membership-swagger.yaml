@@ -9,6 +9,17 @@ servers:
   description: Local server
 
 paths:
+  /_info:
+    get:
+      summary: Get server info
+      operationId: getServerInfo
+      responses:
+        200:
+          description: Server information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerInfo'
   /organizations:
     get:
       summary: List organizations of the connected user
@@ -291,6 +302,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateInvitationResponse'
+  /regions:
+    get:
+      summary: List regions
+      operationId: listRegions
+      responses:
+        200:
+          description: List of the regions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListRegionsResponse'
 
 security:
 - oauth2: []
@@ -333,14 +355,23 @@ components:
       type: object
       required:
       - name
+      - tags
+      - production
+      - metadata
       properties:
         name:
           type: string
           description: Stack name
-        region:
-          type: string
-          description: Region
-          default: eu-west-1
+        tags:
+          type: object
+          additionalProperties:
+            type: string
+        production:
+          type: bool
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
     Stack:
       allOf:
       - $ref: '#/components/schemas/StackData'
@@ -359,6 +390,8 @@ components:
           uri:
             type: string
             description: Base stack uri
+          boundRegion:
+            $ref: '#/components/schemas/Region'
     UserData:
       type: object
       properties:
@@ -474,6 +507,21 @@ components:
       - userEmail
       - organizationId
       - id
+    Region:
+      type: object
+      required:
+      - id
+      - baseUrl
+      - tags
+      properties:
+        id:
+          type: string
+        tags:
+          type: object
+          additionalProperties:
+            type: string
+        baseUrl:
+          type: string
     ListOrganizationExpandedResponse:
       type: object
       properties:
@@ -488,3 +536,17 @@ components:
                   type: integer
                 totalUsers:
                   type: integer
+    ListRegionsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Region'
+    ServerInfo:
+      type: object
+      required:
+      - version
+      properties:
+        version:
+          type: string

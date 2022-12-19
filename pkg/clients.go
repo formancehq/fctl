@@ -22,19 +22,8 @@ func NewMembershipClient(cmd *cobra.Command, cfg *Config) (*membershipclient.API
 	return membershipclient.NewAPIClient(configuration), nil
 }
 
-func NewStackClient(cmd *cobra.Command, cfg *Config) (*formance.APIClient, error) {
+func NewStackClient(cmd *cobra.Command, cfg *Config, stack *membershipclient.Stack) (*formance.APIClient, error) {
 	profile := GetCurrentProfile(cmd, cfg)
-
-	organizationID, err := ResolveOrganizationID(cmd, cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	stack, err := ResolveStack(cmd, cfg, organizationID)
-	if err != nil {
-		return nil, err
-	}
-
 	httpClient := GetHttpClient(cmd)
 
 	token, err := profile.GetStackToken(cmd.Context(), httpClient, stack)

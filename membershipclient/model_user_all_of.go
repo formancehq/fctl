@@ -14,6 +14,9 @@ import (
 	"encoding/json"
 )
 
+// checks if the UserAllOf type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &UserAllOf{}
+
 // UserAllOf struct for UserAllOf
 type UserAllOf struct {
 	// User ID
@@ -52,7 +55,7 @@ func (o *UserAllOf) GetId() string {
 // and a boolean to check if the value has been set.
 func (o *UserAllOf) GetIdOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.Id, true
 }
@@ -63,11 +66,17 @@ func (o *UserAllOf) SetId(v string) {
 }
 
 func (o UserAllOf) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["id"] = o.Id
+	toSerialize,err := o.ToMap()
+	if err != nil {
+		return []byte{}, err
 	}
 	return json.Marshal(toSerialize)
+}
+
+func (o UserAllOf) ToMap() (map[string]interface{}, error) {
+	toSerialize := map[string]interface{}{}
+	toSerialize["id"] = o.Id
+	return toSerialize, nil
 }
 
 type NullableUserAllOf struct {

@@ -6,8 +6,8 @@ import (
 )
 
 func NewCommand() *cobra.Command {
-	return fctl.NewMembershipCommand("sandbox",
-		fctl.WithShortDescription("Manage your sandbox"),
+	return fctl.NewMembershipCommand("stack",
+		fctl.WithShortDescription("Manage your stack"),
 		fctl.WithAliases("stack", "stacks", "st"),
 		fctl.WithChildCommands(
 			NewCreateCommand(),

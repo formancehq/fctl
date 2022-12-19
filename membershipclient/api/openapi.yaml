@@ -9,6 +9,17 @@ servers:
 security:
 - oauth2: []
 paths:
+  /_info:
+    get:
+      operationId: getServerInfo
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerInfo'
+          description: Server information
+      summary: Get server info
   /organizations:
     get:
       operationId: listOrganizations
@@ -329,6 +340,17 @@ paths:
                 $ref: '#/components/schemas/CreateInvitationResponse'
           description: Invitation created
       summary: Create invitation
+  /regions:
+    get:
+      operationId: listRegions
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListRegionsResponse'
+          description: List of the regions
+      summary: List regions
 components:
   schemas:
     OrganizationData:
@@ -347,18 +369,31 @@ components:
       - $ref: '#/components/schemas/Organization_allOf'
     StackData:
       example:
+        metadata:
+          key: metadata
+        production: ""
         name: name
-        region: eu-west-1
+        tags:
+          key: tags
       properties:
         name:
           description: Stack name
           type: string
-        region:
-          default: eu-west-1
-          description: Region
-          type: string
+        tags:
+          additionalProperties:
+            type: string
+          type: object
+        production:
+          type: bool
+        metadata:
+          additionalProperties:
+            type: string
+          type: object
       required:
+      - metadata
       - name
+      - production
+      - tags
       type: object
     Stack:
       allOf:
@@ -526,6 +561,26 @@ components:
       - status
       - userEmail
       type: object
+    Region:
+      example:
+        baseUrl: baseUrl
+        id: id
+        tags:
+          key: tags
+      properties:
+        id:
+          type: string
+        tags:
+          additionalProperties:
+            type: string
+          type: object
+        baseUrl:
+          type: string
+      required:
+      - baseUrl
+      - id
+      - tags
+      type: object
     ListOrganizationExpandedResponse:
       example:
         data:
@@ -536,6 +591,32 @@ components:
           items:
             $ref: '#/components/schemas/ListOrganizationExpandedResponse_data_inner'
           type: array
+      type: object
+    ListRegionsResponse:
+      example:
+        data:
+        - baseUrl: baseUrl
+          id: id
+          tags:
+            key: tags
+        - baseUrl: baseUrl
+          id: id
+          tags:
+            key: tags
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/Region'
+          type: array
+      type: object
+    ServerInfo:
+      example:
+        version: version
+      properties:
+        version:
+          type: string
+      required:
+      - version
       type: object
     Organization_allOf:
       properties:
@@ -561,6 +642,8 @@ components:
         uri:
           description: Base stack uri
           type: string
+        boundRegion:
+          $ref: '#/components/schemas/Region'
       required:
       - id
       - organizationId

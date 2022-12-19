@@ -14,6 +14,9 @@ import (
 	"encoding/json"
 )
 
+// checks if the ListOrganizationExpandedResponseDataInner type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &ListOrganizationExpandedResponseDataInner{}
+
 // ListOrganizationExpandedResponseDataInner struct for ListOrganizationExpandedResponseDataInner
 type ListOrganizationExpandedResponseDataInner struct {
 	// Organization name
@@ -60,7 +63,7 @@ func (o *ListOrganizationExpandedResponseDataInner) GetName() string {
 // and a boolean to check if the value has been set.
 func (o *ListOrganizationExpandedResponseDataInner) GetNameOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.Name, true
 }
@@ -84,7 +87,7 @@ func (o *ListOrganizationExpandedResponseDataInner) GetId() string {
 // and a boolean to check if the value has been set.
 func (o *ListOrganizationExpandedResponseDataInner) GetIdOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.Id, true
 }
@@ -108,7 +111,7 @@ func (o *ListOrganizationExpandedResponseDataInner) GetOwnerId() string {
 // and a boolean to check if the value has been set.
 func (o *ListOrganizationExpandedResponseDataInner) GetOwnerIdOk() (*string, bool) {
 	if o == nil {
-    return nil, false
+		return nil, false
 	}
 	return &o.OwnerId, true
 }
@@ -183,23 +186,25 @@ func (o *ListOrganizationExpandedResponseDataInner) SetTotalUsers(v int32) {
 }
 
 func (o ListOrganizationExpandedResponseDataInner) MarshalJSON() ([]byte, error) {
+	toSerialize,err := o.ToMap()
+	if err != nil {
+		return []byte{}, err
+	}
+	return json.Marshal(toSerialize)
+}
+
+func (o ListOrganizationExpandedResponseDataInner) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["name"] = o.Name
-	}
-	if true {
-		toSerialize["id"] = o.Id
-	}
-	if true {
-		toSerialize["ownerId"] = o.OwnerId
-	}
+	toSerialize["name"] = o.Name
+	toSerialize["id"] = o.Id
+	toSerialize["ownerId"] = o.OwnerId
 	if !isNil(o.TotalStacks) {
 		toSerialize["totalStacks"] = o.TotalStacks
 	}
 	if !isNil(o.TotalUsers) {
 		toSerialize["totalUsers"] = o.TotalUsers
 	}
-	return json.Marshal(toSerialize)
+	return toSerialize, nil
 }
 
 type NullableListOrganizationExpandedResponseDataInner struct {

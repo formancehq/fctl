@@ -8,6 +8,7 @@ import (
 func NewUninstallCommand() *cobra.Command {
 	return fctl.NewCommand("uninstall connector",
 		fctl.WithAliases("uninstall", "u", "un"),
+		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgs("stripe"),
 		fctl.WithShortDescription("Uninstall a connector"),
@@ -18,7 +19,21 @@ func NewUninstallCommand() *cobra.Command {
 				return err
 			}
 
-			client, err := fctl.NewStackClient(cmd, cfg)
+			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg)
+			if err != nil {
+				return err
+			}
+
+			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
+			if err != nil {
+				return err
+			}
+
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to uninstall connector '%s'", args[0]) {
+				return fctl.ErrMissingApproval
+			}
+
+			client, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
 				return err
 			}
