@@ -10,6 +10,7 @@ import (
 	"github.com/formancehq/fctl/cmd/stack/internal"
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -18,6 +19,7 @@ func NewCreateCommand() *cobra.Command {
 		productionFlag = "production"
 		unprotectFlag  = "unprotect"
 		tagFlag        = "tag"
+		nowaitFlag     = "no-wait"
 	)
 	return fctl.NewMembershipCommand("create",
 		fctl.WithShortDescription("Create a new stack"),
@@ -26,6 +28,7 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithBoolFlag(productionFlag, false, "Create a production stack"),
 		fctl.WithBoolFlag(unprotectFlag, false, "Unprotect stacks (no confirmation on write commands)"),
 		fctl.WithStringSliceFlag(tagFlag, []string{}, "Tags to use to find matching region"),
+		fctl.WithBoolFlag(nowaitFlag, false, "Not wait stack availability"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 
 			cfg, err := fctl.GetConfig(cmd)
@@ -68,8 +71,19 @@ func NewCreateCommand() *cobra.Command {
 
 			profile := fctl.GetCurrentProfile(cmd, cfg)
 
-			if err := waitStackReady(cmd, profile, stack.Data); err != nil {
-				return err
+			if !fctl.GetBool(cmd, nowaitFlag) {
+				spinner, err := pterm.DefaultSpinner.Start("Waiting services availability")
+				if err != nil {
+					return err
+				}
+
+				if err := waitStackReady(cmd, profile, stack.Data); err != nil {
+					return err
+				}
+
+				if err := spinner.Stop(); err != nil {
+					return err
+				}
 			}
 
 			fctl.Highlightln(cmd.OutOrStdout(), "Your dashboard will be reachable on: %s",
