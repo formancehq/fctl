@@ -64,7 +64,7 @@ func NewSendCommand() *cobra.Command {
 				return err
 			}
 
-			metadata, err := internal.ParseMetadata(fctl.GetStringSlice(cmd, metadataFlag))
+			metadata, err := fctl.ParseMetadata(fctl.GetStringSlice(cmd, metadataFlag))
 			if err != nil {
 				return err
 			}
@@ -72,7 +72,7 @@ func NewSendCommand() *cobra.Command {
 			reference := fctl.GetString(cmd, referenceFlag)
 			response, _, err := ledgerClient.TransactionsApi.
 				CreateTransaction(cmd.Context(), fctl.GetString(cmd, internal.LedgerFlag)).
-				PostTransaction(formance.PostTransaction{
+				TransactionData(formance.TransactionData{
 					Postings: []formance.Posting{{
 						Amount:      int32(amount),
 						Asset:       asset,

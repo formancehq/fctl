@@ -112,7 +112,7 @@ func NewCommand() *cobra.Command {
 
 			reference := fctl.GetString(cmd, referenceFlag)
 
-			metadata, err := internal.ParseMetadata(fctl.GetStringSlice(cmd, metadataFlag))
+			metadata, err := fctl.ParseMetadata(fctl.GetStringSlice(cmd, metadataFlag))
 			if err != nil {
 				return err
 			}

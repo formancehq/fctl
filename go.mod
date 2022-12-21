@@ -6,7 +6,7 @@ require (
 	github.com/athul/shelby v1.0.6
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/formancehq/fctl/membershipclient v0.0.0-00010101000000-000000000000
-	github.com/formancehq/formance-sdk-go v0.0.0-20221221153553-323f206b6df4
+	github.com/formancehq/formance-sdk-go v0.0.0-20221221170814-b1eb9fb95e0e
 	github.com/iancoleman/strcase v0.2.0
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/pkg/errors v0.9.1
