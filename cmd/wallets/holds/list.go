@@ -1,4 +1,4 @@
-package wallet
+package holds
 
 import (
 	fctl "github.com/formancehq/fctl/pkg"
@@ -9,9 +9,10 @@ import (
 )
 
 func NewListCommand() *cobra.Command {
-	return fctl.NewCommand("list",
-		fctl.WithShortDescription("List all wallets"),
+	return fctl.NewCommand("list WALLET_ID",
+		fctl.WithShortDescription("List holds of a wallets"),
 		fctl.WithAliases("ls", "l"),
+		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
@@ -28,12 +29,12 @@ func NewListCommand() *cobra.Command {
 				return err
 			}
 
-			webhookClient, err := fctl.NewStackClient(cmd, cfg, stack)
+			stackClient, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
 				return errors.Wrap(err, "creating stack client")
 			}
 
-			res, _, err := webhookClient.WalletsApi.GetWallets(cmd.Context()).Execute()
+			res, _, err := stackClient.WalletsApi.GetHolds(cmd.Context(), args[0]).Execute()
 			if err != nil {
 				return errors.Wrap(err, "listing wallets")
 			}
@@ -44,13 +45,12 @@ func NewListCommand() *cobra.Command {
 				WithData(
 					fctl.Prepend(
 						fctl.Map(res.Data,
-							func(src formance.Wallet) []string {
+							func(src formance.Hold) []string {
 								return []string{
 									src.Id,
-									src.Name,
 								}
 							}),
-						[]string{"ID", "Name"},
+						[]string{"ID"},
 					),
 				).Render(); err != nil {
 				return errors.Wrap(err, "rendering table")

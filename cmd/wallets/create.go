@@ -1,4 +1,4 @@
-package wallet
+package wallets
 
 import (
 	fctl "github.com/formancehq/fctl/pkg"
@@ -12,7 +12,7 @@ func NewCreateCommand() *cobra.Command {
 		metadataFlag = "metadata"
 	)
 	return fctl.NewCommand("create NAME",
-		fctl.WithShortDescription("Create a new wallet"),
+		fctl.WithShortDescription("Create a new wallets"),
 		fctl.WithAliases("cr"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
@@ -33,7 +33,7 @@ func NewCreateCommand() *cobra.Command {
 				return err
 			}
 
-			if !fctl.CheckStackApprobation(cmd, stack, "You are about to create a wallet") {
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to create a wallets") {
 				return fctl.ErrMissingApproval
 			}
 
@@ -52,7 +52,7 @@ func NewCreateCommand() *cobra.Command {
 				Metadata: metadata,
 			}).Execute()
 			if err != nil {
-				return errors.Wrap(err, "Creating wallet")
+				return errors.Wrap(err, "Creating wallets")
 			}
 
 			fctl.Success(cmd.OutOrStdout(),
