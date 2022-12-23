@@ -33,10 +33,6 @@ func NewShowCommand() *cobra.Command {
 				return err
 			}
 
-			if !fctl.CheckStackApprobation(cmd, stack, "You are about to create a wallets") {
-				return fctl.ErrMissingApproval
-			}
-
 			client, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
 				return errors.Wrap(err, "creating stack client")
@@ -47,20 +43,30 @@ func NewShowCommand() *cobra.Command {
 				return errors.Wrap(err, "Creating wallets")
 			}
 
-			fctl.Success(cmd.OutOrStdout(),
-				"Wallet created successfully with ID: %s", res.Data.Id)
-
 			return PrintWallet(cmd.OutOrStdout(), res.Data)
 		}),
 	)
 }
 
-func PrintWallet(out io.Writer, wallet formance.Wallet) error {
+func PrintWallet(out io.Writer, wallet formance.WalletWithBalances) error {
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("ID"), fmt.Sprint(wallet.Id)})
 	tableData = append(tableData, []string{pterm.LightCyan("Name"), wallet.Name})
 
 	if err := pterm.DefaultTable.
+		WithWriter(out).
+		WithData(tableData).
+		Render(); err != nil {
+		return err
+	}
+
+	tableData = pterm.TableData{}
+	tableData = append(tableData, []string{"Asset", "Amount"})
+	for asset, amount := range wallet.Balances {
+		tableData = append(tableData, []string{asset, fmt.Sprint(amount)})
+	}
+	if err := pterm.DefaultTable.
+		WithHasHeader(true).
 		WithWriter(out).
 		WithData(tableData).
 		Render(); err != nil {
