@@ -36,7 +36,7 @@ func NewGetConfigCommand() *cobra.Command {
 				return err
 			}
 
-			connectorConfig, _, err := client.PaymentsApi.ReadConnectorConfig(cmd.Context(), args[0]).Execute()
+			connectorConfig, _, err := client.PaymentsApi.ReadConnectorConfig(cmd.Context(), formance.Connectors(args[0])).Execute()
 			if err != nil {
 				return fctl.WrapError(err, "reading connector config")
 			}
