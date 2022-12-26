@@ -11,6 +11,10 @@ func NewInstallCommand() *cobra.Command {
 		fctl.WithShortDescription("Install a connector"),
 		fctl.WithChildCommands(
 			NewStripeCommand(),
+			NewBankingCircleCommand(),
+			NewCurrencyCloudCommand(),
+			NewModulrCommand(),
+			NewWiseCommand(),
 		),
 	)
 }

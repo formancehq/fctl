@@ -1,7 +1,9 @@
 package connectors
 
 import (
+	"github.com/formancehq/fctl/cmd/payments/connectors/internal"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -39,22 +41,112 @@ func NewGetConfigCommand() *cobra.Command {
 				return fctl.WrapError(err, "reading connector config")
 			}
 			switch args[0] {
-			case "stripe":
-				config := connectorConfig.StripeConfig
-
-				tableData := pterm.TableData{}
-				tableData = append(tableData, []string{pterm.LightCyan("Api key:"), config.ApiKey})
-
-				if err := pterm.DefaultTable.
-					WithWriter(cmd.OutOrStdout()).
-					WithData(tableData).
-					Render(); err != nil {
-					return err
-				}
+			case internal.StripeConnector:
+				err = displayStripeConfig(cmd, connectorConfig)
+			case internal.ModulrConnector:
+				err = displayModulrConfig(cmd, connectorConfig)
+			case internal.BankingCircleConnector:
+				err = displayBankingCircleConfig(cmd, connectorConfig)
+			case internal.CurrencyCloudConnector:
+				err = displayCurrencyCloudConfig(cmd, connectorConfig)
+			case internal.WiseConnector:
+				err = displayWiseConfig(cmd, connectorConfig)
 			default:
 				fctl.Error(cmd.ErrOrStderr(), "Connection unknown.")
 			}
-			return nil
+			return err
 		}),
 	)
+}
+
+func displayStripeConfig(cmd *cobra.Command, connectorConfig *formance.ConnectorConfig) error {
+	config := connectorConfig.StripeConfig
+
+	tableData := pterm.TableData{}
+	tableData = append(tableData, []string{pterm.LightCyan("API key:"), config.ApiKey})
+
+	if err := pterm.DefaultTable.
+		WithWriter(cmd.OutOrStdout()).
+		WithData(tableData).
+		Render(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func displayModulrConfig(cmd *cobra.Command, connectorConfig *formance.ConnectorConfig) error {
+	config := connectorConfig.ModulrConfig
+
+	tableData := pterm.TableData{}
+	tableData = append(tableData, []string{pterm.LightCyan("API key:"), config.ApiKey})
+	tableData = append(tableData, []string{pterm.LightCyan("API secret:"), config.ApiSecret})
+	tableData = append(tableData, []string{pterm.LightCyan("Endpoint:"), func() string {
+		if config.Endpoint == nil {
+			return ""
+		}
+		return *config.Endpoint
+	}()})
+
+	if err := pterm.DefaultTable.
+		WithWriter(cmd.OutOrStdout()).
+		WithData(tableData).
+		Render(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func displayWiseConfig(cmd *cobra.Command, connectorConfig *formance.ConnectorConfig) error {
+	config := connectorConfig.WiseConfig
+
+	tableData := pterm.TableData{}
+	tableData = append(tableData, []string{pterm.LightCyan("API key:"), config.ApiKey})
+
+	if err := pterm.DefaultTable.
+		WithWriter(cmd.OutOrStdout()).
+		WithData(tableData).
+		Render(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func displayBankingCircleConfig(cmd *cobra.Command, connectorConfig *formance.ConnectorConfig) error {
+	config := connectorConfig.BankingCircleConfig
+
+	tableData := pterm.TableData{}
+	tableData = append(tableData, []string{pterm.LightCyan("Username:"), config.Username})
+	tableData = append(tableData, []string{pterm.LightCyan("Password:"), config.Password})
+	tableData = append(tableData, []string{pterm.LightCyan("Endpoint:"), config.Endpoint})
+	tableData = append(tableData, []string{pterm.LightCyan("Authorization endpoint:"), config.AuthorizationEndpoint})
+
+	if err := pterm.DefaultTable.
+		WithWriter(cmd.OutOrStdout()).
+		WithData(tableData).
+		Render(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func displayCurrencyCloudConfig(cmd *cobra.Command, connectorConfig *formance.ConnectorConfig) error {
+	config := connectorConfig.CurrencyCloudConfig
+
+	tableData := pterm.TableData{}
+	tableData = append(tableData, []string{pterm.LightCyan("API key:"), config.ApiKey})
+	tableData = append(tableData, []string{pterm.LightCyan("Login ID:"), config.LoginID})
+	tableData = append(tableData, []string{pterm.LightCyan("Endpoint:"), func() string {
+		if config.Endpoint == nil {
+			return ""
+		}
+		return *config.Endpoint
+	}()})
+
+	if err := pterm.DefaultTable.
+		WithWriter(cmd.OutOrStdout()).
+		WithData(tableData).
+		Render(); err != nil {
+		return err
+	}
+	return nil
 }
