@@ -14,6 +14,7 @@ import (
 	"github.com/formancehq/fctl/cmd/profiles"
 	"github.com/formancehq/fctl/cmd/search"
 	"github.com/formancehq/fctl/cmd/stack"
+	"github.com/formancehq/fctl/cmd/wallets"
 	"github.com/formancehq/fctl/cmd/webhooks"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
@@ -46,6 +47,7 @@ func NewRootCommand() *cobra.Command {
 			cloud.NewCommand(),
 			search.NewCommand(),
 			webhooks.NewCommand(),
+			wallets.NewCommand(),
 		),
 		fctl.WithPersistentStringPFlag(fctl.ProfileFlag, "p", "", "config profile to use"),
 		fctl.WithPersistentStringPFlag(fctl.FileFlag, "c", fmt.Sprintf("%s/.formance/fctl.config", homedir), "Debug mode"),

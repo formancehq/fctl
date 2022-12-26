@@ -1,9 +1,6 @@
-package webhooks
+package holds
 
 import (
-	"strings"
-	"time"
-
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go"
 	"github.com/pkg/errors"
@@ -12,9 +9,10 @@ import (
 )
 
 func NewListCommand() *cobra.Command {
-	return fctl.NewCommand("list",
-		fctl.WithShortDescription("List all configs"),
+	return fctl.NewCommand("list WALLET_ID",
+		fctl.WithShortDescription("List holds of a wallets"),
 		fctl.WithAliases("ls", "l"),
+		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
@@ -31,14 +29,14 @@ func NewListCommand() *cobra.Command {
 				return err
 			}
 
-			webhookClient, err := fctl.NewStackClient(cmd, cfg, stack)
+			stackClient, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
 				return errors.Wrap(err, "creating stack client")
 			}
 
-			res, _, err := webhookClient.WebhooksApi.GetManyConfigs(cmd.Context()).Execute()
+			res, _, err := stackClient.WalletsApi.GetHolds(cmd.Context(), args[0]).Execute()
 			if err != nil {
-				return errors.Wrap(err, "listing all configs")
+				return errors.Wrap(err, "listing wallets")
 			}
 
 			if err := pterm.DefaultTable.
@@ -46,18 +44,13 @@ func NewListCommand() *cobra.Command {
 				WithWriter(cmd.OutOrStdout()).
 				WithData(
 					fctl.Prepend(
-						fctl.Map(res.Cursor.Data,
-							func(src formance.WebhooksConfig) []string {
+						fctl.Map(res.Data,
+							func(src formance.Hold) []string {
 								return []string{
-									*src.Id,
-									src.CreatedAt.Format(time.RFC3339),
-									fctl.StringPointerToString(src.Secret),
-									*src.Endpoint,
-									fctl.BoolPointerToString(src.Active),
-									strings.Join(src.EventTypes, ","),
+									src.Id,
 								}
 							}),
-						[]string{"ID", "Created at", "Secret", "Endpoint", "Active", "Event types"},
+						[]string{"ID"},
 					),
 				).Render(); err != nil {
 				return errors.Wrap(err, "rendering table")

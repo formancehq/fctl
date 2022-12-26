@@ -7,7 +7,7 @@ import (
 )
 
 func NewDeactivateCommand() *cobra.Command {
-	return fctl.NewCommand("deactivate [CONFIG_ID]",
+	return fctl.NewCommand("deactivate CONFIG_ID",
 		fctl.WithShortDescription("Deactivate one config"),
 		fctl.WithConfirmFlag(),
 		fctl.WithAliases("deac"),
@@ -34,7 +34,7 @@ func NewDeactivateCommand() *cobra.Command {
 
 			client, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
-				return errors.Wrap(err, "fctl.NewStackClient")
+				return errors.Wrap(err, "creating stack client")
 			}
 
 			_, _, err = client.WebhooksApi.DeactivateOneConfig(cmd.Context(), args[0]).Execute()

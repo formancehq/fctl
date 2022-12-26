@@ -13,7 +13,7 @@ func NewCreateCommand() *cobra.Command {
 	const (
 		secretFlag = "secret"
 	)
-	return fctl.NewCommand("create [ENDPOINT] [EVENT_TYPE1] [EVENT_TYPE2,optional]...",
+	return fctl.NewCommand("create ENDPOINT [EVENT_TYPE...]",
 		fctl.WithShortDescription("Create a new config. At least one event type is required."),
 		fctl.WithAliases("cr"),
 		fctl.WithConfirmFlag(),
@@ -41,7 +41,7 @@ func NewCreateCommand() *cobra.Command {
 
 			client, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
-				return errors.Wrap(err, "fctl.NewStackClient")
+				return errors.Wrap(err, "creating stack client")
 			}
 
 			if _, err := url.Parse(args[0]); err != nil {

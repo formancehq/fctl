@@ -4,20 +4,21 @@ import (
 	"github.com/formancehq/fctl/cmd/ledger/accounts"
 	"github.com/formancehq/fctl/cmd/ledger/internal"
 	"github.com/formancehq/fctl/cmd/ledger/transactions"
-	internal2 "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 )
 
 func NewCommand() *cobra.Command {
-	return internal2.NewStackCommand("ledger",
-		internal2.WithAliases("l"),
-		internal2.WithPersistentStringFlag(internal.LedgerFlag, "default", "Specific ledger"),
-		internal2.WithShortDescription("Ledger management"),
-		internal2.WithChildCommands(
+	return fctl.NewStackCommand("ledger",
+		fctl.WithAliases("l"),
+		fctl.WithPersistentStringFlag(internal.LedgerFlag, "default", "Specific ledger"),
+		fctl.WithShortDescription("Ledger management"),
+		fctl.WithChildCommands(
 			NewBalancesCommand(),
 			NewSendCommand(),
 			NewStatsCommand(),
 			NewServerInfoCommand(),
+			NewListCommand(),
 			transactions.NewLedgerTransactionsCommand(),
 			accounts.NewLedgerAccountsCommand(),
 		),

@@ -25,6 +25,7 @@ func PrintStackInformation(out io.Writer, profile *fctl.Profile, stack *membersh
 	tableData = append(tableData, []string{pterm.LightCyan("Payments URI"), fmt.Sprintf("%s/api/payments", baseUrlStr)})
 	tableData = append(tableData, []string{pterm.LightCyan("Search URI"), fmt.Sprintf("%s/api/search", baseUrlStr)})
 	tableData = append(tableData, []string{pterm.LightCyan("Auth URI"), fmt.Sprintf("%s/api/auth", baseUrlStr)})
+	tableData = append(tableData, []string{pterm.LightCyan("Wallets URI"), fmt.Sprintf("%s/api/wallets", baseUrlStr)})
 	if err := pterm.DefaultTable.
 		WithWriter(out).
 		WithData(tableData).

@@ -7,7 +7,7 @@ import (
 )
 
 func NewDeleteCommand() *cobra.Command {
-	return fctl.NewCommand("delete [CONFIG_ID]",
+	return fctl.NewCommand("delete CONFIG_ID",
 		fctl.WithShortDescription("Delete a config"),
 		fctl.WithConfirmFlag(),
 		fctl.WithAliases("del"),
@@ -34,7 +34,7 @@ func NewDeleteCommand() *cobra.Command {
 
 			webhookClient, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
-				return errors.Wrap(err, "fctl.NewStackClient")
+				return errors.Wrap(err, "creating stack client")
 			}
 
 			_, err = webhookClient.WebhooksApi.DeleteOneConfig(cmd.Context(), args[0]).Execute()

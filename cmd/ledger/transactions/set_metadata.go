@@ -15,7 +15,7 @@ func NewSetMetadataCommand() *cobra.Command {
 		fctl.WithArgs(cobra.MinimumNArgs(2)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 
-			metadata, err := internal.ParseMetadata(args[1:])
+			metadata, err := fctl.ParseMetadata(args[1:])
 			if err != nil {
 				return err
 			}

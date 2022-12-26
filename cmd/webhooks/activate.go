@@ -7,7 +7,7 @@ import (
 )
 
 func NewActivateCommand() *cobra.Command {
-	return fctl.NewCommand("activate [CONFIG_ID]",
+	return fctl.NewCommand("activate CONFIG_ID",
 		fctl.WithShortDescription("Activate one config"),
 		fctl.WithAliases("ac", "a"),
 		fctl.WithConfirmFlag(),
@@ -34,7 +34,7 @@ func NewActivateCommand() *cobra.Command {
 
 			client, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
-				return errors.Wrap(err, "fctl.NewStackClient")
+				return errors.Wrap(err, "creating stack client")
 			}
 
 			_, _, err = client.WebhooksApi.ActivateOneConfig(cmd.Context(), args[0]).Execute()
