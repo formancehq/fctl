@@ -10,11 +10,15 @@ import (
 )
 
 func NewCreditWalletCommand() *cobra.Command {
-	return fctl.NewCommand("credit ID AMOUNT ASSET",
+	const (
+		metadataFlag = "metadata"
+	)
+	return fctl.NewCommand("credit ID <amount> <asset>",
 		fctl.WithShortDescription("Credit a wallets"),
 		fctl.WithAliases("cr"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(3)),
+		fctl.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
@@ -45,11 +49,17 @@ func NewCreditWalletCommand() *cobra.Command {
 				return errors.Wrap(err, "parsing amount")
 			}
 
+			metadata, err := fctl.ParseMetadata(fctl.GetStringSlice(cmd, metadataFlag))
+			if err != nil {
+				return err
+			}
+
 			_, err = client.WalletsApi.CreditWallet(cmd.Context(), args[0]).CreditWalletRequest(formance.CreditWalletRequest{
 				Amount: formance.Monetary{
 					Asset:  args[2],
 					Amount: float32(amount),
 				},
+				Metadata: metadata,
 			}).Execute()
 			if err != nil {
 				return errors.Wrap(err, "Crediting wallets")

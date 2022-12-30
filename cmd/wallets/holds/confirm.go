@@ -7,7 +7,7 @@ import (
 )
 
 func NewConfirmCommand() *cobra.Command {
-	return fctl.NewCommand("confirm WALLET_ID HOLD_ID",
+	return fctl.NewCommand("confirm <hold-id>",
 		fctl.WithShortDescription("Confirm a hold"),
 		fctl.WithAliases("c", "conf"),
 		fctl.WithArgs(cobra.ExactArgs(2)),
@@ -32,7 +32,7 @@ func NewConfirmCommand() *cobra.Command {
 				return errors.Wrap(err, "creating stack client")
 			}
 
-			_, err = stackClient.WalletsApi.ConfirmHold(cmd.Context(), args[0], args[1]).Execute()
+			_, err = stackClient.WalletsApi.ConfirmHold(cmd.Context(), args[1]).Execute()
 			if err != nil {
 				return errors.Wrap(err, "listing wallets")
 			}

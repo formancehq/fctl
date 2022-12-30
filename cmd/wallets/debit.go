@@ -11,14 +11,16 @@ import (
 
 func NewDebitWalletCommand() *cobra.Command {
 	const (
-		pendingFlag = "pending"
+		pendingFlag  = "pending"
+		metadataFlag = "metadata"
 	)
-	return fctl.NewCommand("debit ID AMOUNT ASSET",
+	return fctl.NewCommand("debit ID <amount> <asset>",
 		fctl.WithShortDescription("Debit a wallets"),
 		fctl.WithAliases("deb"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(3)),
 		fctl.WithBoolFlag(pendingFlag, false, "Create a pending debit"),
+		fctl.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
@@ -50,12 +52,19 @@ func NewDebitWalletCommand() *cobra.Command {
 			}
 
 			pending := fctl.GetBool(cmd, pendingFlag)
+
+			metadata, err := fctl.ParseMetadata(fctl.GetStringSlice(cmd, metadataFlag))
+			if err != nil {
+				return err
+			}
+
 			hold, _, err := client.WalletsApi.DebitWallet(cmd.Context(), args[0]).DebitWalletRequest(formance.DebitWalletRequest{
 				Amount: formance.Monetary{
 					Asset:  args[2],
 					Amount: float32(amount),
 				},
-				Pending: &pending,
+				Pending:  &pending,
+				Metadata: metadata,
 			}).Execute()
 			if err != nil {
 				return errors.Wrap(err, "Debiting wallets")
