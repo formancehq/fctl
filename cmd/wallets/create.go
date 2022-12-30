@@ -11,7 +11,7 @@ func NewCreateCommand() *cobra.Command {
 	const (
 		metadataFlag = "metadata"
 	)
-	return fctl.NewCommand("create NAME",
+	return fctl.NewCommand("create <name>",
 		fctl.WithShortDescription("Create a new wallets"),
 		fctl.WithAliases("cr"),
 		fctl.WithConfirmFlag(),

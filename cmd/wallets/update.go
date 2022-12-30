@@ -11,7 +11,7 @@ func NewUpdateCommand() *cobra.Command {
 	const (
 		metadataFlag = "metadata"
 	)
-	return fctl.NewCommand("update WALLET_ID",
+	return fctl.NewCommand("update <wallet-id>",
 		fctl.WithShortDescription("Update a wallets"),
 		fctl.WithAliases("up"),
 		fctl.WithConfirmFlag(),

@@ -9,7 +9,7 @@ import (
 )
 
 func NewListCommand() *cobra.Command {
-	return fctl.NewCommand("list WALLET_ID",
+	return fctl.NewCommand("list <wallet-id>",
 		fctl.WithShortDescription("List holds of a wallets"),
 		fctl.WithAliases("ls", "l"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
@@ -34,7 +34,7 @@ func NewListCommand() *cobra.Command {
 				return errors.Wrap(err, "creating stack client")
 			}
 
-			res, _, err := stackClient.WalletsApi.GetHolds(cmd.Context(), args[0]).Execute()
+			res, _, err := stackClient.WalletsApi.GetHolds(cmd.Context()).Execute()
 			if err != nil {
 				return errors.Wrap(err, "listing wallets")
 			}

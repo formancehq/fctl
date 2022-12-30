@@ -12,7 +12,7 @@ import (
 )
 
 func NewShowCommand() *cobra.Command {
-	return fctl.NewCommand("show ID",
+	return fctl.NewCommand("show <id>",
 		fctl.WithShortDescription("Show a wallets"),
 		fctl.WithAliases("sh"),
 		fctl.WithConfirmFlag(),
