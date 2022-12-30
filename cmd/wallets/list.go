@@ -43,7 +43,7 @@ func NewListCommand() *cobra.Command {
 				WithWriter(cmd.OutOrStdout()).
 				WithData(
 					fctl.Prepend(
-						fctl.Map(res.Data,
+						fctl.Map(res.Cursor.Data,
 							func(src formance.Wallet) []string {
 								return []string{
 									src.Id,

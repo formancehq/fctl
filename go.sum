@@ -72,8 +72,8 @@ github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7
 github.com/felixge/httpsnoop v1.0.1/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
 github.com/formancehq/cobra v0.0.0-20221112160629-60a6d6d55ef9 h1:vix/rzvBgwdc0/4HRnEGFUXmqMJdU1LwIZbdXsm4qT4=
 github.com/formancehq/cobra v0.0.0-20221112160629-60a6d6d55ef9/go.mod h1:IOw/AERYS7UzyrGinqmz6HLUo219MORXGxhbaJUqzrY=
-github.com/formancehq/formance-sdk-go v1.0.0-rc.1.0.20221223151240-1e3b29146f83 h1:fKx7hua1af8jH/V6vAoCOLl2fr08TCk4xcu/IZz9kqc=
-github.com/formancehq/formance-sdk-go v1.0.0-rc.1.0.20221223151240-1e3b29146f83/go.mod h1:8/3set1MEjevx4epBHjwBQxDrXVeliF7kzHFOzZC/yI=
+github.com/formancehq/formance-sdk-go v1.0.0-rc.1.0.20221230080334-d6eebc3cc315 h1:vaIHs0DjTKsCdb2P8PbiZZV/H7M9fHwB6PRxS1/wLaA=
+github.com/formancehq/formance-sdk-go v1.0.0-rc.1.0.20221230080334-d6eebc3cc315/go.mod h1:8/3set1MEjevx4epBHjwBQxDrXVeliF7kzHFOzZC/yI=
 github.com/formancehq/oidc v0.0.0-20220922145049-a6daec727711 h1:FlfsWVuJWpIA+FasyDRNExFSp9VnmuR+BlIT6Tyjabw=
 github.com/formancehq/oidc v0.0.0-20220922145049-a6daec727711/go.mod h1:vcDdyFgHzwPIPgoXO1u1UCJQjv2gJBq832VZx13sWBE=
 github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1/go.mod h1:vR7hzQXu2zJy9AVAgeJqvqgH9Q5CA+iKCZ2gyEVpxRU=
