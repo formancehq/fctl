@@ -8,7 +8,7 @@ import (
 )
 
 func NewShowCommand() *cobra.Command {
-	return fctl.NewCommand("show",
+	return fctl.NewCommand("show <name>",
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithAliases("s"),
 		fctl.WithShortDescription("Show profile"),

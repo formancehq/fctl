@@ -8,7 +8,7 @@ import (
 )
 
 func NewChangeSecretCommand() *cobra.Command {
-	return fctl.NewCommand("change-secret CONFIG_ID SECRET",
+	return fctl.NewCommand("change-secret <config-id> <secret>",
 		fctl.WithShortDescription("Change the signing secret of a config. You can bring your own secret. If not passed or empty, a secret is automatically generated. The format is a string of bytes of size 24, base64 encoded. (larger size after encoding)"),
 		fctl.WithConfirmFlag(),
 		fctl.WithAliases("cs"),

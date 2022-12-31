@@ -7,7 +7,7 @@ import (
 )
 
 func NewDeleteCommand() *cobra.Command {
-	return fctl.NewCommand("delete",
+	return fctl.NewCommand("delete <name>",
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithShortDescription("Delete a profile"),
 		fctl.WithValidArgsFunction(ProfileNamesAutoCompletion),

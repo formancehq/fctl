@@ -69,6 +69,7 @@ func NewLoginCommand() *cobra.Command {
 		fctl.WithStringFlag(fctl.MembershipUriFlag, fctl.DefaultMemberShipUri, "service url"),
 		fctl.WithHiddenFlag(fctl.MembershipUriFlag),
 		fctl.WithShortDescription("Login"),
+		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 
 			cfg, err := fctl.GetConfig(cmd)

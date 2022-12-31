@@ -7,7 +7,7 @@ import (
 )
 
 func NewDeleteCommand() *cobra.Command {
-	return fctl.NewCommand("delete CONFIG_ID",
+	return fctl.NewCommand("delete <config-id>",
 		fctl.WithShortDescription("Delete a config"),
 		fctl.WithConfirmFlag(),
 		fctl.WithAliases("del"),

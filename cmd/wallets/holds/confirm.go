@@ -12,7 +12,7 @@ func NewConfirmCommand() *cobra.Command {
 		finalFlag  = "final"
 		amountFlag = "amount"
 	)
-	return fctl.NewCommand("confirm <hold-id> [amount]",
+	return fctl.NewCommand("confirm <hold-id>",
 		fctl.WithShortDescription("Confirm a hold"),
 		fctl.WithAliases("c", "conf"),
 		fctl.WithArgs(cobra.RangeArgs(1, 2)),

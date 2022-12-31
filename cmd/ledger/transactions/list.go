@@ -38,6 +38,7 @@ func NewListCommand() *cobra.Command {
 		fctl.WithIntFlag(pageSizeFlag, 5, "Page size"),
 		// SDK not generating correct requests
 		fctl.WithHiddenFlag(metadataFlag),
+		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {

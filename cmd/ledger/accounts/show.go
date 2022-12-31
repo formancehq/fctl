@@ -10,7 +10,7 @@ import (
 )
 
 func NewShowCommand() *cobra.Command {
-	return fctl.NewCommand("show [ADDRESS]",
+	return fctl.NewCommand("show <address>",
 		fctl.WithShortDescription("Show account"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithAliases("sh", "s"),

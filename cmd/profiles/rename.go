@@ -7,7 +7,7 @@ import (
 )
 
 func NewRenameCommand() *cobra.Command {
-	return fctl.NewCommand("rename",
+	return fctl.NewCommand("rename <old-name> <new-name>",
 		fctl.WithArgs(cobra.ExactArgs(2)),
 		fctl.WithShortDescription("Rename a profile"),
 		fctl.WithValidArgsFunction(ProfileNamesAutoCompletion),

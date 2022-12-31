@@ -7,7 +7,7 @@ import (
 )
 
 func NewActivateCommand() *cobra.Command {
-	return fctl.NewCommand("activate CONFIG_ID",
+	return fctl.NewCommand("activate <config-id>",
 		fctl.WithShortDescription("Activate one config"),
 		fctl.WithAliases("ac", "a"),
 		fctl.WithConfirmFlag(),

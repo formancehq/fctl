@@ -31,6 +31,7 @@ func openUrl(url string) error {
 func NewUICommand() *cobra.Command {
 	return fctl.NewStackCommand("ui",
 		fctl.WithShortDescription("Open UI"),
+		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 
 			cfg, err := fctl.GetConfig(cmd)

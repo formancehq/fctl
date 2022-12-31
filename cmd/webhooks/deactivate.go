@@ -7,7 +7,7 @@ import (
 )
 
 func NewDeactivateCommand() *cobra.Command {
-	return fctl.NewCommand("deactivate CONFIG_ID",
+	return fctl.NewCommand("deactivate <config-id>",
 		fctl.WithShortDescription("Deactivate one config"),
 		fctl.WithConfirmFlag(),
 		fctl.WithAliases("deac"),

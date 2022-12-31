@@ -7,7 +7,7 @@ import (
 )
 
 func NewCreateCommand() *cobra.Command {
-	return fctl.NewCommand("create",
+	return fctl.NewCommand("create <name>",
 		fctl.WithAliases("cr", "c"),
 		fctl.WithShortDescription("Create organization"),
 		fctl.WithArgs(cobra.ExactArgs(1)),

@@ -9,6 +9,7 @@ import (
 
 func NewListCommand() *cobra.Command {
 	return fctl.NewCommand("list",
+		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithAliases("ls", "l"),
 		fctl.WithShortDescription("List users"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {

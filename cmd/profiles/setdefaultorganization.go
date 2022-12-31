@@ -7,7 +7,7 @@ import (
 )
 
 func NewSetDefaultOrganizationCommand() *cobra.Command {
-	return fctl.NewCommand("set-default-organization",
+	return fctl.NewCommand("set-default-organization <organization-id>",
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithAliases("sdo"),
 		fctl.WithShortDescription("Set default organization"),

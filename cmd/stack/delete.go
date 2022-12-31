@@ -11,7 +11,7 @@ func NewDeleteCommand() *cobra.Command {
 	const (
 		stackNameFlag = "name"
 	)
-	return fctl.NewMembershipCommand("delete [STACK_ID] | --name=[NAME]",
+	return fctl.NewMembershipCommand("delete (<stack-id> | --name=<stack-name>)",
 		fctl.WithConfirmFlag(),
 		fctl.WithShortDescription("Delete a stack"),
 		fctl.WithAliases("del", "d"),
@@ -35,7 +35,7 @@ func NewDeleteCommand() *cobra.Command {
 			var stack *membershipclient.Stack
 			if len(args) == 1 {
 				if fctl.GetString(cmd, stackNameFlag) != "" {
-					return errors.New("need either an id of a name spefified using --name flag")
+					return errors.New("need either an id of a name specified using --name flag")
 				}
 
 				rsp, _, err := apiClient.DefaultApi.ReadStack(cmd.Context(), organization, args[0]).Execute()

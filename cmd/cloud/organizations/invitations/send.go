@@ -6,7 +6,7 @@ import (
 )
 
 func NewSendCommand() *cobra.Command {
-	return fctl.NewCommand("send",
+	return fctl.NewCommand("send <email>",
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithShortDescription("Invite a user by email"),
 		fctl.WithAliases("s"),

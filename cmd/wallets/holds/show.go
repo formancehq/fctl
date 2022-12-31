@@ -12,7 +12,7 @@ import (
 )
 
 func NewShowCommand() *cobra.Command {
-	return fctl.NewCommand("show",
+	return fctl.NewCommand("show <hold-id>",
 		fctl.WithShortDescription("Show a hold"),
 		fctl.WithAliases("sh"),
 		fctl.WithArgs(cobra.ExactArgs(1)),

@@ -16,7 +16,7 @@ func ProfileNamesAutoCompletion(cmd *cobra.Command, args []string, toComplete st
 }
 
 func NewUseCommand() *cobra.Command {
-	return fctl.NewCommand("use",
+	return fctl.NewCommand("use <name>",
 		fctl.WithAliases("u"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithShortDescription("Use profile"),

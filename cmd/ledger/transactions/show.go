@@ -8,7 +8,7 @@ import (
 )
 
 func NewShowCommand() *cobra.Command {
-	return fctl.NewCommand("show [TXID]",
+	return fctl.NewCommand("show <transaction-id>",
 		fctl.WithShortDescription("Print a transaction"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithAliases("sh"),

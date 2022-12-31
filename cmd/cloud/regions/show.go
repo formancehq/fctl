@@ -10,7 +10,7 @@ import (
 )
 
 func NewShowCommand() *cobra.Command {
-	return fctl.NewCommand("show",
+	return fctl.NewCommand("show <region-id>",
 		fctl.WithAliases("sh", "s"),
 		fctl.WithShortDescription("Show region details"),
 		fctl.WithArgs(cobra.ExactArgs(1)),

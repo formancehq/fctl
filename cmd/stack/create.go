@@ -21,7 +21,7 @@ func NewCreateCommand() *cobra.Command {
 		tagFlag        = "tag"
 		nowaitFlag     = "no-wait"
 	)
-	return fctl.NewMembershipCommand("create",
+	return fctl.NewMembershipCommand("create <name>",
 		fctl.WithShortDescription("Create a new stack"),
 		fctl.WithAliases("c", "cr"),
 		fctl.WithArgs(cobra.ExactArgs(1)),

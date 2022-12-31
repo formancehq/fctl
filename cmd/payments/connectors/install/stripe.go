@@ -12,7 +12,7 @@ func NewStripeCommand() *cobra.Command {
 	const (
 		stripeApiKeyFlag = "api-key"
 	)
-	return fctl.NewCommand(internal.StripeConnector+" API_KEY",
+	return fctl.NewCommand(internal.StripeConnector+" <api-key>",
 		fctl.WithShortDescription("Install a stripe connector"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),

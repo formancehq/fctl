@@ -7,9 +7,10 @@ import (
 )
 
 func NewShowCommand() *cobra.Command {
-	return fctl.NewCommand("show",
+	return fctl.NewCommand("show <user-id>",
 		fctl.WithAliases("s"),
 		fctl.WithShortDescription("Show user"),
+		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {

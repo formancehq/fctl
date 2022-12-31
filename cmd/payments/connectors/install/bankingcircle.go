@@ -16,7 +16,7 @@ func NewBankingCircleCommand() *cobra.Command {
 		defaultEndpoint              = "https://sandbox.bankingcircle.com"
 		defaultAuthorizationEndpoint = "https://authorizationsandbox.bankingcircleconnect.com"
 	)
-	return fctl.NewCommand(internal.BankingCircleConnector+" USERNAME PASSWORD",
+	return fctl.NewCommand(internal.BankingCircleConnector+" <username> <password>",
 		fctl.WithShortDescription("Install a Banking Circle connector"),
 		fctl.WithArgs(cobra.ExactArgs(2)),
 		fctl.WithStringFlag(endpointFlag, defaultEndpoint, "API endpoint"),

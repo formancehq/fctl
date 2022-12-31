@@ -244,6 +244,7 @@ func (p *prompt) run(cmd *cobra.Command) error {
 func NewPromptCommand() *cobra.Command {
 	return fctl.NewCommand("prompt",
 		fctl.WithShortDescription("Start a prompt"),
+		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			return (&prompt{
 				promptColor: goprompt.Blue,

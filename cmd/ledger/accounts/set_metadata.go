@@ -7,7 +7,7 @@ import (
 )
 
 func NewSetMetadataCommand() *cobra.Command {
-	return fctl.NewCommand("set-metadata [ACCOUNT] [METADATA_KEY]=[METADATA_VALUE]...",
+	return fctl.NewCommand("set-metadata <account> [<key>=<value>...]",
 		fctl.WithConfirmFlag(),
 		fctl.WithShortDescription("Set metadata on account"),
 		fctl.WithAliases("sm", "set-meta"),
