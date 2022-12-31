@@ -1,8 +1,12 @@
 package fctl
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
+
+	"github.com/pterm/pterm"
 )
 
 func ParseMetadata(array []string) (map[string]any, error) {
@@ -15,4 +19,37 @@ func ParseMetadata(array []string) (map[string]any, error) {
 		metadata[parts[0]] = parts[1]
 	}
 	return metadata, nil
+}
+
+func PrintMetadata(out io.Writer, metadata map[string]any) error {
+	if len(metadata) == 0 {
+		Print("No metadata.")
+		return nil
+	}
+	Highlightln(out, "Metadata :")
+	tableData := pterm.TableData{}
+	for k, v := range metadata {
+		data, err := json.Marshal(v)
+		if err != nil {
+			panic(err)
+		}
+		tableData = append(tableData, []string{pterm.LightCyan(k), string(data)})
+	}
+
+	return pterm.DefaultTable.
+		WithWriter(out).
+		WithData(tableData).
+		Render()
+}
+
+func MetadataAsShortString(metadata map[string]any) string {
+	metadataAsString := ""
+	for k, v := range metadata {
+		asJson, err := json.Marshal(v)
+		if err != nil {
+			panic(err)
+		}
+		metadataAsString += fmt.Sprintf("%s=%s ", k, string(asJson))
+	}
+	return metadataAsString
 }

@@ -1,6 +1,7 @@
 package holds
 
 import (
+	"github.com/formancehq/fctl/cmd/wallets/internal"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go"
 	"github.com/pkg/errors"
@@ -9,10 +10,12 @@ import (
 )
 
 func NewListCommand() *cobra.Command {
-	return fctl.NewCommand("list <wallet-id>",
+	return fctl.NewCommand("list",
 		fctl.WithShortDescription("List holds of a wallets"),
 		fctl.WithAliases("ls", "l"),
-		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithArgs(cobra.RangeArgs(0, 1)),
+		internal.WithTargetingWalletByName(),
+		internal.WithTargetingWalletByID(),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
@@ -29,14 +32,27 @@ func NewListCommand() *cobra.Command {
 				return err
 			}
 
-			stackClient, err := fctl.NewStackClient(cmd, cfg, stack)
+			client, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
 				return errors.Wrap(err, "creating stack client")
 			}
 
-			res, _, err := stackClient.WalletsApi.GetHolds(cmd.Context()).Execute()
+			walletID, err := internal.RetrieveWalletID(cmd, client)
+			if err != nil {
+				return err
+			}
+
+			res, _, err := client.WalletsApi.
+				GetHolds(cmd.Context()).
+				WalletID(walletID).
+				Execute()
 			if err != nil {
 				return errors.Wrap(err, "listing wallets")
+			}
+
+			if len(res.Cursor.Data) == 0 {
+				fctl.Print("No holds found.")
+				return nil
 			}
 
 			if err := pterm.DefaultTable.
@@ -48,9 +64,11 @@ func NewListCommand() *cobra.Command {
 							func(src formance.Hold) []string {
 								return []string{
 									src.Id,
+									src.WalletID,
+									src.Description,
 								}
 							}),
-						[]string{"ID"},
+						[]string{"ID", "Wallet ID", "Description"},
 					),
 				).Render(); err != nil {
 				return errors.Wrap(err, "rendering table")

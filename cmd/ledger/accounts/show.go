@@ -60,7 +60,7 @@ func NewShowCommand() *cobra.Command {
 
 			fmt.Fprintln(cmd.OutOrStdout())
 
-			if err := internal.PrintMetadata(cmd.OutOrStdout(), rsp.Data.Metadata); err != nil {
+			if err := fctl.PrintMetadata(cmd.OutOrStdout(), rsp.Data.Metadata); err != nil {
 				return err
 			}
 

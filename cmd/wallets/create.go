@@ -33,7 +33,7 @@ func NewCreateCommand() *cobra.Command {
 				return err
 			}
 
-			if !fctl.CheckStackApprobation(cmd, stack, "You are about to create a wallets") {
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to create a wallet") {
 				return fctl.ErrMissingApproval
 			}
 

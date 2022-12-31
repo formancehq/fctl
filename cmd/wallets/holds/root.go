@@ -13,6 +13,7 @@ func NewCommand() *cobra.Command {
 			NewListCommand(),
 			NewVoidCommand(),
 			NewConfirmCommand(),
+			NewShowCommand(),
 		),
 	)
 }

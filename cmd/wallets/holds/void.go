@@ -10,7 +10,7 @@ func NewVoidCommand() *cobra.Command {
 	return fctl.NewCommand("void <hold-id>",
 		fctl.WithShortDescription("Void a hold"),
 		fctl.WithAliases("v"),
-		fctl.WithArgs(cobra.ExactArgs(2)),
+		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
@@ -32,12 +32,12 @@ func NewVoidCommand() *cobra.Command {
 				return errors.Wrap(err, "creating stack client")
 			}
 
-			_, err = stackClient.WalletsApi.VoidHold(cmd.Context(), args[1]).Execute()
+			_, err = stackClient.WalletsApi.VoidHold(cmd.Context(), args[0]).Execute()
 			if err != nil {
 				return errors.Wrap(err, "listing wallets")
 			}
 
-			fctl.Success(cmd.OutOrStdout(), "Hold '%s' voided!", args[1])
+			fctl.Success(cmd.OutOrStdout(), "Hold '%s' voided!", args[0])
 
 			return nil
 		}),

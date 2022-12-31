@@ -97,6 +97,14 @@ func (fn CommandOptionFn) apply(cmd *cobra.Command) {
 	fn(cmd)
 }
 
+func Options(fn ...CommandOption) CommandOptionFn {
+	return func(cmd *cobra.Command) {
+		for _, fn := range fn {
+			fn.apply(cmd)
+		}
+	}
+}
+
 func WithPersistentStringFlag(name, defaultValue, help string) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.PersistentFlags().String(name, defaultValue, help)

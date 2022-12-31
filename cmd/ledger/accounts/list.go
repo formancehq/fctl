@@ -9,9 +9,13 @@ import (
 )
 
 func NewListCommand() *cobra.Command {
+	const (
+		metadataFlag = "metadata"
+	)
 	return fctl.NewCommand("list",
 		fctl.WithAliases("ls", "l"),
 		fctl.WithShortDescription("List accounts"),
+		fctl.WithStringSliceFlag(metadataFlag, []string{}, "Filter accounts with metadata"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 
 			cfg, err := fctl.GetConfig(cmd)
@@ -34,8 +38,16 @@ func NewListCommand() *cobra.Command {
 				return err
 			}
 
+			metadata, err := fctl.ParseMetadata(fctl.GetStringSlice(cmd, metadataFlag))
+			if err != nil {
+				return err
+			}
+
 			ledger := fctl.GetString(cmd, internal.LedgerFlag)
-			rsp, _, err := ledgerClient.AccountsApi.ListAccounts(cmd.Context(), ledger).Execute()
+			rsp, _, err := ledgerClient.AccountsApi.
+				ListAccounts(cmd.Context(), ledger).
+				Metadata(metadata).
+				Execute()
 			if err != nil {
 				return err
 			}
