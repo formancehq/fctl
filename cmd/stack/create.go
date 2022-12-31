@@ -88,7 +88,6 @@ func NewCreateCommand() *cobra.Command {
 
 			fctl.Highlightln(cmd.OutOrStdout(), "Your dashboard will be reachable on: %s",
 				profile.ServicesBaseUrl(stack.Data).String())
-			fctl.Highlightln(cmd.OutOrStdout(), "You can access your stack apis using following urls :")
 
 			return internal.PrintStackInformation(cmd.OutOrStdout(), profile, stack.Data)
 		}),
