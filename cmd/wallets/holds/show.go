@@ -64,6 +64,5 @@ func PrintHold(out io.Writer, hold formance.ExpandedDebitHold) error {
 		return err
 	}
 
-	fctl.Section.Println("Metadata")
 	return fctl.PrintMetadata(out, hold.Metadata)
 }

@@ -2,6 +2,7 @@ package regions
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
@@ -30,7 +31,7 @@ func NewShowCommand() *cobra.Command {
 				return err
 			}
 
-			//TODO: Add GET /regions/<id> on fctl
+			//TODO: Add GET /regions/<id> on membership
 
 			var region *membershipclient.Region
 			for _, r := range regionsResponse.Data {
@@ -42,9 +43,10 @@ func NewShowCommand() *cobra.Command {
 				return errors.New("region not found")
 			}
 
+			fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Information")
 			tableData := pterm.TableData{}
 			tableData = append(tableData, []string{pterm.LightCyan("ID"), region.Id})
-			tableData = append(tableData, []string{pterm.LightCyan("BaseUrl"), region.BaseUrl})
+			tableData = append(tableData, []string{pterm.LightCyan("Base URL"), region.BaseUrl})
 
 			if err := pterm.DefaultTable.
 				WithWriter(cmd.OutOrStdout()).
@@ -53,7 +55,8 @@ func NewShowCommand() *cobra.Command {
 				return err
 			}
 
-			fctl.Highlightln(cmd.OutOrStdout(), "Tags :")
+			fmt.Fprintln(cmd.OutOrStdout())
+			fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Tags")
 			tableData = pterm.TableData{}
 			for k, v := range region.Tags {
 				tableData = append(tableData, []string{pterm.LightCyan(k), v})

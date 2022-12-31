@@ -41,9 +41,10 @@ func NewShowCommand() *cobra.Command {
 				return err
 			}
 
-			if rsp.Data.Volumes != nil {
+			fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Information")
+			if rsp.Data.Volumes != nil && len(*rsp.Data.Volumes) > 0 {
 				tableData := pterm.TableData{}
-				tableData = append(tableData, []string{"", "Input", "Output"})
+				tableData = append(tableData, []string{"Asset", "Input", "Output"})
 				for asset, volumes := range *rsp.Data.Volumes {
 					input := volumes["input"]
 					output := volumes["output"]
@@ -56,6 +57,8 @@ func NewShowCommand() *cobra.Command {
 					Render(); err != nil {
 					return err
 				}
+			} else {
+				fctl.Println("No balances.")
 			}
 
 			fmt.Fprintln(cmd.OutOrStdout())

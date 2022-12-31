@@ -12,6 +12,7 @@ import (
 func PrintStackInformation(out io.Writer, profile *fctl.Profile, stack *membershipclient.Stack) error {
 	baseUrlStr := profile.ServicesBaseUrl(stack).String()
 
+	fctl.Section.WithWriter(out).Println("Information")
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("ID"), stack.Id})
 	tableData = append(tableData, []string{pterm.LightCyan("Name"), stack.Name})
@@ -33,7 +34,8 @@ func PrintStackInformation(out io.Writer, profile *fctl.Profile, stack *membersh
 		return err
 	}
 
-	fctl.Highlightln(out, "Metadata :")
+	fctl.Println()
+	fctl.Section.WithWriter(out).Println("Metadata")
 	tableData = pterm.TableData{}
 	for k, v := range stack.Metadata {
 		tableData = append(tableData, []string{pterm.LightCyan(k), v})

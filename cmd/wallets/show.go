@@ -74,7 +74,7 @@ func PrintWallet(out io.Writer, wallet formance.WalletWithBalances) error {
 
 	fctl.Section.Println("Balances")
 	if len(wallet.Balances) == 0 {
-		fctl.Print("No balances found.")
+		fctl.Println("No balances found.")
 		return nil
 	}
 	tableData = pterm.TableData{}

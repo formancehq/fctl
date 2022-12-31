@@ -22,11 +22,11 @@ func ParseMetadata(array []string) (map[string]any, error) {
 }
 
 func PrintMetadata(out io.Writer, metadata map[string]any) error {
+	Section.WithWriter(out).Println("Metadata")
 	if len(metadata) == 0 {
-		Print("No metadata.")
+		Println("No metadata.")
 		return nil
 	}
-	Highlightln(out, "Metadata :")
 	tableData := pterm.TableData{}
 	for k, v := range metadata {
 		data, err := json.Marshal(v)

@@ -46,7 +46,7 @@ func NewShowCommand() *cobra.Command {
 			tableData = append(tableData, []string{pterm.LightCyan("Description"), fctl.StringPointerToString(response.Data.Description)})
 			tableData = append(tableData, []string{pterm.LightCyan("Public"), fctl.BoolPointerToString(response.Data.Public)})
 
-			fctl.Highlightln(cmd.OutOrStdout(), "Information :")
+			fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Information :")
 			if err := pterm.DefaultTable.
 				WithWriter(cmd.OutOrStdout()).
 				WithData(tableData).
@@ -82,7 +82,7 @@ func NewShowCommand() *cobra.Command {
 			}
 
 			if len(response.Data.Secrets) > 0 {
-				fctl.Highlightln(cmd.OutOrStdout(), "Secrets :")
+				fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Secrets :")
 
 				if err := pterm.DefaultTable.
 					WithWriter(cmd.OutOrStdout()).
