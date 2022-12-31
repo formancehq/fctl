@@ -10,12 +10,16 @@ import (
 )
 
 func NewListCommand() *cobra.Command {
+	const (
+		metadataFlag = "metadata"
+	)
 	return fctl.NewCommand("list",
 		fctl.WithShortDescription("List holds of a wallets"),
 		fctl.WithAliases("ls", "l"),
 		fctl.WithArgs(cobra.RangeArgs(0, 1)),
 		internal.WithTargetingWalletByName(),
 		internal.WithTargetingWalletByID(),
+		fctl.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
@@ -42,8 +46,14 @@ func NewListCommand() *cobra.Command {
 				return err
 			}
 
+			metadata, err := fctl.ParseMetadata(fctl.GetStringSlice(cmd, metadataFlag))
+			if err != nil {
+				return err
+			}
+
 			res, _, err := client.WalletsApi.
 				GetHolds(cmd.Context()).
+				Metadata(metadata).
 				WalletID(walletID).
 				Execute()
 			if err != nil {
@@ -66,9 +76,10 @@ func NewListCommand() *cobra.Command {
 									src.Id,
 									src.WalletID,
 									src.Description,
+									fctl.MetadataAsShortString(src.Metadata),
 								}
 							}),
-						[]string{"ID", "Wallet ID", "Description"},
+						[]string{"ID", "Wallet ID", "Description", "Metadata"},
 					),
 				).Render(); err != nil {
 				return errors.Wrap(err, "rendering table")
