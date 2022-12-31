@@ -56,9 +56,10 @@ func NewListCommand() *cobra.Command {
 			tableData := fctl.Map(rsp.Cursor.Data, func(account formance.Account) []string {
 				return []string{
 					account.Address,
+					fctl.MetadataAsShortString(account.Metadata),
 				}
 			})
-			tableData = fctl.Prepend(tableData, []string{"Address"})
+			tableData = fctl.Prepend(tableData, []string{"Address", "Metadata"})
 			return pterm.DefaultTable.
 				WithHasHeader().
 				WithWriter(cmd.OutOrStdout()).
