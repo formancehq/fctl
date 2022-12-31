@@ -38,6 +38,11 @@ func NewListCommand() *cobra.Command {
 				return err
 			}
 
+			if len(listUsersResponse.Data) == 0 {
+				fctl.Println("No users found.")
+				return nil
+			}
+
 			tableData := fctl.Map(listUsersResponse.Data, func(o formance.User) []string {
 				return []string{
 					*o.Id,

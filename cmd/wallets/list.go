@@ -39,7 +39,7 @@ func NewListCommand() *cobra.Command {
 			}
 
 			if len(res.Cursor.Data) == 0 {
-				fctl.Print("No wallets found.")
+				fctl.Println("No wallets found.")
 				return nil
 			}
 

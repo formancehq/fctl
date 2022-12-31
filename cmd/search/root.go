@@ -93,12 +93,16 @@ func NewCommand() *cobra.Command {
 
 			switch target {
 			case "TRANSACTION":
+				fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Transactions")
 				err = displayTransactions(cmd.OutOrStdout(), response.Cursor.Data)
 			case "ACCOUNT":
+				fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Accounts")
 				err = displayAccounts(cmd.OutOrStdout(), response.Cursor.Data)
 			case "ASSET":
+				fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Assets")
 				err = displayAssets(cmd.OutOrStdout(), response.Cursor.Data)
 			case "PAYMENT":
+				fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Payments")
 				err = displayPayments(cmd.OutOrStdout(), response.Cursor.Data)
 			}
 			return err

@@ -83,7 +83,7 @@ func NewListCommand() *cobra.Command {
 			}
 
 			if len(rsp.Cursor.Data) == 0 {
-				fctl.Print("No transactions found.")
+				fctl.Println("No transactions found.")
 				return nil
 			}
 

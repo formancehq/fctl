@@ -6,7 +6,7 @@ import (
 	"github.com/pterm/pterm"
 )
 
-func Print(args ...any) {
+func Println(args ...any) {
 	pterm.Println(args...)
 }
 

@@ -12,7 +12,7 @@ import (
 
 func PrintTransaction(out io.Writer, transaction formance.Transaction) error {
 
-	fctl.Section.Println("Information")
+	fctl.Section.WithWriter(out).Println("Information")
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("ID"), fmt.Sprint(transaction.Txid)})
 	tableData = append(tableData, []string{pterm.LightCyan("Reference"), fctl.StringPointerToString(transaction.Reference)})
@@ -25,7 +25,7 @@ func PrintTransaction(out io.Writer, transaction formance.Transaction) error {
 		return err
 	}
 	fmt.Fprintln(out, "")
-	fctl.Section.Println("Postings")
+	fctl.Section.WithWriter(out).Println("Postings")
 	tableData = pterm.TableData{}
 	tableData = append(tableData, []string{"Source", "Destination", "Asset", "Amount"})
 	for _, posting := range transaction.Postings {
@@ -43,7 +43,7 @@ func PrintTransaction(out io.Writer, transaction formance.Transaction) error {
 	}
 	fmt.Fprintln(out, "")
 
-	fctl.Section.Println("Resume")
+	fctl.Section.WithWriter(out).Println("Resume")
 	tableData = pterm.TableData{}
 	tableData = append(tableData, []string{"Account", "Asset", "Movement", "Final balance"})
 	for account, postCommitVolume := range *transaction.PostCommitVolumes {
@@ -67,7 +67,6 @@ func PrintTransaction(out io.Writer, transaction formance.Transaction) error {
 	}
 
 	fmt.Fprintln(out, "")
-	fctl.Section.Println("Metadata")
 	if err := fctl.PrintMetadata(out, transaction.Metadata); err != nil {
 		return err
 	}
