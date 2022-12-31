@@ -16,7 +16,7 @@ var interactiveContinue = pterm.InteractiveContinuePrinter{
 	DefaultValueIndex: 0,
 	DefaultText:       "Do you want to continue",
 	TextStyle:         &pterm.ThemeDefault.PrimaryStyle,
-	Options:           []string{"yes", "no"},
+	Options:           []string{"y", "n"},
 	OptionsStyle:      &pterm.ThemeDefault.SuccessMessageStyle,
 	SuffixStyle:       &pterm.ThemeDefault.SecondaryStyle,
 }
@@ -44,7 +44,7 @@ func CheckStackApprobation(cmd *cobra.Command, stack *membershipclient.Stack, di
 	if err != nil {
 		panic(err)
 	}
-	return strings.ToLower(result) == "yes"
+	return strings.ToLower(result) == "y"
 }
 
 func CheckOrganizationApprobation(cmd *cobra.Command, disclaimer string, args ...any) bool {

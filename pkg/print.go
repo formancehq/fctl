@@ -6,6 +6,10 @@ import (
 	"github.com/pterm/pterm"
 )
 
+func Print(args ...any) {
+	pterm.Println(args...)
+}
+
 func TextWriter(out io.Writer) *pterm.BasicTextPrinter {
 	return pterm.DefaultBasicText.WithWriter(out)
 }
@@ -28,4 +32,12 @@ func ErrorWriter(out io.Writer) *pterm.PrefixPrinter {
 
 func Error(out io.Writer, format string, args ...any) {
 	ErrorWriter(out).Printfln(format, args...)
+}
+
+var Section = pterm.SectionPrinter{
+	Style:           &pterm.ThemeDefault.SectionStyle,
+	Level:           1,
+	TopPadding:      0,
+	BottomPadding:   0,
+	IndentCharacter: "#",
 }

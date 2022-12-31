@@ -3,6 +3,7 @@ package wallets
 import (
 	"strconv"
 
+	"github.com/formancehq/fctl/cmd/wallets/internal"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go"
 	"github.com/pkg/errors"
@@ -13,16 +14,17 @@ func NewCreditWalletCommand() *cobra.Command {
 	const (
 		metadataFlag = "metadata"
 	)
-	return fctl.NewCommand("credit ID <amount> <asset>",
+	return fctl.NewCommand("credit [<wallet-id> | --name=<wallet-name>] <amount> <asset>",
 		fctl.WithShortDescription("Credit a wallets"),
 		fctl.WithAliases("cr"),
 		fctl.WithConfirmFlag(),
-		fctl.WithArgs(cobra.ExactArgs(3)),
+		fctl.WithArgs(cobra.RangeArgs(2, 3)),
 		fctl.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
+		internal.WithTargetingWalletByName(),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
-				return errors.Wrap(err, "fctl.GetConfig")
+				return errors.Wrap(err, "reading config")
 			}
 
 			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg)
@@ -44,7 +46,26 @@ func NewCreditWalletCommand() *cobra.Command {
 				return errors.Wrap(err, "creating stack client")
 			}
 
-			amount, err := strconv.ParseUint(args[1], 10, 32)
+			var (
+				amountStr string
+				asset     string
+				walletID  string
+			)
+			switch len(args) {
+			case 2:
+				amountStr = args[0]
+				asset = args[1]
+				walletID, err = internal.RetrieveWalletIDFromName(cmd, client)
+				if err != nil {
+					return err
+				}
+			case 3:
+				walletID = args[0]
+				amountStr = args[1]
+				asset = args[2]
+			}
+
+			amount, err := strconv.ParseInt(amountStr, 10, 32)
 			if err != nil {
 				return errors.Wrap(err, "parsing amount")
 			}
@@ -54,10 +75,10 @@ func NewCreditWalletCommand() *cobra.Command {
 				return err
 			}
 
-			_, err = client.WalletsApi.CreditWallet(cmd.Context(), args[0]).CreditWalletRequest(formance.CreditWalletRequest{
+			_, err = client.WalletsApi.CreditWallet(cmd.Context(), walletID).CreditWalletRequest(formance.CreditWalletRequest{
 				Amount: formance.Monetary{
-					Asset:  args[2],
-					Amount: float32(amount),
+					Asset:  asset,
+					Amount: amount,
 				},
 				Metadata: metadata,
 			}).Execute()

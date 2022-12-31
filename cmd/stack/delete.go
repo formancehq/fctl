@@ -11,7 +11,6 @@ func NewDeleteCommand() *cobra.Command {
 	const (
 		stackNameFlag = "name"
 	)
-
 	return fctl.NewMembershipCommand("delete [STACK_ID] | --name=[NAME]",
 		fctl.WithConfirmFlag(),
 		fctl.WithShortDescription("Delete a stack"),
