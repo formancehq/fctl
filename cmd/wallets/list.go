@@ -9,9 +9,14 @@ import (
 )
 
 func NewListCommand() *cobra.Command {
+	const (
+		metadataFlag = "metadata"
+	)
 	return fctl.NewCommand("list",
 		fctl.WithShortDescription("List all wallets"),
 		fctl.WithAliases("ls", "l"),
+		fctl.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
+		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
@@ -28,12 +33,17 @@ func NewListCommand() *cobra.Command {
 				return err
 			}
 
-			stackClient, err := fctl.NewStackClient(cmd, cfg, stack)
+			client, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
 				return errors.Wrap(err, "creating stack client")
 			}
 
-			res, _, err := stackClient.WalletsApi.GetWallets(cmd.Context()).Execute()
+			metadata, err := fctl.ParseMetadata(fctl.GetStringSlice(cmd, metadataFlag))
+			if err != nil {
+				return err
+			}
+
+			res, _, err := client.WalletsApi.GetWallets(cmd.Context()).Metadata(metadata).Execute()
 			if err != nil {
 				return errors.Wrap(err, "listing wallets")
 			}
