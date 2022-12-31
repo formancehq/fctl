@@ -8,7 +8,7 @@ import (
 )
 
 func NewRevertCommand() *cobra.Command {
-	return fctl.NewCommand("revert [TXID]",
+	return fctl.NewCommand("revert <transaction-id>",
 		fctl.WithConfirmFlag(),
 		fctl.WithShortDescription("Revert a transaction"),
 		fctl.WithArgs(cobra.ExactArgs(1)),

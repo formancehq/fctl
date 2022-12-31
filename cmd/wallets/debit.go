@@ -16,7 +16,7 @@ func NewDebitWalletCommand() *cobra.Command {
 		metadataFlag    = "metadata"
 		descriptionFlag = "description"
 	)
-	return fctl.NewCommand("debit [<wallet-id> | --name=<wallet-name>] <amount> <asset>",
+	return fctl.NewCommand("debit <amount> <asset>",
 		fctl.WithShortDescription("Debit a wallet"),
 		fctl.WithAliases("deb"),
 		fctl.WithConfirmFlag(),
@@ -57,23 +57,15 @@ func NewDebitWalletCommand() *cobra.Command {
 				return err
 			}
 
-			var (
-				amountStr string
-				asset     string
-				walletID  string
-			)
-			switch len(args) {
-			case 2:
-				amountStr = args[0]
-				asset = args[1]
-				walletID, err = internal.RetrieveWalletIDFromName(cmd, client)
-				if err != nil {
-					return err
-				}
-			case 3:
-				walletID = args[0]
-				amountStr = args[1]
-				asset = args[2]
+			amountStr := args[0]
+			asset := args[1]
+			walletID, err := internal.RetrieveWalletIDFromName(cmd, client)
+			if err != nil {
+				return err
+			}
+
+			if walletID == "" {
+				return errors.New("You need to specify wallet id using --id or --name flags")
 			}
 
 			description := fctl.GetString(cmd, descriptionFlag)

@@ -6,7 +6,7 @@ import (
 )
 
 func NewAcceptCommand() *cobra.Command {
-	return fctl.NewCommand("accept",
+	return fctl.NewCommand("accept <invitation-id>",
 		fctl.WithAliases("a"),
 		fctl.WithShortDescription("Accept invitation"),
 		fctl.WithArgs(cobra.ExactArgs(1)),

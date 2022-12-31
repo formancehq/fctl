@@ -12,7 +12,7 @@ func NewCreateCommand() *cobra.Command {
 		metadataFlag = "metadata"
 	)
 	return fctl.NewCommand("create <name>",
-		fctl.WithShortDescription("Create a new wallets"),
+		fctl.WithShortDescription("Create a new wallet"),
 		fctl.WithAliases("cr"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),

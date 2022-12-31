@@ -15,7 +15,7 @@ var errStackNotFound = errors.New("stack not found")
 func NewShowCommand() *cobra.Command {
 	const stackNameFlag = "name"
 
-	return fctl.NewMembershipCommand("show",
+	return fctl.NewMembershipCommand("show (<stack-id> | --name=<stack-name>)",
 		fctl.WithAliases("s", "sh"),
 		fctl.WithShortDescription("Show stack"),
 		fctl.WithArgs(cobra.MaximumNArgs(1)),

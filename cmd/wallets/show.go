@@ -13,11 +13,11 @@ import (
 )
 
 func NewShowCommand() *cobra.Command {
-	return fctl.NewCommand("show <id>",
+	return fctl.NewCommand("show",
 		fctl.WithShortDescription("Show a wallets"),
 		fctl.WithAliases("sh"),
 		fctl.WithConfirmFlag(),
-		fctl.WithArgs(cobra.ExactArgs(0)),
+		fctl.WithArgs(cobra.ExactArgs(1)),
 		internal.WithTargetingWalletByID(),
 		internal.WithTargetingWalletByName(),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
@@ -44,6 +44,9 @@ func NewShowCommand() *cobra.Command {
 			walletID, err := internal.RetrieveWalletID(cmd, client)
 			if err != nil {
 				return err
+			}
+			if walletID == "" {
+				return errors.New("You need to specify wallet id using --id or --name flags")
 			}
 
 			res, _, err := client.WalletsApi.GetWallet(cmd.Context(), walletID).Execute()

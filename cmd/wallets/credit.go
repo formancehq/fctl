@@ -14,13 +14,14 @@ func NewCreditWalletCommand() *cobra.Command {
 	const (
 		metadataFlag = "metadata"
 	)
-	return fctl.NewCommand("credit [<wallet-id> | --name=<wallet-name>] <amount> <asset>",
+	return fctl.NewCommand("credit <amount> <asset>",
 		fctl.WithShortDescription("Credit a wallets"),
 		fctl.WithAliases("cr"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.RangeArgs(2, 3)),
 		fctl.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
 		internal.WithTargetingWalletByName(),
+		internal.WithTargetingWalletByID(),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
@@ -46,23 +47,15 @@ func NewCreditWalletCommand() *cobra.Command {
 				return errors.Wrap(err, "creating stack client")
 			}
 
-			var (
-				amountStr string
-				asset     string
-				walletID  string
-			)
-			switch len(args) {
-			case 2:
-				amountStr = args[0]
-				asset = args[1]
-				walletID, err = internal.RetrieveWalletIDFromName(cmd, client)
-				if err != nil {
-					return err
-				}
-			case 3:
-				walletID = args[0]
-				amountStr = args[1]
-				asset = args[2]
+			amountStr := args[0]
+			asset := args[1]
+			walletID, err := internal.RetrieveWalletIDFromName(cmd, client)
+			if err != nil {
+				return err
+			}
+
+			if walletID == "" {
+				return errors.New("You need to specify wallet id using --id or --name flags")
 			}
 
 			amount, err := strconv.ParseInt(amountStr, 10, 32)

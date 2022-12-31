@@ -13,7 +13,7 @@ func NewCurrencyCloudCommand() *cobra.Command {
 		endpointFlag    = "endpoint"
 		defaultEndpoint = "https://devapi.currencycloud.com"
 	)
-	return fctl.NewCommand(internal.CurrencyCloudConnector+" LOGIN_ID API_KEY",
+	return fctl.NewCommand(internal.CurrencyCloudConnector+" <login-id> <api-key>",
 		fctl.WithShortDescription("Install a Currency Cloud connector"),
 		fctl.WithArgs(cobra.ExactArgs(2)),
 		fctl.WithStringFlag(endpointFlag, defaultEndpoint, "API endpoint"),

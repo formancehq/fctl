@@ -6,7 +6,7 @@ import (
 )
 
 func NewDeleteCommand() *cobra.Command {
-	return fctl.NewCommand("delete [CLIENT_ID]",
+	return fctl.NewCommand("delete <client-id>",
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithAliases("d", "del"),

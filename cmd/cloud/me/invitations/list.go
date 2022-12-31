@@ -18,6 +18,7 @@ func NewListCommand() *cobra.Command {
 		fctl.WithAliases("ls", "l"),
 		fctl.WithShortDescription("List invitations"),
 		fctl.WithStringFlag(statusFlag, "", "Filter invitations by status"),
+		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithStringFlag(organizationFlag, "", "Filter invitations by organization"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)

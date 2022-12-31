@@ -30,6 +30,16 @@ func IsProtectedStack(stack *membershipclient.Stack) bool {
 	return stack.Metadata != nil && (stack.Metadata)[ProtectedStackMetadata] == "Yes"
 }
 
+func NeedConfirm(cmd *cobra.Command, stack *membershipclient.Stack) bool {
+	if !IsProtectedStack(stack) {
+		return false
+	}
+	if GetBool(cmd, confirmFlag) {
+		return false
+	}
+	return true
+}
+
 func CheckStackApprobation(cmd *cobra.Command, stack *membershipclient.Stack, disclaimer string, args ...any) bool {
 	if !IsProtectedStack(stack) {
 		return true

@@ -15,6 +15,7 @@ var (
 func NewVersionCommand() *cobra.Command {
 	return fctl.NewCommand("version",
 		fctl.WithShortDescription("Get version"),
+		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			tableData := pterm.TableData{}
 			tableData = append(tableData, []string{pterm.LightCyan("Version"), Version})

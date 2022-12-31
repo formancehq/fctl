@@ -13,7 +13,7 @@ func NewCreateCommand() *cobra.Command {
 	const (
 		secretFlag = "secret"
 	)
-	return fctl.NewCommand("create ENDPOINT [EVENT_TYPE...]",
+	return fctl.NewCommand("create <endpoint> [<event-type>...]",
 		fctl.WithShortDescription("Create a new config. At least one event type is required."),
 		fctl.WithAliases("cr"),
 		fctl.WithConfirmFlag(),

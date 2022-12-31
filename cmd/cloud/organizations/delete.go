@@ -6,7 +6,7 @@ import (
 )
 
 func NewDeleteCommand() *cobra.Command {
-	return fctl.NewCommand("delete",
+	return fctl.NewCommand("delete <organization-id>",
 		fctl.WithAliases("del", "d"),
 		fctl.WithShortDescription("Delete organization"),
 		fctl.WithArgs(cobra.ExactArgs(1)),

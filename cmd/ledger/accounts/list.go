@@ -15,6 +15,7 @@ func NewListCommand() *cobra.Command {
 	return fctl.NewCommand("list",
 		fctl.WithAliases("ls", "l"),
 		fctl.WithShortDescription("List accounts"),
+		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithStringSliceFlag(metadataFlag, []string{}, "Filter accounts with metadata"),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 

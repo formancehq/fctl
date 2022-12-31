@@ -14,7 +14,7 @@ func NewSendCommand() *cobra.Command {
 		metadataFlag  = "metadata"
 		referenceFlag = "reference"
 	)
-	return fctl.NewCommand("send [SOURCE] [DESTINATION] [AMOUNT] [ASSET]",
+	return fctl.NewCommand("send [<source>] <destination> <amount> <asset>",
 		fctl.WithAliases("s", "se"),
 		fctl.WithShortDescription("Send from one account to another"),
 		fctl.WithConfirmFlag(),

@@ -19,6 +19,7 @@ func NewBalancesCommand() *cobra.Command {
 		fctl.WithStringFlag(addressFlag, "", "Filter on specific address"),
 		fctl.WithStringFlag(afterFlag, "", "Filter after specific address"),
 		fctl.WithShortDescription("Read balances"),
+		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {

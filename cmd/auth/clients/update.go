@@ -20,7 +20,7 @@ func NewUpdateCommand() *cobra.Command {
 		redirectUriFlag           = "redirect-uri"
 		postLogoutRedirectUriFlag = "post-logout-redirect-uri"
 	)
-	return fctl.NewCommand("update [CLIENT_ID]",
+	return fctl.NewCommand("update <client-id>",
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithShortDescription("Update client"),
 		fctl.WithAliases("u", "upd"),

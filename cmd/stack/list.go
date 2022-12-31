@@ -14,6 +14,7 @@ func NewListCommand() *cobra.Command {
 	return fctl.NewMembershipCommand("list",
 		fctl.WithAliases("ls", "l"),
 		fctl.WithShortDescription("List stacks"),
+		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {

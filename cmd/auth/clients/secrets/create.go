@@ -8,7 +8,7 @@ import (
 )
 
 func NewCreateCommand() *cobra.Command {
-	return fctl.NewCommand("create [CLIENT_ID] [SECRET_NAME]",
+	return fctl.NewCommand("create <client-id> <secret-name>",
 		fctl.WithAliases("c"),
 		fctl.WithArgs(cobra.ExactArgs(2)),
 		fctl.WithShortDescription("Create secret"),

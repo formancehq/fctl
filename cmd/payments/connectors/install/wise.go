@@ -9,7 +9,7 @@ import (
 )
 
 func NewWiseCommand() *cobra.Command {
-	return fctl.NewCommand(internal.WiseConnector+" API_KEY",
+	return fctl.NewCommand(internal.WiseConnector+" <api-key>",
 		fctl.WithShortDescription("Install a Wise connector"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {

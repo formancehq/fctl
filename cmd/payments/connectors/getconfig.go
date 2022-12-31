@@ -9,7 +9,7 @@ import (
 )
 
 func NewGetConfigCommand() *cobra.Command {
-	return fctl.NewCommand("get-config [CONNECTOR_NAME]",
+	return fctl.NewCommand("get-config <connector-name>",
 		fctl.WithAliases("getconfig", "getconf", "gc", "get", "g"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgs("stripe"),

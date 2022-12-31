@@ -8,7 +8,7 @@ import (
 )
 
 func NewUninstallCommand() *cobra.Command {
-	return fctl.NewCommand("uninstall connector",
+	return fctl.NewCommand("uninstall <connector-name>",
 		fctl.WithAliases("uninstall", "u", "un"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),

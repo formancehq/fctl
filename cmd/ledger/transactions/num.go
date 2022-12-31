@@ -22,7 +22,7 @@ func NewCommand() *cobra.Command {
 		metadataFlag   = "metadata"
 		referenceFlag  = "reference"
 	)
-	return fctl.NewCommand("num -|[FILENAME]",
+	return fctl.NewCommand("num -|<filename>",
 		fctl.WithShortDescription("Execute a numscript script on a ledger"),
 		fctl.WithDescription(`More help on variables can be found here: https://docs.formance.com/oss/ledger/reference/numscript/variables`),
 		fctl.WithArgs(cobra.ExactArgs(1)),
@@ -48,17 +48,11 @@ func NewCommand() *cobra.Command {
 				return err
 			}
 
-			if !fctl.CheckStackApprobation(cmd, stack, "You are about to apply a numscript") {
-				return fctl.ErrMissingApproval
-			}
-
-			ledgerClient, err := fctl.NewStackClient(cmd, cfg, stack)
-			if err != nil {
-				return err
-			}
-
 			var script string
 			if args[0] == "-" {
+				if fctl.NeedConfirm(cmd, stack) {
+					return errors.New("You need to use --confirm flag to use stdin")
+				}
 				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil && err != io.EOF {
 					return errors.Wrapf(err, "reading stdin")
@@ -71,6 +65,15 @@ func NewCommand() *cobra.Command {
 					return errors.Wrapf(err, "reading file %s", args[0])
 				}
 				script = string(data)
+			}
+
+			if !fctl.CheckStackApprobation(cmd, stack, "You are about to apply a numscript") {
+				return fctl.ErrMissingApproval
+			}
+
+			client, err := fctl.NewStackClient(cmd, cfg, stack)
+			if err != nil {
+				return err
 			}
 
 			vars := map[string]interface{}{}
@@ -118,7 +121,7 @@ func NewCommand() *cobra.Command {
 			}
 
 			ledger := fctl.GetString(cmd, internal.LedgerFlag)
-			response, _, err := ledgerClient.ScriptApi.
+			response, _, err := client.ScriptApi.
 				RunScript(cmd.Context(), ledger).
 				Script(formance.Script{
 					Plain:     script,

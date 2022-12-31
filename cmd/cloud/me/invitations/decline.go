@@ -6,7 +6,7 @@ import (
 )
 
 func NewDeclineCommand() *cobra.Command {
-	return fctl.NewCommand("decline",
+	return fctl.NewCommand("decline <invitation-id>",
 		fctl.WithAliases("dec", "d"),
 		fctl.WithShortDescription("Decline invitation"),
 		fctl.WithArgs(cobra.ExactArgs(1)),

@@ -14,7 +14,7 @@ func NewModulrCommand() *cobra.Command {
 
 		defaultEndpoint = "https://api-sandbox.modulrfinance.com"
 	)
-	return fctl.NewCommand(internal.ModulrConnector+" API_KEY API_SECRET",
+	return fctl.NewCommand(internal.ModulrConnector+" <api-key> <api-secret>",
 		fctl.WithShortDescription("Install a Modulr connector"),
 		fctl.WithArgs(cobra.ExactArgs(2)),
 		fctl.WithStringFlag(endpointFlag, defaultEndpoint, "API endpoint"),

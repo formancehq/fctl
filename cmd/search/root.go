@@ -16,7 +16,7 @@ func NewCommand() *cobra.Command {
 	const (
 		sizeFlag = "size"
 	)
-	return fctl.NewStackCommand("search",
+	return fctl.NewStackCommand("search <object-type> <terms>...",
 		fctl.WithAliases("se"),
 		fctl.WithArgs(cobra.MinimumNArgs(1)),
 		fctl.WithIntFlag(sizeFlag, 5, "Number of items to fetch"),
