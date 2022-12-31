@@ -51,5 +51,8 @@ func MetadataAsShortString(metadata map[string]any) string {
 		}
 		metadataAsString += fmt.Sprintf("%s=%s ", k, string(asJson))
 	}
+	if len(metadataAsString) > 100 {
+		metadataAsString = metadataAsString[:100] + "..."
+	}
 	return metadataAsString
 }
