@@ -50,9 +50,9 @@ func NewCreateCommand() *cobra.Command {
 
 			secret := fctl.GetString(cmd, secretFlag)
 
-			res, _, err := client.WebhooksApi.InsertOneConfig(cmd.Context()).
+			res, _, err := client.WebhooksApi.InsertConfig(cmd.Context()).
 				ConfigUser(formance.ConfigUser{
-					Endpoint:   &args[0],
+					Endpoint:   args[0],
 					EventTypes: args[1:],
 					Secret:     &secret,
 				}).Execute()

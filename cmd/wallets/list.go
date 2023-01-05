@@ -43,7 +43,7 @@ func NewListCommand() *cobra.Command {
 				return err
 			}
 
-			res, _, err := client.WalletsApi.GetWallets(cmd.Context()).Metadata(metadata).Execute()
+			res, _, err := client.WalletsApi.ListWallets(cmd.Context()).Metadata(metadata).Execute()
 			if err != nil {
 				return errors.Wrap(err, "listing wallets")
 			}

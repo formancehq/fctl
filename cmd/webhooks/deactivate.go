@@ -37,7 +37,7 @@ func NewDeactivateCommand() *cobra.Command {
 				return errors.Wrap(err, "creating stack client")
 			}
 
-			_, _, err = client.WebhooksApi.DeactivateOneConfig(cmd.Context(), args[0]).Execute()
+			_, _, err = client.WebhooksApi.DeactivateConfig(cmd.Context(), args[0]).Execute()
 			if err != nil {
 				return errors.Wrap(err, "deactivating config")
 			}

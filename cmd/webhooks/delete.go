@@ -37,7 +37,7 @@ func NewDeleteCommand() *cobra.Command {
 				return errors.Wrap(err, "creating stack client")
 			}
 
-			_, err = webhookClient.WebhooksApi.DeleteOneConfig(cmd.Context(), args[0]).Execute()
+			_, err = webhookClient.WebhooksApi.DeleteConfig(cmd.Context(), args[0]).Execute()
 			if err != nil {
 				return errors.Wrap(err, "deleting config")
 			}
