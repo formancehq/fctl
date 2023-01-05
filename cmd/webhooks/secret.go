@@ -44,10 +44,10 @@ func NewChangeSecretCommand() *cobra.Command {
 			}
 
 			res, _, err := client.WebhooksApi.
-				ChangeOneConfigSecret(cmd.Context(), args[0]).
-				ChangeOneConfigSecretRequest(
-					formance.ChangeOneConfigSecretRequest{
-						Secret: secret,
+				ChangeConfigSecret(cmd.Context(), args[0]).
+				ConfigChangeSecret(
+					formance.ConfigChangeSecret{
+						Secret: &secret,
 					}).
 				Execute()
 			if err != nil {

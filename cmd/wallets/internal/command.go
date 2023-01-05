@@ -31,7 +31,7 @@ func RetrieveWalletIDFromName(cmd *cobra.Command, client *formance.APIClient) (s
 	if walletName == "" {
 		return "", ErrUndefinedName
 	}
-	wallets, _, err := client.WalletsApi.GetWallets(cmd.Context()).Name(walletName).Execute()
+	wallets, _, err := client.WalletsApi.ListWallets(cmd.Context()).Name(walletName).Execute()
 	if err != nil {
 		return "", errors.Wrap(err, "listing wallets to retrieve wallet by name")
 	}

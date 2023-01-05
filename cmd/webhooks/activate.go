@@ -37,7 +37,7 @@ func NewActivateCommand() *cobra.Command {
 				return errors.Wrap(err, "creating stack client")
 			}
 
-			_, _, err = client.WebhooksApi.ActivateOneConfig(cmd.Context(), args[0]).Execute()
+			_, _, err = client.WebhooksApi.ActivateConfig(cmd.Context(), args[0]).Execute()
 			if err != nil {
 				return errors.Wrap(err, "activating config")
 			}
