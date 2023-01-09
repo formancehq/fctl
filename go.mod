@@ -52,3 +52,5 @@ replace github.com/zitadel/oidc => github.com/formancehq/oidc v0.0.0-20220922145
 replace github.com/formancehq/fctl/membershipclient => ./membershipclient
 
 replace github.com/spf13/cobra v1.6.1 => github.com/formancehq/cobra v0.0.0-20221112160629-60a6d6d55ef9
+
+replace github.com/formancehq/formance-sdk-go => github.com/formancehq/stack/sdks/go v0.0.0-20230109134922-9e4c3c79ccf8
