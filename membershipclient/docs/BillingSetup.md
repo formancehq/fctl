@@ -1,48 +1,48 @@
-# ServerInfo
+# BillingSetup
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Version** | **string** |  | 
+**Url** | **string** | Billing portal URL | 
 
 ## Methods
 
-### NewServerInfo
+### NewBillingSetup
 
-`func NewServerInfo(version string, ) *ServerInfo`
+`func NewBillingSetup(url string, ) *BillingSetup`
 
-NewServerInfo instantiates a new ServerInfo object
+NewBillingSetup instantiates a new BillingSetup object
 This constructor will assign default values to properties that have it defined,
 and makes sure properties required by API are set, but the set of arguments
 will change when the set of required properties is changed
 
-### NewServerInfoWithDefaults
+### NewBillingSetupWithDefaults
 
-`func NewServerInfoWithDefaults() *ServerInfo`
+`func NewBillingSetupWithDefaults() *BillingSetup`
 
-NewServerInfoWithDefaults instantiates a new ServerInfo object
+NewBillingSetupWithDefaults instantiates a new BillingSetup object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
-### GetVersion
+### GetUrl
 
-`func (o *ServerInfo) GetVersion() string`
+`func (o *BillingSetup) GetUrl() string`
 
-GetVersion returns the Version field if non-nil, zero value otherwise.
+GetUrl returns the Url field if non-nil, zero value otherwise.
 
-### GetVersionOk
+### GetUrlOk
 
-`func (o *ServerInfo) GetVersionOk() (*string, bool)`
+`func (o *BillingSetup) GetUrlOk() (*string, bool)`
 
-GetVersionOk returns a tuple with the Version field if it's non-nil, zero value otherwise
+GetUrlOk returns a tuple with the Url field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetVersion
+### SetUrl
 
-`func (o *ServerInfo) SetVersion(v string)`
+`func (o *BillingSetup) SetUrl(v string)`
 
-SetVersion sets Version field to given value.
+SetUrl sets Url field to given value.
 
 
 

@@ -24,9 +24,9 @@ type ListOrganizationExpandedResponseDataInner struct {
 	// Organization ID
 	Id string `json:"id"`
 	// Owner ID
-	OwnerId     string `json:"ownerId"`
+	OwnerId string `json:"ownerId"`
 	TotalStacks *int32 `json:"totalStacks,omitempty"`
-	TotalUsers  *int32 `json:"totalUsers,omitempty"`
+	TotalUsers *int32 `json:"totalUsers,omitempty"`
 }
 
 // NewListOrganizationExpandedResponseDataInner instantiates a new ListOrganizationExpandedResponseDataInner object
@@ -186,7 +186,7 @@ func (o *ListOrganizationExpandedResponseDataInner) SetTotalUsers(v int32) {
 }
 
 func (o ListOrganizationExpandedResponseDataInner) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -242,3 +242,5 @@ func (v *NullableListOrganizationExpandedResponseDataInner) UnmarshalJSON(src []
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+
