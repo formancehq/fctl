@@ -1,17 +1,16 @@
-package orchestration
+package workflows
 
 import (
 	"strings"
-	"time"
 
+	"github.com/formancehq/fctl/cmd/orchestration/internal"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/formance-sdk-go"
 	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
-func NewRunWorkflowCommand() *cobra.Command {
+func NewRunCommand() *cobra.Command {
 	const (
 		variableFlag = "variable"
 		waitFlag     = "wait"
@@ -62,31 +61,14 @@ func NewRunWorkflowCommand() *cobra.Command {
 				return errors.Wrap(err, "running workflow")
 			}
 
-			fctl.Success(cmd.OutOrStdout(), "Workflow occurrence created with ID: %s", res.Data.Id)
+			pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Workflow occurrence created with ID: %s", res.Data.Id)
 			if wait {
-				if err := pterm.DefaultTable.
-					WithHasHeader(true).
-					WithWriter(cmd.OutOrStdout()).
-					WithData(
-						fctl.Prepend(
-							fctl.Map(res.Data.Statuses,
-								func(src formance.StageStatus) []string {
-									return []string{
-										src.StartedAt.Format(time.RFC3339),
-										src.TerminatedAt.Format(time.RFC3339),
-										func() string {
-											if src.Error != nil {
-												return *src.Error
-											}
-											return ""
-										}(),
-									}
-								}),
-							[]string{"Started at", "Terminated at", "Error"},
-						),
-					).Render(); err != nil {
-					return errors.Wrap(err, "rendering table")
+				w, _, err := client.OrchestrationApi.GetWorkflow(cmd.Context(), args[0]).Execute()
+				if err != nil {
+					panic(err)
 				}
+
+				return internal.PrintWorkflowInstance(cmd.OutOrStdout(), w.Data, res.Data)
 			}
 
 			return nil

@@ -1,4 +1,4 @@
-package orchestration
+package workflows
 
 import (
 	"time"
@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewListWorkflowsCommand() *cobra.Command {
+func NewListCommand() *cobra.Command {
 	return fctl.NewCommand("list",
 		fctl.WithShortDescription("List all workflows"),
 		fctl.WithAliases("ls", "l"),
@@ -36,7 +36,7 @@ func NewListWorkflowsCommand() *cobra.Command {
 				return errors.Wrap(err, "creating stack client")
 			}
 
-			res, _, err := client.OrchestrationApi.ListFlows(cmd.Context()).Execute()
+			res, _, err := client.OrchestrationApi.ListWorkflows(cmd.Context()).Execute()
 			if err != nil {
 				return errors.Wrap(err, "listing workflows")
 			}
@@ -55,11 +55,17 @@ func NewListWorkflowsCommand() *cobra.Command {
 							func(src formance.Workflow) []string {
 								return []string{
 									src.Id,
+									func() string {
+										if src.Config.Name != nil {
+											return *src.Config.Name
+										}
+										return ""
+									}(),
 									src.CreatedAt.Format(time.RFC3339),
 									src.UpdatedAt.Format(time.RFC3339),
 								}
 							}),
-						[]string{"ID", "Created at", "Updated at"},
+						[]string{"ID", "Name", "Created at", "Updated at"},
 					),
 				).Render(); err != nil {
 				return errors.Wrap(err, "rendering table")

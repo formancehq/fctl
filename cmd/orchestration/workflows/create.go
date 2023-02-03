@@ -1,14 +1,15 @@
-package orchestration
+package workflows
 
 import (
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go"
 	"github.com/pkg/errors"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
 
-func NewCreateWorkflowCommand() *cobra.Command {
+func NewCreateCommand() *cobra.Command {
 	return fctl.NewCommand("create <file>|-",
 		fctl.WithShortDescription("Create a workflow"),
 		fctl.WithAliases("cr", "c"),
@@ -52,7 +53,7 @@ func NewCreateWorkflowCommand() *cobra.Command {
 				return errors.Wrap(err, "listing workflows")
 			}
 
-			fctl.Success(cmd.OutOrStdout(), "Workflow created with ID: %s", res.Data.Id)
+			pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Workflow created with ID: %s", res.Data.Id)
 
 			return nil
 		}),

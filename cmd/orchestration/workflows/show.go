@@ -1,4 +1,4 @@
-package orchestration
+package workflows
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func NewShowWorkflowCommand() *cobra.Command {
+func NewShowCommand() *cobra.Command {
 	return fctl.NewCommand("show <id>",
 		fctl.WithShortDescription("Show a workflow"),
 		fctl.WithAliases("s"),
@@ -38,7 +38,7 @@ func NewShowWorkflowCommand() *cobra.Command {
 			}
 
 			res, _, err := client.OrchestrationApi.
-				GetFlow(cmd.Context(), args[0]).
+				GetWorkflow(cmd.Context(), args[0]).
 				Execute()
 			if err != nil {
 				return errors.Wrap(err, "getting workflow")
@@ -47,6 +47,12 @@ func NewShowWorkflowCommand() *cobra.Command {
 			fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Information")
 			tableData := pterm.TableData{}
 			tableData = append(tableData, []string{pterm.LightCyan("ID"), res.Data.Id})
+			tableData = append(tableData, []string{pterm.LightCyan("Name"), func() string {
+				if res.Data.Config.Name != nil {
+					return *res.Data.Config.Name
+				}
+				return ""
+			}()})
 			tableData = append(tableData, []string{pterm.LightCyan("Created at"), res.Data.CreatedAt.Format(time.RFC3339)})
 			tableData = append(tableData, []string{pterm.LightCyan("Updated at"), res.Data.UpdatedAt.Format(time.RFC3339)})
 

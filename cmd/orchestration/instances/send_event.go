@@ -1,17 +1,17 @@
-package holds
+package instances
 
 import (
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go"
 	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
-func NewVoidCommand() *cobra.Command {
-	return fctl.NewCommand("void <hold-id>",
-		fctl.WithShortDescription("Void a hold"),
-		fctl.WithAliases("v"),
-		fctl.WithArgs(cobra.ExactArgs(1)),
+func NewSendEventCommand() *cobra.Command {
+	return fctl.NewCommand("send-event <instance-id> <event>",
+		fctl.WithShortDescription("Send an event to an instance"),
+		fctl.WithArgs(cobra.ExactArgs(2)),
 		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
@@ -28,17 +28,19 @@ func NewVoidCommand() *cobra.Command {
 				return err
 			}
 
-			stackClient, err := fctl.NewStackClient(cmd, cfg, stack)
+			client, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
 				return errors.Wrap(err, "creating stack client")
 			}
 
-			_, err = stackClient.WalletsApi.VoidHold(cmd.Context(), args[0]).Execute()
+			_, err = client.OrchestrationApi.SendEvent(cmd.Context(), args[0]).SendEventRequest(formance.SendEventRequest{
+				Name: args[1],
+			}).Execute()
 			if err != nil {
-				return errors.Wrap(err, "listing wallets")
+				return err
 			}
 
-			pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Hold '%s' voided!", args[0])
+			pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Event '%s' sent", args[1])
 
 			return nil
 		}),
