@@ -1,9 +1,8 @@
 VERSION 0.8
 
-IMPORT github.com/formancehq/earthly:tags/v0.12.0 AS core
-IMPORT github.com/formancehq/stack:feat/monorepo AS stack
+IMPORT github.com/formancehq/earthly:feat/monorepo AS core
 IMPORT github.com/formancehq/stack/releases:feat/monorepo AS releases
-IMPORT github.com/formancehq/stack/components:feat/monorepo AS components
+IMPORT github.com/formancehq/stack/libs/go-libs:feat/monorepo AS libs
 
 FROM core+base-image
 
@@ -22,7 +21,7 @@ deploy-staging:
 sources:
     WORKDIR src
     COPY --pass-args (releases+sdk-generate/go) /src/releases/sdks/go
-    DO stack+INCLUDE_GO_LIBS --LOCATION libs/go-libs
+    DO core+INCLUDE_GO_LIBS --LOCATION libs/go-libs
     WORKDIR /src/components/fctl
     COPY go.* .
     COPY --dir cmd pkg membershipclient .
@@ -34,7 +33,7 @@ lint:
     COPY (+sources/*) /src
     COPY --pass-args +tidy/go.* .
     WORKDIR /src/components/fctl
-    DO --pass-args stack+GO_LINT
+    DO --pass-args core+GO_LINT
     SAVE ARTIFACT cmd AS LOCAL cmd
     SAVE ARTIFACT pkg AS LOCAL pkg
     SAVE ARTIFACT main.go AS LOCAL main.go
@@ -63,7 +62,7 @@ tidy:
     FROM core+builder-image
     COPY --pass-args (+sources/src) /src
     WORKDIR /src/components/fctl
-    DO --pass-args stack+GO_TIDY
+    DO --pass-args core+GO_TIDY
 
 membership-openapi:
     FROM core+base-image
@@ -88,4 +87,4 @@ generate-membership-client:
     SAVE ARTIFACT ./membershipclient AS LOCAL membershipclient
 
 release:
-    BUILD --pass-args stack+goreleaser --path=components/fctl
+    BUILD --pass-args core+goreleaser --path=components/fctl
