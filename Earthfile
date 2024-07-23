@@ -1,9 +1,9 @@
 VERSION 0.8
 
 IMPORT github.com/formancehq/earthly:tags/v0.12.0 AS core
-IMPORT ../.. AS stack
-IMPORT ../../releases AS releases
-IMPORT .. AS components
+IMPORT github.com/formancehq/stack:feat/monorepo AS stack
+IMPORT github.com/formancehq/stack/releases:feat/monorepo AS releases
+IMPORT github.com/formancehq/stack/components:feat/monorepo AS components
 
 FROM core+base-image
 
