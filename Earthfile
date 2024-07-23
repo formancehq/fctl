@@ -1,8 +1,6 @@
 VERSION 0.8
 
 IMPORT github.com/formancehq/earthly:feat/monorepo AS core
-IMPORT github.com/formancehq/stack/releases:feat/monorepo AS releases
-IMPORT github.com/formancehq/stack/libs/go-libs:feat/monorepo AS libs
 
 FROM core+base-image
 
@@ -20,7 +18,7 @@ deploy-staging:
 
 sources:
     WORKDIR src
-    COPY --pass-args (releases+sdk-generate/go) /src/releases/sdks/go
+    DO core+INCLURE_SDK_GO --LOCATION /src/releases/sdks/go
     DO core+INCLUDE_GO_LIBS --LOCATION libs/go-libs
     WORKDIR /src/components/fctl
     COPY go.* .
@@ -87,4 +85,7 @@ generate-membership-client:
     SAVE ARTIFACT ./membershipclient AS LOCAL membershipclient
 
 release:
-    BUILD --pass-args core+goreleaser --path=components/fctl
+    FROM core+builder-image
+    ARG mode=local
+    COPY . /src
+    DO core+GORELEASER --mode=$mode
