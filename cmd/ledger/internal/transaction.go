@@ -3,13 +3,16 @@ package internal
 import (
 	"context"
 	"errors"
+	"fmt"
+	"math/big"
 	"strconv"
 	"strings"
 
-	"github.com/formancehq/formance-sdk-go"
+	formance "github.com/formancehq/formance-sdk-go/v3"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 )
 
-func TransactionIDOrLastN(ctx context.Context, ledgerClient *formance.APIClient, ledger, id string) (int64, error) {
+func TransactionIDOrLastN(ctx context.Context, ledgerClient *formance.Formance, ledger, id string) (*big.Int, error) {
 	if strings.HasPrefix(id, "last") {
 		id = strings.TrimPrefix(id, "last")
 		sub := int64(0)
@@ -17,21 +20,36 @@ func TransactionIDOrLastN(ctx context.Context, ledgerClient *formance.APIClient,
 			var err error
 			sub, err = strconv.ParseInt(id, 10, 64)
 			if err != nil {
-				return 0, err
+				return nil, err
 			}
 		}
-		response, _, err := ledgerClient.TransactionsApi.
-			ListTransactions(ctx, ledger).
-			PageSize(1).
-			Execute()
+		pageSize := int64(1)
+		request := operations.ListTransactionsRequest{
+			Ledger:   ledger,
+			PageSize: &pageSize,
+		}
+		response, err := ledgerClient.Ledger.V1.ListTransactions(ctx, request)
 		if err != nil {
-			return 0, err
+			return nil, err
 		}
-		if len(response.Cursor.Data) == 0 {
-			return 0, errors.New("no transaction found")
+
+		if response.StatusCode >= 300 {
+			return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 		}
-		return response.Cursor.Data[0].Txid + sub, nil
+
+		if len(response.TransactionsCursorResponse.Cursor.Data) == 0 {
+			return nil, errors.New("no transaction found")
+		}
+		return response.TransactionsCursorResponse.Cursor.Data[0].Txid.Sub(
+			response.TransactionsCursorResponse.Cursor.Data[0].Txid,
+			big.NewInt(sub),
+		), nil
 	}
 
-	return strconv.ParseInt(id, 10, 64)
+	v, ok := big.NewInt(0).SetString(id, 10)
+	if !ok {
+		return nil, fmt.Errorf("invalid bigint: %s", id)
+	}
+
+	return v, nil
 }

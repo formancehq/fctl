@@ -3,33 +3,185 @@ package search
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"strings"
 
+	"github.com/formancehq/fctl/cmd/search/views"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/formance-sdk-go"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
+const (
+	sizeFlag      = "size"
+	defaultTarget = "ANY"
+)
+
+var targets = []string{"TRANSACTION", "ACCOUNT", "ASSET", "PAYMENT"}
+
+type SearchStore struct {
+	Response *shared.Response `json:"response"`
+}
+
+type SearchController struct {
+	store  *SearchStore
+	target string
+}
+
+var _ fctl.Controller[*SearchStore] = (*SearchController)(nil)
+
+func NewDefaultSearchStore() *SearchStore {
+	return &SearchStore{
+		Response: &shared.Response{
+			Data: make(map[string]interface{}, 0),
+			Cursor: &shared.ResponseCursor{
+				Data: make([]map[string]interface{}, 0),
+			},
+		},
+	}
+}
+
+func NewSearchController() *SearchController {
+	return &SearchController{
+		store: NewDefaultSearchStore(),
+	}
+}
+
+func (c *SearchController) GetStore() *SearchStore {
+	return c.store
+}
+
+func (c *SearchController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+
+	store := fctl.GetStackStore(cmd.Context())
+
+	terms := make([]string, 0)
+	if len(args) > 1 {
+		terms = args[1:]
+	}
+	size := int64(fctl.GetInt(cmd, sizeFlag))
+
+	target := strings.ToUpper(args[0])
+
+	if target == "ANY" {
+		target = ""
+	}
+	c.target = target
+	request := shared.Query{
+		PageSize: &size,
+		Terms:    terms,
+		Target:   &target,
+	}
+	response, err := store.Client().Search.V1.Search(cmd.Context(), request)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode >= 300 {
+		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+	}
+
+	if target == "" {
+		c.store.Response.Data = response.Response.Data
+		c.store.Response.Cursor = response.Response.Cursor
+	} else {
+		// TRANSACTION, ACCOUNT, ASSET, PAYMENT
+		c.store.Response.Cursor = response.Response.Cursor
+	}
+
+	return c, err
+}
+
+func (c *SearchController) Render(cmd *cobra.Command, args []string) error {
+	var err error
+	// No Data
+	if (c.store.Response.Cursor != nil && len(c.store.Response.Cursor.Data) == 0) && len(c.store.Response.Data) == 0 {
+		fctl.Section.WithWriter(cmd.OutOrStdout()).Println("No data found")
+		return nil
+	}
+
+	ok := fctl.ContainValue(targets, c.target)
+	// Cursor is initialized & target is valid
+	if ok && c.store.Response.Cursor != nil {
+		//But no data
+		if len(c.store.Response.Cursor.Data) == 0 {
+			fctl.Section.WithWriter(cmd.OutOrStdout()).Println("No data found")
+			return nil
+		}
+
+		// Display the data
+		switch c.target {
+		case "TRANSACTION":
+			fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Transactions")
+			err = views.DisplayTransactions(cmd.OutOrStdout(), c.store.Response.Cursor.Data)
+		case "ACCOUNT":
+			fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Accounts")
+			err = views.DisplayAccounts(cmd.OutOrStdout(), c.store.Response.Cursor.Data)
+		case "ASSET":
+			fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Assets")
+			err = views.DisplayAssets(cmd.OutOrStdout(), c.store.Response.Cursor.Data)
+		case "PAYMENT":
+			fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Payments")
+			err = views.DisplayPayments(cmd.OutOrStdout(), c.store.Response.Cursor.Data)
+		}
+	}
+
+	ok = defaultTarget == c.target || c.target == ""
+
+	// Any data
+	if len(c.store.Response.Data) > 0 && ok {
+		tableData := make([][]string, 0)
+		for kind, values := range c.store.Response.Data {
+			for _, value := range values.([]any) {
+				dataAsJson, err := json.Marshal(value)
+				if err != nil {
+					return err
+				}
+
+				dataAsJsonString := string(dataAsJson)
+				if len(dataAsJsonString) > 100 {
+					dataAsJsonString = dataAsJsonString[:100] + "..."
+				}
+
+				tableData = append(tableData, []string{
+					kind, dataAsJsonString,
+				})
+			}
+		}
+		tableData = fctl.Prepend(tableData, []string{"Kind", "Object"})
+		return pterm.DefaultTable.
+			WithHasHeader().
+			WithWriter(cmd.OutOrStdout()).
+			WithData(tableData).
+			Render()
+	}
+
+	return err
+}
+
 func NewCommand() *cobra.Command {
-	const (
-		sizeFlag = "size"
-	)
+
 	return fctl.NewStackCommand("search <object-type> <terms>...",
 		fctl.WithAliases("se"),
 		fctl.WithArgs(cobra.MinimumNArgs(1)),
 		fctl.WithIntFlag(sizeFlag, 5, "Number of items to fetch"),
-		fctl.WithValidArgs("ANY", "ACCOUNT", "TRANSACTION", "ASSET", "PAYMENT"),
-		fctl.WithShortDescription("Search in all services"),
-		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
+		fctl.WithValidArgs(append(targets, defaultTarget)...),
+		// fctl.WithValidArgsFunction(func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		// 	return append(targets, defaultTarget), cobra.ShellCompDirectiveNoFileComp
+		// }),
+		fctl.WithShortDescription("Search in all services (Default: ANY), or in a specific service (ACCOUNT, TRANSACTION, ASSET, PAYMENT)"),
+		fctl.WithController[*SearchStore](NewSearchController()),
+		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
 
 			cfg, err := fctl.GetConfig(cmd)
 			if err != nil {
 				return err
 			}
-
-			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg)
+			apiClient, err := fctl.NewMembershipClient(cmd, cfg)
+			if err != nil {
+				return err
+			}
+			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg, apiClient.DefaultApi)
 			if err != nil {
 				return err
 			}
@@ -39,158 +191,13 @@ func NewCommand() *cobra.Command {
 				return err
 			}
 
-			searchClient, err := fctl.NewStackClient(cmd, cfg, stack)
+			stackClient, err := fctl.NewStackClient(cmd, cfg, stack)
 			if err != nil {
 				return err
 			}
+			cmd.SetContext(fctl.ContextWithStackStore(cmd.Context(), fctl.StackNode(cfg, stack, organizationID, stackClient)))
 
-			target := strings.ToUpper(args[0])
-			if target == "ANY" {
-				target = ""
-			}
-			terms := make([]string, 0)
-			if len(args) > 1 {
-				terms = args[1:]
-			}
-			size := int64(fctl.GetInt(cmd, sizeFlag))
-
-			response, _, err := searchClient.SearchApi.Search(cmd.Context()).Query(formance.Query{
-				PageSize: &size,
-				Terms:    terms,
-				Target:   &target,
-			}).Execute()
-			if err != nil {
-				return err
-			}
-
-			if target == "" {
-				tableData := make([][]string, 0)
-				for kind, values := range response.Data {
-					for _, value := range values.([]any) {
-						dataAsJson, err := json.Marshal(value)
-						if err != nil {
-							return err
-						}
-
-						dataAsJsonString := string(dataAsJson)
-						if len(dataAsJsonString) > 100 {
-							dataAsJsonString = dataAsJsonString[:100] + "..."
-						}
-
-						tableData = append(tableData, []string{
-							kind, dataAsJsonString,
-						})
-					}
-				}
-				tableData = fctl.Prepend(tableData, []string{"Kind", "Object"})
-
-				return pterm.DefaultTable.
-					WithHasHeader().
-					WithWriter(cmd.OutOrStdout()).
-					WithData(tableData).
-					Render()
-			}
-
-			switch target {
-			case "TRANSACTION":
-				fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Transactions")
-				err = displayTransactions(cmd.OutOrStdout(), response.Cursor.Data)
-			case "ACCOUNT":
-				fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Accounts")
-				err = displayAccounts(cmd.OutOrStdout(), response.Cursor.Data)
-			case "ASSET":
-				fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Assets")
-				err = displayAssets(cmd.OutOrStdout(), response.Cursor.Data)
-			case "PAYMENT":
-				fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Payments")
-				err = displayPayments(cmd.OutOrStdout(), response.Cursor.Data)
-			}
-			return err
+			return nil
 		}),
 	)
-}
-
-func displayPayments(out io.Writer, payments []interface{}) error {
-	tableData := make([][]string, 0)
-	for _, payment := range payments {
-		payment := payment.(map[string]any)
-		tableData = append(tableData, []string{
-			payment["provider"].(string),
-			payment["reference"].(string),
-			fmt.Sprint(payment["amount"].(float64)),
-			payment["asset"].(string),
-			payment["createdAt"].(string),
-			payment["scheme"].(string),
-			payment["status"].(string),
-			payment["type"].(string),
-		})
-	}
-	tableData = fctl.Prepend(tableData, []string{"Provider", "Reference", "Account",
-		"Asset", "Created at", "Scheme", "Status", "Type"})
-
-	return pterm.DefaultTable.
-		WithHasHeader().
-		WithWriter(out).
-		WithData(tableData).
-		Render()
-}
-
-func displayAssets(out io.Writer, assets []interface{}) error {
-	tableData := make([][]string, 0)
-	for _, asset := range assets {
-		asset := asset.(map[string]any)
-		tableData = append(tableData, []string{
-			asset["ledger"].(string),
-			asset["name"].(string),
-			asset["account"].(string),
-			fmt.Sprint(asset["input"].(float64)),
-			fmt.Sprint(asset["output"].(float64)),
-		})
-	}
-	tableData = fctl.Prepend(tableData, []string{"Ledger", "Asset", "Account", "Input", "Output"})
-
-	return pterm.DefaultTable.
-		WithHasHeader().
-		WithWriter(out).
-		WithData(tableData).
-		Render()
-}
-
-func displayAccounts(out io.Writer, accounts []interface{}) error {
-	tableData := make([][]string, 0)
-	for _, account := range accounts {
-		account := account.(map[string]any)
-		tableData = append(tableData, []string{
-			// TODO: Missing property 'ledger' on api response
-			//account["ledger"].(string),
-			account["address"].(string),
-		})
-	}
-	tableData = fctl.Prepend(tableData, []string{ /*"Ledger",*/ "Address"})
-
-	return pterm.DefaultTable.
-		WithHasHeader().
-		WithWriter(out).
-		WithData(tableData).
-		Render()
-}
-
-func displayTransactions(out io.Writer, txs []interface{}) error {
-	tableData := make([][]string, 0)
-	for _, tx := range txs {
-		tx := tx.(map[string]any)
-		tableData = append(tableData, []string{
-			tx["ledger"].(string),
-			fmt.Sprint(tx["txid"].(float64)),
-			tx["reference"].(string),
-			tx["timestamp"].(string),
-		})
-	}
-	tableData = fctl.Prepend(tableData, []string{"Ledger", "ID", "Reference", "Date"})
-
-	return pterm.DefaultTable.
-		WithHasHeader().
-		WithWriter(out).
-		WithData(tableData).
-		Render()
 }

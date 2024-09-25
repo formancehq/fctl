@@ -3,42 +3,87 @@ package internal
 import (
 	"fmt"
 	"io"
+	"net/url"
 
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/iancoleman/strcase"
 	"github.com/pterm/pterm"
 )
 
-func PrintStackInformation(out io.Writer, profile *fctl.Profile, stack *membershipclient.Stack) error {
-	baseUrlStr := profile.ServicesBaseUrl(stack).String()
+func PrintStackInformation(out io.Writer, profile *fctl.Profile, stack *membershipclient.Stack, versions *shared.GetVersionsResponse) error {
+	baseUrlStr := profile.ServicesBaseUrl(stack)
 
-	fctl.Section.WithWriter(out).Println("Information")
-	tableData := pterm.TableData{}
-	tableData = append(tableData, []string{pterm.LightCyan("ID"), stack.Id})
-	tableData = append(tableData, []string{pterm.LightCyan("Name"), stack.Name})
-	tableData = append(tableData, []string{pterm.LightCyan("Bound region"), func() string {
-		if stack.BoundRegion == nil {
-			return ""
-		}
-		return stack.BoundRegion.Id
-	}()})
-	tableData = append(tableData, []string{pterm.LightCyan("Ledger URI"), fmt.Sprintf("%s/api/ledger", baseUrlStr)})
-	tableData = append(tableData, []string{pterm.LightCyan("Payments URI"), fmt.Sprintf("%s/api/payments", baseUrlStr)})
-	tableData = append(tableData, []string{pterm.LightCyan("Search URI"), fmt.Sprintf("%s/api/search", baseUrlStr)})
-	tableData = append(tableData, []string{pterm.LightCyan("Auth URI"), fmt.Sprintf("%s/api/auth", baseUrlStr)})
-	tableData = append(tableData, []string{pterm.LightCyan("Wallets URI"), fmt.Sprintf("%s/api/wallets", baseUrlStr)})
-	if err := pterm.DefaultTable.
-		WithWriter(out).
-		WithData(tableData).
-		Render(); err != nil {
+	err := printInformation(out, stack)
+
+	if err != nil {
 		return err
 	}
 
+	if versions != nil {
+		err = printVersion(out, baseUrlStr, versions, stack)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	err = printMetadata(out, stack)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func printInformation(out io.Writer, stack *membershipclient.Stack) error {
+
+	fctl.Section.WithWriter(out).Println("Information")
+	tableData := pterm.TableData{}
+	tableData = append(tableData, []string{pterm.LightCyan("ID"), stack.Id, ""})
+	tableData = append(tableData, []string{pterm.LightCyan("Name"), stack.Name, ""})
+	tableData = append(tableData, []string{pterm.LightCyan("Region"), stack.RegionID, ""})
+	tableData = append(tableData, []string{pterm.LightCyan("Status"), stack.State, ""})
+	tableData = append(tableData, []string{pterm.LightCyan("Effective status"), stack.Status, ""})
+
+	if stack.AuditEnabled != nil {
+		tableData = append(tableData, []string{pterm.LightCyan("Audit enabled"), fctl.BoolPointerToString(stack.AuditEnabled), ""})
+	}
+
+	return pterm.DefaultTable.
+		WithWriter(out).
+		WithData(tableData).
+		Render()
+}
+
+func printVersion(out io.Writer, url *url.URL, versions *shared.GetVersionsResponse, stack *membershipclient.Stack) error {
+	fctl.Println()
+	fctl.Section.WithWriter(out).Println("Versions")
+
+	tableData := pterm.TableData{}
+
+	for _, service := range versions.Versions {
+		tableData = append(tableData, []string{pterm.LightCyan(strcase.ToCamel(service.Name)), service.Version,
+			fmt.Sprintf("%s/api/%s", url.String(), service.Name)})
+	}
+
+	return pterm.DefaultTable.
+		WithWriter(out).
+		WithData(tableData).
+		Render()
+}
+
+func printMetadata(out io.Writer, stack *membershipclient.Stack) error {
 	fctl.Println()
 	fctl.Section.WithWriter(out).Println("Metadata")
-	tableData = pterm.TableData{}
-	for k, v := range stack.Metadata {
-		tableData = append(tableData, []string{pterm.LightCyan(k), v})
+
+	tableData := pterm.TableData{}
+
+	if stack.Metadata != nil {
+		for k, v := range *stack.Metadata {
+			tableData = append(tableData, []string{pterm.LightCyan(k), v})
+		}
 	}
 
 	return pterm.DefaultTable.

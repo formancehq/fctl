@@ -19,7 +19,7 @@ var _ MappedNullable = &CreateOrganizationResponse{}
 
 // CreateOrganizationResponse struct for CreateOrganizationResponse
 type CreateOrganizationResponse struct {
-	Data *Organization `json:"data,omitempty"`
+	Data *OrganizationExpanded `json:"data,omitempty"`
 }
 
 // NewCreateOrganizationResponse instantiates a new CreateOrganizationResponse object
@@ -40,9 +40,9 @@ func NewCreateOrganizationResponseWithDefaults() *CreateOrganizationResponse {
 }
 
 // GetData returns the Data field value if set, zero value otherwise.
-func (o *CreateOrganizationResponse) GetData() Organization {
-	if o == nil || isNil(o.Data) {
-		var ret Organization
+func (o *CreateOrganizationResponse) GetData() OrganizationExpanded {
+	if o == nil || IsNil(o.Data) {
+		var ret OrganizationExpanded
 		return ret
 	}
 	return *o.Data
@@ -50,8 +50,8 @@ func (o *CreateOrganizationResponse) GetData() Organization {
 
 // GetDataOk returns a tuple with the Data field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *CreateOrganizationResponse) GetDataOk() (*Organization, bool) {
-	if o == nil || isNil(o.Data) {
+func (o *CreateOrganizationResponse) GetDataOk() (*OrganizationExpanded, bool) {
+	if o == nil || IsNil(o.Data) {
 		return nil, false
 	}
 	return o.Data, true
@@ -59,20 +59,20 @@ func (o *CreateOrganizationResponse) GetDataOk() (*Organization, bool) {
 
 // HasData returns a boolean if a field has been set.
 func (o *CreateOrganizationResponse) HasData() bool {
-	if o != nil && !isNil(o.Data) {
+	if o != nil && !IsNil(o.Data) {
 		return true
 	}
 
 	return false
 }
 
-// SetData gets a reference to the given Organization and assigns it to the Data field.
-func (o *CreateOrganizationResponse) SetData(v Organization) {
+// SetData gets a reference to the given OrganizationExpanded and assigns it to the Data field.
+func (o *CreateOrganizationResponse) SetData(v OrganizationExpanded) {
 	o.Data = &v
 }
 
 func (o CreateOrganizationResponse) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -81,7 +81,7 @@ func (o CreateOrganizationResponse) MarshalJSON() ([]byte, error) {
 
 func (o CreateOrganizationResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !isNil(o.Data) {
+	if !IsNil(o.Data) {
 		toSerialize["data"] = o.Data
 	}
 	return toSerialize, nil
@@ -122,3 +122,5 @@ func (v *NullableCreateOrganizationResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

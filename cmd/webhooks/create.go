@@ -4,65 +4,82 @@ import (
 	"net/url"
 
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/formance-sdk-go"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/pkg/errors"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
+const (
+	secretFlag = "secret"
+)
+
+type CreateWebhookController struct {
+	store *CreateWebhookStore
+}
+
+type CreateWebhookStore struct {
+	Webhook shared.WebhooksConfig `json:"webhook"`
+}
+
+var _ fctl.Controller[*CreateWebhookStore] = (*CreateWebhookController)(nil)
+
+func NewDefaultCreateWebhookStore() *CreateWebhookStore {
+	return &CreateWebhookStore{
+		Webhook: shared.WebhooksConfig{},
+	}
+}
+
+func NewCreateWebhookController() *CreateWebhookController {
+	return &CreateWebhookController{
+		store: NewDefaultCreateWebhookStore(),
+	}
+}
+func (c *CreateWebhookController) GetStore() *CreateWebhookStore {
+	return c.store
+}
+
+func (c *CreateWebhookController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+	store := fctl.GetStackStore(cmd.Context())
+
+	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to create a webhook") {
+		return nil, fctl.ErrMissingApproval
+	}
+
+	if _, err := url.Parse(args[0]); err != nil {
+		return nil, errors.Wrap(err, "invalid endpoint URL")
+	}
+
+	secret := fctl.GetString(cmd, secretFlag)
+
+	response, err := store.Client().Webhooks.V1.InsertConfig(cmd.Context(), shared.ConfigUser{
+		Endpoint:   args[0],
+		EventTypes: args[1:],
+		Secret:     &secret,
+	})
+
+	if err != nil {
+		return nil, errors.Wrap(err, "creating config")
+	}
+
+	c.store.Webhook = response.ConfigResponse.Data
+
+	return c, nil
+}
+
+func (c *CreateWebhookController) Render(cmd *cobra.Command, args []string) error {
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Config created successfully")
+	return nil
+}
+
 func NewCreateCommand() *cobra.Command {
-	const (
-		secretFlag = "secret"
-	)
+
 	return fctl.NewCommand("create <endpoint> [<event-type>...]",
 		fctl.WithShortDescription("Create a new config. At least one event type is required."),
 		fctl.WithAliases("cr"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.MinimumNArgs(2)),
 		fctl.WithStringFlag(secretFlag, "", "Bring your own webhooks signing secret. If not passed or empty, a secret is automatically generated. The format is a string of bytes of size 24, base64 encoded. (larger size after encoding)"),
-		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := fctl.GetConfig(cmd)
-			if err != nil {
-				return errors.Wrap(err, "fctl.GetConfig")
-			}
-
-			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg)
-			if err != nil {
-				return err
-			}
-
-			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
-			if err != nil {
-				return err
-			}
-
-			if !fctl.CheckStackApprobation(cmd, stack, "You are about to create a webhook") {
-				return fctl.ErrMissingApproval
-			}
-
-			client, err := fctl.NewStackClient(cmd, cfg, stack)
-			if err != nil {
-				return errors.Wrap(err, "creating stack client")
-			}
-
-			if _, err := url.Parse(args[0]); err != nil {
-				return errors.Wrap(err, "invalid endpoint URL")
-			}
-
-			secret := fctl.GetString(cmd, secretFlag)
-
-			res, _, err := client.WebhooksApi.InsertConfig(cmd.Context()).
-				ConfigUser(formance.ConfigUser{
-					Endpoint:   args[0],
-					EventTypes: args[1:],
-					Secret:     &secret,
-				}).Execute()
-			if err != nil {
-				return errors.Wrap(err, "inserting config")
-			}
-
-			fctl.Success(cmd.OutOrStdout(),
-				"Config created successfully with ID: %s", *res.Data.Id)
-			return nil
-		}),
+		fctl.WithController[*CreateWebhookStore](NewCreateWebhookController()),
 	)
 }

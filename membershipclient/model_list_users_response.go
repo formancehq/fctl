@@ -19,7 +19,7 @@ var _ MappedNullable = &ListUsersResponse{}
 
 // ListUsersResponse struct for ListUsersResponse
 type ListUsersResponse struct {
-	Data []User `json:"data,omitempty"`
+	Data []OrganizationUserArrayInner `json:"data,omitempty"`
 }
 
 // NewListUsersResponse instantiates a new ListUsersResponse object
@@ -40,9 +40,9 @@ func NewListUsersResponseWithDefaults() *ListUsersResponse {
 }
 
 // GetData returns the Data field value if set, zero value otherwise.
-func (o *ListUsersResponse) GetData() []User {
-	if o == nil || isNil(o.Data) {
-		var ret []User
+func (o *ListUsersResponse) GetData() []OrganizationUserArrayInner {
+	if o == nil || IsNil(o.Data) {
+		var ret []OrganizationUserArrayInner
 		return ret
 	}
 	return o.Data
@@ -50,8 +50,8 @@ func (o *ListUsersResponse) GetData() []User {
 
 // GetDataOk returns a tuple with the Data field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ListUsersResponse) GetDataOk() ([]User, bool) {
-	if o == nil || isNil(o.Data) {
+func (o *ListUsersResponse) GetDataOk() ([]OrganizationUserArrayInner, bool) {
+	if o == nil || IsNil(o.Data) {
 		return nil, false
 	}
 	return o.Data, true
@@ -59,20 +59,20 @@ func (o *ListUsersResponse) GetDataOk() ([]User, bool) {
 
 // HasData returns a boolean if a field has been set.
 func (o *ListUsersResponse) HasData() bool {
-	if o != nil && !isNil(o.Data) {
+	if o != nil && !IsNil(o.Data) {
 		return true
 	}
 
 	return false
 }
 
-// SetData gets a reference to the given []User and assigns it to the Data field.
-func (o *ListUsersResponse) SetData(v []User) {
+// SetData gets a reference to the given []OrganizationUserArrayInner and assigns it to the Data field.
+func (o *ListUsersResponse) SetData(v []OrganizationUserArrayInner) {
 	o.Data = v
 }
 
 func (o ListUsersResponse) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -81,7 +81,7 @@ func (o ListUsersResponse) MarshalJSON() ([]byte, error) {
 
 func (o ListUsersResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !isNil(o.Data) {
+	if !IsNil(o.Data) {
 		toSerialize["data"] = o.Data
 	}
 	return toSerialize, nil
@@ -122,3 +122,5 @@ func (v *NullableListUsersResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

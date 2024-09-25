@@ -4,17 +4,20 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/iancoleman/strcase"
 	"github.com/spf13/cobra"
 )
 
 const (
-	MembershipUriFlag = "membership-uri"
+	MembershipURIFlag = "membership-uri"
 	FileFlag          = "config"
 	ProfileFlag       = "profile"
+	OutputFlag        = "output"
 	DebugFlag         = "debug"
 	InsecureTlsFlag   = "insecure-tls"
+	TelemetryFlag     = "telemetry"
 )
 
 func GetBool(cmd *cobra.Command, flagName string) bool {
@@ -60,4 +63,26 @@ func GetInt(cmd *cobra.Command, flagName string) int {
 		return 0
 	}
 	return v
+}
+
+func GetDateTime(cmd *cobra.Command, flagName string) (*time.Time, error) {
+	v, err := cmd.Flags().GetString(flagName)
+	if err != nil || v == "" {
+		v = os.Getenv(strcase.ToScreamingSnake(flagName))
+	}
+
+	if v == "" {
+		return nil, nil
+	}
+
+	t, err := time.Parse(time.RFC3339, v)
+	if err != nil {
+		return nil, err
+	}
+
+	return &t, nil
+}
+
+func Ptr[T any](t T) *T {
+	return &t
 }

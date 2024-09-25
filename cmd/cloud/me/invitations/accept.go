@@ -2,8 +2,29 @@ package invitations
 
 import (
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
+
+type AcceptStore struct {
+	Success      bool   `json:"success"`
+	InvitationId string `json:"invitationId"`
+}
+type AcceptController struct {
+	store *AcceptStore
+}
+
+var _ fctl.Controller[*AcceptStore] = (*AcceptController)(nil)
+
+func NewDefaultAcceptStore() *AcceptStore {
+	return &AcceptStore{}
+}
+
+func NewAcceptController() *AcceptController {
+	return &AcceptController{
+		store: NewDefaultAcceptStore(),
+	}
+}
 
 func NewAcceptCommand() *cobra.Command {
 	return fctl.NewCommand("accept <invitation-id>",
@@ -11,28 +32,34 @@ func NewAcceptCommand() *cobra.Command {
 		fctl.WithShortDescription("Accept invitation"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithConfirmFlag(),
-		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := fctl.GetConfig(cmd)
-			if err != nil {
-				return err
-			}
-
-			client, err := fctl.NewMembershipClient(cmd, cfg)
-			if err != nil {
-				return err
-			}
-
-			if !fctl.CheckOrganizationApprobation(cmd, "You are about to accept an invitation") {
-				return fctl.ErrMissingApproval
-			}
-
-			_, err = client.DefaultApi.AcceptInvitation(cmd.Context(), args[0]).Execute()
-			if err != nil {
-				return err
-			}
-
-			fctl.Success(cmd.OutOrStdout(), "Invitation accepted!")
-			return nil
-		}),
+		fctl.WithController[*AcceptStore](NewAcceptController()),
 	)
+}
+
+func (c *AcceptController) GetStore() *AcceptStore {
+	return c.store
+}
+
+func (c *AcceptController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+
+	store := fctl.GetMembershipStore(cmd.Context())
+	if !fctl.CheckOrganizationApprobation(cmd, "You are about to accept an invitation") {
+		return nil, fctl.ErrMissingApproval
+	}
+
+	_, err := store.Client().AcceptInvitation(cmd.Context(), args[0]).Execute()
+	if err != nil {
+		return nil, err
+	}
+
+	c.store.InvitationId = args[0]
+	c.store.Success = true
+
+	return c, nil
+}
+
+func (c *AcceptController) Render(cmd *cobra.Command, args []string) error {
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Invitation %s accepted!", c.store.InvitationId)
+	return nil
+
 }

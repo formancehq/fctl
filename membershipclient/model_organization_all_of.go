@@ -12,6 +12,7 @@ package membershipclient
 
 import (
 	"encoding/json"
+	"time"
 )
 
 // checks if the OrganizationAllOf type satisfies the MappedNullable interface at compile time
@@ -23,6 +24,12 @@ type OrganizationAllOf struct {
 	Id string `json:"id"`
 	// Owner ID
 	OwnerId string `json:"ownerId"`
+	// Number of available stacks
+	AvailableStacks *int32 `json:"availableStacks,omitempty"`
+	// Number of available sandboxes
+	AvailableSandboxes *int32 `json:"availableSandboxes,omitempty"`
+	CreatedAt *time.Time `json:"createdAt,omitempty"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
 }
 
 // NewOrganizationAllOf instantiates a new OrganizationAllOf object
@@ -92,8 +99,136 @@ func (o *OrganizationAllOf) SetOwnerId(v string) {
 	o.OwnerId = v
 }
 
+// GetAvailableStacks returns the AvailableStacks field value if set, zero value otherwise.
+func (o *OrganizationAllOf) GetAvailableStacks() int32 {
+	if o == nil || IsNil(o.AvailableStacks) {
+		var ret int32
+		return ret
+	}
+	return *o.AvailableStacks
+}
+
+// GetAvailableStacksOk returns a tuple with the AvailableStacks field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *OrganizationAllOf) GetAvailableStacksOk() (*int32, bool) {
+	if o == nil || IsNil(o.AvailableStacks) {
+		return nil, false
+	}
+	return o.AvailableStacks, true
+}
+
+// HasAvailableStacks returns a boolean if a field has been set.
+func (o *OrganizationAllOf) HasAvailableStacks() bool {
+	if o != nil && !IsNil(o.AvailableStacks) {
+		return true
+	}
+
+	return false
+}
+
+// SetAvailableStacks gets a reference to the given int32 and assigns it to the AvailableStacks field.
+func (o *OrganizationAllOf) SetAvailableStacks(v int32) {
+	o.AvailableStacks = &v
+}
+
+// GetAvailableSandboxes returns the AvailableSandboxes field value if set, zero value otherwise.
+func (o *OrganizationAllOf) GetAvailableSandboxes() int32 {
+	if o == nil || IsNil(o.AvailableSandboxes) {
+		var ret int32
+		return ret
+	}
+	return *o.AvailableSandboxes
+}
+
+// GetAvailableSandboxesOk returns a tuple with the AvailableSandboxes field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *OrganizationAllOf) GetAvailableSandboxesOk() (*int32, bool) {
+	if o == nil || IsNil(o.AvailableSandboxes) {
+		return nil, false
+	}
+	return o.AvailableSandboxes, true
+}
+
+// HasAvailableSandboxes returns a boolean if a field has been set.
+func (o *OrganizationAllOf) HasAvailableSandboxes() bool {
+	if o != nil && !IsNil(o.AvailableSandboxes) {
+		return true
+	}
+
+	return false
+}
+
+// SetAvailableSandboxes gets a reference to the given int32 and assigns it to the AvailableSandboxes field.
+func (o *OrganizationAllOf) SetAvailableSandboxes(v int32) {
+	o.AvailableSandboxes = &v
+}
+
+// GetCreatedAt returns the CreatedAt field value if set, zero value otherwise.
+func (o *OrganizationAllOf) GetCreatedAt() time.Time {
+	if o == nil || IsNil(o.CreatedAt) {
+		var ret time.Time
+		return ret
+	}
+	return *o.CreatedAt
+}
+
+// GetCreatedAtOk returns a tuple with the CreatedAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *OrganizationAllOf) GetCreatedAtOk() (*time.Time, bool) {
+	if o == nil || IsNil(o.CreatedAt) {
+		return nil, false
+	}
+	return o.CreatedAt, true
+}
+
+// HasCreatedAt returns a boolean if a field has been set.
+func (o *OrganizationAllOf) HasCreatedAt() bool {
+	if o != nil && !IsNil(o.CreatedAt) {
+		return true
+	}
+
+	return false
+}
+
+// SetCreatedAt gets a reference to the given time.Time and assigns it to the CreatedAt field.
+func (o *OrganizationAllOf) SetCreatedAt(v time.Time) {
+	o.CreatedAt = &v
+}
+
+// GetUpdatedAt returns the UpdatedAt field value if set, zero value otherwise.
+func (o *OrganizationAllOf) GetUpdatedAt() time.Time {
+	if o == nil || IsNil(o.UpdatedAt) {
+		var ret time.Time
+		return ret
+	}
+	return *o.UpdatedAt
+}
+
+// GetUpdatedAtOk returns a tuple with the UpdatedAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *OrganizationAllOf) GetUpdatedAtOk() (*time.Time, bool) {
+	if o == nil || IsNil(o.UpdatedAt) {
+		return nil, false
+	}
+	return o.UpdatedAt, true
+}
+
+// HasUpdatedAt returns a boolean if a field has been set.
+func (o *OrganizationAllOf) HasUpdatedAt() bool {
+	if o != nil && !IsNil(o.UpdatedAt) {
+		return true
+	}
+
+	return false
+}
+
+// SetUpdatedAt gets a reference to the given time.Time and assigns it to the UpdatedAt field.
+func (o *OrganizationAllOf) SetUpdatedAt(v time.Time) {
+	o.UpdatedAt = &v
+}
+
 func (o OrganizationAllOf) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -104,6 +239,18 @@ func (o OrganizationAllOf) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
 	toSerialize["ownerId"] = o.OwnerId
+	if !IsNil(o.AvailableStacks) {
+		toSerialize["availableStacks"] = o.AvailableStacks
+	}
+	if !IsNil(o.AvailableSandboxes) {
+		toSerialize["availableSandboxes"] = o.AvailableSandboxes
+	}
+	if !IsNil(o.CreatedAt) {
+		toSerialize["createdAt"] = o.CreatedAt
+	}
+	if !IsNil(o.UpdatedAt) {
+		toSerialize["updatedAt"] = o.UpdatedAt
+	}
 	return toSerialize, nil
 }
 
@@ -142,3 +289,5 @@ func (v *NullableOrganizationAllOf) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

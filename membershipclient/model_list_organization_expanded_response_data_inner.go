@@ -12,6 +12,7 @@ package membershipclient
 
 import (
 	"encoding/json"
+	"time"
 )
 
 // checks if the ListOrganizationExpandedResponseDataInner type satisfies the MappedNullable interface at compile time
@@ -21,12 +22,23 @@ var _ MappedNullable = &ListOrganizationExpandedResponseDataInner{}
 type ListOrganizationExpandedResponseDataInner struct {
 	// Organization name
 	Name string `json:"name"`
+	DefaultOrganizationAccess *Role `json:"defaultOrganizationAccess,omitempty"`
+	DefaultStackAccess *Role `json:"defaultStackAccess,omitempty"`
+	// Organization domain
+	Domain *string `json:"domain,omitempty"`
 	// Organization ID
 	Id string `json:"id"`
 	// Owner ID
-	OwnerId     string `json:"ownerId"`
+	OwnerId string `json:"ownerId"`
+	// Number of available stacks
+	AvailableStacks *int32 `json:"availableStacks,omitempty"`
+	// Number of available sandboxes
+	AvailableSandboxes *int32 `json:"availableSandboxes,omitempty"`
+	CreatedAt *time.Time `json:"createdAt,omitempty"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
 	TotalStacks *int32 `json:"totalStacks,omitempty"`
-	TotalUsers  *int32 `json:"totalUsers,omitempty"`
+	TotalUsers *int32 `json:"totalUsers,omitempty"`
+	Owner *User `json:"owner,omitempty"`
 }
 
 // NewListOrganizationExpandedResponseDataInner instantiates a new ListOrganizationExpandedResponseDataInner object
@@ -71,6 +83,102 @@ func (o *ListOrganizationExpandedResponseDataInner) GetNameOk() (*string, bool) 
 // SetName sets field value
 func (o *ListOrganizationExpandedResponseDataInner) SetName(v string) {
 	o.Name = v
+}
+
+// GetDefaultOrganizationAccess returns the DefaultOrganizationAccess field value if set, zero value otherwise.
+func (o *ListOrganizationExpandedResponseDataInner) GetDefaultOrganizationAccess() Role {
+	if o == nil || IsNil(o.DefaultOrganizationAccess) {
+		var ret Role
+		return ret
+	}
+	return *o.DefaultOrganizationAccess
+}
+
+// GetDefaultOrganizationAccessOk returns a tuple with the DefaultOrganizationAccess field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ListOrganizationExpandedResponseDataInner) GetDefaultOrganizationAccessOk() (*Role, bool) {
+	if o == nil || IsNil(o.DefaultOrganizationAccess) {
+		return nil, false
+	}
+	return o.DefaultOrganizationAccess, true
+}
+
+// HasDefaultOrganizationAccess returns a boolean if a field has been set.
+func (o *ListOrganizationExpandedResponseDataInner) HasDefaultOrganizationAccess() bool {
+	if o != nil && !IsNil(o.DefaultOrganizationAccess) {
+		return true
+	}
+
+	return false
+}
+
+// SetDefaultOrganizationAccess gets a reference to the given Role and assigns it to the DefaultOrganizationAccess field.
+func (o *ListOrganizationExpandedResponseDataInner) SetDefaultOrganizationAccess(v Role) {
+	o.DefaultOrganizationAccess = &v
+}
+
+// GetDefaultStackAccess returns the DefaultStackAccess field value if set, zero value otherwise.
+func (o *ListOrganizationExpandedResponseDataInner) GetDefaultStackAccess() Role {
+	if o == nil || IsNil(o.DefaultStackAccess) {
+		var ret Role
+		return ret
+	}
+	return *o.DefaultStackAccess
+}
+
+// GetDefaultStackAccessOk returns a tuple with the DefaultStackAccess field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ListOrganizationExpandedResponseDataInner) GetDefaultStackAccessOk() (*Role, bool) {
+	if o == nil || IsNil(o.DefaultStackAccess) {
+		return nil, false
+	}
+	return o.DefaultStackAccess, true
+}
+
+// HasDefaultStackAccess returns a boolean if a field has been set.
+func (o *ListOrganizationExpandedResponseDataInner) HasDefaultStackAccess() bool {
+	if o != nil && !IsNil(o.DefaultStackAccess) {
+		return true
+	}
+
+	return false
+}
+
+// SetDefaultStackAccess gets a reference to the given Role and assigns it to the DefaultStackAccess field.
+func (o *ListOrganizationExpandedResponseDataInner) SetDefaultStackAccess(v Role) {
+	o.DefaultStackAccess = &v
+}
+
+// GetDomain returns the Domain field value if set, zero value otherwise.
+func (o *ListOrganizationExpandedResponseDataInner) GetDomain() string {
+	if o == nil || IsNil(o.Domain) {
+		var ret string
+		return ret
+	}
+	return *o.Domain
+}
+
+// GetDomainOk returns a tuple with the Domain field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ListOrganizationExpandedResponseDataInner) GetDomainOk() (*string, bool) {
+	if o == nil || IsNil(o.Domain) {
+		return nil, false
+	}
+	return o.Domain, true
+}
+
+// HasDomain returns a boolean if a field has been set.
+func (o *ListOrganizationExpandedResponseDataInner) HasDomain() bool {
+	if o != nil && !IsNil(o.Domain) {
+		return true
+	}
+
+	return false
+}
+
+// SetDomain gets a reference to the given string and assigns it to the Domain field.
+func (o *ListOrganizationExpandedResponseDataInner) SetDomain(v string) {
+	o.Domain = &v
 }
 
 // GetId returns the Id field value
@@ -121,9 +229,137 @@ func (o *ListOrganizationExpandedResponseDataInner) SetOwnerId(v string) {
 	o.OwnerId = v
 }
 
+// GetAvailableStacks returns the AvailableStacks field value if set, zero value otherwise.
+func (o *ListOrganizationExpandedResponseDataInner) GetAvailableStacks() int32 {
+	if o == nil || IsNil(o.AvailableStacks) {
+		var ret int32
+		return ret
+	}
+	return *o.AvailableStacks
+}
+
+// GetAvailableStacksOk returns a tuple with the AvailableStacks field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ListOrganizationExpandedResponseDataInner) GetAvailableStacksOk() (*int32, bool) {
+	if o == nil || IsNil(o.AvailableStacks) {
+		return nil, false
+	}
+	return o.AvailableStacks, true
+}
+
+// HasAvailableStacks returns a boolean if a field has been set.
+func (o *ListOrganizationExpandedResponseDataInner) HasAvailableStacks() bool {
+	if o != nil && !IsNil(o.AvailableStacks) {
+		return true
+	}
+
+	return false
+}
+
+// SetAvailableStacks gets a reference to the given int32 and assigns it to the AvailableStacks field.
+func (o *ListOrganizationExpandedResponseDataInner) SetAvailableStacks(v int32) {
+	o.AvailableStacks = &v
+}
+
+// GetAvailableSandboxes returns the AvailableSandboxes field value if set, zero value otherwise.
+func (o *ListOrganizationExpandedResponseDataInner) GetAvailableSandboxes() int32 {
+	if o == nil || IsNil(o.AvailableSandboxes) {
+		var ret int32
+		return ret
+	}
+	return *o.AvailableSandboxes
+}
+
+// GetAvailableSandboxesOk returns a tuple with the AvailableSandboxes field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ListOrganizationExpandedResponseDataInner) GetAvailableSandboxesOk() (*int32, bool) {
+	if o == nil || IsNil(o.AvailableSandboxes) {
+		return nil, false
+	}
+	return o.AvailableSandboxes, true
+}
+
+// HasAvailableSandboxes returns a boolean if a field has been set.
+func (o *ListOrganizationExpandedResponseDataInner) HasAvailableSandboxes() bool {
+	if o != nil && !IsNil(o.AvailableSandboxes) {
+		return true
+	}
+
+	return false
+}
+
+// SetAvailableSandboxes gets a reference to the given int32 and assigns it to the AvailableSandboxes field.
+func (o *ListOrganizationExpandedResponseDataInner) SetAvailableSandboxes(v int32) {
+	o.AvailableSandboxes = &v
+}
+
+// GetCreatedAt returns the CreatedAt field value if set, zero value otherwise.
+func (o *ListOrganizationExpandedResponseDataInner) GetCreatedAt() time.Time {
+	if o == nil || IsNil(o.CreatedAt) {
+		var ret time.Time
+		return ret
+	}
+	return *o.CreatedAt
+}
+
+// GetCreatedAtOk returns a tuple with the CreatedAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ListOrganizationExpandedResponseDataInner) GetCreatedAtOk() (*time.Time, bool) {
+	if o == nil || IsNil(o.CreatedAt) {
+		return nil, false
+	}
+	return o.CreatedAt, true
+}
+
+// HasCreatedAt returns a boolean if a field has been set.
+func (o *ListOrganizationExpandedResponseDataInner) HasCreatedAt() bool {
+	if o != nil && !IsNil(o.CreatedAt) {
+		return true
+	}
+
+	return false
+}
+
+// SetCreatedAt gets a reference to the given time.Time and assigns it to the CreatedAt field.
+func (o *ListOrganizationExpandedResponseDataInner) SetCreatedAt(v time.Time) {
+	o.CreatedAt = &v
+}
+
+// GetUpdatedAt returns the UpdatedAt field value if set, zero value otherwise.
+func (o *ListOrganizationExpandedResponseDataInner) GetUpdatedAt() time.Time {
+	if o == nil || IsNil(o.UpdatedAt) {
+		var ret time.Time
+		return ret
+	}
+	return *o.UpdatedAt
+}
+
+// GetUpdatedAtOk returns a tuple with the UpdatedAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ListOrganizationExpandedResponseDataInner) GetUpdatedAtOk() (*time.Time, bool) {
+	if o == nil || IsNil(o.UpdatedAt) {
+		return nil, false
+	}
+	return o.UpdatedAt, true
+}
+
+// HasUpdatedAt returns a boolean if a field has been set.
+func (o *ListOrganizationExpandedResponseDataInner) HasUpdatedAt() bool {
+	if o != nil && !IsNil(o.UpdatedAt) {
+		return true
+	}
+
+	return false
+}
+
+// SetUpdatedAt gets a reference to the given time.Time and assigns it to the UpdatedAt field.
+func (o *ListOrganizationExpandedResponseDataInner) SetUpdatedAt(v time.Time) {
+	o.UpdatedAt = &v
+}
+
 // GetTotalStacks returns the TotalStacks field value if set, zero value otherwise.
 func (o *ListOrganizationExpandedResponseDataInner) GetTotalStacks() int32 {
-	if o == nil || isNil(o.TotalStacks) {
+	if o == nil || IsNil(o.TotalStacks) {
 		var ret int32
 		return ret
 	}
@@ -133,7 +369,7 @@ func (o *ListOrganizationExpandedResponseDataInner) GetTotalStacks() int32 {
 // GetTotalStacksOk returns a tuple with the TotalStacks field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *ListOrganizationExpandedResponseDataInner) GetTotalStacksOk() (*int32, bool) {
-	if o == nil || isNil(o.TotalStacks) {
+	if o == nil || IsNil(o.TotalStacks) {
 		return nil, false
 	}
 	return o.TotalStacks, true
@@ -141,7 +377,7 @@ func (o *ListOrganizationExpandedResponseDataInner) GetTotalStacksOk() (*int32, 
 
 // HasTotalStacks returns a boolean if a field has been set.
 func (o *ListOrganizationExpandedResponseDataInner) HasTotalStacks() bool {
-	if o != nil && !isNil(o.TotalStacks) {
+	if o != nil && !IsNil(o.TotalStacks) {
 		return true
 	}
 
@@ -155,7 +391,7 @@ func (o *ListOrganizationExpandedResponseDataInner) SetTotalStacks(v int32) {
 
 // GetTotalUsers returns the TotalUsers field value if set, zero value otherwise.
 func (o *ListOrganizationExpandedResponseDataInner) GetTotalUsers() int32 {
-	if o == nil || isNil(o.TotalUsers) {
+	if o == nil || IsNil(o.TotalUsers) {
 		var ret int32
 		return ret
 	}
@@ -165,7 +401,7 @@ func (o *ListOrganizationExpandedResponseDataInner) GetTotalUsers() int32 {
 // GetTotalUsersOk returns a tuple with the TotalUsers field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *ListOrganizationExpandedResponseDataInner) GetTotalUsersOk() (*int32, bool) {
-	if o == nil || isNil(o.TotalUsers) {
+	if o == nil || IsNil(o.TotalUsers) {
 		return nil, false
 	}
 	return o.TotalUsers, true
@@ -173,7 +409,7 @@ func (o *ListOrganizationExpandedResponseDataInner) GetTotalUsersOk() (*int32, b
 
 // HasTotalUsers returns a boolean if a field has been set.
 func (o *ListOrganizationExpandedResponseDataInner) HasTotalUsers() bool {
-	if o != nil && !isNil(o.TotalUsers) {
+	if o != nil && !IsNil(o.TotalUsers) {
 		return true
 	}
 
@@ -185,8 +421,40 @@ func (o *ListOrganizationExpandedResponseDataInner) SetTotalUsers(v int32) {
 	o.TotalUsers = &v
 }
 
+// GetOwner returns the Owner field value if set, zero value otherwise.
+func (o *ListOrganizationExpandedResponseDataInner) GetOwner() User {
+	if o == nil || IsNil(o.Owner) {
+		var ret User
+		return ret
+	}
+	return *o.Owner
+}
+
+// GetOwnerOk returns a tuple with the Owner field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ListOrganizationExpandedResponseDataInner) GetOwnerOk() (*User, bool) {
+	if o == nil || IsNil(o.Owner) {
+		return nil, false
+	}
+	return o.Owner, true
+}
+
+// HasOwner returns a boolean if a field has been set.
+func (o *ListOrganizationExpandedResponseDataInner) HasOwner() bool {
+	if o != nil && !IsNil(o.Owner) {
+		return true
+	}
+
+	return false
+}
+
+// SetOwner gets a reference to the given User and assigns it to the Owner field.
+func (o *ListOrganizationExpandedResponseDataInner) SetOwner(v User) {
+	o.Owner = &v
+}
+
 func (o ListOrganizationExpandedResponseDataInner) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -196,13 +464,37 @@ func (o ListOrganizationExpandedResponseDataInner) MarshalJSON() ([]byte, error)
 func (o ListOrganizationExpandedResponseDataInner) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["name"] = o.Name
+	if !IsNil(o.DefaultOrganizationAccess) {
+		toSerialize["defaultOrganizationAccess"] = o.DefaultOrganizationAccess
+	}
+	if !IsNil(o.DefaultStackAccess) {
+		toSerialize["defaultStackAccess"] = o.DefaultStackAccess
+	}
+	if !IsNil(o.Domain) {
+		toSerialize["domain"] = o.Domain
+	}
 	toSerialize["id"] = o.Id
 	toSerialize["ownerId"] = o.OwnerId
-	if !isNil(o.TotalStacks) {
+	if !IsNil(o.AvailableStacks) {
+		toSerialize["availableStacks"] = o.AvailableStacks
+	}
+	if !IsNil(o.AvailableSandboxes) {
+		toSerialize["availableSandboxes"] = o.AvailableSandboxes
+	}
+	if !IsNil(o.CreatedAt) {
+		toSerialize["createdAt"] = o.CreatedAt
+	}
+	if !IsNil(o.UpdatedAt) {
+		toSerialize["updatedAt"] = o.UpdatedAt
+	}
+	if !IsNil(o.TotalStacks) {
 		toSerialize["totalStacks"] = o.TotalStacks
 	}
-	if !isNil(o.TotalUsers) {
+	if !IsNil(o.TotalUsers) {
 		toSerialize["totalUsers"] = o.TotalUsers
+	}
+	if !IsNil(o.Owner) {
+		toSerialize["owner"] = o.Owner
 	}
 	return toSerialize, nil
 }
@@ -242,3 +534,5 @@ func (v *NullableListOrganizationExpandedResponseDataInner) UnmarshalJSON(src []
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

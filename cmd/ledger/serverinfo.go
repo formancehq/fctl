@@ -8,64 +8,67 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type ServerInfoStore struct {
+	Server  string `json:"server"`
+	Version string `json:"version"`
+}
+type ServerInfoController struct {
+	store *ServerInfoStore
+}
+
+var _ fctl.Controller[*ServerInfoStore] = (*ServerInfoController)(nil)
+
+func NewDefaultServerInfoStore() *ServerInfoStore {
+	return &ServerInfoStore{
+		Server:  "unknown",
+		Version: "unknown",
+	}
+}
+
+func NewServerInfoController() *ServerInfoController {
+	return &ServerInfoController{
+		store: NewDefaultServerInfoStore(),
+	}
+}
+
 func NewServerInfoCommand() *cobra.Command {
 	return fctl.NewCommand("server-infos",
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithAliases("si"),
 		fctl.WithShortDescription("Read server info"),
-		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := fctl.GetConfig(cmd)
-			if err != nil {
-				return err
-			}
-
-			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg)
-			if err != nil {
-				return err
-			}
-
-			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
-			if err != nil {
-				return err
-			}
-
-			ledgerClient, err := fctl.NewStackClient(cmd, cfg, stack)
-			if err != nil {
-				return err
-			}
-
-			response, _, err := ledgerClient.ServerApi.GetInfo(cmd.Context()).Execute()
-			if err != nil {
-				return err
-			}
-
-			tableData := pterm.TableData{}
-			tableData = append(tableData, []string{pterm.LightCyan("Server"), fmt.Sprint(response.Data.Server)})
-			tableData = append(tableData, []string{pterm.LightCyan("Version"), fmt.Sprint(response.Data.Version)})
-			tableData = append(tableData, []string{pterm.LightCyan("Storage driver"), fmt.Sprint(response.Data.Config.Storage.Driver)})
-
-			if err := pterm.DefaultTable.
-				WithWriter(cmd.OutOrStdout()).
-				WithData(tableData).
-				Render(); err != nil {
-				return err
-			}
-
-			fctl.Highlightln(cmd.OutOrStdout(), "Ledgers :")
-			if err := pterm.DefaultBulletList.
-				WithWriter(cmd.OutOrStdout()).
-				WithItems(fctl.Map(response.Data.Config.Storage.Ledgers, func(ledger string) pterm.BulletListItem {
-					return pterm.BulletListItem{
-						Text:        ledger,
-						TextStyle:   pterm.NewStyle(pterm.FgDefault),
-						BulletStyle: pterm.NewStyle(pterm.FgLightCyan),
-					}
-				})).
-				Render(); err != nil {
-				return err
-			}
-
-			return nil
-		}),
+		fctl.WithController[*ServerInfoStore](NewServerInfoController()),
 	)
+}
+
+func (c *ServerInfoController) GetStore() *ServerInfoStore {
+	return c.store
+}
+
+func (c *ServerInfoController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+	store := fctl.GetStackStore(cmd.Context())
+
+	response, err := store.Client().Ledger.V1.GetInfo(cmd.Context())
+	if err != nil {
+		return nil, err
+	}
+
+	c.store.Server = response.ConfigInfoResponse.Data.Server
+	c.store.Version = response.ConfigInfoResponse.Data.Version
+
+	return c, nil
+}
+
+func (c *ServerInfoController) Render(cmd *cobra.Command, args []string) error {
+	tableData := pterm.TableData{}
+	tableData = append(tableData, []string{pterm.LightCyan("Server"), fmt.Sprint(c.store.Server)})
+	tableData = append(tableData, []string{pterm.LightCyan("Version"), fmt.Sprint(c.store.Version)})
+
+	if err := pterm.DefaultTable.
+		WithWriter(cmd.OutOrStdout()).
+		WithData(tableData).
+		Render(); err != nil {
+		return err
+	}
+
+	return nil
 }

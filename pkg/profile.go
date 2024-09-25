@@ -13,26 +13,54 @@ import (
 	"time"
 
 	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/go-libs/logging"
+	"github.com/golang-jwt/jwt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/zitadel/oidc/pkg/client"
-	"github.com/zitadel/oidc/pkg/client/rp"
-	httphelper "github.com/zitadel/oidc/pkg/http"
-	"github.com/zitadel/oidc/pkg/oidc"
+	"github.com/zitadel/oidc/v2/pkg/client"
+	"github.com/zitadel/oidc/v2/pkg/client/rp"
+	"github.com/zitadel/oidc/v2/pkg/oidc"
 	"golang.org/x/oauth2"
 )
+
+type ErrInvalidAuthentication struct {
+	err error
+}
+
+func (e ErrInvalidAuthentication) Error() string {
+	return e.err.Error()
+}
+
+func (e ErrInvalidAuthentication) Unwrap() error {
+	return e.err
+}
+
+func (e ErrInvalidAuthentication) Is(err error) bool {
+	_, ok := err.(*ErrInvalidAuthentication)
+	return ok
+}
+
+func IsInvalidAuthentication(err error) bool {
+	return errors.Is(err, &ErrInvalidAuthentication{})
+}
+
+func newErrInvalidAuthentication(err error) *ErrInvalidAuthentication {
+	return &ErrInvalidAuthentication{
+		err: err,
+	}
+}
 
 const AuthClient = "fctl"
 
 type persistedProfile struct {
-	MembershipURI       string        `json:"membershipURI"`
-	Token               *oauth2.Token `json:"token"`
-	DefaultOrganization string        `json:"defaultOrganization"`
+	MembershipURI       string                    `json:"membershipURI"`
+	Token               *oidc.AccessTokenResponse `json:"token"`
+	DefaultOrganization string                    `json:"defaultOrganization"`
 }
 
 type Profile struct {
 	membershipURI       string
-	token               *oauth2.Token
+	token               *oidc.AccessTokenResponse
 	defaultOrganization string
 	config              *Config
 }
@@ -51,9 +79,8 @@ func (p *Profile) ApiUrl(stack *membershipclient.Stack, service string) *url.URL
 	return url
 }
 
-func (p *Profile) UpdateToken(token *oauth2.Token) {
+func (p *Profile) UpdateToken(token *oidc.AccessTokenResponse) {
 	p.token = token
-	p.token.Expiry = p.token.Expiry.UTC()
 }
 
 func (p *Profile) SetMembershipURI(v string) {
@@ -90,55 +117,74 @@ func (p *Profile) GetDefaultOrganization() string {
 }
 
 func (p *Profile) GetToken(ctx context.Context, httpClient *http.Client) (*oauth2.Token, error) {
+	logging.FromContext(ctx).Debug("Check token from profile")
 	if p.token == nil {
 		return nil, errors.New("not authenticated")
 	}
-	if p.token != nil && p.token.Expiry.Before(time.Now()) {
-		relyingParty, err := rp.NewRelyingPartyOIDC(p.membershipURI, AuthClient, "",
-			"", []string{"openid", "email", "offline_access", "supertoken"}, rp.WithHTTPClient(httpClient))
+	logging.FromContext(ctx).Debug("Has been authenticated")
+	if p.token != nil {
+		claims := &oidc.AccessTokenClaims{}
+		_, err := oidc.ParseToken(p.token.AccessToken, claims)
 		if err != nil {
-			return nil, err
+			return nil, newErrInvalidAuthentication(errors.Wrap(err, "parsing token"))
 		}
+		logging.FromContext(ctx).Debugf("Token has expired ? %s in %s", BoolToString(claims.Expiration.AsTime().Before(time.Now())), time.Since(claims.Expiration.AsTime()).String())
+		if claims.Expiration.AsTime().Before(time.Now()) {
+			relyingParty, err := GetAuthRelyingParty(httpClient, p.membershipURI)
+			if err != nil {
+				return nil, err
+			}
 
-		newToken, err := relyingParty.
-			OAuthConfig().
-			TokenSource(context.WithValue(ctx, oauth2.HTTPClient, httpClient), p.token).
-			Token()
-		if err != nil {
-			return nil, err
-		}
+			newToken, err := rp.RefreshAccessToken(relyingParty, p.token.RefreshToken, "", "")
+			if err != nil {
+				return nil, newErrInvalidAuthentication(errors.Wrap(err, "refreshing token"))
+			}
 
-		p.UpdateToken(newToken)
-		if err := p.config.Persist(); err != nil {
-			return nil, err
+			p.UpdateToken(&oidc.AccessTokenResponse{
+				AccessToken:  newToken.AccessToken,
+				TokenType:    newToken.TokenType,
+				RefreshToken: newToken.RefreshToken,
+				IDToken:      newToken.Extra("id_token").(string),
+			})
+			if err := p.config.Persist(); err != nil {
+				return nil, err
+			}
+			logging.FromContext(ctx).Debug("Token refreshed and persisted")
 		}
 	}
-	return p.token, nil
+	claims := &oidc.AccessTokenClaims{}
+	_, err := oidc.ParseToken(p.token.AccessToken, claims)
+	if err != nil {
+		return nil, newErrInvalidAuthentication(err)
+	}
+	return &oauth2.Token{
+		AccessToken:  p.token.AccessToken,
+		TokenType:    p.token.TokenType,
+		RefreshToken: p.token.RefreshToken,
+		Expiry:       claims.Expiration.AsTime(),
+	}, nil
 }
 
-func (p *Profile) GetUserInfo(cmd *cobra.Command) (oidc.UserInfo, error) {
-
-	relyingParty, err := GetAuthRelyingParty(cmd, p.GetMembershipURI())
+func (p *Profile) GetClaims() (jwt.MapClaims, error) {
+	claims := jwt.MapClaims{}
+	parser := jwt.Parser{}
+	_, _, err := parser.ParseUnverified(p.token.AccessToken, claims)
 	if err != nil {
 		return nil, err
 	}
+	return claims, nil
+}
 
-	req, err := http.NewRequest(http.MethodGet, relyingParty.UserinfoEndpoint(), nil)
-	if err != nil {
-		return nil, err
+func (p *Profile) GetUserInfo(cmd *cobra.Command) (*userClaims, error) {
+	claims := &userClaims{}
+	if p.token != nil && p.token.IDToken != "" {
+		_, err := oidc.ParseToken(p.token.IDToken, claims)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	token, err := p.GetToken(cmd.Context(), relyingParty.HttpClient())
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.TokenType, token.AccessToken))
-	userinfo := oidc.NewUserInfo()
-	if err := httphelper.HttpRequest(relyingParty.HttpClient(), req, &userinfo); err != nil {
-		return nil, err
-	}
-	return userinfo, nil
+	return claims, nil
 }
 
 func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, stack *membershipclient.Stack) (string, error) {
@@ -163,7 +209,7 @@ func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, st
 	req.SetBasicAuth(AuthClient, "")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	ret, err := http.DefaultClient.Do(req)
+	ret, err := httpClient.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -198,7 +244,6 @@ func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, st
 	if err != nil {
 		return "", err
 	}
-	req.SetBasicAuth("fctl", "")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	ret, err = httpClient.Do(req)

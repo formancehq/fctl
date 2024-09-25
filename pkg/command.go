@@ -1,14 +1,20 @@
 package fctl
 
 import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/TylerBrock/colorjson"
 	"github.com/formancehq/fctl/membershipclient"
 	"github.com/pkg/errors"
+	"github.com/segmentio/ksuid"
 	"github.com/spf13/cobra"
 )
 
 const (
 	stackFlag        = "stack"
 	organizationFlag = "organization"
+	outputFlag       = "output"
 )
 
 var (
@@ -31,17 +37,12 @@ func RetrieveOrganizationIDFromFlagOrProfile(cmd *cobra.Command, cfg *Config) (s
 	return "", ErrOrganizationNotSpecified
 }
 
-func ResolveOrganizationID(cmd *cobra.Command, cfg *Config) (string, error) {
+func ResolveOrganizationID(cmd *cobra.Command, cfg *Config, client *membershipclient.DefaultApiService) (string, error) {
 	if id, err := RetrieveOrganizationIDFromFlagOrProfile(cmd, cfg); err == nil {
 		return id, nil
 	}
 
-	client, err := NewMembershipClient(cmd, cfg)
-	if err != nil {
-		return "", err
-	}
-
-	organizations, _, err := client.DefaultApi.ListOrganizations(cmd.Context()).Execute()
+	organizations, _, err := client.ListOrganizations(cmd.Context()).Execute()
 	if err != nil {
 		return "", errors.Wrap(err, "listing organizations")
 	}
@@ -67,7 +68,7 @@ func ResolveStack(cmd *cobra.Command, cfg *Config, organizationID string) (*memb
 		return nil, err
 	}
 	if id := GetSelectedStackID(cmd); id != "" {
-		response, _, err := client.DefaultApi.ReadStack(cmd.Context(), organizationID, id).Execute()
+		response, _, err := client.DefaultApi.GetStack(cmd.Context(), organizationID, id).Execute()
 		if err != nil {
 			return nil, err
 		}
@@ -95,14 +96,6 @@ type CommandOptionFn func(cmd *cobra.Command)
 
 func (fn CommandOptionFn) apply(cmd *cobra.Command) {
 	fn(cmd)
-}
-
-func Options(fn ...CommandOption) CommandOptionFn {
-	return func(cmd *cobra.Command) {
-		for _, fn := range fn {
-			fn.apply(cmd)
-		}
-	}
 }
 
 func WithPersistentStringFlag(name, defaultValue, help string) CommandOptionFn {
@@ -159,9 +152,21 @@ func WithStringSliceFlag(name string, defaultValue []string, help string) Comman
 	}
 }
 
+func WithStringArrayFlag(name string, defaultValue []string, help string) CommandOptionFn {
+	return func(cmd *cobra.Command) {
+		cmd.Flags().StringArray(name, defaultValue, help)
+	}
+}
+
 func WithHiddenFlag(name string) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		_ = cmd.Flags().MarkHidden(name)
+	}
+}
+
+func WithHidden() CommandOptionFn {
+	return func(cmd *cobra.Command) {
+		cmd.Hidden = true
 	}
 }
 
@@ -171,9 +176,81 @@ func WithRunE(fn func(cmd *cobra.Command, args []string) error) CommandOptionFn 
 	}
 }
 
-func WithRun(fn func(cmd *cobra.Command, args []string)) CommandOptionFn {
+func WithPersistentPreRunE(fn func(cmd *cobra.Command, args []string) error) CommandOptionFn {
 	return func(cmd *cobra.Command) {
-		cmd.Run = fn
+		cmd.PersistentPreRunE = fn
+	}
+}
+
+func WithPreRunE(fn func(cmd *cobra.Command, args []string) error) CommandOptionFn {
+	return func(cmd *cobra.Command) {
+		cmd.PreRunE = fn
+	}
+}
+
+func WithDeprecatedFlag(name, message string) CommandOptionFn {
+	return func(cmd *cobra.Command) {
+		cmd.Flags().MarkDeprecated(name, message)
+	}
+}
+
+func WithDeprecated(message string) CommandOptionFn {
+	return func(cmd *cobra.Command) {
+		cmd.Deprecated = message
+	}
+}
+
+func WithController[T any](c Controller[T]) CommandOptionFn {
+	return func(cmd *cobra.Command) {
+		cmd.RunE = func(cmd *cobra.Command, args []string) error {
+			renderable, err := c.Run(cmd, args)
+
+			if err != nil {
+				return err
+			}
+
+			err = WithRender(cmd, args, c, renderable)
+
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}
+	}
+}
+func WithRender[T any](cmd *cobra.Command, args []string, c Controller[T], r Renderable) error {
+	flags := GetString(cmd, OutputFlag)
+
+	switch flags {
+	case "json":
+		// Inject into export struct
+		export := ExportedData{
+			Data: c.GetStore(),
+		}
+
+		// Marshal to JSON then print to stdout
+		out, err := json.Marshal(export)
+		if err != nil {
+			return err
+		}
+
+		raw := make(map[string]any)
+		if err := json.Unmarshal(out, &raw); err == nil {
+			f := colorjson.NewFormatter()
+			f.Indent = 2
+			colorized, err := f.Marshal(raw)
+			if err != nil {
+				panic(err)
+			}
+			cmd.OutOrStdout().Write(colorized)
+			return nil
+		} else {
+			cmd.OutOrStdout().Write(out)
+			return nil
+		}
+	default:
+		return r.Render(cmd, args)
 	}
 }
 
@@ -188,12 +265,6 @@ func WithChildCommands(cmds ...*cobra.Command) CommandOptionFn {
 func WithShortDescription(v string) CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.Short = v
-	}
-}
-
-func WithLongDescription(v string) CommandOptionFn {
-	return func(cmd *cobra.Command) {
-		cmd.Long = v
 	}
 }
 
@@ -237,32 +308,93 @@ func WithConfirmFlag() CommandOptionFn {
 	return WithBoolFlag(confirmFlag, false, "Confirm action")
 }
 
-func NewStackProtectedCommand(use string, opts ...CommandOption) *cobra.Command {
-	return NewStackCommand(use, append(
-		opts,
-		WithConfirmFlag())...,
-	)
-}
-
 func NewStackCommand(use string, opts ...CommandOption) *cobra.Command {
-	return NewMembershipCommand(use,
+	cmd := NewMembershipCommand(use,
 		append(opts,
 			WithPersistentStringFlag(stackFlag, "", "Specific stack (not required if only one stack is present)"),
 		)...,
 	)
+	cmd.RegisterFlagCompletionFunc("stack", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		cfg, err := GetConfig(cmd)
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveError
+		}
+		profile := GetCurrentProfile(cmd, cfg)
+
+		claims, err := profile.GetUserInfo(cmd)
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveError
+		}
+
+		selectedOrganization := GetSelectedOrganization(cmd)
+		if selectedOrganization == "" {
+			selectedOrganization = profile.defaultOrganization
+		}
+
+		ret := make([]string, 0)
+		for _, org := range claims.Org {
+			if selectedOrganization != "" && selectedOrganization != org.ID {
+				continue
+			}
+			for _, stack := range org.Stacks {
+				ret = append(ret, fmt.Sprintf("%s\t%s", stack.ID, stack.DisplayName))
+			}
+		}
+
+		return ret, cobra.ShellCompDirectiveDefault
+	})
+	return cmd
 }
 
 func NewMembershipCommand(use string, opts ...CommandOption) *cobra.Command {
-	return NewCommand(use,
+	cmd := NewCommand(use,
 		append(opts,
 			WithPersistentStringFlag(organizationFlag, "", "Selected organization (not required if only one organization is present)"),
 		)...,
 	)
+	cmd.RegisterFlagCompletionFunc("organization", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+
+		cfg, err := GetConfig(cmd)
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveError
+		}
+		profile := GetCurrentProfile(cmd, cfg)
+
+		claims, err := profile.GetUserInfo(cmd)
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveError
+		}
+
+		ret := make([]string, 0)
+		for _, org := range claims.Org {
+			ret = append(ret, fmt.Sprintf("%s\t%s", org.ID, org.DisplayName))
+		}
+
+		return ret, cobra.ShellCompDirectiveDefault
+	})
+	return cmd
 }
 
 func NewCommand(use string, opts ...CommandOption) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: use,
+		PersistentPostRun: func(cmd *cobra.Command, args []string) {
+			if GetBool(cmd, TelemetryFlag) {
+				cfg, err := GetConfig(cmd)
+				if err != nil {
+					return
+				}
+
+				if cfg.GetUniqueID() == "" {
+					uniqueID := ksuid.New().String()
+					cfg.SetUniqueID(uniqueID)
+					err = cfg.Persist()
+					if err != nil {
+						return
+					}
+				}
+			}
+		},
 	}
 	for _, opt := range opts {
 		opt.apply(cmd)

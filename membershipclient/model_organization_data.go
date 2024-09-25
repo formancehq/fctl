@@ -21,6 +21,10 @@ var _ MappedNullable = &OrganizationData{}
 type OrganizationData struct {
 	// Organization name
 	Name string `json:"name"`
+	DefaultOrganizationAccess *Role `json:"defaultOrganizationAccess,omitempty"`
+	DefaultStackAccess *Role `json:"defaultStackAccess,omitempty"`
+	// Organization domain
+	Domain *string `json:"domain,omitempty"`
 }
 
 // NewOrganizationData instantiates a new OrganizationData object
@@ -65,8 +69,104 @@ func (o *OrganizationData) SetName(v string) {
 	o.Name = v
 }
 
+// GetDefaultOrganizationAccess returns the DefaultOrganizationAccess field value if set, zero value otherwise.
+func (o *OrganizationData) GetDefaultOrganizationAccess() Role {
+	if o == nil || IsNil(o.DefaultOrganizationAccess) {
+		var ret Role
+		return ret
+	}
+	return *o.DefaultOrganizationAccess
+}
+
+// GetDefaultOrganizationAccessOk returns a tuple with the DefaultOrganizationAccess field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *OrganizationData) GetDefaultOrganizationAccessOk() (*Role, bool) {
+	if o == nil || IsNil(o.DefaultOrganizationAccess) {
+		return nil, false
+	}
+	return o.DefaultOrganizationAccess, true
+}
+
+// HasDefaultOrganizationAccess returns a boolean if a field has been set.
+func (o *OrganizationData) HasDefaultOrganizationAccess() bool {
+	if o != nil && !IsNil(o.DefaultOrganizationAccess) {
+		return true
+	}
+
+	return false
+}
+
+// SetDefaultOrganizationAccess gets a reference to the given Role and assigns it to the DefaultOrganizationAccess field.
+func (o *OrganizationData) SetDefaultOrganizationAccess(v Role) {
+	o.DefaultOrganizationAccess = &v
+}
+
+// GetDefaultStackAccess returns the DefaultStackAccess field value if set, zero value otherwise.
+func (o *OrganizationData) GetDefaultStackAccess() Role {
+	if o == nil || IsNil(o.DefaultStackAccess) {
+		var ret Role
+		return ret
+	}
+	return *o.DefaultStackAccess
+}
+
+// GetDefaultStackAccessOk returns a tuple with the DefaultStackAccess field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *OrganizationData) GetDefaultStackAccessOk() (*Role, bool) {
+	if o == nil || IsNil(o.DefaultStackAccess) {
+		return nil, false
+	}
+	return o.DefaultStackAccess, true
+}
+
+// HasDefaultStackAccess returns a boolean if a field has been set.
+func (o *OrganizationData) HasDefaultStackAccess() bool {
+	if o != nil && !IsNil(o.DefaultStackAccess) {
+		return true
+	}
+
+	return false
+}
+
+// SetDefaultStackAccess gets a reference to the given Role and assigns it to the DefaultStackAccess field.
+func (o *OrganizationData) SetDefaultStackAccess(v Role) {
+	o.DefaultStackAccess = &v
+}
+
+// GetDomain returns the Domain field value if set, zero value otherwise.
+func (o *OrganizationData) GetDomain() string {
+	if o == nil || IsNil(o.Domain) {
+		var ret string
+		return ret
+	}
+	return *o.Domain
+}
+
+// GetDomainOk returns a tuple with the Domain field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *OrganizationData) GetDomainOk() (*string, bool) {
+	if o == nil || IsNil(o.Domain) {
+		return nil, false
+	}
+	return o.Domain, true
+}
+
+// HasDomain returns a boolean if a field has been set.
+func (o *OrganizationData) HasDomain() bool {
+	if o != nil && !IsNil(o.Domain) {
+		return true
+	}
+
+	return false
+}
+
+// SetDomain gets a reference to the given string and assigns it to the Domain field.
+func (o *OrganizationData) SetDomain(v string) {
+	o.Domain = &v
+}
+
 func (o OrganizationData) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -76,6 +176,15 @@ func (o OrganizationData) MarshalJSON() ([]byte, error) {
 func (o OrganizationData) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["name"] = o.Name
+	if !IsNil(o.DefaultOrganizationAccess) {
+		toSerialize["defaultOrganizationAccess"] = o.DefaultOrganizationAccess
+	}
+	if !IsNil(o.DefaultStackAccess) {
+		toSerialize["defaultStackAccess"] = o.DefaultStackAccess
+	}
+	if !IsNil(o.Domain) {
+		toSerialize["domain"] = o.Domain
+	}
 	return toSerialize, nil
 }
 
@@ -114,3 +223,5 @@ func (v *NullableOrganizationData) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

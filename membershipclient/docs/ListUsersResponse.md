@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Data** | Pointer to [**[]User**](User.md) |  | [optional]
+**Data** | Pointer to [**[]OrganizationUserArrayInner**](OrganizationUserArrayInner.md) |  | [optional] 
 
 ## Methods
 
@@ -27,20 +27,20 @@ but it doesn't guarantee that properties required by API are set
 
 ### GetData
 
-`func (o *ListUsersResponse) GetData() []User`
+`func (o *ListUsersResponse) GetData() []OrganizationUserArrayInner`
 
 GetData returns the Data field if non-nil, zero value otherwise.
 
 ### GetDataOk
 
-`func (o *ListUsersResponse) GetDataOk() (*[]User, bool)`
+`func (o *ListUsersResponse) GetDataOk() (*[]OrganizationUserArrayInner, bool)`
 
 GetDataOk returns a tuple with the Data field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetData
 
-`func (o *ListUsersResponse) SetData(v []User)`
+`func (o *ListUsersResponse) SetData(v []OrganizationUserArrayInner)`
 
 SetData sets Data field to given value.
 
@@ -52,3 +52,5 @@ HasData returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
+
+

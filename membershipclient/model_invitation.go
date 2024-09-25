@@ -20,25 +20,30 @@ var _ MappedNullable = &Invitation{}
 
 // Invitation struct for Invitation
 type Invitation struct {
-	Id             string     `json:"id"`
-	OrganizationId string     `json:"organizationId"`
-	UserEmail      string     `json:"userEmail"`
-	Status         string     `json:"status"`
-	CreationDate   time.Time  `json:"creationDate"`
-	UpdatedAt      *time.Time `json:"updatedAt,omitempty"`
+	Id string `json:"id"`
+	OrganizationId string `json:"organizationId"`
+	UserEmail string `json:"userEmail"`
+	Status string `json:"status"`
+	CreationDate time.Time `json:"creationDate"`
+	UpdatedAt *string `json:"updatedAt,omitempty"`
+	Role Role `json:"role"`
+	StackClaims []StackClaim `json:"stackClaims,omitempty"`
+	UserId *string `json:"userId,omitempty"`
+	OrganizationAccess *OrganizationUser `json:"organizationAccess,omitempty"`
 }
 
 // NewInvitation instantiates a new Invitation object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewInvitation(id string, organizationId string, userEmail string, status string, creationDate time.Time) *Invitation {
+func NewInvitation(id string, organizationId string, userEmail string, status string, creationDate time.Time, role Role) *Invitation {
 	this := Invitation{}
 	this.Id = id
 	this.OrganizationId = organizationId
 	this.UserEmail = userEmail
 	this.Status = status
 	this.CreationDate = creationDate
+	this.Role = role
 	return &this
 }
 
@@ -171,9 +176,9 @@ func (o *Invitation) SetCreationDate(v time.Time) {
 }
 
 // GetUpdatedAt returns the UpdatedAt field value if set, zero value otherwise.
-func (o *Invitation) GetUpdatedAt() time.Time {
-	if o == nil || isNil(o.UpdatedAt) {
-		var ret time.Time
+func (o *Invitation) GetUpdatedAt() string {
+	if o == nil || IsNil(o.UpdatedAt) {
+		var ret string
 		return ret
 	}
 	return *o.UpdatedAt
@@ -181,8 +186,8 @@ func (o *Invitation) GetUpdatedAt() time.Time {
 
 // GetUpdatedAtOk returns a tuple with the UpdatedAt field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *Invitation) GetUpdatedAtOk() (*time.Time, bool) {
-	if o == nil || isNil(o.UpdatedAt) {
+func (o *Invitation) GetUpdatedAtOk() (*string, bool) {
+	if o == nil || IsNil(o.UpdatedAt) {
 		return nil, false
 	}
 	return o.UpdatedAt, true
@@ -190,20 +195,140 @@ func (o *Invitation) GetUpdatedAtOk() (*time.Time, bool) {
 
 // HasUpdatedAt returns a boolean if a field has been set.
 func (o *Invitation) HasUpdatedAt() bool {
-	if o != nil && !isNil(o.UpdatedAt) {
+	if o != nil && !IsNil(o.UpdatedAt) {
 		return true
 	}
 
 	return false
 }
 
-// SetUpdatedAt gets a reference to the given time.Time and assigns it to the UpdatedAt field.
-func (o *Invitation) SetUpdatedAt(v time.Time) {
+// SetUpdatedAt gets a reference to the given string and assigns it to the UpdatedAt field.
+func (o *Invitation) SetUpdatedAt(v string) {
 	o.UpdatedAt = &v
 }
 
+// GetRole returns the Role field value
+func (o *Invitation) GetRole() Role {
+	if o == nil {
+		var ret Role
+		return ret
+	}
+
+	return o.Role
+}
+
+// GetRoleOk returns a tuple with the Role field value
+// and a boolean to check if the value has been set.
+func (o *Invitation) GetRoleOk() (*Role, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Role, true
+}
+
+// SetRole sets field value
+func (o *Invitation) SetRole(v Role) {
+	o.Role = v
+}
+
+// GetStackClaims returns the StackClaims field value if set, zero value otherwise.
+func (o *Invitation) GetStackClaims() []StackClaim {
+	if o == nil || IsNil(o.StackClaims) {
+		var ret []StackClaim
+		return ret
+	}
+	return o.StackClaims
+}
+
+// GetStackClaimsOk returns a tuple with the StackClaims field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Invitation) GetStackClaimsOk() ([]StackClaim, bool) {
+	if o == nil || IsNil(o.StackClaims) {
+		return nil, false
+	}
+	return o.StackClaims, true
+}
+
+// HasStackClaims returns a boolean if a field has been set.
+func (o *Invitation) HasStackClaims() bool {
+	if o != nil && !IsNil(o.StackClaims) {
+		return true
+	}
+
+	return false
+}
+
+// SetStackClaims gets a reference to the given []StackClaim and assigns it to the StackClaims field.
+func (o *Invitation) SetStackClaims(v []StackClaim) {
+	o.StackClaims = v
+}
+
+// GetUserId returns the UserId field value if set, zero value otherwise.
+func (o *Invitation) GetUserId() string {
+	if o == nil || IsNil(o.UserId) {
+		var ret string
+		return ret
+	}
+	return *o.UserId
+}
+
+// GetUserIdOk returns a tuple with the UserId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Invitation) GetUserIdOk() (*string, bool) {
+	if o == nil || IsNil(o.UserId) {
+		return nil, false
+	}
+	return o.UserId, true
+}
+
+// HasUserId returns a boolean if a field has been set.
+func (o *Invitation) HasUserId() bool {
+	if o != nil && !IsNil(o.UserId) {
+		return true
+	}
+
+	return false
+}
+
+// SetUserId gets a reference to the given string and assigns it to the UserId field.
+func (o *Invitation) SetUserId(v string) {
+	o.UserId = &v
+}
+
+// GetOrganizationAccess returns the OrganizationAccess field value if set, zero value otherwise.
+func (o *Invitation) GetOrganizationAccess() OrganizationUser {
+	if o == nil || IsNil(o.OrganizationAccess) {
+		var ret OrganizationUser
+		return ret
+	}
+	return *o.OrganizationAccess
+}
+
+// GetOrganizationAccessOk returns a tuple with the OrganizationAccess field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Invitation) GetOrganizationAccessOk() (*OrganizationUser, bool) {
+	if o == nil || IsNil(o.OrganizationAccess) {
+		return nil, false
+	}
+	return o.OrganizationAccess, true
+}
+
+// HasOrganizationAccess returns a boolean if a field has been set.
+func (o *Invitation) HasOrganizationAccess() bool {
+	if o != nil && !IsNil(o.OrganizationAccess) {
+		return true
+	}
+
+	return false
+}
+
+// SetOrganizationAccess gets a reference to the given OrganizationUser and assigns it to the OrganizationAccess field.
+func (o *Invitation) SetOrganizationAccess(v OrganizationUser) {
+	o.OrganizationAccess = &v
+}
+
 func (o Invitation) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -217,8 +342,18 @@ func (o Invitation) ToMap() (map[string]interface{}, error) {
 	toSerialize["userEmail"] = o.UserEmail
 	toSerialize["status"] = o.Status
 	toSerialize["creationDate"] = o.CreationDate
-	if !isNil(o.UpdatedAt) {
+	if !IsNil(o.UpdatedAt) {
 		toSerialize["updatedAt"] = o.UpdatedAt
+	}
+	toSerialize["role"] = o.Role
+	if !IsNil(o.StackClaims) {
+		toSerialize["stackClaims"] = o.StackClaims
+	}
+	if !IsNil(o.UserId) {
+		toSerialize["userId"] = o.UserId
+	}
+	if !IsNil(o.OrganizationAccess) {
+		toSerialize["organizationAccess"] = o.OrganizationAccess
 	}
 	return toSerialize, nil
 }
@@ -258,3 +393,5 @@ func (v *NullableInvitation) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+
