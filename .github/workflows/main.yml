@@ -79,7 +79,6 @@ jobs:
     runs-on: "ubuntu-latest"
     if: contains(github.event.pull_request.labels.*.name, 'build-images') || github.ref == 'refs/heads/main' || github.event_name == 'merge_group'
     needs:
-      - Tests
       - Dirty
     steps:
       - uses: earthly/actions-setup@v1
