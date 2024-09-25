@@ -4,16 +4,22 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Id** | **string** | Stack ID |
-**OrganizationId** | **string** | Organization ID |
-**Uri** | **string** | Base stack uri |
-**BoundRegion** | Pointer to [**Region**](Region.md) |  | [optional]
+**Id** | **string** | Stack ID | 
+**OrganizationId** | **string** | Organization ID | 
+**Uri** | **string** | Base stack uri | 
+**RegionID** | **string** | The region where the stack is installed | 
+**StargateEnabled** | **bool** |  | 
+**CreatedAt** | Pointer to **time.Time** |  | [optional] 
+**DeletedAt** | Pointer to **time.Time** |  | [optional] 
+**DisabledAt** | Pointer to **time.Time** |  | [optional] 
+**AuditEnabled** | Pointer to **bool** |  | [optional] 
+**Synchronised** | **bool** |  | 
 
 ## Methods
 
 ### NewStackAllOf
 
-`func NewStackAllOf(id string, organizationId string, uri string, ) *StackAllOf`
+`func NewStackAllOf(id string, organizationId string, uri string, regionID string, stargateEnabled bool, synchronised bool, ) *StackAllOf`
 
 NewStackAllOf instantiates a new StackAllOf object
 This constructor will assign default values to properties that have it defined,
@@ -88,30 +94,167 @@ and a boolean to check if the value has been set.
 SetUri sets Uri field to given value.
 
 
-### GetBoundRegion
+### GetRegionID
 
-`func (o *StackAllOf) GetBoundRegion() Region`
+`func (o *StackAllOf) GetRegionID() string`
 
-GetBoundRegion returns the BoundRegion field if non-nil, zero value otherwise.
+GetRegionID returns the RegionID field if non-nil, zero value otherwise.
 
-### GetBoundRegionOk
+### GetRegionIDOk
 
-`func (o *StackAllOf) GetBoundRegionOk() (*Region, bool)`
+`func (o *StackAllOf) GetRegionIDOk() (*string, bool)`
 
-GetBoundRegionOk returns a tuple with the BoundRegion field if it's non-nil, zero value otherwise
+GetRegionIDOk returns a tuple with the RegionID field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetBoundRegion
+### SetRegionID
 
-`func (o *StackAllOf) SetBoundRegion(v Region)`
+`func (o *StackAllOf) SetRegionID(v string)`
 
-SetBoundRegion sets BoundRegion field to given value.
+SetRegionID sets RegionID field to given value.
 
-### HasBoundRegion
 
-`func (o *StackAllOf) HasBoundRegion() bool`
+### GetStargateEnabled
 
-HasBoundRegion returns a boolean if a field has been set.
+`func (o *StackAllOf) GetStargateEnabled() bool`
+
+GetStargateEnabled returns the StargateEnabled field if non-nil, zero value otherwise.
+
+### GetStargateEnabledOk
+
+`func (o *StackAllOf) GetStargateEnabledOk() (*bool, bool)`
+
+GetStargateEnabledOk returns a tuple with the StargateEnabled field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetStargateEnabled
+
+`func (o *StackAllOf) SetStargateEnabled(v bool)`
+
+SetStargateEnabled sets StargateEnabled field to given value.
+
+
+### GetCreatedAt
+
+`func (o *StackAllOf) GetCreatedAt() time.Time`
+
+GetCreatedAt returns the CreatedAt field if non-nil, zero value otherwise.
+
+### GetCreatedAtOk
+
+`func (o *StackAllOf) GetCreatedAtOk() (*time.Time, bool)`
+
+GetCreatedAtOk returns a tuple with the CreatedAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetCreatedAt
+
+`func (o *StackAllOf) SetCreatedAt(v time.Time)`
+
+SetCreatedAt sets CreatedAt field to given value.
+
+### HasCreatedAt
+
+`func (o *StackAllOf) HasCreatedAt() bool`
+
+HasCreatedAt returns a boolean if a field has been set.
+
+### GetDeletedAt
+
+`func (o *StackAllOf) GetDeletedAt() time.Time`
+
+GetDeletedAt returns the DeletedAt field if non-nil, zero value otherwise.
+
+### GetDeletedAtOk
+
+`func (o *StackAllOf) GetDeletedAtOk() (*time.Time, bool)`
+
+GetDeletedAtOk returns a tuple with the DeletedAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDeletedAt
+
+`func (o *StackAllOf) SetDeletedAt(v time.Time)`
+
+SetDeletedAt sets DeletedAt field to given value.
+
+### HasDeletedAt
+
+`func (o *StackAllOf) HasDeletedAt() bool`
+
+HasDeletedAt returns a boolean if a field has been set.
+
+### GetDisabledAt
+
+`func (o *StackAllOf) GetDisabledAt() time.Time`
+
+GetDisabledAt returns the DisabledAt field if non-nil, zero value otherwise.
+
+### GetDisabledAtOk
+
+`func (o *StackAllOf) GetDisabledAtOk() (*time.Time, bool)`
+
+GetDisabledAtOk returns a tuple with the DisabledAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDisabledAt
+
+`func (o *StackAllOf) SetDisabledAt(v time.Time)`
+
+SetDisabledAt sets DisabledAt field to given value.
+
+### HasDisabledAt
+
+`func (o *StackAllOf) HasDisabledAt() bool`
+
+HasDisabledAt returns a boolean if a field has been set.
+
+### GetAuditEnabled
+
+`func (o *StackAllOf) GetAuditEnabled() bool`
+
+GetAuditEnabled returns the AuditEnabled field if non-nil, zero value otherwise.
+
+### GetAuditEnabledOk
+
+`func (o *StackAllOf) GetAuditEnabledOk() (*bool, bool)`
+
+GetAuditEnabledOk returns a tuple with the AuditEnabled field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetAuditEnabled
+
+`func (o *StackAllOf) SetAuditEnabled(v bool)`
+
+SetAuditEnabled sets AuditEnabled field to given value.
+
+### HasAuditEnabled
+
+`func (o *StackAllOf) HasAuditEnabled() bool`
+
+HasAuditEnabled returns a boolean if a field has been set.
+
+### GetSynchronised
+
+`func (o *StackAllOf) GetSynchronised() bool`
+
+GetSynchronised returns the Synchronised field if non-nil, zero value otherwise.
+
+### GetSynchronisedOk
+
+`func (o *StackAllOf) GetSynchronisedOk() (*bool, bool)`
+
+GetSynchronisedOk returns a tuple with the Synchronised field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetSynchronised
+
+`func (o *StackAllOf) SetSynchronised(v bool)`
+
+SetSynchronised sets Synchronised field to given value.
+
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
+
+

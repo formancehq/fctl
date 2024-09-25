@@ -2,10 +2,71 @@ package webhooks
 
 import (
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/formance-sdk-go"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/pkg/errors"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
+
+type ChangeSecretStore struct {
+	Secret string `json:"secret"`
+	ID     string `json:"id"`
+}
+
+type ChangeSecretWebhookController struct {
+	store *ChangeSecretStore
+}
+
+var _ fctl.Controller[*ChangeSecretStore] = (*ChangeSecretWebhookController)(nil)
+
+func NewDefaultChangeSecretStore() *ChangeSecretStore {
+	return &ChangeSecretStore{
+		Secret: "",
+		ID:     "",
+	}
+}
+func NewChangeSecretWebhookController() *ChangeSecretWebhookController {
+	return &ChangeSecretWebhookController{
+		store: NewDefaultChangeSecretStore(),
+	}
+}
+func (c *ChangeSecretWebhookController) GetStore() *ChangeSecretStore {
+	return c.store
+}
+func (c *ChangeSecretWebhookController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+	store := fctl.GetStackStore(cmd.Context())
+
+	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to change a webhook secret") {
+		return nil, fctl.ErrMissingApproval
+	}
+	secret := ""
+	if len(args) > 1 {
+		secret = args[1]
+	}
+
+	response, err := store.Client().Webhooks.V1.
+		ChangeConfigSecret(cmd.Context(), operations.ChangeConfigSecretRequest{
+			ConfigChangeSecret: &shared.ConfigChangeSecret{
+				Secret: secret,
+			},
+			ID: args[0],
+		})
+	if err != nil {
+		return nil, errors.Wrap(err, "changing secret")
+	}
+
+	c.store.ID = response.ConfigResponse.Data.ID
+	c.store.Secret = response.ConfigResponse.Data.Secret
+
+	return c, nil
+}
+
+func (c *ChangeSecretWebhookController) Render(cmd *cobra.Command, args []string) error {
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln(
+		"Config '%s' updated successfully with new secret", c.store.ID)
+	return nil
+}
 
 func NewChangeSecretCommand() *cobra.Command {
 	return fctl.NewCommand("change-secret <config-id> <secret>",
@@ -13,50 +74,6 @@ func NewChangeSecretCommand() *cobra.Command {
 		fctl.WithConfirmFlag(),
 		fctl.WithAliases("cs"),
 		fctl.WithArgs(cobra.RangeArgs(1, 2)),
-		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := fctl.GetConfig(cmd)
-			if err != nil {
-				return errors.Wrap(err, "fctl.GetConfig")
-			}
-
-			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg)
-			if err != nil {
-				return err
-			}
-
-			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
-			if err != nil {
-				return err
-			}
-
-			if !fctl.CheckStackApprobation(cmd, stack, "You are about to change a webhook secret") {
-				return fctl.ErrMissingApproval
-			}
-
-			client, err := fctl.NewStackClient(cmd, cfg, stack)
-			if err != nil {
-				return errors.Wrap(err, "creating stack client")
-			}
-
-			secret := ""
-			if len(args) > 1 {
-				secret = args[1]
-			}
-
-			res, _, err := client.WebhooksApi.
-				ChangeConfigSecret(cmd.Context(), args[0]).
-				ConfigChangeSecret(
-					formance.ConfigChangeSecret{
-						Secret: &secret,
-					}).
-				Execute()
-			if err != nil {
-				return errors.Wrap(err, "changing secret")
-			}
-
-			fctl.Success(cmd.OutOrStdout(),
-				"Config updated successfully with new secret: %s", *res.Data.Secret)
-			return nil
-		}),
+		fctl.WithController[*ChangeSecretStore](NewChangeSecretWebhookController()),
 	)
 }

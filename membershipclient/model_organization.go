@@ -12,6 +12,7 @@ package membershipclient
 
 import (
 	"encoding/json"
+	"time"
 )
 
 // checks if the Organization type satisfies the MappedNullable interface at compile time
@@ -21,10 +22,20 @@ var _ MappedNullable = &Organization{}
 type Organization struct {
 	// Organization name
 	Name string `json:"name"`
+	DefaultOrganizationAccess *Role `json:"defaultOrganizationAccess,omitempty"`
+	DefaultStackAccess *Role `json:"defaultStackAccess,omitempty"`
+	// Organization domain
+	Domain *string `json:"domain,omitempty"`
 	// Organization ID
 	Id string `json:"id"`
 	// Owner ID
 	OwnerId string `json:"ownerId"`
+	// Number of available stacks
+	AvailableStacks *int32 `json:"availableStacks,omitempty"`
+	// Number of available sandboxes
+	AvailableSandboxes *int32 `json:"availableSandboxes,omitempty"`
+	CreatedAt *time.Time `json:"createdAt,omitempty"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
 }
 
 // NewOrganization instantiates a new Organization object
@@ -69,6 +80,102 @@ func (o *Organization) GetNameOk() (*string, bool) {
 // SetName sets field value
 func (o *Organization) SetName(v string) {
 	o.Name = v
+}
+
+// GetDefaultOrganizationAccess returns the DefaultOrganizationAccess field value if set, zero value otherwise.
+func (o *Organization) GetDefaultOrganizationAccess() Role {
+	if o == nil || IsNil(o.DefaultOrganizationAccess) {
+		var ret Role
+		return ret
+	}
+	return *o.DefaultOrganizationAccess
+}
+
+// GetDefaultOrganizationAccessOk returns a tuple with the DefaultOrganizationAccess field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Organization) GetDefaultOrganizationAccessOk() (*Role, bool) {
+	if o == nil || IsNil(o.DefaultOrganizationAccess) {
+		return nil, false
+	}
+	return o.DefaultOrganizationAccess, true
+}
+
+// HasDefaultOrganizationAccess returns a boolean if a field has been set.
+func (o *Organization) HasDefaultOrganizationAccess() bool {
+	if o != nil && !IsNil(o.DefaultOrganizationAccess) {
+		return true
+	}
+
+	return false
+}
+
+// SetDefaultOrganizationAccess gets a reference to the given Role and assigns it to the DefaultOrganizationAccess field.
+func (o *Organization) SetDefaultOrganizationAccess(v Role) {
+	o.DefaultOrganizationAccess = &v
+}
+
+// GetDefaultStackAccess returns the DefaultStackAccess field value if set, zero value otherwise.
+func (o *Organization) GetDefaultStackAccess() Role {
+	if o == nil || IsNil(o.DefaultStackAccess) {
+		var ret Role
+		return ret
+	}
+	return *o.DefaultStackAccess
+}
+
+// GetDefaultStackAccessOk returns a tuple with the DefaultStackAccess field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Organization) GetDefaultStackAccessOk() (*Role, bool) {
+	if o == nil || IsNil(o.DefaultStackAccess) {
+		return nil, false
+	}
+	return o.DefaultStackAccess, true
+}
+
+// HasDefaultStackAccess returns a boolean if a field has been set.
+func (o *Organization) HasDefaultStackAccess() bool {
+	if o != nil && !IsNil(o.DefaultStackAccess) {
+		return true
+	}
+
+	return false
+}
+
+// SetDefaultStackAccess gets a reference to the given Role and assigns it to the DefaultStackAccess field.
+func (o *Organization) SetDefaultStackAccess(v Role) {
+	o.DefaultStackAccess = &v
+}
+
+// GetDomain returns the Domain field value if set, zero value otherwise.
+func (o *Organization) GetDomain() string {
+	if o == nil || IsNil(o.Domain) {
+		var ret string
+		return ret
+	}
+	return *o.Domain
+}
+
+// GetDomainOk returns a tuple with the Domain field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Organization) GetDomainOk() (*string, bool) {
+	if o == nil || IsNil(o.Domain) {
+		return nil, false
+	}
+	return o.Domain, true
+}
+
+// HasDomain returns a boolean if a field has been set.
+func (o *Organization) HasDomain() bool {
+	if o != nil && !IsNil(o.Domain) {
+		return true
+	}
+
+	return false
+}
+
+// SetDomain gets a reference to the given string and assigns it to the Domain field.
+func (o *Organization) SetDomain(v string) {
+	o.Domain = &v
 }
 
 // GetId returns the Id field value
@@ -119,8 +226,136 @@ func (o *Organization) SetOwnerId(v string) {
 	o.OwnerId = v
 }
 
+// GetAvailableStacks returns the AvailableStacks field value if set, zero value otherwise.
+func (o *Organization) GetAvailableStacks() int32 {
+	if o == nil || IsNil(o.AvailableStacks) {
+		var ret int32
+		return ret
+	}
+	return *o.AvailableStacks
+}
+
+// GetAvailableStacksOk returns a tuple with the AvailableStacks field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Organization) GetAvailableStacksOk() (*int32, bool) {
+	if o == nil || IsNil(o.AvailableStacks) {
+		return nil, false
+	}
+	return o.AvailableStacks, true
+}
+
+// HasAvailableStacks returns a boolean if a field has been set.
+func (o *Organization) HasAvailableStacks() bool {
+	if o != nil && !IsNil(o.AvailableStacks) {
+		return true
+	}
+
+	return false
+}
+
+// SetAvailableStacks gets a reference to the given int32 and assigns it to the AvailableStacks field.
+func (o *Organization) SetAvailableStacks(v int32) {
+	o.AvailableStacks = &v
+}
+
+// GetAvailableSandboxes returns the AvailableSandboxes field value if set, zero value otherwise.
+func (o *Organization) GetAvailableSandboxes() int32 {
+	if o == nil || IsNil(o.AvailableSandboxes) {
+		var ret int32
+		return ret
+	}
+	return *o.AvailableSandboxes
+}
+
+// GetAvailableSandboxesOk returns a tuple with the AvailableSandboxes field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Organization) GetAvailableSandboxesOk() (*int32, bool) {
+	if o == nil || IsNil(o.AvailableSandboxes) {
+		return nil, false
+	}
+	return o.AvailableSandboxes, true
+}
+
+// HasAvailableSandboxes returns a boolean if a field has been set.
+func (o *Organization) HasAvailableSandboxes() bool {
+	if o != nil && !IsNil(o.AvailableSandboxes) {
+		return true
+	}
+
+	return false
+}
+
+// SetAvailableSandboxes gets a reference to the given int32 and assigns it to the AvailableSandboxes field.
+func (o *Organization) SetAvailableSandboxes(v int32) {
+	o.AvailableSandboxes = &v
+}
+
+// GetCreatedAt returns the CreatedAt field value if set, zero value otherwise.
+func (o *Organization) GetCreatedAt() time.Time {
+	if o == nil || IsNil(o.CreatedAt) {
+		var ret time.Time
+		return ret
+	}
+	return *o.CreatedAt
+}
+
+// GetCreatedAtOk returns a tuple with the CreatedAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Organization) GetCreatedAtOk() (*time.Time, bool) {
+	if o == nil || IsNil(o.CreatedAt) {
+		return nil, false
+	}
+	return o.CreatedAt, true
+}
+
+// HasCreatedAt returns a boolean if a field has been set.
+func (o *Organization) HasCreatedAt() bool {
+	if o != nil && !IsNil(o.CreatedAt) {
+		return true
+	}
+
+	return false
+}
+
+// SetCreatedAt gets a reference to the given time.Time and assigns it to the CreatedAt field.
+func (o *Organization) SetCreatedAt(v time.Time) {
+	o.CreatedAt = &v
+}
+
+// GetUpdatedAt returns the UpdatedAt field value if set, zero value otherwise.
+func (o *Organization) GetUpdatedAt() time.Time {
+	if o == nil || IsNil(o.UpdatedAt) {
+		var ret time.Time
+		return ret
+	}
+	return *o.UpdatedAt
+}
+
+// GetUpdatedAtOk returns a tuple with the UpdatedAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Organization) GetUpdatedAtOk() (*time.Time, bool) {
+	if o == nil || IsNil(o.UpdatedAt) {
+		return nil, false
+	}
+	return o.UpdatedAt, true
+}
+
+// HasUpdatedAt returns a boolean if a field has been set.
+func (o *Organization) HasUpdatedAt() bool {
+	if o != nil && !IsNil(o.UpdatedAt) {
+		return true
+	}
+
+	return false
+}
+
+// SetUpdatedAt gets a reference to the given time.Time and assigns it to the UpdatedAt field.
+func (o *Organization) SetUpdatedAt(v time.Time) {
+	o.UpdatedAt = &v
+}
+
 func (o Organization) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -130,8 +365,29 @@ func (o Organization) MarshalJSON() ([]byte, error) {
 func (o Organization) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["name"] = o.Name
+	if !IsNil(o.DefaultOrganizationAccess) {
+		toSerialize["defaultOrganizationAccess"] = o.DefaultOrganizationAccess
+	}
+	if !IsNil(o.DefaultStackAccess) {
+		toSerialize["defaultStackAccess"] = o.DefaultStackAccess
+	}
+	if !IsNil(o.Domain) {
+		toSerialize["domain"] = o.Domain
+	}
 	toSerialize["id"] = o.Id
 	toSerialize["ownerId"] = o.OwnerId
+	if !IsNil(o.AvailableStacks) {
+		toSerialize["availableStacks"] = o.AvailableStacks
+	}
+	if !IsNil(o.AvailableSandboxes) {
+		toSerialize["availableSandboxes"] = o.AvailableSandboxes
+	}
+	if !IsNil(o.CreatedAt) {
+		toSerialize["createdAt"] = o.CreatedAt
+	}
+	if !IsNil(o.UpdatedAt) {
+		toSerialize["updatedAt"] = o.UpdatedAt
+	}
 	return toSerialize, nil
 }
 
@@ -170,3 +426,5 @@ func (v *NullableOrganization) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

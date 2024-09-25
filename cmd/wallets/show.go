@@ -1,18 +1,36 @@
 package wallets
 
 import (
-	"fmt"
-	"io"
-
 	"github.com/formancehq/fctl/cmd/wallets/internal"
+	"github.com/formancehq/fctl/cmd/wallets/internal/views"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/formance-sdk-go"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
+type ShowStore struct {
+	Wallet shared.WalletWithBalances `json:"wallet"`
+}
+type ShowController struct {
+	store *ShowStore
+}
+
+var _ fctl.Controller[*ShowStore] = (*ShowController)(nil)
+
+func NewDefaultShowStore() *ShowStore {
+	return &ShowStore{}
+}
+
+func NewShowController() *ShowController {
+	return &ShowController{
+		store: NewDefaultShowStore(),
+	}
+}
+
 func NewShowCommand() *cobra.Command {
+	c := NewShowController()
 	return fctl.NewCommand("show",
 		fctl.WithShortDescription("Show a wallets"),
 		fctl.WithAliases("sh"),
@@ -20,75 +38,38 @@ func NewShowCommand() *cobra.Command {
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		internal.WithTargetingWalletByID(),
 		internal.WithTargetingWalletByName(),
-		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := fctl.GetConfig(cmd)
-			if err != nil {
-				return errors.Wrap(err, "retrieving config")
-			}
-
-			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg)
-			if err != nil {
-				return err
-			}
-
-			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
-			if err != nil {
-				return err
-			}
-
-			client, err := fctl.NewStackClient(cmd, cfg, stack)
-			if err != nil {
-				return errors.Wrap(err, "creating stack client")
-			}
-
-			walletID, err := internal.RetrieveWalletID(cmd, client)
-			if err != nil {
-				return err
-			}
-			if walletID == "" {
-				return errors.New("You need to specify wallet id using --id or --name flags")
-			}
-
-			res, _, err := client.WalletsApi.GetWallet(cmd.Context(), walletID).Execute()
-			if err != nil {
-				return errors.Wrap(err, "Creating wallets")
-			}
-
-			return PrintWallet(cmd.OutOrStdout(), res.Data)
-		}),
+		fctl.WithController[*ShowStore](c),
 	)
 }
 
-func PrintWallet(out io.Writer, wallet formance.WalletWithBalances) error {
-	fctl.Section.Println("Information")
-	tableData := pterm.TableData{}
-	tableData = append(tableData, []string{pterm.LightCyan("ID"), fmt.Sprint(wallet.Id)})
-	tableData = append(tableData, []string{pterm.LightCyan("Name"), wallet.Name})
+func (c *ShowController) GetStore() *ShowStore {
+	return c.store
+}
 
-	if err := pterm.DefaultTable.
-		WithWriter(out).
-		WithData(tableData).
-		Render(); err != nil {
-		return err
-	}
+func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	fctl.Section.Println("Balances")
-	if len(wallet.Balances.Main.Assets) == 0 {
-		fctl.Println("No balances found.")
-		return nil
+	store := fctl.GetStackStore(cmd.Context())
+
+	walletID, err := internal.RetrieveWalletID(cmd, store.Client())
+	if err != nil {
+		return nil, err
 	}
-	tableData = pterm.TableData{}
-	tableData = append(tableData, []string{"Asset", "Amount"})
-	for asset, amount := range wallet.Balances.Main.Assets {
-		tableData = append(tableData, []string{asset, fmt.Sprint(amount)})
-	}
-	if err := pterm.DefaultTable.
-		WithHasHeader(true).
-		WithWriter(out).
-		WithData(tableData).
-		Render(); err != nil {
-		return err
+	if walletID == "" {
+		return nil, errors.New("You need to specify wallet id using --id or --name flags")
 	}
 
-	return nil
+	response, err := store.Client().Wallets.V1.GetWallet(cmd.Context(), operations.GetWalletRequest{
+		ID: walletID,
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "getting wallet")
+	}
+
+	c.store.Wallet = response.GetWalletResponse.Data
+
+	return c, nil
+}
+
+func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
+	return views.PrintWalletWithMetadata(cmd.OutOrStdout(), c.store.Wallet)
 }

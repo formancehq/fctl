@@ -1,93 +1,114 @@
 package ledger
 
 import (
-	"strconv"
+	"fmt"
+	"math/big"
+
+	"github.com/formancehq/go-libs/collectionutils"
 
 	"github.com/formancehq/fctl/cmd/ledger/internal"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/formance-sdk-go"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/spf13/cobra"
 )
 
+type SendStore struct {
+	Transaction *shared.Transaction `json:"transaction"`
+}
+type SendController struct {
+	store         *SendStore
+	metadataFlag  string
+	referenceFlag string
+}
+
+var _ fctl.Controller[*SendStore] = (*SendController)(nil)
+
+func NewDefaultSendStore() *SendStore {
+	return &SendStore{}
+}
+
+func NewSendController() *SendController {
+	return &SendController{
+		store:         NewDefaultSendStore(),
+		metadataFlag:  "metadata",
+		referenceFlag: "reference",
+	}
+}
+
 func NewSendCommand() *cobra.Command {
-	const (
-		metadataFlag  = "metadata"
-		referenceFlag = "reference"
-	)
+	c := NewSendController()
 	return fctl.NewCommand("send [<source>] <destination> <amount> <asset>",
 		fctl.WithAliases("s", "se"),
 		fctl.WithShortDescription("Send from one account to another"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.RangeArgs(3, 4)),
-		fctl.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
-		fctl.WithStringFlag(referenceFlag, "", "Reference to add to the generated transaction"),
-		fctl.WithRunE(func(cmd *cobra.Command, args []string) error {
-			cfg, err := fctl.GetConfig(cmd)
-			if err != nil {
-				return err
-			}
-
-			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg)
-			if err != nil {
-				return err
-			}
-
-			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
-			if err != nil {
-				return err
-			}
-
-			if !fctl.CheckStackApprobation(cmd, stack, "You are about to create a new transaction") {
-				return fctl.ErrMissingApproval
-			}
-
-			ledgerClient, err := fctl.NewStackClient(cmd, cfg, stack)
-			if err != nil {
-				return err
-			}
-
-			var source, destination, asset, amountStr string
-			if len(args) == 3 {
-				source = "world"
-				destination = args[0]
-				amountStr = args[1]
-				asset = args[2]
-			} else {
-				source = args[0]
-				destination = args[1]
-				amountStr = args[2]
-				asset = args[3]
-			}
-
-			amount, err := strconv.ParseInt(amountStr, 10, 64)
-			if err != nil {
-				return err
-			}
-
-			metadata, err := fctl.ParseMetadata(fctl.GetStringSlice(cmd, metadataFlag))
-			if err != nil {
-				return err
-			}
-
-			reference := fctl.GetString(cmd, referenceFlag)
-			response, _, err := ledgerClient.TransactionsApi.
-				CreateTransaction(cmd.Context(), fctl.GetString(cmd, internal.LedgerFlag)).
-				PostTransaction(formance.PostTransaction{
-					Postings: []formance.Posting{{
-						Amount:      amount,
-						Asset:       asset,
-						Destination: destination,
-						Source:      source,
-					}},
-					Reference: &reference,
-					Metadata:  metadata,
-				}).
-				Execute()
-			if err != nil {
-				return err
-			}
-
-			return internal.PrintTransaction(cmd.OutOrStdout(), response.Data[0])
-		}),
+		fctl.WithStringSliceFlag(c.metadataFlag, []string{""}, "Metadata to use"),
+		fctl.WithStringFlag(c.referenceFlag, "", "Reference to add to the generated transaction"),
+		fctl.WithController[*SendStore](c),
 	)
+}
+
+func (c *SendController) GetStore() *SendStore {
+	return c.store
+}
+
+func (c *SendController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+	store := fctl.GetStackStore(cmd.Context())
+
+	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to create a new transaction") {
+		return nil, fctl.ErrMissingApproval
+	}
+
+	var source, destination, asset, amountStr string
+	if len(args) == 3 {
+		source = "world"
+		destination = args[0]
+		amountStr = args[1]
+		asset = args[2]
+	} else {
+		source = args[0]
+		destination = args[1]
+		amountStr = args[2]
+		asset = args[3]
+	}
+
+	amount, ok := big.NewInt(0).SetString(amountStr, 10)
+	if !ok {
+		return nil, fmt.Errorf("unable to parse '%s' as big int", amountStr)
+	}
+
+	metadata, err := fctl.ParseMetadata(fctl.GetStringSlice(cmd, c.metadataFlag))
+	if err != nil {
+		return nil, err
+	}
+
+	reference := fctl.GetString(cmd, c.referenceFlag)
+
+	response, err := store.Client().Ledger.V1.CreateTransaction(cmd.Context(), operations.CreateTransactionRequest{
+		PostTransaction: shared.PostTransaction{
+			Metadata: collectionutils.ConvertMap(metadata, collectionutils.ToAny[string]),
+			Postings: []shared.Posting{
+				{
+					Amount:      amount,
+					Asset:       asset,
+					Destination: destination,
+					Source:      source,
+				},
+			},
+			Reference: &reference,
+		},
+		Ledger: fctl.GetString(cmd, internal.LedgerFlag),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	c.store.Transaction = &response.TransactionsResponse.Data[0]
+	return c, nil
+}
+
+// TODO: This need to use the ui.NewListModel
+func (c *SendController) Render(cmd *cobra.Command, args []string) error {
+	return internal.PrintTransaction(cmd.OutOrStdout(), internal.WrapV1Transaction(*c.store.Transaction))
 }

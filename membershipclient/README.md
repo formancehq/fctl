@@ -81,63 +81,134 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**AcceptInvitation**](docs/DefaultApi.md#acceptinvitation) | **Post** /me/invitations/{invitationId}/accept | Accept invitation
 *DefaultApi* | [**CreateInvitation**](docs/DefaultApi.md#createinvitation) | **Post** /organizations/{organizationId}/invitations | Create invitation
 *DefaultApi* | [**CreateOrganization**](docs/DefaultApi.md#createorganization) | **Post** /organizations | Create organization
+*DefaultApi* | [**CreatePrivateRegion**](docs/DefaultApi.md#createprivateregion) | **Post** /organizations/{organizationId}/regions | Create a private region
 *DefaultApi* | [**CreateStack**](docs/DefaultApi.md#createstack) | **Post** /organizations/{organizationId}/stacks | Create stack
 *DefaultApi* | [**DeclineInvitation**](docs/DefaultApi.md#declineinvitation) | **Post** /me/invitations/{invitationId}/reject | Decline invitation
+*DefaultApi* | [**DeleteInvitation**](docs/DefaultApi.md#deleteinvitation) | **Delete** /organizations/{organizationId}/invitations/{invitationId} | Delete invitation
 *DefaultApi* | [**DeleteOrganization**](docs/DefaultApi.md#deleteorganization) | **Delete** /organizations/{organizationId} | Delete organization
+*DefaultApi* | [**DeleteRegion**](docs/DefaultApi.md#deleteregion) | **Delete** /organizations/{organizationId}/regions/{regionId} | Delete region
 *DefaultApi* | [**DeleteStack**](docs/DefaultApi.md#deletestack) | **Delete** /organizations/{organizationId}/stacks/{stackId} | Delete stack
+*DefaultApi* | [**DeleteStackUserAccess**](docs/DefaultApi.md#deletestackuseraccess) | **Delete** /organizations/{organizationId}/stacks/{stackId}/users/{userId} | Delete stack user access role within an organization
+*DefaultApi* | [**DeleteUserFromOrganization**](docs/DefaultApi.md#deleteuserfromorganization) | **Delete** /organizations/{organizationId}/users/{userId} | delete user from organization
+*DefaultApi* | [**DisableModule**](docs/DefaultApi.md#disablemodule) | **Delete** /organizations/{organizationId}/stacks/{stackId}/modules | disable module
+*DefaultApi* | [**DisableStack**](docs/DefaultApi.md#disablestack) | **Put** /organizations/{organizationId}/stacks/{stackId}/disable | Disable stack
+*DefaultApi* | [**DisableStargate**](docs/DefaultApi.md#disablestargate) | **Put** /organizations/{organizationId}/stacks/{stackId}/stargate/disable | Disable stargate on a stack
+*DefaultApi* | [**EnableModule**](docs/DefaultApi.md#enablemodule) | **Post** /organizations/{organizationId}/stacks/{stackId}/modules | enable module
+*DefaultApi* | [**EnableStack**](docs/DefaultApi.md#enablestack) | **Put** /organizations/{organizationId}/stacks/{stackId}/enable | Enable stack
+*DefaultApi* | [**EnableStargate**](docs/DefaultApi.md#enablestargate) | **Put** /organizations/{organizationId}/stacks/{stackId}/stargate/enable | Enable stargate on a stack
+*DefaultApi* | [**GetRegion**](docs/DefaultApi.md#getregion) | **Get** /organizations/{organizationId}/regions/{regionId} | Get region
+*DefaultApi* | [**GetRegionVersions**](docs/DefaultApi.md#getregionversions) | **Get** /organizations/{organizationId}/regions/{regionId}/versions | Get region versions
 *DefaultApi* | [**GetServerInfo**](docs/DefaultApi.md#getserverinfo) | **Get** /_info | Get server info
+*DefaultApi* | [**GetStack**](docs/DefaultApi.md#getstack) | **Get** /organizations/{organizationId}/stacks/{stackId} | Find stack
 *DefaultApi* | [**ListInvitations**](docs/DefaultApi.md#listinvitations) | **Get** /me/invitations | List invitations of the user
+*DefaultApi* | [**ListLogs**](docs/DefaultApi.md#listlogs) | **Get** /organizations/{organizationId}/logs | List logs
+*DefaultApi* | [**ListModules**](docs/DefaultApi.md#listmodules) | **Get** /organizations/{organizationId}/stacks/{stackId}/modules | List modules of a stack
 *DefaultApi* | [**ListOrganizationInvitations**](docs/DefaultApi.md#listorganizationinvitations) | **Get** /organizations/{organizationId}/invitations | List invitations of the organization
 *DefaultApi* | [**ListOrganizations**](docs/DefaultApi.md#listorganizations) | **Get** /organizations | List organizations of the connected user
 *DefaultApi* | [**ListOrganizationsExpanded**](docs/DefaultApi.md#listorganizationsexpanded) | **Get** /organizations/expanded | List organizations of the connected user with expanded data
-*DefaultApi* | [**ListRegions**](docs/DefaultApi.md#listregions) | **Get** /regions | List regions
+*DefaultApi* | [**ListRegions**](docs/DefaultApi.md#listregions) | **Get** /organizations/{organizationId}/regions | List regions
+*DefaultApi* | [**ListStackUsersAccesses**](docs/DefaultApi.md#liststackusersaccesses) | **Get** /organizations/{organizationId}/stacks/{stackId}/users | List stack users accesses within an organization
 *DefaultApi* | [**ListStacks**](docs/DefaultApi.md#liststacks) | **Get** /organizations/{organizationId}/stacks | List stacks
-*DefaultApi* | [**ListUsers**](docs/DefaultApi.md#listusers) | **Get** /organizations/{organizationId}/users | List users
+*DefaultApi* | [**ListUsersOfOrganization**](docs/DefaultApi.md#listusersoforganization) | **Get** /organizations/{organizationId}/users | List users of organization
+*DefaultApi* | [**ReadConnectedUser**](docs/DefaultApi.md#readconnecteduser) | **Get** /me | Read user
 *DefaultApi* | [**ReadOrganization**](docs/DefaultApi.md#readorganization) | **Get** /organizations/{organizationId} | Read organization
-*DefaultApi* | [**ReadStack**](docs/DefaultApi.md#readstack) | **Get** /organizations/{organizationId}/stacks/{stackId} | Read stack
-*DefaultApi* | [**ReadUser**](docs/DefaultApi.md#readuser) | **Get** /organizations/{organizationId}/users/{userId} | Read user
+*DefaultApi* | [**ReadStackUserAccess**](docs/DefaultApi.md#readstackuseraccess) | **Get** /organizations/{organizationId}/stacks/{stackId}/users/{userId} | Read stack user access role within an organization
+*DefaultApi* | [**ReadUserOfOrganization**](docs/DefaultApi.md#readuseroforganization) | **Get** /organizations/{organizationId}/users/{userId} | Read user of organization
+*DefaultApi* | [**RestoreStack**](docs/DefaultApi.md#restorestack) | **Put** /organizations/{organizationId}/stacks/{stackId}/restore | Restore stack
+*DefaultApi* | [**UpdateOrganization**](docs/DefaultApi.md#updateorganization) | **Put** /organizations/{organizationId} | Update organization
+*DefaultApi* | [**UpdateStack**](docs/DefaultApi.md#updatestack) | **Put** /organizations/{organizationId}/stacks/{stackId} | Update stack
+*DefaultApi* | [**UpgradeStack**](docs/DefaultApi.md#upgradestack) | **Put** /organizations/{organizationId}/stacks/{stackId}/upgrade | Upgrade stack
+*DefaultApi* | [**UpsertOrganizationUser**](docs/DefaultApi.md#upsertorganizationuser) | **Put** /organizations/{organizationId}/users/{userId} | Update user within an organization
+*DefaultApi* | [**UpsertStackUserAccess**](docs/DefaultApi.md#upsertstackuseraccess) | **Put** /organizations/{organizationId}/stacks/{stackId}/users/{userId} | Update stack user access role within an organization
 
 
 ## Documentation For Models
 
+ - [Action](docs/Action.md)
+ - [AnyRegion](docs/AnyRegion.md)
+ - [AnyRegionAllOf](docs/AnyRegionAllOf.md)
+ - [Capability](docs/Capability.md)
  - [CreateInvitationResponse](docs/CreateInvitationResponse.md)
  - [CreateOrganizationResponse](docs/CreateOrganizationResponse.md)
+ - [CreatePrivateRegionRequest](docs/CreatePrivateRegionRequest.md)
+ - [CreateStackRequest](docs/CreateStackRequest.md)
+ - [CreateStackRequestAllOf](docs/CreateStackRequestAllOf.md)
  - [CreateStackResponse](docs/CreateStackResponse.md)
+ - [CreatedPrivateRegionResponse](docs/CreatedPrivateRegionResponse.md)
+ - [Cursor](docs/Cursor.md)
  - [Error](docs/Error.md)
+ - [GetRegionResponse](docs/GetRegionResponse.md)
+ - [GetRegionVersionsResponse](docs/GetRegionVersionsResponse.md)
  - [Invitation](docs/Invitation.md)
+ - [InvitationClaim](docs/InvitationClaim.md)
  - [ListInvitationsResponse](docs/ListInvitationsResponse.md)
+ - [ListModulesResponse](docs/ListModulesResponse.md)
  - [ListOrganizationExpandedResponse](docs/ListOrganizationExpandedResponse.md)
  - [ListOrganizationExpandedResponseDataInner](docs/ListOrganizationExpandedResponseDataInner.md)
- - [ListOrganizationExpandedResponseDataInnerAllOf](docs/ListOrganizationExpandedResponseDataInnerAllOf.md)
  - [ListOrganizationResponse](docs/ListOrganizationResponse.md)
  - [ListRegionsResponse](docs/ListRegionsResponse.md)
  - [ListStacksResponse](docs/ListStacksResponse.md)
  - [ListUsersResponse](docs/ListUsersResponse.md)
+ - [Log](docs/Log.md)
+ - [LogCursor](docs/LogCursor.md)
+ - [LogCursorData](docs/LogCursorData.md)
+ - [LogCursorDataAllOf](docs/LogCursorDataAllOf.md)
+ - [Module](docs/Module.md)
  - [Organization](docs/Organization.md)
  - [OrganizationAllOf](docs/OrganizationAllOf.md)
  - [OrganizationData](docs/OrganizationData.md)
+ - [OrganizationExpanded](docs/OrganizationExpanded.md)
+ - [OrganizationExpandedAllOf](docs/OrganizationExpandedAllOf.md)
+ - [OrganizationUser](docs/OrganizationUser.md)
+ - [OrganizationUserAllOf](docs/OrganizationUserAllOf.md)
+ - [OrganizationUserArrayInner](docs/OrganizationUserArrayInner.md)
+ - [PrivateRegion](docs/PrivateRegion.md)
+ - [PrivateRegionAllOf](docs/PrivateRegionAllOf.md)
+ - [PrivateRegionAllOfSecret](docs/PrivateRegionAllOfSecret.md)
+ - [PublicRegion](docs/PublicRegion.md)
+ - [PublicRegionAllOf](docs/PublicRegionAllOf.md)
+ - [ReadOrganizationResponse](docs/ReadOrganizationResponse.md)
+ - [ReadOrganizationUserResponse](docs/ReadOrganizationUserResponse.md)
+ - [ReadStackUserAccess](docs/ReadStackUserAccess.md)
  - [ReadUserResponse](docs/ReadUserResponse.md)
  - [Region](docs/Region.md)
+ - [RegionCapability](docs/RegionCapability.md)
+ - [RegionCapabilityKeys](docs/RegionCapabilityKeys.md)
+ - [Role](docs/Role.md)
  - [ServerInfo](docs/ServerInfo.md)
  - [Stack](docs/Stack.md)
  - [StackAllOf](docs/StackAllOf.md)
+ - [StackClaim](docs/StackClaim.md)
  - [StackData](docs/StackData.md)
+ - [StackLifeCycle](docs/StackLifeCycle.md)
+ - [StackReachability](docs/StackReachability.md)
+ - [StackUserAccess](docs/StackUserAccess.md)
+ - [StackUserAccessAllOf](docs/StackUserAccessAllOf.md)
+ - [StackUserAccessResponse](docs/StackUserAccessResponse.md)
+ - [StackVersion](docs/StackVersion.md)
+ - [SystemRole](docs/SystemRole.md)
+ - [UpdateOrganizationUserRequest](docs/UpdateOrganizationUserRequest.md)
+ - [UpdateStackRequest](docs/UpdateStackRequest.md)
+ - [UpdateStackUserRequest](docs/UpdateStackUserRequest.md)
  - [User](docs/User.md)
  - [UserAllOf](docs/UserAllOf.md)
+ - [UserAllOf1](docs/UserAllOf1.md)
  - [UserData](docs/UserData.md)
+ - [UserDataAllOf](docs/UserDataAllOf.md)
+ - [Version](docs/Version.md)
 
 
 ## Documentation For Authorization
 
 
-
+Authentication schemes defined for the API:
 ### oauth2
 
 
 - **Type**: OAuth
 - **Flow**: accessCode
 - **Authorization URL**: /authorize
-- **Scopes**:
+- **Scopes**: 
  - **openid**: Enable OIDC
  - **email**: Ask email access
 
@@ -178,3 +249,6 @@ Each of these functions takes a value of the given basic type and returns a poin
 * `PtrTime`
 
 ## Author
+
+
+

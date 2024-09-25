@@ -41,7 +41,7 @@ func NewCreateInvitationResponseWithDefaults() *CreateInvitationResponse {
 
 // GetData returns the Data field value if set, zero value otherwise.
 func (o *CreateInvitationResponse) GetData() Invitation {
-	if o == nil || isNil(o.Data) {
+	if o == nil || IsNil(o.Data) {
 		var ret Invitation
 		return ret
 	}
@@ -51,7 +51,7 @@ func (o *CreateInvitationResponse) GetData() Invitation {
 // GetDataOk returns a tuple with the Data field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *CreateInvitationResponse) GetDataOk() (*Invitation, bool) {
-	if o == nil || isNil(o.Data) {
+	if o == nil || IsNil(o.Data) {
 		return nil, false
 	}
 	return o.Data, true
@@ -59,7 +59,7 @@ func (o *CreateInvitationResponse) GetDataOk() (*Invitation, bool) {
 
 // HasData returns a boolean if a field has been set.
 func (o *CreateInvitationResponse) HasData() bool {
-	if o != nil && !isNil(o.Data) {
+	if o != nil && !IsNil(o.Data) {
 		return true
 	}
 
@@ -72,7 +72,7 @@ func (o *CreateInvitationResponse) SetData(v Invitation) {
 }
 
 func (o CreateInvitationResponse) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -81,7 +81,7 @@ func (o CreateInvitationResponse) MarshalJSON() ([]byte, error) {
 
 func (o CreateInvitationResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !isNil(o.Data) {
+	if !IsNil(o.Data) {
 		toSerialize["data"] = o.Data
 	}
 	return toSerialize, nil
@@ -122,3 +122,5 @@ func (v *NullableCreateInvitationResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+
