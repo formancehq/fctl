@@ -11,6 +11,7 @@ runs:
       with:
         github-token: ${{ inputs.token }}
         version: "latest"
+        use-cache: true
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
     - name: Set up Docker Buildx
