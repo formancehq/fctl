@@ -1,8 +1,16 @@
 name: Setup Env
 description: Setup Env for Linux x64
+inputs:
+  token:
+    description: 'A Github PAT'
+    required: true
 runs:
   using: composite
   steps:
+    - uses: earthly/actions-setup@v1
+      with:
+        github-token: ${{ inputs.token }}
+        version: "latest"
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
     - name: Set up Docker Buildx
