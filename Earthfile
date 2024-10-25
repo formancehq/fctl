@@ -5,6 +5,9 @@ IMPORT github.com/formancehq/earthly:tags/v0.16.0 AS core
 
 FROM core+base-image
 
+CACHE --sharing=shared --id go-mod-cache /go/pkg/mod
+CACHE --sharing=shared --id go-cache /root/.cache/go-build
+
 sources:
     WORKDIR /src
     COPY go.* .
@@ -14,6 +17,8 @@ sources:
 
 lint:
     FROM core+builder-image
+    CACHE --id go-mod-cache /go/pkg/mod
+    CACHE --id go-cache /root/.cache/go-build
     COPY (+sources/*) /src
     COPY --pass-args +tidy/go.* .
     WORKDIR /src
@@ -34,6 +39,8 @@ tests:
 
 completions:
     FROM core+builder-image
+    CACHE --id go-mod-cache /go/pkg/mod
+    CACHE --id go-cache /root/.cache/go-build
     COPY --pass-args (+sources/src) /src
     WORKDIR /src
     RUN mkdir -p ./completions
@@ -44,6 +51,8 @@ completions:
 
 tidy:
     FROM core+builder-image
+    CACHE --id go-mod-cache /go/pkg/mod
+    CACHE --id go-cache /root/.cache/go-build
     COPY --pass-args (+sources/src) /src
     WORKDIR /src
     DO --pass-args core+GO_TIDY
