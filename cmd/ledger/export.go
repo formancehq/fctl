@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/formancehq/fctl/cmd/ledger/internal"
 	fctl "github.com/formancehq/fctl/pkg"
@@ -67,13 +68,22 @@ func (c *ExportController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 	return c, nil
 }
 
-func (c *ExportController) Render(cmd *cobra.Command, args []string) error {
-	out := fctl.GetString(cmd, "file")
-	if out == "" {
-		_, err := io.Copy(os.Stdout, c.store.response.Body)
+func (c *ExportController) Render(cmd *cobra.Command, _ []string) error {
+	outFile := fctl.GetString(cmd, "file")
+	var out io.Writer
+	if outFile == "" {
+		out = os.Stdout
+	} else {
+		err := os.MkdirAll(filepath.Dir(outFile), 0755)
+		if err != nil {
+			return err
+		}
+		out, err = os.Create(outFile)
 		if err != nil {
 			return err
 		}
 	}
-	return nil
+
+	_, err := io.Copy(out, c.store.response.Body)
+	return err
 }
