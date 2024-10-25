@@ -88,6 +88,8 @@ github.com/formancehq/cobra v0.0.0-20240315111924-ca456bf9cac9 h1:y+q436ECR5jNU+
 github.com/formancehq/cobra v0.0.0-20240315111924-ca456bf9cac9/go.mod h1:WXLWApfZ71AjXPya3WOlMsY9yMs7YeiHhFVlvLyhcho=
 github.com/formancehq/formance-sdk-go/v3 v3.0.0 h1:UIzVMJSPUBUSm29Zg50tZjM0f101WeWHYlu0ClfUk2c=
 github.com/formancehq/formance-sdk-go/v3 v3.0.0/go.mod h1:ZBBYCgtDgde68qMW5nZ9lfliM8W1D3ZI/BpZ+RdhD3c=
+github.com/formancehq/formance-sdk-go/v3 v3.0.1-0.20241025120905-d3f682ede4a1 h1:RtQzRAkI0+7ZdMPtQr7nkbB771f3fqjWIuq9DlYwZOU=
+github.com/formancehq/formance-sdk-go/v3 v3.0.1-0.20241025120905-d3f682ede4a1/go.mod h1:ZBBYCgtDgde68qMW5nZ9lfliM8W1D3ZI/BpZ+RdhD3c=
 github.com/formancehq/go-libs v1.7.1 h1:9D5cxKWFlVtdX5AYDXeUz1Nb9PdoEfQX0f/yeLsU324=
 github.com/formancehq/go-libs v1.7.1/go.mod h1:pWTScpoyieF7OoJ6WVmXNG9NhDjbZbAmFqd7UOw85iI=
 github.com/go-chi/chi/v5 v5.1.0 h1:acVI1TYaD+hhedDJ3r54HyA6sExp3HfXq7QWEEY/xMw=
