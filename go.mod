@@ -8,7 +8,7 @@ require (
 	github.com/TylerBrock/colorjson v0.0.0-20200706003622-8a50f05110d2
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/formancehq/fctl/membershipclient v0.0.0-20230109152136-5d4c9193a44c
-	github.com/formancehq/formance-sdk-go/v3 v3.0.0
+	github.com/formancehq/formance-sdk-go/v3 v3.1.0
 	github.com/formancehq/go-libs v1.7.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/iancoleman/strcase v0.3.0
@@ -33,7 +33,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/containerd/console v1.0.4 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/ericlagergren/decimal v0.0.0-20240305081647-93d586550569 // indirect
+	github.com/ericlagergren/decimal v0.0.0-20240411145413-00de7ca16731 // indirect
 	github.com/fatih/color v1.17.0 // indirect
 	github.com/go-chi/chi/v5 v5.1.0 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
