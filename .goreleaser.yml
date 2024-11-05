@@ -60,10 +60,22 @@ brews:
       zsh_completion.install "completions/fctl.zsh" => "_fctl"
       fish_completion.install "completions/fctl.fish"
 
+nfpms:
+  - id: packages
+    package_name: fctl
+    file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    builds:
+      - fctl
+    homepage: https://formance.com
+    maintainer: Maxence Maireaux <maxence@formance.com>
+    formats:
+      - deb
+      - rpm
+
 furies:
   - account: formance
     ids:
-      - fctl
+      - packages
 
 release:
   prerelease: auto
