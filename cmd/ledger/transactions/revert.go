@@ -35,6 +35,7 @@ func NewRevertCommand() *cobra.Command {
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgs("last"),
 		fctl.WithBoolFlag("at-effective-date", false, "set the timestamp to the original transaction timestamp"),
+		fctl.WithBoolFlag("force", false, "Force the revert even if the account does not have enough funds"),
 		fctl.WithController[*RevertStore](NewRevertController()),
 	)
 }
@@ -56,11 +57,14 @@ func (c *RevertController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
+	force := fctl.GetBool(cmd, "force")
+
 	if fctl.GetBool(cmd, "at-effective-date") {
 		request := operations.V2RevertTransactionRequest{
 			Ledger:          ledger,
 			ID:              txId,
 			AtEffectiveDate: pointer.For(true),
+			Force:           &force,
 		}
 
 		response, err := store.Client().Ledger.V2.RevertTransaction(cmd.Context(), request)
@@ -71,8 +75,9 @@ func (c *RevertController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		c.store.Transaction = internal.WrapV2Transaction(response.V2RevertTransactionResponse.Data)
 	} else {
 		request := operations.RevertTransactionRequest{
-			Ledger: ledger,
-			Txid:   txId,
+			Ledger:        ledger,
+			Txid:          txId,
+			DisableChecks: &force,
 		}
 
 		response, err := store.Client().Ledger.V1.RevertTransaction(cmd.Context(), request)
