@@ -20,17 +20,17 @@ type Role string
 
 // List of Role
 const (
+	NONE Role = "NONE"
 	ADMIN Role = "ADMIN"
 	VIEWER Role = "VIEWER"
-	NONE Role = "NONE"
 	GUEST Role = "GUEST"
 )
 
 // All allowed values of Role enum
 var AllowedRoleEnumValues = []Role{
+	"NONE",
 	"ADMIN",
 	"VIEWER",
-	"NONE",
 	"GUEST",
 }
 

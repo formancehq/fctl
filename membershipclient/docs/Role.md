@@ -3,11 +3,11 @@
 ## Enum
 
 
+* `NONE` (value: `"NONE"`)
+
 * `ADMIN` (value: `"ADMIN"`)
 
 * `VIEWER` (value: `"VIEWER"`)
-
-* `NONE` (value: `"NONE"`)
 
 * `GUEST` (value: `"GUEST"`)
 

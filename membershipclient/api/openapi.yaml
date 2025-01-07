@@ -1788,9 +1788,9 @@ components:
       - $ref: '#/components/schemas/UserData_allOf'
     Role:
       enum:
+      - NONE
       - ADMIN
       - VIEWER
-      - NONE
       - GUEST
       type: string
     SystemRole:
