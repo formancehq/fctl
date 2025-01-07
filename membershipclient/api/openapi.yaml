@@ -1793,6 +1793,16 @@ components:
       - VIEWER
       - GUEST
       type: string
+      x-enum-varnames:
+      - NONE
+      - ADMIN
+      - VIEWER
+      - GUEST
+      x-enum-descriptions:
+      - No role
+      - Administrator role
+      - Viewer role
+      - "Deprecated: Use VIEWER instead"
     SystemRole:
       enum:
       - USER
