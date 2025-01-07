@@ -41,7 +41,6 @@ func NewRootCommand() *cobra.Command {
 	cmd := fctl.NewCommand("fctl",
 		fctl.WithSilenceError(),
 		fctl.WithShortDescription("Formance Control CLI"),
-		fctl.WithSilenceUsage(),
 		fctl.WithChildCommands(
 			ui.NewCommand(),
 			version.NewCommand(),
@@ -97,8 +96,8 @@ func Execute() {
 	}()
 	cobra.EnableTraverseRunHooks = true
 	ctx, _ := signal.NotifyContext(context.TODO(), os.Interrupt)
-	err := NewRootCommand().ExecuteContext(ctx)
-	if err != nil {
+	cmd := NewRootCommand()
+	if err := cmd.ExecuteContext(ctx); err != nil {
 		switch {
 		case errors.Is(err, fctl.ErrMissingApproval):
 			pterm.Error.WithWriter(os.Stderr).Printfln("Command aborted as you didn't approve.")
@@ -129,7 +128,10 @@ func Execute() {
 				}
 			}
 		}
+
 		pterm.Error.WithWriter(os.Stderr).Printfln(err.Error())
+
+		fmt.Println("---")
 		os.Exit(255)
 	}
 }

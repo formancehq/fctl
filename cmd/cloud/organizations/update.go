@@ -63,14 +63,14 @@ func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		DefaultOrganizationAccess: func() *membershipclient.Role {
 			if cmd.Flags().Changed("default-organization-role") {
 				s := fctl.GetString(cmd, "default-organization-role")
-				return membershipclient.Role(s).Ptr()
+				return &membershipclient.Role{String: &s}
 			}
 			return org.Data.DefaultOrganizationAccess
 		}(),
 		DefaultStackAccess: func() *membershipclient.Role {
 			if cmd.Flags().Changed("default-stack-role") {
 				s := fctl.GetString(cmd, "default-stack-role")
-				return membershipclient.Role(s).Ptr()
+				return &membershipclient.Role{String: &s}
 			}
 			return org.Data.DefaultStackAccess
 		}(),

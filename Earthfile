@@ -1,5 +1,4 @@
 VERSION 0.8
-PROJECT FormanceHQ/fctl
 
 IMPORT github.com/formancehq/earthly:tags/v0.16.0 AS core
 
@@ -57,16 +56,10 @@ tidy:
     WORKDIR /src
     DO --pass-args core+GO_TIDY
 
-membership-openapi:
-    FROM core+base-image
-    WORKDIR /src
-    COPY membership-swagger.yaml openapi.yaml
-    SAVE ARTIFACT openapi.yaml
-
 generate-membership-client:
     FROM openapitools/openapi-generator-cli:v6.6.0
     WORKDIR /src
-    COPY (+membership-openapi/openapi.yaml) .
+    COPY membership-swagger.yaml ./openapi.yaml
     RUN docker-entrypoint.sh generate \
         -i ./openapi.yaml \
         -g go \

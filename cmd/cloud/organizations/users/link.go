@@ -32,7 +32,7 @@ func NewLinkController() *LinkController {
 
 func NewLinkCommand() *cobra.Command {
 	return fctl.NewCommand("link <user-id>",
-		fctl.WithStringFlag("role", "", "Roles: (ADMIN, GUEST, NONE)"),
+		fctl.WithStringFlag("role", "", "Roles: (ADMIN, VIEWER, NONE)"),
 		fctl.WithShortDescription("Link user to an organization with properties"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithPreRunE(func(cmd *cobra.Command, args []string) error {
@@ -56,7 +56,7 @@ func (c *LinkController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	role := fctl.GetString(cmd, "role")
 	req := membershipclient.UpdateOrganizationUserRequest{}
 	if role != "" {
-		req.Role = membershipclient.Role(role)
+		req.Role = membershipclient.Role{String: &role}
 	} else {
 		return nil, fmt.Errorf("role is required")
 	}

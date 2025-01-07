@@ -6,6 +6,7 @@ import (
 	"github.com/formancehq/fctl/cmd/stack/store"
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/go-libs/pointer"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -33,7 +34,7 @@ func NewLinkController() *LinkController {
 
 func NewLinkCommand() *cobra.Command {
 	return fctl.NewCommand("link <stack-id> <user-id>",
-		fctl.WithStringFlag("role", "", "Roles: (ADMIN, GUEST, NONE)"),
+		fctl.WithStringFlag("role", "", "Roles: (ADMIN, VIEWER, NONE)"),
 		fctl.WithShortDescription("Link stack user with properties"),
 		fctl.WithArgs(cobra.ExactArgs(2)),
 		fctl.WithController[*LinkStore](NewLinkController()),
@@ -48,9 +49,9 @@ func (c *LinkController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 
 	store := store.GetStore(cmd.Context())
 
-	role := membershipclient.Role(fctl.GetString(cmd, "role"))
+	role := membershipclient.Role{String: pointer.For(fctl.GetString(cmd, "role"))}
 	req := membershipclient.UpdateStackUserRequest{}
-	if role != "" {
+	if *role.String != "" {
 		req.Role = role
 	} else {
 		return nil, fmt.Errorf("role is required")

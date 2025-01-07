@@ -15,7 +15,7 @@ func PrintOrganization(store *membershipclient.OrganizationExpanded) error {
 		{"Name", store.Name},
 		{"Domain", func() string {
 			if store.Domain == nil {
-				return "None"
+				return ""
 			}
 			return *store.Domain
 		}()},
@@ -23,13 +23,13 @@ func PrintOrganization(store *membershipclient.OrganizationExpanded) error {
 			if store.DefaultStackAccess == nil {
 				return "None"
 			}
-			return string(*store.DefaultStackAccess)
+			return string(*store.DefaultStackAccess.String)
 		}()},
 		{"Default Organization Role", func() string {
 			if store.DefaultOrganizationAccess == nil {
 				return "None"
 			}
-			return string(*store.DefaultOrganizationAccess)
+			return string(*store.DefaultOrganizationAccess.String)
 		}()},
 	}
 

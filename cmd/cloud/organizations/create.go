@@ -32,9 +32,9 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithAliases("cr", "c"),
 		fctl.WithShortDescription("Create organization"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithStringFlag("default-stack-role", "", "Default Stack Role roles: (ADMIN,GUEST)"),
+		fctl.WithStringFlag("default-stack-role", "", "Default Stack Role roles: (ADMIN,VIEWER)"),
 		fctl.WithStringFlag("domain", "", "Organization Domain"),
-		fctl.WithStringFlag("default-organization-role", "", "Default Organization Role roles: (ADMIN,GUEST)"),
+		fctl.WithStringFlag("default-organization-role", "", "Default Organization Role roles: (ADMIN,VIEWER)"),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*CreateStore](NewCreateController()),
 	)
@@ -60,11 +60,15 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 	}
 
 	if defaultOrganizationRole != "" {
-		orgData.DefaultOrganizationAccess = membershipclient.Role(defaultOrganizationRole).Ptr()
+		orgData.DefaultOrganizationAccess = &membershipclient.Role{
+			String: &defaultOrganizationRole,
+		}
 	}
 
 	if defaultStackRole != "" {
-		orgData.DefaultStackAccess = membershipclient.Role(defaultStackRole).Ptr()
+		orgData.DefaultStackAccess = &membershipclient.Role{
+			String: &defaultStackRole,
+		}
 	}
 
 	if domain != "" {

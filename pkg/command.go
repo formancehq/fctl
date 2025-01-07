@@ -292,12 +292,6 @@ func WithDescription(v string) CommandOptionFn {
 	}
 }
 
-func WithSilenceUsage() CommandOptionFn {
-	return func(cmd *cobra.Command) {
-		cmd.SilenceUsage = true
-	}
-}
-
 func WithSilenceError() CommandOptionFn {
 	return func(cmd *cobra.Command) {
 		cmd.SilenceErrors = true
