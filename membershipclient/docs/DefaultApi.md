@@ -1873,7 +1873,7 @@ import (
 )
 
 func main() {
-    expand := TODO // bool |  (optional)
+    expand := true // bool |  (optional)
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
@@ -1898,7 +1898,7 @@ Other parameters are passed through a pointer to a apiListOrganizationsRequest s
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **expand** | [**bool**](bool.md) |  | 
+ **expand** | **bool** |  | 
 
 ### Return type
 
@@ -2335,7 +2335,7 @@ import (
 
 func main() {
     organizationId := "organizationId_example" // string | 
-    expand := TODO // bool |  (optional)
+    expand := true // bool |  (optional)
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
@@ -2365,7 +2365,7 @@ Other parameters are passed through a pointer to a apiReadOrganizationRequest st
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **expand** | [**bool**](bool.md) |  | 
+ **expand** | **bool** |  | 
 
 ### Return type
 
@@ -2836,7 +2836,7 @@ import (
 func main() {
     organizationId := "organizationId_example" // string | 
     userId := "userId_example" // string | 
-    updateOrganizationUserRequest := *openapiclient.NewUpdateOrganizationUserRequest(openapiclient.Role("NONE")) // UpdateOrganizationUserRequest |  (optional)
+    updateOrganizationUserRequest := *openapiclient.NewUpdateOrganizationUserRequest(openapiclient.Role{String: new(string)}) // UpdateOrganizationUserRequest |  (optional)
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
@@ -2908,7 +2908,7 @@ func main() {
     organizationId := "organizationId_example" // string | 
     stackId := "stackId_example" // string | 
     userId := "userId_example" // string | 
-    updateStackUserRequest := *openapiclient.NewUpdateStackUserRequest(openapiclient.Role("NONE")) // UpdateStackUserRequest |  (optional)
+    updateStackUserRequest := *openapiclient.NewUpdateStackUserRequest(openapiclient.Role{String: new(string)}) // UpdateStackUserRequest |  (optional)
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)

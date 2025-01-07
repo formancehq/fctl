@@ -6,13 +6,14 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **StackId** | **string** | Stack ID | 
 **UserId** | **string** | User ID | 
+**Email** | **string** | User email | 
 **Role** | [**Role**](Role.md) |  | 
 
 ## Methods
 
 ### NewStackUserAccess
 
-`func NewStackUserAccess(stackId string, userId string, role Role, ) *StackUserAccess`
+`func NewStackUserAccess(stackId string, userId string, email string, role Role, ) *StackUserAccess`
 
 NewStackUserAccess instantiates a new StackUserAccess object
 This constructor will assign default values to properties that have it defined,
@@ -65,6 +66,26 @@ and a boolean to check if the value has been set.
 `func (o *StackUserAccess) SetUserId(v string)`
 
 SetUserId sets UserId field to given value.
+
+
+### GetEmail
+
+`func (o *StackUserAccess) GetEmail() string`
+
+GetEmail returns the Email field if non-nil, zero value otherwise.
+
+### GetEmailOk
+
+`func (o *StackUserAccess) GetEmailOk() (*string, bool)`
+
+GetEmailOk returns a tuple with the Email field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetEmail
+
+`func (o *StackUserAccess) SetEmail(v string)`
+
+SetEmail sets Email field to given value.
 
 
 ### GetRole

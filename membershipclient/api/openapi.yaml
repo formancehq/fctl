@@ -29,7 +29,7 @@ paths:
         name: expand
         required: false
         schema:
-          type: bool
+          type: boolean
         style: form
       responses:
         "200":
@@ -114,7 +114,7 @@ paths:
         name: expand
         required: false
         schema:
-          type: bool
+          type: boolean
         style: form
       responses:
         "200":
@@ -301,12 +301,12 @@ paths:
           type: string
         style: simple
       responses:
-        "400":
+        "404":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-          description: Error
+          description: Not Found
         "403":
           content:
             application/json:
@@ -1240,12 +1240,24 @@ paths:
             schema:
               $ref: '#/components/schemas/InvitationClaim'
       responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateInvitationResponse'
+          description: Invitation already sent
         "201":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateInvitationResponse'
           description: Invitation created
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
         "403":
           content:
             application/json:
@@ -1775,11 +1787,17 @@ components:
       allOf:
       - $ref: '#/components/schemas/UserData_allOf'
     Role:
-      enum:
-      - NONE
-      - ADMIN
-      - GUEST
-      type: string
+      oneOf:
+      - enum:
+        - ADMIN
+        - VIEWER
+        - NONE
+        type: string
+      - deprecated: true
+        description: Use VIEWER instead
+        enum:
+        - GUEST
+        type: string
     SystemRole:
       enum:
       - USER
@@ -1916,11 +1934,6 @@ components:
         - organizationId: organizationId
           role: null
           userEmail: userEmail
-          stackClaims:
-          - role: null
-            id: id
-          - role: null
-            id: id
           id: id
           creationDate: 2000-01-23T04:56:07.000+00:00
           userId: userId
@@ -1930,11 +1943,6 @@ components:
         - organizationId: organizationId
           role: null
           userEmail: userEmail
-          stackClaims:
-          - role: null
-            id: id
-          - role: null
-            id: id
           id: id
           creationDate: 2000-01-23T04:56:07.000+00:00
           userId: userId
@@ -1953,11 +1961,6 @@ components:
           organizationId: organizationId
           role: null
           userEmail: userEmail
-          stackClaims:
-          - role: null
-            id: id
-          - role: null
-            id: id
           id: id
           creationDate: 2000-01-23T04:56:07.000+00:00
           userId: userId
@@ -1982,11 +1985,6 @@ components:
         organizationId: organizationId
         role: null
         userEmail: userEmail
-        stackClaims:
-        - role: null
-          id: id
-        - role: null
-          id: id
         id: id
         creationDate: 2000-01-23T04:56:07.000+00:00
         userId: userId
@@ -2015,10 +2013,6 @@ components:
           type: string
         role:
           $ref: '#/components/schemas/Role'
-        stackClaims:
-          items:
-            $ref: '#/components/schemas/StackClaim'
-          type: array
         userId:
           type: string
         organizationAccess:
@@ -2034,35 +2028,9 @@ components:
     InvitationClaim:
       example:
         role: null
-        stackClaims:
-        - role: null
-          id: id
-        - role: null
-          id: id
       properties:
         role:
           $ref: '#/components/schemas/Role'
-        stackClaims:
-          items:
-            $ref: '#/components/schemas/StackClaim'
-          type: array
-      type: object
-    StackClaims:
-      items:
-        $ref: '#/components/schemas/StackClaim'
-      type: array
-    StackClaim:
-      example:
-        role: null
-        id: id
-      properties:
-        id:
-          type: string
-        role:
-          $ref: '#/components/schemas/Role'
-      required:
-      - id
-      - role
       type: object
     Region:
       properties:
@@ -2389,9 +2357,13 @@ components:
         userId:
           description: User ID
           type: string
+        email:
+          description: User email
+          type: string
         role:
           $ref: '#/components/schemas/Role'
       required:
+      - email
       - role
       - stackId
       - userId

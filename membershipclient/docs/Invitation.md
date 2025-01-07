@@ -11,7 +11,6 @@ Name | Type | Description | Notes
 **CreationDate** | **time.Time** |  | 
 **UpdatedAt** | Pointer to **string** |  | [optional] 
 **Role** | [**Role**](Role.md) |  | 
-**StackClaims** | Pointer to [**[]StackClaim**](StackClaim.md) |  | [optional] 
 **UserId** | Pointer to **string** |  | [optional] 
 **OrganizationAccess** | Pointer to [**OrganizationUser**](OrganizationUser.md) |  | [optional] 
 
@@ -178,31 +177,6 @@ and a boolean to check if the value has been set.
 
 SetRole sets Role field to given value.
 
-
-### GetStackClaims
-
-`func (o *Invitation) GetStackClaims() []StackClaim`
-
-GetStackClaims returns the StackClaims field if non-nil, zero value otherwise.
-
-### GetStackClaimsOk
-
-`func (o *Invitation) GetStackClaimsOk() (*[]StackClaim, bool)`
-
-GetStackClaimsOk returns a tuple with the StackClaims field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetStackClaims
-
-`func (o *Invitation) SetStackClaims(v []StackClaim)`
-
-SetStackClaims sets StackClaims field to given value.
-
-### HasStackClaims
-
-`func (o *Invitation) HasStackClaims() bool`
-
-HasStackClaims returns a boolean if a field has been set.
 
 ### GetUserId
 

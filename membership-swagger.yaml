@@ -28,7 +28,7 @@ paths:
         - name: expand
           in: query
           schema:
-            type: bool
+            type: boolean
           required: false
       responses:
         200:
@@ -84,7 +84,7 @@ paths:
         - name: expand
           in: query
           schema:
-            type: bool
+            type: boolean
           required: false
       responses:
         200:
@@ -238,8 +238,8 @@ paths:
       summary: Read user of organization
       operationId: readUserOfOrganization
       responses:
-        400:
-          description: Error
+        404:
+          description: Not Found
           content:
             application/json:
               schema:
@@ -1084,12 +1084,24 @@ paths:
             schema:
               $ref: "#/components/schemas/InvitationClaim"
       responses:
+        200:
+          description: Invitation already sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateInvitationResponse"
         201:
           description: Invitation created
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CreateInvitationResponse"
+        404:
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         403:
           description: Not Authorized
           content:
@@ -1671,11 +1683,17 @@ components:
           required:
             - email
     Role:
-      type: string
-      enum:
-        - NONE
-        - ADMIN
-        - GUEST
+      oneOf:
+        - type: string
+          enum:
+            - ADMIN
+            - VIEWER
+            - NONE
+        - type: string
+          deprecated: true
+          enum:
+            - GUEST
+          description: Use VIEWER instead
     SystemRole:
       type: string
       enum:
@@ -1743,6 +1761,7 @@ components:
           required:
             - stackId
             - userId
+            - email
             - role
           properties:
             stackId:
@@ -1751,6 +1770,9 @@ components:
             userId:
               type: string
               description: User ID
+            email:
+              type: string
+              description: User email
             role:
               $ref: "#/components/schemas/Role"
     StackUserAccessResponse:
@@ -1859,8 +1881,6 @@ components:
           format: date-tim
         role:
           $ref: "#/components/schemas/Role"
-        stackClaims:
-          $ref: "#/components/schemas/StackClaims"
         userId:
           type: string
         organizationAccess:
@@ -1875,22 +1895,6 @@ components:
     InvitationClaim:
       type: object
       properties:
-        role:
-          $ref: "#/components/schemas/Role"
-        stackClaims:
-          $ref: "#/components/schemas/StackClaims"
-    StackClaims:
-      type: array
-      items:
-        $ref: "#/components/schemas/StackClaim"
-    StackClaim:
-      type: object
-      required:
-        - id
-        - role
-      properties:
-        id:
-          type: string
         role:
           $ref: "#/components/schemas/Role"
     Region:
