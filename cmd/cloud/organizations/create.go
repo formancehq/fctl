@@ -60,15 +60,11 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 	}
 
 	if defaultOrganizationRole != "" {
-		orgData.DefaultOrganizationAccess = &membershipclient.Role{
-			String: &defaultOrganizationRole,
-		}
+		orgData.DefaultOrganizationAccess = membershipclient.Role(defaultOrganizationRole).Ptr()
 	}
 
 	if defaultStackRole != "" {
-		orgData.DefaultStackAccess = &membershipclient.Role{
-			String: &defaultStackRole,
-		}
+		orgData.DefaultStackAccess = membershipclient.Role(defaultStackRole).Ptr()
 	}
 
 	if domain != "" {

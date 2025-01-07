@@ -1787,17 +1787,12 @@ components:
       allOf:
       - $ref: '#/components/schemas/UserData_allOf'
     Role:
-      oneOf:
-      - enum:
-        - ADMIN
-        - VIEWER
-        - NONE
-        type: string
-      - deprecated: true
-        description: Use VIEWER instead
-        enum:
-        - GUEST
-        type: string
+      enum:
+      - ADMIN
+      - VIEWER
+      - NONE
+      - GUEST
+      type: string
     SystemRole:
       enum:
       - USER

@@ -65,7 +65,7 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 		return []string{
 			o.StackId,
 			o.UserId,
-			string(*o.Role.String),
+			string(o.Role),
 		}
 	})
 

@@ -75,7 +75,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 			UserEmail:    i.UserEmail,
 			Status:       i.Status,
 			CreationDate: i.CreationDate,
-			OrgClaim:     string(*i.Role.String),
+			OrgClaim:     string(i.Role),
 		}
 	})
 

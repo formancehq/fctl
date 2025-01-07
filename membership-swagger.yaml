@@ -1683,17 +1683,13 @@ components:
           required:
             - email
     Role:
-      oneOf:
-        - type: string
-          enum:
-            - ADMIN
-            - VIEWER
-            - NONE
-        - type: string
-          deprecated: true
-          enum:
-            - GUEST
-          description: Use VIEWER instead
+      type: string
+      enum:
+        - ADMIN
+        - VIEWER
+        - NONE
+        # Deprecated
+        - GUEST
     SystemRole:
       type: string
       enum:

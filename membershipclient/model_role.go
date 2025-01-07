@@ -15,68 +15,66 @@ import (
 	"fmt"
 )
 
-// Role - struct for Role
-type Role struct {
-	String *string
+// Role the model 'Role'
+type Role string
+
+// List of Role
+const (
+	ADMIN Role = "ADMIN"
+	VIEWER Role = "VIEWER"
+	NONE Role = "NONE"
+	GUEST Role = "GUEST"
+)
+
+// All allowed values of Role enum
+var AllowedRoleEnumValues = []Role{
+	"ADMIN",
+	"VIEWER",
+	"NONE",
+	"GUEST",
 }
 
-// stringAsRole is a convenience function that returns string wrapped in Role
-func StringAsRole(v *string) Role {
-	return Role{
-		String: v,
+func (v *Role) UnmarshalJSON(src []byte) error {
+	var value string
+	err := json.Unmarshal(src, &value)
+	if err != nil {
+		return err
 	}
-}
-
-
-// Unmarshal JSON data into one of the pointers in the struct
-func (dst *Role) UnmarshalJSON(data []byte) error {
-	var err error
-	match := 0
-	// try to unmarshal data into String
-	err = newStrictDecoder(data).Decode(&dst.String)
-	if err == nil {
-		jsonString, _ := json.Marshal(dst.String)
-		if string(jsonString) == "{}" { // empty struct
-			dst.String = nil
-		} else {
-			match++
+	enumTypeValue := Role(value)
+	for _, existing := range AllowedRoleEnumValues {
+		if existing == enumTypeValue {
+			*v = enumTypeValue
+			return nil
 		}
+	}
+
+	return fmt.Errorf("%+v is not a valid Role", value)
+}
+
+// NewRoleFromValue returns a pointer to a valid Role
+// for the value passed as argument, or an error if the value passed is not allowed by the enum
+func NewRoleFromValue(v string) (*Role, error) {
+	ev := Role(v)
+	if ev.IsValid() {
+		return &ev, nil
 	} else {
-		dst.String = nil
-	}
-
-	if match > 1 { // more than 1 match
-		// reset to nil
-		dst.String = nil
-
-		return fmt.Errorf("data matches more than one schema in oneOf(Role)")
-	} else if match == 1 {
-		return nil // exactly one match
-	} else { // no match
-		return fmt.Errorf("data failed to match schemas in oneOf(Role)")
+		return nil, fmt.Errorf("invalid value '%v' for Role: valid values are %v", v, AllowedRoleEnumValues)
 	}
 }
 
-// Marshal data from the first non-nil pointers in the struct to JSON
-func (src Role) MarshalJSON() ([]byte, error) {
-	if src.String != nil {
-		return json.Marshal(&src.String)
+// IsValid return true if the value is valid for the enum, false otherwise
+func (v Role) IsValid() bool {
+	for _, existing := range AllowedRoleEnumValues {
+		if existing == v {
+			return true
+		}
 	}
-
-	return nil, nil // no data in oneOf schemas
+	return false
 }
 
-// Get the actual instance
-func (obj *Role) GetActualInstance() (interface{}) {
-	if obj == nil {
-		return nil
-	}
-	if obj.String != nil {
-		return obj.String
-	}
-
-	// all schemas are nil
-	return nil
+// Ptr returns reference to Role value
+func (v Role) Ptr() *Role {
+	return &v
 }
 
 type NullableRole struct {
@@ -114,5 +112,4 @@ func (v *NullableRole) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
 

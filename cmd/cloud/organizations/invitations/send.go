@@ -64,7 +64,7 @@ func (c *SendController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	invitationClaim := membershipclient.InvitationClaim{}
 	orgClaimString := fctl.GetString(cmd, "org-claim")
 	if orgClaimString != "" {
-		invitationClaim.Role = &membershipclient.Role{String: &orgClaimString}
+		invitationClaim.Role = membershipclient.Role(orgClaimString).Ptr()
 	}
 
 	invitations, _, err := store.Client().

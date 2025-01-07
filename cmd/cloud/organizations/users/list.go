@@ -74,7 +74,7 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 		return []string{
 			i.ID,
 			i.Email,
-			string(*i.Role.String),
+			string(i.Role),
 		}
 	})
 

@@ -23,13 +23,13 @@ func PrintOrganization(store *membershipclient.OrganizationExpanded) error {
 			if store.DefaultStackAccess == nil {
 				return "None"
 			}
-			return string(*store.DefaultStackAccess.String)
+			return string(*store.DefaultStackAccess)
 		}()},
 		{"Default Organization Role", func() string {
 			if store.DefaultOrganizationAccess == nil {
 				return "None"
 			}
-			return string(*store.DefaultOrganizationAccess.String)
+			return string(*store.DefaultOrganizationAccess)
 		}()},
 	}
 

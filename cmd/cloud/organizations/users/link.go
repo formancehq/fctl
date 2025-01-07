@@ -56,7 +56,7 @@ func (c *LinkController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	role := fctl.GetString(cmd, "role")
 	req := membershipclient.UpdateOrganizationUserRequest{}
 	if role != "" {
-		req.Role = membershipclient.Role{String: &role}
+		req.Role = membershipclient.Role(role)
 	} else {
 		return nil, fmt.Errorf("role is required")
 	}
