@@ -1,8 +1,6 @@
 package invitations
 
 import (
-	"encoding/json"
-
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
@@ -10,9 +8,8 @@ import (
 )
 
 type InvitationSend struct {
-	Email       string                        `json:"email"`
-	StackClaims []membershipclient.StackClaim `json:"stackClaims"`
-	OrgClaim    membershipclient.Role         `json:"orgClaim"`
+	Email    string                `json:"email"`
+	OrgClaim membershipclient.Role `json:"orgClaim"`
 }
 
 type SendStore struct {
@@ -42,7 +39,7 @@ func NewSendCommand() *cobra.Command {
 		fctl.WithShortDescription("Invite a user by email"),
 		fctl.WithAliases("s"),
 		fctl.WithStringFlag("org-claim", "", "Pre assign organization role e.g. 'ADMIN'"),
-		fctl.WithStringFlag("stack-claims", "", `Pre assign stack roles e.g. '[{"id": "<stackId>", "role":"<ADMIN|GUEST|NONE>"},...]'`),
+		fctl.WithStringFlag("stack-claims", "", `Pre assign stack roles e.g. '[{"id": "<stackId>", "role":"<ADMIN|VIEWER|NONE>"},...]'`),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*SendStore](NewSendController()),
 	)
@@ -70,16 +67,6 @@ func (c *SendController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		invitationClaim.Role = membershipclient.Role(orgClaimString).Ptr()
 	}
 
-	stackClaimsStrings := fctl.GetString(cmd, "stack-claims")
-	if stackClaimsStrings != "" {
-		stackClaims := make([]membershipclient.StackClaim, 0)
-		err := json.Unmarshal([]byte(stackClaimsStrings), &stackClaims)
-		if err != nil {
-			return nil, err
-		}
-		invitationClaim.StackClaims = stackClaims
-	}
-
 	invitations, _, err := store.Client().
 		CreateInvitation(cmd.Context(), organizationID).
 		Email(args[0]).InvitationClaim(invitationClaim).Execute()
@@ -88,7 +75,6 @@ func (c *SendController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	}
 
 	c.store.Invitation.Email = invitations.Data.UserEmail
-	c.store.Invitation.StackClaims = invitations.Data.StackClaims
 	c.store.Invitation.OrgClaim = invitations.Data.Role
 
 	return c, nil

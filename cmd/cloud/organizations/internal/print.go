@@ -15,7 +15,7 @@ func PrintOrganization(store *membershipclient.OrganizationExpanded) error {
 		{"Name", store.Name},
 		{"Domain", func() string {
 			if store.Domain == nil {
-				return "None"
+				return ""
 			}
 			return *store.Domain
 		}()},

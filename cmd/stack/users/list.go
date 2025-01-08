@@ -31,7 +31,7 @@ func NewListController() *ListController {
 
 func NewListCommand() *cobra.Command {
 	return fctl.NewCommand("list <stack-id>",
-		fctl.WithAliases("usar"),
+		fctl.WithAliases("l"),
 		fctl.WithShortDescription("List Stack Access Role within an organization by stacks"),
 		fctl.WithArgs(cobra.MinimumNArgs(1)),
 		fctl.WithController[*ListStore](NewListController()),
@@ -46,7 +46,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 
 	store := store.GetStore(cmd.Context())
 
-	ListStackUsersAccesses, response, err := store.Client().ListStackUsersAccesses(cmd.Context(), store.OrganizationId(), args[0]).Execute()
+	listStackUsersAccesses, response, err := store.Client().ListStackUsersAccesses(cmd.Context(), store.OrganizationId(), args[0]).Execute()
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, err
 	}
 
-	c.store.list = append(c.store.list, ListStackUsersAccesses.Data...)
+	c.store.list = append(c.store.list, listStackUsersAccesses.Data...)
 
 	return c, nil
 }
@@ -65,11 +65,12 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 		return []string{
 			o.StackId,
 			o.UserId,
+			o.Email,
 			string(o.Role),
 		}
 	})
 
-	tableData := fctl.Prepend(stackUserAccessMap, []string{"Stack Id", "User Id", "Role"})
+	tableData := fctl.Prepend(stackUserAccessMap, []string{"Stack Id", "User Id", "Email", "Role"})
 
 	return pterm.DefaultTable.WithHasHeader().WithWriter(cmd.OutOrStdout()).WithData(tableData).Render()
 

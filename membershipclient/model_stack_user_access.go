@@ -23,6 +23,8 @@ type StackUserAccess struct {
 	StackId string `json:"stackId"`
 	// User ID
 	UserId string `json:"userId"`
+	// User email
+	Email string `json:"email"`
 	Role Role `json:"role"`
 }
 
@@ -30,10 +32,11 @@ type StackUserAccess struct {
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewStackUserAccess(stackId string, userId string, role Role) *StackUserAccess {
+func NewStackUserAccess(stackId string, userId string, email string, role Role) *StackUserAccess {
 	this := StackUserAccess{}
 	this.StackId = stackId
 	this.UserId = userId
+	this.Email = email
 	this.Role = role
 	return &this
 }
@@ -94,6 +97,30 @@ func (o *StackUserAccess) SetUserId(v string) {
 	o.UserId = v
 }
 
+// GetEmail returns the Email field value
+func (o *StackUserAccess) GetEmail() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Email
+}
+
+// GetEmailOk returns a tuple with the Email field value
+// and a boolean to check if the value has been set.
+func (o *StackUserAccess) GetEmailOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Email, true
+}
+
+// SetEmail sets field value
+func (o *StackUserAccess) SetEmail(v string) {
+	o.Email = v
+}
+
 // GetRole returns the Role field value
 func (o *StackUserAccess) GetRole() Role {
 	if o == nil {
@@ -130,6 +157,7 @@ func (o StackUserAccess) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["stackId"] = o.StackId
 	toSerialize["userId"] = o.UserId
+	toSerialize["email"] = o.Email
 	toSerialize["role"] = o.Role
 	return toSerialize, nil
 }

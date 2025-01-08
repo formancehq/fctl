@@ -7,6 +7,8 @@
 
 * `ADMIN` (value: `"ADMIN"`)
 
+* `VIEWER` (value: `"VIEWER"`)
+
 * `GUEST` (value: `"GUEST"`)
 
 

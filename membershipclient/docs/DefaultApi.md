@@ -1873,7 +1873,7 @@ import (
 )
 
 func main() {
-    expand := TODO // bool |  (optional)
+    expand := true // bool |  (optional)
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
@@ -1898,7 +1898,7 @@ Other parameters are passed through a pointer to a apiListOrganizationsRequest s
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **expand** | [**bool**](bool.md) |  | 
+ **expand** | **bool** |  | 
 
 ### Return type
 
@@ -2335,7 +2335,7 @@ import (
 
 func main() {
     organizationId := "organizationId_example" // string | 
-    expand := TODO // bool |  (optional)
+    expand := true // bool |  (optional)
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
@@ -2365,7 +2365,7 @@ Other parameters are passed through a pointer to a apiReadOrganizationRequest st
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **expand** | [**bool**](bool.md) |  | 
+ **expand** | **bool** |  | 
 
 ### Return type
 

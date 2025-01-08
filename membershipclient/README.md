@@ -178,7 +178,6 @@ Class | Method | HTTP request | Description
  - [ServerInfo](docs/ServerInfo.md)
  - [Stack](docs/Stack.md)
  - [StackAllOf](docs/StackAllOf.md)
- - [StackClaim](docs/StackClaim.md)
  - [StackData](docs/StackData.md)
  - [StackLifeCycle](docs/StackLifeCycle.md)
  - [StackReachability](docs/StackReachability.md)

@@ -7,7 +7,7 @@ import (
 
 func NewCommand() *cobra.Command {
 	return fctl.NewStackCommand("invitations",
-		fctl.WithAliases("invit", "inv", "i"),
+		fctl.WithAliases("invit", "inv", "i", "invitation"),
 		fctl.WithShortDescription("Invitations management"),
 		fctl.WithChildCommands(
 			NewSendCommand(),

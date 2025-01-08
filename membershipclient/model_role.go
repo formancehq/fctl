@@ -22,6 +22,7 @@ type Role string
 const (
 	NONE Role = "NONE"
 	ADMIN Role = "ADMIN"
+	VIEWER Role = "VIEWER"
 	GUEST Role = "GUEST"
 )
 
@@ -29,6 +30,7 @@ const (
 var AllowedRoleEnumValues = []Role{
 	"NONE",
 	"ADMIN",
+	"VIEWER",
 	"GUEST",
 }
 

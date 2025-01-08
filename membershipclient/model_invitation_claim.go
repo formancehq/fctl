@@ -20,7 +20,6 @@ var _ MappedNullable = &InvitationClaim{}
 // InvitationClaim struct for InvitationClaim
 type InvitationClaim struct {
 	Role *Role `json:"role,omitempty"`
-	StackClaims []StackClaim `json:"stackClaims,omitempty"`
 }
 
 // NewInvitationClaim instantiates a new InvitationClaim object
@@ -72,38 +71,6 @@ func (o *InvitationClaim) SetRole(v Role) {
 	o.Role = &v
 }
 
-// GetStackClaims returns the StackClaims field value if set, zero value otherwise.
-func (o *InvitationClaim) GetStackClaims() []StackClaim {
-	if o == nil || IsNil(o.StackClaims) {
-		var ret []StackClaim
-		return ret
-	}
-	return o.StackClaims
-}
-
-// GetStackClaimsOk returns a tuple with the StackClaims field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *InvitationClaim) GetStackClaimsOk() ([]StackClaim, bool) {
-	if o == nil || IsNil(o.StackClaims) {
-		return nil, false
-	}
-	return o.StackClaims, true
-}
-
-// HasStackClaims returns a boolean if a field has been set.
-func (o *InvitationClaim) HasStackClaims() bool {
-	if o != nil && !IsNil(o.StackClaims) {
-		return true
-	}
-
-	return false
-}
-
-// SetStackClaims gets a reference to the given []StackClaim and assigns it to the StackClaims field.
-func (o *InvitationClaim) SetStackClaims(v []StackClaim) {
-	o.StackClaims = v
-}
-
 func (o InvitationClaim) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -116,9 +83,6 @@ func (o InvitationClaim) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	if !IsNil(o.Role) {
 		toSerialize["role"] = o.Role
-	}
-	if !IsNil(o.StackClaims) {
-		toSerialize["stackClaims"] = o.StackClaims
 	}
 	return toSerialize, nil
 }

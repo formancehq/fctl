@@ -33,7 +33,7 @@ func NewLinkController() *LinkController {
 
 func NewLinkCommand() *cobra.Command {
 	return fctl.NewCommand("link <stack-id> <user-id>",
-		fctl.WithStringFlag("role", "", "Roles: (ADMIN, GUEST, NONE)"),
+		fctl.WithStringFlag("role", "", "Roles: (ADMIN, VIEWER, NONE)"),
 		fctl.WithShortDescription("Link stack user with properties"),
 		fctl.WithArgs(cobra.ExactArgs(2)),
 		fctl.WithController[*LinkStore](NewLinkController()),
