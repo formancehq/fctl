@@ -1687,8 +1687,6 @@ components:
       enum:
         - NONE
         - ADMIN
-        - VIEWER
-        # Deprecated
         - GUEST
     SystemRole:
       type: string
