@@ -1790,7 +1790,6 @@ components:
       enum:
       - NONE
       - ADMIN
-      - VIEWER
       - GUEST
       type: string
     SystemRole:

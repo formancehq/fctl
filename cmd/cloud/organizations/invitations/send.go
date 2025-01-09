@@ -39,7 +39,7 @@ func NewSendCommand() *cobra.Command {
 		fctl.WithShortDescription("Invite a user by email"),
 		fctl.WithAliases("s"),
 		fctl.WithStringFlag("org-claim", "", "Pre assign organization role e.g. 'ADMIN'"),
-		fctl.WithStringFlag("stack-claims", "", `Pre assign stack roles e.g. '[{"id": "<stackId>", "role":"<ADMIN|VIEWER|NONE>"},...]'`),
+		fctl.WithStringFlag("stack-claims", "", `Pre assign stack roles e.g. '[{"id": "<stackId>", "role":"<ADMIN|GUEST|NONE>"},...]'`),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*SendStore](NewSendController()),
 	)
