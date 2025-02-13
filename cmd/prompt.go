@@ -17,6 +17,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	ErrMalformedCommand = errors.New("malformed command")
+)
+
 type prompt struct {
 	promptColor   goprompt.Color
 	history       []string
@@ -42,8 +46,7 @@ func (p *prompt) completionsFromCommand(subCommand *cobra.Command, completionsAr
 	if err != nil {
 		return []goprompt.Suggest{}
 	}
-
-	return goprompt.FilterHasPrefix(fctl.Map(completions, func(src string) goprompt.Suggest {
+	suggestion := goprompt.FilterHasPrefix(fctl.Map(completions, func(src string) goprompt.Suggest {
 		parts := strings.SplitN(src, "\t", 2)
 		description := ""
 		if len(parts) > 1 {
@@ -54,6 +57,12 @@ func (p *prompt) completionsFromCommand(subCommand *cobra.Command, completionsAr
 			Description: description,
 		}
 	}), d.GetWordBeforeCursor(), true)
+
+	suggestion = append(suggestion, goprompt.Suggest{
+		Text:        ":",
+		Description: "Custom command",
+	})
+	return suggestion
 }
 
 func (p *prompt) completions(cfg *fctl.Config, d goprompt.Document) []goprompt.Suggest {
@@ -124,7 +133,7 @@ func (p *prompt) startPrompt(prompt string, cfg *fctl.Config, opts ...goprompt.O
 func (p *prompt) executeCommand(cmd *cobra.Command, t string) error {
 	parse, err := shellwords.Parse(t)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("%w: %w", errors.ErrUnsupported, err)
 	}
 
 	subCommand := NewRootCommand()
@@ -146,7 +155,7 @@ func (p *prompt) executePromptCommand(cmd *cobra.Command, t string) error {
 		v = strings.TrimRight(v, " ")
 		parts := strings.SplitN(v, " ", 2)
 		if len(parts) != 2 {
-			return errors.New("malformed command")
+			return ErrMalformedCommand
 		} else {
 			if v := parts[0]; v != fctl.ProfileFlag && v != fctl.DebugFlag && v != fctl.InsecureTlsFlag {
 				return fmt.Errorf("unknown configuration: %s", v)
@@ -156,7 +165,7 @@ func (p *prompt) executePromptCommand(cmd *cobra.Command, t string) error {
 			pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Set %s=%s", parts[0], parts[1])
 		}
 	default:
-		return errors.New("malformed command")
+		return ErrMalformedCommand
 	}
 	return nil
 }
