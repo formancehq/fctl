@@ -3,6 +3,7 @@ package ledger
 import (
 	"github.com/formancehq/fctl/cmd/ledger/accounts"
 	"github.com/formancehq/fctl/cmd/ledger/internal"
+	"github.com/formancehq/fctl/cmd/ledger/logs"
 	"github.com/formancehq/fctl/cmd/ledger/transactions"
 	"github.com/formancehq/fctl/cmd/ledger/volumes"
 	fctl "github.com/formancehq/fctl/pkg"
@@ -24,6 +25,7 @@ func NewCommand() *cobra.Command {
 			NewDeleteMetadataCommand(),
 			NewExportCommand(),
 			NewImportCommand(),
+			logs.NewLogsCommand(),
 			transactions.NewLedgerTransactionsCommand(),
 			accounts.NewLedgerAccountsCommand(),
 			volumes.NewLedgerVolumesCommand(),
