@@ -18,6 +18,9 @@ const (
 	DebugFlag         = "debug"
 	InsecureTlsFlag   = "insecure-tls"
 	TelemetryFlag     = "telemetry"
+	stackFlag         = "stack"
+	organizationFlag  = "organization"
+	outputFlag        = "output"
 )
 
 func GetBool(cmd *cobra.Command, flagName string) bool {

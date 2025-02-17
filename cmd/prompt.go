@@ -46,7 +46,7 @@ func (p *prompt) completionsFromCommand(subCommand *cobra.Command, completionsAr
 	if err != nil {
 		return []goprompt.Suggest{}
 	}
-	suggestion := goprompt.FilterHasPrefix(fctl.Map(completions, func(src string) goprompt.Suggest {
+	return goprompt.FilterHasPrefix(fctl.Map(completions, func(src string) goprompt.Suggest {
 		parts := strings.SplitN(src, "\t", 2)
 		description := ""
 		if len(parts) > 1 {
@@ -57,12 +57,6 @@ func (p *prompt) completionsFromCommand(subCommand *cobra.Command, completionsAr
 			Description: description,
 		}
 	}), d.GetWordBeforeCursor(), true)
-
-	suggestion = append(suggestion, goprompt.Suggest{
-		Text:        ":",
-		Description: "Custom command",
-	})
-	return suggestion
 }
 
 func (p *prompt) completions(cfg *fctl.Config, d goprompt.Document) []goprompt.Suggest {
@@ -107,9 +101,10 @@ func (p *prompt) completions(cfg *fctl.Config, d goprompt.Document) []goprompt.S
 	return goprompt.FilterHasPrefix(suggestions, d.GetWordBeforeCursor(), true)
 }
 
-func (p *prompt) startPrompt(prompt string, cfg *fctl.Config, opts ...goprompt.Option) string {
+func (p *prompt) startPrompt(ctx context.Context, prompt string, cfg *fctl.Config, opts ...goprompt.Option) string {
 	return goprompt.Input(prompt, func(d goprompt.Document) []goprompt.Suggest {
 		subCommand := NewRootCommand()
+		subCommand.SetContext(ctx)
 
 		switch {
 		case d.Text == "":
@@ -142,7 +137,7 @@ func (p *prompt) executeCommand(cmd *cobra.Command, t string) error {
 	subCommand.SetErr(cmd.ErrOrStderr())
 	subCommand.SilenceErrors = true
 	subCommand.SilenceUsage = true
-	return subCommand.ExecuteContext(context.TODO())
+	return subCommand.ExecuteContext(cmd.Context())
 }
 
 func (p *prompt) executePromptCommand(cmd *cobra.Command, t string) error {
@@ -192,6 +187,10 @@ func (p *prompt) displayHeader(cmd *cobra.Command, cfg *fctl.Config) error {
 		if organizationID := fctl.GetCurrentProfile(cmd, cfg).GetDefaultOrganization(); organizationID != "" {
 			header += " / " + organizationID
 		}
+
+		if stackID := fctl.GetCurrentProfile(cmd, cfg).GetDefaultStack(); stackID != "" {
+			header += " / " + stackID
+		}
 	}
 	header += " #"
 	fctl.BasicTextCyan.WithWriter(cmd.OutOrStdout()).Printfln(header)
@@ -217,7 +216,7 @@ func (p *prompt) nextCommand(cmd *cobra.Command) error {
 		return err
 	}
 
-	switch t := p.startPrompt(" > ", cfg,
+	switch t := p.startPrompt(cmd.Context(), " > ", cfg,
 		goprompt.OptionPrefixTextColor(p.promptColor),
 		goprompt.OptionHistory(p.history),
 		goprompt.OptionCompletionOnDown()); t {

@@ -11,15 +11,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	stackFlag        = "stack"
-	organizationFlag = "organization"
-	outputFlag       = "output"
-)
-
 var (
 	ErrOrganizationNotSpecified   = errors.New("organization not specified")
 	ErrMultipleOrganizationsFound = errors.New("found more than one organization and no organization specified")
+	ErrNoStackSpecified           = errors.New("no stack specified: use --stack=<stack-id>")
 )
 
 func GetSelectedOrganization(cmd *cobra.Command) string {
@@ -58,8 +53,25 @@ func ResolveOrganizationID(cmd *cobra.Command, cfg *Config, client *membershipcl
 	return organizations.Data[0].Id, nil
 }
 
-func GetSelectedStackID(cmd *cobra.Command) string {
-	return GetString(cmd, stackFlag)
+func GetSelectedStackIDError(cmd *cobra.Command, cfg *Config) (string, error) {
+	if str := GetSelectedStackID(cmd, cfg); str != "" {
+		return str, nil
+	}
+	return "", ErrNoStackSpecified
+}
+
+func GetSelectedStackID(cmd *cobra.Command, cfg *Config) string {
+	if id := GetString(cmd, stackFlag); id != "" {
+		return id
+	}
+	pf := cfg.GetCurrentProfile()
+	if pf != nil {
+		if pf.defaultStack != "" {
+			return pf.defaultStack
+		}
+	}
+
+	return ""
 }
 
 func ResolveStack(cmd *cobra.Command, cfg *Config, organizationID string) (*membershipclient.Stack, error) {
@@ -67,7 +79,7 @@ func ResolveStack(cmd *cobra.Command, cfg *Config, organizationID string) (*memb
 	if err != nil {
 		return nil, err
 	}
-	if id := GetSelectedStackID(cmd); id != "" {
+	if id := GetSelectedStackID(cmd, cfg); id != "" {
 		response, _, err := client.DefaultApi.GetStack(cmd.Context(), organizationID, id).Execute()
 		if err != nil {
 			return nil, err
@@ -347,7 +359,6 @@ func NewMembershipCommand(use string, opts ...CommandOption) *cobra.Command {
 		)...,
 	)
 	cmd.RegisterFlagCompletionFunc("organization", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-
 		cfg, err := GetConfig(cmd)
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveError

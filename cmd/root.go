@@ -32,6 +32,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func init() {
+	cobra.EnableTraverseRunHooks = true
+}
+
 func NewRootCommand() *cobra.Command {
 	homedir, err := os.UserHomeDir()
 	if err != nil {
@@ -94,7 +98,6 @@ func Execute() {
 			debug.PrintStack()
 		}
 	}()
-	cobra.EnableTraverseRunHooks = true
 	ctx, _ := signal.NotifyContext(context.TODO(), os.Interrupt)
 	cmd := NewRootCommand()
 	if err := cmd.ExecuteContext(ctx); err != nil {
@@ -124,14 +127,12 @@ func Execute() {
 					printError(errResponse.ErrorCode, errResponse.ErrorMessage, &errResponse.Details)
 					return
 				default:
+					pterm.Error.WithWriter(os.Stderr).Println(unwrapped)
 					unwrapped = errors.Unwrap(unwrapped)
 				}
 			}
 		}
 
-		pterm.Error.WithWriter(os.Stderr).Printfln(err.Error())
-
-		fmt.Println("---")
 		os.Exit(255)
 	}
 }

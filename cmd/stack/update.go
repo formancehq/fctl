@@ -2,7 +2,6 @@ package stack
 
 import (
 	"github.com/formancehq/fctl/cmd/stack/internal"
-	"github.com/formancehq/fctl/cmd/stack/store"
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/go-libs/pointer"
@@ -54,7 +53,7 @@ func (c *StackUpdateController) GetStore() *StackUpdateStore {
 }
 
 func (c *StackUpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := store.GetStore(cmd.Context())
+	store := fctl.GetOrganizationStore(cmd)
 	c.profile = store.Config.GetProfile(fctl.GetCurrentProfileName(cmd, store.Config))
 
 	protected := !fctl.GetBool(cmd, unprotectFlag)

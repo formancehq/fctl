@@ -1,7 +1,6 @@
 package users
 
 import (
-	"github.com/formancehq/fctl/cmd/stack/store"
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
@@ -32,10 +31,10 @@ func NewUnlinkController() *UnlinkController {
 }
 
 func NewUnlinkCommand() *cobra.Command {
-	return fctl.NewMembershipCommand("unlink <stack-id> <user-id>",
+	return fctl.NewMembershipCommand("unlink <user-id>",
 		fctl.WithShortDescription("Unlink stack user within an organization"),
-		fctl.WithArgs(cobra.ExactArgs(2)),
-		fctl.WithController[*UnlinkStore](NewUnlinkController()),
+		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithController(NewUnlinkController()),
 	)
 }
 func (c *UnlinkController) GetStore() *UnlinkStore {
@@ -43,9 +42,9 @@ func (c *UnlinkController) GetStore() *UnlinkStore {
 }
 
 func (c *UnlinkController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := store.GetStore(cmd.Context())
+	store := fctl.GetMembershipStackStore(cmd.Context())
 
-	res, err := store.Client().DeleteStackUserAccess(cmd.Context(), store.OrganizationId(), args[0], args[1]).Execute()
+	res, err := store.Client().DeleteStackUserAccess(cmd.Context(), store.OrganizationId(), store.StackId(), args[0]).Execute()
 	if err != nil {
 		return nil, err
 	}

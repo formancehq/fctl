@@ -1,7 +1,6 @@
 package stack
 
 import (
-	"github.com/formancehq/fctl/cmd/stack/store"
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pkg/errors"
@@ -53,7 +52,7 @@ func (c *DisableController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		stackNameFlag = "name"
 	)
 
-	store := store.GetStore(cmd.Context())
+	store := fctl.GetOrganizationStore(cmd)
 	var stack *membershipclient.Stack
 	if len(args) == 1 {
 		if fctl.GetString(cmd, stackNameFlag) != "" {

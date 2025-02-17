@@ -1,7 +1,6 @@
 package modules
 
 import (
-	"github.com/formancehq/fctl/cmd/stack/store"
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/go-libs/time"
@@ -41,9 +40,9 @@ func (c *ListController) GetStore() *ListStore {
 }
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := store.GetStore(cmd.Context())
+	mbStackStore := fctl.GetMembershipStackStore(cmd.Context())
 
-	modules, _, err := store.Client().ListModules(cmd.Context(), store.OrganizationId(), fctl.GetString(cmd, stackFlag)).Execute()
+	modules, _, err := mbStackStore.Client().ListModules(cmd.Context(), mbStackStore.OrganizationId(), mbStackStore.StackId()).Execute()
 	if err != nil {
 		return nil, err
 	}

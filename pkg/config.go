@@ -65,12 +65,28 @@ func (c *Config) GetProfileOrDefault(name string, membershipUri string) *Profile
 	return p
 }
 
+func (c *Config) GetCurrentProfile() *Profile {
+	return c.GetProfileOrDefault(c.currentProfile, DefaultMembershipURI)
+}
+
 func (c *Config) DeleteProfile(s string) error {
 	_, ok := c.profiles[s]
 	if !ok {
 		return errors.New("not found")
 	}
 	delete(c.profiles, s)
+	return nil
+}
+
+func (c *Config) ResetProfile(s string) error {
+	_, ok := c.profiles[s]
+	if !ok {
+		return errors.New("not found")
+	}
+	c.profiles[s] = &Profile{
+		membershipURI: DefaultMembershipURI,
+		config:        c,
+	}
 	return nil
 }
 

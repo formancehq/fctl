@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/formancehq/fctl/cmd/stack/internal"
-	"github.com/formancehq/fctl/cmd/stack/store"
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
@@ -53,7 +52,7 @@ func (c *StackRestoreController) GetStore() *StackRestoreStore {
 }
 
 func (c *StackRestoreController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := store.GetStore(cmd.Context())
+	store := fctl.GetOrganizationStore(cmd)
 	var stack *membershipclient.Stack
 	if len(args) == 1 {
 		rsp, _, err := store.Client().GetStack(cmd.Context(), store.OrganizationId(), args[0]).Execute()
