@@ -7,7 +7,6 @@ import (
 	"github.com/formancehq/go-libs/pointer"
 
 	"github.com/formancehq/fctl/cmd/stack/internal"
-	"github.com/formancehq/fctl/cmd/stack/store"
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
@@ -65,7 +64,7 @@ func (c *StackCreateController) GetStore() *StackCreateStore {
 
 func (c *StackCreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 	var err error
-	store := store.GetStore(cmd.Context())
+	store := fctl.GetOrganizationStore(cmd)
 
 	protected := !fctl.GetBool(cmd, unprotectFlag)
 	metadata := map[string]string{

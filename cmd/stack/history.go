@@ -4,7 +4,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/formancehq/fctl/cmd/stack/store"
 	"github.com/formancehq/fctl/membershipclient"
 	"github.com/formancehq/fctl/pkg/printer"
 
@@ -67,7 +66,7 @@ func (c *HistoryController) GetStore() *HistoryStore {
 }
 
 func (c *HistoryController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := store.GetStore(cmd.Context())
+	store := fctl.GetOrganizationStore(cmd)
 	pageSize := fctl.GetInt(cmd, pageSizeFlag)
 	stackID := args[0]
 	req := store.Client().ListLogs(cmd.Context(), store.OrganizationId()).PageSize(int32(pageSize)).StackId(stackID)

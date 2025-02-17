@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/formancehq/fctl/cmd/stack/internal"
-	"github.com/formancehq/fctl/cmd/stack/store"
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
@@ -59,7 +58,7 @@ func (c *StackShowController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 	var stackNameFlag = "name"
 	var stack *membershipclient.Stack
 
-	store := store.GetStore(cmd.Context())
+	store := fctl.GetOrganizationStore(cmd)
 	if len(args) == 1 {
 		if fctl.GetString(cmd, stackNameFlag) != "" {
 			return nil, errors.New("need either an id of a name specified using --name flag")

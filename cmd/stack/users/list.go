@@ -1,7 +1,6 @@
 package users
 
 import (
-	"github.com/formancehq/fctl/cmd/stack/store"
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
@@ -30,11 +29,10 @@ func NewListController() *ListController {
 }
 
 func NewListCommand() *cobra.Command {
-	return fctl.NewCommand("list <stack-id>",
+	return fctl.NewCommand("list",
 		fctl.WithAliases("l"),
 		fctl.WithShortDescription("List Stack Access Role within an organization by stacks"),
-		fctl.WithArgs(cobra.MinimumNArgs(1)),
-		fctl.WithController[*ListStore](NewListController()),
+		fctl.WithController(NewListController()),
 	)
 }
 
@@ -44,9 +42,9 @@ func (c *ListController) GetStore() *ListStore {
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := store.GetStore(cmd.Context())
+	store := fctl.GetMembershipStackStore(cmd.Context())
 
-	listStackUsersAccesses, response, err := store.Client().ListStackUsersAccesses(cmd.Context(), store.OrganizationId(), args[0]).Execute()
+	listStackUsersAccesses, response, err := store.Client().ListStackUsersAccesses(cmd.Context(), store.OrganizationId(), store.StackId()).Execute()
 	if err != nil {
 		return nil, err
 	}

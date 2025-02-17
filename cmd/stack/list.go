@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/formancehq/fctl/cmd/stack/store"
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pkg/errors"
@@ -67,7 +66,7 @@ func (c *StackListController) GetStore() *StackListStore {
 
 func (c *StackListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := store.GetStore(cmd.Context())
+	store := fctl.GetOrganizationStore(cmd)
 	c.profile = store.Config.GetProfile(fctl.GetCurrentProfileName(cmd, store.Config))
 
 	rsp, _, err := store.Client().ListStacks(cmd.Context(), store.OrganizationId()).

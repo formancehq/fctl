@@ -1,7 +1,6 @@
 package modules
 
 import (
-	"github.com/formancehq/fctl/cmd/stack/store"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -38,9 +37,9 @@ func (c *DisableController) GetStore() *DisableStore {
 }
 
 func (c *DisableController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := store.GetStore(cmd.Context())
+	mbStackStore := fctl.GetMembershipStackStore(cmd.Context())
 
-	_, err := store.Client().DisableModule(cmd.Context(), store.OrganizationId(), fctl.GetString(cmd, stackFlag)).Name(args[0]).Execute()
+	_, err := mbStackStore.Client().DisableModule(cmd.Context(), mbStackStore.OrganizationId(), mbStackStore.StackId()).Name(args[0]).Execute()
 	if err != nil {
 		return nil, err
 	}
