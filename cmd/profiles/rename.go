@@ -73,6 +73,6 @@ func NewRenameCommand() *cobra.Command {
 		fctl.WithArgs(cobra.ExactArgs(2)),
 		fctl.WithShortDescription("Rename a profile"),
 		fctl.WithValidArgsFunction(ProfileNamesAutoCompletion),
-		fctl.WithController[*ProfilesRenameStore](NewProfilesRenameController()),
+		fctl.WithController(NewProfilesRenameController()),
 	)
 }

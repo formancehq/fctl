@@ -81,6 +81,6 @@ func NewListCommand() *cobra.Command {
 	return fctl.NewCommand("list",
 		fctl.WithAliases("l"),
 		fctl.WithShortDescription("List profiles"),
-		fctl.WithController[*ProfilesListStore](NewProfilesListController()),
+		fctl.WithController(NewProfilesListController()),
 	)
 }

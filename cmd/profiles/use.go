@@ -67,6 +67,6 @@ func NewUseCommand() *cobra.Command {
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithShortDescription("Use profile"),
 		fctl.WithValidArgsFunction(ProfileNamesAutoCompletion),
-		fctl.WithController[*ProfilesUseStore](NewProfilesUseController()),
+		fctl.WithController(NewProfilesUseController()),
 	)
 }

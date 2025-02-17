@@ -69,6 +69,6 @@ func NewShowCommand() *cobra.Command {
 		fctl.WithAliases("s"),
 		fctl.WithShortDescription("Show profile"),
 		fctl.WithValidArgsFunction(ProfileNamesAutoCompletion),
-		fctl.WithController[*ProfilesShowStore](NewProfilesShowController()),
+		fctl.WithController(NewProfilesShowController()),
 	)
 }

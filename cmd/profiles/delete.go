@@ -61,6 +61,6 @@ func NewDeleteCommand() *cobra.Command {
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithShortDescription("Delete a profile"),
 		fctl.WithValidArgsFunction(ProfileNamesAutoCompletion),
-		fctl.WithController[*ProfilesDeleteStore](NewDeleteProfileController()),
+		fctl.WithController(NewDeleteProfileController()),
 	)
 }
