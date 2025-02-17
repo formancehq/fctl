@@ -9,10 +9,28 @@ import (
 )
 
 var (
-	storeKey      string = "_stores"
-	stackKey      string = "_stack"
-	membershipKey string = "_membership"
+	storeKey           string = "_stores"
+	stackKey                  = "_stack"
+	membershipKey      string = "_membership"
+	orgKey                    = "_membership_organization"
+	membershipStackKey        = "_membership_stack"
 )
+
+func GetOrganizationStore(cmd *cobra.Command) *OrganizationStore {
+	return GetStore(cmd.Context(), orgKey).(*OrganizationStore)
+}
+
+func GetMembershipStackStore(ctx context.Context) *MembershipStackStore {
+	return GetStore(ctx, membershipStackKey).(*MembershipStackStore)
+}
+
+func ContextWithOrganizationStore(ctx context.Context, store *OrganizationStore) context.Context {
+	return ContextWithStore(ctx, orgKey, store)
+}
+
+func ContextWithMembershipStackStore(ctx context.Context, store *MembershipStackStore) context.Context {
+	return ContextWithStore(ctx, membershipStackKey, store)
+}
 
 func ContextWithStore(ctx context.Context, key string, store interface{}) context.Context {
 	var stores map[string]interface{}

@@ -56,13 +56,17 @@ type persistedProfile struct {
 	MembershipURI       string                    `json:"membershipURI"`
 	Token               *oidc.AccessTokenResponse `json:"token"`
 	DefaultOrganization string                    `json:"defaultOrganization"`
+	DefaultStack        string                    `json:"defaultStack"`
 }
 
 type Profile struct {
-	membershipURI       string
-	token               *oidc.AccessTokenResponse
+	membershipURI string
+	token         *oidc.AccessTokenResponse
+
 	defaultOrganization string
-	config              *Config
+	defaultStack        string
+
+	config *Config
 }
 
 func (p *Profile) ServicesBaseUrl(stack *membershipclient.Stack) *url.URL {
@@ -92,6 +96,7 @@ func (p *Profile) MarshalJSON() ([]byte, error) {
 		MembershipURI:       p.membershipURI,
 		Token:               p.token,
 		DefaultOrganization: p.defaultOrganization,
+		DefaultStack:        p.defaultStack,
 	})
 }
 
@@ -104,6 +109,7 @@ func (p *Profile) UnmarshalJSON(data []byte) error {
 		membershipURI:       cfg.MembershipURI,
 		token:               cfg.Token,
 		defaultOrganization: cfg.DefaultOrganization,
+		defaultStack:        cfg.DefaultStack,
 	}
 	return nil
 }
@@ -114,6 +120,10 @@ func (p *Profile) GetMembershipURI() string {
 
 func (p *Profile) GetDefaultOrganization() string {
 	return p.defaultOrganization
+}
+
+func (p *Profile) GetDefaultStack() string {
+	return p.defaultStack
 }
 
 func (p *Profile) GetToken(ctx context.Context, httpClient *http.Client) (*oauth2.Token, error) {
@@ -177,12 +187,35 @@ func (p *Profile) GetClaims() (jwt.MapClaims, error) {
 
 func (p *Profile) GetUserInfo(cmd *cobra.Command) (*userClaims, error) {
 	claims := &userClaims{}
-	if p.token != nil && p.token.IDToken != "" {
-		_, err := oidc.ParseToken(p.token.IDToken, claims)
-		if err != nil {
-			return nil, err
-		}
+	if p.token == nil || p.token.IDToken == "" {
+		return nil, errors.New("not authenticated")
 	}
+
+	_, err := oidc.ParseToken(p.token.IDToken, claims)
+	if err != nil {
+		return nil, err
+	}
+
+	mbClient, err := NewMembershipClient(cmd, p.config)
+	if err != nil {
+		return nil, err
+	}
+	token, err := mbClient.GetProfile().GetToken(cmd.Context(), mbClient.GetConfig().HTTPClient)
+	if err != nil {
+		return nil, err
+	}
+	relyingParty, err := GetAuthRelyingParty(mbClient.GetConfig().HTTPClient, p.membershipURI)
+	if err != nil {
+		return nil, err
+	}
+
+	ui, err := rp.Userinfo(token.AccessToken, token.TokenType, claims.Subject, relyingParty)
+	if err != nil {
+		return nil, err
+	}
+
+	claims.Email = ui.Email
+	claims.Subject = ui.Subject
 
 	return claims, nil
 }
@@ -269,6 +302,10 @@ func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, st
 
 func (p *Profile) SetDefaultOrganization(o string) {
 	p.defaultOrganization = o
+}
+
+func (p *Profile) SetDefaultStack(s string) {
+	p.defaultStack = s
 }
 
 func (p *Profile) IsConnected() bool {
