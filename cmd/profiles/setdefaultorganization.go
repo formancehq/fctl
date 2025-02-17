@@ -1,7 +1,11 @@
 package profiles
 
 import (
+	"fmt"
+
+	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/go-libs/collectionutils"
 	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -39,7 +43,7 @@ func (c *ProfilesSetDefaultOrganizationController) Run(cmd *cobra.Command, args 
 	}
 
 	fctl.GetCurrentProfile(cmd, cfg).SetDefaultOrganization(args[0])
-
+	fctl.GetCurrentProfile(cmd, cfg).SetDefaultStack("")
 	if err := cfg.Persist(); err != nil {
 		return nil, errors.Wrap(err, "Updating config")
 	}
@@ -58,7 +62,30 @@ func NewSetDefaultOrganizationCommand() *cobra.Command {
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithAliases("sdo"),
 		fctl.WithShortDescription("Set default organization"),
-		fctl.WithValidArgsFunction(ProfileNamesAutoCompletion),
-		fctl.WithController[*ProfilesSetDefaultOrganizationStore](NewProfilesSetDefaultOrganizationController()),
+		fctl.WithValidArgsFunction(organizationCompletion),
+		fctl.WithController(NewProfilesSetDefaultOrganizationController()),
 	)
+}
+
+func organizationCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	if err := fctl.NewMembershipStore(cmd); err != nil {
+		return []string{}, cobra.ShellCompDirectiveError
+	}
+
+	mbStore := fctl.GetMembershipStore(cmd.Context())
+
+	ret, res, err := mbStore.Client().ListOrganizations(cmd.Context()).Execute()
+	if err != nil {
+		return []string{}, cobra.ShellCompDirectiveError
+	}
+
+	if res.StatusCode > 300 {
+		return []string{}, cobra.ShellCompDirectiveError
+	}
+
+	opts := collectionutils.Reduce(ret.Data, func(acc []string, o membershipclient.ListOrganizationExpandedResponseDataInner) []string {
+		return append(acc, fmt.Sprintf("%s\t%s", o.Id, o.Name))
+	}, []string{})
+
+	return opts, cobra.ShellCompDirectiveDefault
 }
