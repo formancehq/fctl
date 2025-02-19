@@ -94,7 +94,7 @@ func (c *ForwardController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 	}
 
 	c.store.BankAccountID = response.BankAccountResponse.Data.ID
-	c.store.ConnectorID = response.BankAccountResponse.Data.ConnectorID
+	c.store.ConnectorID = *response.BankAccountResponse.Data.ConnectorID
 
 	return c, nil
 }
