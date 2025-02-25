@@ -82,7 +82,7 @@ func (c *ApproveController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 }
 
 func (c *ApproveController) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Transfer Initiation %q scheduled with TaskId %q", c.store.TransferID, c.store.TaskID)
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Transfer Initiation scheduled with TaskID %q", c.store.TaskID)
 
 	return nil
 }
