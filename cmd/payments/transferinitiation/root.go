@@ -10,6 +10,7 @@ func NewTransferInitiationCommand() *cobra.Command {
 		fctl.WithAliases("ti"),
 		fctl.WithShortDescription("Transfer Initiation management"),
 		fctl.WithChildCommands(
+			NewApproveCommand(),
 			NewCreateCommand(),
 			NewDeleteCommand(),
 			NewListCommand(),

@@ -42,7 +42,7 @@ func NewUpdateStatusCommand() *cobra.Command {
 	c := NewUpdateStatusController()
 	return fctl.NewCommand("update_status <transferID> <status>",
 		fctl.WithConfirmFlag(),
-		fctl.WithShortDescription("Update the status of a transfer initiation"),
+		fctl.WithShortDescription("Update the status of a transfer initiation (deprecated in >= v3.0.0)"),
 		fctl.WithAliases("u"),
 		fctl.WithArgs(cobra.ExactArgs(2)),
 		fctl.WithController[*UpdateStatusStore](c),
@@ -60,8 +60,8 @@ func (c *UpdateStatusController) Run(cmd *cobra.Command, args []string) (fctl.Re
 		return nil, err
 	}
 
-	if c.PaymentsVersion < versions.V1 {
-		return nil, fmt.Errorf("transfer initiation are only supported in >= v1.0.0")
+	if c.PaymentsVersion < versions.V1 || c.PaymentsVersion >= versions.V3 {
+		return nil, fmt.Errorf("transfer initiation updates are only supported in == v2.0.0")
 	}
 
 	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to update the status of the transfer initiation '%s' to '%s'", args[0], args[1]) {
