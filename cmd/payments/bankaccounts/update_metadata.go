@@ -72,6 +72,26 @@ func (c *UpdateMetadataController) Run(cmd *cobra.Command, args []string) (fctl.
 	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to set a metadata on bank account '%s'", bankAccountID) {
 		return nil, fctl.ErrMissingApproval
 	}
+	if c.PaymentsVersion >= versions.V3 {
+		request := operations.V3UpdateBankAccountMetadataRequest{
+			V3UpdateBankAccountMetadataRequest: &shared.V3UpdateBankAccountMetadataRequest{
+				Metadata: metadata,
+			},
+			BankAccountID: bankAccountID,
+		}
+
+		response, err := store.Client().Payments.V3.UpdateBankAccountMetadata(cmd.Context(), request)
+		if err != nil {
+			return nil, err
+		}
+
+		if response.StatusCode >= 300 {
+			return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+		}
+
+		c.store.Success = response.StatusCode == 204
+		return c, nil
+	}
 
 	request := operations.UpdateBankAccountMetadataRequest{
 		UpdateBankAccountMetadataRequest: shared.UpdateBankAccountMetadataRequest{
