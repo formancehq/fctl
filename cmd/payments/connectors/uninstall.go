@@ -19,7 +19,11 @@ var (
 type PaymentsConnectorsUninstallStore struct {
 	Success   bool   `json:"success"`
 	Connector string `json:"connector"`
+
+	// V3
+	TaskID string `json:"task_id"`
 }
+
 type PaymentsConnectorsUninstallController struct {
 	PaymentsVersion versions.Version
 
@@ -38,6 +42,7 @@ func NewDefaultPaymentsConnectorsUninstallStore() *PaymentsConnectorsUninstallSt
 	return &PaymentsConnectorsUninstallStore{
 		Success:   false,
 		Connector: "",
+		TaskID:    "",
 	}
 }
 
@@ -77,6 +82,28 @@ func (c *PaymentsConnectorsUninstallController) Run(cmd *cobra.Command, args []s
 	provider := fctl.GetString(cmd, c.providerFlag)
 	connectorID := fctl.GetString(cmd, c.connectorIDFlag)
 	switch c.PaymentsVersion {
+	case versions.V3:
+		if connectorID == "" {
+			return nil, fmt.Errorf("missing connector ID")
+		}
+
+		if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to uninstall connector '%s'", connectorID) {
+			return nil, fctl.ErrMissingApproval
+		}
+
+		response, err := store.Client().Payments.V3.UninstallConnector(cmd.Context(), operations.V3UninstallConnectorRequest{
+			ConnectorID: connectorID,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		if response.StatusCode >= 300 {
+			return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+		}
+
+		c.store.TaskID = response.V3UninstallConnectorResponse.Data.GetTaskID()
+
 	case versions.V1:
 		if provider == "" {
 			return nil, fmt.Errorf("missing provider")
@@ -133,6 +160,10 @@ func (c *PaymentsConnectorsUninstallController) Run(cmd *cobra.Command, args []s
 
 // TODO: This need to use the ui.NewListModel
 func (c *PaymentsConnectorsUninstallController) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Connector '%s' uninstalled!", c.store.Connector)
+	if c.PaymentsVersion < versions.V3 {
+		pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Connector '%s' uninstalled!", c.store.Connector)
+		return nil
+	}
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Connector uninstall scheduled with TaskID: %s", c.store.TaskID)
 	return nil
 }

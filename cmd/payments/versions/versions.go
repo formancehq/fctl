@@ -13,6 +13,8 @@ type Version int
 const (
 	V0 Version = iota
 	V1
+	V2
+	V3
 )
 
 type VersionController interface {
@@ -34,16 +36,16 @@ func GetPaymentsVersion(cmd *cobra.Command, args []string, controller VersionCon
 
 	if !semver.IsValid(version) {
 		// last version for commits
-		controller.SetVersion(V1)
+		controller.SetVersion(V3)
 		return nil
 	}
 
-	res := semver.Compare(version, "v1.0.0-rc.1")
+	res := semver.Compare(version, "v3.0.0-rc.1")
 	switch res {
 	case 0, 1:
-		controller.SetVersion(V1)
+		controller.SetVersion(V3)
 	default:
-		controller.SetVersion(V0)
+		controller.SetVersion(V1)
 	}
 
 	return nil

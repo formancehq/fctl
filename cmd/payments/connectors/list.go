@@ -81,14 +81,13 @@ func (c *PaymentsConnectorsListController) Run(cmd *cobra.Command, args []string
 
 func (c *PaymentsConnectorsListController) Render(cmd *cobra.Command, args []string) error {
 	tableData := fctl.Map(c.store.Connectors, func(connector shared.ConnectorsResponseData) []string {
-		switch c.PaymentsVersion {
-		case versions.V1:
+		if c.PaymentsVersion >= versions.V1 {
 			return []string{
 				string(connector.Provider),
 				connector.Name,
 				connector.ConnectorID,
 			}
-		default:
+		} else {
 			// V0
 			return []string{
 				string(connector.Provider),
@@ -96,10 +95,9 @@ func (c *PaymentsConnectorsListController) Render(cmd *cobra.Command, args []str
 		}
 
 	})
-	switch c.PaymentsVersion {
-	case versions.V1:
+	if c.PaymentsVersion >= versions.V1 {
 		tableData = fctl.Prepend(tableData, []string{"Provider", "Name", "ConnectorID"})
-	default:
+	} else {
 		tableData = fctl.Prepend(tableData, []string{"Provider"})
 	}
 

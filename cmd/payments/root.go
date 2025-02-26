@@ -6,6 +6,7 @@ import (
 	"github.com/formancehq/fctl/cmd/payments/connectors"
 	"github.com/formancehq/fctl/cmd/payments/payments"
 	"github.com/formancehq/fctl/cmd/payments/pools"
+	"github.com/formancehq/fctl/cmd/payments/tasks"
 	"github.com/formancehq/fctl/cmd/payments/transferinitiation"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
@@ -21,6 +22,7 @@ func NewCommand() *cobra.Command {
 			bankaccounts.NewBankAccountsCommand(),
 			accounts.NewAccountsCommand(),
 			pools.NewPoolsCommand(),
+			tasks.NewTasksCommand(),
 		),
 		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
 			return fctl.NewStackStore(cmd)
