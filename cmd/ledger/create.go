@@ -1,6 +1,9 @@
 package ledger
 
 import (
+	"fmt"
+	"strings"
+
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
@@ -11,6 +14,7 @@ import (
 
 const (
 	bucketNameFlag = "bucket"
+	featuresFlag   = "features"
 )
 
 type CreateStore struct{}
@@ -41,6 +45,8 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithAliases("c", "cr"),
 		fctl.WithShortDescription("Create a new ledger (starting from ledger v2)"),
 		fctl.WithStringFlag(bucketNameFlag, "", "Bucket on which install the new ledger"),
+		fctl.WithStringSliceFlag(featuresFlag, []string{}, `Experimental! Features to enable on the newly created ledger (default: all)
+Starting from ledger v2.2`),
 		fctl.WithStringSliceFlag(c.metadataFlag, []string{}, "Metadata to apply on the newly created ledger"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
@@ -63,10 +69,20 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
+	features := make(map[string]string)
+	for _, s := range fctl.GetStringSlice(cmd, featuresFlag) {
+		parts := strings.SplitN(s, "=", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid feature flag format")
+		}
+		features[parts[0]] = parts[1]
+	}
+
 	_, err = store.Client().Ledger.V2.CreateLedger(cmd.Context(), operations.V2CreateLedgerRequest{
 		V2CreateLedgerRequest: &shared.V2CreateLedgerRequest{
 			Bucket:   pointer.For(fctl.GetString(cmd, bucketNameFlag)),
 			Metadata: metadata,
+			Features: features,
 		},
 		Ledger: args[0],
 	})
