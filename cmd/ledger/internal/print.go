@@ -116,8 +116,7 @@ type v2Transaction struct {
 }
 
 func (t v2Transaction) GetID() *big.Int {
-	//TODO implement me
-	panic("implement me")
+	return t.ID
 }
 
 func (t v2Transaction) GetPostings() []shared.Posting {
