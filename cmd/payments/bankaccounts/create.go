@@ -71,6 +71,24 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
+	if c.PaymentsVersion >= versions.V3 {
+		request := shared.V3CreateBankAccountRequest{}
+		if err := json.Unmarshal([]byte(script), &request); err != nil {
+			return nil, err
+		}
+
+		response, err := store.Client().Payments.V3.CreateBankAccount(cmd.Context(), &request)
+		if err != nil {
+			return nil, err
+		}
+		if response.StatusCode >= 300 {
+			return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+		}
+
+		c.store.BankAccountID = response.V3CreateBankAccountResponse.Data
+		return c, nil
+	}
+
 	request := shared.BankAccountRequest{}
 	if err := json.Unmarshal([]byte(script), &request); err != nil {
 		return nil, err
