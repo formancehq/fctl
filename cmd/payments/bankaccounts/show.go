@@ -89,14 +89,16 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.BankAccount = ToV3BankAccount(&response.BankAccountResponse.Data)
+	bankAccount := ToV3BankAccount(&response.BankAccountResponse.Data)
+	c.store.BankAccount = &bankAccount
 
 	return c, nil
 }
 
-func ToV3BankAccount(account *shared.BankAccount) *shared.V3BankAccount {
-	v3Account := &shared.V3BankAccount{
+func ToV3BankAccount(account *shared.BankAccount) shared.V3BankAccount {
+	v3Account := shared.V3BankAccount{
 		AccountNumber:   account.AccountNumber,
+		Country:         &account.Country,
 		CreatedAt:       account.CreatedAt,
 		Iban:            account.Iban,
 		ID:              account.ID,
@@ -120,6 +122,9 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 	tableData = append(tableData, []string{pterm.LightCyan("ID"), c.store.BankAccount.ID})
 	tableData = append(tableData, []string{pterm.LightCyan("Name"), c.store.BankAccount.Name})
 	tableData = append(tableData, []string{pterm.LightCyan("CreatedAt"), c.store.BankAccount.CreatedAt.Format(time.RFC3339)})
+	if c.store.BankAccount.Country != nil {
+		tableData = append(tableData, []string{pterm.LightCyan("Country"), *c.store.BankAccount.Country})
+	}
 	if c.store.BankAccount.AccountNumber != nil {
 		tableData = append(tableData, []string{pterm.LightCyan("AccountNumber"), *c.store.BankAccount.AccountNumber})
 	}
