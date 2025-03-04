@@ -13,7 +13,7 @@ import (
 )
 
 type ListStore struct {
-	Cursor *shared.BankAccountsCursorCursor `json:"cursor"`
+	Cursor *shared.V3BankAccountsCursorResponseCursor `json:"cursor"`
 }
 
 type ListController struct {
@@ -33,7 +33,7 @@ var _ fctl.Controller[*ListStore] = (*ListController)(nil)
 
 func NewListStore() *ListStore {
 	return &ListStore{
-		Cursor: &shared.BankAccountsCursorCursor{},
+		Cursor: &shared.V3BankAccountsCursorResponseCursor{},
 	}
 }
 
@@ -71,6 +71,10 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		pageSize = fctl.Ptr(int64(ps))
 	}
 
+	if c.PaymentsVersion >= versions.V3 {
+		return c.v3list(cmd, store, cursor, pageSize)
+	}
+
 	response, err := store.Client().Payments.V1.ListBankAccounts(
 		cmd.Context(),
 		operations.ListBankAccountsRequest{
@@ -86,19 +90,58 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Cursor = &response.BankAccountsCursor.Cursor
+	c.store.Cursor = ToV3BankAccountCursor(&response.BankAccountsCursor.Cursor)
 
 	return c, nil
 }
 
+func (c *ListController) v3list(cmd *cobra.Command, store *fctl.StackStore, cursor *string, pageSize *int64) (fctl.Renderable, error) {
+	response, err := store.Client().Payments.V3.ListBankAccounts(
+		cmd.Context(),
+		operations.V3ListBankAccountsRequest{
+			Cursor:   cursor,
+			PageSize: pageSize,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode >= 300 {
+		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+	}
+
+	c.store.Cursor = &response.V3BankAccountsCursorResponse.Cursor
+
+	return c, nil
+}
+
+func ToV3BankAccountCursor(c *shared.BankAccountsCursorCursor) *shared.V3BankAccountsCursorResponseCursor {
+	cursor := &shared.V3BankAccountsCursorResponseCursor{
+		Data:     make([]shared.V3BankAccount, 0, len(c.Data)),
+		HasMore:  c.HasMore,
+		Next:     c.Next,
+		Previous: c.Previous,
+		PageSize: c.PageSize,
+	}
+	for _, acc := range c.Data {
+		cursor.Data = append(cursor.Data, ToV3BankAccount(&acc))
+	}
+	return cursor
+}
+
 func (c *ListController) Render(cmd *cobra.Command, args []string) error {
-	tableData := fctl.Map(c.store.Cursor.Data, func(bc shared.BankAccount) []string {
-		return []string{
+	tableData := fctl.Map(c.store.Cursor.Data, func(bc shared.V3BankAccount) []string {
+		row := []string{
 			bc.ID,
 			bc.Name,
 			bc.CreatedAt.Format(time.RFC3339),
-			bc.Country,
+			"",
 		}
+		if bc.Country != nil {
+			row[3] = *bc.Country
+		}
+		return row
 	})
 	tableData = fctl.Prepend(tableData, []string{"ID", "Name", "CreatedAt", "Country"})
 	if err := pterm.DefaultTable.
