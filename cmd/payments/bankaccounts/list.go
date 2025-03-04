@@ -152,6 +152,25 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Paging")
+	cursorTable := pterm.TableData{}
+	cursorTable = append(cursorTable, []string{pterm.LightCyan("Page Size"), fmt.Sprintf("%d", c.store.Cursor.PageSize)})
+	cursorTable = append(cursorTable, []string{pterm.LightCyan("Has More"), fmt.Sprintf("%t", c.store.Cursor.HasMore)})
+	if c.store.Cursor.Next != nil {
+		cursorTable = append(cursorTable, []string{pterm.LightCyan("Next"), *c.store.Cursor.Next})
+	}
+	if c.store.Cursor.Previous != nil {
+		cursorTable = append(cursorTable, []string{pterm.LightCyan("Previous"), *c.store.Cursor.Previous})
+	}
+	//cursorTable = fctl.Prepend(cursorTable, []string{"Next", "Previous"})
+	if err := pterm.DefaultTable.
+		WithHasHeader().
+		WithWriter(cmd.OutOrStdout()).
+		WithData(cursorTable).
+		Render(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
