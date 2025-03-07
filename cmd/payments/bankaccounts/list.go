@@ -162,7 +162,6 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 	if c.store.Cursor.Previous != nil {
 		cursorTable = append(cursorTable, []string{pterm.LightCyan("Previous"), *c.store.Cursor.Previous})
 	}
-	//cursorTable = fctl.Prepend(cursorTable, []string{"Next", "Previous"})
 	if err := pterm.DefaultTable.
 		WithHasHeader().
 		WithWriter(cmd.OutOrStdout()).
