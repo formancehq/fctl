@@ -32,7 +32,7 @@ func NewLinkController() *LinkController {
 
 func NewLinkCommand() *cobra.Command {
 	return fctl.NewCommand("link <user-id>",
-		fctl.WithStringFlag("role", "", "Roles: (ADMIN, GUEST, NONE)"),
+		fctl.WithStringFlag("role", "", "Roles: (ADMIN, GUEST)"),
 		fctl.WithShortDescription("Link stack user with properties"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithController[*LinkStore](NewLinkController()),
@@ -44,7 +44,6 @@ func (c *LinkController) GetStore() *LinkStore {
 }
 
 func (c *LinkController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-
 	store := fctl.GetMembershipStackStore(cmd.Context())
 
 	role := membershipclient.Role(fctl.GetString(cmd, "role"))

@@ -102,7 +102,6 @@ func (c *LoginController) Render(cmd *cobra.Command, args []string) error {
 func NewCommand() *cobra.Command {
 	return fctl.NewCommand("login",
 		fctl.WithStringFlag(fctl.MembershipURIFlag, "", "service url"),
-		fctl.WithHiddenFlag(fctl.MembershipURIFlag),
 		fctl.WithShortDescription("Login"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithController[*LoginStore](NewLoginController()),
