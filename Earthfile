@@ -1,7 +1,7 @@
 VERSION 0.8
 PROJECT FormanceHQ/fctl
 
-IMPORT github.com/formancehq/earthly:tags/v0.16.0 AS core
+IMPORT github.com/formancehq/earthly:tags/v0.19.1 AS core
 
 FROM core+base-image
 
