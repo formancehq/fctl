@@ -15,9 +15,9 @@ import (
 
 type ImportStore struct{}
 type ImportController struct {
-	store              *ImportStore
-	inputFileFlag      string
-	recoverFromLastLog string
+	store             *ImportStore
+	inputFileFlag     string
+	resumeFromLastLog string
 }
 
 var _ fctl.Controller[*ImportStore] = (*ImportController)(nil)
@@ -28,9 +28,9 @@ func NewDefaultImportStore() *ImportStore {
 
 func NewImportController() *ImportController {
 	return &ImportController{
-		store:              NewDefaultImportStore(),
-		inputFileFlag:      "file",
-		recoverFromLastLog: "recover-from-last-log",
+		store:             NewDefaultImportStore(),
+		inputFileFlag:     "file",
+		resumeFromLastLog: "resume-from-last-log",
 	}
 }
 
@@ -40,7 +40,7 @@ func NewImportCommand() *cobra.Command {
 		fctl.WithArgs(cobra.ExactArgs(2)),
 		fctl.WithShortDescription("Import a ledger"),
 		fctl.WithStringFlag(c.inputFileFlag, "", "Import from stdin or file"),
-		fctl.WithBoolFlag(c.recoverFromLastLog, false, "Recover interrupted import"),
+		fctl.WithBoolFlag(c.resumeFromLastLog, false, "Recover interrupted import"),
 		fctl.WithController[*ImportStore](c),
 	)
 }
@@ -53,11 +53,11 @@ func (c *ImportController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 	store := fctl.GetStackStore(cmd.Context())
 
 	lastID := big.NewInt(-1)
-	recoverFromLastLog, err := cmd.Flags().GetBool(c.recoverFromLastLog)
+	resumeFromLastLog, err := cmd.Flags().GetBool(c.resumeFromLastLog)
 	if err != nil {
 		return nil, err
 	}
-	if recoverFromLastLog {
+	if resumeFromLastLog {
 		logs, err := store.Client().Ledger.V2.ListLogs(cmd.Context(), operations.V2ListLogsRequest{
 			Ledger:   args[0],
 			PageSize: pointer.For[int64](1),
