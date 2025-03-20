@@ -61,7 +61,7 @@ func (c *UpdateStatusController) Run(cmd *cobra.Command, args []string) (fctl.Re
 	}
 
 	if c.PaymentsVersion < versions.V1 {
-		return nil, fmt.Errorf("transfer initiation updates are only supported in == v2.0.0")
+		return nil, fmt.Errorf("transfer initiation updates are only supported in >= v2.0.0")
 	}
 
 	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to update the status of the transfer initiation '%s' to '%s'", args[0], args[1]) {
