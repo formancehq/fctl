@@ -94,7 +94,7 @@ func (c *PaymentsGetConfigController) Run(cmd *cobra.Command, args []string) (fc
 		c.store.Provider = provider
 		c.store.ConnectorConfig = response.ConnectorConfigResponse
 
-	case versions.V1:
+	default:
 		connectorList, err := store.Client().Payments.V1.ListAllConnectors(cmd.Context())
 		if err != nil {
 			return nil, err

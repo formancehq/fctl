@@ -8,7 +8,7 @@ require (
 	github.com/TylerBrock/colorjson v0.0.0-20200706003622-8a50f05110d2
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/formancehq/fctl/membershipclient v0.0.0-20230109152136-5d4c9193a44c
-	github.com/formancehq/formance-sdk-go/v3 v3.4.0
+	github.com/formancehq/formance-sdk-go/v3 v3.4.1
 	github.com/formancehq/go-libs v1.7.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/iancoleman/strcase v0.3.0
