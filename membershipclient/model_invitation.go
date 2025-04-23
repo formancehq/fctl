@@ -13,6 +13,8 @@ package membershipclient
 import (
 	"encoding/json"
 	"time"
+	"bytes"
+	"fmt"
 )
 
 // checks if the Invitation type satisfies the MappedNullable interface at compile time
@@ -29,7 +31,12 @@ type Invitation struct {
 	Role Role `json:"role"`
 	UserId *string `json:"userId,omitempty"`
 	OrganizationAccess *OrganizationUser `json:"organizationAccess,omitempty"`
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+	CreatorId *string `json:"creatorId,omitempty"`
+	LastUpdate *time.Time `json:"lastUpdate,omitempty"`
 }
+
+type _Invitation Invitation
 
 // NewInvitation instantiates a new Invitation object
 // This constructor will assign default values to properties that have it defined,
@@ -294,6 +301,102 @@ func (o *Invitation) SetOrganizationAccess(v OrganizationUser) {
 	o.OrganizationAccess = &v
 }
 
+// GetExpiresAt returns the ExpiresAt field value if set, zero value otherwise.
+func (o *Invitation) GetExpiresAt() time.Time {
+	if o == nil || IsNil(o.ExpiresAt) {
+		var ret time.Time
+		return ret
+	}
+	return *o.ExpiresAt
+}
+
+// GetExpiresAtOk returns a tuple with the ExpiresAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Invitation) GetExpiresAtOk() (*time.Time, bool) {
+	if o == nil || IsNil(o.ExpiresAt) {
+		return nil, false
+	}
+	return o.ExpiresAt, true
+}
+
+// HasExpiresAt returns a boolean if a field has been set.
+func (o *Invitation) HasExpiresAt() bool {
+	if o != nil && !IsNil(o.ExpiresAt) {
+		return true
+	}
+
+	return false
+}
+
+// SetExpiresAt gets a reference to the given time.Time and assigns it to the ExpiresAt field.
+func (o *Invitation) SetExpiresAt(v time.Time) {
+	o.ExpiresAt = &v
+}
+
+// GetCreatorId returns the CreatorId field value if set, zero value otherwise.
+func (o *Invitation) GetCreatorId() string {
+	if o == nil || IsNil(o.CreatorId) {
+		var ret string
+		return ret
+	}
+	return *o.CreatorId
+}
+
+// GetCreatorIdOk returns a tuple with the CreatorId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Invitation) GetCreatorIdOk() (*string, bool) {
+	if o == nil || IsNil(o.CreatorId) {
+		return nil, false
+	}
+	return o.CreatorId, true
+}
+
+// HasCreatorId returns a boolean if a field has been set.
+func (o *Invitation) HasCreatorId() bool {
+	if o != nil && !IsNil(o.CreatorId) {
+		return true
+	}
+
+	return false
+}
+
+// SetCreatorId gets a reference to the given string and assigns it to the CreatorId field.
+func (o *Invitation) SetCreatorId(v string) {
+	o.CreatorId = &v
+}
+
+// GetLastUpdate returns the LastUpdate field value if set, zero value otherwise.
+func (o *Invitation) GetLastUpdate() time.Time {
+	if o == nil || IsNil(o.LastUpdate) {
+		var ret time.Time
+		return ret
+	}
+	return *o.LastUpdate
+}
+
+// GetLastUpdateOk returns a tuple with the LastUpdate field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Invitation) GetLastUpdateOk() (*time.Time, bool) {
+	if o == nil || IsNil(o.LastUpdate) {
+		return nil, false
+	}
+	return o.LastUpdate, true
+}
+
+// HasLastUpdate returns a boolean if a field has been set.
+func (o *Invitation) HasLastUpdate() bool {
+	if o != nil && !IsNil(o.LastUpdate) {
+		return true
+	}
+
+	return false
+}
+
+// SetLastUpdate gets a reference to the given time.Time and assigns it to the LastUpdate field.
+func (o *Invitation) SetLastUpdate(v time.Time) {
+	o.LastUpdate = &v
+}
+
 func (o Invitation) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -319,7 +422,58 @@ func (o Invitation) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.OrganizationAccess) {
 		toSerialize["organizationAccess"] = o.OrganizationAccess
 	}
+	if !IsNil(o.ExpiresAt) {
+		toSerialize["expiresAt"] = o.ExpiresAt
+	}
+	if !IsNil(o.CreatorId) {
+		toSerialize["creatorId"] = o.CreatorId
+	}
+	if !IsNil(o.LastUpdate) {
+		toSerialize["lastUpdate"] = o.LastUpdate
+	}
 	return toSerialize, nil
+}
+
+func (o *Invitation) UnmarshalJSON(data []byte) (err error) {
+	// This validates that all required properties are included in the JSON object
+	// by unmarshalling the object into a generic map with string keys and checking
+	// that every required field exists as a key in the generic map.
+	requiredProperties := []string{
+		"id",
+		"organizationId",
+		"userEmail",
+		"status",
+		"creationDate",
+		"role",
+	}
+
+	allProperties := make(map[string]interface{})
+
+	err = json.Unmarshal(data, &allProperties)
+
+	if err != nil {
+		return err;
+	}
+
+	for _, requiredProperty := range(requiredProperties) {
+		if _, exists := allProperties[requiredProperty]; !exists {
+			return fmt.Errorf("no value given for required property %v", requiredProperty)
+		}
+	}
+
+	varInvitation := _Invitation{}
+
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&varInvitation)
+
+	if err != nil {
+		return err
+	}
+
+	*o = Invitation(varInvitation)
+
+	return err
 }
 
 type NullableInvitation struct {

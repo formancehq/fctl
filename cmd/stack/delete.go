@@ -44,7 +44,7 @@ func NewDeleteCommand() *cobra.Command {
 		fctl.WithArgs(cobra.MaximumNArgs(1)),
 		fctl.WithStringFlag(stackNameFlag, "", "Stack to delete"),
 		fctl.WithBoolFlag(forceFlag, false, "Force to delete a stack without retention policy"),
-		fctl.WithController[*DeletedStackStore](NewStackDeleteController()),
+		fctl.WithController(NewStackDeleteController()),
 	)
 }
 func (c *StackDeleteController) GetStore() *DeletedStackStore {

@@ -11,12 +11,16 @@ Name | Type | Description | Notes
 **LastPing** | Pointer to **time.Time** |  | [optional] 
 **Name** | **string** |  | 
 **Capabilities** | [**RegionCapability**](RegionCapability.md) |  | 
+**AgentID** | **string** |  | 
+**Outdated** | **bool** |  | 
+**CreatorId** | Pointer to **string** |  | [optional] 
+**Version** | Pointer to **string** |  | [optional] 
 
 ## Methods
 
 ### NewRegion
 
-`func NewRegion(id string, baseUrl string, createdAt string, active bool, name string, capabilities RegionCapability, ) *Region`
+`func NewRegion(id string, baseUrl string, createdAt string, active bool, name string, capabilities RegionCapability, agentID string, outdated bool, ) *Region`
 
 NewRegion instantiates a new Region object
 This constructor will assign default values to properties that have it defined,
@@ -175,6 +179,96 @@ and a boolean to check if the value has been set.
 
 SetCapabilities sets Capabilities field to given value.
 
+
+### GetAgentID
+
+`func (o *Region) GetAgentID() string`
+
+GetAgentID returns the AgentID field if non-nil, zero value otherwise.
+
+### GetAgentIDOk
+
+`func (o *Region) GetAgentIDOk() (*string, bool)`
+
+GetAgentIDOk returns a tuple with the AgentID field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetAgentID
+
+`func (o *Region) SetAgentID(v string)`
+
+SetAgentID sets AgentID field to given value.
+
+
+### GetOutdated
+
+`func (o *Region) GetOutdated() bool`
+
+GetOutdated returns the Outdated field if non-nil, zero value otherwise.
+
+### GetOutdatedOk
+
+`func (o *Region) GetOutdatedOk() (*bool, bool)`
+
+GetOutdatedOk returns a tuple with the Outdated field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetOutdated
+
+`func (o *Region) SetOutdated(v bool)`
+
+SetOutdated sets Outdated field to given value.
+
+
+### GetCreatorId
+
+`func (o *Region) GetCreatorId() string`
+
+GetCreatorId returns the CreatorId field if non-nil, zero value otherwise.
+
+### GetCreatorIdOk
+
+`func (o *Region) GetCreatorIdOk() (*string, bool)`
+
+GetCreatorIdOk returns a tuple with the CreatorId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetCreatorId
+
+`func (o *Region) SetCreatorId(v string)`
+
+SetCreatorId sets CreatorId field to given value.
+
+### HasCreatorId
+
+`func (o *Region) HasCreatorId() bool`
+
+HasCreatorId returns a boolean if a field has been set.
+
+### GetVersion
+
+`func (o *Region) GetVersion() string`
+
+GetVersion returns the Version field if non-nil, zero value otherwise.
+
+### GetVersionOk
+
+`func (o *Region) GetVersionOk() (*string, bool)`
+
+GetVersionOk returns a tuple with the Version field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetVersion
+
+`func (o *Region) SetVersion(v string)`
+
+SetVersion sets Version field to given value.
+
+### HasVersion
+
+`func (o *Region) HasVersion() bool`
+
+HasVersion returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

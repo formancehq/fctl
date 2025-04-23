@@ -20,12 +20,12 @@ import (
 )
 
 
-// DefaultApiService DefaultApi service
-type DefaultApiService service
+// DefaultAPIService DefaultAPI service
+type DefaultAPIService service
 
 type ApiAcceptInvitationRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	invitationId string
 }
 
@@ -40,7 +40,7 @@ AcceptInvitation Accept invitation
  @param invitationId
  @return ApiAcceptInvitationRequest
 */
-func (a *DefaultApiService) AcceptInvitation(ctx context.Context, invitationId string) ApiAcceptInvitationRequest {
+func (a *DefaultAPIService) AcceptInvitation(ctx context.Context, invitationId string) ApiAcceptInvitationRequest {
 	return ApiAcceptInvitationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -49,14 +49,14 @@ func (a *DefaultApiService) AcceptInvitation(ctx context.Context, invitationId s
 }
 
 // Execute executes the request
-func (a *DefaultApiService) AcceptInvitationExecute(r ApiAcceptInvitationRequest) (*http.Response, error) {
+func (a *DefaultAPIService) AcceptInvitationExecute(r ApiAcceptInvitationRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.AcceptInvitation")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.AcceptInvitation")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -147,7 +147,7 @@ func (a *DefaultApiService) AcceptInvitationExecute(r ApiAcceptInvitationRequest
 
 type ApiCreateInvitationRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	email *string
 	invitationClaim *InvitationClaim
@@ -174,7 +174,7 @@ CreateInvitation Create invitation
  @param organizationId
  @return ApiCreateInvitationRequest
 */
-func (a *DefaultApiService) CreateInvitation(ctx context.Context, organizationId string) ApiCreateInvitationRequest {
+func (a *DefaultAPIService) CreateInvitation(ctx context.Context, organizationId string) ApiCreateInvitationRequest {
 	return ApiCreateInvitationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -184,7 +184,7 @@ func (a *DefaultApiService) CreateInvitation(ctx context.Context, organizationId
 
 // Execute executes the request
 //  @return CreateInvitationResponse
-func (a *DefaultApiService) CreateInvitationExecute(r ApiCreateInvitationRequest) (*CreateInvitationResponse, *http.Response, error) {
+func (a *DefaultAPIService) CreateInvitationExecute(r ApiCreateInvitationRequest) (*CreateInvitationResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -192,7 +192,7 @@ func (a *DefaultApiService) CreateInvitationExecute(r ApiCreateInvitationRequest
 		localVarReturnValue  *CreateInvitationResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.CreateInvitation")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.CreateInvitation")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -207,7 +207,7 @@ func (a *DefaultApiService) CreateInvitationExecute(r ApiCreateInvitationRequest
 		return localVarReturnValue, nil, reportError("email is required and must be specified")
 	}
 
-	parameterAddToHeaderOrQuery(localVarQueryParams, "email", r.email, "")
+	parameterAddToHeaderOrQuery(localVarQueryParams, "email", r.email, "form", "")
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{"application/json"}
 
@@ -287,7 +287,7 @@ func (a *DefaultApiService) CreateInvitationExecute(r ApiCreateInvitationRequest
 
 type ApiCreateOrganizationRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	body *OrganizationData
 }
 
@@ -306,7 +306,7 @@ CreateOrganization Create organization
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiCreateOrganizationRequest
 */
-func (a *DefaultApiService) CreateOrganization(ctx context.Context) ApiCreateOrganizationRequest {
+func (a *DefaultAPIService) CreateOrganization(ctx context.Context) ApiCreateOrganizationRequest {
 	return ApiCreateOrganizationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -315,7 +315,7 @@ func (a *DefaultApiService) CreateOrganization(ctx context.Context) ApiCreateOrg
 
 // Execute executes the request
 //  @return CreateOrganizationResponse
-func (a *DefaultApiService) CreateOrganizationExecute(r ApiCreateOrganizationRequest) (*CreateOrganizationResponse, *http.Response, error) {
+func (a *DefaultAPIService) CreateOrganizationExecute(r ApiCreateOrganizationRequest) (*CreateOrganizationResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -323,7 +323,7 @@ func (a *DefaultApiService) CreateOrganizationExecute(r ApiCreateOrganizationReq
 		localVarReturnValue  *CreateOrganizationResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.CreateOrganization")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.CreateOrganization")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -402,7 +402,7 @@ func (a *DefaultApiService) CreateOrganizationExecute(r ApiCreateOrganizationReq
 
 type ApiCreatePrivateRegionRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	createPrivateRegionRequest *CreatePrivateRegionRequest
 }
@@ -423,7 +423,7 @@ CreatePrivateRegion Create a private region
  @param organizationId
  @return ApiCreatePrivateRegionRequest
 */
-func (a *DefaultApiService) CreatePrivateRegion(ctx context.Context, organizationId string) ApiCreatePrivateRegionRequest {
+func (a *DefaultAPIService) CreatePrivateRegion(ctx context.Context, organizationId string) ApiCreatePrivateRegionRequest {
 	return ApiCreatePrivateRegionRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -433,7 +433,7 @@ func (a *DefaultApiService) CreatePrivateRegion(ctx context.Context, organizatio
 
 // Execute executes the request
 //  @return CreatedPrivateRegionResponse
-func (a *DefaultApiService) CreatePrivateRegionExecute(r ApiCreatePrivateRegionRequest) (*CreatedPrivateRegionResponse, *http.Response, error) {
+func (a *DefaultAPIService) CreatePrivateRegionExecute(r ApiCreatePrivateRegionRequest) (*CreatedPrivateRegionResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -441,7 +441,7 @@ func (a *DefaultApiService) CreatePrivateRegionExecute(r ApiCreatePrivateRegionR
 		localVarReturnValue  *CreatedPrivateRegionResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.CreatePrivateRegion")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.CreatePrivateRegion")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -544,7 +544,7 @@ func (a *DefaultApiService) CreatePrivateRegionExecute(r ApiCreatePrivateRegionR
 
 type ApiCreateStackRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	createStackRequest *CreateStackRequest
 }
@@ -565,7 +565,7 @@ CreateStack Create stack
  @param organizationId
  @return ApiCreateStackRequest
 */
-func (a *DefaultApiService) CreateStack(ctx context.Context, organizationId string) ApiCreateStackRequest {
+func (a *DefaultAPIService) CreateStack(ctx context.Context, organizationId string) ApiCreateStackRequest {
 	return ApiCreateStackRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -575,7 +575,7 @@ func (a *DefaultApiService) CreateStack(ctx context.Context, organizationId stri
 
 // Execute executes the request
 //  @return CreateStackResponse
-func (a *DefaultApiService) CreateStackExecute(r ApiCreateStackRequest) (*CreateStackResponse, *http.Response, error) {
+func (a *DefaultAPIService) CreateStackExecute(r ApiCreateStackRequest) (*CreateStackResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -583,7 +583,7 @@ func (a *DefaultApiService) CreateStackExecute(r ApiCreateStackRequest) (*Create
 		localVarReturnValue  *CreateStackResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.CreateStack")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.CreateStack")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -674,7 +674,7 @@ func (a *DefaultApiService) CreateStackExecute(r ApiCreateStackRequest) (*Create
 
 type ApiDeclineInvitationRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	invitationId string
 }
 
@@ -689,7 +689,7 @@ DeclineInvitation Decline invitation
  @param invitationId
  @return ApiDeclineInvitationRequest
 */
-func (a *DefaultApiService) DeclineInvitation(ctx context.Context, invitationId string) ApiDeclineInvitationRequest {
+func (a *DefaultAPIService) DeclineInvitation(ctx context.Context, invitationId string) ApiDeclineInvitationRequest {
 	return ApiDeclineInvitationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -698,14 +698,14 @@ func (a *DefaultApiService) DeclineInvitation(ctx context.Context, invitationId 
 }
 
 // Execute executes the request
-func (a *DefaultApiService) DeclineInvitationExecute(r ApiDeclineInvitationRequest) (*http.Response, error) {
+func (a *DefaultAPIService) DeclineInvitationExecute(r ApiDeclineInvitationRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.DeclineInvitation")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DeclineInvitation")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -796,7 +796,7 @@ func (a *DefaultApiService) DeclineInvitationExecute(r ApiDeclineInvitationReque
 
 type ApiDeleteInvitationRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	invitationId string
 }
@@ -813,7 +813,7 @@ DeleteInvitation Delete invitation
  @param invitationId
  @return ApiDeleteInvitationRequest
 */
-func (a *DefaultApiService) DeleteInvitation(ctx context.Context, organizationId string, invitationId string) ApiDeleteInvitationRequest {
+func (a *DefaultAPIService) DeleteInvitation(ctx context.Context, organizationId string, invitationId string) ApiDeleteInvitationRequest {
 	return ApiDeleteInvitationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -823,14 +823,14 @@ func (a *DefaultApiService) DeleteInvitation(ctx context.Context, organizationId
 }
 
 // Execute executes the request
-func (a *DefaultApiService) DeleteInvitationExecute(r ApiDeleteInvitationRequest) (*http.Response, error) {
+func (a *DefaultAPIService) DeleteInvitationExecute(r ApiDeleteInvitationRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.DeleteInvitation")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DeleteInvitation")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -922,7 +922,7 @@ func (a *DefaultApiService) DeleteInvitationExecute(r ApiDeleteInvitationRequest
 
 type ApiDeleteOrganizationRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 }
 
@@ -937,7 +937,7 @@ DeleteOrganization Delete organization
  @param organizationId
  @return ApiDeleteOrganizationRequest
 */
-func (a *DefaultApiService) DeleteOrganization(ctx context.Context, organizationId string) ApiDeleteOrganizationRequest {
+func (a *DefaultAPIService) DeleteOrganization(ctx context.Context, organizationId string) ApiDeleteOrganizationRequest {
 	return ApiDeleteOrganizationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -946,14 +946,14 @@ func (a *DefaultApiService) DeleteOrganization(ctx context.Context, organization
 }
 
 // Execute executes the request
-func (a *DefaultApiService) DeleteOrganizationExecute(r ApiDeleteOrganizationRequest) (*http.Response, error) {
+func (a *DefaultAPIService) DeleteOrganizationExecute(r ApiDeleteOrganizationRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.DeleteOrganization")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DeleteOrganization")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1034,9 +1034,9 @@ func (a *DefaultApiService) DeleteOrganizationExecute(r ApiDeleteOrganizationReq
 
 type ApiDeleteRegionRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
-	regionId string
+	regionID string
 }
 
 func (r ApiDeleteRegionRequest) Execute() (*http.Response, error) {
@@ -1048,34 +1048,34 @@ DeleteRegion Delete region
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @param organizationId
- @param regionId
+ @param regionID
  @return ApiDeleteRegionRequest
 */
-func (a *DefaultApiService) DeleteRegion(ctx context.Context, organizationId string, regionId string) ApiDeleteRegionRequest {
+func (a *DefaultAPIService) DeleteRegion(ctx context.Context, organizationId string, regionID string) ApiDeleteRegionRequest {
 	return ApiDeleteRegionRequest{
 		ApiService: a,
 		ctx: ctx,
 		organizationId: organizationId,
-		regionId: regionId,
+		regionID: regionID,
 	}
 }
 
 // Execute executes the request
-func (a *DefaultApiService) DeleteRegionExecute(r ApiDeleteRegionRequest) (*http.Response, error) {
+func (a *DefaultAPIService) DeleteRegionExecute(r ApiDeleteRegionRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.DeleteRegion")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DeleteRegion")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/organizations/{organizationId}/regions/{regionId}"
+	localVarPath := localBasePath + "/organizations/{organizationId}/regions/{regionID}"
 	localVarPath = strings.Replace(localVarPath, "{"+"organizationId"+"}", url.PathEscape(parameterValueToString(r.organizationId, "organizationId")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"regionId"+"}", url.PathEscape(parameterValueToString(r.regionId, "regionId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"regionID"+"}", url.PathEscape(parameterValueToString(r.regionID, "regionID")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -1160,7 +1160,7 @@ func (a *DefaultApiService) DeleteRegionExecute(r ApiDeleteRegionRequest) (*http
 
 type ApiDeleteStackRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	stackId string
 	force *bool
@@ -1183,7 +1183,7 @@ DeleteStack Delete stack
  @param stackId
  @return ApiDeleteStackRequest
 */
-func (a *DefaultApiService) DeleteStack(ctx context.Context, organizationId string, stackId string) ApiDeleteStackRequest {
+func (a *DefaultAPIService) DeleteStack(ctx context.Context, organizationId string, stackId string) ApiDeleteStackRequest {
 	return ApiDeleteStackRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1193,14 +1193,14 @@ func (a *DefaultApiService) DeleteStack(ctx context.Context, organizationId stri
 }
 
 // Execute executes the request
-func (a *DefaultApiService) DeleteStackExecute(r ApiDeleteStackRequest) (*http.Response, error) {
+func (a *DefaultAPIService) DeleteStackExecute(r ApiDeleteStackRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.DeleteStack")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DeleteStack")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1214,7 +1214,7 @@ func (a *DefaultApiService) DeleteStackExecute(r ApiDeleteStackRequest) (*http.R
 	localVarFormParams := url.Values{}
 
 	if r.force != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "force", r.force, "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "force", r.force, "form", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1295,7 +1295,7 @@ func (a *DefaultApiService) DeleteStackExecute(r ApiDeleteStackRequest) (*http.R
 
 type ApiDeleteStackUserAccessRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	stackId string
 	userId string
@@ -1314,7 +1314,7 @@ DeleteStackUserAccess Delete stack user access role within an organization
  @param userId
  @return ApiDeleteStackUserAccessRequest
 */
-func (a *DefaultApiService) DeleteStackUserAccess(ctx context.Context, organizationId string, stackId string, userId string) ApiDeleteStackUserAccessRequest {
+func (a *DefaultAPIService) DeleteStackUserAccess(ctx context.Context, organizationId string, stackId string, userId string) ApiDeleteStackUserAccessRequest {
 	return ApiDeleteStackUserAccessRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1325,14 +1325,14 @@ func (a *DefaultApiService) DeleteStackUserAccess(ctx context.Context, organizat
 }
 
 // Execute executes the request
-func (a *DefaultApiService) DeleteStackUserAccessExecute(r ApiDeleteStackUserAccessRequest) (*http.Response, error) {
+func (a *DefaultAPIService) DeleteStackUserAccessExecute(r ApiDeleteStackUserAccessRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.DeleteStackUserAccess")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DeleteStackUserAccess")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1415,7 +1415,7 @@ func (a *DefaultApiService) DeleteStackUserAccessExecute(r ApiDeleteStackUserAcc
 
 type ApiDeleteUserFromOrganizationRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	userId string
 }
@@ -1435,7 +1435,7 @@ The owner of the organization can remove anyone while each user can leave any or
  @param userId
  @return ApiDeleteUserFromOrganizationRequest
 */
-func (a *DefaultApiService) DeleteUserFromOrganization(ctx context.Context, organizationId string, userId string) ApiDeleteUserFromOrganizationRequest {
+func (a *DefaultAPIService) DeleteUserFromOrganization(ctx context.Context, organizationId string, userId string) ApiDeleteUserFromOrganizationRequest {
 	return ApiDeleteUserFromOrganizationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1445,14 +1445,14 @@ func (a *DefaultApiService) DeleteUserFromOrganization(ctx context.Context, orga
 }
 
 // Execute executes the request
-func (a *DefaultApiService) DeleteUserFromOrganizationExecute(r ApiDeleteUserFromOrganizationRequest) (*http.Response, error) {
+func (a *DefaultAPIService) DeleteUserFromOrganizationExecute(r ApiDeleteUserFromOrganizationRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.DeleteUserFromOrganization")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DeleteUserFromOrganization")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1533,7 +1533,7 @@ func (a *DefaultApiService) DeleteUserFromOrganizationExecute(r ApiDeleteUserFro
 
 type ApiDisableModuleRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	stackId string
 	name *string
@@ -1556,7 +1556,7 @@ DisableModule disable module
  @param stackId
  @return ApiDisableModuleRequest
 */
-func (a *DefaultApiService) DisableModule(ctx context.Context, organizationId string, stackId string) ApiDisableModuleRequest {
+func (a *DefaultAPIService) DisableModule(ctx context.Context, organizationId string, stackId string) ApiDisableModuleRequest {
 	return ApiDisableModuleRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1566,14 +1566,14 @@ func (a *DefaultApiService) DisableModule(ctx context.Context, organizationId st
 }
 
 // Execute executes the request
-func (a *DefaultApiService) DisableModuleExecute(r ApiDisableModuleRequest) (*http.Response, error) {
+func (a *DefaultAPIService) DisableModuleExecute(r ApiDisableModuleRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.DisableModule")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DisableModule")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1589,7 +1589,7 @@ func (a *DefaultApiService) DisableModuleExecute(r ApiDisableModuleRequest) (*ht
 		return nil, reportError("name is required and must be specified")
 	}
 
-	parameterAddToHeaderOrQuery(localVarQueryParams, "name", r.name, "")
+	parameterAddToHeaderOrQuery(localVarQueryParams, "name", r.name, "form", "")
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -1658,7 +1658,7 @@ func (a *DefaultApiService) DisableModuleExecute(r ApiDisableModuleRequest) (*ht
 
 type ApiDisableStackRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	stackId string
 }
@@ -1675,7 +1675,7 @@ DisableStack Disable stack
  @param stackId
  @return ApiDisableStackRequest
 */
-func (a *DefaultApiService) DisableStack(ctx context.Context, organizationId string, stackId string) ApiDisableStackRequest {
+func (a *DefaultAPIService) DisableStack(ctx context.Context, organizationId string, stackId string) ApiDisableStackRequest {
 	return ApiDisableStackRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1685,14 +1685,14 @@ func (a *DefaultApiService) DisableStack(ctx context.Context, organizationId str
 }
 
 // Execute executes the request
-func (a *DefaultApiService) DisableStackExecute(r ApiDisableStackRequest) (*http.Response, error) {
+func (a *DefaultAPIService) DisableStackExecute(r ApiDisableStackRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPut
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.DisableStack")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DisableStack")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1784,7 +1784,7 @@ func (a *DefaultApiService) DisableStackExecute(r ApiDisableStackRequest) (*http
 
 type ApiDisableStargateRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	stackId string
 }
@@ -1801,7 +1801,7 @@ DisableStargate Disable stargate on a stack
  @param stackId
  @return ApiDisableStargateRequest
 */
-func (a *DefaultApiService) DisableStargate(ctx context.Context, organizationId string, stackId string) ApiDisableStargateRequest {
+func (a *DefaultAPIService) DisableStargate(ctx context.Context, organizationId string, stackId string) ApiDisableStargateRequest {
 	return ApiDisableStargateRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1811,14 +1811,14 @@ func (a *DefaultApiService) DisableStargate(ctx context.Context, organizationId 
 }
 
 // Execute executes the request
-func (a *DefaultApiService) DisableStargateExecute(r ApiDisableStargateRequest) (*http.Response, error) {
+func (a *DefaultAPIService) DisableStargateExecute(r ApiDisableStargateRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPut
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.DisableStargate")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DisableStargate")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1899,7 +1899,7 @@ func (a *DefaultApiService) DisableStargateExecute(r ApiDisableStargateRequest) 
 
 type ApiEnableModuleRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	stackId string
 	name *string
@@ -1922,7 +1922,7 @@ EnableModule enable module
  @param stackId
  @return ApiEnableModuleRequest
 */
-func (a *DefaultApiService) EnableModule(ctx context.Context, organizationId string, stackId string) ApiEnableModuleRequest {
+func (a *DefaultAPIService) EnableModule(ctx context.Context, organizationId string, stackId string) ApiEnableModuleRequest {
 	return ApiEnableModuleRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1932,14 +1932,14 @@ func (a *DefaultApiService) EnableModule(ctx context.Context, organizationId str
 }
 
 // Execute executes the request
-func (a *DefaultApiService) EnableModuleExecute(r ApiEnableModuleRequest) (*http.Response, error) {
+func (a *DefaultAPIService) EnableModuleExecute(r ApiEnableModuleRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.EnableModule")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.EnableModule")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1955,7 +1955,7 @@ func (a *DefaultApiService) EnableModuleExecute(r ApiEnableModuleRequest) (*http
 		return nil, reportError("name is required and must be specified")
 	}
 
-	parameterAddToHeaderOrQuery(localVarQueryParams, "name", r.name, "")
+	parameterAddToHeaderOrQuery(localVarQueryParams, "name", r.name, "form", "")
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -2024,7 +2024,7 @@ func (a *DefaultApiService) EnableModuleExecute(r ApiEnableModuleRequest) (*http
 
 type ApiEnableStackRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	stackId string
 }
@@ -2041,7 +2041,7 @@ EnableStack Enable stack
  @param stackId
  @return ApiEnableStackRequest
 */
-func (a *DefaultApiService) EnableStack(ctx context.Context, organizationId string, stackId string) ApiEnableStackRequest {
+func (a *DefaultAPIService) EnableStack(ctx context.Context, organizationId string, stackId string) ApiEnableStackRequest {
 	return ApiEnableStackRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -2051,14 +2051,14 @@ func (a *DefaultApiService) EnableStack(ctx context.Context, organizationId stri
 }
 
 // Execute executes the request
-func (a *DefaultApiService) EnableStackExecute(r ApiEnableStackRequest) (*http.Response, error) {
+func (a *DefaultAPIService) EnableStackExecute(r ApiEnableStackRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPut
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.EnableStack")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.EnableStack")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -2150,7 +2150,7 @@ func (a *DefaultApiService) EnableStackExecute(r ApiEnableStackRequest) (*http.R
 
 type ApiEnableStargateRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	stackId string
 }
@@ -2167,7 +2167,7 @@ EnableStargate Enable stargate on a stack
  @param stackId
  @return ApiEnableStargateRequest
 */
-func (a *DefaultApiService) EnableStargate(ctx context.Context, organizationId string, stackId string) ApiEnableStargateRequest {
+func (a *DefaultAPIService) EnableStargate(ctx context.Context, organizationId string, stackId string) ApiEnableStargateRequest {
 	return ApiEnableStargateRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -2177,14 +2177,14 @@ func (a *DefaultApiService) EnableStargate(ctx context.Context, organizationId s
 }
 
 // Execute executes the request
-func (a *DefaultApiService) EnableStargateExecute(r ApiEnableStargateRequest) (*http.Response, error) {
+func (a *DefaultAPIService) EnableStargateExecute(r ApiEnableStargateRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPut
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.EnableStargate")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.EnableStargate")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -2265,9 +2265,9 @@ func (a *DefaultApiService) EnableStargateExecute(r ApiEnableStargateRequest) (*
 
 type ApiGetRegionRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
-	regionId string
+	regionID string
 }
 
 func (r ApiGetRegionRequest) Execute() (*GetRegionResponse, *http.Response, error) {
@@ -2279,21 +2279,21 @@ GetRegion Get region
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @param organizationId
- @param regionId
+ @param regionID
  @return ApiGetRegionRequest
 */
-func (a *DefaultApiService) GetRegion(ctx context.Context, organizationId string, regionId string) ApiGetRegionRequest {
+func (a *DefaultAPIService) GetRegion(ctx context.Context, organizationId string, regionID string) ApiGetRegionRequest {
 	return ApiGetRegionRequest{
 		ApiService: a,
 		ctx: ctx,
 		organizationId: organizationId,
-		regionId: regionId,
+		regionID: regionID,
 	}
 }
 
 // Execute executes the request
 //  @return GetRegionResponse
-func (a *DefaultApiService) GetRegionExecute(r ApiGetRegionRequest) (*GetRegionResponse, *http.Response, error) {
+func (a *DefaultAPIService) GetRegionExecute(r ApiGetRegionRequest) (*GetRegionResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -2301,14 +2301,14 @@ func (a *DefaultApiService) GetRegionExecute(r ApiGetRegionRequest) (*GetRegionR
 		localVarReturnValue  *GetRegionResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.GetRegion")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetRegion")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/organizations/{organizationId}/regions/{regionId}"
+	localVarPath := localBasePath + "/organizations/{organizationId}/regions/{regionID}"
 	localVarPath = strings.Replace(localVarPath, "{"+"organizationId"+"}", url.PathEscape(parameterValueToString(r.organizationId, "organizationId")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"regionId"+"}", url.PathEscape(parameterValueToString(r.regionId, "regionId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"regionID"+"}", url.PathEscape(parameterValueToString(r.regionID, "regionID")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -2392,9 +2392,9 @@ func (a *DefaultApiService) GetRegionExecute(r ApiGetRegionRequest) (*GetRegionR
 
 type ApiGetRegionVersionsRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
-	regionId string
+	regionID string
 }
 
 func (r ApiGetRegionVersionsRequest) Execute() (*GetRegionVersionsResponse, *http.Response, error) {
@@ -2406,21 +2406,21 @@ GetRegionVersions Get region versions
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @param organizationId
- @param regionId
+ @param regionID
  @return ApiGetRegionVersionsRequest
 */
-func (a *DefaultApiService) GetRegionVersions(ctx context.Context, organizationId string, regionId string) ApiGetRegionVersionsRequest {
+func (a *DefaultAPIService) GetRegionVersions(ctx context.Context, organizationId string, regionID string) ApiGetRegionVersionsRequest {
 	return ApiGetRegionVersionsRequest{
 		ApiService: a,
 		ctx: ctx,
 		organizationId: organizationId,
-		regionId: regionId,
+		regionID: regionID,
 	}
 }
 
 // Execute executes the request
 //  @return GetRegionVersionsResponse
-func (a *DefaultApiService) GetRegionVersionsExecute(r ApiGetRegionVersionsRequest) (*GetRegionVersionsResponse, *http.Response, error) {
+func (a *DefaultAPIService) GetRegionVersionsExecute(r ApiGetRegionVersionsRequest) (*GetRegionVersionsResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -2428,14 +2428,14 @@ func (a *DefaultApiService) GetRegionVersionsExecute(r ApiGetRegionVersionsReque
 		localVarReturnValue  *GetRegionVersionsResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.GetRegionVersions")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetRegionVersions")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/organizations/{organizationId}/regions/{regionId}/versions"
+	localVarPath := localBasePath + "/organizations/{organizationId}/regions/{regionID}/versions"
 	localVarPath = strings.Replace(localVarPath, "{"+"organizationId"+"}", url.PathEscape(parameterValueToString(r.organizationId, "organizationId")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"regionId"+"}", url.PathEscape(parameterValueToString(r.regionId, "regionId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"regionID"+"}", url.PathEscape(parameterValueToString(r.regionID, "regionID")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -2519,7 +2519,7 @@ func (a *DefaultApiService) GetRegionVersionsExecute(r ApiGetRegionVersionsReque
 
 type ApiGetServerInfoRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 }
 
 func (r ApiGetServerInfoRequest) Execute() (*ServerInfo, *http.Response, error) {
@@ -2532,7 +2532,7 @@ GetServerInfo Get server info
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiGetServerInfoRequest
 */
-func (a *DefaultApiService) GetServerInfo(ctx context.Context) ApiGetServerInfoRequest {
+func (a *DefaultAPIService) GetServerInfo(ctx context.Context) ApiGetServerInfoRequest {
 	return ApiGetServerInfoRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -2541,7 +2541,7 @@ func (a *DefaultApiService) GetServerInfo(ctx context.Context) ApiGetServerInfoR
 
 // Execute executes the request
 //  @return ServerInfo
-func (a *DefaultApiService) GetServerInfoExecute(r ApiGetServerInfoRequest) (*ServerInfo, *http.Response, error) {
+func (a *DefaultAPIService) GetServerInfoExecute(r ApiGetServerInfoRequest) (*ServerInfo, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -2549,7 +2549,7 @@ func (a *DefaultApiService) GetServerInfoExecute(r ApiGetServerInfoRequest) (*Se
 		localVarReturnValue  *ServerInfo
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.GetServerInfo")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetServerInfo")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -2616,7 +2616,7 @@ func (a *DefaultApiService) GetServerInfoExecute(r ApiGetServerInfoRequest) (*Se
 
 type ApiGetStackRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	stackId string
 }
@@ -2633,7 +2633,7 @@ GetStack Find stack
  @param stackId
  @return ApiGetStackRequest
 */
-func (a *DefaultApiService) GetStack(ctx context.Context, organizationId string, stackId string) ApiGetStackRequest {
+func (a *DefaultAPIService) GetStack(ctx context.Context, organizationId string, stackId string) ApiGetStackRequest {
 	return ApiGetStackRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -2644,7 +2644,7 @@ func (a *DefaultApiService) GetStack(ctx context.Context, organizationId string,
 
 // Execute executes the request
 //  @return CreateStackResponse
-func (a *DefaultApiService) GetStackExecute(r ApiGetStackRequest) (*CreateStackResponse, *http.Response, error) {
+func (a *DefaultAPIService) GetStackExecute(r ApiGetStackRequest) (*CreateStackResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -2652,7 +2652,7 @@ func (a *DefaultApiService) GetStackExecute(r ApiGetStackRequest) (*CreateStackR
 		localVarReturnValue  *CreateStackResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.GetStack")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetStack")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -2742,7 +2742,7 @@ func (a *DefaultApiService) GetStackExecute(r ApiGetStackRequest) (*CreateStackR
 
 type ApiListInvitationsRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	status *string
 	organization *string
 }
@@ -2769,7 +2769,7 @@ ListInvitations List invitations of the user
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiListInvitationsRequest
 */
-func (a *DefaultApiService) ListInvitations(ctx context.Context) ApiListInvitationsRequest {
+func (a *DefaultAPIService) ListInvitations(ctx context.Context) ApiListInvitationsRequest {
 	return ApiListInvitationsRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -2778,7 +2778,7 @@ func (a *DefaultApiService) ListInvitations(ctx context.Context) ApiListInvitati
 
 // Execute executes the request
 //  @return ListInvitationsResponse
-func (a *DefaultApiService) ListInvitationsExecute(r ApiListInvitationsRequest) (*ListInvitationsResponse, *http.Response, error) {
+func (a *DefaultAPIService) ListInvitationsExecute(r ApiListInvitationsRequest) (*ListInvitationsResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -2786,7 +2786,7 @@ func (a *DefaultApiService) ListInvitationsExecute(r ApiListInvitationsRequest) 
 		localVarReturnValue  *ListInvitationsResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ListInvitations")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListInvitations")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -2798,10 +2798,10 @@ func (a *DefaultApiService) ListInvitationsExecute(r ApiListInvitationsRequest) 
 	localVarFormParams := url.Values{}
 
 	if r.status != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "status", r.status, "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "status", r.status, "form", "")
 	}
 	if r.organization != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "organization", r.organization, "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "organization", r.organization, "form", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -2859,7 +2859,7 @@ func (a *DefaultApiService) ListInvitationsExecute(r ApiListInvitationsRequest) 
 
 type ApiListLogsRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	stackId *string
 	cursor *string
@@ -2916,7 +2916,7 @@ ListLogs List logs
  @param organizationId
  @return ApiListLogsRequest
 */
-func (a *DefaultApiService) ListLogs(ctx context.Context, organizationId string) ApiListLogsRequest {
+func (a *DefaultAPIService) ListLogs(ctx context.Context, organizationId string) ApiListLogsRequest {
 	return ApiListLogsRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -2926,7 +2926,7 @@ func (a *DefaultApiService) ListLogs(ctx context.Context, organizationId string)
 
 // Execute executes the request
 //  @return LogCursor
-func (a *DefaultApiService) ListLogsExecute(r ApiListLogsRequest) (*LogCursor, *http.Response, error) {
+func (a *DefaultAPIService) ListLogsExecute(r ApiListLogsRequest) (*LogCursor, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -2934,7 +2934,7 @@ func (a *DefaultApiService) ListLogsExecute(r ApiListLogsRequest) (*LogCursor, *
 		localVarReturnValue  *LogCursor
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ListLogs")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListLogs")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -2947,25 +2947,25 @@ func (a *DefaultApiService) ListLogsExecute(r ApiListLogsRequest) (*LogCursor, *
 	localVarFormParams := url.Values{}
 
 	if r.stackId != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "stackId", r.stackId, "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "stackId", r.stackId, "form", "")
 	}
 	if r.cursor != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "cursor", r.cursor, "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "cursor", r.cursor, "form", "")
 	}
 	if r.pageSize != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "pageSize", r.pageSize, "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "pageSize", r.pageSize, "form", "")
 	}
 	if r.action != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "action", r.action, "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "action", r.action, "form", "")
 	}
 	if r.userId != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "userId", r.userId, "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "userId", r.userId, "form", "")
 	}
 	if r.key != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "key", r.key, "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "key", r.key, "form", "")
 	}
 	if r.value != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "value", r.value, "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "value", r.value, "form", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -3023,7 +3023,7 @@ func (a *DefaultApiService) ListLogsExecute(r ApiListLogsRequest) (*LogCursor, *
 
 type ApiListModulesRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	stackId string
 }
@@ -3040,7 +3040,7 @@ ListModules List modules of a stack
  @param stackId
  @return ApiListModulesRequest
 */
-func (a *DefaultApiService) ListModules(ctx context.Context, organizationId string, stackId string) ApiListModulesRequest {
+func (a *DefaultAPIService) ListModules(ctx context.Context, organizationId string, stackId string) ApiListModulesRequest {
 	return ApiListModulesRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -3051,7 +3051,7 @@ func (a *DefaultApiService) ListModules(ctx context.Context, organizationId stri
 
 // Execute executes the request
 //  @return ListModulesResponse
-func (a *DefaultApiService) ListModulesExecute(r ApiListModulesRequest) (*ListModulesResponse, *http.Response, error) {
+func (a *DefaultAPIService) ListModulesExecute(r ApiListModulesRequest) (*ListModulesResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -3059,7 +3059,7 @@ func (a *DefaultApiService) ListModulesExecute(r ApiListModulesRequest) (*ListMo
 		localVarReturnValue  *ListModulesResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ListModules")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListModules")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -3149,7 +3149,7 @@ func (a *DefaultApiService) ListModulesExecute(r ApiListModulesRequest) (*ListMo
 
 type ApiListOrganizationInvitationsRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	status *string
 }
@@ -3171,7 +3171,7 @@ ListOrganizationInvitations List invitations of the organization
  @param organizationId
  @return ApiListOrganizationInvitationsRequest
 */
-func (a *DefaultApiService) ListOrganizationInvitations(ctx context.Context, organizationId string) ApiListOrganizationInvitationsRequest {
+func (a *DefaultAPIService) ListOrganizationInvitations(ctx context.Context, organizationId string) ApiListOrganizationInvitationsRequest {
 	return ApiListOrganizationInvitationsRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -3181,7 +3181,7 @@ func (a *DefaultApiService) ListOrganizationInvitations(ctx context.Context, org
 
 // Execute executes the request
 //  @return ListInvitationsResponse
-func (a *DefaultApiService) ListOrganizationInvitationsExecute(r ApiListOrganizationInvitationsRequest) (*ListInvitationsResponse, *http.Response, error) {
+func (a *DefaultAPIService) ListOrganizationInvitationsExecute(r ApiListOrganizationInvitationsRequest) (*ListInvitationsResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -3189,7 +3189,7 @@ func (a *DefaultApiService) ListOrganizationInvitationsExecute(r ApiListOrganiza
 		localVarReturnValue  *ListInvitationsResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ListOrganizationInvitations")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListOrganizationInvitations")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -3202,7 +3202,7 @@ func (a *DefaultApiService) ListOrganizationInvitationsExecute(r ApiListOrganiza
 	localVarFormParams := url.Values{}
 
 	if r.status != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "status", r.status, "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "status", r.status, "form", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -3281,7 +3281,7 @@ func (a *DefaultApiService) ListOrganizationInvitationsExecute(r ApiListOrganiza
 
 type ApiListOrganizationsRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	expand *bool
 }
 
@@ -3300,7 +3300,7 @@ ListOrganizations List organizations of the connected user
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiListOrganizationsRequest
 */
-func (a *DefaultApiService) ListOrganizations(ctx context.Context) ApiListOrganizationsRequest {
+func (a *DefaultAPIService) ListOrganizations(ctx context.Context) ApiListOrganizationsRequest {
 	return ApiListOrganizationsRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -3309,7 +3309,7 @@ func (a *DefaultApiService) ListOrganizations(ctx context.Context) ApiListOrgani
 
 // Execute executes the request
 //  @return ListOrganizationExpandedResponse
-func (a *DefaultApiService) ListOrganizationsExecute(r ApiListOrganizationsRequest) (*ListOrganizationExpandedResponse, *http.Response, error) {
+func (a *DefaultAPIService) ListOrganizationsExecute(r ApiListOrganizationsRequest) (*ListOrganizationExpandedResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -3317,7 +3317,7 @@ func (a *DefaultApiService) ListOrganizationsExecute(r ApiListOrganizationsReque
 		localVarReturnValue  *ListOrganizationExpandedResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ListOrganizations")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListOrganizations")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -3329,7 +3329,7 @@ func (a *DefaultApiService) ListOrganizationsExecute(r ApiListOrganizationsReque
 	localVarFormParams := url.Values{}
 
 	if r.expand != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "expand", r.expand, "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "expand", r.expand, "form", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -3387,7 +3387,7 @@ func (a *DefaultApiService) ListOrganizationsExecute(r ApiListOrganizationsReque
 
 type ApiListOrganizationsExpandedRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 }
 
 func (r ApiListOrganizationsExpandedRequest) Execute() (*ListOrganizationExpandedResponse, *http.Response, error) {
@@ -3402,7 +3402,7 @@ ListOrganizationsExpanded List organizations of the connected user with expanded
 
 Deprecated
 */
-func (a *DefaultApiService) ListOrganizationsExpanded(ctx context.Context) ApiListOrganizationsExpandedRequest {
+func (a *DefaultAPIService) ListOrganizationsExpanded(ctx context.Context) ApiListOrganizationsExpandedRequest {
 	return ApiListOrganizationsExpandedRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -3412,7 +3412,7 @@ func (a *DefaultApiService) ListOrganizationsExpanded(ctx context.Context) ApiLi
 // Execute executes the request
 //  @return ListOrganizationExpandedResponse
 // Deprecated
-func (a *DefaultApiService) ListOrganizationsExpandedExecute(r ApiListOrganizationsExpandedRequest) (*ListOrganizationExpandedResponse, *http.Response, error) {
+func (a *DefaultAPIService) ListOrganizationsExpandedExecute(r ApiListOrganizationsExpandedRequest) (*ListOrganizationExpandedResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -3420,7 +3420,7 @@ func (a *DefaultApiService) ListOrganizationsExpandedExecute(r ApiListOrganizati
 		localVarReturnValue  *ListOrganizationExpandedResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ListOrganizationsExpanded")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListOrganizationsExpanded")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -3487,7 +3487,7 @@ func (a *DefaultApiService) ListOrganizationsExpandedExecute(r ApiListOrganizati
 
 type ApiListRegionsRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 }
 
@@ -3502,7 +3502,7 @@ ListRegions List regions
  @param organizationId
  @return ApiListRegionsRequest
 */
-func (a *DefaultApiService) ListRegions(ctx context.Context, organizationId string) ApiListRegionsRequest {
+func (a *DefaultAPIService) ListRegions(ctx context.Context, organizationId string) ApiListRegionsRequest {
 	return ApiListRegionsRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -3512,7 +3512,7 @@ func (a *DefaultApiService) ListRegions(ctx context.Context, organizationId stri
 
 // Execute executes the request
 //  @return ListRegionsResponse
-func (a *DefaultApiService) ListRegionsExecute(r ApiListRegionsRequest) (*ListRegionsResponse, *http.Response, error) {
+func (a *DefaultAPIService) ListRegionsExecute(r ApiListRegionsRequest) (*ListRegionsResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -3520,7 +3520,7 @@ func (a *DefaultApiService) ListRegionsExecute(r ApiListRegionsRequest) (*ListRe
 		localVarReturnValue  *ListRegionsResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ListRegions")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListRegions")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -3609,7 +3609,7 @@ func (a *DefaultApiService) ListRegionsExecute(r ApiListRegionsRequest) (*ListRe
 
 type ApiListStackUsersAccessesRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	stackId string
 }
@@ -3626,7 +3626,7 @@ ListStackUsersAccesses List stack users accesses within an organization
  @param stackId
  @return ApiListStackUsersAccessesRequest
 */
-func (a *DefaultApiService) ListStackUsersAccesses(ctx context.Context, organizationId string, stackId string) ApiListStackUsersAccessesRequest {
+func (a *DefaultAPIService) ListStackUsersAccesses(ctx context.Context, organizationId string, stackId string) ApiListStackUsersAccessesRequest {
 	return ApiListStackUsersAccessesRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -3637,7 +3637,7 @@ func (a *DefaultApiService) ListStackUsersAccesses(ctx context.Context, organiza
 
 // Execute executes the request
 //  @return StackUserAccessResponse
-func (a *DefaultApiService) ListStackUsersAccessesExecute(r ApiListStackUsersAccessesRequest) (*StackUserAccessResponse, *http.Response, error) {
+func (a *DefaultAPIService) ListStackUsersAccessesExecute(r ApiListStackUsersAccessesRequest) (*StackUserAccessResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -3645,7 +3645,7 @@ func (a *DefaultApiService) ListStackUsersAccessesExecute(r ApiListStackUsersAcc
 		localVarReturnValue  *StackUserAccessResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ListStackUsersAccesses")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListStackUsersAccesses")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -3735,7 +3735,7 @@ func (a *DefaultApiService) ListStackUsersAccessesExecute(r ApiListStackUsersAcc
 
 type ApiListStacksRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	all *bool
 	deleted *bool
@@ -3765,7 +3765,7 @@ ListStacks List stacks
  @param organizationId
  @return ApiListStacksRequest
 */
-func (a *DefaultApiService) ListStacks(ctx context.Context, organizationId string) ApiListStacksRequest {
+func (a *DefaultAPIService) ListStacks(ctx context.Context, organizationId string) ApiListStacksRequest {
 	return ApiListStacksRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -3775,7 +3775,7 @@ func (a *DefaultApiService) ListStacks(ctx context.Context, organizationId strin
 
 // Execute executes the request
 //  @return ListStacksResponse
-func (a *DefaultApiService) ListStacksExecute(r ApiListStacksRequest) (*ListStacksResponse, *http.Response, error) {
+func (a *DefaultAPIService) ListStacksExecute(r ApiListStacksRequest) (*ListStacksResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -3783,7 +3783,7 @@ func (a *DefaultApiService) ListStacksExecute(r ApiListStacksRequest) (*ListStac
 		localVarReturnValue  *ListStacksResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ListStacks")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListStacks")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -3796,10 +3796,10 @@ func (a *DefaultApiService) ListStacksExecute(r ApiListStacksRequest) (*ListStac
 	localVarFormParams := url.Values{}
 
 	if r.all != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "all", r.all, "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "all", r.all, "form", "")
 	}
 	if r.deleted != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "deleted", r.deleted, "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "deleted", r.deleted, "form", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -3857,7 +3857,7 @@ func (a *DefaultApiService) ListStacksExecute(r ApiListStacksRequest) (*ListStac
 
 type ApiListUsersOfOrganizationRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 }
 
@@ -3872,7 +3872,7 @@ ListUsersOfOrganization List users of organization
  @param organizationId
  @return ApiListUsersOfOrganizationRequest
 */
-func (a *DefaultApiService) ListUsersOfOrganization(ctx context.Context, organizationId string) ApiListUsersOfOrganizationRequest {
+func (a *DefaultAPIService) ListUsersOfOrganization(ctx context.Context, organizationId string) ApiListUsersOfOrganizationRequest {
 	return ApiListUsersOfOrganizationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -3882,7 +3882,7 @@ func (a *DefaultApiService) ListUsersOfOrganization(ctx context.Context, organiz
 
 // Execute executes the request
 //  @return ListUsersResponse
-func (a *DefaultApiService) ListUsersOfOrganizationExecute(r ApiListUsersOfOrganizationRequest) (*ListUsersResponse, *http.Response, error) {
+func (a *DefaultAPIService) ListUsersOfOrganizationExecute(r ApiListUsersOfOrganizationRequest) (*ListUsersResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -3890,7 +3890,7 @@ func (a *DefaultApiService) ListUsersOfOrganizationExecute(r ApiListUsersOfOrgan
 		localVarReturnValue  *ListUsersResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ListUsersOfOrganization")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListUsersOfOrganization")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -3969,7 +3969,7 @@ func (a *DefaultApiService) ListUsersOfOrganizationExecute(r ApiListUsersOfOrgan
 
 type ApiReadConnectedUserRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 }
 
 func (r ApiReadConnectedUserRequest) Execute() (*ReadUserResponse, *http.Response, error) {
@@ -3982,7 +3982,7 @@ ReadConnectedUser Read user
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiReadConnectedUserRequest
 */
-func (a *DefaultApiService) ReadConnectedUser(ctx context.Context) ApiReadConnectedUserRequest {
+func (a *DefaultAPIService) ReadConnectedUser(ctx context.Context) ApiReadConnectedUserRequest {
 	return ApiReadConnectedUserRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -3991,7 +3991,7 @@ func (a *DefaultApiService) ReadConnectedUser(ctx context.Context) ApiReadConnec
 
 // Execute executes the request
 //  @return ReadUserResponse
-func (a *DefaultApiService) ReadConnectedUserExecute(r ApiReadConnectedUserRequest) (*ReadUserResponse, *http.Response, error) {
+func (a *DefaultAPIService) ReadConnectedUserExecute(r ApiReadConnectedUserRequest) (*ReadUserResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -3999,7 +3999,7 @@ func (a *DefaultApiService) ReadConnectedUserExecute(r ApiReadConnectedUserReque
 		localVarReturnValue  *ReadUserResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ReadConnectedUser")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ReadConnectedUser")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -4066,7 +4066,7 @@ func (a *DefaultApiService) ReadConnectedUserExecute(r ApiReadConnectedUserReque
 
 type ApiReadOrganizationRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	expand *bool
 }
@@ -4087,7 +4087,7 @@ ReadOrganization Read organization
  @param organizationId
  @return ApiReadOrganizationRequest
 */
-func (a *DefaultApiService) ReadOrganization(ctx context.Context, organizationId string) ApiReadOrganizationRequest {
+func (a *DefaultAPIService) ReadOrganization(ctx context.Context, organizationId string) ApiReadOrganizationRequest {
 	return ApiReadOrganizationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -4097,7 +4097,7 @@ func (a *DefaultApiService) ReadOrganization(ctx context.Context, organizationId
 
 // Execute executes the request
 //  @return ReadOrganizationResponse
-func (a *DefaultApiService) ReadOrganizationExecute(r ApiReadOrganizationRequest) (*ReadOrganizationResponse, *http.Response, error) {
+func (a *DefaultAPIService) ReadOrganizationExecute(r ApiReadOrganizationRequest) (*ReadOrganizationResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -4105,7 +4105,7 @@ func (a *DefaultApiService) ReadOrganizationExecute(r ApiReadOrganizationRequest
 		localVarReturnValue  *ReadOrganizationResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ReadOrganization")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ReadOrganization")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -4118,7 +4118,7 @@ func (a *DefaultApiService) ReadOrganizationExecute(r ApiReadOrganizationRequest
 	localVarFormParams := url.Values{}
 
 	if r.expand != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "expand", r.expand, "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "expand", r.expand, "form", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -4176,7 +4176,7 @@ func (a *DefaultApiService) ReadOrganizationExecute(r ApiReadOrganizationRequest
 
 type ApiReadStackUserAccessRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	stackId string
 	userId string
@@ -4195,7 +4195,7 @@ ReadStackUserAccess Read stack user access role within an organization
  @param userId
  @return ApiReadStackUserAccessRequest
 */
-func (a *DefaultApiService) ReadStackUserAccess(ctx context.Context, organizationId string, stackId string, userId string) ApiReadStackUserAccessRequest {
+func (a *DefaultAPIService) ReadStackUserAccess(ctx context.Context, organizationId string, stackId string, userId string) ApiReadStackUserAccessRequest {
 	return ApiReadStackUserAccessRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -4207,7 +4207,7 @@ func (a *DefaultApiService) ReadStackUserAccess(ctx context.Context, organizatio
 
 // Execute executes the request
 //  @return ReadStackUserAccess
-func (a *DefaultApiService) ReadStackUserAccessExecute(r ApiReadStackUserAccessRequest) (*ReadStackUserAccess, *http.Response, error) {
+func (a *DefaultAPIService) ReadStackUserAccessExecute(r ApiReadStackUserAccessRequest) (*ReadStackUserAccess, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -4215,7 +4215,7 @@ func (a *DefaultApiService) ReadStackUserAccessExecute(r ApiReadStackUserAccessR
 		localVarReturnValue  *ReadStackUserAccess
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ReadStackUserAccess")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ReadStackUserAccess")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -4306,7 +4306,7 @@ func (a *DefaultApiService) ReadStackUserAccessExecute(r ApiReadStackUserAccessR
 
 type ApiReadUserOfOrganizationRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	userId string
 }
@@ -4323,7 +4323,7 @@ ReadUserOfOrganization Read user of organization
  @param userId
  @return ApiReadUserOfOrganizationRequest
 */
-func (a *DefaultApiService) ReadUserOfOrganization(ctx context.Context, organizationId string, userId string) ApiReadUserOfOrganizationRequest {
+func (a *DefaultAPIService) ReadUserOfOrganization(ctx context.Context, organizationId string, userId string) ApiReadUserOfOrganizationRequest {
 	return ApiReadUserOfOrganizationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -4334,7 +4334,7 @@ func (a *DefaultApiService) ReadUserOfOrganization(ctx context.Context, organiza
 
 // Execute executes the request
 //  @return ReadOrganizationUserResponse
-func (a *DefaultApiService) ReadUserOfOrganizationExecute(r ApiReadUserOfOrganizationRequest) (*ReadOrganizationUserResponse, *http.Response, error) {
+func (a *DefaultAPIService) ReadUserOfOrganizationExecute(r ApiReadUserOfOrganizationRequest) (*ReadOrganizationUserResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -4342,7 +4342,7 @@ func (a *DefaultApiService) ReadUserOfOrganizationExecute(r ApiReadUserOfOrganiz
 		localVarReturnValue  *ReadOrganizationUserResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.ReadUserOfOrganization")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ReadUserOfOrganization")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -4433,7 +4433,7 @@ func (a *DefaultApiService) ReadUserOfOrganizationExecute(r ApiReadUserOfOrganiz
 
 type ApiRestoreStackRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	stackId string
 }
@@ -4450,7 +4450,7 @@ RestoreStack Restore stack
  @param stackId
  @return ApiRestoreStackRequest
 */
-func (a *DefaultApiService) RestoreStack(ctx context.Context, organizationId string, stackId string) ApiRestoreStackRequest {
+func (a *DefaultAPIService) RestoreStack(ctx context.Context, organizationId string, stackId string) ApiRestoreStackRequest {
 	return ApiRestoreStackRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -4461,7 +4461,7 @@ func (a *DefaultApiService) RestoreStack(ctx context.Context, organizationId str
 
 // Execute executes the request
 //  @return CreateStackResponse
-func (a *DefaultApiService) RestoreStackExecute(r ApiRestoreStackRequest) (*CreateStackResponse, *http.Response, error) {
+func (a *DefaultAPIService) RestoreStackExecute(r ApiRestoreStackRequest) (*CreateStackResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPut
 		localVarPostBody     interface{}
@@ -4469,7 +4469,7 @@ func (a *DefaultApiService) RestoreStackExecute(r ApiRestoreStackRequest) (*Crea
 		localVarReturnValue  *CreateStackResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.RestoreStack")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.RestoreStack")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -4570,7 +4570,7 @@ func (a *DefaultApiService) RestoreStackExecute(r ApiRestoreStackRequest) (*Crea
 
 type ApiUpdateOrganizationRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	organizationData *OrganizationData
 }
@@ -4591,7 +4591,7 @@ UpdateOrganization Update organization
  @param organizationId
  @return ApiUpdateOrganizationRequest
 */
-func (a *DefaultApiService) UpdateOrganization(ctx context.Context, organizationId string) ApiUpdateOrganizationRequest {
+func (a *DefaultAPIService) UpdateOrganization(ctx context.Context, organizationId string) ApiUpdateOrganizationRequest {
 	return ApiUpdateOrganizationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -4601,7 +4601,7 @@ func (a *DefaultApiService) UpdateOrganization(ctx context.Context, organization
 
 // Execute executes the request
 //  @return ReadOrganizationResponse
-func (a *DefaultApiService) UpdateOrganizationExecute(r ApiUpdateOrganizationRequest) (*ReadOrganizationResponse, *http.Response, error) {
+func (a *DefaultAPIService) UpdateOrganizationExecute(r ApiUpdateOrganizationRequest) (*ReadOrganizationResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPut
 		localVarPostBody     interface{}
@@ -4609,7 +4609,7 @@ func (a *DefaultApiService) UpdateOrganizationExecute(r ApiUpdateOrganizationReq
 		localVarReturnValue  *ReadOrganizationResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.UpdateOrganization")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.UpdateOrganization")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -4689,7 +4689,7 @@ func (a *DefaultApiService) UpdateOrganizationExecute(r ApiUpdateOrganizationReq
 
 type ApiUpdateStackRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	stackId string
 	updateStackRequest *UpdateStackRequest
@@ -4712,7 +4712,7 @@ UpdateStack Update stack
  @param stackId
  @return ApiUpdateStackRequest
 */
-func (a *DefaultApiService) UpdateStack(ctx context.Context, organizationId string, stackId string) ApiUpdateStackRequest {
+func (a *DefaultAPIService) UpdateStack(ctx context.Context, organizationId string, stackId string) ApiUpdateStackRequest {
 	return ApiUpdateStackRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -4723,7 +4723,7 @@ func (a *DefaultApiService) UpdateStack(ctx context.Context, organizationId stri
 
 // Execute executes the request
 //  @return CreateStackResponse
-func (a *DefaultApiService) UpdateStackExecute(r ApiUpdateStackRequest) (*CreateStackResponse, *http.Response, error) {
+func (a *DefaultAPIService) UpdateStackExecute(r ApiUpdateStackRequest) (*CreateStackResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPut
 		localVarPostBody     interface{}
@@ -4731,7 +4731,7 @@ func (a *DefaultApiService) UpdateStackExecute(r ApiUpdateStackRequest) (*Create
 		localVarReturnValue  *CreateStackResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.UpdateStack")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.UpdateStack")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -4823,7 +4823,7 @@ func (a *DefaultApiService) UpdateStackExecute(r ApiUpdateStackRequest) (*Create
 
 type ApiUpgradeStackRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	stackId string
 	stackVersion *StackVersion
@@ -4846,7 +4846,7 @@ UpgradeStack Upgrade stack
  @param stackId
  @return ApiUpgradeStackRequest
 */
-func (a *DefaultApiService) UpgradeStack(ctx context.Context, organizationId string, stackId string) ApiUpgradeStackRequest {
+func (a *DefaultAPIService) UpgradeStack(ctx context.Context, organizationId string, stackId string) ApiUpgradeStackRequest {
 	return ApiUpgradeStackRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -4856,14 +4856,14 @@ func (a *DefaultApiService) UpgradeStack(ctx context.Context, organizationId str
 }
 
 // Execute executes the request
-func (a *DefaultApiService) UpgradeStackExecute(r ApiUpgradeStackRequest) (*http.Response, error) {
+func (a *DefaultAPIService) UpgradeStackExecute(r ApiUpgradeStackRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPut
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.UpgradeStack")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.UpgradeStack")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -4946,7 +4946,7 @@ func (a *DefaultApiService) UpgradeStackExecute(r ApiUpgradeStackRequest) (*http
 
 type ApiUpsertOrganizationUserRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	userId string
 	updateOrganizationUserRequest *UpdateOrganizationUserRequest
@@ -4969,7 +4969,7 @@ UpsertOrganizationUser Update user within an organization
  @param userId
  @return ApiUpsertOrganizationUserRequest
 */
-func (a *DefaultApiService) UpsertOrganizationUser(ctx context.Context, organizationId string, userId string) ApiUpsertOrganizationUserRequest {
+func (a *DefaultAPIService) UpsertOrganizationUser(ctx context.Context, organizationId string, userId string) ApiUpsertOrganizationUserRequest {
 	return ApiUpsertOrganizationUserRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -4979,14 +4979,14 @@ func (a *DefaultApiService) UpsertOrganizationUser(ctx context.Context, organiza
 }
 
 // Execute executes the request
-func (a *DefaultApiService) UpsertOrganizationUserExecute(r ApiUpsertOrganizationUserRequest) (*http.Response, error) {
+func (a *DefaultAPIService) UpsertOrganizationUserExecute(r ApiUpsertOrganizationUserRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPut
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.UpsertOrganizationUser")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.UpsertOrganizationUser")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -5081,7 +5081,7 @@ func (a *DefaultApiService) UpsertOrganizationUserExecute(r ApiUpsertOrganizatio
 
 type ApiUpsertStackUserAccessRequest struct {
 	ctx context.Context
-	ApiService *DefaultApiService
+	ApiService *DefaultAPIService
 	organizationId string
 	stackId string
 	userId string
@@ -5106,7 +5106,7 @@ UpsertStackUserAccess Update stack user access role within an organization
  @param userId
  @return ApiUpsertStackUserAccessRequest
 */
-func (a *DefaultApiService) UpsertStackUserAccess(ctx context.Context, organizationId string, stackId string, userId string) ApiUpsertStackUserAccessRequest {
+func (a *DefaultAPIService) UpsertStackUserAccess(ctx context.Context, organizationId string, stackId string, userId string) ApiUpsertStackUserAccessRequest {
 	return ApiUpsertStackUserAccessRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -5117,14 +5117,14 @@ func (a *DefaultApiService) UpsertStackUserAccess(ctx context.Context, organizat
 }
 
 // Execute executes the request
-func (a *DefaultApiService) UpsertStackUserAccessExecute(r ApiUpsertStackUserAccessRequest) (*http.Response, error) {
+func (a *DefaultAPIService) UpsertStackUserAccessExecute(r ApiUpsertStackUserAccessRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPut
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultApiService.UpsertStackUserAccess")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.UpsertStackUserAccess")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}

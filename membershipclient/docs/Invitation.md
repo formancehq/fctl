@@ -13,6 +13,9 @@ Name | Type | Description | Notes
 **Role** | [**Role**](Role.md) |  | 
 **UserId** | Pointer to **string** |  | [optional] 
 **OrganizationAccess** | Pointer to [**OrganizationUser**](OrganizationUser.md) |  | [optional] 
+**ExpiresAt** | Pointer to **time.Time** |  | [optional] 
+**CreatorId** | Pointer to **string** |  | [optional] 
+**LastUpdate** | Pointer to **time.Time** |  | [optional] 
 
 ## Methods
 
@@ -227,6 +230,81 @@ SetOrganizationAccess sets OrganizationAccess field to given value.
 `func (o *Invitation) HasOrganizationAccess() bool`
 
 HasOrganizationAccess returns a boolean if a field has been set.
+
+### GetExpiresAt
+
+`func (o *Invitation) GetExpiresAt() time.Time`
+
+GetExpiresAt returns the ExpiresAt field if non-nil, zero value otherwise.
+
+### GetExpiresAtOk
+
+`func (o *Invitation) GetExpiresAtOk() (*time.Time, bool)`
+
+GetExpiresAtOk returns a tuple with the ExpiresAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetExpiresAt
+
+`func (o *Invitation) SetExpiresAt(v time.Time)`
+
+SetExpiresAt sets ExpiresAt field to given value.
+
+### HasExpiresAt
+
+`func (o *Invitation) HasExpiresAt() bool`
+
+HasExpiresAt returns a boolean if a field has been set.
+
+### GetCreatorId
+
+`func (o *Invitation) GetCreatorId() string`
+
+GetCreatorId returns the CreatorId field if non-nil, zero value otherwise.
+
+### GetCreatorIdOk
+
+`func (o *Invitation) GetCreatorIdOk() (*string, bool)`
+
+GetCreatorIdOk returns a tuple with the CreatorId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetCreatorId
+
+`func (o *Invitation) SetCreatorId(v string)`
+
+SetCreatorId sets CreatorId field to given value.
+
+### HasCreatorId
+
+`func (o *Invitation) HasCreatorId() bool`
+
+HasCreatorId returns a boolean if a field has been set.
+
+### GetLastUpdate
+
+`func (o *Invitation) GetLastUpdate() time.Time`
+
+GetLastUpdate returns the LastUpdate field if non-nil, zero value otherwise.
+
+### GetLastUpdateOk
+
+`func (o *Invitation) GetLastUpdateOk() (*time.Time, bool)`
+
+GetLastUpdateOk returns a tuple with the LastUpdate field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetLastUpdate
+
+`func (o *Invitation) SetLastUpdate(v time.Time)`
+
+SetLastUpdate sets LastUpdate field to given value.
+
+### HasLastUpdate
+
+`func (o *Invitation) HasLastUpdate() bool`
+
+HasLastUpdate returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

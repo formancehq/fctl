@@ -25,6 +25,7 @@ const (
 	INVITATIONS_CREATED Action = "invitations.created"
 	INVITATIONS_ACCEPTED Action = "invitations.accepted"
 	INVITATIONS_REJECTED Action = "invitations.rejected"
+	INVITATIONS_CANCELLED Action = "invitations.cancelled"
 	ORGANIZATIONS_CREATED Action = "organizations.created"
 	ORGANIZATIONS_UPDATED Action = "organizations.updated"
 	ORGANIZATIONS_DELETED Action = "organizations.deleted"
@@ -63,6 +64,7 @@ var AllowedActionEnumValues = []Action{
 	"invitations.created",
 	"invitations.accepted",
 	"invitations.rejected",
+	"invitations.cancelled",
 	"organizations.created",
 	"organizations.updated",
 	"organizations.deleted",

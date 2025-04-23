@@ -46,7 +46,7 @@ func NewShowCommand() *cobra.Command {
 		fctl.WithShortDescription("Show stack"),
 		fctl.WithArgs(cobra.MaximumNArgs(1)),
 		fctl.WithStringFlag(stackNameFlag, "", ""),
-		fctl.WithController[*StackShowStore](NewStackShowController()),
+		fctl.WithController(NewStackShowController()),
 	)
 }
 

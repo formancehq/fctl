@@ -6,12 +6,13 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Name** | **string** |  | 
 **Versions** | **map[string]string** |  | 
+**RegionID** | **string** |  | 
 
 ## Methods
 
 ### NewVersion
 
-`func NewVersion(name string, versions map[string]string, ) *Version`
+`func NewVersion(name string, versions map[string]string, regionID string, ) *Version`
 
 NewVersion instantiates a new Version object
 This constructor will assign default values to properties that have it defined,
@@ -64,6 +65,26 @@ and a boolean to check if the value has been set.
 `func (o *Version) SetVersions(v map[string]string)`
 
 SetVersions sets Versions field to given value.
+
+
+### GetRegionID
+
+`func (o *Version) GetRegionID() string`
+
+GetRegionID returns the RegionID field if non-nil, zero value otherwise.
+
+### GetRegionIDOk
+
+`func (o *Version) GetRegionIDOk() (*string, bool)`
+
+GetRegionIDOk returns a tuple with the RegionID field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetRegionID
+
+`func (o *Version) SetRegionID(v string)`
+
+SetRegionID sets RegionID field to given value.
 
 
 

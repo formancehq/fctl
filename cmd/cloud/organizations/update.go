@@ -34,7 +34,7 @@ func NewUpdateCommand() *cobra.Command {
 		fctl.WithStringFlag("default-stack-role", "", "Default Stack Role"),
 		fctl.WithStringFlag("domain", "", "Organization Domain"),
 		fctl.WithStringFlag("default-organization-role", "", "Default Organization Role"),
-		fctl.WithController[*DescribeStore](NewUpdateController()),
+		fctl.WithController(NewUpdateController()),
 	)
 }
 

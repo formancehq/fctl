@@ -45,7 +45,7 @@ func NewUpdateCommand() *cobra.Command {
 		}),
 		fctl.WithBoolFlag(unprotectFlag, false, "Unprotect stacks (no confirmation on write commands)"),
 		fctl.WithStringFlag(nameFlag, "", "Name of the stack"),
-		fctl.WithController[*StackUpdateStore](NewStackUpdateController()),
+		fctl.WithController(NewStackUpdateController()),
 	)
 }
 func (c *StackUpdateController) GetStore() *StackUpdateStore {

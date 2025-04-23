@@ -57,7 +57,7 @@ func NewListCommand() *cobra.Command {
 		fctl.WithBoolFlag(deletedFlag, false, "Display deleted stacks"),
 		fctl.WithBoolFlag(allFlag, false, "Display deleted stacks"),
 		fctl.WithDeprecatedFlag(deletedFlag, "Use --all instead"),
-		fctl.WithController[*StackListStore](NewStackListController()),
+		fctl.WithController(NewStackListController()),
 	)
 }
 func (c *StackListController) GetStore() *StackListStore {

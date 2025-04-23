@@ -19,7 +19,7 @@ var _ MappedNullable = &ListOrganizationExpandedResponse{}
 
 // ListOrganizationExpandedResponse struct for ListOrganizationExpandedResponse
 type ListOrganizationExpandedResponse struct {
-	Data []ListOrganizationExpandedResponseDataInner `json:"data,omitempty"`
+	Data []OrganizationExpanded `json:"data,omitempty"`
 }
 
 // NewListOrganizationExpandedResponse instantiates a new ListOrganizationExpandedResponse object
@@ -40,9 +40,9 @@ func NewListOrganizationExpandedResponseWithDefaults() *ListOrganizationExpanded
 }
 
 // GetData returns the Data field value if set, zero value otherwise.
-func (o *ListOrganizationExpandedResponse) GetData() []ListOrganizationExpandedResponseDataInner {
+func (o *ListOrganizationExpandedResponse) GetData() []OrganizationExpanded {
 	if o == nil || IsNil(o.Data) {
-		var ret []ListOrganizationExpandedResponseDataInner
+		var ret []OrganizationExpanded
 		return ret
 	}
 	return o.Data
@@ -50,7 +50,7 @@ func (o *ListOrganizationExpandedResponse) GetData() []ListOrganizationExpandedR
 
 // GetDataOk returns a tuple with the Data field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ListOrganizationExpandedResponse) GetDataOk() ([]ListOrganizationExpandedResponseDataInner, bool) {
+func (o *ListOrganizationExpandedResponse) GetDataOk() ([]OrganizationExpanded, bool) {
 	if o == nil || IsNil(o.Data) {
 		return nil, false
 	}
@@ -66,8 +66,8 @@ func (o *ListOrganizationExpandedResponse) HasData() bool {
 	return false
 }
 
-// SetData gets a reference to the given []ListOrganizationExpandedResponseDataInner and assigns it to the Data field.
-func (o *ListOrganizationExpandedResponse) SetData(v []ListOrganizationExpandedResponseDataInner) {
+// SetData gets a reference to the given []OrganizationExpanded and assigns it to the Data field.
+func (o *ListOrganizationExpandedResponse) SetData(v []OrganizationExpanded) {
 	o.Data = v
 }
 

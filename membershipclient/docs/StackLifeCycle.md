@@ -10,6 +10,8 @@ Name | Type | Description | Notes
 **LastStateUpdate** | **time.Time** |  | 
 **LastExpectedStatusUpdate** | **time.Time** |  | 
 **LastStatusUpdate** | **time.Time** |  | 
+**WarnedAt** | Pointer to **time.Time** |  | [optional] 
+**DisposableSince** | Pointer to **time.Time** |  | [optional] 
 
 ## Methods
 
@@ -149,6 +151,56 @@ and a boolean to check if the value has been set.
 
 SetLastStatusUpdate sets LastStatusUpdate field to given value.
 
+
+### GetWarnedAt
+
+`func (o *StackLifeCycle) GetWarnedAt() time.Time`
+
+GetWarnedAt returns the WarnedAt field if non-nil, zero value otherwise.
+
+### GetWarnedAtOk
+
+`func (o *StackLifeCycle) GetWarnedAtOk() (*time.Time, bool)`
+
+GetWarnedAtOk returns a tuple with the WarnedAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetWarnedAt
+
+`func (o *StackLifeCycle) SetWarnedAt(v time.Time)`
+
+SetWarnedAt sets WarnedAt field to given value.
+
+### HasWarnedAt
+
+`func (o *StackLifeCycle) HasWarnedAt() bool`
+
+HasWarnedAt returns a boolean if a field has been set.
+
+### GetDisposableSince
+
+`func (o *StackLifeCycle) GetDisposableSince() time.Time`
+
+GetDisposableSince returns the DisposableSince field if non-nil, zero value otherwise.
+
+### GetDisposableSinceOk
+
+`func (o *StackLifeCycle) GetDisposableSinceOk() (*time.Time, bool)`
+
+GetDisposableSinceOk returns a tuple with the DisposableSince field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDisposableSince
+
+`func (o *StackLifeCycle) SetDisposableSince(v time.Time)`
+
+SetDisposableSince sets DisposableSince field to given value.
+
+### HasDisposableSince
+
+`func (o *StackLifeCycle) HasDisposableSince() bool`
+
+HasDisposableSince returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

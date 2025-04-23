@@ -9,6 +9,7 @@ Name | Type | Description | Notes
 **Status** | **string** |  | 
 **LastStatusUpdate** | **time.Time** |  | 
 **LastStateUpdate** | **time.Time** |  | 
+**ClusterStatus** | Pointer to **string** |  | [optional] 
 
 ## Methods
 
@@ -128,6 +129,31 @@ and a boolean to check if the value has been set.
 
 SetLastStateUpdate sets LastStateUpdate field to given value.
 
+
+### GetClusterStatus
+
+`func (o *Module) GetClusterStatus() string`
+
+GetClusterStatus returns the ClusterStatus field if non-nil, zero value otherwise.
+
+### GetClusterStatusOk
+
+`func (o *Module) GetClusterStatusOk() (*string, bool)`
+
+GetClusterStatusOk returns a tuple with the ClusterStatus field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetClusterStatus
+
+`func (o *Module) SetClusterStatus(v string)`
+
+SetClusterStatus sets ClusterStatus field to given value.
+
+### HasClusterStatus
+
+`func (o *Module) HasClusterStatus() bool`
+
+HasClusterStatus returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

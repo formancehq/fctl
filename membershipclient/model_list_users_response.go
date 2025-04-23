@@ -19,7 +19,7 @@ var _ MappedNullable = &ListUsersResponse{}
 
 // ListUsersResponse struct for ListUsersResponse
 type ListUsersResponse struct {
-	Data []OrganizationUserArrayInner `json:"data,omitempty"`
+	Data []OrganizationUser `json:"data,omitempty"`
 }
 
 // NewListUsersResponse instantiates a new ListUsersResponse object
@@ -40,9 +40,9 @@ func NewListUsersResponseWithDefaults() *ListUsersResponse {
 }
 
 // GetData returns the Data field value if set, zero value otherwise.
-func (o *ListUsersResponse) GetData() []OrganizationUserArrayInner {
+func (o *ListUsersResponse) GetData() []OrganizationUser {
 	if o == nil || IsNil(o.Data) {
-		var ret []OrganizationUserArrayInner
+		var ret []OrganizationUser
 		return ret
 	}
 	return o.Data
@@ -50,7 +50,7 @@ func (o *ListUsersResponse) GetData() []OrganizationUserArrayInner {
 
 // GetDataOk returns a tuple with the Data field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ListUsersResponse) GetDataOk() ([]OrganizationUserArrayInner, bool) {
+func (o *ListUsersResponse) GetDataOk() ([]OrganizationUser, bool) {
 	if o == nil || IsNil(o.Data) {
 		return nil, false
 	}
@@ -66,8 +66,8 @@ func (o *ListUsersResponse) HasData() bool {
 	return false
 }
 
-// SetData gets a reference to the given []OrganizationUserArrayInner and assigns it to the Data field.
-func (o *ListUsersResponse) SetData(v []OrganizationUserArrayInner) {
+// SetData gets a reference to the given []OrganizationUser and assigns it to the Data field.
+func (o *ListUsersResponse) SetData(v []OrganizationUser) {
 	o.Data = v
 }
 

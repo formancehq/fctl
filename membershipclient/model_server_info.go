@@ -12,6 +12,8 @@ package membershipclient
 
 import (
 	"encoding/json"
+	"bytes"
+	"fmt"
 )
 
 // checks if the ServerInfo type satisfies the MappedNullable interface at compile time
@@ -23,6 +25,8 @@ type ServerInfo struct {
 	Capabilities []Capability `json:"capabilities,omitempty"`
 	ConsoleURL *string `json:"consoleURL,omitempty"`
 }
+
+type _ServerInfo ServerInfo
 
 // NewServerInfo instantiates a new ServerInfo object
 // This constructor will assign default values to properties that have it defined,
@@ -148,6 +152,43 @@ func (o ServerInfo) ToMap() (map[string]interface{}, error) {
 		toSerialize["consoleURL"] = o.ConsoleURL
 	}
 	return toSerialize, nil
+}
+
+func (o *ServerInfo) UnmarshalJSON(data []byte) (err error) {
+	// This validates that all required properties are included in the JSON object
+	// by unmarshalling the object into a generic map with string keys and checking
+	// that every required field exists as a key in the generic map.
+	requiredProperties := []string{
+		"version",
+	}
+
+	allProperties := make(map[string]interface{})
+
+	err = json.Unmarshal(data, &allProperties)
+
+	if err != nil {
+		return err;
+	}
+
+	for _, requiredProperty := range(requiredProperties) {
+		if _, exists := allProperties[requiredProperty]; !exists {
+			return fmt.Errorf("no value given for required property %v", requiredProperty)
+		}
+	}
+
+	varServerInfo := _ServerInfo{}
+
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&varServerInfo)
+
+	if err != nil {
+		return err
+	}
+
+	*o = ServerInfo(varServerInfo)
+
+	return err
 }
 
 type NullableServerInfo struct {

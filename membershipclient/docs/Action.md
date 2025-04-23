@@ -13,6 +13,8 @@
 
 * `INVITATIONS_REJECTED` (value: `"invitations.rejected"`)
 
+* `INVITATIONS_CANCELLED` (value: `"invitations.cancelled"`)
+
 * `ORGANIZATIONS_CREATED` (value: `"organizations.created"`)
 
 * `ORGANIZATIONS_UPDATED` (value: `"organizations.updated"`)

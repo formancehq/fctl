@@ -1377,7 +1377,7 @@ paths:
                 $ref: '#/components/schemas/CreatedPrivateRegionResponse'
           description: Created region
       summary: Create a private region
-  /organizations/{organizationId}/regions/{regionId}:
+  /organizations/{organizationId}/regions/{regionID}:
     delete:
       operationId: deleteRegion
       parameters:
@@ -1390,7 +1390,7 @@ paths:
         style: simple
       - explode: false
         in: path
-        name: regionId
+        name: regionID
         required: true
         schema:
           type: string
@@ -1429,7 +1429,7 @@ paths:
         style: simple
       - explode: false
         in: path
-        name: regionId
+        name: regionID
         required: true
         schema:
           type: string
@@ -1454,7 +1454,7 @@ paths:
                 $ref: '#/components/schemas/GetRegionResponse'
           description: Get a specific region
       summary: Get region
-  /organizations/{organizationId}/regions/{regionId}/versions:
+  /organizations/{organizationId}/regions/{regionID}/versions:
     get:
       operationId: getRegionVersions
       parameters:
@@ -1467,7 +1467,7 @@ paths:
         style: simple
       - explode: false
         in: path
-        name: regionId
+        name: regionID
         required: true
         schema:
           type: string
@@ -1511,6 +1511,7 @@ components:
         name: name
         lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
         state: ENABLED
+        clusterStatus: clusterStatus
         status: UNKNOWN
       properties:
         name:
@@ -1533,6 +1534,8 @@ components:
         lastStateUpdate:
           format: date-time
           type: string
+        clusterStatus:
+          type: string
       required:
       - lastStateUpdate
       - lastStatusUpdate
@@ -1547,11 +1550,13 @@ components:
           name: name
           lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
           state: ENABLED
+          clusterStatus: clusterStatus
           status: UNKNOWN
         - lastStateUpdate: 2000-01-23T04:56:07.000+00:00
           name: name
           lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
           state: ENABLED
+          clusterStatus: clusterStatus
           status: UNKNOWN
       properties:
         data:
@@ -1568,6 +1573,7 @@ components:
       - invitations.created
       - invitations.accepted
       - invitations.rejected
+      - invitations.cancelled
       - organizations.created
       - organizations.updated
       - organizations.deleted
@@ -1600,13 +1606,37 @@ components:
       type: string
     LogCursor:
       example:
-        data: null
+        data:
+          next: ""
+          previous: YXVsdCBhbmQgYSBtYXhpbXVtIG1heF9yZXN1bHRzLol=
+          data:
+          - organizationId: organizationId
+            date: 2000-01-23T04:56:07.000+00:00
+            data: "{}"
+            action: action
+            userId: userId
+            seq: 1e6f8b6e-1b6b-4b3b-8b3b-1b6b4b3b8b3b
+          - organizationId: organizationId
+            date: 2000-01-23T04:56:07.000+00:00
+            data: "{}"
+            action: action
+            userId: userId
+            seq: 1e6f8b6e-1b6b-4b3b-8b3b-1b6b4b3b8b3b
+          hasMore: false
+          pageSize: 15
       properties:
         data:
           $ref: '#/components/schemas/LogCursor_data'
       required:
       - data
     Log:
+      example:
+        organizationId: organizationId
+        date: 2000-01-23T04:56:07.000+00:00
+        data: "{}"
+        action: action
+        userId: userId
+        seq: 1e6f8b6e-1b6b-4b3b-8b3b-1b6b4b3b8b3b
       properties:
         seq:
           example: 1e6f8b6e-1b6b-4b3b-8b3b-1b6b4b3b8b3b
@@ -1663,7 +1693,29 @@ components:
       type: object
     CreatedPrivateRegionResponse:
       example:
-        data: null
+        data:
+          agentID: agentID
+          capabilities:
+            EE:
+            - EE
+            - EE
+            MODULE_LIST:
+            - MODULE_LIST
+            - MODULE_LIST
+          creatorId: creatorId
+          creatorID: creatorID
+          active: true
+          lastPing: 2000-01-23T04:56:07.000+00:00
+          secret:
+            clear: clear
+            lastDigits: lastDigits
+          version: version
+          organizationID: organizationID
+          createdAt: createdAt
+          baseUrl: baseUrl
+          outdated: true
+          name: name
+          id: id
       properties:
         data:
           $ref: '#/components/schemas/PrivateRegion'
@@ -1672,18 +1724,120 @@ components:
     PrivateRegion:
       allOf:
       - $ref: '#/components/schemas/Region'
-      - $ref: '#/components/schemas/PrivateRegion_allOf'
+      - properties:
+          organizationID:
+            type: string
+          creatorID:
+            type: string
+          secret:
+            $ref: '#/components/schemas/PrivateRegionSecret'
+        required:
+        - creatorID
+        - organizationID
+        type: object
+      example:
+        agentID: agentID
+        capabilities:
+          EE:
+          - EE
+          - EE
+          MODULE_LIST:
+          - MODULE_LIST
+          - MODULE_LIST
+        creatorId: creatorId
+        creatorID: creatorID
+        active: true
+        lastPing: 2000-01-23T04:56:07.000+00:00
+        secret:
+          clear: clear
+          lastDigits: lastDigits
+        version: version
+        organizationID: organizationID
+        createdAt: createdAt
+        baseUrl: baseUrl
+        outdated: true
+        name: name
+        id: id
     PublicRegion:
       allOf:
       - $ref: '#/components/schemas/Region'
-      - $ref: '#/components/schemas/PublicRegion_allOf'
+      - properties:
+          production:
+            type: boolean
+        required:
+        - production
+        type: object
     AnyRegion:
       allOf:
       - $ref: '#/components/schemas/Region'
-      - $ref: '#/components/schemas/AnyRegion_allOf'
+      - properties:
+          clientID:
+            type: string
+          organizationID:
+            type: string
+          creator:
+            $ref: '#/components/schemas/User'
+          production:
+            type: boolean
+          public:
+            type: boolean
+          version:
+            type: string
+          agentID:
+            type: string
+          outdated:
+            type: boolean
+          secret:
+            $ref: '#/components/schemas/PrivateRegionSecret'
+        required:
+        - agentID
+        - outdated
+        - public
+        type: object
+      example:
+        agentID: agentID
+        creator:
+          role: USER
+          id: id
+          email: email
+        capabilities:
+          EE:
+          - EE
+          - EE
+          MODULE_LIST:
+          - MODULE_LIST
+          - MODULE_LIST
+        clientID: clientID
+        production: true
+        creatorId: creatorId
+        active: true
+        lastPing: 2000-01-23T04:56:07.000+00:00
+        secret:
+          clear: clear
+          lastDigits: lastDigits
+        version: version
+        organizationID: organizationID
+        createdAt: createdAt
+        baseUrl: baseUrl
+        outdated: true
+        public: true
+        name: name
+        id: id
+    PrivateRegionSecret:
+      example:
+        clear: clear
+        lastDigits: lastDigits
+      properties:
+        lastDigits:
+          type: string
+        clear:
+          type: string
+      required:
+      - lastDigits
+      type: object
     OrganizationData:
       example:
-        defaultOrganizationAccess: null
+        defaultOrganizationAccess: NONE
         defaultStackAccess: null
         domain: domain
         name: name
@@ -1704,7 +1858,29 @@ components:
     Organization:
       allOf:
       - $ref: '#/components/schemas/OrganizationData'
-      - $ref: '#/components/schemas/Organization_allOf'
+      - properties:
+          id:
+            description: Organization ID
+            type: string
+          ownerId:
+            description: Owner ID
+            type: string
+          availableStacks:
+            description: Number of available stacks
+            type: integer
+          availableSandboxes:
+            description: Number of available sandboxes
+            type: integer
+          createdAt:
+            format: date-time
+            type: string
+          updatedAt:
+            format: date-time
+            type: string
+        required:
+        - id
+        - ownerId
+        type: object
     StackData:
       properties:
         name:
@@ -1756,6 +1932,12 @@ components:
         lastStatusUpdate:
           format: date-time
           type: string
+        warnedAt:
+          format: date-time
+          type: string
+        disposableSince:
+          format: date-time
+          type: string
       required:
       - expectedStatus
       - lastExpectedStatusUpdate
@@ -1782,10 +1964,79 @@ components:
       - $ref: '#/components/schemas/StackVersion'
       - $ref: '#/components/schemas/StackLifeCycle'
       - $ref: '#/components/schemas/StackReachability'
-      - $ref: '#/components/schemas/Stack_allOf'
+      - properties:
+          id:
+            description: Stack ID
+            type: string
+          organizationId:
+            description: Organization ID
+            type: string
+          uri:
+            description: Base stack uri
+            type: string
+          regionID:
+            description: The region where the stack is installed
+            type: string
+          stargateEnabled:
+            type: boolean
+          createdAt:
+            format: date-time
+            type: string
+          deletedAt:
+            format: date-time
+            type: string
+          disabledAt:
+            format: date-time
+            type: string
+          auditEnabled:
+            type: boolean
+          synchronised:
+            type: boolean
+          updatedAt:
+            format: date-time
+            type: string
+        required:
+        - id
+        - organizationId
+        - regionID
+        - stargateEnabled
+        - synchronised
+        - uri
+        type: object
+      example:
+        auditEnabled: true
+        metadata:
+          key: metadata
+        lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
+        expectedStatus: READY
+        version: version
+        uri: uri
+        reachable: true
+        stargateEnabled: true
+        disabledAt: 2000-01-23T04:56:07.000+00:00
+        organizationId: organizationId
+        lastExpectedStatusUpdate: 2000-01-23T04:56:07.000+00:00
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        deletedAt: 2000-01-23T04:56:07.000+00:00
+        regionID: regionID
+        warnedAt: 2000-01-23T04:56:07.000+00:00
+        lastStateUpdate: 2000-01-23T04:56:07.000+00:00
+        name: name
+        lastReachableUpdate: 2000-01-23T04:56:07.000+00:00
+        synchronised: true
+        state: ACTIVE
+        id: id
+        disposableSince: 2000-01-23T04:56:07.000+00:00
+        status: UNKNOWN
+        updatedAt: 2000-01-23T04:56:07.000+00:00
     UserData:
       allOf:
-      - $ref: '#/components/schemas/UserData_allOf'
+      - properties:
+          email:
+            type: string
+        required:
+        - email
+        type: object
     Role:
       enum:
       - NONE
@@ -1800,22 +2051,54 @@ components:
     User:
       allOf:
       - $ref: '#/components/schemas/UserData'
-      - $ref: '#/components/schemas/User_allOf'
-      - $ref: '#/components/schemas/User_allOf_1'
+      - properties:
+          id:
+            description: User ID
+            type: string
+        required:
+        - id
+        type: object
+      - properties:
+          role:
+            $ref: '#/components/schemas/SystemRole'
+        type: object
+      example:
+        role: USER
+        id: id
+        email: email
     OrganizationUserArray:
       items:
-        $ref: '#/components/schemas/OrganizationUserArray_inner'
+        allOf:
+        - $ref: '#/components/schemas/OrganizationUser'
       type: array
     ReadOrganizationUserResponse:
       example:
-        data: null
+        data:
+          role: NONE
+          id: id
+          email: email
       properties:
         data:
           $ref: '#/components/schemas/OrganizationUser'
       type: object
     OrganizationUser:
       allOf:
-      - $ref: '#/components/schemas/OrganizationUser_allOf'
+      - properties:
+          role:
+            $ref: '#/components/schemas/Role'
+          email:
+            type: string
+          id:
+            type: string
+        required:
+        - email
+        - id
+        - role
+        type: object
+      example:
+        role: NONE
+        id: id
+        email: email
     OrganizationArray:
       items:
         $ref: '#/components/schemas/Organization'
@@ -1830,19 +2113,51 @@ components:
       type: array
     ReadStackUserAccess:
       example:
-        data: null
+        data:
+          role: NONE
+          stackId: stackId
+          userId: userId
+          email: email
       properties:
         data:
           $ref: '#/components/schemas/StackUserAccess'
       type: object
     StackUserAccess:
       allOf:
-      - $ref: '#/components/schemas/StackUserAccess_allOf'
+      - properties:
+          stackId:
+            description: Stack ID
+            type: string
+          userId:
+            description: User ID
+            type: string
+          email:
+            description: User email
+            type: string
+          role:
+            $ref: '#/components/schemas/Role'
+        required:
+        - email
+        - role
+        - stackId
+        - userId
+        type: object
+      example:
+        role: NONE
+        stackId: stackId
+        userId: userId
+        email: email
     StackUserAccessResponse:
       example:
         data:
-        - null
-        - null
+        - role: NONE
+          stackId: stackId
+          userId: userId
+          email: email
+        - role: NONE
+          stackId: stackId
+          userId: userId
+          email: email
       properties:
         data:
           items:
@@ -1864,14 +2179,46 @@ components:
       $ref: '#/components/schemas/OrganizationData'
     CreateOrganizationResponse:
       example:
-        data: null
+        data:
+          owner:
+            role: USER
+            id: id
+            email: email
+          defaultOrganizationAccess: NONE
+          totalUsers: 5
+          ownerId: ownerId
+          totalStacks: 1
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          defaultStackAccess: null
+          domain: domain
+          name: name
+          id: id
+          availableSandboxes: 6
+          availableStacks: 0
+          updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
         data:
           $ref: '#/components/schemas/OrganizationExpanded'
       type: object
     ReadOrganizationResponse:
       example:
-        data: null
+        data:
+          owner:
+            role: USER
+            id: id
+            email: email
+          defaultOrganizationAccess: NONE
+          totalUsers: 5
+          ownerId: ownerId
+          totalStacks: 1
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          defaultStackAccess: null
+          domain: domain
+          name: name
+          id: id
+          availableSandboxes: 6
+          availableStacks: 0
+          updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
         data:
           $ref: '#/components/schemas/OrganizationExpanded'
@@ -1879,8 +2226,56 @@ components:
     ListStacksResponse:
       example:
         data:
-        - null
-        - null
+        - auditEnabled: true
+          metadata:
+            key: metadata
+          lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
+          expectedStatus: READY
+          version: version
+          uri: uri
+          reachable: true
+          stargateEnabled: true
+          disabledAt: 2000-01-23T04:56:07.000+00:00
+          organizationId: organizationId
+          lastExpectedStatusUpdate: 2000-01-23T04:56:07.000+00:00
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          deletedAt: 2000-01-23T04:56:07.000+00:00
+          regionID: regionID
+          warnedAt: 2000-01-23T04:56:07.000+00:00
+          lastStateUpdate: 2000-01-23T04:56:07.000+00:00
+          name: name
+          lastReachableUpdate: 2000-01-23T04:56:07.000+00:00
+          synchronised: true
+          state: ACTIVE
+          id: id
+          disposableSince: 2000-01-23T04:56:07.000+00:00
+          status: UNKNOWN
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        - auditEnabled: true
+          metadata:
+            key: metadata
+          lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
+          expectedStatus: READY
+          version: version
+          uri: uri
+          reachable: true
+          stargateEnabled: true
+          disabledAt: 2000-01-23T04:56:07.000+00:00
+          organizationId: organizationId
+          lastExpectedStatusUpdate: 2000-01-23T04:56:07.000+00:00
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          deletedAt: 2000-01-23T04:56:07.000+00:00
+          regionID: regionID
+          warnedAt: 2000-01-23T04:56:07.000+00:00
+          lastStateUpdate: 2000-01-23T04:56:07.000+00:00
+          name: name
+          lastReachableUpdate: 2000-01-23T04:56:07.000+00:00
+          synchronised: true
+          state: ACTIVE
+          id: id
+          disposableSince: 2000-01-23T04:56:07.000+00:00
+          status: UNKNOWN
+          updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
         data:
           items:
@@ -1890,25 +2285,66 @@ components:
     ListUsersResponse:
       example:
         data:
-        - null
-        - null
+        - ""
+        - ""
       properties:
         data:
           items:
-            $ref: '#/components/schemas/OrganizationUserArray_inner'
+            allOf:
+            - $ref: '#/components/schemas/OrganizationUser'
           type: array
       type: object
     CreateStackRequest:
       allOf:
       - $ref: '#/components/schemas/StackData'
       - $ref: '#/components/schemas/StackVersion'
-      - $ref: '#/components/schemas/CreateStackRequest_allOf'
+      - properties:
+          regionID:
+            type: string
+        required:
+        - regionID
+        type: object
+      example:
+        metadata:
+          key: metadata
+        regionID: regionID
+        name: name
+        version: version
     UpdateStackRequest:
       allOf:
       - $ref: '#/components/schemas/StackData'
+      example:
+        metadata:
+          key: metadata
+        name: name
     CreateStackResponse:
       example:
-        data: null
+        data:
+          auditEnabled: true
+          metadata:
+            key: metadata
+          lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
+          expectedStatus: READY
+          version: version
+          uri: uri
+          reachable: true
+          stargateEnabled: true
+          disabledAt: 2000-01-23T04:56:07.000+00:00
+          organizationId: organizationId
+          lastExpectedStatusUpdate: 2000-01-23T04:56:07.000+00:00
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          deletedAt: 2000-01-23T04:56:07.000+00:00
+          regionID: regionID
+          warnedAt: 2000-01-23T04:56:07.000+00:00
+          lastStateUpdate: 2000-01-23T04:56:07.000+00:00
+          name: name
+          lastReachableUpdate: 2000-01-23T04:56:07.000+00:00
+          synchronised: true
+          state: ACTIVE
+          id: id
+          disposableSince: 2000-01-23T04:56:07.000+00:00
+          status: UNKNOWN
+          updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
         data:
           $ref: '#/components/schemas/Stack'
@@ -1917,7 +2353,10 @@ components:
       $ref: '#/components/schemas/CreateStackResponse'
     ReadUserResponse:
       example:
-        data: null
+        data:
+          role: USER
+          id: id
+          email: email
       properties:
         data:
           $ref: '#/components/schemas/User'
@@ -1926,21 +2365,33 @@ components:
       example:
         data:
         - organizationId: organizationId
-          role: null
+          role: NONE
+          lastUpdate: 2000-01-23T04:56:07.000+00:00
+          creatorId: creatorId
           userEmail: userEmail
           id: id
           creationDate: 2000-01-23T04:56:07.000+00:00
           userId: userId
-          organizationAccess: null
+          organizationAccess:
+            role: NONE
+            id: id
+            email: email
+          expiresAt: 2000-01-23T04:56:07.000+00:00
           status: PENDING
           updatedAt: updatedAt
         - organizationId: organizationId
-          role: null
+          role: NONE
+          lastUpdate: 2000-01-23T04:56:07.000+00:00
+          creatorId: creatorId
           userEmail: userEmail
           id: id
           creationDate: 2000-01-23T04:56:07.000+00:00
           userId: userId
-          organizationAccess: null
+          organizationAccess:
+            role: NONE
+            id: id
+            email: email
+          expiresAt: 2000-01-23T04:56:07.000+00:00
           status: PENDING
           updatedAt: updatedAt
       properties:
@@ -1953,12 +2404,18 @@ components:
       example:
         data:
           organizationId: organizationId
-          role: null
+          role: NONE
+          lastUpdate: 2000-01-23T04:56:07.000+00:00
+          creatorId: creatorId
           userEmail: userEmail
           id: id
           creationDate: 2000-01-23T04:56:07.000+00:00
           userId: userId
-          organizationAccess: null
+          organizationAccess:
+            role: NONE
+            id: id
+            email: email
+          expiresAt: 2000-01-23T04:56:07.000+00:00
           status: PENDING
           updatedAt: updatedAt
       properties:
@@ -1966,6 +2423,9 @@ components:
           $ref: '#/components/schemas/Invitation'
       type: object
     Error:
+      example:
+        errorMessage: errorMessage
+        errorCode: errorCode
       properties:
         errorCode:
           type: string
@@ -1977,12 +2437,18 @@ components:
     Invitation:
       example:
         organizationId: organizationId
-        role: null
+        role: NONE
+        lastUpdate: 2000-01-23T04:56:07.000+00:00
+        creatorId: creatorId
         userEmail: userEmail
         id: id
         creationDate: 2000-01-23T04:56:07.000+00:00
         userId: userId
-        organizationAccess: null
+        organizationAccess:
+          role: NONE
+          id: id
+          email: email
+        expiresAt: 2000-01-23T04:56:07.000+00:00
         status: PENDING
         updatedAt: updatedAt
       properties:
@@ -2011,8 +2477,17 @@ components:
           type: string
         organizationAccess:
           $ref: '#/components/schemas/OrganizationUser'
+        expiresAt:
+          format: date-time
+          type: string
+        creatorId:
+          type: string
+        lastUpdate:
+          format: date-time
+          type: string
       required:
       - creationDate
+      - creatorID
       - id
       - organizationId
       - role
@@ -2021,7 +2496,7 @@ components:
       type: object
     InvitationClaim:
       example:
-        role: null
+        role: NONE
       properties:
         role:
           $ref: '#/components/schemas/Role'
@@ -2044,15 +2519,32 @@ components:
           type: string
         capabilities:
           $ref: '#/components/schemas/RegionCapability'
+        agentID:
+          type: string
+        outdated:
+          type: boolean
+        creatorId:
+          type: string
+        version:
+          type: string
       required:
       - active
+      - agentID
       - baseUrl
       - capabilities
       - createdAt
       - id
       - name
+      - outdated
       type: object
     RegionCapability:
+      example:
+        EE:
+        - EE
+        - EE
+        MODULE_LIST:
+        - MODULE_LIST
+        - MODULE_LIST
       properties:
         MODULE_LIST:
           items:
@@ -2071,23 +2563,102 @@ components:
     ListOrganizationExpandedResponse:
       example:
         data:
-        - null
-        - null
+        - ""
+        - ""
       properties:
         data:
           items:
-            $ref: '#/components/schemas/ListOrganizationExpandedResponse_data_inner'
+            allOf:
+            - $ref: '#/components/schemas/OrganizationExpanded'
           type: array
       type: object
     OrganizationExpanded:
       allOf:
       - $ref: '#/components/schemas/Organization'
-      - $ref: '#/components/schemas/OrganizationExpanded_allOf'
+      - properties:
+          totalStacks:
+            type: integer
+          totalUsers:
+            type: integer
+          owner:
+            $ref: '#/components/schemas/User'
+        type: object
+      example:
+        owner:
+          role: USER
+          id: id
+          email: email
+        defaultOrganizationAccess: NONE
+        totalUsers: 5
+        ownerId: ownerId
+        totalStacks: 1
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        defaultStackAccess: null
+        domain: domain
+        name: name
+        id: id
+        availableSandboxes: 6
+        availableStacks: 0
+        updatedAt: 2000-01-23T04:56:07.000+00:00
     ListRegionsResponse:
       example:
         data:
-        - null
-        - null
+        - agentID: agentID
+          creator:
+            role: USER
+            id: id
+            email: email
+          capabilities:
+            EE:
+            - EE
+            - EE
+            MODULE_LIST:
+            - MODULE_LIST
+            - MODULE_LIST
+          clientID: clientID
+          production: true
+          creatorId: creatorId
+          active: true
+          lastPing: 2000-01-23T04:56:07.000+00:00
+          secret:
+            clear: clear
+            lastDigits: lastDigits
+          version: version
+          organizationID: organizationID
+          createdAt: createdAt
+          baseUrl: baseUrl
+          outdated: true
+          public: true
+          name: name
+          id: id
+        - agentID: agentID
+          creator:
+            role: USER
+            id: id
+            email: email
+          capabilities:
+            EE:
+            - EE
+            - EE
+            MODULE_LIST:
+            - MODULE_LIST
+            - MODULE_LIST
+          clientID: clientID
+          production: true
+          creatorId: creatorId
+          active: true
+          lastPing: 2000-01-23T04:56:07.000+00:00
+          secret:
+            clear: clear
+            lastDigits: lastDigits
+          version: version
+          organizationID: organizationID
+          createdAt: createdAt
+          baseUrl: baseUrl
+          outdated: true
+          public: true
+          name: name
+          id: id
       properties:
         data:
           items:
@@ -2098,7 +2669,35 @@ components:
       type: object
     GetRegionResponse:
       example:
-        data: null
+        data:
+          agentID: agentID
+          creator:
+            role: USER
+            id: id
+            email: email
+          capabilities:
+            EE:
+            - EE
+            - EE
+            MODULE_LIST:
+            - MODULE_LIST
+            - MODULE_LIST
+          clientID: clientID
+          production: true
+          creatorId: creatorId
+          active: true
+          lastPing: 2000-01-23T04:56:07.000+00:00
+          secret:
+            clear: clear
+            lastDigits: lastDigits
+          version: version
+          organizationID: organizationID
+          createdAt: createdAt
+          baseUrl: baseUrl
+          outdated: true
+          public: true
+          name: name
+          id: id
       properties:
         data:
           $ref: '#/components/schemas/AnyRegion'
@@ -2133,6 +2732,7 @@ components:
       example:
         versions:
           key: versions
+        regionID: regionID
         name: name
       properties:
         name:
@@ -2141,13 +2741,16 @@ components:
           additionalProperties:
             type: string
           type: object
+        regionID:
+          type: string
       required:
       - name
+      - regionID
       - versions
       type: object
     UpdateOrganizationUserRequest:
       example:
-        role: null
+        role: NONE
       properties:
         role:
           $ref: '#/components/schemas/Role'
@@ -2156,7 +2759,7 @@ components:
       type: object
     UpdateStackUserRequest:
       example:
-        role: null
+        role: NONE
       properties:
         role:
           $ref: '#/components/schemas/Role'
@@ -2168,9 +2771,11 @@ components:
         data:
         - versions:
             key: versions
+          regionID: regionID
           name: name
         - versions:
             key: versions
+          regionID: regionID
           name: name
       properties:
         data:
@@ -2180,210 +2785,33 @@ components:
       required:
       - data
       type: object
-    LogCursor_data_allOf:
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/Log'
-          type: array
-      type: object
     LogCursor_data:
       allOf:
       - $ref: '#/components/schemas/Cursor'
-      - $ref: '#/components/schemas/LogCursor_data_allOf'
-    PrivateRegion_allOf_secret:
-      properties:
-        lastDigits:
-          type: string
-        clear:
-          type: string
-      required:
-      - lastDigits
-      type: object
-      example: null
-    PrivateRegion_allOf:
-      properties:
-        organizationID:
-          type: string
-        creatorID:
-          type: string
-        secret:
-          $ref: '#/components/schemas/PrivateRegion_allOf_secret'
-      required:
-      - creatorID
-      - organizationID
-      type: object
-      example: null
-    PublicRegion_allOf:
-      properties:
-        production:
-          type: boolean
-      required:
-      - production
-      type: object
-      example: null
-    AnyRegion_allOf:
-      properties:
-        clientID:
-          type: string
-        organizationID:
-          type: string
-        creator:
-          $ref: '#/components/schemas/User'
-        production:
-          type: boolean
-        public:
-          type: boolean
-        version:
-          type: string
-      required:
-      - public
-      type: object
-      example: null
-    Organization_allOf:
-      properties:
-        id:
-          description: Organization ID
-          type: string
-        ownerId:
-          description: Owner ID
-          type: string
-        availableStacks:
-          description: Number of available stacks
-          type: integer
-        availableSandboxes:
-          description: Number of available sandboxes
-          type: integer
-        createdAt:
-          format: date-time
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-      required:
-      - id
-      - ownerId
-      type: object
-      example: null
-    Stack_allOf:
-      properties:
-        id:
-          description: Stack ID
-          type: string
-        organizationId:
-          description: Organization ID
-          type: string
-        uri:
-          description: Base stack uri
-          type: string
-        regionID:
-          description: The region where the stack is installed
-          type: string
-        stargateEnabled:
-          type: boolean
-        createdAt:
-          format: date-time
-          type: string
-        deletedAt:
-          format: date-time
-          type: string
-        disabledAt:
-          format: date-time
-          type: string
-        auditEnabled:
-          type: boolean
-        synchronised:
-          type: boolean
-      required:
-      - id
-      - organizationId
-      - regionID
-      - stargateEnabled
-      - synchronised
-      - uri
-      type: object
-      example: null
-    UserData_allOf:
-      properties:
-        email:
-          type: string
-      required:
-      - email
-      type: object
-      example: null
-    User_allOf:
-      properties:
-        id:
-          description: User ID
-          type: string
-      required:
-      - id
-      type: object
-      example: null
-    User_allOf_1:
-      properties:
-        role:
-          $ref: '#/components/schemas/SystemRole'
-      type: object
-      example: null
-    OrganizationUserArray_inner:
-      allOf:
-      - $ref: '#/components/schemas/OrganizationUser'
-    OrganizationUser_allOf:
-      properties:
-        role:
-          $ref: '#/components/schemas/Role'
-        email:
-          type: string
-        id:
-          type: string
-      required:
-      - email
-      - id
-      - role
-      type: object
-      example: null
-    StackUserAccess_allOf:
-      properties:
-        stackId:
-          description: Stack ID
-          type: string
-        userId:
-          description: User ID
-          type: string
-        email:
-          description: User email
-          type: string
-        role:
-          $ref: '#/components/schemas/Role'
-      required:
-      - email
-      - role
-      - stackId
-      - userId
-      type: object
-      example: null
-    CreateStackRequest_allOf:
-      properties:
-        regionID:
-          type: string
-      required:
-      - regionID
-      type: object
-      example: null
-    ListOrganizationExpandedResponse_data_inner:
-      allOf:
-      - $ref: '#/components/schemas/OrganizationExpanded'
-    OrganizationExpanded_allOf:
-      properties:
-        totalStacks:
-          type: integer
-        totalUsers:
-          type: integer
-        owner:
-          $ref: '#/components/schemas/User'
-      type: object
-      example: null
+      - properties:
+          data:
+            items:
+              $ref: '#/components/schemas/Log'
+            type: array
+        type: object
+      example:
+        next: ""
+        previous: YXVsdCBhbmQgYSBtYXhpbXVtIG1heF9yZXN1bHRzLol=
+        data:
+        - organizationId: organizationId
+          date: 2000-01-23T04:56:07.000+00:00
+          data: "{}"
+          action: action
+          userId: userId
+          seq: 1e6f8b6e-1b6b-4b3b-8b3b-1b6b4b3b8b3b
+        - organizationId: organizationId
+          date: 2000-01-23T04:56:07.000+00:00
+          data: "{}"
+          action: action
+          userId: userId
+          seq: 1e6f8b6e-1b6b-4b3b-8b3b-1b6b4b3b8b3b
+        hasMore: false
+        pageSize: 15
   securitySchemes:
     oauth2:
       flows:

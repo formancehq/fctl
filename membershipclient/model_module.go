@@ -13,6 +13,8 @@ package membershipclient
 import (
 	"encoding/json"
 	"time"
+	"bytes"
+	"fmt"
 )
 
 // checks if the Module type satisfies the MappedNullable interface at compile time
@@ -25,7 +27,10 @@ type Module struct {
 	Status string `json:"status"`
 	LastStatusUpdate time.Time `json:"lastStatusUpdate"`
 	LastStateUpdate time.Time `json:"lastStateUpdate"`
+	ClusterStatus *string `json:"clusterStatus,omitempty"`
 }
+
+type _Module Module
 
 // NewModule instantiates a new Module object
 // This constructor will assign default values to properties that have it defined,
@@ -169,6 +174,38 @@ func (o *Module) SetLastStateUpdate(v time.Time) {
 	o.LastStateUpdate = v
 }
 
+// GetClusterStatus returns the ClusterStatus field value if set, zero value otherwise.
+func (o *Module) GetClusterStatus() string {
+	if o == nil || IsNil(o.ClusterStatus) {
+		var ret string
+		return ret
+	}
+	return *o.ClusterStatus
+}
+
+// GetClusterStatusOk returns a tuple with the ClusterStatus field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Module) GetClusterStatusOk() (*string, bool) {
+	if o == nil || IsNil(o.ClusterStatus) {
+		return nil, false
+	}
+	return o.ClusterStatus, true
+}
+
+// HasClusterStatus returns a boolean if a field has been set.
+func (o *Module) HasClusterStatus() bool {
+	if o != nil && !IsNil(o.ClusterStatus) {
+		return true
+	}
+
+	return false
+}
+
+// SetClusterStatus gets a reference to the given string and assigns it to the ClusterStatus field.
+func (o *Module) SetClusterStatus(v string) {
+	o.ClusterStatus = &v
+}
+
 func (o Module) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -184,7 +221,51 @@ func (o Module) ToMap() (map[string]interface{}, error) {
 	toSerialize["status"] = o.Status
 	toSerialize["lastStatusUpdate"] = o.LastStatusUpdate
 	toSerialize["lastStateUpdate"] = o.LastStateUpdate
+	if !IsNil(o.ClusterStatus) {
+		toSerialize["clusterStatus"] = o.ClusterStatus
+	}
 	return toSerialize, nil
+}
+
+func (o *Module) UnmarshalJSON(data []byte) (err error) {
+	// This validates that all required properties are included in the JSON object
+	// by unmarshalling the object into a generic map with string keys and checking
+	// that every required field exists as a key in the generic map.
+	requiredProperties := []string{
+		"name",
+		"state",
+		"status",
+		"lastStatusUpdate",
+		"lastStateUpdate",
+	}
+
+	allProperties := make(map[string]interface{})
+
+	err = json.Unmarshal(data, &allProperties)
+
+	if err != nil {
+		return err;
+	}
+
+	for _, requiredProperty := range(requiredProperties) {
+		if _, exists := allProperties[requiredProperty]; !exists {
+			return fmt.Errorf("no value given for required property %v", requiredProperty)
+		}
+	}
+
+	varModule := _Module{}
+
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&varModule)
+
+	if err != nil {
+		return err
+	}
+
+	*o = Module(varModule)
+
+	return err
 }
 
 type NullableModule struct {

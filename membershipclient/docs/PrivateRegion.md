@@ -11,15 +11,19 @@ Name | Type | Description | Notes
 **LastPing** | Pointer to **time.Time** |  | [optional] 
 **Name** | **string** |  | 
 **Capabilities** | [**RegionCapability**](RegionCapability.md) |  | 
+**AgentID** | **string** |  | 
+**Outdated** | **bool** |  | 
+**CreatorId** | Pointer to **string** |  | [optional] 
+**Version** | Pointer to **string** |  | [optional] 
 **OrganizationID** | **string** |  | 
 **CreatorID** | **string** |  | 
-**Secret** | Pointer to [**PrivateRegionAllOfSecret**](PrivateRegionAllOfSecret.md) |  | [optional] 
+**Secret** | Pointer to [**PrivateRegionSecret**](PrivateRegionSecret.md) |  | [optional] 
 
 ## Methods
 
 ### NewPrivateRegion
 
-`func NewPrivateRegion(id string, baseUrl string, createdAt string, active bool, name string, capabilities RegionCapability, organizationID string, creatorID string, ) *PrivateRegion`
+`func NewPrivateRegion(id string, baseUrl string, createdAt string, active bool, name string, capabilities RegionCapability, agentID string, outdated bool, organizationID string, creatorID string, ) *PrivateRegion`
 
 NewPrivateRegion instantiates a new PrivateRegion object
 This constructor will assign default values to properties that have it defined,
@@ -179,6 +183,96 @@ and a boolean to check if the value has been set.
 SetCapabilities sets Capabilities field to given value.
 
 
+### GetAgentID
+
+`func (o *PrivateRegion) GetAgentID() string`
+
+GetAgentID returns the AgentID field if non-nil, zero value otherwise.
+
+### GetAgentIDOk
+
+`func (o *PrivateRegion) GetAgentIDOk() (*string, bool)`
+
+GetAgentIDOk returns a tuple with the AgentID field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetAgentID
+
+`func (o *PrivateRegion) SetAgentID(v string)`
+
+SetAgentID sets AgentID field to given value.
+
+
+### GetOutdated
+
+`func (o *PrivateRegion) GetOutdated() bool`
+
+GetOutdated returns the Outdated field if non-nil, zero value otherwise.
+
+### GetOutdatedOk
+
+`func (o *PrivateRegion) GetOutdatedOk() (*bool, bool)`
+
+GetOutdatedOk returns a tuple with the Outdated field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetOutdated
+
+`func (o *PrivateRegion) SetOutdated(v bool)`
+
+SetOutdated sets Outdated field to given value.
+
+
+### GetCreatorId
+
+`func (o *PrivateRegion) GetCreatorId() string`
+
+GetCreatorId returns the CreatorId field if non-nil, zero value otherwise.
+
+### GetCreatorIdOk
+
+`func (o *PrivateRegion) GetCreatorIdOk() (*string, bool)`
+
+GetCreatorIdOk returns a tuple with the CreatorId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetCreatorId
+
+`func (o *PrivateRegion) SetCreatorId(v string)`
+
+SetCreatorId sets CreatorId field to given value.
+
+### HasCreatorId
+
+`func (o *PrivateRegion) HasCreatorId() bool`
+
+HasCreatorId returns a boolean if a field has been set.
+
+### GetVersion
+
+`func (o *PrivateRegion) GetVersion() string`
+
+GetVersion returns the Version field if non-nil, zero value otherwise.
+
+### GetVersionOk
+
+`func (o *PrivateRegion) GetVersionOk() (*string, bool)`
+
+GetVersionOk returns a tuple with the Version field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetVersion
+
+`func (o *PrivateRegion) SetVersion(v string)`
+
+SetVersion sets Version field to given value.
+
+### HasVersion
+
+`func (o *PrivateRegion) HasVersion() bool`
+
+HasVersion returns a boolean if a field has been set.
+
 ### GetOrganizationID
 
 `func (o *PrivateRegion) GetOrganizationID() string`
@@ -221,20 +315,20 @@ SetCreatorID sets CreatorID field to given value.
 
 ### GetSecret
 
-`func (o *PrivateRegion) GetSecret() PrivateRegionAllOfSecret`
+`func (o *PrivateRegion) GetSecret() PrivateRegionSecret`
 
 GetSecret returns the Secret field if non-nil, zero value otherwise.
 
 ### GetSecretOk
 
-`func (o *PrivateRegion) GetSecretOk() (*PrivateRegionAllOfSecret, bool)`
+`func (o *PrivateRegion) GetSecretOk() (*PrivateRegionSecret, bool)`
 
 GetSecretOk returns a tuple with the Secret field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetSecret
 
-`func (o *PrivateRegion) SetSecret(v PrivateRegionAllOfSecret)`
+`func (o *PrivateRegion) SetSecret(v PrivateRegionSecret)`
 
 SetSecret sets Secret field to given value.
 

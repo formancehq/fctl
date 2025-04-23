@@ -100,7 +100,7 @@ func NewStackStore(cmd *cobra.Command) error {
 	if err != nil {
 		return err
 	}
-	organizationID, err := ResolveOrganizationID(cmd, cfg, apiClient.DefaultApi)
+	organizationID, err := ResolveOrganizationID(cmd, cfg, apiClient.DefaultAPI)
 	if err != nil {
 		return err
 	}
@@ -123,8 +123,8 @@ type MembershipStore struct {
 	MembershipClient *MembershipClient
 }
 
-func (cns MembershipStore) Client() *membershipclient.DefaultApiService {
-	return cns.MembershipClient.DefaultApi
+func (cns MembershipStore) Client() *membershipclient.DefaultAPIService {
+	return cns.MembershipClient.DefaultAPI
 }
 
 func MembershipNode(config *Config, apiClient *MembershipClient) *MembershipStore {

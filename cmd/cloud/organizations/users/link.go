@@ -38,7 +38,7 @@ func NewLinkCommand() *cobra.Command {
 		fctl.WithPreRunE(func(cmd *cobra.Command, args []string) error {
 			return fctl.CheckMembershipVersion("v0.26.1")(cmd, args)
 		}),
-		fctl.WithController[*LinkStore](NewLinkController()),
+		fctl.WithController(NewLinkController()),
 	)
 }
 

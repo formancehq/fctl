@@ -36,7 +36,7 @@ func NewListCommand() *cobra.Command {
 	return fctl.NewCommand("list",
 		fctl.WithAliases("ls", "l"),
 		fctl.WithShortDescription("List users"),
-		fctl.WithController[*ListStore](NewListController()),
+		fctl.WithController(NewListController()),
 	)
 }
 
@@ -57,7 +57,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, err
 	}
 
-	c.store.Users = fctl.Map(usersResponse.Data, func(i membershipclient.OrganizationUserArrayInner) User {
+	c.store.Users = fctl.Map(usersResponse.Data, func(i membershipclient.OrganizationUser) User {
 		return User{
 			i.Id,
 			i.Email,
