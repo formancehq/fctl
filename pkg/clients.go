@@ -61,7 +61,7 @@ func NewMembershipClient(cmd *cobra.Command, cfg *Config) (*MembershipClient, er
 	return client, nil
 }
 
-func MembershipServerInfo(ctx context.Context, client *membershipclient.DefaultApiService) (*membershipclient.ServerInfo, error) {
+func MembershipServerInfo(ctx context.Context, client *membershipclient.DefaultAPIService) (*membershipclient.ServerInfo, error) {
 	serverInfo, response, err := client.GetServerInfo(ctx).Execute()
 	if err != nil {
 		return nil, err

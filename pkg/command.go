@@ -32,7 +32,7 @@ func RetrieveOrganizationIDFromFlagOrProfile(cmd *cobra.Command, cfg *Config) (s
 	return "", ErrOrganizationNotSpecified
 }
 
-func ResolveOrganizationID(cmd *cobra.Command, cfg *Config, client *membershipclient.DefaultApiService) (string, error) {
+func ResolveOrganizationID(cmd *cobra.Command, cfg *Config, client *membershipclient.DefaultAPIService) (string, error) {
 	if id, err := RetrieveOrganizationIDFromFlagOrProfile(cmd, cfg); err == nil {
 		return id, nil
 	}
@@ -80,7 +80,7 @@ func ResolveStack(cmd *cobra.Command, cfg *Config, organizationID string) (*memb
 		return nil, err
 	}
 	if id := GetSelectedStackID(cmd, cfg); id != "" {
-		response, _, err := client.DefaultApi.GetStack(cmd.Context(), organizationID, id).Execute()
+		response, _, err := client.DefaultAPI.GetStack(cmd.Context(), organizationID, id).Execute()
 		if err != nil {
 			return nil, err
 		}
@@ -88,7 +88,7 @@ func ResolveStack(cmd *cobra.Command, cfg *Config, organizationID string) (*memb
 		return response.Data, nil
 	}
 
-	stacks, _, err := client.DefaultApi.ListStacks(cmd.Context(), organizationID).Execute()
+	stacks, _, err := client.DefaultAPI.ListStacks(cmd.Context(), organizationID).Execute()
 	if err != nil {
 		return nil, errors.Wrap(err, "listing stacks")
 	}

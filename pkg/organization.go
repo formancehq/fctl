@@ -12,8 +12,8 @@ type OrganizationStore struct {
 	organizationId string
 }
 
-func (cns OrganizationStore) Client() *membershipclient.DefaultApiService {
-	return cns.MembershipClient.DefaultApi
+func (cns OrganizationStore) Client() *membershipclient.DefaultAPIService {
+	return cns.MembershipClient.DefaultAPI
 }
 
 func (cns OrganizationStore) OrganizationId() string {

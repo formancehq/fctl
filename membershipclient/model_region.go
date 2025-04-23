@@ -13,6 +13,8 @@ package membershipclient
 import (
 	"encoding/json"
 	"time"
+	"bytes"
+	"fmt"
 )
 
 // checks if the Region type satisfies the MappedNullable interface at compile time
@@ -27,13 +29,19 @@ type Region struct {
 	LastPing *time.Time `json:"lastPing,omitempty"`
 	Name string `json:"name"`
 	Capabilities RegionCapability `json:"capabilities"`
+	AgentID string `json:"agentID"`
+	Outdated bool `json:"outdated"`
+	CreatorId *string `json:"creatorId,omitempty"`
+	Version *string `json:"version,omitempty"`
 }
+
+type _Region Region
 
 // NewRegion instantiates a new Region object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewRegion(id string, baseUrl string, createdAt string, active bool, name string, capabilities RegionCapability) *Region {
+func NewRegion(id string, baseUrl string, createdAt string, active bool, name string, capabilities RegionCapability, agentID string, outdated bool) *Region {
 	this := Region{}
 	this.Id = id
 	this.BaseUrl = baseUrl
@@ -41,6 +49,8 @@ func NewRegion(id string, baseUrl string, createdAt string, active bool, name st
 	this.Active = active
 	this.Name = name
 	this.Capabilities = capabilities
+	this.AgentID = agentID
+	this.Outdated = outdated
 	return &this
 }
 
@@ -228,6 +238,118 @@ func (o *Region) SetCapabilities(v RegionCapability) {
 	o.Capabilities = v
 }
 
+// GetAgentID returns the AgentID field value
+func (o *Region) GetAgentID() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.AgentID
+}
+
+// GetAgentIDOk returns a tuple with the AgentID field value
+// and a boolean to check if the value has been set.
+func (o *Region) GetAgentIDOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.AgentID, true
+}
+
+// SetAgentID sets field value
+func (o *Region) SetAgentID(v string) {
+	o.AgentID = v
+}
+
+// GetOutdated returns the Outdated field value
+func (o *Region) GetOutdated() bool {
+	if o == nil {
+		var ret bool
+		return ret
+	}
+
+	return o.Outdated
+}
+
+// GetOutdatedOk returns a tuple with the Outdated field value
+// and a boolean to check if the value has been set.
+func (o *Region) GetOutdatedOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Outdated, true
+}
+
+// SetOutdated sets field value
+func (o *Region) SetOutdated(v bool) {
+	o.Outdated = v
+}
+
+// GetCreatorId returns the CreatorId field value if set, zero value otherwise.
+func (o *Region) GetCreatorId() string {
+	if o == nil || IsNil(o.CreatorId) {
+		var ret string
+		return ret
+	}
+	return *o.CreatorId
+}
+
+// GetCreatorIdOk returns a tuple with the CreatorId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Region) GetCreatorIdOk() (*string, bool) {
+	if o == nil || IsNil(o.CreatorId) {
+		return nil, false
+	}
+	return o.CreatorId, true
+}
+
+// HasCreatorId returns a boolean if a field has been set.
+func (o *Region) HasCreatorId() bool {
+	if o != nil && !IsNil(o.CreatorId) {
+		return true
+	}
+
+	return false
+}
+
+// SetCreatorId gets a reference to the given string and assigns it to the CreatorId field.
+func (o *Region) SetCreatorId(v string) {
+	o.CreatorId = &v
+}
+
+// GetVersion returns the Version field value if set, zero value otherwise.
+func (o *Region) GetVersion() string {
+	if o == nil || IsNil(o.Version) {
+		var ret string
+		return ret
+	}
+	return *o.Version
+}
+
+// GetVersionOk returns a tuple with the Version field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Region) GetVersionOk() (*string, bool) {
+	if o == nil || IsNil(o.Version) {
+		return nil, false
+	}
+	return o.Version, true
+}
+
+// HasVersion returns a boolean if a field has been set.
+func (o *Region) HasVersion() bool {
+	if o != nil && !IsNil(o.Version) {
+		return true
+	}
+
+	return false
+}
+
+// SetVersion gets a reference to the given string and assigns it to the Version field.
+func (o *Region) SetVersion(v string) {
+	o.Version = &v
+}
+
 func (o Region) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -247,7 +369,59 @@ func (o Region) ToMap() (map[string]interface{}, error) {
 	}
 	toSerialize["name"] = o.Name
 	toSerialize["capabilities"] = o.Capabilities
+	toSerialize["agentID"] = o.AgentID
+	toSerialize["outdated"] = o.Outdated
+	if !IsNil(o.CreatorId) {
+		toSerialize["creatorId"] = o.CreatorId
+	}
+	if !IsNil(o.Version) {
+		toSerialize["version"] = o.Version
+	}
 	return toSerialize, nil
+}
+
+func (o *Region) UnmarshalJSON(data []byte) (err error) {
+	// This validates that all required properties are included in the JSON object
+	// by unmarshalling the object into a generic map with string keys and checking
+	// that every required field exists as a key in the generic map.
+	requiredProperties := []string{
+		"id",
+		"baseUrl",
+		"createdAt",
+		"active",
+		"name",
+		"capabilities",
+		"agentID",
+		"outdated",
+	}
+
+	allProperties := make(map[string]interface{})
+
+	err = json.Unmarshal(data, &allProperties)
+
+	if err != nil {
+		return err;
+	}
+
+	for _, requiredProperty := range(requiredProperties) {
+		if _, exists := allProperties[requiredProperty]; !exists {
+			return fmt.Errorf("no value given for required property %v", requiredProperty)
+		}
+	}
+
+	varRegion := _Region{}
+
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&varRegion)
+
+	if err != nil {
+		return err
+	}
+
+	*o = Region(varRegion)
+
+	return err
 }
 
 type NullableRegion struct {

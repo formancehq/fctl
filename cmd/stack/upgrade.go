@@ -42,7 +42,7 @@ func NewUpgradeCommand() *cobra.Command {
 		fctl.WithPreRunE(func(cmd *cobra.Command, args []string) error {
 			return fctl.CheckMembershipVersion("v0.27.1")(cmd, args)
 		}),
-		fctl.WithController[*UpgradeStore](NewUpgradeController()),
+		fctl.WithController(NewUpgradeController()),
 	)
 }
 func (c *UpgradeController) GetStore() *UpgradeStore {
@@ -131,7 +131,7 @@ func (c *UpgradeController) Render(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func retrieveUpgradableVersion(ctx context.Context, organization string, stack membershipclient.Stack, apiClient *membershipclient.DefaultApiService) ([]string, error) {
+func retrieveUpgradableVersion(ctx context.Context, organization string, stack membershipclient.Stack, apiClient *membershipclient.DefaultAPIService) ([]string, error) {
 	availableVersions, httpResponse, err := apiClient.GetRegionVersions(ctx, organization, stack.RegionID).Execute()
 	if httpResponse == nil {
 		return nil, err

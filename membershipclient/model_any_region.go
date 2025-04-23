@@ -13,6 +13,8 @@ package membershipclient
 import (
 	"encoding/json"
 	"time"
+	"bytes"
+	"fmt"
 )
 
 // checks if the AnyRegion type satisfies the MappedNullable interface at compile time
@@ -27,19 +29,25 @@ type AnyRegion struct {
 	LastPing *time.Time `json:"lastPing,omitempty"`
 	Name string `json:"name"`
 	Capabilities RegionCapability `json:"capabilities"`
+	AgentID string `json:"agentID"`
+	Outdated bool `json:"outdated"`
+	CreatorId *string `json:"creatorId,omitempty"`
+	Version *string `json:"version,omitempty"`
 	ClientID *string `json:"clientID,omitempty"`
 	OrganizationID *string `json:"organizationID,omitempty"`
 	Creator *User `json:"creator,omitempty"`
 	Production *bool `json:"production,omitempty"`
 	Public bool `json:"public"`
-	Version *string `json:"version,omitempty"`
+	Secret *PrivateRegionSecret `json:"secret,omitempty"`
 }
+
+type _AnyRegion AnyRegion
 
 // NewAnyRegion instantiates a new AnyRegion object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewAnyRegion(id string, baseUrl string, createdAt string, active bool, name string, capabilities RegionCapability, public bool) *AnyRegion {
+func NewAnyRegion(id string, baseUrl string, createdAt string, active bool, name string, capabilities RegionCapability, agentID string, outdated bool, public bool) *AnyRegion {
 	this := AnyRegion{}
 	this.Id = id
 	this.BaseUrl = baseUrl
@@ -47,6 +55,8 @@ func NewAnyRegion(id string, baseUrl string, createdAt string, active bool, name
 	this.Active = active
 	this.Name = name
 	this.Capabilities = capabilities
+	this.AgentID = agentID
+	this.Outdated = outdated
 	this.Public = public
 	return &this
 }
@@ -235,6 +245,118 @@ func (o *AnyRegion) SetCapabilities(v RegionCapability) {
 	o.Capabilities = v
 }
 
+// GetAgentID returns the AgentID field value
+func (o *AnyRegion) GetAgentID() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.AgentID
+}
+
+// GetAgentIDOk returns a tuple with the AgentID field value
+// and a boolean to check if the value has been set.
+func (o *AnyRegion) GetAgentIDOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.AgentID, true
+}
+
+// SetAgentID sets field value
+func (o *AnyRegion) SetAgentID(v string) {
+	o.AgentID = v
+}
+
+// GetOutdated returns the Outdated field value
+func (o *AnyRegion) GetOutdated() bool {
+	if o == nil {
+		var ret bool
+		return ret
+	}
+
+	return o.Outdated
+}
+
+// GetOutdatedOk returns a tuple with the Outdated field value
+// and a boolean to check if the value has been set.
+func (o *AnyRegion) GetOutdatedOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Outdated, true
+}
+
+// SetOutdated sets field value
+func (o *AnyRegion) SetOutdated(v bool) {
+	o.Outdated = v
+}
+
+// GetCreatorId returns the CreatorId field value if set, zero value otherwise.
+func (o *AnyRegion) GetCreatorId() string {
+	if o == nil || IsNil(o.CreatorId) {
+		var ret string
+		return ret
+	}
+	return *o.CreatorId
+}
+
+// GetCreatorIdOk returns a tuple with the CreatorId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *AnyRegion) GetCreatorIdOk() (*string, bool) {
+	if o == nil || IsNil(o.CreatorId) {
+		return nil, false
+	}
+	return o.CreatorId, true
+}
+
+// HasCreatorId returns a boolean if a field has been set.
+func (o *AnyRegion) HasCreatorId() bool {
+	if o != nil && !IsNil(o.CreatorId) {
+		return true
+	}
+
+	return false
+}
+
+// SetCreatorId gets a reference to the given string and assigns it to the CreatorId field.
+func (o *AnyRegion) SetCreatorId(v string) {
+	o.CreatorId = &v
+}
+
+// GetVersion returns the Version field value if set, zero value otherwise.
+func (o *AnyRegion) GetVersion() string {
+	if o == nil || IsNil(o.Version) {
+		var ret string
+		return ret
+	}
+	return *o.Version
+}
+
+// GetVersionOk returns a tuple with the Version field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *AnyRegion) GetVersionOk() (*string, bool) {
+	if o == nil || IsNil(o.Version) {
+		return nil, false
+	}
+	return o.Version, true
+}
+
+// HasVersion returns a boolean if a field has been set.
+func (o *AnyRegion) HasVersion() bool {
+	if o != nil && !IsNil(o.Version) {
+		return true
+	}
+
+	return false
+}
+
+// SetVersion gets a reference to the given string and assigns it to the Version field.
+func (o *AnyRegion) SetVersion(v string) {
+	o.Version = &v
+}
+
 // GetClientID returns the ClientID field value if set, zero value otherwise.
 func (o *AnyRegion) GetClientID() string {
 	if o == nil || IsNil(o.ClientID) {
@@ -387,36 +509,36 @@ func (o *AnyRegion) SetPublic(v bool) {
 	o.Public = v
 }
 
-// GetVersion returns the Version field value if set, zero value otherwise.
-func (o *AnyRegion) GetVersion() string {
-	if o == nil || IsNil(o.Version) {
-		var ret string
+// GetSecret returns the Secret field value if set, zero value otherwise.
+func (o *AnyRegion) GetSecret() PrivateRegionSecret {
+	if o == nil || IsNil(o.Secret) {
+		var ret PrivateRegionSecret
 		return ret
 	}
-	return *o.Version
+	return *o.Secret
 }
 
-// GetVersionOk returns a tuple with the Version field value if set, nil otherwise
+// GetSecretOk returns a tuple with the Secret field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *AnyRegion) GetVersionOk() (*string, bool) {
-	if o == nil || IsNil(o.Version) {
+func (o *AnyRegion) GetSecretOk() (*PrivateRegionSecret, bool) {
+	if o == nil || IsNil(o.Secret) {
 		return nil, false
 	}
-	return o.Version, true
+	return o.Secret, true
 }
 
-// HasVersion returns a boolean if a field has been set.
-func (o *AnyRegion) HasVersion() bool {
-	if o != nil && !IsNil(o.Version) {
+// HasSecret returns a boolean if a field has been set.
+func (o *AnyRegion) HasSecret() bool {
+	if o != nil && !IsNil(o.Secret) {
 		return true
 	}
 
 	return false
 }
 
-// SetVersion gets a reference to the given string and assigns it to the Version field.
-func (o *AnyRegion) SetVersion(v string) {
-	o.Version = &v
+// SetSecret gets a reference to the given PrivateRegionSecret and assigns it to the Secret field.
+func (o *AnyRegion) SetSecret(v PrivateRegionSecret) {
+	o.Secret = &v
 }
 
 func (o AnyRegion) MarshalJSON() ([]byte, error) {
@@ -438,6 +560,14 @@ func (o AnyRegion) ToMap() (map[string]interface{}, error) {
 	}
 	toSerialize["name"] = o.Name
 	toSerialize["capabilities"] = o.Capabilities
+	toSerialize["agentID"] = o.AgentID
+	toSerialize["outdated"] = o.Outdated
+	if !IsNil(o.CreatorId) {
+		toSerialize["creatorId"] = o.CreatorId
+	}
+	if !IsNil(o.Version) {
+		toSerialize["version"] = o.Version
+	}
 	if !IsNil(o.ClientID) {
 		toSerialize["clientID"] = o.ClientID
 	}
@@ -451,10 +581,55 @@ func (o AnyRegion) ToMap() (map[string]interface{}, error) {
 		toSerialize["production"] = o.Production
 	}
 	toSerialize["public"] = o.Public
-	if !IsNil(o.Version) {
-		toSerialize["version"] = o.Version
+	if !IsNil(o.Secret) {
+		toSerialize["secret"] = o.Secret
 	}
 	return toSerialize, nil
+}
+
+func (o *AnyRegion) UnmarshalJSON(data []byte) (err error) {
+	// This validates that all required properties are included in the JSON object
+	// by unmarshalling the object into a generic map with string keys and checking
+	// that every required field exists as a key in the generic map.
+	requiredProperties := []string{
+		"id",
+		"baseUrl",
+		"createdAt",
+		"active",
+		"name",
+		"capabilities",
+		"agentID",
+		"outdated",
+		"public",
+	}
+
+	allProperties := make(map[string]interface{})
+
+	err = json.Unmarshal(data, &allProperties)
+
+	if err != nil {
+		return err;
+	}
+
+	for _, requiredProperty := range(requiredProperties) {
+		if _, exists := allProperties[requiredProperty]; !exists {
+			return fmt.Errorf("no value given for required property %v", requiredProperty)
+		}
+	}
+
+	varAnyRegion := _AnyRegion{}
+
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&varAnyRegion)
+
+	if err != nil {
+		return err
+	}
+
+	*o = AnyRegion(varAnyRegion)
+
+	return err
 }
 
 type NullableAnyRegion struct {

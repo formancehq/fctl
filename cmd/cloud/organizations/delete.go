@@ -32,7 +32,7 @@ func NewDeleteCommand() *cobra.Command {
 		fctl.WithShortDescription("Delete organization"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithConfirmFlag(),
-		fctl.WithController[*DeleteStore](NewDeleteController()),
+		fctl.WithController(NewDeleteController()),
 	)
 }
 

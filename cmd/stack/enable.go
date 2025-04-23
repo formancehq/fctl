@@ -40,7 +40,7 @@ func NewEnableCommand() *cobra.Command {
 		fctl.WithShortDescription("Enable a stack"),
 		fctl.WithArgs(cobra.MaximumNArgs(1)),
 		fctl.WithStringFlag(stackNameFlag, "", "Stack to enable"),
-		fctl.WithController[*EnableStore](NewEnableController()),
+		fctl.WithController(NewEnableController()),
 	)
 }
 func (c *EnableController) GetStore() *EnableStore {

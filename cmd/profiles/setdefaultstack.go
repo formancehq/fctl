@@ -80,7 +80,7 @@ func NewSetDefaultStackCommand() *cobra.Command {
 		fctl.WithAliases("sds"),
 		fctl.WithShortDescription("Set default stack"),
 		fctl.WithValidArgsFunction(stackCompletion),
-		fctl.WithController[*SetDefaultStackStore](NewSetDefaultStackController()),
+		fctl.WithController(NewSetDefaultStackController()),
 	)
 }
 

@@ -33,7 +33,7 @@ func waitStackReady(cmd *cobra.Command, client *fctl.MembershipClient, organizat
 			return nil, err
 		}
 
-		stackRsp, resp, err = client.DefaultApi.GetStack(cmd.Context(), organizationId, stackId).Execute()
+		stackRsp, resp, err = client.DefaultAPI.GetStack(cmd.Context(), organizationId, stackId).Execute()
 		if err != nil {
 			return nil, err
 		}

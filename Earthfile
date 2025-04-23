@@ -58,7 +58,7 @@ tidy:
     DO --pass-args core+GO_TIDY
 
 generate-membership-client:
-    FROM openapitools/openapi-generator-cli:v6.6.0
+    FROM openapitools/openapi-generator-cli:v7.12.0
     WORKDIR /src
     COPY membership-swagger.yaml ./openapi.yaml
     RUN docker-entrypoint.sh generate \

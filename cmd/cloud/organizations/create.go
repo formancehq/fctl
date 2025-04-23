@@ -36,7 +36,7 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithStringFlag("domain", "", "Organization Domain"),
 		fctl.WithStringFlag("default-organization-role", "", "Default Organization Role roles: (ADMIN,GUEST)"),
 		fctl.WithConfirmFlag(),
-		fctl.WithController[*CreateStore](NewCreateController()),
+		fctl.WithController(NewCreateController()),
 	)
 }
 

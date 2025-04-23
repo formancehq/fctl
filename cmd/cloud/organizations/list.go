@@ -42,7 +42,7 @@ func NewListCommand() *cobra.Command {
 		fctl.WithShortDescription("List organizations"),
 		fctl.WithBoolFlag("expand", true, "Expand the organization"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
-		fctl.WithController[*ListStore](NewListController()),
+		fctl.WithController(NewListController()),
 	)
 }
 
@@ -66,7 +66,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, err
 	}
 
-	c.store.Organizations = fctl.Map(organizations.Data, func(o membershipclient.ListOrganizationExpandedResponseDataInner) *OrgRow {
+	c.store.Organizations = fctl.Map(organizations.Data, func(o membershipclient.OrganizationExpanded) *OrgRow {
 		isMine := fctl.BoolToString(o.OwnerId == claims["sub"].(string))
 		return &OrgRow{
 			ID:      o.Id,

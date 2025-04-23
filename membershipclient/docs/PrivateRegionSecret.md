@@ -1,4 +1,4 @@
-# PrivateRegionAllOfSecret
+# PrivateRegionSecret
 
 ## Properties
 
@@ -9,65 +9,65 @@ Name | Type | Description | Notes
 
 ## Methods
 
-### NewPrivateRegionAllOfSecret
+### NewPrivateRegionSecret
 
-`func NewPrivateRegionAllOfSecret(lastDigits string, ) *PrivateRegionAllOfSecret`
+`func NewPrivateRegionSecret(lastDigits string, ) *PrivateRegionSecret`
 
-NewPrivateRegionAllOfSecret instantiates a new PrivateRegionAllOfSecret object
+NewPrivateRegionSecret instantiates a new PrivateRegionSecret object
 This constructor will assign default values to properties that have it defined,
 and makes sure properties required by API are set, but the set of arguments
 will change when the set of required properties is changed
 
-### NewPrivateRegionAllOfSecretWithDefaults
+### NewPrivateRegionSecretWithDefaults
 
-`func NewPrivateRegionAllOfSecretWithDefaults() *PrivateRegionAllOfSecret`
+`func NewPrivateRegionSecretWithDefaults() *PrivateRegionSecret`
 
-NewPrivateRegionAllOfSecretWithDefaults instantiates a new PrivateRegionAllOfSecret object
+NewPrivateRegionSecretWithDefaults instantiates a new PrivateRegionSecret object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
 ### GetLastDigits
 
-`func (o *PrivateRegionAllOfSecret) GetLastDigits() string`
+`func (o *PrivateRegionSecret) GetLastDigits() string`
 
 GetLastDigits returns the LastDigits field if non-nil, zero value otherwise.
 
 ### GetLastDigitsOk
 
-`func (o *PrivateRegionAllOfSecret) GetLastDigitsOk() (*string, bool)`
+`func (o *PrivateRegionSecret) GetLastDigitsOk() (*string, bool)`
 
 GetLastDigitsOk returns a tuple with the LastDigits field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetLastDigits
 
-`func (o *PrivateRegionAllOfSecret) SetLastDigits(v string)`
+`func (o *PrivateRegionSecret) SetLastDigits(v string)`
 
 SetLastDigits sets LastDigits field to given value.
 
 
 ### GetClear
 
-`func (o *PrivateRegionAllOfSecret) GetClear() string`
+`func (o *PrivateRegionSecret) GetClear() string`
 
 GetClear returns the Clear field if non-nil, zero value otherwise.
 
 ### GetClearOk
 
-`func (o *PrivateRegionAllOfSecret) GetClearOk() (*string, bool)`
+`func (o *PrivateRegionSecret) GetClearOk() (*string, bool)`
 
 GetClearOk returns a tuple with the Clear field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetClear
 
-`func (o *PrivateRegionAllOfSecret) SetClear(v string)`
+`func (o *PrivateRegionSecret) SetClear(v string)`
 
 SetClear sets Clear field to given value.
 
 ### HasClear
 
-`func (o *PrivateRegionAllOfSecret) HasClear() bool`
+`func (o *PrivateRegionSecret) HasClear() bool`
 
 HasClear returns a boolean if a field has been set.
 

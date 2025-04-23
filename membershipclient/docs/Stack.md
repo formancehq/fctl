@@ -13,6 +13,8 @@ Name | Type | Description | Notes
 **LastStateUpdate** | **time.Time** |  | 
 **LastExpectedStatusUpdate** | **time.Time** |  | 
 **LastStatusUpdate** | **time.Time** |  | 
+**WarnedAt** | Pointer to **time.Time** |  | [optional] 
+**DisposableSince** | Pointer to **time.Time** |  | [optional] 
 **Reachable** | **bool** | Stack is reachable through Stargate | 
 **LastReachableUpdate** | Pointer to **time.Time** | Last time the stack was reachable | [optional] 
 **Id** | **string** | Stack ID | 
@@ -25,6 +27,7 @@ Name | Type | Description | Notes
 **DisabledAt** | Pointer to **time.Time** |  | [optional] 
 **AuditEnabled** | Pointer to **bool** |  | [optional] 
 **Synchronised** | **bool** |  | 
+**UpdatedAt** | Pointer to **time.Time** |  | [optional] 
 
 ## Methods
 
@@ -234,6 +237,56 @@ and a boolean to check if the value has been set.
 
 SetLastStatusUpdate sets LastStatusUpdate field to given value.
 
+
+### GetWarnedAt
+
+`func (o *Stack) GetWarnedAt() time.Time`
+
+GetWarnedAt returns the WarnedAt field if non-nil, zero value otherwise.
+
+### GetWarnedAtOk
+
+`func (o *Stack) GetWarnedAtOk() (*time.Time, bool)`
+
+GetWarnedAtOk returns a tuple with the WarnedAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetWarnedAt
+
+`func (o *Stack) SetWarnedAt(v time.Time)`
+
+SetWarnedAt sets WarnedAt field to given value.
+
+### HasWarnedAt
+
+`func (o *Stack) HasWarnedAt() bool`
+
+HasWarnedAt returns a boolean if a field has been set.
+
+### GetDisposableSince
+
+`func (o *Stack) GetDisposableSince() time.Time`
+
+GetDisposableSince returns the DisposableSince field if non-nil, zero value otherwise.
+
+### GetDisposableSinceOk
+
+`func (o *Stack) GetDisposableSinceOk() (*time.Time, bool)`
+
+GetDisposableSinceOk returns a tuple with the DisposableSince field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDisposableSince
+
+`func (o *Stack) SetDisposableSince(v time.Time)`
+
+SetDisposableSince sets DisposableSince field to given value.
+
+### HasDisposableSince
+
+`func (o *Stack) HasDisposableSince() bool`
+
+HasDisposableSince returns a boolean if a field has been set.
 
 ### GetReachable
 
@@ -499,6 +552,31 @@ and a boolean to check if the value has been set.
 
 SetSynchronised sets Synchronised field to given value.
 
+
+### GetUpdatedAt
+
+`func (o *Stack) GetUpdatedAt() time.Time`
+
+GetUpdatedAt returns the UpdatedAt field if non-nil, zero value otherwise.
+
+### GetUpdatedAtOk
+
+`func (o *Stack) GetUpdatedAtOk() (*time.Time, bool)`
+
+GetUpdatedAtOk returns a tuple with the UpdatedAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetUpdatedAt
+
+`func (o *Stack) SetUpdatedAt(v time.Time)`
+
+SetUpdatedAt sets UpdatedAt field to given value.
+
+### HasUpdatedAt
+
+`func (o *Stack) HasUpdatedAt() bool`
+
+HasUpdatedAt returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

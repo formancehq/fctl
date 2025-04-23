@@ -55,7 +55,7 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithStringFlag(regionFlag, "", "Region on which deploy the stack"),
 		fctl.WithStringFlag(versionFlag, "", "Version of the stack"),
 		fctl.WithBoolFlag(nowaitFlag, false, "Not wait stack availability"),
-		fctl.WithController[*StackCreateStore](NewStackCreateController()),
+		fctl.WithController(NewStackCreateController()),
 	)
 }
 func (c *StackCreateController) GetStore() *StackCreateStore {

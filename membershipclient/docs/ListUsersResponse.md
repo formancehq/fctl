@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Data** | Pointer to [**[]OrganizationUserArrayInner**](OrganizationUserArrayInner.md) |  | [optional] 
+**Data** | Pointer to [**[]OrganizationUser**](OrganizationUser.md) |  | [optional] 
 
 ## Methods
 
@@ -27,20 +27,20 @@ but it doesn't guarantee that properties required by API are set
 
 ### GetData
 
-`func (o *ListUsersResponse) GetData() []OrganizationUserArrayInner`
+`func (o *ListUsersResponse) GetData() []OrganizationUser`
 
 GetData returns the Data field if non-nil, zero value otherwise.
 
 ### GetDataOk
 
-`func (o *ListUsersResponse) GetDataOk() (*[]OrganizationUserArrayInner, bool)`
+`func (o *ListUsersResponse) GetDataOk() (*[]OrganizationUser, bool)`
 
 GetDataOk returns a tuple with the Data field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetData
 
-`func (o *ListUsersResponse) SetData(v []OrganizationUserArrayInner)`
+`func (o *ListUsersResponse) SetData(v []OrganizationUser)`
 
 SetData sets Data field to given value.
 

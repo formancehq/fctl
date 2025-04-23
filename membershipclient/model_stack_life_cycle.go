@@ -13,6 +13,8 @@ package membershipclient
 import (
 	"encoding/json"
 	"time"
+	"bytes"
+	"fmt"
 )
 
 // checks if the StackLifeCycle type satisfies the MappedNullable interface at compile time
@@ -26,7 +28,11 @@ type StackLifeCycle struct {
 	LastStateUpdate time.Time `json:"lastStateUpdate"`
 	LastExpectedStatusUpdate time.Time `json:"lastExpectedStatusUpdate"`
 	LastStatusUpdate time.Time `json:"lastStatusUpdate"`
+	WarnedAt *time.Time `json:"warnedAt,omitempty"`
+	DisposableSince *time.Time `json:"disposableSince,omitempty"`
 }
+
+type _StackLifeCycle StackLifeCycle
 
 // NewStackLifeCycle instantiates a new StackLifeCycle object
 // This constructor will assign default values to properties that have it defined,
@@ -195,6 +201,70 @@ func (o *StackLifeCycle) SetLastStatusUpdate(v time.Time) {
 	o.LastStatusUpdate = v
 }
 
+// GetWarnedAt returns the WarnedAt field value if set, zero value otherwise.
+func (o *StackLifeCycle) GetWarnedAt() time.Time {
+	if o == nil || IsNil(o.WarnedAt) {
+		var ret time.Time
+		return ret
+	}
+	return *o.WarnedAt
+}
+
+// GetWarnedAtOk returns a tuple with the WarnedAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *StackLifeCycle) GetWarnedAtOk() (*time.Time, bool) {
+	if o == nil || IsNil(o.WarnedAt) {
+		return nil, false
+	}
+	return o.WarnedAt, true
+}
+
+// HasWarnedAt returns a boolean if a field has been set.
+func (o *StackLifeCycle) HasWarnedAt() bool {
+	if o != nil && !IsNil(o.WarnedAt) {
+		return true
+	}
+
+	return false
+}
+
+// SetWarnedAt gets a reference to the given time.Time and assigns it to the WarnedAt field.
+func (o *StackLifeCycle) SetWarnedAt(v time.Time) {
+	o.WarnedAt = &v
+}
+
+// GetDisposableSince returns the DisposableSince field value if set, zero value otherwise.
+func (o *StackLifeCycle) GetDisposableSince() time.Time {
+	if o == nil || IsNil(o.DisposableSince) {
+		var ret time.Time
+		return ret
+	}
+	return *o.DisposableSince
+}
+
+// GetDisposableSinceOk returns a tuple with the DisposableSince field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *StackLifeCycle) GetDisposableSinceOk() (*time.Time, bool) {
+	if o == nil || IsNil(o.DisposableSince) {
+		return nil, false
+	}
+	return o.DisposableSince, true
+}
+
+// HasDisposableSince returns a boolean if a field has been set.
+func (o *StackLifeCycle) HasDisposableSince() bool {
+	if o != nil && !IsNil(o.DisposableSince) {
+		return true
+	}
+
+	return false
+}
+
+// SetDisposableSince gets a reference to the given time.Time and assigns it to the DisposableSince field.
+func (o *StackLifeCycle) SetDisposableSince(v time.Time) {
+	o.DisposableSince = &v
+}
+
 func (o StackLifeCycle) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -211,7 +281,55 @@ func (o StackLifeCycle) ToMap() (map[string]interface{}, error) {
 	toSerialize["lastStateUpdate"] = o.LastStateUpdate
 	toSerialize["lastExpectedStatusUpdate"] = o.LastExpectedStatusUpdate
 	toSerialize["lastStatusUpdate"] = o.LastStatusUpdate
+	if !IsNil(o.WarnedAt) {
+		toSerialize["warnedAt"] = o.WarnedAt
+	}
+	if !IsNil(o.DisposableSince) {
+		toSerialize["disposableSince"] = o.DisposableSince
+	}
 	return toSerialize, nil
+}
+
+func (o *StackLifeCycle) UnmarshalJSON(data []byte) (err error) {
+	// This validates that all required properties are included in the JSON object
+	// by unmarshalling the object into a generic map with string keys and checking
+	// that every required field exists as a key in the generic map.
+	requiredProperties := []string{
+		"status",
+		"state",
+		"expectedStatus",
+		"lastStateUpdate",
+		"lastExpectedStatusUpdate",
+		"lastStatusUpdate",
+	}
+
+	allProperties := make(map[string]interface{})
+
+	err = json.Unmarshal(data, &allProperties)
+
+	if err != nil {
+		return err;
+	}
+
+	for _, requiredProperty := range(requiredProperties) {
+		if _, exists := allProperties[requiredProperty]; !exists {
+			return fmt.Errorf("no value given for required property %v", requiredProperty)
+		}
+	}
+
+	varStackLifeCycle := _StackLifeCycle{}
+
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&varStackLifeCycle)
+
+	if err != nil {
+		return err
+	}
+
+	*o = StackLifeCycle(varStackLifeCycle)
+
+	return err
 }
 
 type NullableStackLifeCycle struct {

@@ -12,6 +12,8 @@ package membershipclient
 
 import (
 	"encoding/json"
+	"bytes"
+	"fmt"
 )
 
 // checks if the UserData type satisfies the MappedNullable interface at compile time
@@ -21,6 +23,8 @@ var _ MappedNullable = &UserData{}
 type UserData struct {
 	Email string `json:"email"`
 }
+
+type _UserData UserData
 
 // NewUserData instantiates a new UserData object
 // This constructor will assign default values to properties that have it defined,
@@ -76,6 +80,43 @@ func (o UserData) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["email"] = o.Email
 	return toSerialize, nil
+}
+
+func (o *UserData) UnmarshalJSON(data []byte) (err error) {
+	// This validates that all required properties are included in the JSON object
+	// by unmarshalling the object into a generic map with string keys and checking
+	// that every required field exists as a key in the generic map.
+	requiredProperties := []string{
+		"email",
+	}
+
+	allProperties := make(map[string]interface{})
+
+	err = json.Unmarshal(data, &allProperties)
+
+	if err != nil {
+		return err;
+	}
+
+	for _, requiredProperty := range(requiredProperties) {
+		if _, exists := allProperties[requiredProperty]; !exists {
+			return fmt.Errorf("no value given for required property %v", requiredProperty)
+		}
+	}
+
+	varUserData := _UserData{}
+
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&varUserData)
+
+	if err != nil {
+		return err
+	}
+
+	*o = UserData(varUserData)
+
+	return err
 }
 
 type NullableUserData struct {

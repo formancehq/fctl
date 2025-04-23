@@ -40,7 +40,7 @@ func NewDisableCommand() *cobra.Command {
 		fctl.WithShortDescription("Disable a stack"),
 		fctl.WithArgs(cobra.MaximumNArgs(1)),
 		fctl.WithStringFlag(stackNameFlag, "", "Stack to disable"),
-		fctl.WithController[*DisabledStore](NewDisableController()),
+		fctl.WithController(NewDisableController()),
 	)
 }
 func (c *DisableController) GetStore() *DisabledStore {

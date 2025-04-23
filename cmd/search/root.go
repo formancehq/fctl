@@ -170,7 +170,7 @@ func NewCommand() *cobra.Command {
 		// 	return append(targets, defaultTarget), cobra.ShellCompDirectiveNoFileComp
 		// }),
 		fctl.WithShortDescription("Search in all services (Default: ANY), or in a specific service (ACCOUNT, TRANSACTION, ASSET, PAYMENT)"),
-		fctl.WithController[*SearchStore](NewSearchController()),
+		fctl.WithController(NewSearchController()),
 		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
 
 			cfg, err := fctl.GetConfig(cmd)
@@ -181,7 +181,7 @@ func NewCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg, apiClient.DefaultApi)
+			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg, apiClient.DefaultAPI)
 			if err != nil {
 				return err
 			}

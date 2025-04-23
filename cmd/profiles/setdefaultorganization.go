@@ -83,7 +83,7 @@ func organizationCompletion(cmd *cobra.Command, args []string, toComplete string
 		return []string{}, cobra.ShellCompDirectiveError
 	}
 
-	opts := collectionutils.Reduce(ret.Data, func(acc []string, o membershipclient.ListOrganizationExpandedResponseDataInner) []string {
+	opts := collectionutils.Reduce(ret.Data, func(acc []string, o membershipclient.OrganizationExpanded) []string {
 		return append(acc, fmt.Sprintf("%s\t%s", o.Id, o.Name))
 	}, []string{})
 
