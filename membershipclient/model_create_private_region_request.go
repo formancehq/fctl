@@ -12,7 +12,6 @@ package membershipclient
 
 import (
 	"encoding/json"
-	"bytes"
 	"fmt"
 )
 
@@ -22,6 +21,7 @@ var _ MappedNullable = &CreatePrivateRegionRequest{}
 // CreatePrivateRegionRequest struct for CreatePrivateRegionRequest
 type CreatePrivateRegionRequest struct {
 	Name string `json:"name"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _CreatePrivateRegionRequest CreatePrivateRegionRequest
@@ -79,6 +79,11 @@ func (o CreatePrivateRegionRequest) MarshalJSON() ([]byte, error) {
 func (o CreatePrivateRegionRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["name"] = o.Name
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -106,15 +111,20 @@ func (o *CreatePrivateRegionRequest) UnmarshalJSON(data []byte) (err error) {
 
 	varCreatePrivateRegionRequest := _CreatePrivateRegionRequest{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varCreatePrivateRegionRequest)
+	err = json.Unmarshal(data, &varCreatePrivateRegionRequest)
 
 	if err != nil {
 		return err
 	}
 
 	*o = CreatePrivateRegionRequest(varCreatePrivateRegionRequest)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "name")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

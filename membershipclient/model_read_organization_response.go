@@ -20,7 +20,10 @@ var _ MappedNullable = &ReadOrganizationResponse{}
 // ReadOrganizationResponse struct for ReadOrganizationResponse
 type ReadOrganizationResponse struct {
 	Data *OrganizationExpanded `json:"data,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
+
+type _ReadOrganizationResponse ReadOrganizationResponse
 
 // NewReadOrganizationResponse instantiates a new ReadOrganizationResponse object
 // This constructor will assign default values to properties that have it defined,
@@ -84,7 +87,33 @@ func (o ReadOrganizationResponse) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Data) {
 		toSerialize["data"] = o.Data
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
+}
+
+func (o *ReadOrganizationResponse) UnmarshalJSON(data []byte) (err error) {
+	varReadOrganizationResponse := _ReadOrganizationResponse{}
+
+	err = json.Unmarshal(data, &varReadOrganizationResponse)
+
+	if err != nil {
+		return err
+	}
+
+	*o = ReadOrganizationResponse(varReadOrganizationResponse)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "data")
+		o.AdditionalProperties = additionalProperties
+	}
+
+	return err
 }
 
 type NullableReadOrganizationResponse struct {

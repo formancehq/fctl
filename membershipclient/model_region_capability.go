@@ -21,7 +21,10 @@ var _ MappedNullable = &RegionCapability{}
 type RegionCapability struct {
 	MODULE_LIST []string `json:"MODULE_LIST,omitempty"`
 	EE []string `json:"EE,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
+
+type _RegionCapability RegionCapability
 
 // NewRegionCapability instantiates a new RegionCapability object
 // This constructor will assign default values to properties that have it defined,
@@ -120,7 +123,34 @@ func (o RegionCapability) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.EE) {
 		toSerialize["EE"] = o.EE
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
+}
+
+func (o *RegionCapability) UnmarshalJSON(data []byte) (err error) {
+	varRegionCapability := _RegionCapability{}
+
+	err = json.Unmarshal(data, &varRegionCapability)
+
+	if err != nil {
+		return err
+	}
+
+	*o = RegionCapability(varRegionCapability)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "MODULE_LIST")
+		delete(additionalProperties, "EE")
+		o.AdditionalProperties = additionalProperties
+	}
+
+	return err
 }
 
 type NullableRegionCapability struct {

@@ -20,7 +20,10 @@ var _ MappedNullable = &StackUserAccessResponse{}
 // StackUserAccessResponse struct for StackUserAccessResponse
 type StackUserAccessResponse struct {
 	Data []StackUserAccess `json:"data,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
+
+type _StackUserAccessResponse StackUserAccessResponse
 
 // NewStackUserAccessResponse instantiates a new StackUserAccessResponse object
 // This constructor will assign default values to properties that have it defined,
@@ -84,7 +87,33 @@ func (o StackUserAccessResponse) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Data) {
 		toSerialize["data"] = o.Data
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
+}
+
+func (o *StackUserAccessResponse) UnmarshalJSON(data []byte) (err error) {
+	varStackUserAccessResponse := _StackUserAccessResponse{}
+
+	err = json.Unmarshal(data, &varStackUserAccessResponse)
+
+	if err != nil {
+		return err
+	}
+
+	*o = StackUserAccessResponse(varStackUserAccessResponse)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "data")
+		o.AdditionalProperties = additionalProperties
+	}
+
+	return err
 }
 
 type NullableStackUserAccessResponse struct {

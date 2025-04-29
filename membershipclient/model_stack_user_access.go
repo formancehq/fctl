@@ -12,7 +12,6 @@ package membershipclient
 
 import (
 	"encoding/json"
-	"bytes"
 	"fmt"
 )
 
@@ -28,6 +27,7 @@ type StackUserAccess struct {
 	// User email
 	Email string `json:"email"`
 	Role Role `json:"role"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _StackUserAccess StackUserAccess
@@ -163,6 +163,11 @@ func (o StackUserAccess) ToMap() (map[string]interface{}, error) {
 	toSerialize["userId"] = o.UserId
 	toSerialize["email"] = o.Email
 	toSerialize["role"] = o.Role
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -193,15 +198,23 @@ func (o *StackUserAccess) UnmarshalJSON(data []byte) (err error) {
 
 	varStackUserAccess := _StackUserAccess{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varStackUserAccess)
+	err = json.Unmarshal(data, &varStackUserAccess)
 
 	if err != nil {
 		return err
 	}
 
 	*o = StackUserAccess(varStackUserAccess)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "stackId")
+		delete(additionalProperties, "userId")
+		delete(additionalProperties, "email")
+		delete(additionalProperties, "role")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

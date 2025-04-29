@@ -12,7 +12,6 @@ package membershipclient
 
 import (
 	"encoding/json"
-	"bytes"
 	"fmt"
 )
 
@@ -22,6 +21,7 @@ var _ MappedNullable = &ListRegionsResponse{}
 // ListRegionsResponse struct for ListRegionsResponse
 type ListRegionsResponse struct {
 	Data []AnyRegion `json:"data"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _ListRegionsResponse ListRegionsResponse
@@ -79,6 +79,11 @@ func (o ListRegionsResponse) MarshalJSON() ([]byte, error) {
 func (o ListRegionsResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["data"] = o.Data
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -106,15 +111,20 @@ func (o *ListRegionsResponse) UnmarshalJSON(data []byte) (err error) {
 
 	varListRegionsResponse := _ListRegionsResponse{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varListRegionsResponse)
+	err = json.Unmarshal(data, &varListRegionsResponse)
 
 	if err != nil {
 		return err
 	}
 
 	*o = ListRegionsResponse(varListRegionsResponse)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "data")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

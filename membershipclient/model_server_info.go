@@ -12,7 +12,6 @@ package membershipclient
 
 import (
 	"encoding/json"
-	"bytes"
 	"fmt"
 )
 
@@ -24,6 +23,7 @@ type ServerInfo struct {
 	Version string `json:"version"`
 	Capabilities []Capability `json:"capabilities,omitempty"`
 	ConsoleURL *string `json:"consoleURL,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _ServerInfo ServerInfo
@@ -151,6 +151,11 @@ func (o ServerInfo) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.ConsoleURL) {
 		toSerialize["consoleURL"] = o.ConsoleURL
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -178,15 +183,22 @@ func (o *ServerInfo) UnmarshalJSON(data []byte) (err error) {
 
 	varServerInfo := _ServerInfo{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varServerInfo)
+	err = json.Unmarshal(data, &varServerInfo)
 
 	if err != nil {
 		return err
 	}
 
 	*o = ServerInfo(varServerInfo)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "version")
+		delete(additionalProperties, "capabilities")
+		delete(additionalProperties, "consoleURL")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

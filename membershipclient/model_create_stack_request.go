@@ -12,7 +12,6 @@ package membershipclient
 
 import (
 	"encoding/json"
-	"bytes"
 	"fmt"
 )
 
@@ -27,6 +26,7 @@ type CreateStackRequest struct {
 	// Supported only with agent version >= v0.7.0
 	Version *string `json:"version,omitempty"`
 	RegionID string `json:"regionID"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _CreateStackRequest CreateStackRequest
@@ -180,6 +180,11 @@ func (o CreateStackRequest) ToMap() (map[string]interface{}, error) {
 		toSerialize["version"] = o.Version
 	}
 	toSerialize["regionID"] = o.RegionID
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -208,15 +213,23 @@ func (o *CreateStackRequest) UnmarshalJSON(data []byte) (err error) {
 
 	varCreateStackRequest := _CreateStackRequest{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varCreateStackRequest)
+	err = json.Unmarshal(data, &varCreateStackRequest)
 
 	if err != nil {
 		return err
 	}
 
 	*o = CreateStackRequest(varCreateStackRequest)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "name")
+		delete(additionalProperties, "metadata")
+		delete(additionalProperties, "version")
+		delete(additionalProperties, "regionID")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

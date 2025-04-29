@@ -13,7 +13,6 @@ package membershipclient
 import (
 	"encoding/json"
 	"time"
-	"bytes"
 	"fmt"
 )
 
@@ -28,6 +27,7 @@ type Module struct {
 	LastStatusUpdate time.Time `json:"lastStatusUpdate"`
 	LastStateUpdate time.Time `json:"lastStateUpdate"`
 	ClusterStatus *string `json:"clusterStatus,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _Module Module
@@ -224,6 +224,11 @@ func (o Module) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.ClusterStatus) {
 		toSerialize["clusterStatus"] = o.ClusterStatus
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -255,15 +260,25 @@ func (o *Module) UnmarshalJSON(data []byte) (err error) {
 
 	varModule := _Module{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varModule)
+	err = json.Unmarshal(data, &varModule)
 
 	if err != nil {
 		return err
 	}
 
 	*o = Module(varModule)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "name")
+		delete(additionalProperties, "state")
+		delete(additionalProperties, "status")
+		delete(additionalProperties, "lastStatusUpdate")
+		delete(additionalProperties, "lastStateUpdate")
+		delete(additionalProperties, "clusterStatus")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

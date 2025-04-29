@@ -12,7 +12,6 @@ package membershipclient
 
 import (
 	"encoding/json"
-	"bytes"
 	"fmt"
 )
 
@@ -22,6 +21,7 @@ var _ MappedNullable = &UserData{}
 // UserData struct for UserData
 type UserData struct {
 	Email string `json:"email"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _UserData UserData
@@ -79,6 +79,11 @@ func (o UserData) MarshalJSON() ([]byte, error) {
 func (o UserData) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["email"] = o.Email
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -106,15 +111,20 @@ func (o *UserData) UnmarshalJSON(data []byte) (err error) {
 
 	varUserData := _UserData{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varUserData)
+	err = json.Unmarshal(data, &varUserData)
 
 	if err != nil {
 		return err
 	}
 
 	*o = UserData(varUserData)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "email")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

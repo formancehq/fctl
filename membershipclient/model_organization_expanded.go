@@ -13,7 +13,6 @@ package membershipclient
 import (
 	"encoding/json"
 	"time"
-	"bytes"
 	"fmt"
 )
 
@@ -41,6 +40,7 @@ type OrganizationExpanded struct {
 	TotalStacks *int32 `json:"totalStacks,omitempty"`
 	TotalUsers *int32 `json:"totalUsers,omitempty"`
 	Owner *User `json:"owner,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _OrganizationExpanded OrganizationExpanded
@@ -500,6 +500,11 @@ func (o OrganizationExpanded) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Owner) {
 		toSerialize["owner"] = o.Owner
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -529,15 +534,32 @@ func (o *OrganizationExpanded) UnmarshalJSON(data []byte) (err error) {
 
 	varOrganizationExpanded := _OrganizationExpanded{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varOrganizationExpanded)
+	err = json.Unmarshal(data, &varOrganizationExpanded)
 
 	if err != nil {
 		return err
 	}
 
 	*o = OrganizationExpanded(varOrganizationExpanded)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "name")
+		delete(additionalProperties, "defaultOrganizationAccess")
+		delete(additionalProperties, "defaultStackAccess")
+		delete(additionalProperties, "domain")
+		delete(additionalProperties, "id")
+		delete(additionalProperties, "ownerId")
+		delete(additionalProperties, "availableStacks")
+		delete(additionalProperties, "availableSandboxes")
+		delete(additionalProperties, "createdAt")
+		delete(additionalProperties, "updatedAt")
+		delete(additionalProperties, "totalStacks")
+		delete(additionalProperties, "totalUsers")
+		delete(additionalProperties, "owner")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }
