@@ -13,7 +13,6 @@ package membershipclient
 import (
 	"encoding/json"
 	"time"
-	"bytes"
 	"fmt"
 )
 
@@ -34,6 +33,7 @@ type Invitation struct {
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 	CreatorId *string `json:"creatorId,omitempty"`
 	LastUpdate *time.Time `json:"lastUpdate,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _Invitation Invitation
@@ -431,6 +431,11 @@ func (o Invitation) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.LastUpdate) {
 		toSerialize["lastUpdate"] = o.LastUpdate
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -463,15 +468,31 @@ func (o *Invitation) UnmarshalJSON(data []byte) (err error) {
 
 	varInvitation := _Invitation{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varInvitation)
+	err = json.Unmarshal(data, &varInvitation)
 
 	if err != nil {
 		return err
 	}
 
 	*o = Invitation(varInvitation)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "id")
+		delete(additionalProperties, "organizationId")
+		delete(additionalProperties, "userEmail")
+		delete(additionalProperties, "status")
+		delete(additionalProperties, "creationDate")
+		delete(additionalProperties, "updatedAt")
+		delete(additionalProperties, "role")
+		delete(additionalProperties, "userId")
+		delete(additionalProperties, "organizationAccess")
+		delete(additionalProperties, "expiresAt")
+		delete(additionalProperties, "creatorId")
+		delete(additionalProperties, "lastUpdate")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

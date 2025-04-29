@@ -13,7 +13,6 @@ package membershipclient
 import (
 	"encoding/json"
 	"time"
-	"bytes"
 	"fmt"
 )
 
@@ -28,6 +27,7 @@ type Log struct {
 	Action string `json:"action"`
 	Date time.Time `json:"date"`
 	Data map[string]interface{} `json:"data"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _Log Log
@@ -215,6 +215,11 @@ func (o Log) ToMap() (map[string]interface{}, error) {
 	toSerialize["action"] = o.Action
 	toSerialize["date"] = o.Date
 	toSerialize["data"] = o.Data
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -247,15 +252,25 @@ func (o *Log) UnmarshalJSON(data []byte) (err error) {
 
 	varLog := _Log{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varLog)
+	err = json.Unmarshal(data, &varLog)
 
 	if err != nil {
 		return err
 	}
 
 	*o = Log(varLog)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "seq")
+		delete(additionalProperties, "organizationId")
+		delete(additionalProperties, "userId")
+		delete(additionalProperties, "action")
+		delete(additionalProperties, "date")
+		delete(additionalProperties, "data")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

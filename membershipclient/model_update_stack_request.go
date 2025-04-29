@@ -12,7 +12,6 @@ package membershipclient
 
 import (
 	"encoding/json"
-	"bytes"
 	"fmt"
 )
 
@@ -24,6 +23,7 @@ type UpdateStackRequest struct {
 	// Stack name
 	Name string `json:"name"`
 	Metadata *map[string]string `json:"metadata,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _UpdateStackRequest UpdateStackRequest
@@ -116,6 +116,11 @@ func (o UpdateStackRequest) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Metadata) {
 		toSerialize["metadata"] = o.Metadata
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -143,15 +148,21 @@ func (o *UpdateStackRequest) UnmarshalJSON(data []byte) (err error) {
 
 	varUpdateStackRequest := _UpdateStackRequest{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varUpdateStackRequest)
+	err = json.Unmarshal(data, &varUpdateStackRequest)
 
 	if err != nil {
 		return err
 	}
 
 	*o = UpdateStackRequest(varUpdateStackRequest)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "name")
+		delete(additionalProperties, "metadata")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

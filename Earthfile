@@ -69,7 +69,8 @@ generate-membership-client:
         --git-repo-id=fctl \
         -p packageVersion=latest \
         -p isGoSubmodule=true \
-        -p packageName=membershipclient
+        -p packageName=membershipclient \
+        -p disallowAdditionalPropertiesIfNotPresent=false
     RUN rm -rf ./membershipclient/test
     SAVE ARTIFACT ./membershipclient AS LOCAL membershipclient
 

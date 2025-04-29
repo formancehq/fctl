@@ -12,7 +12,6 @@ package membershipclient
 
 import (
 	"encoding/json"
-	"bytes"
 	"fmt"
 )
 
@@ -22,6 +21,7 @@ var _ MappedNullable = &UpdateOrganizationUserRequest{}
 // UpdateOrganizationUserRequest struct for UpdateOrganizationUserRequest
 type UpdateOrganizationUserRequest struct {
 	Role Role `json:"role"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _UpdateOrganizationUserRequest UpdateOrganizationUserRequest
@@ -79,6 +79,11 @@ func (o UpdateOrganizationUserRequest) MarshalJSON() ([]byte, error) {
 func (o UpdateOrganizationUserRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["role"] = o.Role
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -106,15 +111,20 @@ func (o *UpdateOrganizationUserRequest) UnmarshalJSON(data []byte) (err error) {
 
 	varUpdateOrganizationUserRequest := _UpdateOrganizationUserRequest{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varUpdateOrganizationUserRequest)
+	err = json.Unmarshal(data, &varUpdateOrganizationUserRequest)
 
 	if err != nil {
 		return err
 	}
 
 	*o = UpdateOrganizationUserRequest(varUpdateOrganizationUserRequest)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "role")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

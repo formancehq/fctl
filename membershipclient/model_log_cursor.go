@@ -12,7 +12,6 @@ package membershipclient
 
 import (
 	"encoding/json"
-	"bytes"
 	"fmt"
 )
 
@@ -22,6 +21,7 @@ var _ MappedNullable = &LogCursor{}
 // LogCursor struct for LogCursor
 type LogCursor struct {
 	Data LogCursorData `json:"data"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _LogCursor LogCursor
@@ -79,6 +79,11 @@ func (o LogCursor) MarshalJSON() ([]byte, error) {
 func (o LogCursor) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["data"] = o.Data
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -106,15 +111,20 @@ func (o *LogCursor) UnmarshalJSON(data []byte) (err error) {
 
 	varLogCursor := _LogCursor{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varLogCursor)
+	err = json.Unmarshal(data, &varLogCursor)
 
 	if err != nil {
 		return err
 	}
 
 	*o = LogCursor(varLogCursor)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "data")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

@@ -20,7 +20,10 @@ var _ MappedNullable = &ReadStackUserAccess{}
 // ReadStackUserAccess struct for ReadStackUserAccess
 type ReadStackUserAccess struct {
 	Data *StackUserAccess `json:"data,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
+
+type _ReadStackUserAccess ReadStackUserAccess
 
 // NewReadStackUserAccess instantiates a new ReadStackUserAccess object
 // This constructor will assign default values to properties that have it defined,
@@ -84,7 +87,33 @@ func (o ReadStackUserAccess) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Data) {
 		toSerialize["data"] = o.Data
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
+}
+
+func (o *ReadStackUserAccess) UnmarshalJSON(data []byte) (err error) {
+	varReadStackUserAccess := _ReadStackUserAccess{}
+
+	err = json.Unmarshal(data, &varReadStackUserAccess)
+
+	if err != nil {
+		return err
+	}
+
+	*o = ReadStackUserAccess(varReadStackUserAccess)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "data")
+		o.AdditionalProperties = additionalProperties
+	}
+
+	return err
 }
 
 type NullableReadStackUserAccess struct {

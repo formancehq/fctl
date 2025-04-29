@@ -13,7 +13,6 @@ package membershipclient
 import (
 	"encoding/json"
 	"time"
-	"bytes"
 	"fmt"
 )
 
@@ -30,6 +29,7 @@ type StackLifeCycle struct {
 	LastStatusUpdate time.Time `json:"lastStatusUpdate"`
 	WarnedAt *time.Time `json:"warnedAt,omitempty"`
 	DisposableSince *time.Time `json:"disposableSince,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _StackLifeCycle StackLifeCycle
@@ -287,6 +287,11 @@ func (o StackLifeCycle) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.DisposableSince) {
 		toSerialize["disposableSince"] = o.DisposableSince
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -319,15 +324,27 @@ func (o *StackLifeCycle) UnmarshalJSON(data []byte) (err error) {
 
 	varStackLifeCycle := _StackLifeCycle{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varStackLifeCycle)
+	err = json.Unmarshal(data, &varStackLifeCycle)
 
 	if err != nil {
 		return err
 	}
 
 	*o = StackLifeCycle(varStackLifeCycle)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "status")
+		delete(additionalProperties, "state")
+		delete(additionalProperties, "expectedStatus")
+		delete(additionalProperties, "lastStateUpdate")
+		delete(additionalProperties, "lastExpectedStatusUpdate")
+		delete(additionalProperties, "lastStatusUpdate")
+		delete(additionalProperties, "warnedAt")
+		delete(additionalProperties, "disposableSince")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

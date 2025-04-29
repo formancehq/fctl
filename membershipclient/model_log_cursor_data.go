@@ -12,7 +12,6 @@ package membershipclient
 
 import (
 	"encoding/json"
-	"bytes"
 	"fmt"
 )
 
@@ -26,6 +25,7 @@ type LogCursorData struct {
 	Previous *string `json:"previous,omitempty"`
 	Next *string `json:"next,omitempty"`
 	Data []Log `json:"data"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _LogCursorData LogCursorData
@@ -205,6 +205,11 @@ func (o LogCursorData) ToMap() (map[string]interface{}, error) {
 		toSerialize["next"] = o.Next
 	}
 	toSerialize["data"] = o.Data
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -234,15 +239,24 @@ func (o *LogCursorData) UnmarshalJSON(data []byte) (err error) {
 
 	varLogCursorData := _LogCursorData{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varLogCursorData)
+	err = json.Unmarshal(data, &varLogCursorData)
 
 	if err != nil {
 		return err
 	}
 
 	*o = LogCursorData(varLogCursorData)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "pageSize")
+		delete(additionalProperties, "hasMore")
+		delete(additionalProperties, "previous")
+		delete(additionalProperties, "next")
+		delete(additionalProperties, "data")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

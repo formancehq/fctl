@@ -13,7 +13,6 @@ package membershipclient
 import (
 	"encoding/json"
 	"time"
-	"bytes"
 	"fmt"
 )
 
@@ -38,6 +37,7 @@ type Organization struct {
 	AvailableSandboxes *int32 `json:"availableSandboxes,omitempty"`
 	CreatedAt *time.Time `json:"createdAt,omitempty"`
 	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _Organization Organization
@@ -392,6 +392,11 @@ func (o Organization) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.UpdatedAt) {
 		toSerialize["updatedAt"] = o.UpdatedAt
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -421,15 +426,29 @@ func (o *Organization) UnmarshalJSON(data []byte) (err error) {
 
 	varOrganization := _Organization{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varOrganization)
+	err = json.Unmarshal(data, &varOrganization)
 
 	if err != nil {
 		return err
 	}
 
 	*o = Organization(varOrganization)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "name")
+		delete(additionalProperties, "defaultOrganizationAccess")
+		delete(additionalProperties, "defaultStackAccess")
+		delete(additionalProperties, "domain")
+		delete(additionalProperties, "id")
+		delete(additionalProperties, "ownerId")
+		delete(additionalProperties, "availableStacks")
+		delete(additionalProperties, "availableSandboxes")
+		delete(additionalProperties, "createdAt")
+		delete(additionalProperties, "updatedAt")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

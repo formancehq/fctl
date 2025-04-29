@@ -21,7 +21,10 @@ var _ MappedNullable = &StackVersion{}
 type StackVersion struct {
 	// Supported only with agent version >= v0.7.0
 	Version *string `json:"version,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
+
+type _StackVersion StackVersion
 
 // NewStackVersion instantiates a new StackVersion object
 // This constructor will assign default values to properties that have it defined,
@@ -85,7 +88,33 @@ func (o StackVersion) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Version) {
 		toSerialize["version"] = o.Version
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
+}
+
+func (o *StackVersion) UnmarshalJSON(data []byte) (err error) {
+	varStackVersion := _StackVersion{}
+
+	err = json.Unmarshal(data, &varStackVersion)
+
+	if err != nil {
+		return err
+	}
+
+	*o = StackVersion(varStackVersion)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "version")
+		o.AdditionalProperties = additionalProperties
+	}
+
+	return err
 }
 
 type NullableStackVersion struct {

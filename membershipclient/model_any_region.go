@@ -13,7 +13,6 @@ package membershipclient
 import (
 	"encoding/json"
 	"time"
-	"bytes"
 	"fmt"
 )
 
@@ -39,6 +38,7 @@ type AnyRegion struct {
 	Production *bool `json:"production,omitempty"`
 	Public bool `json:"public"`
 	Secret *PrivateRegionSecret `json:"secret,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _AnyRegion AnyRegion
@@ -584,6 +584,11 @@ func (o AnyRegion) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Secret) {
 		toSerialize["secret"] = o.Secret
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -619,15 +624,36 @@ func (o *AnyRegion) UnmarshalJSON(data []byte) (err error) {
 
 	varAnyRegion := _AnyRegion{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varAnyRegion)
+	err = json.Unmarshal(data, &varAnyRegion)
 
 	if err != nil {
 		return err
 	}
 
 	*o = AnyRegion(varAnyRegion)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "id")
+		delete(additionalProperties, "baseUrl")
+		delete(additionalProperties, "createdAt")
+		delete(additionalProperties, "active")
+		delete(additionalProperties, "lastPing")
+		delete(additionalProperties, "name")
+		delete(additionalProperties, "capabilities")
+		delete(additionalProperties, "agentID")
+		delete(additionalProperties, "outdated")
+		delete(additionalProperties, "creatorId")
+		delete(additionalProperties, "version")
+		delete(additionalProperties, "clientID")
+		delete(additionalProperties, "organizationID")
+		delete(additionalProperties, "creator")
+		delete(additionalProperties, "production")
+		delete(additionalProperties, "public")
+		delete(additionalProperties, "secret")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

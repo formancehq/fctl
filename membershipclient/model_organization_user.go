@@ -12,7 +12,6 @@ package membershipclient
 
 import (
 	"encoding/json"
-	"bytes"
 	"fmt"
 )
 
@@ -24,6 +23,7 @@ type OrganizationUser struct {
 	Role Role `json:"role"`
 	Email string `json:"email"`
 	Id string `json:"id"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _OrganizationUser OrganizationUser
@@ -133,6 +133,11 @@ func (o OrganizationUser) ToMap() (map[string]interface{}, error) {
 	toSerialize["role"] = o.Role
 	toSerialize["email"] = o.Email
 	toSerialize["id"] = o.Id
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -162,15 +167,22 @@ func (o *OrganizationUser) UnmarshalJSON(data []byte) (err error) {
 
 	varOrganizationUser := _OrganizationUser{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varOrganizationUser)
+	err = json.Unmarshal(data, &varOrganizationUser)
 
 	if err != nil {
 		return err
 	}
 
 	*o = OrganizationUser(varOrganizationUser)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "role")
+		delete(additionalProperties, "email")
+		delete(additionalProperties, "id")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

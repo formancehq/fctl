@@ -20,7 +20,10 @@ var _ MappedNullable = &InvitationClaim{}
 // InvitationClaim struct for InvitationClaim
 type InvitationClaim struct {
 	Role *Role `json:"role,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
+
+type _InvitationClaim InvitationClaim
 
 // NewInvitationClaim instantiates a new InvitationClaim object
 // This constructor will assign default values to properties that have it defined,
@@ -84,7 +87,33 @@ func (o InvitationClaim) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Role) {
 		toSerialize["role"] = o.Role
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
+}
+
+func (o *InvitationClaim) UnmarshalJSON(data []byte) (err error) {
+	varInvitationClaim := _InvitationClaim{}
+
+	err = json.Unmarshal(data, &varInvitationClaim)
+
+	if err != nil {
+		return err
+	}
+
+	*o = InvitationClaim(varInvitationClaim)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "role")
+		o.AdditionalProperties = additionalProperties
+	}
+
+	return err
 }
 
 type NullableInvitationClaim struct {

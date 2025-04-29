@@ -13,7 +13,6 @@ package membershipclient
 import (
 	"encoding/json"
 	"time"
-	"bytes"
 	"fmt"
 )
 
@@ -26,6 +25,7 @@ type StackReachability struct {
 	Reachable bool `json:"reachable"`
 	// Last time the stack was reachable
 	LastReachableUpdate *time.Time `json:"lastReachableUpdate,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _StackReachability StackReachability
@@ -118,6 +118,11 @@ func (o StackReachability) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.LastReachableUpdate) {
 		toSerialize["lastReachableUpdate"] = o.LastReachableUpdate
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -145,15 +150,21 @@ func (o *StackReachability) UnmarshalJSON(data []byte) (err error) {
 
 	varStackReachability := _StackReachability{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varStackReachability)
+	err = json.Unmarshal(data, &varStackReachability)
 
 	if err != nil {
 		return err
 	}
 
 	*o = StackReachability(varStackReachability)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "reachable")
+		delete(additionalProperties, "lastReachableUpdate")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

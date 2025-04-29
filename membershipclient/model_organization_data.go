@@ -12,7 +12,6 @@ package membershipclient
 
 import (
 	"encoding/json"
-	"bytes"
 	"fmt"
 )
 
@@ -27,6 +26,7 @@ type OrganizationData struct {
 	DefaultStackAccess *Role `json:"defaultStackAccess,omitempty"`
 	// Organization domain
 	Domain *string `json:"domain,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _OrganizationData OrganizationData
@@ -189,6 +189,11 @@ func (o OrganizationData) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Domain) {
 		toSerialize["domain"] = o.Domain
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -216,15 +221,23 @@ func (o *OrganizationData) UnmarshalJSON(data []byte) (err error) {
 
 	varOrganizationData := _OrganizationData{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varOrganizationData)
+	err = json.Unmarshal(data, &varOrganizationData)
 
 	if err != nil {
 		return err
 	}
 
 	*o = OrganizationData(varOrganizationData)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "name")
+		delete(additionalProperties, "defaultOrganizationAccess")
+		delete(additionalProperties, "defaultStackAccess")
+		delete(additionalProperties, "domain")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

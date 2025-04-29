@@ -20,7 +20,10 @@ var _ MappedNullable = &ListStacksResponse{}
 // ListStacksResponse struct for ListStacksResponse
 type ListStacksResponse struct {
 	Data []Stack `json:"data,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
+
+type _ListStacksResponse ListStacksResponse
 
 // NewListStacksResponse instantiates a new ListStacksResponse object
 // This constructor will assign default values to properties that have it defined,
@@ -84,7 +87,33 @@ func (o ListStacksResponse) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Data) {
 		toSerialize["data"] = o.Data
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
+}
+
+func (o *ListStacksResponse) UnmarshalJSON(data []byte) (err error) {
+	varListStacksResponse := _ListStacksResponse{}
+
+	err = json.Unmarshal(data, &varListStacksResponse)
+
+	if err != nil {
+		return err
+	}
+
+	*o = ListStacksResponse(varListStacksResponse)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "data")
+		o.AdditionalProperties = additionalProperties
+	}
+
+	return err
 }
 
 type NullableListStacksResponse struct {

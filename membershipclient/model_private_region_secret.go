@@ -12,7 +12,6 @@ package membershipclient
 
 import (
 	"encoding/json"
-	"bytes"
 	"fmt"
 )
 
@@ -23,6 +22,7 @@ var _ MappedNullable = &PrivateRegionSecret{}
 type PrivateRegionSecret struct {
 	LastDigits string `json:"lastDigits"`
 	Clear *string `json:"clear,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _PrivateRegionSecret PrivateRegionSecret
@@ -115,6 +115,11 @@ func (o PrivateRegionSecret) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Clear) {
 		toSerialize["clear"] = o.Clear
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -142,15 +147,21 @@ func (o *PrivateRegionSecret) UnmarshalJSON(data []byte) (err error) {
 
 	varPrivateRegionSecret := _PrivateRegionSecret{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varPrivateRegionSecret)
+	err = json.Unmarshal(data, &varPrivateRegionSecret)
 
 	if err != nil {
 		return err
 	}
 
 	*o = PrivateRegionSecret(varPrivateRegionSecret)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "lastDigits")
+		delete(additionalProperties, "clear")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

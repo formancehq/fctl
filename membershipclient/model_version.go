@@ -12,7 +12,6 @@ package membershipclient
 
 import (
 	"encoding/json"
-	"bytes"
 	"fmt"
 )
 
@@ -24,6 +23,7 @@ type Version struct {
 	Name string `json:"name"`
 	Versions map[string]string `json:"versions"`
 	RegionID string `json:"regionID"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _Version Version
@@ -133,6 +133,11 @@ func (o Version) ToMap() (map[string]interface{}, error) {
 	toSerialize["name"] = o.Name
 	toSerialize["versions"] = o.Versions
 	toSerialize["regionID"] = o.RegionID
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -162,15 +167,22 @@ func (o *Version) UnmarshalJSON(data []byte) (err error) {
 
 	varVersion := _Version{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varVersion)
+	err = json.Unmarshal(data, &varVersion)
 
 	if err != nil {
 		return err
 	}
 
 	*o = Version(varVersion)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "name")
+		delete(additionalProperties, "versions")
+		delete(additionalProperties, "regionID")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

@@ -13,7 +13,6 @@ package membershipclient
 import (
 	"encoding/json"
 	"time"
-	"bytes"
 	"fmt"
 )
 
@@ -54,6 +53,7 @@ type Stack struct {
 	AuditEnabled *bool `json:"auditEnabled,omitempty"`
 	Synchronised bool `json:"synchronised"`
 	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _Stack Stack
@@ -799,6 +799,11 @@ func (o Stack) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.UpdatedAt) {
 		toSerialize["updatedAt"] = o.UpdatedAt
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -839,15 +844,43 @@ func (o *Stack) UnmarshalJSON(data []byte) (err error) {
 
 	varStack := _Stack{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varStack)
+	err = json.Unmarshal(data, &varStack)
 
 	if err != nil {
 		return err
 	}
 
 	*o = Stack(varStack)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "name")
+		delete(additionalProperties, "metadata")
+		delete(additionalProperties, "version")
+		delete(additionalProperties, "status")
+		delete(additionalProperties, "state")
+		delete(additionalProperties, "expectedStatus")
+		delete(additionalProperties, "lastStateUpdate")
+		delete(additionalProperties, "lastExpectedStatusUpdate")
+		delete(additionalProperties, "lastStatusUpdate")
+		delete(additionalProperties, "warnedAt")
+		delete(additionalProperties, "disposableSince")
+		delete(additionalProperties, "reachable")
+		delete(additionalProperties, "lastReachableUpdate")
+		delete(additionalProperties, "id")
+		delete(additionalProperties, "organizationId")
+		delete(additionalProperties, "uri")
+		delete(additionalProperties, "regionID")
+		delete(additionalProperties, "stargateEnabled")
+		delete(additionalProperties, "createdAt")
+		delete(additionalProperties, "deletedAt")
+		delete(additionalProperties, "disabledAt")
+		delete(additionalProperties, "auditEnabled")
+		delete(additionalProperties, "synchronised")
+		delete(additionalProperties, "updatedAt")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }
