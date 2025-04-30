@@ -2,9 +2,14 @@ package ledger
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"math/big"
 	"os"
+
+	"github.com/pkg/errors"
 
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
@@ -70,11 +75,14 @@ func (c *ImportController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		}
 	}
 
-	var f *os.File
+	var (
+		f               *os.File
+		positionInBytes int
+	)
 	if lastID.Cmp(big.NewInt(-1)) == 0 {
 		f, err = os.Open(args[1])
 	} else {
-		f, err = c.openFileWithOffset(args[1], lastID)
+		f, positionInBytes, err = c.openFileWithOffset(args[1], lastID)
 	}
 	if err != nil {
 		return nil, err
@@ -83,15 +91,61 @@ func (c *ImportController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		_ = f.Close()
 	}()
 
-	_, err = store.Client().Ledger.V2.ImportLogs(cmd.Context(), operations.V2ImportLogsRequest{
-		Ledger:              args[0],
-		V2ImportLogsRequest: f,
-	})
+	fileInfo, err := f.Stat()
 	if err != nil {
 		return nil, err
 	}
 
-	return c, err
+	fileSize := fileInfo.Size()
+
+	const blockSize = 100
+
+	var (
+		buffer = new(bytes.Buffer)
+		count  = 0
+	)
+
+	progressBar, err := pterm.DefaultProgressbar.
+		WithTotal(int(fileSize)).
+		WithWriter(cmd.OutOrStdout()).
+		WithCurrent(positionInBytes).
+		WithRemoveWhenDone(true).
+		WithShowCount(false).
+		Start("Import")
+	if err != nil {
+		return nil, err
+	}
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		scannerErr := scanner.Err()
+		if scannerErr != nil && !errors.Is(scannerErr, io.EOF) {
+			return nil, fmt.Errorf("error reading file: %w", scannerErr)
+		}
+		bytes := scanner.Bytes()
+		buffer.Write(bytes)
+		buffer.Write([]byte("\n"))
+		count++
+
+		progressBar.Add(len(bytes) + 1) // +1 for the end of line
+
+		if count == blockSize {
+			_, err = store.Client().Ledger.V2.ImportLogs(cmd.Context(), operations.V2ImportLogsRequest{
+				Ledger:              args[0],
+				V2ImportLogsRequest: buffer,
+			})
+			if err != nil {
+				return nil, err
+			}
+			buffer.Reset()
+			count = 0
+		}
+		if errors.Is(scannerErr, io.EOF) {
+			break
+		}
+	}
+
+	return c, nil
 }
 
 func (c *ImportController) Render(cmd *cobra.Command, _ []string) error {
@@ -99,10 +153,10 @@ func (c *ImportController) Render(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-func (c *ImportController) openFileWithOffset(filePath string, id *big.Int) (*os.File, error) {
+func (c *ImportController) openFileWithOffset(filePath string, id *big.Int) (*os.File, int, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer func() {
 		_ = f.Close()
@@ -116,11 +170,11 @@ func (c *ImportController) openFileWithOffset(filePath string, id *big.Int) (*os
 	readBytes := 0
 	for scanner.Scan() {
 		if scanner.Err() != nil {
-			return nil, scanner.Err()
+			return nil, 0, scanner.Err()
 		}
 		l := &log{}
 		if err := json.Unmarshal(scanner.Bytes(), l); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		readBytes += len(scanner.Bytes()) + 1 // +1 for the end of line
@@ -132,13 +186,13 @@ func (c *ImportController) openFileWithOffset(filePath string, id *big.Int) (*os
 
 	ret, err := os.Open(filePath)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	_, err = ret.Seek(int64(readBytes), 0)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return ret, nil
+	return ret, readBytes, nil
 }
