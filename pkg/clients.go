@@ -3,6 +3,10 @@ package fctl
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"time"
+
+	"golang.org/x/oauth2"
 
 	"github.com/formancehq/fctl/membershipclient"
 	formance "github.com/formancehq/formance-sdk-go/v3"
@@ -73,21 +77,52 @@ func MembershipServerInfo(ctx context.Context, client *membershipclient.DefaultA
 }
 
 func NewStackClient(cmd *cobra.Command, cfg *Config, stack *membershipclient.Stack) (*formance.Formance, error) {
-	profile := GetCurrentProfile(cmd, cfg)
-	httpClient := GetHttpClient(cmd, map[string][]string{})
-
-	token, err := profile.GetStackToken(cmd.Context(), httpClient, stack)
-	if err != nil {
-		return nil, err
-	}
-
 	return formance.New(
 		formance.WithServerURL(stack.Uri),
 		formance.WithClient(
-			GetHttpClient(cmd, map[string][]string{
-				"Authorization": {fmt.Sprintf("Bearer %s", token)},
-				"User-Agent":    {"fctl/" + getVersion(cmd)},
-			}),
+			&http.Client{
+				Transport: NewStackHTTPTransport(
+					cmd,
+					GetCurrentProfile(cmd, cfg),
+					stack,
+					map[string][]string{
+						"User-Agent": {"fctl/" + getVersion(cmd)},
+					},
+				),
+			},
 		),
 	), nil
 }
+
+type stackHttpTransport struct {
+	profile             *Profile
+	authHttpClient      *http.Client
+	stack               *membershipclient.Stack
+	token               *oauth2.Token
+	underlyingTransport http.RoundTripper
+}
+
+func (s *stackHttpTransport) RoundTrip(request *http.Request) (*http.Response, error) {
+	if s.token == nil || time.Now().After(s.token.Expiry.Add(-10*time.Second)) {
+		token, err := s.profile.GetStackToken(request.Context(), s.authHttpClient, s.stack)
+		if err != nil {
+			return nil, err
+		}
+		s.token = token
+	}
+
+	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.token.AccessToken))
+
+	return s.underlyingTransport.RoundTrip(request)
+}
+
+func NewStackHTTPTransport(cmd *cobra.Command, profile *Profile, stack *membershipclient.Stack, defaultHeaders map[string][]string) *stackHttpTransport {
+	return &stackHttpTransport{
+		underlyingTransport: NewHTTPTransport(cmd, defaultHeaders),
+		authHttpClient:      GetHttpClient(cmd, map[string][]string{}),
+		profile:             profile,
+		stack:               stack,
+	}
+}
+
+var _ http.RoundTripper = &stackHttpTransport{}

@@ -220,7 +220,7 @@ func (p *Profile) GetUserInfo(cmd *cobra.Command) (*userClaims, error) {
 	return claims, nil
 }
 
-func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, stack *membershipclient.Stack) (string, error) {
+func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, stack *membershipclient.Stack) (*oauth2.Token, error) {
 
 	form := url.Values{
 		"grant_type":         []string{string(oidc.GrantTypeTokenExchange)},
@@ -231,33 +231,36 @@ func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, st
 
 	membershipDiscoveryConfiguration, err := client.Discover(p.membershipURI, httpClient)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, membershipDiscoveryConfiguration.TokenEndpoint,
 		bytes.NewBufferString(form.Encode()))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	req.SetBasicAuth(AuthClient, "")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	ret, err := httpClient.Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
+	defer func() {
+		_ = ret.Body.Close()
+	}()
 
 	if ret.StatusCode != http.StatusOK {
 		data, err := io.ReadAll(ret.Body)
 		if err != nil {
 			panic(err)
 		}
-		return "", errors.New(string(data))
+		return nil, errors.New(string(data))
 	}
 
 	securityToken := oauth2.Token{}
 	if err := json.NewDecoder(ret.Body).Decode(&securityToken); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	apiUrl := p.ApiUrl(stack, "auth")
@@ -269,19 +272,20 @@ func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, st
 
 	stackDiscoveryConfiguration, err := client.Discover(apiUrl.String(), httpClient)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	req, err = http.NewRequestWithContext(ctx, http.MethodPost, stackDiscoveryConfiguration.TokenEndpoint,
 		bytes.NewBufferString(form.Encode()))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
+	now := time.Now()
 	ret, err = httpClient.Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if ret.StatusCode != http.StatusOK {
@@ -289,15 +293,19 @@ func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, st
 		if err != nil {
 			panic(err)
 		}
-		return "", errors.New(string(data))
+		return nil, errors.New(string(data))
 	}
 
-	stackToken := oauth2.Token{}
-	if err := json.NewDecoder(ret.Body).Decode(&stackToken); err != nil {
-		return "", err
+	stackToken := &oauth2.Token{}
+	if err := json.NewDecoder(ret.Body).Decode(stackToken); err != nil {
+		return nil, err
 	}
 
-	return stackToken.AccessToken, nil
+	if stackToken.Expiry.IsZero() {
+		stackToken.Expiry = now.Add(time.Duration(securityToken.ExpiresIn) * time.Second)
+	}
+
+	return stackToken, nil
 }
 
 func (p *Profile) SetDefaultOrganization(o string) {
