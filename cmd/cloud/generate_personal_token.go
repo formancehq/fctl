@@ -59,7 +59,7 @@ func (c *GeneratePersonalTokenController) Run(cmd *cobra.Command, args []string)
 		return nil, err
 	}
 
-	c.store.Token = token
+	c.store.Token = token.AccessToken
 
 	return c, nil
 }

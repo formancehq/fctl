@@ -15,8 +15,7 @@ import (
 
 func GetHttpClient(cmd *cobra.Command, defaultHeaders map[string][]string) *http.Client {
 	return NewHTTPClient(
-		GetBool(cmd, InsecureTlsFlag),
-		GetBool(cmd, DebugFlag),
+		cmd,
 		defaultHeaders,
 	)
 }
@@ -99,19 +98,24 @@ func defaultHeadersRoundTripper(rt http.RoundTripper, headers map[string][]strin
 	}
 }
 
-func NewHTTPClient(insecureTLS, debug bool, defaultHeaders map[string][]string) *http.Client {
+func NewHTTPClient(cmd *cobra.Command, defaultHeaders map[string][]string) *http.Client {
+	return &http.Client{
+		Transport: NewHTTPTransport(cmd, defaultHeaders),
+	}
+}
+
+func NewHTTPTransport(cmd *cobra.Command, defaultHeaders map[string][]string) http.RoundTripper {
+
 	var transport http.RoundTripper = &http.Transport{
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: insecureTLS,
+			InsecureSkipVerify: GetBool(cmd, InsecureTlsFlag),
 		},
 	}
-	if debug {
+	if GetBool(cmd, DebugFlag) {
 		transport = debugRoundTripper(transport)
 	}
 	if len(defaultHeaders) > 0 {
 		transport = defaultHeadersRoundTripper(transport, defaultHeaders)
 	}
-	return &http.Client{
-		Transport: transport,
-	}
+	return transport
 }
