@@ -24,6 +24,7 @@ generate: completions
         -p packageName=membershipclient \
         -p disallowAdditionalPropertiesIfNotPresent=false
     rm -rf ./membershipclient/test
+    rm -rf ./membershipclient/docs
 g: generate
 
 tests:
