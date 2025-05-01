@@ -49,7 +49,7 @@ func NewStackProxyController() *StackProxyController {
 }
 
 func NewProxyCommand() *cobra.Command {
-	cmd := fctl.NewMembershipCommand("proxy",
+	cmd := fctl.NewStackCommand("proxy",
 		fctl.WithShortDescription("Start a local proxy server to access the stack with authentication"),
 		fctl.WithDescription("Start a local proxy server that adds authentication headers to requests to the stack"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
