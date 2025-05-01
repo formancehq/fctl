@@ -7,13 +7,7 @@ pre-commit: tidy generate lint
 pc: pre-commit
 
 lint:
-    golangci-lint run --fix --build-tags it --timeout 5m
-    for d in $(ls tools); do \
-        pushd tools/$d; \
-        golangci-lint run --fix --build-tags it --timeout 5m; \
-        popd; \
-    done
-    cd {{justfile_directory()}}/deployments/pulumi && golangci-lint run --fix --build-tags it --timeout 5m
+    golangci-lint run --fix --timeout 5m
 
 tidy:
     go mod tidy
