@@ -144,8 +144,8 @@ func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 			targetURL.String(),
 			err)
 
-		w.WriteHeader(http.StatusBadGateway)
 		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusBadGateway)
 		errorMsg := fmt.Sprintf("Proxy Error: %v\nTarget URL: %s",
 			err,
 			targetURL.String())
@@ -217,36 +217,33 @@ type tokenTransport struct {
 }
 
 func (t *tokenTransport) isTokenValid() bool {
-    // First, grab a read lock to check for nil token and expiry zero-value.
-    t.tokenMux.RLock()
-    if t.token == nil {
-        t.tokenMux.RUnlock()
-        return false
-    }
-    zero := t.tokenExpiry.IsZero()
-    t.tokenMux.RUnlock()
+	// First, grab a read lock to check for nil token and expiry zero-value.
+	t.tokenMux.RLock()
+	if t.token == nil {
+		t.tokenMux.RUnlock()
+		return false
+	}
+	zero := t.tokenExpiry.IsZero()
+	t.tokenMux.RUnlock()
 
-    // If the expiry hasn't been initialized, switch to a write lock and do it.
-    if zero {
-        t.tokenMux.Lock()
-        if t.tokenExpiry.IsZero() { // double-check under write lock
-            parser := jwt.Parser{}
-            claims := jwt.MapClaims{}
-            if _, _, err := parser.ParseUnverified(t.token.AccessToken, claims); err == nil {
-                if exp, ok := claims["exp"].(float64); ok {
-                    t.tokenExpiry = time.Unix(int64(exp), 0)
-                }
-            }
-        }
-        t.tokenMux.Unlock()
-    }
+	// If the expiry hasn't been initialized, switch to a write lock and do it.
+	if zero {
+		t.tokenMux.Lock()
+		if t.tokenExpiry.IsZero() { // double-check under write lock
+			parser := jwt.Parser{}
+			claims := jwt.MapClaims{}
+			if _, _, err := parser.ParseUnverified(t.token.AccessToken, claims); err == nil {
+				if exp, ok := claims["exp"].(float64); ok {
+					t.tokenExpiry = time.Unix(int64(exp), 0)
+				}
+			}
+		}
+		t.tokenMux.Unlock()
+	}
 
-    // Now re-acquire read lock for the rest of the validation logic.
-    t.tokenMux.RLock()
-    defer t.tokenMux.RUnlock()
-
-    // …rest of original code (e.g. returning whether now < t.tokenExpiry)…
-}
+	// Now re-acquire read lock for the rest of the validation logic.
+	t.tokenMux.RLock()
+	defer t.tokenMux.RUnlock()
 
 	return time.Until(t.tokenExpiry) > 30*time.Second
 }
