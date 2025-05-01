@@ -1,0 +1,57 @@
+version: "2"
+linters:
+  default: none
+  enable:
+    - gosec
+    - unused
+  settings:
+    gosec:
+      includes:
+        - G103
+        - G104
+        - G106
+        - G108
+        - G109
+        - G110
+        - G111
+        - G112
+        - G201
+        - G202
+        - G203
+        - G204
+        - G301
+        - G302
+        - G303
+        - G304
+        - G305
+        - G306
+        - G307
+        - G401
+        - G403
+        - G501
+        - G502
+        - G503
+        - G504
+        - G505
+        - G602
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
