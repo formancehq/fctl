@@ -1,5 +1,5 @@
 {
-  description = "A Nix-flake-based Go 1.23 development environment";
+  description = "A Nix-flake-based Go 1.24 development environment";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -13,6 +13,26 @@
   outputs = { self, nixpkgs, nur }:
     let
       goVersion = 24;
+
+      supportedSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
+
+      forEachSupportedSystem = f:
+        nixpkgs.lib.genAttrs supportedSystems (system:
+          let
+            pkgs = import nixpkgs {
+              inherit system;
+              overlays = [ self.overlays.default nur.overlays.default ];
+              config.allowUnfree = true;
+            };
+          in
+          f { pkgs = pkgs; system = system; }
+        );
+
     in
     {
       overlays.default = final: prev: {
@@ -33,6 +53,7 @@
               pkgs.nur.repos.goreleaser.goreleaser-pro
               just
               goperf
+              openapi-generator-cli
             ];
           };
         }
