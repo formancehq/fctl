@@ -49,13 +49,28 @@ func NewStackProxyController() *StackProxyController {
 }
 
 func NewProxyCommand() *cobra.Command {
-	return fctl.NewMembershipCommand("proxy",
+	cmd := fctl.NewMembershipCommand("proxy",
 		fctl.WithShortDescription("Start a local proxy server to access the stack with authentication"),
 		fctl.WithDescription("Start a local proxy server that adds authentication headers to requests to the stack"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithIntFlag(proxyPortFlag, 55001, "Port to use for the local proxy server"),
 		fctl.WithController(NewStackProxyController()),
 	)
+
+	// Override RunE to use our custom handling
+	originalRunE := cmd.RunE
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		// Run the original command but handle the result differently
+		if err := originalRunE(cmd, args); err != nil {
+			return err
+		}
+
+		// Prevent returning to cobra by exiting directly
+		os.Exit(0)
+		return nil // Never reached
+	}
+
+	return cmd
 }
 
 func (c *StackProxyController) GetStore() *StackProxyStore {
@@ -163,25 +178,31 @@ func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 		fmt.Fprintf(cmd.OutOrStdout(), "Press Ctrl+C to stop the server\n")
 
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			fmt.Fprintf(cmd.ErrOrStderr(), "Error starting proxy server: %v\n", err)
+			fmt.Fprintf(cmd.ErrOrStderr(), "Server error: %v\n", err)
 			os.Exit(1)
 		}
 	}()
 
 	<-stop
+	fmt.Fprintln(cmd.OutOrStdout(), "\nShutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	fmt.Fprintln(cmd.OutOrStdout(), "\nShutting down server...")
 	if err := server.Shutdown(ctx); err != nil {
-		fmt.Fprintf(cmd.ErrOrStderr(), "Server shutdown error: %v\n", err)
+		fmt.Fprintf(cmd.ErrOrStderr(), "Error during server shutdown: %v\n", err)
+	} else {
+		fmt.Fprintln(cmd.OutOrStdout(), "Server stopped successfully")
 	}
 
-	return nil, nil
+	// Create a dummy renderable to avoid nil pointer dereference
+	return &EmptyRenderable{}, nil
 }
 
-func (c *StackProxyController) Render(cmd *cobra.Command, args []string) error {
+// EmptyRenderable is a dummy implementation of the Renderable interface
+type EmptyRenderable struct{}
+
+func (r *EmptyRenderable) Render(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
