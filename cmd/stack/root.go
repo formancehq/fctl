@@ -22,6 +22,7 @@ func NewCommand() *cobra.Command {
 			NewUpdateCommand(),
 			NewUpgradeCommand(),
 			NewHistoryCommand(),
+			NewProxyCommand(),
 			users.NewCommand(),
 			modules.NewCommand(),
 		),
