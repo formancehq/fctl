@@ -139,7 +139,7 @@ func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 	}
 
 	transport := &tokenTransport{
-		wrapped:  http.DefaultTransport,
+		wrapped:  fctl.NewHTTPTransport(cmd, map[string][]string{}),
 		profile:  c.profile,
 		stack:    stack,
 		cmd:      cmd,
