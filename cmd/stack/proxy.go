@@ -52,7 +52,6 @@ func NewProxyCommand() *cobra.Command {
 	cmd := fctl.NewStackCommand("proxy",
 		fctl.WithShortDescription("Start a local proxy server to access the stack with authentication"),
 		fctl.WithDescription("Start a local proxy server that adds authentication headers to requests to the stack"),
-		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithIntFlag(proxyPortFlag, 55001, "Port to use for the local proxy server"),
 		fctl.WithController(NewStackProxyController()),
 	)
@@ -103,7 +102,7 @@ func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 		return nil, fmt.Errorf("error parsing stack URL: %v", err)
 	}
 
-	fmt.Fprintf(cmd.OutOrStdout(), "Target Stack URL: %s\n", stackBaseURL.String())
+	fmt.Fprintf(cmd.OutOrStdout(), "Target Stack URL: %s\r\n", stackBaseURL.String())
 
 	proxy := httputil.NewSingleHostReverseProxy(stackBaseURL)
 
@@ -124,7 +123,7 @@ func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 			RawQuery: req.URL.RawQuery,
 		}
 
-		fmt.Fprintf(cmd.OutOrStdout(), "[%s] Proxying %s %s to %s\n",
+		fmt.Fprintf(cmd.OutOrStdout(), "[%s] Proxying %s %s to %s\r\n",
 			time.Now().Format(time.RFC3339),
 			req.Method,
 			sourceURL.String(),
@@ -139,7 +138,7 @@ func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 			RawQuery: r.URL.RawQuery,
 		}
 
-		fmt.Fprintf(cmd.ErrOrStderr(), "[%s] ERROR proxying request to %s: %v\n",
+		fmt.Fprintf(cmd.ErrOrStderr(), "[%s] ERROR proxying request to %s: %v\r\n",
 			time.Now().Format(time.RFC3339),
 			targetURL.String(),
 			err)
@@ -173,26 +172,34 @@ func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
+	// Create error channel to handle server errors from the main goroutine
+	serverErrors := make(chan error, 1)
+
 	go func() {
-		fmt.Fprintf(cmd.OutOrStdout(), "Starting proxy server at %s -> %s\n", c.store.ProxyUrl, c.store.StackUrl)
-		fmt.Fprintf(cmd.OutOrStdout(), "Press Ctrl+C to stop the server\n")
+		fmt.Fprintf(cmd.OutOrStdout(), "Starting proxy server at %s -> %s\r\n", c.store.ProxyUrl, c.store.StackUrl)
+		fmt.Fprintf(cmd.OutOrStdout(), "Press Ctrl+C to stop the server\r\n")
 
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			fmt.Fprintf(cmd.ErrOrStderr(), "Server error: %v\n", err)
-			os.Exit(1)
+			serverErrors <- err
 		}
 	}()
 
-	<-stop
-	fmt.Fprintln(cmd.OutOrStdout(), "\nShutting down server...")
+	// Handle either server error or stop signal
+	select {
+	case err := <-serverErrors:
+		fmt.Fprintf(cmd.ErrOrStderr(), "Server error: %v\r\n", err)
+		return nil, err
+	case <-stop:
+		fmt.Fprintf(cmd.OutOrStdout(), "\r\nShutting down server...\r\n")
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		fmt.Fprintf(cmd.ErrOrStderr(), "Error during server shutdown: %v\n", err)
+		fmt.Fprintf(cmd.ErrOrStderr(), "Error during server shutdown: %v\r\n", err)
 	} else {
-		fmt.Fprintln(cmd.OutOrStdout(), "Server stopped successfully")
+		fmt.Fprintf(cmd.OutOrStdout(), "Server stopped successfully\r\n")
 	}
 
 	// Create a dummy renderable to avoid nil pointer dereference
@@ -223,29 +230,16 @@ func (t *tokenTransport) isTokenValid() bool {
 		t.tokenMux.RUnlock()
 		return false
 	}
-	zero := t.tokenExpiry.IsZero()
-	t.tokenMux.RUnlock()
 
-	// If the expiry hasn't been initialized, switch to a write lock and do it.
-	if zero {
-		t.tokenMux.Lock()
-		if t.tokenExpiry.IsZero() { // double-check under write lock
-			parser := jwt.Parser{}
-			claims := jwt.MapClaims{}
-			if _, _, err := parser.ParseUnverified(t.token.AccessToken, claims); err == nil {
-				if exp, ok := claims["exp"].(float64); ok {
-					t.tokenExpiry = time.Unix(int64(exp), 0)
-				}
-			}
-		}
-		t.tokenMux.Unlock()
+	// Check if token is expired
+	if !t.tokenExpiry.IsZero() {
+		valid := time.Until(t.tokenExpiry) > 30*time.Second
+		t.tokenMux.RUnlock()
+		return valid
 	}
 
-	// Now re-acquire read lock for the rest of the validation logic.
-	t.tokenMux.RLock()
-	defer t.tokenMux.RUnlock()
-
-	return time.Until(t.tokenExpiry) > 30*time.Second
+	t.tokenMux.RUnlock()
+	return false
 }
 
 func (t *tokenTransport) refreshToken(ctx context.Context) error {
@@ -259,17 +253,35 @@ func (t *tokenTransport) refreshToken(ctx context.Context) error {
 	}
 
 	t.token = newToken
-	t.tokenExpiry = time.Time{}
 
-	parser := jwt.Parser{}
-	claims := jwt.MapClaims{}
-	_, _, err = parser.ParseUnverified(newToken.AccessToken, claims)
-	if err == nil {
-		if exp, ok := claims["exp"].(float64); ok {
-			t.tokenExpiry = time.Unix(int64(exp), 0)
-			fmt.Fprintf(t.cmd.OutOrStdout(), "[%s] Token refreshed, will expire at %s\n",
-				time.Now().Format(time.RFC3339),
-				t.tokenExpiry.Format(time.RFC3339))
+	// Set expiry based on token.Expiry which comes from OAuth2 response
+	if !newToken.Expiry.IsZero() {
+		t.tokenExpiry = newToken.Expiry
+		fmt.Fprintf(t.cmd.OutOrStdout(), "[%s] Token refreshed, will expire at %s\r\n",
+			time.Now().Format(time.RFC3339),
+			t.tokenExpiry.Format(time.RFC3339))
+	} else {
+		// Fallback to JWT parsing if OAuth2 doesn't provide expiry
+		parser := jwt.Parser{}
+		claims := jwt.MapClaims{}
+		_, _, err = parser.ParseUnverified(newToken.AccessToken, claims)
+		if err != nil {
+			fmt.Fprintf(t.cmd.ErrOrStderr(), "[%s] Warning: Unable to parse JWT token: %v\r\n",
+				time.Now().Format(time.RFC3339), err)
+			// Set a default expiry of 1 hour if we can't determine it
+			t.tokenExpiry = time.Now().Add(1 * time.Hour)
+		} else {
+			if exp, ok := claims["exp"].(float64); ok {
+				t.tokenExpiry = time.Unix(int64(exp), 0)
+				fmt.Fprintf(t.cmd.OutOrStdout(), "[%s] Token refreshed, will expire at %s\r\n",
+					time.Now().Format(time.RFC3339),
+					t.tokenExpiry.Format(time.RFC3339))
+			} else {
+				// Set a default expiry if exp claim is not found
+				fmt.Fprintf(t.cmd.ErrOrStderr(), "[%s] Warning: JWT token missing expiration claim\r\n",
+					time.Now().Format(time.RFC3339))
+				t.tokenExpiry = time.Now().Add(1 * time.Hour)
+			}
 		}
 	}
 
@@ -297,7 +309,7 @@ func (t *tokenTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	if resp.StatusCode == http.StatusUnauthorized {
 		if err := resp.Body.Close(); err != nil {
-			fmt.Fprintf(t.cmd.ErrOrStderr(), "[%s] Error closing response body: %v\n",
+			fmt.Fprintf(t.cmd.ErrOrStderr(), "[%s] Error closing response body: %v\r\n",
 				time.Now().Format(time.RFC3339), err)
 		}
 
