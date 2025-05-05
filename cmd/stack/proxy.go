@@ -56,19 +56,6 @@ func NewProxyCommand() *cobra.Command {
 		fctl.WithController(NewStackProxyController()),
 	)
 
-	// Override RunE to use our custom handling
-	originalRunE := cmd.RunE
-	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		// Run the original command but handle the result differently
-		if err := originalRunE(cmd, args); err != nil {
-			return err
-		}
-
-		// Prevent returning to cobra by exiting directly
-		os.Exit(0)
-		return nil // Never reached
-	}
-
 	return cmd
 }
 
