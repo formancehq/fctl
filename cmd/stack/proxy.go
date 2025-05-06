@@ -173,9 +173,9 @@ func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 			serverErrors <- fmt.Errorf("port %d is already in use or unavailable: %w", port, err)
 			return
 		}
-		listener.Close()
 
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		// Use the existing listener instead of closing it and calling ListenAndServe
+		if err := server.Serve(listener); err != nil && err != http.ErrServerClosed {
 			serverErrors <- err
 		}
 	}()
