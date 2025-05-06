@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/golang-jwt/jwt"
 	"github.com/spf13/cobra"
 	"golang.org/x/oauth2"
 )
@@ -166,6 +166,15 @@ func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 		fmt.Fprintf(cmd.OutOrStdout(), "Starting proxy server at %s -> %s\r\n", c.store.ProxyUrl, c.store.StackUrl)
 		fmt.Fprintf(cmd.OutOrStdout(), "Press Ctrl+C to stop the server\r\n")
 
+		// Check if port is available before starting the server
+		addr := fmt.Sprintf(":%d", port)
+		listener, err := net.Listen("tcp", addr)
+		if err != nil {
+			serverErrors <- fmt.Errorf("port %d is already in use or unavailable: %w", port, err)
+			return
+		}
+		listener.Close()
+
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			serverErrors <- err
 		}
@@ -240,37 +249,11 @@ func (t *tokenTransport) refreshToken(ctx context.Context) error {
 	}
 
 	t.token = newToken
+	t.tokenExpiry = newToken.Expiry
 
-	// Set expiry based on token.Expiry which comes from OAuth2 response
-	if !newToken.Expiry.IsZero() {
-		t.tokenExpiry = newToken.Expiry
-		fmt.Fprintf(t.cmd.OutOrStdout(), "[%s] Token refreshed, will expire at %s\r\n",
-			time.Now().Format(time.RFC3339),
-			t.tokenExpiry.Format(time.RFC3339))
-	} else {
-		// Fallback to JWT parsing if OAuth2 doesn't provide expiry
-		parser := jwt.Parser{}
-		claims := jwt.MapClaims{}
-		_, _, err = parser.ParseUnverified(newToken.AccessToken, claims)
-		if err != nil {
-			fmt.Fprintf(t.cmd.ErrOrStderr(), "[%s] Warning: Unable to parse JWT token: %v\r\n",
-				time.Now().Format(time.RFC3339), err)
-			// Set a default expiry of 1 hour if we can't determine it
-			t.tokenExpiry = time.Now().Add(1 * time.Hour)
-		} else {
-			if exp, ok := claims["exp"].(float64); ok {
-				t.tokenExpiry = time.Unix(int64(exp), 0)
-				fmt.Fprintf(t.cmd.OutOrStdout(), "[%s] Token refreshed, will expire at %s\r\n",
-					time.Now().Format(time.RFC3339),
-					t.tokenExpiry.Format(time.RFC3339))
-			} else {
-				// Set a default expiry if exp claim is not found
-				fmt.Fprintf(t.cmd.ErrOrStderr(), "[%s] Warning: JWT token missing expiration claim\r\n",
-					time.Now().Format(time.RFC3339))
-				t.tokenExpiry = time.Now().Add(1 * time.Hour)
-			}
-		}
-	}
+	fmt.Fprintf(t.cmd.OutOrStdout(), "[%s] Token refreshed, will expire at %s\r\n",
+		time.Now().Format(time.RFC3339),
+		t.tokenExpiry.Format(time.RFC3339))
 
 	return nil
 }
