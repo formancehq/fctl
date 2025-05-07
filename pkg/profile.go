@@ -302,7 +302,7 @@ func (p *Profile) GetStackToken(ctx context.Context, httpClient *http.Client, st
 	}
 
 	if stackToken.Expiry.IsZero() {
-		stackToken.Expiry = now.Add(time.Duration(securityToken.ExpiresIn) * time.Second)
+		stackToken.Expiry = now.Add(time.Duration(stackToken.ExpiresIn) * time.Second)
 	}
 
 	return stackToken, nil
