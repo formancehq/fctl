@@ -1,4 +1,5 @@
 .gitignore
+.openapi-generator-ignore
 .travis.yml
 README.md
 api/openapi.yaml
@@ -43,6 +44,7 @@ docs/ReadOrganizationResponse.md
 docs/ReadOrganizationUserResponse.md
 docs/ReadStackUserAccess.md
 docs/ReadUserResponse.md
+docs/ReadUserResponseData.md
 docs/Region.md
 docs/RegionCapability.md
 docs/RegionCapabilityKeys.md
@@ -102,6 +104,7 @@ model_read_organization_response.go
 model_read_organization_user_response.go
 model_read_stack_user_access.go
 model_read_user_response.go
+model_read_user_response_data.go
 model_region.go
 model_region_capability.go
 model_region_capability_keys.go

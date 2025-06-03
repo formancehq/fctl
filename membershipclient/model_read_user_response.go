@@ -19,7 +19,7 @@ var _ MappedNullable = &ReadUserResponse{}
 
 // ReadUserResponse struct for ReadUserResponse
 type ReadUserResponse struct {
-	Data *User `json:"data,omitempty"`
+	Data *ReadUserResponseData `json:"data,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -43,9 +43,9 @@ func NewReadUserResponseWithDefaults() *ReadUserResponse {
 }
 
 // GetData returns the Data field value if set, zero value otherwise.
-func (o *ReadUserResponse) GetData() User {
+func (o *ReadUserResponse) GetData() ReadUserResponseData {
 	if o == nil || IsNil(o.Data) {
-		var ret User
+		var ret ReadUserResponseData
 		return ret
 	}
 	return *o.Data
@@ -53,7 +53,7 @@ func (o *ReadUserResponse) GetData() User {
 
 // GetDataOk returns a tuple with the Data field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ReadUserResponse) GetDataOk() (*User, bool) {
+func (o *ReadUserResponse) GetDataOk() (*ReadUserResponseData, bool) {
 	if o == nil || IsNil(o.Data) {
 		return nil, false
 	}
@@ -69,8 +69,8 @@ func (o *ReadUserResponse) HasData() bool {
 	return false
 }
 
-// SetData gets a reference to the given User and assigns it to the Data field.
-func (o *ReadUserResponse) SetData(v User) {
+// SetData gets a reference to the given ReadUserResponseData and assigns it to the Data field.
+func (o *ReadUserResponse) SetData(v ReadUserResponseData) {
 	o.Data = &v
 }
 

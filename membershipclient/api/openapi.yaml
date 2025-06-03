@@ -2355,11 +2355,12 @@ components:
       example:
         data:
           role: USER
+          clientSecret: clientSecret
           id: id
           email: email
       properties:
         data:
-          $ref: '#/components/schemas/User'
+          $ref: '#/components/schemas/ReadUserResponse_data'
       type: object
     ListInvitationsResponse:
       example:
@@ -2812,6 +2813,21 @@ components:
           seq: 1e6f8b6e-1b6b-4b3b-8b3b-1b6b4b3b8b3b
         hasMore: false
         pageSize: 15
+    ReadUserResponse_data:
+      allOf:
+      - $ref: '#/components/schemas/User'
+      - properties:
+          clientSecret:
+            description: User clientSecret used for client credentials flow
+            type: string
+        required:
+        - clientSecret
+        type: object
+      example:
+        role: USER
+        clientSecret: clientSecret
+        id: id
+        email: email
   securitySchemes:
     oauth2:
       flows:

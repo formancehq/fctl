@@ -13,6 +13,7 @@ tidy:
     go mod tidy
 
 generate: completions
+    rm -rf ./membershipclient
     openapi-generator-cli generate \
         -i ./membership-swagger.yaml \
         -g go \

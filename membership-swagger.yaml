@@ -1855,7 +1855,15 @@ components:
       type: object
       properties:
         data:
-          $ref: "#/components/schemas/User"
+          allOf:
+          - $ref: "#/components/schemas/User"
+          - type: object
+            required:
+            - clientSecret
+            properties:
+              clientSecret:
+                type: string
+                description: User clientSecret used for client credentials flow
     ListInvitationsResponse:
       type: object
       properties:

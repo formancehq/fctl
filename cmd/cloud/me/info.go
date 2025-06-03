@@ -2,6 +2,7 @@ package me
 
 import (
 	"errors"
+	"fmt"
 
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
@@ -11,6 +12,9 @@ import (
 type InfoStore struct {
 	Subject string `json:"subject"`
 	Email   string `json:"email"`
+
+	ClientId     string `json:"clientId"`
+	ClientSecret string `json:"clientSecret"`
 }
 type InfoController struct {
 	store *InfoStore
@@ -33,7 +37,7 @@ func NewInfoCommand() *cobra.Command {
 		fctl.WithAliases("i", "in"),
 		fctl.WithShortDescription("Display user information"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
-		fctl.WithController[*InfoStore](NewInfoController()),
+		fctl.WithController(NewInfoController()),
 	)
 }
 
@@ -48,6 +52,11 @@ func (c *InfoController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, errors.New("not logged. use 'login' command before")
 	}
 
+	me, _, err := store.Client().ReadConnectedUser(cmd.Context()).Execute()
+	if err != nil {
+		return nil, err
+	}
+
 	userInfo, err := profile.GetUserInfo(cmd)
 	if err != nil {
 		return nil, err
@@ -55,6 +64,8 @@ func (c *InfoController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 
 	c.store.Subject = userInfo.Subject
 	c.store.Email = userInfo.Email
+	c.store.ClientSecret = me.Data.ClientSecret
+	c.store.ClientId = fmt.Sprintf("user_%s", me.Data.Id)
 
 	return c, nil
 }
@@ -63,6 +74,8 @@ func (c *InfoController) Render(cmd *cobra.Command, args []string) error {
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Subject"), c.store.Subject})
 	tableData = append(tableData, []string{pterm.LightCyan("Email"), c.store.Email})
+	tableData = append(tableData, []string{pterm.LightCyan("Client ID"), c.store.ClientId})
+	tableData = append(tableData, []string{pterm.LightCyan("Client Secret"), c.store.ClientSecret})
 
 	return pterm.DefaultTable.
 		WithWriter(cmd.OutOrStdout()).

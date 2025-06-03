@@ -162,6 +162,7 @@ Class | Method | HTTP request | Description
  - [ReadOrganizationUserResponse](docs/ReadOrganizationUserResponse.md)
  - [ReadStackUserAccess](docs/ReadStackUserAccess.md)
  - [ReadUserResponse](docs/ReadUserResponse.md)
+ - [ReadUserResponseData](docs/ReadUserResponseData.md)
  - [Region](docs/Region.md)
  - [RegionCapability](docs/RegionCapability.md)
  - [RegionCapabilityKeys](docs/RegionCapabilityKeys.md)
