@@ -18,7 +18,7 @@ require (
 	github.com/segmentio/ksuid v1.0.4
 	github.com/spf13/cobra v1.8.1
 	github.com/zitadel/oidc/v2 v2.12.2
-	golang.org/x/mod v0.19.0
+	golang.org/x/mod v0.25.0
 	golang.org/x/oauth2 v0.23.0
 	gopkg.in/yaml.v3 v3.0.1
 )
