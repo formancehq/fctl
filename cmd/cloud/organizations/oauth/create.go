@@ -64,8 +64,8 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 
 func (c *CreateController) Render(cmd *cobra.Command, args []string) error {
 	data := [][]string{
-		{"Client ID", fmt.Sprintf("organization_%s", c.store.Organization.Id)},
-		{"Client Secret", *c.store.Organization.Clear},
+		{"Client ID", fmt.Sprintf("organization_%s", c.store.Organization.Data.Id)},
+		{"Client Secret", *c.store.Organization.Data.Secret.Clear},
 	}
 	pterm.DefaultTable.WithHasHeader().WithData(data).Render()
 

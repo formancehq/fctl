@@ -132,6 +132,8 @@ Class | Method | HTTP request | Description
  - [AnyRegion](docs/AnyRegion.md)
  - [Capability](docs/Capability.md)
  - [CreateClientResponse](docs/CreateClientResponse.md)
+ - [CreateClientResponseData](docs/CreateClientResponseData.md)
+ - [CreateClientResponseDataAllOfSecret](docs/CreateClientResponseDataAllOfSecret.md)
  - [CreateInvitationResponse](docs/CreateInvitationResponse.md)
  - [CreateOrganizationResponse](docs/CreateOrganizationResponse.md)
  - [CreatePrivateRegionRequest](docs/CreatePrivateRegionRequest.md)

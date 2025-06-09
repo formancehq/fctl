@@ -42,10 +42,6 @@ func (c *ShowController) GetStore() *Show {
 func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
 	store := fctl.GetMembershipStore(cmd.Context())
-	if !fctl.CheckOrganizationApprobation(cmd, "You are about to Show a new organization") {
-		return nil, fctl.ErrMissingApproval
-	}
-
 	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
 	if err != nil {
 		return nil, err
@@ -63,8 +59,8 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 
 func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 	data := [][]string{
-		{"Client ID", fmt.Sprintf("organization_%s", c.store.Organization.Id)},
-		{"Client Last Digits", c.store.Organization.LastDigits},
+		{"Client ID", fmt.Sprintf("organization_%s", c.store.Organization.Data.Id)},
+		{"Client Last Digits", c.store.Organization.Data.Secret.LastDigits},
 	}
 	pterm.DefaultTable.WithHasHeader().WithData(data).Render()
 

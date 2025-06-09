@@ -1715,29 +1715,27 @@ components:
       - name
       type: object
     CreateClientResponse:
-      allOf:
-      - $ref: '#/components/schemas/Organization'
-      - properties:
-          lastDigits:
-            type: string
-          clear:
-            type: string
-        required:
-        - lastDigits
-        type: object
       example:
-        createdAt: 2000-01-23T04:56:07.000+00:00
-        defaultOrganizationAccess: NONE
-        defaultStackAccess: null
-        domain: domain
-        name: name
-        clear: clear
-        lastDigits: lastDigits
-        id: id
-        ownerId: ownerId
-        availableSandboxes: 6
-        availableStacks: 0
-        updatedAt: 2000-01-23T04:56:07.000+00:00
+        data:
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          defaultOrganizationAccess: NONE
+          defaultStackAccess: null
+          domain: domain
+          name: name
+          id: id
+          secret:
+            clear: clear
+            lastDigits: lastDigits
+          ownerId: ownerId
+          availableSandboxes: 6
+          availableStacks: 0
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        data:
+          $ref: '#/components/schemas/CreateClientResponse_data'
+      required:
+      - data
+      type: object
     Organization:
       allOf:
       - $ref: '#/components/schemas/OrganizationData'
@@ -2695,6 +2693,41 @@ components:
           seq: 1e6f8b6e-1b6b-4b3b-8b3b-1b6b4b3b8b3b
         hasMore: false
         pageSize: 15
+    CreateClientResponse_data_allOf_secret:
+      example:
+        clear: clear
+        lastDigits: lastDigits
+      properties:
+        lastDigits:
+          type: string
+        clear:
+          type: string
+      required:
+      - lastDigits
+      type: object
+    CreateClientResponse_data:
+      allOf:
+      - $ref: '#/components/schemas/Organization'
+      - properties:
+          secret:
+            $ref: '#/components/schemas/CreateClientResponse_data_allOf_secret'
+        required:
+        - secret
+        type: object
+      example:
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        defaultOrganizationAccess: NONE
+        defaultStackAccess: null
+        domain: domain
+        name: name
+        id: id
+        secret:
+          clear: clear
+          lastDigits: lastDigits
+        ownerId: ownerId
+        availableSandboxes: 6
+        availableStacks: 0
+        updatedAt: 2000-01-23T04:56:07.000+00:00
   securitySchemes:
     oauth2:
       flows:

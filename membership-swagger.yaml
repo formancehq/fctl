@@ -1405,16 +1405,26 @@ components:
           type: string
           description: Organization domain
     CreateClientResponse:
-      allOf:
-      - $ref: "#/components/schemas/Organization"
-      - type: object
-        required:
-        - lastDigits
-        properties:
-          lastDigits:
-            type: string
-          clear:
-            type: string
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          allOf:
+          - $ref: "#/components/schemas/Organization"
+          - type: object
+            required:
+            - secret
+            properties:
+              secret:
+                type: object
+                required:
+                - lastDigits
+                properties:
+                  lastDigits:
+                    type: string
+                  clear:
+                    type: string
     Organization:
       allOf:
       - $ref: "#/components/schemas/OrganizationData"
