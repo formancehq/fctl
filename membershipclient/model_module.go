@@ -26,7 +26,7 @@ type Module struct {
 	Status string `json:"status"`
 	LastStatusUpdate time.Time `json:"lastStatusUpdate"`
 	LastStateUpdate time.Time `json:"lastStateUpdate"`
-	ClusterStatus *string `json:"clusterStatus,omitempty"`
+	ClusterStatus map[string]interface{} `json:"clusterStatus,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -175,19 +175,19 @@ func (o *Module) SetLastStateUpdate(v time.Time) {
 }
 
 // GetClusterStatus returns the ClusterStatus field value if set, zero value otherwise.
-func (o *Module) GetClusterStatus() string {
+func (o *Module) GetClusterStatus() map[string]interface{} {
 	if o == nil || IsNil(o.ClusterStatus) {
-		var ret string
+		var ret map[string]interface{}
 		return ret
 	}
-	return *o.ClusterStatus
+	return o.ClusterStatus
 }
 
 // GetClusterStatusOk returns a tuple with the ClusterStatus field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *Module) GetClusterStatusOk() (*string, bool) {
+func (o *Module) GetClusterStatusOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.ClusterStatus) {
-		return nil, false
+		return map[string]interface{}{}, false
 	}
 	return o.ClusterStatus, true
 }
@@ -201,9 +201,9 @@ func (o *Module) HasClusterStatus() bool {
 	return false
 }
 
-// SetClusterStatus gets a reference to the given string and assigns it to the ClusterStatus field.
-func (o *Module) SetClusterStatus(v string) {
-	o.ClusterStatus = &v
+// SetClusterStatus gets a reference to the given map[string]interface{} and assigns it to the ClusterStatus field.
+func (o *Module) SetClusterStatus(v map[string]interface{}) {
+	o.ClusterStatus = v
 }
 
 func (o Module) MarshalJSON() ([]byte, error) {

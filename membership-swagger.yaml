@@ -20,6 +20,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ServerInfo"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /organizations:
     get:
       summary: List organizations of the connected user
@@ -37,6 +43,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ListOrganizationExpandedResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     post:
       summary: Create organization
       operationId: createOrganization
@@ -52,7 +64,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CreateOrganizationResponse"
-        400:
+        default:
           description: Error
           content:
             application/json:
@@ -93,6 +105,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReadOrganizationResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
     put:
       summary: Update organization
@@ -115,7 +133,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReadOrganizationResponse"
-        400:
+        default:
           description: Error
           content:
             application/json:
@@ -131,20 +149,77 @@ paths:
           type: string
         required: true
       responses:
-        400:
+        204:
+          description: Organization deleted
+        default:
           description: Error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
+  /organizations/{organizationId}/client:
+    get:
+      summary: Read organization client
+      operationId: readOrganizationClient
+      parameters:
+      - name: organizationId
+        in: path
+        schema:
+          type: string
+        required: true
+      responses:
+        200:
+          description: Organization client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateClientResponse"
+        default:
+          description: Error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+    put:
+      summary: Create organization client
+      operationId: createOrganizationClient
+      parameters:
+      - name: organizationId
+        in: path
+        schema:
+          type: string
+        required: true
+      responses:
+        201:
+          description: Client organization created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateClientResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete organization client
+      operationId: deleteOrganizationClient
+      parameters:
+      - name: organizationId
+        in: path
+        schema:
+          type: string
+        required: true
+      responses:
         204:
-          description: Organization deleted
+          description: Client deleted
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /organizations/{organizationId}/logs:
     get:
       summary: List logs
@@ -198,6 +273,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LogCursor"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /organizations/{organizationId}/users:
     get:
       summary: List users of organization
@@ -209,18 +290,18 @@ paths:
           type: string
         required: true
       responses:
-        403:
-          description: Not Authorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
         200:
           description: List of users
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ListUsersResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /organizations/{organizationId}/users/{userId}:
     parameters:
     - name: organizationId
@@ -233,29 +314,22 @@ paths:
       schema:
         type: string
       required: true
-
     get:
       summary: Read user of organization
       operationId: readUserOfOrganization
       responses:
-        404:
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
         200:
           description: Read a user
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReadOrganizationUserResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     put:
       summary: Update user within an organization
       operationId: upsertOrganizationUser
@@ -265,26 +339,14 @@ paths:
             schema:
               $ref: "#/components/schemas/UpdateOrganizationUserRequest"
       responses:
-        400:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        404:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
         204:
           description: Updated user
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     delete:
       summary: delete user from organization
       operationId: deleteUserFromOrganization
@@ -293,14 +355,8 @@ paths:
       responses:
         204:
           description: User deleted from organization
-        400:
+        default:
           description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
           content:
             application/json:
               schema:
@@ -335,6 +391,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ListStacksResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     post:
       summary: Create stack
       operationId: createStack
@@ -356,14 +418,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CreateStackResponse"
-        400:
+        default:
           description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
           content:
             application/json:
               schema:
@@ -390,13 +446,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ListModulesResponse"
-        403:
-          description: Not Authorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        404:
+        default:
           description: Error
           content:
             application/json:
@@ -424,14 +474,8 @@ paths:
       responses:
         202:
           description: Module enabled
-        400:
+        default:
           description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
           content:
             application/json:
               schema:
@@ -458,14 +502,8 @@ paths:
       responses:
         202:
           description: Module disabled
-        400:
+        default:
           description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
           content:
             application/json:
               schema:
@@ -494,14 +532,8 @@ paths:
       responses:
         202:
           description: Stack upgrade accepted
-        400:
+        default:
           description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
           content:
             application/json:
               schema:
@@ -528,14 +560,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReadStackResponse"
-        404:
-          description: NotFound
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
+        default:
+          description: Error
           content:
             application/json:
               schema:
@@ -566,14 +592,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReadStackResponse"
-        400:
+        default:
           description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
           content:
             application/json:
               schema:
@@ -601,20 +621,8 @@ paths:
       responses:
         204:
           description: Stack deleted
-        400:
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        404:
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
+        default:
+          description: Error
           content:
             application/json:
               schema:
@@ -641,13 +649,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StackUserAccessResponse"
-        403:
-          description: Not Authorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        404:
+        default:
           description: Error
           content:
             application/json:
@@ -680,13 +682,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReadStackUserAccess"
-        403:
-          description: Not Authorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        404:
+        default:
           description: Error
           content:
             application/json:
@@ -712,20 +708,14 @@ paths:
           type: string
         required: true
       responses:
-        403:
-          description: Not Authorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        404:
+        204:
+          description: Updated user
+        default:
           description: Error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        204:
-          description: Updated user
     put:
       summary: Update stack user access role within an organization
       operationId: upsertStackUserAccess
@@ -751,26 +741,14 @@ paths:
             schema:
               $ref: "#/components/schemas/UpdateStackUserRequest"
       responses:
-        400:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        404:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
         204:
           description: Updated user
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /organizations/{organizationId}/stacks/{stackId}/disable:
     put:
       summary: Disable stack
@@ -789,20 +767,8 @@ paths:
       responses:
         202:
           description: Stack disabled
-        400:
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        404:
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
+        default:
+          description: Error
           content:
             application/json:
               schema:
@@ -825,20 +791,8 @@ paths:
       responses:
         202:
           description: Stack enabled
-        400:
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        404:
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
+        default:
+          description: Error
           content:
             application/json:
               schema:
@@ -865,20 +819,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReadStackResponse"
-        400:
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        404:
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
+        default:
+          description: Error
           content:
             application/json:
               schema:
@@ -901,14 +843,8 @@ paths:
       responses:
         202:
           description: OK
-        400:
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
+        default:
+          description: Error
           content:
             application/json:
               schema:
@@ -931,14 +867,8 @@ paths:
       responses:
         202:
           description: OK
-        400:
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
+        default:
+          description: Error
           content:
             application/json:
               schema:
@@ -967,6 +897,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ListInvitationsResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /me/invitations/{invitationId}/accept:
     post:
       summary: Accept invitation
@@ -980,20 +916,8 @@ paths:
       responses:
         204:
           description: Invitation accepted
-        400:
+        default:
           description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        404:
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
           content:
             application/json:
               schema:
@@ -1011,20 +935,8 @@ paths:
       responses:
         204:
           description: Invitation declined
-        400:
+        default:
           description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        404:
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
           content:
             application/json:
               schema:
@@ -1052,14 +964,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ListInvitationsResponse"
-        404:
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
+        default:
+          description: Error
           content:
             application/json:
               schema:
@@ -1096,14 +1002,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CreateInvitationResponse"
-        404:
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
+        default:
+          description: Error
           content:
             application/json:
               schema:
@@ -1126,20 +1026,8 @@ paths:
       responses:
         204:
           description: Invitation deleted
-        400:
+        default:
           description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        404:
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not Authorized
           content:
             application/json:
               schema:
@@ -1162,14 +1050,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ListRegionsResponse"
-        400:
+        default:
           description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        404:
-          description: Not found
           content:
             application/json:
               schema:
@@ -1183,30 +1065,18 @@ paths:
             schema:
               $ref: "#/components/schemas/CreatePrivateRegionRequest"
       responses:
-        400:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        404:
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not authorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
         200:
           description: Created region
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CreatedPrivateRegionResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /organizations/{organizationId}/regions/{regionID}:
     parameters:
     - name: organizationId
@@ -1223,44 +1093,26 @@ paths:
       summary: Get region
       operationId: getRegion
       responses:
-        404:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
         200:
           description: Get a specific region
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/GetRegionResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     delete:
       summary: Delete region
       operationId: deleteRegion
       responses:
         204:
           description: Delete a specific region
-        404:
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        400:
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Not authorized
+        default:
+          description: Error
           content:
             application/json:
               schema:
@@ -1281,24 +1133,18 @@ paths:
       summary: Get region versions
       operationId: getRegionVersions
       responses:
-        404:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        403:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
         200:
           description: Get a specific region
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/GetRegionVersionsResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /me:
     get:
       summary: Read user
@@ -1310,6 +1156,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReadUserResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 security:
 - oauth2: []
 
@@ -1355,7 +1207,7 @@ components:
           type: string
           format: date-time
         clusterStatus:
-          type: string
+          type: object
 
     ListModulesResponse:
       type: object
@@ -1552,6 +1404,17 @@ components:
         domain:
           type: string
           description: Organization domain
+    CreateClientResponse:
+      allOf:
+      - $ref: "#/components/schemas/Organization"
+      - type: object
+        required:
+        - lastDigits
+        properties:
+          lastDigits:
+            type: string
+          clear:
+            type: string
     Organization:
       allOf:
       - $ref: "#/components/schemas/OrganizationData"
