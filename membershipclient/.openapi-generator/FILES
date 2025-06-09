@@ -8,6 +8,9 @@ configuration.go
 docs/Action.md
 docs/AnyRegion.md
 docs/Capability.md
+docs/CreateClientResponse.md
+docs/CreateClientResponseData.md
+docs/CreateClientResponseDataAllOfSecret.md
 docs/CreateInvitationResponse.md
 docs/CreateOrganizationResponse.md
 docs/CreatePrivateRegionRequest.md
@@ -68,6 +71,9 @@ go.sum
 model_action.go
 model_any_region.go
 model_capability.go
+model_create_client_response.go
+model_create_client_response_data.go
+model_create_client_response_data_all_of_secret.go
 model_create_invitation_response.go
 model_create_organization_response.go
 model_create_private_region_request.go

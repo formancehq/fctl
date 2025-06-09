@@ -82,11 +82,13 @@ Class | Method | HTTP request | Description
 *DefaultAPI* | [**AcceptInvitation**](docs/DefaultAPI.md#acceptinvitation) | **Post** /me/invitations/{invitationId}/accept | Accept invitation
 *DefaultAPI* | [**CreateInvitation**](docs/DefaultAPI.md#createinvitation) | **Post** /organizations/{organizationId}/invitations | Create invitation
 *DefaultAPI* | [**CreateOrganization**](docs/DefaultAPI.md#createorganization) | **Post** /organizations | Create organization
+*DefaultAPI* | [**CreateOrganizationClient**](docs/DefaultAPI.md#createorganizationclient) | **Put** /organizations/{organizationId}/client | Create organization client
 *DefaultAPI* | [**CreatePrivateRegion**](docs/DefaultAPI.md#createprivateregion) | **Post** /organizations/{organizationId}/regions | Create a private region
 *DefaultAPI* | [**CreateStack**](docs/DefaultAPI.md#createstack) | **Post** /organizations/{organizationId}/stacks | Create stack
 *DefaultAPI* | [**DeclineInvitation**](docs/DefaultAPI.md#declineinvitation) | **Post** /me/invitations/{invitationId}/reject | Decline invitation
 *DefaultAPI* | [**DeleteInvitation**](docs/DefaultAPI.md#deleteinvitation) | **Delete** /organizations/{organizationId}/invitations/{invitationId} | Delete invitation
 *DefaultAPI* | [**DeleteOrganization**](docs/DefaultAPI.md#deleteorganization) | **Delete** /organizations/{organizationId} | Delete organization
+*DefaultAPI* | [**DeleteOrganizationClient**](docs/DefaultAPI.md#deleteorganizationclient) | **Delete** /organizations/{organizationId}/client | Delete organization client
 *DefaultAPI* | [**DeleteRegion**](docs/DefaultAPI.md#deleteregion) | **Delete** /organizations/{organizationId}/regions/{regionID} | Delete region
 *DefaultAPI* | [**DeleteStack**](docs/DefaultAPI.md#deletestack) | **Delete** /organizations/{organizationId}/stacks/{stackId} | Delete stack
 *DefaultAPI* | [**DeleteStackUserAccess**](docs/DefaultAPI.md#deletestackuseraccess) | **Delete** /organizations/{organizationId}/stacks/{stackId}/users/{userId} | Delete stack user access role within an organization
@@ -113,6 +115,7 @@ Class | Method | HTTP request | Description
 *DefaultAPI* | [**ListUsersOfOrganization**](docs/DefaultAPI.md#listusersoforganization) | **Get** /organizations/{organizationId}/users | List users of organization
 *DefaultAPI* | [**ReadConnectedUser**](docs/DefaultAPI.md#readconnecteduser) | **Get** /me | Read user
 *DefaultAPI* | [**ReadOrganization**](docs/DefaultAPI.md#readorganization) | **Get** /organizations/{organizationId} | Read organization
+*DefaultAPI* | [**ReadOrganizationClient**](docs/DefaultAPI.md#readorganizationclient) | **Get** /organizations/{organizationId}/client | Read organization client
 *DefaultAPI* | [**ReadStackUserAccess**](docs/DefaultAPI.md#readstackuseraccess) | **Get** /organizations/{organizationId}/stacks/{stackId}/users/{userId} | Read stack user access role within an organization
 *DefaultAPI* | [**ReadUserOfOrganization**](docs/DefaultAPI.md#readuseroforganization) | **Get** /organizations/{organizationId}/users/{userId} | Read user of organization
 *DefaultAPI* | [**RestoreStack**](docs/DefaultAPI.md#restorestack) | **Put** /organizations/{organizationId}/stacks/{stackId}/restore | Restore stack
@@ -128,6 +131,9 @@ Class | Method | HTTP request | Description
  - [Action](docs/Action.md)
  - [AnyRegion](docs/AnyRegion.md)
  - [Capability](docs/Capability.md)
+ - [CreateClientResponse](docs/CreateClientResponse.md)
+ - [CreateClientResponseData](docs/CreateClientResponseData.md)
+ - [CreateClientResponseDataAllOfSecret](docs/CreateClientResponseDataAllOfSecret.md)
  - [CreateInvitationResponse](docs/CreateInvitationResponse.md)
  - [CreateOrganizationResponse](docs/CreateOrganizationResponse.md)
  - [CreatePrivateRegionRequest](docs/CreatePrivateRegionRequest.md)
