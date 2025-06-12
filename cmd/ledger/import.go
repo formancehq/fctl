@@ -145,6 +145,16 @@ func (c *ImportController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		}
 	}
 
+	if buffer.Len() > 0 {
+		_, err = store.Client().Ledger.V2.ImportLogs(cmd.Context(), operations.V2ImportLogsRequest{
+			Ledger:              args[0],
+			V2ImportLogsRequest: buffer,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return c, nil
 }
 
