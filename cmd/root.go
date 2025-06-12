@@ -62,12 +62,12 @@ func NewRootCommand() *cobra.Command {
 			wallets.NewCommand(),
 			orchestration.NewCommand(),
 		),
-		fctl.WithPersistentStringPFlag(fctl.ProfileFlag, "p", "", "config profile to use"),
-		fctl.WithPersistentStringPFlag(fctl.FileFlag, "c", fmt.Sprintf("%s/.formance/fctl.config", homedir), "Debug mode"),
-		fctl.WithPersistentBoolPFlag(fctl.DebugFlag, "d", false, "Debug mode"),
+		fctl.WithPersistentStringPFlag(fctl.ProfileFlag, "p", "", "Configuration profile to use"),
+		fctl.WithPersistentStringPFlag(fctl.FileFlag, "c", fmt.Sprintf("%s/.formance/fctl.config", homedir), "Path to Configuration file"),
+		fctl.WithPersistentBoolPFlag(fctl.DebugFlag, "d", false, "Enable debug mode"),
 		fctl.WithPersistentStringPFlag(fctl.OutputFlag, "o", "plain", "Output format (plain, json)"),
-		fctl.WithPersistentBoolFlag(fctl.InsecureTlsFlag, false, "Insecure TLS"),
-		fctl.WithPersistentBoolFlag(fctl.TelemetryFlag, false, "Telemetry enabled"),
+		fctl.WithPersistentBoolFlag(fctl.InsecureTlsFlag, false, "Allow insecure TLS connections"),
+		fctl.WithPersistentBoolFlag(fctl.TelemetryFlag, false, "Enable telemetry"),
 		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
 			logger := logging.NewDefaultLogger(cmd.OutOrStdout(), fctl.GetBool(cmd, fctl.DebugFlag), false)
 			ctx := logging.ContextWithLogger(cmd.Context(), logger)
