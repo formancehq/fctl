@@ -73,25 +73,31 @@ func corsMiddleware(allowedOrigins []string, next http.Handler) http.Handler {
 
 		// Check if origin is allowed
 		originAllowed := false
+		allowWildcard := false
 		for _, allowedOrigin := range allowedOrigins {
-			if allowedOrigin == "*" || allowedOrigin == origin {
+			if allowedOrigin == "*" {
+				originAllowed = true
+				allowWildcard = true
+				break
+			} else if allowedOrigin == origin {
 				originAllowed = true
 				break
 			}
 		}
 
+		// Set CORS headers only for allowed origins
 		if originAllowed {
-			if origin != "" {
-				w.Header().Set("Access-Control-Allow-Origin", origin)
-			} else if len(allowedOrigins) == 1 && allowedOrigins[0] == "*" {
+			if allowWildcard {
 				w.Header().Set("Access-Control-Allow-Origin", "*")
+			} else if origin != "" {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
 			}
-		}
 
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token, X-Requested-With")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		w.Header().Set("Access-Control-Max-Age", "86400") // 24 hours
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token, X-Requested-With")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+			w.Header().Set("Access-Control-Max-Age", "86400") // 24 hours
+		}
 
 		// Handle preflight requests
 		if r.Method == "OPTIONS" {
@@ -195,6 +201,20 @@ func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 	}
 
 	proxy.Transport = transport
+
+	// Clear any CORS headers from upstream to prevent conflicts with our CORS middleware
+	proxy.ModifyResponse = func(resp *http.Response) error {
+		resp.Header.Del("Access-Control-Allow-Origin")
+		resp.Header.Del("Access-Control-Allow-Methods")
+		resp.Header.Del("Access-Control-Allow-Headers")
+		resp.Header.Del("Access-Control-Allow-Credentials")
+		resp.Header.Del("Access-Control-Max-Age")
+		resp.Header.Del("Access-Control-Expose-Headers")
+		resp.Header.Del("Access-Control-Request-Method")
+		resp.Header.Del("Access-Control-Request-Headers")
+
+		return nil
+	}
 
 	// Only wrap with CORS middleware if origins are specified
 	var handler http.Handler = proxy
