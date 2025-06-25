@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -21,7 +22,8 @@ import (
 )
 
 const (
-	proxyPortFlag = "port"
+	proxyPortFlag      = "port"
+	allowedOriginsFlag = "allowed-origins"
 )
 
 type StackProxyStore struct {
@@ -53,6 +55,7 @@ func NewProxyCommand() *cobra.Command {
 		fctl.WithShortDescription("Start a local proxy server to access the stack with authentication"),
 		fctl.WithDescription("Start a local proxy server that adds authentication headers to requests to the stack"),
 		fctl.WithIntFlag(proxyPortFlag, 55001, "Port to use for the local proxy server"),
+		fctl.WithStringSliceFlag(allowedOriginsFlag, []string{}, "Allowed origins for CORS (comma-separated). If not specified, CORS is disabled."),
 		fctl.WithController(NewStackProxyController()),
 	)
 
@@ -61,6 +64,43 @@ func NewProxyCommand() *cobra.Command {
 
 func (c *StackProxyController) GetStore() *StackProxyStore {
 	return c.store
+}
+
+// corsMiddleware creates a CORS middleware that handles preflight requests and adds CORS headers
+func corsMiddleware(allowedOrigins []string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := r.Header.Get("Origin")
+
+		// Check if origin is allowed
+		originAllowed := false
+		for _, allowedOrigin := range allowedOrigins {
+			if allowedOrigin == "*" || allowedOrigin == origin {
+				originAllowed = true
+				break
+			}
+		}
+
+		if originAllowed {
+			if origin != "" {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+			} else if len(allowedOrigins) == 1 && allowedOrigins[0] == "*" {
+				w.Header().Set("Access-Control-Allow-Origin", "*")
+			}
+		}
+
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token, X-Requested-With")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Max-Age", "86400") // 24 hours
+
+		// Handle preflight requests
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
@@ -82,6 +122,7 @@ func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 	c.store.StackUrl = c.profile.ServicesBaseUrl(stack).String()
 
 	port := fctl.GetInt(cmd, proxyPortFlag)
+	allowedOrigins := fctl.GetStringSlice(cmd, allowedOriginsFlag)
 	c.store.ProxyUrl = fmt.Sprintf("http://localhost:%d", port)
 
 	stackBaseURL, err := url.Parse(c.store.StackUrl)
@@ -90,6 +131,13 @@ func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 	}
 
 	fmt.Fprintf(cmd.OutOrStdout(), "Target Stack URL: %s\r\n", stackBaseURL.String())
+
+	// Only show CORS info if origins are specified
+	if len(allowedOrigins) > 0 {
+		fmt.Fprintf(cmd.OutOrStdout(), "CORS enabled - Allowed Origins: %s\r\n", strings.Join(allowedOrigins, ", "))
+	} else {
+		fmt.Fprintf(cmd.OutOrStdout(), "CORS disabled\r\n")
+	}
 
 	proxy := httputil.NewSingleHostReverseProxy(stackBaseURL)
 
@@ -148,11 +196,15 @@ func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 
 	proxy.Transport = transport
 
+	// Only wrap with CORS middleware if origins are specified
+	var handler http.Handler = proxy
+	if len(allowedOrigins) > 0 {
+		handler = corsMiddleware(allowedOrigins, proxy)
+	}
+
 	server := &http.Server{
-		Addr: fmt.Sprintf(":%d", port),
-		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			proxy.ServeHTTP(w, r)
-		}),
+		Addr:              fmt.Sprintf(":%d", port),
+		Handler:           handler,
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
