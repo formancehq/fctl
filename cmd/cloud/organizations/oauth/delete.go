@@ -25,7 +25,7 @@ func NewDeleteController() *DeleteController {
 
 func NewDeleteCommand() *cobra.Command {
 	return fctl.NewCommand(`delete`,
-		fctl.WithShortDescription("Delete organization client"),
+		fctl.WithShortDescription("Delete organization OAuth client"),
 		fctl.WithConfirmFlag(),
 		fctl.WithController(NewDeleteController()),
 	)
@@ -37,7 +37,7 @@ func (c *DeleteController) GetStore() *Delete {
 
 func (c *DeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 	store := fctl.GetMembershipStore(cmd.Context())
-	if !fctl.CheckOrganizationApprobation(cmd, "You are about to Delete a new organization") {
+	if !fctl.CheckOrganizationApprobation(cmd, "You are about to delete a new organization OAuth client") {
 		return nil, fctl.ErrMissingApproval
 	}
 

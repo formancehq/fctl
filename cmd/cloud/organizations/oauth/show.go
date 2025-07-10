@@ -30,7 +30,7 @@ func NewShowController() *ShowController {
 
 func NewShowCommand() *cobra.Command {
 	return fctl.NewCommand(`show`,
-		fctl.WithShortDescription("Show organization client"),
+		fctl.WithShortDescription("Show organization OAuth client"),
 		fctl.WithController(NewShowController()),
 	)
 }
