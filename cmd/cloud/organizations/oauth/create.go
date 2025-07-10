@@ -43,7 +43,7 @@ func (c *CreateController) GetStore() *Create {
 func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
 	store := fctl.GetMembershipStore(cmd.Context())
-	if !fctl.CheckOrganizationApprobation(cmd, "You are about to create a new organization") {
+	if !fctl.CheckOrganizationApprobation(cmd, "You are about to create a new organization oauth client") {
 		return nil, fctl.ErrMissingApproval
 	}
 
