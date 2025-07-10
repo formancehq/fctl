@@ -30,7 +30,7 @@ func NewCreateController() *CreateController {
 
 func NewCreateCommand() *cobra.Command {
 	return fctl.NewCommand(`create`,
-		fctl.WithShortDescription("Create organization client"),
+		fctl.WithShortDescription("Create organization OAuth client"),
 		fctl.WithConfirmFlag(),
 		fctl.WithController(NewCreateController()),
 	)
@@ -43,7 +43,7 @@ func (c *CreateController) GetStore() *Create {
 func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
 	store := fctl.GetMembershipStore(cmd.Context())
-	if !fctl.CheckOrganizationApprobation(cmd, "You are about to create a new organization") {
+	if !fctl.CheckOrganizationApprobation(cmd, "You are about to create a new organization OAuth client") {
 		return nil, fctl.ErrMissingApproval
 	}
 
