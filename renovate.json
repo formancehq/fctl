@@ -6,5 +6,5 @@
   "ignoreDeps": [
     "github.com/formancehq/fctl/pkg/client"
   ],
-  "ignorePaths": ["./membership/"]
+  "ignorePaths": ["./membershipclient"]
 }
