@@ -4,7 +4,7 @@
     "github>formancehq/shared-config//renovate/presets/golang"
   ],
   "ignoreDeps": [
-    "github.com/formancehq/fctl/pkg/client"
+    "github.com/formancehq/fctl/membershipclient"
   ],
   "ignorePaths": ["**/membershipclient/**"]
 }
