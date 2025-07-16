@@ -7,7 +7,7 @@ toolchain go1.23.2
 require (
 	github.com/TylerBrock/colorjson v0.0.0-20200706003622-8a50f05110d2
 	github.com/c-bata/go-prompt v0.2.6
-	github.com/formancehq/fctl/membershipclient v0.0.0-20250710091417-cf201b965e78
+	github.com/formancehq/fctl/membershipclient v0.0.0-00010101000000-000000000000
 	github.com/formancehq/formance-sdk-go/v3 v3.4.1
 	github.com/formancehq/go-libs v1.7.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
