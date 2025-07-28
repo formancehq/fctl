@@ -1,16 +1,18 @@
 package oauth
 
 import (
-	"fmt"
-
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/pterm/pterm"
+	"github.com/formancehq/go-libs/pointer"
 	"github.com/spf13/cobra"
 )
 
+var (
+	descriptionFlag = "description"
+)
+
 type Create struct {
-	Organization *membershipclient.CreateOrganizationClientResponse `json:"organization"`
+	Client membershipclient.OrganizationClient `json:"organizationClient"`
 }
 type CreateController struct {
 	store *Create
@@ -32,7 +34,7 @@ func NewCreateCommand() *cobra.Command {
 	return fctl.NewCommand(`create`,
 		fctl.WithShortDescription("Create organization OAuth client"),
 		fctl.WithConfirmFlag(),
-		fctl.WithDeprecated("Use `fctl cloud organizations clients create` instead"),
+		fctl.WithStringFlag(descriptionFlag, "", "Description of the OAuth client usage"),
 		fctl.WithController(NewCreateController()),
 	)
 }
@@ -53,22 +55,29 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
-	response, _, err := store.Client().CreateOrganizationClient(cmd.Context(), organizationID).Execute()
+	description, err := cmd.Flags().GetString(descriptionFlag)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Organization = response
+	req := store.Client().OrganizationClientCreate(cmd.Context(), organizationID)
+
+	if description != "" {
+		req = req.CreateOrganizationClientRequest(membershipclient.CreateOrganizationClientRequest{
+			Description: pointer.For(description),
+		})
+	}
+
+	response, _, err := req.Execute()
+	if err != nil {
+		return nil, err
+	}
+
+	c.store.Client = response.Data
 
 	return c, nil
 }
 
 func (c *CreateController) Render(cmd *cobra.Command, args []string) error {
-	data := [][]string{
-		{"Client ID", fmt.Sprintf("organization_%s", c.store.Organization.Data.Id)},
-		{"Client Secret", *c.store.Organization.Data.Secret.Clear},
-	}
-	pterm.DefaultTable.WithHasHeader().WithData(data).Render()
-
-	return nil
+	return showOrganizationClient(cmd.OutOrStdout(), c.store.Client)
 }

@@ -6,11 +6,11 @@ import (
 )
 
 func NewCommand() *cobra.Command {
-	return fctl.NewMembershipCommand("oauth",
-		fctl.WithShortDescription("client management"),
-		fctl.WithDeprecated("Use `fctl cloud organizations clients` instead"),
+	return fctl.NewMembershipCommand("oauth-clients",
+		fctl.WithShortDescription("Oauth clients management"),
 		fctl.WithChildCommands(
 			NewCreateCommand(),
+			NewListCommand(),
 			NewShowCommand(),
 			NewDeleteCommand(),
 		),

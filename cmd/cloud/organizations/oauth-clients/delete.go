@@ -24,10 +24,10 @@ func NewDeleteController() *DeleteController {
 }
 
 func NewDeleteCommand() *cobra.Command {
-	return fctl.NewCommand(`delete`,
+	return fctl.NewCommand(`delete <client_id>`,
 		fctl.WithShortDescription("Delete organization OAuth client"),
 		fctl.WithConfirmFlag(),
-		fctl.WithDeprecated("Use `fctl cloud organizations clients delete` instead"),
+		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithController(NewDeleteController()),
 	)
 }
@@ -47,7 +47,12 @@ func (c *DeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
-	_, err = store.Client().DeleteOrganizationClient(cmd.Context(), organizationID).Execute()
+	clientID := args[0]
+	if clientID == "" {
+		return nil, ErrMissingClientID
+	}
+
+	_, err = store.Client().OrganizationClientDelete(cmd.Context(), organizationID, clientID).Execute()
 	if err != nil {
 		return nil, err
 	}

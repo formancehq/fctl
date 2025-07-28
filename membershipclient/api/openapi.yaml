@@ -319,6 +319,7 @@ paths:
       summary: Delete feature
   /organizations/{organizationId}/client:
     delete:
+      deprecated: true
       operationId: deleteOrganizationClient
       parameters:
       - explode: false
@@ -337,8 +338,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Error
-      summary: Delete organization client
+      summary: Delete organization client (DEPRECATED) (until 12/31/2025)
     get:
+      deprecated: true
       operationId: readOrganizationClient
       parameters:
       - explode: false
@@ -353,7 +355,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateClientResponse'
+                $ref: '#/components/schemas/CreateOrganizationClientResponse'
           description: Organization client
         default:
           content:
@@ -361,8 +363,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Error
-      summary: Read organization client
+      summary: Read organization client (DEPRECATED) (until 12/31/2025)
     put:
+      deprecated: true
       operationId: createOrganizationClient
       parameters:
       - explode: false
@@ -377,7 +380,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateClientResponse'
+                $ref: '#/components/schemas/CreateOrganizationClientResponse'
           description: Client organization created
         default:
           content:
@@ -385,7 +388,135 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Error
+      summary: Create organization client (DEPRECATED) (until 12/31/2025)
+  /organizations/{organizationId}/clients:
+    get:
+      operationId: organizationClientsRead
+      parameters:
+      - explode: false
+        in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: cursor
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: pageSize
+        required: false
+        schema:
+          minimum: 1
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadOrganizationClientsResponse'
+          description: Organization client
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      summary: Read organization clients
+    post:
+      operationId: organizationClientCreate
+      parameters:
+      - explode: false
+        in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrganizationClientRequest'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateOrganizationClientResponse'
+          description: Organization client created
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
       summary: Create organization client
+  /organizations/{organizationId}/clients/{clientId}:
+    delete:
+      operationId: organizationClientDelete
+      parameters:
+      - explode: false
+        in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Client deleted
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      summary: Delete organization client
+    get:
+      operationId: organizationClientRead
+      parameters:
+      - explode: false
+        in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadOrganizationClientResponse'
+          description: Organization client details
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      summary: Read organization client
   /organizations/{organizationId}/logs:
     get:
       operationId: listLogs
@@ -1884,27 +2015,95 @@ components:
       required:
       - name
       type: object
-    CreateClientResponse:
+    CreateOrganizationClientRequest:
+      example:
+        description: description
+      properties:
+        description:
+          description: Description of the client
+          type: string
+      type: object
+    CreateOrganizationClientResponse:
       example:
         data:
           createdAt: 2000-01-23T04:56:07.000+00:00
-          defaultOrganizationAccess: NONE
-          defaultStackAccess: null
-          domain: domain
-          name: name
+          description: description
           id: id
           secret:
             clear: clear
             lastDigits: lastDigits
-          ownerId: ownerId
-          availableSandboxes: 6
-          availableStacks: 0
-          updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
         data:
-          $ref: '#/components/schemas/CreateClientResponse_data'
+          $ref: '#/components/schemas/OrganizationClient'
       required:
       - data
+      type: object
+    ReadOrganizationClientResponse:
+      example:
+        data:
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          description: description
+          id: id
+          secret:
+            clear: clear
+            lastDigits: lastDigits
+      properties:
+        data:
+          $ref: '#/components/schemas/OrganizationClient'
+      required:
+      - data
+      type: object
+    ReadOrganizationClientsResponse:
+      example:
+        data:
+          next: ""
+          previous: YXVsdCBhbmQgYSBtYXhpbXVtIG1heF9yZXN1bHRzLol=
+          data:
+          - createdAt: 2000-01-23T04:56:07.000+00:00
+            description: description
+            id: id
+            secret:
+              clear: clear
+              lastDigits: lastDigits
+          - createdAt: 2000-01-23T04:56:07.000+00:00
+            description: description
+            id: id
+            secret:
+              clear: clear
+              lastDigits: lastDigits
+          hasMore: false
+          pageSize: 15
+      properties:
+        data:
+          $ref: '#/components/schemas/ReadOrganizationClientsResponse_data'
+      required:
+      - data
+      type: object
+    OrganizationClient:
+      example:
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        description: description
+        id: id
+        secret:
+          clear: clear
+          lastDigits: lastDigits
+      properties:
+        id:
+          description: Organization ID
+          type: string
+        secret:
+          $ref: '#/components/schemas/OrganizationClient_secret'
+        description:
+          description: Description of the client
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+      required:
+      - createdAt
+      - description
+      - id
+      - secret
       type: object
     Organization:
       allOf:
@@ -2028,6 +2227,8 @@ components:
           regionID:
             description: The region where the stack is installed
             type: string
+          region:
+            $ref: '#/components/schemas/Region'
           stargateEnabled:
             type: boolean
           createdAt:
@@ -2046,8 +2247,13 @@ components:
           updatedAt:
             format: date-time
             type: string
+          modules:
+            items:
+              $ref: '#/components/schemas/Module'
+            type: array
         required:
         - id
+        - modules
         - organizationId
         - regionID
         - stargateEnabled
@@ -2058,28 +2264,59 @@ components:
         auditEnabled: true
         metadata:
           key: metadata
-        lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
         expectedStatus: READY
-        version: version
-        uri: uri
-        reachable: true
-        stargateEnabled: true
         disabledAt: 2000-01-23T04:56:07.000+00:00
         organizationId: organizationId
         lastExpectedStatusUpdate: 2000-01-23T04:56:07.000+00:00
         createdAt: 2000-01-23T04:56:07.000+00:00
-        deletedAt: 2000-01-23T04:56:07.000+00:00
         regionID: regionID
         warnedAt: 2000-01-23T04:56:07.000+00:00
         lastStateUpdate: 2000-01-23T04:56:07.000+00:00
-        name: name
         lastReachableUpdate: 2000-01-23T04:56:07.000+00:00
         synchronised: true
         state: ACTIVE
         id: id
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+        lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
+        version: version
+        uri: uri
+        reachable: true
+        stargateEnabled: true
+        modules:
+        - lastStateUpdate: 2000-01-23T04:56:07.000+00:00
+          name: name
+          lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
+          state: ENABLED
+          clusterStatus: "{}"
+          status: UNKNOWN
+        - lastStateUpdate: 2000-01-23T04:56:07.000+00:00
+          name: name
+          lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
+          state: ENABLED
+          clusterStatus: "{}"
+          status: UNKNOWN
+        deletedAt: 2000-01-23T04:56:07.000+00:00
+        name: name
+        region:
+          createdAt: createdAt
+          baseUrl: baseUrl
+          agentID: agentID
+          capabilities:
+            EE:
+            - EE
+            - EE
+            MODULE_LIST:
+            - MODULE_LIST
+            - MODULE_LIST
+          outdated: true
+          name: name
+          creatorId: creatorId
+          active: true
+          lastPing: 2000-01-23T04:56:07.000+00:00
+          id: id
+          version: version
         disposableSince: 2000-01-23T04:56:07.000+00:00
         status: UNKNOWN
-        updatedAt: 2000-01-23T04:56:07.000+00:00
     UserData:
       allOf:
       - properties:
@@ -2280,53 +2517,115 @@ components:
         - auditEnabled: true
           metadata:
             key: metadata
-          lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
           expectedStatus: READY
-          version: version
-          uri: uri
-          reachable: true
-          stargateEnabled: true
           disabledAt: 2000-01-23T04:56:07.000+00:00
           organizationId: organizationId
           lastExpectedStatusUpdate: 2000-01-23T04:56:07.000+00:00
           createdAt: 2000-01-23T04:56:07.000+00:00
-          deletedAt: 2000-01-23T04:56:07.000+00:00
           regionID: regionID
           warnedAt: 2000-01-23T04:56:07.000+00:00
           lastStateUpdate: 2000-01-23T04:56:07.000+00:00
-          name: name
           lastReachableUpdate: 2000-01-23T04:56:07.000+00:00
           synchronised: true
           state: ACTIVE
           id: id
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+          lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
+          version: version
+          uri: uri
+          reachable: true
+          stargateEnabled: true
+          modules:
+          - lastStateUpdate: 2000-01-23T04:56:07.000+00:00
+            name: name
+            lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
+            state: ENABLED
+            clusterStatus: "{}"
+            status: UNKNOWN
+          - lastStateUpdate: 2000-01-23T04:56:07.000+00:00
+            name: name
+            lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
+            state: ENABLED
+            clusterStatus: "{}"
+            status: UNKNOWN
+          deletedAt: 2000-01-23T04:56:07.000+00:00
+          name: name
+          region:
+            createdAt: createdAt
+            baseUrl: baseUrl
+            agentID: agentID
+            capabilities:
+              EE:
+              - EE
+              - EE
+              MODULE_LIST:
+              - MODULE_LIST
+              - MODULE_LIST
+            outdated: true
+            name: name
+            creatorId: creatorId
+            active: true
+            lastPing: 2000-01-23T04:56:07.000+00:00
+            id: id
+            version: version
           disposableSince: 2000-01-23T04:56:07.000+00:00
           status: UNKNOWN
-          updatedAt: 2000-01-23T04:56:07.000+00:00
         - auditEnabled: true
           metadata:
             key: metadata
-          lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
           expectedStatus: READY
-          version: version
-          uri: uri
-          reachable: true
-          stargateEnabled: true
           disabledAt: 2000-01-23T04:56:07.000+00:00
           organizationId: organizationId
           lastExpectedStatusUpdate: 2000-01-23T04:56:07.000+00:00
           createdAt: 2000-01-23T04:56:07.000+00:00
-          deletedAt: 2000-01-23T04:56:07.000+00:00
           regionID: regionID
           warnedAt: 2000-01-23T04:56:07.000+00:00
           lastStateUpdate: 2000-01-23T04:56:07.000+00:00
-          name: name
           lastReachableUpdate: 2000-01-23T04:56:07.000+00:00
           synchronised: true
           state: ACTIVE
           id: id
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+          lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
+          version: version
+          uri: uri
+          reachable: true
+          stargateEnabled: true
+          modules:
+          - lastStateUpdate: 2000-01-23T04:56:07.000+00:00
+            name: name
+            lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
+            state: ENABLED
+            clusterStatus: "{}"
+            status: UNKNOWN
+          - lastStateUpdate: 2000-01-23T04:56:07.000+00:00
+            name: name
+            lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
+            state: ENABLED
+            clusterStatus: "{}"
+            status: UNKNOWN
+          deletedAt: 2000-01-23T04:56:07.000+00:00
+          name: name
+          region:
+            createdAt: createdAt
+            baseUrl: baseUrl
+            agentID: agentID
+            capabilities:
+              EE:
+              - EE
+              - EE
+              MODULE_LIST:
+              - MODULE_LIST
+              - MODULE_LIST
+            outdated: true
+            name: name
+            creatorId: creatorId
+            active: true
+            lastPing: 2000-01-23T04:56:07.000+00:00
+            id: id
+            version: version
           disposableSince: 2000-01-23T04:56:07.000+00:00
           status: UNKNOWN
-          updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
         data:
           items:
@@ -2374,28 +2673,59 @@ components:
           auditEnabled: true
           metadata:
             key: metadata
-          lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
           expectedStatus: READY
-          version: version
-          uri: uri
-          reachable: true
-          stargateEnabled: true
           disabledAt: 2000-01-23T04:56:07.000+00:00
           organizationId: organizationId
           lastExpectedStatusUpdate: 2000-01-23T04:56:07.000+00:00
           createdAt: 2000-01-23T04:56:07.000+00:00
-          deletedAt: 2000-01-23T04:56:07.000+00:00
           regionID: regionID
           warnedAt: 2000-01-23T04:56:07.000+00:00
           lastStateUpdate: 2000-01-23T04:56:07.000+00:00
-          name: name
           lastReachableUpdate: 2000-01-23T04:56:07.000+00:00
           synchronised: true
           state: ACTIVE
           id: id
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+          lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
+          version: version
+          uri: uri
+          reachable: true
+          stargateEnabled: true
+          modules:
+          - lastStateUpdate: 2000-01-23T04:56:07.000+00:00
+            name: name
+            lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
+            state: ENABLED
+            clusterStatus: "{}"
+            status: UNKNOWN
+          - lastStateUpdate: 2000-01-23T04:56:07.000+00:00
+            name: name
+            lastStatusUpdate: 2000-01-23T04:56:07.000+00:00
+            state: ENABLED
+            clusterStatus: "{}"
+            status: UNKNOWN
+          deletedAt: 2000-01-23T04:56:07.000+00:00
+          name: name
+          region:
+            createdAt: createdAt
+            baseUrl: baseUrl
+            agentID: agentID
+            capabilities:
+              EE:
+              - EE
+              - EE
+              MODULE_LIST:
+              - MODULE_LIST
+              - MODULE_LIST
+            outdated: true
+            name: name
+            creatorId: creatorId
+            active: true
+            lastPing: 2000-01-23T04:56:07.000+00:00
+            id: id
+            version: version
           disposableSince: 2000-01-23T04:56:07.000+00:00
           status: UNKNOWN
-          updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
         data:
           $ref: '#/components/schemas/Stack'
@@ -2553,6 +2883,24 @@ components:
           $ref: '#/components/schemas/Role'
       type: object
     Region:
+      example:
+        createdAt: createdAt
+        baseUrl: baseUrl
+        agentID: agentID
+        capabilities:
+          EE:
+          - EE
+          - EE
+          MODULE_LIST:
+          - MODULE_LIST
+          - MODULE_LIST
+        outdated: true
+        name: name
+        creatorId: creatorId
+        active: true
+        lastPing: 2000-01-23T04:56:07.000+00:00
+        id: id
+        version: version
       properties:
         id:
           type: string
@@ -2997,7 +3345,36 @@ components:
           seq: 1e6f8b6e-1b6b-4b3b-8b3b-1b6b4b3b8b3b
         hasMore: false
         pageSize: 15
-    CreateClientResponse_data_allOf_secret:
+    ReadOrganizationClientsResponse_data:
+      allOf:
+      - $ref: '#/components/schemas/Cursor'
+      - properties:
+          data:
+            items:
+              $ref: '#/components/schemas/OrganizationClient'
+            type: array
+        required:
+        - data
+        type: object
+      example:
+        next: ""
+        previous: YXVsdCBhbmQgYSBtYXhpbXVtIG1heF9yZXN1bHRzLol=
+        data:
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          description: description
+          id: id
+          secret:
+            clear: clear
+            lastDigits: lastDigits
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          description: description
+          id: id
+          secret:
+            clear: clear
+            lastDigits: lastDigits
+        hasMore: false
+        pageSize: 15
+    OrganizationClient_secret:
       example:
         clear: clear
         lastDigits: lastDigits
@@ -3009,29 +3386,6 @@ components:
       required:
       - lastDigits
       type: object
-    CreateClientResponse_data:
-      allOf:
-      - $ref: '#/components/schemas/Organization'
-      - properties:
-          secret:
-            $ref: '#/components/schemas/CreateClientResponse_data_allOf_secret'
-        required:
-        - secret
-        type: object
-      example:
-        createdAt: 2000-01-23T04:56:07.000+00:00
-        defaultOrganizationAccess: NONE
-        defaultStackAccess: null
-        domain: domain
-        name: name
-        id: id
-        secret:
-          clear: clear
-          lastDigits: lastDigits
-        ownerId: ownerId
-        availableSandboxes: 6
-        availableStacks: 0
-        updatedAt: 2000-01-23T04:56:07.000+00:00
     GoogleIDPConfig_allOf_config:
       type: object
     MicrosoftIDPConfig_allOf_config:
