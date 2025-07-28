@@ -1,4 +1,4 @@
-package oauth
+package oauth_clients
 
 import (
 	fctl "github.com/formancehq/fctl/pkg"
