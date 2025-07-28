@@ -38,7 +38,7 @@ func (c *DeleteController) GetStore() *Delete {
 
 func (c *DeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 	store := fctl.GetMembershipStore(cmd.Context())
-	if !fctl.CheckOrganizationApprobation(cmd, "You are about to delete a new organization OAuth client") {
+	if !fctl.CheckOrganizationApprobation(cmd, "You are about to delete an OAuth client") {
 		return nil, fctl.ErrMissingApproval
 	}
 
