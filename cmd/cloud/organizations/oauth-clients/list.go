@@ -31,7 +31,6 @@ func NewListCommand() *cobra.Command {
 		fctl.WithShortDescription("List organization OAuth clients"),
 		fctl.WithPageSizeFlag(),
 		fctl.WithCursorFlag(),
-		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithController(NewListController()),
 	)
 }
