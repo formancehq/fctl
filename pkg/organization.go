@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/go-libs/collectionutils"
 	"github.com/spf13/cobra"
 )
 
@@ -77,4 +78,30 @@ func NewMembershipOrganizationStore(cmd *cobra.Command) error {
 	cmd.SetContext(ContextWithOrganizationStore(cmd.Context(), NewOrganizationStore(store, organization)))
 
 	return nil
+}
+
+func OrganizationCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	if err := NewMembershipStore(cmd); err != nil {
+		return []string{}, cobra.ShellCompDirectiveError
+	}
+
+	mbStore := GetMembershipStore(cmd.Context())
+	if mbStore == nil {
+		return []string{}, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	ret, res, err := mbStore.Client().ListOrganizations(cmd.Context()).Execute()
+	if err != nil {
+		return []string{}, cobra.ShellCompDirectiveError
+	}
+
+	if res.StatusCode > 300 {
+		return []string{}, cobra.ShellCompDirectiveError
+	}
+
+	opts := collectionutils.Reduce(ret.Data, func(acc []string, o membershipclient.OrganizationExpanded) []string {
+		return append(acc, fmt.Sprintf("%s\t%s", o.Id, o.Name))
+	}, []string{})
+
+	return opts, cobra.ShellCompDirectiveNoFileComp
 }

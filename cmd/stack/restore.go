@@ -43,6 +43,7 @@ func NewRestoreStackCommand() *cobra.Command {
 	return fctl.NewMembershipCommand("restore <stack-id>",
 		fctl.WithShortDescription("Restore a deleted stack"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(fctl.StackCompletion),
 		fctl.WithStringFlag(stackNameFlag, "", ""),
 		fctl.WithController(NewStackRestoreController()),
 	)

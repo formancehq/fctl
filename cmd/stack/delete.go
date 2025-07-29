@@ -42,6 +42,7 @@ func NewDeleteCommand() *cobra.Command {
 		fctl.WithShortDescription("Delete a stack"),
 		fctl.WithAliases("del", "d"),
 		fctl.WithArgs(cobra.MaximumNArgs(1)),
+		fctl.WithValidArgsFunction(fctl.StackCompletion),
 		fctl.WithStringFlag(stackNameFlag, "", "Stack to delete"),
 		fctl.WithBoolFlag(forceFlag, false, "Force to delete a stack without retention policy"),
 		fctl.WithController(NewStackDeleteController()),

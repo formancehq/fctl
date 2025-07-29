@@ -39,6 +39,7 @@ func NewDisableCommand() *cobra.Command {
 		fctl.WithConfirmFlag(),
 		fctl.WithShortDescription("Disable a stack"),
 		fctl.WithArgs(cobra.MaximumNArgs(1)),
+		fctl.WithValidArgsFunction(fctl.StackCompletion),
 		fctl.WithStringFlag(stackNameFlag, "", "Stack to disable"),
 		fctl.WithController(NewDisableController()),
 	)
