@@ -62,6 +62,7 @@ func NewUpdateCommand() *cobra.Command {
 	c := NewUpdateController()
 	return fctl.NewCommand("update <client-id>",
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithShortDescription("Update client"),
 		fctl.WithAliases("u", "upd"),
 		fctl.WithConfirmFlag(),

@@ -41,6 +41,7 @@ func NewCommand() *cobra.Command {
 	return fctl.NewCommand("version",
 		fctl.WithShortDescription("Get version"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*VersionStore](NewVersionController()),
 	)
 }

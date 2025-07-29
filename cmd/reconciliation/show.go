@@ -35,6 +35,7 @@ func NewShowCommand() *cobra.Command {
 	return fctl.NewCommand("get <reconciliationID>",
 		fctl.WithShortDescription("Get reconciliation"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithAliases("sh", "s"),
 		fctl.WithController[*ShowStore](NewShowController()),
 	)

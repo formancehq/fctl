@@ -33,6 +33,7 @@ func NewShowCommand() *cobra.Command {
 		fctl.WithAliases("s"),
 		fctl.WithShortDescription("Show user by id"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController(NewShowController()),
 	)
 }

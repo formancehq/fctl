@@ -37,6 +37,7 @@ func NewDescribeCommand() *cobra.Command {
 	return fctl.NewCommand("describe <instance-id>",
 		fctl.WithShortDescription("Describe a specific workflow instance"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*InstancesDescribeStore](c),
 	)
 }

@@ -84,6 +84,7 @@ func NewCommand() *cobra.Command {
 	return fctl.NewStackCommand("ui",
 		fctl.WithShortDescription("Open UI"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*UiStruct](NewUiController()),
 		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
 			return fctl.NewMembershipStore(cmd)

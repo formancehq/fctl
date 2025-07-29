@@ -45,6 +45,7 @@ func NewShowCommand() *cobra.Command {
 		fctl.WithAliases("s", "sh"),
 		fctl.WithShortDescription("Show stack"),
 		fctl.WithArgs(cobra.MaximumNArgs(1)),
+		fctl.WithValidArgsFunction(fctl.StackCompletion),
 		fctl.WithStringFlag(stackNameFlag, "", ""),
 		fctl.WithController(NewStackShowController()),
 	)

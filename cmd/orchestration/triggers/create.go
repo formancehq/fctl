@@ -41,6 +41,7 @@ func NewCreateCommand() *cobra.Command {
 	return fctl.NewCommand("create <event> <workflow-id>",
 		fctl.WithShortDescription("Create a trigger"),
 		fctl.WithArgs(cobra.ExactArgs(2)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*TriggersCreateStore](ctrl),
 		fctl.WithStringFlag(ctrl.nameFlag, "", "Trigger's name"),
 		fctl.WithStringFlag(ctrl.filterFlag, "", "Filter events"),

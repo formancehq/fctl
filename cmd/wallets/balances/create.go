@@ -41,6 +41,7 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithAliases("c", "cr"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		internal.WithTargetingWalletByID(),
 		internal.WithTargetingWalletByName(),
 		fctl.WithStringFlag(expiresAtFlag, "", "Balance expiration date"),

@@ -47,6 +47,7 @@ func NewHistoryCommand() *cobra.Command {
 		fctl.WithShortDescription("Query stack history"),
 		fctl.WithAliases("hist"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(fctl.StackCompletion),
 		fctl.WithStringFlag(actionFlag, "", "Filter on Action"),
 		fctl.WithStringFlag(userIdFlag, "", "Filter on UserId, use SYSTEM to filter on system logs"),
 		fctl.WithStringFlag(dataFlag, "", "Filter on modified Data with --data key=value, key is a jsonb text path"),

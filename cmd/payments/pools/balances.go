@@ -84,6 +84,7 @@ func NewBalancesCommand() *cobra.Command {
 	c := NewBalancesController()
 	return fctl.NewCommand("balances <poolID> <at>",
 		fctl.WithArgs(cobra.ExactArgs(2)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithShortDescription("List pool balances"),
 		fctl.WithController[*BalancesStore](c),
 	)

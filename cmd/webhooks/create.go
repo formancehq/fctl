@@ -79,6 +79,7 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithAliases("cr"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.MinimumNArgs(2)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithStringFlag(secretFlag, "", "Bring your own webhooks signing secret. If not passed or empty, a secret is automatically generated. The format is a string of bytes of size 24, base64 encoded. (larger size after encoding)"),
 		fctl.WithController[*CreateWebhookStore](NewCreateWebhookController()),
 	)

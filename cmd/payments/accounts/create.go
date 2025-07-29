@@ -43,6 +43,7 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithShortDescription("Create an account on formance platform"),
 		fctl.WithAliases("cr", "c"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*CreateStore](c),
 	)
 }

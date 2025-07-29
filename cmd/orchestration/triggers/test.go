@@ -34,6 +34,7 @@ func NewTestCommand() *cobra.Command {
 	return fctl.NewCommand("test <trigger-id> <event>",
 		fctl.WithShortDescription("Test a specific workflow trigger"),
 		fctl.WithArgs(cobra.ExactArgs(2)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*TriggersTestStore](NewTriggersTestController()),
 	)
 }

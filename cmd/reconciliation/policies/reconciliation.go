@@ -35,6 +35,7 @@ func NewReconciliationCommand() *cobra.Command {
 	return fctl.NewCommand("reconcile <policyID> <atLedger> <atPayments>",
 		fctl.WithShortDescription("Launch a reconciliation from a policy"),
 		fctl.WithArgs(cobra.ExactArgs(3)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithAliases("r"),
 		fctl.WithController[*ReconciliationStore](NewReconciliationController()),
 	)

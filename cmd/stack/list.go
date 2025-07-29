@@ -54,6 +54,7 @@ func NewListCommand() *cobra.Command {
 		fctl.WithAliases("ls", "l"),
 		fctl.WithShortDescription("List stacks"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithBoolFlag(deletedFlag, false, "Display deleted stacks"),
 		fctl.WithBoolFlag(allFlag, false, "Display deleted stacks"),
 		fctl.WithDeprecatedFlag(deletedFlag, "Use --all instead"),

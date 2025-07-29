@@ -32,6 +32,7 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithAliases("cr", "c"),
 		fctl.WithShortDescription("Create organization"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithStringFlag("default-stack-role", "", "Default Stack Role roles: (ADMIN,GUEST,NONE)"),
 		fctl.WithStringFlag("domain", "", "Organization Domain"),
 		fctl.WithStringFlag("default-organization-role", "", "Default Organization Role roles: (ADMIN,GUEST)"),

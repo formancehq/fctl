@@ -39,6 +39,7 @@ func NewUpdateCommand() *cobra.Command {
 	return fctl.NewMembershipCommand("update <stack-id>",
 		fctl.WithShortDescription("Update a created stack, name, or metadata"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(fctl.StackCompletion),
 		fctl.WithPreRunE(func(cmd *cobra.Command, args []string) error {
 			return fctl.CheckMembershipVersion("v0.27.1")(cmd, args)
 

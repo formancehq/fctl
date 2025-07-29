@@ -36,6 +36,7 @@ func NewVoidCommand() *cobra.Command {
 		fctl.WithShortDescription("Void a hold"),
 		fctl.WithAliases("v"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithStringFlag(c.ikFlag, "", "Idempotency Key"),
 		fctl.WithController[*VoidStore](c),
 	)

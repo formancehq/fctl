@@ -36,6 +36,7 @@ func NewShowCommand() *cobra.Command {
 	return fctl.NewCommand("show <instance-id>",
 		fctl.WithShortDescription("Show a specific workflow instance"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*InstancesShowStore](NewInstancesShowController()),
 	)
 }

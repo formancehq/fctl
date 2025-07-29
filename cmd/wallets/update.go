@@ -38,6 +38,7 @@ func NewUpdateCommand() *cobra.Command {
 		fctl.WithAliases("up"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithStringFlag(c.ikFlag, "", "Idempotency Key"),
 		fctl.WithStringSliceFlag(c.metadataFlag, []string{""}, "Metadata to use"),
 		fctl.WithController[*UpdateStore](c),

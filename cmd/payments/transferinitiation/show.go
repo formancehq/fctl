@@ -42,6 +42,7 @@ func NewShowCommand() *cobra.Command {
 	return fctl.NewCommand("get <transferID>",
 		fctl.WithShortDescription("Get transfer initiation"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithAliases("sh", "s"),
 		fctl.WithController[*ShowStore](c),
 	)

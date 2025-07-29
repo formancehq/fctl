@@ -34,6 +34,7 @@ func NewServerInfoController() *ServerInfoController {
 func NewServerInfoCommand() *cobra.Command {
 	return fctl.NewCommand("server-infos",
 		fctl.WithArgs(cobra.ExactArgs(0)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithAliases("si"),
 		fctl.WithShortDescription("Read server info"),
 		fctl.WithController[*ServerInfoStore](NewServerInfoController()),

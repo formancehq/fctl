@@ -38,6 +38,7 @@ func NewListCommand() *cobra.Command {
 		fctl.WithAliases("ls", "l"),
 		fctl.WithStringFlag(c.nameFlag, "", "Search by name"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*TriggersListStore](c),
 	)
 }
