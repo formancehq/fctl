@@ -39,6 +39,7 @@ func NewUpgradeCommand() *cobra.Command {
 		fctl.WithShortDescription("Upgrade a stack to specified version"),
 		fctl.WithBoolFlag(nowaitFlag, false, "Wait stack availability"),
 		fctl.WithArgs(cobra.RangeArgs(1, 2)),
+		fctl.WithValidArgsFunction(fctl.StackCompletion),
 		fctl.WithPreRunE(func(cmd *cobra.Command, args []string) error {
 			return fctl.CheckMembershipVersion("v0.27.1")(cmd, args)
 		}),

@@ -39,6 +39,7 @@ func NewEnableCommand() *cobra.Command {
 		fctl.WithConfirmFlag(),
 		fctl.WithShortDescription("Enable a stack"),
 		fctl.WithArgs(cobra.MaximumNArgs(1)),
+		fctl.WithValidArgsFunction(fctl.StackCompletion),
 		fctl.WithStringFlag(stackNameFlag, "", "Stack to enable"),
 		fctl.WithController(NewEnableController()),
 	)

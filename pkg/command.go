@@ -2,7 +2,6 @@ package fctl
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/TylerBrock/colorjson"
 	"github.com/formancehq/fctl/membershipclient"
@@ -320,35 +319,7 @@ func NewStackCommand(use string, opts ...CommandOption) *cobra.Command {
 			WithPersistentStringFlag(stackFlag, "", "Specific stack (not required if only one stack is present)"),
 		)...,
 	)
-	cmd.RegisterFlagCompletionFunc("stack", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		cfg, err := GetConfig(cmd)
-		if err != nil {
-			return nil, cobra.ShellCompDirectiveError
-		}
-		profile := GetCurrentProfile(cmd, cfg)
-
-		claims, err := profile.GetUserInfo(cmd)
-		if err != nil {
-			return nil, cobra.ShellCompDirectiveError
-		}
-
-		selectedOrganization := GetSelectedOrganization(cmd)
-		if selectedOrganization == "" {
-			selectedOrganization = profile.defaultOrganization
-		}
-
-		ret := make([]string, 0)
-		for _, org := range claims.Org {
-			if selectedOrganization != "" && selectedOrganization != org.ID {
-				continue
-			}
-			for _, stack := range org.Stacks {
-				ret = append(ret, fmt.Sprintf("%s\t%s", stack.ID, stack.DisplayName))
-			}
-		}
-
-		return ret, cobra.ShellCompDirectiveDefault
-	})
+	cmd.RegisterFlagCompletionFunc("stack", StackCompletion)
 	return cmd
 }
 
@@ -358,25 +329,7 @@ func NewMembershipCommand(use string, opts ...CommandOption) *cobra.Command {
 			WithPersistentStringFlag(organizationFlag, "", "Selected organization (not required if only one organization is present)"),
 		)...,
 	)
-	cmd.RegisterFlagCompletionFunc("organization", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		cfg, err := GetConfig(cmd)
-		if err != nil {
-			return nil, cobra.ShellCompDirectiveError
-		}
-		profile := GetCurrentProfile(cmd, cfg)
-
-		claims, err := profile.GetUserInfo(cmd)
-		if err != nil {
-			return nil, cobra.ShellCompDirectiveError
-		}
-
-		ret := make([]string, 0)
-		for _, org := range claims.Org {
-			ret = append(ret, fmt.Sprintf("%s\t%s", org.ID, org.DisplayName))
-		}
-
-		return ret, cobra.ShellCompDirectiveDefault
-	})
+	cmd.RegisterFlagCompletionFunc("organization", OrganizationCompletion)
 	return cmd
 }
 
