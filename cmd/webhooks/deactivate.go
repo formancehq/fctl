@@ -66,6 +66,7 @@ func NewDeactivateCommand() *cobra.Command {
 		fctl.WithConfirmFlag(),
 		fctl.WithAliases("deac"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*DesactivateWebhookStore](NewDesactivateWebhookController()),
 	)
 }

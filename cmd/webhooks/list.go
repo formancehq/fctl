@@ -79,6 +79,8 @@ func NewListCommand() *cobra.Command {
 	return fctl.NewCommand("list",
 		fctl.WithShortDescription("List all configs"),
 		fctl.WithAliases("ls", "l"),
+		fctl.WithArgs(cobra.ExactArgs(0)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*ListWebhookStore](NewListWebhookController()),
 	)
 }

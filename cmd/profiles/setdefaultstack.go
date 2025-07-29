@@ -86,7 +86,7 @@ func NewSetDefaultStackCommand() *cobra.Command {
 
 func stackCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	if err := fctl.NewMembershipOrganizationStore(cmd); err != nil {
-		return []string{}, cobra.ShellCompDirectiveDefault
+		return []string{}, cobra.ShellCompDirectiveNoFileComp
 	}
 
 	orgStore := fctl.GetOrganizationStore(cmd)
@@ -104,5 +104,5 @@ func stackCompletion(cmd *cobra.Command, args []string, toComplete string) ([]st
 		return append(acc, fmt.Sprintf("%s\t%s", s.Id, s.Name))
 	}, []string{})
 
-	return opts, cobra.ShellCompDirectiveDefault
+	return opts, cobra.ShellCompDirectiveNoFileComp
 }

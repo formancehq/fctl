@@ -127,6 +127,7 @@ func NewListBalanceCommand() *cobra.Command {
 	c := NewListBalancesController()
 	return fctl.NewCommand("balances <accountID>",
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithShortDescription("List accounts balances"),
 		fctl.WithStringFlag(c.cursorFlag, "", "Cursor"),
 		fctl.WithIntFlag(c.pageSizeFlag, 0, "PageSize"),

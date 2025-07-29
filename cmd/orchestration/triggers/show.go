@@ -34,6 +34,7 @@ func NewShowCommand() *cobra.Command {
 	return fctl.NewCommand("show <trigger-id>",
 		fctl.WithShortDescription("Show a specific workflow trigger"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*TriggersShowStore](NewTriggersShowController()),
 	)
 }

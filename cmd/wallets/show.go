@@ -36,6 +36,7 @@ func NewShowCommand() *cobra.Command {
 		fctl.WithAliases("sh"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(0)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		internal.WithTargetingWalletByID(),
 		internal.WithTargetingWalletByName(),
 		fctl.WithController[*ShowStore](c),

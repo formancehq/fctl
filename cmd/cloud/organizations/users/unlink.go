@@ -31,6 +31,7 @@ func NewUnlinkCommand() *cobra.Command {
 		fctl.WithAliases("u", "un"),
 		fctl.WithShortDescription("Unlink user from organization"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController(NewUnlinkController()),
 	)
 }

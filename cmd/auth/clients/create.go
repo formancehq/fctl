@@ -56,6 +56,7 @@ func NewCreateCommand() *cobra.Command {
 	return fctl.NewCommand("create <name>",
 		fctl.WithAliases("c"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithConfirmFlag(),
 		fctl.WithBoolFlag(c.publicFlag, false, "Is client public"),
 		fctl.WithBoolFlag(c.trustedFlag, false, "Is the client trusted"),

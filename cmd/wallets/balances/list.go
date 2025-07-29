@@ -36,6 +36,7 @@ func NewListCommand() *cobra.Command {
 		fctl.WithAliases("ls", "l"),
 		fctl.WithShortDescription("List balances"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		internal.WithTargetingWalletByName(),
 		internal.WithTargetingWalletByID(),
 		fctl.WithController[*ListStore](NewListController()),

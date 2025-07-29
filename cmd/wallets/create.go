@@ -39,6 +39,7 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithAliases("cr"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithStringSliceFlag(c.metadataFlag, []string{""}, "Metadata to use"),
 		fctl.WithStringFlag(c.ikFlag, "", "Idempotency key"),
 		fctl.WithController[*CreateStore](c),

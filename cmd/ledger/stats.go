@@ -33,6 +33,7 @@ func NewStatsController() *StatsController {
 func NewStatsCommand() *cobra.Command {
 	return fctl.NewCommand("stats",
 		fctl.WithArgs(cobra.ExactArgs(0)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithAliases("st"),
 		fctl.WithShortDescription("Read ledger stats"),
 		fctl.WithController[*StatsStore](NewStatsController()),

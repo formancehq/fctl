@@ -35,6 +35,7 @@ func NewListController() *ListController {
 func NewListCommand() *cobra.Command {
 	return fctl.NewCommand("list",
 		fctl.WithAliases("ls", "l"),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithShortDescription("List users"),
 		fctl.WithController(NewListController()),
 	)

@@ -31,6 +31,7 @@ func NewStopCommand() *cobra.Command {
 	return fctl.NewCommand("stop <instance-id>",
 		fctl.WithShortDescription("Stop a specific workflow instance"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*InstancesStopStore](NewInstancesStopController()),
 	)
 }

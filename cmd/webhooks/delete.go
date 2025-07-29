@@ -81,6 +81,7 @@ func NewDeleteCommand() *cobra.Command {
 		fctl.WithConfirmFlag(),
 		fctl.WithAliases("del"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*DeleteWebhookStore](NewDeleteWebhookController()),
 	)
 }

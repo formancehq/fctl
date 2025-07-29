@@ -104,6 +104,7 @@ func NewCommand() *cobra.Command {
 		fctl.WithStringFlag(fctl.MembershipURIFlag, "", "service url"),
 		fctl.WithShortDescription("Login"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*LoginStore](NewLoginController()),
 	)
 }

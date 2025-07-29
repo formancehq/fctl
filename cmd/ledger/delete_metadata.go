@@ -32,6 +32,7 @@ func NewDeleteMetadataCommand() *cobra.Command {
 		fctl.WithAliases("dm", "del-meta"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.MinimumNArgs(2)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*DeleteMetadataStore](NewDeleteMetadataController()),
 	)
 }

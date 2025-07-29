@@ -74,6 +74,7 @@ func NewChangeSecretCommand() *cobra.Command {
 		fctl.WithConfirmFlag(),
 		fctl.WithAliases("cs"),
 		fctl.WithArgs(cobra.RangeArgs(1, 2)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*ChangeSecretStore](NewChangeSecretWebhookController()),
 	)
 }

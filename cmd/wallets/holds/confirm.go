@@ -43,6 +43,7 @@ func NewConfirmCommand() *cobra.Command {
 		fctl.WithShortDescription("Confirm a hold"),
 		fctl.WithAliases("c", "conf"),
 		fctl.WithArgs(cobra.RangeArgs(1, 2)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithBoolFlag(c.finalFlag, false, "Is final debit (close hold)"),
 		fctl.WithStringFlag(c.ikFlag, "", "Idempotency Key"),
 		fctl.WithIntFlag(c.amountFlag, 0, "Amount to confirm"),

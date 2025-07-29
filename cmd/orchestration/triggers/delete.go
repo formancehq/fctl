@@ -32,6 +32,7 @@ func NewDeleteCommand() *cobra.Command {
 	return fctl.NewCommand("delete <trigger-id>",
 		fctl.WithShortDescription("Delete a specific workflow trigger"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*TriggersDeleteStore](NewTriggersDeleteController()),
 	)
 }

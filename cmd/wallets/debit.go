@@ -55,6 +55,7 @@ func NewDebitWalletCommand() *cobra.Command {
 		fctl.WithAliases("deb"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.RangeArgs(2, 3)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithStringFlag(c.descriptionFlag, "", "Debit description"),
 		fctl.WithStringFlag(c.ikFlag, "", "Idempotency Key"),
 		fctl.WithBoolFlag(c.pendingFlag, false, "Create a pending debit"),

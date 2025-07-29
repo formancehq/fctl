@@ -32,6 +32,7 @@ func NewListCommand() *cobra.Command {
 		fctl.WithConfirmFlag(),
 		fctl.WithShortDescription("List modules in a stack"),
 		fctl.WithAliases("ls"),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController(NewListController()),
 	)
 }

@@ -43,6 +43,7 @@ func NewRejectCommand() *cobra.Command {
 		fctl.WithShortDescription("Reject a transfer initiation"),
 		fctl.WithAliases("rj"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*RejectStore](c),
 	)
 }

@@ -34,6 +34,7 @@ func NewShowCommand() *cobra.Command {
 	return fctl.NewCommand("get <accountID>",
 		fctl.WithShortDescription("Get account"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithAliases("sh", "s"),
 		fctl.WithController[*ShowStore](NewShowController()),
 	)

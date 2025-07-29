@@ -33,6 +33,7 @@ func NewShowCommand() *cobra.Command {
 		fctl.WithShortDescription("Show a hold"),
 		fctl.WithAliases("sh"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*ShowStore](NewShowController()),
 	)
 }

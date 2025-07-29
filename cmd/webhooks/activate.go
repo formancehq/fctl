@@ -59,6 +59,7 @@ func NewActivateCommand() *cobra.Command {
 		fctl.WithAliases("ac", "a"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*ActivateWebhookStore](NewActivateWebhookController()),
 	)
 }
