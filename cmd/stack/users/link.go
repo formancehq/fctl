@@ -35,6 +35,7 @@ func NewLinkCommand() *cobra.Command {
 		fctl.WithStringFlag("role", "", "Roles: (ADMIN, GUEST)"),
 		fctl.WithShortDescription("Link stack user with properties"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*LinkStore](NewLinkController()),
 	)
 }

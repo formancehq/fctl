@@ -86,7 +86,7 @@ func NewRootCommand() *cobra.Command {
 		for name := range cfg.GetProfiles() {
 			ret = append(ret, name)
 		}
-		return ret, cobra.ShellCompDirectiveDefault
+		return ret, cobra.ShellCompDirectiveNoFileComp
 	})
 	return cmd
 }

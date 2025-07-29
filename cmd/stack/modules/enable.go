@@ -29,6 +29,7 @@ func NewEnableCommand() *cobra.Command {
 		fctl.WithConfirmFlag(),
 		fctl.WithShortDescription("Enable a module"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController(NewEnableController()),
 	)
 }

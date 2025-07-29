@@ -37,6 +37,7 @@ func NewListCommand() *cobra.Command {
 		fctl.WithShortDescription("List holds of a wallets"),
 		fctl.WithAliases("ls", "l"),
 		fctl.WithArgs(cobra.RangeArgs(0, 1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		internal.WithTargetingWalletByName(),
 		internal.WithTargetingWalletByID(),
 		fctl.WithStringSliceFlag(c.metadataFlag, []string{""}, "Metadata to use"),

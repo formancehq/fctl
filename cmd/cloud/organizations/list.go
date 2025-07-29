@@ -42,6 +42,7 @@ func NewListCommand() *cobra.Command {
 		fctl.WithShortDescription("List organizations"),
 		fctl.WithBoolFlag("expand", true, "Expand the organization"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController(NewListController()),
 	)
 }

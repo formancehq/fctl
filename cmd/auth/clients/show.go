@@ -33,6 +33,7 @@ func NewShowController() *ShowController {
 func NewShowCommand() *cobra.Command {
 	return fctl.NewCommand("show <client-id>",
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithAliases("s"),
 		fctl.WithShortDescription("Show client"),
 		fctl.WithController[*ShowStore](NewShowController()),

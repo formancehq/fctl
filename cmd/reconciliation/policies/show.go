@@ -35,6 +35,7 @@ func NewShowCommand() *cobra.Command {
 	return fctl.NewCommand("get <policyID>",
 		fctl.WithShortDescription("Get policy"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithAliases("sh", "s"),
 		fctl.WithController[*ShowStore](NewShowController()),
 	)

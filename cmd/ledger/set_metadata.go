@@ -32,6 +32,7 @@ func NewSetMetadataCommand() *cobra.Command {
 		fctl.WithAliases("sm", "set-meta"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.MinimumNArgs(2)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*SetMetadataStore](NewSetMetadataController()),
 	)
 }

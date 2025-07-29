@@ -39,9 +39,10 @@ func NewShowController() *ShowController {
 
 func NewShowCommand() *cobra.Command {
 	c := NewShowController()
-	return fctl.NewCommand("get <poolOD>",
+	return fctl.NewCommand("get <poolID>",
 		fctl.WithShortDescription("Get pool"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithAliases("sh", "s"),
 		fctl.WithController[*ShowStore](c),
 	)

@@ -45,6 +45,7 @@ func NewUpdateStatusCommand() *cobra.Command {
 		fctl.WithShortDescription("Update the status of a transfer initiation (deprecated in >= v3.0.0)"),
 		fctl.WithAliases("u"),
 		fctl.WithArgs(cobra.ExactArgs(2)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*UpdateStatusStore](c),
 	)
 }

@@ -134,6 +134,7 @@ func NewListCommand() *cobra.Command {
 	return fctl.NewCommand("list",
 		fctl.WithAliases("ls"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithShortDescription("List payments"),
 		fctl.WithStringFlag(c.cursorFlag, "", "Cursor"),
 		fctl.WithIntFlag(c.pageSizeFlag, 0, "PageSize"),

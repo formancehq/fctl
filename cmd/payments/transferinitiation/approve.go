@@ -43,6 +43,7 @@ func NewApproveCommand() *cobra.Command {
 		fctl.WithShortDescription("Approve a transfer initiation"),
 		fctl.WithAliases("a"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*ApproveStore](c),
 	)
 }

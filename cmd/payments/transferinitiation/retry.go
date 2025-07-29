@@ -43,6 +43,7 @@ func NewRetryCommand() *cobra.Command {
 		fctl.WithShortDescription("Retry a failed transfer initiation"),
 		fctl.WithAliases("r"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*RetryStore](c),
 	)
 }

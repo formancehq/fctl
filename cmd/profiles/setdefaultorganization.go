@@ -87,5 +87,5 @@ func organizationCompletion(cmd *cobra.Command, args []string, toComplete string
 		return append(acc, fmt.Sprintf("%s\t%s", o.Id, o.Name))
 	}, []string{})
 
-	return opts, cobra.ShellCompDirectiveDefault
+	return opts, cobra.ShellCompDirectiveNoFileComp
 }

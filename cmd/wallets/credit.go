@@ -47,6 +47,7 @@ func NewCreditWalletCommand() *cobra.Command {
 		fctl.WithAliases("cr"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(2)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithStringSliceFlag(c.metadataFlag, []string{""}, "Metadata to use"),
 		fctl.WithStringFlag(c.balanceFlag, "", "Balance to credit"),
 		fctl.WithStringFlag(c.ikFlag, "", "Idempotency Key"),
