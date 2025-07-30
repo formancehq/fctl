@@ -17,6 +17,7 @@ require (
 	github.com/pterm/pterm v0.12.81
 	github.com/segmentio/ksuid v1.0.4
 	github.com/spf13/cobra v1.8.1
+	github.com/spf13/pflag v1.0.5
 	github.com/zitadel/oidc/v2 v2.12.2
 	golang.org/x/mod v0.25.0
 	golang.org/x/oauth2 v0.30.0
@@ -61,7 +62,6 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/uptrace/bun v1.2.3 // indirect
