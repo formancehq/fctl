@@ -9,15 +9,21 @@ import (
 	"github.com/pterm/pterm"
 )
 
+func onCreateShow(writer io.Writer, client membershipclient.OrganizationClient) error {
+	data := [][]string{
+		{"Client ID", fmt.Sprintf("organization_%s", client.Id)},
+		{"Secret", *client.Secret.Clear},
+		{"Secret last digits", client.Secret.LastDigits},
+		{"Description", client.Description},
+		{"CreatedAt", client.CreatedAt.String()},
+	}
+	return pterm.DefaultTable.WithHasHeader().WithWriter(writer).WithData(data).Render()
+}
+
 func showOrganizationClient(writer io.Writer, client membershipclient.OrganizationClient) error {
 	data := [][]string{
 		{"Client ID", fmt.Sprintf("organization_%s", client.Id)},
-		{"Client Secret", func() string {
-			if client.Secret.Clear == nil {
-				return ""
-			}
-			return *client.Secret.Clear
-		}()},
+		{"Secret last digits", client.Secret.LastDigits},
 		{"Description", client.Description},
 		{"CreatedAt", client.CreatedAt.String()},
 	}
@@ -37,17 +43,12 @@ func showOrganizationClients(writer io.Writer, clientsCursor membershipclient.Re
 	}
 
 	data := [][]string{
-		{"Client ID", "Client Secret", "Description", "CreatedAt"},
+		{"Client ID", "Secret last digits", "Description", "CreatedAt"},
 	}
 	for _, client := range clientsCursor.Data {
 		data = append(data, []string{
 			fmt.Sprintf("organization_%s", client.Id),
-			func() string {
-				if client.Secret.Clear == nil {
-					return ""
-				}
-				return *client.Secret.Clear
-			}(),
+			client.Secret.LastDigits,
 			client.Description,
 			client.CreatedAt.String(),
 		})

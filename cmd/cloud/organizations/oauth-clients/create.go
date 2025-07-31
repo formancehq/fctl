@@ -79,5 +79,5 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 }
 
 func (c *CreateController) Render(cmd *cobra.Command, args []string) error {
-	return showOrganizationClient(cmd.OutOrStdout(), c.store.Client)
+	return onCreateShow(cmd.OutOrStdout(), c.store.Client)
 }
