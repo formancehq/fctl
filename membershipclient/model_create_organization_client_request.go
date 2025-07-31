@@ -19,6 +19,8 @@ var _ MappedNullable = &CreateOrganizationClientRequest{}
 
 // CreateOrganizationClientRequest struct for CreateOrganizationClientRequest
 type CreateOrganizationClientRequest struct {
+	// Name of the client
+	Name *string `json:"name,omitempty"`
 	// Description of the client
 	Description *string `json:"description,omitempty"`
 	AdditionalProperties map[string]interface{}
@@ -41,6 +43,38 @@ func NewCreateOrganizationClientRequest() *CreateOrganizationClientRequest {
 func NewCreateOrganizationClientRequestWithDefaults() *CreateOrganizationClientRequest {
 	this := CreateOrganizationClientRequest{}
 	return &this
+}
+
+// GetName returns the Name field value if set, zero value otherwise.
+func (o *CreateOrganizationClientRequest) GetName() string {
+	if o == nil || IsNil(o.Name) {
+		var ret string
+		return ret
+	}
+	return *o.Name
+}
+
+// GetNameOk returns a tuple with the Name field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CreateOrganizationClientRequest) GetNameOk() (*string, bool) {
+	if o == nil || IsNil(o.Name) {
+		return nil, false
+	}
+	return o.Name, true
+}
+
+// HasName returns a boolean if a field has been set.
+func (o *CreateOrganizationClientRequest) HasName() bool {
+	if o != nil && !IsNil(o.Name) {
+		return true
+	}
+
+	return false
+}
+
+// SetName gets a reference to the given string and assigns it to the Name field.
+func (o *CreateOrganizationClientRequest) SetName(v string) {
+	o.Name = &v
 }
 
 // GetDescription returns the Description field value if set, zero value otherwise.
@@ -85,6 +119,9 @@ func (o CreateOrganizationClientRequest) MarshalJSON() ([]byte, error) {
 
 func (o CreateOrganizationClientRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.Name) {
+		toSerialize["name"] = o.Name
+	}
 	if !IsNil(o.Description) {
 		toSerialize["description"] = o.Description
 	}
@@ -110,6 +147,7 @@ func (o *CreateOrganizationClientRequest) UnmarshalJSON(data []byte) (err error)
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "name")
 		delete(additionalProperties, "description")
 		o.AdditionalProperties = additionalProperties
 	}

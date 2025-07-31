@@ -120,6 +120,7 @@ Class | Method | HTTP request | Description
 *DefaultAPI* | [**OrganizationClientCreate**](docs/DefaultAPI.md#organizationclientcreate) | **Post** /organizations/{organizationId}/clients | Create organization client
 *DefaultAPI* | [**OrganizationClientDelete**](docs/DefaultAPI.md#organizationclientdelete) | **Delete** /organizations/{organizationId}/clients/{clientId} | Delete organization client
 *DefaultAPI* | [**OrganizationClientRead**](docs/DefaultAPI.md#organizationclientread) | **Get** /organizations/{organizationId}/clients/{clientId} | Read organization client
+*DefaultAPI* | [**OrganizationClientUpdate**](docs/DefaultAPI.md#organizationclientupdate) | **Put** /organizations/{organizationId}/clients/{clientId} | Update organization client
 *DefaultAPI* | [**OrganizationClientsRead**](docs/DefaultAPI.md#organizationclientsread) | **Get** /organizations/{organizationId}/clients | Read organization clients
 *DefaultAPI* | [**ReadAuthenticationProvider**](docs/DefaultAPI.md#readauthenticationprovider) | **Get** /organizations/{organizationId}/authentication-provider | Read authentication provider
 *DefaultAPI* | [**ReadConnectedUser**](docs/DefaultAPI.md#readconnecteduser) | **Get** /me | Read user
@@ -209,6 +210,7 @@ Class | Method | HTTP request | Description
  - [StackUserAccessResponse](docs/StackUserAccessResponse.md)
  - [StackVersion](docs/StackVersion.md)
  - [SystemRole](docs/SystemRole.md)
+ - [UpdateOrganizationClientRequest](docs/UpdateOrganizationClientRequest.md)
  - [UpdateOrganizationUserRequest](docs/UpdateOrganizationUserRequest.md)
  - [UpdateStackRequest](docs/UpdateStackRequest.md)
  - [UpdateStackUserRequest](docs/UpdateStackUserRequest.md)

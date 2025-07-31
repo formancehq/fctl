@@ -486,6 +486,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+    put:
+      summary: Update organization client
+      operationId: organizationClientUpdate
+      parameters:
+      - name: organizationId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: clientId
+        in: path
+        schema:
+          type: string
+        required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrganizationClientRequest"
+      responses:
+        204:
+          description: Client updated
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /organizations/{organizationId}/logs:
     get:
       summary: List logs
@@ -1686,6 +1714,20 @@ components:
     CreateOrganizationClientRequest:
       type: object
       properties:
+        name:
+          type: string
+          description: Name of the client
+        description:
+          type: string
+          description: Description of the client
+    UpdateOrganizationClientRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: Name of the client
         description:
           type: string
           description: Description of the client
@@ -1725,7 +1767,9 @@ components:
       - id
       - secret
       - createdAt
+      - updatedAt
       - description
+      - name
       properties:
         id:
           type: string
@@ -1739,10 +1783,16 @@ components:
               type: string
             clear:
               type: string
+        name:
+          type: string
+          description: Name of the client
         description:
           type: string
           description: Description of the client
         createdAt:
+          type: string
+          format: date-time
+        updatedAt:
           type: string
           format: date-time
     Organization:

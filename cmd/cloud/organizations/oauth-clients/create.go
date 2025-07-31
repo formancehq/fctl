@@ -9,6 +9,7 @@ import (
 
 var (
 	descriptionFlag = "description"
+	nameFlag        = "name"
 )
 
 type Create struct {
@@ -35,6 +36,7 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithShortDescription("Create organization OAuth client"),
 		fctl.WithConfirmFlag(),
 		fctl.WithStringFlag(descriptionFlag, "", "Description of the OAuth client usage"),
+		fctl.WithStringFlag(nameFlag, "", "Name of the OAuth client"),
 		fctl.WithController(NewCreateController()),
 	)
 }
@@ -60,12 +62,23 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
-	req := store.Client().OrganizationClientCreate(cmd.Context(), organizationID)
+	name, err := cmd.Flags().GetString(nameFlag)
+	if err != nil {
+		return nil, err
+	}
 
+	req := store.Client().OrganizationClientCreate(cmd.Context(), organizationID)
+	reqBody := membershipclient.CreateOrganizationClientRequest{}
 	if description != "" {
-		req = req.CreateOrganizationClientRequest(membershipclient.CreateOrganizationClientRequest{
-			Description: pointer.For(description),
-		})
+		reqBody.Description = pointer.For(description)
+	}
+
+	if name != "" {
+		reqBody.Name = pointer.For(name)
+	}
+
+	if description != "" || name != "" {
+		req = req.CreateOrganizationClientRequest(reqBody)
 	}
 
 	response, _, err := req.Execute()

@@ -24,9 +24,12 @@ type OrganizationClient struct {
 	// Organization ID
 	Id string `json:"id"`
 	Secret OrganizationClientSecret `json:"secret"`
+	// Name of the client
+	Name string `json:"name"`
 	// Description of the client
 	Description string `json:"description"`
 	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -36,12 +39,14 @@ type _OrganizationClient OrganizationClient
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewOrganizationClient(id string, secret OrganizationClientSecret, description string, createdAt time.Time) *OrganizationClient {
+func NewOrganizationClient(id string, secret OrganizationClientSecret, name string, description string, createdAt time.Time, updatedAt time.Time) *OrganizationClient {
 	this := OrganizationClient{}
 	this.Id = id
 	this.Secret = secret
+	this.Name = name
 	this.Description = description
 	this.CreatedAt = createdAt
+	this.UpdatedAt = updatedAt
 	return &this
 }
 
@@ -101,6 +106,30 @@ func (o *OrganizationClient) SetSecret(v OrganizationClientSecret) {
 	o.Secret = v
 }
 
+// GetName returns the Name field value
+func (o *OrganizationClient) GetName() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Name
+}
+
+// GetNameOk returns a tuple with the Name field value
+// and a boolean to check if the value has been set.
+func (o *OrganizationClient) GetNameOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Name, true
+}
+
+// SetName sets field value
+func (o *OrganizationClient) SetName(v string) {
+	o.Name = v
+}
+
 // GetDescription returns the Description field value
 func (o *OrganizationClient) GetDescription() string {
 	if o == nil {
@@ -149,6 +178,30 @@ func (o *OrganizationClient) SetCreatedAt(v time.Time) {
 	o.CreatedAt = v
 }
 
+// GetUpdatedAt returns the UpdatedAt field value
+func (o *OrganizationClient) GetUpdatedAt() time.Time {
+	if o == nil {
+		var ret time.Time
+		return ret
+	}
+
+	return o.UpdatedAt
+}
+
+// GetUpdatedAtOk returns a tuple with the UpdatedAt field value
+// and a boolean to check if the value has been set.
+func (o *OrganizationClient) GetUpdatedAtOk() (*time.Time, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.UpdatedAt, true
+}
+
+// SetUpdatedAt sets field value
+func (o *OrganizationClient) SetUpdatedAt(v time.Time) {
+	o.UpdatedAt = v
+}
+
 func (o OrganizationClient) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -161,8 +214,10 @@ func (o OrganizationClient) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
 	toSerialize["secret"] = o.Secret
+	toSerialize["name"] = o.Name
 	toSerialize["description"] = o.Description
 	toSerialize["createdAt"] = o.CreatedAt
+	toSerialize["updatedAt"] = o.UpdatedAt
 
 	for key, value := range o.AdditionalProperties {
 		toSerialize[key] = value
@@ -178,8 +233,10 @@ func (o *OrganizationClient) UnmarshalJSON(data []byte) (err error) {
 	requiredProperties := []string{
 		"id",
 		"secret",
+		"name",
 		"description",
 		"createdAt",
+		"updatedAt",
 	}
 
 	allProperties := make(map[string]interface{})
@@ -211,8 +268,10 @@ func (o *OrganizationClient) UnmarshalJSON(data []byte) (err error) {
 	if err = json.Unmarshal(data, &additionalProperties); err == nil {
 		delete(additionalProperties, "id")
 		delete(additionalProperties, "secret")
+		delete(additionalProperties, "name")
 		delete(additionalProperties, "description")
 		delete(additionalProperties, "createdAt")
+		delete(additionalProperties, "updatedAt")
 		o.AdditionalProperties = additionalProperties
 	}
 

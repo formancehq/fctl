@@ -12,6 +12,7 @@ import (
 func onCreateShow(writer io.Writer, client membershipclient.OrganizationClient) error {
 	data := [][]string{
 		{"Client ID", fmt.Sprintf("organization_%s", client.Id)},
+		{"Name", fmt.Sprintf("organization_%s", client.Name)},
 		{"Secret", *client.Secret.Clear},
 		{"Secret last digits", client.Secret.LastDigits},
 		{"Description", client.Description},
@@ -23,9 +24,11 @@ func onCreateShow(writer io.Writer, client membershipclient.OrganizationClient) 
 func showOrganizationClient(writer io.Writer, client membershipclient.OrganizationClient) error {
 	data := [][]string{
 		{"Client ID", fmt.Sprintf("organization_%s", client.Id)},
+		{"Name", fmt.Sprintf("organization_%s", client.Name)},
 		{"Secret last digits", client.Secret.LastDigits},
 		{"Description", client.Description},
 		{"CreatedAt", client.CreatedAt.String()},
+		{"UpdatedAt", client.UpdatedAt.String()},
 	}
 	return pterm.DefaultTable.WithHasHeader().WithWriter(writer).WithData(data).Render()
 }
@@ -43,14 +46,16 @@ func showOrganizationClients(writer io.Writer, clientsCursor membershipclient.Re
 	}
 
 	data := [][]string{
-		{"Client ID", "Secret last digits", "Description", "CreatedAt"},
+		{"Client ID", "Name", "Secret last digits", "Description", "CreatedAt", "UpdatedAt"},
 	}
 	for _, client := range clientsCursor.Data {
 		data = append(data, []string{
 			fmt.Sprintf("organization_%s", client.Id),
+			client.Name,
 			client.Secret.LastDigits,
 			client.Description,
 			client.CreatedAt.String(),
+			client.UpdatedAt.String(),
 		})
 	}
 	return pterm.DefaultTable.WithHasHeader().WithWriter(writer).WithData(data).Render()
