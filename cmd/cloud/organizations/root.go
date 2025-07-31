@@ -4,6 +4,7 @@ import (
 	authorization_provider "github.com/formancehq/fctl/cmd/cloud/organizations/authentication-provider"
 	"github.com/formancehq/fctl/cmd/cloud/organizations/invitations"
 	"github.com/formancehq/fctl/cmd/cloud/organizations/oauth"
+	oauth_clients "github.com/formancehq/fctl/cmd/cloud/organizations/oauth-clients"
 	"github.com/formancehq/fctl/cmd/cloud/organizations/users"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
@@ -23,6 +24,7 @@ func NewCommand() *cobra.Command {
 			users.NewCommand(),
 			invitations.NewCommand(),
 			oauth.NewCommand(),
+			oauth_clients.NewCommand(),
 			authorization_provider.NewCommand(),
 		),
 	)

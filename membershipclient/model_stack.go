@@ -46,6 +46,7 @@ type Stack struct {
 	Uri string `json:"uri"`
 	// The region where the stack is installed
 	RegionID string `json:"regionID"`
+	Region *Region `json:"region,omitempty"`
 	StargateEnabled bool `json:"stargateEnabled"`
 	CreatedAt *time.Time `json:"createdAt,omitempty"`
 	DeletedAt *time.Time `json:"deletedAt,omitempty"`
@@ -53,6 +54,7 @@ type Stack struct {
 	AuditEnabled *bool `json:"auditEnabled,omitempty"`
 	Synchronised bool `json:"synchronised"`
 	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+	Modules []Module `json:"modules"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -62,7 +64,7 @@ type _Stack Stack
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewStack(name string, status string, state string, expectedStatus string, lastStateUpdate time.Time, lastExpectedStatusUpdate time.Time, lastStatusUpdate time.Time, reachable bool, id string, organizationId string, uri string, regionID string, stargateEnabled bool, synchronised bool) *Stack {
+func NewStack(name string, status string, state string, expectedStatus string, lastStateUpdate time.Time, lastExpectedStatusUpdate time.Time, lastStatusUpdate time.Time, reachable bool, id string, organizationId string, uri string, regionID string, stargateEnabled bool, synchronised bool, modules []Module) *Stack {
 	this := Stack{}
 	this.Name = name
 	this.Status = status
@@ -78,6 +80,7 @@ func NewStack(name string, status string, state string, expectedStatus string, l
 	this.RegionID = regionID
 	this.StargateEnabled = stargateEnabled
 	this.Synchronised = synchronised
+	this.Modules = modules
 	return &this
 }
 
@@ -537,6 +540,38 @@ func (o *Stack) SetRegionID(v string) {
 	o.RegionID = v
 }
 
+// GetRegion returns the Region field value if set, zero value otherwise.
+func (o *Stack) GetRegion() Region {
+	if o == nil || IsNil(o.Region) {
+		var ret Region
+		return ret
+	}
+	return *o.Region
+}
+
+// GetRegionOk returns a tuple with the Region field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Stack) GetRegionOk() (*Region, bool) {
+	if o == nil || IsNil(o.Region) {
+		return nil, false
+	}
+	return o.Region, true
+}
+
+// HasRegion returns a boolean if a field has been set.
+func (o *Stack) HasRegion() bool {
+	if o != nil && !IsNil(o.Region) {
+		return true
+	}
+
+	return false
+}
+
+// SetRegion gets a reference to the given Region and assigns it to the Region field.
+func (o *Stack) SetRegion(v Region) {
+	o.Region = &v
+}
+
 // GetStargateEnabled returns the StargateEnabled field value
 func (o *Stack) GetStargateEnabled() bool {
 	if o == nil {
@@ -745,6 +780,30 @@ func (o *Stack) SetUpdatedAt(v time.Time) {
 	o.UpdatedAt = &v
 }
 
+// GetModules returns the Modules field value
+func (o *Stack) GetModules() []Module {
+	if o == nil {
+		var ret []Module
+		return ret
+	}
+
+	return o.Modules
+}
+
+// GetModulesOk returns a tuple with the Modules field value
+// and a boolean to check if the value has been set.
+func (o *Stack) GetModulesOk() ([]Module, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Modules, true
+}
+
+// SetModules sets field value
+func (o *Stack) SetModules(v []Module) {
+	o.Modules = v
+}
+
 func (o Stack) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -782,6 +841,9 @@ func (o Stack) ToMap() (map[string]interface{}, error) {
 	toSerialize["organizationId"] = o.OrganizationId
 	toSerialize["uri"] = o.Uri
 	toSerialize["regionID"] = o.RegionID
+	if !IsNil(o.Region) {
+		toSerialize["region"] = o.Region
+	}
 	toSerialize["stargateEnabled"] = o.StargateEnabled
 	if !IsNil(o.CreatedAt) {
 		toSerialize["createdAt"] = o.CreatedAt
@@ -799,6 +861,7 @@ func (o Stack) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.UpdatedAt) {
 		toSerialize["updatedAt"] = o.UpdatedAt
 	}
+	toSerialize["modules"] = o.Modules
 
 	for key, value := range o.AdditionalProperties {
 		toSerialize[key] = value
@@ -826,6 +889,7 @@ func (o *Stack) UnmarshalJSON(data []byte) (err error) {
 		"regionID",
 		"stargateEnabled",
 		"synchronised",
+		"modules",
 	}
 
 	allProperties := make(map[string]interface{})
@@ -872,6 +936,7 @@ func (o *Stack) UnmarshalJSON(data []byte) (err error) {
 		delete(additionalProperties, "organizationId")
 		delete(additionalProperties, "uri")
 		delete(additionalProperties, "regionID")
+		delete(additionalProperties, "region")
 		delete(additionalProperties, "stargateEnabled")
 		delete(additionalProperties, "createdAt")
 		delete(additionalProperties, "deletedAt")
@@ -879,6 +944,7 @@ func (o *Stack) UnmarshalJSON(data []byte) (err error) {
 		delete(additionalProperties, "auditEnabled")
 		delete(additionalProperties, "synchronised")
 		delete(additionalProperties, "updatedAt")
+		delete(additionalProperties, "modules")
 		o.AdditionalProperties = additionalProperties
 	}
 
