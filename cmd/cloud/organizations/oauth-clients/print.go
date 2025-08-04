@@ -12,7 +12,7 @@ import (
 func onCreateShow(writer io.Writer, client membershipclient.OrganizationClient) error {
 	data := [][]string{
 		{"Client ID", fmt.Sprintf("organization_%s", client.Id)},
-		{"Name", fmt.Sprintf("organization_%s", client.Name)},
+		{"Name", client.Name},
 		{"Secret", *client.Secret.Clear},
 		{"Secret last digits", client.Secret.LastDigits},
 		{"Description", client.Description},
@@ -24,7 +24,7 @@ func onCreateShow(writer io.Writer, client membershipclient.OrganizationClient) 
 func showOrganizationClient(writer io.Writer, client membershipclient.OrganizationClient) error {
 	data := [][]string{
 		{"Client ID", fmt.Sprintf("organization_%s", client.Id)},
-		{"Name", fmt.Sprintf("organization_%s", client.Name)},
+		{"Name", client.Name},
 		{"Secret last digits", client.Secret.LastDigits},
 		{"Description", client.Description},
 		{"CreatedAt", client.CreatedAt.String()},
