@@ -30,7 +30,7 @@ func NewUpdateController() *UpdateController {
 }
 
 func NewUpdateCommand() *cobra.Command {
-	return fctl.NewCommand(`Update <clientId>`,
+	return fctl.NewCommand(`update <clientId>`,
 		fctl.WithShortDescription("Update organization OAuth client"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
