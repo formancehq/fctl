@@ -59,13 +59,13 @@ func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 	}
 
 	clientId := args[0]
-	clientId = strings.TrimPrefix("organization_", clientId)
+	clientId = strings.TrimPrefix(clientId, "organization_")
 	if clientId == "" {
 		return nil, fmt.Errorf("invalid client_id: %s", args[0])
 	}
 
 	store := fctl.GetMembershipStore(cmd.Context())
-	if !fctl.CheckOrganizationApprobation(cmd, "You are about to Update a new organization OAuth client") {
+	if !fctl.CheckOrganizationApprobation(cmd, "You are about to update an existing organization OAuth client") {
 		return nil, fctl.ErrMissingApproval
 	}
 	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
