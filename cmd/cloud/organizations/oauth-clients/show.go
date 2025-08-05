@@ -1,16 +1,13 @@
-package oauth
+package oauth_clients
 
 import (
-	"fmt"
-
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 type Show struct {
-	Organization *membershipclient.CreateOrganizationClientResponse `json:"organization"`
+	Client membershipclient.OrganizationClient `json:"organizationClient"`
 }
 type ShowController struct {
 	store *Show
@@ -29,10 +26,10 @@ func NewShowController() *ShowController {
 }
 
 func NewShowCommand() *cobra.Command {
-	return fctl.NewCommand(`show`,
+	return fctl.NewCommand(`show <client_id>`,
 		fctl.WithShortDescription("Show organization OAuth client"),
-		fctl.WithDeprecated("Use `fctl cloud organizations clients show` instead"),
 		fctl.WithController(NewShowController()),
+		fctl.WithArgs(cobra.ExactArgs(1)),
 	)
 }
 
@@ -48,22 +45,21 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, err
 	}
 
-	response, _, err := store.Client().ReadOrganizationClient(cmd.Context(), organizationID).Execute()
+	clientID := args[0]
+	if clientID == "" {
+		return nil, ErrMissingClientID
+	}
+
+	response, _, err := store.Client().OrganizationClientRead(cmd.Context(), organizationID, clientID).Execute()
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Organization = response
+	c.store.Client = response.Data
 
 	return c, nil
 }
 
 func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
-	data := [][]string{
-		{"Client ID", fmt.Sprintf("organization_%s", c.store.Organization.Data.Id)},
-		{"Client Last Digits", c.store.Organization.Data.Secret.LastDigits},
-	}
-	pterm.DefaultTable.WithHasHeader().WithData(data).Render()
-
-	return nil
+	return showOrganizationClient(cmd.OutOrStdout(), c.store.Client)
 }

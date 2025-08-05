@@ -14,10 +14,9 @@ docs/AuthenticationProviderResponse.md
 docs/AuthenticationProviderResponseData.md
 docs/BaseProviderConfig.md
 docs/Capability.md
-docs/CreateClientResponse.md
-docs/CreateClientResponseData.md
-docs/CreateClientResponseDataAllOfSecret.md
 docs/CreateInvitationResponse.md
+docs/CreateOrganizationClientRequest.md
+docs/CreateOrganizationClientResponse.md
 docs/CreateOrganizationResponse.md
 docs/CreatePrivateRegionRequest.md
 docs/CreateStackRequest.md
@@ -49,6 +48,8 @@ docs/Module.md
 docs/OIDCConfig.md
 docs/OIDCConfigAllOfConfig.md
 docs/Organization.md
+docs/OrganizationClient.md
+docs/OrganizationClientSecret.md
 docs/OrganizationData.md
 docs/OrganizationExpanded.md
 docs/OrganizationFeature.md
@@ -56,6 +57,9 @@ docs/OrganizationUser.md
 docs/PrivateRegion.md
 docs/PrivateRegionSecret.md
 docs/PublicRegion.md
+docs/ReadOrganizationClientResponse.md
+docs/ReadOrganizationClientsResponse.md
+docs/ReadOrganizationClientsResponseData.md
 docs/ReadOrganizationResponse.md
 docs/ReadOrganizationUserResponse.md
 docs/ReadStackUserAccess.md
@@ -73,6 +77,7 @@ docs/StackUserAccess.md
 docs/StackUserAccessResponse.md
 docs/StackVersion.md
 docs/SystemRole.md
+docs/UpdateOrganizationClientRequest.md
 docs/UpdateOrganizationUserRequest.md
 docs/UpdateStackRequest.md
 docs/UpdateStackUserRequest.md
@@ -91,10 +96,9 @@ model_authentication_provider_response.go
 model_authentication_provider_response_data.go
 model_base_provider_config.go
 model_capability.go
-model_create_client_response.go
-model_create_client_response_data.go
-model_create_client_response_data_all_of_secret.go
 model_create_invitation_response.go
+model_create_organization_client_request.go
+model_create_organization_client_response.go
 model_create_organization_response.go
 model_create_private_region_request.go
 model_create_stack_request.go
@@ -125,6 +129,8 @@ model_module.go
 model_oidc_config.go
 model_oidc_config_all_of_config.go
 model_organization.go
+model_organization_client.go
+model_organization_client_secret.go
 model_organization_data.go
 model_organization_expanded.go
 model_organization_feature.go
@@ -132,6 +138,9 @@ model_organization_user.go
 model_private_region.go
 model_private_region_secret.go
 model_public_region.go
+model_read_organization_client_response.go
+model_read_organization_clients_response.go
+model_read_organization_clients_response_data.go
 model_read_organization_response.go
 model_read_organization_user_response.go
 model_read_stack_user_access.go
@@ -149,6 +158,7 @@ model_stack_user_access.go
 model_stack_user_access_response.go
 model_stack_version.go
 model_system_role.go
+model_update_organization_client_request.go
 model_update_organization_user_request.go
 model_update_stack_request.go
 model_update_stack_user_request.go

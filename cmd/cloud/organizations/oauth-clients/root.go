@@ -1,4 +1,4 @@
-package oauth
+package oauth_clients
 
 import (
 	fctl "github.com/formancehq/fctl/pkg"
@@ -6,13 +6,14 @@ import (
 )
 
 func NewCommand() *cobra.Command {
-	return fctl.NewMembershipCommand("oauth",
-		fctl.WithShortDescription("client management"),
-		fctl.WithDeprecated("Use `fctl cloud organizations clients` instead"),
+	return fctl.NewMembershipCommand("oauth-clients",
+		fctl.WithShortDescription("Oauth clients management"),
 		fctl.WithChildCommands(
 			NewCreateCommand(),
+			NewListCommand(),
 			NewShowCommand(),
 			NewDeleteCommand(),
+			NewUpdateCommand(),
 		),
 	)
 }

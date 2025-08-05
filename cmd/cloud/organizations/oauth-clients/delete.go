@@ -1,4 +1,4 @@
-package oauth
+package oauth_clients
 
 import (
 	fctl "github.com/formancehq/fctl/pkg"
@@ -24,10 +24,10 @@ func NewDeleteController() *DeleteController {
 }
 
 func NewDeleteCommand() *cobra.Command {
-	return fctl.NewCommand(`delete`,
+	return fctl.NewCommand(`delete <client_id>`,
 		fctl.WithShortDescription("Delete organization OAuth client"),
 		fctl.WithConfirmFlag(),
-		fctl.WithDeprecated("Use `fctl cloud organizations clients delete` instead"),
+		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithController(NewDeleteController()),
 	)
 }
@@ -38,7 +38,7 @@ func (c *DeleteController) GetStore() *Delete {
 
 func (c *DeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 	store := fctl.GetMembershipStore(cmd.Context())
-	if !fctl.CheckOrganizationApprobation(cmd, "You are about to delete a new organization OAuth client") {
+	if !fctl.CheckOrganizationApprobation(cmd, "You are about to delete an OAuth client") {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -47,7 +47,12 @@ func (c *DeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
-	_, err = store.Client().DeleteOrganizationClient(cmd.Context(), organizationID).Execute()
+	clientID := args[0]
+	if clientID == "" {
+		return nil, ErrMissingClientID
+	}
+
+	_, err = store.Client().OrganizationClientDelete(cmd.Context(), organizationID, clientID).Execute()
 	if err != nil {
 		return nil, err
 	}
