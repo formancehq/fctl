@@ -35,6 +35,7 @@ func NewLinkCommand() *cobra.Command {
 		fctl.WithStringFlag("role", "", "Roles: (ADMIN, GUEST, NONE)"),
 		fctl.WithShortDescription("Link user to an organization with properties"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithPreRunE(func(cmd *cobra.Command, args []string) error {
 			return fctl.CheckMembershipVersion("v0.26.1")(cmd, args)
 		}),

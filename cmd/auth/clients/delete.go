@@ -32,6 +32,7 @@ func NewDeleteCommand() *cobra.Command {
 	return fctl.NewCommand("delete <client-id>",
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithAliases("d", "del"),
 		fctl.WithShortDescription("Delete client"),
 		fctl.WithController[*DeleteStore](NewDeleteController()),

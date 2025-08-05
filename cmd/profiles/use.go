@@ -34,7 +34,7 @@ func ProfileNamesAutoCompletion(cmd *cobra.Command, args []string, toComplete st
 		return []string{}, cobra.ShellCompDirectiveError
 	}
 
-	return ret, cobra.ShellCompDirectiveDefault
+	return ret, cobra.ShellCompDirectiveNoFileComp
 }
 
 func (c *ProfilesUseController) GetStore() *ProfilesUseStore {

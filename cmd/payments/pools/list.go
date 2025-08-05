@@ -141,6 +141,7 @@ func NewListCommand() *cobra.Command {
 	return fctl.NewCommand("list",
 		fctl.WithAliases("ls", "l"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithShortDescription("List pools"),
 		fctl.WithStringFlag(c.cursorFlag, "", "Cursor"),
 		fctl.WithIntFlag(c.pageSizeFlag, 0, "PageSize"),

@@ -51,6 +51,7 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithShortDescription("Create a new stack"),
 		fctl.WithAliases("c", "cr"),
 		fctl.WithArgs(cobra.RangeArgs(0, 1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithBoolFlag(unprotectFlag, false, "Unprotect stacks (no confirmation on write commands)"),
 		fctl.WithStringFlag(regionFlag, "", "Region on which deploy the stack"),
 		fctl.WithStringFlag(versionFlag, "", "Version of the stack"),

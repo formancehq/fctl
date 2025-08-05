@@ -36,6 +36,7 @@ func NewSendEventCommand() *cobra.Command {
 	return fctl.NewCommand("send-event <instance-id> <event>",
 		fctl.WithShortDescription("Send an event to an instance"),
 		fctl.WithArgs(cobra.ExactArgs(2)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*InstancesSendEventStore](NewInstancesSendEventController()),
 	)
 }

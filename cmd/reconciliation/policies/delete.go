@@ -36,6 +36,7 @@ func NewDeleteCommand() *cobra.Command {
 		fctl.WithAliases("d"),
 		fctl.WithShortDescription("Delete a policy"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*DeleteStore](c),
 	)
 }

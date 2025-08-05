@@ -53,6 +53,7 @@ func NewGetConfigCommand() *cobra.Command {
 	return fctl.NewCommand("get-config",
 		fctl.WithAliases("getconfig", "getconf", "gc", "get", "g"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithStringFlag("provider", "", "Provider name"),
 		fctl.WithStringFlag("connector-id", "", "Connector ID"),
 		fctl.WithShortDescription(fmt.Sprintf("Read a connector config (Connectors available: %v)", internal.AllConnectors)),

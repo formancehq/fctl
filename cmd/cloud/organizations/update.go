@@ -29,6 +29,7 @@ func NewUpdateCommand() *cobra.Command {
 		fctl.WithAliases("update"),
 		fctl.WithShortDescription("Update organization"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(fctl.OrganizationCompletion),
 		fctl.WithConfirmFlag(),
 		fctl.WithStringFlag("name", "", "Organization Name"),
 		fctl.WithStringFlag("default-stack-role", "", "Default Stack Role"),

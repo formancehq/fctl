@@ -50,6 +50,7 @@ Starting from ledger v2.2`),
 		fctl.WithStringSliceFlag(c.metadataFlag, []string{}, "Metadata to apply on the newly created ledger"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*CreateStore](c),
 	)
 }

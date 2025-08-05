@@ -42,7 +42,8 @@ func NewRemoveAccountCommand() *cobra.Command {
 	return fctl.NewCommand("remove-account <poolID> <accountID>",
 		fctl.WithShortDescription("Remove account from pool"),
 		fctl.WithArgs(cobra.ExactArgs(2)),
-		fctl.WithAliases("add", "a"),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
+		fctl.WithAliases("remove", "rm"),
 		fctl.WithController[*RemoveAccountStore](c),
 	)
 }
