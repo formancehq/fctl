@@ -14,6 +14,8 @@ docs/AuthenticationProviderResponse.md
 docs/AuthenticationProviderResponseData.md
 docs/BaseProviderConfig.md
 docs/Capability.md
+docs/CreateClientResponseResponse.md
+docs/CreateClientResponseResponseData.md
 docs/CreateInvitationResponse.md
 docs/CreateOrganizationClientRequest.md
 docs/CreateOrganizationClientResponse.md
@@ -96,6 +98,8 @@ model_authentication_provider_response.go
 model_authentication_provider_response_data.go
 model_base_provider_config.go
 model_capability.go
+model_create_client_response_response.go
+model_create_client_response_response_data.go
 model_create_invitation_response.go
 model_create_organization_client_request.go
 model_create_organization_client_response.go

@@ -4,7 +4,7 @@ default:
   @just --list
 
 pre-commit: tidy generate lint
-pc: pre-commit
+pc: pre-commit completions
 
 lint:
     golangci-lint run --fix --timeout 5m
@@ -12,7 +12,7 @@ lint:
 tidy:
     go mod tidy
 
-generate: completions
+generate: 
     openapi-generator-cli generate \
         -i ./membership-swagger.yaml \
         -g go \
@@ -39,7 +39,7 @@ release-ci:
 release:
     @goreleaser release --clean
 
-completions:
+completions: generate
     mkdir -p ./completions
     go run main.go completion bash > "./completions/fctl.bash"
     go run main.go completion zsh > "./completions/fctl.zsh"

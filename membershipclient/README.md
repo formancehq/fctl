@@ -148,6 +148,8 @@ Class | Method | HTTP request | Description
  - [AuthenticationProviderResponseData](docs/AuthenticationProviderResponseData.md)
  - [BaseProviderConfig](docs/BaseProviderConfig.md)
  - [Capability](docs/Capability.md)
+ - [CreateClientResponseResponse](docs/CreateClientResponseResponse.md)
+ - [CreateClientResponseResponseData](docs/CreateClientResponseResponseData.md)
  - [CreateInvitationResponse](docs/CreateInvitationResponse.md)
  - [CreateOrganizationClientRequest](docs/CreateOrganizationClientRequest.md)
  - [CreateOrganizationClientResponse](docs/CreateOrganizationClientResponse.md)
