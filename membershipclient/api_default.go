@@ -473,7 +473,7 @@ type ApiCreateOrganizationClientRequest struct {
 	organizationId string
 }
 
-func (r ApiCreateOrganizationClientRequest) Execute() (*CreateOrganizationClientResponse, *http.Response, error) {
+func (r ApiCreateOrganizationClientRequest) Execute() (*CreateClientResponseResponse, *http.Response, error) {
 	return r.ApiService.CreateOrganizationClientExecute(r)
 }
 
@@ -495,14 +495,14 @@ func (a *DefaultAPIService) CreateOrganizationClient(ctx context.Context, organi
 }
 
 // Execute executes the request
-//  @return CreateOrganizationClientResponse
+//  @return CreateClientResponseResponse
 // Deprecated
-func (a *DefaultAPIService) CreateOrganizationClientExecute(r ApiCreateOrganizationClientRequest) (*CreateOrganizationClientResponse, *http.Response, error) {
+func (a *DefaultAPIService) CreateOrganizationClientExecute(r ApiCreateOrganizationClientRequest) (*CreateClientResponseResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPut
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *CreateOrganizationClientResponse
+		localVarReturnValue  *CreateClientResponseResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.CreateOrganizationClient")
@@ -5132,7 +5132,7 @@ type ApiReadOrganizationClientRequest struct {
 	organizationId string
 }
 
-func (r ApiReadOrganizationClientRequest) Execute() (*CreateOrganizationClientResponse, *http.Response, error) {
+func (r ApiReadOrganizationClientRequest) Execute() (*CreateClientResponseResponse, *http.Response, error) {
 	return r.ApiService.ReadOrganizationClientExecute(r)
 }
 
@@ -5154,14 +5154,14 @@ func (a *DefaultAPIService) ReadOrganizationClient(ctx context.Context, organiza
 }
 
 // Execute executes the request
-//  @return CreateOrganizationClientResponse
+//  @return CreateClientResponseResponse
 // Deprecated
-func (a *DefaultAPIService) ReadOrganizationClientExecute(r ApiReadOrganizationClientRequest) (*CreateOrganizationClientResponse, *http.Response, error) {
+func (a *DefaultAPIService) ReadOrganizationClientExecute(r ApiReadOrganizationClientRequest) (*CreateClientResponseResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *CreateOrganizationClientResponse
+		localVarReturnValue  *CreateClientResponseResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ReadOrganizationClient")

@@ -327,7 +327,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateOrganizationClientResponse"
+                $ref: "#/components/schemas/CreateClientResponseResponse"
         default:
           description: Error
           content:
@@ -350,7 +350,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateOrganizationClientResponse"
+                $ref: "#/components/schemas/CreateClientResponseResponse"
         default:
           description: Error
           content:
@@ -2237,6 +2237,19 @@ components:
           items:
             allOf:
             - $ref: "#/components/schemas/OrganizationExpanded"
+    CreateClientResponseResponse:
+      type: object
+      properties:
+        data:
+          allOf:
+          - $ref: "#/components/schemas/OrganizationClient"
+          - type: object
+            properties:
+              ownerId:
+                type: string
+                description: The ID of the owner of the client (DEPRECATED will be empty)
+            required:
+            - ownerId
     OrganizationExpanded:
       allOf:
       - $ref: "#/components/schemas/Organization"

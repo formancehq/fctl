@@ -355,7 +355,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateOrganizationClientResponse'
+                $ref: '#/components/schemas/CreateClientResponseResponse'
           description: Organization client
         default:
           content:
@@ -380,7 +380,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateOrganizationClientResponse'
+                $ref: '#/components/schemas/CreateClientResponseResponse'
           description: Client organization created
         default:
           content:
@@ -3039,6 +3039,22 @@ components:
             - $ref: '#/components/schemas/OrganizationExpanded'
           type: array
       type: object
+    CreateClientResponseResponse:
+      example:
+        data:
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          name: name
+          description: description
+          id: id
+          secret:
+            clear: clear
+            lastDigits: lastDigits
+          ownerId: ownerId
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        data:
+          $ref: '#/components/schemas/CreateClientResponseResponse_data'
+      type: object
     OrganizationExpanded:
       allOf:
       - $ref: '#/components/schemas/Organization'
@@ -3458,6 +3474,26 @@ components:
       required:
       - lastDigits
       type: object
+    CreateClientResponseResponse_data:
+      allOf:
+      - $ref: '#/components/schemas/OrganizationClient'
+      - properties:
+          ownerId:
+            description: The ID of the owner of the client (DEPRECATED will be empty)
+            type: string
+        required:
+        - ownerId
+        type: object
+      example:
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        name: name
+        description: description
+        id: id
+        secret:
+          clear: clear
+          lastDigits: lastDigits
+        ownerId: ownerId
+        updatedAt: 2000-01-23T04:56:07.000+00:00
     GoogleIDPConfig_allOf_config:
       type: object
     MicrosoftIDPConfig_allOf_config:

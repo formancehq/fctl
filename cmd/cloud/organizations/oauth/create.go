@@ -10,7 +10,7 @@ import (
 )
 
 type Create struct {
-	Organization *membershipclient.CreateOrganizationClientResponse `json:"organization"`
+	Organization *membershipclient.CreateClientResponseResponse `json:"organization"`
 }
 type CreateController struct {
 	store *Create
