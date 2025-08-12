@@ -30,7 +30,7 @@ jobs:
       GOPATH: /tmp/go
       GOLANGCI_LINT_CACHE: /tmp/golangci-lint
     steps:
-      - uses: 'actions/checkout@v4'
+      - uses: 'actions/checkout@v5'
         with:
           fetch-depth: 0
       - name: Setup Env
@@ -67,7 +67,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           version: "latest"
-      - uses: 'actions/checkout@v4'
+      - uses: 'actions/checkout@v5'
         with:
           fetch-depth: 0
       - name: Setup Env
