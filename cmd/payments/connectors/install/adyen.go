@@ -3,6 +3,7 @@ package install
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/formancehq/fctl/cmd/payments/versions"
 
 	"github.com/formancehq/fctl/cmd/payments/connectors/internal"
@@ -83,9 +84,9 @@ func (c *PaymentsConnectorsAdyenController) Run(cmd *cobra.Command, args []strin
 		response, err := store.Client().Payments.V3.InstallConnector(cmd.Context(), operations.V3InstallConnectorRequest{
 			V3InstallConnectorRequest: &shared.V3InstallConnectorRequest{
 				V3AdyenConfig: &config,
-				Type:          "Adyen",
+				Type:          internal.AdyenConnector,
 			},
-			Connector: "Adyen",
+			Connector: internal.AdyenConnector,
 		})
 
 		if err != nil {
@@ -102,9 +103,7 @@ func (c *PaymentsConnectorsAdyenController) Run(cmd *cobra.Command, args []strin
 			c.store.ConnectorID = response.V3InstallConnectorResponse.GetData()
 		}
 
-	case versions.V0:
-	case versions.V2:
-	case versions.V1:
+	case versions.V0, versions.V1, versions.V2:
 		var config shared.AdyenConfig
 		if err := json.Unmarshal([]byte(script), &config); err != nil {
 			return nil, err
