@@ -3,6 +3,7 @@ package install
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/formancehq/fctl/cmd/payments/versions"
 
 	"github.com/formancehq/fctl/cmd/payments/connectors/internal"
 	fctl "github.com/formancehq/fctl/pkg"
@@ -20,7 +21,13 @@ type PaymentsConnectorsAdyenStore struct {
 }
 
 type PaymentsConnectorsAdyenController struct {
+	PaymentsVersion versions.Version
+
 	store *PaymentsConnectorsAdyenStore
+}
+
+func (c *PaymentsConnectorsAdyenController) SetVersion(version versions.Version) {
+	c.PaymentsVersion = version
 }
 
 var _ fctl.Controller[*PaymentsConnectorsAdyenStore] = (*PaymentsConnectorsAdyenController)(nil)
@@ -56,35 +63,72 @@ func (c *PaymentsConnectorsAdyenController) Run(cmd *cobra.Command, args []strin
 	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to install connector '%s'", internal.AdyenConnector) {
 		return nil, fctl.ErrMissingApproval
 	}
+
+	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
+		return nil, err
+	}
+
 	script, err := fctl.ReadFile(cmd, store.Stack(), args[0])
 	if err != nil {
 		return nil, err
 	}
 
-	var config shared.AdyenConfig
-	if err := json.Unmarshal([]byte(script), &config); err != nil {
-		return nil, err
-	}
+	switch c.PaymentsVersion {
+	case versions.V3:
+		var config shared.V3AdyenConfig
+		if err := json.Unmarshal([]byte(script), &config); err != nil {
+			return nil, err
+		}
 
-	response, err := store.Client().Payments.V1.InstallConnector(cmd.Context(), operations.InstallConnectorRequest{
-		ConnectorConfig: shared.ConnectorConfig{
-			AdyenConfig: &config,
-		},
-		Connector: shared.ConnectorAdyen,
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "installing connector")
-	}
+		response, err := store.Client().Payments.V3.InstallConnector(cmd.Context(), operations.V3InstallConnectorRequest{
+			V3InstallConnectorRequest: &shared.V3InstallConnectorRequest{
+				V3AdyenConfig: &config,
+				Type:          "Adyen",
+			},
+			Connector: "Adyen",
+		})
 
-	if response.StatusCode >= 300 {
-		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
-	}
+		if err != nil {
+			return nil, errors.Wrap(err, "installing connector")
+		}
+		if response.StatusCode >= 300 {
+			return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+		}
 
-	c.store.Success = true
-	c.store.ConnectorName = internal.AdyenConnector
+		c.store.Success = true
+		c.store.ConnectorName = internal.AdyenConnector
 
-	if response.ConnectorResponse != nil {
-		c.store.ConnectorID = response.ConnectorResponse.Data.ConnectorID
+		if response.V3InstallConnectorResponse.GetData() != "" {
+			c.store.ConnectorID = response.V3InstallConnectorResponse.GetData()
+		}
+
+	case versions.V0:
+	case versions.V2:
+	case versions.V1:
+		var config shared.AdyenConfig
+		if err := json.Unmarshal([]byte(script), &config); err != nil {
+			return nil, err
+		}
+
+		response, err := store.Client().Payments.V1.InstallConnector(cmd.Context(), operations.InstallConnectorRequest{
+			ConnectorConfig: shared.ConnectorConfig{
+				AdyenConfig: &config,
+			},
+			Connector: shared.ConnectorAdyen,
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "installing connector")
+		}
+		if response.StatusCode >= 300 {
+			return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+		}
+
+		c.store.Success = true
+		c.store.ConnectorName = internal.AdyenConnector
+
+		if response.ConnectorResponse != nil {
+			c.store.ConnectorID = response.ConnectorResponse.Data.ConnectorID
+		}
 	}
 
 	return c, nil
