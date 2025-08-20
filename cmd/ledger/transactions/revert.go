@@ -72,7 +72,7 @@ func (c *RevertController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 			return nil, err
 		}
 
-		c.store.Transaction = internal.WrapV2Transaction(response.V2RevertTransactionResponse.Data)
+		c.store.Transaction = internal.WrapV2Transaction(response.V2CreateTransactionResponse.Data)
 	} else {
 		request := operations.RevertTransactionRequest{
 			Ledger:        ledger,

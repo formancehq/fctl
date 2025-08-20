@@ -106,7 +106,7 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 			fmt.Sprint(tf.InitialAmount),
 			tf.Asset,
 			string(tf.Status),
-			tf.Error,
+			*tf.Error,
 		}
 	})
 	tableData = fctl.Prepend(tableData, []string{"ID", "Reference", "CreatedAt", "ScheduledAt", "Description", "Source Account ID",
