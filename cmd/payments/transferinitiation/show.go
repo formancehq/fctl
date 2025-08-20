@@ -94,7 +94,7 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 	tableData = append(tableData, []string{pterm.LightCyan("InitialAmount"), fmt.Sprint(c.store.TransferInitiation.InitialAmount)})
 	tableData = append(tableData, []string{pterm.LightCyan("Asset"), c.store.TransferInitiation.Asset})
 	tableData = append(tableData, []string{pterm.LightCyan("Status"), string(c.store.TransferInitiation.Status)})
-	tableData = append(tableData, []string{pterm.LightCyan("Error"), c.store.TransferInitiation.Error})
+	tableData = append(tableData, []string{pterm.LightCyan("Error"), *c.store.TransferInitiation.Error})
 
 	if err := pterm.DefaultTable.
 		WithWriter(cmd.OutOrStdout()).
@@ -108,7 +108,7 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 			tf.PaymentID,
 			tf.CreatedAt.Format(time.RFC3339),
 			string(tf.Status),
-			tf.Error,
+			*tf.Error,
 		}
 	})
 	tableData = fctl.Prepend(tableData, []string{"PaymentID", "CreatedAt", "Status", "Error"})
@@ -125,7 +125,7 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 			tf.AdjustmentID,
 			tf.CreatedAt.Format(time.RFC3339),
 			string(tf.Status),
-			tf.Error,
+			*tf.Error,
 		}
 	})
 	tableData = fctl.Prepend(tableData, []string{"AdjustmentID", "CreatedAt", "Status", "Error"})
