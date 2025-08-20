@@ -11,6 +11,8 @@ const (
 	MangoPayConnector      = "mangopay"
 	MoneycorpConnector     = "moneycorp"
 	GenericConnector       = "generic"
+	QontoConnector         = "qonto"
+	ColumnConnector        = "column"
 )
 
 var AllConnectors = []string{
@@ -24,4 +26,6 @@ var AllConnectors = []string{
 	MangoPayConnector,
 	MoneycorpConnector,
 	GenericConnector,
+	QontoConnector,
+	ColumnConnector,
 }
