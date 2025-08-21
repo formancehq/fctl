@@ -29,8 +29,7 @@ type PaymentsConnectorsListController struct {
 }
 
 func (c *PaymentsConnectorsListController) SetVersion(version versions.Version) {
-	// c.PaymentsVersion = version
-	c.PaymentsVersion = versions.V1
+	c.PaymentsVersion = version
 }
 
 var _ fctl.Controller[*PaymentsConnectorsListStore] = (*PaymentsConnectorsListController)(nil)
