@@ -2,10 +2,10 @@ package connectors
 
 import (
 	"fmt"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 
 	"github.com/formancehq/fctl/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -24,10 +24,13 @@ type PaymentsConnectorsListController struct {
 	PaymentsVersion versions.Version
 
 	store *PaymentsConnectorsListStore
+
+	pageSizeFlag string
 }
 
 func (c *PaymentsConnectorsListController) SetVersion(version versions.Version) {
-	c.PaymentsVersion = version
+	// c.PaymentsVersion = version
+	c.PaymentsVersion = versions.V1
 }
 
 var _ fctl.Controller[*PaymentsConnectorsListStore] = (*PaymentsConnectorsListController)(nil)
@@ -40,7 +43,8 @@ func NewDefaultPaymentsConnectorsListStore() *PaymentsConnectorsListStore {
 
 func NewPaymentsConnectorsListController() *PaymentsConnectorsListController {
 	return &PaymentsConnectorsListController{
-		store: NewDefaultPaymentsConnectorsListStore(),
+		store:        NewDefaultPaymentsConnectorsListStore(),
+		pageSizeFlag: "page-size",
 	}
 }
 
@@ -49,6 +53,7 @@ func NewListCommand() *cobra.Command {
 	return fctl.NewCommand("list",
 		fctl.WithAliases("ls", "l"),
 		fctl.WithShortDescription("List all enabled connectors"),
+		fctl.WithIntFlag(c.pageSizeFlag, 10, "Page size"),
 		fctl.WithController[*PaymentsConnectorsListStore](c),
 	)
 }
@@ -64,14 +69,18 @@ func (c *PaymentsConnectorsListController) Run(cmd *cobra.Command, args []string
 		return nil, err
 	}
 
+	pageSizeAsInt := int64(fctl.GetInt(cmd, c.pageSizeFlag))
+
 	switch c.PaymentsVersion {
 	case versions.V3:
-		response, err := store.Client().Payments.V3.ListConnectors(cmd.Context(), operations.V3ListConnectorsRequest{})
+		response, err := store.Client().Payments.V3.ListConnectors(cmd.Context(), operations.V3ListConnectorsRequest{
+			PageSize: &pageSizeAsInt,
+		})
 		if err != nil {
 			return nil, err
 		}
 
-		if response.StatusCode > 300 {
+		if response.StatusCode >= 300 {
 			return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 		}
 
@@ -93,7 +102,16 @@ func (c *PaymentsConnectorsListController) Run(cmd *cobra.Command, args []string
 		if response.ConnectorsResponse == nil {
 			return nil, fmt.Errorf("unexpected response: %v", response)
 		}
-		c.store.Connectors = fctl.Map(response.ConnectorsResponse.Data, V1toConnectorData)
+
+		connectorsLength := len(response.ConnectorsResponse.Data)
+		endIndex := int(pageSizeAsInt)
+		if connectorsLength < endIndex {
+			endIndex = connectorsLength
+		}
+
+		connectorsSlice := response.ConnectorsResponse.Data[:endIndex]
+		c.store.Connectors = fctl.Map(connectorsSlice, V1toConnectorData)
+
 	}
 
 	return c, nil

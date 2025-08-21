@@ -3,6 +3,7 @@ package install
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/formancehq/fctl/cmd/payments/connectors/internal"
 	"github.com/formancehq/fctl/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/pkg"

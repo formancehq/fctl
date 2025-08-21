@@ -86,7 +86,6 @@ func (c *UpdateQontoConnectorConfigController) Run(cmd *cobra.Command, args []st
 	response, err := store.Client().Payments.V3.V3UpdateConnectorConfig(cmd.Context(), operations.V3UpdateConnectorConfigRequest{
 		V3InstallConnectorRequest: &shared.V3InstallConnectorRequest{
 			V3QontoConfig: config,
-			Type:          internal.QontoConnector,
 		},
 		ConnectorID: connectorID,
 	})
