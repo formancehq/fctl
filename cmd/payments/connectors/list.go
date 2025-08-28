@@ -5,22 +5,27 @@ import (
 
 	"github.com/formancehq/fctl/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
-var (
-	PaymentsConnectorsList = "develop"
-)
+type ConnectorData struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Provider string `json:"provider"`
+}
 
 type PaymentsConnectorsListStore struct {
-	Connectors []shared.ConnectorsResponseData `json:"connectors"`
+	Connectors []ConnectorData `json:"connectors"`
 }
 type PaymentsConnectorsListController struct {
 	PaymentsVersion versions.Version
 
 	store *PaymentsConnectorsListStore
+
+	pageSizeFlag string
 }
 
 func (c *PaymentsConnectorsListController) SetVersion(version versions.Version) {
@@ -31,13 +36,14 @@ var _ fctl.Controller[*PaymentsConnectorsListStore] = (*PaymentsConnectorsListCo
 
 func NewDefaultPaymentsConnectorsListStore() *PaymentsConnectorsListStore {
 	return &PaymentsConnectorsListStore{
-		Connectors: []shared.ConnectorsResponseData{},
+		Connectors: []ConnectorData{},
 	}
 }
 
 func NewPaymentsConnectorsListController() *PaymentsConnectorsListController {
 	return &PaymentsConnectorsListController{
-		store: NewDefaultPaymentsConnectorsListStore(),
+		store:        NewDefaultPaymentsConnectorsListStore(),
+		pageSizeFlag: "page-size",
 	}
 }
 
@@ -46,6 +52,7 @@ func NewListCommand() *cobra.Command {
 	return fctl.NewCommand("list",
 		fctl.WithAliases("ls", "l"),
 		fctl.WithShortDescription("List all enabled connectors"),
+		fctl.WithIntFlag(c.pageSizeFlag, 10, "Page size"),
 		fctl.WithController[*PaymentsConnectorsListStore](c),
 	)
 }
@@ -61,36 +68,66 @@ func (c *PaymentsConnectorsListController) Run(cmd *cobra.Command, args []string
 		return nil, err
 	}
 
-	response, err := store.Client().Payments.V1.ListAllConnectors(cmd.Context())
-	if err != nil {
-		return nil, err
-	}
+	pageSizeAsInt := int64(fctl.GetInt(cmd, c.pageSizeFlag))
 
-	if response.StatusCode >= 300 {
-		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
-	}
+	switch c.PaymentsVersion {
+	case versions.V3:
+		response, err := store.Client().Payments.V3.ListConnectors(cmd.Context(), operations.V3ListConnectorsRequest{
+			PageSize: &pageSizeAsInt,
+		})
+		if err != nil {
+			return nil, err
+		}
 
-	if response.ConnectorsResponse == nil {
-		return nil, fmt.Errorf("unexpected response: %v", response)
-	}
+		if response.StatusCode >= 300 {
+			return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+		}
 
-	c.store.Connectors = response.ConnectorsResponse.Data
+		if response.V3ConnectorsCursorResponse == nil {
+			return nil, fmt.Errorf("unexpected response: %v", response)
+		}
+		c.store.Connectors = fctl.Map(response.V3ConnectorsCursorResponse.Cursor.Data, V3toConnectorData)
+
+	case versions.V0, versions.V1, versions.V2:
+		response, err := store.Client().Payments.V1.ListAllConnectors(cmd.Context())
+		if err != nil {
+			return nil, err
+		}
+
+		if response.StatusCode >= 300 {
+			return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+		}
+
+		if response.ConnectorsResponse == nil {
+			return nil, fmt.Errorf("unexpected response: %v", response)
+		}
+
+		connectorsLength := len(response.ConnectorsResponse.Data)
+		endIndex := int(pageSizeAsInt)
+		if connectorsLength < endIndex {
+			endIndex = connectorsLength
+		}
+
+		connectorsSlice := response.ConnectorsResponse.Data[:endIndex]
+		c.store.Connectors = fctl.Map(connectorsSlice, V1toConnectorData)
+
+	}
 
 	return c, nil
 }
 
 func (c *PaymentsConnectorsListController) Render(cmd *cobra.Command, args []string) error {
-	tableData := fctl.Map(c.store.Connectors, func(connector shared.ConnectorsResponseData) []string {
+	tableData := fctl.Map(c.store.Connectors, func(connector ConnectorData) []string {
 		if c.PaymentsVersion >= versions.V1 {
 			return []string{
-				string(connector.Provider),
+				connector.Provider,
 				connector.Name,
-				connector.ConnectorID,
+				connector.ID,
 			}
 		} else {
 			// V0
 			return []string{
-				string(connector.Provider),
+				connector.Provider,
 			}
 		}
 
@@ -106,4 +143,20 @@ func (c *PaymentsConnectorsListController) Render(cmd *cobra.Command, args []str
 		WithWriter(cmd.OutOrStdout()).
 		WithData(tableData).
 		Render()
+}
+
+func V3toConnectorData(connector shared.V3Connector) ConnectorData {
+	return ConnectorData{
+		ID:       connector.ID,
+		Name:     connector.Name,
+		Provider: connector.Provider,
+	}
+}
+
+func V1toConnectorData(connector shared.ConnectorsResponseData) ConnectorData {
+	return ConnectorData{
+		ID:       connector.ConnectorID,
+		Name:     connector.Name,
+		Provider: string(connector.Provider),
+	}
 }

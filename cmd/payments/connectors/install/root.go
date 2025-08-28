@@ -20,6 +20,8 @@ func NewInstallCommand() *cobra.Command {
 			NewMoneycorpCommand(),
 			NewAtlarCommand(),
 			NewGenericCommand(),
+			NewQontoCommand(),
+			NewColumnCommand(),
 		),
 	)
 }
