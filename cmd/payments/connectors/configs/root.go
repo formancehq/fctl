@@ -19,6 +19,8 @@ func NewUpdateConfigCommands() *cobra.Command {
 			newUpdateMoneycorpCommand(),
 			newUpdateStripeCommand(),
 			newUpdateWiseCommand(),
+			newUpdateQontoCommand(),
+			newUpdateColumnCommand(),
 		),
 	)
 }
