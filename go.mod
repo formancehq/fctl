@@ -1,8 +1,8 @@
 module github.com/formancehq/fctl
 
-go 1.23.0
+go 1.24.0
 
-toolchain go1.23.2
+toolchain go1.25.1
 
 require (
 	github.com/TylerBrock/colorjson v0.0.0-20200706003622-8a50f05110d2
@@ -16,10 +16,10 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pterm/pterm v0.12.81
 	github.com/segmentio/ksuid v1.0.4
-	github.com/spf13/cobra v1.8.1
+	github.com/spf13/cobra v1.10.1
 	github.com/zitadel/oidc/v2 v2.12.2
-	golang.org/x/mod v0.27.0
-	golang.org/x/oauth2 v0.30.0
+	golang.org/x/mod v0.28.0
+	golang.org/x/oauth2 v0.31.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
