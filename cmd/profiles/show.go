@@ -10,6 +10,7 @@ import (
 type ProfilesShowStore struct {
 	MembershipURI       string `json:"membershipUri"`
 	DefaultOrganization string `json:"defaultOrganization"`
+	DefaultStack        string `json:"defaultStack"`
 }
 type ProfilesShowController struct {
 	store *ProfilesShowStore
@@ -21,6 +22,7 @@ func NewDefaultProfilesShowStore() *ProfilesShowStore {
 	return &ProfilesShowStore{
 		MembershipURI:       "",
 		DefaultOrganization: "",
+		DefaultStack:        "",
 	}
 }
 
@@ -48,6 +50,7 @@ func (c *ProfilesShowController) Run(cmd *cobra.Command, args []string) (fctl.Re
 
 	c.store.DefaultOrganization = p.GetDefaultOrganization()
 	c.store.MembershipURI = p.GetMembershipURI()
+	c.store.DefaultStack = p.GetDefaultStack()
 
 	return c, nil
 }
@@ -57,6 +60,7 @@ func (c *ProfilesShowController) Render(cmd *cobra.Command, args []string) error
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Membership URI"), c.store.MembershipURI})
 	tableData = append(tableData, []string{pterm.LightCyan("Default organization"), c.store.DefaultOrganization})
+	tableData = append(tableData, []string{pterm.LightCyan("Default stack"), c.store.DefaultStack})
 	return pterm.DefaultTable.
 		WithWriter(cmd.OutOrStdout()).
 		WithData(tableData).
