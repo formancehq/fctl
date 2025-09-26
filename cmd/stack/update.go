@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	nameFlag = "name"
+	nameFlag     = "name"
+	metadataFlag = "metadata"
 )
 
 type StackUpdateStore struct {
@@ -46,6 +47,7 @@ func NewUpdateCommand() *cobra.Command {
 		}),
 		fctl.WithBoolFlag(unprotectFlag, false, "Unprotect stacks (no confirmation on write commands)"),
 		fctl.WithStringFlag(nameFlag, "", "Name of the stack"),
+		fctl.WithStringSliceFlag(metadataFlag, []string{""}, "Metadata to use"),
 		fctl.WithController(NewStackUpdateController()),
 	)
 }
@@ -57,10 +59,23 @@ func (c *StackUpdateController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 	store := fctl.GetOrganizationStore(cmd)
 	c.profile = store.Config.GetProfile(fctl.GetCurrentProfileName(cmd, store.Config))
 
-	protected := !fctl.GetBool(cmd, unprotectFlag)
-	metadata := map[string]string{
-		fctl.ProtectedStackMetadata: fctl.BoolPointerToString(&protected),
+	// Parse user-provided metadata
+	userMetadata, err := fctl.ParseMetadata(fctl.GetStringSlice(cmd, metadataFlag))
+	if err != nil {
+		return nil, errors.Wrap(err, "parsing metadata")
 	}
+
+	// Merge user metadata with protected metadata
+	protected := !fctl.GetBool(cmd, unprotectFlag)
+	metadata := make(map[string]string)
+	
+	// Add user metadata first
+	for k, v := range userMetadata {
+		metadata[k] = v
+	}
+	
+	// Add/override with protected metadata
+	metadata[fctl.ProtectedStackMetadata] = fctl.BoolPointerToString(&protected)
 
 	stack, res, err := store.Client().GetStack(cmd.Context(), store.OrganizationId(), args[0]).Execute()
 	if err != nil {
