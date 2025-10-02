@@ -1,0 +1,10 @@
+# CreateAppVariableResponse
+
+
+## Fields
+
+| Field                                                                                   | Type                                                                                    | Required                                                                                | Description                                                                             |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                              | [components.HTTPMetadata](../../models/components/httpmetadata.md)                      | :heavy_check_mark:                                                                      | N/A                                                                                     |
+| `CreateVariableResponse`                                                                | [*components.CreateVariableResponse](../../models/components/createvariableresponse.md) | :heavy_minus_sign:                                                                      | Variable created successfully                                                           |
+| `Error`                                                                                 | [*components.Error](../../models/components/error.md)                                   | :heavy_minus_sign:                                                                      | Error                                                                                   |

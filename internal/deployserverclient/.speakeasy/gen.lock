@@ -1,0 +1,393 @@
+lockVersion: 2.0.0
+id: 8068b42d-3ccb-4bcf-87ba-eaf586d7782d
+management:
+  docChecksum: 09ddb3789f76fbcb89bccbe097095f96
+  docVersion: 0.1.0
+  speakeasyVersion: 1.517.3
+  generationVersion: 2.548.6
+  releaseVersion: 0.0.1
+  configChecksum: d23898d9ddb6413e61cc245b19d999ed
+features:
+  go:
+    acceptHeaders: 2.81.2
+    additionalDependencies: 0.1.0
+    core: 3.7.2
+    defaultEnabledRetries: 0.2.0
+    devContainers: 2.90.0
+    downloadStreams: 0.1.2
+    envVarSecurityUsage: 0.3.2
+    flattening: 2.81.1
+    globalSecurityCallbacks: 0.1.0
+    globalServerURLs: 2.82.2
+    intellisenseMarkdownSupport: 0.1.0
+    nullables: 0.1.1
+    responseFormat: 0.1.2
+    retries: 2.83.2
+    sdkHooks: 0.1.0
+    uploadStreams: 0.1.0
+generatedFiles:
+  - .devcontainer/README.md
+  - .devcontainer/devcontainer.json
+  - .devcontainer/setup.sh
+  - .gitattributes
+  - /models/components/app.go
+  - /models/components/appinfo.go
+  - /models/components/application.go
+  - /models/components/appresponse.go
+  - /models/components/appversionresponse.go
+  - /models/components/configurationversion.go
+  - /models/components/createapprequest.go
+  - /models/components/createvariablerequest.go
+  - /models/components/createvariableresponse.go
+  - /models/components/error.go
+  - /models/components/httpmetadata.go
+  - /models/components/ledger.go
+  - /models/components/listappsresponse.go
+  - /models/components/listrunsresponse.go
+  - /models/components/listversionsresponse.go
+  - /models/components/log.go
+  - /models/components/payments.go
+  - /models/components/pool.go
+  - /models/components/readlogsresponse.go
+  - /models/components/readvariablesresponse.go
+  - /models/components/reconciliation.go
+  - /models/components/reconciliationledger.go
+  - /models/components/reconciliationpolicy.go
+  - /models/components/run.go
+  - /models/components/runresponse.go
+  - /models/components/updateapprequest.go
+  - /models/components/variable.go
+  - /models/components/variabledata.go
+  - /models/components/webhooks.go
+  - /models/operations/createapp.go
+  - /models/operations/createappvariable.go
+  - /models/operations/deleteapp.go
+  - /models/operations/deleteappvariable.go
+  - /models/operations/deployappconfiguration.go
+  - /models/operations/deployappconfigurationraw.go
+  - /models/operations/downloadappversion.go
+  - /models/operations/getappcurrentstateversion.go
+  - /models/operations/getcurrentappversion.go
+  - /models/operations/listapps.go
+  - /models/operations/readapp.go
+  - /models/operations/readappmanifest.go
+  - /models/operations/readappruns.go
+  - /models/operations/readappvariables.go
+  - /models/operations/readappversions.go
+  - /models/operations/readcurrentrun.go
+  - /models/operations/readcurrentrunlogs.go
+  - /models/operations/readrun.go
+  - /models/operations/readversion.go
+  - /models/operations/updateapp.go
+  - USAGE.md
+  - deployserver.go
+  - docs/models/components/app.md
+  - docs/models/components/appinfo.md
+  - docs/models/components/application.md
+  - docs/models/components/appresponse.md
+  - docs/models/components/appversionresponse.md
+  - docs/models/components/configurationversion.md
+  - docs/models/components/connector.md
+  - docs/models/components/createapprequest.md
+  - docs/models/components/createvariablerequest.md
+  - docs/models/components/createvariableresponse.md
+  - docs/models/components/diagnostic.md
+  - docs/models/components/error.md
+  - docs/models/components/httpmetadata.md
+  - docs/models/components/ledger.md
+  - docs/models/components/listappsresponse.md
+  - docs/models/components/listappsresponsedata.md
+  - docs/models/components/listrunsresponse.md
+  - docs/models/components/listrunsresponsedata.md
+  - docs/models/components/listversionsresponse.md
+  - docs/models/components/listversionsresponsedata.md
+  - docs/models/components/log.md
+  - docs/models/components/payments.md
+  - docs/models/components/pool.md
+  - docs/models/components/readlogsresponse.md
+  - docs/models/components/readvariablesresponse.md
+  - docs/models/components/readvariablesresponsedata.md
+  - docs/models/components/reconciliation.md
+  - docs/models/components/reconciliationledger.md
+  - docs/models/components/reconciliationpolicy.md
+  - docs/models/components/run.md
+  - docs/models/components/runresponse.md
+  - docs/models/components/schema.md
+  - docs/models/components/status.md
+  - docs/models/components/updateapprequest.md
+  - docs/models/components/variable.md
+  - docs/models/components/variablecategory.md
+  - docs/models/components/variabledata.md
+  - docs/models/components/variabledatacategory.md
+  - docs/models/components/webhooks.md
+  - docs/models/operations/createappresponse.md
+  - docs/models/operations/createappvariablerequest.md
+  - docs/models/operations/createappvariableresponse.md
+  - docs/models/operations/deleteapprequest.md
+  - docs/models/operations/deleteappresponse.md
+  - docs/models/operations/deleteappvariablerequest.md
+  - docs/models/operations/deleteappvariableresponse.md
+  - docs/models/operations/deployappconfigurationrawrequest.md
+  - docs/models/operations/deployappconfigurationrawresponse.md
+  - docs/models/operations/deployappconfigurationrequest.md
+  - docs/models/operations/deployappconfigurationresponse.md
+  - docs/models/operations/downloadappversionrequest.md
+  - docs/models/operations/downloadappversionresponse.md
+  - docs/models/operations/from.md
+  - docs/models/operations/getappcurrentstateversionrequest.md
+  - docs/models/operations/getappcurrentstateversionresponse.md
+  - docs/models/operations/getcurrentappversionrequest.md
+  - docs/models/operations/getcurrentappversionresponse.md
+  - docs/models/operations/listappsrequest.md
+  - docs/models/operations/listappsresponse.md
+  - docs/models/operations/option.md
+  - docs/models/operations/readappmanifestrequest.md
+  - docs/models/operations/readappmanifestresponse.md
+  - docs/models/operations/readapprequest.md
+  - docs/models/operations/readappresponse.md
+  - docs/models/operations/readapprunsrequest.md
+  - docs/models/operations/readapprunsresponse.md
+  - docs/models/operations/readappvariablesrequest.md
+  - docs/models/operations/readappvariablesresponse.md
+  - docs/models/operations/readappversionsrequest.md
+  - docs/models/operations/readappversionsresponse.md
+  - docs/models/operations/readcurrentrunlogsrequest.md
+  - docs/models/operations/readcurrentrunlogsresponse.md
+  - docs/models/operations/readcurrentrunrequest.md
+  - docs/models/operations/readcurrentrunresponse.md
+  - docs/models/operations/readrunrequest.md
+  - docs/models/operations/readrunresponse.md
+  - docs/models/operations/readversionrequest.md
+  - docs/models/operations/readversionresponse.md
+  - docs/models/operations/updateapprequest.md
+  - docs/models/operations/updateappresponse.md
+  - docs/sdks/deployserver/README.md
+  - go.mod
+  - internal/hooks/hooks.go
+  - internal/utils/contenttype.go
+  - internal/utils/env.go
+  - internal/utils/form.go
+  - internal/utils/headers.go
+  - internal/utils/json.go
+  - internal/utils/pathparams.go
+  - internal/utils/queryparams.go
+  - internal/utils/requestbody.go
+  - internal/utils/retries.go
+  - internal/utils/security.go
+  - internal/utils/utils.go
+  - models/apierrors/apierror.go
+  - models/operations/options.go
+  - retry/config.go
+  - types/bigint.go
+  - types/date.go
+  - types/datetime.go
+  - types/decimal.go
+  - types/pointers.go
+examples:
+  listApps:
+    speakeasy-default-list-apps:
+      parameters:
+        query:
+          organizationId: "<id>"
+      responses:
+        "200":
+          application/json: {"data": {"items": []}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  createApp:
+    speakeasy-default-create-app:
+      requestBody:
+        application/json: {"organizationId": "<id>"}
+      responses:
+        "201":
+          application/json: {"data": {"id": "<id>", "name": "<value>"}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  updateApp:
+    speakeasy-default-update-app:
+      parameters:
+        path:
+          id: "<id>"
+      requestBody:
+        application/json: {}
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  readApp:
+    speakeasy-default-read-app:
+      parameters:
+        path:
+          id: "<id>"
+      responses:
+        "200":
+          application/json: {"data": {"id": "<id>", "name": "<value>"}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  deleteApp:
+    speakeasy-default-delete-app:
+      parameters:
+        path:
+          id: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  getAppCurrentStateVersion:
+    speakeasy-default-get-app-current-state-version:
+      parameters:
+        path:
+          id: "<id>"
+      responses:
+        "200":
+          application/json: "<value>"
+        default:
+          application/json: {"errorCode": "<value>"}
+  readAppVariables:
+    speakeasy-default-read-app-variables:
+      parameters:
+        path:
+          id: "<id>"
+        query: {}
+      responses:
+        "200":
+          application/json: {"data": {}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  createAppVariable:
+    speakeasy-default-create-app-variable:
+      parameters:
+        path:
+          id: "<id>"
+      requestBody:
+        application/json: {"variable": {"key": "<key>", "value": "<value>", "sensitive": true, "category": "env"}}
+      responses:
+        "201":
+          application/json: {"data": {"key": "<key>", "value": "<value>", "sensitive": false, "category": "env", "id": "<id>"}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  deleteAppVariable:
+    speakeasy-default-delete-app-variable:
+      parameters:
+        path:
+          id: "<id>"
+          variableId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  readAppRuns:
+    speakeasy-default-read-app-runs:
+      parameters:
+        path:
+          id: "<id>"
+        query: {}
+      responses:
+        "200":
+          application/json: {"data": {"items": []}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  readAppVersions:
+    speakeasy-default-read-app-versions:
+      parameters:
+        path:
+          id: "<id>"
+        query: {}
+      responses:
+        "200":
+          application/json: {"data": {"items": [{"id": "<id>", "autoQueueRuns": true, "error": "<value>", "errorMessage": "<value>", "status": ""}, {"id": "<id>", "autoQueueRuns": false, "error": "<value>", "errorMessage": "<value>", "status": "fetching"}]}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  readAppManifest:
+    speakeasy-default-read-app-manifest:
+      parameters:
+        path:
+          id: "<id>"
+        query: {}
+      responses:
+        "200":
+          application/octet-stream: "x-file: example.file"
+        default:
+          application/json: {"errorCode": "<value>"}
+  deployAppConfiguration:
+    speakeasy-default-deploy-app-configuration-raw:
+      parameters:
+        path:
+          id: "<id>"
+      requestBody:
+        application/yaml: "x-file: example.file"
+      responses:
+        "202":
+          application/json: {"data": {"id": "<id>", "autoApply": false, "createdAt": "2024-10-20T17:30:57.507Z", "isDestroy": true, "hasChanges": true, "message": "<value>", "planOnly": false, "refresh": false, "refreshOnly": false, "savePlan": true, "status": "<value>"}}
+        default:
+          application/json: {"errorCode": "<value>"}
+    speakeasy-default-deploy-app-configuration:
+      parameters:
+        path:
+          id: "<id>"
+      requestBody:
+        application/json: {}
+      responses:
+        "202":
+          application/json: {"data": {"id": "<id>", "autoApply": true, "createdAt": "2025-11-25T16:47:13.814Z", "isDestroy": false, "hasChanges": false, "message": "<value>", "planOnly": false, "refresh": false, "refreshOnly": true, "savePlan": true, "status": "<value>"}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  readCurrentRun:
+    speakeasy-default-read-current-run:
+      parameters:
+        path:
+          id: "<id>"
+      responses:
+        "200":
+          application/json: {"data": {"id": "<id>", "autoApply": true, "createdAt": "2024-12-13T04:50:02.482Z", "isDestroy": false, "hasChanges": true, "message": "<value>", "planOnly": true, "refresh": false, "refreshOnly": true, "savePlan": false, "status": "<value>"}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  readVersion:
+    speakeasy-default-read-version:
+      parameters:
+        path:
+          id: "<id>"
+      responses:
+        "200":
+          application/json: {"data": {"id": "<id>", "autoQueueRuns": true, "error": "<value>", "errorMessage": "<value>", "status": "fetching"}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  readRun:
+    speakeasy-default-read-run:
+      parameters:
+        path:
+          id: "<id>"
+      responses:
+        "200":
+          application/json: {"data": {"id": "<id>", "autoApply": true, "createdAt": "2025-08-15T08:39:20.123Z", "isDestroy": true, "hasChanges": true, "message": "<value>", "planOnly": false, "refresh": true, "refreshOnly": true, "savePlan": false, "status": "<value>"}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  readCurrentRunLogs:
+    speakeasy-default-read-current-run-logs:
+      parameters:
+        path:
+          id: "<id>"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  getCurrentAppVersion:
+    speakeasy-default-get-current-app-version:
+      parameters:
+        path:
+          id: "<id>"
+      responses:
+        "200":
+          application/json: {"data": {"id": "<id>", "autoQueueRuns": false, "error": "<value>", "errorMessage": "<value>", "status": "errored"}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  downloadAppVersion:
+    speakeasy-default-download-app-version:
+      parameters:
+        path:
+          id: "<id>"
+      responses:
+        "200":
+          application/gzip: "x-file: example.file"
+        default:
+          application/json: {"errorCode": "<value>"}
+examplesVersion: 1.0.0
+generatedTests: {}

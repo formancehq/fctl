@@ -1,0 +1,10 @@
+# ReadAppVariablesResponse
+
+
+## Fields
+
+| Field                                                                                 | Type                                                                                  | Required                                                                              | Description                                                                           |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                            | [components.HTTPMetadata](../../models/components/httpmetadata.md)                    | :heavy_check_mark:                                                                    | N/A                                                                                   |
+| `ReadVariablesResponse`                                                               | [*components.ReadVariablesResponse](../../models/components/readvariablesresponse.md) | :heavy_minus_sign:                                                                    | App variables retrieved successfully                                                  |
+| `Error`                                                                               | [*components.Error](../../models/components/error.md)                                 | :heavy_minus_sign:                                                                    | Error                                                                                 |
