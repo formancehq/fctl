@@ -1,29 +1,29 @@
 lockVersion: 2.0.0
 id: 8068b42d-3ccb-4bcf-87ba-eaf586d7782d
 management:
-  docChecksum: 09ddb3789f76fbcb89bccbe097095f96
+  docChecksum: 91e66dad1b2d98107da7d109b66a96a0
   docVersion: 0.1.0
-  speakeasyVersion: 1.517.3
-  generationVersion: 2.548.6
+  speakeasyVersion: 1.634.1
+  generationVersion: 2.721.0
   releaseVersion: 0.0.1
-  configChecksum: d23898d9ddb6413e61cc245b19d999ed
+  configChecksum: 49beab34f992f84433bdbebb05f8f9d1
 features:
   go:
     acceptHeaders: 2.81.2
     additionalDependencies: 0.1.0
-    core: 3.7.2
+    core: 3.11.1
     defaultEnabledRetries: 0.2.0
     devContainers: 2.90.0
     downloadStreams: 0.1.2
     envVarSecurityUsage: 0.3.2
     flattening: 2.81.1
     globalSecurityCallbacks: 0.1.0
-    globalServerURLs: 2.82.2
+    globalServerURLs: 2.82.3
     intellisenseMarkdownSupport: 0.1.0
-    nullables: 0.1.1
+    nullables: 0.2.0
     responseFormat: 0.1.2
-    retries: 2.83.2
-    sdkHooks: 0.1.0
+    retries: 2.84.2
+    sdkHooks: 0.2.0
     uploadStreams: 0.1.0
 generatedFiles:
   - .devcontainer/README.md
@@ -49,12 +49,14 @@ generatedFiles:
   - /models/components/payments.go
   - /models/components/pool.go
   - /models/components/readlogsresponse.go
+  - /models/components/readstateresponse.go
   - /models/components/readvariablesresponse.go
   - /models/components/reconciliation.go
   - /models/components/reconciliationledger.go
   - /models/components/reconciliationpolicy.go
   - /models/components/run.go
   - /models/components/runresponse.go
+  - /models/components/state.go
   - /models/components/updateapprequest.go
   - /models/components/variable.go
   - /models/components/variabledata.go
@@ -66,14 +68,14 @@ generatedFiles:
   - /models/operations/deployappconfiguration.go
   - /models/operations/deployappconfigurationraw.go
   - /models/operations/downloadappversion.go
-  - /models/operations/getappcurrentstateversion.go
-  - /models/operations/getcurrentappversion.go
   - /models/operations/listapps.go
   - /models/operations/readapp.go
+  - /models/operations/readappcurrentstateversion.go
   - /models/operations/readappmanifest.go
   - /models/operations/readappruns.go
   - /models/operations/readappvariables.go
   - /models/operations/readappversions.go
+  - /models/operations/readcurrentappversion.go
   - /models/operations/readcurrentrun.go
   - /models/operations/readcurrentrunlogs.go
   - /models/operations/readrun.go
@@ -105,6 +107,7 @@ generatedFiles:
   - docs/models/components/payments.md
   - docs/models/components/pool.md
   - docs/models/components/readlogsresponse.md
+  - docs/models/components/readstateresponse.md
   - docs/models/components/readvariablesresponse.md
   - docs/models/components/readvariablesresponsedata.md
   - docs/models/components/reconciliation.md
@@ -113,6 +116,7 @@ generatedFiles:
   - docs/models/components/run.md
   - docs/models/components/runresponse.md
   - docs/models/components/schema.md
+  - docs/models/components/state.md
   - docs/models/components/status.md
   - docs/models/components/updateapprequest.md
   - docs/models/components/variable.md
@@ -134,13 +138,11 @@ generatedFiles:
   - docs/models/operations/downloadappversionrequest.md
   - docs/models/operations/downloadappversionresponse.md
   - docs/models/operations/from.md
-  - docs/models/operations/getappcurrentstateversionrequest.md
-  - docs/models/operations/getappcurrentstateversionresponse.md
-  - docs/models/operations/getcurrentappversionrequest.md
-  - docs/models/operations/getcurrentappversionresponse.md
   - docs/models/operations/listappsrequest.md
   - docs/models/operations/listappsresponse.md
   - docs/models/operations/option.md
+  - docs/models/operations/readappcurrentstateversionrequest.md
+  - docs/models/operations/readappcurrentstateversionresponse.md
   - docs/models/operations/readappmanifestrequest.md
   - docs/models/operations/readappmanifestresponse.md
   - docs/models/operations/readapprequest.md
@@ -151,6 +153,8 @@ generatedFiles:
   - docs/models/operations/readappvariablesresponse.md
   - docs/models/operations/readappversionsrequest.md
   - docs/models/operations/readappversionsresponse.md
+  - docs/models/operations/readcurrentappversionrequest.md
+  - docs/models/operations/readcurrentappversionresponse.md
   - docs/models/operations/readcurrentrunlogsrequest.md
   - docs/models/operations/readcurrentrunlogsresponse.md
   - docs/models/operations/readcurrentrunrequest.md
@@ -163,6 +167,7 @@ generatedFiles:
   - docs/models/operations/updateappresponse.md
   - docs/sdks/deployserver/README.md
   - go.mod
+  - internal/config/sdkconfiguration.go
   - internal/hooks/hooks.go
   - internal/utils/contenttype.go
   - internal/utils/env.go
@@ -177,11 +182,12 @@ generatedFiles:
   - internal/utils/utils.go
   - models/apierrors/apierror.go
   - models/operations/options.go
+  - optionalnullable/optionalnullable.go
+  - optionalnullable/optionalnullable_test.go
   - retry/config.go
   - types/bigint.go
   - types/date.go
   - types/datetime.go
-  - types/decimal.go
   - types/pointers.go
 examples:
   listApps:
@@ -231,14 +237,14 @@ examples:
       responses:
         default:
           application/json: {"errorCode": "<value>"}
-  getAppCurrentStateVersion:
-    speakeasy-default-get-app-current-state-version:
+  readAppCurrentStateVersion:
+    speakeasy-default-read-app-current-state-version:
       parameters:
         path:
           id: "<id>"
       responses:
         "200":
-          application/json: "<value>"
+          application/json: {"data": {"stack": {"key": "<value>", "key1": "<value>", "key2": "<value>"}}}
         default:
           application/json: {"errorCode": "<value>"}
   readAppVariables:
@@ -246,7 +252,6 @@ examples:
       parameters:
         path:
           id: "<id>"
-        query: {}
       responses:
         "200":
           application/json: {"data": {}}
@@ -258,10 +263,10 @@ examples:
         path:
           id: "<id>"
       requestBody:
-        application/json: {"variable": {"key": "<key>", "value": "<value>", "sensitive": true, "category": "env"}}
+        application/json: {"variable": {"key": "<key>", "value": "<value>", "sensitive": false, "category": "terraform"}}
       responses:
         "201":
-          application/json: {"data": {"key": "<key>", "value": "<value>", "sensitive": false, "category": "env", "id": "<id>"}}
+          application/json: {"data": {"key": "<key>", "value": "<value>", "sensitive": false, "category": "terraform", "id": "<id>"}}
         default:
           application/json: {"errorCode": "<value>"}
   deleteAppVariable:
@@ -278,10 +283,9 @@ examples:
       parameters:
         path:
           id: "<id>"
-        query: {}
       responses:
         "200":
-          application/json: {"data": {"items": []}}
+          application/json: {"data": {"items": [{"id": "<id>", "autoApply": true, "createdAt": "2025-03-02T05:46:18.656Z", "isDestroy": false, "hasChanges": true, "message": "<value>", "planOnly": true, "refresh": false, "refreshOnly": true, "savePlan": true, "status": "<value>"}]}}
         default:
           application/json: {"errorCode": "<value>"}
   readAppVersions:
@@ -289,10 +293,9 @@ examples:
       parameters:
         path:
           id: "<id>"
-        query: {}
       responses:
         "200":
-          application/json: {"data": {"items": [{"id": "<id>", "autoQueueRuns": true, "error": "<value>", "errorMessage": "<value>", "status": ""}, {"id": "<id>", "autoQueueRuns": false, "error": "<value>", "errorMessage": "<value>", "status": "fetching"}]}}
+          application/json: {"data": {"items": []}}
         default:
           application/json: {"errorCode": "<value>"}
   readAppManifest:
@@ -300,7 +303,6 @@ examples:
       parameters:
         path:
           id: "<id>"
-        query: {}
       responses:
         "200":
           application/octet-stream: "x-file: example.file"
@@ -315,7 +317,7 @@ examples:
         application/yaml: "x-file: example.file"
       responses:
         "202":
-          application/json: {"data": {"id": "<id>", "autoApply": false, "createdAt": "2024-10-20T17:30:57.507Z", "isDestroy": true, "hasChanges": true, "message": "<value>", "planOnly": false, "refresh": false, "refreshOnly": false, "savePlan": true, "status": "<value>"}}
+          application/json: {"data": {"id": "<id>", "autoApply": true, "createdAt": "2025-06-20T11:04:58.624Z", "isDestroy": false, "hasChanges": false, "message": "<value>", "planOnly": true, "refresh": true, "refreshOnly": true, "savePlan": false, "status": "<value>"}}
         default:
           application/json: {"errorCode": "<value>"}
     speakeasy-default-deploy-app-configuration:
@@ -326,7 +328,7 @@ examples:
         application/json: {}
       responses:
         "202":
-          application/json: {"data": {"id": "<id>", "autoApply": true, "createdAt": "2025-11-25T16:47:13.814Z", "isDestroy": false, "hasChanges": false, "message": "<value>", "planOnly": false, "refresh": false, "refreshOnly": true, "savePlan": true, "status": "<value>"}}
+          application/json: {"data": {"id": "<id>", "autoApply": true, "createdAt": "2025-06-20T11:04:58.624Z", "isDestroy": false, "hasChanges": false, "message": "<value>", "planOnly": true, "refresh": true, "refreshOnly": true, "savePlan": false, "status": "<value>"}}
         default:
           application/json: {"errorCode": "<value>"}
   readCurrentRun:
@@ -336,7 +338,7 @@ examples:
           id: "<id>"
       responses:
         "200":
-          application/json: {"data": {"id": "<id>", "autoApply": true, "createdAt": "2024-12-13T04:50:02.482Z", "isDestroy": false, "hasChanges": true, "message": "<value>", "planOnly": true, "refresh": false, "refreshOnly": true, "savePlan": false, "status": "<value>"}}
+          application/json: {"data": {"id": "<id>", "autoApply": true, "createdAt": "2025-08-19T01:34:09.674Z", "isDestroy": true, "hasChanges": true, "message": "<value>", "planOnly": false, "refresh": false, "refreshOnly": false, "savePlan": true, "status": "<value>"}}
         default:
           application/json: {"errorCode": "<value>"}
   readVersion:
@@ -346,7 +348,7 @@ examples:
           id: "<id>"
       responses:
         "200":
-          application/json: {"data": {"id": "<id>", "autoQueueRuns": true, "error": "<value>", "errorMessage": "<value>", "status": "fetching"}}
+          application/json: {"data": {"id": "<id>", "autoQueueRuns": false, "error": "<value>", "errorMessage": "<value>", "status": "uploaded"}}
         default:
           application/json: {"errorCode": "<value>"}
   readRun:
@@ -356,7 +358,7 @@ examples:
           id: "<id>"
       responses:
         "200":
-          application/json: {"data": {"id": "<id>", "autoApply": true, "createdAt": "2025-08-15T08:39:20.123Z", "isDestroy": true, "hasChanges": true, "message": "<value>", "planOnly": false, "refresh": true, "refreshOnly": true, "savePlan": false, "status": "<value>"}}
+          application/json: {"data": {"id": "<id>", "autoApply": false, "createdAt": "2024-05-09T05:04:30.620Z", "isDestroy": false, "hasChanges": false, "message": "<value>", "planOnly": false, "refresh": false, "refreshOnly": true, "savePlan": true, "status": "<value>"}}
         default:
           application/json: {"errorCode": "<value>"}
   readCurrentRunLogs:
@@ -369,8 +371,8 @@ examples:
           application/json: {}
         default:
           application/json: {"errorCode": "<value>"}
-  getCurrentAppVersion:
-    speakeasy-default-get-current-app-version:
+  readCurrentAppVersion:
+    speakeasy-default-read-current-app-version:
       parameters:
         path:
           id: "<id>"
@@ -389,5 +391,5 @@ examples:
           application/gzip: "x-file: example.file"
         default:
           application/json: {"errorCode": "<value>"}
-examplesVersion: 1.0.0
+examplesVersion: 1.0.2
 generatedTests: {}

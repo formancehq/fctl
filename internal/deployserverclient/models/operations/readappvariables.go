@@ -12,25 +12,25 @@ type ReadAppVariablesRequest struct {
 	PageSize   *int64 `queryParam:"style=form,explode=true,name=pageSize"`
 }
 
-func (o *ReadAppVariablesRequest) GetID() string {
-	if o == nil {
+func (r *ReadAppVariablesRequest) GetID() string {
+	if r == nil {
 		return ""
 	}
-	return o.ID
+	return r.ID
 }
 
-func (o *ReadAppVariablesRequest) GetPageNumber() *int64 {
-	if o == nil {
+func (r *ReadAppVariablesRequest) GetPageNumber() *int64 {
+	if r == nil {
 		return nil
 	}
-	return o.PageNumber
+	return r.PageNumber
 }
 
-func (o *ReadAppVariablesRequest) GetPageSize() *int64 {
-	if o == nil {
+func (r *ReadAppVariablesRequest) GetPageSize() *int64 {
+	if r == nil {
 		return nil
 	}
-	return o.PageSize
+	return r.PageSize
 }
 
 type ReadAppVariablesResponse struct {
@@ -41,23 +41,23 @@ type ReadAppVariablesResponse struct {
 	Error *components.Error
 }
 
-func (o *ReadAppVariablesResponse) GetHTTPMeta() components.HTTPMetadata {
-	if o == nil {
+func (r *ReadAppVariablesResponse) GetHTTPMeta() components.HTTPMetadata {
+	if r == nil {
 		return components.HTTPMetadata{}
 	}
-	return o.HTTPMeta
+	return r.HTTPMeta
 }
 
-func (o *ReadAppVariablesResponse) GetReadVariablesResponse() *components.ReadVariablesResponse {
-	if o == nil {
+func (r *ReadAppVariablesResponse) GetReadVariablesResponse() *components.ReadVariablesResponse {
+	if r == nil {
 		return nil
 	}
-	return o.ReadVariablesResponse
+	return r.ReadVariablesResponse
 }
 
-func (o *ReadAppVariablesResponse) GetError() *components.Error {
-	if o == nil {
+func (r *ReadAppVariablesResponse) GetError() *components.Error {
+	if r == nil {
 		return nil
 	}
-	return o.Error
+	return r.Error
 }

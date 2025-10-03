@@ -6,9 +6,9 @@ type Pool struct {
 	AccountIds []string `json:"accountIds,omitempty"`
 }
 
-func (o *Pool) GetAccountIds() []string {
-	if o == nil {
+func (p *Pool) GetAccountIds() []string {
+	if p == nil {
 		return nil
 	}
-	return o.AccountIds
+	return p.AccountIds
 }

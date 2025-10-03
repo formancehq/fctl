@@ -90,7 +90,7 @@ func main() {
 * [UpdateApp](docs/sdks/deployserver/README.md#updateapp) - Update an app
 * [ReadApp](docs/sdks/deployserver/README.md#readapp) - read app details
 * [DeleteApp](docs/sdks/deployserver/README.md#deleteapp) - Delete an app
-* [GetAppCurrentStateVersion](docs/sdks/deployserver/README.md#getappcurrentstateversion) - Get the current state version of an app
+* [ReadAppCurrentStateVersion](docs/sdks/deployserver/README.md#readappcurrentstateversion) - Get the current state version of an app
 * [ReadAppVariables](docs/sdks/deployserver/README.md#readappvariables) - Get all variables of an app
 * [CreateAppVariable](docs/sdks/deployserver/README.md#createappvariable) - Create variable for an app
 * [DeleteAppVariable](docs/sdks/deployserver/README.md#deleteappvariable) - Delete a variable from an app
@@ -103,7 +103,7 @@ func main() {
 * [ReadVersion](docs/sdks/deployserver/README.md#readversion) - Get a specific version
 * [ReadRun](docs/sdks/deployserver/README.md#readrun) - Get the run of a version
 * [ReadCurrentRunLogs](docs/sdks/deployserver/README.md#readcurrentrunlogs) - Get logs of the current run of an app
-* [GetCurrentAppVersion](docs/sdks/deployserver/README.md#getcurrentappversion) - Get the current version of an app
+* [ReadCurrentAppVersion](docs/sdks/deployserver/README.md#readcurrentappversion) - Get the current version of an app
 * [DownloadAppVersion](docs/sdks/deployserver/README.md#downloadappversion) - Download a specific version of an app
 
 </details>
@@ -295,7 +295,7 @@ func main() {
 	ctx := context.Background()
 
 	s := deployserverclient.New(
-		deployserverclient.WithServerURL("https://deploy-server.staging.formance.cloud"),
+		deployserverclient.WithServerURL("http://localhost:8080"),
 	)
 
 	res, err := s.ListApps(ctx, "<id>", nil, nil)
@@ -327,12 +327,13 @@ The built-in `net/http` client satisfies this interface and a default client bas
 import (
 	"net/http"
 	"time"
-	"github.com/myorg/your-go-sdk"
+
+	"github.com/formancehq/fctl/internal/deployserverclient"
 )
 
 var (
 	httpClient = &http.Client{Timeout: 30 * time.Second}
-	sdkClient  = sdk.New(sdk.WithClient(httpClient))
+	sdkClient  = deployserverclient.New(deployserverclient.WithClient(httpClient))
 )
 ```
 

@@ -16,55 +16,55 @@ type ListRunsResponseData struct {
 	Items      []Run  `json:"items"`
 }
 
-func (o *ListRunsResponseData) GetCurrentPage() *int64 {
-	if o == nil {
+func (l *ListRunsResponseData) GetCurrentPage() *int64 {
+	if l == nil {
 		return nil
 	}
-	return o.CurrentPage
+	return l.CurrentPage
 }
 
-func (o *ListRunsResponseData) GetPreviousPage() *int64 {
-	if o == nil {
+func (l *ListRunsResponseData) GetPreviousPage() *int64 {
+	if l == nil {
 		return nil
 	}
-	return o.PreviousPage
+	return l.PreviousPage
 }
 
-func (o *ListRunsResponseData) GetNextPage() *int64 {
-	if o == nil {
+func (l *ListRunsResponseData) GetNextPage() *int64 {
+	if l == nil {
 		return nil
 	}
-	return o.NextPage
+	return l.NextPage
 }
 
-func (o *ListRunsResponseData) GetTotalPages() *int64 {
-	if o == nil {
+func (l *ListRunsResponseData) GetTotalPages() *int64 {
+	if l == nil {
 		return nil
 	}
-	return o.TotalPages
+	return l.TotalPages
 }
 
-func (o *ListRunsResponseData) GetTotalCount() *int64 {
-	if o == nil {
+func (l *ListRunsResponseData) GetTotalCount() *int64 {
+	if l == nil {
 		return nil
 	}
-	return o.TotalCount
+	return l.TotalCount
 }
 
-func (o *ListRunsResponseData) GetItems() []Run {
-	if o == nil {
+func (l *ListRunsResponseData) GetItems() []Run {
+	if l == nil {
 		return []Run{}
 	}
-	return o.Items
+	return l.Items
 }
 
 type ListRunsResponse struct {
 	Data ListRunsResponseData `json:"data"`
 }
 
-func (o *ListRunsResponse) GetData() ListRunsResponseData {
-	if o == nil {
+func (l *ListRunsResponse) GetData() ListRunsResponseData {
+	if l == nil {
 		return ListRunsResponseData{}
 	}
-	return o.Data
+	return l.Data
 }

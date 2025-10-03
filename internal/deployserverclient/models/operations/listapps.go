@@ -12,25 +12,25 @@ type ListAppsRequest struct {
 	PageSize       *int64 `queryParam:"style=form,explode=true,name=pageSize"`
 }
 
-func (o *ListAppsRequest) GetOrganizationID() string {
-	if o == nil {
+func (l *ListAppsRequest) GetOrganizationID() string {
+	if l == nil {
 		return ""
 	}
-	return o.OrganizationID
+	return l.OrganizationID
 }
 
-func (o *ListAppsRequest) GetPageNumber() *int64 {
-	if o == nil {
+func (l *ListAppsRequest) GetPageNumber() *int64 {
+	if l == nil {
 		return nil
 	}
-	return o.PageNumber
+	return l.PageNumber
 }
 
-func (o *ListAppsRequest) GetPageSize() *int64 {
-	if o == nil {
+func (l *ListAppsRequest) GetPageSize() *int64 {
+	if l == nil {
 		return nil
 	}
-	return o.PageSize
+	return l.PageSize
 }
 
 type ListAppsResponse struct {
@@ -41,23 +41,23 @@ type ListAppsResponse struct {
 	Error *components.Error
 }
 
-func (o *ListAppsResponse) GetHTTPMeta() components.HTTPMetadata {
-	if o == nil {
+func (l *ListAppsResponse) GetHTTPMeta() components.HTTPMetadata {
+	if l == nil {
 		return components.HTTPMetadata{}
 	}
-	return o.HTTPMeta
+	return l.HTTPMeta
 }
 
-func (o *ListAppsResponse) GetListAppsResponse() *components.ListAppsResponse {
-	if o == nil {
+func (l *ListAppsResponse) GetListAppsResponse() *components.ListAppsResponse {
+	if l == nil {
 		return nil
 	}
-	return o.ListAppsResponse
+	return l.ListAppsResponse
 }
 
-func (o *ListAppsResponse) GetError() *components.Error {
-	if o == nil {
+func (l *ListAppsResponse) GetError() *components.Error {
+	if l == nil {
 		return nil
 	}
-	return o.Error
+	return l.Error
 }

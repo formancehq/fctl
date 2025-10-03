@@ -11,18 +11,18 @@ type DeleteAppVariableRequest struct {
 	VariableID string `pathParam:"style=simple,explode=false,name=variableId"`
 }
 
-func (o *DeleteAppVariableRequest) GetID() string {
-	if o == nil {
+func (d *DeleteAppVariableRequest) GetID() string {
+	if d == nil {
 		return ""
 	}
-	return o.ID
+	return d.ID
 }
 
-func (o *DeleteAppVariableRequest) GetVariableID() string {
-	if o == nil {
+func (d *DeleteAppVariableRequest) GetVariableID() string {
+	if d == nil {
 		return ""
 	}
-	return o.VariableID
+	return d.VariableID
 }
 
 type DeleteAppVariableResponse struct {
@@ -31,16 +31,16 @@ type DeleteAppVariableResponse struct {
 	Error *components.Error
 }
 
-func (o *DeleteAppVariableResponse) GetHTTPMeta() components.HTTPMetadata {
-	if o == nil {
+func (d *DeleteAppVariableResponse) GetHTTPMeta() components.HTTPMetadata {
+	if d == nil {
 		return components.HTTPMetadata{}
 	}
-	return o.HTTPMeta
+	return d.HTTPMeta
 }
 
-func (o *DeleteAppVariableResponse) GetError() *components.Error {
-	if o == nil {
+func (d *DeleteAppVariableResponse) GetError() *components.Error {
+	if d == nil {
 		return nil
 	}
-	return o.Error
+	return d.Error
 }

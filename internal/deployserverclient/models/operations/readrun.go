@@ -10,11 +10,11 @@ type ReadRunRequest struct {
 	ID string `pathParam:"style=simple,explode=false,name=id"`
 }
 
-func (o *ReadRunRequest) GetID() string {
-	if o == nil {
+func (r *ReadRunRequest) GetID() string {
+	if r == nil {
 		return ""
 	}
-	return o.ID
+	return r.ID
 }
 
 type ReadRunResponse struct {
@@ -25,23 +25,23 @@ type ReadRunResponse struct {
 	Error *components.Error
 }
 
-func (o *ReadRunResponse) GetHTTPMeta() components.HTTPMetadata {
-	if o == nil {
+func (r *ReadRunResponse) GetHTTPMeta() components.HTTPMetadata {
+	if r == nil {
 		return components.HTTPMetadata{}
 	}
-	return o.HTTPMeta
+	return r.HTTPMeta
 }
 
-func (o *ReadRunResponse) GetRunResponse() *components.RunResponse {
-	if o == nil {
+func (r *ReadRunResponse) GetRunResponse() *components.RunResponse {
+	if r == nil {
 		return nil
 	}
-	return o.RunResponse
+	return r.RunResponse
 }
 
-func (o *ReadRunResponse) GetError() *components.Error {
-	if o == nil {
+func (r *ReadRunResponse) GetError() *components.Error {
+	if r == nil {
 		return nil
 	}
-	return o.Error
+	return r.Error
 }

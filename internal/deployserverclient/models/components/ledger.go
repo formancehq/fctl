@@ -7,18 +7,18 @@ type Schema struct {
 	Name     *string           `json:"name,omitempty"`
 }
 
-func (o *Schema) GetMetadata() map[string]string {
-	if o == nil {
+func (s *Schema) GetMetadata() map[string]string {
+	if s == nil {
 		return nil
 	}
-	return o.Metadata
+	return s.Metadata
 }
 
-func (o *Schema) GetName() *string {
-	if o == nil {
+func (s *Schema) GetName() *string {
+	if s == nil {
 		return nil
 	}
-	return o.Name
+	return s.Name
 }
 
 type Ledger struct {
@@ -26,16 +26,16 @@ type Ledger struct {
 	Schema []Schema `json:"schema,omitempty"`
 }
 
-func (o *Ledger) GetName() *string {
-	if o == nil {
+func (l *Ledger) GetName() *string {
+	if l == nil {
 		return nil
 	}
-	return o.Name
+	return l.Name
 }
 
-func (o *Ledger) GetSchema() []Schema {
-	if o == nil {
+func (l *Ledger) GetSchema() []Schema {
+	if l == nil {
 		return nil
 	}
-	return o.Schema
+	return l.Schema
 }

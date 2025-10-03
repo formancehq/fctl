@@ -10,11 +10,11 @@ type DeleteAppRequest struct {
 	ID string `pathParam:"style=simple,explode=false,name=id"`
 }
 
-func (o *DeleteAppRequest) GetID() string {
-	if o == nil {
+func (d *DeleteAppRequest) GetID() string {
+	if d == nil {
 		return ""
 	}
-	return o.ID
+	return d.ID
 }
 
 type DeleteAppResponse struct {
@@ -23,16 +23,16 @@ type DeleteAppResponse struct {
 	Error *components.Error
 }
 
-func (o *DeleteAppResponse) GetHTTPMeta() components.HTTPMetadata {
-	if o == nil {
+func (d *DeleteAppResponse) GetHTTPMeta() components.HTTPMetadata {
+	if d == nil {
 		return components.HTTPMetadata{}
 	}
-	return o.HTTPMeta
+	return d.HTTPMeta
 }
 
-func (o *DeleteAppResponse) GetError() *components.Error {
-	if o == nil {
+func (d *DeleteAppResponse) GetError() *components.Error {
+	if d == nil {
 		return nil
 	}
-	return o.Error
+	return d.Error
 }

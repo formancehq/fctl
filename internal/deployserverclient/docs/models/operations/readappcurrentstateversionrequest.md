@@ -1,4 +1,4 @@
-# GetCurrentAppVersionRequest
+# ReadAppCurrentStateVersionRequest
 
 
 ## Fields

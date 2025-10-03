@@ -132,7 +132,7 @@ paths:
   /apps/{id}/current-state-version:
     get:
       summary: Get the current state version of an app
-      operationId: getAppCurrentStateVersion
+      operationId: readAppCurrentStateVersion
       parameters:
       - name: id
         in: path
@@ -145,8 +145,7 @@ paths:
           content:
             application/json:
               schema:
-                data:
-                  type: object
+                $ref: '#/components/schemas/ReadStateResponse'
         default:
           description: Error
           content:
@@ -457,7 +456,7 @@ paths:
   /apps/{id}/version:
     get:
       summary: Get the current version of an app
-      operationId: getCurrentAppVersion
+      operationId: readCurrentAppVersion
       parameters:
       - name: id
         in: path
@@ -503,6 +502,22 @@ paths:
                 $ref: '#/components/schemas/Error'
 components:
   schemas:
+    ReadStateResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/State'
+    State:
+      type: object
+      required:
+      - stack
+      properties:
+        stack:
+          type: object
+          description: The stack details from the Terraform state
+          additionalProperties: true
     ReadManifestResponse:
       type: object
       required:

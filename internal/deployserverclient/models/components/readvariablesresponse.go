@@ -16,55 +16,55 @@ type ReadVariablesResponseData struct {
 	TotalCount *int64 `json:"totalCount,omitempty"`
 }
 
-func (o *ReadVariablesResponseData) GetItems() []Variable {
-	if o == nil {
+func (r *ReadVariablesResponseData) GetItems() []Variable {
+	if r == nil {
 		return nil
 	}
-	return o.Items
+	return r.Items
 }
 
-func (o *ReadVariablesResponseData) GetCurrentPage() *int64 {
-	if o == nil {
+func (r *ReadVariablesResponseData) GetCurrentPage() *int64 {
+	if r == nil {
 		return nil
 	}
-	return o.CurrentPage
+	return r.CurrentPage
 }
 
-func (o *ReadVariablesResponseData) GetPreviousPage() *int64 {
-	if o == nil {
+func (r *ReadVariablesResponseData) GetPreviousPage() *int64 {
+	if r == nil {
 		return nil
 	}
-	return o.PreviousPage
+	return r.PreviousPage
 }
 
-func (o *ReadVariablesResponseData) GetNextPage() *int64 {
-	if o == nil {
+func (r *ReadVariablesResponseData) GetNextPage() *int64 {
+	if r == nil {
 		return nil
 	}
-	return o.NextPage
+	return r.NextPage
 }
 
-func (o *ReadVariablesResponseData) GetTotalPages() *int64 {
-	if o == nil {
+func (r *ReadVariablesResponseData) GetTotalPages() *int64 {
+	if r == nil {
 		return nil
 	}
-	return o.TotalPages
+	return r.TotalPages
 }
 
-func (o *ReadVariablesResponseData) GetTotalCount() *int64 {
-	if o == nil {
+func (r *ReadVariablesResponseData) GetTotalCount() *int64 {
+	if r == nil {
 		return nil
 	}
-	return o.TotalCount
+	return r.TotalCount
 }
 
 type ReadVariablesResponse struct {
 	Data ReadVariablesResponseData `json:"data"`
 }
 
-func (o *ReadVariablesResponse) GetData() ReadVariablesResponseData {
-	if o == nil {
+func (r *ReadVariablesResponse) GetData() ReadVariablesResponseData {
+	if r == nil {
 		return ReadVariablesResponseData{}
 	}
-	return o.Data
+	return r.Data
 }

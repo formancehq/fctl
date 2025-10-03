@@ -57,37 +57,37 @@ type ConfigurationVersion struct {
 	Status       Status `json:"status"`
 }
 
-func (o *ConfigurationVersion) GetID() string {
-	if o == nil {
+func (c *ConfigurationVersion) GetID() string {
+	if c == nil {
 		return ""
 	}
-	return o.ID
+	return c.ID
 }
 
-func (o *ConfigurationVersion) GetAutoQueueRuns() bool {
-	if o == nil {
+func (c *ConfigurationVersion) GetAutoQueueRuns() bool {
+	if c == nil {
 		return false
 	}
-	return o.AutoQueueRuns
+	return c.AutoQueueRuns
 }
 
-func (o *ConfigurationVersion) GetError() string {
-	if o == nil {
+func (c *ConfigurationVersion) GetError() string {
+	if c == nil {
 		return ""
 	}
-	return o.Error
+	return c.Error
 }
 
-func (o *ConfigurationVersion) GetErrorMessage() string {
-	if o == nil {
+func (c *ConfigurationVersion) GetErrorMessage() string {
+	if c == nil {
 		return ""
 	}
-	return o.ErrorMessage
+	return c.ErrorMessage
 }
 
-func (o *ConfigurationVersion) GetStatus() Status {
-	if o == nil {
+func (c *ConfigurationVersion) GetStatus() Status {
+	if c == nil {
 		return Status("")
 	}
-	return o.Status
+	return c.Status
 }

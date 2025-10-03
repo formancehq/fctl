@@ -47,37 +47,37 @@ type VariableData struct {
 	Category VariableDataCategory `json:"category"`
 }
 
-func (o *VariableData) GetKey() string {
-	if o == nil {
+func (v *VariableData) GetKey() string {
+	if v == nil {
 		return ""
 	}
-	return o.Key
+	return v.Key
 }
 
-func (o *VariableData) GetValue() string {
-	if o == nil {
+func (v *VariableData) GetValue() string {
+	if v == nil {
 		return ""
 	}
-	return o.Value
+	return v.Value
 }
 
-func (o *VariableData) GetDescription() *string {
-	if o == nil {
+func (v *VariableData) GetDescription() *string {
+	if v == nil {
 		return nil
 	}
-	return o.Description
+	return v.Description
 }
 
-func (o *VariableData) GetSensitive() bool {
-	if o == nil {
+func (v *VariableData) GetSensitive() bool {
+	if v == nil {
 		return false
 	}
-	return o.Sensitive
+	return v.Sensitive
 }
 
-func (o *VariableData) GetCategory() VariableDataCategory {
-	if o == nil {
+func (v *VariableData) GetCategory() VariableDataCategory {
+	if v == nil {
 		return VariableDataCategory("")
 	}
-	return o.Category
+	return v.Category
 }

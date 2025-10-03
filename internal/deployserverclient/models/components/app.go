@@ -11,30 +11,30 @@ type App struct {
 	CurrentRun                  *Run                  `json:"currentRun,omitempty"`
 }
 
-func (o *App) GetID() string {
-	if o == nil {
+func (a *App) GetID() string {
+	if a == nil {
 		return ""
 	}
-	return o.ID
+	return a.ID
 }
 
-func (o *App) GetName() string {
-	if o == nil {
+func (a *App) GetName() string {
+	if a == nil {
 		return ""
 	}
-	return o.Name
+	return a.Name
 }
 
-func (o *App) GetCurrentConfigurationVersion() *ConfigurationVersion {
-	if o == nil {
+func (a *App) GetCurrentConfigurationVersion() *ConfigurationVersion {
+	if a == nil {
 		return nil
 	}
-	return o.CurrentConfigurationVersion
+	return a.CurrentConfigurationVersion
 }
 
-func (o *App) GetCurrentRun() *Run {
-	if o == nil {
+func (a *App) GetCurrentRun() *Run {
+	if a == nil {
 		return nil
 	}
-	return o.CurrentRun
+	return a.CurrentRun
 }

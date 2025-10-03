@@ -6,9 +6,9 @@ type AppResponse struct {
 	Data App `json:"data"`
 }
 
-func (o *AppResponse) GetData() App {
-	if o == nil {
+func (a *AppResponse) GetData() App {
+	if a == nil {
 		return App{}
 	}
-	return o.Data
+	return a.Data
 }

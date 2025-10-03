@@ -10,37 +10,37 @@ type Application struct {
 	Reconciliation *Reconciliation `json:"reconciliation,omitempty"`
 }
 
-func (o *Application) GetEvents() *Webhooks {
-	if o == nil {
+func (a *Application) GetEvents() *Webhooks {
+	if a == nil {
 		return nil
 	}
-	return o.Events
+	return a.Events
 }
 
-func (o *Application) GetInfo() *AppInfo {
-	if o == nil {
+func (a *Application) GetInfo() *AppInfo {
+	if a == nil {
 		return nil
 	}
-	return o.Info
+	return a.Info
 }
 
-func (o *Application) GetLedger() []Ledger {
-	if o == nil {
+func (a *Application) GetLedger() []Ledger {
+	if a == nil {
 		return nil
 	}
-	return o.Ledger
+	return a.Ledger
 }
 
-func (o *Application) GetPayments() *Payments {
-	if o == nil {
+func (a *Application) GetPayments() *Payments {
+	if a == nil {
 		return nil
 	}
-	return o.Payments
+	return a.Payments
 }
 
-func (o *Application) GetReconciliation() *Reconciliation {
-	if o == nil {
+func (a *Application) GetReconciliation() *Reconciliation {
+	if a == nil {
 		return nil
 	}
-	return o.Reconciliation
+	return a.Reconciliation
 }

@@ -7,16 +7,16 @@ type Error struct {
 	ErrorMessage *string `json:"errorMessage,omitempty"`
 }
 
-func (o *Error) GetErrorCode() string {
-	if o == nil {
+func (e *Error) GetErrorCode() string {
+	if e == nil {
 		return ""
 	}
-	return o.ErrorCode
+	return e.ErrorCode
 }
 
-func (o *Error) GetErrorMessage() *string {
-	if o == nil {
+func (e *Error) GetErrorMessage() *string {
+	if e == nil {
 		return nil
 	}
-	return o.ErrorMessage
+	return e.ErrorMessage
 }

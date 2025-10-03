@@ -6,9 +6,9 @@ type CreateVariableRequest struct {
 	Variable VariableData `json:"variable"`
 }
 
-func (o *CreateVariableRequest) GetVariable() VariableData {
-	if o == nil {
+func (c *CreateVariableRequest) GetVariable() VariableData {
+	if c == nil {
 		return VariableData{}
 	}
-	return o.Variable
+	return c.Variable
 }

@@ -6,9 +6,9 @@ type RunResponse struct {
 	Data Run `json:"data"`
 }
 
-func (o *RunResponse) GetData() Run {
-	if o == nil {
+func (r *RunResponse) GetData() Run {
+	if r == nil {
 		return Run{}
 	}
-	return o.Data
+	return r.Data
 }

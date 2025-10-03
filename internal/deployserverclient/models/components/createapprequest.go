@@ -7,9 +7,9 @@ type CreateAppRequest struct {
 	OrganizationID string `json:"organizationId"`
 }
 
-func (o *CreateAppRequest) GetOrganizationID() string {
-	if o == nil {
+func (c *CreateAppRequest) GetOrganizationID() string {
+	if c == nil {
 		return ""
 	}
-	return o.OrganizationID
+	return c.OrganizationID
 }

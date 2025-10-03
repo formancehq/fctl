@@ -10,11 +10,11 @@ type ReadVersionRequest struct {
 	ID string `pathParam:"style=simple,explode=false,name=id"`
 }
 
-func (o *ReadVersionRequest) GetID() string {
-	if o == nil {
+func (r *ReadVersionRequest) GetID() string {
+	if r == nil {
 		return ""
 	}
-	return o.ID
+	return r.ID
 }
 
 type ReadVersionResponse struct {
@@ -25,23 +25,23 @@ type ReadVersionResponse struct {
 	Error *components.Error
 }
 
-func (o *ReadVersionResponse) GetHTTPMeta() components.HTTPMetadata {
-	if o == nil {
+func (r *ReadVersionResponse) GetHTTPMeta() components.HTTPMetadata {
+	if r == nil {
 		return components.HTTPMetadata{}
 	}
-	return o.HTTPMeta
+	return r.HTTPMeta
 }
 
-func (o *ReadVersionResponse) GetAppVersionResponse() *components.AppVersionResponse {
-	if o == nil {
+func (r *ReadVersionResponse) GetAppVersionResponse() *components.AppVersionResponse {
+	if r == nil {
 		return nil
 	}
-	return o.AppVersionResponse
+	return r.AppVersionResponse
 }
 
-func (o *ReadVersionResponse) GetError() *components.Error {
-	if o == nil {
+func (r *ReadVersionResponse) GetError() *components.Error {
+	if r == nil {
 		return nil
 	}
-	return o.Error
+	return r.Error
 }

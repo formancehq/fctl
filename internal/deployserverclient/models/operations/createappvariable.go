@@ -11,18 +11,18 @@ type CreateAppVariableRequest struct {
 	CreateVariableRequest components.CreateVariableRequest `request:"mediaType=application/json"`
 }
 
-func (o *CreateAppVariableRequest) GetID() string {
-	if o == nil {
+func (c *CreateAppVariableRequest) GetID() string {
+	if c == nil {
 		return ""
 	}
-	return o.ID
+	return c.ID
 }
 
-func (o *CreateAppVariableRequest) GetCreateVariableRequest() components.CreateVariableRequest {
-	if o == nil {
+func (c *CreateAppVariableRequest) GetCreateVariableRequest() components.CreateVariableRequest {
+	if c == nil {
 		return components.CreateVariableRequest{}
 	}
-	return o.CreateVariableRequest
+	return c.CreateVariableRequest
 }
 
 type CreateAppVariableResponse struct {
@@ -33,23 +33,23 @@ type CreateAppVariableResponse struct {
 	Error *components.Error
 }
 
-func (o *CreateAppVariableResponse) GetHTTPMeta() components.HTTPMetadata {
-	if o == nil {
+func (c *CreateAppVariableResponse) GetHTTPMeta() components.HTTPMetadata {
+	if c == nil {
 		return components.HTTPMetadata{}
 	}
-	return o.HTTPMeta
+	return c.HTTPMeta
 }
 
-func (o *CreateAppVariableResponse) GetCreateVariableResponse() *components.CreateVariableResponse {
-	if o == nil {
+func (c *CreateAppVariableResponse) GetCreateVariableResponse() *components.CreateVariableResponse {
+	if c == nil {
 		return nil
 	}
-	return o.CreateVariableResponse
+	return c.CreateVariableResponse
 }
 
-func (o *CreateAppVariableResponse) GetError() *components.Error {
-	if o == nil {
+func (c *CreateAppVariableResponse) GetError() *components.Error {
+	if c == nil {
 		return nil
 	}
-	return o.Error
+	return c.Error
 }

@@ -11,18 +11,18 @@ type UpdateAppRequest struct {
 	UpdateAppRequest components.UpdateAppRequest `request:"mediaType=application/json"`
 }
 
-func (o *UpdateAppRequest) GetID() string {
-	if o == nil {
+func (u *UpdateAppRequest) GetID() string {
+	if u == nil {
 		return ""
 	}
-	return o.ID
+	return u.ID
 }
 
-func (o *UpdateAppRequest) GetUpdateAppRequest() components.UpdateAppRequest {
-	if o == nil {
+func (u *UpdateAppRequest) GetUpdateAppRequest() components.UpdateAppRequest {
+	if u == nil {
 		return components.UpdateAppRequest{}
 	}
-	return o.UpdateAppRequest
+	return u.UpdateAppRequest
 }
 
 type UpdateAppResponse struct {
@@ -31,16 +31,16 @@ type UpdateAppResponse struct {
 	Error *components.Error
 }
 
-func (o *UpdateAppResponse) GetHTTPMeta() components.HTTPMetadata {
-	if o == nil {
+func (u *UpdateAppResponse) GetHTTPMeta() components.HTTPMetadata {
+	if u == nil {
 		return components.HTTPMetadata{}
 	}
-	return o.HTTPMeta
+	return u.HTTPMeta
 }
 
-func (o *UpdateAppResponse) GetError() *components.Error {
-	if o == nil {
+func (u *UpdateAppResponse) GetError() *components.Error {
+	if u == nil {
 		return nil
 	}
-	return o.Error
+	return u.Error
 }

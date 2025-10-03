@@ -9,32 +9,32 @@ type Connector struct {
 	Provider      *string           `json:"provider,omitempty"`
 }
 
-func (o *Connector) GetConfiguration() map[string]string {
-	if o == nil {
+func (c *Connector) GetConfiguration() map[string]string {
+	if c == nil {
 		return nil
 	}
-	return o.Configuration
+	return c.Configuration
 }
 
-func (o *Connector) GetCredentials() map[string]string {
-	if o == nil {
+func (c *Connector) GetCredentials() map[string]string {
+	if c == nil {
 		return nil
 	}
-	return o.Credentials
+	return c.Credentials
 }
 
-func (o *Connector) GetName() *string {
-	if o == nil {
+func (c *Connector) GetName() *string {
+	if c == nil {
 		return nil
 	}
-	return o.Name
+	return c.Name
 }
 
-func (o *Connector) GetProvider() *string {
-	if o == nil {
+func (c *Connector) GetProvider() *string {
+	if c == nil {
 		return nil
 	}
-	return o.Provider
+	return c.Provider
 }
 
 type Payments struct {
@@ -42,16 +42,16 @@ type Payments struct {
 	Pools      map[string]Pool `json:"pools,omitempty"`
 }
 
-func (o *Payments) GetConnectors() []Connector {
-	if o == nil {
+func (p *Payments) GetConnectors() []Connector {
+	if p == nil {
 		return nil
 	}
-	return o.Connectors
+	return p.Connectors
 }
 
-func (o *Payments) GetPools() map[string]Pool {
-	if o == nil {
+func (p *Payments) GetPools() map[string]Pool {
+	if p == nil {
 		return nil
 	}
-	return o.Pools
+	return p.Pools
 }

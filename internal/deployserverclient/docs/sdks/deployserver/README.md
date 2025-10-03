@@ -9,7 +9,7 @@
 * [UpdateApp](#updateapp) - Update an app
 * [ReadApp](#readapp) - read app details
 * [DeleteApp](#deleteapp) - Delete an app
-* [GetAppCurrentStateVersion](#getappcurrentstateversion) - Get the current state version of an app
+* [ReadAppCurrentStateVersion](#readappcurrentstateversion) - Get the current state version of an app
 * [ReadAppVariables](#readappvariables) - Get all variables of an app
 * [CreateAppVariable](#createappvariable) - Create variable for an app
 * [DeleteAppVariable](#deleteappvariable) - Delete a variable from an app
@@ -22,7 +22,7 @@
 * [ReadVersion](#readversion) - Get a specific version
 * [ReadRun](#readrun) - Get the run of a version
 * [ReadCurrentRunLogs](#readcurrentrunlogs) - Get logs of the current run of an app
-* [GetCurrentAppVersion](#getcurrentappversion) - Get the current version of an app
+* [ReadCurrentAppVersion](#readcurrentappversion) - Get the current version of an app
 * [DownloadAppVersion](#downloadappversion) - Download a specific version of an app
 
 ## ListApps
@@ -31,6 +31,7 @@ List organization apps
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="listApps" method="get" path="/apps" -->
 ```go
 package main
 
@@ -81,6 +82,7 @@ Create a new app
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="createApp" method="post" path="/apps" -->
 ```go
 package main
 
@@ -132,6 +134,7 @@ Update an app
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="updateApp" method="put" path="/apps/{id}" -->
 ```go
 package main
 
@@ -151,7 +154,7 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    if res != nil {
+    if res.Error != nil {
         // handle response
     }
 }
@@ -182,6 +185,7 @@ read app details
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="readApp" method="get" path="/apps/{id}" -->
 ```go
 package main
 
@@ -230,6 +234,7 @@ Delete an app
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="deleteApp" method="delete" path="/apps/{id}" -->
 ```go
 package main
 
@@ -248,7 +253,7 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    if res != nil {
+    if res.Error != nil {
         // handle response
     }
 }
@@ -272,12 +277,13 @@ func main() {
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
-## GetAppCurrentStateVersion
+## ReadAppCurrentStateVersion
 
 Get the current state version of an app
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="readAppCurrentStateVersion" method="get" path="/apps/{id}/current-state-version" -->
 ```go
 package main
 
@@ -292,11 +298,11 @@ func main() {
 
     s := deployserverclient.New()
 
-    res, err := s.GetAppCurrentStateVersion(ctx, "<id>")
+    res, err := s.ReadAppCurrentStateVersion(ctx, "<id>")
     if err != nil {
         log.Fatal(err)
     }
-    if res.Any != nil {
+    if res.ReadStateResponse != nil {
         // handle response
     }
 }
@@ -312,7 +318,7 @@ func main() {
 
 ### Response
 
-**[*operations.GetAppCurrentStateVersionResponse](../../models/operations/getappcurrentstateversionresponse.md), error**
+**[*operations.ReadAppCurrentStateVersionResponse](../../models/operations/readappcurrentstateversionresponse.md), error**
 
 ### Errors
 
@@ -326,6 +332,7 @@ Get all variables of an app
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="readAppVariables" method="get" path="/apps/{id}/variables" -->
 ```go
 package main
 
@@ -376,6 +383,7 @@ Create variable for an app
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="createAppVariable" method="post" path="/apps/{id}/variables" -->
 ```go
 package main
 
@@ -395,8 +403,8 @@ func main() {
         Variable: components.VariableData{
             Key: "<key>",
             Value: "<value>",
-            Sensitive: true,
-            Category: components.VariableDataCategoryEnv,
+            Sensitive: false,
+            Category: components.VariableDataCategoryTerraform,
         },
     })
     if err != nil {
@@ -433,6 +441,7 @@ Delete a variable from an app
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="deleteAppVariable" method="delete" path="/apps/{id}/variables/{variableId}" -->
 ```go
 package main
 
@@ -451,7 +460,7 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    if res != nil {
+    if res.Error != nil {
         // handle response
     }
 }
@@ -482,6 +491,7 @@ Get runs of an app
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="readAppRuns" method="get" path="/apps/{id}/runs" -->
 ```go
 package main
 
@@ -532,6 +542,7 @@ Get versions of an app
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="readAppVersions" method="get" path="/apps/{id}/versions" -->
 ```go
 package main
 
@@ -582,6 +593,7 @@ Get the last valid deployed manifest of an app
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="readAppManifest" method="get" path="/apps/{id}/manifest" -->
 ```go
 package main
 
@@ -631,6 +643,7 @@ Deploy a new configuration for an app
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="deployAppConfiguration_raw" method="post" path="/apps/{id}/deploy" -->
 ```go
 package main
 
@@ -646,13 +659,12 @@ func main() {
 
     s := deployserverclient.New()
 
-    application, fileErr := os.Open("example.file")
+    example, fileErr := os.Open("example.file")
     if fileErr != nil {
         panic(fileErr)
     }
 
-
-    res, err := s.DeployAppConfigurationRaw(ctx, "<id>", application)
+    res, err := s.DeployAppConfigurationRaw(ctx, "<id>", example)
     if err != nil {
         log.Fatal(err)
     }
@@ -687,6 +699,7 @@ Deploy a new configuration for an app
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="deployAppConfiguration" method="post" path="/apps/{id}/deploy" -->
 ```go
 package main
 
@@ -737,6 +750,7 @@ Get the current run of an app
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="readCurrentRun" method="get" path="/apps/{id}/run" -->
 ```go
 package main
 
@@ -785,6 +799,7 @@ Get a specific version
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="readVersion" method="get" path="/versions/{id}" -->
 ```go
 package main
 
@@ -833,6 +848,7 @@ Get the run of a version
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="readRun" method="get" path="/runs/{id}" -->
 ```go
 package main
 
@@ -881,6 +897,7 @@ Get logs of the current run of an app
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="readCurrentRunLogs" method="get" path="/apps/{id}/run/logs" -->
 ```go
 package main
 
@@ -923,12 +940,13 @@ func main() {
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
-## GetCurrentAppVersion
+## ReadCurrentAppVersion
 
 Get the current version of an app
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="readCurrentAppVersion" method="get" path="/apps/{id}/version" -->
 ```go
 package main
 
@@ -943,7 +961,7 @@ func main() {
 
     s := deployserverclient.New()
 
-    res, err := s.GetCurrentAppVersion(ctx, "<id>")
+    res, err := s.ReadCurrentAppVersion(ctx, "<id>")
     if err != nil {
         log.Fatal(err)
     }
@@ -963,7 +981,7 @@ func main() {
 
 ### Response
 
-**[*operations.GetCurrentAppVersionResponse](../../models/operations/getcurrentappversionresponse.md), error**
+**[*operations.ReadCurrentAppVersionResponse](../../models/operations/readcurrentappversionresponse.md), error**
 
 ### Errors
 
@@ -977,6 +995,7 @@ Download a specific version of an app
 
 ### Example Usage
 
+<!-- UsageSnippet language="go" operationID="downloadAppVersion" method="get" path="/apps/{id}/version/download" -->
 ```go
 package main
 

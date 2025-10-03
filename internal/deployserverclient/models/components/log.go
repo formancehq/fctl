@@ -16,25 +16,25 @@ type Diagnostic struct {
 	Summary string `json:"summary"`
 }
 
-func (o *Diagnostic) GetSeverity() string {
-	if o == nil {
+func (d *Diagnostic) GetSeverity() string {
+	if d == nil {
 		return ""
 	}
-	return o.Severity
+	return d.Severity
 }
 
-func (o *Diagnostic) GetDetail() string {
-	if o == nil {
+func (d *Diagnostic) GetDetail() string {
+	if d == nil {
 		return ""
 	}
-	return o.Detail
+	return d.Detail
 }
 
-func (o *Diagnostic) GetSummary() string {
-	if o == nil {
+func (d *Diagnostic) GetSummary() string {
+	if d == nil {
 		return ""
 	}
-	return o.Summary
+	return d.Summary
 }
 
 type Log struct {
@@ -53,36 +53,36 @@ func (l Log) MarshalJSON() ([]byte, error) {
 }
 
 func (l *Log) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &l, "", false, false); err != nil {
+	if err := utils.UnmarshalJSON(data, &l, "", false, []string{"message", "timestamp", "module"}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (o *Log) GetMessage() string {
-	if o == nil {
+func (l *Log) GetMessage() string {
+	if l == nil {
 		return ""
 	}
-	return o.Message
+	return l.Message
 }
 
-func (o *Log) GetTimestamp() time.Time {
-	if o == nil {
+func (l *Log) GetTimestamp() time.Time {
+	if l == nil {
 		return time.Time{}
 	}
-	return o.Timestamp
+	return l.Timestamp
 }
 
-func (o *Log) GetModule() string {
-	if o == nil {
+func (l *Log) GetModule() string {
+	if l == nil {
 		return ""
 	}
-	return o.Module
+	return l.Module
 }
 
-func (o *Log) GetDiagnostic() *Diagnostic {
-	if o == nil {
+func (l *Log) GetDiagnostic() *Diagnostic {
+	if l == nil {
 		return nil
 	}
-	return o.Diagnostic
+	return l.Diagnostic
 }

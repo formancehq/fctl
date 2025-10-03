@@ -6,9 +6,9 @@ type AppVersionResponse struct {
 	Data ConfigurationVersion `json:"data"`
 }
 
-func (o *AppVersionResponse) GetData() ConfigurationVersion {
-	if o == nil {
+func (a *AppVersionResponse) GetData() ConfigurationVersion {
+	if a == nil {
 		return ConfigurationVersion{}
 	}
-	return o.Data
+	return a.Data
 }

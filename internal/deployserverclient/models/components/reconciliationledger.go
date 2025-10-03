@@ -7,16 +7,16 @@ type ReconciliationLedger struct {
 	Query map[string]any `json:"query,omitempty"`
 }
 
-func (o *ReconciliationLedger) GetName() *string {
-	if o == nil {
+func (r *ReconciliationLedger) GetName() *string {
+	if r == nil {
 		return nil
 	}
-	return o.Name
+	return r.Name
 }
 
-func (o *ReconciliationLedger) GetQuery() map[string]any {
-	if o == nil {
+func (r *ReconciliationLedger) GetQuery() map[string]any {
+	if r == nil {
 		return nil
 	}
-	return o.Query
+	return r.Query
 }

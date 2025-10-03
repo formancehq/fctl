@@ -38,92 +38,92 @@ func (r Run) MarshalJSON() ([]byte, error) {
 }
 
 func (r *Run) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &r, "", false, false); err != nil {
+	if err := utils.UnmarshalJSON(data, &r, "", false, []string{"id", "autoApply", "createdAt", "isDestroy", "hasChanges", "message", "planOnly", "refresh", "refreshOnly", "savePlan", "status"}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (o *Run) GetID() string {
-	if o == nil {
+func (r *Run) GetID() string {
+	if r == nil {
 		return ""
 	}
-	return o.ID
+	return r.ID
 }
 
-func (o *Run) GetAutoApply() bool {
-	if o == nil {
+func (r *Run) GetAutoApply() bool {
+	if r == nil {
 		return false
 	}
-	return o.AutoApply
+	return r.AutoApply
 }
 
-func (o *Run) GetCreatedAt() time.Time {
-	if o == nil {
+func (r *Run) GetCreatedAt() time.Time {
+	if r == nil {
 		return time.Time{}
 	}
-	return o.CreatedAt
+	return r.CreatedAt
 }
 
-func (o *Run) GetIsDestroy() bool {
-	if o == nil {
+func (r *Run) GetIsDestroy() bool {
+	if r == nil {
 		return false
 	}
-	return o.IsDestroy
+	return r.IsDestroy
 }
 
-func (o *Run) GetHasChanges() bool {
-	if o == nil {
+func (r *Run) GetHasChanges() bool {
+	if r == nil {
 		return false
 	}
-	return o.HasChanges
+	return r.HasChanges
 }
 
-func (o *Run) GetMessage() string {
-	if o == nil {
+func (r *Run) GetMessage() string {
+	if r == nil {
 		return ""
 	}
-	return o.Message
+	return r.Message
 }
 
-func (o *Run) GetPlanOnly() bool {
-	if o == nil {
+func (r *Run) GetPlanOnly() bool {
+	if r == nil {
 		return false
 	}
-	return o.PlanOnly
+	return r.PlanOnly
 }
 
-func (o *Run) GetRefresh() bool {
-	if o == nil {
+func (r *Run) GetRefresh() bool {
+	if r == nil {
 		return false
 	}
-	return o.Refresh
+	return r.Refresh
 }
 
-func (o *Run) GetRefreshOnly() bool {
-	if o == nil {
+func (r *Run) GetRefreshOnly() bool {
+	if r == nil {
 		return false
 	}
-	return o.RefreshOnly
+	return r.RefreshOnly
 }
 
-func (o *Run) GetSavePlan() bool {
-	if o == nil {
+func (r *Run) GetSavePlan() bool {
+	if r == nil {
 		return false
 	}
-	return o.SavePlan
+	return r.SavePlan
 }
 
-func (o *Run) GetStatus() string {
-	if o == nil {
+func (r *Run) GetStatus() string {
+	if r == nil {
 		return ""
 	}
-	return o.Status
+	return r.Status
 }
 
-func (o *Run) GetConfigurationVersion() *ConfigurationVersion {
-	if o == nil {
+func (r *Run) GetConfigurationVersion() *ConfigurationVersion {
+	if r == nil {
 		return nil
 	}
-	return o.ConfigurationVersion
+	return r.ConfigurationVersion
 }

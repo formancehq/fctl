@@ -2,13 +2,13 @@
 
 package components
 
-type ReadLogsResponse struct {
-	Data []Log `json:"data,omitempty"`
+type ReadStateResponse struct {
+	Data State `json:"data"`
 }
 
-func (r *ReadLogsResponse) GetData() []Log {
+func (r *ReadStateResponse) GetData() State {
 	if r == nil {
-		return nil
+		return State{}
 	}
 	return r.Data
 }

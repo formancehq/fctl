@@ -11,11 +11,11 @@ type DownloadAppVersionRequest struct {
 	ID string `pathParam:"style=simple,explode=false,name=id"`
 }
 
-func (o *DownloadAppVersionRequest) GetID() string {
-	if o == nil {
+func (d *DownloadAppVersionRequest) GetID() string {
+	if d == nil {
 		return ""
 	}
-	return o.ID
+	return d.ID
 }
 
 type DownloadAppVersionResponse struct {
@@ -27,23 +27,23 @@ type DownloadAppVersionResponse struct {
 	Error *components.Error
 }
 
-func (o *DownloadAppVersionResponse) GetHTTPMeta() components.HTTPMetadata {
-	if o == nil {
+func (d *DownloadAppVersionResponse) GetHTTPMeta() components.HTTPMetadata {
+	if d == nil {
 		return components.HTTPMetadata{}
 	}
-	return o.HTTPMeta
+	return d.HTTPMeta
 }
 
-func (o *DownloadAppVersionResponse) GetResponseStream() io.ReadCloser {
-	if o == nil {
+func (d *DownloadAppVersionResponse) GetResponseStream() io.ReadCloser {
+	if d == nil {
 		return nil
 	}
-	return o.ResponseStream
+	return d.ResponseStream
 }
 
-func (o *DownloadAppVersionResponse) GetError() *components.Error {
-	if o == nil {
+func (d *DownloadAppVersionResponse) GetError() *components.Error {
+	if d == nil {
 		return nil
 	}
-	return o.Error
+	return d.Error
 }

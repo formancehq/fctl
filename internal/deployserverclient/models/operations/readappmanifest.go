@@ -37,18 +37,18 @@ type ReadAppManifestRequest struct {
 	From *From  `queryParam:"style=form,explode=true,name=from"`
 }
 
-func (o *ReadAppManifestRequest) GetID() string {
-	if o == nil {
+func (r *ReadAppManifestRequest) GetID() string {
+	if r == nil {
 		return ""
 	}
-	return o.ID
+	return r.ID
 }
 
-func (o *ReadAppManifestRequest) GetFrom() *From {
-	if o == nil {
+func (r *ReadAppManifestRequest) GetFrom() *From {
+	if r == nil {
 		return nil
 	}
-	return o.From
+	return r.From
 }
 
 type ReadAppManifestResponse struct {
@@ -60,23 +60,23 @@ type ReadAppManifestResponse struct {
 	Error *components.Error
 }
 
-func (o *ReadAppManifestResponse) GetHTTPMeta() components.HTTPMetadata {
-	if o == nil {
+func (r *ReadAppManifestResponse) GetHTTPMeta() components.HTTPMetadata {
+	if r == nil {
 		return components.HTTPMetadata{}
 	}
-	return o.HTTPMeta
+	return r.HTTPMeta
 }
 
-func (o *ReadAppManifestResponse) GetResponseStream() io.ReadCloser {
-	if o == nil {
+func (r *ReadAppManifestResponse) GetResponseStream() io.ReadCloser {
+	if r == nil {
 		return nil
 	}
-	return o.ResponseStream
+	return r.ResponseStream
 }
 
-func (o *ReadAppManifestResponse) GetError() *components.Error {
-	if o == nil {
+func (r *ReadAppManifestResponse) GetError() *components.Error {
+	if r == nil {
 		return nil
 	}
-	return o.Error
+	return r.Error
 }

@@ -6,9 +6,9 @@ type CreateVariableResponse struct {
 	Data Variable `json:"data"`
 }
 
-func (o *CreateVariableResponse) GetData() Variable {
-	if o == nil {
+func (c *CreateVariableResponse) GetData() Variable {
+	if c == nil {
 		return Variable{}
 	}
-	return o.Data
+	return c.Data
 }

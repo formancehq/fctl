@@ -6,9 +6,9 @@ type Reconciliation struct {
 	Policies []ReconciliationPolicy `json:"policies,omitempty"`
 }
 
-func (o *Reconciliation) GetPolicies() []ReconciliationPolicy {
-	if o == nil {
+func (r *Reconciliation) GetPolicies() []ReconciliationPolicy {
+	if r == nil {
 		return nil
 	}
-	return o.Policies
+	return r.Policies
 }

@@ -6,40 +6,40 @@ import (
 	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
 )
 
-type ReadAppRequest struct {
+type ReadCurrentAppVersionRequest struct {
 	ID string `pathParam:"style=simple,explode=false,name=id"`
 }
 
-func (r *ReadAppRequest) GetID() string {
+func (r *ReadCurrentAppVersionRequest) GetID() string {
 	if r == nil {
 		return ""
 	}
 	return r.ID
 }
 
-type ReadAppResponse struct {
+type ReadCurrentAppVersionResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
-	// App details retrieved successfully
-	AppResponse *components.AppResponse
+	// Current app version retrieved successfully
+	AppVersionResponse *components.AppVersionResponse
 	// Error
 	Error *components.Error
 }
 
-func (r *ReadAppResponse) GetHTTPMeta() components.HTTPMetadata {
+func (r *ReadCurrentAppVersionResponse) GetHTTPMeta() components.HTTPMetadata {
 	if r == nil {
 		return components.HTTPMetadata{}
 	}
 	return r.HTTPMeta
 }
 
-func (r *ReadAppResponse) GetAppResponse() *components.AppResponse {
+func (r *ReadCurrentAppVersionResponse) GetAppVersionResponse() *components.AppVersionResponse {
 	if r == nil {
 		return nil
 	}
-	return r.AppResponse
+	return r.AppVersionResponse
 }
 
-func (r *ReadAppResponse) GetError() *components.Error {
+func (r *ReadCurrentAppVersionResponse) GetError() *components.Error {
 	if r == nil {
 		return nil
 	}

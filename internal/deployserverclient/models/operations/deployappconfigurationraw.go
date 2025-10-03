@@ -12,18 +12,18 @@ type DeployAppConfigurationRawRequest struct {
 	Application any `request:"mediaType=application/yaml"`
 }
 
-func (o *DeployAppConfigurationRawRequest) GetID() string {
-	if o == nil {
+func (d *DeployAppConfigurationRawRequest) GetID() string {
+	if d == nil {
 		return ""
 	}
-	return o.ID
+	return d.ID
 }
 
-func (o *DeployAppConfigurationRawRequest) GetApplication() any {
-	if o == nil {
+func (d *DeployAppConfigurationRawRequest) GetApplication() any {
+	if d == nil {
 		return nil
 	}
-	return o.Application
+	return d.Application
 }
 
 type DeployAppConfigurationRawResponse struct {
@@ -34,23 +34,23 @@ type DeployAppConfigurationRawResponse struct {
 	Error *components.Error
 }
 
-func (o *DeployAppConfigurationRawResponse) GetHTTPMeta() components.HTTPMetadata {
-	if o == nil {
+func (d *DeployAppConfigurationRawResponse) GetHTTPMeta() components.HTTPMetadata {
+	if d == nil {
 		return components.HTTPMetadata{}
 	}
-	return o.HTTPMeta
+	return d.HTTPMeta
 }
 
-func (o *DeployAppConfigurationRawResponse) GetRunResponse() *components.RunResponse {
-	if o == nil {
+func (d *DeployAppConfigurationRawResponse) GetRunResponse() *components.RunResponse {
+	if d == nil {
 		return nil
 	}
-	return o.RunResponse
+	return d.RunResponse
 }
 
-func (o *DeployAppConfigurationRawResponse) GetError() *components.Error {
-	if o == nil {
+func (d *DeployAppConfigurationRawResponse) GetError() *components.Error {
+	if d == nil {
 		return nil
 	}
-	return o.Error
+	return d.Error
 }

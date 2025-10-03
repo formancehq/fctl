@@ -14,23 +14,23 @@ type CreateAppResponse struct {
 	Error *components.Error
 }
 
-func (o *CreateAppResponse) GetHTTPMeta() components.HTTPMetadata {
-	if o == nil {
+func (c *CreateAppResponse) GetHTTPMeta() components.HTTPMetadata {
+	if c == nil {
 		return components.HTTPMetadata{}
 	}
-	return o.HTTPMeta
+	return c.HTTPMeta
 }
 
-func (o *CreateAppResponse) GetAppResponse() *components.AppResponse {
-	if o == nil {
+func (c *CreateAppResponse) GetAppResponse() *components.AppResponse {
+	if c == nil {
 		return nil
 	}
-	return o.AppResponse
+	return c.AppResponse
 }
 
-func (o *CreateAppResponse) GetError() *components.Error {
-	if o == nil {
+func (c *CreateAppResponse) GetError() *components.Error {
+	if c == nil {
 		return nil
 	}
-	return o.Error
+	return c.Error
 }

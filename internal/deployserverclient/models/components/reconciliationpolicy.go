@@ -8,23 +8,23 @@ type ReconciliationPolicy struct {
 	Pool   *string               `json:"pool,omitempty"`
 }
 
-func (o *ReconciliationPolicy) GetLedger() *ReconciliationLedger {
-	if o == nil {
+func (r *ReconciliationPolicy) GetLedger() *ReconciliationLedger {
+	if r == nil {
 		return nil
 	}
-	return o.Ledger
+	return r.Ledger
 }
 
-func (o *ReconciliationPolicy) GetName() *string {
-	if o == nil {
+func (r *ReconciliationPolicy) GetName() *string {
+	if r == nil {
 		return nil
 	}
-	return o.Name
+	return r.Name
 }
 
-func (o *ReconciliationPolicy) GetPool() *string {
-	if o == nil {
+func (r *ReconciliationPolicy) GetPool() *string {
+	if r == nil {
 		return nil
 	}
-	return o.Pool
+	return r.Pool
 }

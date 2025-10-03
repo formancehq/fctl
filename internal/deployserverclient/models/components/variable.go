@@ -49,44 +49,44 @@ type Variable struct {
 	ID string `json:"id"`
 }
 
-func (o *Variable) GetKey() string {
-	if o == nil {
+func (v *Variable) GetKey() string {
+	if v == nil {
 		return ""
 	}
-	return o.Key
+	return v.Key
 }
 
-func (o *Variable) GetValue() string {
-	if o == nil {
+func (v *Variable) GetValue() string {
+	if v == nil {
 		return ""
 	}
-	return o.Value
+	return v.Value
 }
 
-func (o *Variable) GetDescription() *string {
-	if o == nil {
+func (v *Variable) GetDescription() *string {
+	if v == nil {
 		return nil
 	}
-	return o.Description
+	return v.Description
 }
 
-func (o *Variable) GetSensitive() bool {
-	if o == nil {
+func (v *Variable) GetSensitive() bool {
+	if v == nil {
 		return false
 	}
-	return o.Sensitive
+	return v.Sensitive
 }
 
-func (o *Variable) GetCategory() VariableCategory {
-	if o == nil {
+func (v *Variable) GetCategory() VariableCategory {
+	if v == nil {
 		return VariableCategory("")
 	}
-	return o.Category
+	return v.Category
 }
 
-func (o *Variable) GetID() string {
-	if o == nil {
+func (v *Variable) GetID() string {
+	if v == nil {
 		return ""
 	}
-	return o.ID
+	return v.ID
 }

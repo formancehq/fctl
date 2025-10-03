@@ -16,55 +16,55 @@ type ListVersionsResponseData struct {
 	Items      []ConfigurationVersion `json:"items"`
 }
 
-func (o *ListVersionsResponseData) GetCurrentPage() *int64 {
-	if o == nil {
+func (l *ListVersionsResponseData) GetCurrentPage() *int64 {
+	if l == nil {
 		return nil
 	}
-	return o.CurrentPage
+	return l.CurrentPage
 }
 
-func (o *ListVersionsResponseData) GetPreviousPage() *int64 {
-	if o == nil {
+func (l *ListVersionsResponseData) GetPreviousPage() *int64 {
+	if l == nil {
 		return nil
 	}
-	return o.PreviousPage
+	return l.PreviousPage
 }
 
-func (o *ListVersionsResponseData) GetNextPage() *int64 {
-	if o == nil {
+func (l *ListVersionsResponseData) GetNextPage() *int64 {
+	if l == nil {
 		return nil
 	}
-	return o.NextPage
+	return l.NextPage
 }
 
-func (o *ListVersionsResponseData) GetTotalPages() *int64 {
-	if o == nil {
+func (l *ListVersionsResponseData) GetTotalPages() *int64 {
+	if l == nil {
 		return nil
 	}
-	return o.TotalPages
+	return l.TotalPages
 }
 
-func (o *ListVersionsResponseData) GetTotalCount() *int64 {
-	if o == nil {
+func (l *ListVersionsResponseData) GetTotalCount() *int64 {
+	if l == nil {
 		return nil
 	}
-	return o.TotalCount
+	return l.TotalCount
 }
 
-func (o *ListVersionsResponseData) GetItems() []ConfigurationVersion {
-	if o == nil {
+func (l *ListVersionsResponseData) GetItems() []ConfigurationVersion {
+	if l == nil {
 		return []ConfigurationVersion{}
 	}
-	return o.Items
+	return l.Items
 }
 
 type ListVersionsResponse struct {
 	Data ListVersionsResponseData `json:"data"`
 }
 
-func (o *ListVersionsResponse) GetData() ListVersionsResponseData {
-	if o == nil {
+func (l *ListVersionsResponse) GetData() ListVersionsResponseData {
+	if l == nil {
 		return ListVersionsResponseData{}
 	}
-	return o.Data
+	return l.Data
 }

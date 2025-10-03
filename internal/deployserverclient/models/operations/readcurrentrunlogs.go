@@ -10,11 +10,11 @@ type ReadCurrentRunLogsRequest struct {
 	ID string `pathParam:"style=simple,explode=false,name=id"`
 }
 
-func (o *ReadCurrentRunLogsRequest) GetID() string {
-	if o == nil {
+func (r *ReadCurrentRunLogsRequest) GetID() string {
+	if r == nil {
 		return ""
 	}
-	return o.ID
+	return r.ID
 }
 
 type ReadCurrentRunLogsResponse struct {
@@ -25,23 +25,23 @@ type ReadCurrentRunLogsResponse struct {
 	Error *components.Error
 }
 
-func (o *ReadCurrentRunLogsResponse) GetHTTPMeta() components.HTTPMetadata {
-	if o == nil {
+func (r *ReadCurrentRunLogsResponse) GetHTTPMeta() components.HTTPMetadata {
+	if r == nil {
 		return components.HTTPMetadata{}
 	}
-	return o.HTTPMeta
+	return r.HTTPMeta
 }
 
-func (o *ReadCurrentRunLogsResponse) GetReadLogsResponse() *components.ReadLogsResponse {
-	if o == nil {
+func (r *ReadCurrentRunLogsResponse) GetReadLogsResponse() *components.ReadLogsResponse {
+	if r == nil {
 		return nil
 	}
-	return o.ReadLogsResponse
+	return r.ReadLogsResponse
 }
 
-func (o *ReadCurrentRunLogsResponse) GetError() *components.Error {
-	if o == nil {
+func (r *ReadCurrentRunLogsResponse) GetError() *components.Error {
+	if r == nil {
 		return nil
 	}
-	return o.Error
+	return r.Error
 }

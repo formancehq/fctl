@@ -11,18 +11,18 @@ type DeployAppConfigurationRequest struct {
 	Application components.Application `request:"mediaType=application/json"`
 }
 
-func (o *DeployAppConfigurationRequest) GetID() string {
-	if o == nil {
+func (d *DeployAppConfigurationRequest) GetID() string {
+	if d == nil {
 		return ""
 	}
-	return o.ID
+	return d.ID
 }
 
-func (o *DeployAppConfigurationRequest) GetApplication() components.Application {
-	if o == nil {
+func (d *DeployAppConfigurationRequest) GetApplication() components.Application {
+	if d == nil {
 		return components.Application{}
 	}
-	return o.Application
+	return d.Application
 }
 
 type DeployAppConfigurationResponse struct {
@@ -33,23 +33,23 @@ type DeployAppConfigurationResponse struct {
 	Error *components.Error
 }
 
-func (o *DeployAppConfigurationResponse) GetHTTPMeta() components.HTTPMetadata {
-	if o == nil {
+func (d *DeployAppConfigurationResponse) GetHTTPMeta() components.HTTPMetadata {
+	if d == nil {
 		return components.HTTPMetadata{}
 	}
-	return o.HTTPMeta
+	return d.HTTPMeta
 }
 
-func (o *DeployAppConfigurationResponse) GetRunResponse() *components.RunResponse {
-	if o == nil {
+func (d *DeployAppConfigurationResponse) GetRunResponse() *components.RunResponse {
+	if d == nil {
 		return nil
 	}
-	return o.RunResponse
+	return d.RunResponse
 }
 
-func (o *DeployAppConfigurationResponse) GetError() *components.Error {
-	if o == nil {
+func (d *DeployAppConfigurationResponse) GetError() *components.Error {
+	if d == nil {
 		return nil
 	}
-	return o.Error
+	return d.Error
 }

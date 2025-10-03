@@ -7,6 +7,7 @@ generation:
   maintainOpenAPIOrder: true
   usageSnippets:
     optionalPropertyRendering: withExample
+    sdkInitStyle: constructor
   useClassNamesForArrayFields: true
   fixes:
     nameResolutionDec2023: true
@@ -14,13 +15,20 @@ generation:
     parameterOrderingFeb2024: true
     requestResponseComponentNamesFeb2024: true
     securityFeb2025: true
+    sharedErrorComponentsApr2025: false
   auth:
     oAuth2ClientCredentialsEnabled: true
     oAuth2PasswordEnabled: true
+    hoistGlobalSecurity: true
+  tests:
+    generateTests: true
+    generateNewTests: false
+    skipResponseBodyAssertions: false
 go:
   version: 0.0.1
   additionalDependencies: {}
   allowUnknownFieldsInWeakUnions: false
+  baseErrorName: DeployServerError
   clientServerStatusCodesAsErrors: true
   defaultErrorName: APIError
   envVarPrefix: DEPLOYSERVER
@@ -36,6 +44,10 @@ go:
   inputModelSuffix: input
   maxMethodParams: 4
   methodArguments: require-security-and-request
+  modulePath: ""
+  nullableOptionalWrapper: false
   outputModelSuffix: output
   packageName: github.com/formancehq/fctl/internal/deployserverclient
+  respectRequiredFields: false
   responseFormat: envelope-http
+  sdkPackageName: ""

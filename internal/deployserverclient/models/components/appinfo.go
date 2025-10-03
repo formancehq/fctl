@@ -8,23 +8,23 @@ type AppInfo struct {
 	Version  *string `json:"version,omitempty"`
 }
 
-func (o *AppInfo) GetName() *string {
-	if o == nil {
+func (a *AppInfo) GetName() *string {
+	if a == nil {
 		return nil
 	}
-	return o.Name
+	return a.Name
 }
 
-func (o *AppInfo) GetRegionID() *string {
-	if o == nil {
+func (a *AppInfo) GetRegionID() *string {
+	if a == nil {
 		return nil
 	}
-	return o.RegionID
+	return a.RegionID
 }
 
-func (o *AppInfo) GetVersion() *string {
-	if o == nil {
+func (a *AppInfo) GetVersion() *string {
+	if a == nil {
 		return nil
 	}
-	return o.Version
+	return a.Version
 }

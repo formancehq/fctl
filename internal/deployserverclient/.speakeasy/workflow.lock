@@ -1,9 +1,9 @@
-speakeasyVersion: 1.517.3
+speakeasyVersion: 1.634.1
 sources:
     Terraform HCP Proxy API:
         sourceNamespace: terraform-hcp-proxy-api
-        sourceRevisionDigest: sha256:4f707f0f5471e89b9bb306c01bac815e4e9ac58dbb696b0a5ae5d9bd4f5d7f48
-        sourceBlobDigest: sha256:7c6b772fabb0ac97408c980f11d6ead6a128a3aa782f6c52b8fb117ff01f3c2c
+        sourceRevisionDigest: sha256:6209e3098cfcfe508c9ca4fd38f6f5cf4f0fad9647c0bb9736ed4d85d87a045d
+        sourceBlobDigest: sha256:d97bec27c4710227aee84433316ed401fc785749c5c2fd1e4d1e6a5961a9bf1f
         tags:
             - latest
             - 0.1.0
@@ -11,10 +11,10 @@ targets:
     deploy-server:
         source: Terraform HCP Proxy API
         sourceNamespace: terraform-hcp-proxy-api
-        sourceRevisionDigest: sha256:4f707f0f5471e89b9bb306c01bac815e4e9ac58dbb696b0a5ae5d9bd4f5d7f48
-        sourceBlobDigest: sha256:7c6b772fabb0ac97408c980f11d6ead6a128a3aa782f6c52b8fb117ff01f3c2c
+        sourceRevisionDigest: sha256:6209e3098cfcfe508c9ca4fd38f6f5cf4f0fad9647c0bb9736ed4d85d87a045d
+        sourceBlobDigest: sha256:d97bec27c4710227aee84433316ed401fc785749c5c2fd1e4d1e6a5961a9bf1f
         codeSamplesNamespace: terraform-hcp-proxy-api-go-code-samples
-        codeSamplesRevisionDigest: sha256:5b5014292a66b081a890273167b864178f8891c37323873ad0e4fc7a694e6e22
+        codeSamplesRevisionDigest: sha256:4e70edea1f7cc7c6019b95ee643994b1faf259560f605329aeab311fd3768b4f
 workflow:
     workflowVersion: 1.0.0
     speakeasyVersion: latest
