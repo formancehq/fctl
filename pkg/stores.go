@@ -2,7 +2,9 @@ package fctl
 
 import (
 	"context"
+	"net/http"
 
+	"github.com/formancehq/fctl/internal/deployserverclient"
 	"github.com/formancehq/fctl/membershipclient"
 	v2 "github.com/formancehq/formance-sdk-go/v3"
 	"github.com/spf13/cobra"
@@ -14,6 +16,7 @@ var (
 	membershipKey      string = "_membership"
 	orgKey                    = "_membership_organization"
 	membershipStackKey        = "_membership_stack"
+	deployServerKey           = struct{}{}
 )
 
 func GetOrganizationStore(cmd *cobra.Command) *OrganizationStore {
@@ -147,10 +150,49 @@ func NewMembershipStore(cmd *cobra.Command) error {
 	if err != nil {
 		return err
 	}
+
 	apiClient, err := NewMembershipClient(cmd, cfg)
 	if err != nil {
 		return err
 	}
 	cmd.SetContext(ContextWithMembershipStore(cmd.Context(), MembershipNode(cfg, apiClient)))
+	return nil
+}
+
+func ContextWithDeployServerStore(ctx context.Context, store *DeployServerStore) context.Context {
+	return context.WithValue(ctx, deployServerKey, store)
+}
+
+func GetDeployServerStore(ctx context.Context) *DeployServerStore {
+	return ctx.Value(deployServerKey).(*DeployServerStore)
+}
+
+type DeployServerStore struct {
+	Cli *deployserverclient.DeployServer
+}
+
+func NewDeployServerStore(cmd *cobra.Command) error {
+	cfg, err := GetConfig(cmd)
+	if err != nil {
+		return err
+	}
+
+	token, err := cfg.GetCurrentProfile().GetToken(cmd.Context(), GetHttpClient(cmd, map[string][]string{}))
+	if err != nil {
+		return err
+	}
+
+	cli := deployserverclient.New(
+		deployserverclient.WithServerIndex(0), //Use staging
+		deployserverclient.WithClient(&http.Client{
+			Transport: NewHTTPTransport(cmd, map[string][]string{
+				"Authorization": {"Bearer " + token.AccessToken},
+			}),
+		}),
+	)
+
+	cmd.SetContext(ContextWithDeployServerStore(cmd.Context(), &DeployServerStore{
+		Cli: cli,
+	}))
 	return nil
 }
