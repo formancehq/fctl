@@ -3,6 +3,7 @@ package apps
 import (
 	"fmt"
 
+	"github.com/formancehq/fctl/cmd/cloud/apps/runs"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 )
@@ -34,7 +35,7 @@ func NewCommand() *cobra.Command {
 			NewDelete(),
 			NewShow(),
 			NewDeploy(),
-			// runs.NewCommand(),
+			runs.NewCommand(),
 			// variables.NewCommand(),
 		),
 	)
