@@ -2,6 +2,8 @@ package apps
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
 	fctl "github.com/formancehq/fctl/pkg"
@@ -11,6 +13,7 @@ import (
 
 type Show struct {
 	components.App
+	State components.State
 }
 
 type ShowCtrl struct {
@@ -20,7 +23,10 @@ type ShowCtrl struct {
 var _ fctl.Controller[*Show] = (*ShowCtrl)(nil)
 
 func newShowStore() *Show {
-	return &Show{}
+	return &Show{
+		App:   components.App{},
+		State: components.State{},
+	}
 }
 
 func NewShowCtrl() *ShowCtrl {
@@ -52,6 +58,11 @@ func (c *ShowCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, erro
 		return nil, err
 	}
 
+	stateVersion, err := store.Cli.ReadAppCurrentStateVersion(cmd.Context(), id)
+	if err == nil {
+		c.store.State = stateVersion.ReadStateResponse.Data
+	}
+
 	c.store.App = app.AppResponse.Data
 
 	return c, nil
@@ -78,5 +89,31 @@ func (c *ShowCtrl) Render(cmd *cobra.Command, args []string) error {
 		Render(); err != nil {
 		return err
 	}
+
+	if c.store.State.Stack == nil {
+		return nil
+	}
+	pterm.DefaultSection.Println("State")
+
+	items = []pterm.BulletListItem{}
+
+	for k, v := range c.store.State.Stack {
+		if v == nil {
+			continue
+		}
+		items = append(items, pterm.BulletListItem{Level: 0, Text: fmt.Sprintf("%s: %s", k, v)})
+	}
+
+	slices.SortFunc(items, func(a, b pterm.BulletListItem) int {
+		return strings.Compare(a.Text, b.Text)
+	})
+	if err := pterm.
+		DefaultBulletList.
+		WithItems(items).
+		WithWriter(cmd.OutOrStdout()).
+		Render(); err != nil {
+		return err
+	}
+
 	return nil
 }
