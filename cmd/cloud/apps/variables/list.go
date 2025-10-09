@@ -1,4 +1,4 @@
-package runs
+package variables
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 )
 
 type List struct {
-	components.ListRunsResponseData
+	components.ReadVariablesResponseData
 }
 
 type ListCtrl struct {
@@ -22,7 +22,7 @@ var _ fctl.Controller[*List] = (*ListCtrl)(nil)
 
 func newDefaultStore() *List {
 	return &List{
-		ListRunsResponseData: components.ListRunsResponseData{},
+		ReadVariablesResponseData: components.ReadVariablesResponseData{},
 	}
 }
 
@@ -35,7 +35,7 @@ func NewListCtrl() *ListCtrl {
 func NewList() *cobra.Command {
 	return fctl.NewCommand("list",
 		fctl.WithAliases("ls"),
-		fctl.WithShortDescription("List runs for an app"),
+		fctl.WithShortDescription("List variables for an app"),
 		fctl.WithStringFlag("id", "", "App ID"),
 		fctl.WithIntFlag("page", 1, "Page number"),
 		fctl.WithIntFlag("page-size", 100, "Page size"),
@@ -53,28 +53,39 @@ func (c *ListCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, erro
 	if id == "" {
 		return nil, fmt.Errorf("id is required")
 	}
-	runs, err := store.Cli.ReadAppRuns(cmd.Context(), id, pointer.For(int64(fctl.GetInt(cmd, "page"))), pointer.For(int64(fctl.GetInt(cmd, "page-size"))))
+
+	vars, err := store.Cli.ReadAppVariables(cmd.Context(), id, pointer.For(int64(fctl.GetInt(cmd, "page"))), pointer.For(int64(fctl.GetInt(cmd, "page-size"))))
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.ListRunsResponseData = runs.ListRunsResponse.Data
+	c.store.ReadVariablesResponseData = vars.ReadVariablesResponse.Data
 
 	return c, nil
 }
 
 func (c *ListCtrl) Render(cmd *cobra.Command, args []string) error {
 	data := [][]string{
-		{"Created At", "ID", "Configuration Id", "Status", "Message"},
+		{"Id", "Key", "Category", "Value", "Description"},
 	}
 
-	for _, run := range c.store.Items {
+	for _, variable := range c.store.ReadVariablesResponseData.Items {
 		data = append(data, []string{
-			run.CreatedAt.String(),
-			run.ID,
-			string(run.ConfigurationVersion.ID),
-			string(run.Status),
-			run.Message,
+			variable.ID,
+			variable.Key,
+			string(variable.Category),
+			func() string {
+				if variable.Sensitive {
+					return "****"
+				}
+				return variable.Value
+			}(),
+			func() string {
+				if variable.Description == nil {
+					return ""
+				}
+				return *variable.Description
+			}(),
 		})
 	}
 	if err := pterm.
