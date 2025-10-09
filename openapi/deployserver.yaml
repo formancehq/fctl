@@ -430,6 +430,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /runs/{id}/logs:
+    get:
+      summary: Get logs of a run by its ID
+      operationId: readRunLogs
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Run logs retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadLogsResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /apps/{id}/run/logs:
     get:
       summary: Get logs of the current run of an app

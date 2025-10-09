@@ -1,10 +1,10 @@
 lockVersion: 2.0.0
 id: 8068b42d-3ccb-4bcf-87ba-eaf586d7782d
 management:
-  docChecksum: 91e66dad1b2d98107da7d109b66a96a0
+  docChecksum: dc78dba7dee9d9cb088a3a591430e18e
   docVersion: 0.1.0
-  speakeasyVersion: 1.634.1
-  generationVersion: 2.721.0
+  speakeasyVersion: 1.636.2
+  generationVersion: 2.723.8
   releaseVersion: 0.0.1
   configChecksum: 49beab34f992f84433bdbebb05f8f9d1
 features:
@@ -20,7 +20,7 @@ features:
     globalSecurityCallbacks: 0.1.0
     globalServerURLs: 2.82.3
     intellisenseMarkdownSupport: 0.1.0
-    nullables: 0.2.0
+    nullables: 0.2.1
     responseFormat: 0.1.2
     retries: 2.84.2
     sdkHooks: 0.2.0
@@ -79,6 +79,7 @@ generatedFiles:
   - /models/operations/readcurrentrun.go
   - /models/operations/readcurrentrunlogs.go
   - /models/operations/readrun.go
+  - /models/operations/readrunlogs.go
   - /models/operations/readversion.go
   - /models/operations/updateapp.go
   - USAGE.md
@@ -159,6 +160,8 @@ generatedFiles:
   - docs/models/operations/readcurrentrunlogsresponse.md
   - docs/models/operations/readcurrentrunrequest.md
   - docs/models/operations/readcurrentrunresponse.md
+  - docs/models/operations/readrunlogsrequest.md
+  - docs/models/operations/readrunlogsresponse.md
   - docs/models/operations/readrunrequest.md
   - docs/models/operations/readrunresponse.md
   - docs/models/operations/readversionrequest.md
@@ -389,6 +392,16 @@ examples:
       responses:
         "200":
           application/gzip: "x-file: example.file"
+        default:
+          application/json: {"errorCode": "<value>"}
+  readRunLogs:
+    speakeasy-default-read-run-logs:
+      parameters:
+        path:
+          id: "<id>"
+      responses:
+        "200":
+          application/json: {}
         default:
           application/json: {"errorCode": "<value>"}
 examplesVersion: 1.0.2

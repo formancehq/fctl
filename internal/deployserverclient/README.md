@@ -102,6 +102,7 @@ func main() {
 * [ReadCurrentRun](docs/sdks/deployserver/README.md#readcurrentrun) - Get the current run of an app
 * [ReadVersion](docs/sdks/deployserver/README.md#readversion) - Get a specific version
 * [ReadRun](docs/sdks/deployserver/README.md#readrun) - Get the run of a version
+* [ReadRunLogs](docs/sdks/deployserver/README.md#readrunlogs) - Get logs of a run by its ID
 * [ReadCurrentRunLogs](docs/sdks/deployserver/README.md#readcurrentrunlogs) - Get logs of the current run of an app
 * [ReadCurrentAppVersion](docs/sdks/deployserver/README.md#readcurrentappversion) - Get the current version of an app
 * [DownloadAppVersion](docs/sdks/deployserver/README.md#downloadappversion) - Download a specific version of an app

@@ -21,6 +21,7 @@
 * [ReadCurrentRun](#readcurrentrun) - Get the current run of an app
 * [ReadVersion](#readversion) - Get a specific version
 * [ReadRun](#readrun) - Get the run of a version
+* [ReadRunLogs](#readrunlogs) - Get logs of a run by its ID
 * [ReadCurrentRunLogs](#readcurrentrunlogs) - Get logs of the current run of an app
 * [ReadCurrentAppVersion](#readcurrentappversion) - Get the current version of an app
 * [DownloadAppVersion](#downloadappversion) - Download a specific version of an app
@@ -884,6 +885,55 @@ func main() {
 ### Response
 
 **[*operations.ReadRunResponse](../../models/operations/readrunresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## ReadRunLogs
+
+Get logs of a run by its ID
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="readRunLogs" method="get" path="/runs/{id}/logs" -->
+```go
+package main
+
+import(
+	"context"
+	"github.com/formancehq/fctl/internal/deployserverclient"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := deployserverclient.New()
+
+    res, err := s.ReadRunLogs(ctx, "<id>")
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.ReadLogsResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
+| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
+| `id`                                                     | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+
+### Response
+
+**[*operations.ReadRunLogsResponse](../../models/operations/readrunlogsresponse.md), error**
 
 ### Errors
 

@@ -11,6 +11,7 @@ func NewCommand() *cobra.Command {
 		fctl.WithChildCommands(
 			NewList(),
 			NewShow(),
+			NewLogs(),
 			// NewWait(),
 		),
 	)
