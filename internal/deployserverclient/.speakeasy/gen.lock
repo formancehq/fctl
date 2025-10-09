@@ -1,7 +1,7 @@
 lockVersion: 2.0.0
 id: 8068b42d-3ccb-4bcf-87ba-eaf586d7782d
 management:
-  docChecksum: dc78dba7dee9d9cb088a3a591430e18e
+  docChecksum: 1904f7f42307e7c8571dbd7a680cf4e4
   docVersion: 0.1.0
   speakeasyVersion: 1.636.2
   generationVersion: 2.723.8
@@ -67,11 +67,9 @@ generatedFiles:
   - /models/operations/deleteappvariable.go
   - /models/operations/deployappconfiguration.go
   - /models/operations/deployappconfigurationraw.go
-  - /models/operations/downloadappversion.go
   - /models/operations/listapps.go
   - /models/operations/readapp.go
   - /models/operations/readappcurrentstateversion.go
-  - /models/operations/readappmanifest.go
   - /models/operations/readappruns.go
   - /models/operations/readappvariables.go
   - /models/operations/readappversions.go
@@ -136,16 +134,12 @@ generatedFiles:
   - docs/models/operations/deployappconfigurationrawresponse.md
   - docs/models/operations/deployappconfigurationrequest.md
   - docs/models/operations/deployappconfigurationresponse.md
-  - docs/models/operations/downloadappversionrequest.md
-  - docs/models/operations/downloadappversionresponse.md
   - docs/models/operations/from.md
   - docs/models/operations/listappsrequest.md
   - docs/models/operations/listappsresponse.md
   - docs/models/operations/option.md
   - docs/models/operations/readappcurrentstateversionrequest.md
   - docs/models/operations/readappcurrentstateversionresponse.md
-  - docs/models/operations/readappmanifestrequest.md
-  - docs/models/operations/readappmanifestresponse.md
   - docs/models/operations/readapprequest.md
   - docs/models/operations/readappresponse.md
   - docs/models/operations/readapprunsrequest.md
@@ -352,6 +346,8 @@ examples:
       responses:
         "200":
           application/json: {"data": {"id": "<id>", "autoQueueRuns": false, "error": "<value>", "errorMessage": "<value>", "status": "uploaded"}}
+          application/gzip: "x-file: example.file"
+          application/yaml: "x-file: example.file"
         default:
           application/json: {"errorCode": "<value>"}
   readRun:
@@ -382,6 +378,8 @@ examples:
       responses:
         "200":
           application/json: {"data": {"id": "<id>", "autoQueueRuns": false, "error": "<value>", "errorMessage": "<value>", "status": "errored"}}
+          application/gzip: "x-file: example.file"
+          application/yaml: "x-file: example.file"
         default:
           application/json: {"errorCode": "<value>"}
   downloadAppVersion:

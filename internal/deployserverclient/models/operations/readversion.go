@@ -4,6 +4,7 @@ package operations
 
 import (
 	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
+	"io"
 )
 
 type ReadVersionRequest struct {
@@ -21,6 +22,12 @@ type ReadVersionResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
 	// version retrieved successfully
 	AppVersionResponse *components.AppVersionResponse
+	// version retrieved successfully
+	// The Close method must be called on this field, even if it is not used, to prevent resource leaks.
+	TwoHundredApplicationGzipResponseStream io.ReadCloser
+	// version retrieved successfully
+	// The Close method must be called on this field, even if it is not used, to prevent resource leaks.
+	TwoHundredApplicationYamlResponseStream io.ReadCloser
 	// Error
 	Error *components.Error
 }
@@ -37,6 +44,20 @@ func (r *ReadVersionResponse) GetAppVersionResponse() *components.AppVersionResp
 		return nil
 	}
 	return r.AppVersionResponse
+}
+
+func (r *ReadVersionResponse) GetTwoHundredApplicationGzipResponseStream() io.ReadCloser {
+	if r == nil {
+		return nil
+	}
+	return r.TwoHundredApplicationGzipResponseStream
+}
+
+func (r *ReadVersionResponse) GetTwoHundredApplicationYamlResponseStream() io.ReadCloser {
+	if r == nil {
+		return nil
+	}
+	return r.TwoHundredApplicationYamlResponseStream
 }
 
 func (r *ReadVersionResponse) GetError() *components.Error {

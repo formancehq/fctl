@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/formancehq/fctl/cmd/cloud/apps/runs"
+	"github.com/formancehq/fctl/cmd/cloud/apps/versions"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 )
@@ -36,6 +37,7 @@ func NewCommand() *cobra.Command {
 			NewShow(),
 			NewDeploy(),
 			runs.NewCommand(),
+			versions.NewCommand(),
 			// variables.NewCommand(),
 		),
 	)

@@ -15,7 +15,6 @@
 * [DeleteAppVariable](#deleteappvariable) - Delete a variable from an app
 * [ReadAppRuns](#readappruns) - Get runs of an app
 * [ReadAppVersions](#readappversions) - Get versions of an app
-* [ReadAppManifest](#readappmanifest) - Get the last valid deployed manifest of an app
 * [DeployAppConfigurationRaw](#deployappconfigurationraw) - Deploy a new configuration for an app
 * [DeployAppConfiguration](#deployappconfiguration) - Deploy a new configuration for an app
 * [ReadCurrentRun](#readcurrentrun) - Get the current run of an app
@@ -24,7 +23,6 @@
 * [ReadRunLogs](#readrunlogs) - Get logs of a run by its ID
 * [ReadCurrentRunLogs](#readcurrentrunlogs) - Get logs of the current run of an app
 * [ReadCurrentAppVersion](#readcurrentappversion) - Get the current version of an app
-* [DownloadAppVersion](#downloadappversion) - Download a specific version of an app
 
 ## ListApps
 
@@ -588,56 +586,6 @@ func main() {
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
-## ReadAppManifest
-
-Get the last valid deployed manifest of an app
-
-### Example Usage
-
-<!-- UsageSnippet language="go" operationID="readAppManifest" method="get" path="/apps/{id}/manifest" -->
-```go
-package main
-
-import(
-	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient"
-	"log"
-)
-
-func main() {
-    ctx := context.Background()
-
-    s := deployserverclient.New()
-
-    res, err := s.ReadAppManifest(ctx, "<id>", nil)
-    if err != nil {
-        log.Fatal(err)
-    }
-    if res.ResponseStream != nil {
-        // handle response
-    }
-}
-```
-
-### Parameters
-
-| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
-| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
-| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `from`                                                   | [*operations.From](../../models/operations/from.md)      | :heavy_minus_sign:                                       | N/A                                                      |
-| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
-
-### Response
-
-**[*operations.ReadAppManifestResponse](../../models/operations/readappmanifestresponse.md), error**
-
-### Errors
-
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
-
 ## DeployAppConfigurationRaw
 
 Deploy a new configuration for an app
@@ -1011,7 +959,7 @@ func main() {
 
     s := deployserverclient.New()
 
-    res, err := s.ReadCurrentAppVersion(ctx, "<id>")
+    res, err := s.ReadCurrentAppVersion(ctx, "<id>", nil)
     if err != nil {
         log.Fatal(err)
     }
@@ -1027,60 +975,12 @@ func main() {
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
 | `id`                                                     | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `from`                                                   | [*operations.From](../../models/operations/from.md)      | :heavy_minus_sign:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
 
 **[*operations.ReadCurrentAppVersionResponse](../../models/operations/readcurrentappversionresponse.md), error**
-
-### Errors
-
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
-
-## DownloadAppVersion
-
-Download a specific version of an app
-
-### Example Usage
-
-<!-- UsageSnippet language="go" operationID="downloadAppVersion" method="get" path="/apps/{id}/version/download" -->
-```go
-package main
-
-import(
-	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient"
-	"log"
-)
-
-func main() {
-    ctx := context.Background()
-
-    s := deployserverclient.New()
-
-    res, err := s.DownloadAppVersion(ctx, "<id>")
-    if err != nil {
-        log.Fatal(err)
-    }
-    if res.ResponseStream != nil {
-        // handle response
-    }
-}
-```
-
-### Parameters
-
-| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
-| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
-| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
-
-### Response
-
-**[*operations.DownloadAppVersionResponse](../../models/operations/downloadappversionresponse.md), error**
 
 ### Errors
 

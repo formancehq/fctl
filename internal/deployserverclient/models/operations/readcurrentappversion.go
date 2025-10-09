@@ -3,11 +3,38 @@
 package operations
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
+	"io"
 )
 
+type From string
+
+const (
+	FromState From = "state"
+)
+
+func (e From) ToPointer() *From {
+	return &e
+}
+func (e *From) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "state":
+		*e = From(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for From: %v", v)
+	}
+}
+
 type ReadCurrentAppVersionRequest struct {
-	ID string `pathParam:"style=simple,explode=false,name=id"`
+	ID   string `pathParam:"style=simple,explode=false,name=id"`
+	From *From  `queryParam:"style=form,explode=true,name=from"`
 }
 
 func (r *ReadCurrentAppVersionRequest) GetID() string {
@@ -17,10 +44,23 @@ func (r *ReadCurrentAppVersionRequest) GetID() string {
 	return r.ID
 }
 
+func (r *ReadCurrentAppVersionRequest) GetFrom() *From {
+	if r == nil {
+		return nil
+	}
+	return r.From
+}
+
 type ReadCurrentAppVersionResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
 	// Current app version retrieved successfully
 	AppVersionResponse *components.AppVersionResponse
+	// Current app version retrieved successfully
+	// The Close method must be called on this field, even if it is not used, to prevent resource leaks.
+	TwoHundredApplicationGzipResponseStream io.ReadCloser
+	// Current app version retrieved successfully
+	// The Close method must be called on this field, even if it is not used, to prevent resource leaks.
+	TwoHundredApplicationYamlResponseStream io.ReadCloser
 	// Error
 	Error *components.Error
 }
@@ -37,6 +77,20 @@ func (r *ReadCurrentAppVersionResponse) GetAppVersionResponse() *components.AppV
 		return nil
 	}
 	return r.AppVersionResponse
+}
+
+func (r *ReadCurrentAppVersionResponse) GetTwoHundredApplicationGzipResponseStream() io.ReadCloser {
+	if r == nil {
+		return nil
+	}
+	return r.TwoHundredApplicationGzipResponseStream
+}
+
+func (r *ReadCurrentAppVersionResponse) GetTwoHundredApplicationYamlResponseStream() io.ReadCloser {
+	if r == nil {
+		return nil
+	}
+	return r.TwoHundredApplicationYamlResponseStream
 }
 
 func (r *ReadCurrentAppVersionResponse) GetError() *components.Error {

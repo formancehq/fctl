@@ -297,38 +297,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /apps/{id}/manifest:
-    get:
-      summary: Get the last valid deployed manifest of an app
-      operationId: readAppManifest
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: from
-        in: query
-        required: false
-        schema:
-          type: string
-          enum:
-          - state
-      responses:
-        '200':
-          description: App manifest retrieved successfully
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
-                description: original manifest content
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
   /apps/{id}/deploy:
     post:
       summary: Deploy a new configuration for an app
@@ -394,6 +362,20 @@ paths:
         required: true
         schema:
           type: string
+      - name: accept
+        in: header
+        required: false
+        description: |
+          The desired response format.
+          - `application/json`: Returns the version metadata in JSON format.
+          - `application/gzip`: Returns the version as a gzip archive.
+          - `application/yaml`: Returns the original manifest content.
+        schema:
+          type: string
+          enum:
+          - application/json
+          - application/gzip
+          - application/yaml
       responses:
         '200':
           description: version retrieved successfully
@@ -401,6 +383,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppVersionResponse'
+            application/gzip:
+              schema:
+                type: string
+                format: binary
+                description: Archive
+            application/yaml:
+              schema:
+                type: string
+                format: binary
+                description: Original manifest content
         default:
           description: Error
           content:
@@ -486,6 +478,27 @@ paths:
         required: true
         schema:
           type: string
+      - name: accept
+        in: header
+        required: false
+        description: |
+          The desired response format.
+          - `application/json`: Returns the version metadata in JSON format.
+          - `application/gzip`: Returns the version as a gzip archive.
+          - `application/yaml`: Returns the original manifest content.
+        schema:
+          type: string
+          enum:
+          - application/json
+          - application/gzip
+          - application/yaml
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - state
       responses:
         '200':
           description: Current app version retrieved successfully
@@ -493,30 +506,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppVersionResponse'
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /apps/{id}/version/download:
-    get:
-      summary: Download a specific version of an app
-      operationId: downloadAppVersion
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: App version downloaded successfully
-          content:
             application/gzip:
               schema:
                 type: string
                 format: binary
+                description: Archive
+            application/yaml:
+              schema:
+                type: string
+                format: binary
+                description: Original manifest content
         default:
           description: Error
           content:

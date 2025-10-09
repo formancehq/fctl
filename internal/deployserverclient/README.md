@@ -96,7 +96,6 @@ func main() {
 * [DeleteAppVariable](docs/sdks/deployserver/README.md#deleteappvariable) - Delete a variable from an app
 * [ReadAppRuns](docs/sdks/deployserver/README.md#readappruns) - Get runs of an app
 * [ReadAppVersions](docs/sdks/deployserver/README.md#readappversions) - Get versions of an app
-* [ReadAppManifest](docs/sdks/deployserver/README.md#readappmanifest) - Get the last valid deployed manifest of an app
 * [DeployAppConfigurationRaw](docs/sdks/deployserver/README.md#deployappconfigurationraw) - Deploy a new configuration for an app
 * [DeployAppConfiguration](docs/sdks/deployserver/README.md#deployappconfiguration) - Deploy a new configuration for an app
 * [ReadCurrentRun](docs/sdks/deployserver/README.md#readcurrentrun) - Get the current run of an app
@@ -105,7 +104,6 @@ func main() {
 * [ReadRunLogs](docs/sdks/deployserver/README.md#readrunlogs) - Get logs of a run by its ID
 * [ReadCurrentRunLogs](docs/sdks/deployserver/README.md#readcurrentrunlogs) - Get logs of the current run of an app
 * [ReadCurrentAppVersion](docs/sdks/deployserver/README.md#readcurrentappversion) - Get the current version of an app
-* [DownloadAppVersion](docs/sdks/deployserver/README.md#downloadappversion) - Download a specific version of an app
 
 </details>
 <!-- End Available Resources and Operations [operations] -->
