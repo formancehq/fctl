@@ -3,9 +3,9 @@ package runs
 import (
 	"fmt"
 
+	"github.com/formancehq/fctl/cmd/cloud/apps/printer"
 	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -57,24 +57,5 @@ func (c *LogsCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, erro
 }
 
 func (c *LogsCtrl) Render(cmd *cobra.Command, args []string) error {
-	data := [][]string{
-		{"Timestamp", "Summary", "Details"},
-	}
-
-	for _, log := range c.store {
-		data = append(data, []string{
-			log.Timestamp.String(),
-			log.Diagnostic.Summary,
-			log.Diagnostic.Detail,
-		})
-	}
-	if err := pterm.
-		DefaultTable.
-		WithHasHeader().
-		WithWriter(cmd.OutOrStdout()).
-		WithData(data).
-		Render(); err != nil {
-		return err
-	}
-	return nil
+	return printer.RenderLogs(cmd.OutOrStdout(), c.store)
 }

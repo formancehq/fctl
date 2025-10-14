@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/formancehq/fctl/cmd/cloud/apps/printer"
 	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
@@ -70,55 +71,45 @@ func (c *DeployCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, er
 		return nil, err
 	}
 	c.store.Run = &deployment.RunResponse.Data
+	return c, nil
+}
 
-	wait := fctl.GetBool(cmd, "wait")
-	if !wait {
-		return c, nil
-	}
-
-	pterm.Success.Println("App Deployement accepted: ", c.store.ID)
+func (c *DeployCtrl) waitRunCompletion(cmd *cobra.Command) error {
+	store := fctl.GetDeployServerStore(cmd.Context())
 	s, err := pterm.DefaultSpinner.Start("Waiting for deployment to complete...")
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer s.Stop()
-
 	for {
 		select {
 		case <-cmd.Context().Done():
-			return nil, cmd.Context().Err()
+			return cmd.Context().Err()
 		case <-time.After(2 * time.Second):
 			r, err := store.Cli.ReadRun(cmd.Context(), c.store.ID)
 			if err != nil {
-				return nil, err
+				return err
 			}
+
+			s.InfoPrinter.Printf("\033[1A\033[K")
+			s.InfoPrinter.Printfln("Deployment status: %s", r.RunResponse.Data.Status)
 			switch r.RunResponse.Data.Status {
 			case "applied":
 				s.Success("Deployment completed successfully")
-				return c, nil
+				return nil
 			case "planned_and_finished":
 				s.Success("Deployment completed successfully, no changes to apply")
-				return c, nil
-			case "errored":
-				s.Fail("Deployment failed")
-				// TOFix: change it to show pro
-				l, err := store.Cli.ReadCurrentRunLogs(cmd.Context(), c.store.ID)
+				return nil
+			case "errored": // TOFix: change it to show pro
+				l, err := store.Cli.ReadRunLogs(cmd.Context(), c.store.ID)
 				if err != nil {
-					return nil, err
+					return err
 				}
 
-				data := [][]string{
-					{"Timestamp", "Severity", "Summary", "Details"},
+				if err := printer.RenderLogs(cmd.ErrOrStderr(), l.ReadLogsResponse.Data); err != nil {
+					return err
 				}
-				for _, entry := range l.ReadLogsResponse.Data {
-					data = append(data, []string{
-						entry.Timestamp.String(),
-						entry.Diagnostic.Severity,
-						entry.Diagnostic.Summary,
-						entry.Diagnostic.Detail,
-					})
-				}
-				return nil, fmt.Errorf("deployment failed: %s", c.store.ID)
+				return fmt.Errorf("deployment failed: %s", c.store.ID)
 			default:
 				continue
 			}
@@ -127,6 +118,36 @@ func (c *DeployCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, er
 }
 
 func (c *DeployCtrl) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.Println("App Deployement accepted", c.store.ID)
+	pterm.Info.Println("App Deployment accepted", c.store.ID)
+	wait := fctl.GetBool(cmd, "wait")
+	if !wait {
+		return nil
+	}
+	if err := c.waitRunCompletion(cmd); err != nil {
+		return err
+	}
+
+	store := fctl.GetDeployServerStore(cmd.Context())
+	id := fctl.GetString(cmd, "id")
+	currentStateRes, err := store.Cli.ReadAppCurrentStateVersion(cmd.Context(), id)
+	if err != nil {
+		return err
+	}
+	if state := currentStateRes.GetReadStateResponse().Data.Stack; state != nil {
+		cfg, err := fctl.GetConfig(cmd)
+		membershipStore := fctl.GetMembershipStore(cmd.Context())
+		organizationID, err := fctl.ResolveOrganizationID(cmd, cfg, membershipStore.Client())
+		if err != nil {
+			return nil
+		}
+		info, _, err := membershipStore.Client().GetServerInfo(cmd.Context()).Execute()
+		if err != nil {
+			return err
+		}
+
+		if info.ConsoleURL != nil {
+			pterm.Success.Printfln("View stack in console: %s/%s/%s?region=%s", *info.ConsoleURL, organizationID, state["id"], state["region_id"])
+		}
+	}
 	return nil
 }

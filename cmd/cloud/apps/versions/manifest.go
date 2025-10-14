@@ -59,6 +59,6 @@ func (c *ManifestCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, 
 }
 
 func (c *ManifestCtrl) Render(cmd *cobra.Command, args []string) error {
-
+	fmt.Println(string(c.store))
 	return nil
 }

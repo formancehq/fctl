@@ -2,6 +2,7 @@ package fctl
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/formancehq/fctl/internal/deployserverclient"
@@ -172,24 +173,32 @@ type DeployServerStore struct {
 }
 
 func NewDeployServerStore(cmd *cobra.Command) error {
-	cfg, err := GetConfig(cmd)
-	if err != nil {
-		return err
-	}
-
-	token, err := cfg.GetCurrentProfile().GetToken(cmd.Context(), GetHttpClient(cmd, map[string][]string{}))
-	if err != nil {
-		return err
-	}
-
-	cli := deployserverclient.New(
-		deployserverclient.WithServerIndex(0), //Use staging
+	rt := NewHTTPTransport(cmd, map[string][]string{})
+	sdkOptions := []deployserverclient.SDKOption{
 		deployserverclient.WithClient(&http.Client{
-			Transport: NewHTTPTransport(cmd, map[string][]string{
-				"Authorization": {"Bearer " + token.AccessToken},
+			Transport: RoundTripperFn(func(req *http.Request) (*http.Response, error) {
+				cfg, err := GetConfig(cmd)
+				if err != nil {
+					return nil, err
+				}
+
+				token, err := cfg.GetCurrentProfile().GetToken(cmd.Context(), GetHttpClient(cmd, map[string][]string{}))
+				if err != nil {
+					return nil, err
+				}
+				req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+				return rt.RoundTrip(req)
 			}),
 		}),
-	)
+	}
+	uri := GetString(cmd, FrameworkURIFlag)
+	if uri == "" {
+		return fmt.Errorf("--%s is required", FrameworkURIFlag)
+	} else {
+		sdkOptions = append(sdkOptions, deployserverclient.WithServerURL(uri))
+	}
+
+	cli := deployserverclient.New(sdkOptions...)
 
 	cmd.SetContext(ContextWithDeployServerStore(cmd.Context(), &DeployServerStore{
 		Cli: cli,

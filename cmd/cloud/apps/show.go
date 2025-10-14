@@ -69,6 +69,24 @@ func (c *ShowCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, erro
 }
 
 func (c *ShowCtrl) Render(cmd *cobra.Command, args []string) error {
+
+	if c.store.State.Stack != nil {
+		cfg, err := fctl.GetConfig(cmd)
+		membershipStore := fctl.GetMembershipStore(cmd.Context())
+		organizationID, err := fctl.ResolveOrganizationID(cmd, cfg, membershipStore.Client())
+		if err != nil {
+			return nil
+		}
+		info, _, err := membershipStore.Client().GetServerInfo(cmd.Context()).Execute()
+		if err != nil {
+			return err
+		}
+
+		if info.ConsoleURL != nil {
+			pterm.Info.Printfln("View stack in console: %s/%s/%s?region=%s", *info.ConsoleURL, organizationID, c.store.State.Stack["id"], c.store.State.Stack["region_id"])
+		}
+	}
+
 	pterm.DefaultSection.Println("App")
 
 	items := []pterm.BulletListItem{
@@ -90,29 +108,28 @@ func (c *ShowCtrl) Render(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if c.store.State.Stack == nil {
-		return nil
-	}
-	pterm.DefaultSection.Println("State")
+	if c.store.State.Stack != nil {
+		pterm.DefaultSection.Println("State")
 
-	items = []pterm.BulletListItem{}
+		items = []pterm.BulletListItem{}
 
-	for k, v := range c.store.State.Stack {
-		if v == nil {
-			continue
+		for k, v := range c.store.State.Stack {
+			if v == nil {
+				continue
+			}
+			items = append(items, pterm.BulletListItem{Level: 0, Text: fmt.Sprintf("%s: %s", k, v)})
 		}
-		items = append(items, pterm.BulletListItem{Level: 0, Text: fmt.Sprintf("%s: %s", k, v)})
-	}
 
-	slices.SortFunc(items, func(a, b pterm.BulletListItem) int {
-		return strings.Compare(a.Text, b.Text)
-	})
-	if err := pterm.
-		DefaultBulletList.
-		WithItems(items).
-		WithWriter(cmd.OutOrStdout()).
-		Render(); err != nil {
-		return err
+		slices.SortFunc(items, func(a, b pterm.BulletListItem) int {
+			return strings.Compare(a.Text, b.Text)
+		})
+		if err := pterm.
+			DefaultBulletList.
+			WithItems(items).
+			WithWriter(cmd.OutOrStdout()).
+			Render(); err != nil {
+			return err
+		}
 	}
 
 	return nil
