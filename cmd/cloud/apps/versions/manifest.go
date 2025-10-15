@@ -9,21 +9,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type Manifest []byte
-
 type ManifestCtrl struct {
-	store Manifest
+	store any
 }
 
-var _ fctl.Controller[Manifest] = (*ManifestCtrl)(nil)
-
-func newManifestStore() []byte {
-	return []byte{}
-}
+var _ fctl.Controller[any] = (*ManifestCtrl)(nil)
 
 func NewManifestCtrl() *ManifestCtrl {
 	return &ManifestCtrl{
-		store: newManifestStore(),
+		store: nil,
 	}
 }
 
@@ -35,7 +29,7 @@ func NewManifest() *cobra.Command {
 	)
 }
 
-func (c *ManifestCtrl) GetStore() Manifest {
+func (c *ManifestCtrl) GetStore() any {
 	return c.store
 }
 
@@ -54,11 +48,12 @@ func (c *ManifestCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, 
 	if err != nil {
 		return nil, err
 	}
-	c.store = data
+
+	c.store = string(data)
 	return c, nil
 }
 
 func (c *ManifestCtrl) Render(cmd *cobra.Command, args []string) error {
-	fmt.Println(string(c.store))
+	fmt.Println(c.store)
 	return nil
 }
