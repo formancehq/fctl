@@ -57,13 +57,12 @@ func (c *ShowCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, erro
 	if err != nil {
 		return nil, err
 	}
+	c.store.App = app.AppResponse.Data
 
 	stateVersion, err := store.Cli.ReadAppCurrentStateVersion(cmd.Context(), id)
 	if err == nil {
 		c.store.State = stateVersion.ReadStateResponse.Data
 	}
-
-	c.store.App = app.AppResponse.Data
 
 	return c, nil
 }
@@ -75,7 +74,7 @@ func (c *ShowCtrl) Render(cmd *cobra.Command, args []string) error {
 		membershipStore := fctl.GetMembershipStore(cmd.Context())
 		organizationID, err := fctl.ResolveOrganizationID(cmd, cfg, membershipStore.Client())
 		if err != nil {
-			return nil
+			return err
 		}
 		info, _, err := membershipStore.Client().GetServerInfo(cmd.Context()).Execute()
 		if err != nil {
