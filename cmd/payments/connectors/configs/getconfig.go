@@ -179,6 +179,10 @@ func (c *PaymentsGetConfigController) Render(cmd *cobra.Command, args []string) 
 		err = views.DisplayAtlarConfig(cmd, c.store.ConnectorConfig)
 	case internal.AdyenConnector:
 		err = views.DisplayAdyenConfig(cmd, c.store.ConnectorConfig)
+	case internal.QontoConnector:
+		err = views.DisplayQontoConfig(cmd, c.store.ConnectorConfig)
+	case internal.ColumnConnector:
+		err = views.DisplayColumnConfig(cmd, c.store.ConnectorConfig)
 	default:
 		pterm.Error.WithWriter(cmd.OutOrStderr()).Printfln("Connection unknown.")
 	}
