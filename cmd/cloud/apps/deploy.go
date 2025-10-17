@@ -42,7 +42,7 @@ func NewDeploy() *cobra.Command {
 		fctl.WithShortDescription("Deploy apps"),
 		fctl.WithStringFlag("id", "", "App ID"),
 		fctl.WithStringFlag("path", "", "Path to the manifest file"),
-		fctl.WithBoolFlag("wait", false, "Wait for the deployment to complete"),
+		fctl.WithBoolFlag("wait", true, "Wait for the deployment to complete"),
 		fctl.WithController(NewDeployCtrl()),
 	)
 }
@@ -66,6 +66,7 @@ func (c *DeployCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, er
 		return nil, err
 	}
 
+	cmd.SilenceUsage = true
 	deployment, err := store.Cli.DeployAppConfigurationRaw(cmd.Context(), id, data)
 	if err != nil {
 		return nil, err
