@@ -1,6 +1,9 @@
 package configs
 
 import (
+	"fmt"
+
+	"github.com/formancehq/fctl/cmd/payments/connectors/internal"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 )
@@ -8,7 +11,7 @@ import (
 func NewUpdateConfigCommands() *cobra.Command {
 	return fctl.NewCommand("update-config",
 		fctl.WithAliases("uc"),
-		fctl.WithShortDescription("Update the config of a connector"),
+		fctl.WithShortDescription(fmt.Sprintf("Update the config of a connector (Connectors available: %v)", internal.AllConnectors)),
 		fctl.WithChildCommands(
 			newUpdateAdyenCommand(),
 			newUpdateAtlarCommand(),
