@@ -82,7 +82,7 @@ func (c *StackListController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		return c, nil
 	}
 
-	dashboard := "https://console.formance.cloud"
+	dashboard := "https://portal.formance.cloud"
 	serverInfo, err := fctl.MembershipServerInfo(cmd.Context(), store.Client())
 	if err != nil {
 		return nil, err
