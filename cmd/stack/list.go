@@ -82,20 +82,20 @@ func (c *StackListController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		return c, nil
 	}
 
-	dashboard := "https://portal.formance.cloud"
+	portal := fctl.DefaultConsoleURL
 	serverInfo, err := fctl.MembershipServerInfo(cmd.Context(), store.Client())
 	if err != nil {
 		return nil, err
 	}
 	if v := serverInfo.ConsoleURL; v != nil {
-		dashboard = *v
+		portal = *v
 	}
 
 	c.store.Stacks = fctl.Map(rsp.Data, func(stack membershipclient.Stack) Stack {
 		return Stack{
 			Id:           stack.Id,
 			Name:         stack.Name,
-			Dashboard:    dashboard,
+			Dashboard:    portal,
 			RegionID:     stack.RegionID,
 			Status:       stack.State,
 			AuditEnabled: fctl.BoolPointerToString(stack.AuditEnabled),

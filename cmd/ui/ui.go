@@ -22,7 +22,7 @@ var _ fctl.Controller[*UiStruct] = (*UiController)(nil)
 
 func NewDefaultUiStore() *UiStruct {
 	return &UiStruct{
-		UIUrl:        "https://portal.formance.cloud",
+		UIUrl:        fctl.DefaultConsoleURL,
 		FoundBrowser: false,
 	}
 }
