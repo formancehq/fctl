@@ -8,6 +8,7 @@ import (
 
 const (
 	DefaultMembershipURI = "https://app.formance.cloud/api"
+	DefaultConsoleURL    = "https://portal.formance.cloud"
 )
 
 type ConfigManager struct {
