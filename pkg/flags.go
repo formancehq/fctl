@@ -20,7 +20,7 @@ const (
 	TelemetryFlag     = "telemetry"
 	stackFlag         = "stack"
 	organizationFlag  = "organization"
-	outputFlag        = "output"
+	FrameworkURIFlag  = "framework-uri"
 )
 
 func GetBool(cmd *cobra.Command, flagName string) bool {

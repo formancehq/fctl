@@ -27,6 +27,11 @@ generate:
     rm -rf ./membershipclient/docs
 g: generate
 
+[group('generate')]
+generate-client:
+    @cd internal/deployserverclient && speakeasy run --skip-versioning
+
+
 tests:
     echo "not implemented"
 
