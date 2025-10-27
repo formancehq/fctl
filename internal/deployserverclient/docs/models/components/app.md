@@ -1,0 +1,11 @@
+# App
+
+
+## Fields
+
+| Field                                                                               | Type                                                                                | Required                                                                            | Description                                                                         |
+| ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `ID`                                                                                | *string*                                                                            | :heavy_check_mark:                                                                  | Unique identifier for the app                                                       |
+| `Name`                                                                              | *string*                                                                            | :heavy_check_mark:                                                                  | Name of the app                                                                     |
+| `CurrentConfigurationVersion`                                                       | [*components.ConfigurationVersion](../../models/components/configurationversion.md) | :heavy_minus_sign:                                                                  | N/A                                                                                 |
+| `CurrentRun`                                                                        | [*components.Run](../../models/components/run.md)                                   | :heavy_minus_sign:                                                                  | N/A                                                                                 |

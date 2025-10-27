@@ -1,6 +1,7 @@
 package cloud
 
 import (
+	"github.com/formancehq/fctl/cmd/cloud/apps"
 	"github.com/formancehq/fctl/cmd/cloud/me"
 	"github.com/formancehq/fctl/cmd/cloud/organizations"
 	"github.com/formancehq/fctl/cmd/cloud/regions"
@@ -17,6 +18,7 @@ func NewCommand() *cobra.Command {
 			me.NewCommand(),
 			regions.NewCommand(),
 			NewGeneratePersonalTokenCommand(),
+			apps.NewCommand(),
 		),
 		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
 			return fctl.NewMembershipStore(cmd)
