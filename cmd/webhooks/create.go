@@ -1,15 +1,13 @@
 package webhooks
 
 import (
+	"fmt"
 	"net/url"
 
-	"github.com/pkg/errors"
+	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
-
-	fctl "github.com/formancehq/fctl/pkg"
 )
 
 const (
@@ -42,26 +40,44 @@ func (c *CreateWebhookController) GetStore() *CreateWebhookStore {
 }
 
 func (c *CreateWebhookController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to create a webhook") {
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to create a webhook") {
 		return nil, fctl.ErrMissingApproval
 	}
 
 	if _, err := url.Parse(args[0]); err != nil {
-		return nil, errors.Wrap(err, "invalid endpoint URL")
+		return nil, fmt.Errorf("invalid endpoint URL: %w", err)
 	}
 
 	secret := fctl.GetString(cmd, secretFlag)
 
-	response, err := store.Client().Webhooks.V1.InsertConfig(cmd.Context(), shared.ConfigUser{
+	response, err := stackClient.Webhooks.V1.InsertConfig(cmd.Context(), shared.ConfigUser{
 		Endpoint:   args[0],
 		EventTypes: args[1:],
 		Secret:     &secret,
 	})
 
 	if err != nil {
-		return nil, errors.Wrap(err, "creating config")
+		return nil, fmt.Errorf("creating config: %w", err)
 	}
 
 	c.store.Webhook = response.ConfigResponse.Data

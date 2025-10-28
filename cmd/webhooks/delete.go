@@ -1,14 +1,13 @@
 package webhooks
 
 import (
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/sdkerrors"
+	"fmt"
 
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/sdkerrors"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type DeleteWebhookStore struct {
@@ -17,8 +16,7 @@ type DeleteWebhookStore struct {
 }
 
 type DeleteWebhookController struct {
-	store  *DeleteWebhookStore
-	config *fctl.Config
+	store *DeleteWebhookStore
 }
 
 var _ fctl.Controller[*DeleteWebhookStore] = (*DeleteWebhookController)(nil)
@@ -31,8 +29,7 @@ func NewDefaultDeleteWebhookStore() *DeleteWebhookStore {
 
 func NewDeleteWebhookController() *DeleteWebhookController {
 	return &DeleteWebhookController{
-		store:  NewDefaultDeleteWebhookStore(),
-		config: nil,
+		store: NewDefaultDeleteWebhookStore(),
 	}
 }
 
@@ -41,19 +38,36 @@ func (c *DeleteWebhookController) GetStore() *DeleteWebhookStore {
 }
 
 func (c *DeleteWebhookController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
-	c.config = store.Config
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to delete a webhook") {
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to delete a webhook") {
 		return nil, fctl.ErrMissingApproval
 	}
 
 	request := operations.DeleteConfigRequest{
 		ID: args[0],
 	}
-	_, err := store.Client().Webhooks.V1.DeleteConfig(cmd.Context(), request)
+	_, err = stackClient.Webhooks.V1.DeleteConfig(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "deleting config")
+		return nil, fmt.Errorf("deleting config: %w", err)
 	}
 
 	c.store.Success = true

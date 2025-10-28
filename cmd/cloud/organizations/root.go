@@ -1,12 +1,13 @@
 package organizations
 
 import (
+	"github.com/formancehq/fctl/cmd/cloud/organizations/applications"
 	"github.com/spf13/cobra"
 
 	authorization_provider "github.com/formancehq/fctl/cmd/cloud/organizations/authentication-provider"
 	"github.com/formancehq/fctl/cmd/cloud/organizations/invitations"
-	"github.com/formancehq/fctl/cmd/cloud/organizations/oauth"
 	oauth_clients "github.com/formancehq/fctl/cmd/cloud/organizations/oauth-clients"
+	"github.com/formancehq/fctl/cmd/cloud/organizations/policies"
 	"github.com/formancehq/fctl/cmd/cloud/organizations/users"
 	fctl "github.com/formancehq/fctl/pkg"
 )
@@ -24,9 +25,10 @@ func NewCommand() *cobra.Command {
 			NewHistoryCommand(),
 			users.NewCommand(),
 			invitations.NewCommand(),
-			oauth.NewCommand(),
 			oauth_clients.NewCommand(),
 			authorization_provider.NewCommand(),
+			policies.NewCommand(),
+			applications.NewCommand(),
 		),
 	)
 }

@@ -36,11 +36,6 @@ func NewDeployCtrl() *DeployCtrl {
 	}
 }
 
-const (
-	IdFlag   = "id"
-	PathFlag = "path"
-)
-
 func NewDeploy() *cobra.Command {
 	return fctl.NewCommand("deploy",
 		fctl.WithShortDescription("Deploy apps"),
@@ -56,7 +51,37 @@ func (c *DeployCtrl) GetStore() *Deploy {
 }
 
 func (c *DeployCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetDeployServerStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, profileName, err := fctl.LoadCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	relyingParty, err := fctl.GetAuthRelyingParty(cmd.Context(), fctl.GetHttpClient(cmd), profile.MembershipURI)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewAppDeployClient(
+		cmd,
+		relyingParty,
+		fctl.NewPTermDialog(),
+		profileName,
+		*profile,
+		organizationID,
+	)
+	if err != nil {
+		return nil, err
+	}
 	id := fctl.GetString(cmd, "id")
 	if id == "" {
 		return nil, fmt.Errorf("id is required")
@@ -71,7 +96,7 @@ func (c *DeployCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, er
 	}
 
 	cmd.SilenceUsage = true
-	deployment, err := store.Cli.DeployAppConfigurationRaw(cmd.Context(), id, data)
+	deployment, err := apiClient.DeployAppConfigurationRaw(cmd.Context(), id, data)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +112,37 @@ func (c *DeployCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, er
 }
 
 func (c *DeployCtrl) waitRunCompletion(cmd *cobra.Command) error {
-	store := fctl.GetDeployServerStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return err
+	}
+
+	profile, profileName, err := fctl.LoadCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return err
+	}
+
+	relyingParty, err := fctl.GetAuthRelyingParty(cmd.Context(), fctl.GetHttpClient(cmd), profile.MembershipURI)
+	if err != nil {
+		return err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return err
+	}
+
+	apiClient, err := fctl.NewAppDeployClient(
+		cmd,
+		relyingParty,
+		fctl.NewPTermDialog(),
+		profileName,
+		*profile,
+		organizationID,
+	)
+	if err != nil {
+		return err
+	}
 	spinner := &pterm.DefaultSpinner
 
 	if s := fctl.GetString(cmd, "output"); s == "plain" {
@@ -103,8 +158,10 @@ func (c *DeployCtrl) waitRunCompletion(cmd *cobra.Command) error {
 		}()
 	} else {
 		spinner.SetWriter(io.Discard)
-
 	}
+	defer func() {
+		_ = spinner.Stop()
+	}()
 
 	waitFor := 0 * time.Second
 	for {
@@ -113,7 +170,7 @@ func (c *DeployCtrl) waitRunCompletion(cmd *cobra.Command) error {
 			return cmd.Context().Err()
 		case <-time.After(waitFor):
 			waitFor = 2 * time.Second
-			r, err := store.Cli.ReadRun(cmd.Context(), c.store.ID)
+			r, err := apiClient.ReadRun(cmd.Context(), c.store.ID)
 			if err != nil {
 				return err
 			}
@@ -128,7 +185,7 @@ func (c *DeployCtrl) waitRunCompletion(cmd *cobra.Command) error {
 				spinner.UpdateText("Deployment completed successfully, no changes to apply")
 				return nil
 			case "errored":
-				l, err := store.Cli.ReadRunLogs(cmd.Context(), c.store.ID)
+				l, err := apiClient.ReadRunLogs(cmd.Context(), c.store.ID)
 				if err != nil {
 					return err
 				}
@@ -152,29 +209,64 @@ func (c *DeployCtrl) Render(cmd *cobra.Command, args []string) error {
 	}
 
 	pterm.Info.Println("App Deployment accepted", c.store.ID)
-	store := fctl.GetDeployServerStore(cmd.Context())
+	wait := fctl.GetBool(cmd, "wait")
+	if !wait {
+		return nil
+	}
+	if err := c.waitRunCompletion(cmd); err != nil {
+		return err
+	}
+
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return err
+	}
+
+	profile, profileName, err := fctl.LoadCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return err
+	}
+
+	relyingParty, err := fctl.GetAuthRelyingParty(cmd.Context(), fctl.GetHttpClient(cmd), profile.MembershipURI)
+	if err != nil {
+		return err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return err
+	}
+
+	apiClient, err := fctl.NewAppDeployClient(
+		cmd,
+		relyingParty,
+		fctl.NewPTermDialog(),
+		profileName,
+		*profile,
+		organizationID,
+	)
+	if err != nil {
+		return err
+	}
 	id := fctl.GetString(cmd, "id")
-	currentStateRes, err := store.Cli.ReadAppCurrentStateVersion(cmd.Context(), id)
+	currentStateRes, err := apiClient.ReadAppCurrentStateVersion(cmd.Context(), id)
 	if err != nil {
 		return err
 	}
 	if state := currentStateRes.GetReadStateResponse().Data.Stack; state != nil {
-		cfg, err := fctl.GetConfig(cmd)
-		if err != nil {
-			return err
-		}
-		membershipStore := fctl.GetMembershipStore(cmd.Context())
-		organizationID, err := fctl.ResolveOrganizationID(cmd, cfg, membershipStore.Client())
-		if err != nil {
-			return nil
-		}
-		info, _, err := membershipStore.Client().GetServerInfo(cmd.Context()).Execute()
+
+		apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
 		if err != nil {
 			return err
 		}
 
-		if info.ConsoleURL != nil {
-			pterm.Success.Printfln("View stack in console: %s/%s/%s?region=%s", *info.ConsoleURL, organizationID, state["id"], state["region_id"])
+		info, err := apiClient.GetServerInfo(cmd.Context())
+		if err != nil {
+			return err
+		}
+
+		if info.ServerInfo.ConsoleURL != nil {
+			pterm.Success.Printfln("View stack in console: %s/%s/%s?region=%s", *info.ServerInfo.ConsoleURL, organizationID, state["id"], state["region_id"])
 		}
 	}
 	return nil

@@ -4,16 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
-
 	"github.com/formancehq/fctl/cmd/payments/connectors/internal"
 	"github.com/formancehq/fctl/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type UpdateQontoConnectorConfigStore struct {
@@ -64,18 +61,36 @@ func (c *UpdateQontoConnectorConfigController) GetStore() *UpdateQontoConnectorC
 }
 
 func (c *UpdateQontoConnectorConfigController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	connectorID := fctl.GetString(cmd, c.connectorIDFlag)
 	if connectorID == "" {
 		return nil, fmt.Errorf("missing connector ID")
 	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to update the config of connector '%s'", connectorID) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to update the config of connector '%s'", connectorID) {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	script, err := fctl.ReadFile(cmd, store.Stack(), args[0])
+	script, err := fctl.ReadFile(cmd, args[0])
 	if err != nil {
 		return nil, err
 	}
@@ -85,14 +100,14 @@ func (c *UpdateQontoConnectorConfigController) Run(cmd *cobra.Command, args []st
 		return nil, err
 	}
 
-	response, err := store.Client().Payments.V3.V3UpdateConnectorConfig(cmd.Context(), operations.V3UpdateConnectorConfigRequest{
+	response, err := stackClient.Payments.V3.V3UpdateConnectorConfig(cmd.Context(), operations.V3UpdateConnectorConfigRequest{
 		V3InstallConnectorRequest: &shared.V3InstallConnectorRequest{
 			V3QontoConfig: config,
 		},
 		ConnectorID: connectorID,
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "updating config of connector")
+		return nil, fmt.Errorf("updating config of connector: %w", err)
 	}
 
 	if response.StatusCode >= 300 {

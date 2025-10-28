@@ -3,13 +3,12 @@ package internal
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-
-	formance "github.com/formancehq/formance-sdk-go/v3"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"errors"
 
 	fctl "github.com/formancehq/fctl/pkg"
+	formance "github.com/formancehq/formance-sdk-go/v3"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/spf13/cobra"
 )
 
 const (
@@ -35,7 +34,7 @@ func DiscoverWalletIDFromName(cmd *cobra.Command, client *formance.Formance, wal
 	}
 	wallets, err := client.Wallets.V1.ListWallets(cmd.Context(), request)
 	if err != nil {
-		return "", errors.Wrap(err, "listing wallets to retrieve wallet by name")
+		return "", fmt.Errorf("listing wallets to retrieve wallet by name: %w", err)
 	}
 
 	if wallets.StatusCode >= 300 {

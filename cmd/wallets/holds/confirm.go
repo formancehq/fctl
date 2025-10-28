@@ -1,16 +1,14 @@
 package holds
 
 import (
+	"fmt"
 	"math/big"
 
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
-
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type ConfirmStore struct {
@@ -58,7 +56,25 @@ func (c *ConfirmController) GetStore() *ConfirmStore {
 }
 
 func (c *ConfirmController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	final := fctl.GetBool(cmd, c.finalFlag)
 	amount := int64(fctl.GetInt(cmd, c.amountFlag))
@@ -70,9 +86,9 @@ func (c *ConfirmController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 			Final:  &final,
 		},
 	}
-	_, err := store.Client().Wallets.V1.ConfirmHold(cmd.Context(), request)
+	_, err = stackClient.Wallets.V1.ConfirmHold(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "confirming hold")
+		return nil, fmt.Errorf("confirming hold: %w", err)
 	}
 
 	c.store.Success = true //Todo: check status code

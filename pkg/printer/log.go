@@ -8,35 +8,36 @@ import (
 
 	"github.com/formancehq/go-libs/time"
 
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
-func LogCursor(writer io.Writer, cursor *membershipclient.LogCursorData, withData bool) error {
+func LogCursor(writer io.Writer, cursor *components.LogCursorData, withData bool) error {
 	header := []string{"Identifier", "User", "Date", "Action"}
 
 	if withData {
 		header = append(header, "Data")
 	}
-	tableData := fctl.Map(cursor.Data, func(log membershipclient.Log) []string {
+	tableData := fctl.Map(cursor.GetData(), func(log components.Log) []string {
 		line := []string{
-			log.Seq,
+			log.GetSeq(),
 			func() string {
-				if log.UserId == "" {
+				if log.GetUserID() == "" {
 					return "SYSTEM"
 				}
-				return log.UserId
+				return log.GetUserID()
 			}(),
-			log.Date.Format(time.DateFormat),
-			log.Action,
+			log.GetDate().Format(time.DateFormat),
+			log.GetAction(),
 		}
 
 		if withData {
 			line = append(line, func() string {
-				if log.Data == nil {
+				data := log.GetData()
+				if data == (components.LogData{}) {
 					return ""
 				}
-				return fmt.Sprintf("%v", log.Data)
+				return fmt.Sprintf("%v", data)
 			}())
 
 		}
@@ -53,10 +54,10 @@ func LogCursor(writer io.Writer, cursor *membershipclient.LogCursorData, withDat
 		return err
 	}
 
-	return Cursor(writer, &membershipclient.Cursor{
-		HasMore:  cursor.HasMore,
-		PageSize: cursor.PageSize,
-		Next:     cursor.Next,
-		Previous: cursor.Previous,
+	return Cursor(writer, &CursorData{
+		HasMore:  cursor.GetHasMore(),
+		PageSize: cursor.GetPageSize(),
+		Next:     cursor.GetNext(),
+		Previous: cursor.GetPrevious(),
 	})
 }

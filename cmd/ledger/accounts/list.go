@@ -49,7 +49,25 @@ func (c *ListController) GetStore() *ListStore {
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	metadata, err := fctl.ParseMetadata(fctl.GetStringSlice(cmd, c.metadataFlag))
 	if err != nil {
@@ -71,7 +89,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 			"$and": body,
 		},
 	}
-	rsp, err := store.Client().Ledger.V2.ListAccounts(cmd.Context(), request)
+	rsp, err := stackClient.Ledger.V2.ListAccounts(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}

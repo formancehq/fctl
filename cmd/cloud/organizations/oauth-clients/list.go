@@ -1,14 +1,17 @@
 package oauth_clients
 
 import (
+	"fmt"
+
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type List struct {
-	Cursor membershipclient.ReadOrganizationClientsResponseData `json:"cursor"`
+	Cursor components.ReadOrganizationClientsResponseData `json:"cursor"`
 }
 
 type ListController struct {
@@ -41,21 +44,29 @@ func (c *ListController) GetStore() *List {
 }
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	req := store.Client().OrganizationClientsRead(cmd.Context(), organizationID)
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
 
 	pageSize, err := fctl.GetPageSize(cmd)
 	if err != nil {
 		return nil, err
-	}
-
-	if pageSize > 0 {
-		req = req.PageSize(pageSize)
 	}
 
 	cursor, err := fctl.GetCursor(cmd)
@@ -63,16 +74,29 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, err
 	}
 
-	if cursor != "" {
-		req = req.Cursor(cursor)
+	request := operations.OrganizationClientsReadRequest{
+		OrganizationID: organizationID,
 	}
 
-	response, _, err := req.Execute()
+	if pageSize > 0 {
+		pageSizeInt64 := int64(pageSize)
+		request.PageSize = &pageSizeInt64
+	}
+
+	if cursor != "" {
+		request.Cursor = &cursor
+	}
+
+	response, err := apiClient.OrganizationClientsRead(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Cursor = response.Data
+	if response.ReadOrganizationClientsResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	c.store.Cursor = response.ReadOrganizationClientsResponse.GetData()
 
 	return c, nil
 }

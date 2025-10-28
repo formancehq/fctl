@@ -3,15 +3,14 @@ package bankaccounts
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"errors"
 
 	"github.com/formancehq/fctl/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type ForwardStore struct {
@@ -59,7 +58,25 @@ func (c *ForwardController) GetStore() *ForwardStore {
 }
 
 func (c *ForwardController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
@@ -69,7 +86,7 @@ func (c *ForwardController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		return nil, fmt.Errorf("bank accounts are only supported in >= v1.0.0")
 	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to forward a bank account to a connector") {
+	if !fctl.CheckStackApprobation(cmd, "You are about to forward a bank account to a connector") {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -85,7 +102,7 @@ func (c *ForwardController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 
 	if c.PaymentsVersion < versions.V3 {
 		//nolint:gosimple
-		response, err := store.Client().Payments.V1.ForwardBankAccount(cmd.Context(), operations.ForwardBankAccountRequest{
+		response, err := stackClient.Payments.V1.ForwardBankAccount(cmd.Context(), operations.ForwardBankAccountRequest{
 			ForwardBankAccountRequest: shared.ForwardBankAccountRequest{
 				ConnectorID: connectorID,
 			},
@@ -105,7 +122,7 @@ func (c *ForwardController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		return c, nil
 	}
 
-	response, err := store.Client().Payments.V3.ForwardBankAccount(cmd.Context(), operations.V3ForwardBankAccountRequest{
+	response, err := stackClient.Payments.V3.ForwardBankAccount(cmd.Context(), operations.V3ForwardBankAccountRequest{
 		V3ForwardBankAccountRequest: &shared.V3ForwardBankAccountRequest{
 			ConnectorID: connectorID,
 		},

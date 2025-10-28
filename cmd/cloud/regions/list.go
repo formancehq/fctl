@@ -1,17 +1,18 @@
 package regions
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-
-	"github.com/formancehq/fctl/membershipclient"
-	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type ListStore struct {
-	Regions []membershipclient.AnyRegion `json:"regions"`
+	Regions []components.AnyRegion `json:"regions"`
 }
 type ListController struct {
 	store *ListStore
@@ -44,48 +45,69 @@ func (c *ListController) GetStore() *ListStore {
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetMembershipStore(cmd.Context())
-
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	regionsResponse, _, err := store.Client().ListRegions(cmd.Context(), organizationID).Execute()
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Regions = regionsResponse.Data
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	request := operations.ListRegionsRequest{
+		OrganizationID: organizationID,
+	}
+
+	response, err := apiClient.ListRegions(cmd.Context(), request)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.ListRegionsResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	c.store.Regions = response.ListRegionsResponse.GetData()
 
 	return c, nil
 }
 
 func (c *ListController) Render(cmd *cobra.Command, args []string) error {
-	tableData := fctl.Map(c.store.Regions, func(i membershipclient.AnyRegion) []string {
+	tableData := fctl.Map(c.store.Regions, func(i components.AnyRegion) []string {
 		return []string{
-			i.Id,
-			i.Name,
-			i.BaseUrl,
-			fctl.BoolToString(i.Public),
-			fctl.BoolToString(i.Active),
+			i.GetID(),
+			i.GetName(),
+			i.GetBaseURL(),
+			fctl.BoolToString(i.GetPublic()),
+			fctl.BoolToString(i.GetActive()),
 			func() string {
-				if i.LastPing != nil {
-					return i.LastPing.Format(time.RFC3339)
+				if ping := i.GetLastPing(); ping != nil {
+					return ping.Format(time.RFC3339)
 				}
 				return ""
 			}(),
 			func() string {
-				if i.Creator != nil {
-					return i.Creator.Email
+				if creator := i.GetCreator(); creator != nil {
+					return creator.GetEmail()
 				}
 				return "Formance Cloud"
 			}(),
 			func() string {
-				if i.Version == nil {
-					return ""
+				if version := i.GetVersion(); version != nil {
+					return *version
 				}
-				return *i.Version
+				return ""
 			}(),
 		}
 	})

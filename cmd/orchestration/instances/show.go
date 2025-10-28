@@ -1,17 +1,15 @@
 package instances
 
 import (
+	"fmt"
 	"time"
-
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
 	"github.com/formancehq/fctl/cmd/orchestration/internal"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type InstancesShowStore struct {
@@ -48,17 +46,35 @@ func (c *InstancesShowController) GetStore() *InstancesShowStore {
 }
 
 func (c *InstancesShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	res, err := store.Client().Orchestration.V1.GetInstance(cmd.Context(), operations.GetInstanceRequest{
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := stackClient.Orchestration.V1.GetInstance(cmd.Context(), operations.GetInstanceRequest{
 		InstanceID: args[0],
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "reading instance")
+		return nil, fmt.Errorf("reading instance: %w", err)
 	}
 
 	c.store.WorkflowInstance = res.GetWorkflowInstanceResponse.Data
-	response, err := store.Client().Orchestration.V1.GetWorkflow(cmd.Context(), operations.GetWorkflowRequest{
+	response, err := stackClient.Orchestration.V1.GetWorkflow(cmd.Context(), operations.GetWorkflowRequest{
 		FlowID: res.GetWorkflowInstanceResponse.Data.WorkflowID,
 	})
 	if err != nil {

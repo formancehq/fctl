@@ -3,15 +3,12 @@ package balances
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
-
 	"github.com/formancehq/fctl/cmd/wallets/internal"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type ListStore struct {
@@ -50,9 +47,27 @@ func (c *ListController) GetStore() *ListStore {
 }
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	walletID, err := internal.RequireWalletID(cmd, store.Client())
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	walletID, err := internal.RequireWalletID(cmd, stackClient)
 	if err != nil {
 		return nil, err
 	}
@@ -60,9 +75,9 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	request := operations.ListBalancesRequest{
 		ID: walletID,
 	}
-	response, err := store.Client().Wallets.V1.ListBalances(cmd.Context(), request)
+	response, err := stackClient.Wallets.V1.ListBalances(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "listing balance")
+		return nil, fmt.Errorf("listing balance: %w", err)
 	}
 
 	if response.StatusCode >= 300 {

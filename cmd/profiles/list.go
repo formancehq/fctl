@@ -37,15 +37,19 @@ func (c *ProfilesListController) GetStore() *ProfilesListStore {
 }
 
 func (c *ProfilesListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	cfg, err := fctl.GetConfig(cmd)
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	p := fctl.MapKeys(cfg.GetProfiles())
-	currentProfileName := fctl.GetCurrentProfileName(cmd, cfg)
+	profiles, err := fctl.ListProfiles(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	for _, k := range p {
+	currentProfileName := fctl.GetCurrentProfileName(cmd, *cfg)
+
+	for _, k := range profiles {
 		c.store.Profiles = append(c.store.Profiles, &Profile{
 			Name: k,
 			Active: func(k string) string {

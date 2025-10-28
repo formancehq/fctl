@@ -1,16 +1,18 @@
 package users
 
 import (
+	"fmt"
+
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-
-	"github.com/formancehq/fctl/membershipclient"
-	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type UnlinkStore struct {
-	Stack  *membershipclient.Stack `json:"stack"`
-	Status string                  `json:"status"`
+	Stack  *components.Stack `json:"stack"`
+	Status string            `json:"status"`
 }
 type UnlinkController struct {
 	store *UnlinkStore
@@ -20,7 +22,7 @@ var _ fctl.Controller[*UnlinkStore] = (*UnlinkController)(nil)
 
 func NewDefaultUnlinkStore() *UnlinkStore {
 	return &UnlinkStore{
-		Stack:  &membershipclient.Stack{},
+		Stack:  &components.Stack{},
 		Status: "",
 	}
 }
@@ -44,15 +46,39 @@ func (c *UnlinkController) GetStore() *UnlinkStore {
 }
 
 func (c *UnlinkController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStackStore(cmd.Context())
-
-	res, err := store.Client().DeleteStackUserAccess(cmd.Context(), store.OrganizationId(), store.StackId(), args[0]).Execute()
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	if res.StatusCode > 300 {
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
 		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	request := operations.DeleteStackUserAccessRequest{
+		OrganizationID: organizationID,
+		StackID:        stackID,
+		UserID:         args[0],
+	}
+
+	response, err := apiClient.DeleteStackUserAccess(cmd.Context(), request)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.Error != nil {
+		return nil, fmt.Errorf("error deleting stack user access: %s", response.Error.GetErrorCode())
 	}
 
 	return c, nil

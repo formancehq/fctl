@@ -1,0 +1,10 @@
+# ListApplicationsResponse
+
+
+## Fields
+
+| Field                                                                                       | Type                                                                                        | Required                                                                                    | Description                                                                                 |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                  | [components.HTTPMetadata](../../models/components/httpmetadata.md)                          | :heavy_check_mark:                                                                          | N/A                                                                                         |
+| `ListApplicationsResponse`                                                                  | [*components.ListApplicationsResponse](../../models/components/listapplicationsresponse.md) | :heavy_minus_sign:                                                                          | List of applications                                                                        |
+| `Error`                                                                                     | [*components.Error](../../models/components/error.md)                                       | :heavy_minus_sign:                                                                          | Error                                                                                       |

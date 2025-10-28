@@ -1,13 +1,12 @@
 package webhooks
 
 import (
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"fmt"
 
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type ActivateWebhookStore struct {
@@ -32,8 +31,26 @@ func (c *ActivateWebhookController) GetStore() *ActivateWebhookStore {
 }
 
 func (c *ActivateWebhookController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are bout to activate a webhook") {
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+	if !fctl.CheckStackApprobation(cmd, "You are about to activate a webhook") {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -41,9 +58,9 @@ func (c *ActivateWebhookController) Run(cmd *cobra.Command, args []string) (fctl
 		ID: args[0],
 	}
 
-	_, err := store.Client().Webhooks.V1.ActivateConfig(cmd.Context(), request)
+	_, err = stackClient.Webhooks.V1.ActivateConfig(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "activating config")
+		return nil, fmt.Errorf("activating config: %w", err)
 	}
 
 	return c, nil

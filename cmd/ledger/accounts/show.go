@@ -48,10 +48,28 @@ func (c *ShowController) GetStore() *ShowStore {
 
 func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	ledger := fctl.GetString(cmd, internal.LedgerFlag)
-	response, err := store.Client().Ledger.V1.GetAccount(cmd.Context(), operations.GetAccountRequest{
+	response, err := stackClient.Ledger.V1.GetAccount(cmd.Context(), operations.GetAccountRequest{
 		Address: args[0],
 		Ledger:  ledger,
 	})

@@ -1,36 +1,37 @@
 package profiles
 
 import (
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
+	"fmt"
+	"os"
+	"strings"
 
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
-type ProfilesUseStore struct {
-	Success bool `json:"success"`
+type UseStore struct {
 }
-type ProfilesUseController struct {
-	store *ProfilesUseStore
-}
-
-var _ fctl.Controller[*ProfilesUseStore] = (*ProfilesUseController)(nil)
-
-func NewDefaultProfilesUseStore() *ProfilesUseStore {
-	return &ProfilesUseStore{
-		Success: false,
-	}
+type UseController struct {
+	store *UseStore
 }
 
-func NewProfilesUseController() *ProfilesUseController {
-	return &ProfilesUseController{
+var _ fctl.Controller[*UseStore] = (*UseController)(nil)
+
+func NewDefaultProfilesUseStore() *UseStore {
+	return &UseStore{}
+}
+
+func NewProfilesUseController() *UseController {
+	return &UseController{
 		store: NewDefaultProfilesUseStore(),
 	}
 }
 
-func ProfileNamesAutoCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	ret, err := fctl.ListProfiles(cmd, toComplete)
+func ProfileNamesAutoCompletion(cmd *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	ret, err := fctl.ListProfiles(cmd, func(s string) bool {
+		return strings.HasPrefix(s, toComplete)
+	})
 	if err != nil {
 		return []string{}, cobra.ShellCompDirectiveError
 	}
@@ -38,26 +39,33 @@ func ProfileNamesAutoCompletion(cmd *cobra.Command, args []string, toComplete st
 	return ret, cobra.ShellCompDirectiveNoFileComp
 }
 
-func (c *ProfilesUseController) GetStore() *ProfilesUseStore {
+func (c *UseController) GetStore() *UseStore {
 	return c.store
 }
 
-func (c *ProfilesUseController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	config, err := fctl.GetConfig(cmd)
+func (c *UseController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+	config, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	config.SetCurrentProfileName(args[0])
-	if err := config.Persist(); err != nil {
-		return nil, errors.Wrap(err, "Updating config")
+	_, err = fctl.LoadProfile(cmd, args[0])
+	if os.IsNotExist(err) {
+		return nil, fmt.Errorf("profile %s not found", args[0])
+	}
+	if err != nil {
+		return nil, err
 	}
 
-	c.store.Success = true
+	config.CurrentProfile = args[0]
+	if err := fctl.WriteConfig(cmd, *config); err != nil {
+		return nil, fmt.Errorf("Updating config: %w", err)
+	}
+
 	return c, nil
 }
 
-func (c *ProfilesUseController) Render(cmd *cobra.Command, args []string) error {
+func (c *UseController) Render(cmd *cobra.Command, _ []string) error {
 	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Selected profile updated!")
 	return nil
 }

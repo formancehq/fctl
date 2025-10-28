@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/formancehq/go-libs/v3/pointer"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
-	"github.com/formancehq/go-libs/pointer"
 
 	fctl "github.com/formancehq/fctl/pkg"
 )
@@ -62,8 +62,27 @@ func (c *CreateController) GetStore() *CreateStore {
 }
 
 func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to create a new ledger") {
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to create a new ledger") {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -81,7 +100,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		features[parts[0]] = parts[1]
 	}
 
-	_, err = store.Client().Ledger.V2.CreateLedger(cmd.Context(), operations.V2CreateLedgerRequest{
+	_, err = stackClient.Ledger.V2.CreateLedger(cmd.Context(), operations.V2CreateLedgerRequest{
 		V2CreateLedgerRequest: shared.V2CreateLedgerRequest{
 			Bucket:   pointer.For(fctl.GetString(cmd, bucketNameFlag)),
 			Metadata: metadata,

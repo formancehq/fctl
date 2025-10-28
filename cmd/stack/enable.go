@@ -1,17 +1,20 @@
 package stack
 
 import (
-	"github.com/pkg/errors"
+	"errors"
+	"fmt"
+
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
+	fctl "github.com/formancehq/fctl/pkg"
+
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-
-	"github.com/formancehq/fctl/membershipclient"
-	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type EnableStore struct {
-	Stack  *membershipclient.Stack `json:"stack"`
-	Status string                  `json:"status"`
+	Stack  *components.Stack `json:"stack"`
+	Status string            `json:"status"`
 }
 type EnableController struct {
 	store *EnableStore
@@ -21,7 +24,7 @@ var _ fctl.Controller[*EnableStore] = (*EnableController)(nil)
 
 func NewEnableStore() *EnableStore {
 	return &EnableStore{
-		Stack:  &membershipclient.Stack{},
+		Stack:  &components.Stack{},
 		Status: "",
 	}
 }
@@ -54,30 +57,62 @@ func (c *EnableController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		stackNameFlag = "name"
 	)
 
-	store := fctl.GetOrganizationStore(cmd)
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	var stack *membershipclient.Stack
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	var stack *components.Stack
 	if len(args) == 1 {
 		if fctl.GetString(cmd, stackNameFlag) != "" {
-			return nil, errors.New("need either an id of a name specified using --name flag")
+			return nil, errors.New("need either an id or a name specified using --name flag")
 		}
 
-		rsp, _, err := store.Client().GetStack(cmd.Context(), store.OrganizationId(), args[0]).Execute()
+		getRequest := operations.GetStackRequest{
+			OrganizationID: organizationID,
+			StackID:        args[0],
+		}
+		rsp, err := apiClient.GetStack(cmd.Context(), getRequest)
 		if err != nil {
 			return nil, err
 		}
-		stack = rsp.Data
+		if rsp.CreateStackResponse == nil {
+			return nil, fmt.Errorf("unexpected response: no data")
+		}
+		stack = rsp.CreateStackResponse.GetData()
 	} else {
 		if fctl.GetString(cmd, stackNameFlag) == "" {
 			return nil, errors.New("need either an id of a name specified using --name flag")
 		}
-		stacks, _, err := store.Client().ListStacks(cmd.Context(), store.OrganizationId()).Execute()
-		if err != nil {
-			return nil, errors.Wrap(err, "listing stacks")
+		listRequest := operations.ListStacksRequest{
+			OrganizationID: organizationID,
 		}
-		for _, s := range stacks.Data {
-			if s.Name == fctl.GetString(cmd, stackNameFlag) {
-				stack = &s
+		stacksResponse, err := apiClient.ListStacks(cmd.Context(), listRequest)
+		if err != nil {
+			return nil, fmt.Errorf("listing stacks: %w", err)
+		}
+		if stacksResponse.ListStacksResponse == nil {
+			return nil, fmt.Errorf("unexpected response: no data")
+		}
+		for _, s := range stacksResponse.ListStacksResponse.GetData() {
+			if s.GetName() == fctl.GetString(cmd, stackNameFlag) {
+				stackData := s
+				stack = &stackData
 				break
 			}
 		}
@@ -86,12 +121,16 @@ func (c *EnableController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, errors.New("Stack not found")
 	}
 
-	if !fctl.CheckStackApprobation(cmd, stack, "You are about to enable stack '%s'", stack.Name) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to enable stack '%s'", stack.GetName()) {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	if _, err := store.Client().EnableStack(cmd.Context(), store.OrganizationId(), stack.Id).Execute(); err != nil {
-		return nil, errors.Wrap(err, "stack enable")
+	enableRequest := operations.EnableStackRequest{
+		OrganizationID: organizationID,
+		StackID:        stack.GetID(),
+	}
+	if _, err := apiClient.EnableStack(cmd.Context(), enableRequest); err != nil {
+		return nil, fmt.Errorf("stack enable: %w", err)
 	}
 
 	c.store.Stack = stack

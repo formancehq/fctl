@@ -15,7 +15,6 @@ func NewCommand() *cobra.Command {
 	cmd := fctl.NewMembershipCommand("apps",
 		fctl.WithShortDescription("* New * Apps manifests management"),
 		fctl.WithPersistentBoolFlag("experimental", false, "Enable experimental commands"),
-		fctl.WithPersistentStringFlag(fctl.FrameworkURIFlag, "https://deploy-server.staging.formance.cloud", "Framework URI"),
 		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
 			ok, err := cmd.Flags().GetBool("experimental")
 			if err != nil {
@@ -24,10 +23,6 @@ func NewCommand() *cobra.Command {
 
 			if !ok {
 				return fmt.Errorf("the apps command is experimental, please use the --experimental flag to enable it")
-			}
-
-			if err := fctl.NewDeployServerStore(cmd); err != nil {
-				return err
 			}
 
 			return nil

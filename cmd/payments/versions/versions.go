@@ -22,9 +22,27 @@ type VersionController interface {
 	SetVersion(Version)
 }
 
-func GetPaymentsVersion(cmd *cobra.Command, args []string, controller VersionController) error {
-	store := fctl.GetStackStore(cmd.Context())
-	response, err := store.Client().Payments.V1.PaymentsgetServerInfo(cmd.Context())
+func GetPaymentsVersion(cmd *cobra.Command, _ []string, controller VersionController) error {
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return err
+	}
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return err
+	}
+	response, err := stackClient.Payments.V1.PaymentsgetServerInfo(cmd.Context())
 	if err != nil {
 		return err
 	}

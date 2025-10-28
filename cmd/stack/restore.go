@@ -4,31 +4,31 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"errors"
 
 	"github.com/formancehq/fctl/cmd/stack/internal"
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type StackRestoreStore struct {
-	Stack    *membershipclient.Stack     `json:"stack"`
+	Stack    *components.Stack           `json:"stack"`
 	Versions *shared.GetVersionsResponse `json:"versions"`
 }
 type StackRestoreController struct {
 	store  *StackRestoreStore
-	config *fctl.Config
+	config fctl.Config
 }
 
 var _ fctl.Controller[*StackRestoreStore] = (*StackRestoreController)(nil)
 
 func NewDefaultVersionStore() *StackRestoreStore {
 	return &StackRestoreStore{
-		Stack:    &membershipclient.Stack{},
+		Stack:    &components.Stack{},
 		Versions: &shared.GetVersionsResponse{},
 	}
 }
@@ -55,30 +55,64 @@ func (c *StackRestoreController) GetStore() *StackRestoreStore {
 }
 
 func (c *StackRestoreController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetOrganizationStore(cmd)
-	var stack *membershipclient.Stack
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+	var stack *components.Stack
 	if len(args) == 1 {
-		rsp, _, err := store.Client().GetStack(cmd.Context(), store.OrganizationId(), args[0]).Execute()
+		getRequest := operations.GetStackRequest{
+			OrganizationID: organizationID,
+			StackID:        args[0],
+		}
+		rsp, err := apiClient.GetStack(cmd.Context(), getRequest)
 		if err != nil {
 			return nil, err
 		}
-		stack = rsp.Data
+		if rsp.CreateStackResponse == nil {
+			return nil, fmt.Errorf("unexpected response: no data")
+		}
+		stack = rsp.CreateStackResponse.GetData()
 	}
 
 	if stack == nil {
 		return nil, errors.New("Stack not found")
 	}
 
-	if !fctl.CheckStackApprobation(cmd, stack, "You are about to restore stack '%s'", stack.Name) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to restore stack '%s'", stack.GetName()) {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	response, _, err := store.Client().
-		RestoreStack(cmd.Context(), store.OrganizationId(), args[0]).
-		Execute()
+	restoreRequest := operations.RestoreStackRequest{
+		OrganizationID: organizationID,
+		StackID:        args[0],
+	}
+
+	response, err := apiClient.RestoreStack(cmd.Context(), restoreRequest)
 	if err != nil {
 		return nil, err
 	}
+
+	if response.CreateStackResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	restoredStackData := response.CreateStackResponse.GetData()
 
 	if !fctl.GetBool(cmd, nowaitFlag) {
 		spinner, err := pterm.DefaultSpinner.Start("Waiting services availability")
@@ -86,7 +120,7 @@ func (c *StackRestoreController) Run(cmd *cobra.Command, args []string) (fctl.Re
 			return nil, err
 		}
 
-		stack, err = waitStackReady(cmd, store.MembershipClient, response.Data.OrganizationId, response.Data.Id)
+		stack, err = waitStackReady(cmd, apiClient, restoredStackData.GetOrganizationID(), restoredStackData.GetID())
 		if err != nil {
 			return nil, err
 		}
@@ -97,10 +131,18 @@ func (c *StackRestoreController) Run(cmd *cobra.Command, args []string) (fctl.Re
 
 		c.store.Stack = stack
 	} else {
-		c.store.Stack = response.Data
+		c.store.Stack = restoredStackData
 	}
 
-	stackClient, err := fctl.NewStackClient(cmd, store.Config, response.Data)
+	stackClient, err := fctl.NewStackClient(
+		cmd,
+		relyingParty,
+		fctl.NewPTermDialog(),
+		profileName,
+		*profile,
+		restoredStackData.GetOrganizationID(),
+		restoredStackData.GetID(),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -115,11 +157,11 @@ func (c *StackRestoreController) Run(cmd *cobra.Command, args []string) (fctl.Re
 	}
 
 	c.store.Versions = versions.GetVersionsResponse
-	c.config = store.Config
+	c.config = *cfg
 
 	return c, nil
 }
 
-func (c *StackRestoreController) Render(cmd *cobra.Command, args []string) error {
-	return internal.PrintStackInformation(cmd.OutOrStdout(), fctl.GetCurrentProfile(cmd, c.config), c.store.Stack, c.store.Versions)
+func (c *StackRestoreController) Render(cmd *cobra.Command, _ []string) error {
+	return internal.PrintStackInformation(cmd.OutOrStdout(), c.store.Stack, c.store.Versions)
 }

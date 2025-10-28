@@ -1,70 +1,61 @@
 package profiles
 
 import (
-	"github.com/pkg/errors"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-
-	fctl "github.com/formancehq/fctl/pkg"
 )
 
-type ProfilesRenameStore struct {
+type RenameStore struct {
 	Success bool `json:"success"`
 }
-type ProfilesRenameController struct {
-	store *ProfilesRenameStore
+type RenameController struct {
+	store *RenameStore
 }
 
-var _ fctl.Controller[*ProfilesRenameStore] = (*ProfilesRenameController)(nil)
+var _ fctl.Controller[*RenameStore] = (*RenameController)(nil)
 
-func NewDefaultProfilesRenameStore() *ProfilesRenameStore {
-	return &ProfilesRenameStore{
+func NewDefaultProfilesRenameStore() *RenameStore {
+	return &RenameStore{
 		Success: false,
 	}
 }
 
-func NewProfilesRenameController() *ProfilesRenameController {
-	return &ProfilesRenameController{
+func NewProfilesRenameController() *RenameController {
+	return &RenameController{
 		store: NewDefaultProfilesRenameStore(),
 	}
 }
 
-func (c *ProfilesRenameController) GetStore() *ProfilesRenameStore {
+func (c *RenameController) GetStore() *RenameStore {
 	return c.store
 }
 
-func (c *ProfilesRenameController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+func (c *RenameController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 	oldName := args[0]
 	newName := args[1]
 
-	config, err := fctl.GetConfig(cmd)
+	config, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	p := config.GetProfile(oldName)
-	if p == nil {
-		return nil, errors.New("profile not found")
-	}
-
-	if err := config.DeleteProfile(oldName); err != nil {
+	if err := fctl.RenameProfile(cmd, oldName, newName); err != nil {
 		return nil, err
 	}
-	if config.GetCurrentProfileName() == oldName {
-		config.SetCurrentProfile(newName, p)
-	} else {
-		config.SetProfile(newName, p)
-	}
 
-	if err := config.Persist(); err != nil {
-		return nil, errors.Wrap(config.Persist(), "Updating config")
+	if config.CurrentProfile == oldName {
+		config.CurrentProfile = newName
+		if err := fctl.WriteConfig(cmd, *config); err != nil {
+			return nil, err
+		}
 	}
 
 	c.store.Success = true
 	return c, nil
 }
 
-func (c *ProfilesRenameController) Render(cmd *cobra.Command, args []string) error {
+func (c *RenameController) Render(cmd *cobra.Command, args []string) error {
 	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Profile renamed!")
 	return nil
 }

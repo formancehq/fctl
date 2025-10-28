@@ -1,14 +1,13 @@
 package wallets
 
 import (
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"fmt"
 
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type CreateStore struct {
@@ -53,9 +52,27 @@ func (c *CreateController) GetStore() *CreateStore {
 }
 
 func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to create a wallet") {
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to create a wallet") {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -71,9 +88,9 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		},
 		IdempotencyKey: fctl.Ptr(fctl.GetString(cmd, c.ikFlag)),
 	}
-	response, err := store.Client().Wallets.V1.CreateWallet(cmd.Context(), request)
+	response, err := stackClient.Wallets.V1.CreateWallet(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "creating wallet")
+		return nil, fmt.Errorf("creating wallet: %w", err)
 	}
 
 	c.store.WalletID = response.CreateWalletResponse.Data.ID

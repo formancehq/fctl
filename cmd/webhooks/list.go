@@ -1,17 +1,15 @@
 package webhooks
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
-
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type ListWebhookStore struct {
@@ -39,11 +37,29 @@ func (c *ListWebhookController) GetStore() *ListWebhookStore {
 }
 
 func (c *ListWebhookController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
-	request := operations.GetManyConfigsRequest{}
-	response, err := store.Client().Webhooks.V1.GetManyConfigs(cmd.Context(), request)
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
-		return nil, errors.Wrap(err, "listing all config")
+		return nil, err
+	}
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+	request := operations.GetManyConfigsRequest{}
+	response, err := stackClient.Webhooks.V1.GetManyConfigs(cmd.Context(), request)
+	if err != nil {
+		return nil, fmt.Errorf("listing all config: %w", err)
 	}
 
 	c.store.Webhooks = response.ConfigsResponse.Cursor.Data
@@ -72,7 +88,7 @@ func (c *ListWebhookController) Render(cmd *cobra.Command, args []string) error 
 				[]string{"ID", "Created at", "Secret", "Endpoint", "Active", "Event types"},
 			),
 		).Render(); err != nil {
-		return errors.Wrap(err, "rendering table")
+		return fmt.Errorf("rendering table: %w", err)
 	}
 	return nil
 }

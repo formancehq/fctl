@@ -63,13 +63,32 @@ func (c *UiController) GetStore() *UiStruct {
 }
 
 func (c *UiController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
-	serverInfo, err := fctl.MembershipServerInfo(cmd.Context(), store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	if v := serverInfo.ConsoleURL; v != nil {
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	serverInfo, err := fctl.MembershipServerInfo(cmd.Context(), apiClient)
+	if err != nil {
+		return nil, err
+	}
+
+	if v := serverInfo.GetConsoleURL(); v != nil {
 		c.store.UIUrl = *v
 	}
 
@@ -81,7 +100,6 @@ func (c *UiController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, 
 }
 
 func (c *UiController) Render(cmd *cobra.Command, args []string) error {
-
 	fmt.Println("Opening url: ", c.store.UIUrl)
 
 	return nil
@@ -93,8 +111,5 @@ func NewCommand() *cobra.Command {
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*UiStruct](NewUiController()),
-		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
-			return fctl.NewMembershipStore(cmd)
-		}),
 	)
 }

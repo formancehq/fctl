@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/formancehq/go-libs/v3/pointer"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/formancehq/go-libs/collectionutils"
-	"github.com/formancehq/go-libs/pointer"
 
 	internal "github.com/formancehq/fctl/cmd/ledger/internal"
 	fctl "github.com/formancehq/fctl/pkg"
@@ -75,8 +74,26 @@ func (c *ListController) GetStore() *ListStore {
 	return c.store
 }
 
-func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	metadata, err := fctl.ParseMetadata(fctl.GetStringSlice(cmd, c.metadataFlag))
 	if err != nil {
@@ -104,20 +121,20 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	if startTime := fctl.GetString(cmd, c.startTimeFlag); startTime != "" {
 		t, err := time.Parse(time.RFC3339Nano, startTime)
 		if err != nil {
-			return nil, errors.Wrap(err, "parsing start time")
+			return nil, fmt.Errorf("parsing start time: %w", err)
 		}
 		req.StartTime = pointer.For(t)
 	}
 	if endTime := fctl.GetString(cmd, c.endTimeFlag); endTime != "" {
 		t, err := time.Parse(time.RFC3339Nano, endTime)
 		if err != nil {
-			return nil, errors.Wrap(err, "parsing end time")
+			return nil, fmt.Errorf("parsing end time: %w", err)
 		}
 		req.EndTime = pointer.For(t)
 	}
 	req.Metadata = collectionutils.ConvertMap(metadata, collectionutils.ToAny[string])
 
-	response, err := store.Client().Ledger.V1.ListTransactions(cmd.Context(), req)
+	response, err := stackClient.Ledger.V1.ListTransactions(cmd.Context(), req)
 	if err != nil {
 		return nil, err
 	}

@@ -57,7 +57,25 @@ func (c *UpdateStatusController) GetStore() *UpdateStatusStore {
 }
 
 func (c *UpdateStatusController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
@@ -67,12 +85,12 @@ func (c *UpdateStatusController) Run(cmd *cobra.Command, args []string) (fctl.Re
 		return nil, fmt.Errorf("transfer initiation updates are only supported in >= v2.0.0")
 	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to update the status of the transfer initiation '%s' to '%s'", args[0], args[1]) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to update the status of the transfer initiation '%s' to '%s'", args[0], args[1]) {
 		return nil, fctl.ErrMissingApproval
 	}
 
 	//nolint:gosimple
-	response, err := store.Client().Payments.V1.UpdateTransferInitiationStatus(cmd.Context(), operations.UpdateTransferInitiationStatusRequest{
+	response, err := stackClient.Payments.V1.UpdateTransferInitiationStatus(cmd.Context(), operations.UpdateTransferInitiationStatusRequest{
 		UpdateTransferInitiationStatusRequest: shared.UpdateTransferInitiationStatusRequest{
 			Status: shared.Status(args[1]),
 		},

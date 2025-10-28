@@ -1,13 +1,12 @@
 package wallets
 
 import (
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"fmt"
 
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type UpdateStore struct {
@@ -52,9 +51,27 @@ func (c *UpdateController) GetStore() *UpdateStore {
 }
 
 func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to update a wallets") {
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to update a wallets") {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -63,14 +80,14 @@ func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
-	_, err = store.Client().Wallets.V1.UpdateWallet(cmd.Context(), operations.UpdateWalletRequest{
+	_, err = stackClient.Wallets.V1.UpdateWallet(cmd.Context(), operations.UpdateWalletRequest{
 		RequestBody: &operations.UpdateWalletRequestBody{
 			Metadata: metadata,
 		},
 		ID: args[0],
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "updating wallet")
+		return nil, fmt.Errorf("updating wallet: %w", err)
 	}
 
 	c.store.Success = true

@@ -9,15 +9,12 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/cmd/stack/internal"
-	"github.com/formancehq/fctl/membershipclient"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/internal/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 )
 
-func waitStackReady(cmd *cobra.Command, client *fctl.MembershipClient, organizationId, stackId string) (*membershipclient.Stack, error) {
-	var resp *http.Response
-	var err error
-	var stackRsp *membershipclient.CreateStackResponse
-
+func waitStackReady(cmd *cobra.Command, client *membershipclient.SDK, organizationId, stackId string) (*components.Stack, error) {
 	waitTime := 2 * time.Second
 	sum := 2 * time.Second
 
@@ -29,28 +26,39 @@ func waitStackReady(cmd *cobra.Command, client *fctl.MembershipClient, organizat
 	}
 
 	for {
-		err = client.RefreshIfNeeded(cmd)
+		request := operations.GetStackRequest{
+			OrganizationID: organizationId,
+			StackID:        stackId,
+		}
+
+		stackRsp, err := client.GetStack(cmd.Context(), request)
 		if err != nil {
 			return nil, err
 		}
 
-		stackRsp, resp, err = client.DefaultAPI.GetStack(cmd.Context(), organizationId, stackId).Execute()
-		if err != nil {
-			return nil, err
-		}
-		if resp.StatusCode == http.StatusNotFound {
+		if stackRsp.GetHTTPMeta().Response.StatusCode == http.StatusNotFound {
 			return nil, fmt.Errorf("stack %s not found", stackId)
 		}
 
-		if stackRsp.Data.Status == "READY" {
-			return stackRsp.Data, nil
+		if stackRsp.CreateStackResponse == nil {
+			return nil, fmt.Errorf("unexpected response: no data")
+		}
+
+		stackData := stackRsp.CreateStackResponse.GetData()
+
+		if stackData == nil {
+			return nil, fmt.Errorf("unexpected response: stack data is nil")
+		}
+
+		if stackData.GetStatus() == "READY" {
+			return stackData, nil
 		}
 
 		if sum > 10*time.Minute {
 			pterm.Warning.Printf("You can check fctl stack show %s --organization %s to see the status of the stack", stackId, organizationId)
 			problem := fmt.Errorf("there might a problem with the stack scheduling, if the problem persists, please contact the support")
 
-			err = internal.PrintStackInformation(cmd.OutOrStdout(), client.GetProfile(), stackRsp.Data, nil)
+			err = internal.PrintStackInformation(cmd.OutOrStdout(), stackData, nil)
 			if err != nil {
 				return nil, problem
 			}

@@ -4,15 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
-
 	"github.com/formancehq/fctl/cmd/payments/connectors/internal"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type PaymentsConnectorsMangoPayStore struct {
@@ -51,13 +48,31 @@ func (c *PaymentsConnectorsMangoPayController) GetStore() *PaymentsConnectorsMan
 }
 
 func (c *PaymentsConnectorsMangoPayController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to install connector '%s'", internal.MangoPayConnector) {
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to install connector '%s'", internal.MangoPayConnector) {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	script, err := fctl.ReadFile(cmd, store.Stack(), args[0])
+	script, err := fctl.ReadFile(cmd, args[0])
 	if err != nil {
 		return nil, err
 	}
@@ -73,9 +88,9 @@ func (c *PaymentsConnectorsMangoPayController) Run(cmd *cobra.Command, args []st
 			MangoPayConfig: &config,
 		},
 	}
-	response, err := store.Client().Payments.V1.InstallConnector(cmd.Context(), request)
+	response, err := stackClient.Payments.V1.InstallConnector(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "installing connector")
+		return nil, fmt.Errorf("installing connector: %w", err)
 	}
 
 	if response.StatusCode >= 300 {

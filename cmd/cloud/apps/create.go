@@ -41,18 +41,35 @@ func (c *CreateCtrl) GetStore() *Create {
 	return c.store
 }
 
-func (c *CreateCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	cfg, err := fctl.GetConfig(cmd)
+func (c *CreateCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
+
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
-	membershipStore := fctl.GetMembershipStore(cmd.Context())
-	organizationID, err := fctl.ResolveOrganizationID(cmd, cfg, membershipStore.Client())
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
 	if err != nil {
 		return nil, err
 	}
-	store := fctl.GetDeployServerStore(cmd.Context())
-	apps, err := store.Cli.CreateApp(cmd.Context(), components.CreateAppRequest{
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewAppDeployClient(
+		cmd,
+		relyingParty,
+		fctl.NewPTermDialog(),
+		profileName,
+		*profile,
+		organizationID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	apps, err := apiClient.CreateApp(cmd.Context(), components.CreateAppRequest{
 		OrganizationID: organizationID,
 	})
 	if err != nil {

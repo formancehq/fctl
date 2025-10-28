@@ -1,0 +1,9 @@
+# UpsertAuthenticationProviderRequest
+
+
+## Fields
+
+| Field                                                                                           | Type                                                                                            | Required                                                                                        | Description                                                                                     |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `OrganizationID`                                                                                | *string*                                                                                        | :heavy_check_mark:                                                                              | N/A                                                                                             |
+| `Body`                                                                                          | [*components.AuthenticationProviderData](../../models/components/authenticationproviderdata.md) | :heavy_minus_sign:                                                                              | N/A                                                                                             |

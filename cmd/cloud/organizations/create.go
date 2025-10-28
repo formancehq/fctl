@@ -1,17 +1,18 @@
 package organizations
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/go-libs/pointer"
-
 	"github.com/formancehq/fctl/cmd/cloud/organizations/internal"
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/go-libs/v3/pointer"
 )
 
 type CreateStore struct {
-	Organization *membershipclient.OrganizationExpanded `json:"organization"`
+	Organization *components.OrganizationExpanded `json:"organization"`
 }
 type CreateController struct {
 	store *CreateStore
@@ -35,9 +36,8 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithShortDescription("Create organization"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
-		fctl.WithStringFlag("default-stack-role", "", "Default Stack Role roles: (ADMIN,GUEST,NONE)"),
+		fctl.WithIntFlag("default-policy-id", 0, "Default policy id"),
 		fctl.WithStringFlag("domain", "", "Organization Domain"),
-		fctl.WithStringFlag("default-organization-role", "", "Default Organization Role roles: (ADMIN,GUEST)"),
 		fctl.WithConfirmFlag(),
 		fctl.WithController(NewCreateController()),
 	)
@@ -49,39 +49,54 @@ func (c *CreateController) GetStore() *CreateStore {
 
 func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetMembershipStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
 	if !fctl.CheckOrganizationApprobation(cmd, "You are about to create a new organization") {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	defaultStackRole := fctl.GetString(cmd, "default-stack-role")
-	defaultOrganizationRole := fctl.GetString(cmd, "default-organization-role")
+	defaultPolicyID := fctl.GetInt(cmd, "default-policy-id")
 	domain := fctl.GetString(cmd, "domain")
 
-	orgData := membershipclient.OrganizationData{
+	orgData := components.CreateOrganizationRequest{
 		Name: args[0],
 	}
 
-	if defaultOrganizationRole != "" {
-		orgData.DefaultOrganizationAccess = membershipclient.Role(defaultOrganizationRole).Ptr()
-	}
-
-	if defaultStackRole != "" {
-		orgData.DefaultStackAccess = membershipclient.Role(defaultStackRole).Ptr()
+	if defaultPolicyID != 0 {
+		orgData.DefaultPolicyID = pointer.For(int64(defaultPolicyID))
 	}
 
 	if domain != "" {
 		orgData.Domain = pointer.For(domain)
 	}
 
-	response, _, err := store.Client().
-		CreateOrganization(cmd.Context()).
-		Body(orgData).Execute()
+	response, err := apiClient.CreateOrganization(cmd.Context(), &orgData)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Organization = response.Data
+	if response.CreateOrganizationResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	c.store.Organization = response.CreateOrganizationResponse.GetData()
 
 	return c, nil
 }

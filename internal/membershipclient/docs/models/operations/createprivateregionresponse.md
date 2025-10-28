@@ -1,0 +1,10 @@
+# CreatePrivateRegionResponse
+
+
+## Fields
+
+| Field                                                                                               | Type                                                                                                | Required                                                                                            | Description                                                                                         |
+| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                          | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                  | :heavy_check_mark:                                                                                  | N/A                                                                                                 |
+| `CreatedPrivateRegionResponse`                                                                      | [*components.CreatedPrivateRegionResponse](../../models/components/createdprivateregionresponse.md) | :heavy_minus_sign:                                                                                  | Created region                                                                                      |
+| `Error`                                                                                             | [*components.Error](../../models/components/error.md)                                               | :heavy_minus_sign:                                                                                  | Error                                                                                               |
