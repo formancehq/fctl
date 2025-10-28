@@ -1,10 +1,10 @@
 package modules
 
 import (
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-
-	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type EnableStore struct {
@@ -39,8 +39,42 @@ func (c *EnableController) GetStore() *EnableStore {
 }
 
 func (c *EnableController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	mbStackStore := fctl.GetMembershipStackStore(cmd.Context())
-	_, err := mbStackStore.Client().EnableModule(cmd.Context(), mbStackStore.OrganizationId(), mbStackStore.StackId()).Name(args[0]).Execute()
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to enable a module") {
+		return nil, fctl.ErrMissingApproval
+	}
+
+	request := operations.EnableModuleRequest{
+		OrganizationID: organizationID,
+		StackID:        stackID,
+		Name:           args[0],
+	}
+
+	_, err = apiClient.EnableModule(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}

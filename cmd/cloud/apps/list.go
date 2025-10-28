@@ -1,13 +1,11 @@
 package apps
 
 import (
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
-	"github.com/formancehq/go-libs/pointer"
-
 	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/go-libs/v3/pointer"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type List struct {
@@ -46,20 +44,37 @@ func (c *ListCtrl) GetStore() *List {
 	return c.store
 }
 
-func (c *ListCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	cfg, err := fctl.GetConfig(cmd)
+func (c *ListCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
-	membershipStore := fctl.GetMembershipStore(cmd.Context())
-	organizationID, err := fctl.ResolveOrganizationID(cmd, cfg, membershipStore.Client())
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
 	if err != nil {
 		return nil, err
 	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
 	pageSize := fctl.GetInt(cmd, "page-size")
 	page := fctl.GetInt(cmd, "page")
-	store := fctl.GetDeployServerStore(cmd.Context())
-	apps, err := store.Cli.ListApps(
+
+	apiClient, err := fctl.NewAppDeployClient(
+		cmd,
+		relyingParty,
+		fctl.NewPTermDialog(),
+		profileName,
+		*profile,
+		organizationID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	apps, err := apiClient.ListApps(
 		cmd.Context(),
 		organizationID,
 		pointer.For(int64(page)),
@@ -74,7 +89,7 @@ func (c *ListCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, erro
 	return c, nil
 }
 
-func (c *ListCtrl) Render(cmd *cobra.Command, args []string) error {
+func (c *ListCtrl) Render(cmd *cobra.Command, _ []string) error {
 	data := [][]string{
 		{"Name", "ID", "Run Status", "Has Configuration Version"},
 	}
@@ -87,7 +102,7 @@ func (c *ListCtrl) Render(cmd *cobra.Command, args []string) error {
 				if w.CurrentRun == nil {
 					return "N/A"
 				}
-				return string(w.CurrentRun.Status)
+				return w.CurrentRun.Status
 			}(),
 			func() string {
 				if w.CurrentConfigurationVersion != nil {

@@ -1,11 +1,9 @@
 package profiles
 
 import (
-	"github.com/pkg/errors"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-
-	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type ResetStore struct {
@@ -34,16 +32,8 @@ func (c *ResetController) GetStore() *ResetStore {
 }
 
 func (c *ResetController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	config, err := fctl.GetConfig(cmd)
-	if err != nil {
+	if err := fctl.ResetProfile(cmd, args[0]); err != nil {
 		return nil, err
-	}
-	if err := config.ResetProfile(args[0]); err != nil {
-		return nil, err
-	}
-
-	if err := config.Persist(); err != nil {
-		return nil, errors.Wrap(err, "updating config")
 	}
 
 	c.store.Success = true

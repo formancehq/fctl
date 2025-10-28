@@ -1,17 +1,18 @@
 package modules
 
 import (
+	"fmt"
+
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
+	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/go-libs/time"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-
-	"github.com/formancehq/go-libs/time"
-
-	"github.com/formancehq/fctl/membershipclient"
-	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type ListStore struct {
-	*membershipclient.ListModulesResponse
+	Modules []components.Module `json:"modules"`
 }
 type ListController struct {
 	store *ListStore
@@ -43,14 +44,41 @@ func (c *ListController) GetStore() *ListStore {
 }
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	mbStackStore := fctl.GetMembershipStackStore(cmd.Context())
-
-	modules, _, err := mbStackStore.Client().ListModules(cmd.Context(), mbStackStore.OrganizationId(), mbStackStore.StackId()).Execute()
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.ListModulesResponse = modules
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	request := operations.ListModulesRequest{
+		OrganizationID: organizationID,
+		StackID:        stackID,
+	}
+
+	response, err := apiClient.ListModules(cmd.Context(), request)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.ListModulesResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	c.store.Modules = response.ListModulesResponse.GetData()
 
 	return c, nil
 }
@@ -58,13 +86,13 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 	header := []string{"Name", "State", "Cluster status", "Last state update", "Last cluster state update"}
 
-	tableData := fctl.Map(c.store.ListModulesResponse.Data, func(module membershipclient.Module) []string {
+	tableData := fctl.Map(c.store.Modules, func(module components.Module) []string {
 		return []string{
-			module.Name,
-			module.State,
-			module.Status,
-			time.Time{Time: module.LastStateUpdate}.String(),
-			time.Time{Time: module.LastStatusUpdate}.String(),
+			module.GetName(),
+			string(module.GetState()),
+			string(module.GetStatus()),
+			time.Time{Time: module.GetLastStateUpdate()}.String(),
+			time.Time{Time: module.GetLastStatusUpdate()}.String(),
 		}
 	})
 

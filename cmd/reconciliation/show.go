@@ -48,9 +48,27 @@ func (c *ShowController) GetStore() *ShowStore {
 }
 
 func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	response, err := store.Client().Reconciliation.V1.GetReconciliation(cmd.Context(), operations.GetReconciliationRequest{
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := stackClient.Reconciliation.V1.GetReconciliation(cmd.Context(), operations.GetReconciliationRequest{
 		ReconciliationID: args[0],
 	})
 	if err != nil {

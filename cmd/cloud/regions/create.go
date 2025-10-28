@@ -1,11 +1,13 @@
 package regions
 
 import (
+	"fmt"
+
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-
-	"github.com/formancehq/fctl/membershipclient"
-	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type CreateStore struct {
@@ -43,9 +45,22 @@ func (c *CreateController) GetStore() *CreateStore {
 
 func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetMembershipStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -60,17 +75,31 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		}
 	}
 
-	regionResponse, _, err := store.Client().CreatePrivateRegion(cmd.Context(), organizationID).
-		CreatePrivateRegionRequest(membershipclient.CreatePrivateRegionRequest{
-			Name: name,
-		}).
-		Execute()
+	reqBody := components.CreatePrivateRegionRequest{
+		Name: name,
+	}
+
+	request := operations.CreatePrivateRegionRequest{
+		OrganizationID: organizationID,
+		Body:           &reqBody,
+	}
+
+	response, err := apiClient.CreatePrivateRegion(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.RegionId = regionResponse.Data.Id
-	c.store.Secret = *regionResponse.Data.Secret.Clear
+	if response.CreatedPrivateRegionResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	region := response.CreatedPrivateRegionResponse.GetData()
+	c.store.RegionId = region.GetID()
+
+	secret := region.GetSecret()
+	if secret != nil && secret.GetClear() != nil {
+		c.store.Secret = *secret.GetClear()
+	}
 
 	return c, nil
 }

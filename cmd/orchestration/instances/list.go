@@ -1,16 +1,14 @@
 package instances
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
-
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type WorkflowInstance struct {
@@ -62,9 +60,27 @@ func (c *InstancesListController) GetStore() *InstancesListStore {
 }
 
 func (c *InstancesListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	response, err := store.Client().Orchestration.V1.ListInstances(cmd.Context(), operations.ListInstancesRequest{
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := stackClient.Orchestration.V1.ListInstances(cmd.Context(), operations.ListInstancesRequest{
 		Running:    fctl.Ptr(fctl.GetBool(cmd, c.runningFlag)),
 		WorkflowID: fctl.Ptr(fctl.GetString(cmd, c.workflowFlag)),
 	})
@@ -114,7 +130,7 @@ func (c *InstancesListController) Render(cmd *cobra.Command, args []string) erro
 				[]string{"ID", "Workflow ID", "Created at", "Updated at", "Terminated at"},
 			),
 		).Render(); err != nil {
-		return errors.Wrap(err, "rendering table")
+		return fmt.Errorf("rendering table: %w", err)
 	}
 
 	return nil

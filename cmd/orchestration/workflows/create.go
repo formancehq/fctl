@@ -44,9 +44,27 @@ func (c *WorkflowsCreateController) GetStore() *WorkflowsCreateStore {
 
 func (c *WorkflowsCreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	script, err := fctl.ReadFile(cmd, store.Stack(), args[0])
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	script, err := fctl.ReadFile(cmd, args[0])
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +75,7 @@ func (c *WorkflowsCreateController) Run(cmd *cobra.Command, args []string) (fctl
 	}
 
 	//nolint:gosimple
-	response, err := store.Client().Orchestration.V1.
+	response, err := stackClient.Orchestration.V1.
 		CreateWorkflow(cmd.Context(), &shared.WorkflowConfig{
 			Name:   config.Name,
 			Stages: config.Stages,

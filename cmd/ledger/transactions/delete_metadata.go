@@ -46,19 +46,37 @@ func (c *DeleteMetadataController) GetStore() *DeleteMetadataStore {
 
 func (c *DeleteMetadataController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	transactionID, err := internal.TransactionIDOrLastN(cmd.Context(), store.Client(),
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	transactionID, err := internal.TransactionIDOrLastN(cmd.Context(), stackClient,
 		fctl.GetString(cmd, internal.LedgerFlag), args[0])
 	if err != nil {
 		return nil, err
 	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to set a metadata on transaction %d", transactionID) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to delete a metadata on transaction %d", transactionID) {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	response, err := store.Client().Ledger.V2.DeleteTransactionMetadata(cmd.Context(), operations.V2DeleteTransactionMetadataRequest{
+	response, err := stackClient.Ledger.V2.DeleteTransactionMetadata(cmd.Context(), operations.V2DeleteTransactionMetadataRequest{
 		ID:     transactionID,
 		Key:    args[1],
 		Ledger: fctl.GetString(cmd, internal.LedgerFlag),

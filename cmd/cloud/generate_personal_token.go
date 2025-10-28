@@ -40,22 +40,40 @@ func (c *GeneratePersonalTokenController) GetStore() *GeneratePersonalTokenStore
 	return c.store
 }
 
-func (c *GeneratePersonalTokenController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+func (c *GeneratePersonalTokenController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
 
-	store := fctl.GetMembershipStore(cmd.Context())
-	profile := fctl.GetCurrentProfile(cmd, store.Config)
-
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	stack, err := fctl.ResolveStack(cmd, store.Config, organizationID)
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	token, err := profile.GetStackToken(cmd.Context(), fctl.GetHttpClient(cmd, map[string][]string{}), stack)
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	access, _, err := fctl.EnsureStackAccess(
+		cmd,
+		relyingParty,
+		fctl.NewPTermDialog(),
+		profileName,
+		*profile,
+		organizationID,
+		stackID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	stackAccess := profile.RootTokens.ID.Claims.
+		GetOrganizationAccess(organizationID).
+		GetStackAccess(stackID)
+
+	token, err := fctl.FetchStackToken(cmd.Context(), relyingParty.HttpClient(), stackAccess.URI, access.Token)
 	if err != nil {
 		return nil, err
 	}
@@ -65,8 +83,7 @@ func (c *GeneratePersonalTokenController) Run(cmd *cobra.Command, args []string)
 	return c, nil
 }
 
-func (c *GeneratePersonalTokenController) Render(cmd *cobra.Command, args []string) error {
-
-	fmt.Fprintln(cmd.OutOrStdout(), c.store.Token)
+func (c *GeneratePersonalTokenController) Render(cmd *cobra.Command, _ []string) error {
+	_, _ = fmt.Fprintln(cmd.OutOrStdout(), c.store.Token)
 	return nil
 }

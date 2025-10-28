@@ -1,14 +1,13 @@
 package webhooks
 
 import (
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"fmt"
 
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type ChangeSecretStore struct {
@@ -37,9 +36,27 @@ func (c *ChangeSecretWebhookController) GetStore() *ChangeSecretStore {
 	return c.store
 }
 func (c *ChangeSecretWebhookController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to change a webhook secret") {
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to change a webhook secret") {
 		return nil, fctl.ErrMissingApproval
 	}
 	secret := ""
@@ -47,7 +64,7 @@ func (c *ChangeSecretWebhookController) Run(cmd *cobra.Command, args []string) (
 		secret = args[1]
 	}
 
-	response, err := store.Client().Webhooks.V1.
+	response, err := stackClient.Webhooks.V1.
 		ChangeConfigSecret(cmd.Context(), operations.ChangeConfigSecretRequest{
 			ConfigChangeSecret: &shared.ConfigChangeSecret{
 				Secret: secret,
@@ -55,7 +72,7 @@ func (c *ChangeSecretWebhookController) Run(cmd *cobra.Command, args []string) (
 			ID: args[0],
 		})
 	if err != nil {
-		return nil, errors.Wrap(err, "changing secret")
+		return nil, fmt.Errorf("changing secret: %w", err)
 	}
 
 	c.store.ID = response.ConfigResponse.Data.ID

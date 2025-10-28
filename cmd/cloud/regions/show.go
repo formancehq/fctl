@@ -5,15 +5,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-
-	"github.com/formancehq/fctl/membershipclient"
-	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type ShowStore struct {
-	Region membershipclient.AnyRegion `json:"region"`
+	Region components.AnyRegion `json:"region"`
 }
 type ShowController struct {
 	store *ShowStore
@@ -45,19 +45,41 @@ func (c *ShowController) GetStore() *ShowStore {
 }
 
 func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
-
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	response, _, err := store.Client().GetRegion(cmd.Context(), organizationID, args[0]).Execute()
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Region = response.Data
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	request := operations.GetRegionRequest{
+		OrganizationID: organizationID,
+		RegionID:       args[0],
+	}
+
+	response, err := apiClient.GetRegion(cmd.Context(), request)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.GetRegionResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	c.store.Region = response.GetRegionResponse.GetData()
 
 	return c, nil
 }
@@ -65,21 +87,21 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 func (c *ShowController) Render(cmd *cobra.Command, args []string) (err error) {
 	fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Information")
 	tableData := pterm.TableData{}
-	tableData = append(tableData, []string{pterm.LightCyan("ID"), c.store.Region.Id})
-	tableData = append(tableData, []string{pterm.LightCyan("Name"), c.store.Region.Name})
-	tableData = append(tableData, []string{pterm.LightCyan("Base URL"), c.store.Region.BaseUrl})
-	tableData = append(tableData, []string{pterm.LightCyan("Active"), fctl.BoolToString(c.store.Region.Active)})
-	tableData = append(tableData, []string{pterm.LightCyan("Public"), fctl.BoolToString(c.store.Region.Public)})
+	tableData = append(tableData, []string{pterm.LightCyan("ID"), c.store.Region.GetID()})
+	tableData = append(tableData, []string{pterm.LightCyan("Name"), c.store.Region.GetName()})
+	tableData = append(tableData, []string{pterm.LightCyan("Base URL"), c.store.Region.GetBaseURL()})
+	tableData = append(tableData, []string{pterm.LightCyan("Active"), fctl.BoolToString(c.store.Region.GetActive())})
+	tableData = append(tableData, []string{pterm.LightCyan("Public"), fctl.BoolToString(c.store.Region.GetPublic())})
 
-	if c.store.Region.Version != nil {
-		tableData = append(tableData, []string{pterm.LightCyan("Version"), *c.store.Region.Version})
+	if version := c.store.Region.GetVersion(); version != nil {
+		tableData = append(tableData, []string{pterm.LightCyan("Version"), *version})
 	}
 
-	if c.store.Region.Creator != nil {
-		tableData = append(tableData, []string{pterm.LightCyan("Creator"), c.store.Region.Creator.Email})
+	if creator := c.store.Region.GetCreator(); creator != nil {
+		tableData = append(tableData, []string{pterm.LightCyan("Creator"), creator.GetEmail()})
 	}
-	if c.store.Region.LastPing != nil {
-		tableData = append(tableData, []string{pterm.LightCyan("Last ping"), c.store.Region.LastPing.Format(time.RFC3339)})
+	if lastPing := c.store.Region.GetLastPing(); lastPing != nil {
+		tableData = append(tableData, []string{pterm.LightCyan("Last ping"), lastPing.Format(time.RFC3339)})
 	}
 
 	err = pterm.DefaultTable.
@@ -91,7 +113,7 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	tableData = pterm.TableData{}
-	capabilities, err := fctl.StructToMap(c.store.Region.Capabilities)
+	capabilities, err := fctl.StructToMap(c.store.Region.GetCapabilities())
 	if err != nil {
 		return
 	}

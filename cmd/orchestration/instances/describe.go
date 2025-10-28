@@ -49,9 +49,27 @@ func (c *InstancesDescribeController) GetStore() *InstancesDescribeStore {
 }
 
 func (c *InstancesDescribeController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	response, err := store.Client().Orchestration.V1.GetInstanceHistory(cmd.Context(), operations.GetInstanceHistoryRequest{
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := stackClient.Orchestration.V1.GetInstanceHistory(cmd.Context(), operations.GetInstanceHistoryRequest{
 		InstanceID: args[0],
 	})
 	if err != nil {
@@ -64,9 +82,28 @@ func (c *InstancesDescribeController) Run(cmd *cobra.Command, args []string) (fc
 }
 
 func (c *InstancesDescribeController) Render(cmd *cobra.Command, args []string) error {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return err
+	}
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return err
+	}
+
 	for i, history := range c.store.WorkflowInstancesHistory {
-		if err := printStage(cmd, i, store.Client(), args[0], history); err != nil {
+		if err := printStage(cmd, i, stackClient, args[0], history); err != nil {
 			return err
 		}
 	}

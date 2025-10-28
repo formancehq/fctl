@@ -1,15 +1,17 @@
 package authentication_provider
 
 import (
+	"fmt"
+
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-
-	"github.com/formancehq/fctl/membershipclient"
-	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type Show struct {
-	provider *membershipclient.AuthenticationProviderResponseData
+	provider *components.Data
 }
 type ShowController struct {
 	store *Show
@@ -40,32 +42,103 @@ func (c *ShowController) GetStore() *Show {
 
 func (c *ShowController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
 
-	store := fctl.GetMembershipStore(cmd.Context())
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	res, _, err := store.Client().
-		ReadAuthenticationProvider(cmd.Context(), organizationID).
-		Execute()
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
 	if err != nil {
 		return nil, err
 	}
-	c.store.provider = res.Data
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	request := operations.ReadAuthenticationProviderRequest{
+		OrganizationID: organizationID,
+	}
+
+	response, err := apiClient.ReadAuthenticationProvider(cmd.Context(), request)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.AuthenticationProviderResponse == nil || response.AuthenticationProviderResponse.GetData() == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	c.store.provider = response.AuthenticationProviderResponse.GetData()
 
 	return c, nil
 }
 
 func (c *ShowController) Render(_ *cobra.Command, _ []string) error {
+	var providerType, name, clientID, clientSecret, redirectURI string
+	var createdAt, updatedAt interface{}
+
+	if c.store.provider == nil {
+		return fmt.Errorf("no provider data")
+	}
+
+	switch c.store.provider.Type {
+	case components.DataTypeAuthenticationProviderResponseGithubIDPConfig:
+		if p := c.store.provider.AuthenticationProviderResponseGithubIDPConfig; p != nil {
+			providerType = string(p.GetType())
+			name = p.GetName()
+			clientID = p.GetClientID()
+			clientSecret = p.GetClientSecret()
+			createdAt = p.GetCreatedAt()
+			updatedAt = p.GetUpdatedAt()
+			redirectURI = p.GetRedirectURI()
+		}
+	case components.DataTypeAuthenticationProviderResponseGoogleIDPConfig:
+		if p := c.store.provider.AuthenticationProviderResponseGoogleIDPConfig; p != nil {
+			providerType = string(p.GetType())
+			name = p.GetName()
+			clientID = p.GetClientID()
+			clientSecret = p.GetClientSecret()
+			createdAt = p.GetCreatedAt()
+			updatedAt = p.GetUpdatedAt()
+			redirectURI = p.GetRedirectURI()
+		}
+	case components.DataTypeAuthenticationProviderResponseMicrosoftIDPConfig:
+		if p := c.store.provider.AuthenticationProviderResponseMicrosoftIDPConfig; p != nil {
+			providerType = string(p.GetType())
+			name = p.GetName()
+			clientID = p.GetClientID()
+			clientSecret = p.GetClientSecret()
+			createdAt = p.GetCreatedAt()
+			updatedAt = p.GetUpdatedAt()
+			redirectURI = p.GetRedirectURI()
+		}
+	case components.DataTypeAuthenticationProviderResponseOIDCConfig:
+		if p := c.store.provider.AuthenticationProviderResponseOIDCConfig; p != nil {
+			providerType = string(p.GetType())
+			name = p.GetName()
+			clientID = p.GetClientID()
+			clientSecret = p.GetClientSecret()
+			createdAt = p.GetCreatedAt()
+			updatedAt = p.GetUpdatedAt()
+			redirectURI = p.GetRedirectURI()
+		}
+	}
+
 	data := [][]string{
-		{"Provider", c.store.provider.Type},
-		{"Name", c.store.provider.Name},
-		{"Client ID", c.store.provider.ClientID},
-		{"Client secret", c.store.provider.ClientSecret},
-		{"Created at", c.store.provider.CreatedAt.String()},
-		{"Updated at", c.store.provider.UpdatedAt.String()},
-		{"Redirect URI", c.store.provider.RedirectURI},
+		{"Provider", providerType},
+		{"Name", name},
+		{"Client ID", clientID},
+		{"Client secret", clientSecret},
+		{"Created at", fmt.Sprintf("%v", createdAt)},
+		{"Updated at", fmt.Sprintf("%v", updatedAt)},
+		{"Redirect URI", redirectURI},
 	}
 	return pterm.DefaultTable.WithHasHeader().WithData(data).Render()
 }

@@ -1,17 +1,18 @@
 package users
 
 import (
+	"fmt"
+
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-
-	"github.com/formancehq/fctl/membershipclient"
-	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type ShowStore struct {
-	Id    string                `json:"id"`
-	Email string                `json:"email"`
-	Role  membershipclient.Role `json:"role"`
+	Id       string `json:"id"`
+	Email    string `json:"email"`
+	PolicyID int64  `json:"policyID"`
 }
 type ShowController struct {
 	store *ShowStore
@@ -44,20 +45,44 @@ func (c *ShowController) GetStore() *ShowStore {
 }
 
 func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	userResponse, _, err := store.Client().ReadUserOfOrganization(cmd.Context(), organizationID, args[0]).Execute()
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Id = userResponse.Data.Id
-	c.store.Email = userResponse.Data.Email
-	c.store.Role = userResponse.Data.Role
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	request := operations.ReadUserOfOrganizationRequest{
+		OrganizationID: organizationID,
+		UserID:         args[0],
+	}
+
+	response, err := apiClient.ReadUserOfOrganization(cmd.Context(), request)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.ReadOrganizationUserResponse == nil || response.ReadOrganizationUserResponse.GetData() == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	data := response.ReadOrganizationUserResponse.GetData()
+	c.store.Id = data.GetID()
+	c.store.Email = data.GetEmail()
+	c.store.PolicyID = data.GetPolicyID()
 
 	return c, nil
 }
@@ -68,7 +93,7 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 	tableData = append(tableData, []string{pterm.LightCyan("Email"), c.store.Email})
 	tableData = append(tableData, []string{
 		pterm.LightCyan("Role"),
-		pterm.LightCyan(c.store.Role),
+		pterm.LightCyan(c.store.PolicyID),
 	})
 
 	return pterm.DefaultTable.

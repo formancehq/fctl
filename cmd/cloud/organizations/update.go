@@ -1,11 +1,15 @@
 package organizations
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/cmd/cloud/organizations/internal"
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/go-libs/v3/pointer"
 )
 
 type UpdateController struct {
@@ -25,16 +29,15 @@ func NewUpdateController() *UpdateController {
 }
 
 func NewUpdateCommand() *cobra.Command {
-	return fctl.NewCommand("update <organizationId> --name <name> --default-stack-role <defaultStackRole...> --default-organization-role <defaultOrganizationRole...>",
+	return fctl.NewCommand("update <organizationId> --name <name> --default-policy-id <defaultPolicyID...>",
 		fctl.WithAliases("update"),
 		fctl.WithShortDescription("Update organization"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(fctl.OrganizationCompletion),
 		fctl.WithConfirmFlag(),
 		fctl.WithStringFlag("name", "", "Organization Name"),
-		fctl.WithStringFlag("default-stack-role", "", "Default Stack Role"),
+		fctl.WithIntFlag("default-policy-id", 0, "Default policy id"),
 		fctl.WithStringFlag("domain", "", "Organization Domain"),
-		fctl.WithStringFlag("default-organization-role", "", "Default Organization Role"),
 		fctl.WithController(NewUpdateController()),
 	)
 }
@@ -44,54 +47,76 @@ func (c *UpdateController) GetStore() *DescribeStore {
 }
 
 func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
-	if !fctl.CheckOrganizationApprobation(cmd, "You are about to update an organization") {
-		return nil, fctl.ErrMissingApproval
-	}
-
-	org, _, err := store.Client().ReadOrganization(cmd.Context(), args[0]).Execute()
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	preparedData := membershipclient.OrganizationData{
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, args[0])
+	if err != nil {
+		return nil, err
+	}
+	if !fctl.CheckOrganizationApprobation(cmd, "You are about to update an organization") {
+		return nil, fctl.ErrMissingApproval
+	}
+
+	readRequest := operations.ReadOrganizationRequest{
+		OrganizationID: args[0],
+	}
+
+	org, err := apiClient.ReadOrganization(cmd.Context(), readRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	if org.ReadOrganizationResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	orgData := org.ReadOrganizationResponse.GetData()
+
+	preparedData := components.OrganizationData{
 		Name: func() string {
 			if cmd.Flags().Changed("name") {
 				return cmd.Flag("name").Value.String()
 			}
-			return org.Data.Name
+			return orgData.GetName()
 		}(),
-		DefaultOrganizationAccess: func() *membershipclient.Role {
-			if cmd.Flags().Changed("default-organization-role") {
-				s := fctl.GetString(cmd, "default-organization-role")
-				return membershipclient.Role(s).Ptr()
+		DefaultPolicyID: func() *int64 {
+			if cmd.Flags().Changed("default-policy-id") {
+				return pointer.For(int64(fctl.GetInt(cmd, "default-policy-id")))
 			}
-			return org.Data.DefaultOrganizationAccess
-		}(),
-		DefaultStackAccess: func() *membershipclient.Role {
-			if cmd.Flags().Changed("default-stack-role") {
-				s := fctl.GetString(cmd, "default-stack-role")
-				return membershipclient.Role(s).Ptr()
-			}
-			return org.Data.DefaultStackAccess
+			return orgData.GetDefaultPolicyID()
 		}(),
 		Domain: func() *string {
 			str := fctl.GetString(cmd, "domain")
 			if str != "" {
 				return &str
 			}
-			return org.Data.Domain
+			return orgData.GetDomain()
 		}(),
 	}
 
-	response, _, err := store.Client().
-		UpdateOrganization(cmd.Context(), args[0]).OrganizationData(preparedData).Execute()
+	updateRequest := operations.UpdateOrganizationRequest{
+		OrganizationID: args[0],
+		Body:           &preparedData,
+	}
 
+	response, err := apiClient.UpdateOrganization(cmd.Context(), updateRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.OrganizationExpanded = response.Data
+	if response.ReadOrganizationResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	c.store.OrganizationExpanded = response.ReadOrganizationResponse.GetData()
 
 	return c, nil
 }

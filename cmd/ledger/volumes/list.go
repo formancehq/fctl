@@ -4,16 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
-
 	"github.com/formancehq/fctl/cmd/ledger/internal"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/fctl/pkg/printer"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type ListStore struct {
@@ -40,7 +37,25 @@ func (c *ListController) GetStore() *ListStore {
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	metadata, err := fctl.ParseMetadata(fctl.GetStringSlice(cmd, c.metadataFlag))
 	if err != nil {
@@ -104,10 +119,10 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		GroupBy:       &groupBy,
 	}
 
-	response, err := store.Client().Ledger.V2.GetVolumesWithBalances(cmd.Context(), request)
+	response, err := stackClient.Ledger.V2.GetVolumesWithBalances(cmd.Context(), request)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "Get Volumes With Balances")
+		return nil, fmt.Errorf("Get Volumes With Balances: %w", err)
 	}
 
 	c.store.Cursor = response.V2VolumesWithBalanceCursorResponse.Cursor

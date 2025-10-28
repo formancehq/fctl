@@ -1,0 +1,18 @@
+workflowVersion: 1.0.0
+speakeasyVersion: latest
+sources:
+    membership:
+        inputs:
+            - location: ../../openapi/membership.yaml
+        registry:
+            location: registry.speakeasyapi.dev/formance/formance/membership
+targets:
+    membership:
+        target: go
+        source: membership
+        codeSamples:
+            registry:
+                location: registry.speakeasyapi.dev/formance/formance/membership-go-code-samples
+            labelOverride:
+                fixedValue: Go (SDK)
+            blocking: false

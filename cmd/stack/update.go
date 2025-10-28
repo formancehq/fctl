@@ -1,13 +1,14 @@
 package stack
 
 import (
-	"github.com/pkg/errors"
+	"errors"
+	"fmt"
+
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/go-libs/pointer"
-
 	"github.com/formancehq/fctl/cmd/stack/internal"
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
@@ -15,24 +16,24 @@ const (
 	nameFlag = "name"
 )
 
-type StackUpdateStore struct {
-	Stack *membershipclient.Stack
+type UpdateStore struct {
+	Stack *components.Stack
 }
 
-type StackUpdateController struct {
-	store   *StackUpdateStore
-	profile *fctl.Profile
+type UpdateController struct {
+	store   *UpdateStore
+	profile fctl.Profile
 }
 
-var _ fctl.Controller[*StackUpdateStore] = (*StackUpdateController)(nil)
+var _ fctl.Controller[*UpdateStore] = (*UpdateController)(nil)
 
-func NewDefaultStackUpdateStore() *StackUpdateStore {
-	return &StackUpdateStore{
-		Stack: &membershipclient.Stack{},
+func NewDefaultStackUpdateStore() *UpdateStore {
+	return &UpdateStore{
+		Stack: &components.Stack{},
 	}
 }
-func NewStackUpdateController() *StackUpdateController {
-	return &StackUpdateController{
+func NewStackUpdateController() *UpdateController {
+	return &UpdateController{
 		store: NewDefaultStackUpdateStore(),
 	}
 }
@@ -42,59 +43,84 @@ func NewUpdateCommand() *cobra.Command {
 		fctl.WithShortDescription("Update a created stack, name, or metadata"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(fctl.StackCompletion),
-		fctl.WithPreRunE(func(cmd *cobra.Command, args []string) error {
-			return fctl.CheckMembershipVersion("v0.27.1")(cmd, args)
-
-		}),
-		fctl.WithBoolFlag(unprotectFlag, false, "Unprotect stacks (no confirmation on write commands)"),
 		fctl.WithStringFlag(nameFlag, "", "Name of the stack"),
 		fctl.WithController(NewStackUpdateController()),
 	)
 }
-func (c *StackUpdateController) GetStore() *StackUpdateStore {
+func (c *UpdateController) GetStore() *UpdateStore {
 	return c.store
 }
 
-func (c *StackUpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetOrganizationStore(cmd)
-	c.profile = store.Config.GetProfile(fctl.GetCurrentProfileName(cmd, store.Config))
-
-	protected := !fctl.GetBool(cmd, unprotectFlag)
-	metadata := map[string]string{
-		fctl.ProtectedStackMetadata: fctl.BoolPointerToString(&protected),
-	}
-
-	stack, res, err := store.Client().GetStack(cmd.Context(), store.OrganizationId(), args[0]).Execute()
+func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
-		return nil, errors.Wrap(err, "retrieving stack")
+		return nil, err
 	}
-	if res.StatusCode > 300 {
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	c.profile = *profile
+
+	getRequest := operations.GetStackRequest{
+		OrganizationID: organizationID,
+		StackID:        args[0],
+	}
+	stackResponse, err := apiClient.GetStack(cmd.Context(), getRequest)
+	if err != nil {
+		return nil, fmt.Errorf("retrieving stack: %w", err)
+	}
+	if stackResponse.GetHTTPMeta().Response.StatusCode > 300 {
 		return nil, errors.New("stack not found")
 	}
 
+	if stackResponse.CreateStackResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	stackData := stackResponse.CreateStackResponse.GetData()
+
 	name := fctl.GetString(cmd, nameFlag)
 	if name == "" {
-		name = stack.Data.Name
+		name = stackData.GetName()
 	}
 
-	req := membershipclient.UpdateStackRequest{
-		Name:     name,
-		Metadata: pointer.For(metadata),
+	updateData := components.StackData{
+		Name: name,
 	}
 
-	stackResponse, _, err := store.Client().
-		UpdateStack(cmd.Context(), store.OrganizationId(), args[0]).
-		UpdateStackRequest(req).
-		Execute()
+	updateRequest := operations.UpdateStackRequest{
+		OrganizationID: organizationID,
+		StackID:        args[0],
+		Body:           &updateData,
+	}
+
+	updatedStackResponse, err := apiClient.UpdateStack(cmd.Context(), updateRequest)
 	if err != nil {
-		return nil, errors.Wrap(err, "updating stack")
+		return nil, fmt.Errorf("updating stack: %w", err)
 	}
 
-	c.store.Stack = stackResponse.Data
+	if updatedStackResponse.CreateStackResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	c.store.Stack = updatedStackResponse.CreateStackResponse.GetData()
 
 	return c, nil
 }
 
-func (c *StackUpdateController) Render(cmd *cobra.Command, args []string) error {
-	return internal.PrintStackInformation(cmd.OutOrStdout(), c.profile, c.store.Stack, nil)
+func (c *UpdateController) Render(cmd *cobra.Command, _ []string) error {
+	return internal.PrintStackInformation(cmd.OutOrStdout(), c.store.Stack, nil)
 }

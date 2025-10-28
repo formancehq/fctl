@@ -12,7 +12,7 @@ import (
 
 const (
 	MembershipURIFlag = "membership-uri"
-	FileFlag          = "config"
+	ConfigDir         = "config-dir"
 	ProfileFlag       = "profile"
 	OutputFlag        = "output"
 	DebugFlag         = "debug"

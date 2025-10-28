@@ -49,18 +49,48 @@ func (c *ShowCtrl) GetStore() *Show {
 }
 
 func (c *ShowCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetDeployServerStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, profileName, err := fctl.LoadCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	relyingParty, err := fctl.GetAuthRelyingParty(cmd.Context(), fctl.GetHttpClient(cmd), profile.MembershipURI)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewAppDeployClient(
+		cmd,
+		relyingParty,
+		fctl.NewPTermDialog(),
+		profileName,
+		*profile,
+		organizationID,
+	)
+	if err != nil {
+		return nil, err
+	}
 	id := fctl.GetString(cmd, "id")
 	if id == "" {
 		return nil, fmt.Errorf("id is required")
 	}
-	app, err := store.Cli.ReadApp(cmd.Context(), id)
+	app, err := apiClient.ReadApp(cmd.Context(), id)
 	if err != nil {
 		return nil, err
 	}
 	c.store.App = app.AppResponse.Data
 
-	stateVersion, err := store.Cli.ReadAppCurrentStateVersion(cmd.Context(), id)
+	stateVersion, err := apiClient.ReadAppCurrentStateVersion(cmd.Context(), id)
 	if err == nil {
 		c.store.State = stateVersion.ReadStateResponse.Data
 	}
@@ -71,22 +101,32 @@ func (c *ShowCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, erro
 func (c *ShowCtrl) Render(cmd *cobra.Command, args []string) error {
 
 	if c.store.State.Stack != nil {
-		cfg, err := fctl.GetConfig(cmd)
-		if err != nil {
-			return err
-		}
-		membershipStore := fctl.GetMembershipStore(cmd.Context())
-		organizationID, err := fctl.ResolveOrganizationID(cmd, cfg, membershipStore.Client())
-		if err != nil {
-			return err
-		}
-		info, _, err := membershipStore.Client().GetServerInfo(cmd.Context()).Execute()
+		cfg, err := fctl.LoadConfig(cmd)
 		if err != nil {
 			return err
 		}
 
-		if info.ConsoleURL != nil {
-			pterm.Info.Printfln("View stack in console: %s/%s/%s?region=%s", *info.ConsoleURL, organizationID, c.store.State.Stack["id"], c.store.State.Stack["region_id"])
+		profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+		if err != nil {
+			return err
+		}
+
+		organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+		if err != nil {
+			return err
+		}
+
+		membershipapiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
+		if err != nil {
+			return err
+		}
+		info, err := fctl.MembershipServerInfo(cmd.Context(), membershipapiClient)
+		if err != nil {
+			return err
+		}
+
+		if consoleURL := info.GetConsoleURL(); consoleURL != nil {
+			pterm.Info.Printfln("View stack in console: %s/%s/%s?region=%s", *consoleURL, organizationID, c.store.State.Stack["id"], c.store.State.Stack["region_id"])
 		}
 	}
 

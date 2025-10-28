@@ -1,15 +1,14 @@
 package holds
 
 import (
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"fmt"
 
 	"github.com/formancehq/fctl/cmd/wallets/internal"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type ListStore struct {
@@ -53,9 +52,27 @@ func (c *ListController) GetStore() *ListStore {
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	walletID, err := internal.RetrieveWalletID(cmd, store.Client())
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	walletID, err := internal.RetrieveWalletID(cmd, stackClient)
 	if err != nil {
 		return nil, err
 	}
@@ -69,9 +86,9 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		WalletID: &walletID,
 		Metadata: metadata,
 	}
-	response, err := store.Client().Wallets.V1.GetHolds(cmd.Context(), request)
+	response, err := stackClient.Wallets.V1.GetHolds(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "getting holds")
+		return nil, fmt.Errorf("getting holds: %w", err)
 	}
 
 	c.store.Holds = response.GetHoldsResponse.Cursor.Data
@@ -102,7 +119,7 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 				[]string{"ID", "Wallet ID", "Description", "Metadata"},
 			),
 		).Render(); err != nil {
-		return errors.Wrap(err, "rendering table")
+		return fmt.Errorf("rendering table: %w", err)
 	}
 
 	return nil

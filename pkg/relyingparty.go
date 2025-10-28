@@ -1,12 +1,22 @@
 package fctl
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/zitadel/oidc/v2/pkg/client/rp"
+	"github.com/formancehq/go-libs/v3/oidc/client"
+	"github.com/pterm/pterm"
 )
 
-func GetAuthRelyingParty(httpClient *http.Client, membershipURI string) (rp.RelyingParty, error) {
-	return rp.NewRelyingPartyOIDC(membershipURI, AuthClient, "",
-		"", []string{"openid", "email", "offline_access", "supertoken", "accesses"}, rp.WithHTTPClient(httpClient))
+func GetAuthRelyingParty(ctx context.Context, httpClient *http.Client, membershipURI string) (client.RelyingParty, error) {
+	pterm.Debug.Println("Getting auth relying party on membership URI:", membershipURI)
+	return client.NewRelyingPartyOIDC(
+		ctx,
+		membershipURI,
+		AuthClient,
+		"",
+		"",
+		[]string{},
+		client.WithHTTPClient(httpClient),
+	)
 }

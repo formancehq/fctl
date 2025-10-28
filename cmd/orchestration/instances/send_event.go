@@ -48,8 +48,26 @@ func (c *InstancesSendEventController) GetStore() *InstancesSendEventStore {
 }
 
 func (c *InstancesSendEventController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
-	_, err := store.Client().Orchestration.V1.SendEvent(cmd.Context(), operations.SendEventRequest{
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+	_, err = stackClient.Orchestration.V1.SendEvent(cmd.Context(), operations.SendEventRequest{
 		RequestBody: &operations.SendEventRequestBody{
 			Name: args[1],
 		},

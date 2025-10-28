@@ -3,13 +3,11 @@ package runs
 import (
 	"fmt"
 
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
-	"github.com/formancehq/go-libs/pointer"
-
 	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/go-libs/v3/pointer"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type List struct {
@@ -50,12 +48,43 @@ func (c *ListCtrl) GetStore() *List {
 }
 
 func (c *ListCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetDeployServerStore(cmd.Context())
+
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, profileName, err := fctl.LoadCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	relyingParty, err := fctl.GetAuthRelyingParty(cmd.Context(), fctl.GetHttpClient(cmd), profile.MembershipURI)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewAppDeployClient(
+		cmd,
+		relyingParty,
+		fctl.NewPTermDialog(),
+		profileName,
+		*profile,
+		organizationID,
+	)
+	if err != nil {
+		return nil, err
+	}
 	id := fctl.GetString(cmd, "id")
 	if id == "" {
 		return nil, fmt.Errorf("id is required")
 	}
-	runs, err := store.Cli.ReadAppRuns(cmd.Context(), id, pointer.For(int64(fctl.GetInt(cmd, "page"))), pointer.For(int64(fctl.GetInt(cmd, "page-size"))))
+	runs, err := apiClient.ReadAppRuns(cmd.Context(), id, pointer.For(int64(fctl.GetInt(cmd, "page"))), pointer.For(int64(fctl.GetInt(cmd, "page-size"))))
 	if err != nil {
 		return nil, err
 	}
@@ -74,8 +103,8 @@ func (c *ListCtrl) Render(cmd *cobra.Command, args []string) error {
 		data = append(data, []string{
 			run.CreatedAt.String(),
 			run.ID,
-			string(run.ConfigurationVersion.ID),
-			string(run.Status),
+			run.ConfigurationVersion.ID,
+			run.Status,
 			run.Message,
 		})
 	}

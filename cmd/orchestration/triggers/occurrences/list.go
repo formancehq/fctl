@@ -1,16 +1,15 @@
 package occurrences
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type OccurrencesListStore struct {
@@ -47,9 +46,27 @@ func (c *OccurrencesListController) GetStore() *OccurrencesListStore {
 }
 
 func (c *OccurrencesListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	response, err := store.Client().Orchestration.V1.ListTriggersOccurrences(cmd.Context(), operations.ListTriggersOccurrencesRequest{
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := stackClient.Orchestration.V1.ListTriggersOccurrences(cmd.Context(), operations.ListTriggersOccurrencesRequest{
 		TriggerID: args[0],
 	})
 	if err != nil {
@@ -98,7 +115,7 @@ func (c *OccurrencesListController) Render(cmd *cobra.Command, args []string) er
 				[]string{"Workflow instance ID", "Date", "Terminated", "Terminated at", "Error"},
 			),
 		).Render(); err != nil {
-		return errors.Wrap(err, "rendering table")
+		return fmt.Errorf("rendering table: %w", err)
 	}
 
 	return nil

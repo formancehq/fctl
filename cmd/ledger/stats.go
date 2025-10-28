@@ -47,12 +47,30 @@ func (c *StatsController) GetStore() *StatsStore {
 }
 
 func (c *StatsController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	request := operations.ReadStatsRequest{
 		Ledger: fctl.GetString(cmd, internal.LedgerFlag),
 	}
-	response, err := store.Client().Ledger.V1.ReadStats(cmd.Context(), request)
+	response, err := stackClient.Ledger.V1.ReadStats(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}

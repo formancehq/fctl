@@ -1,11 +1,9 @@
 package profiles
 
 import (
-	"github.com/pkg/errors"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-
-	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type ProfilesDeleteStore struct {
@@ -34,17 +32,8 @@ func (c *ProfileDeleteController) GetStore() *ProfilesDeleteStore {
 }
 
 func (c *ProfileDeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-
-	config, err := fctl.GetConfig(cmd)
-	if err != nil {
+	if err := fctl.DeleteProfile(cmd, args[0]); err != nil {
 		return nil, err
-	}
-	if err := config.DeleteProfile(args[0]); err != nil {
-		return nil, err
-	}
-
-	if err := config.Persist(); err != nil {
-		return nil, errors.Wrap(err, "updating config")
 	}
 
 	c.store.Success = true

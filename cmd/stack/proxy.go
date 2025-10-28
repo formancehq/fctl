@@ -11,15 +11,13 @@ import (
 	"os"
 	"os/signal"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
-	"github.com/spf13/cobra"
 	"golang.org/x/oauth2"
 
-	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/spf13/cobra"
 )
 
 const (
@@ -27,26 +25,21 @@ const (
 	allowedOriginsFlag = "allowed-origins"
 )
 
-type StackProxyStore struct {
-	ProxyUrl       string `json:"proxyUrl"`
-	StackUrl       string `json:"stackUrl"`
-	OrganizationID string `json:"organizationId"`
-	StackID        string `json:"stackId"`
+type ProxyStore struct {
 }
 
-type StackProxyController struct {
-	store   *StackProxyStore
-	profile *fctl.Profile
+type ProxyController struct {
+	store *ProxyStore
 }
 
-var _ fctl.Controller[*StackProxyStore] = (*StackProxyController)(nil)
+var _ fctl.Controller[*ProxyStore] = (*ProxyController)(nil)
 
-func NewDefaultStackProxyStore() *StackProxyStore {
-	return &StackProxyStore{}
+func NewDefaultStackProxyStore() *ProxyStore {
+	return &ProxyStore{}
 }
 
-func NewStackProxyController() *StackProxyController {
-	return &StackProxyController{
+func NewStackProxyController() *ProxyController {
+	return &ProxyController{
 		store: NewDefaultStackProxyStore(),
 	}
 }
@@ -63,7 +56,7 @@ func NewProxyCommand() *cobra.Command {
 	return cmd
 }
 
-func (c *StackProxyController) GetStore() *StackProxyStore {
+func (c *ProxyController) GetStore() *ProxyStore {
 	return c.store
 }
 
@@ -112,40 +105,43 @@ func corsMiddleware(allowedOrigins []string, next http.Handler) http.Handler {
 	})
 }
 
-func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetOrganizationStore(cmd)
-	c.profile = store.Config.GetProfile(fctl.GetCurrentProfileName(cmd, store.Config))
+func (c *ProxyController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
 
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	stack, err := fctl.ResolveStack(cmd, store.Config, organizationID)
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.OrganizationID = organizationID
-	c.store.StackID = stack.Id
-	c.store.StackUrl = c.profile.ServicesBaseUrl(stack).String()
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackToken, stackAccess, err := fctl.EnsureStackAccess(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	port := fctl.GetInt(cmd, proxyPortFlag)
 	allowedOrigins := fctl.GetStringSlice(cmd, allowedOriginsFlag)
-	c.store.ProxyUrl = fmt.Sprintf("http://localhost:%d", port)
 
-	stackBaseURL, err := url.Parse(c.store.StackUrl)
+	stackBaseURL, err := url.Parse(stackAccess.URI)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing stack URL: %v", err)
 	}
 
-	fmt.Fprintf(cmd.OutOrStdout(), "Target Stack URL: %s\r\n", stackBaseURL.String())
+	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Target Stack URL: %s\r\n", stackBaseURL.String())
 
 	// Only show CORS info if origins are specified
 	if len(allowedOrigins) > 0 {
-		fmt.Fprintf(cmd.OutOrStdout(), "CORS enabled - Allowed Origins: %s\r\n", strings.Join(allowedOrigins, ", "))
+		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "CORS enabled - Allowed Origins: %s\r\n", strings.Join(allowedOrigins, ", "))
 	} else {
-		fmt.Fprintf(cmd.OutOrStdout(), "CORS disabled\r\n")
+		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "CORS disabled\r\n")
 	}
 
 	proxy := httputil.NewSingleHostReverseProxy(stackBaseURL)
@@ -167,7 +163,7 @@ func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 			RawQuery: req.URL.RawQuery,
 		}
 
-		fmt.Fprintf(cmd.OutOrStdout(), "[%s] Proxying %s %s to %s\r\n",
+		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "[%s] Proxying %s %s to %s\r\n",
 			time.Now().Format(time.RFC3339),
 			req.Method,
 			sourceURL.String(),
@@ -182,7 +178,7 @@ func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 			RawQuery: r.URL.RawQuery,
 		}
 
-		fmt.Fprintf(cmd.ErrOrStderr(), "[%s] ERROR proxying request to %s: %v\r\n",
+		_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "[%s] ERROR proxying request to %s: %v\r\n",
 			time.Now().Format(time.RFC3339),
 			targetURL.String(),
 			err)
@@ -195,15 +191,17 @@ func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 		_, _ = io.WriteString(w, errorMsg)
 	}
 
-	transport := &tokenTransport{
-		wrapped:  fctl.NewHTTPTransport(cmd, map[string][]string{}),
-		profile:  c.profile,
-		stack:    stack,
-		cmd:      cmd,
-		tokenMux: &sync.RWMutex{},
+	proxy.Transport = &oauth2.Transport{
+		Base: fctl.GetHttpClient(cmd).Transport,
+		Source: fctl.NewStackTokenSource(
+			*stackToken,
+			stackAccess,
+			relyingParty,
+			func(newToken fctl.AccessToken) error {
+				return fctl.WriteStackToken(cmd, profileName, stackID, newToken)
+			},
+		),
 	}
-
-	proxy.Transport = transport
 
 	// Clear any CORS headers from upstream to prevent conflicts with our CORS middleware
 	// TODO: forward services provided headers - also check where headers are added (line ~97)
@@ -239,7 +237,7 @@ func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 	serverErrors := make(chan error, 1)
 
 	go func() {
-		fmt.Fprintf(cmd.OutOrStdout(), "Starting proxy server at %s -> %s\r\n", c.store.ProxyUrl, c.store.StackUrl)
+		fmt.Fprintf(cmd.OutOrStdout(), "Starting proxy server at http://localhost:%d -> %s\r\n", port, stackAccess.URI)
 		fmt.Fprintf(cmd.OutOrStdout(), "Press Ctrl+C to stop the server\r\n")
 
 		// Check if port is available before starting the server
@@ -283,95 +281,4 @@ type EmptyRenderable struct{}
 
 func (r *EmptyRenderable) Render(cmd *cobra.Command, args []string) error {
 	return nil
-}
-
-type tokenTransport struct {
-	wrapped     http.RoundTripper
-	profile     *fctl.Profile
-	stack       *membershipclient.Stack
-	cmd         *cobra.Command
-	token       *oauth2.Token
-	tokenMux    *sync.RWMutex
-	tokenExpiry time.Time
-}
-
-func (t *tokenTransport) isTokenValid() bool {
-	// First, grab a read lock to check for nil token and expiry zero-value.
-	t.tokenMux.RLock()
-	if t.token == nil {
-		t.tokenMux.RUnlock()
-		return false
-	}
-
-	// Check if token is expired
-	if !t.tokenExpiry.IsZero() {
-		valid := time.Until(t.tokenExpiry) > 30*time.Second
-		t.tokenMux.RUnlock()
-		return valid
-	}
-
-	t.tokenMux.RUnlock()
-	return false
-}
-
-func (t *tokenTransport) refreshToken(ctx context.Context) error {
-	t.tokenMux.Lock()
-	defer t.tokenMux.Unlock()
-
-	httpClient := fctl.GetHttpClient(t.cmd, map[string][]string{})
-	newToken, err := t.profile.GetStackToken(ctx, httpClient, t.stack)
-	if err != nil {
-		return err
-	}
-
-	t.token = newToken
-	t.tokenExpiry = newToken.Expiry
-
-	fmt.Fprintf(t.cmd.OutOrStdout(), "[%s] Token refreshed, will expire at %s\r\n",
-		time.Now().Format(time.RFC3339),
-		t.tokenExpiry.Format(time.RFC3339))
-
-	return nil
-}
-
-func (t *tokenTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	if !t.isTokenValid() {
-		if err := t.refreshToken(req.Context()); err != nil {
-			return nil, fmt.Errorf("failed to refresh token: %w", err)
-		}
-	}
-
-	t.tokenMux.RLock()
-	token := t.token
-	t.tokenMux.RUnlock()
-
-	reqCopy := req.Clone(req.Context())
-	reqCopy.Header.Set("Authorization", fmt.Sprintf("%s %s", token.TokenType, token.AccessToken))
-
-	resp, err := t.wrapped.RoundTrip(reqCopy)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode == http.StatusUnauthorized {
-		if err := resp.Body.Close(); err != nil {
-			fmt.Fprintf(t.cmd.ErrOrStderr(), "[%s] Error closing response body: %v\r\n",
-				time.Now().Format(time.RFC3339), err)
-		}
-
-		if err := t.refreshToken(req.Context()); err != nil {
-			return nil, fmt.Errorf("failed to refresh token after 401: %w", err)
-		}
-
-		t.tokenMux.RLock()
-		token = t.token
-		t.tokenMux.RUnlock()
-
-		newReqCopy := req.Clone(req.Context())
-		newReqCopy.Header.Set("Authorization", fmt.Sprintf("%s %s", token.TokenType, token.AccessToken))
-
-		return t.wrapped.RoundTrip(newReqCopy)
-	}
-
-	return resp, nil
 }

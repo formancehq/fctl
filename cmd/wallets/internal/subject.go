@@ -3,11 +3,11 @@ package internal
 import (
 	"strings"
 
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
+	"errors"
 
 	formance "github.com/formancehq/formance-sdk-go/v3"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/spf13/cobra"
 )
 
 func ParseSubject(subject string, cmd *cobra.Command, client *formance.Formance) (*shared.Subject, error) {

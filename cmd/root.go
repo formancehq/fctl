@@ -13,8 +13,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/sdkerrors"
-	"github.com/formancehq/go-libs/api"
-	"github.com/formancehq/go-libs/logging"
 
 	"github.com/formancehq/fctl/cmd/auth"
 	"github.com/formancehq/fctl/cmd/cloud"
@@ -30,8 +28,10 @@ import (
 	"github.com/formancehq/fctl/cmd/version"
 	"github.com/formancehq/fctl/cmd/wallets"
 	"github.com/formancehq/fctl/cmd/webhooks"
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/apierrors"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/go-libs/v3/api"
+	"github.com/formancehq/go-libs/v3/logging"
 )
 
 func init() {
@@ -65,13 +65,13 @@ func NewRootCommand() *cobra.Command {
 			orchestration.NewCommand(),
 		),
 		fctl.WithPersistentStringPFlag(fctl.ProfileFlag, "p", "", "Configuration profile to use"),
-		fctl.WithPersistentStringPFlag(fctl.FileFlag, "c", fmt.Sprintf("%s/.formance/fctl.config", homedir), "Path to configuration file"),
+		fctl.WithPersistentStringPFlag(fctl.ConfigDir, "c", fmt.Sprintf("%s/.config/formance/fctl", homedir), "Path to configuration dir"),
 		fctl.WithPersistentBoolPFlag(fctl.DebugFlag, "d", false, "Enable debug mode"),
 		fctl.WithPersistentStringPFlag(fctl.OutputFlag, "o", "plain", "Output format (plain, json)"),
 		fctl.WithPersistentBoolFlag(fctl.InsecureTlsFlag, false, "Allow insecure TLS connections"),
 		fctl.WithPersistentBoolFlag(fctl.TelemetryFlag, false, "Enable telemetry"),
 		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
-			logger := logging.NewDefaultLogger(cmd.OutOrStdout(), fctl.GetBool(cmd, fctl.DebugFlag), false)
+			logger := logging.NewDefaultLogger(cmd.OutOrStdout(), fctl.GetBool(cmd, fctl.DebugFlag), false, false)
 			ctx := logging.ContextWithLogger(cmd.Context(), logger)
 			cmd.SetContext(ctx)
 			return nil
@@ -80,15 +80,12 @@ func NewRootCommand() *cobra.Command {
 
 	cmd.Version = version.Version
 	err = cmd.RegisterFlagCompletionFunc(fctl.ProfileFlag, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		cfg, err := fctl.GetConfig(cmd)
+		profiles, err := fctl.ListProfiles(cmd)
 		if err != nil {
 			return []string{}, cobra.ShellCompDirectiveError
 		}
-		ret := make([]string, 0)
-		for name := range cfg.GetProfiles() {
-			ret = append(ret, name)
-		}
-		return ret, cobra.ShellCompDirectiveNoFileComp
+
+		return profiles, cobra.ShellCompDirectiveNoFileComp
 	})
 	if err != nil {
 		panic(err)
@@ -123,15 +120,22 @@ func Execute() {
 				case *sdkerrors.V2ErrorResponse:
 					printV2ErrorResponse(err)
 					return
-				case *membershipclient.GenericOpenAPIError:
-					body := err.Body()
+				case *apierrors.APIError:
+					body := err.Body
 
 					errResponse := api.ErrorResponse{}
-					if err := json.Unmarshal(body, &errResponse); err != nil {
-						pterm.Error.WithWriter(os.Stderr).Println(string(body))
+					if err := json.Unmarshal([]byte(body), &errResponse); err != nil {
+						pterm.Error.WithWriter(os.Stderr).Println(body)
 						return
 					}
 					printError(errResponse.ErrorCode, errResponse.ErrorMessage, &errResponse.Details)
+					return
+				case *apierrors.Error:
+					errMsg := ""
+					if err.ErrorMessage != nil {
+						errMsg = *err.ErrorMessage
+					}
+					printError(err.ErrorCode, errMsg, nil)
 					return
 				default:
 					pterm.Error.WithWriter(os.Stderr).Println(unwrapped)

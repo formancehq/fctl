@@ -1,49 +1,44 @@
 package internal
 
 import (
+	"fmt"
 	"strconv"
 
-	"github.com/pterm/pterm"
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
 
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/pterm/pterm"
 )
 
-func PrintOrganization(store *membershipclient.OrganizationExpanded) error {
+func PrintOrganization(organization *components.OrganizationExpanded) error {
 	pterm.DefaultSection.Println("Organization")
 
 	data := [][]string{
-		{"ID", store.Id},
-		{"Name", store.Name},
+		{"ID", organization.ID},
+		{"Name", organization.Name},
 		{"Domain", func() string {
-			if store.Domain == nil {
+			if organization.Domain == nil {
 				return ""
 			}
-			return *store.Domain
+			return *organization.Domain
 		}()},
-		{"Default Stack Role", func() string {
-			if store.DefaultStackAccess == nil {
+		{"Default Policy", func() string {
+			if organization.DefaultPolicyID == nil {
 				return "None"
 			}
-			return string(*store.DefaultStackAccess)
-		}()},
-		{"Default Organization Role", func() string {
-			if store.DefaultOrganizationAccess == nil {
-				return "None"
-			}
-			return string(*store.DefaultOrganizationAccess)
+			return fmt.Sprintf("%d", *organization.DefaultPolicyID)
 		}()},
 	}
 
-	if store.Owner != nil {
-		data = append(data, []string{"Owner", store.Owner.Email})
+	if organization.Owner != nil {
+		data = append(data, []string{"Owner", organization.Owner.Email})
 	}
 
-	if store.TotalUsers != nil {
-		data = append(data, []string{"Total Users", strconv.Itoa(int(*store.TotalUsers))})
+	if organization.TotalUsers != nil {
+		data = append(data, []string{"Total Users", strconv.Itoa(int(*organization.TotalUsers))})
 	}
 
-	if store.TotalStacks != nil {
-		data = append(data, []string{"Total Stacks", strconv.Itoa(int(*store.TotalStacks))})
+	if organization.TotalStacks != nil {
+		data = append(data, []string{"Total Stacks", strconv.Itoa(int(*organization.TotalStacks))})
 	}
 
 	return pterm.DefaultTable.WithHasHeader().WithData(data).Render()

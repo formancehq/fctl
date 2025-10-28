@@ -1,13 +1,14 @@
 package invitations
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-
-	"github.com/formancehq/fctl/membershipclient"
-	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type Invitations struct {
@@ -15,7 +16,6 @@ type Invitations struct {
 	UserEmail    string    `json:"userEmail"`
 	Status       string    `json:"status"`
 	CreationDate time.Time `json:"creationDate"`
-	OrgClaim     string    `json:"orgClaim"`
 }
 
 type ListStore struct {
@@ -56,41 +56,62 @@ func (c *ListController) GetStore() *ListStore {
 }
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	listInvitationsResponse, _, err := store.Client().
-		ListOrganizationInvitations(cmd.Context(), organizationID).
-		Status(fctl.GetString(cmd, c.statusFlag)).
-		Execute()
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Invitations = fctl.Map(listInvitationsResponse.Data, func(i membershipclient.Invitation) Invitations {
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	status := fctl.GetString(cmd, c.statusFlag)
+	request := operations.ListOrganizationInvitationsRequest{
+		OrganizationID: organizationID,
+	}
+	if status != "" {
+		request.Status = &status
+	}
+
+	response, err := apiClient.ListOrganizationInvitations(cmd.Context(), request)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.ListInvitationsResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	c.store.Invitations = fctl.Map(response.ListInvitationsResponse.GetData(), func(i components.Invitation) Invitations {
 		return Invitations{
-			Id:           i.Id,
-			UserEmail:    i.UserEmail,
-			Status:       i.Status,
-			CreationDate: i.CreationDate,
-			OrgClaim:     string(i.Role),
+			Id:           i.GetID(),
+			UserEmail:    i.GetUserEmail(),
+			Status:       string(i.GetStatus()),
+			CreationDate: i.GetCreationDate(),
 		}
 	})
 
 	return c, nil
 }
 
-func (c *ListController) Render(cmd *cobra.Command, args []string) error {
+func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
 	tableData := fctl.Map(c.store.Invitations, func(i Invitations) []string {
 		return []string{
 			i.Id,
 			i.UserEmail,
 			i.Status,
 			i.CreationDate.Format(time.RFC3339),
-			i.OrgClaim,
 		}
 	})
 

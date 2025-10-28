@@ -1,13 +1,12 @@
 package holds
 
 import (
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"fmt"
 
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type VoidStore struct {
@@ -50,14 +49,32 @@ func (c *VoidController) GetStore() *VoidStore {
 
 func (c *VoidController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 	request := operations.VoidHoldRequest{
 		IdempotencyKey: fctl.Ptr(fctl.GetString(cmd, c.ikFlag)),
 		HoldID:         args[0],
 	}
-	_, err := store.Client().Wallets.V1.VoidHold(cmd.Context(), request)
+	_, err = stackClient.Wallets.V1.VoidHold(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "voiding hold")
+		return nil, fmt.Errorf("voiding hold: %w", err)
 	}
 
 	c.store.Success = true

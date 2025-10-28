@@ -1,10 +1,10 @@
 package authentication_provider
 
 import (
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-
-	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type Delete struct{}
@@ -37,15 +37,31 @@ func (c *DeleteController) GetStore() *Delete {
 
 func (c *DeleteController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
 
-	store := fctl.GetMembershipStore(cmd.Context())
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = store.Client().
-		DeleteAuthenticationProvider(cmd.Context(), organizationID).
-		Execute()
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	request := operations.DeleteAuthenticationProviderRequest{
+		OrganizationID: organizationID,
+	}
+
+	_, err = apiClient.DeleteAuthenticationProvider(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}

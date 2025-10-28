@@ -1,15 +1,19 @@
 package organizations
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/cmd/cloud/organizations/internal"
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/go-libs/v3/pointer"
 )
 
 type DescribeStore struct {
-	*membershipclient.OrganizationExpanded
+	*components.OrganizationExpanded
 }
 type DescribeController struct {
 	store *DescribeStore
@@ -44,16 +48,42 @@ func (c *DescribeController) GetStore() *DescribeStore {
 
 func (c *DescribeController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetMembershipStore(cmd.Context())
-
-	expand := fctl.GetBool(cmd, "expand")
-	response, _, err := store.Client().
-		ReadOrganization(cmd.Context(), args[0]).Expand(expand).Execute()
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.OrganizationExpanded = response.Data
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	expand := fctl.GetBool(cmd, "expand")
+	request := operations.ReadOrganizationRequest{
+		OrganizationID: args[0],
+		Expand:         pointer.For(expand),
+	}
+
+	response, err := apiClient.ReadOrganization(cmd.Context(), request)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.ReadOrganizationResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	c.store.OrganizationExpanded = response.ReadOrganizationResponse.GetData()
 	return c, nil
 }
 

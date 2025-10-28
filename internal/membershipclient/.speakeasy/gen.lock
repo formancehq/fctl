@@ -1,0 +1,1197 @@
+lockVersion: 2.0.0
+id: 61dd85f3-592f-465f-a3c4-a3f10e3e6f10
+management:
+  docChecksum: 922c081bf23863393f8b491ed986eda1
+  docVersion: 0.1.0
+  speakeasyVersion: 1.656.1
+  generationVersion: 2.753.1
+  releaseVersion: 0.1.0
+  configChecksum: 48e8dafeac8f9c6c8ae37b02d59fd7d8
+features:
+  go:
+    additionalDependencies: 0.1.0
+    constsAndDefaults: 0.1.12
+    core: 3.13.2
+    defaultEnabledRetries: 0.2.0
+    deprecations: 2.81.3
+    envVarSecurityUsage: 0.3.2
+    globalSecurity: 2.82.12
+    globalSecurityCallbacks: 0.1.0
+    globalSecurityFlattening: 0.1.0
+    globalServerURLs: 2.83.0
+    intellisenseMarkdownSupport: 0.1.0
+    nullables: 0.2.1
+    responseFormat: 0.1.2
+    retries: 2.84.2
+    sdkHooks: 0.2.0
+    unions: 2.87.1
+generatedFiles:
+  - .gitattributes
+  - /models/apierrors/error.go
+  - /models/components/action.go
+  - /models/components/anyregion.go
+  - /models/components/application.go
+  - /models/components/applicationdata.go
+  - /models/components/applicationwithscope.go
+  - /models/components/authenticationproviderdata.go
+  - /models/components/authenticationproviderresponse.go
+  - /models/components/capability.go
+  - /models/components/createapplicationresponse.go
+  - /models/components/createapplicationscoperequest.go
+  - /models/components/createapplicationscoperesponse.go
+  - /models/components/createclientresponseresponse.go
+  - /models/components/createdprivateregionresponse.go
+  - /models/components/createinvitationresponse.go
+  - /models/components/createorganizationclientrequest.go
+  - /models/components/createorganizationclientresponse.go
+  - /models/components/createorganizationrequest.go
+  - /models/components/createorganizationresponse.go
+  - /models/components/createpolicyresponse.go
+  - /models/components/createprivateregionrequest.go
+  - /models/components/createstackrequest.go
+  - /models/components/createstackresponse.go
+  - /models/components/createuserrequest.go
+  - /models/components/createuserresponse.go
+  - /models/components/enableapplicationfororganizationresponse.go
+  - /models/components/error.go
+  - /models/components/getapplicationresponse.go
+  - /models/components/getregionresponse.go
+  - /models/components/getregionversionsresponse.go
+  - /models/components/httpmetadata.go
+  - /models/components/invitation.go
+  - /models/components/listapplicationsresponse.go
+  - /models/components/listinvitationsresponse.go
+  - /models/components/listmodulesresponse.go
+  - /models/components/listorganizationexpandedresponse.go
+  - /models/components/listpoliciesresponse.go
+  - /models/components/listregionsresponse.go
+  - /models/components/liststacksresponse.go
+  - /models/components/listusersresponse.go
+  - /models/components/log.go
+  - /models/components/logcursor.go
+  - /models/components/module.go
+  - /models/components/organizationapplication.go
+  - /models/components/organizationclient.go
+  - /models/components/organizationdata.go
+  - /models/components/organizationexpanded.go
+  - /models/components/organizationfeature.go
+  - /models/components/policy.go
+  - /models/components/policydata.go
+  - /models/components/privateregion.go
+  - /models/components/privateregionsecret.go
+  - /models/components/readorganizationclientresponse.go
+  - /models/components/readorganizationclientsresponse.go
+  - /models/components/readorganizationresponse.go
+  - /models/components/readorganizationuserresponse.go
+  - /models/components/readpolicyresponse.go
+  - /models/components/readstackuseraccess.go
+  - /models/components/readuserresponse.go
+  - /models/components/region.go
+  - /models/components/regioncapability.go
+  - /models/components/scope.go
+  - /models/components/security.go
+  - /models/components/serverinfo.go
+  - /models/components/stack.go
+  - /models/components/stackdata.go
+  - /models/components/stackuseraccessresponse.go
+  - /models/components/stackversion.go
+  - /models/components/systemrole.go
+  - /models/components/updateapplicationresponse.go
+  - /models/components/updateorganizationclientrequest.go
+  - /models/components/updateorganizationuserrequest.go
+  - /models/components/updatepolicyresponse.go
+  - /models/components/updatestackuserrequest.go
+  - /models/components/user.go
+  - /models/components/version.go
+  - /models/operations/acceptinvitation.go
+  - /models/operations/addfeatures.go
+  - /models/operations/addscopetopolicy.go
+  - /models/operations/createapplication.go
+  - /models/operations/createapplicationscope.go
+  - /models/operations/createinvitation.go
+  - /models/operations/createorganization.go
+  - /models/operations/createorganizationclient.go
+  - /models/operations/createpolicy.go
+  - /models/operations/createprivateregion.go
+  - /models/operations/createstack.go
+  - /models/operations/createuser.go
+  - /models/operations/declineinvitation.go
+  - /models/operations/deleteapplication.go
+  - /models/operations/deleteapplicationscope.go
+  - /models/operations/deleteauthenticationprovider.go
+  - /models/operations/deletefeature.go
+  - /models/operations/deleteinvitation.go
+  - /models/operations/deleteorganization.go
+  - /models/operations/deleteorganizationclient.go
+  - /models/operations/deletepolicy.go
+  - /models/operations/deleteregion.go
+  - /models/operations/deletestack.go
+  - /models/operations/deletestackuseraccess.go
+  - /models/operations/deleteuserfromorganization.go
+  - /models/operations/disableapplicationfororganization.go
+  - /models/operations/disablemodule.go
+  - /models/operations/disablestack.go
+  - /models/operations/disablestargate.go
+  - /models/operations/enableapplicationfororganization.go
+  - /models/operations/enablemodule.go
+  - /models/operations/enablestack.go
+  - /models/operations/enablestargate.go
+  - /models/operations/getapplication.go
+  - /models/operations/getorganizationapplication.go
+  - /models/operations/getregion.go
+  - /models/operations/getregionversions.go
+  - /models/operations/getserverinfo.go
+  - /models/operations/getstack.go
+  - /models/operations/listapplications.go
+  - /models/operations/listfeatures.go
+  - /models/operations/listinvitations.go
+  - /models/operations/listlogs.go
+  - /models/operations/listmodules.go
+  - /models/operations/listorganizationapplications.go
+  - /models/operations/listorganizationinvitations.go
+  - /models/operations/listorganizations.go
+  - /models/operations/listorganizationsexpanded.go
+  - /models/operations/listpolicies.go
+  - /models/operations/listregions.go
+  - /models/operations/liststacks.go
+  - /models/operations/liststackusersaccesses.go
+  - /models/operations/listusersoforganization.go
+  - /models/operations/organizationclientcreate.go
+  - /models/operations/organizationclientdelete.go
+  - /models/operations/organizationclientread.go
+  - /models/operations/organizationclientsread.go
+  - /models/operations/organizationclientupdate.go
+  - /models/operations/readauthenticationprovider.go
+  - /models/operations/readconnecteduser.go
+  - /models/operations/readorganization.go
+  - /models/operations/readorganizationclient.go
+  - /models/operations/readpolicy.go
+  - /models/operations/readstackuseraccess.go
+  - /models/operations/readuseroforganization.go
+  - /models/operations/removescopefrompolicy.go
+  - /models/operations/restorestack.go
+  - /models/operations/updateapplication.go
+  - /models/operations/updateorganization.go
+  - /models/operations/updatepolicy.go
+  - /models/operations/updatestack.go
+  - /models/operations/upgradestack.go
+  - /models/operations/upsertauthenticationprovider.go
+  - /models/operations/upsertorganizationuser.go
+  - /models/operations/upsertstackuseraccess.go
+  - USAGE.md
+  - docs/models/apierrors/error.md
+  - docs/models/components/action.md
+  - docs/models/components/anyregion.md
+  - docs/models/components/application.md
+  - docs/models/components/applicationdata.md
+  - docs/models/components/applicationwithscope.md
+  - docs/models/components/authenticationproviderdata.md
+  - docs/models/components/authenticationproviderdatagithubidpconfig.md
+  - docs/models/components/authenticationproviderdatagithubidpconfigconfig.md
+  - docs/models/components/authenticationproviderdatagithubidpconfigtype.md
+  - docs/models/components/authenticationproviderdatagoogleidpconfig.md
+  - docs/models/components/authenticationproviderdatagoogleidpconfigconfig.md
+  - docs/models/components/authenticationproviderdatagoogleidpconfigtype.md
+  - docs/models/components/authenticationproviderdatamicrosoftidpconfig.md
+  - docs/models/components/authenticationproviderdatamicrosoftidpconfigconfig.md
+  - docs/models/components/authenticationproviderdatamicrosoftidpconfigtype.md
+  - docs/models/components/authenticationproviderdataoidcconfig.md
+  - docs/models/components/authenticationproviderdataoidcconfigconfig.md
+  - docs/models/components/authenticationproviderdataoidcconfigtype.md
+  - docs/models/components/authenticationproviderresponse.md
+  - docs/models/components/authenticationproviderresponsegithubidpconfig.md
+  - docs/models/components/authenticationproviderresponsegithubidpconfigconfig.md
+  - docs/models/components/authenticationproviderresponsegithubidpconfigtype.md
+  - docs/models/components/authenticationproviderresponsegoogleidpconfig.md
+  - docs/models/components/authenticationproviderresponsegoogleidpconfigconfig.md
+  - docs/models/components/authenticationproviderresponsegoogleidpconfigtype.md
+  - docs/models/components/authenticationproviderresponsemicrosoftidpconfig.md
+  - docs/models/components/authenticationproviderresponsemicrosoftidpconfigconfig.md
+  - docs/models/components/authenticationproviderresponsemicrosoftidpconfigtype.md
+  - docs/models/components/authenticationproviderresponseoidcconfig.md
+  - docs/models/components/authenticationproviderresponseoidcconfigconfig.md
+  - docs/models/components/authenticationproviderresponseoidcconfigtype.md
+  - docs/models/components/capability.md
+  - docs/models/components/clusterstatus.md
+  - docs/models/components/createapplicationresponse.md
+  - docs/models/components/createapplicationscoperequest.md
+  - docs/models/components/createapplicationscoperesponse.md
+  - docs/models/components/createclientresponseresponse.md
+  - docs/models/components/createclientresponseresponsedata.md
+  - docs/models/components/createclientresponseresponsesecret.md
+  - docs/models/components/createdprivateregionresponse.md
+  - docs/models/components/createinvitationresponse.md
+  - docs/models/components/createorganizationclientrequest.md
+  - docs/models/components/createorganizationclientresponse.md
+  - docs/models/components/createorganizationrequest.md
+  - docs/models/components/createorganizationresponse.md
+  - docs/models/components/createpolicyresponse.md
+  - docs/models/components/createprivateregionrequest.md
+  - docs/models/components/createstackrequest.md
+  - docs/models/components/createstackresponse.md
+  - docs/models/components/createuserrequest.md
+  - docs/models/components/createuserresponse.md
+  - docs/models/components/cursor.md
+  - docs/models/components/data.md
+  - docs/models/components/enableapplicationfororganizationresponse.md
+  - docs/models/components/error.md
+  - docs/models/components/expectedstatus.md
+  - docs/models/components/getapplicationresponse.md
+  - docs/models/components/getregionresponse.md
+  - docs/models/components/getregionversionsresponse.md
+  - docs/models/components/httpmetadata.md
+  - docs/models/components/invitation.md
+  - docs/models/components/invitationstatus.md
+  - docs/models/components/listapplicationsresponse.md
+  - docs/models/components/listinvitationsresponse.md
+  - docs/models/components/listmodulesresponse.md
+  - docs/models/components/listorganizationexpandedresponse.md
+  - docs/models/components/listpoliciesresponse.md
+  - docs/models/components/listregionsresponse.md
+  - docs/models/components/liststacksresponse.md
+  - docs/models/components/listusersresponse.md
+  - docs/models/components/log.md
+  - docs/models/components/logcursor.md
+  - docs/models/components/logcursordata.md
+  - docs/models/components/logdata.md
+  - docs/models/components/module.md
+  - docs/models/components/modulestate.md
+  - docs/models/components/modulestatus.md
+  - docs/models/components/organizationaccess.md
+  - docs/models/components/organizationapplication.md
+  - docs/models/components/organizationclient.md
+  - docs/models/components/organizationclientsecret.md
+  - docs/models/components/organizationdata.md
+  - docs/models/components/organizationexpanded.md
+  - docs/models/components/organizationfeature.md
+  - docs/models/components/organizationuser.md
+  - docs/models/components/policy.md
+  - docs/models/components/policydata.md
+  - docs/models/components/privateregion.md
+  - docs/models/components/privateregionsecret.md
+  - docs/models/components/readorganizationclientresponse.md
+  - docs/models/components/readorganizationclientsresponse.md
+  - docs/models/components/readorganizationclientsresponsedata.md
+  - docs/models/components/readorganizationresponse.md
+  - docs/models/components/readorganizationuserresponse.md
+  - docs/models/components/readorganizationuserresponsedata.md
+  - docs/models/components/readpolicyresponse.md
+  - docs/models/components/readstackuseraccess.md
+  - docs/models/components/readstackuseraccessdata.md
+  - docs/models/components/readuserresponse.md
+  - docs/models/components/region.md
+  - docs/models/components/regioncapability.md
+  - docs/models/components/scope.md
+  - docs/models/components/security.md
+  - docs/models/components/serverinfo.md
+  - docs/models/components/stack.md
+  - docs/models/components/stackdata.md
+  - docs/models/components/stackstate.md
+  - docs/models/components/stackstatus.md
+  - docs/models/components/stackuseraccessresponse.md
+  - docs/models/components/stackuseraccessresponsedata.md
+  - docs/models/components/stackversion.md
+  - docs/models/components/systemrole.md
+  - docs/models/components/updateapplicationresponse.md
+  - docs/models/components/updateorganizationclientrequest.md
+  - docs/models/components/updateorganizationuserrequest.md
+  - docs/models/components/updatepolicyresponse.md
+  - docs/models/components/updatestackuserrequest.md
+  - docs/models/components/user.md
+  - docs/models/components/version.md
+  - docs/models/operations/acceptinvitationrequest.md
+  - docs/models/operations/acceptinvitationresponse.md
+  - docs/models/operations/addfeaturesrequest.md
+  - docs/models/operations/addfeaturesrequestbody.md
+  - docs/models/operations/addfeaturesresponse.md
+  - docs/models/operations/addscopetopolicyrequest.md
+  - docs/models/operations/addscopetopolicyresponse.md
+  - docs/models/operations/createapplicationresponse.md
+  - docs/models/operations/createapplicationscoperequest.md
+  - docs/models/operations/createapplicationscoperesponse.md
+  - docs/models/operations/createinvitationrequest.md
+  - docs/models/operations/createinvitationresponse.md
+  - docs/models/operations/createorganizationclientrequest.md
+  - docs/models/operations/createorganizationclientresponse.md
+  - docs/models/operations/createorganizationresponse.md
+  - docs/models/operations/createpolicyrequest.md
+  - docs/models/operations/createpolicyresponse.md
+  - docs/models/operations/createprivateregionrequest.md
+  - docs/models/operations/createprivateregionresponse.md
+  - docs/models/operations/createstackrequest.md
+  - docs/models/operations/createstackresponse.md
+  - docs/models/operations/createuserresponse.md
+  - docs/models/operations/declineinvitationrequest.md
+  - docs/models/operations/declineinvitationresponse.md
+  - docs/models/operations/deleteapplicationrequest.md
+  - docs/models/operations/deleteapplicationresponse.md
+  - docs/models/operations/deleteapplicationscoperequest.md
+  - docs/models/operations/deleteapplicationscoperesponse.md
+  - docs/models/operations/deleteauthenticationproviderrequest.md
+  - docs/models/operations/deleteauthenticationproviderresponse.md
+  - docs/models/operations/deletefeaturerequest.md
+  - docs/models/operations/deletefeatureresponse.md
+  - docs/models/operations/deleteinvitationrequest.md
+  - docs/models/operations/deleteinvitationresponse.md
+  - docs/models/operations/deleteorganizationclientrequest.md
+  - docs/models/operations/deleteorganizationclientresponse.md
+  - docs/models/operations/deleteorganizationrequest.md
+  - docs/models/operations/deleteorganizationresponse.md
+  - docs/models/operations/deletepolicyrequest.md
+  - docs/models/operations/deletepolicyresponse.md
+  - docs/models/operations/deleteregionrequest.md
+  - docs/models/operations/deleteregionresponse.md
+  - docs/models/operations/deletestackrequest.md
+  - docs/models/operations/deletestackresponse.md
+  - docs/models/operations/deletestackuseraccessrequest.md
+  - docs/models/operations/deletestackuseraccessresponse.md
+  - docs/models/operations/deleteuserfromorganizationrequest.md
+  - docs/models/operations/deleteuserfromorganizationresponse.md
+  - docs/models/operations/disableapplicationfororganizationrequest.md
+  - docs/models/operations/disableapplicationfororganizationresponse.md
+  - docs/models/operations/disablemodulerequest.md
+  - docs/models/operations/disablemoduleresponse.md
+  - docs/models/operations/disablestackrequest.md
+  - docs/models/operations/disablestackresponse.md
+  - docs/models/operations/disablestargaterequest.md
+  - docs/models/operations/disablestargateresponse.md
+  - docs/models/operations/enableapplicationfororganizationrequest.md
+  - docs/models/operations/enableapplicationfororganizationresponse.md
+  - docs/models/operations/enablemodulerequest.md
+  - docs/models/operations/enablemoduleresponse.md
+  - docs/models/operations/enablestackrequest.md
+  - docs/models/operations/enablestackresponse.md
+  - docs/models/operations/enablestargaterequest.md
+  - docs/models/operations/enablestargateresponse.md
+  - docs/models/operations/getapplicationrequest.md
+  - docs/models/operations/getapplicationresponse.md
+  - docs/models/operations/getorganizationapplicationrequest.md
+  - docs/models/operations/getorganizationapplicationresponse.md
+  - docs/models/operations/getregionrequest.md
+  - docs/models/operations/getregionresponse.md
+  - docs/models/operations/getregionversionsrequest.md
+  - docs/models/operations/getregionversionsresponse.md
+  - docs/models/operations/getserverinforesponse.md
+  - docs/models/operations/getstackrequest.md
+  - docs/models/operations/getstackresponse.md
+  - docs/models/operations/listapplicationsresponse.md
+  - docs/models/operations/listfeaturesrequest.md
+  - docs/models/operations/listfeaturesresponse.md
+  - docs/models/operations/listfeaturesresponsebody.md
+  - docs/models/operations/listinvitationsrequest.md
+  - docs/models/operations/listinvitationsresponse.md
+  - docs/models/operations/listlogsrequest.md
+  - docs/models/operations/listlogsresponse.md
+  - docs/models/operations/listmodulesrequest.md
+  - docs/models/operations/listmodulesresponse.md
+  - docs/models/operations/listorganizationapplicationsrequest.md
+  - docs/models/operations/listorganizationapplicationsresponse.md
+  - docs/models/operations/listorganizationinvitationsrequest.md
+  - docs/models/operations/listorganizationinvitationsresponse.md
+  - docs/models/operations/listorganizationsexpandedresponse.md
+  - docs/models/operations/listorganizationsrequest.md
+  - docs/models/operations/listorganizationsresponse.md
+  - docs/models/operations/listpoliciesrequest.md
+  - docs/models/operations/listpoliciesresponse.md
+  - docs/models/operations/listregionsrequest.md
+  - docs/models/operations/listregionsresponse.md
+  - docs/models/operations/liststacksrequest.md
+  - docs/models/operations/liststacksresponse.md
+  - docs/models/operations/liststackusersaccessesrequest.md
+  - docs/models/operations/liststackusersaccessesresponse.md
+  - docs/models/operations/listusersoforganizationrequest.md
+  - docs/models/operations/listusersoforganizationresponse.md
+  - docs/models/operations/option.md
+  - docs/models/operations/organizationclientcreaterequest.md
+  - docs/models/operations/organizationclientcreateresponse.md
+  - docs/models/operations/organizationclientdeleterequest.md
+  - docs/models/operations/organizationclientdeleteresponse.md
+  - docs/models/operations/organizationclientreadrequest.md
+  - docs/models/operations/organizationclientreadresponse.md
+  - docs/models/operations/organizationclientsreadrequest.md
+  - docs/models/operations/organizationclientsreadresponse.md
+  - docs/models/operations/organizationclientupdaterequest.md
+  - docs/models/operations/organizationclientupdateresponse.md
+  - docs/models/operations/readauthenticationproviderrequest.md
+  - docs/models/operations/readauthenticationproviderresponse.md
+  - docs/models/operations/readconnecteduserresponse.md
+  - docs/models/operations/readorganizationclientrequest.md
+  - docs/models/operations/readorganizationclientresponse.md
+  - docs/models/operations/readorganizationrequest.md
+  - docs/models/operations/readorganizationresponse.md
+  - docs/models/operations/readpolicyrequest.md
+  - docs/models/operations/readpolicyresponse.md
+  - docs/models/operations/readstackuseraccessrequest.md
+  - docs/models/operations/readstackuseraccessresponse.md
+  - docs/models/operations/readuseroforganizationrequest.md
+  - docs/models/operations/readuseroforganizationresponse.md
+  - docs/models/operations/removescopefrompolicyrequest.md
+  - docs/models/operations/removescopefrompolicyresponse.md
+  - docs/models/operations/restorestackrequest.md
+  - docs/models/operations/restorestackresponse.md
+  - docs/models/operations/updateapplicationrequest.md
+  - docs/models/operations/updateapplicationresponse.md
+  - docs/models/operations/updateorganizationrequest.md
+  - docs/models/operations/updateorganizationresponse.md
+  - docs/models/operations/updatepolicyrequest.md
+  - docs/models/operations/updatepolicyresponse.md
+  - docs/models/operations/updatestackrequest.md
+  - docs/models/operations/updatestackresponse.md
+  - docs/models/operations/upgradestackrequest.md
+  - docs/models/operations/upgradestackresponse.md
+  - docs/models/operations/upsertauthenticationproviderrequest.md
+  - docs/models/operations/upsertauthenticationproviderresponse.md
+  - docs/models/operations/upsertorganizationuserrequest.md
+  - docs/models/operations/upsertorganizationuserresponse.md
+  - docs/models/operations/upsertstackuseraccessrequest.md
+  - docs/models/operations/upsertstackuseraccessresponse.md
+  - docs/sdks/sdk/README.md
+  - go.mod
+  - internal/config/sdkconfiguration.go
+  - internal/hooks/hooks.go
+  - internal/utils/contenttype.go
+  - internal/utils/env.go
+  - internal/utils/form.go
+  - internal/utils/headers.go
+  - internal/utils/json.go
+  - internal/utils/pathparams.go
+  - internal/utils/queryparams.go
+  - internal/utils/requestbody.go
+  - internal/utils/retries.go
+  - internal/utils/security.go
+  - internal/utils/utils.go
+  - models/apierrors/apierror.go
+  - models/operations/options.go
+  - optionalnullable/optionalnullable.go
+  - optionalnullable/optionalnullable_test.go
+  - retry/config.go
+  - sdk.go
+  - types/bigint.go
+  - types/date.go
+  - types/datetime.go
+  - types/pointers.go
+examples:
+  getServerInfo:
+    speakeasy-default-get-server-info:
+      responses:
+        "200":
+          application/json: {"version": "<value>"}
+        default:
+          application/json: {"errorCode": "<value>"}
+  listOrganizations:
+    speakeasy-default-list-organizations:
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  createOrganization:
+    speakeasy-default-create-organization:
+      responses:
+        "201":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  listOrganizationsExpanded:
+    speakeasy-default-list-organizations-expanded:
+      responses:
+        "200":
+          application/json: {}
+  readOrganization:
+    speakeasy-default-read-organization:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  updateOrganization:
+    speakeasy-default-update-organization:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  deleteOrganization:
+    speakeasy-default-delete-organization:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  readAuthenticationProvider:
+    speakeasy-default-read-authentication-provider:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  upsertAuthenticationProvider:
+    speakeasy-default-upsert-authentication-provider:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  deleteAuthenticationProvider:
+    speakeasy-default-delete-authentication-provider:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  listFeatures:
+    speakeasy-default-list-features:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        "200":
+          application/json: {"data": [{"organizationID": "<id>", "name": "<value>", "createdAt": "2025-11-09T12:05:56.871Z"}]}
+        default:
+          application/json: {"errorCode": "<value>"}
+  addFeatures:
+    speakeasy-default-add-features:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  deleteFeature:
+    speakeasy-default-delete-feature:
+      parameters:
+        path:
+          organizationId: "<id>"
+          name: "<value>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  readOrganizationClient:
+    speakeasy-default-read-organization-client:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  createOrganizationClient:
+    speakeasy-default-create-organization-client:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        "201":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  deleteOrganizationClient:
+    speakeasy-default-delete-organization-client:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  organizationClientsRead:
+    speakeasy-default-organization-clients-read:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        "200":
+          application/json: {"data": {"pageSize": 15, "hasMore": false, "previous": "YXVsdCBhbmQgYSBtYXhpbXVtIG1heF9yZXN1bHRzLol=", "next": "", "data": [{"id": "<id>", "secret": {"lastDigits": "<value>"}, "name": "<value>", "description": "even furthermore sarcastic at tinderbox resort guacamole incandescence redound than", "createdAt": "2024-10-01T11:29:19.916Z", "updatedAt": "2024-12-23T20:03:23.769Z"}]}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  organizationClientCreate:
+    speakeasy-default-organization-client-create:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        "201":
+          application/json: {"data": {"id": "<id>", "secret": {"lastDigits": "<value>"}, "name": "<value>", "description": "reclassify rapid likewise separate carp pish upsell quintuple", "createdAt": "2024-01-13T09:33:21.504Z", "updatedAt": "2023-08-27T21:07:22.984Z"}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  organizationClientRead:
+    speakeasy-default-organization-client-read:
+      parameters:
+        path:
+          organizationId: "<id>"
+          clientId: "<id>"
+      responses:
+        "200":
+          application/json: {"data": {"id": "<id>", "secret": {"lastDigits": "<value>"}, "name": "<value>", "description": "oh solution gosh amid nor orient narrate within gah fooey", "createdAt": "2025-05-24T11:12:14.293Z", "updatedAt": "2024-11-19T21:20:10.690Z"}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  organizationClientDelete:
+    speakeasy-default-organization-client-delete:
+      parameters:
+        path:
+          organizationId: "<id>"
+          clientId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  organizationClientUpdate:
+    speakeasy-default-organization-client-update:
+      parameters:
+        path:
+          organizationId: "<id>"
+          clientId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  listLogs:
+    speakeasy-default-list-logs:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        "200":
+          application/json: {"data": {"pageSize": 15, "hasMore": false, "previous": "YXVsdCBhbmQgYSBtYXhpbXVtIG1heF9yZXN1bHRzLol=", "next": "", "data": [{"seq": "1e6f8b6e-1b6b-4b3b-8b3b-1b6b4b3b8b3b", "organizationId": "<id>", "userId": "<id>", "action": "<value>", "date": "2024-08-30T19:05:54.946Z", "data": {}}]}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  listUsersOfOrganization:
+    speakeasy-default-list-users-of-organization:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  readUserOfOrganization:
+    speakeasy-default-read-user-of-organization:
+      parameters:
+        path:
+          organizationId: "<id>"
+          userId: "<id>"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  upsertOrganizationUser:
+    speakeasy-default-upsert-organization-user:
+      parameters:
+        path:
+          organizationId: "<id>"
+          userId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  deleteUserFromOrganization:
+    speakeasy-default-delete-user-from-organization:
+      parameters:
+        path:
+          organizationId: "<id>"
+          userId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  listPolicies:
+    speakeasy-default-list-policies:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  createPolicy:
+    speakeasy-default-create-policy:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        "201":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  readPolicy:
+    speakeasy-default-read-policy:
+      parameters:
+        path:
+          organizationId: "<id>"
+          policyId: 831591
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  updatePolicy:
+    speakeasy-default-update-policy:
+      parameters:
+        path:
+          organizationId: "<id>"
+          policyId: 127460
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  deletePolicy:
+    speakeasy-default-delete-policy:
+      parameters:
+        path:
+          organizationId: "<id>"
+          policyId: 114294
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  addScopeToPolicy:
+    speakeasy-default-add-scope-to-policy:
+      parameters:
+        path:
+          organizationId: "<id>"
+          policyId: 328027
+          scopeId: 675877
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  removeScopeFromPolicy:
+    speakeasy-default-remove-scope-from-policy:
+      parameters:
+        path:
+          organizationId: "<id>"
+          policyId: 995736
+          scopeId: 485996
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  listStacks:
+    speakeasy-default-list-stacks:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  createStack:
+    speakeasy-default-create-stack:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        "202":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  listModules:
+    speakeasy-default-list-modules:
+      parameters:
+        path:
+          organizationId: "<id>"
+          stackId: "<id>"
+      responses:
+        "200":
+          application/json: {"data": []}
+        default:
+          application/json: {"errorCode": "<value>"}
+  enableModule:
+    speakeasy-default-enable-module:
+      parameters:
+        path:
+          organizationId: "<id>"
+          stackId: "<id>"
+        query:
+          name: "<value>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  disableModule:
+    speakeasy-default-disable-module:
+      parameters:
+        path:
+          organizationId: "<id>"
+          stackId: "<id>"
+        query:
+          name: "<value>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  upgradeStack:
+    speakeasy-default-upgrade-stack:
+      parameters:
+        path:
+          organizationId: "<id>"
+          stackId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  getStack:
+    speakeasy-default-get-stack:
+      parameters:
+        path:
+          organizationId: "<id>"
+          stackId: "<id>"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  updateStack:
+    speakeasy-default-update-stack:
+      parameters:
+        path:
+          organizationId: "<id>"
+          stackId: "<id>"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  deleteStack:
+    speakeasy-default-delete-stack:
+      parameters:
+        path:
+          organizationId: "<id>"
+          stackId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  listStackUsersAccesses:
+    speakeasy-default-list-stack-users-accesses:
+      parameters:
+        path:
+          organizationId: "<id>"
+          stackId: "<id>"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  readStackUserAccess:
+    speakeasy-default-read-stack-user-access:
+      parameters:
+        path:
+          organizationId: "<id>"
+          stackId: "<id>"
+          userId: "<id>"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  deleteStackUserAccess:
+    speakeasy-default-delete-stack-user-access:
+      parameters:
+        path:
+          organizationId: "<id>"
+          stackId: "<id>"
+          userId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  upsertStackUserAccess:
+    speakeasy-default-upsert-stack-user-access:
+      parameters:
+        path:
+          organizationId: "<id>"
+          stackId: "<id>"
+          userId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  disableStack:
+    speakeasy-default-disable-stack:
+      parameters:
+        path:
+          organizationId: "<id>"
+          stackId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  enableStack:
+    speakeasy-default-enable-stack:
+      parameters:
+        path:
+          organizationId: "<id>"
+          stackId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  restoreStack:
+    speakeasy-default-restore-stack:
+      parameters:
+        path:
+          organizationId: "<id>"
+          stackId: "<id>"
+      responses:
+        "202":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  enableStargate:
+    speakeasy-default-enable-stargate:
+      parameters:
+        path:
+          organizationId: "<id>"
+          stackId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  disableStargate:
+    speakeasy-default-disable-stargate:
+      parameters:
+        path:
+          organizationId: "<id>"
+          stackId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  listInvitations:
+    speakeasy-default-list-invitations:
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  acceptInvitation:
+    speakeasy-default-accept-invitation:
+      parameters:
+        path:
+          invitationId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  declineInvitation:
+    speakeasy-default-decline-invitation:
+      parameters:
+        path:
+          invitationId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  listOrganizationInvitations:
+    speakeasy-default-list-organization-invitations:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  createInvitation:
+    speakeasy-default-create-invitation:
+      parameters:
+        path:
+          organizationId: "<id>"
+        query:
+          email: "Manley_Hoeger@hotmail.com"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  deleteInvitation:
+    speakeasy-default-delete-invitation:
+      parameters:
+        path:
+          organizationId: "<id>"
+          invitationId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  listRegions:
+    speakeasy-default-list-regions:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        "200":
+          application/json: {"data": []}
+        default:
+          application/json: {"errorCode": "<value>"}
+  createPrivateRegion:
+    speakeasy-default-create-private-region:
+      parameters:
+        path:
+          organizationId: "<id>"
+      responses:
+        "200":
+          application/json: {"data": {"id": "<id>", "baseUrl": "https://wide-eyed-kinase.org", "createdAt": "2024-12-31T09:20:38.935Z", "active": true, "name": "<value>", "capabilities": {}, "agentID": "<id>", "outdated": true, "organizationID": "<id>", "creatorID": "<value>"}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  getRegion:
+    speakeasy-default-get-region:
+      parameters:
+        path:
+          organizationId: "<id>"
+          regionID: "<id>"
+      responses:
+        "200":
+          application/json: {"data": {"id": "<id>", "baseUrl": "https://critical-pine.info/", "createdAt": "2024-12-31T04:45:57.185Z", "active": false, "name": "<value>", "capabilities": {}, "agentID": "<id>", "outdated": false, "public": true}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  deleteRegion:
+    speakeasy-default-delete-region:
+      parameters:
+        path:
+          organizationId: "<id>"
+          regionID: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  getRegionVersions:
+    speakeasy-default-get-region-versions:
+      parameters:
+        path:
+          organizationId: "<id>"
+          regionID: "<id>"
+      responses:
+        "200":
+          application/json: {"data": []}
+        default:
+          application/json: {"errorCode": "<value>"}
+  enableApplicationForOrganization:
+    speakeasy-default-enable-application-for-organization:
+      parameters:
+        path:
+          organizationId: "<id>"
+          applicationId: "<id>"
+      responses:
+        "201":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  disableApplicationForOrganization:
+    speakeasy-default-disable-application-for-organization:
+      parameters:
+        path:
+          organizationId: "<id>"
+          applicationId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  listApplications:
+    speakeasy-default-list-applications:
+      responses:
+        "200":
+          application/json: {"cursor": {"pageSize": 15, "hasMore": false, "previous": "YXVsdCBhbmQgYSBtYXhpbXVtIG1heF9yZXN1bHRzLol=", "next": "", "data": []}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  createApplication:
+    speakeasy-default-create-application:
+      responses:
+        "201":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  getApplication:
+    speakeasy-default-get-application:
+      parameters:
+        path:
+          applicationId: "<id>"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  updateApplication:
+    speakeasy-default-update-application:
+      parameters:
+        path:
+          applicationId: "<id>"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  deleteApplication:
+    speakeasy-default-delete-application:
+      parameters:
+        path:
+          applicationId: "<id>"
+      responses:
+        default:
+          application/json: {"errorCode": "<value>"}
+  createApplicationScope:
+    speakeasy-default-create-application-scope:
+      parameters:
+        path:
+          applicationId: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        "201":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  deleteApplicationScope:
+    speakeasy-default-delete-application-scope:
+      parameters:
+        path:
+          applicationId: "550e8400-e29b-41d4-a716-446655440000"
+          scopeID: 115177
+      responses:
+        "400":
+          application/json: {"errorCode": "<value>"}
+        "500":
+          application/json: {"errorCode": "<value>"}
+        default:
+          application/json: {"errorCode": "<value>"}
+  createUser:
+    speakeasy-default-create-user:
+      requestBody:
+        application/json: {"email": "user@example.com"}
+      responses:
+        "201":
+          application/json: {}
+        "400":
+          application/json: {"errorCode": "<value>"}
+        "500":
+          application/json: {"errorCode": "<value>"}
+        default:
+          application/json: {"errorCode": "<value>"}
+  readConnectedUser:
+    speakeasy-default-read-connected-user:
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+  listOrganizationApplications:
+    speakeasy-default-list-organization-applications:
+      parameters:
+        path:
+          organizationId: "<id>"
+        query:
+          pageSize: 15
+          page: 0
+      responses:
+        "200":
+          application/json: {"cursor": {"pageSize": 15, "hasMore": false, "previous": "YXVsdCBhbmQgYSBtYXhpbXVtIG1heF9yZXN1bHRzLol=", "next": "", "data": []}}
+        default:
+          application/json: {"errorCode": "<value>"}
+  getOrganizationApplication:
+    speakeasy-default-get-organization-application:
+      parameters:
+        path:
+          organizationId: "<id>"
+          applicationId: "<id>"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
+examplesVersion: 1.0.2

@@ -1,13 +1,12 @@
 package webhooks
 
 import (
-	"github.com/pkg/errors"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"fmt"
 
 	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 )
 
 type DesactivateWebhookStore struct {
@@ -36,18 +35,36 @@ func (c *DesactivateWebhookController) GetStore() *DesactivateWebhookStore {
 }
 
 func (c *DesactivateWebhookController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to deactivate a webhook") {
+	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to deactivate a webhook") {
 		return nil, fctl.ErrMissingApproval
 	}
 
 	request := operations.DeactivateConfigRequest{
 		ID: args[0],
 	}
-	response, err := store.Client().Webhooks.V1.DeactivateConfig(cmd.Context(), request)
+	response, err := stackClient.Webhooks.V1.DeactivateConfig(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "deactivating config")
+		return nil, fmt.Errorf("deactivating config: %w", err)
 	}
 
 	c.store.Success = !response.ConfigResponse.Data.Active
