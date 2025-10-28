@@ -27,7 +27,6 @@ type Invitation struct {
 	Status string `json:"status"`
 	CreationDate time.Time `json:"creationDate"`
 	UpdatedAt *string `json:"updatedAt,omitempty"`
-	Role Role `json:"role"`
 	UserId *string `json:"userId,omitempty"`
 	OrganizationAccess *OrganizationUser `json:"organizationAccess,omitempty"`
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
@@ -42,14 +41,13 @@ type _Invitation Invitation
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewInvitation(id string, organizationId string, userEmail string, status string, creationDate time.Time, role Role) *Invitation {
+func NewInvitation(id string, organizationId string, userEmail string, status string, creationDate time.Time) *Invitation {
 	this := Invitation{}
 	this.Id = id
 	this.OrganizationId = organizationId
 	this.UserEmail = userEmail
 	this.Status = status
 	this.CreationDate = creationDate
-	this.Role = role
 	return &this
 }
 
@@ -211,30 +209,6 @@ func (o *Invitation) HasUpdatedAt() bool {
 // SetUpdatedAt gets a reference to the given string and assigns it to the UpdatedAt field.
 func (o *Invitation) SetUpdatedAt(v string) {
 	o.UpdatedAt = &v
-}
-
-// GetRole returns the Role field value
-func (o *Invitation) GetRole() Role {
-	if o == nil {
-		var ret Role
-		return ret
-	}
-
-	return o.Role
-}
-
-// GetRoleOk returns a tuple with the Role field value
-// and a boolean to check if the value has been set.
-func (o *Invitation) GetRoleOk() (*Role, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Role, true
-}
-
-// SetRole sets field value
-func (o *Invitation) SetRole(v Role) {
-	o.Role = v
 }
 
 // GetUserId returns the UserId field value if set, zero value otherwise.
@@ -415,7 +389,6 @@ func (o Invitation) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.UpdatedAt) {
 		toSerialize["updatedAt"] = o.UpdatedAt
 	}
-	toSerialize["role"] = o.Role
 	if !IsNil(o.UserId) {
 		toSerialize["userId"] = o.UserId
 	}
@@ -449,7 +422,6 @@ func (o *Invitation) UnmarshalJSON(data []byte) (err error) {
 		"userEmail",
 		"status",
 		"creationDate",
-		"role",
 	}
 
 	allProperties := make(map[string]interface{})
@@ -485,7 +457,6 @@ func (o *Invitation) UnmarshalJSON(data []byte) (err error) {
 		delete(additionalProperties, "status")
 		delete(additionalProperties, "creationDate")
 		delete(additionalProperties, "updatedAt")
-		delete(additionalProperties, "role")
 		delete(additionalProperties, "userId")
 		delete(additionalProperties, "organizationAccess")
 		delete(additionalProperties, "expiresAt")

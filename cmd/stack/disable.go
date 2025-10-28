@@ -53,14 +53,32 @@ func (c *DisableController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		stackNameFlag = "name"
 	)
 
-	store := fctl.GetOrganizationStore(cmd)
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
 	var stack *membershipclient.Stack
 	if len(args) == 1 {
 		if fctl.GetString(cmd, stackNameFlag) != "" {
 			return nil, errors.New("need either an id of a name specified using --name flag")
 		}
 
-		rsp, _, err := store.Client().GetStack(cmd.Context(), store.OrganizationId(), args[0]).Execute()
+		rsp, _, err := store.DefaultAPI.GetStack(cmd.Context(), organizationID, args[0]).Execute()
 		if err != nil {
 			return nil, err
 		}
@@ -69,7 +87,7 @@ func (c *DisableController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		if fctl.GetString(cmd, stackNameFlag) == "" {
 			return nil, errors.New("need either an id of a name specified using --name flag")
 		}
-		stacks, _, err := store.Client().ListStacks(cmd.Context(), store.OrganizationId()).Execute()
+		stacks, _, err := store.DefaultAPI.ListStacks(cmd.Context(), organizationID).Execute()
 		if err != nil {
 			return nil, errors.Wrap(err, "listing stacks")
 		}
@@ -84,11 +102,11 @@ func (c *DisableController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		return nil, errors.New("Stack not found")
 	}
 
-	if !fctl.CheckStackApprobation(cmd, stack, "You are about to disable stack '%s'", stack.Name) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to disable stack '%s'", stack.Name) {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	if _, err := store.Client().DisableStack(cmd.Context(), store.OrganizationId(), stack.Id).Execute(); err != nil {
+	if _, err := store.DefaultAPI.DisableStack(cmd.Context(), organizationID, stack.Id).Execute(); err != nil {
 		return nil, errors.Wrap(err, "stack disable")
 	}
 

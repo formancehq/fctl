@@ -63,7 +63,7 @@ func NewRootCommand() *cobra.Command {
 			orchestration.NewCommand(),
 		),
 		fctl.WithPersistentStringPFlag(fctl.ProfileFlag, "p", "", "Configuration profile to use"),
-		fctl.WithPersistentStringPFlag(fctl.FileFlag, "c", fmt.Sprintf("%s/.formance/fctl.config", homedir), "Path to configuration file"),
+		fctl.WithPersistentStringPFlag(fctl.ConfigDir, "c", fmt.Sprintf("%s/.config/formance/fctl", homedir), "Path to configuration dir"),
 		fctl.WithPersistentBoolPFlag(fctl.DebugFlag, "d", false, "Enable debug mode"),
 		fctl.WithPersistentStringPFlag(fctl.OutputFlag, "o", "plain", "Output format (plain, json)"),
 		fctl.WithPersistentBoolFlag(fctl.InsecureTlsFlag, false, "Allow insecure TLS connections"),
@@ -77,16 +77,13 @@ func NewRootCommand() *cobra.Command {
 	)
 
 	cmd.Version = version.Version
-	cmd.RegisterFlagCompletionFunc(fctl.ProfileFlag, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		cfg, err := fctl.GetConfig(cmd)
+	_ = cmd.RegisterFlagCompletionFunc(fctl.ProfileFlag, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		profiles, err := fctl.ListProfiles(cmd)
 		if err != nil {
 			return []string{}, cobra.ShellCompDirectiveError
 		}
-		ret := make([]string, 0)
-		for name := range cfg.GetProfiles() {
-			ret = append(ret, name)
-		}
-		return ret, cobra.ShellCompDirectiveNoFileComp
+
+		return profiles, cobra.ShellCompDirectiveNoFileComp
 	})
 	return cmd
 }

@@ -52,23 +52,45 @@ func (c *ListController) GetStore() *ListStore {
 }
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
-
-	expand := fctl.GetBool(cmd, "expand")
-
-	organizations, _, err := store.Client().ListOrganizations(cmd.Context()).Expand(expand).Execute()
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	currentProfile := fctl.GetCurrentProfile(cmd, store.Config)
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	expand := fctl.GetBool(cmd, "expand")
+
+	organizations, _, err := store.DefaultAPI.ListOrganizations(cmd.Context()).Expand(expand).Execute()
+	if err != nil {
+		return nil, err
+	}
+
+	currentProfile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	claims, err := currentProfile.GetClaims()
 	if err != nil {
 		return nil, err
 	}
 
 	c.store.Organizations = fctl.Map(organizations.Data, func(o membershipclient.OrganizationExpanded) *OrgRow {
-		isMine := fctl.BoolToString(o.OwnerId == claims["sub"].(string))
+		isMine := fctl.BoolToString(o.OwnerId == claims.Subject)
 		return &OrgRow{
 			ID:      o.Id,
 			Name:    o.Name,

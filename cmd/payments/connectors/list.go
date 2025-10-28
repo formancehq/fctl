@@ -62,7 +62,30 @@ func (c *PaymentsConnectorsListController) GetStore() *PaymentsConnectorsListSto
 }
 
 func (c *PaymentsConnectorsListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
@@ -72,7 +95,7 @@ func (c *PaymentsConnectorsListController) Run(cmd *cobra.Command, args []string
 
 	switch c.PaymentsVersion {
 	case versions.V3:
-		response, err := store.Client().Payments.V3.ListConnectors(cmd.Context(), operations.V3ListConnectorsRequest{
+		response, err := stackClient.Payments.V3.ListConnectors(cmd.Context(), operations.V3ListConnectorsRequest{
 			PageSize: &pageSizeAsInt,
 		})
 		if err != nil {
@@ -89,7 +112,7 @@ func (c *PaymentsConnectorsListController) Run(cmd *cobra.Command, args []string
 		c.store.Connectors = fctl.Map(response.V3ConnectorsCursorResponse.Cursor.Data, V3toConnectorData)
 
 	case versions.V0, versions.V1, versions.V2:
-		response, err := store.Client().Payments.V1.ListAllConnectors(cmd.Context())
+		response, err := stackClient.Payments.V1.ListAllConnectors(cmd.Context())
 		if err != nil {
 			return nil, err
 		}

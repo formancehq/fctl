@@ -43,17 +43,30 @@ func (c *CreateController) GetStore() *Create {
 
 func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetMembershipStore(cmd.Context())
-	if !fctl.CheckOrganizationApprobation(cmd, "You are about to create a new organization OAuth client") {
-		return nil, fctl.ErrMissingApproval
-	}
-
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	response, _, err := store.Client().CreateOrganizationClient(cmd.Context(), organizationID).Execute()
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+	if !fctl.CheckOrganizationApprobation(cmd, "You are about to create a new organization OAuth client") {
+		return nil, fctl.ErrMissingApproval
+	}
+
+	response, _, err := store.DefaultAPI.CreateOrganizationClient(cmd.Context(), organizationID).Execute()
 	if err != nil {
 		return nil, err
 	}

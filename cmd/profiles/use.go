@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 type ProfilesUseStore struct {
@@ -29,7 +30,9 @@ func NewProfilesUseController() *ProfilesUseController {
 }
 
 func ProfileNamesAutoCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	ret, err := fctl.ListProfiles(cmd, toComplete)
+	ret, err := fctl.ListProfiles(cmd, func(s string) bool {
+		return strings.HasPrefix(s, toComplete)
+	})
 	if err != nil {
 		return []string{}, cobra.ShellCompDirectiveError
 	}
@@ -42,13 +45,14 @@ func (c *ProfilesUseController) GetStore() *ProfilesUseStore {
 }
 
 func (c *ProfilesUseController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	config, err := fctl.GetConfig(cmd)
+	config, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	config.SetCurrentProfileName(args[0])
-	if err := config.Persist(); err != nil {
+	config.CurrentProfile = args[0]
+
+	if err := fctl.WriteConfig(cmd, *config); err != nil {
 		return nil, errors.Wrap(err, "Updating config")
 	}
 

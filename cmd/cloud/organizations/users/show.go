@@ -1,16 +1,15 @@
 package users
 
 import (
-	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 type ShowStore struct {
-	Id    string                `json:"id"`
-	Email string                `json:"email"`
-	Role  membershipclient.Role `json:"role"`
+	Id       string `json:"id"`
+	Email    string `json:"email"`
+	PolicyID int32  `json:"policyID"`
 }
 type ShowController struct {
 	store *ShowStore
@@ -43,20 +42,34 @@ func (c *ShowController) GetStore() *ShowStore {
 }
 
 func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	userResponse, _, err := store.Client().ReadUserOfOrganization(cmd.Context(), organizationID, args[0]).Execute()
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	userResponse, _, err := store.DefaultAPI.ReadUserOfOrganization(cmd.Context(), organizationID, args[0]).Execute()
 	if err != nil {
 		return nil, err
 	}
 
 	c.store.Id = userResponse.Data.Id
 	c.store.Email = userResponse.Data.Email
-	c.store.Role = userResponse.Data.Role
+	c.store.PolicyID = userResponse.Data.PolicyID
 
 	return c, nil
 }
@@ -67,7 +80,7 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 	tableData = append(tableData, []string{pterm.LightCyan("Email"), c.store.Email})
 	tableData = append(tableData, []string{
 		pterm.LightCyan("Role"),
-		pterm.LightCyan(c.store.Role),
+		pterm.LightCyan(c.store.PolicyID),
 	})
 
 	return pterm.DefaultTable.

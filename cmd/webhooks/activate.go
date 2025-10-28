@@ -30,8 +30,31 @@ func (c *ActivateWebhookController) GetStore() *ActivateWebhookStore {
 }
 
 func (c *ActivateWebhookController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are bout to activate a webhook") {
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+	if !fctl.CheckStackApprobation(cmd, "You are bout to activate a webhook") {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -39,7 +62,7 @@ func (c *ActivateWebhookController) Run(cmd *cobra.Command, args []string) (fctl
 		ID: args[0],
 	}
 
-	_, err := store.Client().Webhooks.V1.ActivateConfig(cmd.Context(), request)
+	_, err = stackClient.Webhooks.V1.ActivateConfig(cmd.Context(), request)
 	if err != nil {
 		return nil, errors.Wrap(err, "activating config")
 	}

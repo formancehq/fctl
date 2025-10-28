@@ -55,6 +55,11 @@ const (
 	STACKS_MODULE_ENABLED Action = "stacks.module.enabled"
 	STACKS_MODULE_DISABLED Action = "stacks.module.disabled"
 	STACKS_MODULE_STATUS_UPDATED Action = "stacks.module.status.updated"
+	POLICIES_CREATED Action = "policies.created"
+	POLICIES_UPDATED Action = "policies.updated"
+	POLICIES_DELETED Action = "policies.deleted"
+	POLICIES_SCOPE_ADDED Action = "policies.scope.added"
+	POLICIES_SCOPE_REMOVED Action = "policies.scope.removed"
 )
 
 // All allowed values of Action enum
@@ -94,6 +99,11 @@ var AllowedActionEnumValues = []Action{
 	"stacks.module.enabled",
 	"stacks.module.disabled",
 	"stacks.module.status.updated",
+	"policies.created",
+	"policies.updated",
+	"policies.deleted",
+	"policies.scope.added",
+	"policies.scope.removed",
 }
 
 func (v *Action) UnmarshalJSON(src []byte) error {

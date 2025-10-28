@@ -2,6 +2,7 @@ package users
 
 import (
 	"fmt"
+	"github.com/formancehq/go-libs/pointer"
 
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
@@ -32,13 +33,10 @@ func NewLinkController() *LinkController {
 
 func NewLinkCommand() *cobra.Command {
 	return fctl.NewCommand("link <user-id>",
-		fctl.WithStringFlag("role", "", "Roles: (ADMIN, GUEST, NONE)"),
+		fctl.WithIntFlag("policy-id", 0, "Policy ID"),
 		fctl.WithShortDescription("Link user to an organization with properties"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
-		fctl.WithPreRunE(func(cmd *cobra.Command, args []string) error {
-			return fctl.CheckMembershipVersion("v0.26.1")(cmd, args)
-		}),
 		fctl.WithController(NewLinkController()),
 	)
 }
@@ -48,20 +46,35 @@ func (c *LinkController) GetStore() *LinkStore {
 }
 
 func (c *LinkController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	role := fctl.GetString(cmd, "role")
-	req := membershipclient.UpdateOrganizationUserRequest{}
-	if role != "" {
-		req.Role = membershipclient.Role(role)
-	} else {
-		return nil, fmt.Errorf("role is required")
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
 	}
-	response, err := store.Client().UpsertOrganizationUser(
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	policyID := fctl.GetInt(cmd, "policy-id")
+	if policyID == 0 {
+		return nil, fmt.Errorf("policy id is required")
+	}
+
+	req := membershipclient.UpdateOrganizationUserRequest{
+		PolicyID: pointer.For(int32(policyID)),
+	}
+	response, err := store.DefaultAPI.UpsertOrganizationUser(
 		cmd.Context(),
 		organizationID,
 		args[0]).

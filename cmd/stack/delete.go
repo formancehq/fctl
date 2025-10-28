@@ -53,7 +53,25 @@ func (c *StackDeleteController) GetStore() *DeletedStackStore {
 }
 
 func (c *StackDeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetOrganizationStore(cmd)
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
 
 	var stack *membershipclient.Stack
 	if len(args) == 1 {
@@ -61,7 +79,7 @@ func (c *StackDeleteController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 			return nil, errors.New("need either an id of a name specified using --name flag")
 		}
 
-		rsp, _, err := store.Client().GetStack(cmd.Context(), store.OrganizationId(), args[0]).Execute()
+		rsp, _, err := store.DefaultAPI.GetStack(cmd.Context(), organizationID, args[0]).Execute()
 		if err != nil {
 			return nil, err
 		}
@@ -70,7 +88,7 @@ func (c *StackDeleteController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 		if fctl.GetString(cmd, stackNameFlag) == "" {
 			return nil, errors.New("need either an id of a name specified using --name flag")
 		}
-		stacks, _, err := store.Client().ListStacks(cmd.Context(), store.OrganizationId()).Execute()
+		stacks, _, err := store.DefaultAPI.ListStacks(cmd.Context(), organizationID).Execute()
 		if err != nil {
 			return nil, errors.Wrap(err, "listing stacks")
 		}
@@ -85,19 +103,16 @@ func (c *StackDeleteController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 		return nil, errors.New("Stack not found")
 	}
 
-	if !fctl.CheckStackApprobation(cmd, stack, "You are about to delete stack '%s'", stack.Name) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to delete stack '%s'", stack.Name) {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	query := store.Client().DeleteStack(cmd.Context(), store.OrganizationId(), stack.Id)
+	query := store.DefaultAPI.DeleteStack(cmd.Context(), organizationID, stack.Id)
 	if fctl.GetBool(cmd, forceFlag) {
-		if isValid := fctl.CheckMembershipVersion("v0.27.1")(cmd, args); isValid != nil {
-			return nil, isValid
-		}
 		query = query.Force(true)
 	}
 
-	_, err := query.Execute()
+	_, err = query.Execute()
 	if err != nil {
 		return nil, errors.Wrap(err, "deleting stack")
 	}

@@ -2,17 +2,17 @@ package stack
 
 import (
 	"fmt"
+	fctl "github.com/formancehq/fctl/pkg"
 	"net/http"
 	"time"
 
 	"github.com/formancehq/fctl/cmd/stack/internal"
 	"github.com/formancehq/fctl/membershipclient"
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
-func waitStackReady(cmd *cobra.Command, client *fctl.MembershipClient, organizationId, stackId string) (*membershipclient.Stack, error) {
+func waitStackReady(cmd *cobra.Command, profile fctl.Profile, client *membershipclient.APIClient, organizationId, stackId string) (*membershipclient.Stack, error) {
 	var resp *http.Response
 	var err error
 	var stackRsp *membershipclient.CreateStackResponse
@@ -28,11 +28,6 @@ func waitStackReady(cmd *cobra.Command, client *fctl.MembershipClient, organizat
 	}
 
 	for {
-		err = client.RefreshIfNeeded(cmd)
-		if err != nil {
-			return nil, err
-		}
-
 		stackRsp, resp, err = client.DefaultAPI.GetStack(cmd.Context(), organizationId, stackId).Execute()
 		if err != nil {
 			return nil, err
@@ -49,7 +44,7 @@ func waitStackReady(cmd *cobra.Command, client *fctl.MembershipClient, organizat
 			pterm.Warning.Printf("You can check fctl stack show %s --organization %s to see the status of the stack", stackId, organizationId)
 			problem := fmt.Errorf("there might a problem with the stack scheduling, if the problem persists, please contact the support")
 
-			err = internal.PrintStackInformation(cmd.OutOrStdout(), client.GetProfile(), stackRsp.Data, nil)
+			err = internal.PrintStackInformation(cmd.OutOrStdout(), stackRsp.Data, nil)
 			if err != nil {
 				return nil, problem
 			}

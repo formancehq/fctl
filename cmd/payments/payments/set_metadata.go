@@ -45,7 +45,30 @@ func (c *SetMetadataController) GetStore() *SetMetadataStore {
 }
 
 func (c *SetMetadataController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	metadata, err := fctl.ParseMetadata(args[1:])
 	if err != nil {
@@ -54,7 +77,7 @@ func (c *SetMetadataController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 
 	paymentID := args[0]
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to set a metadata on paymentID '%s'", paymentID) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to set a metadata on paymentID '%s'", paymentID) {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -63,7 +86,7 @@ func (c *SetMetadataController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 		PaymentID:   paymentID,
 	}
 
-	response, err := store.Client().Payments.V1.UpdateMetadata(cmd.Context(), request)
+	response, err := stackClient.Payments.V1.UpdateMetadata(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}

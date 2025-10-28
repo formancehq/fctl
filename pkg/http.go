@@ -13,11 +13,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func GetHttpClient(cmd *cobra.Command, defaultHeaders map[string][]string) *http.Client {
-	return NewHTTPClient(
-		cmd,
-		defaultHeaders,
-	)
+func GetHttpClient(cmd *cobra.Command) *http.Client {
+	return &http.Client{
+		Transport: NewHTTPTransport(cmd),
+	}
 }
 
 type RoundTripperFn func(req *http.Request) (*http.Response, error)
@@ -57,7 +56,7 @@ func debugRoundTripper(rt http.RoundTripper) RoundTripperFn {
 			if err != nil {
 				panic(err)
 			}
-			req.Body.Close()
+			_ = req.Body.Close()
 			req.Body = io.NopCloser(bytes.NewBuffer(data))
 			printBody(data)
 		}
@@ -78,7 +77,7 @@ func debugRoundTripper(rt http.RoundTripper) RoundTripperFn {
 			if err != nil {
 				panic(err)
 			}
-			rsp.Body.Close()
+			_ = rsp.Body.Close()
 			rsp.Body = io.NopCloser(bytes.NewBuffer(data))
 			printBody(data)
 		}
@@ -87,24 +86,7 @@ func debugRoundTripper(rt http.RoundTripper) RoundTripperFn {
 	}
 }
 
-func defaultHeadersRoundTripper(rt http.RoundTripper, headers map[string][]string) RoundTripperFn {
-	return func(req *http.Request) (*http.Response, error) {
-		for k, v := range headers {
-			for _, vv := range v {
-				req.Header.Add(k, vv)
-			}
-		}
-		return rt.RoundTrip(req)
-	}
-}
-
-func NewHTTPClient(cmd *cobra.Command, defaultHeaders map[string][]string) *http.Client {
-	return &http.Client{
-		Transport: NewHTTPTransport(cmd, defaultHeaders),
-	}
-}
-
-func NewHTTPTransport(cmd *cobra.Command, defaultHeaders map[string][]string) http.RoundTripper {
+func NewHTTPTransport(cmd *cobra.Command) http.RoundTripper {
 
 	var transport http.RoundTripper = &http.Transport{
 		TLSClientConfig: &tls.Config{
@@ -114,8 +96,6 @@ func NewHTTPTransport(cmd *cobra.Command, defaultHeaders map[string][]string) ht
 	if GetBool(cmd, DebugFlag) {
 		transport = debugRoundTripper(transport)
 	}
-	if len(defaultHeaders) > 0 {
-		transport = defaultHeadersRoundTripper(transport, defaultHeaders)
-	}
+
 	return transport
 }

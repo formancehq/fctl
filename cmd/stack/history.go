@@ -56,9 +56,6 @@ func NewHistoryCommand() *cobra.Command {
 
 		fctl.WithStringFlag(cursorFlag, "", "Cursor"),
 		fctl.WithIntFlag(pageSizeFlag, 10, "Page size"),
-		fctl.WithPreRunE(func(cmd *cobra.Command, args []string) error {
-			return fctl.CheckMembershipVersion("v0.29.0")(cmd, args)
-		}),
 		fctl.WithController(NewHistoryController()),
 	)
 }
@@ -67,10 +64,28 @@ func (c *HistoryController) GetStore() *HistoryStore {
 }
 
 func (c *HistoryController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetOrganizationStore(cmd)
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
 	pageSize := fctl.GetInt(cmd, pageSizeFlag)
 	stackID := args[0]
-	req := store.Client().ListLogs(cmd.Context(), store.OrganizationId()).PageSize(int32(pageSize)).StackId(stackID)
+	req := store.DefaultAPI.ListLogs(cmd.Context(), organizationID).PageSize(int32(pageSize)).StackId(stackID)
 
 	cursor := fctl.GetString(cmd, cursorFlag)
 	userID := fctl.GetString(cmd, userIdFlag)

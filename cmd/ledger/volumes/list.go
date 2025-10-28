@@ -39,7 +39,30 @@ func (c *ListController) GetStore() *ListStore {
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	metadata, err := fctl.ParseMetadata(fctl.GetStringSlice(cmd, c.metadataFlag))
 	if err != nil {
@@ -101,7 +124,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		GroupBy:       &groupBy,
 	}
 
-	response, err := store.Client().Ledger.V2.GetVolumesWithBalances(cmd.Context(), request)
+	response, err := stackClient.Ledger.V2.GetVolumesWithBalances(cmd.Context(), request)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "Get Volumes With Balances")

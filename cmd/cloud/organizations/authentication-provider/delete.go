@@ -36,13 +36,27 @@ func (c *DeleteController) GetStore() *Delete {
 
 func (c *DeleteController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
 
-	store := fctl.GetMembershipStore(cmd.Context())
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = store.Client().
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = store.DefaultAPI.
 		DeleteAuthenticationProvider(cmd.Context(), organizationID).
 		Execute()
 	if err != nil {

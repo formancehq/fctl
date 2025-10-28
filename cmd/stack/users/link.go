@@ -32,7 +32,7 @@ func NewLinkController() *LinkController {
 
 func NewLinkCommand() *cobra.Command {
 	return fctl.NewCommand("link <user-id>",
-		fctl.WithStringFlag("role", "", "Roles: (ADMIN, GUEST)"),
+		fctl.WithIntFlag("policy-id", 0, "Policy id"),
 		fctl.WithShortDescription("Link stack user with properties"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
@@ -45,24 +45,47 @@ func (c *LinkController) GetStore() *LinkStore {
 }
 
 func (c *LinkController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStackStore(cmd.Context())
-
-	role := membershipclient.Role(fctl.GetString(cmd, "role"))
-	req := membershipclient.UpdateStackUserRequest{}
-	if role != "" {
-		req.Role = role
-	} else {
-		return nil, fmt.Errorf("role is required")
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
 	}
 
-	_, err := store.Client().
-		UpsertStackUserAccess(cmd.Context(), store.OrganizationId(), store.StackId(), args[0]).
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	policyID := fctl.GetInt(cmd, "policy-id")
+	req := membershipclient.UpdateStackUserRequest{}
+	if policyID != 0 {
+		req.PolicyID = int32(policyID)
+	} else {
+		return nil, fmt.Errorf("policy id is required")
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = store.DefaultAPI.
+		UpsertStackUserAccess(cmd.Context(), organizationID, stackID, args[0]).
 		UpdateStackUserRequest(req).Execute()
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.OrganizationID = store.OrganizationId()
+	c.store.OrganizationID = organizationID
 	c.store.StackID = args[0]
 	c.store.UserID = args[1]
 

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -59,11 +58,15 @@ func (p *prompt) completionsFromCommand(subCommand *cobra.Command, completionsAr
 	}), d.GetWordBeforeCursor(), true)
 }
 
-func (p *prompt) completions(cfg *fctl.Config, d goprompt.Document) []goprompt.Suggest {
+func (p *prompt) completions(cmd *cobra.Command, d goprompt.Document) ([]goprompt.Suggest, error) {
 	suggestions := make([]goprompt.Suggest, 0)
 	switch {
 	case strings.HasPrefix(d.Text, ":set "+fctl.ProfileFlag):
-		profiles := fctl.MapKeys(cfg.GetProfiles())
+		profiles, err := fctl.ListProfiles(cmd)
+		if err != nil {
+			return nil, err
+		}
+
 		sort.Strings(profiles)
 		for _, p := range profiles {
 			suggestions = append(suggestions, goprompt.Suggest{
@@ -98,19 +101,24 @@ func (p *prompt) completions(cfg *fctl.Config, d goprompt.Document) []goprompt.S
 		})
 	}
 
-	return goprompt.FilterHasPrefix(suggestions, d.GetWordBeforeCursor(), true)
+	return goprompt.FilterHasPrefix(suggestions, d.GetWordBeforeCursor(), true), nil
 }
 
-func (p *prompt) startPrompt(ctx context.Context, prompt string, cfg *fctl.Config, opts ...goprompt.Option) string {
+func (p *prompt) startPrompt(cmd *cobra.Command, prompt string, opts ...goprompt.Option) (string, error) {
 	return goprompt.Input(prompt, func(d goprompt.Document) []goprompt.Suggest {
 		subCommand := NewRootCommand()
-		subCommand.SetContext(ctx)
+		subCommand.SetContext(cmd.Context())
 
 		switch {
 		case d.Text == "":
 			return p.completionsFromCommand(subCommand, []string{""}, d)
 		case strings.HasPrefix(d.Text, ":"):
-			return p.completions(cfg, d)
+			completions, err := p.completions(cmd, d)
+			if err != nil {
+				return []goprompt.Suggest{}
+			}
+
+			return completions
 		default:
 			parse, err := shellwords.Parse(d.Text)
 			if err != nil {
@@ -122,7 +130,7 @@ func (p *prompt) startPrompt(ctx context.Context, prompt string, cfg *fctl.Confi
 			}
 			return p.completionsFromCommand(subCommand, parse, d)
 		}
-	}, opts...)
+	}, opts...), nil
 }
 
 func (p *prompt) executeCommand(cmd *cobra.Command, t string) error {
@@ -165,13 +173,17 @@ func (p *prompt) executePromptCommand(cmd *cobra.Command, t string) error {
 	return nil
 }
 
-func (p *prompt) refreshUserEmail(cmd *cobra.Command, cfg *fctl.Config) error {
-	profile := fctl.GetCurrentProfile(cmd, cfg)
+func (p *prompt) refreshUserEmail(cmd *cobra.Command, cfg fctl.Config) error {
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, cfg)
+	if err != nil {
+		return err
+	}
 	if !profile.IsConnected() {
 		p.userEmail = ""
 		return nil
 	}
-	userInfo, err := profile.GetUserInfo(cmd)
+
+	userInfo, err := fctl.UserInfo(cmd, relyingParty, profile.RootTokens.Access)
 	if err != nil {
 		p.userEmail = ""
 		return nil
@@ -181,14 +193,18 @@ func (p *prompt) refreshUserEmail(cmd *cobra.Command, cfg *fctl.Config) error {
 }
 
 func (p *prompt) displayHeader(cmd *cobra.Command, cfg *fctl.Config) error {
-	header := fctl.GetCurrentProfileName(cmd, cfg)
+	header := fctl.GetCurrentProfileName(cmd, *cfg)
 	if p.userEmail != "" {
+		currentProfile, err := fctl.LoadCurrentProfile(cmd, *cfg)
+		if err != nil {
+			return err
+		}
 		header += " / " + p.userEmail
-		if organizationID := fctl.GetCurrentProfile(cmd, cfg).GetDefaultOrganization(); organizationID != "" {
+		if organizationID := currentProfile.GetDefaultOrganization(); organizationID != "" {
 			header += " / " + organizationID
 		}
 
-		if stackID := fctl.GetCurrentProfile(cmd, cfg).GetDefaultStack(); stackID != "" {
+		if stackID := currentProfile.GetDefaultStack(); stackID != "" {
 			header += " / " + stackID
 		}
 	}
@@ -199,14 +215,14 @@ func (p *prompt) displayHeader(cmd *cobra.Command, cfg *fctl.Config) error {
 
 func (p *prompt) nextCommand(cmd *cobra.Command) error {
 
-	cfg, err := fctl.GetConfig(cmd)
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return err
 	}
 
-	currentProfileName := fctl.GetCurrentProfileName(cmd, cfg)
+	currentProfileName := fctl.GetCurrentProfileName(cmd, *cfg)
 	if currentProfileName != p.actualProfile || p.userEmail == "" {
-		if err := p.refreshUserEmail(cmd, cfg); err != nil {
+		if err := p.refreshUserEmail(cmd, *cfg); err != nil {
 			return err
 		}
 		p.actualProfile = currentProfileName
@@ -216,18 +232,22 @@ func (p *prompt) nextCommand(cmd *cobra.Command) error {
 		return err
 	}
 
-	switch t := p.startPrompt(cmd.Context(), " > ", cfg,
+	prompt, err := p.startPrompt(cmd, " > ",
 		goprompt.OptionPrefixTextColor(p.promptColor),
 		goprompt.OptionHistory(p.history),
-		goprompt.OptionCompletionOnDown()); t {
+		goprompt.OptionCompletionOnDown())
+	if err != nil {
+		return err
+	}
+	switch prompt {
 	case "":
 		p.promptColor = goprompt.Blue
 	default:
 		var err error
-		if strings.HasPrefix(t, ":") {
-			err = p.executePromptCommand(cmd, t)
+		if strings.HasPrefix(prompt, ":") {
+			err = p.executePromptCommand(cmd, prompt)
 		} else {
-			err = p.executeCommand(cmd, t)
+			err = p.executeCommand(cmd, prompt)
 		}
 		if err != nil {
 			pterm.Error.WithWriter(cmd.OutOrStderr()).Printfln("%s", err)
@@ -235,7 +255,7 @@ func (p *prompt) nextCommand(cmd *cobra.Command) error {
 		} else {
 			p.promptColor = goprompt.Blue
 		}
-		p.history = append(p.history, t)
+		p.history = append(p.history, prompt)
 	}
 
 	return nil

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/formancehq/fctl/membershipclient"
 	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -22,28 +21,17 @@ var interactiveContinue = pterm.InteractiveContinuePrinter{
 }
 
 const (
-	ProtectedStackMetadata = "github.com/formancehq/fctl/protected"
 	confirmFlag            = "confirm"
 )
 
-func IsProtectedStack(stack *membershipclient.Stack) bool {
-	return stack.Metadata != nil && (*stack.Metadata)[ProtectedStackMetadata] == "Yes"
-}
-
-func NeedConfirm(cmd *cobra.Command, stack *membershipclient.Stack) bool {
-	if !IsProtectedStack(stack) {
-		return false
-	}
+func NeedConfirm(cmd *cobra.Command) bool {
 	if GetBool(cmd, confirmFlag) {
 		return false
 	}
 	return true
 }
 
-func CheckStackApprobation(cmd *cobra.Command, stack *membershipclient.Stack, disclaimer string, args ...any) bool {
-	if !IsProtectedStack(stack) {
-		return true
-	}
+func CheckStackApprobation(cmd *cobra.Command, disclaimer string, args ...any) bool {
 	if GetBool(cmd, confirmFlag) {
 		return true
 	}

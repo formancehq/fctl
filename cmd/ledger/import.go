@@ -55,7 +55,30 @@ func (c *ImportController) GetStore() *ImportStore {
 }
 
 func (c *ImportController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	lastID := big.NewInt(-1)
 	resumeFromLastLog, err := cmd.Flags().GetBool(c.resumeFromLastLog)
@@ -63,7 +86,7 @@ func (c *ImportController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 	if resumeFromLastLog {
-		logs, err := store.Client().Ledger.V2.ListLogs(cmd.Context(), operations.V2ListLogsRequest{
+		logs, err := stackClient.Ledger.V2.ListLogs(cmd.Context(), operations.V2ListLogsRequest{
 			Ledger:   args[0],
 			PageSize: pointer.For[int64](1),
 		})
@@ -130,7 +153,7 @@ func (c *ImportController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		progressBar.Add(len(bytes) + 1) // +1 for the end of line
 
 		if count == blockSize {
-			_, err = store.Client().Ledger.V2.ImportLogs(cmd.Context(), operations.V2ImportLogsRequest{
+			_, err = stackClient.Ledger.V2.ImportLogs(cmd.Context(), operations.V2ImportLogsRequest{
 				Ledger:              args[0],
 				V2ImportLogsRequest: buffer,
 			})
@@ -146,7 +169,7 @@ func (c *ImportController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 	}
 
 	if buffer.Len() > 0 {
-		_, err = store.Client().Ledger.V2.ImportLogs(cmd.Context(), operations.V2ImportLogsRequest{
+		_, err = stackClient.Ledger.V2.ImportLogs(cmd.Context(), operations.V2ImportLogsRequest{
 			Ledger:              args[0],
 			V2ImportLogsRequest: buffer,
 		})

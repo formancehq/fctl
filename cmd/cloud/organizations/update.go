@@ -2,6 +2,7 @@ package organizations
 
 import (
 	"github.com/formancehq/fctl/cmd/cloud/organizations/internal"
+	"github.com/formancehq/go-libs/pointer"
 
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
@@ -25,16 +26,15 @@ func NewUpdateController() *UpdateController {
 }
 
 func NewUpdateCommand() *cobra.Command {
-	return fctl.NewCommand("update <organizationId> --name <name> --default-stack-role <defaultStackRole...> --default-organization-role <defaultOrganizationRole...>",
+	return fctl.NewCommand("update <organizationId> --name <name> --default-policy-id <defaultPolicyID...>",
 		fctl.WithAliases("update"),
 		fctl.WithShortDescription("Update organization"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(fctl.OrganizationCompletion),
 		fctl.WithConfirmFlag(),
 		fctl.WithStringFlag("name", "", "Organization Name"),
-		fctl.WithStringFlag("default-stack-role", "", "Default Stack Role"),
+		fctl.WithIntFlag("default-policy-id", 0, "Default policy id"),
 		fctl.WithStringFlag("domain", "", "Organization Domain"),
-		fctl.WithStringFlag("default-organization-role", "", "Default Organization Role"),
 		fctl.WithController(NewUpdateController()),
 	)
 }
@@ -44,12 +44,30 @@ func (c *UpdateController) GetStore() *DescribeStore {
 }
 
 func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
 	if !fctl.CheckOrganizationApprobation(cmd, "You are about to update an organization") {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	org, _, err := store.Client().ReadOrganization(cmd.Context(), args[0]).Execute()
+	org, _, err := store.DefaultAPI.ReadOrganization(cmd.Context(), args[0]).Execute()
 	if err != nil {
 		return nil, err
 	}
@@ -61,19 +79,13 @@ func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 			}
 			return org.Data.Name
 		}(),
-		DefaultOrganizationAccess: func() *membershipclient.Role {
-			if cmd.Flags().Changed("default-organization-role") {
-				s := fctl.GetString(cmd, "default-organization-role")
-				return membershipclient.Role(s).Ptr()
+		DefaultPolicyID: func() membershipclient.NullableInt32 {
+			if cmd.Flags().Changed("default-policy-id") {
+				return *membershipclient.NewNullableInt32(
+					pointer.For(int32(fctl.GetInt(cmd, "default-policy-id"))),
+				)
 			}
-			return org.Data.DefaultOrganizationAccess
-		}(),
-		DefaultStackAccess: func() *membershipclient.Role {
-			if cmd.Flags().Changed("default-stack-role") {
-				s := fctl.GetString(cmd, "default-stack-role")
-				return membershipclient.Role(s).Ptr()
-			}
-			return org.Data.DefaultStackAccess
+			return org.Data.DefaultPolicyID
 		}(),
 		Domain: func() *string {
 			str := fctl.GetString(cmd, "domain")
@@ -84,8 +96,10 @@ func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		}(),
 	}
 
-	response, _, err := store.Client().
-		UpdateOrganization(cmd.Context(), args[0]).OrganizationData(preparedData).Execute()
+	response, _, err := store.DefaultAPI.
+		UpdateOrganization(cmd.Context(), args[0]).
+		OrganizationData(preparedData).
+		Execute()
 
 	if err != nil {
 		return nil, err

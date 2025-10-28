@@ -2,7 +2,6 @@ package profiles
 
 import (
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -36,27 +35,29 @@ func (c *ProfilesRenameController) Run(cmd *cobra.Command, args []string) (fctl.
 	oldName := args[0]
 	newName := args[1]
 
-	config, err := fctl.GetConfig(cmd)
+	config, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	p := config.GetProfile(oldName)
-	if p == nil {
-		return nil, errors.New("profile not found")
-	}
-
-	if err := config.DeleteProfile(oldName); err != nil {
+	profile, err := fctl.LoadProfile(cmd, oldName)
+	if err != nil {
 		return nil, err
 	}
-	if config.GetCurrentProfileName() == oldName {
-		config.SetCurrentProfile(newName, p)
-	} else {
-		config.SetProfile(newName, p)
+
+	if err := fctl.DeleteProfile(cmd, oldName); err != nil {
+		return nil, err
 	}
 
-	if err := config.Persist(); err != nil {
-		return nil, errors.Wrap(config.Persist(), "Updating config")
+	if err := fctl.WriteProfile(cmd, newName, *profile); err != nil {
+		return nil, err
+	}
+
+	if config.CurrentProfile == oldName {
+		config.CurrentProfile = newName
+		if err := fctl.WriteConfig(cmd, *config); err != nil {
+			return nil, err
+		}
 	}
 
 	c.store.Success = true

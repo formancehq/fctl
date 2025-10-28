@@ -81,31 +81,43 @@ Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *DefaultAPI* | [**AcceptInvitation**](docs/DefaultAPI.md#acceptinvitation) | **Post** /me/invitations/{invitationId}/accept | Accept invitation
 *DefaultAPI* | [**AddFeatures**](docs/DefaultAPI.md#addfeatures) | **Post** /organizations/{organizationId}/features | Add Features
+*DefaultAPI* | [**AddScopeToPolicy**](docs/DefaultAPI.md#addscopetopolicy) | **Put** /organizations/{organizationId}/policies/{policyId}/scopes/{scopeId} | Add scope to policy
+*DefaultAPI* | [**CreateApplication**](docs/DefaultAPI.md#createapplication) | **Post** /applications | Create application
+*DefaultAPI* | [**CreateApplicationScope**](docs/DefaultAPI.md#createapplicationscope) | **Post** /applications/{applicationId}/scopes | Create application scope
 *DefaultAPI* | [**CreateInvitation**](docs/DefaultAPI.md#createinvitation) | **Post** /organizations/{organizationId}/invitations | Create invitation
 *DefaultAPI* | [**CreateOrganization**](docs/DefaultAPI.md#createorganization) | **Post** /organizations | Create organization
 *DefaultAPI* | [**CreateOrganizationClient**](docs/DefaultAPI.md#createorganizationclient) | **Put** /organizations/{organizationId}/client | Create organization client (DEPRECATED) (until 12/31/2025)
+*DefaultAPI* | [**CreatePolicy**](docs/DefaultAPI.md#createpolicy) | **Post** /organizations/{organizationId}/policies | Create policy
 *DefaultAPI* | [**CreatePrivateRegion**](docs/DefaultAPI.md#createprivateregion) | **Post** /organizations/{organizationId}/regions | Create a private region
 *DefaultAPI* | [**CreateStack**](docs/DefaultAPI.md#createstack) | **Post** /organizations/{organizationId}/stacks | Create stack
+*DefaultAPI* | [**CreateUser**](docs/DefaultAPI.md#createuser) | **Post** /users | Create user
 *DefaultAPI* | [**DeclineInvitation**](docs/DefaultAPI.md#declineinvitation) | **Post** /me/invitations/{invitationId}/reject | Decline invitation
+*DefaultAPI* | [**DeleteApplication**](docs/DefaultAPI.md#deleteapplication) | **Delete** /applications/{applicationId} | Delete application
+*DefaultAPI* | [**DeleteApplicationScope**](docs/DefaultAPI.md#deleteapplicationscope) | **Delete** /applications/{applicationId}/scopes/{scopeID} | Delete application scope
 *DefaultAPI* | [**DeleteAuthenticationProvider**](docs/DefaultAPI.md#deleteauthenticationprovider) | **Delete** /organizations/{organizationId}/authentication-provider | Delete authentication provider
 *DefaultAPI* | [**DeleteFeature**](docs/DefaultAPI.md#deletefeature) | **Delete** /organizations/{organizationId}/features/{name} | Delete feature
 *DefaultAPI* | [**DeleteInvitation**](docs/DefaultAPI.md#deleteinvitation) | **Delete** /organizations/{organizationId}/invitations/{invitationId} | Delete invitation
 *DefaultAPI* | [**DeleteOrganization**](docs/DefaultAPI.md#deleteorganization) | **Delete** /organizations/{organizationId} | Delete organization
 *DefaultAPI* | [**DeleteOrganizationClient**](docs/DefaultAPI.md#deleteorganizationclient) | **Delete** /organizations/{organizationId}/client | Delete organization client (DEPRECATED) (until 12/31/2025)
+*DefaultAPI* | [**DeletePolicy**](docs/DefaultAPI.md#deletepolicy) | **Delete** /organizations/{organizationId}/policies/{policyId} | Delete policy
 *DefaultAPI* | [**DeleteRegion**](docs/DefaultAPI.md#deleteregion) | **Delete** /organizations/{organizationId}/regions/{regionID} | Delete region
 *DefaultAPI* | [**DeleteStack**](docs/DefaultAPI.md#deletestack) | **Delete** /organizations/{organizationId}/stacks/{stackId} | Delete stack
-*DefaultAPI* | [**DeleteStackUserAccess**](docs/DefaultAPI.md#deletestackuseraccess) | **Delete** /organizations/{organizationId}/stacks/{stackId}/users/{userId} | Delete stack user access role within an organization
+*DefaultAPI* | [**DeleteStackUserAccess**](docs/DefaultAPI.md#deletestackuseraccess) | **Delete** /organizations/{organizationId}/stacks/{stackId}/users/{userId} | Delete stack user access within an organization
 *DefaultAPI* | [**DeleteUserFromOrganization**](docs/DefaultAPI.md#deleteuserfromorganization) | **Delete** /organizations/{organizationId}/users/{userId} | delete user from organization
+*DefaultAPI* | [**DisableApplicationForOrganization**](docs/DefaultAPI.md#disableapplicationfororganization) | **Delete** /organizations/{organizationId}/applications/{applicationId} | Disable application for organization
 *DefaultAPI* | [**DisableModule**](docs/DefaultAPI.md#disablemodule) | **Delete** /organizations/{organizationId}/stacks/{stackId}/modules | disable module
 *DefaultAPI* | [**DisableStack**](docs/DefaultAPI.md#disablestack) | **Put** /organizations/{organizationId}/stacks/{stackId}/disable | Disable stack
 *DefaultAPI* | [**DisableStargate**](docs/DefaultAPI.md#disablestargate) | **Put** /organizations/{organizationId}/stacks/{stackId}/stargate/disable | Disable stargate on a stack
+*DefaultAPI* | [**EnableApplicationForOrganization**](docs/DefaultAPI.md#enableapplicationfororganization) | **Put** /organizations/{organizationId}/applications/{applicationId} | Enable application for organization
 *DefaultAPI* | [**EnableModule**](docs/DefaultAPI.md#enablemodule) | **Post** /organizations/{organizationId}/stacks/{stackId}/modules | enable module
 *DefaultAPI* | [**EnableStack**](docs/DefaultAPI.md#enablestack) | **Put** /organizations/{organizationId}/stacks/{stackId}/enable | Enable stack
 *DefaultAPI* | [**EnableStargate**](docs/DefaultAPI.md#enablestargate) | **Put** /organizations/{organizationId}/stacks/{stackId}/stargate/enable | Enable stargate on a stack
+*DefaultAPI* | [**GetApplication**](docs/DefaultAPI.md#getapplication) | **Get** /applications/{applicationId} | Get application
 *DefaultAPI* | [**GetRegion**](docs/DefaultAPI.md#getregion) | **Get** /organizations/{organizationId}/regions/{regionID} | Get region
 *DefaultAPI* | [**GetRegionVersions**](docs/DefaultAPI.md#getregionversions) | **Get** /organizations/{organizationId}/regions/{regionID}/versions | Get region versions
 *DefaultAPI* | [**GetServerInfo**](docs/DefaultAPI.md#getserverinfo) | **Get** /_info | Get server info
 *DefaultAPI* | [**GetStack**](docs/DefaultAPI.md#getstack) | **Get** /organizations/{organizationId}/stacks/{stackId} | Find stack
+*DefaultAPI* | [**ListApplications**](docs/DefaultAPI.md#listapplications) | **Get** /applications | List applications
 *DefaultAPI* | [**ListFeatures**](docs/DefaultAPI.md#listfeatures) | **Get** /organizations/{organizationId}/features | List features
 *DefaultAPI* | [**ListInvitations**](docs/DefaultAPI.md#listinvitations) | **Get** /me/invitations | List invitations of the user
 *DefaultAPI* | [**ListLogs**](docs/DefaultAPI.md#listlogs) | **Get** /organizations/{organizationId}/logs | List logs
@@ -113,6 +125,7 @@ Class | Method | HTTP request | Description
 *DefaultAPI* | [**ListOrganizationInvitations**](docs/DefaultAPI.md#listorganizationinvitations) | **Get** /organizations/{organizationId}/invitations | List invitations of the organization
 *DefaultAPI* | [**ListOrganizations**](docs/DefaultAPI.md#listorganizations) | **Get** /organizations | List organizations of the connected user
 *DefaultAPI* | [**ListOrganizationsExpanded**](docs/DefaultAPI.md#listorganizationsexpanded) | **Get** /organizations/expanded | List organizations of the connected user with expanded data
+*DefaultAPI* | [**ListPolicies**](docs/DefaultAPI.md#listpolicies) | **Get** /organizations/{organizationId}/policies | List policies of organization
 *DefaultAPI* | [**ListRegions**](docs/DefaultAPI.md#listregions) | **Get** /organizations/{organizationId}/regions | List regions
 *DefaultAPI* | [**ListStackUsersAccesses**](docs/DefaultAPI.md#liststackusersaccesses) | **Get** /organizations/{organizationId}/stacks/{stackId}/users | List stack users accesses within an organization
 *DefaultAPI* | [**ListStacks**](docs/DefaultAPI.md#liststacks) | **Get** /organizations/{organizationId}/stacks | List stacks
@@ -126,15 +139,19 @@ Class | Method | HTTP request | Description
 *DefaultAPI* | [**ReadConnectedUser**](docs/DefaultAPI.md#readconnecteduser) | **Get** /me | Read user
 *DefaultAPI* | [**ReadOrganization**](docs/DefaultAPI.md#readorganization) | **Get** /organizations/{organizationId} | Read organization
 *DefaultAPI* | [**ReadOrganizationClient**](docs/DefaultAPI.md#readorganizationclient) | **Get** /organizations/{organizationId}/client | Read organization client (DEPRECATED) (until 12/31/2025)
-*DefaultAPI* | [**ReadStackUserAccess**](docs/DefaultAPI.md#readstackuseraccess) | **Get** /organizations/{organizationId}/stacks/{stackId}/users/{userId} | Read stack user access role within an organization
+*DefaultAPI* | [**ReadPolicy**](docs/DefaultAPI.md#readpolicy) | **Get** /organizations/{organizationId}/policies/{policyId} | Read policy with scopes
+*DefaultAPI* | [**ReadStackUserAccess**](docs/DefaultAPI.md#readstackuseraccess) | **Get** /organizations/{organizationId}/stacks/{stackId}/users/{userId} | Read stack user access within an organization
 *DefaultAPI* | [**ReadUserOfOrganization**](docs/DefaultAPI.md#readuseroforganization) | **Get** /organizations/{organizationId}/users/{userId} | Read user of organization
+*DefaultAPI* | [**RemoveScopeFromPolicy**](docs/DefaultAPI.md#removescopefrompolicy) | **Delete** /organizations/{organizationId}/policies/{policyId}/scopes/{scopeId} | Remove scope from policy
 *DefaultAPI* | [**RestoreStack**](docs/DefaultAPI.md#restorestack) | **Put** /organizations/{organizationId}/stacks/{stackId}/restore | Restore stack
+*DefaultAPI* | [**UpdateApplication**](docs/DefaultAPI.md#updateapplication) | **Put** /applications/{applicationId} | Update application
 *DefaultAPI* | [**UpdateOrganization**](docs/DefaultAPI.md#updateorganization) | **Put** /organizations/{organizationId} | Update organization
+*DefaultAPI* | [**UpdatePolicy**](docs/DefaultAPI.md#updatepolicy) | **Put** /organizations/{organizationId}/policies/{policyId} | Update policy
 *DefaultAPI* | [**UpdateStack**](docs/DefaultAPI.md#updatestack) | **Put** /organizations/{organizationId}/stacks/{stackId} | Update stack
 *DefaultAPI* | [**UpgradeStack**](docs/DefaultAPI.md#upgradestack) | **Put** /organizations/{organizationId}/stacks/{stackId}/upgrade | Upgrade stack
 *DefaultAPI* | [**UpsertAuthenticationProvider**](docs/DefaultAPI.md#upsertauthenticationprovider) | **Put** /organizations/{organizationId}/authentication-provider | Upsert an authentication provider
 *DefaultAPI* | [**UpsertOrganizationUser**](docs/DefaultAPI.md#upsertorganizationuser) | **Put** /organizations/{organizationId}/users/{userId} | Update user within an organization
-*DefaultAPI* | [**UpsertStackUserAccess**](docs/DefaultAPI.md#upsertstackuseraccess) | **Put** /organizations/{organizationId}/stacks/{stackId}/users/{userId} | Update stack user access role within an organization
+*DefaultAPI* | [**UpsertStackUserAccess**](docs/DefaultAPI.md#upsertstackuseraccess) | **Put** /organizations/{organizationId}/stacks/{stackId}/users/{userId} | Update stack user access within an organization
 
 
 ## Documentation For Models
@@ -142,35 +159,49 @@ Class | Method | HTTP request | Description
  - [Action](docs/Action.md)
  - [AddFeaturesRequest](docs/AddFeaturesRequest.md)
  - [AnyRegion](docs/AnyRegion.md)
+ - [Application](docs/Application.md)
+ - [ApplicationData](docs/ApplicationData.md)
+ - [ApplicationWithScope](docs/ApplicationWithScope.md)
  - [AuthenticationProvider](docs/AuthenticationProvider.md)
  - [AuthenticationProviderData](docs/AuthenticationProviderData.md)
  - [AuthenticationProviderResponse](docs/AuthenticationProviderResponse.md)
  - [AuthenticationProviderResponseData](docs/AuthenticationProviderResponseData.md)
  - [BaseProviderConfig](docs/BaseProviderConfig.md)
  - [Capability](docs/Capability.md)
+ - [CreateApplicationResponse](docs/CreateApplicationResponse.md)
+ - [CreateApplicationScopeRequest](docs/CreateApplicationScopeRequest.md)
+ - [CreateApplicationScopeResponse](docs/CreateApplicationScopeResponse.md)
  - [CreateClientResponseResponse](docs/CreateClientResponseResponse.md)
  - [CreateClientResponseResponseData](docs/CreateClientResponseResponseData.md)
  - [CreateInvitationResponse](docs/CreateInvitationResponse.md)
  - [CreateOrganizationClientRequest](docs/CreateOrganizationClientRequest.md)
  - [CreateOrganizationClientResponse](docs/CreateOrganizationClientResponse.md)
+ - [CreateOrganizationRequest](docs/CreateOrganizationRequest.md)
  - [CreateOrganizationResponse](docs/CreateOrganizationResponse.md)
+ - [CreatePolicyResponse](docs/CreatePolicyResponse.md)
  - [CreatePrivateRegionRequest](docs/CreatePrivateRegionRequest.md)
  - [CreateStackRequest](docs/CreateStackRequest.md)
  - [CreateStackResponse](docs/CreateStackResponse.md)
+ - [CreateUserRequest](docs/CreateUserRequest.md)
+ - [CreateUserResponse](docs/CreateUserResponse.md)
  - [CreatedPrivateRegionResponse](docs/CreatedPrivateRegionResponse.md)
  - [Cursor](docs/Cursor.md)
+ - [EnableApplicationForOrganizationResponse](docs/EnableApplicationForOrganizationResponse.md)
  - [Error](docs/Error.md)
+ - [GetApplicationResponse](docs/GetApplicationResponse.md)
  - [GetRegionResponse](docs/GetRegionResponse.md)
  - [GetRegionVersionsResponse](docs/GetRegionVersionsResponse.md)
  - [GithubIDPConfig](docs/GithubIDPConfig.md)
  - [GoogleIDPConfig](docs/GoogleIDPConfig.md)
  - [Invitation](docs/Invitation.md)
- - [InvitationClaim](docs/InvitationClaim.md)
+ - [ListApplicationsResponse](docs/ListApplicationsResponse.md)
+ - [ListApplicationsResponseCursor](docs/ListApplicationsResponseCursor.md)
  - [ListFeatures200Response](docs/ListFeatures200Response.md)
  - [ListInvitationsResponse](docs/ListInvitationsResponse.md)
  - [ListModulesResponse](docs/ListModulesResponse.md)
  - [ListOrganizationExpandedResponse](docs/ListOrganizationExpandedResponse.md)
  - [ListOrganizationResponse](docs/ListOrganizationResponse.md)
+ - [ListPoliciesResponse](docs/ListPoliciesResponse.md)
  - [ListRegionsResponse](docs/ListRegionsResponse.md)
  - [ListStacksResponse](docs/ListStacksResponse.md)
  - [ListUsersResponse](docs/ListUsersResponse.md)
@@ -183,12 +214,15 @@ Class | Method | HTTP request | Description
  - [OIDCConfig](docs/OIDCConfig.md)
  - [OIDCConfigAllOfConfig](docs/OIDCConfigAllOfConfig.md)
  - [Organization](docs/Organization.md)
+ - [OrganizationApplication](docs/OrganizationApplication.md)
  - [OrganizationClient](docs/OrganizationClient.md)
  - [OrganizationClientSecret](docs/OrganizationClientSecret.md)
  - [OrganizationData](docs/OrganizationData.md)
  - [OrganizationExpanded](docs/OrganizationExpanded.md)
  - [OrganizationFeature](docs/OrganizationFeature.md)
  - [OrganizationUser](docs/OrganizationUser.md)
+ - [Policy](docs/Policy.md)
+ - [PolicyData](docs/PolicyData.md)
  - [PrivateRegion](docs/PrivateRegion.md)
  - [PrivateRegionSecret](docs/PrivateRegionSecret.md)
  - [PublicRegion](docs/PublicRegion.md)
@@ -197,12 +231,13 @@ Class | Method | HTTP request | Description
  - [ReadOrganizationClientsResponseData](docs/ReadOrganizationClientsResponseData.md)
  - [ReadOrganizationResponse](docs/ReadOrganizationResponse.md)
  - [ReadOrganizationUserResponse](docs/ReadOrganizationUserResponse.md)
+ - [ReadPolicyResponse](docs/ReadPolicyResponse.md)
  - [ReadStackUserAccess](docs/ReadStackUserAccess.md)
  - [ReadUserResponse](docs/ReadUserResponse.md)
  - [Region](docs/Region.md)
  - [RegionCapability](docs/RegionCapability.md)
  - [RegionCapabilityKeys](docs/RegionCapabilityKeys.md)
- - [Role](docs/Role.md)
+ - [Scope](docs/Scope.md)
  - [ServerInfo](docs/ServerInfo.md)
  - [Stack](docs/Stack.md)
  - [StackData](docs/StackData.md)
@@ -212,8 +247,12 @@ Class | Method | HTTP request | Description
  - [StackUserAccessResponse](docs/StackUserAccessResponse.md)
  - [StackVersion](docs/StackVersion.md)
  - [SystemRole](docs/SystemRole.md)
+ - [UpdateApplicationResponse](docs/UpdateApplicationResponse.md)
+ - [UpdateApplicationScopeRequest](docs/UpdateApplicationScopeRequest.md)
+ - [UpdateApplicationScopeResponse](docs/UpdateApplicationScopeResponse.md)
  - [UpdateOrganizationClientRequest](docs/UpdateOrganizationClientRequest.md)
  - [UpdateOrganizationUserRequest](docs/UpdateOrganizationUserRequest.md)
+ - [UpdatePolicyResponse](docs/UpdatePolicyResponse.md)
  - [UpdateStackRequest](docs/UpdateStackRequest.md)
  - [UpdateStackUserRequest](docs/UpdateStackUserRequest.md)
  - [User](docs/User.md)

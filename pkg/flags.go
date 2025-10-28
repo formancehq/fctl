@@ -12,7 +12,7 @@ import (
 
 const (
 	MembershipURIFlag = "membership-uri"
-	FileFlag          = "config"
+	ConfigDir         = "config-dir"
 	ProfileFlag       = "profile"
 	OutputFlag        = "output"
 	DebugFlag         = "debug"
@@ -20,7 +20,6 @@ const (
 	TelemetryFlag     = "telemetry"
 	stackFlag         = "stack"
 	organizationFlag  = "organization"
-	FrameworkURIFlag  = "framework-uri"
 )
 
 func GetBool(cmd *cobra.Command, flagName string) bool {

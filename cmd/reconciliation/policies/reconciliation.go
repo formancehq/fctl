@@ -46,7 +46,30 @@ func (c *ReconciliationController) GetStore() *ReconciliationStore {
 }
 
 func (c *ReconciliationController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	atLedger, err := time.Parse(time.RFC3339, args[1])
 	if err != nil {
@@ -58,7 +81,7 @@ func (c *ReconciliationController) Run(cmd *cobra.Command, args []string) (fctl.
 		return nil, err
 	}
 
-	response, err := store.Client().Reconciliation.V1.Reconcile(cmd.Context(), operations.ReconcileRequest{
+	response, err := stackClient.Reconciliation.V1.Reconcile(cmd.Context(), operations.ReconcileRequest{
 		PolicyID: args[0],
 		ReconciliationRequest: shared.ReconciliationRequest{
 			ReconciledAtLedger:   atLedger,

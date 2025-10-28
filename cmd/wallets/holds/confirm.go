@@ -56,7 +56,30 @@ func (c *ConfirmController) GetStore() *ConfirmStore {
 }
 
 func (c *ConfirmController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	final := fctl.GetBool(cmd, c.finalFlag)
 	amount := int64(fctl.GetInt(cmd, c.amountFlag))
@@ -68,7 +91,7 @@ func (c *ConfirmController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 			Final:  &final,
 		},
 	}
-	_, err := store.Client().Wallets.V1.ConfirmHold(cmd.Context(), request)
+	_, err = stackClient.Wallets.V1.ConfirmHold(cmd.Context(), request)
 	if err != nil {
 		return nil, errors.Wrap(err, "confirming hold")
 	}

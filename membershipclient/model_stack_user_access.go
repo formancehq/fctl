@@ -26,7 +26,8 @@ type StackUserAccess struct {
 	UserId string `json:"userId"`
 	// User email
 	Email string `json:"email"`
-	Role Role `json:"role"`
+	// Policy ID applied to the user for the stack
+	PolicyID int32 `json:"policyID"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -36,12 +37,12 @@ type _StackUserAccess StackUserAccess
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewStackUserAccess(stackId string, userId string, email string, role Role) *StackUserAccess {
+func NewStackUserAccess(stackId string, userId string, email string, policyID int32) *StackUserAccess {
 	this := StackUserAccess{}
 	this.StackId = stackId
 	this.UserId = userId
 	this.Email = email
-	this.Role = role
+	this.PolicyID = policyID
 	return &this
 }
 
@@ -125,28 +126,28 @@ func (o *StackUserAccess) SetEmail(v string) {
 	o.Email = v
 }
 
-// GetRole returns the Role field value
-func (o *StackUserAccess) GetRole() Role {
+// GetPolicyID returns the PolicyID field value
+func (o *StackUserAccess) GetPolicyID() int32 {
 	if o == nil {
-		var ret Role
+		var ret int32
 		return ret
 	}
 
-	return o.Role
+	return o.PolicyID
 }
 
-// GetRoleOk returns a tuple with the Role field value
+// GetPolicyIDOk returns a tuple with the PolicyID field value
 // and a boolean to check if the value has been set.
-func (o *StackUserAccess) GetRoleOk() (*Role, bool) {
+func (o *StackUserAccess) GetPolicyIDOk() (*int32, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.Role, true
+	return &o.PolicyID, true
 }
 
-// SetRole sets field value
-func (o *StackUserAccess) SetRole(v Role) {
-	o.Role = v
+// SetPolicyID sets field value
+func (o *StackUserAccess) SetPolicyID(v int32) {
+	o.PolicyID = v
 }
 
 func (o StackUserAccess) MarshalJSON() ([]byte, error) {
@@ -162,7 +163,7 @@ func (o StackUserAccess) ToMap() (map[string]interface{}, error) {
 	toSerialize["stackId"] = o.StackId
 	toSerialize["userId"] = o.UserId
 	toSerialize["email"] = o.Email
-	toSerialize["role"] = o.Role
+	toSerialize["policyID"] = o.PolicyID
 
 	for key, value := range o.AdditionalProperties {
 		toSerialize[key] = value
@@ -179,7 +180,7 @@ func (o *StackUserAccess) UnmarshalJSON(data []byte) (err error) {
 		"stackId",
 		"userId",
 		"email",
-		"role",
+		"policyID",
 	}
 
 	allProperties := make(map[string]interface{})
@@ -212,7 +213,7 @@ func (o *StackUserAccess) UnmarshalJSON(data []byte) (err error) {
 		delete(additionalProperties, "stackId")
 		delete(additionalProperties, "userId")
 		delete(additionalProperties, "email")
-		delete(additionalProperties, "role")
+		delete(additionalProperties, "policyID")
 		o.AdditionalProperties = additionalProperties
 	}
 

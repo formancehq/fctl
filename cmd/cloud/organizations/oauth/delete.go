@@ -37,17 +37,30 @@ func (c *DeleteController) GetStore() *Delete {
 }
 
 func (c *DeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
-	if !fctl.CheckOrganizationApprobation(cmd, "You are about to delete a new organization OAuth client") {
-		return nil, fctl.ErrMissingApproval
-	}
-
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = store.Client().DeleteOrganizationClient(cmd.Context(), organizationID).Execute()
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+	if !fctl.CheckOrganizationApprobation(cmd, "You are about to delete a new organization OAuth client") {
+		return nil, fctl.ErrMissingApproval
+	}
+
+	_, err = store.DefaultAPI.DeleteOrganizationClient(cmd.Context(), organizationID).Execute()
 	if err != nil {
 		return nil, err
 	}

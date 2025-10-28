@@ -47,8 +47,22 @@ func (c *ConfigureController) GetStore() *Configure {
 
 func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetMembershipStore(cmd.Context())
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +102,7 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		}
 	}
 
-	res, _, err := store.Client().
+	res, _, err := store.DefaultAPI.
 		UpsertAuthenticationProvider(cmd.Context(), organizationID).
 		Body(requestData).
 		Execute()

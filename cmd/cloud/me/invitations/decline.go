@@ -41,13 +41,31 @@ func (c *DeclineController) GetStore() *DeclineStore {
 }
 
 func (c *DeclineController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
 
 	if !fctl.CheckOrganizationApprobation(cmd, "You are about to decline an invitation") {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	_, err := store.Client().DeclineInvitation(cmd.Context(), args[0]).Execute()
+	_, err = store.DefaultAPI.DeclineInvitation(cmd.Context(), args[0]).Execute()
 	if err != nil {
 		return nil, err
 	}
