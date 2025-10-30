@@ -20,7 +20,7 @@ var _ MappedNullable = &UpdateStackUserRequest{}
 
 // UpdateStackUserRequest struct for UpdateStackUserRequest
 type UpdateStackUserRequest struct {
-	Role Role `json:"role"`
+	PolicyID int32 `json:"policyID"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -30,9 +30,9 @@ type _UpdateStackUserRequest UpdateStackUserRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewUpdateStackUserRequest(role Role) *UpdateStackUserRequest {
+func NewUpdateStackUserRequest(policyID int32) *UpdateStackUserRequest {
 	this := UpdateStackUserRequest{}
-	this.Role = role
+	this.PolicyID = policyID
 	return &this
 }
 
@@ -44,28 +44,28 @@ func NewUpdateStackUserRequestWithDefaults() *UpdateStackUserRequest {
 	return &this
 }
 
-// GetRole returns the Role field value
-func (o *UpdateStackUserRequest) GetRole() Role {
+// GetPolicyID returns the PolicyID field value
+func (o *UpdateStackUserRequest) GetPolicyID() int32 {
 	if o == nil {
-		var ret Role
+		var ret int32
 		return ret
 	}
 
-	return o.Role
+	return o.PolicyID
 }
 
-// GetRoleOk returns a tuple with the Role field value
+// GetPolicyIDOk returns a tuple with the PolicyID field value
 // and a boolean to check if the value has been set.
-func (o *UpdateStackUserRequest) GetRoleOk() (*Role, bool) {
+func (o *UpdateStackUserRequest) GetPolicyIDOk() (*int32, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.Role, true
+	return &o.PolicyID, true
 }
 
-// SetRole sets field value
-func (o *UpdateStackUserRequest) SetRole(v Role) {
-	o.Role = v
+// SetPolicyID sets field value
+func (o *UpdateStackUserRequest) SetPolicyID(v int32) {
+	o.PolicyID = v
 }
 
 func (o UpdateStackUserRequest) MarshalJSON() ([]byte, error) {
@@ -78,7 +78,7 @@ func (o UpdateStackUserRequest) MarshalJSON() ([]byte, error) {
 
 func (o UpdateStackUserRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["role"] = o.Role
+	toSerialize["policyID"] = o.PolicyID
 
 	for key, value := range o.AdditionalProperties {
 		toSerialize[key] = value
@@ -92,7 +92,7 @@ func (o *UpdateStackUserRequest) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"role",
+		"policyID",
 	}
 
 	allProperties := make(map[string]interface{})
@@ -122,7 +122,7 @@ func (o *UpdateStackUserRequest) UnmarshalJSON(data []byte) (err error) {
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(data, &additionalProperties); err == nil {
-		delete(additionalProperties, "role")
+		delete(additionalProperties, "policyID")
 		o.AdditionalProperties = additionalProperties
 	}
 

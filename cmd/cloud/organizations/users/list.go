@@ -8,9 +8,9 @@ import (
 )
 
 type User struct {
-	ID    string                `json:"id"`
-	Email string                `json:"email"`
-	Role  membershipclient.Role `json:"role"`
+	ID       string `json:"id"`
+	Email    string `json:"email"`
+	PolicyID int32  `json:"policyID"`
 }
 
 type ListStore struct {
@@ -46,23 +46,36 @@ func (c *ListController) GetStore() *ListStore {
 }
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
-
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	usersResponse, _, err := store.Client().ListUsersOfOrganization(cmd.Context(), organizationID).Execute()
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	usersResponse, _, err := store.DefaultAPI.ListUsersOfOrganization(cmd.Context(), organizationID).Execute()
 	if err != nil {
 		return nil, err
 	}
 
 	c.store.Users = fctl.Map(usersResponse.Data, func(i membershipclient.OrganizationUser) User {
 		return User{
-			i.Id,
-			i.Email,
-			i.Role,
+			ID:       i.Id,
+			Email:    i.Email,
+			PolicyID: i.PolicyID,
 		}
 	})
 
@@ -75,7 +88,7 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 		return []string{
 			i.ID,
 			i.Email,
-			string(i.Role),
+			string(i.PolicyID),
 		}
 	})
 

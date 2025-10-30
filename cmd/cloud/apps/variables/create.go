@@ -49,8 +49,38 @@ func (c *CreateCtrl) GetStore() *Create {
 }
 
 func (c *CreateCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetDeployServerStore(cmd.Context())
-	v, err := store.Cli.CreateAppVariable(cmd.Context(), fctl.GetString(cmd, "id"), components.CreateVariableRequest{
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, err := fctl.LoadCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	relyingParty, err := fctl.GetAuthRelyingParty(cmd.Context(), fctl.GetHttpClient(cmd), profile.MembershipURI)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewAppDeployClient(
+		cmd,
+		relyingParty,
+		fctl.NewPTermDialog(),
+		fctl.GetCurrentProfileName(cmd, *cfg),
+		*profile,
+		organizationID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	v, err := store.CreateAppVariable(cmd.Context(), fctl.GetString(cmd, "id"), components.CreateVariableRequest{
 		Variable: components.VariableData{
 			Key:         fctl.GetString(cmd, "key"),
 			Value:       fctl.GetString(cmd, "value"),

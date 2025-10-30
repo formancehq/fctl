@@ -49,13 +49,36 @@ func (c *PaymentsConnectorsGenericController) GetStore() *PaymentsConnectorsGene
 }
 
 func (c *PaymentsConnectorsGenericController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to install connector '%s'", internal.GenericConnector) {
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to install connector '%s'", internal.GenericConnector) {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	script, err := fctl.ReadFile(cmd, store.Stack(), args[0])
+	script, err := fctl.ReadFile(cmd, args[0])
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +94,7 @@ func (c *PaymentsConnectorsGenericController) Run(cmd *cobra.Command, args []str
 			GenericConfig: &config,
 		},
 	}
-	response, err := store.Client().Payments.V1.InstallConnector(cmd.Context(), request)
+	response, err := stackClient.Payments.V1.InstallConnector(cmd.Context(), request)
 	if err != nil {
 		return nil, errors.Wrap(err, "installing connector")
 	}

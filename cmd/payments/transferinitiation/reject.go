@@ -53,7 +53,30 @@ func (c *RejectController) GetStore() *RejectStore {
 }
 
 func (c *RejectController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
@@ -63,11 +86,11 @@ func (c *RejectController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fmt.Errorf("transfer initiation rejection is only supported in >= v3.0.0")
 	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to reject the transfer initiation %q", args[0]) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to reject the transfer initiation %q", args[0]) {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	response, err := store.Client().Payments.V3.RejectPaymentInitiation(cmd.Context(), operations.V3RejectPaymentInitiationRequest{
+	response, err := stackClient.Payments.V3.RejectPaymentInitiation(cmd.Context(), operations.V3RejectPaymentInitiationRequest{
 		PaymentInitiationID: args[0],
 	})
 	if err != nil {

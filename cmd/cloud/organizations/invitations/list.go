@@ -14,7 +14,6 @@ type Invitations struct {
 	UserEmail    string    `json:"userEmail"`
 	Status       string    `json:"status"`
 	CreationDate time.Time `json:"creationDate"`
-	OrgClaim     string    `json:"orgClaim"`
 }
 
 type ListStore struct {
@@ -55,13 +54,27 @@ func (c *ListController) GetStore() *ListStore {
 }
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	listInvitationsResponse, _, err := store.Client().
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	listInvitationsResponse, _, err := store.DefaultAPI.
 		ListOrganizationInvitations(cmd.Context(), organizationID).
 		Status(fctl.GetString(cmd, c.statusFlag)).
 		Execute()
@@ -75,21 +88,19 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 			UserEmail:    i.UserEmail,
 			Status:       i.Status,
 			CreationDate: i.CreationDate,
-			OrgClaim:     string(i.Role),
 		}
 	})
 
 	return c, nil
 }
 
-func (c *ListController) Render(cmd *cobra.Command, args []string) error {
+func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
 	tableData := fctl.Map(c.store.Invitations, func(i Invitations) []string {
 		return []string{
 			i.Id,
 			i.UserEmail,
 			i.Status,
 			i.CreationDate.Format(time.RFC3339),
-			i.OrgClaim,
 		}
 	})
 

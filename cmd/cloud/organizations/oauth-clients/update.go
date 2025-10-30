@@ -64,21 +64,35 @@ func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fmt.Errorf("invalid client_id: %s", args[0])
 	}
 
-	store := fctl.GetMembershipStore(cmd.Context())
-	if !fctl.CheckOrganizationApprobation(cmd, "You are about to update an existing organization OAuth client") {
-		return nil, fctl.ErrMissingApproval
-	}
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	actualClient, _, err := store.Client().OrganizationClientRead(cmd.Context(), organizationID, clientId).Execute()
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+	if !fctl.CheckOrganizationApprobation(cmd, "You are about to update an existing organization OAuth client") {
+		return nil, fctl.ErrMissingApproval
+	}
+
+	actualClient, _, err := store.DefaultAPI.OrganizationClientRead(cmd.Context(), organizationID, clientId).Execute()
 	if err != nil {
 		return nil, fmt.Errorf("failed to read organization client: %w", err)
 	}
 
-	req := store.Client().OrganizationClientUpdate(cmd.Context(), organizationID, clientId)
+	req := store.DefaultAPI.OrganizationClientUpdate(cmd.Context(), organizationID, clientId)
 	reqBody := membershipclient.UpdateOrganizationClientRequest{}
 	if description != "" {
 		reqBody.Description = pointer.For(description)
@@ -98,7 +112,7 @@ func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
-	updatedClient, _, err := store.Client().OrganizationClientRead(cmd.Context(), organizationID, clientId).Execute()
+	updatedClient, _, err := store.DefaultAPI.OrganizationClientRead(cmd.Context(), organizationID, clientId).Execute()
 	if err != nil {
 		return nil, fmt.Errorf("failed to read organization client: %w", err)
 	}

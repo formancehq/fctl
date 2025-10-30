@@ -31,8 +31,7 @@ type StackListStore struct {
 }
 
 type StackListController struct {
-	store   *StackListStore
-	profile *fctl.Profile
+	store *StackListStore
 }
 
 var _ fctl.Controller[*StackListStore] = (*StackListController)(nil)
@@ -65,12 +64,29 @@ func (c *StackListController) GetStore() *StackListStore {
 	return c.store
 }
 
-func (c *StackListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+func (c *StackListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
 
-	store := fctl.GetOrganizationStore(cmd)
-	c.profile = store.Config.GetProfile(fctl.GetCurrentProfileName(cmd, store.Config))
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	rsp, _, err := store.Client().ListStacks(cmd.Context(), store.OrganizationId()).
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	rsp, _, err := store.DefaultAPI.ListStacks(cmd.Context(), organizationID).
 		All(fctl.GetBool(cmd, allFlag)).
 		Deleted(fctl.GetBool(cmd, deletedFlag)).
 		Execute()
@@ -83,7 +99,7 @@ func (c *StackListController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 	}
 
 	portal := fctl.DefaultConsoleURL
-	serverInfo, err := fctl.MembershipServerInfo(cmd.Context(), store.Client())
+	serverInfo, err := fctl.MembershipServerInfo(cmd.Context(), store.DefaultAPI)
 	if err != nil {
 		return nil, err
 	}

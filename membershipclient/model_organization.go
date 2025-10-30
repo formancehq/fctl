@@ -23,10 +23,10 @@ var _ MappedNullable = &Organization{}
 type Organization struct {
 	// Organization name
 	Name string `json:"name"`
-	DefaultOrganizationAccess *Role `json:"defaultOrganizationAccess,omitempty"`
-	DefaultStackAccess *Role `json:"defaultStackAccess,omitempty"`
 	// Organization domain
 	Domain *string `json:"domain,omitempty"`
+	// Default policy ID applied to new users
+	DefaultPolicyID NullableInt32 `json:"defaultPolicyID"`
 	// Organization ID
 	Id string `json:"id"`
 	// Owner ID
@@ -46,9 +46,10 @@ type _Organization Organization
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewOrganization(name string, id string, ownerId string) *Organization {
+func NewOrganization(name string, defaultPolicyID NullableInt32, id string, ownerId string) *Organization {
 	this := Organization{}
 	this.Name = name
+	this.DefaultPolicyID = defaultPolicyID
 	this.Id = id
 	this.OwnerId = ownerId
 	return &this
@@ -86,70 +87,6 @@ func (o *Organization) SetName(v string) {
 	o.Name = v
 }
 
-// GetDefaultOrganizationAccess returns the DefaultOrganizationAccess field value if set, zero value otherwise.
-func (o *Organization) GetDefaultOrganizationAccess() Role {
-	if o == nil || IsNil(o.DefaultOrganizationAccess) {
-		var ret Role
-		return ret
-	}
-	return *o.DefaultOrganizationAccess
-}
-
-// GetDefaultOrganizationAccessOk returns a tuple with the DefaultOrganizationAccess field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *Organization) GetDefaultOrganizationAccessOk() (*Role, bool) {
-	if o == nil || IsNil(o.DefaultOrganizationAccess) {
-		return nil, false
-	}
-	return o.DefaultOrganizationAccess, true
-}
-
-// HasDefaultOrganizationAccess returns a boolean if a field has been set.
-func (o *Organization) HasDefaultOrganizationAccess() bool {
-	if o != nil && !IsNil(o.DefaultOrganizationAccess) {
-		return true
-	}
-
-	return false
-}
-
-// SetDefaultOrganizationAccess gets a reference to the given Role and assigns it to the DefaultOrganizationAccess field.
-func (o *Organization) SetDefaultOrganizationAccess(v Role) {
-	o.DefaultOrganizationAccess = &v
-}
-
-// GetDefaultStackAccess returns the DefaultStackAccess field value if set, zero value otherwise.
-func (o *Organization) GetDefaultStackAccess() Role {
-	if o == nil || IsNil(o.DefaultStackAccess) {
-		var ret Role
-		return ret
-	}
-	return *o.DefaultStackAccess
-}
-
-// GetDefaultStackAccessOk returns a tuple with the DefaultStackAccess field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *Organization) GetDefaultStackAccessOk() (*Role, bool) {
-	if o == nil || IsNil(o.DefaultStackAccess) {
-		return nil, false
-	}
-	return o.DefaultStackAccess, true
-}
-
-// HasDefaultStackAccess returns a boolean if a field has been set.
-func (o *Organization) HasDefaultStackAccess() bool {
-	if o != nil && !IsNil(o.DefaultStackAccess) {
-		return true
-	}
-
-	return false
-}
-
-// SetDefaultStackAccess gets a reference to the given Role and assigns it to the DefaultStackAccess field.
-func (o *Organization) SetDefaultStackAccess(v Role) {
-	o.DefaultStackAccess = &v
-}
-
 // GetDomain returns the Domain field value if set, zero value otherwise.
 func (o *Organization) GetDomain() string {
 	if o == nil || IsNil(o.Domain) {
@@ -180,6 +117,32 @@ func (o *Organization) HasDomain() bool {
 // SetDomain gets a reference to the given string and assigns it to the Domain field.
 func (o *Organization) SetDomain(v string) {
 	o.Domain = &v
+}
+
+// GetDefaultPolicyID returns the DefaultPolicyID field value
+// If the value is explicit nil, the zero value for int32 will be returned
+func (o *Organization) GetDefaultPolicyID() int32 {
+	if o == nil || o.DefaultPolicyID.Get() == nil {
+		var ret int32
+		return ret
+	}
+
+	return *o.DefaultPolicyID.Get()
+}
+
+// GetDefaultPolicyIDOk returns a tuple with the DefaultPolicyID field value
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *Organization) GetDefaultPolicyIDOk() (*int32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.DefaultPolicyID.Get(), o.DefaultPolicyID.IsSet()
+}
+
+// SetDefaultPolicyID sets field value
+func (o *Organization) SetDefaultPolicyID(v int32) {
+	o.DefaultPolicyID.Set(&v)
 }
 
 // GetId returns the Id field value
@@ -369,15 +332,10 @@ func (o Organization) MarshalJSON() ([]byte, error) {
 func (o Organization) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["name"] = o.Name
-	if !IsNil(o.DefaultOrganizationAccess) {
-		toSerialize["defaultOrganizationAccess"] = o.DefaultOrganizationAccess
-	}
-	if !IsNil(o.DefaultStackAccess) {
-		toSerialize["defaultStackAccess"] = o.DefaultStackAccess
-	}
 	if !IsNil(o.Domain) {
 		toSerialize["domain"] = o.Domain
 	}
+	toSerialize["defaultPolicyID"] = o.DefaultPolicyID.Get()
 	toSerialize["id"] = o.Id
 	toSerialize["ownerId"] = o.OwnerId
 	if !IsNil(o.AvailableStacks) {
@@ -406,6 +364,7 @@ func (o *Organization) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"name",
+		"defaultPolicyID",
 		"id",
 		"ownerId",
 	}
@@ -438,9 +397,8 @@ func (o *Organization) UnmarshalJSON(data []byte) (err error) {
 
 	if err = json.Unmarshal(data, &additionalProperties); err == nil {
 		delete(additionalProperties, "name")
-		delete(additionalProperties, "defaultOrganizationAccess")
-		delete(additionalProperties, "defaultStackAccess")
 		delete(additionalProperties, "domain")
+		delete(additionalProperties, "defaultPolicyID")
 		delete(additionalProperties, "id")
 		delete(additionalProperties, "ownerId")
 		delete(additionalProperties, "availableStacks")

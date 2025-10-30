@@ -12,7 +12,6 @@ package membershipclient
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // checks if the UpdateOrganizationUserRequest type satisfies the MappedNullable interface at compile time
@@ -20,7 +19,8 @@ var _ MappedNullable = &UpdateOrganizationUserRequest{}
 
 // UpdateOrganizationUserRequest struct for UpdateOrganizationUserRequest
 type UpdateOrganizationUserRequest struct {
-	Role Role `json:"role"`
+	// Policy ID applied to the user
+	PolicyID *int32 `json:"policyID,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -30,9 +30,8 @@ type _UpdateOrganizationUserRequest UpdateOrganizationUserRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewUpdateOrganizationUserRequest(role Role) *UpdateOrganizationUserRequest {
+func NewUpdateOrganizationUserRequest() *UpdateOrganizationUserRequest {
 	this := UpdateOrganizationUserRequest{}
-	this.Role = role
 	return &this
 }
 
@@ -44,28 +43,36 @@ func NewUpdateOrganizationUserRequestWithDefaults() *UpdateOrganizationUserReque
 	return &this
 }
 
-// GetRole returns the Role field value
-func (o *UpdateOrganizationUserRequest) GetRole() Role {
-	if o == nil {
-		var ret Role
+// GetPolicyID returns the PolicyID field value if set, zero value otherwise.
+func (o *UpdateOrganizationUserRequest) GetPolicyID() int32 {
+	if o == nil || IsNil(o.PolicyID) {
+		var ret int32
 		return ret
 	}
-
-	return o.Role
+	return *o.PolicyID
 }
 
-// GetRoleOk returns a tuple with the Role field value
+// GetPolicyIDOk returns a tuple with the PolicyID field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *UpdateOrganizationUserRequest) GetRoleOk() (*Role, bool) {
-	if o == nil {
+func (o *UpdateOrganizationUserRequest) GetPolicyIDOk() (*int32, bool) {
+	if o == nil || IsNil(o.PolicyID) {
 		return nil, false
 	}
-	return &o.Role, true
+	return o.PolicyID, true
 }
 
-// SetRole sets field value
-func (o *UpdateOrganizationUserRequest) SetRole(v Role) {
-	o.Role = v
+// HasPolicyID returns a boolean if a field has been set.
+func (o *UpdateOrganizationUserRequest) HasPolicyID() bool {
+	if o != nil && !IsNil(o.PolicyID) {
+		return true
+	}
+
+	return false
+}
+
+// SetPolicyID gets a reference to the given int32 and assigns it to the PolicyID field.
+func (o *UpdateOrganizationUserRequest) SetPolicyID(v int32) {
+	o.PolicyID = &v
 }
 
 func (o UpdateOrganizationUserRequest) MarshalJSON() ([]byte, error) {
@@ -78,7 +85,9 @@ func (o UpdateOrganizationUserRequest) MarshalJSON() ([]byte, error) {
 
 func (o UpdateOrganizationUserRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["role"] = o.Role
+	if !IsNil(o.PolicyID) {
+		toSerialize["policyID"] = o.PolicyID
+	}
 
 	for key, value := range o.AdditionalProperties {
 		toSerialize[key] = value
@@ -88,27 +97,6 @@ func (o UpdateOrganizationUserRequest) ToMap() (map[string]interface{}, error) {
 }
 
 func (o *UpdateOrganizationUserRequest) UnmarshalJSON(data []byte) (err error) {
-	// This validates that all required properties are included in the JSON object
-	// by unmarshalling the object into a generic map with string keys and checking
-	// that every required field exists as a key in the generic map.
-	requiredProperties := []string{
-		"role",
-	}
-
-	allProperties := make(map[string]interface{})
-
-	err = json.Unmarshal(data, &allProperties)
-
-	if err != nil {
-		return err;
-	}
-
-	for _, requiredProperty := range(requiredProperties) {
-		if _, exists := allProperties[requiredProperty]; !exists {
-			return fmt.Errorf("no value given for required property %v", requiredProperty)
-		}
-	}
-
 	varUpdateOrganizationUserRequest := _UpdateOrganizationUserRequest{}
 
 	err = json.Unmarshal(data, &varUpdateOrganizationUserRequest)
@@ -122,7 +110,7 @@ func (o *UpdateOrganizationUserRequest) UnmarshalJSON(data []byte) (err error) {
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(data, &additionalProperties); err == nil {
-		delete(additionalProperties, "role")
+		delete(additionalProperties, "policyID")
 		o.AdditionalProperties = additionalProperties
 	}
 

@@ -2,6 +2,7 @@ package bankaccounts
 
 import (
 	"fmt"
+	formance "github.com/formancehq/formance-sdk-go/v3"
 	"time"
 
 	"github.com/formancehq/fctl/cmd/payments/versions"
@@ -51,7 +52,30 @@ func (c *ListController) GetStore() *ListStore {
 }
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
@@ -72,10 +96,10 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	}
 
 	if c.PaymentsVersion >= versions.V3 {
-		return c.v3list(cmd, store, cursor, pageSize)
+		return c.v3list(cmd, stackClient, cursor, pageSize)
 	}
 
-	response, err := store.Client().Payments.V1.ListBankAccounts(
+	response, err := stackClient.Payments.V1.ListBankAccounts(
 		cmd.Context(),
 		operations.ListBankAccountsRequest{
 			Cursor:   cursor,
@@ -95,8 +119,8 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	return c, nil
 }
 
-func (c *ListController) v3list(cmd *cobra.Command, store *fctl.StackStore, cursor *string, pageSize *int64) (fctl.Renderable, error) {
-	response, err := store.Client().Payments.V3.ListBankAccounts(
+func (c *ListController) v3list(cmd *cobra.Command, stackClient *formance.Formance, cursor *string, pageSize *int64) (fctl.Renderable, error) {
+	response, err := stackClient.Payments.V3.ListBankAccounts(
 		cmd.Context(),
 		operations.V3ListBankAccountsRequest{
 			Cursor:   cursor,

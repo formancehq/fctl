@@ -18,8 +18,5 @@ func NewCommand() *cobra.Command {
 			workflows.NewCommand(),
 			triggers.NewCommand(),
 		),
-		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
-			return fctl.NewStackStore(cmd)
-		}),
 	)
 }

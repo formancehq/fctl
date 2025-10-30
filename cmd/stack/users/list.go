@@ -1,6 +1,7 @@
 package users
 
 import (
+	"fmt"
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
@@ -44,9 +45,32 @@ func (c *ListController) GetStore() *ListStore {
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetMembershipStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	listStackUsersAccesses, response, err := store.Client().ListStackUsersAccesses(cmd.Context(), store.OrganizationId(), store.StackId()).Execute()
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	listStackUsersAccesses, response, err := store.DefaultAPI.ListStackUsersAccesses(cmd.Context(), organizationID, stackID).Execute()
 	if err != nil {
 		return nil, err
 	}
@@ -60,13 +84,13 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	return c, nil
 }
 
-func (c *ListController) Render(cmd *cobra.Command, args []string) error {
+func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
 	stackUserAccessMap := fctl.Map(c.store.list, func(o membershipclient.StackUserAccess) []string {
 		return []string{
 			o.StackId,
 			o.UserId,
 			o.Email,
-			string(o.Role),
+			fmt.Sprintf("%d", o.PolicyID),
 		}
 	})
 

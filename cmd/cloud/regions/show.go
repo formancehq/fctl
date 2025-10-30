@@ -44,14 +44,27 @@ func (c *ShowController) GetStore() *ShowStore {
 }
 
 func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
-
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	response, _, err := store.Client().GetRegion(cmd.Context(), organizationID, args[0]).Execute()
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	response, _, err := store.DefaultAPI.GetRegion(cmd.Context(), organizationID, args[0]).Execute()
 	if err != nil {
 		return nil, err
 	}

@@ -44,10 +44,28 @@ func (c *DescribeController) GetStore() *DescribeStore {
 
 func (c *DescribeController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetMembershipStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
 
 	expand := fctl.GetBool(cmd, "expand")
-	response, _, err := store.Client().
+	response, _, err := store.DefaultAPI.
 		ReadOrganization(cmd.Context(), args[0]).Expand(expand).Execute()
 	if err != nil {
 		return nil, err

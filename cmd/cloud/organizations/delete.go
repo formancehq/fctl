@@ -42,13 +42,31 @@ func (c *DeleteController) GetStore() *DeleteStore {
 }
 
 func (c *DeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
 
 	if !fctl.CheckOrganizationApprobation(cmd, "You are about to delete an organization") {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	_, err := store.Client().DeleteOrganization(cmd.Context(), args[0]).
+	_, err = store.DefaultAPI.DeleteOrganization(cmd.Context(), args[0]).
 		Execute()
 	if err != nil {
 		return nil, err

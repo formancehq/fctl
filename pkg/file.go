@@ -4,15 +4,14 @@ import (
 	"io"
 	"os"
 
-	"github.com/formancehq/fctl/membershipclient"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
-func ReadFile(cmd *cobra.Command, stack *membershipclient.Stack, where string) (string, error) {
+func ReadFile(cmd *cobra.Command, where string) (string, error) {
 	var ret string
 	if where == "-" {
-		if NeedConfirm(cmd, stack) {
+		if NeedConfirm(cmd) {
 			return "", errors.New("You need to use --confirm flag to use stdin")
 		}
 		data, err := io.ReadAll(cmd.InOrStdin())

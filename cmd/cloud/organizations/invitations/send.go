@@ -1,15 +1,13 @@
 package invitations
 
 import (
-	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
 type InvitationSend struct {
-	Email    string                `json:"email"`
-	OrgClaim membershipclient.Role `json:"orgClaim"`
+	Email string `json:"email"`
 }
 
 type SendStore struct {
@@ -38,7 +36,6 @@ func NewSendCommand() *cobra.Command {
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithShortDescription("Invite a user by email"),
 		fctl.WithAliases("s"),
-		fctl.WithStringFlag("org-claim", "", "Pre assign organization role e.g. 'ADMIN'"),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*SendStore](NewSendController()),
 	)
@@ -49,9 +46,22 @@ func (c *SendController) GetStore() *SendStore {
 }
 
 func (c *SendController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -60,21 +70,15 @@ func (c *SendController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fctl.ErrMissingApproval
 	}
 
-	invitationClaim := membershipclient.InvitationClaim{}
-	orgClaimString := fctl.GetString(cmd, "org-claim")
-	if orgClaimString != "" {
-		invitationClaim.Role = membershipclient.Role(orgClaimString).Ptr()
-	}
-
-	invitations, _, err := store.Client().
+	invitations, _, err := store.DefaultAPI.
 		CreateInvitation(cmd.Context(), organizationID).
-		Email(args[0]).InvitationClaim(invitationClaim).Execute()
+		Email(args[0]).
+		Execute()
 	if err != nil {
 		return nil, err
 	}
 
 	c.store.Invitation.Email = invitations.Data.UserEmail
-	c.store.Invitation.OrgClaim = invitations.Data.Role
 
 	return c, nil
 }

@@ -14,8 +14,5 @@ func NewCommand() *cobra.Command {
 			NewListCommand(),
 			NewShowCommand(),
 		),
-		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
-			return fctl.NewStackStore(cmd)
-		}),
 	)
 }

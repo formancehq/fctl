@@ -50,9 +50,32 @@ func (c *UpdateController) GetStore() *UpdateStore {
 }
 
 func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to update a wallets") {
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to update a wallets") {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -61,7 +84,7 @@ func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
-	_, err = store.Client().Wallets.V1.UpdateWallet(cmd.Context(), operations.UpdateWalletRequest{
+	_, err = stackClient.Wallets.V1.UpdateWallet(cmd.Context(), operations.UpdateWalletRequest{
 		RequestBody: &operations.UpdateWalletRequestBody{
 			Metadata: metadata,
 		},

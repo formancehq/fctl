@@ -43,9 +43,32 @@ func (c *UnlinkController) GetStore() *UnlinkStore {
 }
 
 func (c *UnlinkController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	res, err := store.Client().DeleteStackUserAccess(cmd.Context(), store.OrganizationId(), store.StackId(), args[0]).Execute()
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := store.DefaultAPI.DeleteStackUserAccess(cmd.Context(), organizationID, stackID, args[0]).Execute()
 	if err != nil {
 		return nil, err
 	}

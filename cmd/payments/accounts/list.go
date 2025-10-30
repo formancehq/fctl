@@ -44,7 +44,30 @@ func (c *ListController) GetStore() *ListStore {
 }
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 	var cursor *string
 	if c := fctl.GetString(cmd, c.cursorFlag); c != "" {
 		cursor = &c
@@ -55,7 +78,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		pageSize = fctl.Ptr(int64(ps))
 	}
 
-	response, err := store.Client().Payments.V1.PaymentslistAccounts(
+	response, err := stackClient.Payments.V1.PaymentslistAccounts(
 		cmd.Context(),
 		operations.PaymentslistAccountsRequest{
 			Cursor:   cursor,

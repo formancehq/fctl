@@ -42,9 +42,22 @@ func (c *CreateController) GetStore() *CreateStore {
 
 func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetMembershipStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +72,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		}
 	}
 
-	regionResponse, _, err := store.Client().CreatePrivateRegion(cmd.Context(), organizationID).
+	regionResponse, _, err := store.DefaultAPI.CreatePrivateRegion(cmd.Context(), organizationID).
 		CreatePrivateRegionRequest(membershipclient.CreatePrivateRegionRequest{
 			Name: name,
 		}).

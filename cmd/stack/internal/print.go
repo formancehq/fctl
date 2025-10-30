@@ -2,19 +2,15 @@ package internal
 
 import (
 	"fmt"
-	"io"
-	"net/url"
-
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/iancoleman/strcase"
 	"github.com/pterm/pterm"
+	"io"
 )
 
-func PrintStackInformation(out io.Writer, profile *fctl.Profile, stack *membershipclient.Stack, versions *shared.GetVersionsResponse) error {
-	baseUrlStr := profile.ServicesBaseUrl(stack)
-
+func PrintStackInformation(out io.Writer, stack *membershipclient.Stack, versions *shared.GetVersionsResponse) error {
 	err := printInformation(out, stack)
 
 	if err != nil {
@@ -22,7 +18,7 @@ func PrintStackInformation(out io.Writer, profile *fctl.Profile, stack *membersh
 	}
 
 	if versions != nil {
-		err = printVersion(out, baseUrlStr, versions, stack)
+		err = printVersion(out, stack.Uri, versions)
 
 		if err != nil {
 			return err
@@ -57,7 +53,7 @@ func printInformation(out io.Writer, stack *membershipclient.Stack) error {
 		Render()
 }
 
-func printVersion(out io.Writer, url *url.URL, versions *shared.GetVersionsResponse, stack *membershipclient.Stack) error {
+func printVersion(out io.Writer, url string, versions *shared.GetVersionsResponse) error {
 	fctl.Println()
 	fctl.Section.WithWriter(out).Println("Versions")
 
@@ -65,7 +61,7 @@ func printVersion(out io.Writer, url *url.URL, versions *shared.GetVersionsRespo
 
 	for _, service := range versions.Versions {
 		tableData = append(tableData, []string{pterm.LightCyan(strcase.ToCamel(service.Name)), service.Version,
-			fmt.Sprintf("%s/api/%s", url.String(), service.Name)})
+			fmt.Sprintf("%s/api/%s", url, service.Name)})
 	}
 
 	return pterm.DefaultTable.

@@ -17,8 +17,7 @@ type UpgradeStore struct {
 }
 
 type UpgradeController struct {
-	store   *UpgradeStore
-	profile *fctl.Profile
+	store *UpgradeStore
 }
 
 var _ fctl.Controller[*UpgradeStore] = (*UpgradeController)(nil)
@@ -40,9 +39,6 @@ func NewUpgradeCommand() *cobra.Command {
 		fctl.WithBoolFlag(nowaitFlag, false, "Wait stack availability"),
 		fctl.WithArgs(cobra.RangeArgs(1, 2)),
 		fctl.WithValidArgsFunction(fctl.StackCompletion),
-		fctl.WithPreRunE(func(cmd *cobra.Command, args []string) error {
-			return fctl.CheckMembershipVersion("v0.27.1")(cmd, args)
-		}),
 		fctl.WithController(NewUpgradeController()),
 	)
 }
@@ -51,15 +47,27 @@ func (c *UpgradeController) GetStore() *UpgradeStore {
 }
 
 func (c *UpgradeController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetOrganizationStore(cmd)
-	c.profile = store.Config.GetProfile(fctl.GetCurrentProfileName(cmd, store.Config))
-
-	organization, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	stack, res, err := store.Client().GetStack(cmd.Context(), organization, args[0]).Execute()
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stack, res, err := apiClient.DefaultAPI.GetStack(cmd.Context(), organizationID, args[0]).Execute()
 	if err != nil {
 		return nil, errors.Wrap(err, "retrieving stack")
 	}
@@ -73,7 +81,7 @@ func (c *UpgradeController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 	}
 	specifiedVersion := fctl.GetString(cmd, versionFlag)
 	if specifiedVersion == "" {
-		upgradeOpts, err := retrieveUpgradableVersion(cmd.Context(), organization, *stack.Data, store.Client())
+		upgradeOpts, err := retrieveUpgradableVersion(cmd.Context(), organizationID, *stack.Data, apiClient.DefaultAPI)
 		if err != nil {
 			return nil, err
 		}
@@ -87,7 +95,7 @@ func (c *UpgradeController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 	}
 
 	if specifiedVersion != *stack.Data.Version {
-		if !fctl.CheckStackApprobation(cmd, stack.Data, "Disclaimer: You are about to migrate the stack '%s' from '%s' to '%s'. It might take some time to fully migrate", stack.Data.Name, *stack.Data.Version, specifiedVersion) {
+		if !fctl.CheckStackApprobation(cmd, "Disclaimer: You are about to migrate the stack '%s' from '%s' to '%s'. It might take some time to fully migrate", stack.Data.Name, *stack.Data.Version, specifiedVersion) {
 			return nil, fctl.ErrMissingApproval
 		}
 	} else {
@@ -96,8 +104,8 @@ func (c *UpgradeController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 	}
 	req.Version = pointer.For(specifiedVersion)
 
-	res, err = store.Client().
-		UpgradeStack(cmd.Context(), organization, args[0]).StackVersion(req).
+	res, err = apiClient.DefaultAPI.
+		UpgradeStack(cmd.Context(), organizationID, args[0]).StackVersion(req).
 		Execute()
 	if err != nil {
 		return nil, errors.Wrap(err, "upgrading stack")
@@ -113,7 +121,7 @@ func (c *UpgradeController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 			return nil, err
 		}
 
-		stack, err := waitStackReady(cmd, store.MembershipClient, stack.Data.OrganizationId, stack.Data.Id)
+		stack, err := waitStackReady(cmd, *profile, apiClient, stack.Data.OrganizationId, stack.Data.Id)
 		if err != nil {
 			return nil, err
 		}

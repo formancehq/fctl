@@ -33,9 +33,8 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithShortDescription("Create organization"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
-		fctl.WithStringFlag("default-stack-role", "", "Default Stack Role roles: (ADMIN,GUEST,NONE)"),
+		fctl.WithIntFlag("default-policy-id", 0, "Default policy id"),
 		fctl.WithStringFlag("domain", "", "Organization Domain"),
-		fctl.WithStringFlag("default-organization-role", "", "Default Organization Role roles: (ADMIN,GUEST)"),
 		fctl.WithConfirmFlag(),
 		fctl.WithController(NewCreateController()),
 	)
@@ -47,34 +46,48 @@ func (c *CreateController) GetStore() *CreateStore {
 
 func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetMembershipStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
 	if !fctl.CheckOrganizationApprobation(cmd, "You are about to create a new organization") {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	defaultStackRole := fctl.GetString(cmd, "default-stack-role")
-	defaultOrganizationRole := fctl.GetString(cmd, "default-organization-role")
+	defaultPolicyID := fctl.GetInt(cmd, "default-policy-id")
 	domain := fctl.GetString(cmd, "domain")
 
-	orgData := membershipclient.OrganizationData{
+	orgData := membershipclient.CreateOrganizationRequest{
 		Name: args[0],
 	}
 
-	if defaultOrganizationRole != "" {
-		orgData.DefaultOrganizationAccess = membershipclient.Role(defaultOrganizationRole).Ptr()
-	}
-
-	if defaultStackRole != "" {
-		orgData.DefaultStackAccess = membershipclient.Role(defaultStackRole).Ptr()
+	if defaultPolicyID != 0 {
+		orgData.DefaultPolicyID = pointer.For(int32(defaultPolicyID))
 	}
 
 	if domain != "" {
 		orgData.Domain = pointer.For(domain)
 	}
 
-	response, _, err := store.Client().
+	response, _, err := store.DefaultAPI.
 		CreateOrganization(cmd.Context()).
-		Body(orgData).Execute()
+		CreateOrganizationRequest(orgData).
+		Execute()
 	if err != nil {
 		return nil, err
 	}

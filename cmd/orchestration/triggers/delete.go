@@ -42,8 +42,31 @@ func (c *TriggersDeleteController) GetStore() *TriggersDeleteStore {
 }
 
 func (c *TriggersDeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
-	_, err := store.Client().Orchestration.V1.DeleteTrigger(cmd.Context(), operations.DeleteTriggerRequest{
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+	_, err = stackClient.Orchestration.V1.DeleteTrigger(cmd.Context(), operations.DeleteTriggerRequest{
 		TriggerID: args[0],
 	})
 	if err != nil {

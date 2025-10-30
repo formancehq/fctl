@@ -38,8 +38,32 @@ func (c *EnableController) GetStore() *EnableStore {
 }
 
 func (c *EnableController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	mbStackStore := fctl.GetMembershipStackStore(cmd.Context())
-	_, err := mbStackStore.Client().EnableModule(cmd.Context(), mbStackStore.OrganizationId(), mbStackStore.StackId()).Name(args[0]).Execute()
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = apiClient.DefaultAPI.EnableModule(cmd.Context(), organizationID, stackID).Name(args[0]).Execute()
 	if err != nil {
 		return nil, err
 	}

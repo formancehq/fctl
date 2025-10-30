@@ -2,13 +2,12 @@ package profiles
 
 import (
 	"fmt"
-
-	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/go-libs/collectionutils"
 	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 type ProfilesSetDefaultOrganizationStore struct {
@@ -37,14 +36,20 @@ func (c *ProfilesSetDefaultOrganizationController) GetStore() *ProfilesSetDefaul
 }
 
 func (c *ProfilesSetDefaultOrganizationController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	cfg, err := fctl.GetConfig(cmd)
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	fctl.GetCurrentProfile(cmd, cfg).SetDefaultOrganization(args[0])
-	fctl.GetCurrentProfile(cmd, cfg).SetDefaultStack("")
-	if err := cfg.Persist(); err != nil {
+	currentProfile, err := fctl.LoadCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	currentProfile.DefaultOrganization = args[0]
+	currentProfile.DefaultStack = ""
+
+	if err := fctl.WriteProfile(cmd, cfg.CurrentProfile, *currentProfile); err != nil {
 		return nil, errors.Wrap(err, "Updating config")
 	}
 
@@ -67,25 +72,24 @@ func NewSetDefaultOrganizationCommand() *cobra.Command {
 	)
 }
 
-func organizationCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	if err := fctl.NewMembershipStore(cmd); err != nil {
-		return []string{}, cobra.ShellCompDirectiveError
-	}
+func organizationCompletion(cmd *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 
-	mbStore := fctl.GetMembershipStore(cmd.Context())
-
-	ret, res, err := mbStore.Client().ListOrganizations(cmd.Context()).Execute()
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return []string{}, cobra.ShellCompDirectiveError
 	}
 
-	if res.StatusCode > 300 {
-		return []string{}, cobra.ShellCompDirectiveError
+	profile, err := fctl.LoadCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return []string{}, cobra.ShellCompDirectiveNoFileComp
 	}
 
-	opts := collectionutils.Reduce(ret.Data, func(acc []string, o membershipclient.OrganizationExpanded) []string {
-		return append(acc, fmt.Sprintf("%s\t%s", o.Id, o.Name))
-	}, []string{})
+	list := collectionutils.Map(profile.RootTokens.ID.Claims.Organizations, func(from fctl.OrganizationAccess) string {
+		return fmt.Sprintf("%s\t%s", from.ID, from.DisplayName)
+	})
+	list = collectionutils.Filter(list, func(s string) bool {
+		return toComplete == "" || strings.HasPrefix(s, toComplete)
+	})
 
-	return opts, cobra.ShellCompDirectiveNoFileComp
+	return list, cobra.ShellCompDirectiveNoFileComp
 }

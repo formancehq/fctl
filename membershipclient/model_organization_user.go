@@ -20,9 +20,10 @@ var _ MappedNullable = &OrganizationUser{}
 
 // OrganizationUser struct for OrganizationUser
 type OrganizationUser struct {
-	Role Role `json:"role"`
 	Email string `json:"email"`
 	Id string `json:"id"`
+	// Policy ID applied to the user
+	PolicyID int32 `json:"policyID"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -32,11 +33,11 @@ type _OrganizationUser OrganizationUser
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewOrganizationUser(role Role, email string, id string) *OrganizationUser {
+func NewOrganizationUser(email string, id string, policyID int32) *OrganizationUser {
 	this := OrganizationUser{}
-	this.Role = role
 	this.Email = email
 	this.Id = id
+	this.PolicyID = policyID
 	return &this
 }
 
@@ -46,30 +47,6 @@ func NewOrganizationUser(role Role, email string, id string) *OrganizationUser {
 func NewOrganizationUserWithDefaults() *OrganizationUser {
 	this := OrganizationUser{}
 	return &this
-}
-
-// GetRole returns the Role field value
-func (o *OrganizationUser) GetRole() Role {
-	if o == nil {
-		var ret Role
-		return ret
-	}
-
-	return o.Role
-}
-
-// GetRoleOk returns a tuple with the Role field value
-// and a boolean to check if the value has been set.
-func (o *OrganizationUser) GetRoleOk() (*Role, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Role, true
-}
-
-// SetRole sets field value
-func (o *OrganizationUser) SetRole(v Role) {
-	o.Role = v
 }
 
 // GetEmail returns the Email field value
@@ -120,6 +97,30 @@ func (o *OrganizationUser) SetId(v string) {
 	o.Id = v
 }
 
+// GetPolicyID returns the PolicyID field value
+func (o *OrganizationUser) GetPolicyID() int32 {
+	if o == nil {
+		var ret int32
+		return ret
+	}
+
+	return o.PolicyID
+}
+
+// GetPolicyIDOk returns a tuple with the PolicyID field value
+// and a boolean to check if the value has been set.
+func (o *OrganizationUser) GetPolicyIDOk() (*int32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.PolicyID, true
+}
+
+// SetPolicyID sets field value
+func (o *OrganizationUser) SetPolicyID(v int32) {
+	o.PolicyID = v
+}
+
 func (o OrganizationUser) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -130,9 +131,9 @@ func (o OrganizationUser) MarshalJSON() ([]byte, error) {
 
 func (o OrganizationUser) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["role"] = o.Role
 	toSerialize["email"] = o.Email
 	toSerialize["id"] = o.Id
+	toSerialize["policyID"] = o.PolicyID
 
 	for key, value := range o.AdditionalProperties {
 		toSerialize[key] = value
@@ -146,9 +147,9 @@ func (o *OrganizationUser) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"role",
 		"email",
 		"id",
+		"policyID",
 	}
 
 	allProperties := make(map[string]interface{})
@@ -178,9 +179,9 @@ func (o *OrganizationUser) UnmarshalJSON(data []byte) (err error) {
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(data, &additionalProperties); err == nil {
-		delete(additionalProperties, "role")
 		delete(additionalProperties, "email")
 		delete(additionalProperties, "id")
+		delete(additionalProperties, "policyID")
 		o.AdditionalProperties = additionalProperties
 	}
 

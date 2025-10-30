@@ -47,7 +47,30 @@ func (c *ExportController) GetStore() *ExportStore {
 }
 
 func (c *ExportController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	ctx := cmd.Context()
 	out := fctl.GetString(cmd, "file")
@@ -55,7 +78,7 @@ func (c *ExportController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		ctx = context.WithValue(ctx, "path", out)
 	}
 
-	ret, err := store.Client().Ledger.V2.ExportLogs(ctx, operations.V2ExportLogsRequest{
+	ret, err := stackClient.Ledger.V2.ExportLogs(ctx, operations.V2ExportLogsRequest{
 		Ledger: fctl.GetString(cmd, internal.LedgerFlag),
 	})
 	if err != nil {

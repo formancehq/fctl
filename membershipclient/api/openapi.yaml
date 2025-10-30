@@ -742,6 +742,224 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: Error
       summary: Update user within an organization
+  /organizations/{organizationId}/policies:
+    get:
+      operationId: listPolicies
+      parameters:
+      - explode: false
+        in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPoliciesResponse'
+          description: List of policies
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      summary: List policies of organization
+    post:
+      operationId: createPolicy
+      parameters:
+      - explode: false
+        in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePolicyRequest'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePolicyResponse'
+          description: Policy created
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      summary: Create policy
+  /organizations/{organizationId}/policies/{policyId}:
+    delete:
+      operationId: deletePolicy
+      parameters:
+      - explode: false
+        in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: policyId
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "204":
+          description: Policy deleted
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      summary: Delete policy
+    get:
+      operationId: readPolicy
+      parameters:
+      - explode: false
+        in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: policyId
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadPolicyResponse'
+          description: Policy with scopes
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      summary: Read policy with scopes
+    put:
+      operationId: updatePolicy
+      parameters:
+      - explode: false
+        in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: policyId
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePolicyRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdatePolicyResponse'
+          description: Policy updated
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      summary: Update policy
+  /organizations/{organizationId}/policies/{policyId}/scopes/{scopeId}:
+    delete:
+      operationId: removeScopeFromPolicy
+      parameters:
+      - explode: false
+        in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: policyId
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - explode: false
+        in: path
+        name: scopeId
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "204":
+          description: Scope removed from policy
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      summary: Remove scope from policy
+    put:
+      operationId: addScopeToPolicy
+      parameters:
+      - explode: false
+        in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: policyId
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - explode: false
+        in: path
+        name: scopeId
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "204":
+          description: Scope added to policy
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      summary: Add scope to policy
   /organizations/{organizationId}/stacks:
     get:
       operationId: listStacks
@@ -1072,7 +1290,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StackUserAccessResponse'
-          description: Stack users access role
+          description: Stack users access
         default:
           content:
             application/json:
@@ -1114,7 +1332,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Error
-      summary: Delete stack user access role within an organization
+      summary: Delete stack user access within an organization
     get:
       operationId: readStackUserAccess
       parameters:
@@ -1145,14 +1363,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReadStackUserAccess'
-          description: Stack user access role
+          description: Stack user access
         default:
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Error
-      summary: Read stack user access role within an organization
+      summary: Read stack user access within an organization
     put:
       operationId: upsertStackUserAccess
       parameters:
@@ -1191,7 +1409,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Error
-      summary: Update stack user access role within an organization
+      summary: Update stack user access within an organization
   /organizations/{organizationId}/stacks/{stackId}/disable:
     put:
       operationId: disableStack
@@ -1462,11 +1680,6 @@ paths:
         schema:
           type: string
         style: form
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InvitationClaim'
       responses:
         "200":
           content:
@@ -1660,6 +1873,303 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: Error
       summary: Get region versions
+  /organizations/{organizationId}/applications/{applicationId}:
+    delete:
+      operationId: disableApplicationForOrganization
+      parameters:
+      - explode: false
+        in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: applicationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Application disabled for organization
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      summary: Disable application for organization
+    put:
+      operationId: enableApplicationForOrganization
+      parameters:
+      - explode: false
+        in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: applicationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnableApplicationForOrganizationResponse'
+          description: Application enabled for organization
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      summary: Enable application for organization
+  /applications:
+    get:
+      operationId: listApplications
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListApplicationsResponse'
+          description: List of applications
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      summary: List applications
+    post:
+      operationId: createApplication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationData'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateApplicationResponse'
+          description: Application created
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      summary: Create application
+  /applications/{applicationId}:
+    delete:
+      operationId: deleteApplication
+      parameters:
+      - explode: false
+        in: path
+        name: applicationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Application deleted
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      summary: Delete application
+    get:
+      operationId: getApplication
+      parameters:
+      - explode: false
+        in: path
+        name: applicationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetApplicationResponse'
+          description: Application details
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      summary: Get application
+    put:
+      operationId: updateApplication
+      parameters:
+      - explode: false
+        in: path
+        name: applicationId
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationData'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateApplicationResponse'
+          description: Application updated
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      summary: Update application
+  /applications/{applicationId}/scopes:
+    post:
+      operationId: createApplicationScope
+      parameters:
+      - description: The unique identifier of the application (UUID format)
+        example: 550e8400-e29b-41d4-a716-446655440000
+        explode: false
+        in: path
+        name: applicationId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateApplicationScopeRequest'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateApplicationScopeResponse'
+          description: Application scope created
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      summary: Create application scope
+  /applications/{applicationId}/scopes/{scopeID}:
+    delete:
+      description: Delete a specific scope from an application. This operation requires
+        system administrator privileges.
+      operationId: deleteApplicationScope
+      parameters:
+      - description: The unique identifier of the application (UUID format)
+        example: 550e8400-e29b-41d4-a716-446655440000
+        explode: false
+        in: path
+        name: applicationId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - description: The unique identifier of the scope to operate on
+        explode: false
+        in: path
+        name: scopeID
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "204":
+          description: Application scope deleted successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Invalid request (invalid UUID or empty scope ID)
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Application or scope not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      security:
+      - oauth2: []
+      summary: Delete application scope
+  /users:
+    post:
+      description: Create a new user in the system. This operation requires system
+        administrator privileges.
+      operationId: createUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateUserResponse'
+          description: User created successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Invalid request (missing or invalid email)
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Error
+      security:
+      - oauth2: []
+      summary: Create user
   /me:
     get:
       operationId: readConnectedUser
@@ -1777,6 +2287,11 @@ components:
       - stacks.module.enabled
       - stacks.module.disabled
       - stacks.module.status.updated
+      - policies.created
+      - policies.updated
+      - policies.deleted
+      - policies.scope.added
+      - policies.scope.removed
       type: string
     LogCursor:
       example:
@@ -2029,22 +2544,22 @@ components:
       type: object
     OrganizationData:
       example:
-        defaultOrganizationAccess: NONE
-        defaultStackAccess: null
         domain: domain
         name: name
+        defaultPolicyID: 0
       properties:
         name:
           description: Organization name
           type: string
-        defaultOrganizationAccess:
-          $ref: '#/components/schemas/Role'
-        defaultStackAccess:
-          $ref: '#/components/schemas/Role'
         domain:
           description: Organization domain
           type: string
+        defaultPolicyID:
+          description: Default policy ID applied to new users
+          nullable: true
+          type: integer
       required:
+      - defaultPolicyID
       - name
       type: object
     CreateOrganizationClientRequest:
@@ -2393,12 +2908,6 @@ components:
         required:
         - email
         type: object
-    Role:
-      enum:
-      - NONE
-      - ADMIN
-      - GUEST
-      type: string
     SystemRole:
       enum:
       - USER
@@ -2422,6 +2931,28 @@ components:
         role: USER
         id: id
         email: email
+    CreateUserRequest:
+      example:
+        email: user@example.com
+      properties:
+        email:
+          description: Email address of the user to create
+          example: user@example.com
+          format: email
+          type: string
+      required:
+      - email
+      type: object
+    CreateUserResponse:
+      example:
+        data:
+          role: USER
+          id: id
+          email: email
+      properties:
+        data:
+          $ref: '#/components/schemas/User'
+      type: object
     OrganizationUserArray:
       items:
         allOf:
@@ -2430,7 +2961,7 @@ components:
     ReadOrganizationUserResponse:
       example:
         data:
-          role: NONE
+          policyID: 0
           id: id
           email: email
       properties:
@@ -2440,19 +2971,20 @@ components:
     OrganizationUser:
       allOf:
       - properties:
-          role:
-            $ref: '#/components/schemas/Role'
           email:
             type: string
           id:
             type: string
+          policyID:
+            description: Policy ID applied to the user
+            type: integer
         required:
         - email
         - id
-        - role
+        - policyID
         type: object
       example:
-        role: NONE
+        policyID: 0
         id: id
         email: email
     OrganizationArray:
@@ -2470,7 +3002,7 @@ components:
     ReadStackUserAccess:
       example:
         data:
-          role: NONE
+          policyID: 0
           stackId: stackId
           userId: userId
           email: email
@@ -2490,27 +3022,28 @@ components:
           email:
             description: User email
             type: string
-          role:
-            $ref: '#/components/schemas/Role'
+          policyID:
+            description: Policy ID applied to the user for the stack
+            type: integer
         required:
         - email
-        - role
+        - policyID
         - stackId
         - userId
         type: object
       example:
-        role: NONE
+        policyID: 0
         stackId: stackId
         userId: userId
         email: email
     StackUserAccessResponse:
       example:
         data:
-        - role: NONE
+        - policyID: 0
           stackId: stackId
           userId: userId
           email: email
-        - role: NONE
+        - policyID: 0
           stackId: stackId
           userId: userId
           email: email
@@ -2532,7 +3065,28 @@ components:
           type: array
       type: object
     CreateOrganizationRequest:
-      $ref: '#/components/schemas/OrganizationData'
+      example:
+        domain: domain
+        name: name
+        ownerID: ownerID
+        defaultPolicyID: 0
+      properties:
+        name:
+          description: Organization name
+          type: string
+        domain:
+          description: Organization domain
+          type: string
+        defaultPolicyID:
+          description: Default policy ID applied to new users
+          type: integer
+        ownerID:
+          description: User ID of the owner of the organization (only when used with
+            a non user agent)
+          type: string
+      required:
+      - name
+      type: object
     CreateOrganizationResponse:
       example:
         data:
@@ -2540,18 +3094,17 @@ components:
             role: USER
             id: id
             email: email
-          defaultOrganizationAccess: NONE
-          totalUsers: 5
-          ownerId: ownerId
-          totalStacks: 1
           createdAt: 2000-01-23T04:56:07.000+00:00
-          defaultStackAccess: null
+          totalUsers: 5
           domain: domain
           name: name
           id: id
-          availableSandboxes: 6
-          availableStacks: 0
+          ownerId: ownerId
+          availableSandboxes: 1
+          availableStacks: 6
+          defaultPolicyID: 0
           updatedAt: 2000-01-23T04:56:07.000+00:00
+          totalStacks: 5
       properties:
         data:
           $ref: '#/components/schemas/OrganizationExpanded'
@@ -2563,18 +3116,17 @@ components:
             role: USER
             id: id
             email: email
-          defaultOrganizationAccess: NONE
-          totalUsers: 5
-          ownerId: ownerId
-          totalStacks: 1
           createdAt: 2000-01-23T04:56:07.000+00:00
-          defaultStackAccess: null
+          totalUsers: 5
           domain: domain
           name: name
           id: id
-          availableSandboxes: 6
-          availableStacks: 0
+          ownerId: ownerId
+          availableSandboxes: 1
+          availableStacks: 6
+          defaultPolicyID: 0
           updatedAt: 2000-01-23T04:56:07.000+00:00
+          totalStacks: 5
       properties:
         data:
           $ref: '#/components/schemas/OrganizationExpanded'
@@ -2814,7 +3366,6 @@ components:
       example:
         data:
         - organizationId: organizationId
-          role: NONE
           lastUpdate: 2000-01-23T04:56:07.000+00:00
           creatorId: creatorId
           userEmail: userEmail
@@ -2822,14 +3373,13 @@ components:
           creationDate: 2000-01-23T04:56:07.000+00:00
           userId: userId
           organizationAccess:
-            role: NONE
+            policyID: 0
             id: id
             email: email
           expiresAt: 2000-01-23T04:56:07.000+00:00
           status: PENDING
           updatedAt: updatedAt
         - organizationId: organizationId
-          role: NONE
           lastUpdate: 2000-01-23T04:56:07.000+00:00
           creatorId: creatorId
           userEmail: userEmail
@@ -2837,7 +3387,7 @@ components:
           creationDate: 2000-01-23T04:56:07.000+00:00
           userId: userId
           organizationAccess:
-            role: NONE
+            policyID: 0
             id: id
             email: email
           expiresAt: 2000-01-23T04:56:07.000+00:00
@@ -2853,7 +3403,6 @@ components:
       example:
         data:
           organizationId: organizationId
-          role: NONE
           lastUpdate: 2000-01-23T04:56:07.000+00:00
           creatorId: creatorId
           userEmail: userEmail
@@ -2861,7 +3410,7 @@ components:
           creationDate: 2000-01-23T04:56:07.000+00:00
           userId: userId
           organizationAccess:
-            role: NONE
+            policyID: 0
             id: id
             email: email
           expiresAt: 2000-01-23T04:56:07.000+00:00
@@ -2886,7 +3435,6 @@ components:
     Invitation:
       example:
         organizationId: organizationId
-        role: NONE
         lastUpdate: 2000-01-23T04:56:07.000+00:00
         creatorId: creatorId
         userEmail: userEmail
@@ -2894,7 +3442,7 @@ components:
         creationDate: 2000-01-23T04:56:07.000+00:00
         userId: userId
         organizationAccess:
-          role: NONE
+          policyID: 0
           id: id
           email: email
         expiresAt: 2000-01-23T04:56:07.000+00:00
@@ -2920,8 +3468,6 @@ components:
         updatedAt:
           format: date-tim
           type: string
-        role:
-          $ref: '#/components/schemas/Role'
         userId:
           type: string
         organizationAccess:
@@ -2939,16 +3485,9 @@ components:
       - creatorID
       - id
       - organizationId
-      - role
+      - policyID
       - status
       - userEmail
-      type: object
-    InvitationClaim:
-      example:
-        role: NONE
-      properties:
-        role:
-          $ref: '#/components/schemas/Role'
       type: object
     Region:
       example:
@@ -3071,18 +3610,17 @@ components:
           role: USER
           id: id
           email: email
-        defaultOrganizationAccess: NONE
-        totalUsers: 5
-        ownerId: ownerId
-        totalStacks: 1
         createdAt: 2000-01-23T04:56:07.000+00:00
-        defaultStackAccess: null
+        totalUsers: 5
         domain: domain
         name: name
         id: id
-        availableSandboxes: 6
-        availableStacks: 0
+        ownerId: ownerId
+        availableSandboxes: 1
+        availableStacks: 6
+        defaultPolicyID: 0
         updatedAt: 2000-01-23T04:56:07.000+00:00
+        totalStacks: 5
     ListRegionsResponse:
       example:
         data:
@@ -3233,21 +3771,20 @@ components:
       type: object
     UpdateOrganizationUserRequest:
       example:
-        role: NONE
+        policyID: 0
       properties:
-        role:
-          $ref: '#/components/schemas/Role'
-      required:
-      - role
+        policyID:
+          description: Policy ID applied to the user
+          type: integer
       type: object
     UpdateStackUserRequest:
       example:
-        role: NONE
+        policyID: 0
       properties:
-        role:
-          $ref: '#/components/schemas/Role'
+        policyID:
+          type: integer
       required:
-      - role
+      - policyID
       type: object
     GetRegionVersionsResponse:
       example:
@@ -3375,6 +3912,650 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/AuthenticationProviderResponse_data'
+      type: object
+    PolicyData:
+      example:
+        name: name
+        description: description
+      properties:
+        name:
+          description: Policy name
+          type: string
+        description:
+          description: Policy description
+          type: string
+      required:
+      - name
+      type: object
+    Policy:
+      allOf:
+      - $ref: '#/components/schemas/PolicyData'
+      - properties:
+          id:
+            description: Policy ID
+            type: integer
+          organizationId:
+            description: Organization ID
+            type: string
+          protected:
+            description: Whether the policy is protected from modification
+            type: boolean
+          scopes:
+            description: List of scopes assigned to the policy (only present when
+              fetched via GET endpoint)
+            items:
+              $ref: '#/components/schemas/Scope'
+            type: array
+          createdAt:
+            description: Creation date
+            format: date-time
+            type: string
+          updatedAt:
+            description: Last update date
+            format: date-time
+            type: string
+        required:
+        - createdAt
+        - id
+        - protected
+        - updatedAt
+        type: object
+      example:
+        organizationId: organizationId
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        protected: true
+        name: name
+        description: description
+        id: 0
+        scopes:
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          application:
+            createdAt: 2000-01-23T04:56:07.000+00:00
+            name: name
+            description: description
+            alias: alias
+            id: id
+            url: https://openapi-generator.tech
+            updatedAt: 2000-01-23T04:56:07.000+00:00
+          protected: false
+          description: description
+          id: 6
+          label: label
+          applicationId: applicationId
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          application:
+            createdAt: 2000-01-23T04:56:07.000+00:00
+            name: name
+            description: description
+            alias: alias
+            id: id
+            url: https://openapi-generator.tech
+            updatedAt: 2000-01-23T04:56:07.000+00:00
+          protected: false
+          description: description
+          id: 6
+          label: label
+          applicationId: applicationId
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+    CreatePolicyRequest:
+      $ref: '#/components/schemas/PolicyData'
+    CreatePolicyResponse:
+      example:
+        data:
+          organizationId: organizationId
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          protected: true
+          name: name
+          description: description
+          id: 0
+          scopes:
+          - createdAt: 2000-01-23T04:56:07.000+00:00
+            application:
+              createdAt: 2000-01-23T04:56:07.000+00:00
+              name: name
+              description: description
+              alias: alias
+              id: id
+              url: https://openapi-generator.tech
+              updatedAt: 2000-01-23T04:56:07.000+00:00
+            protected: false
+            description: description
+            id: 6
+            label: label
+            applicationId: applicationId
+            updatedAt: 2000-01-23T04:56:07.000+00:00
+          - createdAt: 2000-01-23T04:56:07.000+00:00
+            application:
+              createdAt: 2000-01-23T04:56:07.000+00:00
+              name: name
+              description: description
+              alias: alias
+              id: id
+              url: https://openapi-generator.tech
+              updatedAt: 2000-01-23T04:56:07.000+00:00
+            protected: false
+            description: description
+            id: 6
+            label: label
+            applicationId: applicationId
+            updatedAt: 2000-01-23T04:56:07.000+00:00
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        data:
+          $ref: '#/components/schemas/Policy'
+      type: object
+    ReadPolicyResponse:
+      example:
+        data:
+          organizationId: organizationId
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          protected: true
+          name: name
+          description: description
+          id: 0
+          scopes:
+          - createdAt: 2000-01-23T04:56:07.000+00:00
+            application:
+              createdAt: 2000-01-23T04:56:07.000+00:00
+              name: name
+              description: description
+              alias: alias
+              id: id
+              url: https://openapi-generator.tech
+              updatedAt: 2000-01-23T04:56:07.000+00:00
+            protected: false
+            description: description
+            id: 6
+            label: label
+            applicationId: applicationId
+            updatedAt: 2000-01-23T04:56:07.000+00:00
+          - createdAt: 2000-01-23T04:56:07.000+00:00
+            application:
+              createdAt: 2000-01-23T04:56:07.000+00:00
+              name: name
+              description: description
+              alias: alias
+              id: id
+              url: https://openapi-generator.tech
+              updatedAt: 2000-01-23T04:56:07.000+00:00
+            protected: false
+            description: description
+            id: 6
+            label: label
+            applicationId: applicationId
+            updatedAt: 2000-01-23T04:56:07.000+00:00
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        data:
+          $ref: '#/components/schemas/Policy'
+      type: object
+    UpdatePolicyRequest:
+      $ref: '#/components/schemas/PolicyData'
+    UpdatePolicyResponse:
+      example:
+        data:
+          organizationId: organizationId
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          protected: true
+          name: name
+          description: description
+          id: 0
+          scopes:
+          - createdAt: 2000-01-23T04:56:07.000+00:00
+            application:
+              createdAt: 2000-01-23T04:56:07.000+00:00
+              name: name
+              description: description
+              alias: alias
+              id: id
+              url: https://openapi-generator.tech
+              updatedAt: 2000-01-23T04:56:07.000+00:00
+            protected: false
+            description: description
+            id: 6
+            label: label
+            applicationId: applicationId
+            updatedAt: 2000-01-23T04:56:07.000+00:00
+          - createdAt: 2000-01-23T04:56:07.000+00:00
+            application:
+              createdAt: 2000-01-23T04:56:07.000+00:00
+              name: name
+              description: description
+              alias: alias
+              id: id
+              url: https://openapi-generator.tech
+              updatedAt: 2000-01-23T04:56:07.000+00:00
+            protected: false
+            description: description
+            id: 6
+            label: label
+            applicationId: applicationId
+            updatedAt: 2000-01-23T04:56:07.000+00:00
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        data:
+          $ref: '#/components/schemas/Policy'
+      type: object
+    ListPoliciesResponse:
+      example:
+        data:
+        - organizationId: organizationId
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          protected: true
+          name: name
+          description: description
+          id: 0
+          scopes:
+          - createdAt: 2000-01-23T04:56:07.000+00:00
+            application:
+              createdAt: 2000-01-23T04:56:07.000+00:00
+              name: name
+              description: description
+              alias: alias
+              id: id
+              url: https://openapi-generator.tech
+              updatedAt: 2000-01-23T04:56:07.000+00:00
+            protected: false
+            description: description
+            id: 6
+            label: label
+            applicationId: applicationId
+            updatedAt: 2000-01-23T04:56:07.000+00:00
+          - createdAt: 2000-01-23T04:56:07.000+00:00
+            application:
+              createdAt: 2000-01-23T04:56:07.000+00:00
+              name: name
+              description: description
+              alias: alias
+              id: id
+              url: https://openapi-generator.tech
+              updatedAt: 2000-01-23T04:56:07.000+00:00
+            protected: false
+            description: description
+            id: 6
+            label: label
+            applicationId: applicationId
+            updatedAt: 2000-01-23T04:56:07.000+00:00
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        - organizationId: organizationId
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          protected: true
+          name: name
+          description: description
+          id: 0
+          scopes:
+          - createdAt: 2000-01-23T04:56:07.000+00:00
+            application:
+              createdAt: 2000-01-23T04:56:07.000+00:00
+              name: name
+              description: description
+              alias: alias
+              id: id
+              url: https://openapi-generator.tech
+              updatedAt: 2000-01-23T04:56:07.000+00:00
+            protected: false
+            description: description
+            id: 6
+            label: label
+            applicationId: applicationId
+            updatedAt: 2000-01-23T04:56:07.000+00:00
+          - createdAt: 2000-01-23T04:56:07.000+00:00
+            application:
+              createdAt: 2000-01-23T04:56:07.000+00:00
+              name: name
+              description: description
+              alias: alias
+              id: id
+              url: https://openapi-generator.tech
+              updatedAt: 2000-01-23T04:56:07.000+00:00
+            protected: false
+            description: description
+            id: 6
+            label: label
+            applicationId: applicationId
+            updatedAt: 2000-01-23T04:56:07.000+00:00
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/Policy'
+          type: array
+      type: object
+    ApplicationData:
+      example:
+        name: name
+        description: description
+        alias: alias
+        url: https://openapi-generator.tech
+      properties:
+        name:
+          description: Application name
+          type: string
+        description:
+          description: Application description
+          type: string
+        url:
+          description: Application URL (must be unique)
+          format: uri
+          type: string
+        alias:
+          description: Application alias
+          type: string
+      required:
+      - alias
+      - name
+      - url
+      type: object
+    Application:
+      allOf:
+      - $ref: '#/components/schemas/ApplicationData'
+      - properties:
+          id:
+            description: Application ID
+            type: string
+          createdAt:
+            description: Creation date
+            format: date-time
+            type: string
+          updatedAt:
+            description: Last update date
+            format: date-time
+            type: string
+        required:
+        - createdAt
+        - id
+        - updatedAt
+        type: object
+      example:
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        name: name
+        description: description
+        alias: alias
+        id: id
+        url: https://openapi-generator.tech
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+    ApplicationWithScope:
+      allOf:
+      - $ref: '#/components/schemas/Application'
+      - properties:
+          scopes:
+            description: List of scopes associated with this application
+            items:
+              $ref: '#/components/schemas/Scope'
+            type: array
+        required:
+        - scopes
+        type: object
+      example:
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        name: name
+        description: description
+        alias: alias
+        id: id
+        scopes:
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          application:
+            createdAt: 2000-01-23T04:56:07.000+00:00
+            name: name
+            description: description
+            alias: alias
+            id: id
+            url: https://openapi-generator.tech
+            updatedAt: 2000-01-23T04:56:07.000+00:00
+          protected: false
+          description: description
+          id: 6
+          label: label
+          applicationId: applicationId
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          application:
+            createdAt: 2000-01-23T04:56:07.000+00:00
+            name: name
+            description: description
+            alias: alias
+            id: id
+            url: https://openapi-generator.tech
+            updatedAt: 2000-01-23T04:56:07.000+00:00
+          protected: false
+          description: description
+          id: 6
+          label: label
+          applicationId: applicationId
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        url: https://openapi-generator.tech
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+    ListApplicationsResponse:
+      example:
+        cursor:
+          next: ""
+          previous: YXVsdCBhbmQgYSBtYXhpbXVtIG1heF9yZXN1bHRzLol=
+          data:
+          - createdAt: 2000-01-23T04:56:07.000+00:00
+            name: name
+            description: description
+            alias: alias
+            id: id
+            url: https://openapi-generator.tech
+            updatedAt: 2000-01-23T04:56:07.000+00:00
+          - createdAt: 2000-01-23T04:56:07.000+00:00
+            name: name
+            description: description
+            alias: alias
+            id: id
+            url: https://openapi-generator.tech
+            updatedAt: 2000-01-23T04:56:07.000+00:00
+          hasMore: false
+          pageSize: 15
+      properties:
+        cursor:
+          $ref: '#/components/schemas/ListApplicationsResponse_cursor'
+      required:
+      - data
+      type: object
+    CreateApplicationResponse:
+      example:
+        data:
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          name: name
+          description: description
+          alias: alias
+          id: id
+          url: https://openapi-generator.tech
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        data:
+          $ref: '#/components/schemas/Application'
+      type: object
+    GetApplicationResponse:
+      example:
+        data:
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          name: name
+          description: description
+          alias: alias
+          id: id
+          scopes:
+          - createdAt: 2000-01-23T04:56:07.000+00:00
+            application:
+              createdAt: 2000-01-23T04:56:07.000+00:00
+              name: name
+              description: description
+              alias: alias
+              id: id
+              url: https://openapi-generator.tech
+              updatedAt: 2000-01-23T04:56:07.000+00:00
+            protected: false
+            description: description
+            id: 6
+            label: label
+            applicationId: applicationId
+            updatedAt: 2000-01-23T04:56:07.000+00:00
+          - createdAt: 2000-01-23T04:56:07.000+00:00
+            application:
+              createdAt: 2000-01-23T04:56:07.000+00:00
+              name: name
+              description: description
+              alias: alias
+              id: id
+              url: https://openapi-generator.tech
+              updatedAt: 2000-01-23T04:56:07.000+00:00
+            protected: false
+            description: description
+            id: 6
+            label: label
+            applicationId: applicationId
+            updatedAt: 2000-01-23T04:56:07.000+00:00
+          url: https://openapi-generator.tech
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        data:
+          $ref: '#/components/schemas/ApplicationWithScope'
+      type: object
+    UpdateApplicationResponse:
+      example:
+        data:
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          name: name
+          description: description
+          alias: alias
+          id: id
+          url: https://openapi-generator.tech
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        data:
+          $ref: '#/components/schemas/Application'
+      type: object
+    CreateApplicationScopeRequest:
+      example:
+        description: description
+        label: label
+      properties:
+        description:
+          description: Scope description
+          type: string
+        label:
+          description: "The OAuth2 scope label (e.g., \"custom:read\")"
+          type: string
+      required:
+      - label
+      type: object
+    CreateApplicationScopeResponse:
+      example:
+        data:
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          application:
+            createdAt: 2000-01-23T04:56:07.000+00:00
+            name: name
+            description: description
+            alias: alias
+            id: id
+            url: https://openapi-generator.tech
+            updatedAt: 2000-01-23T04:56:07.000+00:00
+          protected: false
+          description: description
+          id: 6
+          label: label
+          applicationId: applicationId
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        data:
+          $ref: '#/components/schemas/Scope'
+      type: object
+    UpdateApplicationScopeRequest:
+      properties:
+        description:
+          description: Scope description
+          type: string
+      type: object
+    UpdateApplicationScopeResponse:
+      properties:
+        data:
+          $ref: '#/components/schemas/Scope'
+      type: object
+    Scope:
+      example:
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        application:
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          name: name
+          description: description
+          alias: alias
+          id: id
+          url: https://openapi-generator.tech
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        protected: false
+        description: description
+        id: 6
+        label: label
+        applicationId: applicationId
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        id:
+          description: Scope ID
+          type: integer
+        label:
+          description: "The OAuth2 scope label (e.g., \"custom:read\")"
+          type: string
+        description:
+          description: Scope description
+          type: string
+        applicationId:
+          description: Application ID (null for global scopes)
+          type: string
+        application:
+          $ref: '#/components/schemas/Application'
+        protected:
+          default: false
+          description: Whether the scope is protected
+          type: boolean
+        createdAt:
+          description: Creation timestamp
+          format: date-time
+          type: string
+        updatedAt:
+          description: Last update timestamp
+          format: date-time
+          type: string
+      required:
+      - createdAt
+      - id
+      - label
+      - protected
+      - updatedAt
+      type: object
+    OrganizationApplication:
+      example:
+        organizationId: organizationId
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        applicationId: applicationId
+      properties:
+        organizationId:
+          description: Organization ID
+          type: string
+        applicationId:
+          description: Application ID
+          type: string
+        createdAt:
+          description: Creation date
+          format: date-time
+          type: string
+      required:
+      - applicationId
+      - createdAt
+      - organizationId
+      type: object
+    EnableApplicationForOrganizationResponse:
+      example:
+        data:
+          organizationId: organizationId
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          applicationId: applicationId
+      properties:
+        data:
+          $ref: '#/components/schemas/OrganizationApplication'
       type: object
     listFeatures_200_response:
       example:
@@ -3528,6 +4709,35 @@ components:
         redirectURI: redirectURI
         createdAt: 2000-01-23T04:56:07.000+00:00
         updatedAt: 2000-01-23T04:56:07.000+00:00
+    ListApplicationsResponse_cursor:
+      allOf:
+      - $ref: '#/components/schemas/Cursor'
+      - properties:
+          data:
+            items:
+              $ref: '#/components/schemas/Application'
+            type: array
+        type: object
+      example:
+        next: ""
+        previous: YXVsdCBhbmQgYSBtYXhpbXVtIG1heF9yZXN1bHRzLol=
+        data:
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          name: name
+          description: description
+          alias: alias
+          id: id
+          url: https://openapi-generator.tech
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        - createdAt: 2000-01-23T04:56:07.000+00:00
+          name: name
+          description: description
+          alias: alias
+          id: id
+          url: https://openapi-generator.tech
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        hasMore: false
+        pageSize: 15
   securitySchemes:
     oauth2:
       flows:

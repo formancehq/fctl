@@ -3,7 +3,10 @@ package fctl
 import (
 	"encoding/json"
 	"errors"
+	"github.com/spf13/cobra"
+	"os"
 	"os/exec"
+	"path"
 	"runtime"
 )
 
@@ -33,14 +36,6 @@ func MapMap[KEY comparable, VALUE any, DST any](srcs map[KEY]VALUE, mapper func(
 	return ret
 }
 
-func MapKeys[K comparable, V any](m map[K]V) []K {
-	ret := make([]K, 0)
-	for k := range m {
-		ret = append(ret, k)
-	}
-	return ret
-}
-
 func Prepend[V any](array []V, items ...V) []V {
 	return append(items, array...)
 }
@@ -55,10 +50,10 @@ func ContainValue[V comparable](array []V, value V) bool {
 }
 
 var (
-	ErrOpenningBrowser = errors.New("opening browser")
+	ErrOpeningBrowser = errors.New("opening browser")
 )
 
-func Open(url string) error {
+func OpenURL(url string) error {
 	var (
 		cmd  string
 		args []string
@@ -79,5 +74,44 @@ func Open(url string) error {
 		return exec.Command(cmd, args...).Start()
 	}
 
-	return ErrOpenningBrowser
+	return ErrOpeningBrowser
+}
+
+func ReadJSONFile[V any](cmd *cobra.Command, filePath string) (*V, error) {
+	f, err := os.Open(GetFilePath(cmd, filePath))
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = f.Close()
+	}()
+
+	v := new(V)
+	if err := json.NewDecoder(f).Decode(v); err != nil {
+		return nil, err
+	}
+
+	return v, nil
+}
+
+func WriteJSONFile(filePath string, data any) error {
+	dir := path.Dir(filePath)
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return err
+	}
+
+	f, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = f.Close()
+	}()
+
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(data); err != nil {
+		return err
+	}
+	return nil
 }

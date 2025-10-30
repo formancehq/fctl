@@ -46,20 +46,43 @@ func (c *SetMetadataController) GetStore() *SetMetadataStore {
 
 func (c *SetMetadataController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
 
 	metadata, err := fctl.ParseMetadata(args[1:])
 	if err != nil {
 		return nil, err
 	}
 
-	transactionID, err := internal.TransactionIDOrLastN(cmd.Context(), store.Client(),
+	transactionID, err := internal.TransactionIDOrLastN(cmd.Context(), stackClient,
 		fctl.GetString(cmd, internal.LedgerFlag), args[0])
 	if err != nil {
 		return nil, err
 	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to set a metadata on transaction %d", transactionID) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to set a metadata on transaction %d", transactionID) {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -68,7 +91,7 @@ func (c *SetMetadataController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 		Txid:        transactionID,
 		RequestBody: collectionutils.ConvertMap(metadata, collectionutils.ToAny[string]),
 	}
-	response, err := store.Client().Ledger.V1.AddMetadataOnTransaction(cmd.Context(), request)
+	response, err := stackClient.Ledger.V1.AddMetadataOnTransaction(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}

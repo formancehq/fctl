@@ -51,9 +51,32 @@ func (c *CreateController) GetStore() *CreateStore {
 }
 
 func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	cfg, err := fctl.LoadConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to create a wallet") {
+	profile, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackID, err := fctl.ResolveStackID(cmd, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), cfg.CurrentProfile, *profile, organizationID, stackID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to create a wallet") {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -69,7 +92,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		},
 		IdempotencyKey: fctl.Ptr(fctl.GetString(cmd, c.ikFlag)),
 	}
-	response, err := store.Client().Wallets.V1.CreateWallet(cmd.Context(), request)
+	response, err := stackClient.Wallets.V1.CreateWallet(cmd.Context(), request)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating wallet")
 	}
