@@ -1,5 +1,6 @@
 # Formance Control CLI (fctl)
 
+
 Command-line interface for managing and interacting with Formance services.
 
 ## Overview
