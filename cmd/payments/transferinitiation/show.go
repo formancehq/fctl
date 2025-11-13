@@ -120,7 +120,7 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	tableData = fctl.Map(c.store.TransferInitiation.RelatedAdjustments, func(tf shared.TransferInitiationAdjusments) []string {
+	tableData = fctl.Map(c.store.TransferInitiation.RelatedAdjustments, func(tf shared.TransferInitiationAdjustments) []string {
 		return []string{
 			tf.AdjustmentID,
 			tf.CreatedAt.Format(time.RFC3339),

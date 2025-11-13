@@ -7,6 +7,7 @@ toolchain go1.23.2
 replace (
 	github.com/formancehq/fctl/internal/deployserverclient => ./internal/deployserverclient
 	github.com/formancehq/fctl/membershipclient => ./membershipclient
+	github.com/formancehq/formance-sdk-go/v3 => ../formance-sdk-go/
 	github.com/spf13/cobra => github.com/formancehq/cobra v0.0.0-20240315111924-ca456bf9cac9
 	github.com/zitadel/oidc/v2 v2.6.1 => github.com/formancehq/oidc/v2 v2.6.2-0.20230526075055-93dc5ecb0149
 )
@@ -41,7 +42,6 @@ require (
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/containerd/console v1.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/ericlagergren/decimal v0.0.0-20240411145413-00de7ca16731 // indirect
 	github.com/fatih/color v1.17.0 // indirect
 	github.com/go-chi/chi/v5 v5.2.2 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
