@@ -45,17 +45,8 @@ func (c *ListCtrl) GetStore() *List {
 }
 
 func (c *ListCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
-	cfg, err := fctl.LoadConfig(cmd)
-	if err != nil {
-		return nil, err
-	}
 
-	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -63,13 +54,12 @@ func (c *ListCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) 
 	pageSize := fctl.GetInt(cmd, "page-size")
 	page := fctl.GetInt(cmd, "page")
 
-	apiClient, err := fctl.NewAppDeployClient(
+	organizationID, apiClient, err := fctl.NewAppDeployClientFromFlags(
 		cmd,
 		relyingParty,
 		fctl.NewPTermDialog(),
 		profileName,
 		*profile,
-		organizationID,
 	)
 	if err != nil {
 		return nil, err

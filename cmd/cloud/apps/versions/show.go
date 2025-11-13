@@ -44,34 +44,18 @@ func (c *ShowCtrl) GetStore() *Show {
 	return c.store
 }
 
-func (c *ShowCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	cfg, err := fctl.LoadConfig(cmd)
+func (c *ShowCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	profile, profileName, err := fctl.LoadCurrentProfile(cmd, *cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	relyingParty, err := fctl.GetAuthRelyingParty(cmd.Context(), fctl.GetHttpClient(cmd), profile.MembershipURI)
-	if err != nil {
-		return nil, err
-	}
-
-	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
-	if err != nil {
-		return nil, err
-	}
-
-	apiClient, err := fctl.NewAppDeployClient(
+	_, apiClient, err := fctl.NewAppDeployClientFromFlags(
 		cmd,
 		relyingParty,
 		fctl.NewPTermDialog(),
 		profileName,
 		*profile,
-		organizationID,
 	)
 	if err != nil {
 		return nil, err
