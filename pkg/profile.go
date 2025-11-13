@@ -92,7 +92,8 @@ func LoadCurrentProfile(cmd *cobra.Command, cfg Config) (*Profile, string, error
 	return profile, currentProfileName, err
 }
 
-func LoadAndAuthenticateCurrentProfile(cmd *cobra.Command, cfg Config) (*Profile, string, client.RelyingParty, error) {
+func LoadAndAuthenticateCurrentProfileWithConfig(cmd *cobra.Command, cfg Config) (*Profile, string, client.RelyingParty, error) {
+
 	profile, profileName, err := LoadCurrentProfile(cmd, cfg)
 	if err != nil {
 		return nil, "", nil, err
@@ -108,6 +109,20 @@ func LoadAndAuthenticateCurrentProfile(cmd *cobra.Command, cfg Config) (*Profile
 	}
 
 	return profile, profileName, relyingParty, nil
+}
+
+func LoadAndAuthenticateCurrentProfile(cmd *cobra.Command) (*Config, *Profile, string, client.RelyingParty, error) {
+	cfg, err := LoadConfig(cmd)
+	if err != nil {
+		return nil, nil, "", nil, err
+	}
+
+	profile, profileName, relyingParty, err := LoadAndAuthenticateCurrentProfileWithConfig(cmd, *cfg)
+	if err != nil {
+		return nil, nil, "", nil, err
+	}
+
+	return cfg, profile, profileName, relyingParty, nil
 }
 
 type CurrentProfile Profile

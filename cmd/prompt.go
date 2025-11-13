@@ -177,7 +177,7 @@ func (p *prompt) executePromptCommand(cmd *cobra.Command, t string) error {
 }
 
 func (p *prompt) refreshUserEmail(cmd *cobra.Command, cfg fctl.Config) error {
-	profile, _, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, cfg)
+	profile, _, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfileWithConfig(cmd, cfg)
 	if err != nil {
 		return err
 	}

@@ -49,33 +49,17 @@ func (c *ShowCtrl) GetStore() *Show {
 }
 
 func (c *ShowCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	cfg, err := fctl.LoadConfig(cmd)
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	profile, profileName, err := fctl.LoadCurrentProfile(cmd, *cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	relyingParty, err := fctl.GetAuthRelyingParty(cmd.Context(), fctl.GetHttpClient(cmd), profile.MembershipURI)
-	if err != nil {
-		return nil, err
-	}
-
-	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
-	if err != nil {
-		return nil, err
-	}
-
-	apiClient, err := fctl.NewAppDeployClient(
+	_, apiClient, err := fctl.NewAppDeployClientFromFlags(
 		cmd,
 		relyingParty,
 		fctl.NewPTermDialog(),
 		profileName,
 		*profile,
-		organizationID,
 	)
 	if err != nil {
 		return nil, err
@@ -101,26 +85,16 @@ func (c *ShowCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, erro
 func (c *ShowCtrl) Render(cmd *cobra.Command, args []string) error {
 
 	if c.store.State.Stack != nil {
-		cfg, err := fctl.LoadConfig(cmd)
+		_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 		if err != nil {
 			return err
 		}
 
-		profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+		organizationID, apiClient, err := fctl.NewMembershipClientForOrganizationFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
 		if err != nil {
 			return err
 		}
-
-		organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
-		if err != nil {
-			return err
-		}
-
-		membershipapiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
-		if err != nil {
-			return err
-		}
-		info, err := fctl.MembershipServerInfo(cmd.Context(), membershipapiClient)
+		info, err := fctl.MembershipServerInfo(cmd.Context(), apiClient)
 		if err != nil {
 			return err
 		}

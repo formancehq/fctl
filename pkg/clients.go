@@ -397,7 +397,24 @@ func NewMembershipClientForOrganization(
 		membershipclient.WithClient(relyingParty.HttpClient()),
 		membershipclient.WithSecurity(fmt.Sprintf("Bearer %s", organizationToken.Token)),
 	), nil
+}
 
+func NewMembershipClientForOrganizationFromFlags(
+	cmd *cobra.Command,
+	relyingParty client.RelyingParty,
+	dialog Dialog,
+	profileName string,
+	profile Profile,
+) (string, *membershipclient.SDK, error) {
+
+	organizationID, err := ResolveOrganizationID(cmd, profile)
+	if err != nil {
+		return "", nil, err
+	}
+
+	client, err := NewMembershipClientForOrganization(cmd, relyingParty, dialog, profileName, profile, organizationID)
+
+	return organizationID, client, err
 }
 
 func NewStackClient(
@@ -436,7 +453,22 @@ func NewStackClient(
 	), nil
 }
 
-// todo: deploy use membership token, we have to rely on membership applications
+func NewStackClientFromFlags(
+	cmd *cobra.Command,
+	relyingParty client.RelyingParty,
+	dialog Dialog,
+	profileName string,
+	profile Profile,
+) (*formance.Formance, error) {
+
+	organizationID, stackID, err := ResolveStackID(cmd, profile)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewStackClient(cmd, relyingParty, dialog, profileName, profile, organizationID, stackID)
+}
+
 func NewAppDeployClient(
 	cmd *cobra.Command,
 	relyingParty client.RelyingParty,
@@ -469,6 +501,28 @@ func NewAppDeployClient(
 			oauth2.StaticTokenSource(appToken.ToOAuth2()),
 		)),
 	), nil
+}
+
+// todo: deploy use membership token, we have to rely on membership applications
+func NewAppDeployClientFromFlags(
+	cmd *cobra.Command,
+	relyingParty client.RelyingParty,
+	dialog Dialog,
+	profileName string,
+	profile Profile,
+) (string, *deployserverclient.DeployServer, error) {
+
+	organizationID, err := ResolveOrganizationID(cmd, profile)
+	if err != nil {
+		return "", nil, err
+	}
+
+	deployClient, err := NewAppDeployClient(cmd, relyingParty, dialog, profileName, profile, organizationID)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return organizationID, deployClient, nil
 }
 
 type stackTokenSource struct {

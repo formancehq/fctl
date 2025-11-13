@@ -61,22 +61,13 @@ func (c *UpdateAdyenConnectorConfigController) GetStore() *UpdateAdyenConnectorC
 }
 
 func (c *UpdateAdyenConnectorConfigController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	cfg, err := fctl.LoadConfig(cmd)
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
-	if err != nil {
-		return nil, err
-	}
-
-	stackClient, err := fctl.NewStackClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID, stackID)
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
 	if err != nil {
 		return nil, err
 	}

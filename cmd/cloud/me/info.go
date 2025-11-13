@@ -44,12 +44,7 @@ func (c *InfoController) GetStore() *InfoStore {
 
 func (c *InfoController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
 
-	cfg, err := fctl.LoadConfig(cmd)
-	if err != nil {
-		return nil, err
-	}
-
-	profile, _, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
+	_, profile, _, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}

@@ -43,28 +43,17 @@ func (c *CreateCtrl) GetStore() *Create {
 
 func (c *CreateCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
 
-	cfg, err := fctl.LoadConfig(cmd)
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd, *cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
-	if err != nil {
-		return nil, err
-	}
-
-	apiClient, err := fctl.NewAppDeployClient(
+	organizationID, apiClient, err := fctl.NewAppDeployClientFromFlags(
 		cmd,
 		relyingParty,
 		fctl.NewPTermDialog(),
 		profileName,
 		*profile,
-		organizationID,
 	)
 	if err != nil {
 		return nil, err

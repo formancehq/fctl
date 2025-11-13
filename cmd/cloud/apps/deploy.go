@@ -51,33 +51,17 @@ func (c *DeployCtrl) GetStore() *Deploy {
 }
 
 func (c *DeployCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	cfg, err := fctl.LoadConfig(cmd)
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	profile, profileName, err := fctl.LoadCurrentProfile(cmd, *cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	relyingParty, err := fctl.GetAuthRelyingParty(cmd.Context(), fctl.GetHttpClient(cmd), profile.MembershipURI)
-	if err != nil {
-		return nil, err
-	}
-
-	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
-	if err != nil {
-		return nil, err
-	}
-
-	apiClient, err := fctl.NewAppDeployClient(
+	_, apiClient, err := fctl.NewAppDeployClientFromFlags(
 		cmd,
 		relyingParty,
 		fctl.NewPTermDialog(),
 		profileName,
 		*profile,
-		organizationID,
 	)
 	if err != nil {
 		return nil, err
@@ -112,33 +96,18 @@ func (c *DeployCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, er
 }
 
 func (c *DeployCtrl) waitRunCompletion(cmd *cobra.Command) error {
-	cfg, err := fctl.LoadConfig(cmd)
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return err
 	}
 
-	profile, profileName, err := fctl.LoadCurrentProfile(cmd, *cfg)
-	if err != nil {
-		return err
-	}
-
-	relyingParty, err := fctl.GetAuthRelyingParty(cmd.Context(), fctl.GetHttpClient(cmd), profile.MembershipURI)
-	if err != nil {
-		return err
-	}
-
-	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
-	if err != nil {
-		return err
-	}
-
-	apiClient, err := fctl.NewAppDeployClient(
+	_, apiClient, err := fctl.NewAppDeployClientFromFlags(
 		cmd,
 		relyingParty,
 		fctl.NewPTermDialog(),
 		profileName,
 		*profile,
-		organizationID,
 	)
 	if err != nil {
 		return err
@@ -232,18 +201,12 @@ func (c *DeployCtrl) Render(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	organizationID, err := fctl.ResolveOrganizationID(cmd, *profile)
-	if err != nil {
-		return err
-	}
-
-	apiClient, err := fctl.NewAppDeployClient(
+	organizationID, apiClient, err := fctl.NewAppDeployClientFromFlags(
 		cmd,
 		relyingParty,
 		fctl.NewPTermDialog(),
 		profileName,
 		*profile,
-		organizationID,
 	)
 	if err != nil {
 		return err
