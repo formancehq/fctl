@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/formancehq/fctl/membershipclient"
 	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+
+	"github.com/formancehq/fctl/membershipclient"
 )
 
 var ErrMissingApproval = errors.New("Missing approval.")

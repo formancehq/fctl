@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
 	"github.com/pterm/pterm"
+
+	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
 )
 
 func RenderLogs(out io.Writer, logs []components.Log) error {

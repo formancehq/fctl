@@ -3,12 +3,14 @@ package clients
 import (
 	"fmt"
 
-	"github.com/formancehq/fctl/cmd/auth/clients/views"
-	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+
+	"github.com/formancehq/fctl/cmd/auth/clients/views"
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type ShowStore struct {
@@ -66,7 +68,9 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 
 func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 
-	views.PrintClient(cmd.OutOrStdout(), c.store.Client)
+	if err := views.PrintClient(cmd.OutOrStdout(), c.store.Client); err != nil {
+		return err
+	}
 
 	if len(c.store.Client.RedirectUris) > 0 {
 		fctl.BasicTextCyan.WithWriter(cmd.OutOrStdout()).Printfln("Redirect URIs :")

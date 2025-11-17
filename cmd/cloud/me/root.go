@@ -1,9 +1,10 @@
 package me
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/formancehq/fctl/cmd/cloud/me/invitations"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/spf13/cobra"
 )
 
 func NewCommand() *cobra.Command {

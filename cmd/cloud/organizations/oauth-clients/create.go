@@ -1,10 +1,12 @@
 package oauth_clients
 
 import (
+	"github.com/spf13/cobra"
+
+	"github.com/formancehq/go-libs/pointer"
+
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/go-libs/pointer"
-	"github.com/spf13/cobra"
 )
 
 var (

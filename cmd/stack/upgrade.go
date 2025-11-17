@@ -3,13 +3,15 @@ package stack
 import (
 	"context"
 
-	"github.com/formancehq/fctl/membershipclient"
-	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/go-libs/pointer"
 	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/semver"
+
+	"github.com/formancehq/go-libs/pointer"
+
+	"github.com/formancehq/fctl/membershipclient"
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type UpgradeStore struct {

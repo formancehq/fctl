@@ -1,10 +1,11 @@
 package profiles
 
 import (
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type ProfilesDeleteStore struct {

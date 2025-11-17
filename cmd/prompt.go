@@ -10,11 +10,12 @@ import (
 	"strings"
 
 	goprompt "github.com/c-bata/go-prompt"
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/iancoleman/strcase"
 	"github.com/mattn/go-shellwords"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 var (
@@ -156,7 +157,9 @@ func (p *prompt) executePromptCommand(cmd *cobra.Command, t string) error {
 				return fmt.Errorf("unknown configuration: %s", v)
 			}
 			_ = cmd.Flags().Set(parts[0], parts[1])
-			os.Setenv(strcase.ToScreamingSnake(parts[0]), parts[1])
+			if err := os.Setenv(strcase.ToScreamingSnake(parts[0]), parts[1]); err != nil {
+				return err
+			}
 			pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Set %s=%s", parts[0], parts[1])
 		}
 	default:

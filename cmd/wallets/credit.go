@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/formancehq/fctl/cmd/wallets/internal"
-	fctl "github.com/formancehq/fctl/pkg"
-	formance "github.com/formancehq/formance-sdk-go/v3"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+
+	formance "github.com/formancehq/formance-sdk-go/v3"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+
+	"github.com/formancehq/fctl/cmd/wallets/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type CreditWalletStore struct {

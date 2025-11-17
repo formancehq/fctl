@@ -12,8 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/formancehq/fctl/membershipclient"
-	"github.com/formancehq/go-libs/logging"
 	"github.com/golang-jwt/jwt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -21,6 +19,10 @@ import (
 	"github.com/zitadel/oidc/v2/pkg/client/rp"
 	"github.com/zitadel/oidc/v2/pkg/oidc"
 	"golang.org/x/oauth2"
+
+	"github.com/formancehq/go-libs/logging"
+
+	"github.com/formancehq/fctl/membershipclient"
 )
 
 type ErrInvalidAuthentication struct {

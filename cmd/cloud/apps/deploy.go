@@ -3,13 +3,15 @@ package apps
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
+
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/cmd/cloud/apps/printer"
 	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
 )
 
 type Deploy struct {
@@ -61,7 +63,7 @@ func (c *DeployCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, er
 	if path == "" {
 		return nil, fmt.Errorf("path is required")
 	}
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +83,11 @@ func (c *DeployCtrl) waitRunCompletion(cmd *cobra.Command) error {
 	if err != nil {
 		return err
 	}
-	defer s.Stop()
+	defer func() {
+		if err := s.Stop(); err != nil {
+			pterm.Error.Println(err)
+		}
+	}()
 	for {
 		select {
 		case <-cmd.Context().Done():
@@ -136,6 +142,9 @@ func (c *DeployCtrl) Render(cmd *cobra.Command, args []string) error {
 	}
 	if state := currentStateRes.GetReadStateResponse().Data.Stack; state != nil {
 		cfg, err := fctl.GetConfig(cmd)
+		if err != nil {
+			return err
+		}
 		membershipStore := fctl.GetMembershipStore(cmd.Context())
 		organizationID, err := fctl.ResolveOrganizationID(cmd, cfg, membershipStore.Client())
 		if err != nil {

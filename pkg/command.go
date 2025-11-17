@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 
 	"github.com/TylerBrock/colorjson"
-	"github.com/formancehq/fctl/membershipclient"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/spf13/cobra"
+
+	"github.com/formancehq/fctl/membershipclient"
 )
 
 var (
@@ -201,7 +202,7 @@ func WithPreRunE(fn func(cmd *cobra.Command, args []string) error) CommandOption
 
 func WithDeprecatedFlag(name, message string) CommandOptionFn {
 	return func(cmd *cobra.Command) {
-		cmd.Flags().MarkDeprecated(name, message)
+		_ = cmd.Flags().MarkDeprecated(name, message)
 	}
 }
 
@@ -254,11 +255,11 @@ func WithRender[T any](cmd *cobra.Command, args []string, c Controller[T], r Ren
 			if err != nil {
 				panic(err)
 			}
-			cmd.OutOrStdout().Write(colorized)
-			return nil
+			_, err = cmd.OutOrStdout().Write(colorized)
+			return err
 		} else {
-			cmd.OutOrStdout().Write(out)
-			return nil
+			_, err := cmd.OutOrStdout().Write(out)
+			return err
 		}
 	default:
 		return r.Render(cmd, args)
@@ -319,7 +320,9 @@ func NewStackCommand(use string, opts ...CommandOption) *cobra.Command {
 			WithPersistentStringFlag(stackFlag, "", "Specific stack (not required if only one stack is present)"),
 		)...,
 	)
-	cmd.RegisterFlagCompletionFunc("stack", StackCompletion)
+	if err := cmd.RegisterFlagCompletionFunc("stack", StackCompletion); err != nil {
+		panic(err)
+	}
 	return cmd
 }
 
@@ -329,7 +332,9 @@ func NewMembershipCommand(use string, opts ...CommandOption) *cobra.Command {
 			WithPersistentStringFlag(organizationFlag, "", "Selected organization (not required if only one organization is present)"),
 		)...,
 	)
-	cmd.RegisterFlagCompletionFunc("organization", OrganizationCompletion)
+	if err := cmd.RegisterFlagCompletionFunc("organization", OrganizationCompletion); err != nil {
+		panic(err)
+	}
 	return cmd
 }
 

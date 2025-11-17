@@ -1,11 +1,13 @@
 package workflows
 
 import (
-	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
+
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type WorkflowsCreateStore struct {

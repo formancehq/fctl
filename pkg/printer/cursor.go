@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/formancehq/fctl/membershipclient"
 	"github.com/pterm/pterm"
+
+	"github.com/formancehq/fctl/membershipclient"
 )
 
 func Cursor(writer io.Writer, cursor *membershipclient.Cursor) error {

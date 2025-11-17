@@ -15,10 +15,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/formancehq/fctl/membershipclient"
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 	"golang.org/x/oauth2"
+
+	"github.com/formancehq/fctl/membershipclient"
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 const (
@@ -189,7 +190,7 @@ func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 		errorMsg := fmt.Sprintf("Proxy Error: %v\nTarget URL: %s",
 			err,
 			targetURL.String())
-		io.WriteString(w, errorMsg)
+		_, _ = io.WriteString(w, errorMsg)
 	}
 
 	transport := &tokenTransport{

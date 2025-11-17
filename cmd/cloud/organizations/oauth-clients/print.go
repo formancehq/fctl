@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/pterm/pterm"
+
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/pterm/pterm"
 )
 
 func onCreateShow(writer io.Writer, client membershipclient.OrganizationClient) error {

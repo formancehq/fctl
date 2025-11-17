@@ -1,9 +1,10 @@
 package profiles
 
 import (
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type Profile struct {
@@ -69,12 +70,11 @@ func (c *ProfilesListController) Render(cmd *cobra.Command, args []string) error
 	})
 	tableData = fctl.Prepend(tableData, []string{"Name", "Active"})
 
-	pterm.DefaultTable.
+	return pterm.DefaultTable.
 		WithHasHeader().
 		WithWriter(cmd.OutOrStdout()).
 		WithData(tableData).
 		Render()
-	return nil
 }
 
 func NewListCommand() *cobra.Command {

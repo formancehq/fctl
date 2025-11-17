@@ -1,10 +1,11 @@
 package clients
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/formancehq/fctl/cmd/auth/clients/secrets"
 	"github.com/formancehq/fctl/cmd/auth/users"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/spf13/cobra"
 )
 
 func NewCommand() *cobra.Command {

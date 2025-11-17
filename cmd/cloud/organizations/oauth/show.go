@@ -3,10 +3,11 @@ package oauth
 import (
 	"fmt"
 
-	"github.com/formancehq/fctl/membershipclient"
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+
+	"github.com/formancehq/fctl/membershipclient"
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type Show struct {
@@ -63,7 +64,6 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 		{"Client ID", fmt.Sprintf("organization_%s", c.store.Organization.Data.Id)},
 		{"Client Last Digits", c.store.Organization.Data.Secret.LastDigits},
 	}
-	pterm.DefaultTable.WithHasHeader().WithData(data).Render()
 
-	return nil
+	return pterm.DefaultTable.WithHasHeader().WithData(data).Render()
 }

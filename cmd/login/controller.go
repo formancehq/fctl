@@ -7,9 +7,10 @@ import (
 	"net/url"
 	"time"
 
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/zitadel/oidc/v2/pkg/client/rp"
 	"github.com/zitadel/oidc/v2/pkg/oidc"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 func LogIn(ctx context.Context, dialog Dialog, relyingParty rp.RelyingParty) (*oidc.AccessTokenResponse, error) {

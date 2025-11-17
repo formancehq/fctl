@@ -9,6 +9,13 @@ import (
 	"os/signal"
 	"runtime/debug"
 
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
+
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/sdkerrors"
+	"github.com/formancehq/go-libs/api"
+	"github.com/formancehq/go-libs/logging"
+
 	"github.com/formancehq/fctl/cmd/auth"
 	"github.com/formancehq/fctl/cmd/cloud"
 	"github.com/formancehq/fctl/cmd/ledger"
@@ -25,11 +32,6 @@ import (
 	"github.com/formancehq/fctl/cmd/webhooks"
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/sdkerrors"
-	"github.com/formancehq/go-libs/api"
-	"github.com/formancehq/go-libs/logging"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
 )
 
 func init() {
@@ -77,7 +79,7 @@ func NewRootCommand() *cobra.Command {
 	)
 
 	cmd.Version = version.Version
-	cmd.RegisterFlagCompletionFunc(fctl.ProfileFlag, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	err = cmd.RegisterFlagCompletionFunc(fctl.ProfileFlag, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		cfg, err := fctl.GetConfig(cmd)
 		if err != nil {
 			return []string{}, cobra.ShellCompDirectiveError
@@ -88,6 +90,9 @@ func NewRootCommand() *cobra.Command {
 		}
 		return ret, cobra.ShellCompDirectiveNoFileComp
 	})
+	if err != nil {
+		panic(err)
+	}
 	return cmd
 }
 

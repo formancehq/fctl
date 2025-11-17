@@ -5,9 +5,11 @@ import (
 	"io"
 	"strings"
 
-	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/pterm/pterm"
+
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 func PrintClient(out io.Writer, client *shared.Client) error {
@@ -27,7 +29,8 @@ func PrintClient(out io.Writer, client *shared.Client) error {
 		Render(); err != nil {
 		return err
 	}
-	fmt.Fprintln(out, "")
 
-	return nil
+	_, err := fmt.Fprintln(out, "")
+
+	return err
 }

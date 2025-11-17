@@ -1,11 +1,13 @@
 package apps
 
 import (
-	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
-	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/go-libs/pointer"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+
+	"github.com/formancehq/go-libs/pointer"
+
+	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type List struct {
@@ -46,6 +48,9 @@ func (c *ListCtrl) GetStore() *List {
 
 func (c *ListCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 	cfg, err := fctl.GetConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 	membershipStore := fctl.GetMembershipStore(cmd.Context())
 	organizationID, err := fctl.ResolveOrganizationID(cmd, cfg, membershipStore.Client())
 	if err != nil {

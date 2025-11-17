@@ -3,8 +3,9 @@ package internal
 import (
 	"strconv"
 
-	"github.com/formancehq/fctl/membershipclient"
 	"github.com/pterm/pterm"
+
+	"github.com/formancehq/fctl/membershipclient"
 )
 
 func PrintOrganization(store *membershipclient.OrganizationExpanded) error {
