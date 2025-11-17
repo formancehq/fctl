@@ -1,0 +1,107 @@
+DEBUG	
+
+--- Renaming 4 types with name "data" ---
+DEBUG	discriminated: Renamed to "ListAppsResponse_data" 
+	 labels: "original_name:data scope:shared refName:ListAppsResponse" 
+	 registrationID: "scope:shared refType:Schemas refName:ListAppsResponse originalName:data"
+DEBUG	discriminated: Renamed to "ReadVariablesResponse_data" 
+	 labels: "original_name:data scope:shared refName:ReadVariablesResponse" 
+	 registrationID: "scope:shared refType:Schemas refName:ReadVariablesResponse originalName:data"
+DEBUG	discriminated: Renamed to "ListRunsResponse_data" 
+	 labels: "original_name:data scope:shared refName:ListRunsResponse" 
+	 registrationID: "scope:shared refType:Schemas refName:ListRunsResponse originalName:data"
+DEBUG	discriminated: Renamed to "ListVersionsResponse_data" 
+	 labels: "original_name:data scope:shared refName:ListVersionsResponse" 
+	 registrationID: "scope:shared refType:Schemas refName:ListVersionsResponse originalName:data"
+DEBUG	
+
+--- Renaming 2 types with name "category" ---
+DEBUG	discriminated: Renamed to "Variable_category" 
+	 labels: "original_name:category scope:shared data_type:enum refName:Variable" 
+	 registrationID: "scope:shared refType:Schemas refName:Variable originalName:category"
+DEBUG	discriminated: Renamed to "VariableData_category" 
+	 labels: "original_name:category scope:shared data_type:enum refName:VariableData" 
+	 registrationID: "scope:shared refType:Schemas refName:VariableData originalName:category"
+DEBUG	
+
+DeployServer (SDK empty)
+ListAppsRequest (organizationId: string, pageNumber: integer, pageSize: integer)
+ListAppsResponse (HttpMeta: HTTPMetadata, ListAppsResponse: ListAppsResponse, Error: Error)
+ HttpMetadata (Response: response, Request: request)
+ ListAppsResponse (data: class)
+  ListAppsResponseData (currentPage: integer, previousPage: integer, nextPage: integer ...)
+    App (id: string, name: string, currentConfigurationVersion: ConfigurationVersion ...)
+     ConfigurationVersion (id: string, autoQueueRuns: boolean, error: string ...)
+      Status (enum: archived, errored, pending ...)
+     Run (id: string, autoApply: boolean, createdAt: date-time ...)
+ Error (errorCode: string, errorMessage: string)
+CreateAppRequest (organizationId: string)
+CreateAppResponse (HttpMeta: HTTPMetadata, AppResponse: AppResponse, Error: Error)
+ AppResponse (data: App)
+UpdateAppRequest (id: string, UpdateAppRequest: UpdateAppRequest)
+ UpdateAppRequest (empty)
+UpdateAppResponse (HttpMeta: HTTPMetadata, Error: Error)
+ReadAppRequest (id: string)
+ReadAppResponse (HttpMeta: HTTPMetadata, AppResponse: AppResponse, Error: Error)
+DeleteAppRequest (id: string)
+DeleteAppResponse (HttpMeta: HTTPMetadata, Error: Error)
+ReadAppCurrentStateVersionRequest (id: string)
+ReadAppCurrentStateVersionResponse (HttpMeta: HTTPMetadata, ReadStateResponse: ReadStateResponse, Error: Error)
+ ReadStateResponse (data: State)
+  State (stack: map)
+ReadAppVariablesRequest (id: string, pageNumber: integer, pageSize: integer)
+ReadAppVariablesResponse (HttpMeta: HTTPMetadata, ReadVariablesResponse: ReadVariablesResponse, Error: Error)
+ ReadVariablesResponse (data: class)
+  ReadVariablesResponseData (items: array, currentPage: integer, previousPage: integer ...)
+    Variable (key: string, value: string, description: string ...)
+     VariableCategory (enum: env, terraform)
+CreateAppVariableRequest (id: string, CreateVariableRequest: CreateVariableRequest)
+ CreateVariableRequest (variable: VariableData)
+  VariableData (key: string, value: string, description: string ...)
+   VariableDataCategory (enum: env, terraform)
+CreateAppVariableResponse (HttpMeta: HTTPMetadata, CreateVariableResponse: CreateVariableResponse, Error: Error)
+ CreateVariableResponse (data: Variable)
+DeleteAppVariableRequest (id: string, variableId: string)
+DeleteAppVariableResponse (HttpMeta: HTTPMetadata, Error: Error)
+ReadAppRunsRequest (id: string, pageNumber: integer, pageSize: integer)
+ReadAppRunsResponse (HttpMeta: HTTPMetadata, ListRunsResponse: ListRunsResponse, Error: Error)
+ ListRunsResponse (data: class)
+  ListRunsResponseData (currentPage: integer, previousPage: integer, nextPage: integer ...)
+ReadAppVersionsRequest (id: string, pageNumber: integer, pageSize: integer)
+ReadAppVersionsResponse (HttpMeta: HTTPMetadata, ListVersionsResponse: ListVersionsResponse, Error: Error)
+ ListVersionsResponse (data: class)
+  ListVersionsResponseData (currentPage: integer, previousPage: integer, nextPage: integer ...)
+DeployAppConfigurationRawRequest (id: string, application: application)
+  Webhooks (empty)
+  AppInfo (name: string, region_id: string, version: string)
+   Ledger (name: string, schema: array)
+     Schema (metadata: map, name: string)
+  Payments (connectors: array, pools: map)
+    Connector (configuration: map, credentials: map, name: string ...)
+    Pool (accountIds: array)
+  Reconciliation (policies: array)
+    ReconciliationPolicy (ledger: ReconciliationLedger, name: string, pool: string)
+     ReconciliationLedger (name: string, query: map)
+DeployAppConfigurationRawResponse (HttpMeta: HTTPMetadata, RunResponse: RunResponse, Error: Error)
+ RunResponse (data: Run)
+DeployAppConfigurationRequest (id: string, application: application)
+ Application (events: Webhooks, info: AppInfo, ledger: array ...)
+DeployAppConfigurationResponse (HttpMeta: HTTPMetadata, RunResponse: RunResponse, Error: Error)
+ReadCurrentRunRequest (id: string)
+ReadCurrentRunResponse (HttpMeta: HTTPMetadata, RunResponse: RunResponse, Error: Error)
+ReadVersionRequest (id: string)
+ReadVersionResponse (HttpMeta: HTTPMetadata, AppVersionResponse: AppVersionResponse, 200_application/gzip_response-stream: response-stream ...)
+ AppVersionResponse (data: ConfigurationVersion)
+ReadRunRequest (id: string)
+ReadRunResponse (HttpMeta: HTTPMetadata, RunResponse: RunResponse, Error: Error)
+ReadRunLogsRequest (id: string)
+ReadRunLogsResponse (HttpMeta: HTTPMetadata, ReadLogsResponse: ReadLogsResponse, Error: Error)
+ ReadLogsResponse (data: array)
+   Log (message: string, timestamp: date-time, module: string ...)
+    Diagnostic (severity: string, detail: string, summary: string)
+ReadCurrentRunLogsRequest (id: string)
+ReadCurrentRunLogsResponse (HttpMeta: HTTPMetadata, ReadLogsResponse: ReadLogsResponse, Error: Error)
+ReadCurrentAppVersionRequest (id: string, from: enum)
+ From (enum: state)
+ReadCurrentAppVersionResponse (HttpMeta: HTTPMetadata, AppVersionResponse: AppVersionResponse, 200_application/gzip_response-stream: response-stream ...)
+

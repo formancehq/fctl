@@ -1,8 +1,6 @@
 package accounts
 
 import (
-	"github.com/formancehq/go-libs/collectionutils"
-
 	"github.com/formancehq/fctl/cmd/ledger/internal"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
@@ -12,7 +10,7 @@ import (
 )
 
 type ListStore struct {
-	Accounts []shared.Account `json:"accounts"`
+	Accounts []shared.V2Account `json:"accounts"`
 }
 type ListController struct {
 	store        *ListStore
@@ -65,23 +63,25 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		})
 	}
 
-	request := operations.ListAccountsRequest{
-		Ledger:   fctl.GetString(cmd, internal.LedgerFlag),
-		Metadata: collectionutils.ConvertMap(metadata, collectionutils.ToAny[string]),
+	request := operations.V2ListAccountsRequest{
+		Ledger: fctl.GetString(cmd, internal.LedgerFlag),
+		RequestBody: map[string]any{
+			"$and": body,
+		},
 	}
-	rsp, err := store.Client().Ledger.V1.ListAccounts(cmd.Context(), request)
+	rsp, err := store.Client().Ledger.V2.ListAccounts(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Accounts = rsp.AccountsCursorResponse.Cursor.Data
+	c.store.Accounts = rsp.V2AccountsCursorResponse.Cursor.Data
 
 	return c, nil
 }
 
 func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 
-	tableData := fctl.Map(c.store.Accounts, func(account shared.Account) []string {
+	tableData := fctl.Map(c.store.Accounts, func(account shared.V2Account) []string {
 		return []string{
 			account.Address,
 			fctl.MetadataAsShortString(account.Metadata),
