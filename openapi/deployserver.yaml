@@ -816,7 +816,6 @@ components:
       required:
       - key
       - value
-      - category
       - sensitive
       properties:
         key:
@@ -831,12 +830,6 @@ components:
         sensitive:
           type: boolean
           description: Whether the variable is sensitive
-        category:
-          type: string
-          enum:
-          - env
-          - terraform
-          description: Category of the variable
     Variable:
       allOf:
       - $ref: '#/components/schemas/VariableData'
@@ -857,6 +850,8 @@ components:
       required:
       - errorCode
     Ledger:
+      required:
+      - name
       properties:
         name:
           type: string
@@ -866,17 +861,15 @@ components:
               metadata:
                 additionalProperties:
                   type: string
-                type:
-                - object
-                - 'null'
+                type: object
               name:
                 type: string
             type: object
-          type:
-          - array
-          - 'null'
+          type: array
       type: object
     Pool:
+      required:
+      - accountIds
       properties:
         accountIds:
           items:
@@ -884,6 +877,9 @@ components:
           type: array
       type: object
     ReconciliationLedger:
+      required:
+      - name
+      - query
       properties:
         name:
           type: string
@@ -894,6 +890,10 @@ components:
           - 'null'
       type: object
     ReconciliationPolicy:
+      required:
+      - name
+      - ledger
+      - pool
       properties:
         ledger:
           $ref: '#/components/schemas/ReconciliationLedger'
@@ -902,15 +902,20 @@ components:
         pool:
           type: string
       type: object
-    Webhooks:
-      type: object
-    AppInfo:
+    Webhook:
+      required:
+      - name
+      - endpoint
       properties:
+        endpoint:
+          type: string
+        events:
+          items:
+            type: string
+          type: array
         name:
           type: string
-        region_id:
-          type: string
-        version:
+        secret:
           type: string
       type: object
     Ledgers:
@@ -923,10 +928,12 @@ components:
       properties:
         connectors:
           items:
+            required:
+            - name
+            - provider
             properties:
               configuration:
-                additionalProperties:
-                  type: string
+                additionalProperties: {}
                 type: object
               credentials:
                 additionalProperties:
@@ -950,19 +957,31 @@ components:
             $ref: '#/components/schemas/ReconciliationPolicy'
           type: array
       type: object
+    Stack:
+      required:
+      - name
+      properties:
+        name:
+          type: string
+        region_id:
+          type: string
+        version:
+          type: string
+      type: object
+    Webhooks:
+      items:
+        $ref: '#/components/schemas/Webhook'
+      type:
+      - 'null'
+      - array
     application:
       $schema: http://json-schema.org/draft-04/schema
+      required:
+      - stack
       definitions:
-        AppInfo:
-          properties:
-            name:
-              type: string
-            region_id:
-              type: string
-            version:
-              type: string
-          type: object
         Ledger:
+          required:
+          - name
           properties:
             name:
               type: string
@@ -972,15 +991,11 @@ components:
                   metadata:
                     additionalProperties:
                       type: string
-                    type:
-                    - object
-                    - 'null'
+                    type: object
                   name:
                     type: string
                 type: object
-              type:
-              - array
-              - 'null'
+              type: array
           type: object
         Ledgers:
           items:
@@ -992,10 +1007,12 @@ components:
           properties:
             connectors:
               items:
+                required:
+                - name
+                - provider
                 properties:
                   configuration:
-                    additionalProperties:
-                      type: string
+                    additionalProperties: {}
                     type: object
                   credentials:
                     additionalProperties:
@@ -1013,6 +1030,8 @@ components:
               type: object
           type: object
         Pool:
+          required:
+          - accountIds
           properties:
             accountIds:
               items:
@@ -1027,6 +1046,9 @@ components:
               type: array
           type: object
         ReconciliationLedger:
+          required:
+          - name
+          - query
           properties:
             name:
               type: string
@@ -1037,6 +1059,10 @@ components:
               - 'null'
           type: object
         ReconciliationPolicy:
+          required:
+          - name
+          - ledger
+          - pool
           properties:
             ledger:
               $ref: '#/components/schemas/ReconciliationLedger'
@@ -1045,17 +1071,48 @@ components:
             pool:
               type: string
           type: object
-        Webhooks:
+        Stack:
+          required:
+          - name
+          properties:
+            name:
+              type: string
+            region_id:
+              type: string
+            version:
+              type: string
           type: object
+        Webhook:
+          required:
+          - name
+          - endpoint
+          properties:
+            endpoint:
+              type: string
+            events:
+              items:
+                type: string
+              type: array
+            name:
+              type: string
+            secret:
+              type: string
+          type: object
+        Webhooks:
+          items:
+            $ref: '#/components/schemas/Webhook'
+          type:
+          - 'null'
+          - array
       properties:
-        events:
-          $ref: '#/components/schemas/Webhooks'
-        info:
-          $ref: '#/components/schemas/AppInfo'
-        ledger:
+        ledgers:
           $ref: '#/components/schemas/Ledgers'
         payments:
           $ref: '#/components/schemas/Payments'
         reconciliation:
           $ref: '#/components/schemas/Reconciliation'
+        stack:
+          $ref: '#/components/schemas/Stack'
+        webhooks:
+          $ref: '#/components/schemas/Webhooks'
       type: object

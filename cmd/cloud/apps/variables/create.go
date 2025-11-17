@@ -57,7 +57,6 @@ func (c *CreateCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, er
 			Value:       fctl.GetString(cmd, "value"),
 			Description: func() *string { s := fctl.GetString(cmd, "description"); return &s }(),
 			Sensitive:   fctl.GetBool(cmd, "sensitive"),
-			Category:    components.VariableDataCategory(fctl.GetString(cmd, "category")),
 		},
 	})
 	if err != nil {
@@ -75,7 +74,6 @@ func (c *CreateCtrl) Render(cmd *cobra.Command, args []string) error {
 	items := []pterm.BulletListItem{
 		{Level: 0, Text: fmt.Sprintf("ID: %s", c.store.Variable.ID)},
 		{Level: 0, Text: fmt.Sprintf("Key: %s", c.store.Variable.Key)},
-		{Level: 0, Text: fmt.Sprintf("Category: %s", c.store.Variable.Category)},
 		{Level: 0, Text: fmt.Sprintf("Value: %s", func() string {
 			if c.store.Variable.Sensitive {
 				return "****"

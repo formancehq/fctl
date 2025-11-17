@@ -3,12 +3,12 @@
 package components
 
 type Pool struct {
-	AccountIds []string `json:"accountIds,omitempty"`
+	AccountIds []string `json:"accountIds"`
 }
 
 func (p *Pool) GetAccountIds() []string {
 	if p == nil {
-		return nil
+		return []string{}
 	}
 	return p.AccountIds
 }

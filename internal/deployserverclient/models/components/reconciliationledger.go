@@ -3,13 +3,13 @@
 package components
 
 type ReconciliationLedger struct {
-	Name  *string        `json:"name,omitempty"`
-	Query map[string]any `json:"query,omitempty"`
+	Name  string         `json:"name"`
+	Query map[string]any `json:"query"`
 }
 
-func (r *ReconciliationLedger) GetName() *string {
+func (r *ReconciliationLedger) GetName() string {
 	if r == nil {
-		return nil
+		return ""
 	}
 	return r.Name
 }

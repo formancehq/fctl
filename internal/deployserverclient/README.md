@@ -264,7 +264,7 @@ func main() {
 	ctx := context.Background()
 
 	s := deployserverclient.New(
-		deployserverclient.WithServerIndex(2),
+		deployserverclient.WithServerIndex(0),
 	)
 
 	res, err := s.ListApps(ctx, "<id>", nil, nil)

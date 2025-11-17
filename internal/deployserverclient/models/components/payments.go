@@ -3,13 +3,13 @@
 package components
 
 type Connector struct {
-	Configuration map[string]string `json:"configuration,omitempty"`
+	Configuration map[string]any    `json:"configuration,omitempty"`
 	Credentials   map[string]string `json:"credentials,omitempty"`
-	Name          *string           `json:"name,omitempty"`
-	Provider      *string           `json:"provider,omitempty"`
+	Name          string            `json:"name"`
+	Provider      string            `json:"provider"`
 }
 
-func (c *Connector) GetConfiguration() map[string]string {
+func (c *Connector) GetConfiguration() map[string]any {
 	if c == nil {
 		return nil
 	}
@@ -23,16 +23,16 @@ func (c *Connector) GetCredentials() map[string]string {
 	return c.Credentials
 }
 
-func (c *Connector) GetName() *string {
+func (c *Connector) GetName() string {
 	if c == nil {
-		return nil
+		return ""
 	}
 	return c.Name
 }
 
-func (c *Connector) GetProvider() *string {
+func (c *Connector) GetProvider() string {
 	if c == nil {
-		return nil
+		return ""
 	}
 	return c.Provider
 }

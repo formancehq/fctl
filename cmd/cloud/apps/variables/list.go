@@ -68,14 +68,13 @@ func (c *ListCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, erro
 
 func (c *ListCtrl) Render(cmd *cobra.Command, args []string) error {
 	data := [][]string{
-		{"Id", "Key", "Category", "Value", "Description"},
+		{"Id", "Key", "Value", "Description"},
 	}
 
 	for _, variable := range c.store.ReadVariablesResponseData.Items {
 		data = append(data, []string{
 			variable.ID,
 			variable.Key,
-			string(variable.Category),
 			func() string {
 				if variable.Sensitive {
 					return "****"

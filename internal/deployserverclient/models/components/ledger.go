@@ -22,13 +22,13 @@ func (s *Schema) GetName() *string {
 }
 
 type Ledger struct {
-	Name   *string  `json:"name,omitempty"`
+	Name   string   `json:"name"`
 	Schema []Schema `json:"schema,omitempty"`
 }
 
-func (l *Ledger) GetName() *string {
+func (l *Ledger) GetName() string {
 	if l == nil {
-		return nil
+		return ""
 	}
 	return l.Name
 }
