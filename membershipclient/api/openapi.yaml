@@ -17,13 +17,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServerInfo'
+                $ref: "#/components/schemas/ServerInfo"
           description: Server information
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Get server info
   /organizations:
@@ -42,13 +42,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListOrganizationExpandedResponse'
+                $ref: "#/components/schemas/ListOrganizationExpandedResponse"
           description: List of organizations
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: List organizations of the connected user
     post:
@@ -57,19 +57,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateOrganizationRequest'
+              $ref: "#/components/schemas/CreateOrganizationRequest"
       responses:
         "201":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateOrganizationResponse'
+                $ref: "#/components/schemas/CreateOrganizationResponse"
           description: Organization created
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Create organization
   /organizations/expanded:
@@ -81,7 +81,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListOrganizationExpandedResponse'
+                $ref: "#/components/schemas/ListOrganizationExpandedResponse"
           description: List of organizations with expanded data
       summary: List organizations of the connected user with expanded data
   /organizations/{organizationId}:
@@ -102,7 +102,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Delete organization
     get:
@@ -127,13 +127,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReadOrganizationResponse'
+                $ref: "#/components/schemas/ReadOrganizationResponse"
           description: OK
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Read organization
     put:
@@ -150,19 +150,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrganizationData'
+              $ref: "#/components/schemas/OrganizationData"
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReadOrganizationResponse'
+                $ref: "#/components/schemas/ReadOrganizationResponse"
           description: Organization updated
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Update organization
   /organizations/{organizationId}/authentication-provider:
@@ -183,7 +183,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Delete authentication provider
     get:
@@ -201,13 +201,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthenticationProviderResponse'
+                $ref: "#/components/schemas/AuthenticationProviderResponse"
           description: Authentication provider details
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Read authentication provider
     put:
@@ -224,19 +224,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpsertAuthenticationProviderRequest'
+              $ref: "#/components/schemas/UpsertAuthenticationProviderRequest"
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthenticationProviderResponse'
+                $ref: "#/components/schemas/AuthenticationProviderResponse"
           description: Authentication provider created or updated
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Upsert an authentication provider
   /organizations/{organizationId}/features:
@@ -255,13 +255,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/listFeatures_200_response'
+                $ref: "#/components/schemas/listFeatures_200_response"
           description: List of features
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: List features
     post:
@@ -278,7 +278,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/addFeatures_request'
+              $ref: "#/components/schemas/addFeatures_request"
       responses:
         "204":
           description: Features added
@@ -286,7 +286,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Add Features
   /organizations/{organizationId}/features/{name}:
@@ -314,7 +314,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Delete feature
   /organizations/{organizationId}/client:
@@ -336,7 +336,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Delete organization client (DEPRECATED) (until 12/31/2025)
     get:
@@ -355,13 +355,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateClientResponseResponse'
+                $ref: "#/components/schemas/CreateClientResponseResponse"
           description: Organization client
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Read organization client (DEPRECATED) (until 12/31/2025)
     put:
@@ -380,13 +380,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateClientResponseResponse'
+                $ref: "#/components/schemas/CreateClientResponseResponse"
           description: Client organization created
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Create organization client (DEPRECATED) (until 12/31/2025)
   /organizations/{organizationId}/clients:
@@ -420,13 +420,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReadOrganizationClientsResponse'
+                $ref: "#/components/schemas/ReadOrganizationClientsResponse"
           description: Organization client
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Read organization clients
     post:
@@ -443,19 +443,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateOrganizationClientRequest'
+              $ref: "#/components/schemas/CreateOrganizationClientRequest"
       responses:
         "201":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateOrganizationClientResponse'
+                $ref: "#/components/schemas/CreateOrganizationClientResponse"
           description: Organization client created
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Create organization client
   /organizations/{organizationId}/clients/{clientId}:
@@ -483,7 +483,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Delete organization client
     get:
@@ -508,13 +508,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReadOrganizationClientResponse'
+                $ref: "#/components/schemas/ReadOrganizationClientResponse"
           description: Organization client details
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Read organization client
     put:
@@ -538,7 +538,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateOrganizationClientRequest'
+              $ref: "#/components/schemas/UpdateOrganizationClientRequest"
       responses:
         "204":
           description: Client updated
@@ -546,7 +546,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Update organization client
   /organizations/{organizationId}/logs:
@@ -587,7 +587,7 @@ paths:
         name: action
         required: false
         schema:
-          $ref: '#/components/schemas/Action'
+          $ref: "#/components/schemas/Action"
         style: form
       - explode: true
         in: query
@@ -615,13 +615,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LogCursor'
+                $ref: "#/components/schemas/LogCursor"
           description: Cursor of logs
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: List logs
   /organizations/{organizationId}/users:
@@ -640,13 +640,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListUsersResponse'
+                $ref: "#/components/schemas/ListUsersResponse"
           description: List of users
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: List users of organization
   /organizations/{organizationId}/users/{userId}:
@@ -676,7 +676,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: delete user from organization
     get:
@@ -701,13 +701,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReadOrganizationUserResponse'
+                $ref: "#/components/schemas/ReadOrganizationUserResponse"
           description: Read a user
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Read user of organization
     put:
@@ -731,7 +731,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateOrganizationUserRequest'
+              $ref: "#/components/schemas/UpdateOrganizationUserRequest"
       responses:
         "204":
           description: Updated user
@@ -739,7 +739,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Update user within an organization
   /organizations/{organizationId}/stacks:
@@ -775,13 +775,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListStacksResponse'
+                $ref: "#/components/schemas/ListStacksResponse"
           description: List of stacks
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: List stacks
     post:
@@ -798,19 +798,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateStackRequest'
+              $ref: "#/components/schemas/CreateStackRequest"
       responses:
         "202":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateStackResponse'
+                $ref: "#/components/schemas/CreateStackResponse"
           description: Stack created
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Create stack
   /organizations/{organizationId}/stacks/{stackId}/modules:
@@ -845,7 +845,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: disable module
     get:
@@ -870,13 +870,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListModulesResponse'
+                $ref: "#/components/schemas/ListModulesResponse"
           description: List of modules
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: List modules of a stack
     post:
@@ -910,7 +910,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: enable module
   /organizations/{organizationId}/stacks/{stackId}/upgrade:
@@ -935,7 +935,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StackVersion'
+              $ref: "#/components/schemas/StackVersion"
       responses:
         "202":
           description: Stack upgrade accepted
@@ -943,7 +943,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Upgrade stack
   /organizations/{organizationId}/stacks/{stackId}:
@@ -978,7 +978,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Delete stack
     get:
@@ -1003,13 +1003,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReadStackResponse'
+                $ref: "#/components/schemas/ReadStackResponse"
           description: OK
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Find stack
     put:
@@ -1033,19 +1033,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateStackRequest'
+              $ref: "#/components/schemas/UpdateStackRequest"
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReadStackResponse'
+                $ref: "#/components/schemas/ReadStackResponse"
           description: Updated stack
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Update stack
   /organizations/{organizationId}/stacks/{stackId}/users:
@@ -1071,13 +1071,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StackUserAccessResponse'
+                $ref: "#/components/schemas/StackUserAccessResponse"
           description: Stack users access role
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: List stack users accesses within an organization
   /organizations/{organizationId}/stacks/{stackId}/users/{userId}:
@@ -1112,7 +1112,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Delete stack user access role within an organization
     get:
@@ -1144,13 +1144,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReadStackUserAccess'
+                $ref: "#/components/schemas/ReadStackUserAccess"
           description: Stack user access role
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Read stack user access role within an organization
     put:
@@ -1181,7 +1181,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateStackUserRequest'
+              $ref: "#/components/schemas/UpdateStackUserRequest"
       responses:
         "204":
           description: Updated user
@@ -1189,7 +1189,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Update stack user access role within an organization
   /organizations/{organizationId}/stacks/{stackId}/disable:
@@ -1217,7 +1217,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Disable stack
   /organizations/{organizationId}/stacks/{stackId}/enable:
@@ -1245,7 +1245,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Enable stack
   /organizations/{organizationId}/stacks/{stackId}/restore:
@@ -1271,13 +1271,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReadStackResponse'
+                $ref: "#/components/schemas/ReadStackResponse"
           description: OK
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Restore stack
   /organizations/{organizationId}/stacks/{stackId}/stargate/enable:
@@ -1305,7 +1305,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Enable stargate on a stack
   /organizations/{organizationId}/stacks/{stackId}/stargate/disable:
@@ -1333,7 +1333,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Disable stargate on a stack
   /me/invitations:
@@ -1361,13 +1361,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListInvitationsResponse'
+                $ref: "#/components/schemas/ListInvitationsResponse"
           description: List of the invitations for the connected user
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: List invitations of the user
   /me/invitations/{invitationId}/accept:
@@ -1388,7 +1388,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Accept invitation
   /me/invitations/{invitationId}/reject:
@@ -1409,7 +1409,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Decline invitation
   /organizations/{organizationId}/invitations:
@@ -1436,13 +1436,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListInvitationsResponse'
+                $ref: "#/components/schemas/ListInvitationsResponse"
           description: List of the invitations for the organization
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: List invitations of the organization
     post:
@@ -1466,25 +1466,25 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InvitationClaim'
+              $ref: "#/components/schemas/InvitationClaim"
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateInvitationResponse'
+                $ref: "#/components/schemas/CreateInvitationResponse"
           description: Invitation already sent
         "201":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateInvitationResponse'
+                $ref: "#/components/schemas/CreateInvitationResponse"
           description: Invitation created
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Create invitation
   /organizations/{organizationId}/invitations/{invitationId}:
@@ -1512,7 +1512,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Delete invitation
   /organizations/{organizationId}/regions:
@@ -1531,13 +1531,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListRegionsResponse'
+                $ref: "#/components/schemas/ListRegionsResponse"
           description: List of the regions
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: List regions
     post:
@@ -1554,19 +1554,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreatePrivateRegionRequest'
+              $ref: "#/components/schemas/CreatePrivateRegionRequest"
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreatedPrivateRegionResponse'
+                $ref: "#/components/schemas/CreatedPrivateRegionResponse"
           description: Created region
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Create a private region
   /organizations/{organizationId}/regions/{regionID}:
@@ -1594,7 +1594,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Delete region
     get:
@@ -1619,13 +1619,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetRegionResponse'
+                $ref: "#/components/schemas/GetRegionResponse"
           description: Get a specific region
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Get region
   /organizations/{organizationId}/regions/{regionID}/versions:
@@ -1651,13 +1651,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetRegionVersionsResponse'
+                $ref: "#/components/schemas/GetRegionVersionsResponse"
           description: Get a specific region
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Get region versions
   /me:
@@ -1668,13 +1668,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReadUserResponse'
+                $ref: "#/components/schemas/ReadUserResponse"
           description: Read a user
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Error
       summary: Read user
 components:
@@ -1735,7 +1735,7 @@ components:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/Module'
+            $ref: "#/components/schemas/Module"
           type: array
       required:
       - data
@@ -1800,7 +1800,7 @@ components:
           pageSize: 15
       properties:
         data:
-          $ref: '#/components/schemas/LogCursor_data'
+          $ref: "#/components/schemas/LogCursor_data"
       required:
       - data
     Log:
@@ -1910,19 +1910,19 @@ components:
           id: id
       properties:
         data:
-          $ref: '#/components/schemas/PrivateRegion'
+          $ref: "#/components/schemas/PrivateRegion"
       required:
       - data
     PrivateRegion:
       allOf:
-      - $ref: '#/components/schemas/Region'
+      - $ref: "#/components/schemas/Region"
       - properties:
           organizationID:
             type: string
           creatorID:
             type: string
           secret:
-            $ref: '#/components/schemas/PrivateRegionSecret'
+            $ref: "#/components/schemas/PrivateRegionSecret"
         required:
         - creatorID
         - organizationID
@@ -1952,7 +1952,7 @@ components:
         id: id
     PublicRegion:
       allOf:
-      - $ref: '#/components/schemas/Region'
+      - $ref: "#/components/schemas/Region"
       - properties:
           production:
             type: boolean
@@ -1961,14 +1961,14 @@ components:
         type: object
     AnyRegion:
       allOf:
-      - $ref: '#/components/schemas/Region'
+      - $ref: "#/components/schemas/Region"
       - properties:
           clientID:
             type: string
           organizationID:
             type: string
           creator:
-            $ref: '#/components/schemas/User'
+            $ref: "#/components/schemas/User"
           production:
             type: boolean
           public:
@@ -1980,7 +1980,7 @@ components:
           outdated:
             type: boolean
           secret:
-            $ref: '#/components/schemas/PrivateRegionSecret'
+            $ref: "#/components/schemas/PrivateRegionSecret"
         required:
         - agentID
         - outdated
@@ -2038,9 +2038,9 @@ components:
           description: Organization name
           type: string
         defaultOrganizationAccess:
-          $ref: '#/components/schemas/Role'
+          $ref: "#/components/schemas/Role"
         defaultStackAccess:
-          $ref: '#/components/schemas/Role'
+          $ref: "#/components/schemas/Role"
         domain:
           description: Organization domain
           type: string
@@ -2086,7 +2086,7 @@ components:
           updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
         data:
-          $ref: '#/components/schemas/OrganizationClient'
+          $ref: "#/components/schemas/OrganizationClient"
       required:
       - data
       type: object
@@ -2103,7 +2103,7 @@ components:
           updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
         data:
-          $ref: '#/components/schemas/OrganizationClient'
+          $ref: "#/components/schemas/OrganizationClient"
       required:
       - data
       type: object
@@ -2133,7 +2133,7 @@ components:
           pageSize: 15
       properties:
         data:
-          $ref: '#/components/schemas/ReadOrganizationClientsResponse_data'
+          $ref: "#/components/schemas/ReadOrganizationClientsResponse_data"
       required:
       - data
       type: object
@@ -2152,7 +2152,7 @@ components:
           description: Organization ID
           type: string
         secret:
-          $ref: '#/components/schemas/OrganizationClient_secret'
+          $ref: "#/components/schemas/OrganizationClient_secret"
         name:
           description: Name of the client
           type: string
@@ -2175,7 +2175,7 @@ components:
       type: object
     Organization:
       allOf:
-      - $ref: '#/components/schemas/OrganizationData'
+      - $ref: "#/components/schemas/OrganizationData"
       - properties:
           id:
             description: Organization ID
@@ -2278,10 +2278,10 @@ components:
       type: object
     Stack:
       allOf:
-      - $ref: '#/components/schemas/StackData'
-      - $ref: '#/components/schemas/StackVersion'
-      - $ref: '#/components/schemas/StackLifeCycle'
-      - $ref: '#/components/schemas/StackReachability'
+      - $ref: "#/components/schemas/StackData"
+      - $ref: "#/components/schemas/StackVersion"
+      - $ref: "#/components/schemas/StackLifeCycle"
+      - $ref: "#/components/schemas/StackReachability"
       - properties:
           id:
             description: Stack ID
@@ -2296,7 +2296,7 @@ components:
             description: The region where the stack is installed
             type: string
           region:
-            $ref: '#/components/schemas/Region'
+            $ref: "#/components/schemas/Region"
           stargateEnabled:
             type: boolean
           createdAt:
@@ -2317,7 +2317,7 @@ components:
             type: string
           modules:
             items:
-              $ref: '#/components/schemas/Module'
+              $ref: "#/components/schemas/Module"
             type: array
         required:
         - id
@@ -2406,7 +2406,7 @@ components:
       type: string
     User:
       allOf:
-      - $ref: '#/components/schemas/UserData'
+      - $ref: "#/components/schemas/UserData"
       - properties:
           id:
             description: User ID
@@ -2416,7 +2416,7 @@ components:
         type: object
       - properties:
           role:
-            $ref: '#/components/schemas/SystemRole'
+            $ref: "#/components/schemas/SystemRole"
         type: object
       example:
         role: USER
@@ -2425,7 +2425,7 @@ components:
     OrganizationUserArray:
       items:
         allOf:
-        - $ref: '#/components/schemas/OrganizationUser'
+        - $ref: "#/components/schemas/OrganizationUser"
       type: array
     ReadOrganizationUserResponse:
       example:
@@ -2435,13 +2435,13 @@ components:
           email: email
       properties:
         data:
-          $ref: '#/components/schemas/OrganizationUser'
+          $ref: "#/components/schemas/OrganizationUser"
       type: object
     OrganizationUser:
       allOf:
       - properties:
           role:
-            $ref: '#/components/schemas/Role'
+            $ref: "#/components/schemas/Role"
           email:
             type: string
           id:
@@ -2457,15 +2457,15 @@ components:
         email: email
     OrganizationArray:
       items:
-        $ref: '#/components/schemas/Organization'
+        $ref: "#/components/schemas/Organization"
       type: array
     StackArray:
       items:
-        $ref: '#/components/schemas/Stack'
+        $ref: "#/components/schemas/Stack"
       type: array
     UserArray:
       items:
-        $ref: '#/components/schemas/User'
+        $ref: "#/components/schemas/User"
       type: array
     ReadStackUserAccess:
       example:
@@ -2476,7 +2476,7 @@ components:
           email: email
       properties:
         data:
-          $ref: '#/components/schemas/StackUserAccess'
+          $ref: "#/components/schemas/StackUserAccess"
       type: object
     StackUserAccess:
       allOf:
@@ -2491,7 +2491,7 @@ components:
             description: User email
             type: string
           role:
-            $ref: '#/components/schemas/Role'
+            $ref: "#/components/schemas/Role"
         required:
         - email
         - role
@@ -2517,22 +2517,22 @@ components:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/StackUserAccess'
+            $ref: "#/components/schemas/StackUserAccess"
           type: array
       type: object
     StackUserAccessArray:
       items:
-        $ref: '#/components/schemas/StackUserAccess'
+        $ref: "#/components/schemas/StackUserAccess"
       type: array
     ListOrganizationResponse:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/Organization'
+            $ref: "#/components/schemas/Organization"
           type: array
       type: object
     CreateOrganizationRequest:
-      $ref: '#/components/schemas/OrganizationData'
+      $ref: "#/components/schemas/OrganizationData"
     CreateOrganizationResponse:
       example:
         data:
@@ -2554,7 +2554,7 @@ components:
           updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
         data:
-          $ref: '#/components/schemas/OrganizationExpanded'
+          $ref: "#/components/schemas/OrganizationExpanded"
       type: object
     ReadOrganizationResponse:
       example:
@@ -2577,7 +2577,7 @@ components:
           updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
         data:
-          $ref: '#/components/schemas/OrganizationExpanded'
+          $ref: "#/components/schemas/OrganizationExpanded"
       type: object
     ListStacksResponse:
       example:
@@ -2697,7 +2697,7 @@ components:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/Stack'
+            $ref: "#/components/schemas/Stack"
           type: array
       type: object
     ListUsersResponse:
@@ -2709,13 +2709,13 @@ components:
         data:
           items:
             allOf:
-            - $ref: '#/components/schemas/OrganizationUser'
+            - $ref: "#/components/schemas/OrganizationUser"
           type: array
       type: object
     CreateStackRequest:
       allOf:
-      - $ref: '#/components/schemas/StackData'
-      - $ref: '#/components/schemas/StackVersion'
+      - $ref: "#/components/schemas/StackData"
+      - $ref: "#/components/schemas/StackVersion"
       - properties:
           regionID:
             type: string
@@ -2730,7 +2730,7 @@ components:
         version: version
     UpdateStackRequest:
       allOf:
-      - $ref: '#/components/schemas/StackData'
+      - $ref: "#/components/schemas/StackData"
       example:
         metadata:
           key: metadata
@@ -2796,10 +2796,10 @@ components:
           status: UNKNOWN
       properties:
         data:
-          $ref: '#/components/schemas/Stack'
+          $ref: "#/components/schemas/Stack"
       type: object
     ReadStackResponse:
-      $ref: '#/components/schemas/CreateStackResponse'
+      $ref: "#/components/schemas/CreateStackResponse"
     ReadUserResponse:
       example:
         data:
@@ -2808,7 +2808,7 @@ components:
           email: email
       properties:
         data:
-          $ref: '#/components/schemas/User'
+          $ref: "#/components/schemas/User"
       type: object
     ListInvitationsResponse:
       example:
@@ -2846,7 +2846,7 @@ components:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/Invitation'
+            $ref: "#/components/schemas/Invitation"
           type: array
       type: object
     CreateInvitationResponse:
@@ -2869,7 +2869,7 @@ components:
           updatedAt: updatedAt
       properties:
         data:
-          $ref: '#/components/schemas/Invitation'
+          $ref: "#/components/schemas/Invitation"
       type: object
     Error:
       example:
@@ -2921,11 +2921,11 @@ components:
           format: date-tim
           type: string
         role:
-          $ref: '#/components/schemas/Role'
+          $ref: "#/components/schemas/Role"
         userId:
           type: string
         organizationAccess:
-          $ref: '#/components/schemas/OrganizationUser'
+          $ref: "#/components/schemas/OrganizationUser"
         expiresAt:
           format: date-time
           type: string
@@ -2948,7 +2948,7 @@ components:
         role: NONE
       properties:
         role:
-          $ref: '#/components/schemas/Role'
+          $ref: "#/components/schemas/Role"
       type: object
     Region:
       example:
@@ -2985,7 +2985,7 @@ components:
         name:
           type: string
         capabilities:
-          $ref: '#/components/schemas/RegionCapability'
+          $ref: "#/components/schemas/RegionCapability"
         agentID:
           type: string
         outdated:
@@ -3036,7 +3036,7 @@ components:
         data:
           items:
             allOf:
-            - $ref: '#/components/schemas/OrganizationExpanded'
+            - $ref: "#/components/schemas/OrganizationExpanded"
           type: array
       type: object
     CreateClientResponseResponse:
@@ -3053,18 +3053,18 @@ components:
           updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
         data:
-          $ref: '#/components/schemas/CreateClientResponseResponse_data'
+          $ref: "#/components/schemas/CreateClientResponseResponse_data"
       type: object
     OrganizationExpanded:
       allOf:
-      - $ref: '#/components/schemas/Organization'
+      - $ref: "#/components/schemas/Organization"
       - properties:
           totalStacks:
             type: integer
           totalUsers:
             type: integer
           owner:
-            $ref: '#/components/schemas/User'
+            $ref: "#/components/schemas/User"
         type: object
       example:
         owner:
@@ -3145,7 +3145,7 @@ components:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/AnyRegion'
+            $ref: "#/components/schemas/AnyRegion"
           type: array
       required:
       - data
@@ -3183,7 +3183,7 @@ components:
           id: id
       properties:
         data:
-          $ref: '#/components/schemas/AnyRegion'
+          $ref: "#/components/schemas/AnyRegion"
       required:
       - data
       type: object
@@ -3200,7 +3200,7 @@ components:
         capabilities:
           items:
             allOf:
-            - $ref: '#/components/schemas/Capability'
+            - $ref: "#/components/schemas/Capability"
           type: array
         consoleURL:
           type: string
@@ -3236,7 +3236,7 @@ components:
         role: NONE
       properties:
         role:
-          $ref: '#/components/schemas/Role'
+          $ref: "#/components/schemas/Role"
       required:
       - role
       type: object
@@ -3245,7 +3245,7 @@ components:
         role: NONE
       properties:
         role:
-          $ref: '#/components/schemas/Role'
+          $ref: "#/components/schemas/Role"
       required:
       - role
       type: object
@@ -3263,17 +3263,17 @@ components:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/Version'
+            $ref: "#/components/schemas/Version"
           type: array
       required:
       - data
       type: object
     AuthenticationProviderData:
       oneOf:
-      - $ref: '#/components/schemas/GoogleIDPConfig'
-      - $ref: '#/components/schemas/MicrosoftIDPConfig'
-      - $ref: '#/components/schemas/GithubIDPConfig'
-      - $ref: '#/components/schemas/OIDCConfig'
+      - $ref: "#/components/schemas/GoogleIDPConfig"
+      - $ref: "#/components/schemas/MicrosoftIDPConfig"
+      - $ref: "#/components/schemas/GithubIDPConfig"
+      - $ref: "#/components/schemas/OIDCConfig"
       type: object
     BaseProviderConfig:
       properties:
@@ -3302,7 +3302,7 @@ components:
       type: object
     AuthenticationProvider:
       allOf:
-      - $ref: '#/components/schemas/AuthenticationProviderData'
+      - $ref: "#/components/schemas/AuthenticationProviderData"
       - properties:
           organizationId:
             description: Unique identifier for the authentication provider
@@ -3323,10 +3323,10 @@ components:
       type: object
     GoogleIDPConfig:
       allOf:
-      - $ref: '#/components/schemas/BaseProviderConfig'
+      - $ref: "#/components/schemas/BaseProviderConfig"
       - properties:
           config:
-            $ref: '#/components/schemas/GoogleIDPConfig_allOf_config'
+            $ref: "#/components/schemas/GoogleIDPConfig_allOf_config"
         required:
         - config
         type: object
@@ -3338,33 +3338,33 @@ components:
         config: null
     MicrosoftIDPConfig:
       allOf:
-      - $ref: '#/components/schemas/BaseProviderConfig'
+      - $ref: "#/components/schemas/BaseProviderConfig"
       - properties:
           config:
-            $ref: '#/components/schemas/MicrosoftIDPConfig_allOf_config'
+            $ref: "#/components/schemas/MicrosoftIDPConfig_allOf_config"
         required:
         - config
         type: object
     GithubIDPConfig:
       allOf:
-      - $ref: '#/components/schemas/BaseProviderConfig'
+      - $ref: "#/components/schemas/BaseProviderConfig"
       - properties:
           config:
-            $ref: '#/components/schemas/GoogleIDPConfig_allOf_config'
+            $ref: "#/components/schemas/GoogleIDPConfig_allOf_config"
         required:
         - config
         type: object
     OIDCConfig:
       allOf:
-      - $ref: '#/components/schemas/BaseProviderConfig'
+      - $ref: "#/components/schemas/BaseProviderConfig"
       - properties:
           config:
-            $ref: '#/components/schemas/OIDCConfig_allOf_config'
+            $ref: "#/components/schemas/OIDCConfig_allOf_config"
         required:
         - config
         type: object
     UpsertAuthenticationProviderRequest:
-      $ref: '#/components/schemas/AuthenticationProviderData'
+      $ref: "#/components/schemas/AuthenticationProviderData"
     AuthenticationProviderResponse:
       example:
         data:
@@ -3374,7 +3374,7 @@ components:
           updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
         data:
-          $ref: '#/components/schemas/AuthenticationProviderResponse_data'
+          $ref: "#/components/schemas/AuthenticationProviderResponse_data"
       type: object
     listFeatures_200_response:
       example:
@@ -3388,7 +3388,7 @@ components:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/OrganizationFeature'
+            $ref: "#/components/schemas/OrganizationFeature"
           type: array
       required:
       - data
@@ -3404,11 +3404,11 @@ components:
       type: object
     LogCursor_data:
       allOf:
-      - $ref: '#/components/schemas/Cursor'
+      - $ref: "#/components/schemas/Cursor"
       - properties:
           data:
             items:
-              $ref: '#/components/schemas/Log'
+              $ref: "#/components/schemas/Log"
             type: array
         type: object
       example:
@@ -3431,11 +3431,11 @@ components:
         pageSize: 15
     ReadOrganizationClientsResponse_data:
       allOf:
-      - $ref: '#/components/schemas/Cursor'
+      - $ref: "#/components/schemas/Cursor"
       - properties:
           data:
             items:
-              $ref: '#/components/schemas/OrganizationClient'
+              $ref: "#/components/schemas/OrganizationClient"
             type: array
         required:
         - data
@@ -3476,7 +3476,7 @@ components:
       type: object
     CreateClientResponseResponse_data:
       allOf:
-      - $ref: '#/components/schemas/OrganizationClient'
+      - $ref: "#/components/schemas/OrganizationClient"
       - properties:
           ownerId:
             description: The ID of the owner of the client (DEPRECATED will be empty)
@@ -3516,7 +3516,7 @@ components:
       type: object
     AuthenticationProviderResponse_data:
       allOf:
-      - $ref: '#/components/schemas/AuthenticationProvider'
+      - $ref: "#/components/schemas/AuthenticationProvider"
       - properties:
           redirectURI:
             type: string

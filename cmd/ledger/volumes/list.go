@@ -9,7 +9,6 @@ import (
 	"github.com/formancehq/fctl/pkg/printer"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
-	"github.com/formancehq/go-libs/collectionutils"
 	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -91,7 +90,9 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	}
 
 	request := operations.V2GetVolumesWithBalancesRequest{
-		RequestBody:   collectionutils.ConvertMap(metadata, collectionutils.ToAny[string]),
+		RequestBody: map[string]any{
+			"$and": body,
+		},
 		Ledger:        fctl.GetString(cmd, internal.LedgerFlag),
 		StartTime:     oot,
 		EndTime:       pit,
