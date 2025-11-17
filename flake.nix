@@ -94,11 +94,11 @@
             gotools
             jq
             just
-            openapi-generator-cli
             yq-go
           ];
           unstablePackages = with pkgs-unstable; [
             golangci-lint
+            openapi-generator-cli
           ];
           otherPackages = [
             pkgs.nur.repos.goreleaser.goreleaser-pro
