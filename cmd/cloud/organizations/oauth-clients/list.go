@@ -1,9 +1,10 @@
 package oauth_clients
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/spf13/cobra"
 )
 
 type List struct {

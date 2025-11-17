@@ -3,10 +3,12 @@ package fctl
 import (
 	"fmt"
 
-	"github.com/formancehq/fctl/membershipclient"
-	"github.com/formancehq/go-libs/collectionutils"
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/semver"
+
+	"github.com/formancehq/go-libs/collectionutils"
+
+	"github.com/formancehq/fctl/membershipclient"
 )
 
 func CheckMembershipVersion(version string) func(cmd *cobra.Command, args []string) error {

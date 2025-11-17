@@ -3,11 +3,13 @@ package runs
 import (
 	"fmt"
 
-	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
-	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/go-libs/pointer"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+
+	"github.com/formancehq/go-libs/pointer"
+
+	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type List struct {

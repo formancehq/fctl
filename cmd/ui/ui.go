@@ -5,8 +5,9 @@ import (
 	"os/exec"
 	"runtime"
 
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type UiStruct struct {

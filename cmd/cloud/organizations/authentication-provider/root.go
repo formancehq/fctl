@@ -1,8 +1,9 @@
 package authentication_provider
 
 import (
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 func NewCommand() *cobra.Command {

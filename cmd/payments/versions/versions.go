@@ -3,9 +3,10 @@ package versions
 import (
 	"fmt"
 
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/semver"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type Version int

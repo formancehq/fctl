@@ -1,8 +1,9 @@
 package accounts
 
 import (
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 func NewLedgerAccountsCommand() *cobra.Command {

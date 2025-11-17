@@ -3,13 +3,15 @@ package bankaccounts
 import (
 	"fmt"
 
-	"github.com/formancehq/fctl/cmd/payments/versions"
-	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+
+	"github.com/formancehq/fctl/cmd/payments/versions"
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type ForwardStore struct {

@@ -5,11 +5,13 @@ import (
 	"io"
 	"net/url"
 
-	"github.com/formancehq/fctl/membershipclient"
-	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/iancoleman/strcase"
 	"github.com/pterm/pterm"
+
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+
+	"github.com/formancehq/fctl/membershipclient"
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 func PrintStackInformation(out io.Writer, profile *fctl.Profile, stack *membershipclient.Stack, versions *shared.GetVersionsResponse) error {

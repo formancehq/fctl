@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/spf13/cobra"
+
+	"github.com/formancehq/go-libs/pointer"
+
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/go-libs/pointer"
-	"github.com/spf13/cobra"
 )
 
 type Update struct {

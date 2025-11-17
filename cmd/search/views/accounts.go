@@ -3,8 +3,9 @@ package views
 import (
 	"io"
 
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 func DisplayAccounts(out io.Writer, accounts []map[string]interface{}) error {

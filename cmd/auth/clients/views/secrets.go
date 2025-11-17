@@ -3,9 +3,11 @@ package views
 import (
 	"io"
 
-	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/pterm/pterm"
+
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 func PrintSecrets(out io.Writer, secrets []shared.ClientSecret) error {

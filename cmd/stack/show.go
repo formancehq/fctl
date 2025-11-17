@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+
 	"github.com/formancehq/fctl/cmd/stack/internal"
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 )
 
 var errStackNotFound = errors.New("stack not found")

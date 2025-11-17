@@ -6,12 +6,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/spf13/cobra"
 	"golang.org/x/oauth2"
 
-	"github.com/formancehq/fctl/membershipclient"
 	formance "github.com/formancehq/formance-sdk-go/v3"
 	"github.com/formancehq/go-libs/logging"
-	"github.com/spf13/cobra"
+
+	"github.com/formancehq/fctl/membershipclient"
 )
 
 func getVersion(cmd *cobra.Command) string {

@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"io"
 
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 func DisplayAssets(out io.Writer, assets []map[string]interface{}) error {

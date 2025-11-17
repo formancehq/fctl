@@ -3,10 +3,11 @@ package oauth
 import (
 	"fmt"
 
-	"github.com/formancehq/fctl/membershipclient"
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+
+	"github.com/formancehq/fctl/membershipclient"
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type Show struct {

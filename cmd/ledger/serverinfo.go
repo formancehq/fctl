@@ -3,9 +3,10 @@ package ledger
 import (
 	"fmt"
 
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type ServerInfoStore struct {

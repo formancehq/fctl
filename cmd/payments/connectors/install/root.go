@@ -3,9 +3,10 @@ package install
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+
 	"github.com/formancehq/fctl/cmd/payments/connectors/internal"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/spf13/cobra"
 )
 
 func NewInstallCommand() *cobra.Command {

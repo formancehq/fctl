@@ -5,11 +5,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
+
 	"github.com/formancehq/fctl/cmd/stack/internal"
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
 )
 
 func waitStackReady(cmd *cobra.Command, client *fctl.MembershipClient, organizationId, stackId string) (*membershipclient.Stack, error) {

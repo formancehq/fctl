@@ -10,11 +10,12 @@ import (
 	"strings"
 
 	goprompt "github.com/c-bata/go-prompt"
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/iancoleman/strcase"
 	"github.com/mattn/go-shellwords"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 var (

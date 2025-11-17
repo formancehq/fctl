@@ -15,10 +15,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/formancehq/fctl/membershipclient"
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/spf13/cobra"
 	"golang.org/x/oauth2"
+
+	"github.com/formancehq/fctl/membershipclient"
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 const (

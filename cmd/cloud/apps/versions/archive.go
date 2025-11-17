@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/spf13/cobra"
+
 	"github.com/formancehq/fctl/internal/deployserverclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/spf13/cobra"
 )
 
 type Archive []byte

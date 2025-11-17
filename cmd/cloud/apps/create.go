@@ -1,10 +1,11 @@
 package apps
 
 import (
-	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+
+	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type Create struct {

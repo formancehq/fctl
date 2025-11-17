@@ -3,9 +3,11 @@ package fctl
 import (
 	"fmt"
 
-	"github.com/formancehq/fctl/membershipclient"
-	"github.com/formancehq/go-libs/collectionutils"
 	"github.com/spf13/cobra"
+
+	"github.com/formancehq/go-libs/collectionutils"
+
+	"github.com/formancehq/fctl/membershipclient"
 )
 
 type OrganizationStore struct {

@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/formancehq/fctl/cmd/search/views"
-	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+
+	"github.com/formancehq/fctl/cmd/search/views"
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 const (

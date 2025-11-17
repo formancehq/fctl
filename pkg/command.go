@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 
 	"github.com/TylerBrock/colorjson"
-	"github.com/formancehq/fctl/membershipclient"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/spf13/cobra"
+
+	"github.com/formancehq/fctl/membershipclient"
 )
 
 var (

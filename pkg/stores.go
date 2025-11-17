@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/spf13/cobra"
+
+	v2 "github.com/formancehq/formance-sdk-go/v3"
+
 	"github.com/formancehq/fctl/internal/deployserverclient"
 	"github.com/formancehq/fctl/membershipclient"
-	v2 "github.com/formancehq/formance-sdk-go/v3"
-	"github.com/spf13/cobra"
 )
 
 var (

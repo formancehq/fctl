@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"io"
 
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 func DisplayPayments(out io.Writer, payments []map[string]interface{}) error {

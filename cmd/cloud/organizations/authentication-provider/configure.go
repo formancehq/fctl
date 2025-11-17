@@ -3,12 +3,13 @@ package authentication_provider
 import (
 	"fmt"
 
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
+
 	"github.com/formancehq/go-libs/pointer"
 
 	"github.com/formancehq/fctl/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
 )
 
 type Configure struct {

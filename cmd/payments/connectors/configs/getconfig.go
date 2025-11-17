@@ -4,15 +4,17 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
+
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/go-libs/collectionutils"
+
 	"github.com/formancehq/fctl/cmd/payments/connectors/internal"
 	"github.com/formancehq/fctl/cmd/payments/connectors/views"
 	"github.com/formancehq/fctl/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
-	"github.com/formancehq/go-libs/collectionutils"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
 )
 
 type PaymentsGetConfigStore struct {
