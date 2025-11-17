@@ -2,6 +2,7 @@ package apps
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -16,6 +17,7 @@ import (
 
 type Deploy struct {
 	*components.Run
+	logs []components.Log
 }
 
 type DeployCtrl struct {
@@ -74,48 +76,65 @@ func (c *DeployCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, er
 		return nil, err
 	}
 	c.store.Run = &deployment.RunResponse.Data
+
+	if fctl.GetBool(cmd, "wait") {
+		if err := c.waitRunCompletion(cmd); err != nil {
+			return nil, err
+		}
+	}
+
 	return c, nil
 }
 
 func (c *DeployCtrl) waitRunCompletion(cmd *cobra.Command) error {
 	store := fctl.GetDeployServerStore(cmd.Context())
-	s, err := pterm.DefaultSpinner.Start("Waiting for deployment to complete...")
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := s.Stop(); err != nil {
-			pterm.Error.Println(err)
+	spinner := &pterm.DefaultSpinner
+
+	if s := fctl.GetString(cmd, "output"); s == "plain" {
+		var err error
+		spinner, err = spinner.Start("Waiting for deployment to complete...")
+		if err != nil {
+			return err
 		}
-	}()
+		defer func() {
+			if err := spinner.Stop(); err != nil {
+				pterm.Error.Println(err)
+			}
+		}()
+	} else {
+		spinner.SetWriter(io.Discard)
+
+	}
+
+	waitFor := 0 * time.Second
 	for {
 		select {
 		case <-cmd.Context().Done():
 			return cmd.Context().Err()
-		case <-time.After(2 * time.Second):
+		case <-time.After(waitFor):
+			waitFor = 2 * time.Second
 			r, err := store.Cli.ReadRun(cmd.Context(), c.store.ID)
 			if err != nil {
 				return err
 			}
+			c.store.Run = &r.RunResponse.Data
 
-			s.InfoPrinter.Printf("\033[1A\033[K")
-			s.InfoPrinter.Printfln("Deployment status: %s", r.RunResponse.Data.Status)
+			spinner.UpdateText(fmt.Sprintf("Deployment status: %s", r.RunResponse.Data.Status))
 			switch r.RunResponse.Data.Status {
 			case "applied":
-				s.Success("Deployment completed successfully")
+				spinner.UpdateText("Deployment completed successfully")
 				return nil
 			case "planned_and_finished":
-				s.Success("Deployment completed successfully, no changes to apply")
+				spinner.UpdateText("Deployment completed successfully, no changes to apply")
 				return nil
-			case "errored": // TOFix: change it to show pro
+			case "errored":
 				l, err := store.Cli.ReadRunLogs(cmd.Context(), c.store.ID)
 				if err != nil {
 					return err
 				}
 
-				if err := printer.RenderLogs(cmd.ErrOrStderr(), l.ReadLogsResponse.Data); err != nil {
-					return err
-				}
+				c.store.logs = l.ReadLogsResponse.Data
+
 				return fmt.Errorf("deployment failed: %s", c.store.ID)
 			default:
 				continue
@@ -125,15 +144,14 @@ func (c *DeployCtrl) waitRunCompletion(cmd *cobra.Command) error {
 }
 
 func (c *DeployCtrl) Render(cmd *cobra.Command, args []string) error {
-	pterm.Info.Println("App Deployment accepted", c.store.ID)
-	wait := fctl.GetBool(cmd, "wait")
-	if !wait {
-		return nil
-	}
-	if err := c.waitRunCompletion(cmd); err != nil {
-		return err
+	if c.store.Run.Status == "errored" && len(c.store.logs) > 0 {
+		if err := printer.RenderLogs(cmd.ErrOrStderr(), c.store.logs); err != nil {
+			return err
+		}
+		return fmt.Errorf("deployment failed: %s", c.store.ID)
 	}
 
+	pterm.Info.Println("App Deployment accepted", c.store.ID)
 	store := fctl.GetDeployServerStore(cmd.Context())
 	id := fctl.GetString(cmd, "id")
 	currentStateRes, err := store.Cli.ReadAppCurrentStateVersion(cmd.Context(), id)
