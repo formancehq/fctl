@@ -403,7 +403,6 @@ func main() {
             Key: "<key>",
             Value: "<value>",
             Sensitive: false,
-            Category: components.VariableDataCategoryTerraform,
         },
     })
     if err != nil {
@@ -664,7 +663,11 @@ func main() {
 
     s := deployserverclient.New()
 
-    res, err := s.DeployAppConfiguration(ctx, "<id>", components.Application{})
+    res, err := s.DeployAppConfiguration(ctx, "<id>", components.Application{
+        Stack: components.Stack{
+            Name: "<value>",
+        },
+    })
     if err != nil {
         log.Fatal(err)
     }

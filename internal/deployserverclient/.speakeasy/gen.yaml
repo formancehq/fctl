@@ -20,6 +20,9 @@ generation:
     oAuth2ClientCredentialsEnabled: true
     oAuth2PasswordEnabled: true
     hoistGlobalSecurity: true
+  schemas:
+    allOfMergeStrategy: shallowMerge
+  requestBodyFieldName: ""
   tests:
     generateTests: true
     generateNewTests: false
@@ -41,6 +44,7 @@ go:
       operations: models/operations
       shared: models/components
       webhooks: models/webhooks
+  includeEmptyObjects: false
   inputModelSuffix: input
   maxMethodParams: 4
   methodArguments: require-security-and-request
@@ -51,3 +55,4 @@ go:
   respectRequiredFields: false
   responseFormat: envelope-http
   sdkPackageName: ""
+  unionDeserializationStrategy: left-to-right

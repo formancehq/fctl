@@ -3,28 +3,28 @@
 package components
 
 type ReconciliationPolicy struct {
-	Ledger *ReconciliationLedger `json:"ledger,omitempty"`
-	Name   *string               `json:"name,omitempty"`
-	Pool   *string               `json:"pool,omitempty"`
+	Ledger ReconciliationLedger `json:"ledger"`
+	Name   string               `json:"name"`
+	Pool   string               `json:"pool"`
 }
 
-func (r *ReconciliationPolicy) GetLedger() *ReconciliationLedger {
+func (r *ReconciliationPolicy) GetLedger() ReconciliationLedger {
 	if r == nil {
-		return nil
+		return ReconciliationLedger{}
 	}
 	return r.Ledger
 }
 
-func (r *ReconciliationPolicy) GetName() *string {
+func (r *ReconciliationPolicy) GetName() string {
 	if r == nil {
-		return nil
+		return ""
 	}
 	return r.Name
 }
 
-func (r *ReconciliationPolicy) GetPool() *string {
+func (r *ReconciliationPolicy) GetPool() string {
 	if r == nil {
-		return nil
+		return ""
 	}
 	return r.Pool
 }

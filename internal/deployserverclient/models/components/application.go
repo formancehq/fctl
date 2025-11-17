@@ -3,32 +3,18 @@
 package components
 
 type Application struct {
-	Events         *Webhooks       `json:"events,omitempty"`
-	Info           *AppInfo        `json:"info,omitempty"`
-	Ledger         []Ledger        `json:"ledger,omitempty"`
+	Ledgers        []Ledger        `json:"ledgers,omitempty"`
 	Payments       *Payments       `json:"payments,omitempty"`
 	Reconciliation *Reconciliation `json:"reconciliation,omitempty"`
+	Stack          Stack           `json:"stack"`
+	Webhooks       []Webhook       `json:"webhooks,omitempty"`
 }
 
-func (a *Application) GetEvents() *Webhooks {
+func (a *Application) GetLedgers() []Ledger {
 	if a == nil {
 		return nil
 	}
-	return a.Events
-}
-
-func (a *Application) GetInfo() *AppInfo {
-	if a == nil {
-		return nil
-	}
-	return a.Info
-}
-
-func (a *Application) GetLedger() []Ledger {
-	if a == nil {
-		return nil
-	}
-	return a.Ledger
+	return a.Ledgers
 }
 
 func (a *Application) GetPayments() *Payments {
@@ -43,4 +29,18 @@ func (a *Application) GetReconciliation() *Reconciliation {
 		return nil
 	}
 	return a.Reconciliation
+}
+
+func (a *Application) GetStack() Stack {
+	if a == nil {
+		return Stack{}
+	}
+	return a.Stack
+}
+
+func (a *Application) GetWebhooks() []Webhook {
+	if a == nil {
+		return nil
+	}
+	return a.Webhooks
 }

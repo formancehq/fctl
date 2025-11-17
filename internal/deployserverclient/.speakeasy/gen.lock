@@ -1,24 +1,24 @@
 lockVersion: 2.0.0
 id: 8068b42d-3ccb-4bcf-87ba-eaf586d7782d
 management:
-  docChecksum: 1904f7f42307e7c8571dbd7a680cf4e4
+  docChecksum: 59577c447ac91b447ca6bed84676d04d
   docVersion: 0.1.0
-  speakeasyVersion: 1.636.2
-  generationVersion: 2.723.8
+  speakeasyVersion: 1.658.1
+  generationVersion: 2.755.6
   releaseVersion: 0.0.1
-  configChecksum: 49beab34f992f84433bdbebb05f8f9d1
+  configChecksum: 245d28481398341ceab8d0112f197b44
 features:
   go:
     acceptHeaders: 2.81.2
     additionalDependencies: 0.1.0
-    core: 3.11.1
+    core: 3.13.2
     defaultEnabledRetries: 0.2.0
     devContainers: 2.90.0
     downloadStreams: 0.1.2
     envVarSecurityUsage: 0.3.2
     flattening: 2.81.1
     globalSecurityCallbacks: 0.1.0
-    globalServerURLs: 2.82.3
+    globalServerURLs: 2.83.0
     intellisenseMarkdownSupport: 0.1.0
     nullables: 0.2.1
     responseFormat: 0.1.2
@@ -31,7 +31,6 @@ generatedFiles:
   - .devcontainer/setup.sh
   - .gitattributes
   - /models/components/app.go
-  - /models/components/appinfo.go
   - /models/components/application.go
   - /models/components/appresponse.go
   - /models/components/appversionresponse.go
@@ -56,11 +55,12 @@ generatedFiles:
   - /models/components/reconciliationpolicy.go
   - /models/components/run.go
   - /models/components/runresponse.go
+  - /models/components/stack.go
   - /models/components/state.go
   - /models/components/updateapprequest.go
   - /models/components/variable.go
   - /models/components/variabledata.go
-  - /models/components/webhooks.go
+  - /models/components/webhook.go
   - /models/operations/createapp.go
   - /models/operations/createappvariable.go
   - /models/operations/deleteapp.go
@@ -83,7 +83,6 @@ generatedFiles:
   - USAGE.md
   - deployserver.go
   - docs/models/components/app.md
-  - docs/models/components/appinfo.md
   - docs/models/components/application.md
   - docs/models/components/appresponse.md
   - docs/models/components/appversionresponse.md
@@ -115,14 +114,13 @@ generatedFiles:
   - docs/models/components/run.md
   - docs/models/components/runresponse.md
   - docs/models/components/schema.md
+  - docs/models/components/stack.md
   - docs/models/components/state.md
   - docs/models/components/status.md
   - docs/models/components/updateapprequest.md
   - docs/models/components/variable.md
-  - docs/models/components/variablecategory.md
   - docs/models/components/variabledata.md
-  - docs/models/components/variabledatacategory.md
-  - docs/models/components/webhooks.md
+  - docs/models/components/webhook.md
   - docs/models/operations/createappresponse.md
   - docs/models/operations/createappvariablerequest.md
   - docs/models/operations/createappvariableresponse.md
@@ -260,10 +258,10 @@ examples:
         path:
           id: "<id>"
       requestBody:
-        application/json: {"variable": {"key": "<key>", "value": "<value>", "sensitive": false, "category": "terraform"}}
+        application/json: {"variable": {"key": "<key>", "value": "<value>", "sensitive": false}}
       responses:
         "201":
-          application/json: {"data": {"key": "<key>", "value": "<value>", "sensitive": false, "category": "terraform", "id": "<id>"}}
+          application/json: {"data": {"key": "<key>", "value": "<value>", "sensitive": false, "id": "<id>"}}
         default:
           application/json: {"errorCode": "<value>"}
   deleteAppVariable:
@@ -322,7 +320,7 @@ examples:
         path:
           id: "<id>"
       requestBody:
-        application/json: {}
+        application/json: {"stack": {"name": "<value>"}}
       responses:
         "202":
           application/json: {"data": {"id": "<id>", "autoApply": true, "createdAt": "2025-06-20T11:04:58.624Z", "isDestroy": false, "hasChanges": false, "message": "<value>", "planOnly": true, "refresh": true, "refreshOnly": true, "savePlan": false, "status": "<value>"}}

@@ -2,38 +2,6 @@
 
 package components
 
-import (
-	"encoding/json"
-	"fmt"
-)
-
-// VariableCategory - Category of the variable
-type VariableCategory string
-
-const (
-	VariableCategoryEnv       VariableCategory = "env"
-	VariableCategoryTerraform VariableCategory = "terraform"
-)
-
-func (e VariableCategory) ToPointer() *VariableCategory {
-	return &e
-}
-func (e *VariableCategory) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "env":
-		fallthrough
-	case "terraform":
-		*e = VariableCategory(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for VariableCategory: %v", v)
-	}
-}
-
 type Variable struct {
 	// Key of the variable
 	Key string `json:"key"`
@@ -43,8 +11,6 @@ type Variable struct {
 	Description *string `json:"description,omitempty"`
 	// Whether the variable is sensitive
 	Sensitive bool `json:"sensitive"`
-	// Category of the variable
-	Category VariableCategory `json:"category"`
 	// Unique identifier for the variable
 	ID string `json:"id"`
 }
@@ -75,13 +41,6 @@ func (v *Variable) GetSensitive() bool {
 		return false
 	}
 	return v.Sensitive
-}
-
-func (v *Variable) GetCategory() VariableCategory {
-	if v == nil {
-		return VariableCategory("")
-	}
-	return v.Category
 }
 
 func (v *Variable) GetID() string {
