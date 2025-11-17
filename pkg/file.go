@@ -3,6 +3,7 @@ package fctl
 import (
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -23,7 +24,7 @@ func ReadFile(cmd *cobra.Command, stack *membershipclient.Stack, where string) (
 
 		ret = string(data)
 	} else {
-		data, err := os.ReadFile(where)
+		data, err := os.ReadFile(filepath.Clean(where))
 		if err != nil {
 			return "", errors.Wrapf(err, "reading file %s", where)
 		}

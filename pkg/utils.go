@@ -3,6 +3,8 @@ package fctl
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"net/url"
 	"os/exec"
 	"runtime"
 )
@@ -58,11 +60,15 @@ var (
 	ErrOpenningBrowser = errors.New("opening browser")
 )
 
-func Open(url string) error {
+func Open(urlString string) error {
 	var (
 		cmd  string
 		args []string
 	)
+
+	if _, err := url.Parse(urlString); err != nil {
+		return fmt.Errorf("invalid URL: %s", urlString)
+	}
 
 	switch runtime.GOOS {
 	case "windows":
@@ -73,10 +79,11 @@ func Open(url string) error {
 	default: // "linux", "freebsd", "openbsd", "netbsd"
 		cmd = "xdg-open"
 	}
+
 	_, err := exec.LookPath(cmd)
 	if err == nil {
-		args = append(args, url)
-		return exec.Command(cmd, args...).Start()
+		args = append(args, urlString)
+		return exec.Command(cmd, args...).Start() //nolint:gosec
 	}
 
 	return ErrOpenningBrowser

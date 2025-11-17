@@ -57,7 +57,7 @@ func debugRoundTripper(rt http.RoundTripper) RoundTripperFn {
 			if err != nil {
 				panic(err)
 			}
-			req.Body.Close()
+			_ = req.Body.Close()
 			req.Body = io.NopCloser(bytes.NewBuffer(data))
 			printBody(data)
 		}
@@ -78,7 +78,7 @@ func debugRoundTripper(rt http.RoundTripper) RoundTripperFn {
 			if err != nil {
 				panic(err)
 			}
-			rsp.Body.Close()
+			_ = rsp.Body.Close()
 			rsp.Body = io.NopCloser(bytes.NewBuffer(data))
 			printBody(data)
 		}

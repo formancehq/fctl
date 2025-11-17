@@ -48,6 +48,9 @@ func (c *ListCtrl) GetStore() *List {
 
 func (c *ListCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 	cfg, err := fctl.GetConfig(cmd)
+	if err != nil {
+		return nil, err
+	}
 	membershipStore := fctl.GetMembershipStore(cmd.Context())
 	organizationID, err := fctl.ResolveOrganizationID(cmd, cfg, membershipStore.Client())
 	if err != nil {

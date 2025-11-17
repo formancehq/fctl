@@ -29,7 +29,8 @@ func PrintClient(out io.Writer, client *shared.Client) error {
 		Render(); err != nil {
 		return err
 	}
-	fmt.Fprintln(out, "")
 
-	return nil
+	_, err := fmt.Fprintln(out, "")
+
+	return err
 }

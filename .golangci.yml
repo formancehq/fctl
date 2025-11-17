@@ -25,6 +25,8 @@ linters:
   settings:
     errcheck:
       exclude-functions:
+        - fmt.Fprintf
+        - fmt.Fprintln
         - (io.Closer).Close
         - (*github.com/formancehq/go-libs/v3/publish/circuit_breaker.CircuitBreaker).Close
     staticcheck:

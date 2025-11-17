@@ -72,6 +72,9 @@ func (c *ShowCtrl) Render(cmd *cobra.Command, args []string) error {
 
 	if c.store.State.Stack != nil {
 		cfg, err := fctl.GetConfig(cmd)
+		if err != nil {
+			return err
+		}
 		membershipStore := fctl.GetMembershipStore(cmd.Context())
 		organizationID, err := fctl.ResolveOrganizationID(cmd, cfg, membershipStore.Client())
 		if err != nil {

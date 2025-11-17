@@ -69,7 +69,6 @@ func (c *CreateController) Render(cmd *cobra.Command, args []string) error {
 		{"Client ID", fmt.Sprintf("organization_%s", c.store.Organization.Data.Id)},
 		{"Client Secret", *c.store.Organization.Data.Secret.Clear},
 	}
-	pterm.DefaultTable.WithHasHeader().WithData(data).Render()
 
-	return nil
+	return pterm.DefaultTable.WithHasHeader().WithData(data).Render()
 }

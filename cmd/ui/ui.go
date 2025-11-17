@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"net/url"
 	"os/exec"
 	"runtime"
 
@@ -34,11 +35,15 @@ func NewUiController() *UiController {
 	}
 }
 
-func openUrl(url string) error {
+func openUrl(urlString string) error {
 	var (
 		cmd  string
 		args []string
 	)
+
+	if _, err := url.Parse(urlString); err != nil {
+		return fmt.Errorf("invalid URL: %s", urlString)
+	}
 
 	switch runtime.GOOS {
 	case "windows":
@@ -49,9 +54,10 @@ func openUrl(url string) error {
 	default: // "linux", "freebsd", "openbsd", "netbsd"
 		cmd = "xdg-open"
 	}
-	args = append(args, url)
-	return exec.Command(cmd, args...).Start()
+	args = append(args, urlString)
+	return exec.Command(cmd, args...).Start() //nolint:gosec
 }
+
 func (c *UiController) GetStore() *UiStruct {
 	return c.store
 }

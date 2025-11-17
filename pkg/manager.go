@@ -26,7 +26,9 @@ func (m *ConfigManager) Load() (*Config, error) {
 		}
 		return nil, err
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	cfg := &Config{}
 	if err := json.NewDecoder(f).Decode(cfg); err != nil {
@@ -49,7 +51,9 @@ func (m *ConfigManager) UpdateConfig(config *Config) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "  ")

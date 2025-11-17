@@ -8,6 +8,7 @@ import (
 	"io"
 	"math/big"
 	"os"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
@@ -165,7 +166,7 @@ func (c *ImportController) Render(cmd *cobra.Command, _ []string) error {
 }
 
 func (c *ImportController) openFileWithOffset(filePath string, id *big.Int) (*os.File, int, error) {
-	f, err := os.Open(filePath)
+	f, err := os.Open(filepath.Clean(filePath))
 	if err != nil {
 		return nil, 0, err
 	}
