@@ -45,7 +45,7 @@ func (c *InstancesStopController) GetStore() *InstancesStopStore {
 func (c *InstancesStopController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 	store := fctl.GetStackStore(cmd.Context())
 
-	_, err := store.Client().Orchestration.V1.CancelEvent(cmd.Context(), operations.CancelEventRequest{
+	_, err := store.Client().Orchestration.V2.CancelEvent(cmd.Context(), operations.V2CancelEventRequest{
 		InstanceID: args[0],
 	})
 	if err != nil {

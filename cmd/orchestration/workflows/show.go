@@ -50,15 +50,22 @@ func (c *WorkflowsShowController) Run(cmd *cobra.Command, args []string) (fctl.R
 
 	store := fctl.GetStackStore(cmd.Context())
 
-	response, err := store.Client().Orchestration.V1.
-		GetWorkflow(cmd.Context(), operations.GetWorkflowRequest{
+	response, err := store.Client().Orchestration.V2.
+		GetWorkflow(cmd.Context(), operations.V2GetWorkflowRequest{
 			FlowID: args[0],
 		})
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Workflow = response.GetWorkflowResponse.Data
+	// Convert V2Workflow to Workflow
+	v2Workflow := response.V2GetWorkflowResponse.Data
+	c.store.Workflow = shared.Workflow{
+		ID:        v2Workflow.ID,
+		CreatedAt: v2Workflow.CreatedAt,
+		UpdatedAt: v2Workflow.UpdatedAt,
+		Config:    shared.WorkflowConfig(v2Workflow.Config),
+	}
 
 	return c, nil
 }

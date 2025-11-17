@@ -15,8 +15,8 @@ import (
 )
 
 type InstancesShowStore struct {
-	WorkflowInstance shared.WorkflowInstance `json:"workflowInstance"`
-	Workflow         shared.Workflow         `json:"workflow"`
+	WorkflowInstance shared.V2WorkflowInstance `json:"workflowInstance"`
+	Workflow         shared.Workflow           `json:"workflow"`
 }
 type InstancesShowController struct {
 	store *InstancesShowStore
@@ -50,22 +50,29 @@ func (c *InstancesShowController) GetStore() *InstancesShowStore {
 func (c *InstancesShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 	store := fctl.GetStackStore(cmd.Context())
 
-	res, err := store.Client().Orchestration.V1.GetInstance(cmd.Context(), operations.GetInstanceRequest{
+	res, err := store.Client().Orchestration.V2.GetInstance(cmd.Context(), operations.V2GetInstanceRequest{
 		InstanceID: args[0],
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "reading instance")
 	}
 
-	c.store.WorkflowInstance = res.GetWorkflowInstanceResponse.Data
-	response, err := store.Client().Orchestration.V1.GetWorkflow(cmd.Context(), operations.GetWorkflowRequest{
-		FlowID: res.GetWorkflowInstanceResponse.Data.WorkflowID,
+	c.store.WorkflowInstance = res.V2GetWorkflowInstanceResponse.Data
+	response, err := store.Client().Orchestration.V2.GetWorkflow(cmd.Context(), operations.V2GetWorkflowRequest{
+		FlowID: res.V2GetWorkflowInstanceResponse.Data.WorkflowID,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Workflow = response.GetWorkflowResponse.Data
+	// Convert V2Workflow to Workflow
+	v2Workflow := response.V2GetWorkflowResponse.Data
+	c.store.Workflow = shared.Workflow{
+		ID:        v2Workflow.ID,
+		CreatedAt: v2Workflow.CreatedAt,
+		UpdatedAt: v2Workflow.UpdatedAt,
+		Config:    shared.WorkflowConfig(v2Workflow.Config),
+	}
 
 	return c, nil
 }
@@ -91,7 +98,25 @@ func (c *InstancesShowController) Render(cmd *cobra.Command, args []string) erro
 		return err
 	}
 
-	if err := internal.PrintWorkflowInstance(cmd.OutOrStdout(), c.store.Workflow, c.store.WorkflowInstance); err != nil {
+	// Convert V2WorkflowInstance to WorkflowInstance
+	v2Instance := c.store.WorkflowInstance
+	instance := shared.WorkflowInstance{
+		ID:           v2Instance.ID,
+		WorkflowID:   v2Instance.WorkflowID,
+		CreatedAt:    v2Instance.CreatedAt,
+		UpdatedAt:    v2Instance.UpdatedAt,
+		Terminated:   v2Instance.Terminated,
+		TerminatedAt: v2Instance.TerminatedAt,
+		Error:        v2Instance.Error,
+		Status: fctl.Map(v2Instance.Status, func(src shared.V2StageStatus) shared.StageStatus {
+			return shared.StageStatus{
+				StartedAt:    src.StartedAt,
+				TerminatedAt: src.TerminatedAt,
+				Error:        src.Error,
+			}
+		}),
+	}
+	if err := internal.PrintWorkflowInstance(cmd.OutOrStdout(), c.store.Workflow, instance); err != nil {
 		return err
 	}
 
