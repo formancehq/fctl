@@ -1,17 +1,17 @@
 package triggers
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
-	"errors"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/formancehq/go-libs/v3/pointer"
 
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type TriggersCreateStore struct {

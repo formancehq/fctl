@@ -4,19 +4,18 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math/big"
 	"os"
 	"path/filepath"
 
-	"errors"
-
-	"github.com/formancehq/go-libs/v3/pointer"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/go-libs/v3/pointer"
 
 	fctl "github.com/formancehq/fctl/pkg"
 )

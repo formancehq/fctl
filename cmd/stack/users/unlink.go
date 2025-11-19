@@ -3,11 +3,12 @@ package users
 import (
 	"fmt"
 
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
+
 	"github.com/formancehq/fctl/internal/membershipclient/models/components"
 	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
 )
 
 type UnlinkStore struct {

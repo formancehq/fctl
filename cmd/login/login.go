@@ -1,10 +1,11 @@
 package login
 
 import (
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/zitadel/oidc/v2/pkg/oidc"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type Store struct {

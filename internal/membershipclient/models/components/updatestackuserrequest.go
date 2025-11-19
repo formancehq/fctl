@@ -3,7 +3,7 @@
 package components
 
 type UpdateStackUserRequest struct {
-	PolicyID int64 `json:"policyID"`
+	PolicyID int64 `json:"policyId"`
 }
 
 func (u *UpdateStackUserRequest) GetPolicyID() int64 {

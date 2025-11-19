@@ -2760,13 +2760,13 @@ components:
           required:
             - email
             - id
-            - policyID
+            - policyId
           properties:
             email:
               type: string
             id:
               type: string
-            policyID:
+            policyId:
               type: integer
               description: Policy ID applied to the user
 
@@ -2794,7 +2794,7 @@ components:
             - stackId
             - userId
             - email
-            - policyID
+            - policyId
           properties:
             stackId:
               type: string
@@ -2805,7 +2805,7 @@ components:
             email:
               type: string
               description: User email
-            policyID:
+            policyId:
               type: integer
               description: Policy ID applied to the user for the stack
     StackUserAccessResponse:
@@ -2946,7 +2946,7 @@ components:
         - userEmail
         - organizationId
         - id
-        - policyID
+        - policyId
     Region:
       type: object
       required:
@@ -3082,18 +3082,21 @@ components:
             type: string
         regionID:
           type: string
+        deprecated:
+          type: boolean
+          description: Indicates if this version is deprecated and should not be used
     UpdateOrganizationUserRequest:
       type: object
       properties:
-        policyID:
+        policyId:
           type: integer
           description: Policy ID applied to the user
     UpdateStackUserRequest:
       type: object
       required:
-        - policyID
+        - policyId
       properties:
-        policyID:
+        policyId:
           type: integer
 
     GetRegionVersionsResponse:

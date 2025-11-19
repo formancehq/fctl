@@ -4,14 +4,16 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
+	"golang.org/x/mod/semver"
+
+	"github.com/formancehq/go-libs/v3/pointer"
+
 	"github.com/formancehq/fctl/internal/membershipclient"
 	"github.com/formancehq/fctl/internal/membershipclient/models/components"
 	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/go-libs/v3/pointer"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-	"golang.org/x/mod/semver"
 )
 
 type UpgradeStore struct {

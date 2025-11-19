@@ -45,6 +45,7 @@ go:
       shared: models/components
       webhooks: models/webhooks
   includeEmptyObjects: false
+  inferUnionDiscriminators: false
   inputModelSuffix: input
   maxMethodParams: 4
   methodArguments: require-security-and-request
@@ -55,4 +56,4 @@ go:
   respectRequiredFields: false
   responseFormat: envelope-http
   sdkPackageName: ""
-  unionDeserializationStrategy: left-to-right
+  unionStrategy: left-to-right

@@ -511,65 +511,31 @@ func CreateAuthenticationProviderDataAuthenticationProviderDataOIDCConfig(authen
 
 func (u *AuthenticationProviderData) UnmarshalJSON(data []byte) error {
 
-	var candidates []utils.UnionCandidate
-
-	// Collect all valid candidates
 	var authenticationProviderDataGoogleIDPConfig AuthenticationProviderDataGoogleIDPConfig = AuthenticationProviderDataGoogleIDPConfig{}
 	if err := utils.UnmarshalJSON(data, &authenticationProviderDataGoogleIDPConfig, "", true, nil); err == nil {
-		candidates = append(candidates, utils.UnionCandidate{
-			Type:  AuthenticationProviderDataTypeAuthenticationProviderDataGoogleIDPConfig,
-			Value: &authenticationProviderDataGoogleIDPConfig,
-		})
+		u.AuthenticationProviderDataGoogleIDPConfig = &authenticationProviderDataGoogleIDPConfig
+		u.Type = AuthenticationProviderDataTypeAuthenticationProviderDataGoogleIDPConfig
+		return nil
 	}
 
 	var authenticationProviderDataMicrosoftIDPConfig AuthenticationProviderDataMicrosoftIDPConfig = AuthenticationProviderDataMicrosoftIDPConfig{}
 	if err := utils.UnmarshalJSON(data, &authenticationProviderDataMicrosoftIDPConfig, "", true, nil); err == nil {
-		candidates = append(candidates, utils.UnionCandidate{
-			Type:  AuthenticationProviderDataTypeAuthenticationProviderDataMicrosoftIDPConfig,
-			Value: &authenticationProviderDataMicrosoftIDPConfig,
-		})
+		u.AuthenticationProviderDataMicrosoftIDPConfig = &authenticationProviderDataMicrosoftIDPConfig
+		u.Type = AuthenticationProviderDataTypeAuthenticationProviderDataMicrosoftIDPConfig
+		return nil
 	}
 
 	var authenticationProviderDataGithubIDPConfig AuthenticationProviderDataGithubIDPConfig = AuthenticationProviderDataGithubIDPConfig{}
 	if err := utils.UnmarshalJSON(data, &authenticationProviderDataGithubIDPConfig, "", true, nil); err == nil {
-		candidates = append(candidates, utils.UnionCandidate{
-			Type:  AuthenticationProviderDataTypeAuthenticationProviderDataGithubIDPConfig,
-			Value: &authenticationProviderDataGithubIDPConfig,
-		})
+		u.AuthenticationProviderDataGithubIDPConfig = &authenticationProviderDataGithubIDPConfig
+		u.Type = AuthenticationProviderDataTypeAuthenticationProviderDataGithubIDPConfig
+		return nil
 	}
 
 	var authenticationProviderDataOIDCConfig AuthenticationProviderDataOIDCConfig = AuthenticationProviderDataOIDCConfig{}
 	if err := utils.UnmarshalJSON(data, &authenticationProviderDataOIDCConfig, "", true, nil); err == nil {
-		candidates = append(candidates, utils.UnionCandidate{
-			Type:  AuthenticationProviderDataTypeAuthenticationProviderDataOIDCConfig,
-			Value: &authenticationProviderDataOIDCConfig,
-		})
-	}
-
-	if len(candidates) == 0 {
-		return fmt.Errorf("could not unmarshal `%s` into any supported union types for AuthenticationProviderData", string(data))
-	}
-
-	// Pick the best candidate using multi-stage filtering
-	best := utils.PickBestCandidate(candidates)
-	if best == nil {
-		return fmt.Errorf("could not unmarshal `%s` into any supported union types for AuthenticationProviderData", string(data))
-	}
-
-	// Set the union type and value based on the best candidate
-	u.Type = best.Type.(AuthenticationProviderDataType)
-	switch best.Type {
-	case AuthenticationProviderDataTypeAuthenticationProviderDataGoogleIDPConfig:
-		u.AuthenticationProviderDataGoogleIDPConfig = best.Value.(*AuthenticationProviderDataGoogleIDPConfig)
-		return nil
-	case AuthenticationProviderDataTypeAuthenticationProviderDataMicrosoftIDPConfig:
-		u.AuthenticationProviderDataMicrosoftIDPConfig = best.Value.(*AuthenticationProviderDataMicrosoftIDPConfig)
-		return nil
-	case AuthenticationProviderDataTypeAuthenticationProviderDataGithubIDPConfig:
-		u.AuthenticationProviderDataGithubIDPConfig = best.Value.(*AuthenticationProviderDataGithubIDPConfig)
-		return nil
-	case AuthenticationProviderDataTypeAuthenticationProviderDataOIDCConfig:
-		u.AuthenticationProviderDataOIDCConfig = best.Value.(*AuthenticationProviderDataOIDCConfig)
+		u.AuthenticationProviderDataOIDCConfig = &authenticationProviderDataOIDCConfig
+		u.Type = AuthenticationProviderDataTypeAuthenticationProviderDataOIDCConfig
 		return nil
 	}
 

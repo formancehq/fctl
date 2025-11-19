@@ -1,17 +1,17 @@
 lockVersion: 2.0.0
 id: 61dd85f3-592f-465f-a3c4-a3f10e3e6f10
 management:
-  docChecksum: 922c081bf23863393f8b491ed986eda1
+  docChecksum: 2261488416352a021f4f1e4aee627d0a
   docVersion: 0.1.0
-  speakeasyVersion: 1.656.1
-  generationVersion: 2.753.1
+  speakeasyVersion: 1.661.3
+  generationVersion: 2.763.3
   releaseVersion: 0.1.0
-  configChecksum: 48e8dafeac8f9c6c8ae37b02d59fd7d8
+  configChecksum: 76c0e45e65b5c931b8995565a01160b1
 features:
   go:
     additionalDependencies: 0.1.0
     constsAndDefaults: 0.1.12
-    core: 3.13.2
+    core: 3.13.3
     defaultEnabledRetries: 0.2.0
     deprecations: 2.81.3
     envVarSecurityUsage: 0.3.2
@@ -24,7 +24,7 @@ features:
     responseFormat: 0.1.2
     retries: 2.84.2
     sdkHooks: 0.2.0
-    unions: 2.87.1
+    unions: 2.87.2
 generatedFiles:
   - .gitattributes
   - /models/apierrors/error.go

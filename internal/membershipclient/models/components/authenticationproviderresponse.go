@@ -652,65 +652,31 @@ func CreateDataAuthenticationProviderResponseOIDCConfig(authenticationProviderRe
 
 func (u *Data) UnmarshalJSON(data []byte) error {
 
-	var candidates []utils.UnionCandidate
-
-	// Collect all valid candidates
 	var authenticationProviderResponseGoogleIDPConfig AuthenticationProviderResponseGoogleIDPConfig = AuthenticationProviderResponseGoogleIDPConfig{}
 	if err := utils.UnmarshalJSON(data, &authenticationProviderResponseGoogleIDPConfig, "", true, nil); err == nil {
-		candidates = append(candidates, utils.UnionCandidate{
-			Type:  DataTypeAuthenticationProviderResponseGoogleIDPConfig,
-			Value: &authenticationProviderResponseGoogleIDPConfig,
-		})
+		u.AuthenticationProviderResponseGoogleIDPConfig = &authenticationProviderResponseGoogleIDPConfig
+		u.Type = DataTypeAuthenticationProviderResponseGoogleIDPConfig
+		return nil
 	}
 
 	var authenticationProviderResponseMicrosoftIDPConfig AuthenticationProviderResponseMicrosoftIDPConfig = AuthenticationProviderResponseMicrosoftIDPConfig{}
 	if err := utils.UnmarshalJSON(data, &authenticationProviderResponseMicrosoftIDPConfig, "", true, nil); err == nil {
-		candidates = append(candidates, utils.UnionCandidate{
-			Type:  DataTypeAuthenticationProviderResponseMicrosoftIDPConfig,
-			Value: &authenticationProviderResponseMicrosoftIDPConfig,
-		})
+		u.AuthenticationProviderResponseMicrosoftIDPConfig = &authenticationProviderResponseMicrosoftIDPConfig
+		u.Type = DataTypeAuthenticationProviderResponseMicrosoftIDPConfig
+		return nil
 	}
 
 	var authenticationProviderResponseGithubIDPConfig AuthenticationProviderResponseGithubIDPConfig = AuthenticationProviderResponseGithubIDPConfig{}
 	if err := utils.UnmarshalJSON(data, &authenticationProviderResponseGithubIDPConfig, "", true, nil); err == nil {
-		candidates = append(candidates, utils.UnionCandidate{
-			Type:  DataTypeAuthenticationProviderResponseGithubIDPConfig,
-			Value: &authenticationProviderResponseGithubIDPConfig,
-		})
+		u.AuthenticationProviderResponseGithubIDPConfig = &authenticationProviderResponseGithubIDPConfig
+		u.Type = DataTypeAuthenticationProviderResponseGithubIDPConfig
+		return nil
 	}
 
 	var authenticationProviderResponseOIDCConfig AuthenticationProviderResponseOIDCConfig = AuthenticationProviderResponseOIDCConfig{}
 	if err := utils.UnmarshalJSON(data, &authenticationProviderResponseOIDCConfig, "", true, nil); err == nil {
-		candidates = append(candidates, utils.UnionCandidate{
-			Type:  DataTypeAuthenticationProviderResponseOIDCConfig,
-			Value: &authenticationProviderResponseOIDCConfig,
-		})
-	}
-
-	if len(candidates) == 0 {
-		return fmt.Errorf("could not unmarshal `%s` into any supported union types for Data", string(data))
-	}
-
-	// Pick the best candidate using multi-stage filtering
-	best := utils.PickBestCandidate(candidates)
-	if best == nil {
-		return fmt.Errorf("could not unmarshal `%s` into any supported union types for Data", string(data))
-	}
-
-	// Set the union type and value based on the best candidate
-	u.Type = best.Type.(DataType)
-	switch best.Type {
-	case DataTypeAuthenticationProviderResponseGoogleIDPConfig:
-		u.AuthenticationProviderResponseGoogleIDPConfig = best.Value.(*AuthenticationProviderResponseGoogleIDPConfig)
-		return nil
-	case DataTypeAuthenticationProviderResponseMicrosoftIDPConfig:
-		u.AuthenticationProviderResponseMicrosoftIDPConfig = best.Value.(*AuthenticationProviderResponseMicrosoftIDPConfig)
-		return nil
-	case DataTypeAuthenticationProviderResponseGithubIDPConfig:
-		u.AuthenticationProviderResponseGithubIDPConfig = best.Value.(*AuthenticationProviderResponseGithubIDPConfig)
-		return nil
-	case DataTypeAuthenticationProviderResponseOIDCConfig:
-		u.AuthenticationProviderResponseOIDCConfig = best.Value.(*AuthenticationProviderResponseOIDCConfig)
+		u.AuthenticationProviderResponseOIDCConfig = &authenticationProviderResponseOIDCConfig
+		u.Type = DataTypeAuthenticationProviderResponseOIDCConfig
 		return nil
 	}
 

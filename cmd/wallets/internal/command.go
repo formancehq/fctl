@@ -1,14 +1,15 @@
 package internal
 
 import (
+	"errors"
 	"fmt"
 
-	"errors"
+	"github.com/spf13/cobra"
 
-	fctl "github.com/formancehq/fctl/pkg"
 	formance "github.com/formancehq/formance-sdk-go/v3"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/spf13/cobra"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 const (

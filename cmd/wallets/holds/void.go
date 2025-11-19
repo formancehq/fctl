@@ -3,10 +3,12 @@ package holds
 import (
 	"fmt"
 
-	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type VoidStore struct {
