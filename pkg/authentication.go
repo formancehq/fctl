@@ -74,7 +74,6 @@ var (
 		"organization:ReadLogs",
 		"organization:ListFeatures",
 		"organization:ReadFeature",
-		"organization:UpdateFeatures",
 	}
 	StackScopes = []string{
 		"stack:Read",
