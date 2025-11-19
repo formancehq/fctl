@@ -1,101 +1,99 @@
 package login
 
 import (
-	"fmt"
-
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+	"github.com/zitadel/oidc/v2/pkg/oidc"
 
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
-type Dialog interface {
-	DisplayURIAndCode(uri, code string)
+type Store struct {
+	profile *fctl.Profile
 }
-type DialogFn func(uri, code string)
-
-func (fn DialogFn) DisplayURIAndCode(uri, code string) {
-	fn(uri, code)
+type Controller struct {
+	store *Store
 }
 
-type LoginStore struct {
-	profile    *fctl.Profile `json:"-"`
-	DeviceCode string        `json:"deviceCode"`
-	LoginURI   string        `json:"loginUri"`
-	BrowserURL string        `json:"browserUrl"`
-	Success    bool          `json:"success"`
-}
-type LoginController struct {
-	store *LoginStore
-}
-
-func NewDefaultLoginStore() *LoginStore {
-	return &LoginStore{
-		profile:    nil,
-		DeviceCode: "",
-		LoginURI:   "",
-		BrowserURL: "",
-		Success:    false,
+func NewDefaultStore() *Store {
+	return &Store{
+		profile: nil,
 	}
 }
-func (c *LoginController) GetStore() *LoginStore {
+func (c *Controller) GetStore() *Store {
 	return c.store
 }
-func NewLoginController() *LoginController {
-	return &LoginController{
-		store: NewDefaultLoginStore(),
+
+func NewLoginController() *Controller {
+	return &Controller{
+		store: NewDefaultStore(),
 	}
 }
-func (c *LoginController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	cfg, err := fctl.GetConfig(cmd)
+func (c *Controller) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
+
+	cfg, err := fctl.LoadConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	profile := fctl.GetCurrentProfile(cmd, cfg)
+	profile, profileName, err := fctl.LoadCurrentProfile(cmd, *cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	membershipUri, err := cmd.Flags().GetString(fctl.MembershipURIFlag)
 	if err != nil {
 		return nil, err
 	}
 	if membershipUri == "" {
 		membershipUri = profile.GetMembershipURI()
+	} else {
+		profile.MembershipURI = membershipUri
 	}
 
-	relyingParty, err := fctl.GetAuthRelyingParty(fctl.GetHttpClient(cmd, map[string][]string{}), membershipUri)
+	relyingParty, err := fctl.GetAuthRelyingParty(cmd.Context(), fctl.GetHttpClient(cmd), membershipUri)
 	if err != nil {
 		return nil, err
 	}
 
 	c.store.profile = profile
 
-	ret, err := LogIn(cmd.Context(), DialogFn(func(uri, code string) {
-		c.store.DeviceCode = code
-		c.store.LoginURI = uri
-		fmt.Println("Link :", fmt.Sprintf("%s?user_code=%s", c.store.LoginURI, c.store.DeviceCode))
-	}), relyingParty)
-
-	// Other relying error not related to browser
+	ret, err := fctl.Authenticate(
+		cmd.Context(),
+		relyingParty,
+		fctl.NewPTermDialog(),
+		[]fctl.AuthenticationOption{
+			fctl.AuthenticateWithScopes(
+				oidc.ScopeOpenID,
+				oidc.ScopeOfflineAccess,
+				"accesses",
+				"on_behalf",
+			),
+			fctl.AuthenticateWithPrompt("no-org"),
+		},
+		[]fctl.TokenOption{},
+	)
 	if err != nil {
 		return nil, err
 	}
+	profile.UpdateRootToken(ret)
 
-	// Browser not found
-	if ret != nil {
-		c.store.Success = true
-		profile.UpdateToken(ret)
+	currentProfileName := profileName
+
+	cfg.CurrentProfile = currentProfileName
+	if err := fctl.WriteConfig(cmd, *cfg); err != nil {
+		return nil, err
 	}
 
-	profile.SetMembershipURI(membershipUri)
+	if err := fctl.WriteProfile(cmd, currentProfileName, *profile); err != nil {
+		return nil, err
+	}
 
-	currentProfileName := fctl.GetCurrentProfileName(cmd, cfg)
-
-	cfg.SetCurrentProfile(currentProfileName, profile)
-
-	return c, cfg.Persist()
+	return c, nil
 }
 
-func (c *LoginController) Render(cmd *cobra.Command, args []string) error {
+func (c *Controller) Render(cmd *cobra.Command, args []string) error {
 	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Logged!")
 	return nil
 }
@@ -106,6 +104,6 @@ func NewCommand() *cobra.Command {
 		fctl.WithShortDescription("Login"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
-		fctl.WithController[*LoginStore](NewLoginController()),
+		fctl.WithController[*Store](NewLoginController()),
 	)
 }

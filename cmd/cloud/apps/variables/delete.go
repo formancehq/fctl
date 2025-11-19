@@ -43,7 +43,21 @@ func (c *DeleteCtrl) GetStore() *Delete {
 }
 
 func (c *DeleteCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetDeployServerStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	_, apiClient, err := fctl.NewAppDeployClientFromFlags(
+		cmd,
+		relyingParty,
+		fctl.NewPTermDialog(),
+		profileName,
+		*profile,
+	)
+	if err != nil {
+		return nil, err
+	}
 	id := fctl.GetString(cmd, "id")
 	if id == "" {
 		return nil, fmt.Errorf("id is required")
@@ -52,7 +66,7 @@ func (c *DeleteCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, er
 	if appID == "" {
 		return nil, fmt.Errorf("app-id is required")
 	}
-	_, err := store.Cli.DeleteAppVariable(cmd.Context(), appID, id)
+	_, err = apiClient.DeleteAppVariable(cmd.Context(), appID, id)
 	if err != nil {
 		return nil, err
 	}

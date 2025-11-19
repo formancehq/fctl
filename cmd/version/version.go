@@ -13,27 +13,27 @@ var (
 	BuildDate = "-"
 )
 
-type VersionStore struct {
+type Store struct {
 	Version   string `json:"version"`
 	BuildDate string `json:"buildDate"`
 	Commit    string `json:"commit"`
 }
-type VersionController struct {
-	store *VersionStore
+type Controller struct {
+	store *Store
 }
 
-var _ fctl.Controller[*VersionStore] = (*VersionController)(nil)
+var _ fctl.Controller[*Store] = (*Controller)(nil)
 
-func NewDefaultVersionStore() *VersionStore {
-	return &VersionStore{
+func NewDefaultVersionStore() *Store {
+	return &Store{
 		Version:   Version,
 		BuildDate: BuildDate,
 		Commit:    Commit,
 	}
 }
 
-func NewVersionController() *VersionController {
-	return &VersionController{
+func NewVersionController() *Controller {
+	return &Controller{
 		store: NewDefaultVersionStore(),
 	}
 }
@@ -43,20 +43,20 @@ func NewCommand() *cobra.Command {
 		fctl.WithShortDescription("Get version"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
-		fctl.WithController[*VersionStore](NewVersionController()),
+		fctl.WithController[*Store](NewVersionController()),
 	)
 }
 
-func (c *VersionController) GetStore() *VersionStore {
+func (c *Controller) GetStore() *Store {
 	return c.store
 }
 
-func (c *VersionController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+func (c *Controller) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 	return c, nil
 }
 
 // TODO: This need to use the ui.NewListModel
-func (c *VersionController) Render(cmd *cobra.Command, args []string) error {
+func (c *Controller) Render(cmd *cobra.Command, args []string) error {
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Version"), c.store.Version})
 	tableData = append(tableData, []string{pterm.LightCyan("Date"), c.store.BuildDate})

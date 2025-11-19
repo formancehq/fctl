@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -57,7 +56,16 @@ func NewQontoCommand() *cobra.Command {
 func (c *PaymentsConnectorsQontoController) GetStore() *PaymentsConnectorsQontoStore { return c.store }
 
 func (c *PaymentsConnectorsQontoController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
@@ -66,7 +74,7 @@ func (c *PaymentsConnectorsQontoController) Run(cmd *cobra.Command, args []strin
 		return nil, fmt.Errorf("qonto connector is only supported in version >= v3.0.0")
 	}
 
-	script, err := fctl.ReadFile(cmd, store.Stack(), args[0])
+	script, err := fctl.ReadFile(cmd, args[0])
 	if err != nil {
 		return nil, err
 	}
@@ -75,10 +83,10 @@ func (c *PaymentsConnectorsQontoController) Run(cmd *cobra.Command, args []strin
 	if err := json.Unmarshal([]byte(script), &config); err != nil {
 		return nil, err
 	}
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to install connector '%s'", internal.QontoConnector) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to install connector '%s'", internal.QontoConnector) {
 		return nil, fctl.ErrMissingApproval
 	}
-	response, err := store.Client().Payments.V3.InstallConnector(cmd.Context(), operations.V3InstallConnectorRequest{
+	response, err := stackClient.Payments.V3.InstallConnector(cmd.Context(), operations.V3InstallConnectorRequest{
 		V3InstallConnectorRequest: &shared.V3InstallConnectorRequest{
 			V3QontoConfig: &config,
 			Type:          internal.QontoConnector,
@@ -86,7 +94,7 @@ func (c *PaymentsConnectorsQontoController) Run(cmd *cobra.Command, args []strin
 		Connector: internal.QontoConnector,
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "unexpected error during installation")
+		return nil, fmt.Errorf("unexpected error during installation: %w", err)
 	}
 
 	if response.StatusCode >= 300 {

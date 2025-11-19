@@ -17,58 +17,67 @@ import (
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
-type PaymentsGetConfigStore struct {
+type PaymentsLoadConfigStore struct {
 	ConnectorConfig *shared.ConnectorConfigResponse `json:"connectorConfig"`
 	Provider        string                          `json:"provider"`
 	ConnectorID     string                          `json:"connectorId"`
 }
 
-type PaymentsGetConfigController struct {
+type PaymentsLoadConfigController struct {
 	PaymentsVersion versions.Version
 
-	store *PaymentsGetConfigStore
+	store *PaymentsLoadConfigStore
 
 	providerNameFlag string
 	connectorIDFlag  string
 }
 
-func (c *PaymentsGetConfigController) SetVersion(version versions.Version) {
+func (c *PaymentsLoadConfigController) SetVersion(version versions.Version) {
 	c.PaymentsVersion = version
 }
 
-var _ fctl.Controller[*PaymentsGetConfigStore] = (*PaymentsGetConfigController)(nil)
+var _ fctl.Controller[*PaymentsLoadConfigStore] = (*PaymentsLoadConfigController)(nil)
 
-func NewDefaultPaymentsGetConfigStore() *PaymentsGetConfigStore {
-	return &PaymentsGetConfigStore{}
+func NewDefaultPaymentsLoadConfigStore() *PaymentsLoadConfigStore {
+	return &PaymentsLoadConfigStore{}
 }
 
-func NewPaymentsGetConfigController() *PaymentsGetConfigController {
-	return &PaymentsGetConfigController{
-		store:            NewDefaultPaymentsGetConfigStore(),
+func NewPaymentsLoadConfigController() *PaymentsLoadConfigController {
+	return &PaymentsLoadConfigController{
+		store:            NewDefaultPaymentsLoadConfigStore(),
 		providerNameFlag: "provider",
 		connectorIDFlag:  "connector-id",
 	}
 }
 
-func NewGetConfigCommand() *cobra.Command {
-	c := NewPaymentsGetConfigController()
+func NewLoadConfigCommand() *cobra.Command {
+	c := NewPaymentsLoadConfigController()
 	return fctl.NewCommand("get-config",
-		fctl.WithAliases("getconfig", "getconf", "gc", "get", "g"),
+		fctl.WithAliases("LoadConfig", "getconf", "gc", "get", "g"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithStringFlag("provider", "", "Provider name"),
 		fctl.WithStringFlag("connector-id", "", "Connector ID"),
 		fctl.WithShortDescription(fmt.Sprintf("Read a connector config (Connectors available: %v)", internal.AllConnectors)),
-		fctl.WithController[*PaymentsGetConfigStore](c),
+		fctl.WithController[*PaymentsLoadConfigStore](c),
 	)
 }
 
-func (c *PaymentsGetConfigController) GetStore() *PaymentsGetConfigStore {
+func (c *PaymentsLoadConfigController) GetStore() *PaymentsLoadConfigStore {
 	return c.store
 }
 
-func (c *PaymentsGetConfigController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
@@ -83,7 +92,7 @@ func (c *PaymentsGetConfigController) Run(cmd *cobra.Command, args []string) (fc
 			return nil, fmt.Errorf("provider is required")
 		}
 
-		response, err := store.Client().Payments.V1.ReadConnectorConfig(cmd.Context(), operations.ReadConnectorConfigRequest{
+		response, err := stackClient.Payments.V1.ReadConnectorConfig(cmd.Context(), operations.ReadConnectorConfigRequest{
 			Connector: shared.Connector(provider),
 		})
 		if err != nil {
@@ -98,7 +107,7 @@ func (c *PaymentsGetConfigController) Run(cmd *cobra.Command, args []string) (fc
 		c.store.ConnectorConfig = response.ConnectorConfigResponse
 
 	default:
-		connectorList, err := store.Client().Payments.V1.ListAllConnectors(cmd.Context())
+		connectorList, err := stackClient.Payments.V1.ListAllConnectors(cmd.Context())
 		if err != nil {
 			return nil, err
 		}
@@ -138,7 +147,7 @@ func (c *PaymentsGetConfigController) Run(cmd *cobra.Command, args []string) (fc
 			provider = strings.Split(strings.Split(selectedOption, " ")[1], ":")[1]
 		}
 
-		response, err := store.Client().Payments.V1.ReadConnectorConfigV1(cmd.Context(), operations.ReadConnectorConfigV1Request{
+		response, err := stackClient.Payments.V1.ReadConnectorConfigV1(cmd.Context(), operations.ReadConnectorConfigV1Request{
 			Connector:   shared.Connector(provider),
 			ConnectorID: connectorID,
 		})
@@ -160,7 +169,7 @@ func (c *PaymentsGetConfigController) Run(cmd *cobra.Command, args []string) (fc
 }
 
 // TODO: This need to use the ui.NewListModel
-func (c *PaymentsGetConfigController) Render(cmd *cobra.Command, args []string) error {
+func (c *PaymentsLoadConfigController) Render(cmd *cobra.Command, args []string) error {
 	var err error
 	switch c.store.Provider {
 	case internal.StripeConnector:

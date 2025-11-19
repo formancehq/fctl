@@ -1,9 +1,9 @@
 package workflows
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -53,9 +53,17 @@ func (c *WorkflowsListController) GetStore() *WorkflowsListStore {
 
 func (c *WorkflowsListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	response, err := store.Client().Orchestration.V1.ListWorkflows(cmd.Context())
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := stackClient.Orchestration.V1.ListWorkflows(cmd.Context())
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +108,7 @@ func (c *WorkflowsListController) Render(cmd *cobra.Command, args []string) erro
 				[]string{"ID", "Name", "Created at", "Updated at"},
 			),
 		).Render(); err != nil {
-		return errors.Wrap(err, "rendering table")
+		return fmt.Errorf("rendering table: %w", err)
 	}
 
 	return nil

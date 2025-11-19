@@ -55,7 +55,15 @@ func (c *SearchController) GetStore() *SearchStore {
 
 func (c *SearchController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	terms := make([]string, 0)
 	if len(args) > 1 {
@@ -74,7 +82,7 @@ func (c *SearchController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		Terms:    terms,
 		Target:   &target,
 	}
-	response, err := store.Client().Search.V1.Search(cmd.Context(), request)
+	response, err := stackClient.Search.V1.Search(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}
@@ -173,33 +181,5 @@ func NewCommand() *cobra.Command {
 		// }),
 		fctl.WithShortDescription("Search in all services (Default: ANY), or in a specific service (ACCOUNT, TRANSACTION, ASSET, PAYMENT)"),
 		fctl.WithController(NewSearchController()),
-		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
-
-			cfg, err := fctl.GetConfig(cmd)
-			if err != nil {
-				return err
-			}
-			apiClient, err := fctl.NewMembershipClient(cmd, cfg)
-			if err != nil {
-				return err
-			}
-			organizationID, err := fctl.ResolveOrganizationID(cmd, cfg, apiClient.DefaultAPI)
-			if err != nil {
-				return err
-			}
-
-			stack, err := fctl.ResolveStack(cmd, cfg, organizationID)
-			if err != nil {
-				return err
-			}
-
-			stackClient, err := fctl.NewStackClient(cmd, cfg, stack)
-			if err != nil {
-				return err
-			}
-			cmd.SetContext(fctl.ContextWithStackStore(cmd.Context(), fctl.StackNode(cfg, stack, organizationID, stackClient)))
-
-			return nil
-		}),
 	)
 }

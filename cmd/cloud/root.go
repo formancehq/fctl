@@ -21,8 +21,5 @@ func NewCommand() *cobra.Command {
 			NewGeneratePersonalTokenCommand(),
 			apps.NewCommand(),
 		),
-		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
-			return fctl.NewMembershipStore(cmd)
-		}),
 	)
 }

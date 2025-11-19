@@ -42,14 +42,17 @@ func (c *InfoController) GetStore() *InfoStore {
 	return c.store
 }
 
-func (c *InfoController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
-	profile := fctl.GetCurrentProfile(cmd, store.Config)
+func (c *InfoController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
+
+	_, profile, _, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
 	if !profile.IsConnected() {
 		return nil, errors.New("not logged. use 'login' command before")
 	}
 
-	userInfo, err := profile.GetUserInfo(cmd)
+	userInfo, err := fctl.UserInfo(cmd, relyingParty, profile.RootTokens.Access)
 	if err != nil {
 		return nil, err
 	}

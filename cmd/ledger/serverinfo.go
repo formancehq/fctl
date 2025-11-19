@@ -47,9 +47,18 @@ func (c *ServerInfoController) GetStore() *ServerInfoStore {
 }
 
 func (c *ServerInfoController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
 
-	response, err := store.Client().Ledger.V1.GetInfo(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := stackClient.Ledger.V1.GetInfo(cmd.Context())
 	if err != nil {
 		return nil, err
 	}

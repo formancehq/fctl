@@ -47,7 +47,16 @@ func (c *SetMetadataController) GetStore() *SetMetadataStore {
 }
 
 func (c *SetMetadataController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	metadata, err := fctl.ParseMetadata(args[1:])
 	if err != nil {
@@ -56,7 +65,7 @@ func (c *SetMetadataController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 
 	paymentID := args[0]
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to set a metadata on paymentID '%s'", paymentID) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to set metadata on paymentID '%s'", paymentID) {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -65,7 +74,7 @@ func (c *SetMetadataController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 		PaymentID:   paymentID,
 	}
 
-	response, err := store.Client().Payments.V1.UpdateMetadata(cmd.Context(), request)
+	response, err := stackClient.Payments.V1.UpdateMetadata(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}

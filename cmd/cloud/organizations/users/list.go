@@ -1,17 +1,20 @@
 package users
 
 import (
+	"fmt"
+
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type User struct {
-	ID    string                `json:"id"`
-	Email string                `json:"email"`
-	Role  membershipclient.Role `json:"role"`
+	ID       string `json:"id"`
+	Email    string `json:"email"`
+	PolicyID int64  `json:"policyID"`
 }
 
 type ListStore struct {
@@ -47,23 +50,35 @@ func (c *ListController) GetStore() *ListStore {
 }
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
 
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	usersResponse, _, err := store.Client().ListUsersOfOrganization(cmd.Context(), organizationID).Execute()
+	organizationID, apiClient, err := fctl.NewMembershipClientForOrganizationFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Users = fctl.Map(usersResponse.Data, func(i membershipclient.OrganizationUser) User {
+	request := operations.ListUsersOfOrganizationRequest{
+		OrganizationID: organizationID,
+	}
+
+	response, err := apiClient.ListUsersOfOrganization(cmd.Context(), request)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.ListUsersResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	c.store.Users = fctl.Map(response.ListUsersResponse.GetData(), func(i components.OrganizationUser) User {
 		return User{
-			i.Id,
-			i.Email,
-			i.Role,
+			ID:       i.GetID(),
+			Email:    i.GetEmail(),
+			PolicyID: i.GetPolicyID(),
 		}
 	})
 
@@ -76,11 +91,11 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 		return []string{
 			i.ID,
 			i.Email,
-			string(i.Role),
+			fmt.Sprint(i.PolicyID),
 		}
 	})
 
-	tableData := fctl.Prepend(usersRow, []string{"ID", "Email", "Role"})
+	tableData := fctl.Prepend(usersRow, []string{"ID", "Email", "Policy ID"})
 	return pterm.DefaultTable.
 		WithHasHeader().
 		WithWriter(cmd.OutOrStdout()).

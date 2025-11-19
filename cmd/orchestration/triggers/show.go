@@ -1,9 +1,9 @@
 package triggers
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -46,13 +46,22 @@ func (c *TriggersShowController) GetStore() *TriggersShowStore {
 }
 
 func (c *TriggersShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
 
-	res, err := store.Client().Orchestration.V1.ReadTrigger(cmd.Context(), operations.ReadTriggerRequest{
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := stackClient.Orchestration.V1.ReadTrigger(cmd.Context(), operations.ReadTriggerRequest{
 		TriggerID: args[0],
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "reading trigger")
+		return nil, fmt.Errorf("reading trigger: %w", err)
 	}
 
 	c.store.Trigger = res.ReadTriggerResponse.Data

@@ -45,14 +45,22 @@ func (c *SetMetadataController) GetStore() *SetMetadataStore {
 
 func (c *SetMetadataController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	metadata, err := fctl.ParseMetadata(args[1:])
 	if err != nil {
 		return nil, err
 	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to set a metadata on ledger %s", args[0]) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to set a metadata on ledger %s", args[0]) {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -60,7 +68,7 @@ func (c *SetMetadataController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 		Ledger:      args[0],
 		RequestBody: metadata,
 	}
-	response, err := store.Client().Ledger.V2.UpdateLedgerMetadata(cmd.Context(), request)
+	response, err := stackClient.Ledger.V2.UpdateLedgerMetadata(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}

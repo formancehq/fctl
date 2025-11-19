@@ -4,18 +4,18 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math/big"
 	"os"
 	"path/filepath"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/go-libs/pointer"
+	"github.com/formancehq/go-libs/v3/pointer"
 
 	fctl "github.com/formancehq/fctl/pkg"
 )
@@ -57,7 +57,16 @@ func (c *ImportController) GetStore() *ImportStore {
 }
 
 func (c *ImportController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	lastID := big.NewInt(-1)
 	resumeFromLastLog, err := cmd.Flags().GetBool(c.resumeFromLastLog)
@@ -65,7 +74,7 @@ func (c *ImportController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 	if resumeFromLastLog {
-		logs, err := store.Client().Ledger.V2.ListLogs(cmd.Context(), operations.V2ListLogsRequest{
+		logs, err := stackClient.Ledger.V2.ListLogs(cmd.Context(), operations.V2ListLogsRequest{
 			Ledger:   args[0],
 			PageSize: pointer.For[int64](1),
 		})
@@ -132,7 +141,7 @@ func (c *ImportController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		progressBar.Add(len(bytes) + 1) // +1 for the end of line
 
 		if count == blockSize {
-			_, err = store.Client().Ledger.V2.ImportLogs(cmd.Context(), operations.V2ImportLogsRequest{
+			_, err = stackClient.Ledger.V2.ImportLogs(cmd.Context(), operations.V2ImportLogsRequest{
 				Ledger:              args[0],
 				V2ImportLogsRequest: buffer,
 			})
@@ -148,7 +157,7 @@ func (c *ImportController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 	}
 
 	if buffer.Len() > 0 {
-		_, err = store.Client().Ledger.V2.ImportLogs(cmd.Context(), operations.V2ImportLogsRequest{
+		_, err = stackClient.Ledger.V2.ImportLogs(cmd.Context(), operations.V2ImportLogsRequest{
 			Ledger:              args[0],
 			V2ImportLogsRequest: buffer,
 		})

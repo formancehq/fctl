@@ -1,16 +1,17 @@
 package invitations
 
 import (
+	"fmt"
+
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type InvitationSend struct {
-	Email    string                `json:"email"`
-	OrgClaim membershipclient.Role `json:"orgClaim"`
+	Email string `json:"email"`
 }
 
 type SendStore struct {
@@ -39,7 +40,6 @@ func NewSendCommand() *cobra.Command {
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithShortDescription("Invite a user by email"),
 		fctl.WithAliases("s"),
-		fctl.WithStringFlag("org-claim", "", "Pre assign organization role e.g. 'ADMIN'"),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*SendStore](NewSendController()),
 	)
@@ -50,9 +50,13 @@ func (c *SendController) GetStore() *SendStore {
 }
 
 func (c *SendController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
 
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, apiClient, err := fctl.NewMembershipClientForOrganizationFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
 	if err != nil {
 		return nil, err
 	}
@@ -61,21 +65,21 @@ func (c *SendController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fctl.ErrMissingApproval
 	}
 
-	invitationClaim := membershipclient.InvitationClaim{}
-	orgClaimString := fctl.GetString(cmd, "org-claim")
-	if orgClaimString != "" {
-		invitationClaim.Role = membershipclient.Role(orgClaimString).Ptr()
+	request := operations.CreateInvitationRequest{
+		OrganizationID: organizationID,
+		Email:          args[0],
 	}
 
-	invitations, _, err := store.Client().
-		CreateInvitation(cmd.Context(), organizationID).
-		Email(args[0]).InvitationClaim(invitationClaim).Execute()
+	response, err := apiClient.CreateInvitation(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Invitation.Email = invitations.Data.UserEmail
-	c.store.Invitation.OrgClaim = invitations.Data.Role
+	if response.CreateInvitationResponse == nil || response.CreateInvitationResponse.GetData() == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	c.store.Invitation.Email = response.CreateInvitationResponse.GetData().GetUserEmail()
 
 	return c, nil
 }

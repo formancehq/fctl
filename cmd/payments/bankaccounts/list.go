@@ -7,6 +7,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
+	formance "github.com/formancehq/formance-sdk-go/v3"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
@@ -53,7 +54,16 @@ func (c *ListController) GetStore() *ListStore {
 }
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
@@ -74,10 +84,10 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	}
 
 	if c.PaymentsVersion >= versions.V3 {
-		return c.v3list(cmd, store, cursor, pageSize)
+		return c.v3list(cmd, stackClient, cursor, pageSize)
 	}
 
-	response, err := store.Client().Payments.V1.ListBankAccounts(
+	response, err := stackClient.Payments.V1.ListBankAccounts(
 		cmd.Context(),
 		operations.ListBankAccountsRequest{
 			Cursor:   cursor,
@@ -97,8 +107,8 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	return c, nil
 }
 
-func (c *ListController) v3list(cmd *cobra.Command, store *fctl.StackStore, cursor *string, pageSize *int64) (fctl.Renderable, error) {
-	response, err := store.Client().Payments.V3.ListBankAccounts(
+func (c *ListController) v3list(cmd *cobra.Command, stackClient *formance.Formance, cursor *string, pageSize *int64) (fctl.Renderable, error) {
+	response, err := stackClient.Payments.V3.ListBankAccounts(
 		cmd.Context(),
 		operations.V3ListBankAccountsRequest{
 			Cursor:   cursor,

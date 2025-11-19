@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/go-libs/pointer"
+	"github.com/formancehq/go-libs/v3/pointer"
 
 	"github.com/formancehq/fctl/cmd/ledger/internal"
 	fctl "github.com/formancehq/fctl/pkg"
@@ -46,14 +46,23 @@ func (c *RevertController) GetStore() *RevertStore {
 }
 
 func (c *RevertController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to revert transaction %s", args[0]) {
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to revert transaction %s", args[0]) {
 		return nil, fctl.ErrMissingApproval
 	}
 
 	ledger := fctl.GetString(cmd, internal.LedgerFlag)
-	txId, err := internal.TransactionIDOrLastN(cmd.Context(), store.Client(), ledger, args[0])
+	txId, err := internal.TransactionIDOrLastN(cmd.Context(), stackClient, ledger, args[0])
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +77,7 @@ func (c *RevertController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 			Force:           &force,
 		}
 
-		response, err := store.Client().Ledger.V2.RevertTransaction(cmd.Context(), request)
+		response, err := stackClient.Ledger.V2.RevertTransaction(cmd.Context(), request)
 		if err != nil {
 			return nil, err
 		}
@@ -81,7 +90,7 @@ func (c *RevertController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 			DisableChecks: &force,
 		}
 
-		response, err := store.Client().Ledger.V1.RevertTransaction(cmd.Context(), request)
+		response, err := stackClient.Ledger.V1.RevertTransaction(cmd.Context(), request)
 		if err != nil {
 			return nil, err
 		}

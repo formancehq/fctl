@@ -1,7 +1,8 @@
 package holds
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
+
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -50,14 +51,22 @@ func (c *VoidController) GetStore() *VoidStore {
 
 func (c *VoidController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 	request := operations.VoidHoldRequest{
 		IdempotencyKey: fctl.Ptr(fctl.GetString(cmd, c.ikFlag)),
 		HoldID:         args[0],
 	}
-	_, err := store.Client().Wallets.V1.VoidHold(cmd.Context(), request)
+	_, err = stackClient.Wallets.V1.VoidHold(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "voiding hold")
+		return nil, fmt.Errorf("voiding hold: %w", err)
 	}
 
 	c.store.Success = true

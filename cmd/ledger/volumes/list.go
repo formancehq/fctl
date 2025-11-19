@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -40,7 +39,15 @@ func (c *ListController) GetStore() *ListStore {
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	metadata, err := fctl.ParseMetadata(fctl.GetStringSlice(cmd, c.metadataFlag))
 	if err != nil {
@@ -104,10 +111,10 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		GroupBy:       &groupBy,
 	}
 
-	response, err := store.Client().Ledger.V2.GetVolumesWithBalances(cmd.Context(), request)
+	response, err := stackClient.Ledger.V2.GetVolumesWithBalances(cmd.Context(), request)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "Get Volumes With Balances")
+		return nil, fmt.Errorf("Get Volumes With Balances: %w", err)
 	}
 
 	c.store.Cursor = response.V2VolumesWithBalanceCursorResponse.Cursor

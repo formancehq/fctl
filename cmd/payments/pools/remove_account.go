@@ -55,7 +55,16 @@ func (c *RemoveAccountController) GetStore() *RemoveAccountStore {
 }
 
 func (c *RemoveAccountController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
@@ -65,7 +74,7 @@ func (c *RemoveAccountController) Run(cmd *cobra.Command, args []string) (fctl.R
 		return nil, fmt.Errorf("pools are only supported in >= v1.0.0")
 	}
 
-	response, err := store.Client().Payments.V1.RemoveAccountFromPool(cmd.Context(), operations.RemoveAccountFromPoolRequest{
+	response, err := stackClient.Payments.V1.RemoveAccountFromPool(cmd.Context(), operations.RemoveAccountFromPoolRequest{
 		PoolID:    args[0],
 		AccountID: args[1],
 	})

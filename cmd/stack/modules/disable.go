@@ -4,6 +4,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
@@ -39,9 +40,33 @@ func (c *DisableController) GetStore() *DisableStore {
 }
 
 func (c *DisableController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	mbStackStore := fctl.GetMembershipStackStore(cmd.Context())
 
-	_, err := mbStackStore.Client().DisableModule(cmd.Context(), mbStackStore.OrganizationId(), mbStackStore.StackId()).Name(args[0]).Execute()
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to disable a module") {
+		return nil, fctl.ErrMissingApproval
+	}
+
+	request := operations.DisableModuleRequest{
+		OrganizationID: organizationID,
+		StackID:        stackID,
+		Name:           args[0],
+	}
+
+	_, err = apiClient.DisableModule(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}

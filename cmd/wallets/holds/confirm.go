@@ -1,9 +1,9 @@
 package holds
 
 import (
+	"fmt"
 	"math/big"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -58,7 +58,16 @@ func (c *ConfirmController) GetStore() *ConfirmStore {
 }
 
 func (c *ConfirmController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	final := fctl.GetBool(cmd, c.finalFlag)
 	amount := int64(fctl.GetInt(cmd, c.amountFlag))
@@ -70,9 +79,9 @@ func (c *ConfirmController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 			Final:  &final,
 		},
 	}
-	_, err := store.Client().Wallets.V1.ConfirmHold(cmd.Context(), request)
+	_, err = stackClient.Wallets.V1.ConfirmHold(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "confirming hold")
+		return nil, fmt.Errorf("confirming hold: %w", err)
 	}
 
 	c.store.Success = true //Todo: check status code

@@ -45,13 +45,21 @@ func (c *DeleteMetadataController) GetStore() *DeleteMetadataStore {
 
 func (c *DeleteMetadataController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to set a metadata on account %s", args[0]) {
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to delete a metadata on account %s", args[0]) {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	response, err := store.Client().Ledger.V2.DeleteAccountMetadata(cmd.Context(), operations.V2DeleteAccountMetadataRequest{
+	response, err := stackClient.Ledger.V2.DeleteAccountMetadata(cmd.Context(), operations.V2DeleteAccountMetadataRequest{
 		Address: args[0],
 		Key:     args[1],
 		Ledger:  fctl.GetString(cmd, internal.LedgerFlag),

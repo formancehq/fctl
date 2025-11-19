@@ -1,7 +1,9 @@
 package wallets
 
 import (
-	"github.com/pkg/errors"
+	"errors"
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
@@ -51,9 +53,17 @@ func (c *ShowController) GetStore() *ShowStore {
 
 func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	walletID, err := internal.RetrieveWalletID(cmd, store.Client())
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	walletID, err := internal.RetrieveWalletID(cmd, stackClient)
 	if err != nil {
 		return nil, err
 	}
@@ -61,11 +71,11 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, errors.New("You need to specify wallet id using --id or --name flags")
 	}
 
-	response, err := store.Client().Wallets.V1.GetWallet(cmd.Context(), operations.GetWalletRequest{
+	response, err := stackClient.Wallets.V1.GetWallet(cmd.Context(), operations.GetWalletRequest{
 		ID: walletID,
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "getting wallet")
+		return nil, fmt.Errorf("getting wallet: %w", err)
 	}
 
 	c.store.Wallet = response.ActivityGetWalletOutput.Data

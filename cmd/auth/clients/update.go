@@ -84,9 +84,17 @@ func (c *UpdateController) GetStore() *UpdateStore {
 
 func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to delete an OAuth2 client") {
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to update an OAuth2 client") {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -106,7 +114,7 @@ func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 			Scopes:                 fctl.GetStringSlice(cmd, c.scopes),
 		},
 	}
-	response, err := store.Client().Auth.V1.UpdateClient(cmd.Context(), request)
+	response, err := stackClient.Auth.V1.UpdateClient(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}

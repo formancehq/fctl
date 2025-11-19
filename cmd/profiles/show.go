@@ -1,7 +1,8 @@
 package profiles
 
 import (
-	"github.com/pkg/errors"
+	"errors"
+
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -39,12 +40,10 @@ func (c *ProfilesShowController) GetStore() *ProfilesShowStore {
 
 func (c *ProfilesShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	config, err := fctl.GetConfig(cmd)
+	p, err := fctl.LoadProfile(cmd, args[0])
 	if err != nil {
 		return nil, err
 	}
-
-	p := config.GetProfile(args[0])
 	if p == nil {
 		return nil, errors.New("not found")
 	}

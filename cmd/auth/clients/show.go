@@ -47,12 +47,21 @@ func (c *ShowController) GetStore() *ShowStore {
 }
 
 func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	request := operations.ReadClientRequest{
 		ClientID: args[0],
 	}
-	response, err := store.Client().Auth.V1.ReadClient(cmd.Context(), request)
+	response, err := stackClient.Auth.V1.ReadClient(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}

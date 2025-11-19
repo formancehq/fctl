@@ -3,7 +3,6 @@ package wallets
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -52,18 +51,26 @@ func (c *ListController) GetStore() *ListStore {
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	metadata, err := fctl.ParseMetadata(fctl.GetStringSlice(cmd, c.metadataFlag))
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := store.Client().Wallets.V1.ListWallets(cmd.Context(), operations.ListWalletsRequest{
+	response, err := stackClient.Wallets.V1.ListWallets(cmd.Context(), operations.ListWalletsRequest{
 		Metadata: metadata,
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "listing wallet")
+		return nil, fmt.Errorf("listing wallet: %w", err)
 	}
 
 	if response.StatusCode >= 300 {
@@ -96,7 +103,7 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 				[]string{"ID", "Name"},
 			),
 		).Render(); err != nil {
-		return errors.Wrap(err, "rendering table")
+		return fmt.Errorf("rendering table: %w", err)
 	}
 	return nil
 }

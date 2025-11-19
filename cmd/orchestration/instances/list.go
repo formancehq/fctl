@@ -1,9 +1,9 @@
 package instances
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -62,9 +62,18 @@ func (c *InstancesListController) GetStore() *InstancesListStore {
 }
 
 func (c *InstancesListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
 
-	response, err := store.Client().Orchestration.V1.ListInstances(cmd.Context(), operations.ListInstancesRequest{
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := stackClient.Orchestration.V1.ListInstances(cmd.Context(), operations.ListInstancesRequest{
 		Running:    fctl.Ptr(fctl.GetBool(cmd, c.runningFlag)),
 		WorkflowID: fctl.Ptr(fctl.GetString(cmd, c.workflowFlag)),
 	})
@@ -114,7 +123,7 @@ func (c *InstancesListController) Render(cmd *cobra.Command, args []string) erro
 				[]string{"ID", "Workflow ID", "Created at", "Updated at", "Terminated at"},
 			),
 		).Render(); err != nil {
-		return errors.Wrap(err, "rendering table")
+		return fmt.Errorf("rendering table: %w", err)
 	}
 
 	return nil

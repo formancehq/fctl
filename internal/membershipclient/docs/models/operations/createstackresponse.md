@@ -1,0 +1,10 @@
+# CreateStackResponse
+
+
+## Fields
+
+| Field                                                                             | Type                                                                              | Required                                                                          | Description                                                                       |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                        | [components.HTTPMetadata](../../models/components/httpmetadata.md)                | :heavy_check_mark:                                                                | N/A                                                                               |
+| `CreateStackResponse`                                                             | [*components.CreateStackResponse](../../models/components/createstackresponse.md) | :heavy_minus_sign:                                                                | Stack created                                                                     |
+| `Error`                                                                           | [*components.Error](../../models/components/error.md)                             | :heavy_minus_sign:                                                                | Error                                                                             |

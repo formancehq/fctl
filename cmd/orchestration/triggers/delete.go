@@ -1,7 +1,8 @@
 package triggers
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
+
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -44,12 +45,21 @@ func (c *TriggersDeleteController) GetStore() *TriggersDeleteStore {
 }
 
 func (c *TriggersDeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
-	_, err := store.Client().Orchestration.V1.DeleteTrigger(cmd.Context(), operations.DeleteTriggerRequest{
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+	_, err = stackClient.Orchestration.V1.DeleteTrigger(cmd.Context(), operations.DeleteTriggerRequest{
 		TriggerID: args[0],
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "deleting trigger")
+		return nil, fmt.Errorf("deleting trigger: %w", err)
 	}
 
 	c.store.Success = true

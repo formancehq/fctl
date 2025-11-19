@@ -1,0 +1,10 @@
+# UpsertOrganizationUserRequest
+
+
+## Fields
+
+| Field                                                                                                 | Type                                                                                                  | Required                                                                                              | Description                                                                                           |
+| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `OrganizationID`                                                                                      | *string*                                                                                              | :heavy_check_mark:                                                                                    | N/A                                                                                                   |
+| `UserID`                                                                                              | *string*                                                                                              | :heavy_check_mark:                                                                                    | N/A                                                                                                   |
+| `Body`                                                                                                | [*components.UpdateOrganizationUserRequest](../../models/components/updateorganizationuserrequest.md) | :heavy_minus_sign:                                                                                    | N/A                                                                                                   |

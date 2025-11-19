@@ -1,12 +1,14 @@
 package invitations
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
@@ -57,22 +59,43 @@ func (c *ListController) GetStore() *ListStore {
 }
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
-	listInvitationsResponse, _, err := store.Client().
-		ListInvitations(cmd.Context()).
-		Status(fctl.GetString(cmd, c.statusFlag)).
-		Organization(fctl.GetString(cmd, c.organizationFlag)).
-		Execute()
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Invitations = fctl.Map(listInvitationsResponse.Data, func(i membershipclient.Invitation) Invitations {
+	apiClient, err := fctl.NewMembershipClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	status := fctl.GetString(cmd, c.statusFlag)
+	organization := fctl.GetString(cmd, c.organizationFlag)
+
+	request := operations.ListInvitationsRequest{}
+	if status != "" {
+		request.Status = &status
+	}
+	if organization != "" {
+		request.Organization = &organization
+	}
+
+	response, err := apiClient.ListInvitations(cmd.Context(), request)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.ListInvitationsResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	c.store.Invitations = fctl.Map(response.ListInvitationsResponse.GetData(), func(i components.Invitation) Invitations {
 		return Invitations{
-			Id:           i.Id,
-			UserEmail:    i.UserEmail,
-			Status:       i.Status,
-			CreationDate: i.CreationDate,
+			Id:           i.GetID(),
+			UserEmail:    i.GetUserEmail(),
+			Status:       string(i.GetStatus()),
+			CreationDate: i.GetCreationDate(),
 		}
 	})
 

@@ -25,8 +25,5 @@ func NewCommand() *cobra.Command {
 			pools.NewPoolsCommand(),
 			tasks.NewTasksCommand(),
 		),
-		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
-			return fctl.NewStackStore(cmd)
-		}),
 	)
 }

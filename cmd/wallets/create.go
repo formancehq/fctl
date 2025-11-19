@@ -1,7 +1,8 @@
 package wallets
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
+
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -53,9 +54,18 @@ func (c *CreateController) GetStore() *CreateStore {
 }
 
 func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to create a wallet") {
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to create a wallet") {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -71,9 +81,9 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		},
 		IdempotencyKey: fctl.Ptr(fctl.GetString(cmd, c.ikFlag)),
 	}
-	response, err := store.Client().Wallets.V1.CreateWallet(cmd.Context(), request)
+	response, err := stackClient.Wallets.V1.CreateWallet(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "creating wallet")
+		return nil, fmt.Errorf("creating wallet: %w", err)
 	}
 
 	c.store.WalletID = response.CreateWalletResponse.Data.ID

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -53,11 +52,20 @@ func (c *PaymentsConnectorsWiseController) GetStore() *PaymentsConnectorsWiseSto
 }
 
 func (c *PaymentsConnectorsWiseController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to install connector '%s'", internal.WiseConnector) {
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+	if !fctl.CheckStackApprobation(cmd, "You are about to install connector '%s'", internal.WiseConnector) {
 		return nil, fctl.ErrMissingApproval
 	}
-	script, err := fctl.ReadFile(cmd, store.Stack(), args[0])
+	script, err := fctl.ReadFile(cmd, args[0])
 	if err != nil {
 		return nil, err
 	}
@@ -67,14 +75,14 @@ func (c *PaymentsConnectorsWiseController) Run(cmd *cobra.Command, args []string
 		return nil, err
 	}
 
-	response, err := store.Client().Payments.V1.InstallConnector(cmd.Context(), operations.InstallConnectorRequest{
+	response, err := stackClient.Payments.V1.InstallConnector(cmd.Context(), operations.InstallConnectorRequest{
 		ConnectorConfig: shared.ConnectorConfig{
 			WiseConfig: &config,
 		},
 		Connector: shared.ConnectorWise,
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "installing connector")
+		return nil, fmt.Errorf("installing connector: %w", err)
 	}
 
 	if response.StatusCode >= 300 {

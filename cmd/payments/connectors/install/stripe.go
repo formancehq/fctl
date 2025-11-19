@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -53,9 +52,18 @@ func (c *PaymentsConnectorsStripeController) GetStore() *PaymentsConnectorsStrip
 }
 
 func (c *PaymentsConnectorsStripeController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
 
-	script, err := fctl.ReadFile(cmd, store.Stack(), args[0])
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	script, err := fctl.ReadFile(cmd, args[0])
 	if err != nil {
 		return nil, err
 	}
@@ -64,17 +72,17 @@ func (c *PaymentsConnectorsStripeController) Run(cmd *cobra.Command, args []stri
 	if err := json.Unmarshal([]byte(script), &config); err != nil {
 		return nil, err
 	}
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to install connector '%s'", internal.StripeConnector) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to install connector '%s'", internal.StripeConnector) {
 		return nil, fctl.ErrMissingApproval
 	}
-	response, err := store.Client().Payments.V1.InstallConnector(cmd.Context(), operations.InstallConnectorRequest{
+	response, err := stackClient.Payments.V1.InstallConnector(cmd.Context(), operations.InstallConnectorRequest{
 		ConnectorConfig: shared.ConnectorConfig{
 			StripeConfig: &config,
 		},
 		Connector: shared.ConnectorStripe,
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "installing connector")
+		return nil, fmt.Errorf("installing connector: %w", err)
 	}
 
 	if response.StatusCode >= 300 {

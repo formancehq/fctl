@@ -3,7 +3,6 @@ package balances
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -50,9 +49,18 @@ func (c *ListController) GetStore() *ListStore {
 }
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
 
-	walletID, err := internal.RequireWalletID(cmd, store.Client())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	walletID, err := internal.RequireWalletID(cmd, stackClient)
 	if err != nil {
 		return nil, err
 	}
@@ -60,9 +68,9 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	request := operations.ListBalancesRequest{
 		ID: walletID,
 	}
-	response, err := store.Client().Wallets.V1.ListBalances(cmd.Context(), request)
+	response, err := stackClient.Wallets.V1.ListBalances(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "listing balance")
+		return nil, fmt.Errorf("listing balance: %w", err)
 	}
 
 	if response.StatusCode >= 300 {
