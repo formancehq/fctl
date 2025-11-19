@@ -10,12 +10,13 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/spf13/cobra"
+	"golang.org/x/oauth2"
+
 	"github.com/formancehq/go-libs/collectionutils"
 	"github.com/formancehq/go-libs/v3/oidc"
 	"github.com/formancehq/go-libs/v3/oidc/client"
 	"github.com/formancehq/go-libs/v3/time"
-	"github.com/spf13/cobra"
-	"golang.org/x/oauth2"
 )
 
 var (

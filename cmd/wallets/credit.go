@@ -1,18 +1,19 @@
 package wallets
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 
-	"errors"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/cmd/wallets/internal"
-	fctl "github.com/formancehq/fctl/pkg"
 	formance "github.com/formancehq/formance-sdk-go/v3"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
+
+	"github.com/formancehq/fctl/cmd/wallets/internal"
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type CreditWalletStore struct {

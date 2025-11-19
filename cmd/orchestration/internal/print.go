@@ -5,9 +5,11 @@ import (
 	"io"
 	"time"
 
-	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/pterm/pterm"
+
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 func PrintWorkflowInstance(out io.Writer, w shared.Workflow, instance shared.WorkflowInstance) error {

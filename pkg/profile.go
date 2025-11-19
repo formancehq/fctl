@@ -6,9 +6,10 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/formancehq/go-libs/v3/oidc/client"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
+	"github.com/formancehq/go-libs/v3/oidc/client"
 )
 
 type ErrInvalidAuthentication struct {

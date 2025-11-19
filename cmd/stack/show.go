@@ -1,10 +1,9 @@
 package stack
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
-
-	"errors"
 
 	"github.com/spf13/cobra"
 
