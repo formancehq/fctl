@@ -53,7 +53,7 @@ func (a AuthenticationProviderDataOIDCConfigConfig) MarshalJSON() ([]byte, error
 }
 
 func (a *AuthenticationProviderDataOIDCConfigConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"issuer"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -90,7 +90,7 @@ func (a AuthenticationProviderDataOIDCConfig) MarshalJSON() ([]byte, error) {
 }
 
 func (a *AuthenticationProviderDataOIDCConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"type", "name", "clientID", "clientSecret", "config"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -195,7 +195,7 @@ func (a AuthenticationProviderDataGithubIDPConfig) MarshalJSON() ([]byte, error)
 }
 
 func (a *AuthenticationProviderDataGithubIDPConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"type", "name", "clientID", "clientSecret", "config"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -309,7 +309,7 @@ func (a AuthenticationProviderDataMicrosoftIDPConfig) MarshalJSON() ([]byte, err
 }
 
 func (a *AuthenticationProviderDataMicrosoftIDPConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"type", "name", "clientID", "clientSecret", "config"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -414,7 +414,7 @@ func (a AuthenticationProviderDataGoogleIDPConfig) MarshalJSON() ([]byte, error)
 }
 
 func (a *AuthenticationProviderDataGoogleIDPConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"type", "name", "clientID", "clientSecret", "config"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -465,10 +465,10 @@ const (
 )
 
 type AuthenticationProviderData struct {
-	AuthenticationProviderDataGoogleIDPConfig    *AuthenticationProviderDataGoogleIDPConfig    `queryParam:"inline,name=AuthenticationProviderData"`
-	AuthenticationProviderDataMicrosoftIDPConfig *AuthenticationProviderDataMicrosoftIDPConfig `queryParam:"inline,name=AuthenticationProviderData"`
-	AuthenticationProviderDataGithubIDPConfig    *AuthenticationProviderDataGithubIDPConfig    `queryParam:"inline,name=AuthenticationProviderData"`
-	AuthenticationProviderDataOIDCConfig         *AuthenticationProviderDataOIDCConfig         `queryParam:"inline,name=AuthenticationProviderData"`
+	AuthenticationProviderDataGoogleIDPConfig    *AuthenticationProviderDataGoogleIDPConfig    `queryParam:"inline,name=AuthenticationProviderData" union:"member"`
+	AuthenticationProviderDataMicrosoftIDPConfig *AuthenticationProviderDataMicrosoftIDPConfig `queryParam:"inline,name=AuthenticationProviderData" union:"member"`
+	AuthenticationProviderDataGithubIDPConfig    *AuthenticationProviderDataGithubIDPConfig    `queryParam:"inline,name=AuthenticationProviderData" union:"member"`
+	AuthenticationProviderDataOIDCConfig         *AuthenticationProviderDataOIDCConfig         `queryParam:"inline,name=AuthenticationProviderData" union:"member"`
 
 	Type AuthenticationProviderDataType
 }
@@ -551,7 +551,7 @@ func (u *AuthenticationProviderData) UnmarshalJSON(data []byte) error {
 	}
 
 	// Pick the best candidate using multi-stage filtering
-	best := utils.PickBestCandidate(candidates)
+	best := utils.PickBestUnionCandidate(candidates, data)
 	if best == nil {
 		return fmt.Errorf("could not unmarshal `%s` into any supported union types for AuthenticationProviderData", string(data))
 	}

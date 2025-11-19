@@ -14,7 +14,7 @@ type StackUserAccessResponseData struct {
 	// User email
 	Email string `json:"email"`
 	// Policy ID applied to the user for the stack
-	PolicyID int64 `json:"policyID"`
+	PolicyID int64 `json:"policyId"`
 }
 
 func (s *StackUserAccessResponseData) GetStackID() string {

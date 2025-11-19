@@ -10,7 +10,7 @@ type ReadOrganizationUserResponseData struct {
 	Email string `json:"email"`
 	ID    string `json:"id"`
 	// Policy ID applied to the user
-	PolicyID int64 `json:"policyID"`
+	PolicyID int64 `json:"policyId"`
 }
 
 func (r *ReadOrganizationUserResponseData) GetEmail() string {

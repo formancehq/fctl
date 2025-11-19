@@ -20,7 +20,7 @@ func (l ListApplicationsResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (l *ListApplicationsResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &l, "", false, []string{"HttpMeta"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &l, "", false, nil); err != nil {
 		return err
 	}
 	return nil

@@ -32,7 +32,7 @@ func (a AnyRegion) MarshalJSON() ([]byte, error) {
 }
 
 func (a *AnyRegion) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"id", "baseUrl", "createdAt", "active", "name", "capabilities", "agentID", "outdated", "public"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
 		return err
 	}
 	return nil

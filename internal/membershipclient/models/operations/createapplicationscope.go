@@ -18,7 +18,7 @@ func (c CreateApplicationScopeRequest) MarshalJSON() ([]byte, error) {
 }
 
 func (c *CreateApplicationScopeRequest) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &c, "", false, []string{"applicationId"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &c, "", false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -51,7 +51,7 @@ func (c CreateApplicationScopeResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (c *CreateApplicationScopeResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &c, "", false, []string{"HttpMeta"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &c, "", false, nil); err != nil {
 		return err
 	}
 	return nil

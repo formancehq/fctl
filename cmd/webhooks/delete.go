@@ -3,11 +3,13 @@ package webhooks
 import (
 	"fmt"
 
-	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/sdkerrors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/sdkerrors"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type DeleteWebhookStore struct {
@@ -73,7 +75,7 @@ func (c *DeleteWebhookController) Render(cmd *cobra.Command, args []string) erro
 	}
 
 	if c.store.ErrorResponse != nil {
-		pterm.Warning.WithShowLineNumber(false).Println(c.store.ErrorResponse.ErrorMessage)
+		pterm.Warning.WithShowLineNumber(false).Printf("%s\r\n", c.store.ErrorResponse.ErrorMessage)
 		return nil
 	}
 

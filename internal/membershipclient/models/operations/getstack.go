@@ -39,7 +39,7 @@ func (g GetStackResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (g *GetStackResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &g, "", false, []string{"HttpMeta"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
 		return err
 	}
 	return nil

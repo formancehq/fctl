@@ -6,6 +6,8 @@ type Version struct {
 	Name     string            `json:"name"`
 	Versions map[string]string `json:"versions"`
 	RegionID string            `json:"regionID"`
+	// Indicates if this version is deprecated and should not be used
+	Deprecated *bool `json:"deprecated,omitzero"`
 }
 
 func (v *Version) GetName() string {
@@ -27,4 +29,11 @@ func (v *Version) GetRegionID() string {
 		return ""
 	}
 	return v.RegionID
+}
+
+func (v *Version) GetDeprecated() *bool {
+	if v == nil {
+		return nil
+	}
+	return v.Deprecated
 }

@@ -29,7 +29,7 @@ func (a Application) MarshalJSON() ([]byte, error) {
 }
 
 func (a *Application) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"name", "url", "alias", "id", "createdAt", "updatedAt"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
 		return err
 	}
 	return nil

@@ -37,7 +37,7 @@ func (o OrganizationClientDeleteResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (o *OrganizationClientDeleteResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &o, "", false, []string{"HttpMeta"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &o, "", false, nil); err != nil {
 		return err
 	}
 	return nil

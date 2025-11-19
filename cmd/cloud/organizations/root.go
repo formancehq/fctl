@@ -1,9 +1,9 @@
 package organizations
 
 import (
-	"github.com/formancehq/fctl/cmd/cloud/organizations/applications"
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/fctl/cmd/cloud/organizations/applications"
 	authorization_provider "github.com/formancehq/fctl/cmd/cloud/organizations/authentication-provider"
 	"github.com/formancehq/fctl/cmd/cloud/organizations/invitations"
 	oauth_clients "github.com/formancehq/fctl/cmd/cloud/organizations/oauth-clients"

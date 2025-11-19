@@ -3,8 +3,6 @@
 package components
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/formancehq/fctl/internal/membershipclient/internal/utils"
 	"time"
 )
@@ -21,31 +19,23 @@ const (
 func (e InvitationStatus) ToPointer() *InvitationStatus {
 	return &e
 }
-func (e *InvitationStatus) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *InvitationStatus) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "PENDING", "ACCEPTED", "REJECTED", "CANCELLED":
+			return true
+		}
 	}
-	switch v {
-	case "PENDING":
-		fallthrough
-	case "ACCEPTED":
-		fallthrough
-	case "REJECTED":
-		fallthrough
-	case "CANCELLED":
-		*e = InvitationStatus(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for InvitationStatus: %v", v)
-	}
+	return false
 }
 
 type OrganizationAccess struct {
 	Email string `json:"email"`
 	ID    string `json:"id"`
 	// Policy ID applied to the user
-	PolicyID int64 `json:"policyID"`
+	PolicyID int64 `json:"policyId"`
 }
 
 func (o *OrganizationAccess) GetEmail() string {
@@ -88,7 +78,7 @@ func (i Invitation) MarshalJSON() ([]byte, error) {
 }
 
 func (i *Invitation) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &i, "", false, []string{"id", "organizationId", "userEmail", "status", "creationDate"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &i, "", false, nil); err != nil {
 		return err
 	}
 	return nil

@@ -3,7 +3,6 @@
 package components
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/formancehq/fctl/internal/membershipclient/internal/utils"
@@ -23,24 +22,16 @@ const (
 func (e AuthenticationProviderResponseOIDCConfigType) ToPointer() *AuthenticationProviderResponseOIDCConfigType {
 	return &e
 }
-func (e *AuthenticationProviderResponseOIDCConfigType) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *AuthenticationProviderResponseOIDCConfigType) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "oidc", "google", "github", "microsoft":
+			return true
+		}
 	}
-	switch v {
-	case "oidc":
-		fallthrough
-	case "google":
-		fallthrough
-	case "github":
-		fallthrough
-	case "microsoft":
-		*e = AuthenticationProviderResponseOIDCConfigType(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for AuthenticationProviderResponseOIDCConfigType: %v", v)
-	}
+	return false
 }
 
 type AuthenticationProviderResponseOIDCConfigConfig struct {
@@ -54,7 +45,7 @@ func (a AuthenticationProviderResponseOIDCConfigConfig) MarshalJSON() ([]byte, e
 }
 
 func (a *AuthenticationProviderResponseOIDCConfigConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"issuer"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -98,7 +89,7 @@ func (a AuthenticationProviderResponseOIDCConfig) MarshalJSON() ([]byte, error) 
 }
 
 func (a *AuthenticationProviderResponseOIDCConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"type", "name", "clientID", "clientSecret", "config", "organizationId", "createdAt", "updatedAt", "redirectURI"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -180,24 +171,16 @@ const (
 func (e AuthenticationProviderResponseGithubIDPConfigType) ToPointer() *AuthenticationProviderResponseGithubIDPConfigType {
 	return &e
 }
-func (e *AuthenticationProviderResponseGithubIDPConfigType) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *AuthenticationProviderResponseGithubIDPConfigType) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "oidc", "google", "github", "microsoft":
+			return true
+		}
 	}
-	switch v {
-	case "oidc":
-		fallthrough
-	case "google":
-		fallthrough
-	case "github":
-		fallthrough
-	case "microsoft":
-		*e = AuthenticationProviderResponseGithubIDPConfigType(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for AuthenticationProviderResponseGithubIDPConfigType: %v", v)
-	}
+	return false
 }
 
 type AuthenticationProviderResponseGithubIDPConfigConfig struct {
@@ -238,7 +221,7 @@ func (a AuthenticationProviderResponseGithubIDPConfig) MarshalJSON() ([]byte, er
 }
 
 func (a *AuthenticationProviderResponseGithubIDPConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"type", "name", "clientID", "clientSecret", "config", "organizationId", "createdAt", "updatedAt", "redirectURI"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -320,24 +303,16 @@ const (
 func (e AuthenticationProviderResponseMicrosoftIDPConfigType) ToPointer() *AuthenticationProviderResponseMicrosoftIDPConfigType {
 	return &e
 }
-func (e *AuthenticationProviderResponseMicrosoftIDPConfigType) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *AuthenticationProviderResponseMicrosoftIDPConfigType) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "oidc", "google", "github", "microsoft":
+			return true
+		}
 	}
-	switch v {
-	case "oidc":
-		fallthrough
-	case "google":
-		fallthrough
-	case "github":
-		fallthrough
-	case "microsoft":
-		*e = AuthenticationProviderResponseMicrosoftIDPConfigType(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for AuthenticationProviderResponseMicrosoftIDPConfigType: %v", v)
-	}
+	return false
 }
 
 type AuthenticationProviderResponseMicrosoftIDPConfigConfig struct {
@@ -387,7 +362,7 @@ func (a AuthenticationProviderResponseMicrosoftIDPConfig) MarshalJSON() ([]byte,
 }
 
 func (a *AuthenticationProviderResponseMicrosoftIDPConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"type", "name", "clientID", "clientSecret", "config", "organizationId", "createdAt", "updatedAt", "redirectURI"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -469,24 +444,16 @@ const (
 func (e AuthenticationProviderResponseGoogleIDPConfigType) ToPointer() *AuthenticationProviderResponseGoogleIDPConfigType {
 	return &e
 }
-func (e *AuthenticationProviderResponseGoogleIDPConfigType) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *AuthenticationProviderResponseGoogleIDPConfigType) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "oidc", "google", "github", "microsoft":
+			return true
+		}
 	}
-	switch v {
-	case "oidc":
-		fallthrough
-	case "google":
-		fallthrough
-	case "github":
-		fallthrough
-	case "microsoft":
-		*e = AuthenticationProviderResponseGoogleIDPConfigType(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for AuthenticationProviderResponseGoogleIDPConfigType: %v", v)
-	}
+	return false
 }
 
 type AuthenticationProviderResponseGoogleIDPConfigConfig struct {
@@ -527,7 +494,7 @@ func (a AuthenticationProviderResponseGoogleIDPConfig) MarshalJSON() ([]byte, er
 }
 
 func (a *AuthenticationProviderResponseGoogleIDPConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"type", "name", "clientID", "clientSecret", "config", "organizationId", "createdAt", "updatedAt", "redirectURI"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -606,10 +573,10 @@ const (
 )
 
 type Data struct {
-	AuthenticationProviderResponseGoogleIDPConfig    *AuthenticationProviderResponseGoogleIDPConfig    `queryParam:"inline,name=data"`
-	AuthenticationProviderResponseMicrosoftIDPConfig *AuthenticationProviderResponseMicrosoftIDPConfig `queryParam:"inline,name=data"`
-	AuthenticationProviderResponseGithubIDPConfig    *AuthenticationProviderResponseGithubIDPConfig    `queryParam:"inline,name=data"`
-	AuthenticationProviderResponseOIDCConfig         *AuthenticationProviderResponseOIDCConfig         `queryParam:"inline,name=data"`
+	AuthenticationProviderResponseGoogleIDPConfig    *AuthenticationProviderResponseGoogleIDPConfig    `queryParam:"inline,name=data" union:"member"`
+	AuthenticationProviderResponseMicrosoftIDPConfig *AuthenticationProviderResponseMicrosoftIDPConfig `queryParam:"inline,name=data" union:"member"`
+	AuthenticationProviderResponseGithubIDPConfig    *AuthenticationProviderResponseGithubIDPConfig    `queryParam:"inline,name=data" union:"member"`
+	AuthenticationProviderResponseOIDCConfig         *AuthenticationProviderResponseOIDCConfig         `queryParam:"inline,name=data" union:"member"`
 
 	Type DataType
 }
@@ -692,7 +659,7 @@ func (u *Data) UnmarshalJSON(data []byte) error {
 	}
 
 	// Pick the best candidate using multi-stage filtering
-	best := utils.PickBestCandidate(candidates)
+	best := utils.PickBestUnionCandidate(candidates, data)
 	if best == nil {
 		return fmt.Errorf("could not unmarshal `%s` into any supported union types for Data", string(data))
 	}

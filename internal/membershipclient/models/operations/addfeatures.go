@@ -28,7 +28,7 @@ func (a AddFeaturesRequest) MarshalJSON() ([]byte, error) {
 }
 
 func (a *AddFeaturesRequest) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"organizationId"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -59,7 +59,7 @@ func (a AddFeaturesResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (a *AddFeaturesResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"HttpMeta"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
 		return err
 	}
 	return nil

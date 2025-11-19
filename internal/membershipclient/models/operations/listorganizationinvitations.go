@@ -40,7 +40,7 @@ func (l ListOrganizationInvitationsResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (l *ListOrganizationInvitationsResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &l, "", false, []string{"HttpMeta"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &l, "", false, nil); err != nil {
 		return err
 	}
 	return nil

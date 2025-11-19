@@ -2,11 +2,6 @@
 
 package components
 
-import (
-	"encoding/json"
-	"fmt"
-)
-
 type SystemRole string
 
 const (
@@ -17,18 +12,14 @@ const (
 func (e SystemRole) ToPointer() *SystemRole {
 	return &e
 }
-func (e *SystemRole) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *SystemRole) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "USER", "SYSTEM":
+			return true
+		}
 	}
-	switch v {
-	case "USER":
-		fallthrough
-	case "SYSTEM":
-		*e = SystemRole(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for SystemRole: %v", v)
-	}
+	return false
 }

@@ -22,6 +22,7 @@ generation:
   schemas:
     allOfMergeStrategy: shallowMerge
   requestBodyFieldName: body
+  persistentEdits: {}
   tests:
     generateTests: false
     generateNewTests: true
@@ -33,6 +34,7 @@ go:
   clientServerStatusCodesAsErrors: true
   defaultErrorName: APIError
   flattenGlobalSecurity: true
+  forwardCompatibleEnumsByDefault: true
   imports:
     option: openapi
     paths:
@@ -42,14 +44,16 @@ go:
       shared: models/components
       webhooks: models/webhooks
   includeEmptyObjects: true
+  inferUnionDiscriminators: false
   inputModelSuffix: input
   maxMethodParams: 0
   methodArguments: require-security-and-request
   modulePath: ""
+  multipartArrayFormat: standard
   nullableOptionalWrapper: true
   outputModelSuffix: output
   packageName: github.com/formancehq/fctl/internal/membershipclient
   respectRequiredFields: false
   responseFormat: envelope-http
   sdkPackageName: ""
-  unionDeserializationStrategy: populated-fields
+  unionStrategy: populated-fields

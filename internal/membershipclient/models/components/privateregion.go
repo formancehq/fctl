@@ -29,7 +29,7 @@ func (p PrivateRegion) MarshalJSON() ([]byte, error) {
 }
 
 func (p *PrivateRegion) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &p, "", false, []string{"id", "baseUrl", "createdAt", "active", "name", "capabilities", "agentID", "outdated", "organizationID", "creatorID"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &p, "", false, nil); err != nil {
 		return err
 	}
 	return nil

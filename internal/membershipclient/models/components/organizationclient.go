@@ -43,7 +43,7 @@ func (o OrganizationClient) MarshalJSON() ([]byte, error) {
 }
 
 func (o *OrganizationClient) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &o, "", false, []string{"id", "secret", "name", "description", "createdAt", "updatedAt"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &o, "", false, nil); err != nil {
 		return err
 	}
 	return nil

@@ -29,7 +29,7 @@ func (d DeleteAuthenticationProviderResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (d *DeleteAuthenticationProviderResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &d, "", false, []string{"HttpMeta"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &d, "", false, nil); err != nil {
 		return err
 	}
 	return nil

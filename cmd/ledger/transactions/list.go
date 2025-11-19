@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/formancehq/go-libs/v3/pointer"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/formancehq/go-libs/collectionutils"
+	"github.com/formancehq/go-libs/v3/pointer"
 
 	internal "github.com/formancehq/fctl/cmd/ledger/internal"
 	fctl "github.com/formancehq/fctl/pkg"

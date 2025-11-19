@@ -17,7 +17,7 @@ func (c CreatePrivateRegionRequest) MarshalJSON() ([]byte, error) {
 }
 
 func (c *CreatePrivateRegionRequest) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &c, "", false, []string{"organizationId"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &c, "", false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -50,7 +50,7 @@ func (c CreatePrivateRegionResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (c *CreatePrivateRegionResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &c, "", false, []string{"HttpMeta"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &c, "", false, nil); err != nil {
 		return err
 	}
 	return nil

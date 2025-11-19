@@ -4,7 +4,7 @@ package components
 
 type UpdateOrganizationUserRequest struct {
 	// Policy ID applied to the user
-	PolicyID *int64 `json:"policyID,omitzero"`
+	PolicyID *int64 `json:"policyId,omitzero"`
 }
 
 func (u *UpdateOrganizationUserRequest) GetPolicyID() *int64 {

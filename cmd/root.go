@@ -13,6 +13,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/sdkerrors"
+	"github.com/formancehq/go-libs/v3/api"
+	"github.com/formancehq/go-libs/v3/logging"
 
 	"github.com/formancehq/fctl/cmd/auth"
 	"github.com/formancehq/fctl/cmd/cloud"
@@ -30,8 +32,6 @@ import (
 	"github.com/formancehq/fctl/cmd/webhooks"
 	"github.com/formancehq/fctl/internal/membershipclient/models/apierrors"
 	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/go-libs/v3/api"
-	"github.com/formancehq/go-libs/v3/logging"
 )
 
 func init() {
@@ -125,7 +125,7 @@ func Execute() {
 
 					errResponse := api.ErrorResponse{}
 					if err := json.Unmarshal([]byte(body), &errResponse); err != nil {
-						pterm.Error.WithWriter(os.Stderr).Println(body)
+						pterm.Error.WithWriter(os.Stderr).Printf("%s\r\n", body)
 						return
 					}
 					printError(errResponse.ErrorCode, errResponse.ErrorMessage, &errResponse.Details)

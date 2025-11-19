@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/formancehq/go-libs/v3/collectionutils"
 	"github.com/spf13/cobra"
+
+	"github.com/formancehq/go-libs/v3/collectionutils"
 )
 
 func StackCompletion(cmd *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {

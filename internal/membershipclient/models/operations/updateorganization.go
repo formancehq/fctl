@@ -17,7 +17,7 @@ func (u UpdateOrganizationRequest) MarshalJSON() ([]byte, error) {
 }
 
 func (u *UpdateOrganizationRequest) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &u, "", false, []string{"organizationId"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -50,7 +50,7 @@ func (u UpdateOrganizationResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (u *UpdateOrganizationResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &u, "", false, []string{"HttpMeta"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
 		return err
 	}
 	return nil

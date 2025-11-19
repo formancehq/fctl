@@ -212,7 +212,7 @@ func (p *prompt) displayHeader(cmd *cobra.Command, cfg *fctl.Config) error {
 		}
 	}
 	header += " #"
-	fctl.BasicTextCyan.WithWriter(cmd.OutOrStdout()).Println(header)
+	fctl.BasicTextCyan.WithWriter(cmd.OutOrStdout()).Printf("%s\r\n", header)
 	return nil
 }
 

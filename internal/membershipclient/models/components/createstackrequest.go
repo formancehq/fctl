@@ -20,7 +20,7 @@ func (c CreateStackRequest) MarshalJSON() ([]byte, error) {
 }
 
 func (c *CreateStackRequest) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &c, "", false, []string{"name", "regionID"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &c, "", false, nil); err != nil {
 		return err
 	}
 	return nil

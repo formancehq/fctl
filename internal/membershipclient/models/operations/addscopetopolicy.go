@@ -45,7 +45,7 @@ func (a AddScopeToPolicyResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (a *AddScopeToPolicyResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"HttpMeta"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
 		return err
 	}
 	return nil

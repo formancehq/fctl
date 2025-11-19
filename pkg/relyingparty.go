@@ -4,8 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/formancehq/go-libs/v3/oidc/client"
 	"github.com/pterm/pterm"
+
+	"github.com/formancehq/go-libs/v3/oidc/client"
 )
 
 func GetAuthRelyingParty(ctx context.Context, httpClient *http.Client, membershipURI string) (client.RelyingParty, error) {

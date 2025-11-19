@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/formancehq/fctl/internal/membershipclient/models/components"
-
 	"github.com/pterm/pterm"
+
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
 )
 
 func PrintOrganization(organization *components.OrganizationExpanded) error {

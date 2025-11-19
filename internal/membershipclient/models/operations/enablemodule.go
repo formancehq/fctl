@@ -45,7 +45,7 @@ func (e EnableModuleResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (e *EnableModuleResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &e, "", false, []string{"HttpMeta"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &e, "", false, nil); err != nil {
 		return err
 	}
 	return nil

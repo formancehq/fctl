@@ -21,7 +21,7 @@ func (o OrganizationApplication) MarshalJSON() ([]byte, error) {
 }
 
 func (o *OrganizationApplication) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &o, "", false, []string{"organizationId", "applicationId", "createdAt"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &o, "", false, nil); err != nil {
 		return err
 	}
 	return nil

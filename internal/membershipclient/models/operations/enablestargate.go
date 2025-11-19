@@ -37,7 +37,7 @@ func (e EnableStargateResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (e *EnableStargateResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &e, "", false, []string{"HttpMeta"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &e, "", false, nil); err != nil {
 		return err
 	}
 	return nil

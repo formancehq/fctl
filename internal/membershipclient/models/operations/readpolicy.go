@@ -39,7 +39,7 @@ func (r ReadPolicyResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (r *ReadPolicyResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &r, "", false, []string{"HttpMeta"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &r, "", false, nil); err != nil {
 		return err
 	}
 	return nil

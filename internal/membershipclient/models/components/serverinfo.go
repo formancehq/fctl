@@ -17,7 +17,7 @@ func (s ServerInfo) MarshalJSON() ([]byte, error) {
 }
 
 func (s *ServerInfo) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &s, "", false, []string{"version"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &s, "", false, nil); err != nil {
 		return err
 	}
 	return nil

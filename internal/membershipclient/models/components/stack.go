@@ -3,8 +3,6 @@
 package components
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/formancehq/fctl/internal/membershipclient/internal/utils"
 	"time"
 )
@@ -22,26 +20,16 @@ const (
 func (e StackStatus) ToPointer() *StackStatus {
 	return &e
 }
-func (e *StackStatus) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *StackStatus) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "UNKNOWN", "PROGRESSING", "READY", "DISABLED", "DELETED":
+			return true
+		}
 	}
-	switch v {
-	case "UNKNOWN":
-		fallthrough
-	case "PROGRESSING":
-		fallthrough
-	case "READY":
-		fallthrough
-	case "DISABLED":
-		fallthrough
-	case "DELETED":
-		*e = StackStatus(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for StackStatus: %v", v)
-	}
+	return false
 }
 
 type StackState string
@@ -55,22 +43,16 @@ const (
 func (e StackState) ToPointer() *StackState {
 	return &e
 }
-func (e *StackState) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *StackState) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "ACTIVE", "DISABLED", "DELETED":
+			return true
+		}
 	}
-	switch v {
-	case "ACTIVE":
-		fallthrough
-	case "DISABLED":
-		fallthrough
-	case "DELETED":
-		*e = StackState(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for StackState: %v", v)
-	}
+	return false
 }
 
 type ExpectedStatus string
@@ -84,22 +66,16 @@ const (
 func (e ExpectedStatus) ToPointer() *ExpectedStatus {
 	return &e
 }
-func (e *ExpectedStatus) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *ExpectedStatus) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "READY", "DISABLED", "DELETED":
+			return true
+		}
 	}
-	switch v {
-	case "READY":
-		fallthrough
-	case "DISABLED":
-		fallthrough
-	case "DELETED":
-		*e = ExpectedStatus(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for ExpectedStatus: %v", v)
-	}
+	return false
 }
 
 type Stack struct {
@@ -144,7 +120,7 @@ func (s Stack) MarshalJSON() ([]byte, error) {
 }
 
 func (s *Stack) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &s, "", false, []string{"name", "status", "state", "expectedStatus", "lastStateUpdate", "lastExpectedStatusUpdate", "lastStatusUpdate", "reachable", "id", "organizationId", "uri", "regionID", "stargateEnabled", "synchronised", "modules"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &s, "", false, nil); err != nil {
 		return err
 	}
 	return nil

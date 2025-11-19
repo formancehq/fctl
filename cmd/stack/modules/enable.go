@@ -1,10 +1,11 @@
 package modules
 
 import (
-	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
-	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type EnableStore struct {
@@ -50,7 +51,7 @@ func (c *EnableController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
-	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	_, stackID, err := fctl.ResolveStackID(cmd, *profile)
 	if err != nil {
 		return nil, err
 	}

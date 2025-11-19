@@ -3,8 +3,6 @@
 package components
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/formancehq/fctl/internal/membershipclient/internal/utils"
 	"time"
 )
@@ -19,20 +17,16 @@ const (
 func (e ModuleState) ToPointer() *ModuleState {
 	return &e
 }
-func (e *ModuleState) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *ModuleState) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "ENABLED", "DISABLED":
+			return true
+		}
 	}
-	switch v {
-	case "ENABLED":
-		fallthrough
-	case "DISABLED":
-		*e = ModuleState(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for ModuleState: %v", v)
-	}
+	return false
 }
 
 type ModuleStatus string
@@ -47,24 +41,16 @@ const (
 func (e ModuleStatus) ToPointer() *ModuleStatus {
 	return &e
 }
-func (e *ModuleStatus) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *ModuleStatus) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "UNKNOWN", "PROGRESSING", "READY", "DELETED":
+			return true
+		}
 	}
-	switch v {
-	case "UNKNOWN":
-		fallthrough
-	case "PROGRESSING":
-		fallthrough
-	case "READY":
-		fallthrough
-	case "DELETED":
-		*e = ModuleStatus(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for ModuleStatus: %v", v)
-	}
+	return false
 }
 
 type ClusterStatus struct {
@@ -84,7 +70,7 @@ func (m Module) MarshalJSON() ([]byte, error) {
 }
 
 func (m *Module) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &m, "", false, []string{"name", "state", "status", "lastStatusUpdate", "lastStateUpdate"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &m, "", false, nil); err != nil {
 		return err
 	}
 	return nil

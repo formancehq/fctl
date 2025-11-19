@@ -19,7 +19,7 @@ func (u UpsertStackUserAccessRequest) MarshalJSON() ([]byte, error) {
 }
 
 func (u *UpsertStackUserAccessRequest) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &u, "", false, []string{"organizationId", "stackId", "userId"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -64,7 +64,7 @@ func (u UpsertStackUserAccessResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (u *UpsertStackUserAccessResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &u, "", false, []string{"HttpMeta"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
 		return err
 	}
 	return nil

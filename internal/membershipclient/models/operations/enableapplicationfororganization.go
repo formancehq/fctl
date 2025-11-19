@@ -39,7 +39,7 @@ func (e EnableApplicationForOrganizationResponse) MarshalJSON() ([]byte, error) 
 }
 
 func (e *EnableApplicationForOrganizationResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &e, "", false, []string{"HttpMeta"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &e, "", false, nil); err != nil {
 		return err
 	}
 	return nil

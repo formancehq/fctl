@@ -18,7 +18,7 @@ func (u UpdatePolicyRequest) MarshalJSON() ([]byte, error) {
 }
 
 func (u *UpdatePolicyRequest) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &u, "", false, []string{"organizationId", "policyId"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -58,7 +58,7 @@ func (u UpdatePolicyResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (u *UpdatePolicyResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &u, "", false, []string{"HttpMeta"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
 		return err
 	}
 	return nil

@@ -29,7 +29,7 @@ func (s Scope) MarshalJSON() ([]byte, error) {
 }
 
 func (s *Scope) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &s, "", false, []string{"id", "label", "createdAt", "updatedAt"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &s, "", false, nil); err != nil {
 		return err
 	}
 	return nil

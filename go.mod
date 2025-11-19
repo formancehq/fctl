@@ -16,11 +16,9 @@ require (
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/formancehq/fctl/internal/deployserverclient v0.0.0-00010101000000-000000000000
 	github.com/formancehq/fctl/internal/membershipclient v0.0.0-20251027061333-c274726dd769
-	github.com/formancehq/fctl/membershipclient v0.0.0-20251118023827-577ede8a145e
 	github.com/formancehq/formance-sdk-go/v3 v3.5.0
 	github.com/formancehq/go-libs v1.7.2
 	github.com/formancehq/go-libs/v3 v3.4.0
-	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/iancoleman/strcase v0.3.0
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/pkg/errors v0.9.1
@@ -98,5 +96,4 @@ require (
 	golang.org/x/term v0.37.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 	gopkg.in/go-jose/go-jose.v2 v2.6.3 // indirect
-	gopkg.in/validator.v2 v2.0.1 // indirect
 )

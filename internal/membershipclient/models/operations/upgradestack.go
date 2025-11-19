@@ -18,7 +18,7 @@ func (u UpgradeStackRequest) MarshalJSON() ([]byte, error) {
 }
 
 func (u *UpgradeStackRequest) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &u, "", false, []string{"organizationId", "stackId"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -56,7 +56,7 @@ func (u UpgradeStackResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (u *UpgradeStackResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &u, "", false, []string{"HttpMeta"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
 		return err
 	}
 	return nil
