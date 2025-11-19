@@ -317,7 +317,7 @@ func EnsureAppAccess(
 		refreshed, err := Refresh(cmd.Context(), relyingParty, *appToken)
 		if err != nil {
 			oidcErr := &oidc.Error{}
-			if !errors.As(err, oidcErr) {
+			if !errors.As(err, &oidcErr) {
 				return nil, fmt.Errorf("failed to refresh app token: %w", err)
 			}
 
