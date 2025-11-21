@@ -93,7 +93,8 @@ func corsMiddleware(allowedOrigins []string, next http.Handler) http.Handler {
 			} else if origin != "" {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
 			}
-
+			
+			// TODO: forward services provided headers - also check where headers are cleared (line ~208)
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS")
 			w.Header().Set("Access-Control-Expose-Headers", "Count")
 			w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token, X-Requested-With")
@@ -205,6 +206,7 @@ func (c *StackProxyController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 	proxy.Transport = transport
 
 	// Clear any CORS headers from upstream to prevent conflicts with our CORS middleware
+	// TODO: forward services provided headers - also check where headers are added (line ~97)
 	proxy.ModifyResponse = func(resp *http.Response) error {
 		resp.Header.Del("Access-Control-Allow-Origin")
 		resp.Header.Del("Access-Control-Allow-Methods")
