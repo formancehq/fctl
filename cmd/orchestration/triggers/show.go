@@ -48,14 +48,24 @@ func (c *TriggersShowController) GetStore() *TriggersShowStore {
 func (c *TriggersShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 	store := fctl.GetStackStore(cmd.Context())
 
-	res, err := store.Client().Orchestration.V1.ReadTrigger(cmd.Context(), operations.ReadTriggerRequest{
+	res, err := store.Client().Orchestration.V2.ReadTrigger(cmd.Context(), operations.V2ReadTriggerRequest{
 		TriggerID: args[0],
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "reading trigger")
 	}
 
-	c.store.Trigger = res.ReadTriggerResponse.Data
+	// Convert V2Trigger to Trigger
+	v2Trigger := res.V2ReadTriggerResponse.Data
+	c.store.Trigger = shared.Trigger{
+		ID:         v2Trigger.ID,
+		Name:       v2Trigger.Name,
+		WorkflowID: v2Trigger.WorkflowID,
+		Event:      v2Trigger.Event,
+		Filter:     v2Trigger.Filter,
+		Vars:       v2Trigger.Vars,
+		CreatedAt:  v2Trigger.CreatedAt,
+	}
 
 	return c, nil
 }

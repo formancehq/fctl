@@ -57,8 +57,8 @@ func (c *WorkflowsCreateController) Run(cmd *cobra.Command, args []string) (fctl
 	}
 
 	//nolint:gosimple
-	response, err := store.Client().Orchestration.V1.
-		CreateWorkflow(cmd.Context(), &shared.WorkflowConfig{
+	response, err := store.Client().Orchestration.V2.
+		CreateWorkflow(cmd.Context(), &shared.V2WorkflowConfig{
 			Name:   config.Name,
 			Stages: config.Stages,
 		})
@@ -66,7 +66,7 @@ func (c *WorkflowsCreateController) Run(cmd *cobra.Command, args []string) (fctl
 		return nil, err
 	}
 
-	c.store.WorkflowId = response.CreateWorkflowResponse.Data.ID
+	c.store.WorkflowId = response.V2CreateWorkflowResponse.Data.ID
 
 	return c, nil
 }

@@ -66,7 +66,7 @@ func (c *TriggersCreateController) Run(cmd *cobra.Command, args []string) (fctl.
 		workflow = args[1]
 	)
 
-	data := &shared.TriggerData{
+	data := &shared.V2TriggerData{
 		Event:      event,
 		Name:       &name,
 		WorkflowID: workflow,
@@ -85,12 +85,22 @@ func (c *TriggersCreateController) Run(cmd *cobra.Command, args []string) (fctl.
 		}
 	}
 
-	res, err := store.Client().Orchestration.V1.CreateTrigger(cmd.Context(), data)
+	res, err := store.Client().Orchestration.V2.CreateTrigger(cmd.Context(), data)
 	if err != nil {
 		return nil, errors.Wrap(err, "reading trigger")
 	}
 
-	c.store.Trigger = res.CreateTriggerResponse.Data
+	// Convert V2Trigger to Trigger
+	v2Trigger := res.V2CreateTriggerResponse.Data
+	c.store.Trigger = shared.Trigger{
+		ID:         v2Trigger.ID,
+		Name:       v2Trigger.Name,
+		WorkflowID: v2Trigger.WorkflowID,
+		Event:      v2Trigger.Event,
+		Filter:     v2Trigger.Filter,
+		Vars:       v2Trigger.Vars,
+		CreatedAt:  v2Trigger.CreatedAt,
+	}
 
 	return c, nil
 }
