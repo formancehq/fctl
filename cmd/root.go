@@ -105,7 +105,9 @@ func Execute() {
 		}
 	}()
 	ctx, _ := signal.NotifyContext(context.TODO(), os.Interrupt)
+
 	cmd := NewRootCommand()
+	service.BindEnvToCommand(cmd)
 	if err := cmd.ExecuteContext(ctx); err != nil {
 		switch {
 		case errors.Is(err, fctl.ErrMissingApproval):
