@@ -20,7 +20,7 @@ import (
 	"github.com/zitadel/oidc/v2/pkg/oidc"
 	"golang.org/x/oauth2"
 
-	"github.com/formancehq/go-libs/logging"
+	"github.com/formancehq/go-libs/v3/logging"
 
 	"github.com/formancehq/fctl/membershipclient"
 )
