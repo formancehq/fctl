@@ -10,7 +10,7 @@ import (
 	"golang.org/x/oauth2"
 
 	formance "github.com/formancehq/formance-sdk-go/v3"
-	"github.com/formancehq/go-libs/logging"
+	"github.com/formancehq/go-libs/v3/logging"
 
 	"github.com/formancehq/fctl/membershipclient"
 )

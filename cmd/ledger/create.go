@@ -9,7 +9,7 @@ import (
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
-	"github.com/formancehq/go-libs/pointer"
+	"github.com/formancehq/go-libs/v3/pointer"
 
 	fctl "github.com/formancehq/fctl/pkg"
 )

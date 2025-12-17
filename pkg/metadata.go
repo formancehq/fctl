@@ -8,7 +8,7 @@ import (
 
 	"github.com/pterm/pterm"
 
-	"github.com/formancehq/go-libs/metadata"
+	"github.com/formancehq/go-libs/v3/metadata"
 )
 
 func ParseMetadata(array []string) (metadata.Metadata, error) {

@@ -13,8 +13,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/sdkerrors"
-	"github.com/formancehq/go-libs/api"
-	"github.com/formancehq/go-libs/logging"
+	"github.com/formancehq/go-libs/v3/api"
+	"github.com/formancehq/go-libs/v3/logging"
+	"github.com/formancehq/go-libs/v3/service"
 
 	"github.com/formancehq/fctl/cmd/auth"
 	"github.com/formancehq/fctl/cmd/cloud"
@@ -71,7 +72,7 @@ func NewRootCommand() *cobra.Command {
 		fctl.WithPersistentBoolFlag(fctl.InsecureTlsFlag, false, "Allow insecure TLS connections"),
 		fctl.WithPersistentBoolFlag(fctl.TelemetryFlag, false, "Enable telemetry"),
 		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
-			logger := logging.NewDefaultLogger(cmd.OutOrStdout(), fctl.GetBool(cmd, fctl.DebugFlag), false)
+			logger := logging.NewDefaultLogger(cmd.OutOrStdout(), service.IsDebug(cmd), fctl.GetString(cmd, fctl.OutputFlag) == "json", false)
 			ctx := logging.ContextWithLogger(cmd.Context(), logger)
 			cmd.SetContext(ctx)
 			return nil

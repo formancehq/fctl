@@ -10,7 +10,7 @@ import (
 	"github.com/pterm/pterm"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
-	"github.com/formancehq/go-libs/collectionutils"
+	"github.com/formancehq/go-libs/v3/collectionutils"
 
 	fctl "github.com/formancehq/fctl/pkg"
 )
