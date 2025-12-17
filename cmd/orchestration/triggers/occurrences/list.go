@@ -14,7 +14,7 @@ import (
 )
 
 type OccurrencesListStore struct {
-	WorkflowOccurrence []shared.TriggerOccurrence `json:"occurrences"`
+	WorkflowOccurrence []shared.V2TriggerOccurrence `json:"occurrences"`
 }
 type OccurrencesListController struct {
 	store *OccurrencesListStore
@@ -49,14 +49,14 @@ func (c *OccurrencesListController) GetStore() *OccurrencesListStore {
 func (c *OccurrencesListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 	store := fctl.GetStackStore(cmd.Context())
 
-	response, err := store.Client().Orchestration.V1.ListTriggersOccurrences(cmd.Context(), operations.ListTriggersOccurrencesRequest{
+	response, err := store.Client().Orchestration.V2.ListTriggersOccurrences(cmd.Context(), operations.V2ListTriggersOccurrencesRequest{
 		TriggerID: args[0],
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.WorkflowOccurrence = response.ListTriggersOccurrencesResponse.Data
+	c.store.WorkflowOccurrence = response.V2ListTriggersOccurrencesResponse.Cursor.Data
 
 	return c, nil
 }
@@ -73,7 +73,7 @@ func (c *OccurrencesListController) Render(cmd *cobra.Command, args []string) er
 		WithData(
 			fctl.Prepend(
 				fctl.Map(c.store.WorkflowOccurrence,
-					func(src shared.TriggerOccurrence) []string {
+					func(src shared.V2TriggerOccurrence) []string {
 						return []string{
 							func() string {
 								if src.WorkflowInstanceID != nil {

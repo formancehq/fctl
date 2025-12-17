@@ -64,7 +64,7 @@ func (c *InstancesListController) GetStore() *InstancesListStore {
 func (c *InstancesListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 	store := fctl.GetStackStore(cmd.Context())
 
-	response, err := store.Client().Orchestration.V1.ListInstances(cmd.Context(), operations.ListInstancesRequest{
+	response, err := store.Client().Orchestration.V2.ListInstances(cmd.Context(), operations.V2ListInstancesRequest{
 		Running:    fctl.Ptr(fctl.GetBool(cmd, c.runningFlag)),
 		WorkflowID: fctl.Ptr(fctl.GetString(cmd, c.workflowFlag)),
 	})
@@ -72,7 +72,7 @@ func (c *InstancesListController) Run(cmd *cobra.Command, args []string) (fctl.R
 		return nil, err
 	}
 
-	c.store.WorkflowInstance = fctl.Map(response.ListRunsResponse.Data, func(src shared.WorkflowInstance) WorkflowInstance {
+	c.store.WorkflowInstance = fctl.Map(response.V2ListRunsResponse.Cursor.Data, func(src shared.V2WorkflowInstance) WorkflowInstance {
 		return WorkflowInstance{
 			InstanceID: src.ID,
 			WorkflowID: src.WorkflowID,

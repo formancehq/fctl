@@ -52,7 +52,7 @@ func (c *TriggersListController) GetStore() *TriggersListStore {
 func (c *TriggersListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 	store := fctl.GetStackStore(cmd.Context())
 	var name = fctl.GetString(cmd, c.nameFlag)
-	response, err := store.Client().Orchestration.V1.ListTriggers(cmd.Context(), operations.ListTriggersRequest{
+	response, err := store.Client().Orchestration.V2.ListTriggers(cmd.Context(), operations.V2ListTriggersRequest{
 		Name: &name,
 	})
 
@@ -60,7 +60,19 @@ func (c *TriggersListController) Run(cmd *cobra.Command, args []string) (fctl.Re
 		return nil, err
 	}
 
-	c.store.WorkflowTrigger = response.ListTriggersResponse.Data
+	// Convert V2Trigger to Trigger
+	v2Triggers := response.V2ListTriggersResponse.Cursor.Data
+	c.store.WorkflowTrigger = fctl.Map(v2Triggers, func(v2Trigger shared.V2Trigger) shared.Trigger {
+		return shared.Trigger{
+			ID:         v2Trigger.ID,
+			Name:       v2Trigger.Name,
+			WorkflowID: v2Trigger.WorkflowID,
+			Event:      v2Trigger.Event,
+			Filter:     v2Trigger.Filter,
+			Vars:       v2Trigger.Vars,
+			CreatedAt:  v2Trigger.CreatedAt,
+		}
+	})
 
 	return c, nil
 }

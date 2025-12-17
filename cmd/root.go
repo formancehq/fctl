@@ -24,7 +24,6 @@ import (
 	"github.com/formancehq/fctl/cmd/payments"
 	"github.com/formancehq/fctl/cmd/profiles"
 	"github.com/formancehq/fctl/cmd/reconciliation"
-	"github.com/formancehq/fctl/cmd/search"
 	"github.com/formancehq/fctl/cmd/stack"
 	"github.com/formancehq/fctl/cmd/ui"
 	"github.com/formancehq/fctl/cmd/version"
@@ -59,7 +58,6 @@ func NewRootCommand() *cobra.Command {
 			stack.NewCommand(),
 			auth.NewCommand(),
 			cloud.NewCommand(),
-			search.NewCommand(),
 			webhooks.NewCommand(),
 			wallets.NewCommand(),
 			orchestration.NewCommand(),

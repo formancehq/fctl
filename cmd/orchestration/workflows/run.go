@@ -69,8 +69,8 @@ func (c *WorkflowsRunController) Run(cmd *cobra.Command, args []string) (fctl.Re
 		variables[parts[0]] = parts[1]
 	}
 
-	response, err := store.Client().Orchestration.V1.
-		RunWorkflow(cmd.Context(), operations.RunWorkflowRequest{
+	response, err := store.Client().Orchestration.V2.
+		RunWorkflow(cmd.Context(), operations.V2RunWorkflowRequest{
 			RequestBody: variables,
 			Wait:        &wait,
 			WorkflowID:  args[0],
@@ -80,7 +80,17 @@ func (c *WorkflowsRunController) Run(cmd *cobra.Command, args []string) (fctl.Re
 	}
 
 	c.wait = wait
-	c.store.WorkflowInstance = response.RunWorkflowResponse.Data
+	// Convert V2WorkflowInstance to WorkflowInstance
+	v2Instance := response.V2RunWorkflowResponse.Data
+	c.store.WorkflowInstance = shared.WorkflowInstance{
+		ID:           v2Instance.ID,
+		WorkflowID:   v2Instance.WorkflowID,
+		CreatedAt:    v2Instance.CreatedAt,
+		UpdatedAt:    v2Instance.UpdatedAt,
+		Terminated:   v2Instance.Terminated,
+		TerminatedAt: v2Instance.TerminatedAt,
+		Error:        v2Instance.Error,
+	}
 	return c, nil
 }
 
@@ -88,14 +98,22 @@ func (c *WorkflowsRunController) Render(cmd *cobra.Command, args []string) error
 	store := fctl.GetStackStore(cmd.Context())
 	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Workflow instance created with ID: %s", c.store.WorkflowInstance.ID)
 	if c.wait {
-		w, err := store.Client().Orchestration.V1.GetWorkflow(cmd.Context(), operations.GetWorkflowRequest{
+		w, err := store.Client().Orchestration.V2.GetWorkflow(cmd.Context(), operations.V2GetWorkflowRequest{
 			FlowID: args[0],
 		})
 		if err != nil {
 			panic(err)
 		}
 
-		return internal.PrintWorkflowInstance(cmd.OutOrStdout(), w.GetWorkflowResponse.Data, c.store.WorkflowInstance)
+		// Convert V2Workflow to Workflow
+		v2Workflow := w.V2GetWorkflowResponse.Data
+		workflow := shared.Workflow{
+			ID:        v2Workflow.ID,
+			CreatedAt: v2Workflow.CreatedAt,
+			UpdatedAt: v2Workflow.UpdatedAt,
+			Config:    shared.WorkflowConfig(v2Workflow.Config),
+		}
+		return internal.PrintWorkflowInstance(cmd.OutOrStdout(), workflow, c.store.WorkflowInstance)
 	}
 	return nil
 }
