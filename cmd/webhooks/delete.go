@@ -68,7 +68,7 @@ func (c *DeleteWebhookController) Render(cmd *cobra.Command, args []string) erro
 	}
 
 	if c.store.ErrorResponse != nil {
-		pterm.Warning.WithShowLineNumber(false).Printfln(c.store.ErrorResponse.ErrorMessage)
+		pterm.Warning.WithShowLineNumber(false).Println(c.store.ErrorResponse.ErrorMessage)
 		return nil
 	}
 
@@ -84,6 +84,6 @@ func NewDeleteCommand() *cobra.Command {
 		fctl.WithAliases("del"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
-		fctl.WithController[*DeleteWebhookStore](NewDeleteWebhookController()),
+		fctl.WithController(NewDeleteWebhookController()),
 	)
 }

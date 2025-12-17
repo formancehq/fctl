@@ -232,14 +232,14 @@ func printStage(cmd *cobra.Command, i int, client *formance.Formance, id string,
 				listItems = append(listItems, historyItemTitle("List wallets"))
 			}
 			if historyStage.LastFailure != nil {
-				listItems = append(listItems, historyItemError(*historyStage.LastFailure))
+				listItems = append(listItems, historyItemError("%s", *historyStage.LastFailure))
 				if historyStage.NextExecution != nil {
 					listItems = append(listItems, historyItemError("Next try: %s", historyStage.NextExecution.Format(time.RFC3339)))
 					listItems = append(listItems, historyItemError("Attempt: %d", historyStage.Attempt))
 				}
 			}
 			if historyStage.Error != nil {
-				listItems = append(listItems, historyItemError(*historyStage.Error))
+				listItems = append(listItems, historyItemError("%s", *historyStage.Error))
 			}
 		}
 	case shared.StageTypeStageDelay:
