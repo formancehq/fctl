@@ -3,12 +3,20 @@
 package components
 
 type Pool struct {
-	AccountIds []string `json:"accountIds"`
+	AccountIds []string       `json:"accountIds,omitempty"`
+	Query      map[string]any `json:"query,omitempty"`
 }
 
 func (p *Pool) GetAccountIds() []string {
 	if p == nil {
-		return []string{}
+		return nil
 	}
 	return p.AccountIds
+}
+
+func (p *Pool) GetQuery() map[string]any {
+	if p == nil {
+		return nil
+	}
+	return p.Query
 }

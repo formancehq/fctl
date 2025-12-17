@@ -93,7 +93,7 @@ func corsMiddleware(allowedOrigins []string, next http.Handler) http.Handler {
 			} else if origin != "" {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
 			}
-			
+
 			// TODO: forward services provided headers - also check where headers are cleared (line ~208)
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS")
 			w.Header().Set("Access-Control-Expose-Headers", "Count")

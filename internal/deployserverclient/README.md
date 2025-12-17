@@ -245,8 +245,8 @@ You can override the default server globally using the `WithServerIndex(serverIn
 
 | #   | Server                                         | Description       |
 | --- | ---------------------------------------------- | ----------------- |
-| 0   | `https://deploy-server.staging.formance.cloud` | Staging server    |
-| 1   | `https://deploy-server.formance.cloud`         | Production server |
+| 0   | `https://deploy.formance.cloud`                | Production server |
+| 1   | `https://deploy-server.staging.formance.cloud` | Staging server    |
 | 2   | `http://localhost:8080`                        | Local server      |
 
 #### Example

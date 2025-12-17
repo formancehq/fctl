@@ -2,7 +2,7 @@
 
 package deployserverclient
 
-// Generated from OpenAPI doc version 0.1.0 and generator version 2.755.6
+// Generated from OpenAPI doc version 0.1.0 and generator version 2.787.2
 
 import (
 	"bytes"
@@ -22,10 +22,10 @@ import (
 
 // ServerList contains the list of servers available to the SDK
 var ServerList = []string{
+	// Production server
+	"https://deploy.formance.cloud",
 	// Staging server
 	"https://deploy-server.staging.formance.cloud",
-	// Production server
-	"https://deploy-server.formance.cloud",
 	// Local server
 	"http://localhost:8080",
 }
@@ -119,7 +119,7 @@ func New(opts ...SDKOption) *DeployServer {
 	sdk := &DeployServer{
 		SDKVersion: "0.0.1",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 0.0.1 2.755.6 0.1.0 github.com/formancehq/fctl/internal/deployserverclient",
+			UserAgent:  "speakeasy-sdk/go 0.0.1 2.787.2 0.1.0 github.com/formancehq/fctl/internal/deployserverclient",
 			ServerList: ServerList,
 		},
 		hooks: hooks.New(),
@@ -202,7 +202,7 @@ func (s *DeployServer) ListApps(ctx context.Context, organizationID string, page
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateQueryParams(ctx, req, request, nil); err != nil {
+	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
@@ -1499,7 +1499,7 @@ func (s *DeployServer) ReadAppVariables(ctx context.Context, id string, pageNumb
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateQueryParams(ctx, req, request, nil); err != nil {
+	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
@@ -2154,7 +2154,7 @@ func (s *DeployServer) ReadAppRuns(ctx context.Context, id string, pageNumber *i
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateQueryParams(ctx, req, request, nil); err != nil {
+	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
@@ -2380,7 +2380,7 @@ func (s *DeployServer) ReadAppVersions(ctx context.Context, id string, pageNumbe
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateQueryParams(ctx, req, request, nil); err != nil {
+	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
@@ -2548,10 +2548,10 @@ func (s *DeployServer) ReadAppVersions(ctx context.Context, id string, pageNumbe
 }
 
 // DeployAppConfigurationRaw - Deploy a new configuration for an app
-func (s *DeployServer) DeployAppConfigurationRaw(ctx context.Context, id string, application any, opts ...operations.Option) (*operations.DeployAppConfigurationRawResponse, error) {
+func (s *DeployServer) DeployAppConfigurationRaw(ctx context.Context, id string, requestBody any, opts ...operations.Option) (*operations.DeployAppConfigurationRawResponse, error) {
 	request := operations.DeployAppConfigurationRawRequest{
 		ID:          id,
-		Application: application,
+		RequestBody: requestBody,
 	}
 
 	o := operations.Options{}
@@ -2586,7 +2586,7 @@ func (s *DeployServer) DeployAppConfigurationRaw(ctx context.Context, id string,
 		OAuth2Scopes:     nil,
 		SecuritySource:   nil,
 	}
-	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Application", "raw", `request:"mediaType=application/yaml"`)
+	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "RequestBody", "raw", `request:"mediaType=application/yaml"`)
 	if err != nil {
 		return nil, err
 	}
@@ -4181,7 +4181,7 @@ func (s *DeployServer) ReadCurrentAppVersion(ctx context.Context, id string, fro
 
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateQueryParams(ctx, req, request, nil); err != nil {
+	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 

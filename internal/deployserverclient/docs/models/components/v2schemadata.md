@@ -1,0 +1,9 @@
+# V2SchemaData
+
+
+## Fields
+
+| Field                                                                                           | Type                                                                                            | Required                                                                                        | Description                                                                                     |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `Chart`                                                                                         | map[string][components.V2ChartSegment](../../models/components/v2chartsegment.md)               | :heavy_minus_sign:                                                                              | N/A                                                                                             |
+| `Transactions`                                                                                  | map[string][components.V2TransactionTemplate](../../models/components/v2transactiontemplate.md) | :heavy_minus_sign:                                                                              | N/A                                                                                             |

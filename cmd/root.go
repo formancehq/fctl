@@ -128,7 +128,7 @@ func Execute() {
 
 					errResponse := api.ErrorResponse{}
 					if err := json.Unmarshal(body, &errResponse); err != nil {
-						pterm.Error.WithWriter(os.Stderr).Printfln(string(body))
+						pterm.Error.WithWriter(os.Stderr).Println(string(body))
 						return
 					}
 					printError(errResponse.ErrorCode, errResponse.ErrorMessage, &errResponse.Details)
