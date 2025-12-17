@@ -23,6 +23,7 @@ generation:
   schemas:
     allOfMergeStrategy: shallowMerge
   requestBodyFieldName: ""
+  persistentEdits: {}
   tests:
     generateTests: true
     generateNewTests: false
@@ -36,6 +37,7 @@ go:
   defaultErrorName: APIError
   envVarPrefix: DEPLOYSERVER
   flattenGlobalSecurity: true
+  forwardCompatibleEnumsByDefault: false
   imports:
     option: openapi
     paths:
@@ -45,14 +47,16 @@ go:
       shared: models/components
       webhooks: models/webhooks
   includeEmptyObjects: false
+  inferUnionDiscriminators: false
   inputModelSuffix: input
   maxMethodParams: 4
   methodArguments: require-security-and-request
   modulePath: ""
+  multipartArrayFormat: legacy
   nullableOptionalWrapper: false
   outputModelSuffix: output
   packageName: github.com/formancehq/fctl/internal/deployserverclient
   respectRequiredFields: false
   responseFormat: envelope-http
   sdkPackageName: ""
-  unionDeserializationStrategy: left-to-right
+  unionStrategy: left-to-right

@@ -4,10 +4,10 @@ info:
   contact: {}
   version: 0.1.0
 servers:
+- url: https://deploy.formance.cloud
+  description: Production server
 - url: https://deploy-server.staging.formance.cloud
   description: Staging server
-- url: https://deploy-server.formance.cloud
-  description: Production server
 - url: http://localhost:8080
   description: Local server
 paths:
@@ -312,7 +312,9 @@ paths:
         content:
           application/yaml:
             schema:
-              $ref: '#/components/schemas/application'
+              type: string
+              format: binary
+              description: YAML manifest content
           application/json:
             schema:
               $ref: '#/components/schemas/application'
@@ -849,6 +851,61 @@ components:
           type: string
       required:
       - errorCode
+    V2ChartAccountMetadata:
+      properties:
+        default:
+          type:
+          - 'null'
+          - string
+      type: object
+    V2ChartAccountRules:
+      type: object
+    DotSelf:
+      type: object
+    V2ChartSegment:
+      additionalProperties: true
+      properties:
+        .metadata:
+          additionalProperties:
+            $ref: '#/components/schemas/V2ChartAccountMetadata'
+          type: object
+        .pattern:
+          type:
+          - 'null'
+          - string
+        .rules:
+          $ref: '#/components/schemas/V2ChartAccountRules'
+        .self:
+          $ref: '#/components/schemas/DotSelf'
+      type: object
+    V2TransactionTemplate:
+      properties:
+        description:
+          type:
+          - 'null'
+          - string
+        runtime:
+          type:
+          - 'null'
+          - string
+        script:
+          type:
+          - 'null'
+          - string
+      type: object
+    V2SchemaData:
+      properties:
+        chart:
+          additionalProperties:
+            $ref: '#/components/schemas/V2ChartSegment'
+          type:
+          - object
+          - 'null'
+        transactions:
+          additionalProperties:
+            $ref: '#/components/schemas/V2TransactionTemplate'
+          type: object
+      type: object
     Ledger:
       required:
       - name
@@ -856,25 +913,21 @@ components:
         name:
           type: string
         schema:
-          items:
-            properties:
-              metadata:
-                additionalProperties:
-                  type: string
-                type: object
-              name:
-                type: string
-            type: object
-          type: array
+          additionalProperties:
+            $ref: '#/components/schemas/V2SchemaData'
+          type:
+          - object
+          - 'null'
       type: object
     Pool:
-      required:
-      - accountIds
       properties:
         accountIds:
           items:
             type: string
           type: array
+        query:
+          additionalProperties: {}
+          type: object
       type: object
     ReconciliationLedger:
       required:
@@ -900,6 +953,13 @@ components:
         name:
           type: string
         pool:
+          type: string
+      type: object
+    RegionSelector:
+      properties:
+        id:
+          type: string
+        name:
           type: string
       type: object
     Webhook:
@@ -960,11 +1020,12 @@ components:
     Stack:
       required:
       - name
+      - region
       properties:
         name:
           type: string
-        region_id:
-          type: string
+        region:
+          $ref: '#/components/schemas/RegionSelector'
         version:
           type: string
       type: object
@@ -979,6 +1040,8 @@ components:
       required:
       - stack
       definitions:
+        DotSelf:
+          type: object
         Ledger:
           required:
           - name
@@ -986,16 +1049,11 @@ components:
             name:
               type: string
             schema:
-              items:
-                properties:
-                  metadata:
-                    additionalProperties:
-                      type: string
-                    type: object
-                  name:
-                    type: string
-                type: object
-              type: array
+              additionalProperties:
+                $ref: '#/components/schemas/V2SchemaData'
+              type:
+              - object
+              - 'null'
           type: object
         Ledgers:
           items:
@@ -1030,13 +1088,14 @@ components:
               type: object
           type: object
         Pool:
-          required:
-          - accountIds
           properties:
             accountIds:
               items:
                 type: string
               type: array
+            query:
+              additionalProperties: {}
+              type: object
           type: object
         Reconciliation:
           properties:
@@ -1071,16 +1130,77 @@ components:
             pool:
               type: string
           type: object
+        RegionSelector:
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+          type: object
         Stack:
           required:
           - name
+          - region
           properties:
             name:
               type: string
-            region_id:
-              type: string
+            region:
+              $ref: '#/components/schemas/RegionSelector'
             version:
               type: string
+          type: object
+        V2ChartAccountMetadata:
+          properties:
+            default:
+              type:
+              - 'null'
+              - string
+          type: object
+        V2ChartAccountRules:
+          type: object
+        V2ChartSegment:
+          additionalProperties: true
+          properties:
+            .metadata:
+              additionalProperties:
+                $ref: '#/components/schemas/V2ChartAccountMetadata'
+              type: object
+            .pattern:
+              type:
+              - 'null'
+              - string
+            .rules:
+              $ref: '#/components/schemas/V2ChartAccountRules'
+            .self:
+              $ref: '#/components/schemas/DotSelf'
+          type: object
+        V2SchemaData:
+          properties:
+            chart:
+              additionalProperties:
+                $ref: '#/components/schemas/V2ChartSegment'
+              type:
+              - object
+              - 'null'
+            transactions:
+              additionalProperties:
+                $ref: '#/components/schemas/V2TransactionTemplate'
+              type: object
+          type: object
+        V2TransactionTemplate:
+          properties:
+            description:
+              type:
+              - 'null'
+              - string
+            runtime:
+              type:
+              - 'null'
+              - string
+            script:
+              type:
+              - 'null'
+              - string
           type: object
         Webhook:
           required:

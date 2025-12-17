@@ -38,7 +38,7 @@ func (r Run) MarshalJSON() ([]byte, error) {
 }
 
 func (r *Run) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &r, "", false, []string{"id", "autoApply", "createdAt", "isDestroy", "hasChanges", "message", "planOnly", "refresh", "refreshOnly", "savePlan", "status"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &r, "", false, nil); err != nil {
 		return err
 	}
 	return nil

@@ -9,7 +9,7 @@ import (
 type DeployAppConfigurationRawRequest struct {
 	ID string `pathParam:"style=simple,explode=false,name=id"`
 	// This field accepts []byte data or io.Reader implementations, such as *os.File.
-	Application any `request:"mediaType=application/yaml"`
+	RequestBody any `request:"mediaType=application/yaml"`
 }
 
 func (d *DeployAppConfigurationRawRequest) GetID() string {
@@ -19,11 +19,11 @@ func (d *DeployAppConfigurationRawRequest) GetID() string {
 	return d.ID
 }
 
-func (d *DeployAppConfigurationRawRequest) GetApplication() any {
+func (d *DeployAppConfigurationRawRequest) GetRequestBody() any {
 	if d == nil {
 		return nil
 	}
-	return d.Application
+	return d.RequestBody
 }
 
 type DeployAppConfigurationRawResponse struct {

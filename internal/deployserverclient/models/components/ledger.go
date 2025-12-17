@@ -2,28 +2,9 @@
 
 package components
 
-type Schema struct {
-	Metadata map[string]string `json:"metadata,omitempty"`
-	Name     *string           `json:"name,omitempty"`
-}
-
-func (s *Schema) GetMetadata() map[string]string {
-	if s == nil {
-		return nil
-	}
-	return s.Metadata
-}
-
-func (s *Schema) GetName() *string {
-	if s == nil {
-		return nil
-	}
-	return s.Name
-}
-
 type Ledger struct {
-	Name   string   `json:"name"`
-	Schema []Schema `json:"schema,omitempty"`
+	Name   string                  `json:"name"`
+	Schema map[string]V2SchemaData `json:"schema,omitempty"`
 }
 
 func (l *Ledger) GetName() string {
@@ -33,7 +14,7 @@ func (l *Ledger) GetName() string {
 	return l.Name
 }
 
-func (l *Ledger) GetSchema() []Schema {
+func (l *Ledger) GetSchema() map[string]V2SchemaData {
 	if l == nil {
 		return nil
 	}

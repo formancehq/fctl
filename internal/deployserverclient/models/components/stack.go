@@ -3,9 +3,9 @@
 package components
 
 type Stack struct {
-	Name     string  `json:"name"`
-	RegionID *string `json:"region_id,omitempty"`
-	Version  *string `json:"version,omitempty"`
+	Name    string         `json:"name"`
+	Region  RegionSelector `json:"region"`
+	Version *string        `json:"version,omitempty"`
 }
 
 func (s *Stack) GetName() string {
@@ -15,11 +15,11 @@ func (s *Stack) GetName() string {
 	return s.Name
 }
 
-func (s *Stack) GetRegionID() *string {
+func (s *Stack) GetRegion() RegionSelector {
 	if s == nil {
-		return nil
+		return RegionSelector{}
 	}
-	return s.RegionID
+	return s.Region
 }
 
 func (s *Stack) GetVersion() *string {
