@@ -83,7 +83,7 @@ func (c *PaymentsConnectorsUninstallController) Run(cmd *cobra.Command, args []s
 
 	provider := fctl.GetString(cmd, c.providerFlag)
 	connectorID := fctl.GetString(cmd, c.connectorIDFlag)
-	switch c.PaymentsVersion {
+	switch c.PaymentsVersion.Major {
 	case versions.V3:
 		if connectorID == "" {
 			return nil, fmt.Errorf("missing connector ID")
@@ -162,7 +162,7 @@ func (c *PaymentsConnectorsUninstallController) Run(cmd *cobra.Command, args []s
 
 // TODO: This need to use the ui.NewListModel
 func (c *PaymentsConnectorsUninstallController) Render(cmd *cobra.Command, args []string) error {
-	if c.PaymentsVersion < versions.V3 {
+	if c.PaymentsVersion.Major < versions.V3 {
 		pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Connector '%s' uninstalled!", c.store.Connector)
 		return nil
 	}

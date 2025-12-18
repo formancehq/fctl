@@ -70,7 +70,7 @@ func (c *UpdateWiseConnectorConfigController) Run(cmd *cobra.Command, args []str
 		return nil, err
 	}
 
-	if c.PaymentsVersion < versions.V1 {
+	if c.PaymentsVersion.Major < versions.V1 {
 		return nil, fmt.Errorf("update configs are only supported in >= v1.0.0")
 	}
 

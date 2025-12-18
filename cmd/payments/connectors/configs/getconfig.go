@@ -77,7 +77,7 @@ func (c *PaymentsGetConfigController) Run(cmd *cobra.Command, args []string) (fc
 	provider := fctl.GetString(cmd, c.providerNameFlag)
 	connectorID := fctl.GetString(cmd, c.connectorIDFlag)
 
-	switch c.PaymentsVersion {
+	switch c.PaymentsVersion.Major {
 	case versions.V0:
 		if provider == "" {
 			return nil, fmt.Errorf("provider is required")

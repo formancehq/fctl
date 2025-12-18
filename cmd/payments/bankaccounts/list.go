@@ -59,7 +59,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, err
 	}
 
-	if c.PaymentsVersion < versions.V1 {
+	if c.PaymentsVersion.Major < versions.V1 {
 		return nil, fmt.Errorf("bank accounts are only supported in >= v1.0.0")
 	}
 
@@ -73,7 +73,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		pageSize = fctl.Ptr(int64(ps))
 	}
 
-	if c.PaymentsVersion >= versions.V3 {
+	if c.PaymentsVersion.Major >= versions.V3 {
 		return c.v3list(cmd, store, cursor, pageSize)
 	}
 

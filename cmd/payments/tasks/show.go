@@ -60,7 +60,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, err
 	}
 
-	if c.PaymentsVersion < versions.V3 {
+	if c.PaymentsVersion.Major < versions.V3 {
 		return nil, fmt.Errorf("tasks are only supported in >= v3.0.0")
 	}
 

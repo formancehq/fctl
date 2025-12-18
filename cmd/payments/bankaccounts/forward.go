@@ -65,7 +65,7 @@ func (c *ForwardController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		return nil, err
 	}
 
-	if c.PaymentsVersion < versions.V1 {
+	if c.PaymentsVersion.Major < versions.V1 {
 		return nil, fmt.Errorf("bank accounts are only supported in >= v1.0.0")
 	}
 
@@ -83,7 +83,7 @@ func (c *ForwardController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		return nil, errors.New("connector ID is required")
 	}
 
-	if c.PaymentsVersion < versions.V3 {
+	if c.PaymentsVersion.Major < versions.V3 {
 		//nolint:gosimple
 		response, err := store.Client().Payments.V1.ForwardBankAccount(cmd.Context(), operations.ForwardBankAccountRequest{
 			ForwardBankAccountRequest: shared.ForwardBankAccountRequest{
@@ -124,7 +124,7 @@ func (c *ForwardController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 }
 
 func (c *ForwardController) Render(cmd *cobra.Command, args []string) error {
-	if c.PaymentsVersion < versions.V3 {
+	if c.PaymentsVersion.Major < versions.V3 {
 		pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Bank Account %s forwarded to connector %s", c.store.BankAccountID, c.store.ConnectorID)
 		return nil
 	}
