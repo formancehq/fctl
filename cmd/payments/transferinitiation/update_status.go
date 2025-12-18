@@ -63,7 +63,7 @@ func (c *UpdateStatusController) Run(cmd *cobra.Command, args []string) (fctl.Re
 		return nil, err
 	}
 
-	if c.PaymentsVersion < versions.V1 {
+	if c.PaymentsVersion.Major < versions.V1 {
 		return nil, fmt.Errorf("transfer initiation updates are only supported in >= v2.0.0")
 	}
 

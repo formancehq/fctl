@@ -62,7 +62,7 @@ func (c *AddAccountController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 		return nil, err
 	}
 
-	if c.PaymentsVersion < versions.V1 {
+	if c.PaymentsVersion.Major < versions.V1 {
 		return nil, fmt.Errorf("pools are only supported in >= v1.0.0")
 	}
 

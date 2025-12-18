@@ -61,7 +61,7 @@ func (c *RejectController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
-	if c.PaymentsVersion < versions.V3 {
+	if c.PaymentsVersion.Major < versions.V3 {
 		return nil, fmt.Errorf("transfer initiation rejection is only supported in >= v3.0.0")
 	}
 

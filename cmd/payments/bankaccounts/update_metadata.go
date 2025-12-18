@@ -60,7 +60,7 @@ func (c *UpdateMetadataController) Run(cmd *cobra.Command, args []string) (fctl.
 		return nil, err
 	}
 
-	if c.PaymentsVersion < versions.V1 {
+	if c.PaymentsVersion.Major < versions.V1 {
 		return nil, fmt.Errorf("bank accounts are only supported in >= v1.0.0")
 	}
 
@@ -74,7 +74,7 @@ func (c *UpdateMetadataController) Run(cmd *cobra.Command, args []string) (fctl.
 	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to set a metadata on bank account '%s'", bankAccountID) {
 		return nil, fctl.ErrMissingApproval
 	}
-	if c.PaymentsVersion >= versions.V3 {
+	if c.PaymentsVersion.Major >= versions.V3 {
 		request := operations.V3UpdateBankAccountMetadataRequest{
 			V3UpdateBankAccountMetadataRequest: &shared.V3UpdateBankAccountMetadataRequest{
 				Metadata: metadata,

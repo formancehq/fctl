@@ -64,7 +64,7 @@ func (c *PaymentsConnectorsColumnController) Run(cmd *cobra.Command, args []stri
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
 	}
-	if c.PaymentsVersion < versions.V3 {
+	if c.PaymentsVersion.Major < versions.V3 {
 		return nil, fmt.Errorf("column connector is only supported in version >= v3.0.0")
 	}
 

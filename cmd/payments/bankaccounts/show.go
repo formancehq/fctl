@@ -60,11 +60,11 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, err
 	}
 
-	if c.PaymentsVersion < versions.V1 {
+	if c.PaymentsVersion.Major < versions.V1 {
 		return nil, fmt.Errorf("bank accounts are only supported in >= v1.0.0")
 	}
 
-	if c.PaymentsVersion >= versions.V3 {
+	if c.PaymentsVersion.Major >= versions.V3 {
 		response, err := store.Client().Payments.V3.GetBankAccount(cmd.Context(), operations.V3GetBankAccountRequest{
 			BankAccountID: args[0],
 		})

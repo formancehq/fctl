@@ -60,7 +60,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
-	if c.PaymentsVersion < versions.V1 {
+	if c.PaymentsVersion.Major < versions.V1 {
 		return nil, fmt.Errorf("bank accounts are only supported in >= v1.0.0")
 	}
 
@@ -73,7 +73,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
-	if c.PaymentsVersion >= versions.V3 {
+	if c.PaymentsVersion.Major >= versions.V3 {
 		request := shared.V3CreateBankAccountRequest{}
 		if err := json.Unmarshal([]byte(script), &request); err != nil {
 			return nil, err
