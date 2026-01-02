@@ -1,6 +1,7 @@
 package views
 
 import (
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -19,6 +20,23 @@ func DisplayWiseConfig(cmd *cobra.Command, connectorConfig *shared.ConnectorConf
 		}
 		return *config.PollingPeriod
 	}()})
+
+	if err := pterm.DefaultTable.
+		WithWriter(cmd.OutOrStdout()).
+		WithData(tableData).
+		Render(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func DisplayWiseConfigV3(cmd *cobra.Command, v3Config *shared.V3GetConnectorConfigResponse) error {
+	config := v3Config.Data.V3WiseConfig
+
+	tableData := pterm.TableData{}
+	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})
+	tableData = append(tableData, []string{pterm.LightCyan("API key:"), config.APIKey})
+	tableData = append(tableData, []string{pterm.LightCyan("Polling Period:"), fctl.StringPointerToString(config.PollingPeriod)})
 
 	if err := pterm.DefaultTable.
 		WithWriter(cmd.OutOrStdout()).

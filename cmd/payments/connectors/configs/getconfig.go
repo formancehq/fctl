@@ -18,9 +18,10 @@ import (
 )
 
 type PaymentsGetConfigStore struct {
-	ConnectorConfig *shared.ConnectorConfigResponse `json:"connectorConfig"`
-	Provider        string                          `json:"provider"`
-	ConnectorID     string                          `json:"connectorId"`
+	ConnectorConfig   *shared.ConnectorConfigResponse      `json:"connectorConfig"`
+	V3ConnectorConfig *shared.V3GetConnectorConfigResponse `json:"v3ConnectorConfig,omitempty"`
+	Provider          string                               `json:"provider"`
+	ConnectorID       string                               `json:"connectorId"`
 }
 
 type PaymentsGetConfigController struct {
@@ -78,6 +79,29 @@ func (c *PaymentsGetConfigController) Run(cmd *cobra.Command, args []string) (fc
 	connectorID := fctl.GetString(cmd, c.connectorIDFlag)
 
 	switch c.PaymentsVersion {
+	case versions.V3:
+		if connectorID == "" {
+			return nil, fmt.Errorf("connector-id is required for v3")
+		}
+
+		response, err := store.Client().Payments.V3.GetConnectorConfig(cmd.Context(), operations.V3GetConnectorConfigRequest{
+			ConnectorID: connectorID,
+		})
+		if err != nil {
+			return nil, err
+		}
+		if response.StatusCode >= 300 {
+			return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+		}
+
+		if response.V3GetConnectorConfigResponse == nil {
+			return nil, fmt.Errorf("unexpected response: %v", response)
+		}
+
+		c.store.V3ConnectorConfig = response.V3GetConnectorConfigResponse
+		c.store.ConnectorID = connectorID
+		c.store.Provider = string(response.V3GetConnectorConfigResponse.Data.Type)
+
 	case versions.V0:
 		if provider == "" {
 			return nil, fmt.Errorf("provider is required")
@@ -161,6 +185,50 @@ func (c *PaymentsGetConfigController) Run(cmd *cobra.Command, args []string) (fc
 
 // TODO: This need to use the ui.NewListModel
 func (c *PaymentsGetConfigController) Render(cmd *cobra.Command, args []string) error {
+	if c.PaymentsVersion == versions.V3 {
+		return c.renderV3(cmd, args)
+	}
+	return c.renderV1V2(cmd, args)
+}
+
+func (c *PaymentsGetConfigController) renderV3(cmd *cobra.Command, args []string) error {
+	var err error
+	provider := c.store.Provider
+	switch provider {
+	case internal.StripeConnector:
+		err = views.DisplayStripeConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.ModulrConnector:
+		err = views.DisplayModulrConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.BankingCircleConnector:
+		err = views.DisplayBankingCircleConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.CurrencyCloudConnector:
+		err = views.DisplayCurrencyCloudConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.WiseConnector:
+		err = views.DisplayWiseConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.MangoPayConnector:
+		err = views.DisplayMangopayConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.MoneycorpConnector:
+		err = views.DisplayMoneycorpConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.AtlarConnector:
+		err = views.DisplayAtlarConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.AdyenConnector:
+		err = views.DisplayAdyenConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.QontoConnector:
+		err = views.DisplayQontoConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.ColumnConnector:
+		err = views.DisplayColumnConfigV3(cmd, c.store.V3ConnectorConfig)
+	default:
+		pterm.Error.WithWriter(cmd.OutOrStderr()).Printfln("Connection unknown.")
+	}
+
+	return err
+}
+
+func (c *PaymentsGetConfigController) renderV1V2(cmd *cobra.Command, args []string) error {
+	if c.store.ConnectorConfig == nil {
+		return fmt.Errorf("no connector config available")
+	}
+
 	var err error
 	switch c.store.Provider {
 	case internal.StripeConnector:
@@ -181,14 +249,9 @@ func (c *PaymentsGetConfigController) Render(cmd *cobra.Command, args []string) 
 		err = views.DisplayAtlarConfig(cmd, c.store.ConnectorConfig)
 	case internal.AdyenConnector:
 		err = views.DisplayAdyenConfig(cmd, c.store.ConnectorConfig)
-	case internal.QontoConnector:
-		err = views.DisplayQontoConfig(cmd, c.store.ConnectorConfig)
-	case internal.ColumnConnector:
-		err = views.DisplayColumnConfig(cmd, c.store.ConnectorConfig)
 	default:
 		pterm.Error.WithWriter(cmd.OutOrStderr()).Printfln("Connection unknown.")
 	}
 
 	return err
-
 }

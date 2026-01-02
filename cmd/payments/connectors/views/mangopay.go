@@ -1,6 +1,7 @@
 package views
 
 import (
+	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -21,6 +22,25 @@ func DisplayMangopayConfig(cmd *cobra.Command, connectorConfig *shared.Connector
 		}
 		return *config.PollingPeriod
 	}()})
+
+	if err := pterm.DefaultTable.
+		WithWriter(cmd.OutOrStdout()).
+		WithData(tableData).
+		Render(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func DisplayMangopayConfigV3(cmd *cobra.Command, v3Config *shared.V3GetConnectorConfigResponse) error {
+	config := v3Config.Data.V3MangopayConfig
+
+	tableData := pterm.TableData{}
+	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})
+	tableData = append(tableData, []string{pterm.LightCyan("ClientID:"), config.ClientID})
+	tableData = append(tableData, []string{pterm.LightCyan("API key:"), config.APIKey})
+	tableData = append(tableData, []string{pterm.LightCyan("Endpoint:"), config.Endpoint})
+	tableData = append(tableData, []string{pterm.LightCyan("Polling Period:"), fctl.StringPointerToString(config.PollingPeriod)})
 
 	if err := pterm.DefaultTable.
 		WithWriter(cmd.OutOrStdout()).
