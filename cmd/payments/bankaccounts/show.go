@@ -54,7 +54,16 @@ func (c *ShowController) GetStore() *ShowStore {
 }
 
 func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
@@ -65,7 +74,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	}
 
 	if c.PaymentsVersion >= versions.V3 {
-		response, err := store.Client().Payments.V3.GetBankAccount(cmd.Context(), operations.V3GetBankAccountRequest{
+		response, err := stackClient.Payments.V3.GetBankAccount(cmd.Context(), operations.V3GetBankAccountRequest{
 			BankAccountID: args[0],
 		})
 		if err != nil {
@@ -80,7 +89,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return c, nil
 	}
 
-	response, err := store.Client().Payments.V1.GetBankAccount(cmd.Context(), operations.GetBankAccountRequest{
+	response, err := stackClient.Payments.V1.GetBankAccount(cmd.Context(), operations.GetBankAccountRequest{
 		BankAccountID: args[0],
 	})
 	if err != nil {

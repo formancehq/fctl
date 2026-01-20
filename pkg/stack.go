@@ -2,87 +2,41 @@ package fctl
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/go-libs/collectionutils"
-
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/go-libs/v3/collectionutils"
 )
 
-type MembershipStackStore struct {
-	*OrganizationStore
-	stackId string
-}
-
-func (cns MembershipStackStore) StackId() string {
-	return cns.stackId
-}
-
-func NewMembershipStackStore(cmd *cobra.Command) error {
-	cfg, err := GetConfig(cmd)
+func StackCompletion(cmd *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	cfg, err := LoadConfig(cmd)
 	if err != nil {
-		return fmt.Errorf("failed to get config: %w", err)
+		return nil, cobra.ShellCompDirectiveError
 	}
 
-	stackId, err := GetSelectedStackIDError(cmd, cfg)
+	profile, _, err := LoadCurrentProfile(cmd, *cfg)
 	if err != nil {
-		return err
+		return nil, cobra.ShellCompDirectiveError
 	}
 
-	store := GetOrganizationStore(cmd)
-	cmd.SetContext(ContextWithMembershipStackStore(
-		cmd.Context(),
-		&MembershipStackStore{
-			OrganizationStore: store,
-			stackId:           stackId,
-		},
-	))
+	organizationID, _ := ResolveOrganizationID(cmd, *profile)
 
-	return nil
-}
+	organizationClaims := profile.RootTokens.ID.Claims.Organizations
+	organizationClaims = collectionutils.Filter(organizationClaims, func(s OrganizationAccess) bool {
+		return strings.HasPrefix(s.ID, organizationID)
+	})
+	stackClaims := collectionutils.Map(organizationClaims, func(s OrganizationAccess) []StackAccess {
+		return s.Stacks
+	})
+	stackList := collectionutils.Flatten(stackClaims)
+	stackList = collectionutils.Filter(stackList, func(s StackAccess) bool {
+		return toComplete == "" || strings.HasPrefix(s.ID, toComplete)
+	})
 
-func StackCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	if err := NewMembershipStore(cmd); err != nil {
-		return []string{}, cobra.ShellCompDirectiveError
-	}
+	ret := collectionutils.Map(stackList, func(from StackAccess) string {
+		return fmt.Sprintf("%s\t%s", from.ID, from.DisplayName)
+	})
 
-	var organization string
-	if orgaFlag := cmd.Flag(organizationFlag); orgaFlag != nil {
-		organization = orgaFlag.Value.String()
-	}
-
-	mbStore := GetMembershipStore(cmd.Context())
-	if mbStore == nil {
-		return []string{}, cobra.ShellCompDirectiveNoFileComp
-	}
-
-	if organization == "" {
-		if mbStore.Config == nil {
-			return []string{}, cobra.ShellCompDirectiveNoFileComp
-		}
-		p := mbStore.Config.GetProfile(GetCurrentProfileName(cmd, mbStore.Config))
-		if p != nil {
-			organization = p.GetDefaultOrganization()
-		}
-	}
-
-	if organization == "" {
-		return []string{}, cobra.ShellCompDirectiveNoFileComp
-	}
-
-	ret, res, err := mbStore.Client().ListStacks(cmd.Context(), organization).Execute()
-	if err != nil {
-		return []string{}, cobra.ShellCompDirectiveError
-	}
-
-	if res.StatusCode > 300 {
-		return []string{}, cobra.ShellCompDirectiveError
-	}
-
-	opts := collectionutils.Reduce(ret.Data, func(acc []string, s membershipclient.Stack) []string {
-		return append(acc, fmt.Sprintf("%s\t%s", s.Id, s.Name))
-	}, []string{})
-
-	return opts, cobra.ShellCompDirectiveNoFileComp
+	return ret, cobra.ShellCompDirectiveNoFileComp
 }

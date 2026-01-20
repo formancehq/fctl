@@ -47,20 +47,28 @@ func (c *SetMetadataController) GetStore() *SetMetadataStore {
 
 func (c *SetMetadataController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	metadata, err := fctl.ParseMetadata(args[1:])
 	if err != nil {
 		return nil, err
 	}
 
-	transactionID, err := internal.TransactionIDOrLastN(cmd.Context(), store.Client(),
+	transactionID, err := internal.TransactionIDOrLastN(cmd.Context(), stackClient,
 		fctl.GetString(cmd, internal.LedgerFlag), args[0])
 	if err != nil {
 		return nil, err
 	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to set a metadata on transaction %d", transactionID) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to set a metadata on transaction %d", transactionID) {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -69,7 +77,7 @@ func (c *SetMetadataController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 		Txid:        transactionID,
 		RequestBody: collectionutils.ConvertMap(metadata, collectionutils.ToAny[string]),
 	}
-	response, err := store.Client().Ledger.V1.AddMetadataOnTransaction(cmd.Context(), request)
+	response, err := stackClient.Ledger.V1.AddMetadataOnTransaction(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}

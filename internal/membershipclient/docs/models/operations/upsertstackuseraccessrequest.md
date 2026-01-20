@@ -1,0 +1,11 @@
+# UpsertStackUserAccessRequest
+
+
+## Fields
+
+| Field                                                                                   | Type                                                                                    | Required                                                                                | Description                                                                             |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `OrganizationID`                                                                        | *string*                                                                                | :heavy_check_mark:                                                                      | N/A                                                                                     |
+| `StackID`                                                                               | *string*                                                                                | :heavy_check_mark:                                                                      | N/A                                                                                     |
+| `UserID`                                                                                | *string*                                                                                | :heavy_check_mark:                                                                      | N/A                                                                                     |
+| `Body`                                                                                  | [*components.UpdateStackUserRequest](../../models/components/updatestackuserrequest.md) | :heavy_minus_sign:                                                                      | N/A                                                                                     |

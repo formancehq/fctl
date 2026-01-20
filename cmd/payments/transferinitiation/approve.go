@@ -55,7 +55,16 @@ func (c *ApproveController) GetStore() *ApproveStore {
 }
 
 func (c *ApproveController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
@@ -65,11 +74,11 @@ func (c *ApproveController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		return nil, fmt.Errorf("transfer initiation approval is only supported in >= v3.0.0")
 	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to approve the transfer initiation %q", args[0]) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to approve the transfer initiation %q", args[0]) {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	response, err := store.Client().Payments.V3.ApprovePaymentInitiation(cmd.Context(), operations.V3ApprovePaymentInitiationRequest{
+	response, err := stackClient.Payments.V3.ApprovePaymentInitiation(cmd.Context(), operations.V3ApprovePaymentInitiationRequest{
 		PaymentInitiationID: args[0],
 	})
 	if err != nil {

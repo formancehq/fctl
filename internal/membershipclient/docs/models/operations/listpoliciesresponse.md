@@ -1,0 +1,10 @@
+# ListPoliciesResponse
+
+
+## Fields
+
+| Field                                                                               | Type                                                                                | Required                                                                            | Description                                                                         |
+| ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                          | [components.HTTPMetadata](../../models/components/httpmetadata.md)                  | :heavy_check_mark:                                                                  | N/A                                                                                 |
+| `ListPoliciesResponse`                                                              | [*components.ListPoliciesResponse](../../models/components/listpoliciesresponse.md) | :heavy_minus_sign:                                                                  | List of policies                                                                    |
+| `Error`                                                                             | [*components.Error](../../models/components/error.md)                               | :heavy_minus_sign:                                                                  | Error                                                                               |

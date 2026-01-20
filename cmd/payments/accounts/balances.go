@@ -46,7 +46,16 @@ func (c *ListBalancesController) GetStore() *ListBalancesStore {
 }
 
 func (c *ListBalancesController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	var cursor *string
 	if c := fctl.GetString(cmd, c.cursorFlag); c != "" {
@@ -58,7 +67,7 @@ func (c *ListBalancesController) Run(cmd *cobra.Command, args []string) (fctl.Re
 		pageSize = fctl.Ptr(int64(ps))
 	}
 
-	response, err := store.Client().Payments.V1.GetAccountBalances(
+	response, err := stackClient.Payments.V1.GetAccountBalances(
 		cmd.Context(),
 		operations.GetAccountBalancesRequest{
 			Cursor:    cursor,

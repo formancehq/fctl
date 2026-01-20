@@ -1,17 +1,20 @@
 package stack
 
 import (
-	"github.com/pkg/errors"
+	"errors"
+	"fmt"
+
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type DisabledStore struct {
-	Stack  *membershipclient.Stack `json:"stack"`
-	Status string                  `json:"status"`
+	Stack  *components.Stack `json:"stack"`
+	Status string            `json:"status"`
 }
 type DisableController struct {
 	store *DisabledStore
@@ -21,7 +24,7 @@ var _ fctl.Controller[*DisabledStore] = (*DisableController)(nil)
 
 func NewDisableStore() *DisabledStore {
 	return &DisabledStore{
-		Stack:  &membershipclient.Stack{},
+		Stack:  &components.Stack{},
 		Status: "",
 	}
 }
@@ -54,29 +57,51 @@ func (c *DisableController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		stackNameFlag = "name"
 	)
 
-	store := fctl.GetOrganizationStore(cmd)
-	var stack *membershipclient.Stack
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, apiClient, err := fctl.NewMembershipClientForOrganizationFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+	var stack *components.Stack
 	if len(args) == 1 {
 		if fctl.GetString(cmd, stackNameFlag) != "" {
 			return nil, errors.New("need either an id of a name specified using --name flag")
 		}
 
-		rsp, _, err := store.Client().GetStack(cmd.Context(), store.OrganizationId(), args[0]).Execute()
+		getRequest := operations.GetStackRequest{
+			OrganizationID: organizationID,
+			StackID:        args[0],
+		}
+		rsp, err := apiClient.GetStack(cmd.Context(), getRequest)
 		if err != nil {
 			return nil, err
 		}
-		stack = rsp.Data
+		if rsp.ReadStackResponse == nil {
+			return nil, fmt.Errorf("unexpected response: no data")
+		}
+		stack = rsp.ReadStackResponse.GetData()
 	} else {
 		if fctl.GetString(cmd, stackNameFlag) == "" {
 			return nil, errors.New("need either an id of a name specified using --name flag")
 		}
-		stacks, _, err := store.Client().ListStacks(cmd.Context(), store.OrganizationId()).Execute()
-		if err != nil {
-			return nil, errors.Wrap(err, "listing stacks")
+		listRequest := operations.ListStacksRequest{
+			OrganizationID: organizationID,
 		}
-		for _, s := range stacks.Data {
-			if s.Name == fctl.GetString(cmd, stackNameFlag) {
-				stack = &s
+		stacksResponse, err := apiClient.ListStacks(cmd.Context(), listRequest)
+		if err != nil {
+			return nil, fmt.Errorf("listing stacks: %w", err)
+		}
+		if stacksResponse.ListStacksResponse == nil {
+			return nil, fmt.Errorf("unexpected response: no data")
+		}
+		for _, s := range stacksResponse.ListStacksResponse.GetData() {
+			if s.GetName() == fctl.GetString(cmd, stackNameFlag) {
+				stackData := s
+				stack = &stackData
 				break
 			}
 		}
@@ -85,12 +110,16 @@ func (c *DisableController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		return nil, errors.New("Stack not found")
 	}
 
-	if !fctl.CheckStackApprobation(cmd, stack, "You are about to disable stack '%s'", stack.Name) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to disable stack '%s'", stack.GetName()) {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	if _, err := store.Client().DisableStack(cmd.Context(), store.OrganizationId(), stack.Id).Execute(); err != nil {
-		return nil, errors.Wrap(err, "stack disable")
+	disableRequest := operations.DisableStackRequest{
+		OrganizationID: organizationID,
+		StackID:        stack.GetID(),
+	}
+	if _, err := apiClient.DisableStack(cmd.Context(), disableRequest); err != nil {
+		return nil, fmt.Errorf("stack disable: %w", err)
 	}
 
 	c.store.Stack = stack

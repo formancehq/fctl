@@ -1,11 +1,14 @@
 package oauth_clients
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/go-libs/pointer"
+	"github.com/formancehq/go-libs/v3/pointer"
 
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
@@ -15,7 +18,7 @@ var (
 )
 
 type Create struct {
-	Client membershipclient.OrganizationClient `json:"organizationClient"`
+	Client components.OrganizationClient `json:"organizationClient"`
 }
 type CreateController struct {
 	store *Create
@@ -49,14 +52,17 @@ func (c *CreateController) GetStore() *Create {
 
 func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetMembershipStore(cmd.Context())
-	if !fctl.CheckOrganizationApprobation(cmd, "You are about to create a new organization OAuth client") {
-		return nil, fctl.ErrMissingApproval
-	}
-
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
+	}
+
+	organizationID, apiClient, err := fctl.NewMembershipClientForOrganizationFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+	if !fctl.CheckOrganizationApprobation(cmd, "You are about to create a new organization OAuth client") {
+		return nil, fctl.ErrMissingApproval
 	}
 
 	description, err := cmd.Flags().GetString(descriptionFlag)
@@ -69,8 +75,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
-	req := store.Client().OrganizationClientCreate(cmd.Context(), organizationID)
-	reqBody := membershipclient.CreateOrganizationClientRequest{}
+	reqBody := components.CreateOrganizationClientRequest{}
 	if description != "" {
 		reqBody.Description = pointer.For(description)
 	}
@@ -79,16 +84,21 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		reqBody.Name = pointer.For(name)
 	}
 
-	if description != "" || name != "" {
-		req = req.CreateOrganizationClientRequest(reqBody)
+	request := operations.OrganizationClientCreateRequest{
+		OrganizationID: organizationID,
+		Body:           &reqBody,
 	}
 
-	response, _, err := req.Execute()
+	response, err := apiClient.OrganizationClientCreate(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Client = response.Data
+	if response.CreateOrganizationClientResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	c.store.Client = response.CreateOrganizationClientResponse.GetData()
 
 	return c, nil
 }

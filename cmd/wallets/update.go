@@ -1,7 +1,8 @@
 package wallets
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
+
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -52,9 +53,18 @@ func (c *UpdateController) GetStore() *UpdateStore {
 }
 
 func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to update a wallets") {
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to update a wallets") {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -63,14 +73,14 @@ func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
-	_, err = store.Client().Wallets.V1.UpdateWallet(cmd.Context(), operations.UpdateWalletRequest{
+	_, err = stackClient.Wallets.V1.UpdateWallet(cmd.Context(), operations.UpdateWalletRequest{
 		RequestBody: &operations.UpdateWalletRequestBody{
 			Metadata: metadata,
 		},
 		ID: args[0],
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "updating wallet")
+		return nil, fmt.Errorf("updating wallet: %w", err)
 	}
 
 	c.store.Success = true

@@ -1,48 +1,47 @@
 package stack
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
-	"github.com/formancehq/go-libs/pointer"
+	"github.com/formancehq/go-libs/v3/pointer"
 
 	"github.com/formancehq/fctl/cmd/stack/internal"
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
 const (
-	unprotectFlag = "unprotect"
-	regionFlag    = "region"
-	nowaitFlag    = "no-wait"
-	versionFlag   = "version"
+	regionFlag  = "region"
+	nowaitFlag  = "no-wait"
+	versionFlag = "version"
 )
 
-type StackCreateStore struct {
-	Stack    *membershipclient.Stack
+type CreateStore struct {
+	Stack    *components.Stack
 	Versions *shared.GetVersionsResponse
 }
 
-type StackCreateController struct {
-	store   *StackCreateStore
-	profile *fctl.Profile
+type CreateController struct {
+	store *CreateStore
 }
 
-var _ fctl.Controller[*StackCreateStore] = (*StackCreateController)(nil)
+var _ fctl.Controller[*CreateStore] = (*CreateController)(nil)
 
-func NewDefaultStackCreateStore() *StackCreateStore {
-	return &StackCreateStore{
-		Stack:    &membershipclient.Stack{},
+func NewDefaultStackCreateStore() *CreateStore {
+	return &CreateStore{
+		Stack:    &components.Stack{},
 		Versions: &shared.GetVersionsResponse{},
 	}
 }
-func NewStackCreateController() *StackCreateController {
-	return &StackCreateController{
+func NewStackCreateController() *CreateController {
+	return &CreateController{
 		store: NewDefaultStackCreateStore(),
 	}
 }
@@ -53,24 +52,27 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithAliases("c", "cr"),
 		fctl.WithArgs(cobra.RangeArgs(0, 1)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
-		fctl.WithBoolFlag(unprotectFlag, false, "Unprotect stacks (no confirmation on write commands)"),
 		fctl.WithStringFlag(regionFlag, "", "Region on which deploy the stack"),
 		fctl.WithStringFlag(versionFlag, "", "Version of the stack"),
 		fctl.WithBoolFlag(nowaitFlag, false, "Not wait stack availability"),
 		fctl.WithController(NewStackCreateController()),
 	)
 }
-func (c *StackCreateController) GetStore() *StackCreateStore {
+func (c *CreateController) GetStore() *CreateStore {
 	return c.store
 }
 
-func (c *StackCreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 	var err error
-	store := fctl.GetOrganizationStore(cmd)
 
-	protected := !fctl.GetBool(cmd, unprotectFlag)
-	metadata := map[string]string{
-		fctl.ProtectedStackMetadata: fctl.BoolPointerToString(&protected),
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, apiClient, err := fctl.NewMembershipClientForOrganizationFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
 	}
 
 	name := ""
@@ -85,22 +87,30 @@ func (c *StackCreateController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 
 	region := fctl.GetString(cmd, regionFlag)
 	if region == "" {
-		regions, _, err := store.Client().ListRegions(cmd.Context(), store.OrganizationId()).Execute()
+		listRegionsRequest := operations.ListRegionsRequest{
+			OrganizationID: organizationID,
+		}
+
+		regionsResponse, err := apiClient.ListRegions(cmd.Context(), listRegionsRequest)
 		if err != nil {
-			return nil, errors.Wrap(err, "listing regions")
+			return nil, fmt.Errorf("listing regions: %w", err)
+		}
+
+		if regionsResponse.ListRegionsResponse == nil {
+			return nil, fmt.Errorf("unexpected response: no data")
 		}
 
 		var options []string
-		for _, region := range regions.Data {
+		for _, regionItem := range regionsResponse.ListRegionsResponse.GetData() {
 			privacy := "Private"
-			if region.Public {
+			if regionItem.GetPublic() {
 				privacy = "Public "
 			}
 			name := "<noname>"
-			if region.Name != "" {
-				name = region.Name
+			if regionName := regionItem.GetName(); regionName != "" {
+				name = regionName
 			}
-			options = append(options, fmt.Sprintf("%s | %s | %s", region.Id, privacy, name))
+			options = append(options, fmt.Sprintf("%s | %s | %s", regionItem.GetID(), privacy, name))
 		}
 
 		if len(options) == 0 {
@@ -114,32 +124,36 @@ func (c *StackCreateController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 		}
 		for i := 0; i < len(options); i++ {
 			if selectedOption == options[i] {
-				region = regions.Data[i].Id
+				region = regionsResponse.ListRegionsResponse.GetData()[i].GetID()
 				break
 			}
 		}
 	}
 
-	req := membershipclient.CreateStackRequest{
+	req := components.CreateStackRequest{
 		Name:     name,
-		Metadata: pointer.For(metadata),
 		RegionID: region,
 	}
 
-	availableVersions, httpResponse, err := store.Client().GetRegionVersions(cmd.Context(), store.OrganizationId(), region).Execute()
-	if err != nil {
-		return nil, errors.Wrap(err, "retrieving available versions")
+	getVersionsRequest := operations.GetRegionVersionsRequest{
+		OrganizationID: organizationID,
+		RegionID:       region,
 	}
 
-	if httpResponse.StatusCode > 300 {
-		return nil, err
+	availableVersionsResponse, err := apiClient.GetRegionVersions(cmd.Context(), getVersionsRequest)
+	if err != nil {
+		return nil, fmt.Errorf("retrieving available versions: %w", err)
+	}
+
+	if availableVersionsResponse.GetRegionVersionsResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no versions data")
 	}
 
 	specifiedVersion := fctl.GetString(cmd, versionFlag)
 	if specifiedVersion == "" {
 		var options []string
-		for _, version := range availableVersions.Data {
-			options = append(options, version.Name)
+		for _, version := range availableVersionsResponse.GetRegionVersionsResponse.GetData() {
+			options = append(options, version.GetName())
 		}
 
 		selectedOption := ""
@@ -155,12 +169,24 @@ func (c *StackCreateController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 	}
 	req.Version = pointer.For(specifiedVersion)
 
-	stackResponse, _, err := store.Client().
-		CreateStack(cmd.Context(), store.OrganizationId()).
-		CreateStackRequest(req).
-		Execute()
+	createStackRequest := operations.CreateStackRequest{
+		OrganizationID: organizationID,
+		Body:           &req,
+	}
+
+	stackResponse, err := apiClient.CreateStack(cmd.Context(), createStackRequest)
 	if err != nil {
-		return nil, errors.Wrap(err, "creating stack")
+		return nil, fmt.Errorf("creating stack: %w", err)
+	}
+
+	if stackResponse.ReadStackResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	stackData := stackResponse.ReadStackResponse.GetData()
+
+	if stackData == nil {
+		return nil, fmt.Errorf("unexpected response: stack data is nil")
 	}
 
 	if !fctl.GetBool(cmd, nowaitFlag) {
@@ -169,7 +195,7 @@ func (c *StackCreateController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 			return nil, err
 		}
 
-		stack, err := waitStackReady(cmd, store.MembershipClient, stackResponse.Data.OrganizationId, stackResponse.Data.Id)
+		stack, err := waitStackReady(cmd, apiClient, stackData.GetOrganizationID(), stackData.GetID())
 		if err != nil {
 			return nil, err
 		}
@@ -179,21 +205,30 @@ func (c *StackCreateController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 			return nil, err
 		}
 	} else {
-		c.store.Stack = stackResponse.Data
+		c.store.Stack = stackData
 	}
 
 	portal := fctl.DefaultConsoleURL
-	serverInfo, err := fctl.MembershipServerInfo(cmd.Context(), store.Client())
+	serverInfo, err := fctl.MembershipServerInfo(cmd.Context(), apiClient)
 	if err != nil {
 		return nil, err
 	}
-	if v := serverInfo.ConsoleURL; v != nil {
+	if v := serverInfo.GetConsoleURL(); v != nil {
 		portal = *v
 	}
 
 	fctl.BasicTextCyan.WithWriter(cmd.OutOrStdout()).Println("Your portal will be reachable on: " + portal)
 
-	stackClient, err := fctl.NewStackClient(cmd, store.Config, stackResponse.Data)
+	// todo: need a long running client with auto refresh
+	stackClient, err := fctl.NewStackClient(
+		cmd,
+		relyingParty,
+		fctl.NewPTermDialog(),
+		profileName,
+		*profile,
+		organizationID,
+		stackData.GetID(),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -207,11 +242,10 @@ func (c *StackCreateController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 	}
 
 	c.store.Versions = versions.GetVersionsResponse
-	c.profile = store.Config.GetProfile(fctl.GetCurrentProfileName(cmd, store.Config))
 
 	return c, nil
 }
 
-func (c *StackCreateController) Render(cmd *cobra.Command, args []string) error {
-	return internal.PrintStackInformation(cmd.OutOrStdout(), c.profile, c.store.Stack, c.store.Versions)
+func (c *CreateController) Render(cmd *cobra.Command, _ []string) error {
+	return internal.PrintStackInformation(cmd.OutOrStdout(), c.store.Stack, c.store.Versions)
 }

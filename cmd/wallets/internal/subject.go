@@ -1,9 +1,9 @@
 package internal
 
 import (
+	"errors"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	formance "github.com/formancehq/formance-sdk-go/v3"

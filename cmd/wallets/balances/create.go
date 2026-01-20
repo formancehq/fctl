@@ -1,9 +1,9 @@
 package balances
 
 import (
+	"fmt"
 	"math/big"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -57,9 +57,18 @@ func (c *CreateController) GetStore() *CreateStore {
 }
 
 func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
 
-	walletID, err := internal.RequireWalletID(cmd, store.Client())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	walletID, err := internal.RequireWalletID(cmd, stackClient)
 	if err != nil {
 		return nil, err
 	}
@@ -83,9 +92,9 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 			Priority:  priority,
 		},
 	}
-	response, err := store.Client().Wallets.V1.CreateBalance(cmd.Context(), request)
+	response, err := stackClient.Wallets.V1.CreateBalance(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "creating balance")
+		return nil, fmt.Errorf("creating balance: %w", err)
 	}
 
 	c.store.BalanceName = response.CreateBalanceResponse.Data.Name

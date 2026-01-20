@@ -44,15 +44,24 @@ func (c *ShowController) GetStore() *ShowStore {
 }
 
 func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
 
-	ledger := fctl.GetString(cmd, internal.LedgerFlag)
-	txId, err := internal.TransactionIDOrLastN(cmd.Context(), store.Client(), ledger, args[0])
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := store.Client().Ledger.V1.GetTransaction(cmd.Context(), operations.GetTransactionRequest{
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	ledger := fctl.GetString(cmd, internal.LedgerFlag)
+	txId, err := internal.TransactionIDOrLastN(cmd.Context(), stackClient, ledger, args[0])
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := stackClient.Ledger.V1.GetTransaction(cmd.Context(), operations.GetTransactionRequest{
 		Ledger: ledger,
 		Txid:   txId,
 	})

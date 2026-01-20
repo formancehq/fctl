@@ -1,7 +1,8 @@
 package holds
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
@@ -45,14 +46,23 @@ func (c *ShowController) GetStore() *ShowStore {
 }
 
 func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	request := operations.GetHoldRequest{
 		HoldID: args[0],
 	}
-	response, err := store.Client().Wallets.V1.GetHold(cmd.Context(), request)
+	response, err := stackClient.Wallets.V1.GetHold(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "getting hold")
+		return nil, fmt.Errorf("getting hold: %w", err)
 	}
 
 	c.store.Hold = response.GetHoldResponse.Data

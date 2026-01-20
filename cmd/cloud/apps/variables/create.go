@@ -49,9 +49,23 @@ func (c *CreateCtrl) GetStore() *Create {
 	return c.store
 }
 
-func (c *CreateCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetDeployServerStore(cmd.Context())
-	v, err := store.Cli.CreateAppVariable(cmd.Context(), fctl.GetString(cmd, "id"), components.CreateVariableRequest{
+func (c *CreateCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	_, apiClient, err := fctl.NewAppDeployClientFromFlags(
+		cmd,
+		relyingParty,
+		fctl.NewPTermDialog(),
+		profileName,
+		*profile,
+	)
+	if err != nil {
+		return nil, err
+	}
+	v, err := apiClient.CreateAppVariable(cmd.Context(), fctl.GetString(cmd, "id"), components.CreateVariableRequest{
 		Variable: components.VariableData{
 			Key:         fctl.GetString(cmd, "key"),
 			Value:       fctl.GetString(cmd, "value"),

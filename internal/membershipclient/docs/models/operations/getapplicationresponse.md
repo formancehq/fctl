@@ -1,0 +1,10 @@
+# GetApplicationResponse
+
+
+## Fields
+
+| Field                                                                                   | Type                                                                                    | Required                                                                                | Description                                                                             |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                              | [components.HTTPMetadata](../../models/components/httpmetadata.md)                      | :heavy_check_mark:                                                                      | N/A                                                                                     |
+| `GetApplicationResponse`                                                                | [*components.GetApplicationResponse](../../models/components/getapplicationresponse.md) | :heavy_minus_sign:                                                                      | Application details                                                                     |
+| `Error`                                                                                 | [*components.Error](../../models/components/error.md)                                   | :heavy_minus_sign:                                                                      | Error                                                                                   |

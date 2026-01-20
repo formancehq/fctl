@@ -2,11 +2,15 @@ package organizations
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/go-libs/v3/pointer"
+
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
 	"github.com/formancehq/fctl/pkg/printer"
 )
@@ -22,7 +26,7 @@ const (
 )
 
 type HistoryStore struct {
-	Cursor *membershipclient.LogCursorData `json:"cursor"`
+	Cursor *components.LogCursorData `json:"cursor"`
 }
 
 type HistoryController struct {
@@ -33,7 +37,7 @@ var _ fctl.Controller[*HistoryStore] = (*HistoryController)(nil)
 
 func NewDefaultHistoryStore() *HistoryStore {
 	return &HistoryStore{
-		Cursor: &membershipclient.LogCursorData{},
+		Cursor: &components.LogCursorData{},
 	}
 }
 func NewHistoryController() *HistoryController {
@@ -56,9 +60,6 @@ func NewHistoryCommand() *cobra.Command {
 
 		fctl.WithStringFlag(cursorFlag, "", "Cursor"),
 		fctl.WithIntFlag(pageSizeFlag, 10, "Page size"),
-		fctl.WithPreRunE(func(cmd *cobra.Command, args []string) error {
-			return fctl.CheckMembershipVersion("v0.29.0")(cmd, args)
-		}),
 		fctl.WithController(NewHistoryController()),
 	)
 }
@@ -67,33 +68,50 @@ func (c *HistoryController) GetStore() *HistoryStore {
 }
 
 func (c *HistoryController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, args[0])
+	if err != nil {
+		return nil, err
+	}
 	pageSize := fctl.GetInt(cmd, pageSizeFlag)
 	orgId := args[0]
-	req := store.Client().ListLogs(cmd.Context(), orgId).PageSize(int32(pageSize))
 
 	cursor := fctl.GetString(cmd, cursorFlag)
 	userID := fctl.GetString(cmd, userIdFlag)
 	action := fctl.GetString(cmd, actionFlag)
 	data := fctl.GetString(cmd, dataFlag)
+
 	if cursor != "" {
 		if userID != "" || action != "" || data != "" {
 			return nil, errors.New("cursor can't be used with other flags")
 		}
-
-		req = req.Cursor(cursor)
 	}
 
 	if orgId == "" && cursor == "" {
 		return nil, errors.New("org-id or cursor is required")
 	}
 
+	request := operations.ListLogsRequest{
+		OrganizationID: orgId,
+		PageSize:       pointer.For(int64(pageSize)),
+	}
+
+	if cursor != "" {
+		request.Cursor = &cursor
+	}
+
 	if userID != "" {
-		req = req.UserId(userID)
+		request.UserID = &userID
 	}
 
 	if action != "" {
-		req = req.Action(membershipclient.Action(action))
+		actionEnum := components.Action(action)
+		request.Action = &actionEnum
 	}
 
 	if data != "" {
@@ -101,20 +119,21 @@ func (c *HistoryController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		if len(keyVal) != 2 {
 			return nil, errors.New("data filter must be in the form key=value")
 		}
-
-		req = req.Key(keyVal[0]).Value(keyVal[1])
+		request.Key = &keyVal[0]
+		request.Value = &keyVal[1]
 	}
 
-	log, res, err := req.Execute()
+	response, err := apiClient.ListLogs(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}
 
-	if res.StatusCode >= 300 {
-		return nil, errors.New("error listing stack logs")
+	if response.LogCursor == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
 	}
 
-	c.store.Cursor = &log.Data
+	cursorData := response.LogCursor.GetData()
+	c.store.Cursor = &cursorData
 	return c, nil
 }
 

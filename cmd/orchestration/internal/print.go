@@ -1,10 +1,10 @@
 package internal
 
 import (
+	"fmt"
 	"io"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
@@ -48,7 +48,7 @@ func PrintWorkflowInstance(out io.Writer, w shared.Workflow, instance shared.Wor
 				[]string{"Name", "Started at", "Terminated at", "Error"},
 			),
 		).Render(); err != nil {
-		return errors.Wrap(err, "rendering table")
+		return fmt.Errorf("rendering table: %w", err)
 	}
 	return nil
 }

@@ -6,9 +6,10 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/go-libs/pointer"
+	"github.com/formancehq/go-libs/v3/pointer"
 
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
@@ -48,55 +49,88 @@ func (c *ConfigureController) GetStore() *Configure {
 
 func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetMembershipStore(cmd.Context())
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	requestData := membershipclient.AuthenticationProviderData{}
+	organizationID, apiClient, err := fctl.NewMembershipClientForOrganizationFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	var requestData components.UpsertAuthenticationProviderRequest
 
 	switch args[0] {
 	case "github":
-		requestData.GithubIDPConfig = &membershipclient.GithubIDPConfig{
+		requestData = components.CreateUpsertAuthenticationProviderRequestUpsertAuthenticationProviderRequestGithubIDPConfig(components.UpsertAuthenticationProviderRequestGithubIDPConfig{
 			Name:         args[1],
 			ClientID:     args[2],
 			ClientSecret: args[3],
-		}
+			Config:       components.UpsertAuthenticationProviderRequestGithubIDPConfigConfig{},
+		})
 	case "google":
-		requestData.GoogleIDPConfig = &membershipclient.GoogleIDPConfig{
+		requestData = components.CreateUpsertAuthenticationProviderRequestUpsertAuthenticationProviderRequestGoogleIDPConfig(components.UpsertAuthenticationProviderRequestGoogleIDPConfig{
 			Name:         args[1],
 			ClientID:     args[2],
 			ClientSecret: args[3],
-		}
+			Config:       components.UpsertAuthenticationProviderRequestGoogleIDPConfigConfig{},
+		})
 	case "microsoft":
-		requestData.MicrosoftIDPConfig = &membershipclient.MicrosoftIDPConfig{
+		requestData = components.CreateUpsertAuthenticationProviderRequestUpsertAuthenticationProviderRequestMicrosoftIDPConfig(components.UpsertAuthenticationProviderRequestMicrosoftIDPConfig{
 			Name:         args[1],
 			ClientID:     args[2],
 			ClientSecret: args[3],
-			Config: membershipclient.MicrosoftIDPConfigAllOfConfig{
+			Config: components.UpsertAuthenticationProviderRequestMicrosoftIDPConfigConfig{
 				Tenant: pointer.For(fctl.GetString(cmd, "microsoft-tenant")),
 			},
-		}
+		})
 	case "oidc":
-		requestData.OIDCConfig = &membershipclient.OIDCConfig{
+		requestData = components.CreateUpsertAuthenticationProviderRequestUpsertAuthenticationProviderRequestOIDCConfig(components.UpsertAuthenticationProviderRequestOIDCConfig{
 			Name:         args[1],
 			ClientID:     args[2],
 			ClientSecret: args[3],
-			Config: membershipclient.OIDCConfigAllOfConfig{
+			Config: components.UpsertAuthenticationProviderRequestOIDCConfigConfig{
 				Issuer: fctl.GetString(cmd, "oidc-issuer"),
 			},
-		}
+		})
+	default:
+		return nil, fmt.Errorf("unknown provider type: %s", args[0])
 	}
 
-	res, _, err := store.Client().
-		UpsertAuthenticationProvider(cmd.Context(), organizationID).
-		Body(requestData).
-		Execute()
+	request := operations.UpsertAuthenticationProviderRequest{
+		OrganizationID: organizationID,
+		Body:           &requestData,
+	}
+
+	response, err := apiClient.UpsertAuthenticationProvider(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}
-	c.store.RedirectURI = res.Data.RedirectURI
+
+	if response.AuthenticationProviderResponse == nil || response.AuthenticationProviderResponse.GetData() == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	data := response.AuthenticationProviderResponse.GetData()
+	switch data.Type {
+	case components.DataTypeAuthenticationProviderResponseGithubIDPConfig:
+		if p := data.AuthenticationProviderResponseGithubIDPConfig; p != nil {
+			c.store.RedirectURI = p.GetRedirectURI()
+		}
+	case components.DataTypeAuthenticationProviderResponseGoogleIDPConfig:
+		if p := data.AuthenticationProviderResponseGoogleIDPConfig; p != nil {
+			c.store.RedirectURI = p.GetRedirectURI()
+		}
+	case components.DataTypeAuthenticationProviderResponseMicrosoftIDPConfig:
+		if p := data.AuthenticationProviderResponseMicrosoftIDPConfig; p != nil {
+			c.store.RedirectURI = p.GetRedirectURI()
+		}
+	case components.DataTypeAuthenticationProviderResponseOIDCConfig:
+		if p := data.AuthenticationProviderResponseOIDCConfig; p != nil {
+			c.store.RedirectURI = p.GetRedirectURI()
+		}
+	}
 
 	return c, nil
 }

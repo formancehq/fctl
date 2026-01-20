@@ -29,8 +29,5 @@ func NewCommand() *cobra.Command {
 			accounts.NewLedgerAccountsCommand(),
 			volumes.NewLedgerVolumesCommand(),
 		),
-		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
-			return fctl.NewStackStore(cmd)
-		}),
 	)
 }

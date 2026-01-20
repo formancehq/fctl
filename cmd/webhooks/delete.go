@@ -1,7 +1,8 @@
 package webhooks
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
+
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -17,8 +18,7 @@ type DeleteWebhookStore struct {
 }
 
 type DeleteWebhookController struct {
-	store  *DeleteWebhookStore
-	config *fctl.Config
+	store *DeleteWebhookStore
 }
 
 var _ fctl.Controller[*DeleteWebhookStore] = (*DeleteWebhookController)(nil)
@@ -31,8 +31,7 @@ func NewDefaultDeleteWebhookStore() *DeleteWebhookStore {
 
 func NewDeleteWebhookController() *DeleteWebhookController {
 	return &DeleteWebhookController{
-		store:  NewDefaultDeleteWebhookStore(),
-		config: nil,
+		store: NewDefaultDeleteWebhookStore(),
 	}
 }
 
@@ -41,19 +40,27 @@ func (c *DeleteWebhookController) GetStore() *DeleteWebhookStore {
 }
 
 func (c *DeleteWebhookController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
-	c.config = store.Config
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to delete a webhook") {
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to delete a webhook") {
 		return nil, fctl.ErrMissingApproval
 	}
 
 	request := operations.DeleteConfigRequest{
 		ID: args[0],
 	}
-	_, err := store.Client().Webhooks.V1.DeleteConfig(cmd.Context(), request)
+	_, err = stackClient.Webhooks.V1.DeleteConfig(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "deleting config")
+		return nil, fmt.Errorf("deleting config: %w", err)
 	}
 
 	c.store.Success = true
@@ -68,7 +75,7 @@ func (c *DeleteWebhookController) Render(cmd *cobra.Command, args []string) erro
 	}
 
 	if c.store.ErrorResponse != nil {
-		pterm.Warning.WithShowLineNumber(false).Println(c.store.ErrorResponse.ErrorMessage)
+		pterm.Warning.WithShowLineNumber(false).Printf("%s\r\n", c.store.ErrorResponse.ErrorMessage)
 		return nil
 	}
 

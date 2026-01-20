@@ -1,14 +1,15 @@
 package triggers
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
-	"github.com/formancehq/go-libs/pointer"
+	"github.com/formancehq/go-libs/v3/pointer"
 
 	fctl "github.com/formancehq/fctl/pkg"
 )
@@ -56,7 +57,16 @@ func (c *TriggersCreateController) GetStore() *TriggersCreateStore {
 }
 
 func (c *TriggersCreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	var (
 		event    = args[0]
@@ -85,9 +95,9 @@ func (c *TriggersCreateController) Run(cmd *cobra.Command, args []string) (fctl.
 		}
 	}
 
-	res, err := store.Client().Orchestration.V1.CreateTrigger(cmd.Context(), data)
+	res, err := stackClient.Orchestration.V1.CreateTrigger(cmd.Context(), data)
 	if err != nil {
-		return nil, errors.Wrap(err, "reading trigger")
+		return nil, fmt.Errorf("reading trigger: %w", err)
 	}
 
 	c.store.Trigger = res.CreateTriggerResponse.Data

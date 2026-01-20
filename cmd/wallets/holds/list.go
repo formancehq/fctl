@@ -1,7 +1,8 @@
 package holds
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
+
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -53,9 +54,17 @@ func (c *ListController) GetStore() *ListStore {
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	walletID, err := internal.RetrieveWalletID(cmd, store.Client())
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	walletID, err := internal.RetrieveWalletID(cmd, stackClient)
 	if err != nil {
 		return nil, err
 	}
@@ -69,9 +78,9 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		WalletID: &walletID,
 		Metadata: metadata,
 	}
-	response, err := store.Client().Wallets.V1.GetHolds(cmd.Context(), request)
+	response, err := stackClient.Wallets.V1.GetHolds(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "getting holds")
+		return nil, fmt.Errorf("getting holds: %w", err)
 	}
 
 	c.store.Holds = response.GetHoldsResponse.Cursor.Data
@@ -102,7 +111,7 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 				[]string{"ID", "Wallet ID", "Description", "Metadata"},
 			),
 		).Render(); err != nil {
-		return errors.Wrap(err, "rendering table")
+		return fmt.Errorf("rendering table: %w", err)
 	}
 
 	return nil

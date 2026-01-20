@@ -55,7 +55,16 @@ func (c *RetryController) GetStore() *RetryStore {
 }
 
 func (c *RetryController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
 	}
@@ -64,12 +73,12 @@ func (c *RetryController) Run(cmd *cobra.Command, args []string) (fctl.Renderabl
 		return nil, fmt.Errorf("transfer initiation are only supported in >= v1.0.0")
 	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to retry the transfer initiation '%s'", args[0]) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to retry the transfer initiation '%s'", args[0]) {
 		return nil, fctl.ErrMissingApproval
 	}
 
 	//nolint:gosimple
-	response, err := store.Client().Payments.V1.RetryTransferInitiation(cmd.Context(), operations.RetryTransferInitiationRequest{
+	response, err := stackClient.Payments.V1.RetryTransferInitiation(cmd.Context(), operations.RetryTransferInitiationRequest{
 		TransferID: args[0],
 	})
 	if err != nil {

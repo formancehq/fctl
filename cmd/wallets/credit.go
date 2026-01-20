@@ -1,10 +1,10 @@
 package wallets
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -65,14 +65,23 @@ func (c *CreditWalletController) GetStore() *CreditWalletStore {
 }
 
 func (c *CreditWalletController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to credit a wallets") {
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+	if !fctl.CheckStackApprobation(cmd, "You are about to credit a wallets") {
 		return nil, fctl.ErrMissingApproval
 	}
 
 	amountStr := args[0]
 	asset := args[1]
-	walletID, err := internal.RetrieveWalletID(cmd, store.Client())
+	walletID, err := internal.RetrieveWalletID(cmd, stackClient)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +102,7 @@ func (c *CreditWalletController) Run(cmd *cobra.Command, args []string) (fctl.Re
 
 	sources := make([]shared.Subject, 0)
 	for _, sourceStr := range fctl.GetStringSlice(cmd, c.sourceFlag) {
-		source, err := internal.ParseSubject(sourceStr, cmd, store.Client())
+		source, err := internal.ParseSubject(sourceStr, cmd, stackClient)
 		if err != nil {
 			return nil, err
 		}
@@ -113,9 +122,9 @@ func (c *CreditWalletController) Run(cmd *cobra.Command, args []string) (fctl.Re
 			Balance:  formance.String(fctl.GetString(cmd, c.balanceFlag)),
 		},
 	}
-	_, err = store.Client().Wallets.V1.CreditWallet(cmd.Context(), request)
+	_, err = stackClient.Wallets.V1.CreditWallet(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "crediting wallet")
+		return nil, fmt.Errorf("crediting wallet: %w", err)
 	}
 
 	c.store.Success = true

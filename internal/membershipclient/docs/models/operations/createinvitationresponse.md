@@ -1,0 +1,10 @@
+# CreateInvitationResponse
+
+
+## Fields
+
+| Field                                                                                       | Type                                                                                        | Required                                                                                    | Description                                                                                 |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                  | [components.HTTPMetadata](../../models/components/httpmetadata.md)                          | :heavy_check_mark:                                                                          | N/A                                                                                         |
+| `CreateInvitationResponse`                                                                  | [*components.CreateInvitationResponse](../../models/components/createinvitationresponse.md) | :heavy_minus_sign:                                                                          | Invitation already sent                                                                     |
+| `Error`                                                                                     | [*components.Error](../../models/components/error.md)                                       | :heavy_minus_sign:                                                                          | Error                                                                                       |

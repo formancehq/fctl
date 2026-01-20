@@ -12,24 +12,16 @@ lint:
 tidy:
     go mod tidy
 
-generate: 
-    openapi-generator-cli generate \
-        -i ./membership-swagger.yaml \
-        -g go \
-        -o ./membershipclient \
-        --git-user-id=formancehq \
-        --git-repo-id=fctl \
-        -p packageVersion=latest \
-        -p isGoSubmodule=true \
-        -p packageName=membershipclient \
-        -p disallowAdditionalPropertiesIfNotPresent=false
-    rm -rf ./membershipclient/test
-    rm -rf ./membershipclient/docs
+generate: generate-deploy-server-client generate-membership-client
+    @go generate ./...
 g: generate
 
 [group('generate')]
-generate-client:
+generate-deploy-server-client:
     @cd internal/deployserverclient && speakeasy run --skip-versioning
+
+generate-membership-client:
+    @cd internal/membershipclient && speakeasy run --skip-versioning
 
 
 tests:

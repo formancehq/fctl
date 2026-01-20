@@ -2,7 +2,7 @@
 
 package deployserverclient
 
-// Generated from OpenAPI doc version 0.1.0 and generator version 2.787.2
+// Generated from OpenAPI doc version 0.1.0 and generator version 2.797.1
 
 import (
 	"bytes"
@@ -119,7 +119,7 @@ func New(opts ...SDKOption) *DeployServer {
 	sdk := &DeployServer{
 		SDKVersion: "0.0.1",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 0.0.1 2.787.2 0.1.0 github.com/formancehq/fctl/internal/deployserverclient",
+			UserAgent:  "speakeasy-sdk/go 0.0.1 2.797.1 0.1.0 github.com/formancehq/fctl/internal/deployserverclient",
 			ServerList: ServerList,
 		},
 		hooks: hooks.New(),
@@ -133,12 +133,7 @@ func New(opts ...SDKOption) *DeployServer {
 		sdk.sdkConfiguration.Client = &http.Client{Timeout: 60 * time.Second}
 	}
 
-	currentServerURL, _ := sdk.sdkConfiguration.GetServerDetails()
-	serverURL := currentServerURL
-	serverURL, sdk.sdkConfiguration.Client = sdk.hooks.SDKInit(currentServerURL, sdk.sdkConfiguration.Client)
-	if currentServerURL != serverURL {
-		sdk.sdkConfiguration.ServerURL = serverURL
-	}
+	sdk.sdkConfiguration = sdk.hooks.SDKInit(sdk.sdkConfiguration)
 
 	return sdk
 }

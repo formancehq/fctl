@@ -27,8 +27,5 @@ func NewCommand() *cobra.Command {
 			users.NewCommand(),
 			modules.NewCommand(),
 		),
-		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
-			return fctl.NewMembershipOrganizationStore(cmd)
-		}),
 	)
 }

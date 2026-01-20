@@ -6,14 +6,15 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/go-libs/pointer"
+	"github.com/formancehq/go-libs/v3/pointer"
 
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
 type Update struct {
-	Client membershipclient.OrganizationClient `json:"organizationClient"`
+	Client components.OrganizationClient `json:"organizationClient"`
 }
 type UpdateController struct {
 	store *Update
@@ -66,46 +67,69 @@ func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fmt.Errorf("invalid client_id: %s", args[0])
 	}
 
-	store := fctl.GetMembershipStore(cmd.Context())
-	if !fctl.CheckOrganizationApprobation(cmd, "You are about to update an existing organization OAuth client") {
-		return nil, fctl.ErrMissingApproval
-	}
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	actualClient, _, err := store.Client().OrganizationClientRead(cmd.Context(), organizationID, clientId).Execute()
+	organizationID, apiClient, err := fctl.NewMembershipClientForOrganizationFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+	if !fctl.CheckOrganizationApprobation(cmd, "You are about to update an existing organization OAuth client") {
+		return nil, fctl.ErrMissingApproval
+	}
+
+	readRequest := operations.OrganizationClientReadRequest{
+		OrganizationID: organizationID,
+		ClientID:       clientId,
+	}
+
+	actualClientResponse, err := apiClient.OrganizationClientRead(cmd.Context(), readRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read organization client: %w", err)
 	}
 
-	req := store.Client().OrganizationClientUpdate(cmd.Context(), organizationID, clientId)
-	reqBody := membershipclient.UpdateOrganizationClientRequest{}
+	if actualClientResponse.ReadOrganizationClientResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	actualClient := actualClientResponse.ReadOrganizationClientResponse.GetData()
+
+	reqBody := components.UpdateOrganizationClientRequest{}
 	if description != "" {
 		reqBody.Description = pointer.For(description)
 	} else {
-		reqBody.Description = pointer.For(actualClient.Data.Description)
+		reqBody.Description = pointer.For(actualClient.GetDescription())
 	}
 
 	if name != "" {
 		reqBody.Name = name
 	} else {
-		reqBody.Name = actualClient.Data.Name
+		reqBody.Name = actualClient.GetName()
 	}
 
-	req = req.UpdateOrganizationClientRequest(reqBody)
-	_, err = req.Execute()
+	updateRequest := operations.OrganizationClientUpdateRequest{
+		OrganizationID: organizationID,
+		ClientID:       clientId,
+		Body:           &reqBody,
+	}
+
+	_, err = apiClient.OrganizationClientUpdate(cmd.Context(), updateRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	updatedClient, _, err := store.Client().OrganizationClientRead(cmd.Context(), organizationID, clientId).Execute()
+	updatedClientResponse, err := apiClient.OrganizationClientRead(cmd.Context(), readRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read organization client: %w", err)
 	}
 
-	c.store.Client = updatedClient.Data
+	if updatedClientResponse.ReadOrganizationClientResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	c.store.Client = updatedClientResponse.ReadOrganizationClientResponse.GetData()
 
 	return c, nil
 }
