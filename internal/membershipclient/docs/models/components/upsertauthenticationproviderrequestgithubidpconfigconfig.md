@@ -1,4 +1,4 @@
-# AuthenticationProviderDataGithubIDPConfigConfig
+# UpsertAuthenticationProviderRequestGithubIDPConfigConfig
 
 
 ## Fields

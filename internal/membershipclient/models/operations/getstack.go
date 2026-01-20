@@ -29,7 +29,7 @@ func (g *GetStackRequest) GetStackID() string {
 type GetStackResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
 	// OK
-	CreateStackResponse *components.CreateStackResponse
+	ReadStackResponse *components.ReadStackResponse
 	// Error
 	Error *components.Error
 }
@@ -52,11 +52,11 @@ func (g *GetStackResponse) GetHTTPMeta() components.HTTPMetadata {
 	return g.HTTPMeta
 }
 
-func (g *GetStackResponse) GetCreateStackResponse() *components.CreateStackResponse {
+func (g *GetStackResponse) GetReadStackResponse() *components.ReadStackResponse {
 	if g == nil {
 		return nil
 	}
-	return g.CreateStackResponse
+	return g.ReadStackResponse
 }
 
 func (g *GetStackResponse) GetError() *components.Error {

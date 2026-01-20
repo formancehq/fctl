@@ -8,9 +8,9 @@ import (
 )
 
 type UpdatePolicyRequest struct {
-	OrganizationID string                 `pathParam:"style=simple,explode=false,name=organizationId"`
-	PolicyID       int64                  `pathParam:"style=simple,explode=false,name=policyId"`
-	Body           *components.PolicyData `request:"mediaType=application/json"`
+	OrganizationID string                          `pathParam:"style=simple,explode=false,name=organizationId"`
+	PolicyID       int64                           `pathParam:"style=simple,explode=false,name=policyId"`
+	Body           *components.CreatePolicyRequest `request:"mediaType=application/json"`
 }
 
 func (u UpdatePolicyRequest) MarshalJSON() ([]byte, error) {
@@ -38,7 +38,7 @@ func (u *UpdatePolicyRequest) GetPolicyID() int64 {
 	return u.PolicyID
 }
 
-func (u *UpdatePolicyRequest) GetBody() *components.PolicyData {
+func (u *UpdatePolicyRequest) GetBody() *components.CreatePolicyRequest {
 	if u == nil {
 		return nil
 	}

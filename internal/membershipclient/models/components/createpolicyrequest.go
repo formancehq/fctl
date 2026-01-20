@@ -2,23 +2,23 @@
 
 package components
 
-type PolicyData struct {
+type CreatePolicyRequest struct {
 	// Policy name
 	Name string `json:"name"`
 	// Policy description
 	Description *string `json:"description,omitzero"`
 }
 
-func (p *PolicyData) GetName() string {
-	if p == nil {
+func (c *CreatePolicyRequest) GetName() string {
+	if c == nil {
 		return ""
 	}
-	return p.Name
+	return c.Name
 }
 
-func (p *PolicyData) GetDescription() *string {
-	if p == nil {
+func (c *CreatePolicyRequest) GetDescription() *string {
+	if c == nil {
 		return nil
 	}
-	return p.Description
+	return c.Description
 }

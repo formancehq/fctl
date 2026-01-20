@@ -48,7 +48,7 @@ func (u *UpdateStackRequest) GetBody() *components.StackData {
 type UpdateStackResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
 	// Updated stack
-	CreateStackResponse *components.CreateStackResponse
+	ReadStackResponse *components.ReadStackResponse
 	// Error
 	Error *components.Error
 }
@@ -71,11 +71,11 @@ func (u *UpdateStackResponse) GetHTTPMeta() components.HTTPMetadata {
 	return u.HTTPMeta
 }
 
-func (u *UpdateStackResponse) GetCreateStackResponse() *components.CreateStackResponse {
+func (u *UpdateStackResponse) GetReadStackResponse() *components.ReadStackResponse {
 	if u == nil {
 		return nil
 	}
-	return u.CreateStackResponse
+	return u.ReadStackResponse
 }
 
 func (u *UpdateStackResponse) GetError() *components.Error {

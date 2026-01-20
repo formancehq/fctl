@@ -76,11 +76,11 @@ func (c *UpgradeController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		return nil, fmt.Errorf("unexpected status code: %d", stackResponse.GetHTTPMeta().Response.StatusCode)
 	}
 
-	if stackResponse.CreateStackResponse == nil {
+	if stackResponse.ReadStackResponse == nil {
 		return nil, fmt.Errorf("unexpected response: no data")
 	}
 
-	stackData := stackResponse.CreateStackResponse.GetData()
+	stackData := stackResponse.ReadStackResponse.GetData()
 
 	req := components.StackVersion{
 		Version: nil,

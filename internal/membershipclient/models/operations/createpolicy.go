@@ -8,8 +8,8 @@ import (
 )
 
 type CreatePolicyRequest struct {
-	OrganizationID string                 `pathParam:"style=simple,explode=false,name=organizationId"`
-	Body           *components.PolicyData `request:"mediaType=application/json"`
+	OrganizationID string                          `pathParam:"style=simple,explode=false,name=organizationId"`
+	Body           *components.CreatePolicyRequest `request:"mediaType=application/json"`
 }
 
 func (c CreatePolicyRequest) MarshalJSON() ([]byte, error) {
@@ -30,7 +30,7 @@ func (c *CreatePolicyRequest) GetOrganizationID() string {
 	return c.OrganizationID
 }
 
-func (c *CreatePolicyRequest) GetBody() *components.PolicyData {
+func (c *CreatePolicyRequest) GetBody() *components.CreatePolicyRequest {
 	if c == nil {
 		return nil
 	}

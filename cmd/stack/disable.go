@@ -80,10 +80,10 @@ func (c *DisableController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		if err != nil {
 			return nil, err
 		}
-		if rsp.CreateStackResponse == nil {
+		if rsp.ReadStackResponse == nil {
 			return nil, fmt.Errorf("unexpected response: no data")
 		}
-		stack = rsp.CreateStackResponse.GetData()
+		stack = rsp.ReadStackResponse.GetData()
 	} else {
 		if fctl.GetString(cmd, stackNameFlag) == "" {
 			return nil, errors.New("need either an id of a name specified using --name flag")

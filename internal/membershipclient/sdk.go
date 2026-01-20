@@ -2,7 +2,7 @@
 
 package membershipclient
 
-// Generated from OpenAPI doc version 0.1.0 and generator version 2.788.5
+// Generated from OpenAPI doc version 0.1.0 and generator version 2.797.1
 
 import (
 	"bytes"
@@ -132,7 +132,7 @@ func New(opts ...SDKOption) *SDK {
 	sdk := &SDK{
 		SDKVersion: "0.1.0",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 0.1.0 2.788.5 0.1.0 github.com/formancehq/fctl/internal/membershipclient",
+			UserAgent:  "speakeasy-sdk/go 0.1.0 2.797.1 0.1.0 github.com/formancehq/fctl/internal/membershipclient",
 			ServerList: ServerList,
 		},
 		hooks: hooks.New(),
@@ -7643,12 +7643,12 @@ func (s *SDK) CreateStack(ctx context.Context, request operations.CreateStackReq
 				return nil, err
 			}
 
-			var out components.CreateStackResponse
+			var out components.ReadStackResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
 
-			res.CreateStackResponse = &out
+			res.ReadStackResponse = &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -8698,12 +8698,12 @@ func (s *SDK) GetStack(ctx context.Context, request operations.GetStackRequest, 
 				return nil, err
 			}
 
-			var out components.CreateStackResponse
+			var out components.ReadStackResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
 
-			res.CreateStackResponse = &out
+			res.ReadStackResponse = &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -8925,12 +8925,12 @@ func (s *SDK) UpdateStack(ctx context.Context, request operations.UpdateStackReq
 				return nil, err
 			}
 
-			var out components.CreateStackResponse
+			var out components.ReadStackResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
 
-			res.CreateStackResponse = &out
+			res.ReadStackResponse = &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -10596,12 +10596,12 @@ func (s *SDK) RestoreStack(ctx context.Context, request operations.RestoreStackR
 				return nil, err
 			}
 
-			var out components.CreateStackResponse
+			var out components.ReadStackResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
 
-			res.CreateStackResponse = &out
+			res.ReadStackResponse = &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {

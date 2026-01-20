@@ -179,11 +179,11 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fmt.Errorf("creating stack: %w", err)
 	}
 
-	if stackResponse.CreateStackResponse == nil {
+	if stackResponse.ReadStackResponse == nil {
 		return nil, fmt.Errorf("unexpected response: no data")
 	}
 
-	stackData := stackResponse.CreateStackResponse.GetData()
+	stackData := stackResponse.ReadStackResponse.GetData()
 
 	if stackData == nil {
 		return nil, fmt.Errorf("unexpected response: stack data is nil")

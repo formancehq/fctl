@@ -8,8 +8,8 @@ import (
 )
 
 type UpsertAuthenticationProviderRequest struct {
-	OrganizationID string                                 `pathParam:"style=simple,explode=false,name=organizationId"`
-	Body           *components.AuthenticationProviderData `request:"mediaType=application/json"`
+	OrganizationID string                                          `pathParam:"style=simple,explode=false,name=organizationId"`
+	Body           *components.UpsertAuthenticationProviderRequest `request:"mediaType=application/json"`
 }
 
 func (u *UpsertAuthenticationProviderRequest) GetOrganizationID() string {
@@ -19,7 +19,7 @@ func (u *UpsertAuthenticationProviderRequest) GetOrganizationID() string {
 	return u.OrganizationID
 }
 
-func (u *UpsertAuthenticationProviderRequest) GetBody() *components.AuthenticationProviderData {
+func (u *UpsertAuthenticationProviderRequest) GetBody() *components.UpsertAuthenticationProviderRequest {
 	if u == nil {
 		return nil
 	}

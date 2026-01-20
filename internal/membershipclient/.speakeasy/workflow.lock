@@ -1,4 +1,4 @@
-speakeasyVersion: 1.680.1
+speakeasyVersion: 1.690.0
 sources:
     membership:
         sourceNamespace: membership
@@ -14,7 +14,7 @@ targets:
         sourceRevisionDigest: sha256:43d2b208ac1a3492602f5ebe5ee335548bc06ecf07f8e8047c86ae807b1b1354
         sourceBlobDigest: sha256:cc9d8d2f899357b7a2062c6d771067ca22ce09546f07087e255c7096e2830e48
         codeSamplesNamespace: membership-go-code-samples
-        codeSamplesRevisionDigest: sha256:92a09a768f32a57d5206f54eb30bd9ba9de95ed5814d11c511027667e948c3aa
+        codeSamplesRevisionDigest: sha256:ef396366b8bd5db2f0201c182a0e2252bea75215063ce6c8e6452e7fa5c711a7
 workflow:
     workflowVersion: 1.0.0
     speakeasyVersion: latest

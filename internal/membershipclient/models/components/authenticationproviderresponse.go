@@ -573,10 +573,10 @@ const (
 )
 
 type Data struct {
-	AuthenticationProviderResponseGoogleIDPConfig    *AuthenticationProviderResponseGoogleIDPConfig    `queryParam:"inline,name=data" union:"member"`
-	AuthenticationProviderResponseMicrosoftIDPConfig *AuthenticationProviderResponseMicrosoftIDPConfig `queryParam:"inline,name=data" union:"member"`
-	AuthenticationProviderResponseGithubIDPConfig    *AuthenticationProviderResponseGithubIDPConfig    `queryParam:"inline,name=data" union:"member"`
-	AuthenticationProviderResponseOIDCConfig         *AuthenticationProviderResponseOIDCConfig         `queryParam:"inline,name=data" union:"member"`
+	AuthenticationProviderResponseGoogleIDPConfig    *AuthenticationProviderResponseGoogleIDPConfig    `queryParam:"inline" union:"member"`
+	AuthenticationProviderResponseMicrosoftIDPConfig *AuthenticationProviderResponseMicrosoftIDPConfig `queryParam:"inline" union:"member"`
+	AuthenticationProviderResponseGithubIDPConfig    *AuthenticationProviderResponseGithubIDPConfig    `queryParam:"inline" union:"member"`
+	AuthenticationProviderResponseOIDCConfig         *AuthenticationProviderResponseOIDCConfig         `queryParam:"inline" union:"member"`
 
 	Type DataType
 }

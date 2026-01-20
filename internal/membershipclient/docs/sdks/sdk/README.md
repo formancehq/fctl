@@ -1956,7 +1956,7 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    if res.CreateStackResponse != nil {
+    if res.ReadStackResponse != nil {
         // handle response
     }
 }
@@ -2233,7 +2233,7 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    if res.CreateStackResponse != nil {
+    if res.ReadStackResponse != nil {
         // handle response
     }
 }
@@ -2288,7 +2288,7 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    if res.CreateStackResponse != nil {
+    if res.ReadStackResponse != nil {
         // handle response
     }
 }
@@ -2731,7 +2731,7 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    if res.CreateStackResponse != nil {
+    if res.ReadStackResponse != nil {
         // handle response
     }
 }

@@ -77,11 +77,11 @@ func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, errors.New("stack not found")
 	}
 
-	if stackResponse.CreateStackResponse == nil {
+	if stackResponse.ReadStackResponse == nil {
 		return nil, fmt.Errorf("unexpected response: no data")
 	}
 
-	stackData := stackResponse.CreateStackResponse.GetData()
+	stackData := stackResponse.ReadStackResponse.GetData()
 
 	name := fctl.GetString(cmd, nameFlag)
 	if name == "" {
@@ -103,11 +103,11 @@ func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fmt.Errorf("updating stack: %w", err)
 	}
 
-	if updatedStackResponse.CreateStackResponse == nil {
+	if updatedStackResponse.ReadStackResponse == nil {
 		return nil, fmt.Errorf("unexpected response: no data")
 	}
 
-	c.store.Stack = updatedStackResponse.CreateStackResponse.GetData()
+	c.store.Stack = updatedStackResponse.ReadStackResponse.GetData()
 
 	return c, nil
 }

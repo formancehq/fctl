@@ -1,4 +1,4 @@
-# AuthenticationProviderDataGoogleIDPConfigConfig
+# UpsertAuthenticationProviderRequestGoogleIDPConfigConfig
 
 
 ## Fields

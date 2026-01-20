@@ -96,7 +96,7 @@ func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 	}
 
 	description := fctl.GetString(cmd, "description")
-	policyData := components.PolicyData{
+	policyData := components.CreatePolicyRequest{
 		Name: name,
 	}
 	if description != "" || cmd.Flags().Changed("description") {

@@ -40,11 +40,11 @@ func waitStackReady(cmd *cobra.Command, client *membershipclient.SDK, organizati
 			return nil, fmt.Errorf("stack %s not found", stackId)
 		}
 
-		if stackRsp.CreateStackResponse == nil {
+		if stackRsp.ReadStackResponse == nil {
 			return nil, fmt.Errorf("unexpected response: no data")
 		}
 
-		stackData := stackRsp.CreateStackResponse.GetData()
+		stackData := stackRsp.ReadStackResponse.GetData()
 
 		if stackData == nil {
 			return nil, fmt.Errorf("unexpected response: stack data is nil")

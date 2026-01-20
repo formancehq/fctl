@@ -76,10 +76,10 @@ func (c *StackRestoreController) Run(cmd *cobra.Command, args []string) (fctl.Re
 		if err != nil {
 			return nil, err
 		}
-		if rsp.CreateStackResponse == nil {
+		if rsp.ReadStackResponse == nil {
 			return nil, fmt.Errorf("unexpected response: no data")
 		}
-		stack = rsp.CreateStackResponse.GetData()
+		stack = rsp.ReadStackResponse.GetData()
 	}
 
 	if stack == nil {
@@ -100,11 +100,11 @@ func (c *StackRestoreController) Run(cmd *cobra.Command, args []string) (fctl.Re
 		return nil, err
 	}
 
-	if response.CreateStackResponse == nil {
+	if response.ReadStackResponse == nil {
 		return nil, fmt.Errorf("unexpected response: no data")
 	}
 
-	restoredStackData := response.CreateStackResponse.GetData()
+	restoredStackData := response.ReadStackResponse.GetData()
 
 	if !fctl.GetBool(cmd, nowaitFlag) {
 		spinner, err := pterm.DefaultSpinner.Start("Waiting services availability")

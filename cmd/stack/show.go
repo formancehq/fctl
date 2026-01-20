@@ -86,10 +86,10 @@ func (c *StackShowController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 			}
 			return nil, fmt.Errorf("listing stacks: %w", err)
 		}
-		if stackResponse.CreateStackResponse == nil {
+		if stackResponse.ReadStackResponse == nil {
 			return nil, fmt.Errorf("unexpected response: no data")
 		}
-		stack = stackResponse.CreateStackResponse.GetData()
+		stack = stackResponse.ReadStackResponse.GetData()
 	} else {
 		if fctl.GetString(cmd, stackNameFlag) == "" {
 			return nil, errors.New("need either an id of a name specified using --name flag")

@@ -1,4 +1,4 @@
-# AuthenticationProviderDataOIDCConfigConfig
+# UpsertAuthenticationProviderRequestOIDCConfigConfig
 
 
 ## Fields

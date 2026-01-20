@@ -2,7 +2,7 @@
 
 package hooks
 
-// OAuth2Scope - Available scopes for the  OAuth 2.0 scheme (authorizationCode flow).
+// OAuth2Scope - Available scopes for the oauth2 OAuth 2.0 scheme (authorizationCode flow).
 type OAuth2Scope string
 
 const (

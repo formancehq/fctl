@@ -1,4 +1,4 @@
-# AuthenticationProviderDataMicrosoftIDPConfigConfig
+# UpsertAuthenticationProviderRequestMicrosoftIDPConfigConfig
 
 
 ## Fields

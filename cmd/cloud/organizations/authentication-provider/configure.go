@@ -59,49 +59,41 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		return nil, err
 	}
 
-	var requestData components.AuthenticationProviderData
+	var requestData components.UpsertAuthenticationProviderRequest
 
 	switch args[0] {
 	case "github":
-		config := components.AuthenticationProviderDataGithubIDPConfig{
-			Type:         components.AuthenticationProviderDataGithubIDPConfigTypeGithub,
+		requestData = components.CreateUpsertAuthenticationProviderRequestUpsertAuthenticationProviderRequestGithubIDPConfig(components.UpsertAuthenticationProviderRequestGithubIDPConfig{
 			Name:         args[1],
 			ClientID:     args[2],
 			ClientSecret: args[3],
-			Config:       components.AuthenticationProviderDataGithubIDPConfigConfig{},
-		}
-		requestData = components.CreateAuthenticationProviderDataAuthenticationProviderDataGithubIDPConfig(config)
+			Config:       components.UpsertAuthenticationProviderRequestGithubIDPConfigConfig{},
+		})
 	case "google":
-		config := components.AuthenticationProviderDataGoogleIDPConfig{
-			Type:         components.AuthenticationProviderDataGoogleIDPConfigTypeGoogle,
+		requestData = components.CreateUpsertAuthenticationProviderRequestUpsertAuthenticationProviderRequestGoogleIDPConfig(components.UpsertAuthenticationProviderRequestGoogleIDPConfig{
 			Name:         args[1],
 			ClientID:     args[2],
 			ClientSecret: args[3],
-			Config:       components.AuthenticationProviderDataGoogleIDPConfigConfig{},
-		}
-		requestData = components.CreateAuthenticationProviderDataAuthenticationProviderDataGoogleIDPConfig(config)
+			Config:       components.UpsertAuthenticationProviderRequestGoogleIDPConfigConfig{},
+		})
 	case "microsoft":
-		config := components.AuthenticationProviderDataMicrosoftIDPConfig{
-			Type:         components.AuthenticationProviderDataMicrosoftIDPConfigTypeMicrosoft,
+		requestData = components.CreateUpsertAuthenticationProviderRequestUpsertAuthenticationProviderRequestMicrosoftIDPConfig(components.UpsertAuthenticationProviderRequestMicrosoftIDPConfig{
 			Name:         args[1],
 			ClientID:     args[2],
 			ClientSecret: args[3],
-			Config: components.AuthenticationProviderDataMicrosoftIDPConfigConfig{
+			Config: components.UpsertAuthenticationProviderRequestMicrosoftIDPConfigConfig{
 				Tenant: pointer.For(fctl.GetString(cmd, "microsoft-tenant")),
 			},
-		}
-		requestData = components.CreateAuthenticationProviderDataAuthenticationProviderDataMicrosoftIDPConfig(config)
+		})
 	case "oidc":
-		config := components.AuthenticationProviderDataOIDCConfig{
-			Type:         components.AuthenticationProviderDataOIDCConfigTypeOidc,
+		requestData = components.CreateUpsertAuthenticationProviderRequestUpsertAuthenticationProviderRequestOIDCConfig(components.UpsertAuthenticationProviderRequestOIDCConfig{
 			Name:         args[1],
 			ClientID:     args[2],
 			ClientSecret: args[3],
-			Config: components.AuthenticationProviderDataOIDCConfigConfig{
+			Config: components.UpsertAuthenticationProviderRequestOIDCConfigConfig{
 				Issuer: fctl.GetString(cmd, "oidc-issuer"),
 			},
-		}
-		requestData = components.CreateAuthenticationProviderDataAuthenticationProviderDataOIDCConfig(config)
+		})
 	default:
 		return nil, fmt.Errorf("unknown provider type: %s", args[0])
 	}
