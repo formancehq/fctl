@@ -2,7 +2,7 @@
 
 package membershipclient
 
-// Generated from OpenAPI doc version 0.1.0 and generator version 2.797.1
+// Generated from OpenAPI doc version 0.1.0 and generator version 2.799.0
 
 import (
 	"bytes"
@@ -132,7 +132,7 @@ func New(opts ...SDKOption) *SDK {
 	sdk := &SDK{
 		SDKVersion: "0.1.0",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 0.1.0 2.797.1 0.1.0 github.com/formancehq/fctl/internal/membershipclient",
+			UserAgent:  "speakeasy-sdk/go 0.1.0 2.799.0 0.1.0 github.com/formancehq/fctl/internal/membershipclient",
 			ServerList: ServerList,
 		},
 		hooks: hooks.New(),
