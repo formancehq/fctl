@@ -299,7 +299,7 @@ func WithSilenceError() CommandOptionFn {
 }
 
 func WithConfirmFlag() CommandOptionFn {
-	return WithBoolFlag(confirmFlag, false, "Confirm action")
+	return WithBoolFlag(confirmFlag, true, "Confirm action")
 }
 
 func NewStackCommand(use string, opts ...CommandOption) *cobra.Command {

@@ -25,14 +25,11 @@ const (
 )
 
 func NeedConfirm(cmd *cobra.Command) bool {
-	if GetBool(cmd, confirmFlag) {
-		return false
-	}
-	return true
+	return GetBool(cmd, confirmFlag)
 }
 
 func CheckStackApprobation(cmd *cobra.Command, disclaimer string, args ...any) bool {
-	if GetBool(cmd, confirmFlag) {
+	if !NeedConfirm(cmd) {
 		return true
 	}
 
@@ -46,7 +43,7 @@ func CheckStackApprobation(cmd *cobra.Command, disclaimer string, args ...any) b
 }
 
 func CheckOrganizationApprobation(cmd *cobra.Command, disclaimer string, args ...any) bool {
-	if GetBool(cmd, confirmFlag) {
+	if !NeedConfirm(cmd) {
 		return true
 	}
 
