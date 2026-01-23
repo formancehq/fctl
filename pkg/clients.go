@@ -440,16 +440,18 @@ func NewStackClient(
 		return nil, err
 	}
 
-	token, err := FetchStackToken(cmd.Context(), relyingParty.HttpClient(), stackAccess.URI, stackToken.Token)
-	if err != nil {
-		return nil, err
-	}
-
 	return formance.New(
 		formance.WithServerURL(stackAccess.URI),
 		formance.WithClient(oauth2.NewClient(
 			context.WithValue(cmd.Context(), oauth2.HTTPClient, relyingParty.HttpClient()),
-			oauth2.StaticTokenSource(token),
+			NewStackTokenSource(
+				*stackToken,
+				stackAccess,
+				relyingParty,
+				func(newToken AccessToken) error {
+					return WriteStackToken(cmd, profileName, stackID, newToken)
+				},
+			),
 		)),
 	), nil
 }
