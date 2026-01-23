@@ -16,7 +16,7 @@ require (
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/formancehq/fctl/internal/deployserverclient v0.0.0-00010101000000-000000000000
 	github.com/formancehq/fctl/internal/membershipclient v0.0.0-20251027061333-c274726dd769
-	github.com/formancehq/formance-sdk-go/v3 v3.5.0
+	github.com/formancehq/formance-sdk-go/v3 v3.7.2
 	github.com/formancehq/go-libs v1.7.2
 	github.com/formancehq/go-libs/v3 v3.4.0
 	github.com/iancoleman/strcase v0.3.0
@@ -41,7 +41,6 @@ require (
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/containerd/console v1.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/ericlagergren/decimal v0.0.0-20240411145413-00de7ca16731 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/go-chi/chi/v5 v5.2.3 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
