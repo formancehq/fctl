@@ -37,6 +37,8 @@ go:
   allowUnknownFieldsInWeakUnions: false
   baseErrorName: DeployServerError
   clientServerStatusCodesAsErrors: true
+  codeSamples:
+    output: false
   defaultErrorName: APIError
   envVarPrefix: DEPLOYSERVER
   flattenGlobalSecurity: true

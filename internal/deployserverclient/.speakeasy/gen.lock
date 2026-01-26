@@ -3,10 +3,10 @@ id: 12df0dd4-09cf-49f5-8116-53c77b28ba01
 management:
   docChecksum: c7e98d8b5bc9be6f81f0eeed1f3a5870
   docVersion: 0.1.0
-  speakeasyVersion: 1.696.0
+  speakeasyVersion: 1.697.5
   generationVersion: 2.799.0
   releaseVersion: 0.0.1
-  configChecksum: 7e40a20032c51e5c98f4a8002f1b6e5d
+  configChecksum: a487585e540fe4bf00ef54c113512a47
 persistentEdits:
   generation_id: 53ae6319-3673-48bc-91a0-19998c8752c0
   pristine_commit_hash: 93fed012f60be2d5afa1998b7cd2c682b0671247
