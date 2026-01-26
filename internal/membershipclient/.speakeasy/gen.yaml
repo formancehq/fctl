@@ -28,8 +28,10 @@ generation:
     generateTests: false
     generateNewTests: true
     skipResponseBodyAssertions: false
+  codeSamples:
+    output: false
 go:
-  version: 0.1.0
+  version: 0.1.3
   additionalDependencies: {}
   baseErrorName: SDKError
   clientServerStatusCodesAsErrors: true

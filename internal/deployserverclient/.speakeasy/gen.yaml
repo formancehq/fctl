@@ -26,13 +26,16 @@ generation:
   schemas:
     allOfMergeStrategy: shallowMerge
   requestBodyFieldName: ""
-  persistentEdits: {}
+  persistentEdits:
+    enabled: never
   tests:
     generateTests: true
     generateNewTests: false
     skipResponseBodyAssertions: false
+  codeSamples:
+    output: false
 go:
-  version: 0.0.1
+  version: 0.0.3
   additionalDependencies: {}
   allowUnknownFieldsInWeakUnions: false
   baseErrorName: DeployServerError
