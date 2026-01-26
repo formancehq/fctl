@@ -18,10 +18,10 @@ g: generate
 
 [group('generate')]
 generate-deploy-server-client:
-    @cd internal/deployserverclient && speakeasy run --skip-versioning
+    @cd internal/deployserverclient && speakeasy run --skip-versioning --frozen-workflow-lockfile
 
 generate-membership-client:
-    @cd internal/membershipclient && speakeasy run --skip-versioning
+    @cd internal/membershipclient && speakeasy run --skip-versioning --frozen-workflow-lockfile
 
 
 tests:
