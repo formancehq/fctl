@@ -48,9 +48,17 @@ func (c *WorkflowsShowController) GetStore() *WorkflowsShowStore {
 
 func (c *WorkflowsShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	response, err := store.Client().Orchestration.V1.
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := stackClient.Orchestration.V1.
 		GetWorkflow(cmd.Context(), operations.GetWorkflowRequest{
 			FlowID: args[0],
 		})

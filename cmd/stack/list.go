@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/go-libs/v3/pointer"
+
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
@@ -32,8 +34,7 @@ type StackListStore struct {
 }
 
 type StackListController struct {
-	store   *StackListStore
-	profile *fctl.Profile
+	store *StackListStore
 }
 
 var _ fctl.Controller[*StackListStore] = (*StackListController)(nil)
@@ -66,50 +67,64 @@ func (c *StackListController) GetStore() *StackListStore {
 	return c.store
 }
 
-func (c *StackListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+func (c *StackListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
 
-	store := fctl.GetOrganizationStore(cmd)
-	c.profile = store.Config.GetProfile(fctl.GetCurrentProfileName(cmd, store.Config))
-
-	rsp, _, err := store.Client().ListStacks(cmd.Context(), store.OrganizationId()).
-		All(fctl.GetBool(cmd, allFlag)).
-		Deleted(fctl.GetBool(cmd, deletedFlag)).
-		Execute()
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
-		return nil, errors.Wrap(err, "listing stacks")
+		return nil, err
 	}
 
-	if len(rsp.Data) == 0 {
+	organizationID, apiClient, err := fctl.NewMembershipClientForOrganizationFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	request := operations.ListStacksRequest{
+		OrganizationID: organizationID,
+		All:            pointer.For(fctl.GetBool(cmd, allFlag)),
+		Deleted:        pointer.For(fctl.GetBool(cmd, deletedFlag)),
+	}
+
+	rsp, err := apiClient.ListStacks(cmd.Context(), request)
+	if err != nil {
+		return nil, fmt.Errorf("listing stacks: %w", err)
+	}
+
+	if rsp.ListStacksResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	if len(rsp.ListStacksResponse.GetData()) == 0 {
 		return c, nil
 	}
 
 	portal := fctl.DefaultConsoleURL
-	serverInfo, err := fctl.MembershipServerInfo(cmd.Context(), store.Client())
+	serverInfo, err := fctl.MembershipServerInfo(cmd.Context(), apiClient)
 	if err != nil {
 		return nil, err
 	}
-	if v := serverInfo.ConsoleURL; v != nil {
+	if v := serverInfo.GetConsoleURL(); v != nil {
 		portal = *v
 	}
 
-	c.store.Stacks = fctl.Map(rsp.Data, func(stack membershipclient.Stack) Stack {
+	c.store.Stacks = fctl.Map(rsp.ListStacksResponse.GetData(), func(stack components.Stack) Stack {
 		return Stack{
-			Id:           stack.Id,
-			Name:         stack.Name,
+			Id:           stack.GetID(),
+			Name:         stack.GetName(),
 			Dashboard:    portal,
-			RegionID:     stack.RegionID,
-			Status:       stack.State,
-			AuditEnabled: fctl.BoolPointerToString(stack.AuditEnabled),
+			RegionID:     stack.GetRegionID(),
+			Status:       string(stack.GetState()),
+			AuditEnabled: fctl.BoolPointerToString(stack.GetAuditEnabled()),
 			DisabledAt: func() *string {
-				if stack.DisabledAt != nil {
-					t := stack.DisabledAt.Format(time.RFC3339)
+				if disabledAt := stack.GetDisabledAt(); disabledAt != nil {
+					t := disabledAt.Format(time.RFC3339)
 					return &t
 				}
 				return nil
 			}(),
 			DeletedAt: func() *string {
-				if stack.DeletedAt != nil {
-					t := stack.DeletedAt.Format(time.RFC3339)
+				if deletedAt := stack.GetDeletedAt(); deletedAt != nil {
+					t := deletedAt.Format(time.RFC3339)
 					return &t
 				}
 				return nil

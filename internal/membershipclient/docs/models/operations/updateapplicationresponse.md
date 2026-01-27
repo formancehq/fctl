@@ -1,0 +1,10 @@
+# UpdateApplicationResponse
+
+
+## Fields
+
+| Field                                                                                         | Type                                                                                          | Required                                                                                      | Description                                                                                   |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                    | [components.HTTPMetadata](../../models/components/httpmetadata.md)                            | :heavy_check_mark:                                                                            | N/A                                                                                           |
+| `UpdateApplicationResponse`                                                                   | [*components.UpdateApplicationResponse](../../models/components/updateapplicationresponse.md) | :heavy_minus_sign:                                                                            | Application updated                                                                           |
+| `Error`                                                                                       | [*components.Error](../../models/components/error.md)                                         | :heavy_minus_sign:                                                                            | Error                                                                                         |

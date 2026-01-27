@@ -1,0 +1,34 @@
+speakeasyVersion: 1.697.5
+sources:
+    membership:
+        sourceNamespace: membership
+        sourceRevisionDigest: sha256:43d2b208ac1a3492602f5ebe5ee335548bc06ecf07f8e8047c86ae807b1b1354
+        sourceBlobDigest: sha256:cc9d8d2f899357b7a2062c6d771067ca22ce09546f07087e255c7096e2830e48
+        tags:
+            - latest
+            - 0.1.0
+targets:
+    membership:
+        source: membership
+        sourceNamespace: membership
+        sourceRevisionDigest: sha256:43d2b208ac1a3492602f5ebe5ee335548bc06ecf07f8e8047c86ae807b1b1354
+        sourceBlobDigest: sha256:cc9d8d2f899357b7a2062c6d771067ca22ce09546f07087e255c7096e2830e48
+workflow:
+    workflowVersion: 1.0.0
+    speakeasyVersion: latest
+    sources:
+        membership:
+            inputs:
+                - location: ../../openapi/membership.yaml
+            registry:
+                location: registry.speakeasyapi.dev/formance/formance/membership
+    targets:
+        membership:
+            target: go
+            source: membership
+            codeSamples:
+                registry:
+                    location: registry.speakeasyapi.dev/formance/formance/membership-go-code-samples
+                labelOverride:
+                    fixedValue: Go (SDK)
+                blocking: false

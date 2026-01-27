@@ -1,22 +1,22 @@
 lockVersion: 2.0.0
-id: 8068b42d-3ccb-4bcf-87ba-eaf586d7782d
+id: 12df0dd4-09cf-49f5-8116-53c77b28ba01
 management:
   docChecksum: c7e98d8b5bc9be6f81f0eeed1f3a5870
   docVersion: 0.1.0
-  speakeasyVersion: 1.678.0
-  generationVersion: 2.787.2
+  speakeasyVersion: 1.697.5
+  generationVersion: 2.799.0
   releaseVersion: 0.0.1
-  configChecksum: 1f9a1dc7e591665c9a131e04bc6b834d
+  configChecksum: a487585e540fe4bf00ef54c113512a47
 persistentEdits:
-  generation_id: e7a51e36-debb-4ee3-9ee4-d1418d8219bd
-  pristine_commit_hash: ad7315b11d7d352ac503f4b0653f270aba716e55
-  pristine_tree_hash: 3ffee4f2caa2087dd6a5bda3384ed31c039385e2
+  generation_id: 53ae6319-3673-48bc-91a0-19998c8752c0
+  pristine_commit_hash: 93fed012f60be2d5afa1998b7cd2c682b0671247
+  pristine_tree_hash: a2046a687940fe92cb07819fbbd4b279dff590f0
 features:
   go:
     acceptHeaders: 2.81.2
     additionalDependencies: 0.1.0
     additionalProperties: 0.1.2
-    core: 3.13.6
+    core: 3.13.10
     defaultEnabledRetries: 0.2.0
     devContainers: 2.90.0
     downloadStreams: 0.1.2
@@ -53,8 +53,8 @@ trackedFiles:
     pristine_git_object: 6923f88297e52b644b172b3c7e22ed915848c0e2
   deployserver.go:
     id: 4e88cb1c88d3
-    last_write_checksum: sha1:ab89a7eb0bc1540ea63d73004a00f217f23f8af4
-    pristine_git_object: 54fbd6af735095cae99291cf0172e246a39b5cfb
+    last_write_checksum: sha1:4fb641205e6b1550787fe49157689db5da133f8a
+    pristine_git_object: 45e137b1e7b067e343b1242acadb4d2770251508
   docs/models/components/app.md:
     id: a31b0d7743a7
     last_write_checksum: sha1:223551b0228ef49a4fbc16dce5403b407354741a
@@ -405,8 +405,8 @@ trackedFiles:
     pristine_git_object: 946624518574792e91d45c9e8a0cc2bb5eef7b27
   internal/hooks/hooks.go:
     id: 336be70ed5c0
-    last_write_checksum: sha1:2d9eeeafe379d5d7701d4c822707084001c809d1
-    pristine_git_object: 7dad3c83517384b24269b3ecddcc976feed69a21
+    last_write_checksum: sha1:8e13990771df0e19050836adcc854fa5d4fb3b65
+    pristine_git_object: 0965375a76658d5d78b21ea86b48a01fb22b880e
   internal/utils/contenttype.go:
     id: 928a56fe6755
     last_write_checksum: sha1:ab5cfd860d02c6e6a37f89e2b5649a9859947fb1
@@ -425,20 +425,20 @@ trackedFiles:
     pristine_git_object: 84a0dd92e8ed4f8b9e88ad61a2ac9da022d815bf
   internal/utils/json.go:
     id: ad03e3c502d8
-    last_write_checksum: sha1:83dbdc8bdc39e51a3d2bd3368e8a3aa5d7189859
-    pristine_git_object: 422780c3204a68413395d7869f61950ec7f12d27
+    last_write_checksum: sha1:8b1cfc73274971f0ca3e4e6418601864ae517dea
+    pristine_git_object: 617e642c07bc4a5e3d9d36f04bed35be8474ed28
   internal/utils/pathparams.go:
     id: 1f3e0c30fd90
     last_write_checksum: sha1:632b62511b5d0a5a41773a4523839052157c0831
     pristine_git_object: e5e040a355417b899571d3e32255954c5887fedd
   internal/utils/queryparams.go:
     id: e7f604e65a58
-    last_write_checksum: sha1:25f5eeed659375ec1dd349105835dfd97c53c6dd
-    pristine_git_object: 75323fa8f303d95666e32cfc2fd7bd9ea81de0f2
+    last_write_checksum: sha1:a673fa2cb05995baf27ef7697e212d848bd206ef
+    pristine_git_object: 2adddf693277527b44498b7ec7b61539f4f38127
   internal/utils/requestbody.go:
     id: 22445ec1c044
-    last_write_checksum: sha1:670774f80be86c13bd76b7bcb7a85a2b9cdc73fc
-    pristine_git_object: 8f0df6d9898359e832f6998331ccdee4498d1074
+    last_write_checksum: sha1:04bb1756908f3d0b03bb28ba1d4dca23954085ae
+    pristine_git_object: cba32e2ea7af397ac15b06cdb20a9d1ef0c658d2
   internal/utils/retries.go:
     id: b5e011d15c2d
     last_write_checksum: sha1:26594a38d7f3dfb3a2481ac4ceeb14e322568282
@@ -832,16 +832,6 @@ examples:
           application/json: {"data": {"items": []}}
         default:
           application/json: {"errorCode": "<value>"}
-  readAppManifest:
-    speakeasy-default-read-app-manifest:
-      parameters:
-        path:
-          id: "<id>"
-      responses:
-        "200":
-          application/octet-stream: "x-file: example.file"
-        default:
-          application/json: {"errorCode": "<value>"}
   deployAppConfiguration:
     speakeasy-default-deploy-app-configuration-raw:
       parameters:
@@ -897,6 +887,16 @@ examples:
           application/json: {"data": {"id": "<id>", "autoApply": false, "createdAt": "2024-05-09T05:04:30.620Z", "isDestroy": false, "hasChanges": false, "message": "<value>", "planOnly": false, "refresh": false, "refreshOnly": true, "savePlan": true, "status": "<value>"}}
         default:
           application/json: {"errorCode": "<value>"}
+  readRunLogs:
+    speakeasy-default-read-run-logs:
+      parameters:
+        path:
+          id: "<id>"
+      responses:
+        "200":
+          application/json: {}
+        default:
+          application/json: {"errorCode": "<value>"}
   readCurrentRunLogs:
     speakeasy-default-read-current-run-logs:
       parameters:
@@ -919,184 +919,5 @@ examples:
           application/yaml: "x-file: example.file"
         default:
           application/json: {"errorCode": "<value>"}
-  downloadAppVersion:
-    speakeasy-default-download-app-version:
-      parameters:
-        path:
-          id: "<id>"
-      responses:
-        "200":
-          application/gzip: "x-file: example.file"
-        default:
-          application/json: {"errorCode": "<value>"}
-  readRunLogs:
-    speakeasy-default-read-run-logs:
-      parameters:
-        path:
-          id: "<id>"
-      responses:
-        "200":
-          application/json: {}
-        default:
-          application/json: {"errorCode": "<value>"}
 examplesVersion: 1.0.2
 generatedTests: {}
-generatedFiles:
-  - .devcontainer/README.md
-  - .devcontainer/devcontainer.json
-  - .devcontainer/setup.sh
-  - .gitattributes
-  - /models/components/app.go
-  - /models/components/application.go
-  - /models/components/appresponse.go
-  - /models/components/appversionresponse.go
-  - /models/components/configurationversion.go
-  - /models/components/createapprequest.go
-  - /models/components/createvariablerequest.go
-  - /models/components/createvariableresponse.go
-  - /models/components/error.go
-  - /models/components/httpmetadata.go
-  - /models/components/ledger.go
-  - /models/components/listappsresponse.go
-  - /models/components/listrunsresponse.go
-  - /models/components/listversionsresponse.go
-  - /models/components/log.go
-  - /models/components/payments.go
-  - /models/components/pool.go
-  - /models/components/readlogsresponse.go
-  - /models/components/readstateresponse.go
-  - /models/components/readvariablesresponse.go
-  - /models/components/reconciliation.go
-  - /models/components/reconciliationledger.go
-  - /models/components/reconciliationpolicy.go
-  - /models/components/run.go
-  - /models/components/runresponse.go
-  - /models/components/stack.go
-  - /models/components/state.go
-  - /models/components/updateapprequest.go
-  - /models/components/variable.go
-  - /models/components/variabledata.go
-  - /models/components/webhook.go
-  - /models/operations/createapp.go
-  - /models/operations/createappvariable.go
-  - /models/operations/deleteapp.go
-  - /models/operations/deleteappvariable.go
-  - /models/operations/deployappconfiguration.go
-  - /models/operations/deployappconfigurationraw.go
-  - /models/operations/listapps.go
-  - /models/operations/readapp.go
-  - /models/operations/readappcurrentstateversion.go
-  - /models/operations/readappruns.go
-  - /models/operations/readappvariables.go
-  - /models/operations/readappversions.go
-  - /models/operations/readcurrentappversion.go
-  - /models/operations/readcurrentrun.go
-  - /models/operations/readcurrentrunlogs.go
-  - /models/operations/readrun.go
-  - /models/operations/readrunlogs.go
-  - /models/operations/readversion.go
-  - /models/operations/updateapp.go
-  - USAGE.md
-  - deployserver.go
-  - docs/models/components/app.md
-  - docs/models/components/application.md
-  - docs/models/components/appresponse.md
-  - docs/models/components/appversionresponse.md
-  - docs/models/components/configurationversion.md
-  - docs/models/components/connector.md
-  - docs/models/components/createapprequest.md
-  - docs/models/components/createvariablerequest.md
-  - docs/models/components/createvariableresponse.md
-  - docs/models/components/diagnostic.md
-  - docs/models/components/error.md
-  - docs/models/components/httpmetadata.md
-  - docs/models/components/ledger.md
-  - docs/models/components/listappsresponse.md
-  - docs/models/components/listappsresponsedata.md
-  - docs/models/components/listrunsresponse.md
-  - docs/models/components/listrunsresponsedata.md
-  - docs/models/components/listversionsresponse.md
-  - docs/models/components/listversionsresponsedata.md
-  - docs/models/components/log.md
-  - docs/models/components/payments.md
-  - docs/models/components/pool.md
-  - docs/models/components/readlogsresponse.md
-  - docs/models/components/readstateresponse.md
-  - docs/models/components/readvariablesresponse.md
-  - docs/models/components/readvariablesresponsedata.md
-  - docs/models/components/reconciliation.md
-  - docs/models/components/reconciliationledger.md
-  - docs/models/components/reconciliationpolicy.md
-  - docs/models/components/run.md
-  - docs/models/components/runresponse.md
-  - docs/models/components/schema.md
-  - docs/models/components/stack.md
-  - docs/models/components/state.md
-  - docs/models/components/status.md
-  - docs/models/components/updateapprequest.md
-  - docs/models/components/variable.md
-  - docs/models/components/variabledata.md
-  - docs/models/components/webhook.md
-  - docs/models/operations/createappresponse.md
-  - docs/models/operations/createappvariablerequest.md
-  - docs/models/operations/createappvariableresponse.md
-  - docs/models/operations/deleteapprequest.md
-  - docs/models/operations/deleteappresponse.md
-  - docs/models/operations/deleteappvariablerequest.md
-  - docs/models/operations/deleteappvariableresponse.md
-  - docs/models/operations/deployappconfigurationrawrequest.md
-  - docs/models/operations/deployappconfigurationrawresponse.md
-  - docs/models/operations/deployappconfigurationrequest.md
-  - docs/models/operations/deployappconfigurationresponse.md
-  - docs/models/operations/from.md
-  - docs/models/operations/listappsrequest.md
-  - docs/models/operations/listappsresponse.md
-  - docs/models/operations/option.md
-  - docs/models/operations/readappcurrentstateversionrequest.md
-  - docs/models/operations/readappcurrentstateversionresponse.md
-  - docs/models/operations/readapprequest.md
-  - docs/models/operations/readappresponse.md
-  - docs/models/operations/readapprunsrequest.md
-  - docs/models/operations/readapprunsresponse.md
-  - docs/models/operations/readappvariablesrequest.md
-  - docs/models/operations/readappvariablesresponse.md
-  - docs/models/operations/readappversionsrequest.md
-  - docs/models/operations/readappversionsresponse.md
-  - docs/models/operations/readcurrentappversionrequest.md
-  - docs/models/operations/readcurrentappversionresponse.md
-  - docs/models/operations/readcurrentrunlogsrequest.md
-  - docs/models/operations/readcurrentrunlogsresponse.md
-  - docs/models/operations/readcurrentrunrequest.md
-  - docs/models/operations/readcurrentrunresponse.md
-  - docs/models/operations/readrunlogsrequest.md
-  - docs/models/operations/readrunlogsresponse.md
-  - docs/models/operations/readrunrequest.md
-  - docs/models/operations/readrunresponse.md
-  - docs/models/operations/readversionrequest.md
-  - docs/models/operations/readversionresponse.md
-  - docs/models/operations/updateapprequest.md
-  - docs/models/operations/updateappresponse.md
-  - docs/sdks/deployserver/README.md
-  - go.mod
-  - internal/config/sdkconfiguration.go
-  - internal/hooks/hooks.go
-  - internal/utils/contenttype.go
-  - internal/utils/env.go
-  - internal/utils/form.go
-  - internal/utils/headers.go
-  - internal/utils/json.go
-  - internal/utils/pathparams.go
-  - internal/utils/queryparams.go
-  - internal/utils/requestbody.go
-  - internal/utils/retries.go
-  - internal/utils/security.go
-  - internal/utils/utils.go
-  - models/apierrors/apierror.go
-  - models/operations/options.go
-  - optionalnullable/optionalnullable.go
-  - optionalnullable/optionalnullable_test.go
-  - retry/config.go
-  - types/bigint.go
-  - types/date.go
-  - types/datetime.go
-  - types/pointers.go

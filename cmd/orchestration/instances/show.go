@@ -1,9 +1,9 @@
 package instances
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -48,17 +48,26 @@ func (c *InstancesShowController) GetStore() *InstancesShowStore {
 }
 
 func (c *InstancesShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
 
-	res, err := store.Client().Orchestration.V1.GetInstance(cmd.Context(), operations.GetInstanceRequest{
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := stackClient.Orchestration.V1.GetInstance(cmd.Context(), operations.GetInstanceRequest{
 		InstanceID: args[0],
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "reading instance")
+		return nil, fmt.Errorf("reading instance: %w", err)
 	}
 
 	c.store.WorkflowInstance = res.GetWorkflowInstanceResponse.Data
-	response, err := store.Client().Orchestration.V1.GetWorkflow(cmd.Context(), operations.GetWorkflowRequest{
+	response, err := stackClient.Orchestration.V1.GetWorkflow(cmd.Context(), operations.GetWorkflowRequest{
 		FlowID: res.GetWorkflowInstanceResponse.Data.WorkflowID,
 	})
 	if err != nil {

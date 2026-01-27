@@ -1,0 +1,10 @@
+# CreateApplicationResponse
+
+
+## Fields
+
+| Field                                                                                         | Type                                                                                          | Required                                                                                      | Description                                                                                   |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                    | [components.HTTPMetadata](../../models/components/httpmetadata.md)                            | :heavy_check_mark:                                                                            | N/A                                                                                           |
+| `CreateApplicationResponse`                                                                   | [*components.CreateApplicationResponse](../../models/components/createapplicationresponse.md) | :heavy_minus_sign:                                                                            | Application created                                                                           |
+| `Error`                                                                                       | [*components.Error](../../models/components/error.md)                                         | :heavy_minus_sign:                                                                            | Error                                                                                         |

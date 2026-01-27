@@ -4,6 +4,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
@@ -43,14 +44,26 @@ func (c *DeleteController) GetStore() *DeleteStore {
 }
 
 func (c *DeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, args[0])
+	if err != nil {
+		return nil, err
+	}
 
 	if !fctl.CheckOrganizationApprobation(cmd, "You are about to delete an organization") {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	_, err := store.Client().DeleteOrganization(cmd.Context(), args[0]).
-		Execute()
+	request := operations.DeleteOrganizationRequest{
+		OrganizationID: args[0],
+	}
+
+	_, err = apiClient.DeleteOrganization(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}

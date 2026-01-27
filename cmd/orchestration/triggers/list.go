@@ -1,9 +1,9 @@
 package triggers
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -50,9 +50,18 @@ func (c *TriggersListController) GetStore() *TriggersListStore {
 }
 
 func (c *TriggersListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 	var name = fctl.GetString(cmd, c.nameFlag)
-	response, err := store.Client().Orchestration.V1.ListTriggers(cmd.Context(), operations.ListTriggersRequest{
+	response, err := stackClient.Orchestration.V1.ListTriggers(cmd.Context(), operations.ListTriggersRequest{
 		Name: &name,
 	})
 
@@ -95,7 +104,7 @@ func (c *TriggersListController) Render(cmd *cobra.Command, args []string) error
 				[]string{"ID", "Name", "Workflow ID", "Created at", "Event", "Filter"},
 			),
 		).Render(); err != nil {
-		return errors.Wrap(err, "rendering table")
+		return fmt.Errorf("rendering table: %w", err)
 	}
 
 	return nil

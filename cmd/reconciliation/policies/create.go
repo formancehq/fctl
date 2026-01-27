@@ -47,13 +47,22 @@ func (c *CreateController) GetStore() *CreateStore {
 }
 
 func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to create a new policy") {
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to create a new policy") {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	script, err := fctl.ReadFile(cmd, store.Stack(), args[0])
+	script, err := fctl.ReadFile(cmd, args[0])
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +73,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 	}
 
 	//nolint:gosimple
-	response, err := store.Client().Reconciliation.V1.CreatePolicy(cmd.Context(), request)
+	response, err := stackClient.Reconciliation.V1.CreatePolicy(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}

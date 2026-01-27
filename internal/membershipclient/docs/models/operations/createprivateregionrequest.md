@@ -1,0 +1,9 @@
+# CreatePrivateRegionRequest
+
+
+## Fields
+
+| Field                                                                                           | Type                                                                                            | Required                                                                                        | Description                                                                                     |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `OrganizationID`                                                                                | *string*                                                                                        | :heavy_check_mark:                                                                              | N/A                                                                                             |
+| `Body`                                                                                          | [*components.CreatePrivateRegionRequest](../../models/components/createprivateregionrequest.md) | :heavy_minus_sign:                                                                              | N/A                                                                                             |

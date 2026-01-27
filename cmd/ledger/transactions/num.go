@@ -71,14 +71,22 @@ func (c *NumController) GetStore() *NumStore {
 
 func (c *NumController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
-
-	script, err := fctl.ReadFile(cmd, store.Stack(), args[0])
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to apply a numscript") {
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	script, err := fctl.ReadFile(cmd, args[0])
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to apply a numscript") {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -139,7 +147,7 @@ func (c *NumController) Run(cmd *cobra.Command, args []string) (fctl.Renderable,
 
 	ledger := fctl.GetString(cmd, internal.LedgerFlag)
 
-	response, err := store.Client().Ledger.V1.CreateTransaction(cmd.Context(), operations.CreateTransactionRequest{
+	response, err := stackClient.Ledger.V1.CreateTransaction(cmd.Context(), operations.CreateTransactionRequest{
 		PostTransaction: shared.PostTransaction{
 			Metadata:  collectionutils.ConvertMap(metadata, collectionutils.ToAny[string]),
 			Reference: &reference,

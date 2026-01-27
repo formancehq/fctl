@@ -76,9 +76,18 @@ func (c *CreateController) GetStore() *CreateStore {
 }
 
 func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to create a new OAuth2 client") {
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to create a new OAuth2 client") {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -95,7 +104,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		PostLogoutRedirectUris: fctl.GetStringSlice(cmd, c.postLogoutRedirectUriFlag),
 		Scopes:                 fctl.GetStringSlice(cmd, c.scopes),
 	}
-	response, err := store.Client().Auth.V1.CreateClient(cmd.Context(), &request)
+	response, err := stackClient.Auth.V1.CreateClient(cmd.Context(), &request)
 	if err != nil {
 		return nil, err
 	}

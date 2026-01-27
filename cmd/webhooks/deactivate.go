@@ -1,7 +1,8 @@
 package webhooks
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
+
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -36,18 +37,27 @@ func (c *DesactivateWebhookController) GetStore() *DesactivateWebhookStore {
 }
 
 func (c *DesactivateWebhookController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to deactivate a webhook") {
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to deactivate a webhook") {
 		return nil, fctl.ErrMissingApproval
 	}
 
 	request := operations.DeactivateConfigRequest{
 		ID: args[0],
 	}
-	response, err := store.Client().Webhooks.V1.DeactivateConfig(cmd.Context(), request)
+	response, err := stackClient.Webhooks.V1.DeactivateConfig(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "deactivating config")
+		return nil, fmt.Errorf("deactivating config: %w", err)
 	}
 
 	c.store.Success = !response.ConfigResponse.Data.Active

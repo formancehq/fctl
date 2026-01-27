@@ -5,11 +5,16 @@ import (
 	"io"
 
 	"github.com/pterm/pterm"
-
-	"github.com/formancehq/fctl/membershipclient"
 )
 
-func Cursor(writer io.Writer, cursor *membershipclient.Cursor) error {
+type CursorData struct {
+	HasMore  bool
+	Next     *string
+	PageSize int64
+	Previous *string
+}
+
+func Cursor(writer io.Writer, cursor *CursorData) error {
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("HasMore"), fmt.Sprintf("%v", cursor.HasMore)})
 	tableData = append(tableData, []string{pterm.LightCyan("PageSize"), fmt.Sprintf("%d", cursor.PageSize)})

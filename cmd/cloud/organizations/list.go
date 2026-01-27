@@ -1,10 +1,15 @@
 package organizations
 
 import (
+	"fmt"
+
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/go-libs/v3/pointer"
+
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
@@ -51,39 +56,55 @@ func (c *ListController) GetStore() *ListStore {
 	return c.store
 }
 
-func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
+func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	expand := fctl.GetBool(cmd, "expand")
 
-	organizations, _, err := store.Client().ListOrganizations(cmd.Context()).Expand(expand).Execute()
+	request := operations.ListOrganizationsRequest{
+		Expand: pointer.For(expand),
+	}
+
+	response, err := apiClient.ListOrganizations(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}
 
-	currentProfile := fctl.GetCurrentProfile(cmd, store.Config)
-	claims, err := currentProfile.GetClaims()
+	if response.ListOrganizationExpandedResponse == nil {
+		return nil, fmt.Errorf("unexpected response: no data")
+	}
+
+	claims, err := profile.GetClaims()
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Organizations = fctl.Map(organizations.Data, func(o membershipclient.OrganizationExpanded) *OrgRow {
-		isMine := fctl.BoolToString(o.OwnerId == claims["sub"].(string))
+	c.store.Organizations = fctl.Map(response.ListOrganizationExpandedResponse.GetData(), func(o components.OrganizationExpanded) *OrgRow {
+		isMine := fctl.BoolToString(o.GetOwnerID() == claims.Subject)
 		return &OrgRow{
-			ID:      o.Id,
-			Name:    o.Name,
-			OwnerID: o.OwnerId,
+			ID:      o.GetID(),
+			Name:    o.GetName(),
+			OwnerID: o.GetOwnerID(),
 			OwnerEmail: func() string {
-				if o.Owner == nil {
-					return ""
+				if owner := o.GetOwner(); owner != nil {
+					return owner.GetEmail()
 				}
-				return o.Owner.Email
+				return ""
 			}(),
 			Domain: func() string {
-				if o.Domain == nil {
-					return ""
+				if domain := o.GetDomain(); domain != nil {
+					return *domain
 				}
-				return *o.Domain
+				return ""
 			}(),
 			IsMine: isMine,
 		}

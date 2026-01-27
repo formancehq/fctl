@@ -6,7 +6,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
@@ -33,7 +34,7 @@ func NewLinkController() *LinkController {
 
 func NewLinkCommand() *cobra.Command {
 	return fctl.NewCommand("link <user-id>",
-		fctl.WithStringFlag("role", "", "Roles: (ADMIN, GUEST)"),
+		fctl.WithIntFlag("policy-id", 0, "Policy id"),
 		fctl.WithShortDescription("Link stack user with properties"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
@@ -46,26 +47,43 @@ func (c *LinkController) GetStore() *LinkStore {
 }
 
 func (c *LinkController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStackStore(cmd.Context())
 
-	role := membershipclient.Role(fctl.GetString(cmd, "role"))
-	req := membershipclient.UpdateStackUserRequest{}
-	if role != "" {
-		req.Role = role
-	} else {
-		return nil, fmt.Errorf("role is required")
-	}
-
-	_, err := store.Client().
-		UpsertStackUserAccess(cmd.Context(), store.OrganizationId(), store.StackId(), args[0]).
-		UpdateStackUserRequest(req).Execute()
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.OrganizationID = store.OrganizationId()
-	c.store.StackID = args[0]
-	c.store.UserID = args[1]
+	organizationID, stackID, err := fctl.ResolveStackID(cmd, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClientForOrganization(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	policyID := fctl.GetInt(cmd, "policy-id")
+	if policyID == 0 {
+		return nil, fmt.Errorf("policy id is required")
+	}
+
+	_, err = apiClient.
+		UpsertStackUserAccess(cmd.Context(), operations.UpsertStackUserAccessRequest{
+			OrganizationID: organizationID,
+			StackID:        stackID,
+			UserID:         args[0],
+			Body: &components.UpdateStackUserRequest{
+				PolicyID: int64(policyID),
+			},
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	c.store.OrganizationID = organizationID
+	c.store.StackID = stackID
+	c.store.UserID = args[0]
 
 	return c, nil
 }

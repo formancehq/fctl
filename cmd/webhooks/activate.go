@@ -1,7 +1,8 @@
 package webhooks
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
+
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -32,8 +33,17 @@ func (c *ActivateWebhookController) GetStore() *ActivateWebhookStore {
 }
 
 func (c *ActivateWebhookController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are bout to activate a webhook") {
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+	if !fctl.CheckStackApprobation(cmd, "You are about to activate a webhook") {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -41,9 +51,9 @@ func (c *ActivateWebhookController) Run(cmd *cobra.Command, args []string) (fctl
 		ID: args[0],
 	}
 
-	_, err := store.Client().Webhooks.V1.ActivateConfig(cmd.Context(), request)
+	_, err = stackClient.Webhooks.V1.ActivateConfig(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "activating config")
+		return nil, fmt.Errorf("activating config: %w", err)
 	}
 
 	return c, nil

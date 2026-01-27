@@ -4,6 +4,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
@@ -41,14 +42,22 @@ func (c *DeleteController) GetStore() *DeleteStore {
 
 func (c *DeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetMembershipStore(cmd.Context())
-
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = store.Client().DeleteRegion(cmd.Context(), organizationID, args[0]).Execute()
+	organizationID, apiClient, err := fctl.NewMembershipClientForOrganizationFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	request := operations.DeleteRegionRequest{
+		OrganizationID: organizationID,
+		RegionID:       args[0],
+	}
+
+	_, err = apiClient.DeleteRegion(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}

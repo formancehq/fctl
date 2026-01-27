@@ -26,10 +26,6 @@ func NewCommand() *cobra.Command {
 				return fmt.Errorf("the apps command is experimental, please use the --experimental flag to enable it")
 			}
 
-			if err := fctl.NewDeployServerStore(cmd); err != nil {
-				return err
-			}
-
 			return nil
 		}),
 		fctl.WithAliases("app"),

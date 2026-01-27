@@ -44,13 +44,27 @@ func (c *ShowCtrl) GetStore() *Show {
 	return c.store
 }
 
-func (c *ShowCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetDeployServerStore(cmd.Context())
+func (c *ShowCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	_, apiClient, err := fctl.NewAppDeployClientFromFlags(
+		cmd,
+		relyingParty,
+		fctl.NewPTermDialog(),
+		profileName,
+		*profile,
+	)
+	if err != nil {
+		return nil, err
+	}
 	id := fctl.GetString(cmd, "id")
 	if id == "" {
 		return nil, fmt.Errorf("id is required")
 	}
-	app, err := store.Cli.ReadRun(cmd.Context(), id)
+	app, err := apiClient.ReadRun(cmd.Context(), id)
 	if err != nil {
 		return nil, err
 	}

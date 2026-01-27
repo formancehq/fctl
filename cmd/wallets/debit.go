@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -76,8 +75,18 @@ func (c *DebitWalletController) GetStore() *DebitWalletStore {
 }
 
 func (c *DebitWalletController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to debit a wallets") {
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to debit a wallets") {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -90,7 +99,7 @@ func (c *DebitWalletController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 
 	amountStr := args[0]
 	asset := args[1]
-	walletID, err := internal.RequireWalletID(cmd, store.Client())
+	walletID, err := internal.RequireWalletID(cmd, stackClient)
 	if err != nil {
 		return nil, err
 	}
@@ -104,13 +113,13 @@ func (c *DebitWalletController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 
 	var destination *shared.Subject
 	if destinationStr := fctl.GetString(cmd, c.destinationFlag); destinationStr != "" {
-		destination, err = internal.ParseSubject(destinationStr, cmd, store.Client())
+		destination, err = internal.ParseSubject(destinationStr, cmd, stackClient)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	response, err := store.Client().Wallets.V1.DebitWallet(cmd.Context(), operations.DebitWalletRequest{
+	response, err := stackClient.Wallets.V1.DebitWallet(cmd.Context(), operations.DebitWalletRequest{
 		DebitWalletRequest: &shared.DebitWalletRequest{
 			Amount: shared.Monetary{
 				Asset:  asset,
@@ -125,7 +134,7 @@ func (c *DebitWalletController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 		ID: walletID,
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "debiting wallet")
+		return nil, fmt.Errorf("debiting wallet: %w", err)
 	}
 
 	if response.DebitWalletResponse != nil {

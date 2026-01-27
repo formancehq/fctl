@@ -6,7 +6,10 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/membershipclient"
+	"github.com/formancehq/go-libs/v3/pointer"
+
+	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
@@ -33,13 +36,10 @@ func NewLinkController() *LinkController {
 
 func NewLinkCommand() *cobra.Command {
 	return fctl.NewCommand("link <user-id>",
-		fctl.WithStringFlag("role", "", "Roles: (ADMIN, GUEST, NONE)"),
+		fctl.WithIntFlag("policy-id", 0, "Policy ID"),
 		fctl.WithShortDescription("Link user to an organization with properties"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
-		fctl.WithPreRunE(func(cmd *cobra.Command, args []string) error {
-			return fctl.CheckMembershipVersion("v0.26.1")(cmd, args)
-		}),
 		fctl.WithController(NewLinkController()),
 	)
 }
@@ -49,30 +49,44 @@ func (c *LinkController) GetStore() *LinkStore {
 }
 
 func (c *LinkController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	role := fctl.GetString(cmd, "role")
-	req := membershipclient.UpdateOrganizationUserRequest{}
-	if role != "" {
-		req.Role = membershipclient.Role(role)
-	} else {
-		return nil, fmt.Errorf("role is required")
-	}
-	response, err := store.Client().UpsertOrganizationUser(
-		cmd.Context(),
-		organizationID,
-		args[0]).
-		UpdateOrganizationUserRequest(req).Execute()
+	organizationID, apiClient, err := fctl.NewMembershipClientForOrganizationFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
 	if err != nil {
 		return nil, err
 	}
 
-	if response.StatusCode > 300 {
-		return nil, fmt.Errorf("error updating user: %s", response.Status)
+	policyID := fctl.GetInt(cmd, "policy-id")
+	if policyID == 0 {
+		return nil, fmt.Errorf("policy id is required")
+	}
+
+	reqBody := components.UpdateOrganizationUserRequest{
+		PolicyID: pointer.For(int64(policyID)),
+	}
+
+	request := operations.UpsertOrganizationUserRequest{
+		OrganizationID: organizationID,
+		UserID:         args[0],
+		Body:           &reqBody,
+	}
+
+	response, err := apiClient.UpsertOrganizationUser(cmd.Context(), request)
+	if err != nil {
+		return nil, err
+	}
+
+	// Vérifier s'il y a une erreur dans la réponse
+	if response.Error != nil {
+		errMsg := "unknown error"
+		if msg := response.Error.GetErrorMessage(); msg != nil {
+			errMsg = *msg
+		}
+		return nil, fmt.Errorf("error updating user: %s", errMsg)
 	}
 
 	return c, nil
