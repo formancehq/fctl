@@ -2,12 +2,13 @@ package views
 
 import (
 	"fmt"
-	fctl "github.com/formancehq/fctl/pkg"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+
+	fctl "github.com/formancehq/fctl/pkg"
 )
 
 func DisplayAtlarConfig(cmd *cobra.Command, connectorConfig *shared.ConnectorConfigResponse) error {
