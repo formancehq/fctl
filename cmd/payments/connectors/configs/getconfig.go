@@ -226,7 +226,8 @@ func (c *PaymentsLoadConfigController) renderV3(cmd *cobra.Command, args []strin
 	case internal.ColumnConnector:
 		err = views.DisplayColumnConfigV3(cmd, c.store.V3ConnectorConfig)
 	default:
-		pterm.Error.WithWriter(cmd.OutOrStderr()).Printfln("Unknown provider.")
+		err = fmt.Errorf("unknown provider: %s", provider)
+		pterm.Error.WithWriter(cmd.OutOrStderr()).Printfln("%s", err.Error())
 	}
 
 	return err
@@ -237,7 +238,8 @@ func (c *PaymentsLoadConfigController) renderV1V2(cmd *cobra.Command, args []str
 		return fmt.Errorf("no connector config available")
 	}
 	var err error
-	switch c.store.Provider {
+	provider := c.store.Provider
+	switch provider {
 	case internal.StripeConnector:
 		err = views.DisplayStripeConfig(cmd, c.store.ConnectorConfig)
 	case internal.ModulrConnector:
@@ -257,7 +259,8 @@ func (c *PaymentsLoadConfigController) renderV1V2(cmd *cobra.Command, args []str
 	case internal.AdyenConnector:
 		err = views.DisplayAdyenConfig(cmd, c.store.ConnectorConfig)
 	default:
-		pterm.Error.WithWriter(cmd.OutOrStderr()).Printfln("Unknown provider.")
+		err = fmt.Errorf("unknown provider: %s", provider)
+		pterm.Error.WithWriter(cmd.OutOrStderr()).Printfln("%s", err.Error())
 	}
 
 	return err
