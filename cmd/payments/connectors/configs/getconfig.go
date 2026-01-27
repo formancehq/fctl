@@ -18,9 +18,10 @@ import (
 )
 
 type PaymentsLoadConfigStore struct {
-	ConnectorConfig *shared.ConnectorConfigResponse `json:"connectorConfig"`
-	Provider        string                          `json:"provider"`
-	ConnectorID     string                          `json:"connectorId"`
+	ConnectorConfig   *shared.ConnectorConfigResponse      `json:"connectorConfig"`
+	V3ConnectorConfig *shared.V3GetConnectorConfigResponse `json:"v3ConnectorConfig,omitempty"`
+	Provider          string                               `json:"provider"`
+	ConnectorID       string                               `json:"connectorId"`
 }
 
 type PaymentsLoadConfigController struct {
@@ -53,10 +54,10 @@ func NewPaymentsLoadConfigController() *PaymentsLoadConfigController {
 func NewLoadConfigCommand() *cobra.Command {
 	c := NewPaymentsLoadConfigController()
 	return fctl.NewCommand("get-config",
-		fctl.WithAliases("LoadConfig", "getconf", "gc", "get", "g"),
+		fctl.WithAliases("getconfig", "getconf", "gc", "get", "g"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
-		fctl.WithStringFlag("provider", "", "Provider name"),
+		fctl.WithStringFlag("provider", "", "Provider name (only used for v0, v1 or v2)"),
 		fctl.WithStringFlag("connector-id", "", "Connector ID"),
 		fctl.WithShortDescription(fmt.Sprintf("Read a connector config (Connectors available: %v)", internal.AllConnectors)),
 		fctl.WithController[*PaymentsLoadConfigStore](c),
@@ -68,7 +69,6 @@ func (c *PaymentsLoadConfigController) GetStore() *PaymentsLoadConfigStore {
 }
 
 func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-
 	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
@@ -87,6 +87,29 @@ func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (f
 	connectorID := fctl.GetString(cmd, c.connectorIDFlag)
 
 	switch c.PaymentsVersion {
+	case versions.V3:
+		if connectorID == "" {
+			return nil, fmt.Errorf("connector-id is required for v3")
+		}
+
+		response, err := stackClient.Payments.V3.GetConnectorConfig(cmd.Context(), operations.V3GetConnectorConfigRequest{
+			ConnectorID: connectorID,
+		})
+		if err != nil {
+			return nil, err
+		}
+		if response.StatusCode >= 300 {
+			return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+		}
+
+		if response.V3GetConnectorConfigResponse == nil {
+			return nil, fmt.Errorf("unexpected response: %v", response)
+		}
+
+		c.store.V3ConnectorConfig = response.V3GetConnectorConfigResponse
+		c.store.ConnectorID = connectorID
+		c.store.Provider = strings.ToLower(string(response.V3GetConnectorConfigResponse.Data.Type))
+
 	case versions.V0:
 		if provider == "" {
 			return nil, fmt.Errorf("provider is required")
@@ -170,8 +193,53 @@ func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (f
 
 // TODO: This need to use the ui.NewListModel
 func (c *PaymentsLoadConfigController) Render(cmd *cobra.Command, args []string) error {
+	if c.PaymentsVersion == versions.V3 {
+		return c.renderV3(cmd, args)
+	}
+	return c.renderV1V2(cmd, args)
+}
+
+func (c *PaymentsLoadConfigController) renderV3(cmd *cobra.Command, args []string) error {
 	var err error
-	switch c.store.Provider {
+	provider := c.store.Provider
+	switch provider {
+	case internal.StripeConnector:
+		err = views.DisplayStripeConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.ModulrConnector:
+		err = views.DisplayModulrConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.BankingCircleConnector:
+		err = views.DisplayBankingCircleConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.CurrencyCloudConnector:
+		err = views.DisplayCurrencyCloudConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.WiseConnector:
+		err = views.DisplayWiseConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.MangoPayConnector:
+		err = views.DisplayMangopayConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.MoneycorpConnector:
+		err = views.DisplayMoneycorpConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.AtlarConnector:
+		err = views.DisplayAtlarConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.AdyenConnector:
+		err = views.DisplayAdyenConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.QontoConnector:
+		err = views.DisplayQontoConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.ColumnConnector:
+		err = views.DisplayColumnConfigV3(cmd, c.store.V3ConnectorConfig)
+	default:
+		err = fmt.Errorf("unknown provider: %s", provider)
+		pterm.Error.WithWriter(cmd.OutOrStderr()).Printfln("%s", err.Error())
+	}
+
+	return err
+}
+
+func (c *PaymentsLoadConfigController) renderV1V2(cmd *cobra.Command, args []string) error {
+	if c.store.ConnectorConfig == nil {
+		return fmt.Errorf("no connector config available")
+	}
+	var err error
+	provider := c.store.Provider
+	switch provider {
 	case internal.StripeConnector:
 		err = views.DisplayStripeConfig(cmd, c.store.ConnectorConfig)
 	case internal.ModulrConnector:
@@ -190,14 +258,10 @@ func (c *PaymentsLoadConfigController) Render(cmd *cobra.Command, args []string)
 		err = views.DisplayAtlarConfig(cmd, c.store.ConnectorConfig)
 	case internal.AdyenConnector:
 		err = views.DisplayAdyenConfig(cmd, c.store.ConnectorConfig)
-	case internal.QontoConnector:
-		err = views.DisplayQontoConfig(cmd, c.store.ConnectorConfig)
-	case internal.ColumnConnector:
-		err = views.DisplayColumnConfig(cmd, c.store.ConnectorConfig)
 	default:
-		pterm.Error.WithWriter(cmd.OutOrStderr()).Printfln("Connection unknown.")
+		err = fmt.Errorf("unknown provider: %s", provider)
+		pterm.Error.WithWriter(cmd.OutOrStderr()).Printfln("%s", err.Error())
 	}
 
 	return err
-
 }
