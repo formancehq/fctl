@@ -487,7 +487,10 @@ func NewAppDeployClient(
 		profile,
 		organizationID,
 		"deploy",
-		[]string{},
+		[]string{
+			"apps:Read",
+			"apps:Write",
+		},
 	)
 	if err != nil {
 		return nil, err
