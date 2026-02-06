@@ -161,7 +161,7 @@ func (c *DeployCtrl) waitRunCompletion(cmd *cobra.Command) error {
 
 				c.store.logs = l.ReadLogsResponse.Data
 
-				return fmt.Errorf("deployment failed: %s", c.store.ID)
+				return nil
 			default:
 				continue
 			}
@@ -170,9 +170,11 @@ func (c *DeployCtrl) waitRunCompletion(cmd *cobra.Command) error {
 }
 
 func (c *DeployCtrl) Render(cmd *cobra.Command, args []string) error {
-	if c.store.Run.Status == "errored" && len(c.store.logs) > 0 {
-		if err := printer.RenderLogs(cmd.ErrOrStderr(), c.store.logs); err != nil {
-			return err
+	if c.store.Run.Status == "errored" {
+		if len(c.store.logs) > 0 {
+			if err := printer.RenderLogs(cmd.ErrOrStderr(), c.store.logs); err != nil {
+				return err
+			}
 		}
 		return fmt.Errorf("deployment failed: %s", c.store.ID)
 	}
