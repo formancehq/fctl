@@ -72,20 +72,22 @@ func EnsureMembershipAccess(
 
 		token = &tokens.Access
 	} else if token.Expired() { // todo: define a delta on time
+		dialog.Info("Refreshing membership access token...")
 		refreshed, err := Refresh(cmd.Context(), relyingParty, *token)
 		if err != nil {
 			oidcErr := &oidc.Error{}
 			if !errors.As(err, &oidcErr) {
-				return nil, fmt.Errorf("failed to refresh stack token: %w", err)
+				return nil, fmt.Errorf("failed to refresh membership token: %w", err)
 			}
 
-			if oidcErr.ErrorType != oidc.InvalidToken {
+			if oidcErr.ErrorType != oidc.InvalidToken && oidcErr.ErrorType != oidc.InvalidRequest {
 				return nil, fmt.Errorf("received unexpected oauth2 error while refreshing token: %w", err)
 			}
 
+			dialog.Info("Membership token expired, requesting new authentication...")
 			tokens, err := authenticate()
 			if err != nil {
-				return nil, fmt.Errorf("failed to authenticate for stack: %w", err)
+				return nil, fmt.Errorf("failed to authenticate for membership: %w", err)
 			}
 
 			token = &tokens.Access
@@ -144,20 +146,22 @@ func EnsureOrganizationAccess(
 
 		organizationToken = &tokens.Access
 	} else if organizationToken.Expired() { // todo: define a delta on time
+		dialog.Info("Refreshing organization access token...")
 		refreshed, err := Refresh(cmd.Context(), relyingParty, *organizationToken)
 		if err != nil {
 			oidcErr := &oidc.Error{}
 			if !errors.As(err, &oidcErr) {
-				return nil, fmt.Errorf("failed to refresh stack token: %w", err)
+				return nil, fmt.Errorf("failed to refresh organization token: %w", err)
 			}
 
-			if oidcErr.ErrorType != oidc.InvalidToken {
+			if oidcErr.ErrorType != oidc.InvalidToken && oidcErr.ErrorType != oidc.InvalidRequest {
 				return nil, fmt.Errorf("received unexpected oauth2 error while refreshing token: %w", err)
 			}
 
+			dialog.Info("Organization token expired, requesting new authentication...")
 			tokens, err := authenticate()
 			if err != nil {
-				return nil, fmt.Errorf("failed to authenticate for stack: %w", err)
+				return nil, fmt.Errorf("failed to authenticate for organization: %w", err)
 			}
 
 			organizationToken = &tokens.Access
@@ -236,6 +240,7 @@ func EnsureStackAccess(
 
 		stackToken = &tokens.Access
 	} else if stackToken.Expired() {
+		dialog.Info("Refreshing stack access token...")
 		refreshed, err := Refresh(cmd.Context(), relyingParty, *stackToken)
 		if err != nil {
 			oidcErr := &oidc.Error{}
@@ -243,10 +248,14 @@ func EnsureStackAccess(
 				return nil, nil, fmt.Errorf("failed to refresh stack token: %w", err)
 			}
 
-			if oidcErr.ErrorType != oidc.InvalidToken {
+			// Handle invalid_token, invalid_request (refresh_token not found), and other refresh errors
+			// by requesting a new authentication with current profile credentials
+			if oidcErr.ErrorType != oidc.InvalidToken && oidcErr.ErrorType != oidc.InvalidRequest {
 				return nil, nil, fmt.Errorf("received unexpected oauth2 error while refreshing token: %w", err)
 			}
 
+			// Refresh token is invalid/expired/not found, reauthenticate with current profile
+			dialog.Info("Stack refresh token expired, requesting new authentication...")
 			tokens, err := authenticate()
 			if err != nil {
 				return nil, nil, fmt.Errorf("failed to authenticate for stack: %w", err)
@@ -315,6 +324,7 @@ func EnsureAppAccess(
 
 		appToken = &tokens.Access
 	} else if appToken.Expired() { // todo: define a delta on time
+		dialog.Info("Refreshing app access token...")
 		refreshed, err := Refresh(cmd.Context(), relyingParty, *appToken)
 		if err != nil {
 			oidcErr := &oidc.Error{}
@@ -322,13 +332,14 @@ func EnsureAppAccess(
 				return nil, fmt.Errorf("failed to refresh app token: %w", err)
 			}
 
-			if oidcErr.ErrorType != oidc.InvalidToken {
+			if oidcErr.ErrorType != oidc.InvalidToken && oidcErr.ErrorType != oidc.InvalidRequest {
 				return nil, fmt.Errorf("received unexpected oauth2 error while refreshing token: %w", err)
 			}
 
+			dialog.Info("App token expired, requesting new authentication...")
 			tokens, err := authenticate()
 			if err != nil {
-				return nil, fmt.Errorf("failed to authenticate for stack: %w", err)
+				return nil, fmt.Errorf("failed to authenticate for app: %w", err)
 			}
 
 			appToken = &tokens.Access
@@ -553,6 +564,10 @@ func (t *stackTokenSource) Token() (*oauth2.Token, error) {
 		if t.stackToken.Expired() {
 			newStackToken, err := Refresh(context.Background(), t.relyingParty, t.stackToken)
 			if err != nil {
+				oidcErr := &oidc.Error{}
+				if errors.As(err, &oidcErr) && (oidcErr.ErrorType == oidc.InvalidToken || oidcErr.ErrorType == oidc.InvalidRequest) {
+					return nil, newErrInvalidAuthentication(fmt.Errorf("stack refresh token expired or not found, please run a command to re-authenticate"))
+				}
 				return nil, err
 			}
 			t.stackToken = *newStackToken
