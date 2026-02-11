@@ -194,7 +194,7 @@ func EnsureStackAccess(
 
 	if !profile.RootTokens.ID.Claims.HasStackAccess(organizationID, stackID) {
 		return nil, nil, fmt.Errorf("no access to stack %s on organization %s found in your authentication profile, "+
-			"please log in again and/or check you still have access to the organization", stackID, organizationID)
+			"please log in again and/or check you still have access to the organization or that the stack exists or is not deleted", stackID, organizationID)
 	}
 
 	stackAccess := profile.RootTokens.ID.Claims.
