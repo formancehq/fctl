@@ -4,6 +4,7 @@ package components
 
 import (
 	"github.com/formancehq/fctl/internal/membershipclient/internal/utils"
+	"github.com/formancehq/fctl/internal/membershipclient/optionalnullable"
 )
 
 type ReadStackUserAccessData struct {
@@ -15,6 +16,8 @@ type ReadStackUserAccessData struct {
 	Email string `json:"email"`
 	// Policy ID applied to the user for the stack
 	PolicyID int64 `json:"policyId"`
+	// Policy ID applied to the user at the organization level
+	OrganizationPolicyID optionalnullable.OptionalNullable[int64] `json:"organizationPolicyId,omitzero"`
 }
 
 func (r *ReadStackUserAccessData) GetStackID() string {
@@ -43,6 +46,13 @@ func (r *ReadStackUserAccessData) GetPolicyID() int64 {
 		return 0
 	}
 	return r.PolicyID
+}
+
+func (r *ReadStackUserAccessData) GetOrganizationPolicyID() optionalnullable.OptionalNullable[int64] {
+	if r == nil {
+		return nil
+	}
+	return r.OrganizationPolicyID
 }
 
 type ReadStackUserAccess struct {

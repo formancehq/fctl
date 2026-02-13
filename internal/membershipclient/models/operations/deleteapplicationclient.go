@@ -7,52 +7,52 @@ import (
 	"github.com/formancehq/fctl/internal/membershipclient/models/components"
 )
 
-type DeleteApplicationScopeRequest struct {
+type DeleteApplicationClientRequest struct {
 	// The unique identifier of the application (UUID format)
 	ApplicationID string `pathParam:"style=simple,explode=false,name=applicationId"`
-	// The unique identifier of the scope to operate on
-	ScopeID int64 `pathParam:"style=simple,explode=false,name=scopeID"`
+	// The unique identifier of the client (UUID format, optionally prefixed with "application_")
+	ClientID string `pathParam:"style=simple,explode=false,name=clientId"`
 }
 
-func (d *DeleteApplicationScopeRequest) GetApplicationID() string {
+func (d *DeleteApplicationClientRequest) GetApplicationID() string {
 	if d == nil {
 		return ""
 	}
 	return d.ApplicationID
 }
 
-func (d *DeleteApplicationScopeRequest) GetScopeID() int64 {
+func (d *DeleteApplicationClientRequest) GetClientID() string {
 	if d == nil {
-		return 0
+		return ""
 	}
-	return d.ScopeID
+	return d.ClientID
 }
 
-type DeleteApplicationScopeResponse struct {
+type DeleteApplicationClientResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
 	// Error
 	Error *components.Error
 }
 
-func (d DeleteApplicationScopeResponse) MarshalJSON() ([]byte, error) {
+func (d DeleteApplicationClientResponse) MarshalJSON() ([]byte, error) {
 	return utils.MarshalJSON(d, "", false)
 }
 
-func (d *DeleteApplicationScopeResponse) UnmarshalJSON(data []byte) error {
+func (d *DeleteApplicationClientResponse) UnmarshalJSON(data []byte) error {
 	if err := utils.UnmarshalJSON(data, &d, "", false, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (d *DeleteApplicationScopeResponse) GetHTTPMeta() components.HTTPMetadata {
+func (d *DeleteApplicationClientResponse) GetHTTPMeta() components.HTTPMetadata {
 	if d == nil {
 		return components.HTTPMetadata{}
 	}
 	return d.HTTPMeta
 }
 
-func (d *DeleteApplicationScopeResponse) GetError() *components.Error {
+func (d *DeleteApplicationClientResponse) GetError() *components.Error {
 	if d == nil {
 		return nil
 	}

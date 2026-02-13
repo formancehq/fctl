@@ -130,13 +130,6 @@ func Execute() {
 					}
 					printError(errResponse.ErrorCode, errResponse.ErrorMessage, &errResponse.Details)
 					return
-				case *apierrors.Error:
-					errMsg := ""
-					if err.ErrorMessage != nil {
-						errMsg = *err.ErrorMessage
-					}
-					printError(err.ErrorCode, errMsg, nil)
-					return
 				default:
 					pterm.Error.WithWriter(os.Stderr).Println(unwrapped)
 					unwrapped = errors.Unwrap(unwrapped)

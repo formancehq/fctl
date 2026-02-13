@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/fctl/internal/membershipclient"
 	fctl "github.com/formancehq/fctl/pkg"
 )
 
@@ -64,21 +65,20 @@ func (c *UiController) GetStore() *UiStruct {
 
 func (c *UiController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	_, profile, _, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	_, apiClient, err := fctl.NewMembershipClientForOrganizationFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	cli := membershipclient.New(
+		membershipclient.WithServerURL(profile.GetMembershipURI()),
+		membershipclient.WithClient(relyingParty.HttpClient()),
+	)
+
+	serverInfo, err := fctl.MembershipServerInfo(cmd.Context(), cli)
 	if err != nil {
 		return nil, err
 	}
-
-	serverInfo, err := fctl.MembershipServerInfo(cmd.Context(), apiClient)
-	if err != nil {
-		return nil, err
-	}
-
 	if v := serverInfo.GetConsoleURL(); v != nil {
 		c.store.UIUrl = *v
 	}
@@ -97,7 +97,7 @@ func (c *UiController) Render(cmd *cobra.Command, args []string) error {
 }
 
 func NewCommand() *cobra.Command {
-	return fctl.NewStackCommand("ui",
+	return fctl.NewCommand("ui",
 		fctl.WithShortDescription("Open UI"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),

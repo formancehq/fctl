@@ -28,7 +28,7 @@ func LogCursor(writer io.Writer, cursor *components.LogCursorData, withData bool
 				return log.GetUserID()
 			}(),
 			log.GetDate().Format(time.DateFormat),
-			log.GetAction(),
+			string(log.GetAction()),
 		}
 
 		if withData {

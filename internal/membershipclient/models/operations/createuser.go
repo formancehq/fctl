@@ -11,7 +11,7 @@ type CreateUserResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
 	// User created successfully
 	CreateUserResponse *components.CreateUserResponse
-	// Invalid request (missing or invalid email)
+	// Error
 	Error *components.Error
 }
 

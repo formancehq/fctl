@@ -9,7 +9,7 @@ import (
 type ServerInfo struct {
 	Version      string       `json:"version"`
 	Capabilities []Capability `json:"capabilities,omitzero"`
-	ConsoleURL   *string      `json:"consoleURL,omitzero"`
+	ConsoleURL   *string      `json:"consoleUrl,omitzero"`
 }
 
 func (s ServerInfo) MarshalJSON() ([]byte, error) {

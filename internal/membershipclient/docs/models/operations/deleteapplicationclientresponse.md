@@ -1,4 +1,4 @@
-# DeleteApplicationScopeResponse
+# DeleteApplicationClientResponse
 
 
 ## Fields
