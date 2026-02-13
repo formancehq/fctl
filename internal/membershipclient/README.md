@@ -210,6 +210,12 @@ func main() {
 * [DeleteApplication](docs/sdks/sdk/README.md#deleteapplication) - Delete application
 * [CreateApplicationScope](docs/sdks/sdk/README.md#createapplicationscope) - Create application scope
 * [DeleteApplicationScope](docs/sdks/sdk/README.md#deleteapplicationscope) - Delete application scope
+* [AddDelegationToScope](docs/sdks/sdk/README.md#adddelegationtoscope) - Add delegation to scope
+* [RemoveDelegationFromScope](docs/sdks/sdk/README.md#removedelegationfromscope) - Remove delegation from scope
+* [CreateApplicationClient](docs/sdks/sdk/README.md#createapplicationclient) - Create application client
+* [GetApplicationClient](docs/sdks/sdk/README.md#getapplicationclient) - Get application client
+* [UpdateApplicationClient](docs/sdks/sdk/README.md#updateapplicationclient) - Update application client
+* [DeleteApplicationClient](docs/sdks/sdk/README.md#deleteapplicationclient) - Delete application client
 * [CreateUser](docs/sdks/sdk/README.md#createuser) - Create user
 * [ReadConnectedUser](docs/sdks/sdk/README.md#readconnecteduser) - Read user
 
@@ -309,13 +315,11 @@ Handling errors in this SDK should largely match your expectations. All operatio
 
 By Default, an API error will return `apierrors.APIError`. When custom error responses are specified for an operation, the SDK may also return their associated error. You can refer to respective *Errors* tables in SDK docs for more details on possible error types for each operation.
 
-For example, the `DeleteApplicationScope` function may return the following errors:
+For example, the `GetServerInfo` function may return the following errors:
 
-| Error Type         | Status Code | Content Type     |
-| ------------------ | ----------- | ---------------- |
-| apierrors.Error    | 400, 404    | application/json |
-| apierrors.Error    | 500         | application/json |
-| apierrors.APIError | 4XX, 5XX    | \*/\*            |
+| Error Type         | Status Code | Content Type |
+| ------------------ | ----------- | ------------ |
+| apierrors.APIError | 4XX, 5XX    | \*/\*        |
 
 ### Example
 
@@ -327,7 +331,6 @@ import (
 	"errors"
 	"github.com/formancehq/fctl/internal/membershipclient"
 	"github.com/formancehq/fctl/internal/membershipclient/models/apierrors"
-	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
 	"log"
 )
 
@@ -338,23 +341,8 @@ func main() {
 		membershipclient.WithSecurity("<YOUR_OAUTH2_HERE>"),
 	)
 
-	res, err := s.DeleteApplicationScope(ctx, operations.DeleteApplicationScopeRequest{
-		ApplicationID: "550e8400-e29b-41d4-a716-446655440000",
-		ScopeID:       115177,
-	})
+	res, err := s.GetServerInfo(ctx)
 	if err != nil {
-
-		var e *apierrors.Error
-		if errors.As(err, &e) {
-			// handle error
-			log.Fatal(e.Error())
-		}
-
-		var e *apierrors.Error
-		if errors.As(err, &e) {
-			// handle error
-			log.Fatal(e.Error())
-		}
 
 		var e *apierrors.APIError
 		if errors.As(err, &e) {

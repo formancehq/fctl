@@ -24,6 +24,8 @@ type ApplicationWithScope struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 	// List of scopes associated with this application
 	Scopes []Scope `json:"scopes"`
+	// List of clients associated with this application
+	Clients []ApplicationClient `json:"clients,omitzero"`
 }
 
 func (a ApplicationWithScope) MarshalJSON() ([]byte, error) {
@@ -91,4 +93,11 @@ func (a *ApplicationWithScope) GetScopes() []Scope {
 		return []Scope{}
 	}
 	return a.Scopes
+}
+
+func (a *ApplicationWithScope) GetClients() []ApplicationClient {
+	if a == nil {
+		return nil
+	}
+	return a.Clients
 }

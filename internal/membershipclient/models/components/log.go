@@ -14,7 +14,7 @@ type Log struct {
 	Seq            string    `json:"seq"`
 	OrganizationID string    `json:"organizationId"`
 	UserID         string    `json:"userId"`
-	Action         string    `json:"action"`
+	Action         Action    `json:"action"`
 	Date           time.Time `json:"date"`
 	Data           LogData   `json:"data"`
 }
@@ -51,9 +51,9 @@ func (l *Log) GetUserID() string {
 	return l.UserID
 }
 
-func (l *Log) GetAction() string {
+func (l *Log) GetAction() Action {
 	if l == nil {
-		return ""
+		return Action("")
 	}
 	return l.Action
 }

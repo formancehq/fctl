@@ -2,11 +2,6 @@
 
 package components
 
-import (
-	"encoding/json"
-	"fmt"
-)
-
 type Action string
 
 const (
@@ -55,94 +50,14 @@ const (
 func (e Action) ToPointer() *Action {
 	return &e
 }
-func (e *Action) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *Action) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "agents.connected", "agents.disconnected", "invitations.created", "invitations.accepted", "invitations.rejected", "invitations.cancelled", "organizations.created", "organizations.updated", "organizations.deleted", "organizations.user.deleted", "organizations.user.updated", "regions.created", "regions.deleted", "users.created", "users.deleted", "stacks.disposal", "stacks.disposal-reset", "stacks.warned", "stacks.pruned", "stacks.status.updated", "stacks.created", "stacks.updated", "stacks.deleted", "stacks.restored", "stacks.disabled", "stacks.enabled", "stacks.upgraded", "stacks.stargate.enabled", "stacks.stargate.disabled", "stacks.user.updated", "stacks.user.deleted", "stacks.reachness.updated", "stacks.module.enabled", "stacks.module.disabled", "stacks.module.status.updated", "policies.created", "policies.updated", "policies.deleted", "policies.scope.added", "policies.scope.removed":
+			return true
+		}
 	}
-	switch v {
-	case "agents.connected":
-		fallthrough
-	case "agents.disconnected":
-		fallthrough
-	case "invitations.created":
-		fallthrough
-	case "invitations.accepted":
-		fallthrough
-	case "invitations.rejected":
-		fallthrough
-	case "invitations.cancelled":
-		fallthrough
-	case "organizations.created":
-		fallthrough
-	case "organizations.updated":
-		fallthrough
-	case "organizations.deleted":
-		fallthrough
-	case "organizations.user.deleted":
-		fallthrough
-	case "organizations.user.updated":
-		fallthrough
-	case "regions.created":
-		fallthrough
-	case "regions.deleted":
-		fallthrough
-	case "users.created":
-		fallthrough
-	case "users.deleted":
-		fallthrough
-	case "stacks.disposal":
-		fallthrough
-	case "stacks.disposal-reset":
-		fallthrough
-	case "stacks.warned":
-		fallthrough
-	case "stacks.pruned":
-		fallthrough
-	case "stacks.status.updated":
-		fallthrough
-	case "stacks.created":
-		fallthrough
-	case "stacks.updated":
-		fallthrough
-	case "stacks.deleted":
-		fallthrough
-	case "stacks.restored":
-		fallthrough
-	case "stacks.disabled":
-		fallthrough
-	case "stacks.enabled":
-		fallthrough
-	case "stacks.upgraded":
-		fallthrough
-	case "stacks.stargate.enabled":
-		fallthrough
-	case "stacks.stargate.disabled":
-		fallthrough
-	case "stacks.user.updated":
-		fallthrough
-	case "stacks.user.deleted":
-		fallthrough
-	case "stacks.reachness.updated":
-		fallthrough
-	case "stacks.module.enabled":
-		fallthrough
-	case "stacks.module.disabled":
-		fallthrough
-	case "stacks.module.status.updated":
-		fallthrough
-	case "policies.created":
-		fallthrough
-	case "policies.updated":
-		fallthrough
-	case "policies.deleted":
-		fallthrough
-	case "policies.scope.added":
-		fallthrough
-	case "policies.scope.removed":
-		*e = Action(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for Action: %v", v)
-	}
+	return false
 }

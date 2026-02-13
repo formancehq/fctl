@@ -40,7 +40,7 @@ func (c *CreateStackRequest) GetBody() *components.CreateStackRequest {
 type CreateStackResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
 	// Stack created
-	ReadStackResponse *components.ReadStackResponse
+	CreateStackResponse *components.CreateStackResponse
 	// Error
 	Error *components.Error
 }
@@ -63,11 +63,11 @@ func (c *CreateStackResponse) GetHTTPMeta() components.HTTPMetadata {
 	return c.HTTPMeta
 }
 
-func (c *CreateStackResponse) GetReadStackResponse() *components.ReadStackResponse {
+func (c *CreateStackResponse) GetCreateStackResponse() *components.CreateStackResponse {
 	if c == nil {
 		return nil
 	}
-	return c.ReadStackResponse
+	return c.CreateStackResponse
 }
 
 func (c *CreateStackResponse) GetError() *components.Error {

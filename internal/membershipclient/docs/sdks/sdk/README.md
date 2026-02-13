@@ -77,6 +77,12 @@
 * [DeleteApplication](#deleteapplication) - Delete application
 * [CreateApplicationScope](#createapplicationscope) - Create application scope
 * [DeleteApplicationScope](#deleteapplicationscope) - Delete application scope
+* [AddDelegationToScope](#adddelegationtoscope) - Add delegation to scope
+* [RemoveDelegationFromScope](#removedelegationfromscope) - Remove delegation from scope
+* [CreateApplicationClient](#createapplicationclient) - Create application client
+* [GetApplicationClient](#getapplicationclient) - Get application client
+* [UpdateApplicationClient](#updateapplicationclient) - Update application client
+* [DeleteApplicationClient](#deleteapplicationclient) - Delete application client
 * [CreateUser](#createuser) - Create user
 * [ReadConnectedUser](#readconnecteduser) - Read user
 
@@ -1956,7 +1962,7 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    if res.ReadStackResponse != nil {
+    if res.CreateStackResponse != nil {
         // handle response
     }
 }
@@ -4051,8 +4057,337 @@ func main() {
 
 | Error Type         | Status Code        | Content Type       |
 | ------------------ | ------------------ | ------------------ |
-| apierrors.Error    | 400, 404           | application/json   |
-| apierrors.Error    | 500                | application/json   |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## AddDelegationToScope
+
+Add a delegation relationship to a scope. The scope can only delegate to organization scopes (not stack scopes). This operation requires system administrator privileges.
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="addDelegationToScope" method="post" path="/applications/{applicationId}/scopes/{scopeID}/delegations/{delegatesToScopeId}" -->
+```go
+package main
+
+import(
+	"context"
+	"github.com/formancehq/fctl/internal/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := membershipclient.New(
+        membershipclient.WithSecurity("<YOUR_OAUTH2_HERE>"),
+    )
+
+    res, err := s.AddDelegationToScope(ctx, operations.AddDelegationToScopeRequest{
+        ApplicationID: "550e8400-e29b-41d4-a716-446655440000",
+        ScopeID: 151481,
+        DelegatesToScopeID: 49,
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.Error != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                                        | Type                                                                                             | Required                                                                                         | Description                                                                                      |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `ctx`                                                                                            | [context.Context](https://pkg.go.dev/context#Context)                                            | :heavy_check_mark:                                                                               | The context to use for the request.                                                              |
+| `request`                                                                                        | [operations.AddDelegationToScopeRequest](../../models/operations/adddelegationtoscoperequest.md) | :heavy_check_mark:                                                                               | The request object to use for the request.                                                       |
+| `opts`                                                                                           | [][operations.Option](../../models/operations/option.md)                                         | :heavy_minus_sign:                                                                               | The options for this request.                                                                    |
+
+### Response
+
+**[*operations.AddDelegationToScopeResponse](../../models/operations/adddelegationtoscoperesponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## RemoveDelegationFromScope
+
+Remove a delegation relationship from a scope. This operation requires system administrator privileges.
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="removeDelegationFromScope" method="delete" path="/applications/{applicationId}/scopes/{scopeID}/delegations/{delegatesToScopeId}" -->
+```go
+package main
+
+import(
+	"context"
+	"github.com/formancehq/fctl/internal/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := membershipclient.New(
+        membershipclient.WithSecurity("<YOUR_OAUTH2_HERE>"),
+    )
+
+    res, err := s.RemoveDelegationFromScope(ctx, operations.RemoveDelegationFromScopeRequest{
+        ApplicationID: "550e8400-e29b-41d4-a716-446655440000",
+        ScopeID: 98481,
+        DelegatesToScopeID: 49,
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.Error != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                                                  | Type                                                                                                       | Required                                                                                                   | Description                                                                                                |
+| ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                      | [context.Context](https://pkg.go.dev/context#Context)                                                      | :heavy_check_mark:                                                                                         | The context to use for the request.                                                                        |
+| `request`                                                                                                  | [operations.RemoveDelegationFromScopeRequest](../../models/operations/removedelegationfromscoperequest.md) | :heavy_check_mark:                                                                                         | The request object to use for the request.                                                                 |
+| `opts`                                                                                                     | [][operations.Option](../../models/operations/option.md)                                                   | :heavy_minus_sign:                                                                                         | The options for this request.                                                                              |
+
+### Response
+
+**[*operations.RemoveDelegationFromScopeResponse](../../models/operations/removedelegationfromscoperesponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## CreateApplicationClient
+
+Create a new OAuth2 client for an application. This operation requires system administrator privileges.
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="createApplicationClient" method="post" path="/applications/{applicationId}/clients" -->
+```go
+package main
+
+import(
+	"context"
+	"github.com/formancehq/fctl/internal/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := membershipclient.New(
+        membershipclient.WithSecurity("<YOUR_OAUTH2_HERE>"),
+    )
+
+    res, err := s.CreateApplicationClient(ctx, operations.CreateApplicationClientRequest{
+        ApplicationID: "550e8400-e29b-41d4-a716-446655440000",
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.CreateApplicationClientResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                                              | Type                                                                                                   | Required                                                                                               | Description                                                                                            |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `ctx`                                                                                                  | [context.Context](https://pkg.go.dev/context#Context)                                                  | :heavy_check_mark:                                                                                     | The context to use for the request.                                                                    |
+| `request`                                                                                              | [operations.CreateApplicationClientRequest](../../models/operations/createapplicationclientrequest.md) | :heavy_check_mark:                                                                                     | The request object to use for the request.                                                             |
+| `opts`                                                                                                 | [][operations.Option](../../models/operations/option.md)                                               | :heavy_minus_sign:                                                                                     | The options for this request.                                                                          |
+
+### Response
+
+**[*operations.CreateApplicationClientResponse](../../models/operations/createapplicationclientresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## GetApplicationClient
+
+Retrieve details of an application client. This operation requires system administrator privileges.
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="getApplicationClient" method="get" path="/applications/{applicationId}/clients/{clientId}" -->
+```go
+package main
+
+import(
+	"context"
+	"github.com/formancehq/fctl/internal/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := membershipclient.New(
+        membershipclient.WithSecurity("<YOUR_OAUTH2_HERE>"),
+    )
+
+    res, err := s.GetApplicationClient(ctx, operations.GetApplicationClientRequest{
+        ApplicationID: "550e8400-e29b-41d4-a716-446655440000",
+        ClientID: "<id>",
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.GetApplicationClientResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                                        | Type                                                                                             | Required                                                                                         | Description                                                                                      |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `ctx`                                                                                            | [context.Context](https://pkg.go.dev/context#Context)                                            | :heavy_check_mark:                                                                               | The context to use for the request.                                                              |
+| `request`                                                                                        | [operations.GetApplicationClientRequest](../../models/operations/getapplicationclientrequest.md) | :heavy_check_mark:                                                                               | The request object to use for the request.                                                       |
+| `opts`                                                                                           | [][operations.Option](../../models/operations/option.md)                                         | :heavy_minus_sign:                                                                               | The options for this request.                                                                    |
+
+### Response
+
+**[*operations.GetApplicationClientResponse](../../models/operations/getapplicationclientresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## UpdateApplicationClient
+
+Update an application client. This operation requires system administrator privileges.
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="updateApplicationClient" method="put" path="/applications/{applicationId}/clients/{clientId}" -->
+```go
+package main
+
+import(
+	"context"
+	"github.com/formancehq/fctl/internal/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := membershipclient.New(
+        membershipclient.WithSecurity("<YOUR_OAUTH2_HERE>"),
+    )
+
+    res, err := s.UpdateApplicationClient(ctx, operations.UpdateApplicationClientRequest{
+        ApplicationID: "550e8400-e29b-41d4-a716-446655440000",
+        ClientID: "<id>",
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.Error != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                                              | Type                                                                                                   | Required                                                                                               | Description                                                                                            |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `ctx`                                                                                                  | [context.Context](https://pkg.go.dev/context#Context)                                                  | :heavy_check_mark:                                                                                     | The context to use for the request.                                                                    |
+| `request`                                                                                              | [operations.UpdateApplicationClientRequest](../../models/operations/updateapplicationclientrequest.md) | :heavy_check_mark:                                                                                     | The request object to use for the request.                                                             |
+| `opts`                                                                                                 | [][operations.Option](../../models/operations/option.md)                                               | :heavy_minus_sign:                                                                                     | The options for this request.                                                                          |
+
+### Response
+
+**[*operations.UpdateApplicationClientResponse](../../models/operations/updateapplicationclientresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## DeleteApplicationClient
+
+Delete an application client. This operation requires system administrator privileges.
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="deleteApplicationClient" method="delete" path="/applications/{applicationId}/clients/{clientId}" -->
+```go
+package main
+
+import(
+	"context"
+	"github.com/formancehq/fctl/internal/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := membershipclient.New(
+        membershipclient.WithSecurity("<YOUR_OAUTH2_HERE>"),
+    )
+
+    res, err := s.DeleteApplicationClient(ctx, operations.DeleteApplicationClientRequest{
+        ApplicationID: "550e8400-e29b-41d4-a716-446655440000",
+        ClientID: "<id>",
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.Error != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                                              | Type                                                                                                   | Required                                                                                               | Description                                                                                            |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `ctx`                                                                                                  | [context.Context](https://pkg.go.dev/context#Context)                                                  | :heavy_check_mark:                                                                                     | The context to use for the request.                                                                    |
+| `request`                                                                                              | [operations.DeleteApplicationClientRequest](../../models/operations/deleteapplicationclientrequest.md) | :heavy_check_mark:                                                                                     | The request object to use for the request.                                                             |
+| `opts`                                                                                                 | [][operations.Option](../../models/operations/option.md)                                               | :heavy_minus_sign:                                                                                     | The options for this request.                                                                          |
+
+### Response
+
+**[*operations.DeleteApplicationClientResponse](../../models/operations/deleteapplicationclientresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
 ## CreateUser
@@ -4079,7 +4414,7 @@ func main() {
         membershipclient.WithSecurity("<YOUR_OAUTH2_HERE>"),
     )
 
-    res, err := s.CreateUser(ctx, components.CreateUserRequest{
+    res, err := s.CreateUser(ctx, &components.CreateUserRequest{
         Email: "user@example.com",
     })
     if err != nil {
@@ -4107,8 +4442,6 @@ func main() {
 
 | Error Type         | Status Code        | Content Type       |
 | ------------------ | ------------------ | ------------------ |
-| apierrors.Error    | 400                | application/json   |
-| apierrors.Error    | 500                | application/json   |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
 ## ReadConnectedUser
