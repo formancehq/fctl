@@ -195,6 +195,10 @@ func (c *ProxyController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, 
 			func(newToken fctl.AccessToken) error {
 				return fctl.WriteStackToken(cmd, profileName, stackID, newToken)
 			},
+			cmd,
+			profileName,
+			organizationID,
+			stackID,
 		),
 	}
 

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -100,14 +101,11 @@ func LoadAndAuthenticateCurrentProfileWithConfig(cmd *cobra.Command, cfg Config)
 		return nil, "", nil, err
 	}
 
-	relyingParty, err := GetAuthRelyingParty(cmd.Context(), GetHttpClient(cmd), profile.GetMembershipURI())
-	if err != nil {
-		return nil, "", nil, err
-	}
-
 	if !profile.IsConnected() {
 		return nil, "", nil, newErrInvalidAuthentication(errors.New("not authenticated, please run 'fctl login'"))
 	}
+
+	relyingParty := NewLazyRelyingParty(cmd.Context(), GetHttpClient(cmd), profile.GetMembershipURI())
 
 	return profile, profileName, relyingParty, nil
 }
@@ -240,6 +238,32 @@ func WriteAppToken(cmd *cobra.Command, profileName, appAlias string, token Acces
 
 func ReadAppToken(cmd *cobra.Command, profileName, organizationID, appAlias string) (*AccessToken, error) {
 	ret, err := ReadJSONFile[AccessToken](cmd, filepath.Join("profiles", profileName, "organizations", organizationID, "apps", appAlias, "accesses.json"))
+	if err != nil {
+		if errors.Is(err, &fs.PathError{}) || errors.Is(err, os.ErrNotExist) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return ret, nil
+}
+
+type CachedStackAPIToken struct {
+	AccessToken string    `json:"accessToken"`
+	TokenType   string    `json:"tokenType"`
+	Expiry      time.Time `json:"expiry"`
+}
+
+func WriteCachedStackAPIToken(cmd *cobra.Command, profileName, organizationID, stackID string, token CachedStackAPIToken) error {
+	dir := GetFilePath(cmd, filepath.Join("profiles", profileName, "organizations", organizationID, "stacks", stackID))
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return err
+	}
+
+	return WriteJSONFile(filepath.Join(dir, "api_token_cache.json"), token)
+}
+
+func ReadCachedStackAPIToken(cmd *cobra.Command, profileName, organizationID, stackID string) (*CachedStackAPIToken, error) {
+	ret, err := ReadJSONFile[CachedStackAPIToken](cmd, filepath.Join("profiles", profileName, "organizations", organizationID, "stacks", stackID, "api_token_cache.json"))
 	if err != nil {
 		if errors.Is(err, &fs.PathError{}) || errors.Is(err, os.ErrNotExist) {
 			return nil, nil
