@@ -1,5 +1,5 @@
 workflowVersion: 1.0.0
-speakeasyVersion: 1.690.0 # Should be synced with flake.nix speakeasy version.
+speakeasyVersion: 1.723.0 # Should be synced with flake.nix speakeasy version.
 sources:
   Terraform HCP Proxy API:
     inputs:

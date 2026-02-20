@@ -1,4 +1,4 @@
-speakeasyVersion: 1.690.0
+speakeasyVersion: 1.723.0
 sources:
     membership:
         sourceNamespace: membership
@@ -15,7 +15,7 @@ targets:
         sourceBlobDigest: sha256:cc9d8d2f899357b7a2062c6d771067ca22ce09546f07087e255c7096e2830e48
 workflow:
     workflowVersion: 1.0.0
-    speakeasyVersion: 1.690.0
+    speakeasyVersion: 1.723.0
     sources:
         membership:
             inputs:
