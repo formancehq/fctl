@@ -10,8 +10,8 @@ import (
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/formancehq/go-libs/collectionutils"
 
-	internal "github.com/formancehq/fctl/cmd/ledger/internal"
-	fctl "github.com/formancehq/fctl/pkg"
+	internal "github.com/formancehq/fctl/v3/cmd/ledger/internal"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ShowStore struct {

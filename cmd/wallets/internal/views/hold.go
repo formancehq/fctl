@@ -8,7 +8,7 @@ import (
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 func PrintHold(out io.Writer, hold shared.ExpandedDebitHold) error {

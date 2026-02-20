@@ -7,9 +7,9 @@ import (
 
 	"github.com/formancehq/go-libs/v3/pointer"
 
-	"github.com/formancehq/fctl/cmd/cloud/organizations/internal"
-	"github.com/formancehq/fctl/internal/membershipclient/models/components"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/cloud/organizations/internal"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/models/components"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type CreateStore struct {

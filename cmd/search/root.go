@@ -10,8 +10,8 @@ import (
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	"github.com/formancehq/fctl/cmd/search/views"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/search/views"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 const (

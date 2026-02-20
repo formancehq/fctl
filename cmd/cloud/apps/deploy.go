@@ -10,9 +10,9 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/cmd/cloud/apps/printer"
-	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/cloud/apps/printer"
+	"github.com/formancehq/fctl/v3/internal/deployserverclient/models/components"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type Deploy struct {

@@ -5,7 +5,7 @@ package hooks
 import (
 	"context"
 	"errors"
-	"github.com/formancehq/fctl/internal/membershipclient/internal/config"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/internal/config"
 	"net/http"
 )
 

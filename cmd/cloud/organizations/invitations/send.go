@@ -6,8 +6,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type InvitationSend struct {

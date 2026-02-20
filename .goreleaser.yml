@@ -10,9 +10,9 @@ builds:
   - binary: fctl
     id: fctl
     ldflags:
-      - -X github.com/formancehq/fctl/cmd/version.BuildDate={{ .Date }}
-      - -X github.com/formancehq/fctl/cmd/version.Version=v{{ .Version }}
-      - -X github.com/formancehq/fctl/cmd/version.Commit={{ .ShortCommit }}
+      - -X github.com/formancehq/fctl/v3/cmd/version.BuildDate={{ .Date }}
+      - -X github.com/formancehq/fctl/v3/cmd/version.Version=v{{ .Version }}
+      - -X github.com/formancehq/fctl/v3/cmd/version.Commit={{ .ShortCommit }}
       - -s
       - -w
       - -extldflags "-static"

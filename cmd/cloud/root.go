@@ -3,11 +3,11 @@ package cloud
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/cmd/cloud/apps"
-	"github.com/formancehq/fctl/cmd/cloud/me"
-	"github.com/formancehq/fctl/cmd/cloud/organizations"
-	"github.com/formancehq/fctl/cmd/cloud/regions"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/cloud/apps"
+	"github.com/formancehq/fctl/v3/cmd/cloud/me"
+	"github.com/formancehq/fctl/v3/cmd/cloud/organizations"
+	"github.com/formancehq/fctl/v3/cmd/cloud/regions"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 func NewCommand() *cobra.Command {

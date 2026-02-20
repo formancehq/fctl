@@ -9,8 +9,8 @@ import (
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	"github.com/formancehq/fctl/internal/membershipclient/models/components"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/models/components"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 func PrintStackInformation(out io.Writer, stack *components.Stack, versions *shared.GetVersionsResponse) error {

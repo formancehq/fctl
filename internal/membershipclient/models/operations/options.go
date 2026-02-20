@@ -4,8 +4,8 @@ package operations
 
 import (
 	"errors"
-	"github.com/formancehq/fctl/internal/membershipclient/internal/utils"
-	"github.com/formancehq/fctl/internal/membershipclient/retry"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/internal/utils"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/retry"
 	"time"
 )
 

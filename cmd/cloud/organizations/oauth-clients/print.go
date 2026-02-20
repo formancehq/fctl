@@ -6,8 +6,8 @@ import (
 
 	"github.com/pterm/pterm"
 
-	"github.com/formancehq/fctl/internal/membershipclient/models/components"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/models/components"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 func onCreateShow(writer io.Writer, client components.OrganizationClient) error {
