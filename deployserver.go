@@ -3,7 +3,7 @@
 
 package deployserverclient
 
-// Generated from OpenAPI doc version 0.1.0 and generator version 2.797.1
+// Generated from OpenAPI doc version 0.1.0 and generator version 2.835.2
 
 import (
 	"bytes"
@@ -120,7 +120,7 @@ func New(opts ...SDKOption) *DeployServer {
 	sdk := &DeployServer{
 		SDKVersion: "0.0.1",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 0.0.1 2.797.1 0.1.0 github.com/formancehq/fctl/v3/internal/deployserverclient",
+			UserAgent:  "speakeasy-sdk/go 0.0.1 2.835.2 0.1.0 github.com/formancehq/fctl/v3/internal/deployserverclient",
 			ServerList: ServerList,
 		},
 		hooks: hooks.New(),
@@ -757,6 +757,7 @@ func (s *DeployServer) UpdateApp(ctx context.Context, id string, updateAppReques
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -1177,6 +1178,7 @@ func (s *DeployServer) DeleteApp(ctx context.Context, id string, opts ...operati
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -2052,6 +2054,7 @@ func (s *DeployServer) DeleteAppVariable(ctx context.Context, id string, variabl
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
