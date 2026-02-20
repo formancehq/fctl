@@ -5,8 +5,8 @@ package operations
 
 import (
 	"errors"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/internal/utils"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/retry"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/internal/utils"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/retry"
 	"time"
 )
 
