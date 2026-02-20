@@ -462,6 +462,10 @@ func NewStackClient(
 				func(newToken AccessToken) error {
 					return WriteStackToken(cmd, profileName, stackID, newToken)
 				},
+				cmd,
+				profileName,
+				organizationID,
+				stackID,
 			),
 		)),
 	), nil
@@ -554,6 +558,12 @@ type stackTokenSource struct {
 	stackAccess  *StackAccess
 	relyingParty client.RelyingParty
 	onRefresh    func(newToken AccessToken) error
+
+	// Cache fields
+	cmd            *cobra.Command
+	profileName    string
+	organizationID string
+	stackID        string
 }
 
 func (t *stackTokenSource) Token() (*oauth2.Token, error) {
@@ -561,6 +571,19 @@ func (t *stackTokenSource) Token() (*oauth2.Token, error) {
 	defer t.mu.Unlock()
 
 	if t.accessToken == nil || t.accessToken.Expiry.Before(time.Now()) {
+		// Try to load from disk cache
+		if t.cmd != nil {
+			cached, err := ReadCachedStackAPIToken(t.cmd, t.profileName, t.organizationID, t.stackID)
+			if err == nil && cached != nil && cached.Expiry.After(time.Now().Add(5*time.Second)) {
+				t.accessToken = &oauth2.Token{
+					AccessToken: cached.AccessToken,
+					TokenType:   cached.TokenType,
+					Expiry:      cached.Expiry,
+				}
+				return t.accessToken, nil
+			}
+		}
+
 		if t.stackToken.Expired() {
 			newStackToken, err := Refresh(context.Background(), t.relyingParty, t.stackToken)
 			if err != nil {
@@ -582,6 +605,15 @@ func (t *stackTokenSource) Token() (*oauth2.Token, error) {
 		}
 
 		t.accessToken = token
+
+		// Write to disk cache (best-effort)
+		if t.cmd != nil {
+			_ = WriteCachedStackAPIToken(t.cmd, t.profileName, t.organizationID, t.stackID, CachedStackAPIToken{
+				AccessToken: token.AccessToken,
+				TokenType:   token.TokenType,
+				Expiry:      token.Expiry,
+			})
+		}
 	}
 
 	return t.accessToken, nil
@@ -594,12 +626,20 @@ func NewStackTokenSource(
 	stackAccess *StackAccess,
 	relyingParty client.RelyingParty,
 	onRefresh func(newToken AccessToken) error,
+	cmd *cobra.Command,
+	profileName string,
+	organizationID string,
+	stackID string,
 ) oauth2.TokenSource {
 	return &stackTokenSource{
-		stackToken:   stackToken,
-		stackAccess:  stackAccess,
-		relyingParty: relyingParty,
-		onRefresh:    onRefresh,
+		stackToken:     stackToken,
+		stackAccess:    stackAccess,
+		relyingParty:   relyingParty,
+		onRefresh:      onRefresh,
+		cmd:            cmd,
+		profileName:    profileName,
+		organizationID: organizationID,
+		stackID:        stackID,
 	}
 }
 
