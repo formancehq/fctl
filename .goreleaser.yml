@@ -13,7 +13,11 @@ builds:
       - -X github.com/formancehq/fctl/cmd/version.BuildDate={{ .Date }}
       - -X github.com/formancehq/fctl/cmd/version.Version=v{{ .Version }}
       - -X github.com/formancehq/fctl/cmd/version.Commit={{ .ShortCommit }}
+      - -s
+      - -w
       - -extldflags "-static"
+    flags:
+      - -trimpath
     env:
       - CGO_ENABLED=0
     goos:
