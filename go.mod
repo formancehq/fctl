@@ -19,7 +19,6 @@ require (
 	github.com/pterm/pterm v0.12.81
 	github.com/segmentio/ksuid v1.0.4
 	github.com/spf13/cobra v1.10.2
-	github.com/zitadel/oidc/v2 v2.12.2
 	golang.org/x/mod v0.29.0
 	golang.org/x/oauth2 v0.31.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -29,7 +28,6 @@ replace (
 	github.com/formancehq/fctl/internal/deployserverclient/v3 => ./internal/deployserverclient
 	github.com/formancehq/fctl/internal/membershipclient/v3 => ./internal/membershipclient
 	github.com/spf13/cobra => github.com/formancehq/cobra v1.10.3-0.20260220181913-3a9502704365
-	github.com/zitadel/oidc/v2 v2.6.1 => github.com/formancehq/oidc/v2 v2.6.2-0.20230526075055-93dc5ecb0149
 )
 
 require (
@@ -48,7 +46,6 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gookit/color v1.5.4 // indirect
-	github.com/gorilla/schema v1.4.1 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hokaccha/go-prettyjson v0.0.0-20211117102719-0474bc63780f // indirect
@@ -94,5 +91,4 @@ require (
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/term v0.37.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
-	gopkg.in/go-jose/go-jose.v2 v2.6.3 // indirect
 )
