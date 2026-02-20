@@ -12,8 +12,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/formancehq/fctl/v3/internal/membershipclient/optionalnullable"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/types"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/optionalnullable"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/types"
 )
 
 func PopulateQueryParams(_ context.Context, req *http.Request, queryParams interface{}, globals interface{}, allowEmptyValue map[string]struct{}) error {

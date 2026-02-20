@@ -4,18 +4,11 @@ go 1.24.4
 
 toolchain go1.25.4
 
-replace (
-	github.com/formancehq/fctl/v3/internal/deployserverclient => ./internal/deployserverclient
-	github.com/formancehq/fctl/v3/internal/membershipclient => ./internal/membershipclient
-	github.com/spf13/cobra => github.com/formancehq/cobra v0.0.0-20240315111924-ca456bf9cac9
-	github.com/zitadel/oidc/v2 v2.6.1 => github.com/formancehq/oidc/v2 v2.6.2-0.20230526075055-93dc5ecb0149
-)
-
 require (
 	github.com/TylerBrock/colorjson v0.0.0-20200706003622-8a50f05110d2
 	github.com/c-bata/go-prompt v0.2.6
-	github.com/formancehq/fctl/v3/internal/deployserverclient v0.0.0-00010101000000-000000000000
-	github.com/formancehq/fctl/v3/internal/membershipclient v0.0.0-20251027061333-c274726dd769
+	github.com/formancehq/fctl/internal/deployserverclient/v3 v3.1.0
+	github.com/formancehq/fctl/internal/membershipclient/v3 v3.1.0
 	github.com/formancehq/formance-sdk-go/v3 v3.7.2
 	github.com/formancehq/go-libs v1.7.2
 	github.com/formancehq/go-libs/v3 v3.4.0
@@ -30,6 +23,13 @@ require (
 	golang.org/x/mod v0.29.0
 	golang.org/x/oauth2 v0.31.0
 	gopkg.in/yaml.v3 v3.0.1
+)
+
+replace (
+	github.com/formancehq/fctl/internal/deployserverclient/v3 => ./internal/deployserverclient
+	github.com/formancehq/fctl/internal/membershipclient/v3 => ./internal/membershipclient
+	github.com/spf13/cobra => github.com/formancehq/cobra v0.0.0-20240315111924-ca456bf9cac9
+	github.com/zitadel/oidc/v2 v2.6.1 => github.com/formancehq/oidc/v2 v2.6.2-0.20230526075055-93dc5ecb0149
 )
 
 require (

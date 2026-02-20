@@ -5,10 +5,10 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
 	"github.com/formancehq/go-libs/v3/pointer"
 
 	"github.com/formancehq/fctl/v3/cmd/cloud/organizations/internal"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/components"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 

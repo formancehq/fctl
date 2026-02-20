@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/formancehq/fctl/v3/internal/membershipclient/optionalnullable"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/optionalnullable"
 )
 
 func PopulateHeaders(_ context.Context, req *http.Request, headers interface{}, globals interface{}) {

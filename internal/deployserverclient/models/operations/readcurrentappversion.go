@@ -6,7 +6,7 @@ package operations
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/models/components"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"io"
 )
 

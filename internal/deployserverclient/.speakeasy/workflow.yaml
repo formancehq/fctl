@@ -1,18 +1,18 @@
 workflowVersion: 1.0.0
 speakeasyVersion: 1.690.0 # Should be synced with flake.nix speakeasy version.
 sources:
-    Terraform HCP Proxy API:
-        inputs:
-            - location: ../../openapi/deployserver.yaml
-        registry:
-            location: registry.speakeasyapi.dev/formance/formance/terraform-hcp-proxy-api
+  Terraform HCP Proxy API:
+    inputs:
+    - location: ../../openapi/deployserver.yaml
+    registry:
+      location: registry.speakeasyapi.dev/formance/formance/terraform-hcp-proxy-api
 targets:
-    deploy-server:
-        target: go
-        source: Terraform HCP Proxy API
-        codeSamples:
-            registry:
-                location: registry.speakeasyapi.dev/formance/formance/terraform-hcp-proxy-api-go-code-samples
-            labelOverride:
-                fixedValue: Go (SDK)
-            blocking: false
+  deploy-server:
+    target: go
+    source: Terraform HCP Proxy API
+    codeSamples:
+      registry:
+        location: registry.speakeasyapi.dev/formance/formance/terraform-hcp-proxy-api-go-code-samples
+      labelOverride:
+        fixedValue: Go (SDK)
+      blocking: false

@@ -6,7 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/retry"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/retry"
 	"io"
 	"math"
 	"math/rand"

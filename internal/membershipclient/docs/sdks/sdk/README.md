@@ -92,7 +92,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
 	"log"
 )
 
@@ -142,8 +142,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -194,7 +194,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
 	"log"
 )
 
@@ -247,7 +247,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
 	"log"
 )
 
@@ -297,8 +297,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -351,8 +351,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -405,8 +405,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -459,8 +459,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -513,8 +513,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -567,8 +567,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -621,8 +621,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -675,8 +675,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -729,8 +729,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -786,8 +786,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -842,8 +842,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -898,8 +898,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -952,8 +952,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -1006,8 +1006,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -1060,8 +1060,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -1115,8 +1115,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -1170,8 +1170,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -1225,8 +1225,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -1279,8 +1279,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -1333,8 +1333,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -1388,8 +1388,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -1444,8 +1444,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -1499,8 +1499,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -1553,8 +1553,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -1607,8 +1607,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -1662,8 +1662,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -1717,8 +1717,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -1772,8 +1772,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -1828,8 +1828,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -1884,8 +1884,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -1938,8 +1938,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -1992,8 +1992,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -2047,8 +2047,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -2103,8 +2103,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -2159,8 +2159,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -2214,8 +2214,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -2269,8 +2269,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -2324,8 +2324,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -2379,8 +2379,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -2434,8 +2434,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -2490,8 +2490,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -2546,8 +2546,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -2602,8 +2602,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -2657,8 +2657,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -2712,8 +2712,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -2767,8 +2767,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -2822,8 +2822,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -2877,8 +2877,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -2929,8 +2929,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -2983,8 +2983,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -3037,8 +3037,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -3091,8 +3091,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -3146,8 +3146,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -3201,8 +3201,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -3255,8 +3255,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -3309,8 +3309,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -3364,8 +3364,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -3419,8 +3419,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -3474,8 +3474,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -3528,8 +3528,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -3583,8 +3583,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -3638,8 +3638,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -3693,7 +3693,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
 	"log"
 )
 
@@ -3743,7 +3743,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
 	"log"
 )
 
@@ -3794,8 +3794,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -3848,8 +3848,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -3902,8 +3902,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -3956,8 +3956,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -4010,8 +4010,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -4067,8 +4067,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/components"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
 	"log"
 )
 
@@ -4123,7 +4123,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
 	"log"
 )
 

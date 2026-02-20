@@ -4,7 +4,7 @@
 package components
 
 import (
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/internal/utils"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/internal/utils"
 	"time"
 )
 

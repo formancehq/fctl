@@ -51,12 +51,12 @@ go:
   inputModelSuffix: input
   maxMethodParams: 0
   methodArguments: require-security-and-request
-  modulePath: ""
+  modulePath: github.com/formancehq/fctl/internal/membershipclient/v3
   multipartArrayFormat: standard
   nullableOptionalWrapper: true
   outputModelSuffix: output
-  packageName: github.com/formancehq/fctl/v3/internal/membershipclient
+  packageName: membershipclient
   respectRequiredFields: false
   responseFormat: envelope-http
-  sdkPackageName: ""
+  sdkPackageName: membershipclient
   unionStrategy: populated-fields

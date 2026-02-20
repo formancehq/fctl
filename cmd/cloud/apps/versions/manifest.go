@@ -6,7 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/models/operations"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/operations"
+
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 

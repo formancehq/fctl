@@ -8,11 +8,11 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/semver"
 
+	"github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"github.com/formancehq/go-libs/v3/pointer"
 
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/components"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 

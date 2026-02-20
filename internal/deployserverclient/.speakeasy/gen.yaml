@@ -57,12 +57,11 @@ go:
   inputModelSuffix: input
   maxMethodParams: 4
   methodArguments: require-security-and-request
-  modulePath: ""
+  modulePath: github.com/formancehq/fctl/internal/deployserverclient/v3
   multipartArrayFormat: legacy
   nullableOptionalWrapper: false
   outputModelSuffix: output
-  packageName: github.com/formancehq/fctl/v3/internal/deployserverclient
   respectRequiredFields: false
   responseFormat: envelope-http
-  sdkPackageName: ""
+  sdkPackageName: deployserverclient
   unionStrategy: left-to-right

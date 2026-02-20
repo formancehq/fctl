@@ -52,7 +52,7 @@ Developer-friendly & type-safe Go SDK specifically catered to leverage *undefine
 
 To add the SDK as a dependency to your project:
 ```bash
-go get github.com/formancehq/fctl/v3/internal/membershipclient
+go get github.com/formancehq/fctl/internal/membershipclient/v3
 ```
 <!-- End SDK Installation [installation] -->
 
@@ -66,7 +66,7 @@ package main
 
 import (
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
 	"log"
 )
 
@@ -106,7 +106,7 @@ package main
 
 import (
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
 	"log"
 )
 
@@ -227,8 +227,8 @@ package main
 
 import (
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/retry"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/retry"
 	"log"
 	"models/operations"
 )
@@ -267,8 +267,8 @@ package main
 
 import (
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/retry"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/retry"
 	"log"
 )
 
@@ -325,9 +325,9 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/apierrors"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/apierrors"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
 )
 
@@ -378,7 +378,7 @@ package main
 
 import (
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
 	"log"
 )
 
@@ -420,7 +420,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
+	"github.com/formancehq/fctl/internal/membershipclient/v3"
 )
 
 var (

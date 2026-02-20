@@ -8,8 +8,9 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/components"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
+
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
