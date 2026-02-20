@@ -3,7 +3,8 @@ package login
 import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-	"github.com/zitadel/oidc/v2/pkg/oidc"
+
+	"github.com/formancehq/go-libs/v3/oidc"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
