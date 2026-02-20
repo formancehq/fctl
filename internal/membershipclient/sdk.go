@@ -2,7 +2,7 @@
 
 package membershipclient
 
-// Generated from OpenAPI doc version 0.1.0 and generator version 2.797.1
+// Generated from OpenAPI doc version 0.1.0 and generator version 2.835.2
 
 import (
 	"bytes"
@@ -132,7 +132,7 @@ func New(opts ...SDKOption) *SDK {
 	sdk := &SDK{
 		SDKVersion: "0.1.0",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 0.1.0 2.797.1 0.1.0 github.com/formancehq/fctl/internal/membershipclient/v3",
+			UserAgent:  "speakeasy-sdk/go 0.1.0 2.835.2 0.1.0 github.com/formancehq/fctl/internal/membershipclient/v3",
 			ServerList: ServerList,
 		},
 		hooks: hooks.New(),
@@ -1641,6 +1641,7 @@ func (s *SDK) DeleteOrganization(ctx context.Context, request operations.DeleteO
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -2288,6 +2289,7 @@ func (s *SDK) DeleteAuthenticationProvider(ctx context.Context, request operatio
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -2715,6 +2717,7 @@ func (s *SDK) AddFeatures(ctx context.Context, request operations.AddFeaturesReq
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -2915,6 +2918,7 @@ func (s *SDK) DeleteFeature(ctx context.Context, request operations.DeleteFeatur
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -3561,6 +3565,7 @@ func (s *SDK) DeleteOrganizationClient(ctx context.Context, request operations.D
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -4432,6 +4437,7 @@ func (s *SDK) OrganizationClientDelete(ctx context.Context, request operations.O
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -4639,6 +4645,7 @@ func (s *SDK) OrganizationClientUpdate(ctx context.Context, request operations.O
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -5510,6 +5517,7 @@ func (s *SDK) UpsertOrganizationUser(ctx context.Context, request operations.Ups
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -5711,6 +5719,7 @@ func (s *SDK) DeleteUserFromOrganization(ctx context.Context, request operations
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -6805,6 +6814,7 @@ func (s *SDK) DeletePolicy(ctx context.Context, request operations.DeletePolicyR
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -7005,6 +7015,7 @@ func (s *SDK) AddScopeToPolicy(ctx context.Context, request operations.AddScopeT
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -7205,6 +7216,7 @@ func (s *SDK) RemoveScopeFromPolicy(ctx context.Context, request operations.Remo
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -8080,6 +8092,7 @@ func (s *SDK) EnableModule(ctx context.Context, request operations.EnableModuleR
 
 	switch {
 	case httpRes.StatusCode == 202:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -8284,6 +8297,7 @@ func (s *SDK) DisableModule(ctx context.Context, request operations.DisableModul
 
 	switch {
 	case httpRes.StatusCode == 202:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -8491,6 +8505,7 @@ func (s *SDK) UpgradeStack(ctx context.Context, request operations.UpgradeStackR
 
 	switch {
 	case httpRes.StatusCode == 202:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -9142,6 +9157,7 @@ func (s *SDK) DeleteStack(ctx context.Context, request operations.DeleteStackReq
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -9782,6 +9798,7 @@ func (s *SDK) DeleteStackUserAccess(ctx context.Context, request operations.Dele
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -9989,6 +10006,7 @@ func (s *SDK) UpsertStackUserAccess(ctx context.Context, request operations.Upse
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -10189,6 +10207,7 @@ func (s *SDK) DisableStack(ctx context.Context, request operations.DisableStackR
 
 	switch {
 	case httpRes.StatusCode == 202:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -10389,6 +10408,7 @@ func (s *SDK) EnableStack(ctx context.Context, request operations.EnableStackReq
 
 	switch {
 	case httpRes.StatusCode == 202:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -10809,6 +10829,7 @@ func (s *SDK) EnableStargate(ctx context.Context, request operations.EnableStarg
 
 	switch {
 	case httpRes.StatusCode == 202:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -11009,6 +11030,7 @@ func (s *SDK) DisableStargate(ctx context.Context, request operations.DisableSta
 
 	switch {
 	case httpRes.StatusCode == 202:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -11433,6 +11455,7 @@ func (s *SDK) AcceptInvitation(ctx context.Context, request operations.AcceptInv
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -11633,6 +11656,7 @@ func (s *SDK) DeclineInvitation(ctx context.Context, request operations.DeclineI
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -12283,6 +12307,7 @@ func (s *SDK) DeleteInvitation(ctx context.Context, request operations.DeleteInv
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -13150,6 +13175,7 @@ func (s *SDK) DeleteRegion(ctx context.Context, request operations.DeleteRegionR
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -14234,6 +14260,7 @@ func (s *SDK) DisableApplicationForOrganization(ctx context.Context, request ope
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -15328,6 +15355,7 @@ func (s *SDK) DeleteApplication(ctx context.Context, request operations.DeleteAp
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -15756,6 +15784,7 @@ func (s *SDK) DeleteApplicationScope(ctx context.Context, request operations.Del
 
 	switch {
 	case httpRes.StatusCode == 204:
+		utils.DrainBody(httpRes)
 	case httpRes.StatusCode == 400:
 		fallthrough
 	case httpRes.StatusCode == 404:

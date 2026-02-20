@@ -14,6 +14,7 @@ generation:
     securityFeb2025: true
     sharedErrorComponentsApr2025: true
     sharedNestedComponentsJan2026: false
+    nameOverrideFeb2026: false
   auth:
     oAuth2ClientCredentialsEnabled: true
     oAuth2PasswordEnabled: true
@@ -23,6 +24,7 @@ generation:
   schemas:
     allOfMergeStrategy: shallowMerge
   requestBodyFieldName: body
+  versioningStrategy: automatic
   persistentEdits: {}
   tests:
     generateTests: false
@@ -38,6 +40,7 @@ go:
   defaultErrorName: APIError
   flattenGlobalSecurity: true
   forwardCompatibleEnumsByDefault: true
+  forwardCompatibleUnionsByDefault: "false"
   imports:
     option: openapi
     paths:
@@ -57,6 +60,7 @@ go:
   outputModelSuffix: output
   packageName: membershipclient
   respectRequiredFields: false
+  respectTitlesForPrimitiveUnionMembers: false
   responseFormat: envelope-http
   sdkPackageName: membershipclient
   unionStrategy: populated-fields

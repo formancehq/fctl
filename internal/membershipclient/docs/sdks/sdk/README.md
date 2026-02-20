@@ -462,6 +462,7 @@ import(
 	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
 )
 
 func main() {
@@ -478,7 +479,17 @@ func main() {
         log.Fatal(err)
     }
     if res.AuthenticationProviderResponse != nil {
-        // handle response
+        switch res.AuthenticationProviderResponse.Data.Type {
+            case components.DataTypeAuthenticationProviderResponseGoogleIDPConfig:
+                // res.AuthenticationProviderResponse.Data.AuthenticationProviderResponseGoogleIDPConfig is populated
+            case components.DataTypeAuthenticationProviderResponseMicrosoftIDPConfig:
+                // res.AuthenticationProviderResponse.Data.AuthenticationProviderResponseMicrosoftIDPConfig is populated
+            case components.DataTypeAuthenticationProviderResponseGithubIDPConfig:
+                // res.AuthenticationProviderResponse.Data.AuthenticationProviderResponseGithubIDPConfig is populated
+            case components.DataTypeAuthenticationProviderResponseOIDCConfig:
+                // res.AuthenticationProviderResponse.Data.AuthenticationProviderResponseOIDCConfig is populated
+        }
+
     }
 }
 ```
@@ -516,6 +527,7 @@ import(
 	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
 	"log"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
 )
 
 func main() {
@@ -532,7 +544,17 @@ func main() {
         log.Fatal(err)
     }
     if res.AuthenticationProviderResponse != nil {
-        // handle response
+        switch res.AuthenticationProviderResponse.Data.Type {
+            case components.DataTypeAuthenticationProviderResponseGoogleIDPConfig:
+                // res.AuthenticationProviderResponse.Data.AuthenticationProviderResponseGoogleIDPConfig is populated
+            case components.DataTypeAuthenticationProviderResponseMicrosoftIDPConfig:
+                // res.AuthenticationProviderResponse.Data.AuthenticationProviderResponseMicrosoftIDPConfig is populated
+            case components.DataTypeAuthenticationProviderResponseGithubIDPConfig:
+                // res.AuthenticationProviderResponse.Data.AuthenticationProviderResponseGithubIDPConfig is populated
+            case components.DataTypeAuthenticationProviderResponseOIDCConfig:
+                // res.AuthenticationProviderResponse.Data.AuthenticationProviderResponseOIDCConfig is populated
+        }
+
     }
 }
 ```

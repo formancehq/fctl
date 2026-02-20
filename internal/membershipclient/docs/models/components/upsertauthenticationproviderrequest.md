@@ -27,3 +27,19 @@ upsertAuthenticationProviderRequest := components.CreateUpsertAuthenticationProv
 upsertAuthenticationProviderRequest := components.CreateUpsertAuthenticationProviderRequestUpsertAuthenticationProviderRequestOIDCConfig(components.UpsertAuthenticationProviderRequestOIDCConfig{/* values here */})
 ```
 
+## Union Discrimination
+
+Use the `Type` field to determine which variant is active, then access the corresponding field:
+
+```go
+switch upsertAuthenticationProviderRequest.Type {
+	case components.UpsertAuthenticationProviderRequestTypeUpsertAuthenticationProviderRequestGoogleIDPConfig:
+		// upsertAuthenticationProviderRequest.UpsertAuthenticationProviderRequestGoogleIDPConfig is populated
+	case components.UpsertAuthenticationProviderRequestTypeUpsertAuthenticationProviderRequestMicrosoftIDPConfig:
+		// upsertAuthenticationProviderRequest.UpsertAuthenticationProviderRequestMicrosoftIDPConfig is populated
+	case components.UpsertAuthenticationProviderRequestTypeUpsertAuthenticationProviderRequestGithubIDPConfig:
+		// upsertAuthenticationProviderRequest.UpsertAuthenticationProviderRequestGithubIDPConfig is populated
+	case components.UpsertAuthenticationProviderRequestTypeUpsertAuthenticationProviderRequestOIDCConfig:
+		// upsertAuthenticationProviderRequest.UpsertAuthenticationProviderRequestOIDCConfig is populated
+}
+```
