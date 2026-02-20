@@ -36,14 +36,14 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
 func main() {
     ctx := context.Background()
 
-    s := v3.New()
+    s := deployserverclient.New()
 
     res, err := s.ListApps(ctx, "<id>", nil, nil)
     if err != nil {
@@ -87,7 +87,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
 )
@@ -95,7 +95,7 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := v3.New()
+    s := deployserverclient.New()
 
     res, err := s.CreateApp(ctx, components.CreateAppRequest{
         OrganizationID: "<id>",
@@ -139,7 +139,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
 )
@@ -147,7 +147,7 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := v3.New()
+    s := deployserverclient.New()
 
     res, err := s.UpdateApp(ctx, "<id>", components.UpdateAppRequest{})
     if err != nil {
@@ -190,14 +190,14 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
 func main() {
     ctx := context.Background()
 
-    s := v3.New()
+    s := deployserverclient.New()
 
     res, err := s.ReadApp(ctx, "<id>")
     if err != nil {
@@ -239,14 +239,14 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
 func main() {
     ctx := context.Background()
 
-    s := v3.New()
+    s := deployserverclient.New()
 
     res, err := s.DeleteApp(ctx, "<id>")
     if err != nil {
@@ -288,14 +288,14 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
 func main() {
     ctx := context.Background()
 
-    s := v3.New()
+    s := deployserverclient.New()
 
     res, err := s.ReadAppCurrentStateVersion(ctx, "<id>")
     if err != nil {
@@ -337,14 +337,14 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
 func main() {
     ctx := context.Background()
 
-    s := v3.New()
+    s := deployserverclient.New()
 
     res, err := s.ReadAppVariables(ctx, "<id>", nil, nil)
     if err != nil {
@@ -388,7 +388,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
 )
@@ -396,7 +396,7 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := v3.New()
+    s := deployserverclient.New()
 
     res, err := s.CreateAppVariable(ctx, "<id>", components.CreateVariableRequest{
         Variable: components.VariableData{
@@ -445,14 +445,14 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
 func main() {
     ctx := context.Background()
 
-    s := v3.New()
+    s := deployserverclient.New()
 
     res, err := s.DeleteAppVariable(ctx, "<id>", "<id>")
     if err != nil {
@@ -495,14 +495,14 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
 func main() {
     ctx := context.Background()
 
-    s := v3.New()
+    s := deployserverclient.New()
 
     res, err := s.ReadAppRuns(ctx, "<id>", nil, nil)
     if err != nil {
@@ -546,14 +546,14 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
 func main() {
     ctx := context.Background()
 
-    s := v3.New()
+    s := deployserverclient.New()
 
     res, err := s.ReadAppVersions(ctx, "<id>", nil, nil)
     if err != nil {
@@ -597,7 +597,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"os"
 	"log"
 )
@@ -605,7 +605,7 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := v3.New()
+    s := deployserverclient.New()
 
     example, fileErr := os.Open("example.file")
     if fileErr != nil {
@@ -653,7 +653,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
 )
@@ -661,7 +661,7 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := v3.New()
+    s := deployserverclient.New()
 
     res, err := s.DeployAppConfiguration(ctx, "<id>", components.Application{
         Stack: components.Stack{
@@ -709,14 +709,14 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
 func main() {
     ctx := context.Background()
 
-    s := v3.New()
+    s := deployserverclient.New()
 
     res, err := s.ReadCurrentRun(ctx, "<id>")
     if err != nil {
@@ -758,14 +758,14 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
 func main() {
     ctx := context.Background()
 
-    s := v3.New()
+    s := deployserverclient.New()
 
     res, err := s.ReadVersion(ctx, "<id>")
     if err != nil {
@@ -807,14 +807,14 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
 func main() {
     ctx := context.Background()
 
-    s := v3.New()
+    s := deployserverclient.New()
 
     res, err := s.ReadRun(ctx, "<id>")
     if err != nil {
@@ -856,14 +856,14 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
 func main() {
     ctx := context.Background()
 
-    s := v3.New()
+    s := deployserverclient.New()
 
     res, err := s.ReadRunLogs(ctx, "<id>")
     if err != nil {
@@ -905,14 +905,14 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
 func main() {
     ctx := context.Background()
 
-    s := v3.New()
+    s := deployserverclient.New()
 
     res, err := s.ReadCurrentRunLogs(ctx, "<id>")
     if err != nil {
@@ -954,14 +954,14 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
 func main() {
     ctx := context.Background()
 
-    s := v3.New()
+    s := deployserverclient.New()
 
     res, err := s.ReadCurrentAppVersion(ctx, "<id>", nil)
     if err != nil {
