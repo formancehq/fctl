@@ -4,7 +4,7 @@
 package config
 
 import (
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/retry"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/retry"
 	"net/http"
 	"time"
 )

@@ -4,14 +4,14 @@ package main
 
 import (
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
 func main() {
 	ctx := context.Background()
 
-	s := deployserverclient.New()
+	s := v3.New()
 
 	res, err := s.ListApps(ctx, "<id>", nil, nil)
 	if err != nil {

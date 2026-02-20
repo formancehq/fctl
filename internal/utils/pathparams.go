@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/optionalnullable"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/types"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/optionalnullable"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/types"
 )
 
 func GenerateURL(_ context.Context, serverURL, path string, pathParams interface{}, globals interface{}) (string, error) {
