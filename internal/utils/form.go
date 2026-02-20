@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/formancehq/fctl/internal/deployserverclient/optionalnullable"
-	"github.com/formancehq/fctl/internal/deployserverclient/types"
+	"github.com/formancehq/fctl/v3/internal/deployserverclient/optionalnullable"
+	"github.com/formancehq/fctl/v3/internal/deployserverclient/types"
 )
 
 func populateForm(paramName string, explode bool, objType reflect.Type, objValue reflect.Value, delimiter string, defaultValue *string, allowEmptyValue map[string]struct{}, getFieldName func(reflect.StructField) string) url.Values {

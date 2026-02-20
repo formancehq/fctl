@@ -4,7 +4,7 @@
 package operations
 
 import (
-	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
+	"github.com/formancehq/fctl/v3/internal/deployserverclient/models/components"
 )
 
 type ReadAppVersionsRequest struct {

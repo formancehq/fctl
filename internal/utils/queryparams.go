@@ -13,8 +13,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/formancehq/fctl/internal/deployserverclient/optionalnullable"
-	"github.com/formancehq/fctl/internal/deployserverclient/types"
+	"github.com/formancehq/fctl/v3/internal/deployserverclient/optionalnullable"
+	"github.com/formancehq/fctl/v3/internal/deployserverclient/types"
 )
 
 func PopulateQueryParams(_ context.Context, req *http.Request, queryParams interface{}, globals interface{}, allowEmptyValue map[string]struct{}) error {

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/formancehq/fctl/internal/deployserverclient/types"
+	"github.com/formancehq/fctl/v3/internal/deployserverclient/types"
 )
 
 // UnionCandidate represents a candidate type during union deserialization
