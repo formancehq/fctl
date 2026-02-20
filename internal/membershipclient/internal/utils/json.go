@@ -14,7 +14,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/formancehq/fctl/internal/membershipclient/types"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/types"
 )
 
 func MarshalJSON(v interface{}, tag reflect.StructTag, topLevel bool) ([]byte, error) {

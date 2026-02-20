@@ -8,13 +8,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/formancehq/fctl/internal/membershipclient/internal/config"
-	"github.com/formancehq/fctl/internal/membershipclient/internal/hooks"
-	"github.com/formancehq/fctl/internal/membershipclient/internal/utils"
-	"github.com/formancehq/fctl/internal/membershipclient/models/apierrors"
-	"github.com/formancehq/fctl/internal/membershipclient/models/components"
-	"github.com/formancehq/fctl/internal/membershipclient/models/operations"
-	"github.com/formancehq/fctl/internal/membershipclient/retry"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/internal/config"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/internal/hooks"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/internal/utils"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/models/apierrors"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/retry"
 	"net/http"
 	"net/url"
 	"time"
@@ -132,7 +132,7 @@ func New(opts ...SDKOption) *SDK {
 	sdk := &SDK{
 		SDKVersion: "0.1.0",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 0.1.0 2.797.1 0.1.0 github.com/formancehq/fctl/internal/membershipclient",
+			UserAgent:  "speakeasy-sdk/go 0.1.0 2.797.1 0.1.0 github.com/formancehq/fctl/v3/internal/membershipclient",
 			ServerList: ServerList,
 		},
 		hooks: hooks.New(),

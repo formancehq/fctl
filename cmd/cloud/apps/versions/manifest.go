@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/internal/deployserverclient/models/operations"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/internal/deployserverclient/models/operations"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ManifestCtrl struct {

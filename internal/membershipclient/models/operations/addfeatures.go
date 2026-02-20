@@ -3,8 +3,8 @@
 package operations
 
 import (
-	"github.com/formancehq/fctl/internal/membershipclient/internal/utils"
-	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/internal/utils"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/models/components"
 )
 
 type AddFeaturesRequestBody struct {

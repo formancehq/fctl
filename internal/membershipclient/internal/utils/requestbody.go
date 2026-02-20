@@ -15,7 +15,7 @@ import (
 	"reflect"
 	"regexp"
 
-	"github.com/formancehq/fctl/internal/membershipclient/optionalnullable"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/optionalnullable"
 )
 
 const (

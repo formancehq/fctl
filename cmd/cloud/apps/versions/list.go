@@ -9,8 +9,8 @@ import (
 
 	"github.com/formancehq/go-libs/v3/pointer"
 
-	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/internal/deployserverclient/models/components"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type List struct {

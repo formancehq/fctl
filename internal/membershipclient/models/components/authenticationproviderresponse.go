@@ -5,7 +5,7 @@ package components
 import (
 	"errors"
 	"fmt"
-	"github.com/formancehq/fctl/internal/membershipclient/internal/utils"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/internal/utils"
 	"time"
 )
 

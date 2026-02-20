@@ -3,10 +3,10 @@ package wallets
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/cmd/wallets/balances"
-	"github.com/formancehq/fctl/cmd/wallets/holds"
-	"github.com/formancehq/fctl/cmd/wallets/transactions"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/wallets/balances"
+	"github.com/formancehq/fctl/v3/cmd/wallets/holds"
+	"github.com/formancehq/fctl/v3/cmd/wallets/transactions"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 func NewCommand() *cobra.Command {

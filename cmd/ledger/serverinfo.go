@@ -6,7 +6,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ServerInfoStore struct {

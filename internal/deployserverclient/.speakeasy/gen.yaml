@@ -26,7 +26,8 @@ generation:
   schemas:
     allOfMergeStrategy: shallowMerge
   requestBodyFieldName: ""
-  persistentEdits: {}
+  persistentEdits:
+    enabled: "true"
   tests:
     generateTests: true
     generateNewTests: false
@@ -60,7 +61,7 @@ go:
   multipartArrayFormat: legacy
   nullableOptionalWrapper: false
   outputModelSuffix: output
-  packageName: github.com/formancehq/fctl/internal/deployserverclient
+  packageName: github.com/formancehq/fctl/v3/internal/deployserverclient
   respectRequiredFields: false
   responseFormat: envelope-http
   sdkPackageName: ""

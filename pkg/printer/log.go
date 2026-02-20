@@ -8,8 +8,8 @@ import (
 
 	"github.com/formancehq/go-libs/time"
 
-	"github.com/formancehq/fctl/internal/membershipclient/models/components"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/models/components"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 func LogCursor(writer io.Writer, cursor *components.LogCursorData, withData bool) error {

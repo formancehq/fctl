@@ -10,9 +10,9 @@ import (
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	"github.com/formancehq/fctl/cmd/payments/connectors/internal"
-	"github.com/formancehq/fctl/cmd/payments/versions"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/payments/connectors/internal"
+	"github.com/formancehq/fctl/v3/cmd/payments/versions"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type UpdateWiseConnectorConfigStore struct {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/pterm/pterm"
 
-	"github.com/formancehq/fctl/internal/membershipclient/models/components"
+	"github.com/formancehq/fctl/v3/internal/membershipclient/models/components"
 )
 
 func PrintOrganization(organization *components.OrganizationExpanded) error {

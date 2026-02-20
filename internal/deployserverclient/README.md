@@ -42,7 +42,7 @@ Developer-friendly & type-safe Go SDK specifically catered to leverage *github.c
 
 To add the SDK as a dependency to your project:
 ```bash
-go get github.com/formancehq/fctl/internal/deployserverclient
+go get github.com/formancehq/fctl/v3/internal/deployserverclient
 ```
 <!-- End SDK Installation [installation] -->
 
@@ -56,7 +56,7 @@ package main
 
 import (
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient"
+	"github.com/formancehq/fctl/v3/internal/deployserverclient"
 	"log"
 )
 
@@ -119,8 +119,8 @@ package main
 
 import (
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient"
-	"github.com/formancehq/fctl/internal/deployserverclient/retry"
+	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	"github.com/formancehq/fctl/v3/internal/deployserverclient/retry"
 	"log"
 	"models/operations"
 )
@@ -157,8 +157,8 @@ package main
 
 import (
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient"
-	"github.com/formancehq/fctl/internal/deployserverclient/retry"
+	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	"github.com/formancehq/fctl/v3/internal/deployserverclient/retry"
 	"log"
 )
 
@@ -212,8 +212,8 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/formancehq/fctl/internal/deployserverclient"
-	"github.com/formancehq/fctl/internal/deployserverclient/models/apierrors"
+	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	"github.com/formancehq/fctl/v3/internal/deployserverclient/models/apierrors"
 	"log"
 )
 
@@ -256,7 +256,7 @@ package main
 
 import (
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient"
+	"github.com/formancehq/fctl/v3/internal/deployserverclient"
 	"log"
 )
 
@@ -286,7 +286,7 @@ package main
 
 import (
 	"context"
-	"github.com/formancehq/fctl/internal/deployserverclient"
+	"github.com/formancehq/fctl/v3/internal/deployserverclient"
 	"log"
 )
 
@@ -327,7 +327,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/formancehq/fctl/internal/deployserverclient"
+	"github.com/formancehq/fctl/v3/internal/deployserverclient"
 )
 
 var (

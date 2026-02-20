@@ -3,14 +3,14 @@ package payments
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/cmd/payments/accounts"
-	"github.com/formancehq/fctl/cmd/payments/bankaccounts"
-	"github.com/formancehq/fctl/cmd/payments/connectors"
-	"github.com/formancehq/fctl/cmd/payments/payments"
-	"github.com/formancehq/fctl/cmd/payments/pools"
-	"github.com/formancehq/fctl/cmd/payments/tasks"
-	"github.com/formancehq/fctl/cmd/payments/transferinitiation"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/payments/accounts"
+	"github.com/formancehq/fctl/v3/cmd/payments/bankaccounts"
+	"github.com/formancehq/fctl/v3/cmd/payments/connectors"
+	"github.com/formancehq/fctl/v3/cmd/payments/payments"
+	"github.com/formancehq/fctl/v3/cmd/payments/pools"
+	"github.com/formancehq/fctl/v3/cmd/payments/tasks"
+	"github.com/formancehq/fctl/v3/cmd/payments/transferinitiation"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 func NewCommand() *cobra.Command {
