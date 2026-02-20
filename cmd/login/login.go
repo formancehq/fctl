@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/zitadel/oidc/v2/pkg/oidc"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type Store struct {

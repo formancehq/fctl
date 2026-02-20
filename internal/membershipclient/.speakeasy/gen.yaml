@@ -55,7 +55,7 @@ go:
   multipartArrayFormat: standard
   nullableOptionalWrapper: true
   outputModelSuffix: output
-  packageName: github.com/formancehq/fctl/internal/membershipclient
+  packageName: github.com/formancehq/fctl/v3/internal/membershipclient
   respectRequiredFields: false
   responseFormat: envelope-http
   sdkPackageName: ""

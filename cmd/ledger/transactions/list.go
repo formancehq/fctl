@@ -12,8 +12,8 @@ import (
 	"github.com/formancehq/go-libs/collectionutils"
 	"github.com/formancehq/go-libs/v3/pointer"
 
-	internal "github.com/formancehq/fctl/cmd/ledger/internal"
-	fctl "github.com/formancehq/fctl/pkg"
+	internal "github.com/formancehq/fctl/v3/cmd/ledger/internal"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ListStore struct {

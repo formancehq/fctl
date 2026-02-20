@@ -10,9 +10,9 @@ import (
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	"github.com/formancehq/fctl/cmd/ledger/internal"
-	fctl "github.com/formancehq/fctl/pkg"
-	"github.com/formancehq/fctl/pkg/printer"
+	"github.com/formancehq/fctl/v3/cmd/ledger/internal"
+	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/printer"
 )
 
 type ListStore struct {

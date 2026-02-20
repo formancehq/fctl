@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/semver"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type Version int

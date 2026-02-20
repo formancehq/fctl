@@ -9,8 +9,8 @@ import (
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	"github.com/formancehq/fctl/cmd/auth/clients/views"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/auth/clients/views"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ShowStore struct {

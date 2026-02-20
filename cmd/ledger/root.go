@@ -3,11 +3,11 @@ package ledger
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/cmd/ledger/accounts"
-	"github.com/formancehq/fctl/cmd/ledger/internal"
-	"github.com/formancehq/fctl/cmd/ledger/transactions"
-	"github.com/formancehq/fctl/cmd/ledger/volumes"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/ledger/accounts"
+	"github.com/formancehq/fctl/v3/cmd/ledger/internal"
+	"github.com/formancehq/fctl/v3/cmd/ledger/transactions"
+	"github.com/formancehq/fctl/v3/cmd/ledger/volumes"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 func NewCommand() *cobra.Command {

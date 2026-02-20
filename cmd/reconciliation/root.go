@@ -3,8 +3,8 @@ package reconciliation
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/cmd/reconciliation/policies"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/reconciliation/policies"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 func NewCommand() *cobra.Command {
