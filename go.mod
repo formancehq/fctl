@@ -18,7 +18,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pterm/pterm v0.12.81
 	github.com/segmentio/ksuid v1.0.4
-	github.com/spf13/cobra v1.9.1
+	github.com/spf13/cobra v1.10.2
 	github.com/zitadel/oidc/v2 v2.12.2
 	golang.org/x/mod v0.29.0
 	golang.org/x/oauth2 v0.31.0
@@ -28,7 +28,7 @@ require (
 replace (
 	github.com/formancehq/fctl/internal/deployserverclient/v3 => ./internal/deployserverclient
 	github.com/formancehq/fctl/internal/membershipclient/v3 => ./internal/membershipclient
-	github.com/spf13/cobra => github.com/formancehq/cobra v0.0.0-20240315111924-ca456bf9cac9
+	github.com/spf13/cobra => github.com/formancehq/cobra v1.10.3-0.20260220181913-3a9502704365
 	github.com/zitadel/oidc/v2 v2.6.1 => github.com/formancehq/oidc/v2 v2.6.2-0.20230526075055-93dc5ecb0149
 )
 
