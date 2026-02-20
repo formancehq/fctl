@@ -5,8 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
+
 	"github.com/formancehq/fctl/v3/cmd/cloud/apps/printer"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/models/components"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 

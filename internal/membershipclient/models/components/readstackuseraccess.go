@@ -3,7 +3,7 @@
 package components
 
 import (
-	"github.com/formancehq/fctl/v3/internal/membershipclient/internal/utils"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/internal/utils"
 )
 
 type ReadStackUserAccessData struct {

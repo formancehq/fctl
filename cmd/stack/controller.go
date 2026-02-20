@@ -8,10 +8,11 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
+
 	"github.com/formancehq/fctl/v3/cmd/stack/internal"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/components"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/operations"
 )
 
 func waitStackReady(cmd *cobra.Command, client *membershipclient.SDK, organizationId, stackId string) (*components.Stack, error) {

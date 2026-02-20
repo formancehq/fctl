@@ -4,7 +4,7 @@ package config
 
 import (
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/retry"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/retry"
 	"net/http"
 	"time"
 )

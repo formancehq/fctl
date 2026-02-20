@@ -42,7 +42,7 @@ Developer-friendly & type-safe Go SDK specifically catered to leverage *github.c
 
 To add the SDK as a dependency to your project:
 ```bash
-go get github.com/formancehq/fctl/v3/internal/deployserverclient
+go get github.com/formancehq/fctl/internal/deployserverclient/v3
 ```
 <!-- End SDK Installation [installation] -->
 
@@ -56,7 +56,7 @@ package main
 
 import (
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
@@ -119,8 +119,8 @@ package main
 
 import (
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/retry"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/retry"
 	"log"
 	"models/operations"
 )
@@ -157,8 +157,8 @@ package main
 
 import (
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/retry"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/retry"
 	"log"
 )
 
@@ -212,8 +212,8 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/models/apierrors"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/apierrors"
 	"log"
 )
 
@@ -256,7 +256,7 @@ package main
 
 import (
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
@@ -286,7 +286,7 @@ package main
 
 import (
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
@@ -327,7 +327,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3"
 )
 
 var (

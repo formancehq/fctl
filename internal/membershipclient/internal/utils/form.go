@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/formancehq/fctl/v3/internal/membershipclient/optionalnullable"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/types"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/optionalnullable"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/types"
 )
 
 func populateForm(paramName string, explode bool, objType reflect.Type, objValue reflect.Value, delimiter string, defaultValue *string, allowEmptyValue map[string]struct{}, getFieldName func(reflect.StructField) string) url.Values {

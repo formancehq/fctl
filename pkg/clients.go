@@ -12,14 +12,13 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/oauth2"
 
+	"github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
 	formance "github.com/formancehq/formance-sdk-go/v3"
 	"github.com/formancehq/go-libs/collectionutils"
 	"github.com/formancehq/go-libs/v3/oidc"
 	"github.com/formancehq/go-libs/v3/oidc/client"
-
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/components"
 )
 
 func getVersion(cmd *cobra.Command) string {

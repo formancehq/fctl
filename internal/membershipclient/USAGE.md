@@ -4,7 +4,7 @@ package main
 
 import (
 	"context"
-	"github.com/formancehq/fctl/v3/internal/membershipclient"
+	membershipclient "github.com/formancehq/fctl/internal/membershipclient/v3"
 	"log"
 )
 

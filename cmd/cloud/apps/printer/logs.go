@@ -6,7 +6,7 @@ import (
 
 	"github.com/pterm/pterm"
 
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/models/components"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 )
 
 func RenderLogs(out io.Writer, logs []components.Log) error {

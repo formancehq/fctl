@@ -1,4 +1,4 @@
-module github.com/formancehq/fctl/v3/internal/deployserverclient
+module github.com/formancehq/fctl/internal/deployserverclient/v3
 
 go 1.22
 

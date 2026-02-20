@@ -12,6 +12,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/apierrors"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/sdkerrors"
 	"github.com/formancehq/go-libs/v3/api"
 	"github.com/formancehq/go-libs/v3/logging"
@@ -30,7 +31,6 @@ import (
 	"github.com/formancehq/fctl/v3/cmd/version"
 	"github.com/formancehq/fctl/v3/cmd/wallets"
 	"github.com/formancehq/fctl/v3/cmd/webhooks"
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/apierrors"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 

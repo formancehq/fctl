@@ -4,7 +4,7 @@ package main
 
 import (
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 

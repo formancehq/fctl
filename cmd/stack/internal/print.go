@@ -7,9 +7,9 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/pterm/pterm"
 
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	"github.com/formancehq/fctl/v3/internal/membershipclient/models/components"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 

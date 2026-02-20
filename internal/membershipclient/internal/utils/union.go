@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/formancehq/fctl/v3/internal/membershipclient/types"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/types"
 )
 
 // UnionCandidate represents a candidate type during union deserialization

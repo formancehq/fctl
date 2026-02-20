@@ -1,4 +1,4 @@
-module github.com/formancehq/fctl/v3/internal/membershipclient
+module github.com/formancehq/fctl/internal/membershipclient/v3
 
 go 1.22
 

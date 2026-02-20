@@ -9,13 +9,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/internal/config"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/internal/hooks"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/internal/utils"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/models/apierrors"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/models/components"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/models/operations"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/retry"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/internal/config"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/internal/hooks"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/internal/utils"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/apierrors"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/operations"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/retry"
 	"net/http"
 	"net/url"
 	"time"
@@ -120,7 +120,7 @@ func New(opts ...SDKOption) *DeployServer {
 	sdk := &DeployServer{
 		SDKVersion: "0.0.1",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 0.0.1 2.797.1 0.1.0 github.com/formancehq/fctl/v3/internal/deployserverclient",
+			UserAgent:  "speakeasy-sdk/go 0.0.1 2.797.1 0.1.0 github.com/formancehq/fctl/internal/deployserverclient/v3",
 			ServerList: ServerList,
 		},
 		hooks: hooks.New(),

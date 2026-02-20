@@ -1,18 +1,18 @@
 workflowVersion: 1.0.0
 speakeasyVersion: 1.690.0 # Should be synced with flake.nix speakeasy version.
 sources:
-    membership:
-        inputs:
-            - location: ../../openapi/membership.yaml
-        registry:
-            location: registry.speakeasyapi.dev/formance/formance/membership
+  membership:
+    inputs:
+    - location: ../../openapi/membership.yaml
+    registry:
+      location: registry.speakeasyapi.dev/formance/formance/membership
 targets:
-    membership:
-        target: go
-        source: membership
-        codeSamples:
-            registry:
-                location: registry.speakeasyapi.dev/formance/formance/membership-go-code-samples
-            labelOverride:
-                fixedValue: Go (SDK)
-            blocking: false
+  membership:
+    target: go
+    source: membership
+    codeSamples:
+      registry:
+        location: registry.speakeasyapi.dev/formance/formance/membership-go-code-samples
+      labelOverride:
+        fixedValue: Go (SDK)
+      blocking: false
