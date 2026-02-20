@@ -36,7 +36,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
@@ -87,8 +87,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/models/components"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
 )
 
@@ -139,8 +139,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/models/components"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
 )
 
@@ -190,7 +190,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
@@ -239,7 +239,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
@@ -288,7 +288,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
@@ -337,7 +337,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
@@ -388,8 +388,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/models/components"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
 )
 
@@ -445,7 +445,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
@@ -495,7 +495,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
@@ -546,7 +546,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
@@ -597,7 +597,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"os"
 	"log"
 )
@@ -653,8 +653,8 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/models/components"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
 )
 
@@ -709,7 +709,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
@@ -758,7 +758,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
@@ -807,7 +807,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
@@ -856,7 +856,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
@@ -905,7 +905,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
@@ -954,7 +954,7 @@ package main
 
 import(
 	"context"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 

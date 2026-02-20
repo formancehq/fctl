@@ -7,7 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/retry"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/retry"
 	"io"
 	"math"
 	"math/rand"

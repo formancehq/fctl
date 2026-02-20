@@ -16,7 +16,7 @@ import (
 	"reflect"
 	"regexp"
 
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/optionalnullable"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/optionalnullable"
 )
 
 const (

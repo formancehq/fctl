@@ -6,7 +6,7 @@ package hooks
 import (
 	"context"
 	"errors"
-	"github.com/formancehq/fctl/v3/internal/deployserverclient/internal/config"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/internal/config"
 	"net/http"
 )
 
