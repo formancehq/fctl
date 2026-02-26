@@ -19,12 +19,6 @@ func GetHttpClient(cmd *cobra.Command) *http.Client {
 	}
 }
 
-type RoundTripperFn func(req *http.Request) (*http.Response, error)
-
-func (fn RoundTripperFn) RoundTrip(req *http.Request) (*http.Response, error) {
-	return fn(req)
-}
-
 func printBody(data []byte) {
 	if len(data) == 0 {
 		return
@@ -87,23 +81,55 @@ func debugRoundTripper(rt http.RoundTripper) RoundTripperFn {
 }
 
 func NewHTTPTransport(cmd *cobra.Command) http.RoundTripper {
-
-	var transport http.RoundTripper = &http.Transport{
+	var transport = &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: GetBool(cmd, InsecureTlsFlag),
 		},
 	}
+	var roundTripper http.RoundTripper = transport
+
+	if GetBool(cmd, HTTPCloseOnErrorFlag) {
+		roundTripper = &closeOnErrorRoundTripper{
+			transport: transport,
+		}
+	}
+
 	if GetBool(cmd, DebugFlag) {
-		transport = debugRoundTripper(transport)
+		roundTripper = debugRoundTripper(roundTripper)
 	}
 
 	return newInjectHTTPHeadersRoundTripper(
 		http.Header{
 			"User-Agent": []string{fmt.Sprintf("fctl/%s", getVersion(cmd))},
 		},
-		transport,
+		roundTripper,
 	)
 }
+
+var _ http.RoundTripper = (*RoundTripperFn)(nil)
+
+type RoundTripperFn func(req *http.Request) (*http.Response, error)
+
+func (fn RoundTripperFn) RoundTrip(req *http.Request) (*http.Response, error) {
+	return fn(req)
+}
+
+var _ http.RoundTripper = (*closeOnErrorRoundTripper)(nil)
+
+type closeOnErrorRoundTripper struct {
+	transport *http.Transport
+}
+
+func (rt *closeOnErrorRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	rsp, err := rt.transport.RoundTrip(req)
+	if err != nil || rsp.StatusCode >= 400 {
+		_ = rsp.Body.Close()
+		rt.transport.CloseIdleConnections()
+	}
+	return rsp, err
+}
+
+var _ http.RoundTripper = (*injectHTTPHeadersRoundTripper)(nil)
 
 type injectHTTPHeadersRoundTripper struct {
 	headers http.Header
