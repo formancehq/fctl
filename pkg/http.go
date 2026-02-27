@@ -123,7 +123,6 @@ type closeOnErrorRoundTripper struct {
 func (rt *closeOnErrorRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	rsp, err := rt.transport.RoundTrip(req)
 	if err != nil || rsp.StatusCode >= 400 {
-		_ = rsp.Body.Close()
 		rt.transport.CloseIdleConnections()
 	}
 	return rsp, err
