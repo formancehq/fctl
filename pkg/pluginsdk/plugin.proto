@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package fctl.plugin.v1;
+
+option go_package = "github.com/formancehq/fctl/pkg/pluginsdk/pluginpb";
+
+// PluginService is the gRPC service that every fctl plugin must implement.
+service PluginService {
+  // GetManifest returns the plugin's command tree and metadata.
+  rpc GetManifest(GetManifestRequest) returns (GetManifestResponse);
+
+  // Execute runs a specific command within the plugin.
+  rpc Execute(ExecuteRequest) returns (ExecuteResponse);
+}
+
+// GetManifestRequest is currently empty; reserved for future fields.
+message GetManifestRequest {}
+
+// GetManifestResponse wraps the plugin manifest.
+message GetManifestResponse {
+  PluginManifest manifest = 1;
+}
+
+// PluginManifest describes a plugin and its command tree.
+message PluginManifest {
+  string name = 1;
+  string version = 2;
+  string description = 3;
+  CommandSpec root_command = 4;
+}
+
+// CommandType determines which auth context is required.
+enum CommandType {
+  COMMAND_TYPE_BASIC = 0;
+  COMMAND_TYPE_MEMBERSHIP = 1;
+  COMMAND_TYPE_STACK = 2;
+}
+
+// FlagType describes the data type of a CLI flag.
+enum FlagType {
+  FLAG_TYPE_STRING = 0;
+  FLAG_TYPE_BOOL = 1;
+  FLAG_TYPE_INT = 2;
+  FLAG_TYPE_STRING_SLICE = 3;
+}
+
+// CommandSpec describes a single CLI command and its children (recursive tree).
+message CommandSpec {
+  string use = 1;
+  repeated string aliases = 2;
+  string short = 3;
+  string long = 4;
+  repeated FlagSpec flags = 5;
+  repeated FlagSpec persistent_flags = 6;
+  repeated CommandSpec subcommands = 7;
+  bool runnable = 8;
+  CommandType command_type = 9;
+  bool hidden = 10;
+  string deprecated = 11;
+
+  // args_constraint defines the positional args constraint.
+  // Values: "exact:N", "min:N", "max:N", "range:N:M", "none", "any"
+  string args_constraint = 12;
+
+  // confirm indicates the command has a --confirm flag for destructive actions.
+  bool confirm = 13;
+}
+
+// FlagSpec describes a single CLI flag.
+message FlagSpec {
+  string name = 1;
+  string shorthand = 2;
+  string default_value = 3;
+  string description = 4;
+  FlagType type = 5;
+  bool persistent = 6;
+}
+
+// ExecuteRequest contains everything a plugin needs to execute a command.
+message ExecuteRequest {
+  // command_path is the slash-separated path, e.g. "ledger/transactions/list".
+  string command_path = 1;
+
+  // args are the positional arguments.
+  repeated string args = 2;
+
+  // flags are the resolved flag values keyed by flag name.
+  map<string, string> flags = 3;
+
+  // auth_context provides authentication details from the core.
+  AuthContext auth_context = 4;
+
+  // output_format is "plain" or "json".
+  string output_format = 5;
+}
+
+// AuthContext carries all authentication information from the fctl core.
+message AuthContext {
+  string stack_url = 1;
+  string access_token = 2;
+  string organization_id = 3;
+  string stack_id = 4;
+  string membership_url = 5;
+  string membership_token = 6;
+  bool insecure_tls = 7;
+  bool debug = 8;
+}
+
+// ExecuteResponse is the result of a command execution.
+message ExecuteResponse {
+  oneof result {
+    ExecuteSuccess success = 1;
+    ExecuteError error = 2;
+  }
+}
+
+// ExecuteSuccess carries the successful output.
+message ExecuteSuccess {
+  // json_data is the structured data (for --output=json or Store equivalent).
+  string json_data = 1;
+
+  // rendered_text is the human-readable output (pterm tables, etc.).
+  string rendered_text = 2;
+}
+
+// ExecuteError describes a failed execution.
+message ExecuteError {
+  string message = 1;
+  int32 code = 2;
+}
