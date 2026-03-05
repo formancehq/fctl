@@ -10,8 +10,11 @@ require (
 	github.com/formancehq/fctl/internal/deployserverclient/v3 v3.1.1
 	github.com/formancehq/fctl/internal/membershipclient/v3 v3.1.1
 	github.com/formancehq/fctl/v3/pkg/client v0.0.0
+	github.com/formancehq/fctl/v3/pkg/pluginsdk v3.1.1
+	github.com/formancehq/formance-sdk-go/v4 v4.0.0
 	github.com/formancehq/go-libs/v4 v4.1.1
 	github.com/go-jose/go-jose/v4 v4.1.6
+	github.com/hashicorp/go-plugin v1.7.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/pkg/errors v0.9.1
@@ -29,6 +32,7 @@ replace (
 	github.com/formancehq/fctl/internal/deployserverclient/v3 => ./internal/deployserverclient
 	github.com/formancehq/fctl/internal/membershipclient/v3 => ./internal/membershipclient
 	github.com/formancehq/fctl/v3/pkg/client => ./pkg/client
+	github.com/formancehq/fctl/v3/pkg/pluginsdk => ./pkg/pluginsdk
 	github.com/spf13/cobra => github.com/formancehq/cobra v1.10.3-0.20260226173701-7f22399f993b
 	github.com/zitadel/oidc/v2 v2.6.1 => github.com/formancehq/oidc/v2 v2.6.2-0.20230526075055-93dc5ecb0149
 	gopkg.in/go-jose/go-jose.v4 => github.com/go-jose/go-jose/v4 v4.1.6
