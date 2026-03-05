@@ -23,6 +23,7 @@ import (
 	"github.com/formancehq/fctl/v3/cmd/login"
 	"github.com/formancehq/fctl/v3/cmd/orchestration"
 	"github.com/formancehq/fctl/v3/cmd/payments"
+	plugincmd "github.com/formancehq/fctl/v3/cmd/plugin"
 	"github.com/formancehq/fctl/v3/cmd/profiles"
 	"github.com/formancehq/fctl/v3/cmd/reconciliation"
 	"github.com/formancehq/fctl/v3/cmd/search"
@@ -32,6 +33,7 @@ import (
 	"github.com/formancehq/fctl/v3/cmd/wallets"
 	"github.com/formancehq/fctl/v3/cmd/webhooks"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	pluginpkg "github.com/formancehq/fctl/v3/pkg/plugin"
 )
 
 func init() {
@@ -63,6 +65,7 @@ func NewRootCommand() *cobra.Command {
 			webhooks.NewCommand(),
 			wallets.NewCommand(),
 			orchestration.NewCommand(),
+			plugincmd.NewCommand(),
 		),
 		fctl.WithPersistentStringPFlag(fctl.ProfileFlag, "p", "", "Configuration profile to use"),
 		fctl.WithPersistentStringPFlag(fctl.ConfigDir, "c", fmt.Sprintf("%s/.config/formance/fctl", homedir), "Path to configuration dir"),
@@ -93,6 +96,15 @@ func NewRootCommand() *cobra.Command {
 	return cmd
 }
 
+func removeChildCommand(parent *cobra.Command, name string) {
+	for _, child := range parent.Commands() {
+		if child.Name() == name {
+			parent.RemoveCommand(child)
+			return
+		}
+	}
+}
+
 func Execute() {
 	defer func() {
 		if e := recover(); e != nil {
@@ -102,6 +114,22 @@ func Execute() {
 	}()
 	ctx, _ := signal.NotifyContext(context.TODO(), os.Interrupt)
 	cmd := NewRootCommand()
+
+	// Load plugins and override built-in commands
+	configDir := fmt.Sprintf("%s/.config/formance/fctl", os.Getenv("HOME"))
+	if dir := os.Getenv("FCTL_CONFIG_DIR"); dir != "" {
+		configDir = dir
+	}
+	pm := pluginpkg.NewPluginManager(configDir)
+	pm.DiscoverAndLoad(ctx)
+	defer pm.Shutdown()
+
+	for _, loaded := range pm.GetLoadedPlugins() {
+		pluginCmd := pluginpkg.BuildCobraCommand(loaded)
+		removeChildCommand(cmd, loaded.Name)
+		cmd.AddCommand(pluginCmd)
+	}
+
 	if err := cmd.ExecuteContext(ctx); err != nil {
 		switch {
 		case errors.Is(err, fctl.ErrMissingApproval):

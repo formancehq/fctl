@@ -1,0 +1,555 @@
+syntax = "proto3";
+
+package raft;
+
+option go_package = "github.com/formancehq/fctl-plugin-ledger/proto/raftcmdpb";
+
+import "common.proto";
+import "signature.proto";
+
+// ============================================================================
+// Raft FSM State
+// ============================================================================
+
+message LedgerState {
+  common.LedgerInfo ledger_info = 1;
+  uint64 next_log_id = 2;
+  uint64 next_transaction_id = 3;
+}
+
+message State {
+  map<string, LedgerState> ledgers = 1;
+  reserved 2;                                // Was: uint32 next_ledger_id (removed: ledger name used as key)
+  uint64 next_sequence = 3;                 // Next global sequence number for SystemLog
+  uint64 checkpoint_id = 4;                 // ID of the last checkpoint (for snapshot recovery)
+}
+
+// Order represents a request to be processed by the FSM
+// The FSM is responsible for interpreting the request and applying the changes
+message Order {
+  common.Idempotency idempotency = 1;
+  oneof type {
+    LedgerApplyOrder apply = 2;
+    CreateLedgerOrder create_ledger = 3;
+    DeleteLedgerOrder delete_ledger = 4;
+    RegisterSigningKeyOrder register_signing_key = 6;
+    RevokeSigningKeyOrder revoke_signing_key = 7;
+    SetSigningConfigOrder set_signing_config = 8;
+    AddEventsSinkOrder add_events_sink = 9;
+    RemoveEventsSinkOrder remove_events_sink = 10;
+    ClosePeriodOrder close_period = 11;
+    SealPeriodOrder seal_period = 12;
+    ArchivePeriodOrder archive_period = 13;
+    ConfirmArchivePeriodOrder confirm_archive_period = 14;
+    SetMaintenanceModeOrder set_maintenance_mode = 15;
+    SetPeriodScheduleOrder set_period_schedule = 16;
+    DeletePeriodScheduleOrder delete_period_schedule = 17;
+    SetAuditConfigOrder set_audit_config = 18;
+    MirrorIngestOrder mirror_ingest = 19;
+    PromoteLedgerOrder promote_ledger = 20;
+    CreatePreparedQueryOrder create_prepared_query = 21;
+    UpdatePreparedQueryOrder update_prepared_query = 22;
+    DeletePreparedQueryOrder delete_prepared_query = 23;
+    SaveNumscriptOrder save_numscript = 24;
+    DeleteNumscriptOrder delete_numscript = 25;
+  }
+  signature.RequestSignature signature = 5;
+}
+
+message CreatePreparedQueryOrder {
+  common.PreparedQuery query = 1;
+}
+
+message UpdatePreparedQueryOrder {
+  string ledger = 1;
+  string name = 2;
+  common.QueryFilter filter = 3;
+}
+
+message DeletePreparedQueryOrder {
+  string ledger = 1;
+  string name = 2;
+}
+
+message AddEventsSinkOrder {
+  common.SinkConfig config = 1;
+}
+
+message RemoveEventsSinkOrder {
+  string name = 1;
+}
+
+// Signing key management orders
+message RegisterSigningKeyOrder {
+  string key_id = 1;
+  bytes public_key = 2;
+  string parent_key_id = 3;
+}
+
+message RevokeSigningKeyOrder {
+  string key_id = 1;
+  bool cascade = 2;
+}
+
+message SetSigningConfigOrder {
+  bool require_signatures = 1;
+}
+
+message ClosePeriodOrder {}
+
+message SealPeriodOrder {
+  uint64 period_id = 1;
+  bytes sealing_hash = 2;
+}
+
+message ArchivePeriodOrder {
+  uint64 period_id = 1;
+}
+
+message ConfirmArchivePeriodOrder {
+  uint64 period_id = 1;
+}
+
+message SetMaintenanceModeOrder {
+  bool enabled = 1;
+}
+
+message SetPeriodScheduleOrder {
+  string cron = 1;
+}
+
+message DeletePeriodScheduleOrder {}
+
+message SetAuditConfigOrder {
+  bool enabled = 1;
+}
+
+message SaveNumscriptOrder {
+  string name = 1;
+  string content = 2;
+  string version = 3;
+}
+
+message DeleteNumscriptOrder {
+  string name = 1;
+}
+
+
+message CreateLedgerOrder {
+  string name = 1;
+  repeated common.SetMetadataFieldTypeCommand initial_schema = 3;
+  common.LedgerMode mode = 4;
+  common.MirrorSourceConfig mirror_source = 5;
+  common.ChartOfAccounts chart_of_accounts = 6;
+  common.ChartEnforcementMode enforcement_mode = 7;
+}
+
+message MirrorIngestOrder {
+  string ledger = 1;
+  MirrorLogEntry entry = 2;
+}
+
+message MirrorLogEntry {
+  uint64 v2_log_id = 1;
+  oneof data {
+    MirrorCreatedTransaction created_transaction = 2;
+    MirrorSavedMetadata saved_metadata = 3;
+    MirrorRevertedTransaction reverted_transaction = 4;
+    MirrorDeletedMetadata deleted_metadata = 5;
+    MirrorFillGap fill_gap = 6;
+  }
+}
+
+message MirrorFillGap {
+  repeated uint64 skipped_transaction_ids = 1;
+}
+
+message MirrorCreatedTransaction {
+  uint64 transaction_id = 1;
+  repeated common.Posting postings = 2;
+  common.MetadataSet metadata = 3;
+  common.Timestamp timestamp = 4;
+  string reference = 5;
+  map<string, common.MetadataSet> account_metadata = 6;
+}
+
+message MirrorSavedMetadata {
+  common.Target target = 1;
+  common.MetadataSet metadata = 2;
+}
+
+message MirrorRevertedTransaction {
+  uint64 reverted_transaction_id = 1;
+  uint64 new_transaction_id = 2;
+  repeated common.Posting reverse_postings = 3;
+  common.MetadataSet metadata = 4;
+  common.Timestamp timestamp = 5;
+}
+
+message MirrorDeletedMetadata {
+  common.Target target = 1;
+  string key = 2;
+}
+
+message PromoteLedgerOrder {
+  string ledger = 1;
+}
+
+message DeleteLedgerOrder {
+  string name = 1;
+}
+
+message LedgerApplyOrder {
+  string ledger = 1;
+  oneof data {
+    CreateTransactionOrder create_transaction = 2;
+    SaveMetadataOrder add_metadata = 3;
+    RevertTransactionOrder revert_transaction = 4;
+    DeleteMetadataOrder delete_metadata = 5;
+    SetMetadataFieldTypeOrder set_metadata_field_type = 6;
+    RemoveMetadataFieldTypeOrder remove_metadata_field_type = 7;
+    ConvertMetadataBatchOrder convert_metadata_batch = 8;
+    MetadataConversionCompleteOrder conversion_complete = 9;
+    CreateIndexOrder create_index = 10;
+    DropIndexOrder drop_index = 11;
+    IndexReadyOrder index_ready = 12;
+    SetChartOfAccountsOrder set_chart_of_accounts = 13;
+    SetChartEnforcementModeOrder set_chart_enforcement_mode = 14;
+  }
+}
+
+// CreateIndexOrder requests the creation of a new index.
+message CreateIndexOrder {
+  oneof index {
+    common.AddressRole address_role = 1;
+    common.MetadataIndexTarget metadata = 2;
+  }
+}
+
+// DropIndexOrder requests the removal of an index.
+message DropIndexOrder {
+  oneof index {
+    common.AddressRole address_role = 1;
+    common.MetadataIndexTarget metadata = 2;
+  }
+}
+
+// IndexReadyOrder signals that an index has finished building.
+message IndexReadyOrder {
+  oneof index {
+    common.AddressRole address_role = 1;
+    common.MetadataIndexTarget metadata = 2;
+  }
+}
+
+message SetChartOfAccountsOrder {
+  common.ChartOfAccounts chart_of_accounts = 1;
+}
+
+message SetChartEnforcementModeOrder {
+  common.ChartEnforcementMode enforcement_mode = 1;
+}
+
+message ConvertMetadataBatchOrder {
+  common.TargetType target_type = 1;
+  string key = 2;
+  common.MetadataType expected_type = 3;
+  repeated ConvertMetadataEntry entries = 4;
+  uint64 total_keys = 5;
+  uint64 converted_keys_so_far = 6;
+}
+
+message ConvertMetadataEntry {
+  bytes canonical_key = 1;
+  common.MetadataValue converted_value = 2;
+}
+
+message MetadataConversionCompleteOrder {
+  common.TargetType target_type = 1;
+  string key = 2;
+  common.MetadataType expected_type = 3;
+}
+
+message SetMetadataFieldTypeOrder {
+  common.TargetType target_type = 1;
+  string key = 2;
+  common.MetadataType type = 3;
+}
+
+message RemoveMetadataFieldTypeOrder {
+  common.TargetType target_type = 1;
+  string key = 2;
+}
+
+message CreateTransactionOrder {
+  repeated common.Posting postings = 1;
+  common.Script script = 2;
+  common.Timestamp timestamp = 3;
+  string reference = 4;
+  common.MetadataSet metadata = 5;
+  map<string, common.MetadataSet> account_metadata = 6;
+  bool force = 7;  // Skip balance checks when true
+  bool expand_volumes = 8;  // Include post-commit volumes in response
+}
+
+message SaveMetadataOrder {
+  common.Target target = 1;
+  common.MetadataSet metadata = 2;
+}
+
+message RevertTransactionOrder {
+  uint64 transaction_id = 1;
+  bool force = 2;
+  bool at_effective_date = 3;
+  common.MetadataSet metadata = 4;
+  repeated common.Posting original_postings = 5;
+  bool expand_volumes = 6;  // Include post-commit volumes in response
+}
+
+message DeleteMetadataOrder {
+  common.Target target = 1;
+  string key = 2;
+}
+
+// ============================================================================
+// Raft Command Wrapper
+// ============================================================================
+
+// Proposal represents a batch of orders to be executed in the FSM (protobuf serialization format)
+// A proposal can contain multiple orders that will be executed atomically
+message Proposal {
+  uint64 id = 1;                    // Random proposal ID
+  repeated Order orders = 2;        // List of orders to execute atomically
+  common.Timestamp date = 3;        // Creation date in UTC
+  PreloadSet preload = 4;
+  repeated EventsSinkUpdate events_sink_updates = 5;  // Per-sink cursor and error updates (Raft-replicated)
+  repeated MirrorSyncUpdate mirror_sync_updates = 6;  // Per-ledger mirror cursor and error updates (Raft-replicated)
+}
+
+message MirrorSyncUpdate {
+  string ledger_name = 1;
+  uint64 cursor = 2;
+  common.MirrorSyncError error = 3;
+  bool clear_error = 4;
+  uint64 source_log_count = 5;  // Latest known log ID in v2 source
+}
+
+// EventsSinkUpdate carries a per-sink cursor advance or error status change.
+message EventsSinkUpdate {
+  string sink_name = 1;
+  uint64 cursor = 2;              // New cursor position (0 = no change)
+  common.SinkError error = 3;     // Set error (nil = no change unless clear_error)
+  bool clear_error = 4;           // If true, clear any existing error
+}
+
+message CreatedLogOrReference {
+  oneof type {
+    common.Log created_log = 1;
+    uint64 reference_sequence = 2;
+  }
+}
+
+// ============================================================================
+// Mementos (for snapshots)
+// ============================================================================
+
+// TransactionResume represents a simplified transaction for memento purposes
+// Excludes postCommitVolumes and postCommitEffectiveVolumes fields
+message TransactionResume {
+  repeated common.Posting postings = 1;
+  map<string, string> metadata = 2;
+  common.Timestamp timestamp = 3;
+  string reference = 4;
+  uint64 id = 5;                            // Optional, 0 means nil
+  bool reverted = 6;
+}
+
+// CreatedTransactionMemento represents the memento structure for CreatedTransaction
+message CreatedTransactionMemento {
+  TransactionResume transaction = 1;
+  map<string, common.MetadataSet> account_metadata = 2;
+}
+
+// RevertedTransactionMemento represents the memento structure for RevertedTransaction
+message RevertedTransactionMemento {
+  uint64 reverted_transaction_id = 1;      // Optional, 0 means nil
+  TransactionResume revert_transaction = 2;
+}
+
+message LedgerBoundaries {
+  uint64 next_transaction_id = 1;
+  uint64 next_log_id = 2;
+  reserved 3;                               // Was: uint32 ledger_id (removed: ledger name used as key)
+}
+
+message VolumePair {
+  common.Uint256 input_known = 1;
+  common.Uint256 input_diff = 2;
+  common.Uint256 output_known = 3;
+  common.Uint256 output_diff = 4;
+}
+
+message PreloadSet {
+  uint64 lastPersistedIndex = 1;
+  repeated Preload preloads = 2;
+}
+
+message Preload {
+  oneof type {
+     PreloadVolume volume = 1;
+     // field 2 removed: PreloadReverted (replaced by in-memory bitset)
+     PreloadIdempotencyKey idempotency_key = 3;
+     PreloadLedger ledger = 4;
+     PreloadBoundary boundary = 5;
+     PreloadTransactionReference transaction_reference = 6;
+     PreloadSinkConfig sink_config = 7;
+     PreloadAccountMetadata account_metadata = 8;
+     PreloadNumscriptVersion numscript_version = 9;
+     PreloadNumscriptEntry numscript_entry = 10;
+  }
+}
+
+message PreloadVolume {
+  AttributeID id = 1;
+  common.Uint256 input = 2;
+  common.Uint256 output = 3;
+}
+
+// PreloadReverted removed: reversions now use in-memory bitset per ledger.
+
+message PreloadIdempotencyKey {
+  AttributeID id = 1;
+  uint64 log_sequence = 2;  // 0 means not found
+  bytes hash = 3;           // Hash of the original request (for conflict detection)
+}
+
+message PreloadLedger {
+  AttributeID id = 1;
+  common.LedgerInfo info = 2;
+}
+
+message PreloadBoundary {
+  AttributeID id = 1;
+  LedgerBoundaries boundaries = 2;
+}
+
+message PreloadTransactionReference {
+  AttributeID id = 1;
+  uint64 transaction_id = 2;
+}
+
+message PreloadSinkConfig {
+  AttributeID id = 1;
+  common.SinkConfig config = 2;
+}
+
+message PreloadAccountMetadata {
+  AttributeID id = 1;
+  common.MetadataValue value = 2;
+}
+
+message PreloadNumscriptVersion {
+  AttributeID id = 1;
+  string version = 2;
+}
+
+message PreloadNumscriptEntry {
+  AttributeID id = 1;
+  bool exists = 2;
+}
+
+// ============================================================================
+// Memory Snapshot (for Raft snapshots)
+// ============================================================================
+
+message MemorySnapshot {
+  reserved 1;                                // Was: uint32 next_ledger_id (removed: ledger name used as key)
+  uint64 next_sequence_id = 2;
+  bytes last_log_hash = 3;
+  GenerationSnapshot gen0 = 4;
+  GenerationSnapshot gen1 = 5;  // May be nil
+  uint64 checkpoint_id = 6;
+  uint64 current_generation = 7;
+  uint64 last_applied_timestamp = 8;  // HLC timestamp (microseconds since epoch)
+  uint64 next_audit_sequence_id = 9;  // Next audit log sequence ID
+  // Signing keys are persisted in Pebble, not in the memory snapshot.
+  // They are reloaded from Pebble after SynchronizeWithLeader restores the checkpoint.
+  common.Period open_period = 10;     // Current open period (may be nil before first proposal)
+  common.Period closing_period = 11;  // Period being sealed (nil when no period is closing)
+  uint64 next_period_id = 12;
+  repeated common.Period closed_periods = 13;  // CLOSED + ARCHIVED periods (non-purged)
+  repeated ReversionBitsetEntry reversions = 14;  // Per-ledger reversion bitsets
+  reserved 15;                                     // Was: repeated PeerAddress peer_addresses (moved to NodeSnapshot)
+}
+
+// NodeSnapshot wraps the FSM snapshot with cluster-level metadata.
+// The Node layer serializes/deserializes this; the FSM only sees its own bytes.
+message NodeSnapshot {
+  bytes fsm_snapshot = 1;
+  repeated PeerAddress peer_addresses = 2;
+  bool is_reference = 3;    // When true, fsm_snapshot is empty — fetch via FetchMemorySnapshot RPC
+  uint64 size_hint = 4;     // Approximate size of the full snapshot (only set when is_reference=true)
+}
+
+// PeerAddress stores a peer's raft and service addresses in snapshots.
+message PeerAddress {
+  uint64 node_id = 1;
+  string raft_address = 2;
+  string service_address = 3;
+}
+
+message GenerationSnapshot {
+  uint64 base_index = 1;
+  repeated VolumeAttributeSnapshotEntry volumes = 2;
+  repeated MetadataAttributeEntry metadata = 3;  // Account metadata
+  repeated MetadataAttributeEntry ledger_metadata = 4;  // Ledger metadata
+  repeated LedgerAttributeEntry ledgers = 5;
+  repeated BoundaryAttributeEntry boundaries = 6;
+  repeated TransactionReferenceAttributeEntry references = 7;
+}
+
+// VolumeAttributeSnapshotEntry stores a merged Input+Output volume pair in cache snapshots.
+message VolumeAttributeSnapshotEntry {
+  AttributeID id = 1;
+  common.Uint256 input_known = 2;
+  common.Uint256 input_diff = 3;
+  common.Uint256 output_known = 4;
+  common.Uint256 output_diff = 5;
+}
+
+// MetadataKeyStoreEntry stores a single entry from KeyStore[*MetadataValue]
+message MetadataAttributeEntry {
+  AttributeID id = 1;
+  common.MetadataValue value = 2;
+}
+
+// LedgerAttributeEntry stores a single entry from KeyStore[*LedgerInfo]
+message LedgerAttributeEntry {
+  AttributeID id = 1;
+  common.LedgerInfo info = 2;
+}
+
+// BoundaryAttributeEntry stores a single entry from KeyStore[*LedgerBoundaries]
+message BoundaryAttributeEntry {
+  AttributeID id = 1;
+  LedgerBoundaries boundaries = 2;
+}
+
+// TransactionReferenceAttributeEntry stores a single entry from KeyStore[*TransactionReferenceValue]
+message TransactionReferenceAttributeEntry {
+  AttributeID id = 1;
+  common.TransactionReferenceValue value = 2;
+}
+
+// ReversionBitsetEntry stores a packed bitset of reverted transaction IDs for a single ledger.
+// Bit N being set means transaction N has been reverted.
+message ReversionBitsetEntry {
+  string ledger = 1;
+  bytes words = 2;  // Packed little-endian uint64 array
+}
+
+message AttributeID {
+  bytes id = 1;           // 16-byte U128 identifier
+  fixed64 tag = 2;
+}
+
