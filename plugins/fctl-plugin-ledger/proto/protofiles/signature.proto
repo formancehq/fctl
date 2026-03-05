@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package signature;
+
+option go_package = "github.com/formancehq/fctl-plugin-ledger/proto/signaturepb";
+
+// RequestSignature contains the Ed25519 signature of a Request.
+// The client serializes the Request (without signature), signs the bytes,
+// and attaches them here. The server verifies the signature on signed_payload,
+// then deserializes signed_payload to obtain the authoritative content.
+message RequestSignature {
+  string key_id = 1;         // ID of the public key used to sign
+  bytes signature = 2;       // Ed25519 signature (64 bytes)
+  bytes signed_payload = 3;  // Exact serialized bytes signed by the client
+}
+
+// ResponseSignature contains the Ed25519 signature of a Log response.
+// The server serializes the Log (without response_signature and receipt),
+// signs the bytes, and attaches them here. The client verifies the signature
+// on signed_payload using the server's public key obtained via Discovery RPC.
+message ResponseSignature {
+  string key_id = 1;         // Identifier (SHA256 fingerprint of server public key)
+  bytes signature = 2;       // Ed25519 signature (64 bytes)
+  bytes signed_payload = 3;  // Exact serialized bytes that were signed
+}
