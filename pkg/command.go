@@ -17,7 +17,7 @@ var (
 )
 
 func GetSelectedOrganizationID(cmd *cobra.Command) string {
-	return GetString(cmd, organizationFlag)
+	return GetString(cmd, OrganizationFlag)
 }
 
 func ResolveOrganizationID(cmd *cobra.Command, profile Profile) (string, error) {
@@ -40,7 +40,7 @@ func ResolveOrganizationID(cmd *cobra.Command, profile Profile) (string, error) 
 }
 
 func GetSelectedStackID(cmd *cobra.Command, profile Profile) (string, error) {
-	if id := GetString(cmd, stackFlag); id != "" {
+	if id := GetString(cmd, StackFlag); id != "" {
 		return id, nil
 	}
 
@@ -305,7 +305,7 @@ func WithConfirmFlag() CommandOptionFn {
 func NewStackCommand(use string, opts ...CommandOption) *cobra.Command {
 	cmd := NewMembershipCommand(use,
 		append(opts,
-			WithPersistentStringFlag(stackFlag, "", "Specific stack (not required if only one stack is present)"),
+			WithPersistentStringFlag(StackFlag, "", "Specific stack (not required if only one stack is present)"),
 		)...,
 	)
 	if err := cmd.RegisterFlagCompletionFunc("stack", StackCompletion); err != nil {
@@ -317,7 +317,7 @@ func NewStackCommand(use string, opts ...CommandOption) *cobra.Command {
 func NewMembershipCommand(use string, opts ...CommandOption) *cobra.Command {
 	cmd := NewCommand(use,
 		append(opts,
-			WithPersistentStringFlag(organizationFlag, "", "Selected organization (not required if only one organization is present)"),
+			WithPersistentStringFlag(OrganizationFlag, "", "Selected organization (not required if only one organization is present)"),
 		)...,
 	)
 	if err := cmd.RegisterFlagCompletionFunc("organization", OrganizationCompletion); err != nil {
