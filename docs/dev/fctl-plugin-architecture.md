@@ -6,33 +6,17 @@ fctl uses a **plugin system** to let each Formance product (ledger, payments, et
 
 This keeps product-specific logic out of fctl's core, allows independent release cycles, and lets each product team own their CLI experience.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  fctl (host process)                                        │
-│                                                             │
-│  ┌─────────┐  ┌───────────────┐  ┌───────────────────────┐ │
-│  │ Profile  │  │ Auth resolver │  │ Cobra command tree    │ │
-│  │ manager  │  │ (membership,  │  │                       │ │
-│  │          │  │  stack tokens)│  │  fctl                 │ │
-│  └─────────┘  └───────────────┘  │  ├── ledger (plugin)  │ │
-│                                   │  ├── payments (plugin)│ │
-│                                   │  ├── plugin install   │ │
-│                                   │  └── ...              │ │
-│                                   └───────────────────────┘ │
-│                        │                                     │
-│              ┌─────────┴──────────┐                         │
-│              │  Plugin Manager    │                         │
-│              │  (discover, load,  │                         │
-│              │   dispatch, kill)  │                         │
-│              └────┬──────────┬───┘                         │
-└───────────────────┼──────────┼──────────────────────────────┘
-                    │ gRPC     │ gRPC
-         ┌──────────▼───┐  ┌──▼──────────────┐
-         │ fctl-plugin-  │  │ fctl-plugin-     │
-         │ ledger        │  │ payments         │
-         │ (separate     │  │ (separate        │
-         │  process)     │  │  process)        │
-         └──────────────┘  └─────────────────┘
+```mermaid
+graph TD
+    subgraph fctl["fctl (host process)"]
+        PM[Profile manager]
+        AR[Auth resolver<br/>membership, stack tokens]
+        CT[Cobra command tree<br/>fctl<br/>├── ledger plugin<br/>├── payments plugin<br/>├── plugin install<br/>└── ...]
+        MGR[Plugin Manager<br/>discover, load, dispatch, kill]
+    end
+
+    MGR -- gRPC --> PL[fctl-plugin-ledger<br/>separate process]
+    MGR -- gRPC --> PP[fctl-plugin-payments<br/>separate process]
 ```
 
 ## Plugin protocol
@@ -48,7 +32,7 @@ service PluginService {
 }
 ```
 
-- **GetManifest**: returns the plugin's metadata and full command tree. Called once at startup.
+- **GetManifest**: returns the plugin's metadata and full command tree. Called once at install/update time, then cached.
 - **Execute**: runs a specific command. Called each time the user invokes a plugin command.
 
 ### Handshake
@@ -90,23 +74,43 @@ message CommandSpec {
     repeated FlagSpec persistent_flags = 6;
     repeated CommandSpec subcommands   = 7;
     bool runnable               = 8;   // has an Execute handler
-    CommandType command_type    = 9;   // BASIC, MEMBERSHIP, or STACK
-    bool hidden                 = 10;
-    string deprecated           = 11;
-    string args_constraint      = 12;  // "exact:1", "none", "max:2", etc.
-    bool confirm                = 13;  // require --confirm flag
+    bool hidden                 = 9;
+    string deprecated           = 10;
+    string args_constraint      = 11;  // "exact:1", "none", "max:2", etc.
+    bool confirm                = 12;  // require --confirm flag
+    Stability stability         = 13;
+}
+
+enum Stability {
+    STABILITY_STABLE       = 0;  // default — must never be removed
+    STABILITY_EXPERIMENTAL = 1;  // can be removed at any time
 }
 ```
 
-### Command types
+Each command declares a **stability level**:
 
-The `CommandType` tells fctl what authentication context to resolve before calling the plugin:
+| Stability | Meaning |
+|-----------|---------|
+| `stable` (default) | Part of the public contract. Must never be removed once shipped. Breaking changes require a new major version. |
+| `experimental` | May be removed or changed at any time without notice. fctl displays an `[experimental]` tag in help output. |
+
+This applies recursively: if a parent command is `experimental`, all its subcommands are implicitly experimental. A `stable` subcommand under an `experimental` parent is a manifest error.
+
+Note: `CommandSpec` has no `CommandType` field. The plugin type is defined at the **registry level**, not per-command (see [Plugin types](#plugin-types) below).
+
+### Plugin types
+
+The plugin type determines what authentication context fctl resolves before calling the plugin. It is defined **once per plugin in the registry**, not per-command in the manifest. This keeps the plugin protocol simple — a plugin doesn't need to know about fctl's auth model.
 
 | Type | Auth resolved | Use case |
 |------|--------------|----------|
-| `COMMAND_TYPE_BASIC` | None | Commands that don't need auth |
-| `COMMAND_TYPE_MEMBERSHIP` | Membership token + org ID | Org-level management |
-| `COMMAND_TYPE_STACK` | Stack access token + service URL | Product API calls (most common) |
+| `stack` | Stack access token + service URL | Product API calls (most common) |
+| `membership` | Membership token + org ID | Org-level management |
+| `basic` | None | Commands that don't need auth |
+
+The type is stored in the registry and persisted in `plugins.json` at install time. fctl reads it at load time and applies the same auth resolution to **all commands** of the plugin.
+
+In practice, a product plugin is either a stack-level plugin (ledger, payments, ...) or not. There's no need for per-command granularity — if a command doesn't use the auth context (e.g., `version`), it simply ignores it.
 
 ### Execute request
 
@@ -120,24 +124,20 @@ message ExecuteRequest {
 }
 ```
 
-fctl collects all flags as `map[string, string]`, resolves auth based on the command type, and sends everything to the plugin.
+fctl collects all flags as `map[string, string]`, resolves auth based on the plugin type (from `plugins.json`), and sends everything to the plugin.
 
 ### Auth context
 
 ```protobuf
 message AuthContext {
-    string stack_url        = 1;   // service gRPC address
-    string access_token     = 2;   // JWT bearer token for the service
-    string organization_id  = 3;
-    string stack_id         = 4;
-    string membership_url   = 5;
-    string membership_token = 6;
-    bool   insecure_tls     = 7;
-    bool   debug            = 8;
+    string issuer_url       = 1;   // OIDC issuer URL (for token refresh / discovery)
+    string service_url      = 2;   // service endpoint (gRPC, HTTP, etc.)
+    string access_token     = 3;   // bearer token for the service
+    bool   insecure_tls     = 4;   // skip TLS verification
 }
 ```
 
-fctl handles all the OAuth/OIDC flows, token refresh, profile management. The plugin receives ready-to-use credentials.
+fctl handles all the OAuth/OIDC flows, token refresh, and profile management. The plugin receives only what it needs: the service address, a ready-to-use token, the OIDC issuer (in case the plugin needs to refresh or introspect), and a TLS flag.
 
 ### Execute response
 
@@ -162,9 +162,14 @@ message ExecuteError {
 
 ## Plugin lifecycle
 
-### 1. Discovery
+### 1. Install
 
-fctl reads `~/.config/formance/fctl/plugins.json`:
+`fctl plugin install ledger` (or `update`):
+
+1. Fetch registry, resolve version and plugin type
+2. Download the platform-specific binary to `~/.config/formance/fctl/plugins/{name}/{version}/fctl-plugin-{name}`
+3. Spawn the binary, call `GetManifest()`, then kill the process
+4. Cache the manifest and plugin type in `plugins.json`:
 
 ```json
 {
@@ -172,72 +177,58 @@ fctl reads `~/.config/formance/fctl/plugins.json`:
     {
       "name": "ledger",
       "version": "1.0.0",
-      "path": ""
+      "type": "stack",
+      "path": "",
+      "manifest": { ... }
     }
   ]
 }
 ```
 
+The manifest is only fetched at install/update time — not on every fctl startup.
+
 If `path` is empty, fctl looks for the binary at:
 `~/.config/formance/fctl/plugins/{name}/{version}/fctl-plugin-{name}`
 
-### 2. Loading
+### 2. Startup (no plugin process spawned)
 
-For each configured plugin:
+On every fctl launch:
 
-1. Spawn the plugin binary using `exec.Command`
-2. Perform go-plugin handshake (magic cookie + protocol version)
-3. Establish gRPC connection over stdin/stdout
-4. Obtain a `FctlPlugin` client interface
-
-### 3. Manifest registration
-
-1. Call `plugin.GetManifest()`
-2. Recursively convert the `CommandSpec` tree into cobra commands
+1. Read `plugins.json`
+2. For each plugin, rebuild cobra commands from the **cached manifest**
 3. If a built-in fctl command has the same name, the plugin **overrides** it
-4. Add the command tree to fctl's root
 
-### 4. Command execution
+No plugin binary is spawned at this stage. Help, autocompletion, and command discovery work without any plugin process running.
+
+### 3. Command execution
 
 When the user runs `fctl ledger transactions list --ledger foo`:
 
-```
-User                    fctl                        Plugin
- │                       │                            │
- │  fctl ledger tx list  │                            │
- │  --ledger foo         │                            │
- │ ─────────────────────►│                            │
- │                       │                            │
- │                       │ 1. Resolve CommandType      │
- │                       │    (STACK)                  │
- │                       │                            │
- │                       │ 2. Load profile            │
- │                       │ 3. Obtain stack token      │
- │                       │ 4. Resolve service URL     │
- │                       │                            │
- │                       │ 5. Build ExecuteRequest:   │
- │                       │    path: "transactions/list"│
- │                       │    flags: {ledger: "foo"}  │
- │                       │    auth: {url, token}      │
- │                       │                            │
- │                       │  ── Execute(req) ─────────►│
- │                       │                            │
- │                       │                            │ 6. Create gRPC client
- │                       │                            │    (using auth.stack_url)
- │                       │                            │
- │                       │                            │ 7. Call service API
- │                       │                            │    (with auth.access_token
- │                       │                            │     as bearer token)
- │                       │                            │
- │                       │                            │ 8. Format output
- │                       │                            │
- │                       │  ◄── ExecuteResponse ──────│
- │                       │                            │
- │  ◄─── display output ─│                            │
- │                       │                            │
+```mermaid
+sequenceDiagram
+    participant User
+    participant fctl
+    participant Plugin as fctl-plugin-ledger
+
+    User->>fctl: fctl ledger tx list --ledger foo
+
+    Note over fctl: Read plugin type from plugins.json (STACK)
+    Note over fctl: Load profile
+    Note over fctl: Obtain stack token
+    Note over fctl: Resolve service URL
+    Note over fctl: Spawn plugin binary (go-plugin handshake)
+
+    fctl->>Plugin: Execute(path: "transactions/list",<br/>flags: {ledger: "foo"},<br/>auth: {service_url, access_token, issuer_url})
+
+    Note over Plugin: Create gRPC client (using auth.service_url)
+    Note over Plugin: Call service API (with auth.access_token as bearer)
+    Note over Plugin: Format output
+
+    Plugin-->>fctl: ExecuteResponse (rendered text or JSON)
+    fctl-->>User: Display output
 ```
 
-### 5. Shutdown
+### 4. Shutdown
 
 On fctl exit, `PluginManager.Shutdown()` kills all plugin processes.
 
@@ -261,30 +252,150 @@ fctl plugin update --all       # update all
 fctl plugin remove ledger
 ```
 
+### Local plugin development
+
+For development and testing, fctl supports installing a plugin from a local directory:
+
+```bash
+fctl plugin install --path /path/to/fctl-plugin-ledger
+```
+
+When `--path` points to a Go source directory (detected by the presence of a `go.mod` file), fctl will:
+
+1. Run `go build -o <plugin-dir>/fctl-plugin-<name> .` in the given directory
+2. Copy the resulting binary to the plugin directory
+3. Spawn it, call `GetManifest()`, cache the manifest, then kill the process
+
+This avoids the need to manually build and copy binaries during development. The plugin type must be specified explicitly since there is no registry lookup:
+
+```bash
+fctl plugin install --path ./cmd/fctl-plugin --type stack
+```
+
+To rebuild after code changes, simply re-run the same command. The cached manifest will be refreshed.
+
 ### Plugin registry
 
-Plugins are distributed via a central registry (GitHub-hosted JSON):
-`https://raw.githubusercontent.com/formancehq/fctl-plugin-registry/main/registry.json`
+Plugins are distributed via a central registry hosted on GitHub as a YAML file:
+`https://raw.githubusercontent.com/formancehq/fctl-plugin-registry/main/registry.yaml`
 
-The registry contains per-plugin metadata with platform-specific binary URLs:
+The registry contains per-plugin metadata including the **plugin type** and platform-specific binary URLs:
 
-```json
-{
-  "plugins": {
-    "ledger": {
-      "versions": {
-        "1.0.0": {
-          "minCoreVersion": "0.1.0",
-          "binaries": {
-            "linux/amd64": "https://github.com/.../ledger-linux-amd64",
-            "darwin/arm64": "https://github.com/.../ledger-darwin-arm64"
-          }
-        }
-      }
-    }
-  }
-}
+```yaml
+plugins:
+  ledger:
+    type: stack
+    versions:
+      1.0.0:
+        minCoreVersion: "0.1.0"
+        binaries:
+          linux/amd64:
+            url: https://github.com/.../ledger-linux-amd64
+            sha256: a1b2c3d4e5f6...
+          linux/arm64:
+            url: https://github.com/.../ledger-linux-arm64
+            sha256: f6e5d4c3b2a1...
+          darwin/amd64:
+            url: https://github.com/.../ledger-darwin-amd64
+            sha256: 1a2b3c4d5e6f...
+          darwin/arm64:
+            url: https://github.com/.../ledger-darwin-arm64
+            sha256: 6f5e4d3c2b1a...
+
+  payments:
+    type: stack
+    versions:
+      1.0.0:
+        minCoreVersion: "0.1.0"
+        binaries:
+          linux/amd64:
+            url: https://github.com/.../payments-linux-amd64
+            sha256: abcdef123456...
+          darwin/arm64:
+            url: https://github.com/.../payments-darwin-arm64
+            sha256: 654321fedcba...
 ```
+
+After downloading a binary, fctl computes its SHA-256 hash and compares it against the registry checksum. If they don't match, the install is aborted and the binary is deleted. This protects against corrupted downloads and tampered binaries.
+
+The `type` field (`stack`, `membership`, or `basic`) tells fctl what auth context to resolve for this plugin. It is persisted in `plugins.json` at install time so fctl doesn't need to fetch the registry on every startup.
+
+### Registry workflow
+
+Each product team sets up a CI pipeline that, on every release:
+
+1. Builds the plugin binary for all target platforms
+2. Uploads the binaries to GitHub Releases
+3. Opens a PR on the `fctl-plugin-registry` repo to add the new version entry in `registry.yaml`
+
+Old versions are removed manually from the registry when they are no longer supported. The registry only lists actively supported versions.
+
+## Auto-discovery
+
+When working with Formance Cloud, fctl can automatically discover and install the plugins needed for a stack.
+
+### Available data from membership
+
+The membership API provides:
+
+- **`Stack.Modules`**: list of enabled modules on the stack (e.g., `ledger`, `payments`), with state (ENABLED/DISABLED) but no version.
+- **`GetRegionVersions(orgID, regionID)`**: returns a `map[string]string` mapping component names to their versions (e.g., `{"ledger": "v1.20.0", "payments": "v2.5.0"}`).
+
+### Auto-discovery flow
+
+When a user selects a stack (via `fctl stack use` or `--stack`), fctl can automatically ensure the right plugins are installed:
+
+```mermaid
+sequenceDiagram
+    participant fctl
+    participant Membership as Membership API
+    participant Registry as Plugin Registry
+
+    fctl->>Membership: GetStack(orgID, stackID)
+    Membership-->>fctl: Stack{Modules, RegionID}
+
+    fctl->>Membership: GetRegionVersions(orgID, regionID)
+    Membership-->>fctl: {ledger: v1.20.0, payments: v2.5.0}
+
+    fctl->>Registry: Fetch registry.yaml
+    Registry-->>fctl: Plugin definitions + compatibleWith constraints
+
+    Note over fctl: For each enabled module,<br/>find matching plugin version.<br/>Install/update if missing or outdated.
+```
+
+Steps:
+
+1. Fetch the stack from membership — get the list of enabled `Modules` and the `RegionID`
+2. Call `GetRegionVersions(orgID, regionID)` — get the component → version map
+3. For each enabled module, look up the registry to find a plugin version compatible with that component version (using `minCoreVersion` or an explicit compatibility map)
+4. If the plugin is missing or outdated, install/update it automatically
+
+### Registry compatibility
+
+The registry needs a way to express which plugin version is compatible with which component version. The `minCoreVersion` field already serves this purpose — it indicates the minimum fctl version required. We add a `compatibleWith` field to express component version compatibility:
+
+```yaml
+plugins:
+  ledger:
+    type: stack
+    versions:
+      2.0.0:
+        minCoreVersion: "0.1.0"
+        compatibleWith: ">=1.18.0"   # compatible with ledger >= v1.18.0
+        binaries:
+          linux/amd64:
+            url: https://github.com/.../ledger-linux-amd64
+            sha256: a1b2c3d4e5f6...
+          darwin/arm64:
+            url: https://github.com/.../ledger-darwin-arm64
+            sha256: 6f5e4d3c2b1a...
+```
+
+fctl matches the component version from the region against the `compatibleWith` constraint to select the right plugin version.
+
+### Opt-in behavior
+
+Auto-discovery is opt-in and only triggers in cloud mode (when a stack is selected). It can be disabled with `--no-auto-plugins` or a profile setting. In non-cloud mode (direct gRPC, standalone CLIs), plugins are managed manually.
 
 ## Plugin SDK
 
@@ -319,15 +430,13 @@ func (p *MyPlugin) GetManifest(_ context.Context) (*pluginpb.PluginManifest, err
         Name:    "my-product",
         Version: "1.0.0",
         RootCommand: &pluginpb.CommandSpec{
-            Use:         "my-product",
-            Short:       "My product commands",
-            CommandType: pluginpb.CommandType_COMMAND_TYPE_STACK,
+            Use:   "my-product",
+            Short: "My product commands",
             Subcommands: []*pluginpb.CommandSpec{
                 {
                     Use:      "list",
                     Short:    "List resources",
                     Runnable: true,
-                    CommandType: pluginpb.CommandType_COMMAND_TYPE_STACK,
                 },
             },
         },
@@ -336,7 +445,7 @@ func (p *MyPlugin) GetManifest(_ context.Context) (*pluginpb.PluginManifest, err
 
 func (p *MyPlugin) Execute(ctx context.Context, req *pluginpb.ExecuteRequest) (*pluginpb.ExecuteResponse, error) {
     // req.CommandPath = "list"
-    // req.AuthContext.StackUrl = "grpc.stack-xxx.formance.cloud:443"
+    // req.AuthContext.ServiceUrl = "grpc.stack-xxx.formance.cloud:443"
     // req.AuthContext.AccessToken = "eyJ..."
 
     // Call your product's gRPC API using the auth context...
@@ -359,17 +468,15 @@ func main() {
 
 For products that also have a standalone CLI (e.g., `ledgerctl`), commands can be defined once and built for both targets using an adapter pattern:
 
-```
-cmd/shared/commands/          Shared definitions (CommandDef + Handler)
-                              Uses a Runtime interface for environment abstraction
+```mermaid
+graph TD
+    SHARED[cmd/shared/commands/<br/>CommandDef + Handler<br/>Runtime interface]
 
-cmd/shared/cobradapter/       CommandDef → cobra.Command (for standalone CLI)
-                              CobraRuntime implements Runtime
+    SHARED --> COBRA[cmd/shared/cobradapter/<br/>CommandDef → cobra.Command<br/>CobraRuntime implements Runtime]
+    SHARED --> PLUGIN[cmd/fctl-plugin/ — separate Go sub-module<br/>pluginadapter/<br/>CommandDef → pluginpb.CommandSpec<br/>PluginRuntime implements Runtime]
 
-cmd/fctl-plugin/              Separate Go sub-module (imports pluginsdk)
-  pluginadapter/              CommandDef → pluginpb.CommandSpec (for fctl)
-                              PluginRuntime implements Runtime
-  main.go                     pluginsdk.Serve()
+    COBRA --> CLI[ledgerctl binary<br/>standalone CLI]
+    PLUGIN --> BIN[fctl-plugin-ledger binary<br/>pluginsdk.Serve]
 ```
 
 The `Runtime` interface abstracts flag access, gRPC client creation, output, and auth:
@@ -401,11 +508,11 @@ The **sub-module** pattern (`cmd/fctl-plugin/go.mod`) keeps the pluginsdk depend
 
 1. **Process isolation**: each plugin runs as a separate process. A crash in a plugin doesn't take down fctl.
 
-2. **Manifest-driven commands**: plugins declare their CLI tree dynamically. fctl doesn't hardcode product-specific commands.
+2. **Manifest-driven commands**: plugins declare their CLI tree via a manifest. fctl caches it at install time and rebuilds cobra commands from the cache at startup — no plugin process is spawned until a command is actually executed.
 
 3. **Auth delegation**: fctl handles all OAuth/OIDC flows, token refresh, profile management. Plugins receive ready-to-use credentials via `AuthContext`.
 
-4. **Command type awareness**: `BASIC`, `MEMBERSHIP`, `STACK` levels let plugins declare what auth context they need. fctl only resolves what's required.
+4. **Registry-level type**: the plugin type (`stack`, `membership`, `basic`) is defined once in the registry, not per-command. fctl resolves auth accordingly.
 
 5. **Override built-in commands**: plugins can replace built-in fctl commands. This allows gradual migration from built-in to plugin-based commands.
 
