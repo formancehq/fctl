@@ -60,3 +60,6 @@ func (v *V2ChartSegment) GetAdditionalProperties() map[string]any {
 	}
 	return v.AdditionalProperties
 }
+
+// #region class-body-v2chartsegment
+// #endregion class-body-v2chartsegment

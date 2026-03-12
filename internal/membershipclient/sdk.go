@@ -2,7 +2,7 @@
 
 package membershipclient
 
-// Generated from OpenAPI doc version 0.1.0 and generator version 2.835.2
+// Generated from OpenAPI doc version 0.1.0 and generator version 2.859.2
 
 import (
 	"bytes"
@@ -61,7 +61,7 @@ type SDK struct {
 
 type SDKOption func(*SDK)
 
-// WithServerURL allows the overriding of the default server URL
+// WithServerURL allows providing an alternative server URL
 func WithServerURL(serverURL string) SDKOption {
 	return func(sdk *SDK) {
 		sdk.sdkConfiguration.ServerURL = serverURL
@@ -132,7 +132,7 @@ func New(opts ...SDKOption) *SDK {
 	sdk := &SDK{
 		SDKVersion: "0.1.0",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 0.1.0 2.835.2 0.1.0 github.com/formancehq/fctl/internal/membershipclient/v3",
+			UserAgent:  "speakeasy-sdk/go 0.1.0 2.859.2 0.1.0 github.com/formancehq/fctl/internal/membershipclient/v3",
 			ServerList: ServerList,
 		},
 		hooks: hooks.New(),
