@@ -13,6 +13,12 @@ const (
 	GenericConnector       = "generic"
 	QontoConnector         = "qonto"
 	ColumnConnector        = "column"
+	FireblocksConnector    = "fireblocks"
+	CoinbaseprimeConnector = "coinbaseprime"
+	IncreaseConnector     = "increase"
+	PowensConnector       = "powens"
+	TinkConnector         = "tink"
+	PlaidConnector        = "plaid"
 )
 
 var AllConnectors = []string{
@@ -28,4 +34,10 @@ var AllConnectors = []string{
 	GenericConnector,
 	QontoConnector,
 	ColumnConnector,
+	FireblocksConnector,
+	CoinbaseprimeConnector,
+	IncreaseConnector,
+	PowensConnector,
+	TinkConnector,
+	PlaidConnector,
 }
