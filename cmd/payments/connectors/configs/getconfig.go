@@ -192,7 +192,7 @@ func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (f
 
 // TODO: This need to use the ui.NewListModel
 func (c *PaymentsLoadConfigController) Render(cmd *cobra.Command, args []string) error {
-	if c.PaymentsVersion == versions.V3 {
+	if c.PaymentsVersion.Major == versions.V3 {
 		return c.renderV3(cmd, args)
 	}
 	return c.renderV1V2(cmd, args)
