@@ -81,7 +81,7 @@ func (c *PaymentsConnectorsListController) Run(cmd *cobra.Command, args []string
 
 	pageSizeAsInt := int64(fctl.GetInt(cmd, c.pageSizeFlag))
 
-	switch c.PaymentsVersion {
+	switch c.PaymentsVersion.Major {
 	case versions.V3:
 		response, err := stackClient.Payments.V3.ListConnectors(cmd.Context(), operations.V3ListConnectorsRequest{
 			PageSize: &pageSizeAsInt,
@@ -129,7 +129,7 @@ func (c *PaymentsConnectorsListController) Run(cmd *cobra.Command, args []string
 
 func (c *PaymentsConnectorsListController) Render(cmd *cobra.Command, args []string) error {
 	tableData := fctl.Map(c.store.Connectors, func(connector ConnectorData) []string {
-		if c.PaymentsVersion >= versions.V1 {
+		if c.PaymentsVersion.Major >= versions.V1 {
 			return []string{
 				connector.Provider,
 				connector.Name,
@@ -143,7 +143,7 @@ func (c *PaymentsConnectorsListController) Render(cmd *cobra.Command, args []str
 		}
 
 	})
-	if c.PaymentsVersion >= versions.V1 {
+	if c.PaymentsVersion.Major >= versions.V1 {
 		tableData = fctl.Prepend(tableData, []string{"Provider", "Name", "ConnectorID"})
 	} else {
 		tableData = fctl.Prepend(tableData, []string{"Provider"})
