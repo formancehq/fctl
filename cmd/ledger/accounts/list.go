@@ -73,12 +73,11 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		})
 	}
 
-	// Here as well
 	request := operations.V2ListAccountsRequest{
 		Ledger: fctl.GetString(cmd, internal.LedgerFlag),
-		//RequestBody: map[string]any{
-		//	"$and": body,
-		//},
+		Query: map[string]any{
+			"$and": body,
+		},
 	}
 	rsp, err := stackClient.Ledger.V2.ListAccounts(cmd.Context(), request)
 	if err != nil {

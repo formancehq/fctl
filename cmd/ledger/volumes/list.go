@@ -100,7 +100,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 
 	// Request body not anymore in the V2GetVolumesWithBalancesRequest
 	request := operations.V2GetVolumesWithBalancesRequest{
-		RequestBody: map[string]any{
+		Query: map[string]any{
 			"$and": body,
 		},
 		Ledger:        fctl.GetString(cmd, internal.LedgerFlag),
