@@ -225,6 +225,18 @@ func (c *PaymentsLoadConfigController) renderV3(cmd *cobra.Command, args []strin
 		err = views.DisplayQontoConfigV3(cmd, c.store.V3ConnectorConfig)
 	case internal.ColumnConnector:
 		err = views.DisplayColumnConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.FireblocksConnector:
+		err = views.DisplayFireblocksConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.CoinbaseprimeConnector:
+		err = views.DisplayCoinbaseprimeConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.IncreaseConnector:
+		err = views.DisplayIncreaseConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.PowensConnector:
+		err = views.DisplayPowensConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.TinkConnector:
+		err = views.DisplayTinkConfigV3(cmd, c.store.V3ConnectorConfig)
+	case internal.PlaidConnector:
+		err = views.DisplayPlaidConfigV3(cmd, c.store.V3ConnectorConfig)
 	default:
 		err = fmt.Errorf("unknown provider: %s", provider)
 		pterm.Error.WithWriter(cmd.OutOrStderr()).Printfln("%s", err.Error())
