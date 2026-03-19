@@ -5,10 +5,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/cmd/cloud/apps/runs"
-	"github.com/formancehq/fctl/cmd/cloud/apps/variables"
-	"github.com/formancehq/fctl/cmd/cloud/apps/versions"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/cloud/apps/runs"
+	"github.com/formancehq/fctl/v3/cmd/cloud/apps/variables"
+	"github.com/formancehq/fctl/v3/cmd/cloud/apps/versions"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 func NewCommand() *cobra.Command {
@@ -24,10 +24,6 @@ func NewCommand() *cobra.Command {
 
 			if !ok {
 				return fmt.Errorf("the apps command is experimental, please use the --experimental flag to enable it")
-			}
-
-			if err := fctl.NewDeployServerStore(cmd); err != nil {
-				return err
 			}
 
 			return nil

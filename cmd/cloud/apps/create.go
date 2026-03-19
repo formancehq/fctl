@@ -4,8 +4,9 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
+
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type Create struct {
@@ -41,18 +42,24 @@ func (c *CreateCtrl) GetStore() *Create {
 	return c.store
 }
 
-func (c *CreateCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	cfg, err := fctl.GetConfig(cmd)
+func (c *CreateCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
-	membershipStore := fctl.GetMembershipStore(cmd.Context())
-	organizationID, err := fctl.ResolveOrganizationID(cmd, cfg, membershipStore.Client())
+
+	organizationID, apiClient, err := fctl.NewAppDeployClientFromFlags(
+		cmd,
+		relyingParty,
+		fctl.NewPTermDialog(),
+		profileName,
+		*profile,
+	)
 	if err != nil {
 		return nil, err
 	}
-	store := fctl.GetDeployServerStore(cmd.Context())
-	apps, err := store.Cli.CreateApp(cmd.Context(), components.CreateAppRequest{
+	apps, err := apiClient.CreateApp(cmd.Context(), components.CreateAppRequest{
 		OrganizationID: organizationID,
 	})
 	if err != nil {

@@ -4,7 +4,9 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
+
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type AcceptStore struct {
@@ -43,12 +45,24 @@ func (c *AcceptController) GetStore() *AcceptStore {
 
 func (c *AcceptController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetMembershipStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := fctl.NewMembershipClient(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 	if !fctl.CheckOrganizationApprobation(cmd, "You are about to accept an invitation") {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	_, err := store.Client().AcceptInvitation(cmd.Context(), args[0]).Execute()
+	request := operations.AcceptInvitationRequest{
+		InvitationID: args[0],
+	}
+
+	_, err = apiClient.AcceptInvitation(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}

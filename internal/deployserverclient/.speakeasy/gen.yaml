@@ -16,14 +16,20 @@ generation:
     requestResponseComponentNamesFeb2024: true
     securityFeb2025: true
     sharedErrorComponentsApr2025: false
+    sharedNestedComponentsJan2026: false
+    nameOverrideFeb2026: false
   auth:
     oAuth2ClientCredentialsEnabled: true
     oAuth2PasswordEnabled: true
     hoistGlobalSecurity: true
+  inferSSEOverload: true
+  sdkHooksConfigAccess: true
   schemas:
     allOfMergeStrategy: shallowMerge
   requestBodyFieldName: ""
-  persistentEdits: {}
+  versioningStrategy: automatic
+  persistentEdits:
+    enabled: "true"
   tests:
     generateTests: true
     generateNewTests: false
@@ -34,10 +40,13 @@ go:
   allowUnknownFieldsInWeakUnions: false
   baseErrorName: DeployServerError
   clientServerStatusCodesAsErrors: true
+  codeSamples:
+    output: false
   defaultErrorName: APIError
   envVarPrefix: DEPLOYSERVER
   flattenGlobalSecurity: true
   forwardCompatibleEnumsByDefault: false
+  forwardCompatibleUnionsByDefault: "false"
   imports:
     option: openapi
     paths:
@@ -51,12 +60,12 @@ go:
   inputModelSuffix: input
   maxMethodParams: 4
   methodArguments: require-security-and-request
-  modulePath: ""
+  modulePath: github.com/formancehq/fctl/internal/deployserverclient/v3
   multipartArrayFormat: legacy
   nullableOptionalWrapper: false
   outputModelSuffix: output
-  packageName: github.com/formancehq/fctl/internal/deployserverclient
   respectRequiredFields: false
+  respectTitlesForPrimitiveUnionMembers: false
   responseFormat: envelope-http
-  sdkPackageName: ""
+  sdkPackageName: deployserverclient
   unionStrategy: left-to-right

@@ -1,7 +1,5 @@
 package fctl
 
-import "time"
-
 func BoolToString(v bool) string {
 	if !v {
 		return "No"
@@ -21,11 +19,4 @@ func StringPointerToString(v *string) string {
 		return ""
 	}
 	return *v
-}
-
-func TimePointerToString(v *time.Time) string {
-	if v == nil {
-		return "Never"
-	}
-	return v.String()
 }

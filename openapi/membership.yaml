@@ -1,0 +1,3491 @@
+openapi: 3.0.3
+info:
+  title: Membership API
+  contact: {}
+  version: "0.1.0"
+
+servers:
+  - url: http://localhost:8080
+    description: Local server
+
+paths:
+  /_info:
+    get:
+      summary: Get server info
+      operationId: getServerInfo
+      responses:
+        200:
+          description: Server information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerInfo"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations:
+    get:
+      summary: List organizations of the connected user
+      operationId: listOrganizations
+      security:
+        - oauth2: []
+      parameters:
+        - name: expand
+          in: query
+          schema:
+            type: boolean
+          required: false
+      responses:
+        200:
+          description: List of organizations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListOrganizationExpandedResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Create organization
+      operationId: createOrganization
+      security:
+        - oauth2: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrganizationRequest"
+      responses:
+        201:
+          description: Organization created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateOrganizationResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /organizations/expanded:
+    get:
+      summary: List organizations of the connected user with expanded data
+      operationId: listOrganizationsExpanded
+      security:
+        - oauth2: []
+      deprecated: true
+      responses:
+        200:
+          description: List of organizations with expanded data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListOrganizationExpandedResponse"
+  /organizations/{organizationId}:
+    get:
+      summary: Read organization
+      operationId: readOrganization
+      security:
+        - oauth2:
+            - organization:Read
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: expand
+          in: query
+          schema:
+            type: boolean
+          required: false
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadOrganizationResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    put:
+      summary: Update organization
+      operationId: updateOrganization
+      security:
+        - oauth2:
+            - organization:Update
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrganizationData"
+      responses:
+        200:
+          description: Organization updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadOrganizationResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete organization
+      operationId: deleteOrganization
+      security:
+        - oauth2:
+            - organization:Delete
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        204:
+          description: Organization deleted
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/authentication-provider:
+    get:
+      summary: Read authentication provider
+      operationId: readAuthenticationProvider
+      security:
+        - oauth2:
+            - organization:ReadAuthProvider
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: Authentication provider details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthenticationProviderResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Upsert an authentication provider
+      operationId: upsertAuthenticationProvider
+      security:
+        - oauth2:
+            - organization:UpdateAuthProvider
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertAuthenticationProviderRequest"
+      responses:
+        200:
+          description: Authentication provider created or updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthenticationProviderResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete authentication provider
+      operationId: deleteAuthenticationProvider
+      security:
+        - oauth2:
+            - organization:DeleteAuthProvider
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        204:
+          description: Authentication provider deleted
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /organizations/{organizationId}/features:
+    get:
+      summary: List features
+      operationId: listFeatures
+      security:
+        - oauth2:
+            - organization:ListFeatures
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: List of features
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/OrganizationFeature"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Add Features
+      operationId: addFeatures
+      security:
+        - oauth2:
+            - organization:UpdateFeatures
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - features
+              properties:
+                features:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        204:
+          description: Features added
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/features/{name}:
+    parameters:
+      - name: organizationId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: name
+        in: path
+        schema:
+          type: string
+        required: true
+    delete:
+      summary: Delete feature
+      operationId: deleteFeature
+      security:
+        - oauth2:
+            - organization:UpdateFeatures
+      responses:
+        204:
+          description: Feature deleted
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/client:
+    get:
+      summary: Read organization client (DEPRECATED) (until 12/31/2025)
+      operationId: readOrganizationClient
+      security:
+        - oauth2:
+            - organization:ReadClient
+      deprecated: true
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: Organization client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateClientResponseResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Create organization client (DEPRECATED) (until 12/31/2025)
+      operationId: createOrganizationClient
+      security:
+        - oauth2:
+            - organization:CreateClient
+      deprecated: true
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        201:
+          description: Client organization created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateClientResponseResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete organization client (DEPRECATED) (until 12/31/2025)
+      operationId: deleteOrganizationClient
+      security:
+        - oauth2:
+            - organization:DeleteClient
+      deprecated: true
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        204:
+          description: Client deleted
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/clients:
+    get:
+      summary: Read organization clients
+      operationId: organizationClientsRead
+      security:
+        - oauth2:
+            - organization:ListClients
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        200:
+          description: Organization client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadOrganizationClientsResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Create organization client
+      operationId: organizationClientCreate
+      security:
+        - oauth2:
+            - organization:CreateClient
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrganizationClientRequest"
+      responses:
+        201:
+          description: Organization client created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateOrganizationClientResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/clients/{clientId}:
+    get:
+      summary: Read organization client
+      operationId: organizationClientRead
+      security:
+        - oauth2:
+            - organization:ReadClient
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: clientId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: Organization client details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadOrganizationClientResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete organization client
+      operationId: organizationClientDelete
+      security:
+        - oauth2:
+            - organization:DeleteClient
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: clientId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        204:
+          description: Client deleted
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Update organization client
+      operationId: organizationClientUpdate
+      security:
+        - oauth2:
+            - organization:UpdateClient
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: clientId
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrganizationClientRequest"
+      responses:
+        204:
+          description: Client updated
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/logs:
+    get:
+      summary: List logs
+      operationId: listLogs
+      security:
+        - oauth2:
+            - organization:ReadLogs
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: stackId
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          required: false
+        - name: action
+          in: query
+          schema:
+            $ref: "#/components/schemas/Action"
+          required: false
+        - name: userId
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: key
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: value
+          in: query
+          schema:
+            type: string
+          required: false
+      responses:
+        200:
+          description: Cursor of logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogCursor"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/users:
+    get:
+      summary: List users of organization
+      operationId: listUsersOfOrganization
+      security:
+        - oauth2:
+            - organization:ListUsers
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: List of users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListUsersResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/users/{userId}:
+    parameters:
+      - name: organizationId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: userId
+        in: path
+        schema:
+          type: string
+        required: true
+    get:
+      summary: Read user of organization
+      operationId: readUserOfOrganization
+      security:
+        - oauth2:
+            - organization:ReadUser
+      responses:
+        200:
+          description: Read a user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadOrganizationUserResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Update user within an organization
+      operationId: upsertOrganizationUser
+      security:
+        - oauth2:
+            - organization:UpdateUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrganizationUserRequest"
+      responses:
+        204:
+          description: Updated user
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: delete user from organization
+      operationId: deleteUserFromOrganization
+      security:
+        - oauth2:
+            - organization:DeleteUser
+      description: |
+        The owner of the organization can remove anyone while each user can leave any organization where it is not owner.
+      responses:
+        204:
+          description: User deleted from organization
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/policies:
+    get:
+      summary: List policies of organization
+      operationId: listPolicies
+      security:
+        - oauth2:
+            - organization:ListPolicies
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: List of policies
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListPoliciesResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Create policy
+      operationId: createPolicy
+      security:
+        - oauth2:
+            - organization:CreatePolicy
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePolicyRequest"
+      responses:
+        201:
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreatePolicyResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/policies/{policyId}:
+    parameters:
+      - name: organizationId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: policyId
+        in: path
+        schema:
+          type: integer
+        required: true
+    get:
+      summary: Read policy with scopes
+      operationId: readPolicy
+      security:
+        - oauth2:
+            - organization:ReadPolicy
+      responses:
+        200:
+          description: Policy with scopes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadPolicyResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Update policy
+      operationId: updatePolicy
+      security:
+        - oauth2:
+            - organization:UpdatePolicy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePolicyRequest"
+      responses:
+        200:
+          description: Policy updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdatePolicyResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete policy
+      operationId: deletePolicy
+      security:
+        - oauth2:
+            - organization:DeletePolicy
+      responses:
+        204:
+          description: Policy deleted
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/policies/{policyId}/scopes/{scopeId}:
+    parameters:
+      - name: organizationId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: policyId
+        in: path
+        schema:
+          type: integer
+        required: true
+      - name: scopeId
+        in: path
+        schema:
+          type: integer
+        required: true
+    put:
+      summary: Add scope to policy
+      operationId: addScopeToPolicy
+      security:
+        - oauth2:
+            - organization:UpdatePolicy
+      responses:
+        204:
+          description: Scope added to policy
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Remove scope from policy
+      operationId: removeScopeFromPolicy
+      security:
+        - oauth2:
+            - organization:UpdatePolicy
+      responses:
+        204:
+          description: Scope removed from policy
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/stacks:
+    get:
+      summary: List stacks
+      operationId: listStacks
+      security:
+        - oauth2:
+            - organization:ListStacks
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: all
+          in: query
+          description: Include deleted and disabled stacks
+          schema:
+            type: boolean
+          required: false
+        - name: deleted
+          in: query
+          description: Include deleted stacks
+          deprecated: true
+          schema:
+            type: boolean
+          required: false
+      responses:
+        200:
+          description: List of stacks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListStacksResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Create stack
+      operationId: createStack
+      security:
+        - oauth2:
+            - organization:CreateStack
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStackRequest"
+      responses:
+        202:
+          description: Stack created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateStackResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/stacks/{stackId}/modules:
+    get:
+      summary: List modules of a stack
+      operationId: listModules
+      security:
+        - oauth2:
+            - organization:ListStackModules
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: stackId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: List of modules
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListModulesResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: enable module
+      operationId: enableModule
+      security:
+        - oauth2:
+            - organization:EnableStackModulesEnable
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: stackId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: name
+          in: query
+          schema:
+            type: string
+          required: true
+      responses:
+        202:
+          description: Module enabled
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: disable module
+      operationId: disableModule
+      security:
+        - oauth2:
+            - organization:DisableStackModule
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: stackId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: name
+          in: query
+          schema:
+            type: string
+          required: true
+      responses:
+        202:
+          description: Module disabled
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /organizations/{organizationId}/stacks/{stackId}/upgrade:
+    put:
+      summary: Upgrade stack
+      operationId: upgradeStack
+      security:
+        - oauth2:
+            - organization:UpgradeStack
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: stackId
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StackVersion"
+      responses:
+        202:
+          description: Stack upgrade accepted
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/stacks/{stackId}:
+    get:
+      summary: Find stack
+      operationId: getStack
+      security:
+        - oauth2:
+            - organization:ReadStack
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: stackId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadStackResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Update stack
+      operationId: updateStack
+      security:
+        - oauth2:
+            - organization:UpdateStack
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: stackId
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStackRequest"
+      responses:
+        200:
+          description: Updated stack
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadStackResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      summary: Delete stack
+      operationId: deleteStack
+      security:
+        - oauth2:
+            - organization:DeleteStack
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: stackId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: force
+          in: query
+          schema:
+            type: boolean
+          required: false
+      responses:
+        204:
+          description: Stack deleted
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/stacks/{stackId}/users:
+    get:
+      summary: List stack users accesses within an organization
+      operationId: listStackUsersAccesses
+      security:
+        - oauth2:
+            - organization:ListStackUsers
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: stackId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: Stack users access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StackUserAccessResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/stacks/{stackId}/users/{userId}:
+    get:
+      summary: Read stack user access within an organization
+      operationId: readStackUserAccess
+      security:
+        - oauth2:
+            - organization:ReadStackUser
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: stackId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: userId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: Stack user access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadStackUserAccess"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete stack user access within an organization
+      operationId: deleteStackUserAccess
+      security:
+        - oauth2:
+            - organization:DeleteStackUser
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: stackId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: userId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        204:
+          description: Updated user
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Update stack user access within an organization
+      operationId: upsertStackUserAccess
+      security:
+        - oauth2:
+            - organization:CreateStackUser
+            - organization:UpdateStackUser
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: stackId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: userId
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStackUserRequest"
+      responses:
+        204:
+          description: Updated user
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/stacks/{stackId}/disable:
+    put:
+      summary: Disable stack
+      operationId: disableStack
+      security:
+        - oauth2:
+            - organization:DisableStack
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: stackId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        202:
+          description: Stack disabled
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/stacks/{stackId}/enable:
+    put:
+      summary: Enable stack
+      operationId: enableStack
+      security:
+        - oauth2:
+            - organization:EnableStack
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: stackId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        202:
+          description: Stack enabled
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/stacks/{stackId}/restore:
+    put:
+      summary: Restore stack
+      operationId: restoreStack
+      security:
+        - oauth2:
+            - organization:RestoreStack
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: stackId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        202:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadStackResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/stacks/{stackId}/stargate/enable:
+    parameters:
+      - name: organizationId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: stackId
+        in: path
+        schema:
+          type: string
+        required: true
+    put:
+      summary: Enable stargate on a stack
+      operationId: enableStargate
+      security:
+        - oauth2:
+            - organization:EnableStackModule
+      responses:
+        202:
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/stacks/{stackId}/stargate/disable:
+    parameters:
+      - name: organizationId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: stackId
+        in: path
+        schema:
+          type: string
+        required: true
+    put:
+      summary: Disable stargate on a stack
+      operationId: disableStargate
+      security:
+        - oauth2:
+            - organization:DisableStackModule
+      responses:
+        202:
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /me/invitations:
+    get:
+      summary: List invitations of the user
+      operationId: listInvitations
+      security:
+        - oauth2: []
+      parameters:
+        - in: query
+          name: status
+          required: false
+          description: Status of organizations
+          schema:
+            type: string
+        - in: query
+          name: organization
+          required: false
+          description: Status of organizations
+          schema:
+            type: string
+      responses:
+        200:
+          description: List of the invitations for the connected user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListInvitationsResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /me/invitations/{invitationId}/accept:
+    post:
+      summary: Accept invitation
+      operationId: acceptInvitation
+      security:
+        - oauth2: []
+      parameters:
+        - name: invitationId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        204:
+          description: Invitation accepted
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /me/invitations/{invitationId}/reject:
+    post:
+      summary: Decline invitation
+      operationId: declineInvitation
+      security:
+        - oauth2: []
+      parameters:
+        - name: invitationId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        204:
+          description: Invitation declined
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/invitations:
+    get:
+      summary: List invitations of the organization
+      operationId: listOrganizationInvitations
+      security:
+        - oauth2:
+            - organization:ListInvitations
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: status
+          required: false
+          description: Status of organizations
+          schema:
+            type: string
+      responses:
+        200:
+          description: List of the invitations for the organization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListInvitationsResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Create invitation
+      operationId: createInvitation
+      security:
+        - oauth2:
+            - organization:CreateInvitation
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: email
+          in: query
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: Invitation already sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateInvitationResponse"
+        201:
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateInvitationResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/invitations/{invitationId}:
+    delete:
+      summary: Delete invitation
+      operationId: deleteInvitation
+      security:
+        - oauth2:
+            - organization:DeleteInvitation
+      parameters:
+        - name: organizationId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: invitationId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        204:
+          description: Invitation deleted
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/regions:
+    parameters:
+      - name: organizationId
+        in: path
+        schema:
+          type: string
+        required: true
+
+    get:
+      summary: List regions
+      operationId: listRegions
+      security:
+        - oauth2:
+            - organization:ListRegions
+      responses:
+        200:
+          description: List of the regions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListRegionsResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Create a private region
+      operationId: createPrivateRegion
+      security:
+        - oauth2:
+            - organization:CreateRegion
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePrivateRegionRequest"
+      responses:
+        200:
+          description: Created region
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreatedPrivateRegionResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/regions/{regionID}:
+    parameters:
+      - name: organizationId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: regionID
+        in: path
+        schema:
+          type: string
+        required: true
+    get:
+      summary: Get region
+      operationId: getRegion
+      security:
+        - oauth2:
+            - organization:ReadRegion
+      responses:
+        200:
+          description: Get a specific region
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetRegionResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete region
+      operationId: deleteRegion
+      security:
+        - oauth2:
+            - organization:DeleteRegion
+      responses:
+        204:
+          description: Delete a specific region
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/regions/{regionID}/versions:
+    parameters:
+      - name: organizationId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: regionID
+        in: path
+        schema:
+          type: string
+        required: true
+    get:
+      summary: Get region versions
+      operationId: getRegionVersions
+      security:
+        - oauth2:
+            - organization:ReadRegion
+      responses:
+        200:
+          description: Get a specific region
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetRegionVersionsResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/applications:
+    parameters:
+      - name: organizationId
+        in: path
+        schema:
+          type: string
+        required: true
+    get:
+      summary: List applications enabled for organization
+      operationId: listOrganizationApplications
+      security:
+        - oauth2:
+            - organization:Read
+      parameters:
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 15
+          required: false
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+          required: false
+      responses:
+        200:
+          description: List of applications enabled for organization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListApplicationsResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /organizations/{organizationId}/applications/{applicationId}:
+    parameters:
+      - name: organizationId
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: applicationId
+        in: path
+        schema:
+          type: string
+        required: true
+    get:
+      summary: Get application for organization
+      operationId: getOrganizationApplication
+      security:
+        - oauth2:
+            - organization:Read
+      responses:
+        200:
+          description: Application details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetApplicationResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Enable application for organization
+      operationId: enableApplicationForOrganization
+      security:
+        - oauth2:
+            - system:Admin
+      responses:
+        201:
+          description: Application enabled for organization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnableApplicationForOrganizationResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Disable application for organization
+      operationId: disableApplicationForOrganization
+      security:
+        - oauth2:
+            - system:Admin
+      responses:
+        204:
+          description: Application disabled for organization
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /applications:
+    get:
+      summary: List applications
+      operationId: listApplications
+      security:
+        - oauth2:
+            - system:Admin
+      responses:
+        200:
+          description: List of applications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListApplicationsResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Create application
+      operationId: createApplication
+      security:
+        - oauth2:
+            - system:Admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationData"
+      responses:
+        201:
+          description: Application created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateApplicationResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /applications/{applicationId}:
+    parameters:
+      - name: applicationId
+        in: path
+        schema:
+          type: string
+        required: true
+    get:
+      summary: Get application
+      operationId: getApplication
+      security:
+        - oauth2:
+            - system:Admin
+      responses:
+        200:
+          description: Application details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetApplicationResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Update application
+      operationId: updateApplication
+      security:
+        - oauth2:
+            - system:Admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationData"
+      responses:
+        200:
+          description: Application updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateApplicationResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete application
+      operationId: deleteApplication
+      security:
+        - oauth2:
+            - system:Admin
+      responses:
+        204:
+          description: Application deleted
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /applications/{applicationId}/scopes:
+    parameters:
+      - name: applicationId
+        in: path
+        description: The unique identifier of the application (UUID format)
+        schema:
+          type: string
+          format: uuid
+        required: true
+        example: "550e8400-e29b-41d4-a716-446655440000"
+    post:
+      summary: Create application scope
+      operationId: createApplicationScope
+      security:
+        - oauth2:
+            - system:Admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateApplicationScopeRequest"
+      responses:
+        201:
+          description: Application scope created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateApplicationScopeResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /applications/{applicationId}/scopes/{scopeID}:
+    parameters:
+      - name: applicationId
+        in: path
+        description: The unique identifier of the application (UUID format)
+        schema:
+          type: string
+          format: uuid
+        required: true
+        example: "550e8400-e29b-41d4-a716-446655440000"
+      - name: scopeID
+        in: path
+        description: The unique identifier of the scope to operate on
+        schema:
+          type: integer
+        required: true
+
+    delete:
+      summary: Delete application scope
+      description: Delete a specific scope from an application. This operation requires system administrator privileges.
+      operationId: deleteApplicationScope
+      security:
+        - oauth2:
+            - system:Admin
+      responses:
+        204:
+          description: Application scope deleted successfully
+        400:
+          description: Invalid request (invalid UUID or empty scope ID)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        404:
+          description: Application or scope not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /users:
+    post:
+      summary: Create user
+      description: Create a new user in the system. This operation requires system administrator privileges.
+      operationId: createUser
+      security:
+        - oauth2:
+            - system:Admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        201:
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateUserResponse"
+        400:
+          description: Invalid request (missing or invalid email)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /me:
+    get:
+      summary: Read user
+      operationId: readConnectedUser
+      security:
+        - oauth2: []
+      responses:
+        200:
+          description: Read a user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadUserResponse"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+security:
+  - oauth2: []
+
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: /authorize
+          tokenUrl: /oauth/token
+          scopes:
+            # OIDC Standard Scopes
+            openid: Enable OIDC
+            profile: Access to user profile information
+            email: Access to email address
+            phone: Access to phone number
+            address: Access to postal address
+            offline_access: Allows obtaining refresh token
+            # Extended OIDC Scopes
+            accesses: Includes organization and stack access information in tokens
+            keep_refresh_token: Keep refresh token across sessions
+            remember_me: Enable remember me functionality
+            on_behalf: Allow to provide id_token usable as id_token_hint for quick reauthentication
+            # System Scopes
+            system:Admin: Full system administration access
+            # Stack Scopes
+            stack:Read: Read-only access to stack services
+            stack:Write: Write access to stack services
+            # Organization Scopes
+            organization:Read: Read organization details
+            organization:Create: Create organization
+            organization:Update: Update organization details
+            organization:Delete: Delete organization
+            # User Management Scopes
+            organization:ListUsers: List organization users
+            organization:ReadUser: Read user details
+            organization:CreateUser: Create/Invite users to organization
+            organization:UpdateUser: Update user details
+            organization:DeleteUser: Remove users from organization
+            # Policy Management Scopes
+            organization:ListPolicies: List organization policies
+            organization:ReadPolicy: Read policy details
+            organization:CreatePolicy: Create policies
+            organization:UpdatePolicy: Update policies and manage their scopes
+            organization:DeletePolicy: Delete policies
+            # Invitation Management Scopes
+            organization:ListInvitations: List organization invitations
+            organization:ReadInvitation: Read invitation details
+            organization:CreateInvitation: Create invitations
+            organization:UpdateInvitation: Update invitations
+            organization:AcceptInvitation: Accept invitations
+            organization:RejectInvitation: Reject invitations
+            organization:DeleteInvitation: Delete invitations
+            # Region Management Scopes
+            organization:ListRegions: List organization regions
+            organization:ReadRegion: Read region details
+            organization:CreateRegion: Create regions
+            organization:UpdateRegion: Update regions
+            organization:DeleteRegion: Delete regions
+            # Stack Management Scopes
+            organization:ListStacks: List organization stacks
+            organization:ReadStack: Read stack details
+            organization:CreateStack: Create stacks
+            organization:UpdateStack: Update stacks
+            organization:DeleteStack: Delete stacks
+            organization:EnableStack: Enable stacks
+            organization:DisableStack: Disable stacks
+            organization:RestoreStack: Restore stacks
+            organization:UpgradeStack: Upgrade stacks
+            # Stack Users Management Scopes
+            organization:ListStackUsers: List stack users
+            organization:ReadStackUser: Read stack user details
+            organization:CreateStackUser: Add users to stack
+            organization:UpdateStackUser: Update stack user access
+            organization:DeleteStackUser: Remove users from stack
+            # Stack Modules Management Scopes
+            organization:ListStackModules: List stack modules
+            organization:EnableStackModule: Enable stack modules
+            organization:DisableStackModule: Disable stack modules
+            # Client Management Scopes
+            organization:ListClients: List organization clients
+            organization:ReadClient: Read client details
+            organization:CreateClient: Create clients
+            organization:UpdateClient: Update clients
+            organization:DeleteClient: Delete clients
+            # Authentication Provider Scopes
+            organization:ReadAuthProvider: Read authentication provider configuration
+            organization:UpdateAuthProvider: Update authentication provider configuration
+            organization:DeleteAuthProvider: Delete authentication provider configuration
+            # Logs Scopes
+            organization:ReadLogs: Read organization logs
+            # Features Scopes
+            organization:ListFeatures: List organization features
+            organization:ReadFeature: Read feature details
+            organization:UpdateFeatures: Update organization features
+  schemas:
+    Module:
+      type: object
+      required:
+        - name
+        - state
+        - status
+        - lastStatusUpdate
+        - lastStateUpdate
+      properties:
+        name:
+          type: string
+        state:
+          type: string
+          enum:
+            - ENABLED
+            - DISABLED
+        status:
+          type: string
+          enum:
+            - UNKNOWN
+            - PROGRESSING
+            - READY
+            - DELETED
+        lastStatusUpdate:
+          type: string
+          format: date-time
+        lastStateUpdate:
+          type: string
+          format: date-time
+        clusterStatus:
+          type: object
+
+    ListModulesResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Module"
+    Action:
+      type: string
+      enum:
+        - agents.connected
+        - agents.disconnected
+        - invitations.created
+        - invitations.accepted
+        - invitations.rejected
+        - invitations.cancelled
+        - organizations.created
+        - organizations.updated
+        - organizations.deleted
+        - organizations.user.deleted
+        - organizations.user.updated
+        - regions.created
+        - regions.deleted
+        - users.created
+        - users.deleted
+        - stacks.disposal
+        - stacks.disposal-reset
+        - stacks.warned
+        - stacks.pruned
+        - stacks.status.updated
+        - stacks.created
+        - stacks.updated
+        - stacks.deleted
+        - stacks.restored
+        - stacks.disabled
+        - stacks.enabled
+        - stacks.upgraded
+        - stacks.stargate.enabled
+        - stacks.stargate.disabled
+        - stacks.user.updated
+        - stacks.user.deleted
+        - stacks.reachness.updated
+        - stacks.module.enabled
+        - stacks.module.disabled
+        - stacks.module.status.updated
+        - policies.created
+        - policies.updated
+        - policies.deleted
+        - policies.scope.added
+        - policies.scope.removed
+    LogCursor:
+      properties:
+        data:
+          allOf:
+            - $ref: "#/components/schemas/Cursor"
+            - type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Log"
+      required:
+        - data
+    Log:
+      type: object
+      required:
+        - seq
+        - organizationId
+        - userId
+        - action
+        - date
+        - data
+      properties:
+        seq:
+          type: string
+          example: 1e6f8b6e-1b6b-4b3b-8b3b-1b6b4b3b8b3b
+        organizationId:
+          type: string
+        userId:
+          type: string
+        action:
+          type: string
+        date:
+          type: string
+          format: date-time
+        data:
+          type: object
+    Cursor:
+      type: object
+      required:
+        - pageSize
+        - hasMore
+        - data
+      properties:
+        pageSize:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 1000
+          example: 15
+        hasMore:
+          type: boolean
+          example: false
+        previous:
+          type: string
+          example: YXVsdCBhbmQgYSBtYXhpbXVtIG1heF9yZXN1bHRzLol=
+        next:
+          type: string
+          example: ""
+    OrganizationFeature:
+      type: object
+      required:
+        - name
+        - organizationID
+        - createdAt
+      properties:
+        organizationID:
+          type: string
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    CreatePrivateRegionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
+    CreatedPrivateRegionResponse:
+      properties:
+        data:
+          $ref: "#/components/schemas/PrivateRegion"
+      required:
+        - data
+    PrivateRegion:
+      allOf:
+        - $ref: "#/components/schemas/Region"
+        - type: object
+          properties:
+            organizationID:
+              type: string
+            creatorID:
+              type: string
+            secret:
+              $ref: "#/components/schemas/PrivateRegionSecret"
+          required:
+            - organizationID
+            - creatorID
+    PublicRegion:
+      allOf:
+        - $ref: "#/components/schemas/Region"
+        - type: object
+          properties:
+            production:
+              type: boolean
+          required:
+            - production
+    AnyRegion:
+      allOf:
+        - $ref: "#/components/schemas/Region"
+        - type: object
+          properties:
+            clientID:
+              type: string
+            organizationID:
+              type: string
+            creator:
+              $ref: "#/components/schemas/User"
+            production:
+              type: boolean
+            public:
+              type: boolean
+            version:
+              type: string
+            agentID:
+              type: string
+            outdated:
+              type: boolean
+            secret:
+              $ref: "#/components/schemas/PrivateRegionSecret"
+
+          required:
+            - public
+            - agentID
+            - outdated
+    PrivateRegionSecret:
+      type: object
+      required:
+        - lastDigits
+      properties:
+        lastDigits:
+          type: string
+        clear:
+          type: string
+    OrganizationData:
+      type: object
+      required:
+        - name
+        - defaultPolicyID
+      properties:
+        name:
+          type: string
+          description: Organization name
+        domain:
+          type: string
+          description: Organization domain
+        defaultPolicyID:
+          type: integer
+          description: Default policy ID applied to new users
+          nullable: true
+    CreateOrganizationClientRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the client
+        description:
+          type: string
+          description: Description of the client
+    UpdateOrganizationClientRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Name of the client
+        description:
+          type: string
+          description: Description of the client
+    CreateOrganizationClientResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: "#/components/schemas/OrganizationClient"
+    ReadOrganizationClientResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: "#/components/schemas/OrganizationClient"
+    ReadOrganizationClientsResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          allOf:
+            - $ref: "#/components/schemas/Cursor"
+            - type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/OrganizationClient"
+    OrganizationClient:
+      type: object
+      required:
+        - id
+        - secret
+        - createdAt
+        - updatedAt
+        - description
+        - name
+      properties:
+        id:
+          type: string
+          description: Organization ID
+        secret:
+          type: object
+          required:
+            - lastDigits
+          properties:
+            lastDigits:
+              type: string
+            clear:
+              type: string
+        name:
+          type: string
+          description: Name of the client
+        description:
+          type: string
+          description: Description of the client
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Organization:
+      allOf:
+        - $ref: "#/components/schemas/OrganizationData"
+        - type: object
+          required:
+            - id
+            - ownerId
+          properties:
+            id:
+              type: string
+              description: Organization ID
+            ownerId:
+              type: string
+              description: Owner ID
+            availableStacks:
+              type: integer
+              description: Number of available stacks
+            availableSandboxes:
+              type: integer
+              description: Number of available sandboxes
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    StackData:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Stack name
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+    StackVersion:
+      type: object
+      properties:
+        version:
+          type: string
+          description: Supported only with agent version >= v0.7.0
+    StackLifeCycle:
+      type: object
+      required:
+        - status
+        - state
+        - expectedStatus
+        - lastStateUpdate
+        - lastExpectedStatusUpdate
+        - lastStatusUpdate
+      properties:
+        status:
+          type: string
+          enum:
+            - UNKNOWN
+            - PROGRESSING
+            - READY
+            - DISABLED
+            - DELETED
+        state:
+          type: string
+          enum:
+            - ACTIVE
+            - DISABLED
+            - DELETED
+        expectedStatus:
+          type: string
+          enum:
+            - READY
+            - DISABLED
+            - DELETED
+        lastStateUpdate:
+          type: string
+          format: date-time
+        lastExpectedStatusUpdate:
+          type: string
+          format: date-time
+        lastStatusUpdate:
+          type: string
+          format: date-time
+        warnedAt:
+          type: string
+          format: date-time
+        disposableSince:
+          type: string
+          format: date-time
+
+    StackReachability:
+      properties:
+        reachable:
+          description: Stack is reachable through Stargate
+          type: boolean
+        lastReachableUpdate:
+          description: Last time the stack was reachable
+          format: date-time
+          type: string
+      required:
+        - reachable
+      type: object
+    Stack:
+      allOf:
+        - $ref: "#/components/schemas/StackData"
+        - $ref: "#/components/schemas/StackVersion"
+        - $ref: "#/components/schemas/StackLifeCycle"
+        - $ref: "#/components/schemas/StackReachability"
+        - type: object
+          required:
+            - id
+            - organizationId
+            - uri
+            - regionID
+            - stargateEnabled
+            - synchronised
+            - modules
+          properties:
+            id:
+              type: string
+              description: Stack ID
+            organizationId:
+              type: string
+              description: Organization ID
+            uri:
+              type: string
+              description: Base stack uri
+            regionID:
+              type: string
+              description: The region where the stack is installed
+            region:
+              $ref: "#/components/schemas/Region"
+            stargateEnabled:
+              type: boolean
+            createdAt:
+              type: string
+              format: date-time
+            deletedAt:
+              type: string
+              format: date-time
+            disabledAt:
+              type: string
+              format: date-time
+            auditEnabled:
+              type: boolean
+            synchronised:
+              type: boolean
+            updatedAt:
+              type: string
+              format: date-time
+            modules:
+              type: array
+              items:
+                $ref: "#/components/schemas/Module"
+
+    UserData:
+      allOf:
+        - type: object
+          properties:
+            email:
+              type: string
+          required:
+            - email
+    SystemRole:
+      type: string
+      enum:
+        - USER
+        - SYSTEM
+    User:
+      allOf:
+        - $ref: "#/components/schemas/UserData"
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              description: User ID
+        - type: object
+          properties:
+            role:
+              $ref: "#/components/schemas/SystemRole"
+    CreateUserRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address of the user to create
+          example: "user@example.com"
+    CreateUserResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/User"
+    OrganizationUserArray:
+      type: array
+      items:
+        allOf:
+          - $ref: "#/components/schemas/OrganizationUser"
+    ReadOrganizationUserResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/OrganizationUser"
+    OrganizationUser:
+      allOf:
+        - type: object
+          required:
+            - email
+            - id
+            - policyId
+          properties:
+            email:
+              type: string
+            id:
+              type: string
+            policyId:
+              type: integer
+              description: Policy ID applied to the user
+
+    OrganizationArray:
+      type: array
+      items:
+        $ref: "#/components/schemas/Organization"
+    StackArray:
+      type: array
+      items:
+        $ref: "#/components/schemas/Stack"
+    UserArray:
+      type: array
+      items:
+        $ref: "#/components/schemas/User"
+    ReadStackUserAccess:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/StackUserAccess"
+    StackUserAccess:
+      allOf:
+        - type: object
+          required:
+            - stackId
+            - userId
+            - email
+            - policyId
+          properties:
+            stackId:
+              type: string
+              description: Stack ID
+            userId:
+              type: string
+              description: User ID
+            email:
+              type: string
+              description: User email
+            policyId:
+              type: integer
+              description: Policy ID applied to the user for the stack
+    StackUserAccessResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/StackUserAccessArray"
+    StackUserAccessArray:
+      type: array
+      items:
+        $ref: "#/components/schemas/StackUserAccess"
+    ListOrganizationResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/OrganizationArray"
+    CreateOrganizationRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Organization name
+        domain:
+          type: string
+          description: Organization domain
+        defaultPolicyID:
+          type: integer
+          description: Default policy ID applied to new users
+        ownerID:
+          type: string
+          description: User ID of the owner of the organization (only when used with a non user agent)
+    CreateOrganizationResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/OrganizationExpanded"
+    ReadOrganizationResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/OrganizationExpanded"
+    ListStacksResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/StackArray"
+    ListUsersResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/OrganizationUserArray"
+    CreateStackRequest:
+      allOf:
+        - $ref: "#/components/schemas/StackData"
+        - $ref: "#/components/schemas/StackVersion"
+        - type: object
+          properties:
+            regionID:
+              type: string
+          required:
+            - regionID
+    UpdateStackRequest:
+      allOf:
+        - $ref: "#/components/schemas/StackData"
+    CreateStackResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Stack"
+    ReadStackResponse:
+      $ref: "#/components/schemas/CreateStackResponse"
+    ReadUserResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/User"
+    ListInvitationsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Invitation"
+    CreateInvitationResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Invitation"
+    Error:
+      type: object
+      properties:
+        errorCode:
+          type: string
+        errorMessage:
+          type: string
+      required:
+        - errorCode
+    Invitation:
+      type: object
+      properties:
+        id:
+          type: string
+        organizationId:
+          type: string
+        userEmail:
+          type: string
+        status:
+          type: string
+          enum:
+            - PENDING
+            - ACCEPTED
+            - REJECTED
+            - CANCELLED
+        creationDate:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-tim
+        userId:
+          type: string
+        organizationAccess:
+          $ref: "#/components/schemas/OrganizationUser"
+        expiresAt:
+          type: string
+          format: date-time
+        creatorId:
+          type: string
+        lastUpdate:
+          type: string
+          format: date-time
+      required:
+        - creationDate
+        - status
+        - creatorID
+        - userEmail
+        - organizationId
+        - id
+        - policyId
+    Region:
+      type: object
+      required:
+        - id
+        - baseUrl
+        - active
+        - createdAt
+        - name
+        - capabilities
+        - agentID
+        - outdated
+      properties:
+        id:
+          type: string
+        baseUrl:
+          type: string
+        createdAt:
+          type: string
+          format: datetime
+        active:
+          type: boolean
+        lastPing:
+          type: string
+          format: date-time
+        name:
+          type: string
+        capabilities:
+          $ref: "#/components/schemas/RegionCapability"
+        agentID:
+          type: string
+        outdated:
+          type: boolean
+        creatorId:
+          type: string
+        version:
+          type: string
+
+    RegionCapability:
+      type: object
+      properties:
+        MODULE_LIST:
+          type: array
+          items:
+            type: string
+        EE:
+          type: array
+          items:
+            type: string
+    RegionCapabilityKeys:
+      type: string
+      enum:
+        - MODULE_LIST
+        - EE
+    ListOrganizationExpandedResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/OrganizationExpanded"
+    CreateClientResponseResponse:
+      type: object
+      properties:
+        data:
+          allOf:
+            - $ref: "#/components/schemas/OrganizationClient"
+            - type: object
+              properties:
+                ownerId:
+                  type: string
+                  description: The ID of the owner of the client (DEPRECATED will be empty)
+              required:
+                - ownerId
+    OrganizationExpanded:
+      allOf:
+        - $ref: "#/components/schemas/Organization"
+        - type: object
+          properties:
+            totalStacks:
+              type: integer
+            totalUsers:
+              type: integer
+            owner:
+              $ref: "#/components/schemas/User"
+    ListRegionsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnyRegion"
+      required:
+        - data
+    GetRegionResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/AnyRegion"
+      required:
+        - data
+
+    ServerInfo:
+      type: object
+      required:
+        - version
+      properties:
+        version:
+          type: string
+        capabilities:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/Capability"
+        consoleURL:
+          type: string
+    Capability:
+      type: string
+      enum:
+        - MODULE_SELECTION
+    Version:
+      type: object
+      required:
+        - name
+        - versions
+        - regionID
+      properties:
+        name:
+          type: string
+        versions:
+          type: object
+          additionalProperties:
+            type: string
+        regionID:
+          type: string
+        deprecated:
+          type: boolean
+          description: Indicates if this version is deprecated and should not be used
+    UpdateOrganizationUserRequest:
+      type: object
+      properties:
+        policyId:
+          type: integer
+          description: Policy ID applied to the user
+    UpdateStackUserRequest:
+      type: object
+      required:
+        - policyId
+      properties:
+        policyId:
+          type: integer
+
+    GetRegionVersionsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Version"
+      required:
+        - data
+
+    AuthenticationProviderData:
+      type: object
+      oneOf:
+        - $ref: '#/components/schemas/GoogleIDPConfig'
+        - $ref: '#/components/schemas/MicrosoftIDPConfig'
+        - $ref: '#/components/schemas/GithubIDPConfig'
+        - $ref: '#/components/schemas/OIDCConfig'
+
+    BaseProviderConfig:
+      type: object
+      required:
+        - type
+        - name
+        - clientID
+        - clientSecret
+      properties:
+        type:
+          type: string
+          enum:
+            - oidc
+            - google
+            - github
+            - microsoft
+          description: Type of the authentication provider
+        name:
+          type: string
+          description: Name of the authentication provider
+        clientID:
+          type: string
+          description: Client ID for the authentication provider
+        clientSecret:
+          type: string
+          description: Client secret for the authentication provider
+
+    AuthenticationProvider:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/AuthenticationProviderData'
+        - type: object
+          properties:
+            organizationId:
+              type: string
+              description: Unique identifier for the authentication provider
+            createdAt:
+              type: string
+              format: date-time
+              description: Creation date of the authentication provider
+            updatedAt:
+              type: string
+              format: date-time
+              description: Last update date of the authentication provider
+          required:
+            - organizationId
+            - createdAt
+            - updatedAt
+
+    GoogleIDPConfig:
+      allOf:
+        - $ref: '#/components/schemas/BaseProviderConfig'
+        - type: object
+          required:
+            - config
+          properties:
+            config:
+              type: object
+              additionalProperties: false
+
+    MicrosoftIDPConfig:
+      allOf:
+        - $ref: '#/components/schemas/BaseProviderConfig'
+        - type: object
+          required:
+            - config
+          properties:
+            config:
+              type: object
+              properties:
+                tenant:
+                  type: string
+                  description: Tenant ID for Microsoft authentication
+                  default: 'common'
+
+    GithubIDPConfig:
+      allOf:
+        - $ref: '#/components/schemas/BaseProviderConfig'
+        - type: object
+          required:
+            - config
+          properties:
+            config:
+              type: object
+              additionalProperties: false
+
+    OIDCConfig:
+      allOf:
+        - $ref: '#/components/schemas/BaseProviderConfig'
+        - type: object
+          required:
+            - config
+          properties:
+            config:
+              type: object
+              required:
+                - issuer
+              properties:
+                issuer:
+                  type: string
+                  description: OIDC issuer URL
+                discoveryPath:
+                  type: string
+                  default: '/.well-known/openid-configuration'
+
+    UpsertAuthenticationProviderRequest:
+      $ref: "#/components/schemas/AuthenticationProviderData"
+
+    AuthenticationProviderResponse:
+      type: object
+      properties:
+        data:
+          allOf:
+            - $ref: "#/components/schemas/AuthenticationProvider"
+            - type: object
+              properties:
+                redirectURI:
+                  type: string
+              required:
+                - redirectURI
+
+    PolicyData:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Policy name
+        description:
+          type: string
+          description: Policy description
+
+    Policy:
+      allOf:
+        - $ref: "#/components/schemas/PolicyData"
+        - type: object
+          required:
+            - id
+            - protected
+            - createdAt
+            - updatedAt
+          properties:
+            id:
+              type: integer
+              description: Policy ID
+            organizationId:
+              type: string
+              description: Organization ID
+            protected:
+              type: boolean
+              description: Whether the policy is protected from modification
+            scopes:
+              type: array
+              items:
+                $ref: "#/components/schemas/Scope"
+              description: List of scopes assigned to the policy (only present when fetched via GET endpoint)
+            createdAt:
+              type: string
+              format: date-time
+              description: Creation date
+            updatedAt:
+              type: string
+              format: date-time
+              description: Last update date
+
+    CreatePolicyRequest:
+      $ref: "#/components/schemas/PolicyData"
+
+    CreatePolicyResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Policy"
+
+    ReadPolicyResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Policy"
+
+    UpdatePolicyRequest:
+      $ref: "#/components/schemas/PolicyData"
+
+    UpdatePolicyResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Policy"
+
+    ListPoliciesResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Policy"
+
+    ApplicationData:
+      type: object
+      required:
+        - name
+        - url
+        - alias
+      properties:
+        name:
+          type: string
+          description: Application name
+        description:
+          type: string
+          description: Application description
+        url:
+          type: string
+          format: uri
+          description: Application URL (must be unique)
+        alias:
+          type: string
+          description: Application alias
+
+    Application:
+      allOf:
+        - $ref: "#/components/schemas/ApplicationData"
+        - type: object
+          required:
+            - id
+            - createdAt
+            - updatedAt
+          properties:
+            id:
+              type: string
+              description: Application ID
+            createdAt:
+              type: string
+              format: date-time
+              description: Creation date
+            updatedAt:
+              type: string
+              format: date-time
+              description: Last update date
+    ApplicationWithScope:
+      allOf:
+        - $ref: "#/components/schemas/Application"
+        - type: object
+          required:
+            - scopes
+          properties:
+            scopes:
+              type: array
+              description: List of scopes associated with this application
+              items:
+                $ref: "#/components/schemas/Scope"
+
+    ListApplicationsResponse:
+      type: object
+      properties:
+        cursor:
+          allOf:
+            - $ref: "#/components/schemas/Cursor"
+            - type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Application"
+      required:
+        - data
+
+    CreateApplicationResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Application"
+
+    GetApplicationResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/ApplicationWithScope"
+
+    UpdateApplicationResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Application"
+
+    CreateApplicationScopeRequest:
+      type: object
+      required:
+        - label
+      properties:
+        description:
+          type: string
+          description: Scope description
+        label:
+          type: string
+          description: The OAuth2 scope label (e.g., "custom:read")
+
+    CreateApplicationScopeResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Scope"
+
+    UpdateApplicationScopeRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          description: Scope description
+
+    UpdateApplicationScopeResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Scope"
+
+    Scope:
+      type: object
+      required:
+        - id
+        - label
+        - protected
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: integer
+          description: Scope ID
+        label:
+          type: string
+          description: The OAuth2 scope label (e.g., "custom:read")
+        description:
+          type: string
+          description: Scope description
+        applicationId:
+          type: string
+          description: Application ID (null for global scopes)
+        protected:
+          type: boolean
+          description: Whether the scope is protected
+          default: false
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    OrganizationApplication:
+      type: object
+      required:
+        - organizationId
+        - applicationId
+        - createdAt
+      properties:
+        organizationId:
+          type: string
+          description: Organization ID
+        applicationId:
+          type: string
+          description: Application ID
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation date
+
+    EnableApplicationForOrganizationResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/OrganizationApplication"

@@ -9,8 +9,8 @@ import (
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	"github.com/formancehq/fctl/cmd/payments/versions"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/payments/versions"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type UpdateMetadataStore struct {
@@ -54,7 +54,16 @@ func (c *UpdateMetadataController) GetStore() *UpdateMetadataStore {
 }
 
 func (c *UpdateMetadataController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
@@ -71,7 +80,7 @@ func (c *UpdateMetadataController) Run(cmd *cobra.Command, args []string) (fctl.
 
 	bankAccountID := args[0]
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to set a metadata on bank account '%s'", bankAccountID) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to set a metadata on bank account '%s'", bankAccountID) {
 		return nil, fctl.ErrMissingApproval
 	}
 	if c.PaymentsVersion.Major >= versions.V3 {
@@ -82,7 +91,7 @@ func (c *UpdateMetadataController) Run(cmd *cobra.Command, args []string) (fctl.
 			BankAccountID: bankAccountID,
 		}
 
-		response, err := store.Client().Payments.V3.UpdateBankAccountMetadata(cmd.Context(), request)
+		response, err := stackClient.Payments.V3.UpdateBankAccountMetadata(cmd.Context(), request)
 		if err != nil {
 			return nil, err
 		}
@@ -102,7 +111,7 @@ func (c *UpdateMetadataController) Run(cmd *cobra.Command, args []string) (fctl.
 		BankAccountID: bankAccountID,
 	}
 
-	response, err := store.Client().Payments.V1.UpdateBankAccountMetadata(cmd.Context(), request)
+	response, err := stackClient.Payments.V1.UpdateBankAccountMetadata(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}

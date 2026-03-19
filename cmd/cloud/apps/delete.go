@@ -6,7 +6,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type Delete struct {
@@ -42,12 +42,26 @@ func (c *DeleteCtrl) GetStore() *Delete {
 }
 
 func (c *DeleteCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetDeployServerStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	_, apiClient, err := fctl.NewAppDeployClientFromFlags(
+		cmd,
+		relyingParty,
+		fctl.NewPTermDialog(),
+		profileName,
+		*profile,
+	)
+	if err != nil {
+		return nil, err
+	}
 	id := fctl.GetString(cmd, "id")
 	if id == "" {
 		return nil, fmt.Errorf("id is required")
 	}
-	_, err := store.Cli.DeleteApp(cmd.Context(), id)
+	_, err = apiClient.DeleteApp(cmd.Context(), id)
 	if err != nil {
 		return nil, err
 	}

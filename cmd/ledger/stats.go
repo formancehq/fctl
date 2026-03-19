@@ -9,8 +9,8 @@ import (
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	"github.com/formancehq/fctl/cmd/ledger/internal"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/ledger/internal"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type StatsStore struct {
@@ -47,12 +47,21 @@ func (c *StatsController) GetStore() *StatsStore {
 }
 
 func (c *StatsController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	request := operations.ReadStatsRequest{
 		Ledger: fctl.GetString(cmd, internal.LedgerFlag),
 	}
-	response, err := store.Client().Ledger.V1.ReadStats(cmd.Context(), request)
+	response, err := stackClient.Ledger.V1.ReadStats(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}

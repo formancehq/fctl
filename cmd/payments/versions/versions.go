@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/semver"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type PaymentMajorVersion int
@@ -31,9 +31,18 @@ type VersionController interface {
 	SetVersion(Version)
 }
 
-func GetPaymentsVersion(cmd *cobra.Command, args []string, controller VersionController) error {
-	store := fctl.GetStackStore(cmd.Context())
-	response, err := store.Client().Payments.V1.PaymentsgetServerInfo(cmd.Context())
+func GetPaymentsVersion(cmd *cobra.Command, _ []string, controller VersionController) error {
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return err
+	}
+	response, err := stackClient.Payments.V1.PaymentsgetServerInfo(cmd.Context())
 	if err != nil {
 		return err
 	}

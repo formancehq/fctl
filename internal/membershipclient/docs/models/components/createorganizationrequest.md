@@ -1,0 +1,11 @@
+# CreateOrganizationRequest
+
+
+## Fields
+
+| Field                                                                           | Type                                                                            | Required                                                                        | Description                                                                     |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `Name`                                                                          | *string*                                                                        | :heavy_check_mark:                                                              | Organization name                                                               |
+| `Domain`                                                                        | **string*                                                                       | :heavy_minus_sign:                                                              | Organization domain                                                             |
+| `DefaultPolicyID`                                                               | **int64*                                                                        | :heavy_minus_sign:                                                              | Default policy ID applied to new users                                          |
+| `OwnerID`                                                                       | **string*                                                                       | :heavy_minus_sign:                                                              | User ID of the owner of the organization (only when used with a non user agent) |

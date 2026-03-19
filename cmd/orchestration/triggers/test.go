@@ -2,15 +2,15 @@ package triggers
 
 import (
 	"encoding/json"
+	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type TriggersTestStore struct {
@@ -46,19 +46,28 @@ func (c *TriggersTestController) GetStore() *TriggersTestStore {
 }
 
 func (c *TriggersTestController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	data := make(map[string]any)
 	if err := json.Unmarshal([]byte(args[1]), &data); err != nil {
 		return nil, err
 	}
 
-	res, err := store.Client().Orchestration.V2.TestTrigger(cmd.Context(), operations.TestTriggerRequest{
+	res, err := stackClient.Orchestration.V2.TestTrigger(cmd.Context(), operations.TestTriggerRequest{
 		TriggerID:   args[0],
 		RequestBody: data,
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "testing trigger")
+		return nil, fmt.Errorf("testing trigger: %w", err)
 	}
 
 	c.store.Trigger = res.V2TestTriggerResponse.Data

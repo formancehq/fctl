@@ -6,7 +6,7 @@ import (
 
 	"github.com/pterm/pterm"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 func DisplayPayments(out io.Writer, payments []map[string]interface{}) error {

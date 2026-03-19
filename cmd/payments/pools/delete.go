@@ -8,8 +8,8 @@ import (
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 
-	"github.com/formancehq/fctl/cmd/payments/versions"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/payments/versions"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type DeleteStore struct {
@@ -55,7 +55,16 @@ func (c *DeleteController) GetStore() *DeleteStore {
 }
 
 func (c *DeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
@@ -65,11 +74,11 @@ func (c *DeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fmt.Errorf("pools are only supported in >= v1.0.0")
 	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to delete '%s'", args[0]) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to delete '%s'", args[0]) {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	response, err := store.Client().Payments.V1.DeletePool(
+	response, err := stackClient.Payments.V1.DeletePool(
 		cmd.Context(),
 		operations.DeletePoolRequest{
 			PoolID: args[0],

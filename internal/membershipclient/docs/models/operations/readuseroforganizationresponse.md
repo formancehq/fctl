@@ -1,0 +1,10 @@
+# ReadUserOfOrganizationResponse
+
+
+## Fields
+
+| Field                                                                                               | Type                                                                                                | Required                                                                                            | Description                                                                                         |
+| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                          | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                  | :heavy_check_mark:                                                                                  | N/A                                                                                                 |
+| `ReadOrganizationUserResponse`                                                                      | [*components.ReadOrganizationUserResponse](../../models/components/readorganizationuserresponse.md) | :heavy_minus_sign:                                                                                  | Read a user                                                                                         |
+| `Error`                                                                                             | [*components.Error](../../models/components/error.md)                                               | :heavy_minus_sign:                                                                                  | Error                                                                                               |

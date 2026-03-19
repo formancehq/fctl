@@ -10,8 +10,8 @@ import (
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/formancehq/go-libs/collectionutils"
 
-	internal "github.com/formancehq/fctl/cmd/ledger/internal"
-	fctl "github.com/formancehq/fctl/pkg"
+	internal "github.com/formancehq/fctl/v3/cmd/ledger/internal"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ShowStore struct {
@@ -48,10 +48,18 @@ func (c *ShowController) GetStore() *ShowStore {
 
 func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	ledger := fctl.GetString(cmd, internal.LedgerFlag)
-	response, err := store.Client().Ledger.V1.GetAccount(cmd.Context(), operations.GetAccountRequest{
+	response, err := stackClient.Ledger.V1.GetAccount(cmd.Context(), operations.GetAccountRequest{
 		Address: args[0],
 		Ledger:  ledger,
 	})

@@ -6,7 +6,7 @@ import (
 
 	"github.com/pterm/pterm"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 func DisplayAssets(out io.Writer, assets []map[string]interface{}) error {

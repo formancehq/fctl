@@ -1,17 +1,17 @@
 package workflows
 
 import (
+	"errors"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	"github.com/formancehq/fctl/cmd/orchestration/internal"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/orchestration/internal"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type WorkflowsRunStore struct {
@@ -57,7 +57,15 @@ func (c *WorkflowsRunController) GetStore() *WorkflowsRunStore {
 
 func (c *WorkflowsRunController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	wait := fctl.GetBool(cmd, c.waitFlag)
 	variables := make(map[string]string)
@@ -69,7 +77,7 @@ func (c *WorkflowsRunController) Run(cmd *cobra.Command, args []string) (fctl.Re
 		variables[parts[0]] = parts[1]
 	}
 
-	response, err := store.Client().Orchestration.V1.
+	response, err := stackClient.Orchestration.V1.
 		RunWorkflow(cmd.Context(), operations.RunWorkflowRequest{
 			RequestBody: variables,
 			Wait:        &wait,
@@ -85,10 +93,19 @@ func (c *WorkflowsRunController) Run(cmd *cobra.Command, args []string) (fctl.Re
 }
 
 func (c *WorkflowsRunController) Render(cmd *cobra.Command, args []string) error {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return err
+	}
 	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Workflow instance created with ID: %s", c.store.WorkflowInstance.ID)
 	if c.wait {
-		w, err := store.Client().Orchestration.V1.GetWorkflow(cmd.Context(), operations.GetWorkflowRequest{
+		w, err := stackClient.Orchestration.V1.GetWorkflow(cmd.Context(), operations.GetWorkflowRequest{
 			FlowID: args[0],
 		})
 		if err != nil {

@@ -5,9 +5,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/cmd/cloud/apps/printer"
-	"github.com/formancehq/fctl/internal/deployserverclient/models/components"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
+
+	"github.com/formancehq/fctl/v3/cmd/cloud/apps/printer"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type Logs []components.Log
@@ -41,12 +42,27 @@ func (c *LogsCtrl) GetStore() Logs {
 }
 
 func (c *LogsCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetDeployServerStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	_, apiClient, err := fctl.NewAppDeployClientFromFlags(
+		cmd,
+		relyingParty,
+		fctl.NewPTermDialog(),
+		profileName,
+		*profile,
+	)
+	if err != nil {
+		return nil, err
+	}
 	id := fctl.GetString(cmd, "id")
 	if id == "" {
 		return nil, fmt.Errorf("id is required")
 	}
-	logs, err := store.Cli.ReadRunLogs(cmd.Context(), id)
+	logs, err := apiClient.ReadRunLogs(cmd.Context(), id)
 	if err != nil {
 		return nil, err
 	}

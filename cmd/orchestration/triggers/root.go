@@ -3,8 +3,8 @@ package triggers
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/cmd/orchestration/triggers/occurrences"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/orchestration/triggers/occurrences"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 func NewCommand() *cobra.Command {
