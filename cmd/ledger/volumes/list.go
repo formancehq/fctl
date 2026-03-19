@@ -98,7 +98,6 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		oot = &tmp
 	}
 
-	// Request body not anymore in the V2GetVolumesWithBalancesRequest
 	request := operations.V2GetVolumesWithBalancesRequest{
 		Query: map[string]any{
 			"$and": body,
