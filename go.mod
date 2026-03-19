@@ -39,7 +39,7 @@ require (
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/ThreeDotsLabs/watermill v1.5.1 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
-	github.com/buger/jsonparser v1.1.1 // indirect
+	github.com/buger/jsonparser v1.1.2 // indirect
 	github.com/containerd/console v1.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fatih/color v1.18.0 // indirect
