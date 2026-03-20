@@ -5,3 +5,6 @@ package components
 
 type V2ChartAccountRules struct {
 }
+
+// #region class-body-v2chartaccountrules
+// #endregion class-body-v2chartaccountrules

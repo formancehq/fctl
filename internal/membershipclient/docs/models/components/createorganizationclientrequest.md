@@ -5,5 +5,5 @@
 
 | Field                     | Type                      | Required                  | Description               |
 | ------------------------- | ------------------------- | ------------------------- | ------------------------- |
-| `Name`                    | **string*                 | :heavy_minus_sign:        | Name of the client        |
-| `Description`             | **string*                 | :heavy_minus_sign:        | Description of the client |
+| `Name`                    | `*string`                 | :heavy_minus_sign:        | Name of the client        |
+| `Description`             | `*string`                 | :heavy_minus_sign:        | Description of the client |
