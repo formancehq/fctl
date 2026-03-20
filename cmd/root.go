@@ -16,6 +16,7 @@ import (
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/sdkerrors"
 	"github.com/formancehq/go-libs/v3/api"
 	"github.com/formancehq/go-libs/v3/logging"
+	"github.com/formancehq/go-libs/v3/service"
 
 	"github.com/formancehq/fctl/v3/cmd/auth"
 	"github.com/formancehq/fctl/v3/cmd/cloud"
@@ -101,7 +102,9 @@ func Execute() {
 		}
 	}()
 	ctx, _ := signal.NotifyContext(context.TODO(), os.Interrupt)
+
 	cmd := NewRootCommand()
+	service.BindEnvToCommand(cmd)
 	if err := cmd.ExecuteContext(ctx); err != nil {
 		switch {
 		case errors.Is(err, fctl.ErrMissingApproval):
