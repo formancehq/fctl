@@ -205,7 +205,7 @@ func (c *ImportController) openFileWithOffset(filePath string, id *big.Int) (*os
 		}
 	}
 
-	ret, err := os.Open(filePath)
+	ret, err := os.Open(filepath.Clean(filePath))
 	if err != nil {
 		return nil, 0, err
 	}
