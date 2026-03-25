@@ -3,7 +3,7 @@
 
 package deployserverclient
 
-// Generated from OpenAPI doc version 0.1.0 and generator version 2.859.2
+// Generated from OpenAPI doc version 0.1.0 and generator version 2.869.23
 
 import (
 	"bytes"
@@ -120,7 +120,7 @@ func New(opts ...SDKOption) *DeployServer {
 	sdk := &DeployServer{
 		SDKVersion: "0.0.1",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 0.0.1 2.859.2 0.1.0 github.com/formancehq/fctl/internal/deployserverclient/v3",
+			UserAgent:  "speakeasy-sdk/go 0.0.1 2.869.23 0.1.0 github.com/formancehq/fctl/internal/deployserverclient/v3",
 			ServerList: ServerList,
 		},
 		hooks: hooks.New(),

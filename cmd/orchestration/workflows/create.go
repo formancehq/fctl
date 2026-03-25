@@ -59,14 +59,14 @@ func (c *WorkflowsCreateController) Run(cmd *cobra.Command, args []string) (fctl
 		return nil, err
 	}
 
-	config := shared.WorkflowConfig{}
+	config := shared.CreateWorkflowRequest{}
 	if err := yaml.Unmarshal([]byte(script), &config); err != nil {
 		return nil, err
 	}
 
 	//nolint:gosimple
 	response, err := stackClient.Orchestration.V1.
-		CreateWorkflow(cmd.Context(), &shared.WorkflowConfig{
+		CreateWorkflow(cmd.Context(), &shared.CreateWorkflowRequest{
 			Name:   config.Name,
 			Stages: config.Stages,
 		})
