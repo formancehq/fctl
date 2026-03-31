@@ -504,6 +504,109 @@ type Runtime interface {
 
 The **sub-module** pattern (`cmd/fctl-plugin/go.mod`) keeps the pluginsdk dependency isolated — the main module has no knowledge of fctl.
 
+## API versioning simplification
+
+### The problem today
+
+In the current monolithic fctl, every service API version must be handled inside a single binary. This leads to significant complexity:
+
+- **Multi-version SDK dependency**: fctl imports a single SDK (`formance-sdk-go/v3`) that exposes versioned sub-clients: `stackClient.Payments.V1`, `stackClient.Payments.V3`, `stackClient.Ledger.V1`, `stackClient.Ledger.V2`, etc.
+- **Runtime version negotiation**: payments commands call the server's `getServerInfo` endpoint at runtime to detect the API version, then branch accordingly. This logic is duplicated across ~28 commands.
+- **Per-command branching**: each command contains `switch` or `if` blocks to call the right versioned method and handle version-specific request/response types (e.g., `V3CreateBankAccountRequest` vs `BankAccountRequest`).
+- **Growing combinatorial complexity**: every new API version adds another branch to every affected command, and every command must handle all supported versions.
+
+```
+fctl ledger transactions list
+    → detect server version
+    → if v2: call Ledger.V2.ListTransactions()
+    → if v1: call Ledger.V1.ListTransactions()
+    → render with version-specific response type
+```
+
+This version negotiation logic is fctl's biggest source of accidental complexity.
+
+### How plugins eliminate it
+
+With the plugin architecture, **each plugin binary targets exactly one API version**. The version mapping moves from runtime code to the registry:
+
+```
+fctl-plugin-ledger v2.0.0  →  built against Ledger API v2
+fctl-plugin-ledger v3.0.0  →  built against Ledger API v3
+fctl-plugin-payments v1.0.0  →  built against Payments API v1
+fctl-plugin-payments v2.0.0  →  built against Payments API v3
+```
+
+The plugin binary imports only the client library it needs — no multi-version SDK, no runtime detection, no branching. A plugin command looks like:
+
+```go
+func (p *Plugin) Execute(ctx context.Context, req *pluginpb.ExecuteRequest) (*pluginpb.ExecuteResponse, error) {
+    // One client, one version — no negotiation
+    client := ledgerclient.New(req.AuthContext.ServiceUrl, req.AuthContext.AccessToken)
+    txs, err := client.ListTransactions(ctx, ledger, cursor)
+    // ...
+}
+```
+
+### Version selection via the registry
+
+The `compatibleWith` field in the registry replaces all runtime version detection:
+
+```yaml
+plugins:
+  ledger:
+    type: stack
+    versions:
+      2.0.0:
+        compatibleWith: ">=1.18.0 <2.0.0"  # for Ledger API v1.x
+        binaries: { ... }
+      3.0.0:
+        compatibleWith: ">=2.0.0"           # for Ledger API v2.x
+        binaries: { ... }
+
+  payments:
+    type: stack
+    versions:
+      1.0.0:
+        compatibleWith: ">=1.0.0 <3.0.0"   # for Payments API v1/v2
+        binaries: { ... }
+      2.0.0:
+        compatibleWith: ">=3.0.0"           # for Payments API v3
+        binaries: { ... }
+```
+
+With [auto-discovery](#auto-discovery), fctl matches the actual service version running on the stack against the registry constraints and installs the right plugin version automatically. The user never needs to think about API versions.
+
+### What this removes from the codebase
+
+| Before (monolithic fctl) | After (plugins) |
+|---|---|
+| Single SDK with all API versions | Each plugin imports only its target client |
+| `GetPaymentsVersion()` runtime detection | Registry `compatibleWith` at install time |
+| Per-command version branching (`if V3 ... else V1`) | One code path per plugin binary |
+| Version-specific request/response types in same command | Plugin uses one set of types |
+| ~28 payments commands with version switches | Clean single-version commands |
+| Version coupling between unrelated services | Each plugin evolves independently |
+
+### Service APIs drop version prefixes
+
+Since the plugin is built against a specific API version, the service APIs themselves no longer need to expose version prefixes in their paths or gRPC package names. Today, services expose versioned endpoints:
+
+```
+/api/ledger/v2/transactions
+/api/payments/v3/bank-accounts
+```
+
+With plugins, the service can expose a single unversioned API:
+
+```
+/api/ledger/transactions
+/api/payments/bank-accounts
+```
+
+Breaking changes are handled by releasing a new major version of the service, which triggers a new plugin version in the registry. The old plugin version continues to work with old service versions. There is no need to maintain multiple API versions within the same service binary — the version boundary moves to the plugin/service pair.
+
+This aligns with the principle that **version compatibility is a deployment concern (registry + auto-discovery), not a code concern (runtime negotiation)**.
+
 ## Design principles
 
 1. **Process isolation**: each plugin runs as a separate process. A crash in a plugin doesn't take down fctl.
@@ -519,6 +622,8 @@ The **sub-module** pattern (`cmd/fctl-plugin/go.mod`) keeps the pluginsdk depend
 6. **Registry distribution**: plugins are versioned and distributed via a central registry with per-platform binaries.
 
 7. **Dual-target support**: products with a standalone CLI can define commands once and build for both targets using the adapter pattern + Runtime interface.
+
+8. **No API version prefixes**: each plugin targets exactly one API version. Version negotiation moves from runtime code to the registry's `compatibleWith` constraints. Services can drop version prefixes from their API paths — breaking changes are handled by new plugin versions, not by branching logic in fctl.
 
 ## File map
 
