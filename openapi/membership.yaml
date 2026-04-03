@@ -1675,7 +1675,7 @@ paths:
             schema:
               $ref: "#/components/schemas/CreatePrivateRegionRequest"
       responses:
-        200:
+        201:
           description: Created region
           content:
             application/json:
