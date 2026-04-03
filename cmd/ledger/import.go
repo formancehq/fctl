@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/go-libs/v3/pointer"
+	"github.com/formancehq/go-libs/v4/pointer"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
@@ -205,7 +205,7 @@ func (c *ImportController) openFileWithOffset(filePath string, id *big.Int) (*os
 		}
 	}
 
-	ret, err := os.Open(filePath)
+	ret, err := os.Open(filepath.Clean(filePath))
 	if err != nil {
 		return nil, 0, err
 	}

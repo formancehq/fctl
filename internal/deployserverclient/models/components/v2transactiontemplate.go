@@ -29,3 +29,6 @@ func (v *V2TransactionTemplate) GetScript() *string {
 	}
 	return v.Script
 }
+
+// #region class-body-v2transactiontemplate
+// #endregion class-body-v2transactiontemplate

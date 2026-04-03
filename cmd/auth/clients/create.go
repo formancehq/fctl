@@ -95,7 +95,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 	trusted := fctl.GetBool(cmd, c.trustedFlag)
 	description := fctl.GetString(cmd, c.descriptionFlag)
 
-	request := shared.ClientOptions{
+	request := shared.CreateClientRequest{
 		Public:                 &public,
 		RedirectUris:           fctl.GetStringSlice(cmd, c.redirectUriFlag),
 		Description:            &description,

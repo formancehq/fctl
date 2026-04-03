@@ -37,18 +37,19 @@
           f { pkgs = pkgs; pkgs-unstable = pkgs-unstable; system = system; }
         );
 
-      speakeasyVersion = "1.723.0";
+      speakeasyVersion = "1.759.2";
       speakeasyPlatforms = {
         "x86_64-linux"   = "linux_amd64";
         "aarch64-linux"  = "linux_arm64";
         "x86_64-darwin"  = "darwin_amd64";
         "aarch64-darwin" = "darwin_arm64";
       };
+      # Checksums from https://github.com/speakeasy-api/speakeasy/releases/download/v1.759.2/checksums.txt
       speakeasyHashes = {
-        "x86_64-linux"   = "ad92ea76747edc166a08f06be50c7c46de85edad574cb3d43c00d1a8a69d0680";
-        "aarch64-linux"  = "e81ea64194ea6986cbfaac068a16882705843f0db947273f3e62ad0b93cc2852";
-        "x86_64-darwin"  = "92ce41a65713426cea1897af554cf0693cbc0b273b187bc730fb1892f6edac73";
-        "aarch64-darwin" = "f1c5832f982af1f4932c2289d9111afa8b92c138736a0cbb0c9b12abc443ec7b";
+        "x86_64-linux"   = "9234e2e9138f03ac18f0ca034d0c5a0a7b8749ea91b16814b4a643afd680d8fd";
+        "aarch64-linux"  = "ba92a8c5799ed14acba94d317694ed32e35883e9439a07b28c58f7c8c0ea16f5";
+        "x86_64-darwin"  = "b4cfe13627e8822718b5820c68898f51b6381e604c9578650c9b0c3f40f800b0";
+        "aarch64-darwin" = "dda057dbbd83bdaa47f9ccf3311e455013d957d11f45d8336b97b91ba2a56d6d";
       };
 
     in

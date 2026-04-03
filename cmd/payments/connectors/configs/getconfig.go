@@ -9,7 +9,7 @@ import (
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
-	"github.com/formancehq/go-libs/collectionutils"
+	"github.com/formancehq/go-libs/v4/collectionutils"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/connectors/internal"
 	"github.com/formancehq/fctl/v3/cmd/payments/connectors/views"
