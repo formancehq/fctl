@@ -140,11 +140,10 @@ func New(opts ...SDKOption) *DeployServer {
 }
 
 // ListApps - List organization apps
-func (s *DeployServer) ListApps(ctx context.Context, organizationID string, pageNumber *int64, pageSize *int64, opts ...operations.Option) (*operations.ListAppsResponse, error) {
+func (s *DeployServer) ListApps(ctx context.Context, pageNumber *int64, pageSize *int64, opts ...operations.Option) (*operations.ListAppsResponse, error) {
 	request := operations.ListAppsRequest{
-		OrganizationID: organizationID,
-		PageNumber:     pageNumber,
-		PageSize:       pageSize,
+		PageNumber: pageNumber,
+		PageSize:   pageSize,
 	}
 
 	o := operations.Options{}

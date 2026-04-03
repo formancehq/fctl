@@ -1,6 +1,8 @@
 package apps
 
 import (
+	"fmt"
+
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -34,6 +36,7 @@ func NewCreateCtrl() *CreateCtrl {
 func NewCreate() *cobra.Command {
 	return fctl.NewCommand("create",
 		fctl.WithShortDescription("Create apps"),
+		fctl.WithStringFlag("name", "", "App name (required)"),
 		fctl.WithController(NewCreateCtrl()),
 	)
 }
@@ -49,7 +52,7 @@ func (c *CreateCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error
 		return nil, err
 	}
 
-	organizationID, apiClient, err := fctl.NewAppDeployClientFromFlags(
+	_, apiClient, err := fctl.NewAppDeployClientFromFlags(
 		cmd,
 		relyingParty,
 		fctl.NewPTermDialog(),
@@ -59,8 +62,14 @@ func (c *CreateCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error
 	if err != nil {
 		return nil, err
 	}
+
+	name := fctl.GetString(cmd, "name")
+	if name == "" {
+		return nil, fmt.Errorf("--name is required")
+	}
+
 	apps, err := apiClient.CreateApp(cmd.Context(), components.CreateAppRequest{
-		OrganizationID: organizationID,
+		Name: name,
 	})
 	if err != nil {
 		return nil, err
