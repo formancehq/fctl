@@ -56,7 +56,7 @@ func (c *ListCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) 
 	pageSize := fctl.GetInt(cmd, "page-size")
 	page := fctl.GetInt(cmd, "page")
 
-	organizationID, apiClient, err := fctl.NewAppDeployClientFromFlags(
+	_, apiClient, err := fctl.NewAppDeployClientFromFlags(
 		cmd,
 		relyingParty,
 		fctl.NewPTermDialog(),
@@ -68,7 +68,6 @@ func (c *ListCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) 
 	}
 	apps, err := apiClient.ListApps(
 		cmd.Context(),
-		organizationID,
 		pointer.For(int64(page)),
 		pointer.For(int64(pageSize)),
 	)

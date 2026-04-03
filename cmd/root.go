@@ -17,6 +17,7 @@ import (
 	"github.com/formancehq/go-libs/v3/api"
 	"github.com/formancehq/go-libs/v3/logging"
 
+	"github.com/formancehq/fctl/v3/cmd/apps"
 	"github.com/formancehq/fctl/v3/cmd/auth"
 	"github.com/formancehq/fctl/v3/cmd/cloud"
 	"github.com/formancehq/fctl/v3/cmd/ledger"
@@ -52,6 +53,7 @@ func NewRootCommand() *cobra.Command {
 			version.NewCommand(),
 			login.NewCommand(),
 			NewPromptCommand(),
+			apps.NewCommand(),
 			ledger.NewCommand(),
 			payments.NewCommand(),
 			reconciliation.NewCommand(),

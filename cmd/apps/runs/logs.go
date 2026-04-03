@@ -7,7 +7,7 @@ import (
 
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 
-	"github.com/formancehq/fctl/v3/cmd/cloud/apps/printer"
+	"github.com/formancehq/fctl/v3/cmd/apps/printer"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
