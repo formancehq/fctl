@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
-	"github.com/formancehq/go-libs/v3/pointer"
+	"github.com/formancehq/go-libs/v4/pointer"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
