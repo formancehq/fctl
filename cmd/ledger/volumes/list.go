@@ -2,7 +2,6 @@ package volumes
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -86,16 +85,6 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	oot, err := fctl.GetDateTime(cmd, c.ootFlag)
 	if err != nil {
 		return nil, err
-	}
-
-	if pit == nil {
-		tmp := time.Now()
-		pit = &tmp
-	}
-
-	if oot == nil {
-		tmp := pit.Add(-24 * 7 * time.Hour)
-		oot = &tmp
 	}
 
 	request := operations.V2GetVolumesWithBalancesRequest{
