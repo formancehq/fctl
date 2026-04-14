@@ -11,7 +11,7 @@ require (
 	github.com/formancehq/fctl/internal/membershipclient/v3 v3.1.1
 	github.com/formancehq/formance-sdk-go/v3 v3.8.1
 	github.com/formancehq/go-libs/v4 v4.1.1
-	github.com/go-jose/go-jose/v4 v4.1.3
+	github.com/go-jose/go-jose/v4 v4.1.4
 	github.com/iancoleman/strcase v0.3.0
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/pkg/errors v0.9.1
@@ -29,7 +29,7 @@ replace (
 	github.com/formancehq/fctl/internal/membershipclient/v3 => ./internal/membershipclient
 	github.com/spf13/cobra => github.com/formancehq/cobra v1.10.3-0.20260226173701-7f22399f993b
 	github.com/zitadel/oidc/v2 v2.6.1 => github.com/formancehq/oidc/v2 v2.6.2-0.20230526075055-93dc5ecb0149
-	gopkg.in/go-jose/go-jose.v4 => github.com/go-jose/go-jose/v4 v4.1.3
+	gopkg.in/go-jose/go-jose.v4 => github.com/go-jose/go-jose/v4 v4.1.4
 )
 
 require (
