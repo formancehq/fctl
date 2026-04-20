@@ -9,13 +9,13 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/operations"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type Show struct {
 	components.App
-	State components.State
 }
 
 type ShowCtrl struct {
@@ -26,8 +26,7 @@ var _ fctl.Controller[*Show] = (*ShowCtrl)(nil)
 
 func newShowStore() *Show {
 	return &Show{
-		App:   components.App{},
-		State: components.State{},
+		App: components.App{},
 	}
 }
 
@@ -69,23 +68,19 @@ func (c *ShowCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, erro
 	if id == "" {
 		return nil, fmt.Errorf("id is required")
 	}
-	app, err := apiClient.ReadApp(cmd.Context(), id)
+
+	app, err := apiClient.ReadApp(cmd.Context(), id, []operations.ReadAppInclude{operations.ReadAppIncludeState})
 	if err != nil {
 		return nil, err
 	}
 	c.store.App = app.AppResponse.Data
-
-	stateVersion, err := apiClient.ReadAppCurrentStateVersion(cmd.Context(), id)
-	if err == nil {
-		c.store.State = stateVersion.ReadStateResponse.Data
-	}
 
 	return c, nil
 }
 
 func (c *ShowCtrl) Render(cmd *cobra.Command, args []string) error {
 
-	if c.store.State.Stack != nil {
+	if c.store.App.State != nil && c.store.App.State.Stack != nil {
 		_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 		if err != nil {
 			return err
@@ -101,7 +96,7 @@ func (c *ShowCtrl) Render(cmd *cobra.Command, args []string) error {
 		}
 
 		if consoleURL := info.GetConsoleURL(); consoleURL != nil {
-			pterm.Info.Printfln("View stack in console: %s/%s/%s?region=%s", *consoleURL, organizationID, c.store.State.Stack["id"], c.store.State.Stack["region_id"])
+			pterm.Info.Printfln("View stack in console: %s/%s/%s?region=%s", *consoleURL, organizationID, c.store.App.State.Stack["id"], c.store.App.State.Stack["region_id"])
 		}
 	}
 
@@ -110,12 +105,10 @@ func (c *ShowCtrl) Render(cmd *cobra.Command, args []string) error {
 	items := []pterm.BulletListItem{
 		{Level: 0, Text: fmt.Sprintf("ID: %s", c.store.App.ID)},
 		{Level: 0, Text: fmt.Sprintf("Name: %s", c.store.App.Name)},
-		{Level: 0, Text: fmt.Sprintf("Run Status: %s", func() string {
-			if c.store.App.CurrentRun == nil {
-				return "N/A"
-			}
-			return c.store.App.CurrentRun.Status
-		}())},
+	}
+
+	if c.store.App.StackID != nil {
+		items = append(items, pterm.BulletListItem{Level: 0, Text: fmt.Sprintf("Stack ID: %s", *c.store.App.StackID)})
 	}
 
 	if err := pterm.
@@ -126,24 +119,24 @@ func (c *ShowCtrl) Render(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if c.store.State.Stack != nil {
+	if c.store.App.State != nil && c.store.App.State.Stack != nil {
 		pterm.DefaultSection.Println("State")
 
-		items = []pterm.BulletListItem{}
+		stateItems := []pterm.BulletListItem{}
 
-		for k, v := range c.store.State.Stack {
+		for k, v := range c.store.App.State.Stack {
 			if v == nil {
 				continue
 			}
-			items = append(items, pterm.BulletListItem{Level: 0, Text: fmt.Sprintf("%s: %s", k, v)})
+			stateItems = append(stateItems, pterm.BulletListItem{Level: 0, Text: fmt.Sprintf("%s: %s", k, v)})
 		}
 
-		slices.SortFunc(items, func(a, b pterm.BulletListItem) int {
+		slices.SortFunc(stateItems, func(a, b pterm.BulletListItem) int {
 			return strings.Compare(a.Text, b.Text)
 		})
 		if err := pterm.
 			DefaultBulletList.
-			WithItems(items).
+			WithItems(stateItems).
 			WithWriter(cmd.OutOrStdout()).
 			Render(); err != nil {
 			return err

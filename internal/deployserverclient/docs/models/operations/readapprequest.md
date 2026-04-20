@@ -3,6 +3,7 @@
 
 ## Fields
 
-| Field              | Type               | Required           | Description        |
-| ------------------ | ------------------ | ------------------ | ------------------ |
-| `ID`               | `string`           | :heavy_check_mark: | N/A                |
+| Field                                                                                                            | Type                                                                                                             | Required                                                                                                         | Description                                                                                                      |
+| ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `ID`                                                                                                             | `string`                                                                                                         | :heavy_check_mark:                                                                                               | N/A                                                                                                              |
+| `Include`                                                                                                        | [][operations.ReadAppInclude](../../models/operations/readappinclude.md)                                         | :heavy_minus_sign:                                                                                               | Comma-separated list of related resources to include.<br/>- `state`: Include the current Terraform workspace state.<br/> |
