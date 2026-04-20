@@ -56,7 +56,7 @@ func (c *ListCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) 
 	pageSize := fctl.GetInt(cmd, "page-size")
 	page := fctl.GetInt(cmd, "page")
 
-	organizationID, apiClient, err := fctl.NewAppDeployClientFromFlags(
+	_, apiClient, err := fctl.NewAppDeployClientFromFlags(
 		cmd,
 		relyingParty,
 		fctl.NewPTermDialog(),
@@ -68,7 +68,6 @@ func (c *ListCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) 
 	}
 	apps, err := apiClient.ListApps(
 		cmd.Context(),
-		organizationID,
 		pointer.For(int64(page)),
 		pointer.For(int64(pageSize)),
 	)
@@ -83,7 +82,7 @@ func (c *ListCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) 
 
 func (c *ListCtrl) Render(cmd *cobra.Command, _ []string) error {
 	data := [][]string{
-		{"Name", "ID", "Run Status", "Has Configuration Version"},
+		{"Name", "ID", "Stack ID"},
 	}
 
 	for _, w := range c.store.Items {
@@ -91,16 +90,10 @@ func (c *ListCtrl) Render(cmd *cobra.Command, _ []string) error {
 			w.Name,
 			w.ID,
 			func() string {
-				if w.CurrentRun == nil {
-					return "N/A"
+				if w.StackID != nil {
+					return *w.StackID
 				}
-				return w.CurrentRun.Status
-			}(),
-			func() string {
-				if w.CurrentConfigurationVersion != nil {
-					return "Yes"
-				}
-				return "No"
+				return "N/A"
 			}(),
 		})
 	}

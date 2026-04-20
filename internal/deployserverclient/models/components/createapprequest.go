@@ -4,13 +4,22 @@
 package components
 
 type CreateAppRequest struct {
-	// ID of the organization to which the app belongs
-	OrganizationID string `json:"organizationId"`
+	// Name of the app
+	Name string `json:"name"`
+	// Optional existing stack ID to claim
+	StackID *string `json:"stackId,omitempty"`
 }
 
-func (c *CreateAppRequest) GetOrganizationID() string {
+func (c *CreateAppRequest) GetName() string {
 	if c == nil {
 		return ""
 	}
-	return c.OrganizationID
+	return c.Name
+}
+
+func (c *CreateAppRequest) GetStackID() *string {
+	if c == nil {
+		return nil
+	}
+	return c.StackID
 }

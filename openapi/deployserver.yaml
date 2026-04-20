@@ -6,7 +6,7 @@ info:
 servers:
 - url: https://deploy.formance.cloud
   description: Production server
-- url: https://deploy-server.staging.formance.cloud
+- url: https://deploy.staging.formance.cloud
   description: Staging server
 - url: http://localhost:8080
   description: Local server
@@ -16,11 +16,6 @@ paths:
       summary: List organization apps
       operationId: listApps
       parameters:
-      - name: organizationId
-        in: query
-        required: true
-        schema:
-          type: string
       - name: pageNumber
         in: query
         schema:
@@ -98,6 +93,18 @@ paths:
         required: true
         schema:
           type: string
+      - name: include
+        in: query
+        required: false
+        description: |
+          Comma-separated list of related resources to include.
+          - `state`: Include the current Terraform workspace state.
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - state
       responses:
         '200':
           description: App details retrieved successfully
@@ -123,29 +130,6 @@ paths:
       responses:
         '204':
           description: App details retrieved successfully
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /apps/{id}/current-state-version:
-    get:
-      summary: Get the current state version of an app
-      operationId: readAppCurrentStateVersion
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: Current state version retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ReadStateResponse'
         default:
           description: Error
           content:
@@ -235,74 +219,171 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /apps/{id}/runs:
-    get:
-      summary: Get runs of an app
-      operationId: readAppRuns
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: pageNumber
-        in: query
-        schema:
-          type: integer
-      - name: pageSize
-        in: query
-        schema:
-          type: integer
-      responses:
-        '200':
-          description: App runs retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListRunsResponse'
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /apps/{id}/versions:
-    get:
-      summary: Get versions of an app
-      operationId: readAppVersions
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: pageNumber
-        in: query
-        schema:
-          type: integer
-      - name: pageSize
-        in: query
-        schema:
-          type: integer
-      responses:
-        '200':
-          description: App versions retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListVersionsResponse'
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /apps/{id}/deploy:
+  /manifests:
     post:
-      summary: Deploy a new configuration for an app
-      operationId: deployAppConfiguration
+      summary: Create a new manifest
+      operationId: createManifest
       parameters:
-      - name: id
+      - name: name
+        in: query
+        required: true
+        schema:
+          type: string
+        description: Name for the manifest
+      - name: appId
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Optional app ID to scope the manifest to a specific app
+      requestBody:
+        required: true
+        content:
+          application/yaml:
+            schema:
+              type: string
+              format: binary
+              description: YAML manifest content
+          application/json:
+            schema:
+              type: object
+              description: JSON manifest content
+      responses:
+        '201':
+          description: Manifest created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateManifestResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: List manifests in the organization
+      operationId: listManifests
+      parameters:
+      - name: pageNumber
+        in: query
+        schema:
+          type: integer
+      - name: pageSize
+        in: query
+        schema:
+          type: integer
+      - name: appId
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Filter manifests by app ID (includes org-wide manifests as fallback)
+      responses:
+        '200':
+          description: Manifests retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListManifestsResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /manifests/{manifestId}:
+    get:
+      summary: Read a manifest
+      operationId: readManifest
+      parameters:
+      - name: manifestId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: include
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Comma-separated includes (e.g. "latest" to embed latest version content)
+      responses:
+        '200':
+          description: Manifest retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManifestResponse'
+            application/gzip:
+              schema:
+                type: string
+                format: binary
+                description: Transpiled tar.gz of the latest manifest version
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      summary: Update manifest metadata
+      operationId: updateManifest
+      parameters:
+      - name: manifestId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateManifestRequest'
+      responses:
+        '200':
+          description: Manifest updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManifestResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete a manifest and all its versions
+      operationId: deleteManifest
+      parameters:
+      - name: manifestId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: Manifest deleted successfully
+        '409':
+          description: Manifest is still referenced by deployments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /manifests/{manifestId}/versions:
+    post:
+      summary: Push a new version of a manifest
+      operationId: pushManifestVersion
+      parameters:
+      - name: manifestId
         in: path
         required: true
         schema:
@@ -317,49 +398,171 @@ paths:
               description: YAML manifest content
           application/json:
             schema:
-              $ref: '#/components/schemas/application'
+              type: object
+              description: JSON manifest content
       responses:
-        '202':
-          description: App configuration deployed successfully
+        '201':
+          description: Manifest version created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RunResponse'
+                $ref: '#/components/schemas/ManifestVersionResponse'
         default:
           description: Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /apps/{id}/run:
     get:
-      summary: Get the current run of an app
-      operationId: readCurrentRun
+      summary: List versions of a manifest
+      operationId: listManifestVersions
       parameters:
-      - name: id
+      - name: manifestId
         in: path
         required: true
         schema:
           type: string
+      - name: pageNumber
+        in: query
+        schema:
+          type: integer
+      - name: pageSize
+        in: query
+        schema:
+          type: integer
       responses:
         '200':
-          description: Current run retrieved successfully
+          description: Manifest versions retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RunResponse'
+                $ref: '#/components/schemas/ListManifestVersionsResponse'
         default:
           description: Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /versions/{id}:
+  /manifests/{manifestId}/versions/{version}:
     get:
-      summary: Get a specific version
-      operationId: readVersion
+      summary: Get a specific manifest version with content
+      operationId: readManifestVersion
       parameters:
-      - name: id
+      - name: manifestId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: version
+        in: path
+        required: true
+        description: Version number or "latest"
+        schema:
+          type: string
+      - name: accept
+        in: header
+        required: false
+        description: |
+          The desired response format.
+          - `application/json`: Returns the version metadata and content in JSON format.
+          - `application/x-yaml`: Returns the raw manifest content as YAML.
+        schema:
+          type: string
+          enum:
+          - application/json
+          - application/x-yaml
+      responses:
+        '200':
+          description: Manifest version retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManifestVersionResponse'
+            application/x-yaml:
+              schema:
+                type: string
+                format: binary
+                description: Raw manifest YAML content
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /deployments:
+    post:
+      summary: Create a deployment (triggers a run)
+      operationId: createDeployment
+      parameters:
+      - name: appId
+        in: query
+        description: App ID (required for inline YAML deploys)
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDeploymentRequest'
+          application/x-yaml:
+            schema:
+              type: string
+              format: binary
+              description: Inline YAML manifest content (see Application schema)
+          application/yaml:
+            schema:
+              type: string
+              format: binary
+              description: Inline YAML manifest content (see Application schema)
+      responses:
+        '201':
+          description: Deployment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeploymentResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: List deployments
+      operationId: listDeployments
+      parameters:
+      - name: appId
+        in: query
+        schema:
+          type: string
+      - name: pageNumber
+        in: query
+        schema:
+          type: integer
+      - name: pageSize
+        in: query
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Deployments retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListDeploymentsResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /deployments/{deploymentId}:
+    get:
+      summary: Get a single deployment
+      operationId: readDeployment
+      parameters:
+      - name: deploymentId
         in: path
         required: true
         schema:
@@ -369,155 +572,67 @@ paths:
         required: false
         description: |
           The desired response format.
-          - `application/json`: Returns the version metadata in JSON format.
-          - `application/gzip`: Returns the version as a gzip archive.
-          - `application/yaml`: Returns the original manifest content.
+          - `application/json`: Returns the deployment metadata in JSON format.
+          - `application/gzip`: Returns the full configuration version as a gzip archive.
+          - `application/yaml`: Returns the original application manifest content.
         schema:
           type: string
           enum:
           - application/json
           - application/gzip
           - application/yaml
-      responses:
-        '200':
-          description: version retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AppVersionResponse'
-            application/gzip:
-              schema:
-                type: string
-                format: binary
-                description: Archive
-            application/yaml:
-              schema:
-                type: string
-                format: binary
-                description: Original manifest content
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /runs/{id}:
-    get:
-      summary: Get the run of a version
-      operationId: readRun
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: Run retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RunResponse'
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /runs/{id}/logs:
-    get:
-      summary: Get logs of a run by its ID
-      operationId: readRunLogs
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: Run logs retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ReadLogsResponse'
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /apps/{id}/run/logs:
-    get:
-      summary: Get logs of the current run of an app
-      operationId: readCurrentRunLogs
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: Current run logs retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ReadLogsResponse'
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /apps/{id}/version:
-    get:
-      summary: Get the current version of an app
-      operationId: readCurrentAppVersion
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: accept
-        in: header
-        required: false
-        description: |
-          The desired response format.
-          - `application/json`: Returns the version metadata in JSON format.
-          - `application/gzip`: Returns the version as a gzip archive.
-          - `application/yaml`: Returns the original manifest content.
-        schema:
-          type: string
-          enum:
-          - application/json
-          - application/gzip
-          - application/yaml
-      - name: from
+      - name: include
         in: query
         required: false
+        description: |
+          Comma-separated list of related resources to include.
+          - `state`: Include the Terraform state produced by this deployment's run.
         schema:
-          type: string
-          enum:
-          - state
+          type: array
+          items:
+            type: string
+            enum:
+            - state
       responses:
         '200':
-          description: Current app version retrieved successfully
+          description: Deployment retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppVersionResponse'
+                $ref: '#/components/schemas/DeploymentResponse'
             application/gzip:
               schema:
                 type: string
                 format: binary
-                description: Archive
+                description: Configuration version archive
             application/yaml:
               schema:
                 type: string
                 format: binary
-                description: Original manifest content
+                description: Original application manifest content
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /deployments/{deploymentId}/logs:
+    get:
+      summary: Get run logs for a deployment
+      operationId: readDeploymentLogs
+      parameters:
+      - name: deploymentId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Deployment logs retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadLogsResponse'
         default:
           description: Error
           content:
@@ -526,13 +641,8 @@ paths:
                 $ref: '#/components/schemas/Error'
 components:
   schemas:
-    ReadStateResponse:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          $ref: '#/components/schemas/State'
+    Application:
+      $ref: '#/components/schemas/application'
     State:
       type: object
       required:
@@ -609,14 +719,6 @@ components:
         totalCount:
           type: integer
           description: Total number of items
-    CreateAppRequest:
-      type: object
-      required:
-      - organizationId
-      properties:
-        organizationId:
-          type: string
-          description: ID of the organization to which the app belongs
     ListAppsResponse:
       type: object
       required:
@@ -640,45 +742,6 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/App'
-    ListRunsResponse:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          allOf:
-          - $ref: '#/components/schemas/PaginationResponse'
-          - type: object
-            required:
-            - items
-            properties:
-              items:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Run'
-    ListVersionsResponse:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          allOf:
-          - $ref: '#/components/schemas/PaginationResponse'
-          - type: object
-            required:
-            - items
-            properties:
-              items:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ConfigurationVersion'
-    AppVersionResponse:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          $ref: '#/components/schemas/ConfigurationVersion'
     App:
       type: object
       required:
@@ -691,100 +754,30 @@ components:
         name:
           type: string
           description: Name of the app
-        currentConfigurationVersion:
-          $ref: '#/components/schemas/ConfigurationVersion'
-        currentRun:
-          $ref: '#/components/schemas/Run'
-    RunResponse:
+        stackId:
+          type: string
+          description: Optional existing stack ID claimed by this app
+        state:
+          $ref: '#/components/schemas/State'
+    CreateAppRequest:
       type: object
       required:
-      - data
+      - name
       properties:
-        data:
-          $ref: '#/components/schemas/Run'
-    Run:
-      type: object
-      required:
-      - id
-      - status
-      - autoApply
-      - createdAt
-      - isDestroy
-      - hasChanges
-      - message
-      - planOnly
-      - refresh
-      - refreshOnly
-      - savePlan
-      properties:
-        id:
+        name:
           type: string
-          description: Unique identifier for the run
-        autoApply:
-          type: boolean
-          description: Whether the run was auto-applied
-        createdAt:
+          description: Name of the app
+        stackId:
           type: string
-          format: date-time
-          description: Timestamp when the run was created
-        isDestroy:
-          type: boolean
-          description: Whether the run is a destroy operation
-        hasChanges:
-          type: boolean
-          description: Whether the run has changes
-        message:
-          type: string
-          description: Message associated with the run
-        planOnly:
-          type: boolean
-          description: Whether the run is a plan-only operation
-        refresh:
-          type: boolean
-          description: Whether the run is a refresh operation
-        refreshOnly:
-          type: boolean
-          description: Whether the run is a refresh-only operation
-        savePlan:
-          type: boolean
-          description: Whether the run saves the plan
-        status:
-          type: string
-          description: Status of the run
-        configurationVersion:
-          $ref: '#/components/schemas/ConfigurationVersion'
-    ConfigurationVersion:
-      type: object
-      required:
-      - id
-      - status
-      - autoQueueRuns
-      - error
-      - errorMessage
-      properties:
-        id:
-          type: string
-          description: Unique identifier for the configuration version
-        autoQueueRuns:
-          type: boolean
-          description: Auto queue runs when a new version is uploaded
-        error:
-          type: string
-          description: Error code if the version is in an error state
-        errorMessage:
-          type: string
-          description: Error message if the version is in an error state
-        status:
-          type: string
-          enum:
-          - archived
-          - errored
-          - pending
-          - fetching
-          - uploaded
-          - ''
+          description: Optional existing stack ID to claim
     UpdateAppRequest:
       type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: Updated name for the app
     ReadVariablesResponse:
       type: object
       required:
@@ -842,6 +835,207 @@ components:
           id:
             type: string
             description: Unique identifier for the variable
+    Manifest:
+      type: object
+      required:
+      - id
+      - name
+      - latestVersion
+      - createdAt
+      - updatedAt
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the manifest
+        appId:
+          type: string
+          description: Optional app ID the manifest is scoped to
+        name:
+          type: string
+          description: Name of the manifest
+        latestVersion:
+          type: integer
+          description: Latest version number
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the manifest was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the manifest was last updated
+    ManifestVersion:
+      type: object
+      required:
+      - manifestId
+      - version
+      - createdAt
+      properties:
+        manifestId:
+          type: string
+          description: ID of the manifest this version belongs to
+        version:
+          type: integer
+          description: Version number
+        content:
+          type: string
+          format: byte
+          description: Manifest content (base64-encoded). Null when listing versions, present when reading a specific version.
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the version was created
+    CreateManifestResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          required:
+          - id
+          - version
+          - name
+          - createdAt
+          properties:
+            id:
+              type: string
+            appId:
+              type: string
+            version:
+              type: integer
+            name:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+    ManifestResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/Manifest'
+    ManifestVersionResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/ManifestVersion'
+    ListManifestsResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          allOf:
+          - $ref: '#/components/schemas/PaginationResponse'
+          - type: object
+            required:
+            - items
+            properties:
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Manifest'
+    ListManifestVersionsResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          allOf:
+          - $ref: '#/components/schemas/PaginationResponse'
+          - type: object
+            required:
+            - items
+            properties:
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ManifestVersion'
+    DeploymentResource:
+      type: object
+      required:
+      - id
+      - appId
+      - workspaceId
+      - runStatus
+      - createdAt
+      - updatedAt
+      properties:
+        id:
+          type: string
+        appId:
+          type: string
+        manifestId:
+          type: string
+        manifestVersion:
+          type: integer
+        hasInlineContent:
+          type: boolean
+        workspaceId:
+          type: string
+        runId:
+          type: string
+        runStatus:
+          type: string
+        configVersionId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        state:
+          $ref: '#/components/schemas/State'
+    CreateDeploymentRequest:
+      type: object
+      required:
+      - appId
+      properties:
+        appId:
+          type: string
+          description: ID of the app to deploy to
+        manifestId:
+          type: string
+          description: Manifest catalog ID (for manifest-reference mode)
+        manifestVersion:
+          type: integer
+          description: Manifest version (for manifest-reference mode)
+    DeploymentResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/DeploymentResource'
+    ListDeploymentsResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          allOf:
+          - $ref: '#/components/schemas/PaginationResponse'
+          - type: object
+            required:
+            - items
+            properties:
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeploymentResource'
+    UpdateManifestRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: Updated name for the manifest
     Error:
       type: object
       properties:
@@ -878,6 +1072,33 @@ components:
         .self:
           $ref: '#/components/schemas/DotSelf'
       type: object
+    V2QueryTemplateVar:
+      properties:
+        default: {}
+        type:
+          type: string
+      type: object
+    V2QueryTemplate:
+      properties:
+        body:
+          additionalProperties: {}
+          type: object
+        description:
+          type:
+          - 'null'
+          - string
+        params:
+          additionalProperties: {}
+          type: object
+        resource:
+          type:
+          - 'null'
+          - string
+        vars:
+          additionalProperties:
+            $ref: '#/components/schemas/V2QueryTemplateVar'
+          type: object
+      type: object
     V2TransactionTemplate:
       properties:
         description:
@@ -901,6 +1122,10 @@ components:
           type:
           - object
           - 'null'
+        queries:
+          additionalProperties:
+            $ref: '#/components/schemas/V2QueryTemplate'
+          type: object
         transactions:
           additionalProperties:
             $ref: '#/components/schemas/V2TransactionTemplate'
@@ -1174,6 +1399,33 @@ components:
             .self:
               $ref: '#/components/schemas/DotSelf'
           type: object
+        V2QueryTemplate:
+          properties:
+            body:
+              additionalProperties: {}
+              type: object
+            description:
+              type:
+              - 'null'
+              - string
+            params:
+              additionalProperties: {}
+              type: object
+            resource:
+              type:
+              - 'null'
+              - string
+            vars:
+              additionalProperties:
+                $ref: '#/components/schemas/V2QueryTemplateVar'
+              type: object
+          type: object
+        V2QueryTemplateVar:
+          properties:
+            default: {}
+            type:
+              type: string
+          type: object
         V2SchemaData:
           properties:
             chart:
@@ -1182,6 +1434,10 @@ components:
               type:
               - object
               - 'null'
+            queries:
+              additionalProperties:
+                $ref: '#/components/schemas/V2QueryTemplate'
+              type: object
             transactions:
               additionalProperties:
                 $ref: '#/components/schemas/V2TransactionTemplate'

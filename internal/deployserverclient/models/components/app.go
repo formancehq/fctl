@@ -7,9 +7,10 @@ type App struct {
 	// Unique identifier for the app
 	ID string `json:"id"`
 	// Name of the app
-	Name                        string                `json:"name"`
-	CurrentConfigurationVersion *ConfigurationVersion `json:"currentConfigurationVersion,omitempty"`
-	CurrentRun                  *Run                  `json:"currentRun,omitempty"`
+	Name string `json:"name"`
+	// Optional existing stack ID claimed by this app
+	StackID *string `json:"stackId,omitempty"`
+	State   *State  `json:"state,omitempty"`
 }
 
 func (a *App) GetID() string {
@@ -26,16 +27,16 @@ func (a *App) GetName() string {
 	return a.Name
 }
 
-func (a *App) GetCurrentConfigurationVersion() *ConfigurationVersion {
+func (a *App) GetStackID() *string {
 	if a == nil {
 		return nil
 	}
-	return a.CurrentConfigurationVersion
+	return a.StackID
 }
 
-func (a *App) GetCurrentRun() *Run {
+func (a *App) GetState() *State {
 	if a == nil {
 		return nil
 	}
-	return a.CurrentRun
+	return a.State
 }
