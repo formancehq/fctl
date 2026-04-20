@@ -13,7 +13,7 @@ func main() {
 
 	s := deployserverclient.New()
 
-	res, err := s.ListApps(ctx, "<id>", nil, nil)
+	res, err := s.ListApps(ctx, nil, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
