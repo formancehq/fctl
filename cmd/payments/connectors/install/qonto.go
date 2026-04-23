@@ -46,7 +46,7 @@ func NewPaymentsConnectorsQontoController() *PaymentsConnectorsQontoController {
 func NewQontoCommand() *cobra.Command {
 	c := NewPaymentsConnectorsQontoController()
 	return fctl.NewCommand(internal.QontoConnector+" <file>|-",
-		fctl.WithShortDescription("Install a qonto connector"),
+		fctl.WithShortDescription("Install a Qonto connector"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithController[*PaymentsConnectorsQontoStore](c),

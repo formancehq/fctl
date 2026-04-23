@@ -13,7 +13,7 @@ import (
 
 func NewCommand() *cobra.Command {
 	cmd := fctl.NewMembershipCommand("apps",
-		fctl.WithShortDescription("* New * Apps manifests management"),
+		fctl.WithShortDescription("Manage app manifests"),
 		fctl.WithPersistentBoolFlag("experimental", false, "Enable experimental commands"),
 		fctl.WithPersistentStringFlag(fctl.FrameworkURIFlag, "https://deploy.formance.cloud", "Framework URI"),
 		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {

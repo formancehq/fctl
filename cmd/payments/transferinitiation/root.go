@@ -9,7 +9,7 @@ import (
 func NewTransferInitiationCommand() *cobra.Command {
 	return fctl.NewCommand("transfer_initiation",
 		fctl.WithAliases("ti"),
-		fctl.WithShortDescription("Transfer Initiation management"),
+		fctl.WithShortDescription("Manage transfer initiations"),
 		fctl.WithChildCommands(
 			NewApproveCommand(),
 			NewCreateCommand(),

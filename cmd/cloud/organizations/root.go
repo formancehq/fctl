@@ -15,7 +15,7 @@ import (
 func NewCommand() *cobra.Command {
 	return fctl.NewCommand("organizations",
 		fctl.WithAliases("org", "o", "organization"),
-		fctl.WithShortDescription("Organizations management"),
+		fctl.WithShortDescription("Manage organizations"),
 		fctl.WithChildCommands(
 			NewListCommand(),
 			NewCreateCommand(),

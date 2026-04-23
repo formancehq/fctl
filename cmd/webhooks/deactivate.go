@@ -74,7 +74,7 @@ func (c *DesactivateWebhookController) Render(cmd *cobra.Command, args []string)
 
 func NewDeactivateCommand() *cobra.Command {
 	return fctl.NewCommand("deactivate <config-id>",
-		fctl.WithShortDescription("Deactivate one config"),
+		fctl.WithShortDescription("Deactivate a config"),
 		fctl.WithConfirmFlag(),
 		fctl.WithAliases("deac"),
 		fctl.WithArgs(cobra.ExactArgs(1)),

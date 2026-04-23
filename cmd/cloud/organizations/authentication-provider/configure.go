@@ -36,10 +36,10 @@ func NewConfigureCommand() *cobra.Command {
 	return fctl.NewCommand(`configure <type> <name> <client-id> <client-secret>`,
 		fctl.WithValidArgs("github", "google", "microsoft", "oidc"),
 		fctl.WithArgs(cobra.ExactArgs(4)),
-		fctl.WithShortDescription("Configure authorization provider for organization"),
+		fctl.WithShortDescription("Configure the authorization provider for the organization"),
 		fctl.WithController(NewConfigureController()),
-		fctl.WithStringFlag("oidc-issuer", "", "Used when type = oidc"),
-		fctl.WithStringFlag("microsoft-tenant", "tenant", "Used when type = microsoft"),
+		fctl.WithStringFlag("oidc-issuer", "", "OIDC issuer URL (used when type is 'oidc')"),
+		fctl.WithStringFlag("microsoft-tenant", "tenant", "Microsoft tenant ID (used when type is 'microsoft')"),
 	)
 }
 

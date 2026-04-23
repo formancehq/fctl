@@ -45,7 +45,7 @@ func NewReverseCommand() *cobra.Command {
 	return fctl.NewCommand("reverse <transferID> <file>|-",
 		fctl.WithConfirmFlag(),
 		fctl.WithAliases("re", "r"),
-		fctl.WithShortDescription("Reverse a transfer Initiation"),
+		fctl.WithShortDescription("Reverse a transfer initiation"),
 		fctl.WithArgs(cobra.ExactArgs(2)),
 		fctl.WithController[*ReverseStore](c),
 	)
@@ -112,6 +112,6 @@ func (c *ReverseController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 }
 
 func (c *ReverseController) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Transfer Initiation %s reversed!", c.store.TransferID)
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Transfer initiation %s reversed.", c.store.TransferID)
 	return nil
 }

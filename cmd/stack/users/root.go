@@ -9,7 +9,7 @@ import (
 func NewCommand() *cobra.Command {
 	return fctl.NewStackCommand("users",
 		fctl.WithAliases("u", "user"),
-		fctl.WithShortDescription("Stack users management within an organization"),
+		fctl.WithShortDescription("Manage stack users within an organization"),
 		fctl.WithChildCommands(
 			NewLinkCommand(),
 			NewListCommand(),

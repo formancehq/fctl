@@ -71,7 +71,7 @@ func NewShowCommand() *cobra.Command {
 	return fctl.NewCommand("show <name>",
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithAliases("s"),
-		fctl.WithShortDescription("Show profile"),
+		fctl.WithShortDescription("Show a profile"),
 		fctl.WithValidArgsFunction(ProfileNamesAutoCompletion),
 		fctl.WithController(NewProfilesShowController()),
 	)

@@ -30,7 +30,7 @@ func NewSetMetadataController() *SetMetadataController {
 
 func NewSetMetadataCommand() *cobra.Command {
 	return fctl.NewCommand("set-metadata <ledger-name> [<key>=<value>...]",
-		fctl.WithShortDescription("Set metadata on a ledger (Start from ledger v2 api)"),
+		fctl.WithShortDescription("Set metadata on a ledger (requires ledger v2 or later)"),
 		fctl.WithAliases("sm", "set-meta"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.MinimumNArgs(2)),

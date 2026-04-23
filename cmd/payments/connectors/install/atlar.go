@@ -41,7 +41,7 @@ func NewPaymentsConnectorsAtlarController() *PaymentsConnectorsAtlarController {
 func NewAtlarCommand() *cobra.Command {
 	c := NewPaymentsConnectorsAtlarController()
 	return fctl.NewCommand(internal.AtlarConnector+" <file>|-",
-		fctl.WithShortDescription("Install an atlar connector"),
+		fctl.WithShortDescription("Install an Atlar connector"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithController[*PaymentsConnectorsAtlarStore](c),

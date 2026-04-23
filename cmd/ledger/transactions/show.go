@@ -31,7 +31,7 @@ func NewShowController() *ShowController {
 
 func NewShowCommand() *cobra.Command {
 	return fctl.NewCommand("show <transaction-id>",
-		fctl.WithShortDescription("Print a transaction"),
+		fctl.WithShortDescription("Show a transaction"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithAliases("sh"),
 		fctl.WithValidArgs("last"),

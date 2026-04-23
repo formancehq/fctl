@@ -41,7 +41,7 @@ func NewShowController() *ShowController {
 func NewShowCommand() *cobra.Command {
 	c := NewShowController()
 	return fctl.NewCommand("get <taskID>",
-		fctl.WithShortDescription("Get task"),
+		fctl.WithShortDescription("Get a task"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithAliases("sh", "s"),

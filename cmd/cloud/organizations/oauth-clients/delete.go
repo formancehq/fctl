@@ -28,7 +28,7 @@ func NewDeleteController() *DeleteController {
 
 func NewDeleteCommand() *cobra.Command {
 	return fctl.NewCommand(`delete <client_id>`,
-		fctl.WithShortDescription("Delete organization OAuth client"),
+		fctl.WithShortDescription("Delete an organization OAuth client"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithController(NewDeleteController()),

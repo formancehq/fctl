@@ -14,7 +14,7 @@ func NewCommand() *cobra.Command {
 	return fctl.NewStackCommand("ledger",
 		fctl.WithAliases("l"),
 		fctl.WithPersistentStringFlag(internal.LedgerFlag, "default", "Specific ledger"),
-		fctl.WithShortDescription("Ledger management"),
+		fctl.WithShortDescription("Manage ledgers"),
 		fctl.WithChildCommands(
 			NewCreateCommand(),
 			NewSendCommand(),

@@ -10,7 +10,7 @@ import (
 
 func NewCommand() *cobra.Command {
 	return fctl.NewStackCommand("auth",
-		fctl.WithShortDescription("Auth server management"),
+		fctl.WithShortDescription("Manage the auth server"),
 		fctl.WithChildCommands(
 			clients.NewCommand(),
 			users.NewCommand(),

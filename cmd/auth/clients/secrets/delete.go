@@ -35,7 +35,7 @@ func NewDeleteCommand() *cobra.Command {
 	return fctl.NewCommand("delete <client-id> <secret-id>",
 		fctl.WithArgs(cobra.ExactArgs(2)),
 		fctl.WithAliases("d"),
-		fctl.WithShortDescription("Delete secret"),
+		fctl.WithShortDescription("Delete a secret"),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*DeleteStore](NewDeleteController()),
 	)

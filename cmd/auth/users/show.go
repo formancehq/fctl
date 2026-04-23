@@ -33,7 +33,7 @@ func NewShowController() *ShowController {
 func NewShowCommand() *cobra.Command {
 	return fctl.NewCommand("show <user-id>",
 		fctl.WithAliases("s"),
-		fctl.WithShortDescription("Show user"),
+		fctl.WithShortDescription("Show a user"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithController[*ShowStore](NewShowController()),
 	)

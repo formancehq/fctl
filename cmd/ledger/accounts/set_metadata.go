@@ -35,7 +35,7 @@ func NewSetMetadataController() *SetMetadataController {
 func NewSetMetadataCommand() *cobra.Command {
 	return fctl.NewCommand("set-metadata <address> [<key>=<value>...]",
 		fctl.WithConfirmFlag(),
-		fctl.WithShortDescription("Set metadata on address"),
+		fctl.WithShortDescription("Set metadata on an account"),
 		fctl.WithAliases("sm", "set-meta"),
 		fctl.WithArgs(cobra.MinimumNArgs(2)),
 		fctl.WithController[*SetMetadataStore](NewSetMetadataController()),

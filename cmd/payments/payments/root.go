@@ -9,7 +9,7 @@ import (
 func NewPaymentsCommand() *cobra.Command {
 	return fctl.NewCommand("payments",
 		fctl.WithAliases("p"),
-		fctl.WithShortDescription("Payments management"),
+		fctl.WithShortDescription("Manage payments"),
 		fctl.WithChildCommands(
 			NewCreateCommand(),
 			NewListCommand(),

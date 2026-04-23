@@ -9,7 +9,7 @@ import (
 func NewCommand() *cobra.Command {
 	return fctl.NewStackCommand("instances",
 		fctl.WithAliases("ins", "i"),
-		fctl.WithShortDescription("Instances management"),
+		fctl.WithShortDescription("Manage instances"),
 		fctl.WithChildCommands(
 			NewListCommand(),
 			NewShowCommand(),

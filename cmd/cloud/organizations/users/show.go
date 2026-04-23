@@ -35,7 +35,7 @@ func NewShowController() *ShowController {
 func NewShowCommand() *cobra.Command {
 	return fctl.NewCommand("show <user-id>",
 		fctl.WithAliases("s"),
-		fctl.WithShortDescription("Show user by id"),
+		fctl.WithShortDescription("Show a user by ID"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController(NewShowController()),

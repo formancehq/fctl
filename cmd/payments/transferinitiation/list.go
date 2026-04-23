@@ -162,9 +162,9 @@ func NewListCommand() *cobra.Command {
 		fctl.WithAliases("ls", "l"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
-		fctl.WithShortDescription("List transfer initiation"),
-		fctl.WithStringFlag(c.cursorFlag, "", "Cursor"),
-		fctl.WithIntFlag(c.pageSizeFlag, 0, "PageSize"),
+		fctl.WithShortDescription("List transfer initiations"),
+		fctl.WithStringFlag(c.cursorFlag, "", "Pagination cursor"),
+		fctl.WithIntFlag(c.pageSizeFlag, 0, "Page size"),
 		fctl.WithController[*ListStore](c),
 	)
 }

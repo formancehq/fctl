@@ -96,7 +96,7 @@ func (c *RetryController) Run(cmd *cobra.Command, args []string) (fctl.Renderabl
 }
 
 func (c *RetryController) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Retry Transfer Initiation with ID: %s", c.store.TransferID)
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Transfer initiation %s queued for retry.", c.store.TransferID)
 
 	return nil
 }

@@ -35,12 +35,12 @@ func NewCreateCtrl() *CreateCtrl {
 
 func NewCreate() *cobra.Command {
 	return fctl.NewCommand("create",
-		fctl.WithShortDescription("Create new variable for an app"),
+		fctl.WithShortDescription("Create a new variable for an app"),
 		fctl.WithStringFlag("id", "", "App ID"),
 		fctl.WithStringFlag("key", "", "Variable key"),
 		fctl.WithStringFlag("value", "", "Variable value"),
 		fctl.WithStringFlag("description", "", "Variable description"),
-		fctl.WithBoolFlag("sensitive", true, "Is variable sensitive"),
+		fctl.WithBoolFlag("sensitive", true, "Mark the variable as sensitive"),
 		fctl.WithStringFlag("category", "", "Variable category (env or terraform)"),
 		fctl.WithController(NewCreateCtrl()),
 	)

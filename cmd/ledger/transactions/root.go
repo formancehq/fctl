@@ -9,7 +9,7 @@ import (
 func NewLedgerTransactionsCommand() *cobra.Command {
 	return fctl.NewCommand("transactions",
 		fctl.WithAliases("t", "txs", "tx"),
-		fctl.WithShortDescription("Transactions management"),
+		fctl.WithShortDescription("Manage transactions"),
 		fctl.WithChildCommands(
 			NewListCommand(),
 			NewNumCommand(),
