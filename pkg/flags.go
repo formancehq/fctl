@@ -11,16 +11,17 @@ import (
 )
 
 const (
-	MembershipURIFlag = "membership-uri"
-	ConfigDir         = "config-dir"
-	ProfileFlag       = "profile"
-	OutputFlag        = "output"
-	DebugFlag         = "debug"
-	InsecureTlsFlag   = "insecure-tls"
-	TelemetryFlag     = "telemetry"
-	stackFlag         = "stack"
-	organizationFlag  = "organization"
-	FrameworkURIFlag  = "framework-uri"
+	MembershipURIFlag    = "membership-uri"
+	ConfigDir            = "config-dir"
+	ProfileFlag          = "profile"
+	OutputFlag           = "output"
+	DebugFlag            = "debug"
+	InsecureTlsFlag      = "insecure-tls"
+	HTTPCloseOnErrorFlag = "http-close-on-error"
+	TelemetryFlag        = "telemetry"
+	StackFlag            = "stack"
+	OrganizationFlag     = "organization"
+	FrameworkURIFlag     = "framework-uri"
 )
 
 func GetBool(cmd *cobra.Command, flagName string) bool {

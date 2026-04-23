@@ -10,8 +10,8 @@ import (
 	"github.com/pterm/pterm"
 	"golang.org/x/oauth2"
 
-	"github.com/formancehq/go-libs/v3/oidc/client"
-	httphelper "github.com/formancehq/go-libs/v3/oidc/http"
+	"github.com/formancehq/go-libs/v4/oidc/client"
+	httphelper "github.com/formancehq/go-libs/v4/oidc/http"
 )
 
 func GetAuthRelyingParty(ctx context.Context, httpClient *http.Client, membershipURI string) (client.RelyingParty, error) {

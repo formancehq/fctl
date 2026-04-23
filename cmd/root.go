@@ -14,8 +14,8 @@ import (
 
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/apierrors"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/sdkerrors"
-	"github.com/formancehq/go-libs/v3/api"
-	"github.com/formancehq/go-libs/v3/logging"
+	"github.com/formancehq/go-libs/v4/api"
+	"github.com/formancehq/go-libs/v4/logging"
 
 	"github.com/formancehq/fctl/v3/cmd/auth"
 	"github.com/formancehq/fctl/v3/cmd/cloud"

@@ -21,3 +21,6 @@ func (v *V2SchemaData) GetTransactions() map[string]V2TransactionTemplate {
 	}
 	return v.Transactions
 }
+
+// #region class-body-v2schemadata
+// #endregion class-body-v2schemadata

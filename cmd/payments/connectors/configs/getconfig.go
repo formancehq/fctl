@@ -9,7 +9,7 @@ import (
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
-	"github.com/formancehq/go-libs/collectionutils"
+	"github.com/formancehq/go-libs/v4/collectionutils"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/connectors/internal"
 	"github.com/formancehq/fctl/v3/cmd/payments/connectors/views"
@@ -86,7 +86,7 @@ func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (f
 	provider := fctl.GetString(cmd, c.providerNameFlag)
 	connectorID := fctl.GetString(cmd, c.connectorIDFlag)
 
-	switch c.PaymentsVersion {
+	switch c.PaymentsVersion.Major {
 	case versions.V3:
 		if connectorID == "" {
 			return nil, fmt.Errorf("connector-id is required for v3")
@@ -109,7 +109,6 @@ func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (f
 		c.store.V3ConnectorConfig = response.V3GetConnectorConfigResponse
 		c.store.ConnectorID = connectorID
 		c.store.Provider = strings.ToLower(string(response.V3GetConnectorConfigResponse.Data.Type))
-
 	case versions.V0:
 		if provider == "" {
 			return nil, fmt.Errorf("provider is required")
@@ -193,7 +192,7 @@ func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (f
 
 // TODO: This need to use the ui.NewListModel
 func (c *PaymentsLoadConfigController) Render(cmd *cobra.Command, args []string) error {
-	if c.PaymentsVersion == versions.V3 {
+	if c.PaymentsVersion.Major == versions.V3 {
 		return c.renderV3(cmd, args)
 	}
 	return c.renderV1V2(cmd, args)

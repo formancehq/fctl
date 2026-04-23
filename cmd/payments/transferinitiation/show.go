@@ -69,7 +69,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, err
 	}
 
-	if c.PaymentsVersion < versions.V1 {
+	if c.PaymentsVersion.Major < versions.V1 {
 		return nil, fmt.Errorf("transfer initiation are only supported in >= v1.0.0")
 	}
 
@@ -131,7 +131,7 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	tableData = fctl.Map(c.store.TransferInitiation.RelatedAdjustments, func(tf shared.TransferInitiationAdjusments) []string {
+	tableData = fctl.Map(c.store.TransferInitiation.RelatedAdjustments, func(tf shared.TransferInitiationAdjustments) []string {
 		return []string{
 			tf.AdjustmentID,
 			tf.CreatedAt.Format(time.RFC3339),

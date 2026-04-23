@@ -60,9 +60,9 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `organizationID`                                         | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `pageNumber`                                             | **int64*                                                 | :heavy_minus_sign:                                       | N/A                                                      |
-| `pageSize`                                               | **int64*                                                 | :heavy_minus_sign:                                       | N/A                                                      |
+| `organizationID`                                         | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `pageNumber`                                             | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
+| `pageSize`                                               | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -164,7 +164,7 @@ func main() {
 | Parameter                                                                  | Type                                                                       | Required                                                                   | Description                                                                |
 | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | `ctx`                                                                      | [context.Context](https://pkg.go.dev/context#Context)                      | :heavy_check_mark:                                                         | The context to use for the request.                                        |
-| `id`                                                                       | *string*                                                                   | :heavy_check_mark:                                                         | N/A                                                                        |
+| `id`                                                                       | `string`                                                                   | :heavy_check_mark:                                                         | N/A                                                                        |
 | `updateAppRequest`                                                         | [components.UpdateAppRequest](../../models/components/updateapprequest.md) | :heavy_check_mark:                                                         | N/A                                                                        |
 | `opts`                                                                     | [][operations.Option](../../models/operations/option.md)                   | :heavy_minus_sign:                                                         | The options for this request.                                              |
 
@@ -214,7 +214,7 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -263,7 +263,7 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -312,7 +312,7 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -361,9 +361,9 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `pageNumber`                                             | **int64*                                                 | :heavy_minus_sign:                                       | N/A                                                      |
-| `pageSize`                                               | **int64*                                                 | :heavy_minus_sign:                                       | N/A                                                      |
+| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `pageNumber`                                             | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
+| `pageSize`                                               | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -419,7 +419,7 @@ func main() {
 | Parameter                                                                            | Type                                                                                 | Required                                                                             | Description                                                                          |
 | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
 | `ctx`                                                                                | [context.Context](https://pkg.go.dev/context#Context)                                | :heavy_check_mark:                                                                   | The context to use for the request.                                                  |
-| `id`                                                                                 | *string*                                                                             | :heavy_check_mark:                                                                   | N/A                                                                                  |
+| `id`                                                                                 | `string`                                                                             | :heavy_check_mark:                                                                   | N/A                                                                                  |
 | `createVariableRequest`                                                              | [components.CreateVariableRequest](../../models/components/createvariablerequest.md) | :heavy_check_mark:                                                                   | N/A                                                                                  |
 | `opts`                                                                               | [][operations.Option](../../models/operations/option.md)                             | :heavy_minus_sign:                                                                   | The options for this request.                                                        |
 
@@ -469,8 +469,8 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `variableID`                                             | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `variableID`                                             | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -519,9 +519,9 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `pageNumber`                                             | **int64*                                                 | :heavy_minus_sign:                                       | N/A                                                      |
-| `pageSize`                                               | **int64*                                                 | :heavy_minus_sign:                                       | N/A                                                      |
+| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `pageNumber`                                             | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
+| `pageSize`                                               | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -570,9 +570,9 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `pageNumber`                                             | **int64*                                                 | :heavy_minus_sign:                                       | N/A                                                      |
-| `pageSize`                                               | **int64*                                                 | :heavy_minus_sign:                                       | N/A                                                      |
+| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `pageNumber`                                             | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
+| `pageSize`                                               | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -627,8 +627,8 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `requestBody`                                            | *any*                                                    | :heavy_check_mark:                                       | N/A                                                      |
+| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `requestBody`                                            | `any`                                                    | :heavy_check_mark:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -683,7 +683,7 @@ func main() {
 | Parameter                                                        | Type                                                             | Required                                                         | Description                                                      |
 | ---------------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------- |
 | `ctx`                                                            | [context.Context](https://pkg.go.dev/context#Context)            | :heavy_check_mark:                                               | The context to use for the request.                              |
-| `id`                                                             | *string*                                                         | :heavy_check_mark:                                               | N/A                                                              |
+| `id`                                                             | `string`                                                         | :heavy_check_mark:                                               | N/A                                                              |
 | `application`                                                    | [components.Application](../../models/components/application.md) | :heavy_check_mark:                                               | N/A                                                              |
 | `opts`                                                           | [][operations.Option](../../models/operations/option.md)         | :heavy_minus_sign:                                               | The options for this request.                                    |
 
@@ -733,7 +733,7 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -782,7 +782,7 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -831,7 +831,7 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -880,7 +880,7 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -929,7 +929,7 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -978,7 +978,7 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
 | `from`                                                   | [*operations.From](../../models/operations/from.md)      | :heavy_minus_sign:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 

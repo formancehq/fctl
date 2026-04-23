@@ -43,6 +43,8 @@ go:
   codeSamples:
     output: false
   defaultErrorName: APIError
+  enableCustomCodeRegions: false
+  enableSkipDeserialization: false
   envVarPrefix: DEPLOYSERVER
   flattenGlobalSecurity: true
   forwardCompatibleEnumsByDefault: false

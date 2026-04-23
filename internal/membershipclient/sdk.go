@@ -2,7 +2,7 @@
 
 package membershipclient
 
-// Generated from OpenAPI doc version 0.1.0 and generator version 2.835.2
+// Generated from OpenAPI doc version 0.1.0 and generator version 2.869.23
 
 import (
 	"bytes"
@@ -61,7 +61,7 @@ type SDK struct {
 
 type SDKOption func(*SDK)
 
-// WithServerURL allows the overriding of the default server URL
+// WithServerURL allows providing an alternative server URL
 func WithServerURL(serverURL string) SDKOption {
 	return func(sdk *SDK) {
 		sdk.sdkConfiguration.ServerURL = serverURL
@@ -130,9 +130,9 @@ func WithTimeout(timeout time.Duration) SDKOption {
 // New creates a new instance of the SDK with the provided options
 func New(opts ...SDKOption) *SDK {
 	sdk := &SDK{
-		SDKVersion: "0.1.0",
+		SDKVersion: "0.1.1",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 0.1.0 2.835.2 0.1.0 github.com/formancehq/fctl/internal/membershipclient/v3",
+			UserAgent:  "speakeasy-sdk/go 0.1.1 2.869.23 0.1.0 github.com/formancehq/fctl/internal/membershipclient/v3",
 			ServerList: ServerList,
 		},
 		hooks: hooks.New(),
@@ -12734,7 +12734,7 @@ func (s *SDK) CreatePrivateRegion(ctx context.Context, request operations.Create
 	}
 
 	switch {
-	case httpRes.StatusCode == 200:
+	case httpRes.StatusCode == 201:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)

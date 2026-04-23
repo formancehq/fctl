@@ -13,3 +13,6 @@ func (v *V2ChartAccountMetadata) GetDefault() *string {
 	}
 	return v.Default
 }
+
+// #region class-body-v2chartaccountmetadata
+// #endregion class-body-v2chartaccountmetadata
