@@ -72,7 +72,7 @@ func (c *PaymentsConnectorsCoinbaseprimeController) Run(cmd *cobra.Command, args
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
 	}
-	if c.PaymentsVersion < versions.V3 {
+	if c.PaymentsVersion.IsAtLeast(versions.V3, 2) {
 		return nil, fmt.Errorf("coinbaseprime connector is only supported in version >= v3.2.0")
 	}
 

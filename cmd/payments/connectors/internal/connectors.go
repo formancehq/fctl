@@ -15,10 +15,10 @@ const (
 	ColumnConnector        = "column"
 	FireblocksConnector    = "fireblocks"
 	CoinbaseprimeConnector = "coinbaseprime"
-	IncreaseConnector     = "increase"
-	PowensConnector       = "powens"
-	TinkConnector         = "tink"
-	PlaidConnector        = "plaid"
+	IncreaseConnector      = "increase"
+	PowensConnector        = "powens"
+	TinkConnector          = "tink"
+	PlaidConnector         = "plaid"
 )
 
 var AllConnectors = []string{

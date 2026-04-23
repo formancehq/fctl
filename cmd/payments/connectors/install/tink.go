@@ -72,7 +72,7 @@ func (c *PaymentsConnectorsTinkController) Run(cmd *cobra.Command, args []string
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
 	}
-	if c.PaymentsVersion < versions.V3 {
+	if c.PaymentsVersion.IsAtLeast(versions.V3, 1) {
 		return nil, fmt.Errorf("tink connector is only supported in version >= v3.1.0")
 	}
 
