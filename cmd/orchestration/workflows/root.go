@@ -9,7 +9,7 @@ import (
 func NewCommand() *cobra.Command {
 	return fctl.NewStackCommand("workflows",
 		fctl.WithAliases("w", "work"),
-		fctl.WithShortDescription("Workflows management"),
+		fctl.WithShortDescription("Manage workflows"),
 		fctl.WithChildCommands(
 			NewListCommand(),
 			NewCreateCommand(),

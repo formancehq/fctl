@@ -32,7 +32,7 @@ func NewDeleteCtrl() *DeleteCtrl {
 func NewDelete() *cobra.Command {
 	return fctl.NewCommand("delete",
 		fctl.WithShortDescription("Delete a variable"),
-		fctl.WithStringFlag("id", "", "Variable id"),
+		fctl.WithStringFlag("id", "", "Variable ID"),
 		fctl.WithStringFlag("app-id", "", "App ID"),
 		fctl.WithController(NewDeleteCtrl()),
 	)

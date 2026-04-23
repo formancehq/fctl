@@ -35,7 +35,7 @@ func NewCreateController() *CreateController {
 func NewCreateCommand() *cobra.Command {
 	return fctl.NewCommand("create [name]",
 		fctl.WithAliases("sh", "s"),
-		fctl.WithShortDescription("Show region details"),
+		fctl.WithShortDescription("Create a region"),
 		fctl.WithArgs(cobra.RangeArgs(0, 1)),
 		fctl.WithController[*CreateStore](NewCreateController()),
 	)
@@ -100,7 +100,7 @@ func (c *CreateController) Render(cmd *cobra.Command, args []string) error {
 	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln(
 		"Region created successfully with ID: %s", c.store.RegionId)
 	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln(
-		"Your secret is (keep it safe, we will not be able to give it to you again): %s", c.store.Secret)
+		"Secret (shown once — store it safely): %s", c.store.Secret)
 
 	return nil
 }

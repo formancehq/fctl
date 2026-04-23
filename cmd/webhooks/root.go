@@ -9,7 +9,7 @@ import (
 func NewCommand() *cobra.Command {
 	return fctl.NewStackCommand("webhooks",
 		fctl.WithAliases("web", "wh"),
-		fctl.WithShortDescription("Webhooks management"),
+		fctl.WithShortDescription("Manage webhooks"),
 		fctl.WithChildCommands(
 			NewCreateCommand(),
 			NewListCommand(),

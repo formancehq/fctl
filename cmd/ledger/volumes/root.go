@@ -9,7 +9,7 @@ import (
 func NewLedgerVolumesCommand() *cobra.Command {
 	return fctl.NewCommand("volumes",
 		fctl.WithAliases("vol", "volume", "vols", "vlm"),
-		fctl.WithShortDescription("Get volumes and Balances for accounts"),
+		fctl.WithShortDescription("Get volumes and balances for accounts"),
 		fctl.WithChildCommands(NewListCommand()),
 	)
 

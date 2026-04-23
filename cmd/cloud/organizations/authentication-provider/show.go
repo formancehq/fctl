@@ -33,7 +33,7 @@ func NewShowController() *ShowController {
 
 func NewShowCommand() *cobra.Command {
 	return fctl.NewCommand(`show`,
-		fctl.WithShortDescription("Show authorization provider of organization"),
+		fctl.WithShortDescription("Show the authorization provider for the organization"),
 		fctl.WithController(NewShowController()),
 	)
 }

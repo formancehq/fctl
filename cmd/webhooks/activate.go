@@ -67,7 +67,7 @@ func (*ActivateWebhookController) Render(cmd *cobra.Command, args []string) erro
 
 func NewActivateCommand() *cobra.Command {
 	return fctl.NewCommand("activate <config-id>",
-		fctl.WithShortDescription("Activate one config"),
+		fctl.WithShortDescription("Activate a config"),
 		fctl.WithAliases("ac", "a"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),

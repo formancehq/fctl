@@ -69,7 +69,7 @@ func (c *InstancesStopController) Run(cmd *cobra.Command, args []string) (fctl.R
 
 func (c *InstancesStopController) Render(cmd *cobra.Command, args []string) error {
 	// Print the instance information
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Workflow Instance with ID: %s successfully canceled ", c.store.InstanceID)
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Workflow instance %s canceled.", c.store.InstanceID)
 
 	return nil
 }

@@ -50,7 +50,7 @@ func NewUpdateAdyenConnectorConfigController() *UpdateAdyenConnectorConfigContro
 func newUpdateAdyenCommand() *cobra.Command {
 	c := NewUpdateAdyenConnectorConfigController()
 	return fctl.NewCommand(internal.AdyenConnector+" <file>|-",
-		fctl.WithShortDescription("Update the config of a Adyen connector"),
+		fctl.WithShortDescription("Update the config of an Adyen connector"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithStringFlag("connector-id", "", "Connector ID"),

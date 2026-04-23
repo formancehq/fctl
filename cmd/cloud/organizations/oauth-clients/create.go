@@ -38,7 +38,7 @@ func NewCreateController() *CreateController {
 
 func NewCreateCommand() *cobra.Command {
 	return fctl.NewCommand(`create`,
-		fctl.WithShortDescription("Create organization OAuth client"),
+		fctl.WithShortDescription("Create an organization OAuth client"),
 		fctl.WithConfirmFlag(),
 		fctl.WithStringFlag(descriptionFlag, "", "Description of the OAuth client usage"),
 		fctl.WithStringFlag(nameFlag, "", "Name of the OAuth client"),

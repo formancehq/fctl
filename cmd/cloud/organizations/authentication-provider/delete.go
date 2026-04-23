@@ -28,7 +28,7 @@ func NewDeleteController() *DeleteController {
 
 func NewDeleteCommand() *cobra.Command {
 	return fctl.NewCommand(`delete`,
-		fctl.WithShortDescription("Delete authorization provider of organization"),
+		fctl.WithShortDescription("Delete the authorization provider for the organization"),
 		fctl.WithController(NewDeleteController()),
 	)
 }

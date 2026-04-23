@@ -36,7 +36,7 @@ func NewTriggersListController() *TriggersListController {
 func NewListCommand() *cobra.Command {
 	c := NewTriggersListController()
 	return fctl.NewCommand("list",
-		fctl.WithShortDescription("List all workflows triggers"),
+		fctl.WithShortDescription("List all workflow triggers"),
 		fctl.WithAliases("ls", "l"),
 		fctl.WithStringFlag(c.nameFlag, "", "Search by name"),
 		fctl.WithArgs(cobra.ExactArgs(0)),

@@ -31,7 +31,7 @@ func NewDeleteCtrl() *DeleteCtrl {
 
 func NewDelete() *cobra.Command {
 	return fctl.NewCommand("delete",
-		fctl.WithShortDescription("Delete apps"),
+		fctl.WithShortDescription("Delete an app"),
 		fctl.WithStringFlag("id", "", "App ID"),
 		fctl.WithController(NewDeleteCtrl()),
 	)

@@ -43,7 +43,7 @@ func NewAddAccountController() *AddAccountController {
 func NewAddAccountCommand() *cobra.Command {
 	c := NewAddAccountController()
 	return fctl.NewCommand("add-account <poolID> <accountID>",
-		fctl.WithShortDescription("Add account to pool"),
+		fctl.WithShortDescription("Add an account to a pool"),
 		fctl.WithArgs(cobra.ExactArgs(2)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithAliases("add", "a"),

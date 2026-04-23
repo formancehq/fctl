@@ -29,7 +29,7 @@ func NewDisableController() *DisableController {
 func NewDisableCommand() *cobra.Command {
 	return fctl.NewStackCommand("disable <module-name>",
 		fctl.WithConfirmFlag(),
-		fctl.WithShortDescription("disable a module"),
+		fctl.WithShortDescription("Disable a module"),
 		fctl.WithAliases("dis", "d"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),

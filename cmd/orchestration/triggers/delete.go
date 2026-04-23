@@ -69,6 +69,6 @@ func (c *TriggersDeleteController) Run(cmd *cobra.Command, args []string) (fctl.
 }
 
 func (c *TriggersDeleteController) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.Printfln("Trigger %s Deleted!", c.store.TriggerID)
+	pterm.Success.Printfln("Trigger %s deleted.", c.store.TriggerID)
 	return nil
 }
