@@ -2,7 +2,6 @@ package volumes
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -88,18 +87,8 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, err
 	}
 
-	if pit == nil {
-		tmp := time.Now()
-		pit = &tmp
-	}
-
-	if oot == nil {
-		tmp := pit.Add(-24 * 7 * time.Hour)
-		oot = &tmp
-	}
-
 	request := operations.V2GetVolumesWithBalancesRequest{
-		RequestBody: map[string]any{
+		Query: map[string]any{
 			"$and": body,
 		},
 		Ledger:        fctl.GetString(cmd, internal.LedgerFlag),

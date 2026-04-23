@@ -8,8 +8,8 @@ import (
 
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
-	"github.com/formancehq/go-libs/time"
-	"github.com/formancehq/go-libs/v3/pointer"
+	"github.com/formancehq/go-libs/v4/pointer"
+	"github.com/formancehq/go-libs/v4/time"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )

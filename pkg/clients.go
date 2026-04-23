@@ -16,9 +16,9 @@ import (
 	"github.com/formancehq/fctl/internal/membershipclient/v3"
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
 	formance "github.com/formancehq/formance-sdk-go/v3"
-	"github.com/formancehq/go-libs/collectionutils"
-	"github.com/formancehq/go-libs/v3/oidc"
-	"github.com/formancehq/go-libs/v3/oidc/client"
+	"github.com/formancehq/go-libs/v4/collectionutils"
+	"github.com/formancehq/go-libs/v4/oidc"
+	"github.com/formancehq/go-libs/v4/oidc/client"
 )
 
 func getVersion(cmd *cobra.Command) string {
