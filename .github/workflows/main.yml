@@ -24,6 +24,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  Tests:
+    if: github.event_name == 'pull_request'
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "ok"
+
   Dirty:
     runs-on: "shipfox-4vcpu-ubuntu-2404"
     env:
