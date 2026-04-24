@@ -27,9 +27,17 @@ jobs:
   Tests:
     if: github.event_name == 'pull_request'
     name: Tests
-    runs-on: ubuntu-latest
+    runs-on: "shipfox-4vcpu-ubuntu-2404"
     steps:
-      - run: echo "ok"
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          filter: tree:0
+      - name: Setup Env
+        uses: ./.github/actions/default
+        with:
+          token: ${{ secrets.NUMARY_GITHUB_TOKEN }}
+      - run: nix develop --impure --command just tests
 
   Dirty:
     runs-on: "shipfox-4vcpu-ubuntu-2404"
