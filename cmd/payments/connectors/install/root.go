@@ -26,6 +26,12 @@ func NewInstallCommand() *cobra.Command {
 			NewGenericCommand(),
 			NewQontoCommand(),
 			NewColumnCommand(),
+			NewFireblocksCommand(),
+			NewCoinbaseprimeCommand(),
+			NewIncreaseCommand(),
+			NewPowensCommand(),
+			NewTinkCommand(),
+			NewPlaidCommand(),
 		),
 	)
 }

@@ -1,8 +1,6 @@
 package views
 
 import (
-	"fmt"
-
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
@@ -19,12 +17,6 @@ func DisplayAtlarConfig(cmd *cobra.Command, connectorConfig *shared.ConnectorCon
 	tableData = append(tableData, []string{pterm.LightCyan("AccessKey:"), config.AccessKey})
 	tableData = append(tableData, []string{pterm.LightCyan("Secret:"), config.Secret})
 	tableData = append(tableData, []string{pterm.LightCyan("BaseUrl:"), fctl.StringPointerToString(config.BaseURL)})
-	tableData = append(tableData, []string{pterm.LightCyan("PageSize:"), func() string {
-		if config.PageSize == nil {
-			return ""
-		}
-		return fmt.Sprintf("%d", *config.PageSize)
-	}()})
 	tableData = append(tableData, []string{pterm.LightCyan("Polling Period:"), fctl.StringPointerToString(config.PollingPeriod)})
 	tableData = append(tableData, []string{pterm.LightCyan("Transfer Initiation Status Polling Period:"), fctl.StringPointerToString(config.TransferInitiationStatusPollingPeriod)})
 
