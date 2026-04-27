@@ -24,6 +24,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  Tests:
+    name: Tests
+    runs-on: "shipfox-4vcpu-ubuntu-2404"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          filter: tree:0
+      - name: Setup Env
+        uses: ./.github/actions/default
+        with:
+          token: ${{ secrets.NUMARY_GITHUB_TOKEN }}
+      - run: nix develop --impure --command just tests
+
   Dirty:
     runs-on: "shipfox-4vcpu-ubuntu-2404"
     env:

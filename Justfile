@@ -25,7 +25,7 @@ generate-membership-client:
 
 
 tests:
-    echo "not implemented"
+    go test ./...
 
 release-local:
     @goreleaser release --nightly --skip=publish --clean
