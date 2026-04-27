@@ -4,11 +4,40 @@
 package operations
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 )
 
+type ReadAppInclude string
+
+const (
+	ReadAppIncludeState ReadAppInclude = "state"
+)
+
+func (e ReadAppInclude) ToPointer() *ReadAppInclude {
+	return &e
+}
+func (e *ReadAppInclude) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "state":
+		*e = ReadAppInclude(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for ReadAppInclude: %v", v)
+	}
+}
+
 type ReadAppRequest struct {
 	ID string `pathParam:"style=simple,explode=false,name=id"`
+	// Comma-separated list of related resources to include.
+	// - `state`: Include the current Terraform workspace state.
+	//
+	Include []ReadAppInclude `queryParam:"style=form,explode=true,name=include"`
 }
 
 func (r *ReadAppRequest) GetID() string {
@@ -16,6 +45,13 @@ func (r *ReadAppRequest) GetID() string {
 		return ""
 	}
 	return r.ID
+}
+
+func (r *ReadAppRequest) GetInclude() []ReadAppInclude {
+	if r == nil {
+		return nil
+	}
+	return r.Include
 }
 
 type ReadAppResponse struct {

@@ -8,16 +8,8 @@ import (
 )
 
 type ListAppsRequest struct {
-	OrganizationID string `queryParam:"style=form,explode=true,name=organizationId"`
-	PageNumber     *int64 `queryParam:"style=form,explode=true,name=pageNumber"`
-	PageSize       *int64 `queryParam:"style=form,explode=true,name=pageSize"`
-}
-
-func (l *ListAppsRequest) GetOrganizationID() string {
-	if l == nil {
-		return ""
-	}
-	return l.OrganizationID
+	PageNumber *int64 `queryParam:"style=form,explode=true,name=pageNumber"`
+	PageSize   *int64 `queryParam:"style=form,explode=true,name=pageSize"`
 }
 
 func (l *ListAppsRequest) GetPageNumber() *int64 {

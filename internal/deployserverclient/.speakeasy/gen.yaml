@@ -35,7 +35,7 @@ generation:
     generateNewTests: false
     skipResponseBodyAssertions: false
 go:
-  version: 0.0.1
+  version: 0.1.0
   additionalDependencies: {}
   allowUnknownFieldsInWeakUnions: false
   baseErrorName: DeployServerError

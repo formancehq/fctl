@@ -1,0 +1,10 @@
+# CreateManifestResponse
+
+
+## Fields
+
+| Field                                                                                   | Type                                                                                    | Required                                                                                | Description                                                                             |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                              | [components.HTTPMetadata](../../models/components/httpmetadata.md)                      | :heavy_check_mark:                                                                      | N/A                                                                                     |
+| `CreateManifestResponse`                                                                | [*components.CreateManifestResponse](../../models/components/createmanifestresponse.md) | :heavy_minus_sign:                                                                      | Manifest created successfully                                                           |
+| `Error`                                                                                 | [*components.Error](../../models/components/error.md)                                   | :heavy_minus_sign:                                                                      | Error                                                                                   |

@@ -22,9 +22,10 @@ const (
 type AcceptHeaderEnum string
 
 const (
-	AcceptHeaderEnumApplicationJson AcceptHeaderEnum = "application/json"
-	AcceptHeaderEnumApplicationYaml AcceptHeaderEnum = "application/yaml"
-	AcceptHeaderEnumApplicationGzip AcceptHeaderEnum = "application/gzip"
+	AcceptHeaderEnumApplicationJson  AcceptHeaderEnum = "application/json"
+	AcceptHeaderEnumApplicationGzip  AcceptHeaderEnum = "application/gzip"
+	AcceptHeaderEnumApplicationXYaml AcceptHeaderEnum = "application/x-yaml"
+	AcceptHeaderEnumApplicationYaml  AcceptHeaderEnum = "application/yaml"
 )
 
 func (e AcceptHeaderEnum) ToPointer() *AcceptHeaderEnum {
