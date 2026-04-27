@@ -1,0 +1,123 @@
+package install
+
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
+
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+
+	"github.com/formancehq/fctl/v3/cmd/payments/connectors/internal"
+	"github.com/formancehq/fctl/v3/cmd/payments/versions"
+	fctl "github.com/formancehq/fctl/v3/pkg"
+)
+
+type PaymentsConnectorsIncreaseStore struct {
+	Success       bool   `json:"success"`
+	ConnectorName string `json:"connectorName"`
+	ConnectorID   string `json:"connectorId"`
+}
+
+type PaymentsConnectorsIncreaseController struct {
+	PaymentsVersion versions.Version
+
+	store *PaymentsConnectorsIncreaseStore
+}
+
+func (c *PaymentsConnectorsIncreaseController) SetVersion(version versions.Version) {
+	c.PaymentsVersion = version
+}
+
+var _ fctl.Controller[*PaymentsConnectorsIncreaseStore] = (*PaymentsConnectorsIncreaseController)(nil)
+
+func NewDefaultPaymentsConnectorsIncreaseStore() *PaymentsConnectorsIncreaseStore {
+	return &PaymentsConnectorsIncreaseStore{}
+}
+
+func NewPaymentsConnectorsIncreaseController() *PaymentsConnectorsIncreaseController {
+	return &PaymentsConnectorsIncreaseController{
+		store: NewDefaultPaymentsConnectorsIncreaseStore(),
+	}
+}
+
+func NewIncreaseCommand() *cobra.Command {
+	c := NewPaymentsConnectorsIncreaseController()
+	return fctl.NewCommand(internal.IncreaseConnector+" <file>|-",
+		fctl.WithShortDescription("Install an Increase connector"),
+		fctl.WithConfirmFlag(),
+		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithController[*PaymentsConnectorsIncreaseStore](c),
+	)
+}
+
+func (c *PaymentsConnectorsIncreaseController) GetStore() *PaymentsConnectorsIncreaseStore {
+	return c.store
+}
+
+func (c *PaymentsConnectorsIncreaseController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
+		return nil, err
+	}
+	if c.PaymentsVersion.IsAtLeast(versions.V3, 1) {
+		return nil, fmt.Errorf("increase connector is only supported in version >= v3.1.0")
+	}
+
+	script, err := fctl.ReadFile(cmd, args[0])
+	if err != nil {
+		return nil, err
+	}
+
+	var config shared.V3IncreaseConfig
+	if err := json.Unmarshal([]byte(script), &config); err != nil {
+		return nil, err
+	}
+	if !fctl.CheckStackApprobation(cmd, "You are about to install connector '%s'", internal.IncreaseConnector) {
+		return nil, fctl.ErrMissingApproval
+	}
+	response, err := stackClient.Payments.V3.InstallConnector(cmd.Context(), operations.V3InstallConnectorRequest{
+		V3InstallConnectorRequest: &shared.V3InstallConnectorRequest{
+			V3IncreaseConfig: &config,
+			Type:             shared.V3InstallConnectorRequestTypeIncrease,
+		},
+		Connector: internal.IncreaseConnector,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("unexpected error during installation: %w", err)
+	}
+
+	if response.StatusCode >= 300 {
+		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+	}
+
+	c.store.Success = true
+	c.store.ConnectorName = internal.IncreaseConnector
+
+	if response.V3InstallConnectorResponse != nil {
+		c.store.ConnectorID = response.V3InstallConnectorResponse.GetData()
+	}
+
+	return c, nil
+}
+
+func (c *PaymentsConnectorsIncreaseController) Render(cmd *cobra.Command, args []string) error {
+	if c.store.ConnectorID == "" {
+		pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("%s: connector installed", c.store.ConnectorName)
+	} else {
+		pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("%s: connector '%s' installed", c.store.ConnectorName, c.store.ConnectorID)
+	}
+	return nil
+}
