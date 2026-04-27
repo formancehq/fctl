@@ -93,3 +93,7 @@ func computePaymentVersion(rawVersion string) (*Version, error) {
 		Raw:   rawVersion,
 	}, nil
 }
+
+func (v *Version) IsAtLeast(major PaymentMajorVersion, minor int) bool {
+	return v.Major > major || (v.Major == major && v.Minor >= minor)
+}
