@@ -32,7 +32,7 @@ func NewAcceptController() *AcceptController {
 func NewAcceptCommand() *cobra.Command {
 	return fctl.NewCommand("accept <invitation-id>",
 		fctl.WithAliases("a"),
-		fctl.WithShortDescription("Accept invitation"),
+		fctl.WithShortDescription("Accept an invitation"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*AcceptStore](NewAcceptController()),

@@ -35,7 +35,7 @@ func NewOccurrencesListController() *OccurrencesListController {
 func NewListCommand() *cobra.Command {
 	c := NewOccurrencesListController()
 	return fctl.NewCommand("list",
-		fctl.WithShortDescription("List all workflows occurrences"),
+		fctl.WithShortDescription("List all workflow occurrences"),
 		fctl.WithAliases("ls", "l"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithController[*OccurrencesListStore](c),

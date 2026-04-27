@@ -32,7 +32,7 @@ func NewLogs() *cobra.Command {
 	return fctl.NewCommand("logs",
 		fctl.WithAliases("ls"),
 		fctl.WithShortDescription("Read logs related to an app run"),
-		fctl.WithStringFlag("id", "", "run ID"),
+		fctl.WithStringFlag("id", "", "Run ID"),
 		fctl.WithController(NewLogsCtrl()),
 	)
 }

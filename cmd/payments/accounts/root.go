@@ -9,7 +9,7 @@ import (
 func NewAccountsCommand() *cobra.Command {
 	return fctl.NewCommand("accounts",
 		fctl.WithAliases("acc", "a", "ac", "account"),
-		fctl.WithShortDescription("Accounts management"),
+		fctl.WithShortDescription("Manage accounts"),
 		fctl.WithChildCommands(
 			NewCreateCommand(),
 			NewListCommand(),

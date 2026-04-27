@@ -77,7 +77,7 @@ func (c *VoidController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 
 func (c *VoidController) Render(cmd *cobra.Command, args []string) error {
 
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Hold '%s' voided!", args[0])
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Hold '%s' voided.", args[0])
 
 	return nil
 }

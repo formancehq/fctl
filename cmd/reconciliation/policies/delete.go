@@ -85,6 +85,6 @@ func (c *DeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 }
 
 func (c *DeleteController) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Policy %s Deleted!", c.store.PolicyID)
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Policy %s deleted.", c.store.PolicyID)
 	return nil
 }

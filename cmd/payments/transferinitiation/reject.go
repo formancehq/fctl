@@ -93,6 +93,6 @@ func (c *RejectController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 }
 
 func (c *RejectController) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Transfer Initiation %q was rejected", c.store.TransferID)
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Transfer initiation %s rejected.", c.store.TransferID)
 	return nil
 }

@@ -42,7 +42,7 @@ func NewUpdateMetadataCommand() *cobra.Command {
 	c := NewUpdateMetadataController()
 	return fctl.NewCommand("update-metadata <bankAccountID> [<key>=<value>...]",
 		fctl.WithConfirmFlag(),
-		fctl.WithShortDescription("Set metadata on bank account"),
+		fctl.WithShortDescription("Set metadata on a bank account"),
 		fctl.WithAliases("um", "update-meta"),
 		fctl.WithArgs(cobra.MinimumNArgs(2)),
 		fctl.WithController[*UpdateMetadataStore](c),

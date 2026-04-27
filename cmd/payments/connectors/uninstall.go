@@ -175,6 +175,6 @@ func (c *PaymentsConnectorsUninstallController) Render(cmd *cobra.Command, args 
 		pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Connector '%s' uninstalled!", c.store.Connector)
 		return nil
 	}
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Connector uninstall scheduled with TaskID: %s", c.store.TaskID)
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Connector uninstall scheduled with task ID: %s", c.store.TaskID)
 	return nil
 }

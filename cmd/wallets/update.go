@@ -37,7 +37,7 @@ func NewUpdateController() *UpdateController {
 func NewUpdateCommand() *cobra.Command {
 	c := NewUpdateController()
 	return fctl.NewCommand("update <wallet-id>",
-		fctl.WithShortDescription("Update a wallets"),
+		fctl.WithShortDescription("Update a wallet"),
 		fctl.WithAliases("up"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),

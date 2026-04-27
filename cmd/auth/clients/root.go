@@ -11,7 +11,7 @@ import (
 func NewCommand() *cobra.Command {
 	return fctl.NewCommand("clients",
 		fctl.WithAliases("client", "c"),
-		fctl.WithShortDescription("Clients management"),
+		fctl.WithShortDescription("Manage clients"),
 		fctl.WithChildCommands(
 			NewListCommand(),
 			NewCreateCommand(),

@@ -40,7 +40,7 @@ func NewPaymentsConnectorsStripeController() *PaymentsConnectorsStripeController
 func NewStripeCommand() *cobra.Command {
 	c := NewPaymentsConnectorsStripeController()
 	return fctl.NewCommand(internal.StripeConnector+" <file>|-",
-		fctl.WithShortDescription("Install a stripe connector"),
+		fctl.WithShortDescription("Install a Stripe connector"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithController[*PaymentsConnectorsStripeStore](c),

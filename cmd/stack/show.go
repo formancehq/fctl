@@ -46,7 +46,7 @@ func NewShowCommand() *cobra.Command {
 
 	return fctl.NewMembershipCommand("show (<stack-id> | --name=<stack-name>)",
 		fctl.WithAliases("s", "sh"),
-		fctl.WithShortDescription("Show stack"),
+		fctl.WithShortDescription("Show a stack"),
 		fctl.WithArgs(cobra.MaximumNArgs(1)),
 		fctl.WithValidArgsFunction(fctl.StackCompletion),
 		fctl.WithStringFlag(stackNameFlag, "", ""),

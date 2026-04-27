@@ -12,7 +12,7 @@ import (
 func NewCommand() *cobra.Command {
 	return fctl.NewStackCommand("wallets",
 		fctl.WithAliases("wal", "wa", "wallet"),
-		fctl.WithShortDescription("Wallets management"),
+		fctl.WithShortDescription("Manage wallets"),
 		fctl.WithChildCommands(
 			NewCreateCommand(),
 			NewUpdateCommand(),

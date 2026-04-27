@@ -8,7 +8,7 @@ import (
 
 func NewCommand() *cobra.Command {
 	return fctl.NewMembershipCommand("authentication-provider",
-		fctl.WithShortDescription("Authentication provider management"),
+		fctl.WithShortDescription("Manage the authentication provider"),
 		fctl.WithChildCommands(
 			NewConfigureCommand(),
 			NewDeleteCommand(),

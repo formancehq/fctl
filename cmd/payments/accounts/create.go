@@ -42,7 +42,7 @@ func NewCreateCommand() *cobra.Command {
 	c := NewCreateController()
 	return fctl.NewCommand("create <file>|-",
 		fctl.WithConfirmFlag(),
-		fctl.WithShortDescription("Create an account on formance platform"),
+		fctl.WithShortDescription("Create an account on the Formance platform"),
 		fctl.WithAliases("cr", "c"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithController[*CreateStore](c),

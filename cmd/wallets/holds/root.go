@@ -9,7 +9,7 @@ import (
 func NewCommand() *cobra.Command {
 	return fctl.NewCommand("holds",
 		fctl.WithAliases("h", "hold"),
-		fctl.WithShortDescription("Wallets holds management"),
+		fctl.WithShortDescription("Manage wallet holds"),
 		fctl.WithChildCommands(
 			NewListCommand(),
 			NewVoidCommand(),

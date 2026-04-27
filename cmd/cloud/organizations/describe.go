@@ -34,7 +34,7 @@ func NewDescribeController() *DescribeController {
 
 func NewDescribeCommand() *cobra.Command {
 	return fctl.NewCommand("describe <organizationId>",
-		fctl.WithShortDescription("Describe organization"),
+		fctl.WithShortDescription("Describe an organization"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithConfirmFlag(),
 		fctl.WithBoolFlag("expand", false, "Expand the organization"),

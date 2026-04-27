@@ -35,7 +35,7 @@ func NewShowController() *ShowController {
 func NewShowCommand() *cobra.Command {
 	c := NewShowController()
 	return fctl.NewCommand("get <paymentID>",
-		fctl.WithShortDescription("Get payment"),
+		fctl.WithShortDescription("Get a payment"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithAliases("sh", "s"),

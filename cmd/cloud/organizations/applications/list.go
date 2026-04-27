@@ -40,7 +40,7 @@ func NewListController() *ListController {
 func NewListCommand() *cobra.Command {
 	return fctl.NewCommand(`list`,
 		fctl.WithAliases("ls", "l"),
-		fctl.WithShortDescription("List applications available for organization"),
+		fctl.WithShortDescription("List applications available for the organization"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithIntFlag("page", 0, "Page number"),
 		fctl.WithIntFlag("page-size", 15, "Page size"),
