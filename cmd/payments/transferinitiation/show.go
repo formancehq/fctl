@@ -10,8 +10,8 @@ import (
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	"github.com/formancehq/fctl/cmd/payments/versions"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/payments/versions"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ShowStore struct {
@@ -55,16 +55,25 @@ func (c *ShowController) GetStore() *ShowStore {
 }
 
 func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
 	}
 
-	if c.PaymentsVersion < versions.V1 {
+	if c.PaymentsVersion.Major < versions.V1 {
 		return nil, fmt.Errorf("transfer initiation are only supported in >= v1.0.0")
 	}
 
-	response, err := store.Client().Payments.V1.GetTransferInitiation(cmd.Context(), operations.GetTransferInitiationRequest{
+	response, err := stackClient.Payments.V1.GetTransferInitiation(cmd.Context(), operations.GetTransferInitiationRequest{
 		TransferID: args[0],
 	})
 	if err != nil {
@@ -122,7 +131,7 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	tableData = fctl.Map(c.store.TransferInitiation.RelatedAdjustments, func(tf shared.TransferInitiationAdjusments) []string {
+	tableData = fctl.Map(c.store.TransferInitiation.RelatedAdjustments, func(tf shared.TransferInitiationAdjustments) []string {
 		return []string{
 			tf.AdjustmentID,
 			tf.CreatedAt.Format(time.RFC3339),

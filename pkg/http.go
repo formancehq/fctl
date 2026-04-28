@@ -13,17 +13,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func GetHttpClient(cmd *cobra.Command, defaultHeaders map[string][]string) *http.Client {
-	return NewHTTPClient(
-		cmd,
-		defaultHeaders,
-	)
-}
-
-type RoundTripperFn func(req *http.Request) (*http.Response, error)
-
-func (fn RoundTripperFn) RoundTrip(req *http.Request) (*http.Response, error) {
-	return fn(req)
+func GetHttpClient(cmd *cobra.Command) *http.Client {
+	return &http.Client{
+		Transport: NewHTTPTransport(cmd),
+	}
 }
 
 func printBody(data []byte) {
@@ -87,35 +80,74 @@ func debugRoundTripper(rt http.RoundTripper) RoundTripperFn {
 	}
 }
 
-func defaultHeadersRoundTripper(rt http.RoundTripper, headers map[string][]string) RoundTripperFn {
-	return func(req *http.Request) (*http.Response, error) {
-		for k, v := range headers {
-			for _, vv := range v {
-				req.Header.Add(k, vv)
-			}
-		}
-		return rt.RoundTrip(req)
-	}
-}
-
-func NewHTTPClient(cmd *cobra.Command, defaultHeaders map[string][]string) *http.Client {
-	return &http.Client{
-		Transport: NewHTTPTransport(cmd, defaultHeaders),
-	}
-}
-
-func NewHTTPTransport(cmd *cobra.Command, defaultHeaders map[string][]string) http.RoundTripper {
-
-	var transport http.RoundTripper = &http.Transport{
+func NewHTTPTransport(cmd *cobra.Command) http.RoundTripper {
+	var transport = &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: GetBool(cmd, InsecureTlsFlag),
 		},
 	}
+	var roundTripper http.RoundTripper = transport
+
+	if GetBool(cmd, HTTPCloseOnErrorFlag) {
+		roundTripper = &closeOnErrorRoundTripper{
+			transport: transport,
+		}
+	}
+
 	if GetBool(cmd, DebugFlag) {
-		transport = debugRoundTripper(transport)
+		roundTripper = debugRoundTripper(roundTripper)
 	}
-	if len(defaultHeaders) > 0 {
-		transport = defaultHeadersRoundTripper(transport, defaultHeaders)
+
+	return newInjectHTTPHeadersRoundTripper(
+		http.Header{
+			"User-Agent": []string{fmt.Sprintf("fctl/%s", getVersion(cmd))},
+		},
+		roundTripper,
+	)
+}
+
+var _ http.RoundTripper = (*RoundTripperFn)(nil)
+
+type RoundTripperFn func(req *http.Request) (*http.Response, error)
+
+func (fn RoundTripperFn) RoundTrip(req *http.Request) (*http.Response, error) {
+	return fn(req)
+}
+
+var _ http.RoundTripper = (*closeOnErrorRoundTripper)(nil)
+
+type closeOnErrorRoundTripper struct {
+	transport *http.Transport
+}
+
+func (rt *closeOnErrorRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	rsp, err := rt.transport.RoundTrip(req)
+	if err != nil || rsp.StatusCode >= 400 {
+		rt.transport.CloseIdleConnections()
 	}
-	return transport
+	return rsp, err
+}
+
+var _ http.RoundTripper = (*injectHTTPHeadersRoundTripper)(nil)
+
+type injectHTTPHeadersRoundTripper struct {
+	headers http.Header
+	next    http.RoundTripper
+}
+
+func (rt *injectHTTPHeadersRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	req = req.Clone(req.Context())
+	for key, values := range rt.headers {
+		for _, value := range values {
+			req.Header.Add(key, value)
+		}
+	}
+	return rt.next.RoundTrip(req)
+}
+
+func newInjectHTTPHeadersRoundTripper(headers http.Header, next http.RoundTripper) http.RoundTripper {
+	return &injectHTTPHeadersRoundTripper{
+		headers: headers,
+		next:    next,
+	}
 }

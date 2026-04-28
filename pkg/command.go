@@ -2,13 +2,12 @@ package fctl
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/TylerBrock/colorjson"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/spf13/cobra"
-
-	"github.com/formancehq/fctl/membershipclient"
 )
 
 var (
@@ -17,88 +16,77 @@ var (
 	ErrNoStackSpecified           = errors.New("no stack specified: use --stack=<stack-id>")
 )
 
-func GetSelectedOrganization(cmd *cobra.Command) string {
-	return GetString(cmd, organizationFlag)
+func GetSelectedOrganizationID(cmd *cobra.Command) string {
+	return GetString(cmd, OrganizationFlag)
 }
 
-func RetrieveOrganizationIDFromFlagOrProfile(cmd *cobra.Command, cfg *Config) (string, error) {
-	if id := GetSelectedOrganization(cmd); id != "" {
+func ResolveOrganizationID(cmd *cobra.Command, profile Profile) (string, error) {
+	if id := GetSelectedOrganizationID(cmd); id != "" {
 		return id, nil
 	}
 
-	if defaultOrganization := GetCurrentProfile(cmd, cfg).GetDefaultOrganization(); defaultOrganization != "" {
-		return defaultOrganization, nil
-	}
-	return "", ErrOrganizationNotSpecified
-}
-
-func ResolveOrganizationID(cmd *cobra.Command, cfg *Config, client *membershipclient.DefaultAPIService) (string, error) {
-	if id, err := RetrieveOrganizationIDFromFlagOrProfile(cmd, cfg); err == nil {
-		return id, nil
+	if profile.DefaultOrganization != "" {
+		return profile.DefaultOrganization, nil
 	}
 
-	organizations, _, err := client.ListOrganizations(cmd.Context()).Execute()
-	if err != nil {
-		return "", errors.Wrap(err, "listing organizations")
+	if len(profile.RootTokens.ID.Claims.Organizations) == 0 {
+		return "", ErrOrganizationNotSpecified
 	}
-
-	if len(organizations.Data) == 0 {
-		return "", errors.New("no organizations found")
-	}
-
-	if len(organizations.Data) > 1 {
+	if len(profile.RootTokens.ID.Claims.Organizations) > 1 {
 		return "", ErrMultipleOrganizationsFound
 	}
 
-	return organizations.Data[0].Id, nil
+	return profile.RootTokens.ID.Claims.Organizations[0].ID, nil
 }
 
-func GetSelectedStackIDError(cmd *cobra.Command, cfg *Config) (string, error) {
-	if str := GetSelectedStackID(cmd, cfg); str != "" {
-		return str, nil
+func GetSelectedStackID(cmd *cobra.Command, profile Profile) (string, error) {
+	if id := GetString(cmd, StackFlag); id != "" {
+		return id, nil
 	}
-	return "", ErrNoStackSpecified
+
+	return profile.DefaultStack, nil
 }
 
-func GetSelectedStackID(cmd *cobra.Command, cfg *Config) string {
-	if id := GetString(cmd, stackFlag); id != "" {
-		return id
+func ResolveStackID(cmd *cobra.Command, profile Profile) (string, string, error) {
+
+	organizationID, err := ResolveOrganizationID(cmd, profile)
+	if err != nil {
+		return "", "", err
 	}
-	pf := cfg.GetCurrentProfile()
-	if pf != nil {
-		if pf.defaultStack != "" {
-			return pf.defaultStack
+
+	stackID, err := GetSelectedStackID(cmd, profile)
+	if err != nil {
+		return "", "", err
+	}
+
+	if stackID != "" {
+		return organizationID, stackID, nil
+	}
+
+	if !profile.IsConnected() {
+		return "", "", ErrOrganizationNotSpecified
+	}
+
+	var organizationClaim *OrganizationAccess
+	for _, organization := range profile.RootTokens.ID.Claims.Organizations {
+		if organization.ID == organizationID {
+			organizationClaim = &organization
+			break
 		}
 	}
-
-	return ""
-}
-
-func ResolveStack(cmd *cobra.Command, cfg *Config, organizationID string) (*membershipclient.Stack, error) {
-	client, err := NewMembershipClient(cmd, cfg)
-	if err != nil {
-		return nil, err
-	}
-	if id := GetSelectedStackID(cmd, cfg); id != "" {
-		response, _, err := client.DefaultAPI.GetStack(cmd.Context(), organizationID, id).Execute()
-		if err != nil {
-			return nil, err
-		}
-
-		return response.Data, nil
+	if organizationClaim == nil {
+		return "", "", ErrOrganizationNotSpecified
 	}
 
-	stacks, _, err := client.DefaultAPI.ListStacks(cmd.Context(), organizationID).Execute()
-	if err != nil {
-		return nil, errors.Wrap(err, "listing stacks")
+	if len(organizationClaim.Stacks) == 0 {
+		return "", "", ErrNoStackSpecified
 	}
-	if len(stacks.Data) == 0 {
-		return nil, errors.New("no stacks found")
+
+	if len(organizationClaim.Stacks) > 1 {
+		return "", "", fmt.Errorf("found more than one stack and no stack specified")
 	}
-	if len(stacks.Data) > 1 {
-		return nil, errors.New("found more than one stack and no stack specified")
-	}
-	return &(stacks.Data[0]), nil
+
+	return organizationID, organizationClaim.Stacks[0].ID, nil
 }
 
 type CommandOption interface {
@@ -317,7 +305,7 @@ func WithConfirmFlag() CommandOptionFn {
 func NewStackCommand(use string, opts ...CommandOption) *cobra.Command {
 	cmd := NewMembershipCommand(use,
 		append(opts,
-			WithPersistentStringFlag(stackFlag, "", "Specific stack (not required if only one stack is present)"),
+			WithPersistentStringFlag(StackFlag, "", "Specific stack (not required if only one stack is present)"),
 		)...,
 	)
 	if err := cmd.RegisterFlagCompletionFunc("stack", StackCompletion); err != nil {
@@ -329,7 +317,7 @@ func NewStackCommand(use string, opts ...CommandOption) *cobra.Command {
 func NewMembershipCommand(use string, opts ...CommandOption) *cobra.Command {
 	cmd := NewCommand(use,
 		append(opts,
-			WithPersistentStringFlag(organizationFlag, "", "Selected organization (not required if only one organization is present)"),
+			WithPersistentStringFlag(OrganizationFlag, "", "Selected organization (not required if only one organization is present)"),
 		)...,
 	)
 	if err := cmd.RegisterFlagCompletionFunc("organization", OrganizationCompletion); err != nil {
@@ -343,15 +331,15 @@ func NewCommand(use string, opts ...CommandOption) *cobra.Command {
 		Use: use,
 		PersistentPostRun: func(cmd *cobra.Command, args []string) {
 			if GetBool(cmd, TelemetryFlag) {
-				cfg, err := GetConfig(cmd)
+				cfg, err := LoadConfig(cmd)
 				if err != nil {
 					return
 				}
 
-				if cfg.GetUniqueID() == "" {
+				if cfg.UniqueID == "" {
 					uniqueID := ksuid.New().String()
-					cfg.SetUniqueID(uniqueID)
-					err = cfg.Persist()
+					cfg.UniqueID = uniqueID
+					err = WriteConfig(cmd, *cfg)
 					if err != nil {
 						return
 					}

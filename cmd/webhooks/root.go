@@ -3,7 +3,7 @@ package webhooks
 import (
 	"github.com/spf13/cobra"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 func NewCommand() *cobra.Command {
@@ -18,8 +18,5 @@ func NewCommand() *cobra.Command {
 			NewDeleteCommand(),
 			NewChangeSecretCommand(),
 		),
-		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
-			return fctl.NewStackStore(cmd)
-		}),
 	)
 }

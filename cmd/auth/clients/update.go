@@ -10,7 +10,7 @@ import (
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 // TODO: This command is a copy/paste of the create command
@@ -84,9 +84,17 @@ func (c *UpdateController) GetStore() *UpdateStore {
 
 func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to delete an OAuth2 client") {
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	if !fctl.CheckStackApprobation(cmd, "You are about to update an OAuth2 client") {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -96,7 +104,7 @@ func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 
 	request := operations.UpdateClientRequest{
 		ClientID: args[0],
-		ClientOptions: &shared.ClientOptions{
+		CreateClientRequest: &shared.CreateClientRequest{
 			Public:                 &public,
 			RedirectUris:           fctl.GetStringSlice(cmd, c.redirectUriFlag),
 			Description:            &description,
@@ -106,7 +114,7 @@ func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 			Scopes:                 fctl.GetStringSlice(cmd, c.scopes),
 		},
 	}
-	response, err := store.Client().Auth.V1.UpdateClient(cmd.Context(), request)
+	response, err := stackClient.Auth.V1.UpdateClient(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}
@@ -115,13 +123,13 @@ func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Client.ID = response.CreateClientResponse.Data.ID
-	c.store.Client.Name = response.CreateClientResponse.Data.Name
-	c.store.Client.Description = fctl.StringPointerToString(response.CreateClientResponse.Data.Description)
-	c.store.Client.IsPublic = fctl.BoolPointerToString(response.CreateClientResponse.Data.Public)
-	c.store.Client.RedirectUri = strings.Join(response.CreateClientResponse.Data.RedirectUris, ",")
-	c.store.Client.PostLogoutRedirectUri = strings.Join(response.CreateClientResponse.Data.PostLogoutRedirectUris, ",")
-	c.store.Client.Scopes = response.CreateClientResponse.Data.Scopes
+	c.store.Client.ID = response.UpdateClientResponse.Data.ID
+	c.store.Client.Name = response.UpdateClientResponse.Data.Name
+	c.store.Client.Description = fctl.StringPointerToString(response.UpdateClientResponse.Data.Description)
+	c.store.Client.IsPublic = fctl.BoolPointerToString(response.UpdateClientResponse.Data.Public)
+	c.store.Client.RedirectUri = strings.Join(response.UpdateClientResponse.Data.RedirectUris, ",")
+	c.store.Client.PostLogoutRedirectUri = strings.Join(response.UpdateClientResponse.Data.PostLogoutRedirectUris, ",")
+	c.store.Client.Scopes = response.UpdateClientResponse.Data.Scopes
 
 	return c, nil
 }

@@ -6,8 +6,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/internal/deployserverclient/models/operations"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/operations"
+
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ManifestCtrl struct {
@@ -35,12 +36,26 @@ func (c *ManifestCtrl) GetStore() any {
 }
 
 func (c *ManifestCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetDeployServerStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	_, apiClient, err := fctl.NewAppDeployClientFromFlags(
+		cmd,
+		relyingParty,
+		fctl.NewPTermDialog(),
+		profileName,
+		*profile,
+	)
+	if err != nil {
+		return nil, err
+	}
 	id := fctl.GetString(cmd, "id")
 	if id == "" {
 		return nil, fmt.Errorf("id is required")
 	}
-	versions, err := store.Cli.ReadVersion(cmd.Context(), id, operations.WithAcceptHeaderOverride(operations.AcceptHeaderEnumApplicationYaml))
+	versions, err := apiClient.ReadVersion(cmd.Context(), id, operations.WithAcceptHeaderOverride(operations.AcceptHeaderEnumApplicationYaml))
 	if err != nil {
 		return nil, err
 	}

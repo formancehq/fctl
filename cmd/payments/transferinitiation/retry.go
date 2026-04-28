@@ -8,8 +8,8 @@ import (
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 
-	"github.com/formancehq/fctl/cmd/payments/versions"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/payments/versions"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type RetryStore struct {
@@ -55,21 +55,30 @@ func (c *RetryController) GetStore() *RetryStore {
 }
 
 func (c *RetryController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
 	}
 
-	if c.PaymentsVersion < versions.V1 {
+	if c.PaymentsVersion.Major < versions.V1 {
 		return nil, fmt.Errorf("transfer initiation are only supported in >= v1.0.0")
 	}
 
-	if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to retry the transfer initiation '%s'", args[0]) {
+	if !fctl.CheckStackApprobation(cmd, "You are about to retry the transfer initiation '%s'", args[0]) {
 		return nil, fctl.ErrMissingApproval
 	}
 
 	//nolint:gosimple
-	response, err := store.Client().Payments.V1.RetryTransferInitiation(cmd.Context(), operations.RetryTransferInitiationRequest{
+	response, err := stackClient.Payments.V1.RetryTransferInitiation(cmd.Context(), operations.RetryTransferInitiationRequest{
 		TransferID: args[0],
 	})
 	if err != nil {

@@ -10,8 +10,8 @@ import (
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 
-	"github.com/formancehq/fctl/cmd/ledger/internal"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/ledger/internal"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ExportStore struct {
@@ -49,7 +49,16 @@ func (c *ExportController) GetStore() *ExportStore {
 }
 
 func (c *ExportController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	ctx := cmd.Context()
 	out := fctl.GetString(cmd, "file")
@@ -57,7 +66,7 @@ func (c *ExportController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		ctx = context.WithValue(ctx, "path", out)
 	}
 
-	ret, err := store.Client().Ledger.V2.ExportLogs(ctx, operations.V2ExportLogsRequest{
+	ret, err := stackClient.Ledger.V2.ExportLogs(ctx, operations.V2ExportLogsRequest{
 		Ledger: fctl.GetString(cmd, internal.LedgerFlag),
 	})
 	if err != nil {

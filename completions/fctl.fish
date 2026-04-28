@@ -12,14 +12,14 @@ function __fctl_perform_completion
 
     # Extract all args except the last one
     set -l args (commandline -opc)
-    # Extract the last arg and escape it in case it is a space
+    # Extract the last arg and escape it in case it is a space or wildcard
     set -l lastArg (string escape -- (commandline -ct))
 
     __fctl_debug "args: $args"
     __fctl_debug "last arg: $lastArg"
 
     # Disable ActiveHelp which is not supported for fish shell
-    set -l requestComp "FCTL_ACTIVE_HELP=0 $args[1] __complete $args[2..-1] $lastArg"
+    set -l requestComp "FCTL_ACTIVE_HELP=0 $args[1] __complete $(string join ' ' -- (string escape -- $args[2..-1])) $lastArg"
 
     __fctl_debug "Calling $requestComp"
     set -l results (eval $requestComp 2> /dev/null)

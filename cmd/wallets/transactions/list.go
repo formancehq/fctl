@@ -4,15 +4,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	"github.com/formancehq/fctl/cmd/wallets/internal"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/wallets/internal"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ListStore struct {
@@ -52,8 +51,17 @@ func (c *ListController) GetStore() *ListStore {
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
-	walletID, err := internal.RetrieveWalletID(cmd, store.Client())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	walletID, err := internal.RetrieveWalletID(cmd, stackClient)
 	if err != nil {
 		return nil, err
 	}
@@ -61,9 +69,9 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	request := operations.GetTransactionsRequest{
 		WalletID: &walletID,
 	}
-	response, err := store.Client().Wallets.V1.GetTransactions(cmd.Context(), request)
+	response, err := stackClient.Wallets.V1.GetTransactions(cmd.Context(), request)
 	if err != nil {
-		return nil, errors.Wrap(err, "listing transactions")
+		return nil, fmt.Errorf("listing transactions: %w", err)
 	}
 
 	c.store.Transactions = response.GetTransactionsResponse.Cursor.Data

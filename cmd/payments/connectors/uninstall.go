@@ -9,9 +9,9 @@ import (
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	"github.com/formancehq/fctl/cmd/payments/connectors/internal"
-	"github.com/formancehq/fctl/cmd/payments/versions"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/payments/connectors/internal"
+	"github.com/formancehq/fctl/v3/cmd/payments/versions"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 var (
@@ -75,7 +75,16 @@ func (c *PaymentsConnectorsUninstallController) GetStore() *PaymentsConnectorsUn
 }
 
 func (c *PaymentsConnectorsUninstallController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
@@ -83,17 +92,17 @@ func (c *PaymentsConnectorsUninstallController) Run(cmd *cobra.Command, args []s
 
 	provider := fctl.GetString(cmd, c.providerFlag)
 	connectorID := fctl.GetString(cmd, c.connectorIDFlag)
-	switch c.PaymentsVersion {
+	switch c.PaymentsVersion.Major {
 	case versions.V3:
 		if connectorID == "" {
 			return nil, fmt.Errorf("missing connector ID")
 		}
 
-		if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to uninstall connector '%s'", connectorID) {
+		if !fctl.CheckStackApprobation(cmd, "You are about to uninstall connector '%s'", connectorID) {
 			return nil, fctl.ErrMissingApproval
 		}
 
-		response, err := store.Client().Payments.V3.UninstallConnector(cmd.Context(), operations.V3UninstallConnectorRequest{
+		response, err := stackClient.Payments.V3.UninstallConnector(cmd.Context(), operations.V3UninstallConnectorRequest{
 			ConnectorID: connectorID,
 		})
 		if err != nil {
@@ -115,11 +124,11 @@ func (c *PaymentsConnectorsUninstallController) Run(cmd *cobra.Command, args []s
 			return nil, fmt.Errorf("missing connector ID")
 		}
 
-		if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to uninstall connector '%s' from provider '%s'", connectorID, provider) {
+		if !fctl.CheckStackApprobation(cmd, "You are about to uninstall connector '%s' from provider '%s'", connectorID, provider) {
 			return nil, fctl.ErrMissingApproval
 		}
 
-		response, err := store.Client().Payments.V1.UninstallConnectorV1(cmd.Context(), operations.UninstallConnectorV1Request{
+		response, err := stackClient.Payments.V1.UninstallConnectorV1(cmd.Context(), operations.UninstallConnectorV1Request{
 			ConnectorID: connectorID,
 			Connector:   shared.Connector(provider),
 		})
@@ -137,11 +146,11 @@ func (c *PaymentsConnectorsUninstallController) Run(cmd *cobra.Command, args []s
 			return nil, fmt.Errorf("missing provider")
 		}
 
-		if !fctl.CheckStackApprobation(cmd, store.Stack(), "You are about to uninstall connector '%s'", provider) {
+		if !fctl.CheckStackApprobation(cmd, "You are about to uninstall connector '%s'", provider) {
 			return nil, fctl.ErrMissingApproval
 		}
 
-		response, err := store.Client().Payments.V1.UninstallConnector(cmd.Context(), operations.UninstallConnectorRequest{
+		response, err := stackClient.Payments.V1.UninstallConnector(cmd.Context(), operations.UninstallConnectorRequest{
 			Connector: shared.Connector(provider),
 		})
 		if err != nil {
@@ -162,7 +171,7 @@ func (c *PaymentsConnectorsUninstallController) Run(cmd *cobra.Command, args []s
 
 // TODO: This need to use the ui.NewListModel
 func (c *PaymentsConnectorsUninstallController) Render(cmd *cobra.Command, args []string) error {
-	if c.PaymentsVersion < versions.V3 {
+	if c.PaymentsVersion.Major < versions.V3 {
 		pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Connector '%s' uninstalled!", c.store.Connector)
 		return nil
 	}

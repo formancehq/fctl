@@ -4,7 +4,9 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
+
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type DeleteStore struct {
@@ -46,9 +48,13 @@ func (c *DeleteController) GetStore() *DeleteStore {
 }
 
 func (c *DeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetMembershipStore(cmd.Context())
 
-	organizationID, err := fctl.ResolveOrganizationID(cmd, store.Config, store.Client())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, apiClient, err := fctl.NewMembershipClientForOrganizationFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
 	if err != nil {
 		return nil, err
 	}
@@ -57,9 +63,12 @@ func (c *DeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fctl.ErrMissingApproval
 	}
 
-	_, err = store.Client().
-		DeleteInvitation(cmd.Context(), organizationID, args[0]).
-		Execute()
+	request := operations.DeleteInvitationRequest{
+		OrganizationID: organizationID,
+		InvitationID:   args[0],
+	}
+
+	_, err = apiClient.DeleteInvitation(cmd.Context(), request)
 	if err != nil {
 		return nil, err
 	}

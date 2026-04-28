@@ -1,0 +1,10 @@
+# ListStacksResponse
+
+
+## Fields
+
+| Field                                                                           | Type                                                                            | Required                                                                        | Description                                                                     |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                      | [components.HTTPMetadata](../../models/components/httpmetadata.md)              | :heavy_check_mark:                                                              | N/A                                                                             |
+| `ListStacksResponse`                                                            | [*components.ListStacksResponse](../../models/components/liststacksresponse.md) | :heavy_minus_sign:                                                              | List of stacks                                                                  |
+| `Error`                                                                         | [*components.Error](../../models/components/error.md)                           | :heavy_minus_sign:                                                              | Error                                                                           |

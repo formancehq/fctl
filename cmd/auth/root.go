@@ -3,9 +3,9 @@ package auth
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/cmd/auth/clients"
-	"github.com/formancehq/fctl/cmd/auth/users"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/auth/clients"
+	"github.com/formancehq/fctl/v3/cmd/auth/users"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 func NewCommand() *cobra.Command {
@@ -15,8 +15,5 @@ func NewCommand() *cobra.Command {
 			clients.NewCommand(),
 			users.NewCommand(),
 		),
-		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
-			return fctl.NewStackStore(cmd)
-		}),
 	)
 }

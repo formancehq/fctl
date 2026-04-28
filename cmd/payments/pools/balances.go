@@ -10,7 +10,7 @@ import (
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type BalancesStore struct {
@@ -40,14 +40,23 @@ func (c *BalancesController) GetStore() *BalancesStore {
 }
 
 func (c *BalancesController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	at, err := time.Parse(time.RFC3339, args[1])
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := store.Client().Payments.V1.GetPoolBalances(
+	response, err := stackClient.Payments.V1.GetPoolBalances(
 		cmd.Context(),
 		operations.GetPoolBalancesRequest{
 			At:     at,

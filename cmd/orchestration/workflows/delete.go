@@ -6,7 +6,7 @@ import (
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type WorkflowsDeleteStore struct {
@@ -42,9 +42,18 @@ func (c *WorkflowsDeleteController) GetStore() *WorkflowsDeleteStore {
 }
 
 func (c *WorkflowsDeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
 
-	_, err := store.Client().Orchestration.V1.DeleteWorkflow(
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = stackClient.Orchestration.V1.DeleteWorkflow(
 		cmd.Context(),
 		operations.DeleteWorkflowRequest{
 			FlowID: args[0],

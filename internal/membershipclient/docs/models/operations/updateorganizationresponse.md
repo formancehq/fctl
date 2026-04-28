@@ -1,0 +1,10 @@
+# UpdateOrganizationResponse
+
+
+## Fields
+
+| Field                                                                                       | Type                                                                                        | Required                                                                                    | Description                                                                                 |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                  | [components.HTTPMetadata](../../models/components/httpmetadata.md)                          | :heavy_check_mark:                                                                          | N/A                                                                                         |
+| `ReadOrganizationResponse`                                                                  | [*components.ReadOrganizationResponse](../../models/components/readorganizationresponse.md) | :heavy_minus_sign:                                                                          | Organization updated                                                                        |
+| `Error`                                                                                     | [*components.Error](../../models/components/error.md)                                       | :heavy_minus_sign:                                                                          | Error                                                                                       |

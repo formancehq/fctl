@@ -9,8 +9,8 @@ import (
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	"github.com/formancehq/fctl/cmd/payments/versions"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/payments/versions"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ConnectorData struct {
@@ -64,7 +64,16 @@ func (c *PaymentsConnectorsListController) GetStore() *PaymentsConnectorsListSto
 }
 
 func (c *PaymentsConnectorsListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
@@ -72,9 +81,9 @@ func (c *PaymentsConnectorsListController) Run(cmd *cobra.Command, args []string
 
 	pageSizeAsInt := int64(fctl.GetInt(cmd, c.pageSizeFlag))
 
-	switch c.PaymentsVersion {
+	switch c.PaymentsVersion.Major {
 	case versions.V3:
-		response, err := store.Client().Payments.V3.ListConnectors(cmd.Context(), operations.V3ListConnectorsRequest{
+		response, err := stackClient.Payments.V3.ListConnectors(cmd.Context(), operations.V3ListConnectorsRequest{
 			PageSize: &pageSizeAsInt,
 		})
 		if err != nil {
@@ -91,7 +100,7 @@ func (c *PaymentsConnectorsListController) Run(cmd *cobra.Command, args []string
 		c.store.Connectors = fctl.Map(response.V3ConnectorsCursorResponse.Cursor.Data, V3toConnectorData)
 
 	case versions.V0, versions.V1, versions.V2:
-		response, err := store.Client().Payments.V1.ListAllConnectors(cmd.Context())
+		response, err := stackClient.Payments.V1.ListAllConnectors(cmd.Context())
 		if err != nil {
 			return nil, err
 		}
@@ -120,7 +129,7 @@ func (c *PaymentsConnectorsListController) Run(cmd *cobra.Command, args []string
 
 func (c *PaymentsConnectorsListController) Render(cmd *cobra.Command, args []string) error {
 	tableData := fctl.Map(c.store.Connectors, func(connector ConnectorData) []string {
-		if c.PaymentsVersion >= versions.V1 {
+		if c.PaymentsVersion.Major >= versions.V1 {
 			return []string{
 				connector.Provider,
 				connector.Name,
@@ -134,7 +143,7 @@ func (c *PaymentsConnectorsListController) Render(cmd *cobra.Command, args []str
 		}
 
 	})
-	if c.PaymentsVersion >= versions.V1 {
+	if c.PaymentsVersion.Major >= versions.V1 {
 		tableData = fctl.Prepend(tableData, []string{"Provider", "Name", "ConnectorID"})
 	} else {
 		tableData = fctl.Prepend(tableData, []string{"Provider"})

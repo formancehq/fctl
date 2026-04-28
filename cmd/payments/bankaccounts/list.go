@@ -7,11 +7,12 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
+	formance "github.com/formancehq/formance-sdk-go/v3"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	"github.com/formancehq/fctl/cmd/payments/versions"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/payments/versions"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ListStore struct {
@@ -53,13 +54,22 @@ func (c *ListController) GetStore() *ListStore {
 }
 
 func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
 	}
 
-	if c.PaymentsVersion < versions.V1 {
+	if c.PaymentsVersion.Major < versions.V1 {
 		return nil, fmt.Errorf("bank accounts are only supported in >= v1.0.0")
 	}
 
@@ -73,11 +83,11 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		pageSize = fctl.Ptr(int64(ps))
 	}
 
-	if c.PaymentsVersion >= versions.V3 {
-		return c.v3list(cmd, store, cursor, pageSize)
+	if c.PaymentsVersion.Major >= versions.V3 {
+		return c.v3list(cmd, stackClient, cursor, pageSize)
 	}
 
-	response, err := store.Client().Payments.V1.ListBankAccounts(
+	response, err := stackClient.Payments.V1.ListBankAccounts(
 		cmd.Context(),
 		operations.ListBankAccountsRequest{
 			Cursor:   cursor,
@@ -97,8 +107,8 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	return c, nil
 }
 
-func (c *ListController) v3list(cmd *cobra.Command, store *fctl.StackStore, cursor *string, pageSize *int64) (fctl.Renderable, error) {
-	response, err := store.Client().Payments.V3.ListBankAccounts(
+func (c *ListController) v3list(cmd *cobra.Command, stackClient *formance.Formance, cursor *string, pageSize *int64) (fctl.Renderable, error) {
+	response, err := stackClient.Payments.V3.ListBankAccounts(
 		cmd.Context(),
 		operations.V3ListBankAccountsRequest{
 			Cursor:   cursor,

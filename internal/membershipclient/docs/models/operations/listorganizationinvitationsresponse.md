@@ -1,0 +1,10 @@
+# ListOrganizationInvitationsResponse
+
+
+## Fields
+
+| Field                                                                                     | Type                                                                                      | Required                                                                                  | Description                                                                               |
+| ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                | [components.HTTPMetadata](../../models/components/httpmetadata.md)                        | :heavy_check_mark:                                                                        | N/A                                                                                       |
+| `ListInvitationsResponse`                                                                 | [*components.ListInvitationsResponse](../../models/components/listinvitationsresponse.md) | :heavy_minus_sign:                                                                        | List of the invitations for the organization                                              |
+| `Error`                                                                                   | [*components.Error](../../models/components/error.md)                                     | :heavy_minus_sign:                                                                        | Error                                                                                     |

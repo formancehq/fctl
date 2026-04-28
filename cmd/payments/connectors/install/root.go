@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/cmd/payments/connectors/internal"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/payments/connectors/internal"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 func NewInstallCommand() *cobra.Command {
@@ -26,6 +26,12 @@ func NewInstallCommand() *cobra.Command {
 			NewGenericCommand(),
 			NewQontoCommand(),
 			NewColumnCommand(),
+			NewFireblocksCommand(),
+			NewCoinbaseprimeCommand(),
+			NewIncreaseCommand(),
+			NewPowensCommand(),
+			NewTinkCommand(),
+			NewPlaidCommand(),
 		),
 	)
 }

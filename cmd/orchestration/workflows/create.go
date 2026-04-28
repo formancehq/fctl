@@ -7,7 +7,7 @@ import (
 
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	fctl "github.com/formancehq/fctl/pkg"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type WorkflowsCreateStore struct {
@@ -44,21 +44,29 @@ func (c *WorkflowsCreateController) GetStore() *WorkflowsCreateStore {
 
 func (c *WorkflowsCreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
 
-	store := fctl.GetStackStore(cmd.Context())
-
-	script, err := fctl.ReadFile(cmd, store.Stack(), args[0])
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	config := shared.WorkflowConfig{}
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	script, err := fctl.ReadFile(cmd, args[0])
+	if err != nil {
+		return nil, err
+	}
+
+	config := shared.CreateWorkflowRequest{}
 	if err := yaml.Unmarshal([]byte(script), &config); err != nil {
 		return nil, err
 	}
 
 	//nolint:gosimple
-	response, err := store.Client().Orchestration.V1.
-		CreateWorkflow(cmd.Context(), &shared.WorkflowConfig{
+	response, err := stackClient.Orchestration.V1.
+		CreateWorkflow(cmd.Context(), &shared.CreateWorkflowRequest{
 			Name:   config.Name,
 			Stages: config.Stages,
 		})

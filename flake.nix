@@ -2,7 +2,7 @@
   description = "A Nix-flake-based Go 1.25 development environment";
 
   inputs = {
-    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.2505";
+    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.2511";
     nixpkgs-unstable.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
 
     nur = {
@@ -37,18 +37,19 @@
           f { pkgs = pkgs; pkgs-unstable = pkgs-unstable; system = system; }
         );
 
-      speakeasyVersion = "1.563.0";
+      speakeasyVersion = "1.759.2";
       speakeasyPlatforms = {
         "x86_64-linux"   = "linux_amd64";
         "aarch64-linux"  = "linux_arm64";
         "x86_64-darwin"  = "darwin_amd64";
         "aarch64-darwin" = "darwin_arm64";
       };
+      # Checksums from https://github.com/speakeasy-api/speakeasy/releases/download/v1.759.2/checksums.txt
       speakeasyHashes = {
-        "x86_64-linux"   = "632559a6bdc765ef42b81b8404fd0a3e5023919a0bb70ff7e40a8cc259545afd";
-        "aarch64-linux"  = "c74c502df3a05a2d69e6b282886df23354a319d0510d2c1a21fcc124b7ad00ef";
-        "x86_64-darwin"  = "8814be1fdd4eaf6dcc7fb251ede5693e1d3d4c8e03986f8d37bfd59e049698b9";
-        "aarch64-darwin" = "12c20fa485de4725c9730cb2e8936cab4b0961d0a956e9f4c45534371f2a6148";
+        "x86_64-linux"   = "9234e2e9138f03ac18f0ca034d0c5a0a7b8749ea91b16814b4a643afd680d8fd";
+        "aarch64-linux"  = "ba92a8c5799ed14acba94d317694ed32e35883e9439a07b28c58f7c8c0ea16f5";
+        "x86_64-darwin"  = "b4cfe13627e8822718b5820c68898f51b6381e604c9578650c9b0c3f40f800b0";
+        "aarch64-darwin" = "dda057dbbd83bdaa47f9ccf3311e455013d957d11f45d8336b97b91ba2a56d6d";
       };
 
     in
