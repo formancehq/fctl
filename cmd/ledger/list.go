@@ -36,7 +36,7 @@ func NewListController() *ListController {
 func NewListCommand() *cobra.Command {
 	return fctl.NewCommand("list",
 		fctl.WithAliases("l", "ls"),
-		fctl.WithShortDescription("List ledgers (starting from ledger v2)"),
+		fctl.WithShortDescription("List ledgers (requires ledger v2 or later)"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*ListStore](NewListController()),

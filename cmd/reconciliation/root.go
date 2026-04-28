@@ -9,7 +9,7 @@ import (
 
 func NewCommand() *cobra.Command {
 	return fctl.NewStackCommand("reconciliation",
-		fctl.WithShortDescription("Reconciliation management"),
+		fctl.WithShortDescription("Manage reconciliation"),
 		fctl.WithChildCommands(
 			policies.NewPoliciesCommand(),
 			NewListCommand(),

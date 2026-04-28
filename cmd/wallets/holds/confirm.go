@@ -91,7 +91,7 @@ func (c *ConfirmController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 }
 
 func (c *ConfirmController) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Hold '%s' confirmed!", args[0])
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Hold '%s' confirmed.", args[0])
 
 	return nil
 

@@ -102,7 +102,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 }
 
 func (c *CreateController) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Transfer Initiation created with ID: %s", c.store.TransferInitiationId)
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Transfer initiation created with ID: %s", c.store.TransferInitiationId)
 
 	return nil
 }

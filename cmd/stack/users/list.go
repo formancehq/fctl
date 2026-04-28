@@ -36,7 +36,7 @@ func NewListController() *ListController {
 func NewListCommand() *cobra.Command {
 	return fctl.NewCommand("list",
 		fctl.WithAliases("l"),
-		fctl.WithShortDescription("List Stack Access Role within an organization by stacks"),
+		fctl.WithShortDescription("List stack access roles within an organization"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController(NewListController()),

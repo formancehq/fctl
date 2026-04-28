@@ -41,7 +41,7 @@ func NewPaymentsConnectorsAdyenController() *PaymentsConnectorsAdyenController {
 func NewAdyenCommand() *cobra.Command {
 	c := NewPaymentsConnectorsAdyenController()
 	return fctl.NewCommand(internal.AdyenConnector+" <file>|-",
-		fctl.WithShortDescription("Install an adyen connector"),
+		fctl.WithShortDescription("Install an Adyen connector"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithController[*PaymentsConnectorsAdyenStore](c),

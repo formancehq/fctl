@@ -134,9 +134,9 @@ func (c *ForwardController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 
 func (c *ForwardController) Render(cmd *cobra.Command, args []string) error {
 	if c.PaymentsVersion.Major < versions.V3 {
-		pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Bank Account %s forwarded to connector %s", c.store.BankAccountID, c.store.ConnectorID)
+		pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Bank account %s forwarded to connector %s.", c.store.BankAccountID, c.store.ConnectorID)
 		return nil
 	}
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Forwarding Bank Account scheduled with TaskID: %s", c.store.TaskID)
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Bank account forwarding scheduled with task ID: %s", c.store.TaskID)
 	return nil
 }

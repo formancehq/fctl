@@ -25,7 +25,7 @@ func NewManifestCtrl() *ManifestCtrl {
 
 func NewManifest() *cobra.Command {
 	return fctl.NewCommand("show-manifest",
-		fctl.WithShortDescription("Manifest versions for an app"),
+		fctl.WithShortDescription("Show the manifest for an app version"),
 		fctl.WithStringFlag("id", "", "App ID"),
 		fctl.WithController(NewManifestCtrl()),
 	)

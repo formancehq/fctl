@@ -121,7 +121,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 }
 
 func (c *CreateController) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Bank Account created with ID: %s", c.store.BankAccountID)
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Bank account created with ID: %s", c.store.BankAccountID)
 
 	return nil
 }
