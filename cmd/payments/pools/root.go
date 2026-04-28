@@ -18,6 +18,7 @@ func NewPoolsCommand() *cobra.Command {
 			NewBalancesCommand(),
 			NewAddAccountCommand(),
 			NewRemoveAccountCommand(),
+			NewUpdateQueryCommand(),
 		),
 	)
 }
