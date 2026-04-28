@@ -9,7 +9,7 @@ import (
 
 func NewCommand() *cobra.Command {
 	return fctl.NewCommand("me",
-		fctl.WithShortDescription("Current user management"),
+		fctl.WithShortDescription("Manage current user settings"),
 		fctl.WithChildCommands(
 			invitations.NewCommand(),
 			NewInfoCommand(),

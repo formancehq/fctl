@@ -71,6 +71,6 @@ func (c *WorkflowsDeleteController) Run(cmd *cobra.Command, args []string) (fctl
 }
 
 func (c *WorkflowsDeleteController) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.WithShowLineNumber().Printfln("Workflow %s Deleted!", c.store.WorkflowId)
+	pterm.Success.WithShowLineNumber().Printfln("Workflow %s deleted.", c.store.WorkflowId)
 	return nil
 }

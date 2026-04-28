@@ -9,7 +9,7 @@ import (
 func NewTasksCommand() *cobra.Command {
 	return fctl.NewCommand("tasks",
 		fctl.WithAliases("t"),
-		fctl.WithShortDescription("Tasks management"),
+		fctl.WithShortDescription("Manage tasks"),
 		fctl.WithChildCommands(
 			NewShowCommand(),
 		),

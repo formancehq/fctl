@@ -8,7 +8,7 @@ import (
 
 func NewCommand() *cobra.Command {
 	return fctl.NewMembershipCommand("oauth-clients",
-		fctl.WithShortDescription("Oauth clients management"),
+		fctl.WithShortDescription("Manage OAuth clients"),
 		fctl.WithChildCommands(
 			NewCreateCommand(),
 			NewListCommand(),

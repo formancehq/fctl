@@ -37,7 +37,7 @@ func NewUnlinkController() *UnlinkController {
 
 func NewUnlinkCommand() *cobra.Command {
 	return fctl.NewMembershipCommand("unlink <user-id>",
-		fctl.WithShortDescription("Unlink stack user within an organization"),
+		fctl.WithShortDescription("Unlink a stack user from the current stack"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController(NewUnlinkController()),

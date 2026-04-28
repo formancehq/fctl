@@ -51,7 +51,7 @@ func NewNumCommand() *cobra.Command {
 	c := NewNumController()
 
 	return fctl.NewCommand("num -|<filename>",
-		fctl.WithShortDescription("Execute a numscript script on a ledger"),
+		fctl.WithShortDescription("Execute a Numscript program on a ledger"),
 		fctl.WithDescription(`More help on variables can be found here: https://docs.formance.com/oss/ledger/reference/numscript/variables`),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithConfirmFlag(),

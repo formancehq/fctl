@@ -11,7 +11,7 @@ import (
 func NewConnectorsCommand() *cobra.Command {
 	return fctl.NewCommand("connectors",
 		fctl.WithAliases("c", "co", "con"),
-		fctl.WithShortDescription("Connectors management"),
+		fctl.WithShortDescription("Manage connectors"),
 		fctl.WithChildCommands(
 			NewUninstallCommand(),
 			NewListCommand(),

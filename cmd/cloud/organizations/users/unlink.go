@@ -32,7 +32,7 @@ func NewUnlinkController() *DeleteController {
 func NewUnlinkCommand() *cobra.Command {
 	return fctl.NewCommand("unlink <user-id>",
 		fctl.WithAliases("u", "un"),
-		fctl.WithShortDescription("Unlink user from organization"),
+		fctl.WithShortDescription("Unlink a user from the organization"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController(NewUnlinkController()),
@@ -72,7 +72,7 @@ func (c *DeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 }
 
 func (c *DeleteController) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("User '%s' Deleted from organization '%s'", c.store.UserID, c.store.OrganizationID)
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("User '%s' removed from organization '%s'.", c.store.UserID, c.store.OrganizationID)
 
 	return nil
 

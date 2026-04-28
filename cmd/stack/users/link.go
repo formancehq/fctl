@@ -35,8 +35,8 @@ func NewLinkController() *LinkController {
 
 func NewLinkCommand() *cobra.Command {
 	return fctl.NewCommand("link <user-id>",
-		fctl.WithIntFlag("policy-id", 0, "Policy id"),
-		fctl.WithShortDescription("Link stack user with properties"),
+		fctl.WithIntFlag("policy-id", 0, "Policy ID"),
+		fctl.WithShortDescription("Link a stack user to the current stack"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*LinkStore](NewLinkController()),

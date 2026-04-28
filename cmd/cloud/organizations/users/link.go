@@ -93,6 +93,6 @@ func (c *LinkController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 }
 
 func (c *LinkController) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("User Addd.")
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("User added.")
 	return nil
 }

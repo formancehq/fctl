@@ -33,7 +33,7 @@ func NewCreateCtrl() *CreateCtrl {
 
 func NewCreate() *cobra.Command {
 	return fctl.NewCommand("create",
-		fctl.WithShortDescription("Create apps"),
+		fctl.WithShortDescription("Create an app"),
 		fctl.WithController(NewCreateCtrl()),
 	)
 }

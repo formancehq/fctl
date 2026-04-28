@@ -43,7 +43,7 @@ func NewDeleteCommand() *cobra.Command {
 	return fctl.NewCommand("delete <transferID>",
 		fctl.WithConfirmFlag(),
 		fctl.WithAliases("d"),
-		fctl.WithShortDescription("Delete a transfer Initiation"),
+		fctl.WithShortDescription("Delete a transfer initiation"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithController[*DeleteStore](c),
 	)
@@ -99,6 +99,6 @@ func (c *DeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 }
 
 func (c *DeleteController) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Transfer Initiation %s Deleted!", c.store.TransferID)
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Transfer initiation %s deleted.", c.store.TransferID)
 	return nil
 }

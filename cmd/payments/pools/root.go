@@ -9,13 +9,14 @@ import (
 func NewPoolsCommand() *cobra.Command {
 	return fctl.NewCommand("pools",
 		fctl.WithAliases("p"),
-		fctl.WithShortDescription("Pools management"),
+		fctl.WithShortDescription("Manage pools"),
 		fctl.WithChildCommands(
 			NewListCommand(),
 			NewCreateCommand(),
 			NewShowCommand(),
 			NewDeleteCommand(),
 			NewBalancesCommand(),
+			NewLatestBalancesCommand(),
 			NewAddAccountCommand(),
 			NewRemoveAccountCommand(),
 		),
