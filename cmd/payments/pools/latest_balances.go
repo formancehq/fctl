@@ -7,11 +7,12 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
+	formance "github.com/formancehq/formance-sdk-go/v3"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 
-	"github.com/formancehq/fctl/cmd/payments/versions"
-	fctl "github.com/formancehq/fctl/pkg"
+	"github.com/formancehq/fctl/v3/cmd/payments/versions"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type LatestBalancesStore struct {
@@ -47,7 +48,15 @@ func (c *LatestBalancesController) GetStore() *LatestBalancesStore {
 }
 
 func (c *LatestBalancesController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	store := fctl.GetStackStore(cmd.Context())
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
@@ -55,18 +64,18 @@ func (c *LatestBalancesController) Run(cmd *cobra.Command, args []string) (fctl.
 
 	poolID := args[0]
 
-	switch c.PaymentsVersion {
+	switch c.PaymentsVersion.Major {
 	case versions.V1, versions.V2:
-		return c.CallV1(cmd.Context(), store, poolID)
+		return c.CallV1(cmd.Context(), stackClient, poolID)
 	case versions.V3:
-		return c.CallV3(cmd.Context(), store, poolID)
+		return c.CallV3(cmd.Context(), stackClient, poolID)
+	default:
+		return nil, fmt.Errorf("unsupported payments version: %d", c.PaymentsVersion.Major)
 	}
-
-	return nil, fmt.Errorf("unsupported payments version: %d", c.PaymentsVersion)
 }
 
-func (c *LatestBalancesController) CallV1(context context.Context, store *fctl.StackStore, poolID string) (fctl.Renderable, error) {
-	response, err := store.Client().Payments.V1.GetPoolBalancesLatest(
+func (c *LatestBalancesController) CallV1(context context.Context, client *formance.Formance, poolID string) (fctl.Renderable, error) {
+	response, err := client.Payments.V1.GetPoolBalancesLatest(
 		context,
 		operations.GetPoolBalancesLatestRequest{
 			PoolID: poolID,
@@ -77,12 +86,12 @@ func (c *LatestBalancesController) CallV1(context context.Context, store *fctl.S
 	if response.StatusCode >= 300 {
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
-	c.store.Balances = &response.PoolBalancesResponse.Data
+	c.store.Balances = &shared.PoolBalances{Balances: response.PoolBalancesLatestResponse.Data}
 	return c, nil
 }
 
-func (c *LatestBalancesController) CallV3(context context.Context, store *fctl.StackStore, poolID string) (fctl.Renderable, error) {
-	response, err := store.Client().Payments.V3.GetPoolBalancesLatest(
+func (c *LatestBalancesController) CallV3(context context.Context, client *formance.Formance, poolID string) (fctl.Renderable, error) {
+	response, err := client.Payments.V3.GetPoolBalancesLatest(
 		context,
 		operations.V3GetPoolBalancesLatestRequest{
 			PoolID: poolID,
@@ -96,7 +105,7 @@ func (c *LatestBalancesController) CallV3(context context.Context, store *fctl.S
 
 	v3Balances := &response.V3PoolBalancesResponse.Data
 
-	poolBalances := make([]shared.PoolBalance, len(*v3Balances))
+	poolBalances := make([]shared.PoolBalance, 0, len(*v3Balances))
 	for _, v3Balance := range *v3Balances {
 		poolBalance := shared.PoolBalance{
 			Asset:  v3Balance.Asset,
@@ -125,7 +134,7 @@ func (c *LatestBalancesController) Render(cmd *cobra.Command, args []string) err
 
 func NewLatestBalancesCommand() *cobra.Command {
 	c := NewLatestBalancesController()
-	return fctl.NewCommand("balances <poolID>",
+	return fctl.NewCommand("latest-balances <poolID>",
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithShortDescription("List pool latest balances"),
