@@ -31,7 +31,7 @@ func NewDeleteMetadataController() *DeleteMetadataController {
 
 func NewDeleteMetadataCommand() *cobra.Command {
 	return fctl.NewCommand("delete-metadata <address> <key>",
-		fctl.WithShortDescription("Delete metadata on account (Start from ledger v2 api)"),
+		fctl.WithShortDescription("Delete metadata from an account (requires ledger v2 or later)"),
 		fctl.WithAliases("dm", "del-meta"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.MinimumNArgs(2)),

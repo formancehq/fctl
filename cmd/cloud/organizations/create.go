@@ -34,11 +34,11 @@ func NewCreateController() *CreateController {
 func NewCreateCommand() *cobra.Command {
 	return fctl.NewCommand(`create <name> --default-stack-role "ADMIN" --default-organization-role "ADMIN"`,
 		fctl.WithAliases("cr", "c"),
-		fctl.WithShortDescription("Create organization"),
+		fctl.WithShortDescription("Create an organization"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
-		fctl.WithIntFlag("default-policy-id", 0, "Default policy id"),
-		fctl.WithStringFlag("domain", "", "Organization Domain"),
+		fctl.WithIntFlag("default-policy-id", 0, "Default policy ID"),
+		fctl.WithStringFlag("domain", "", "Organization domain"),
 		fctl.WithConfirmFlag(),
 		fctl.WithController(NewCreateController()),
 	)

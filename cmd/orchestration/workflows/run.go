@@ -45,7 +45,7 @@ func NewRunCommand() *cobra.Command {
 		fctl.WithShortDescription("Run a workflow"),
 		fctl.WithAliases("r"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithBoolFlag(c.waitFlag, false, "Wait end of the run"),
+		fctl.WithBoolFlag(c.waitFlag, false, "Wait for the run to complete"),
 		fctl.WithStringSliceFlag(c.variableFlag, []string{}, "Variable to pass to the workflow"),
 		fctl.WithController[*WorkflowsRunStore](c),
 	)

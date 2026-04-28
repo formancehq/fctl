@@ -56,7 +56,7 @@ func waitStackReady(cmd *cobra.Command, client *membershipclient.SDK, organizati
 		}
 
 		if sum > 10*time.Minute {
-			pterm.Warning.Printf("You can check fctl stack show %s --organization %s to see the status of the stack", stackId, organizationId)
+			pterm.Warning.Printf("Check stack status with: fctl stack show %s --organization %s", stackId, organizationId)
 			problem := fmt.Errorf("there might a problem with the stack scheduling, if the problem persists, please contact the support")
 
 			err = internal.PrintStackInformation(cmd.OutOrStdout(), stackData, nil)

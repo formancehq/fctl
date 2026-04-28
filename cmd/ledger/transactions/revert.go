@@ -35,7 +35,7 @@ func NewRevertCommand() *cobra.Command {
 		fctl.WithShortDescription("Revert a transaction"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgs("last"),
-		fctl.WithBoolFlag("at-effective-date", false, "set the timestamp to the original transaction timestamp"),
+		fctl.WithBoolFlag("at-effective-date", false, "Use the original transaction's timestamp"),
 		fctl.WithBoolFlag("force", false, "Force the revert even if the account does not have enough funds"),
 		fctl.WithController[*RevertStore](NewRevertController()),
 	)

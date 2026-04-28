@@ -103,7 +103,7 @@ func (c *UpdateStatusController) Run(cmd *cobra.Command, args []string) (fctl.Re
 }
 
 func (c *UpdateStatusController) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Update Transfer Initiation status with ID: %s and status %s", c.store.TransferID, c.store.Status)
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Transfer initiation %s status updated to %s.", c.store.TransferID, c.store.Status)
 
 	return nil
 }

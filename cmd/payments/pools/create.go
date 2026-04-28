@@ -13,6 +13,8 @@ import (
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
+const dynamicPoolMinMinor = 1
+
 type CreateStore struct {
 	PoolID string `json:"poolID"`
 }
@@ -81,22 +83,44 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
-	request := shared.PoolRequest{}
-	if err := json.Unmarshal([]byte(script), &request); err != nil {
-		return nil, err
-	}
+	switch c.PaymentsVersion.Major {
+	case versions.V3:
+		request := shared.V3CreatePoolRequest{}
+		if err := json.Unmarshal([]byte(script), &request); err != nil {
+			return nil, err
+		}
 
-	//nolint:gosimple
-	response, err := stackClient.Payments.V1.CreatePool(cmd.Context(), request)
-	if err != nil {
-		return nil, err
-	}
+		if request.Query != nil && !c.PaymentsVersion.IsAtLeast(versions.V3, dynamicPoolMinMinor) {
+			return nil, fmt.Errorf("dynamic pools require Connectivity >= v3.1")
+		}
 
-	if response.StatusCode >= 300 {
-		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
-	}
+		response, err := stackClient.Payments.V3.CreatePool(cmd.Context(), &request)
+		if err != nil {
+			return nil, err
+		}
 
-	c.store.PoolID = response.PoolResponse.Data.ID
+		if response.StatusCode >= 300 {
+			return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+		}
+
+		c.store.PoolID = response.V3CreatePoolResponse.Data
+	default:
+		request := shared.PoolRequest{}
+		if err := json.Unmarshal([]byte(script), &request); err != nil {
+			return nil, err
+		}
+
+		response, err := stackClient.Payments.V1.CreatePool(cmd.Context(), request)
+		if err != nil {
+			return nil, err
+		}
+
+		if response.StatusCode >= 300 {
+			return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+		}
+
+		c.store.PoolID = response.PoolResponse.Data.ID
+	}
 
 	return c, nil
 }

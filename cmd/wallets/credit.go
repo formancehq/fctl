@@ -45,7 +45,7 @@ func NewCreditWalletController() *CreditWalletController {
 func NewCreditWalletCommand() *cobra.Command {
 	c := NewCreditWalletController()
 	return fctl.NewCommand("credit <amount> <asset>",
-		fctl.WithShortDescription("Credit a wallets"),
+		fctl.WithShortDescription("Credit a wallet"),
 		fctl.WithAliases("cr"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(2)),

@@ -10,7 +10,7 @@ import (
 func NewCommand() *cobra.Command {
 	return fctl.NewStackCommand("triggers",
 		fctl.WithAliases("trig", "t"),
-		fctl.WithShortDescription("Triggers management"),
+		fctl.WithShortDescription("Manage triggers"),
 		fctl.WithChildCommands(
 			NewListCommand(),
 			NewShowCommand(),

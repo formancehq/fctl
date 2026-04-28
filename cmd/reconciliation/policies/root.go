@@ -9,7 +9,7 @@ import (
 func NewPoliciesCommand() *cobra.Command {
 	return fctl.NewCommand("policies",
 		fctl.WithAliases("p"),
-		fctl.WithShortDescription("Policies management"),
+		fctl.WithShortDescription("Manage policies"),
 		fctl.WithChildCommands(
 			NewListCommand(),
 			NewShowCommand(),

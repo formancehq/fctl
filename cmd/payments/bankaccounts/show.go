@@ -42,7 +42,7 @@ func NewShowController() *ShowController {
 func NewShowCommand() *cobra.Command {
 	c := NewShowController()
 	return fctl.NewCommand("get <bankAccountID>",
-		fctl.WithShortDescription("Get bank account"),
+		fctl.WithShortDescription("Get a bank account"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithAliases("sh", "s"),
 		fctl.WithController[*ShowStore](c),

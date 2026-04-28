@@ -154,8 +154,8 @@ func NewListCommand() *cobra.Command {
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithShortDescription("List pools"),
-		fctl.WithStringFlag(c.cursorFlag, "", "Cursor"),
-		fctl.WithIntFlag(c.pageSizeFlag, 0, "PageSize"),
+		fctl.WithStringFlag(c.cursorFlag, "", "Pagination cursor"),
+		fctl.WithIntFlag(c.pageSizeFlag, 0, "Page size"),
 		fctl.WithController[*ListStore](c),
 	)
 }

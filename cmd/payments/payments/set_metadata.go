@@ -34,7 +34,7 @@ func NewSetMetadataCommand() *cobra.Command {
 	c := NewSetMetadataController()
 	return fctl.NewCommand("set-metadata <paymentID> [<key>=<value>...]",
 		fctl.WithConfirmFlag(),
-		fctl.WithShortDescription("Set metadata on paymentID"),
+		fctl.WithShortDescription("Set metadata on a payment"),
 		fctl.WithAliases("sm", "set-meta"),
 		fctl.WithArgs(cobra.MinimumNArgs(2)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),

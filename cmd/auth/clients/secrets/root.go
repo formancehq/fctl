@@ -9,7 +9,7 @@ import (
 func NewCommand() *cobra.Command {
 	return fctl.NewCommand("secrets",
 		fctl.WithAliases("sec"),
-		fctl.WithShortDescription("Secrets management"),
+		fctl.WithShortDescription("Manage secrets"),
 		fctl.WithChildCommands(
 			NewCreateCommand(),
 			NewDeleteCommand(),

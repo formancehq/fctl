@@ -39,7 +39,7 @@ func NewDeployCtrl() *DeployCtrl {
 
 func NewDeploy() *cobra.Command {
 	return fctl.NewCommand("deploy",
-		fctl.WithShortDescription("Deploy apps"),
+		fctl.WithShortDescription("Deploy an app"),
 		fctl.WithStringFlag("id", "", "App ID"),
 		fctl.WithStringFlag("path", "", "Path to the manifest file"),
 		fctl.WithBoolFlag("wait", true, "Wait for the deployment to complete"),
@@ -180,7 +180,7 @@ func (c *DeployCtrl) Render(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("deployment failed: %s", c.store.ID)
 	}
 
-	pterm.Info.Println("App Deployment accepted", c.store.ID)
+	pterm.Info.Printfln("App deployment accepted with ID: %s", c.store.ID)
 	wait := fctl.GetBool(cmd, "wait")
 	if !wait {
 		return nil

@@ -8,7 +8,7 @@ import (
 
 func NewCommand() *cobra.Command {
 	return fctl.NewMembershipCommand("policies",
-		fctl.WithShortDescription("Policies management"),
+		fctl.WithShortDescription("Manage policies"),
 		fctl.WithChildCommands(
 			NewListCommand(),
 			NewCreateCommand(),

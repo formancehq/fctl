@@ -9,7 +9,7 @@ import (
 func NewCommand() *cobra.Command {
 	return fctl.NewMembershipCommand("applications",
 		fctl.WithAliases("apps", "app"),
-		fctl.WithShortDescription("Applications management"),
+		fctl.WithShortDescription("Manage applications"),
 		fctl.WithChildCommands(
 			NewListCommand(),
 			NewShowCommand(),

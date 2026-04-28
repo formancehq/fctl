@@ -148,7 +148,7 @@ func (c *DebitWalletController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 
 func (c *DebitWalletController) Render(cmd *cobra.Command, args []string) error {
 	if c.store.HoldID != nil && *c.store.HoldID != "" {
-		pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Wallet debited successfully with hold id '%s'!", *c.store.HoldID)
+		pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Wallet debited successfully with hold ID: %s.", *c.store.HoldID)
 	} else {
 		pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Wallet debited successfully!")
 	}

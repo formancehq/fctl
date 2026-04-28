@@ -15,7 +15,7 @@ import (
 
 func NewCommand() *cobra.Command {
 	return fctl.NewStackCommand("payments",
-		fctl.WithShortDescription("Payments management"),
+		fctl.WithShortDescription("Manage payments"),
 		fctl.WithChildCommands(
 			connectors.NewConnectorsCommand(),
 			payments.NewPaymentsCommand(),
