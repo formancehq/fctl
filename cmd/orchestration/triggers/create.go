@@ -46,7 +46,7 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithArgs(cobra.ExactArgs(2)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*TriggersCreateStore](ctrl),
-		fctl.WithStringFlag(ctrl.nameFlag, "", "Trigger's name"),
+		fctl.WithStringFlag(ctrl.nameFlag, "", "Trigger name"),
 		fctl.WithStringFlag(ctrl.filterFlag, "", "Filter events"),
 		fctl.WithStringSliceFlag(ctrl.varsFlag, []string{}, "Variables to pass to the workflow"),
 	)

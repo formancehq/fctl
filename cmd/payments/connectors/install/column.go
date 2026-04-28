@@ -46,7 +46,7 @@ func NewPaymentsConnectorsColumnController() *PaymentsConnectorsColumnController
 func NewColumnCommand() *cobra.Command {
 	c := NewPaymentsConnectorsColumnController()
 	return fctl.NewCommand(internal.ColumnConnector+" <file>|-",
-		fctl.WithShortDescription("Install a column connector"),
+		fctl.WithShortDescription("Install a Column connector"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithController[*PaymentsConnectorsColumnStore](c),

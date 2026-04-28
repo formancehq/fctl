@@ -60,13 +60,13 @@ func NewCreateCommand() *cobra.Command {
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithConfirmFlag(),
-		fctl.WithBoolFlag(c.publicFlag, false, "Is client public"),
-		fctl.WithBoolFlag(c.trustedFlag, false, "Is the client trusted"),
+		fctl.WithBoolFlag(c.publicFlag, false, "Mark the client as public"),
+		fctl.WithBoolFlag(c.trustedFlag, false, "Mark the client as trusted"),
 		fctl.WithStringFlag(c.descriptionFlag, "", "Client description"),
 		fctl.WithStringSliceFlag(c.redirectUriFlag, []string{}, "Redirect URIS"),
 		fctl.WithStringSliceFlag(c.postLogoutRedirectUriFlag, []string{}, "Post logout redirect uris"),
 		fctl.WithStringSliceFlag(c.scopes, []string{""}, "Scopes"),
-		fctl.WithShortDescription("Create client"),
+		fctl.WithShortDescription("Create a client"),
 		fctl.WithController[*CreateStore](c),
 	)
 }

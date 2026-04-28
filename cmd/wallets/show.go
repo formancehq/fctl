@@ -36,7 +36,7 @@ func NewShowController() *ShowController {
 func NewShowCommand() *cobra.Command {
 	c := NewShowController()
 	return fctl.NewCommand("show",
-		fctl.WithShortDescription("Show a wallets"),
+		fctl.WithShortDescription("Show a wallet"),
 		fctl.WithAliases("sh"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(0)),

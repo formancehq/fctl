@@ -94,7 +94,7 @@ func (c *Controller) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error
 }
 
 func (c *Controller) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Logged!")
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Logged in.")
 	return nil
 }
 

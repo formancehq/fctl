@@ -39,7 +39,7 @@ func NewShowCtrl() *ShowCtrl {
 
 func NewShow() *cobra.Command {
 	return fctl.NewCommand("show",
-		fctl.WithShortDescription("Show apps"),
+		fctl.WithShortDescription("Show an app"),
 		fctl.WithStringFlag("id", "", "App ID"),
 		fctl.WithController(NewShowCtrl()),
 	)

@@ -100,6 +100,6 @@ func (c *DeleteController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 }
 
 func (c *DeleteController) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Pool %s Deleted!", c.store.PoolID)
+	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Pool %s deleted.", c.store.PoolID)
 	return nil
 }

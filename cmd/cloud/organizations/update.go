@@ -32,13 +32,13 @@ func NewUpdateController() *UpdateController {
 func NewUpdateCommand() *cobra.Command {
 	return fctl.NewCommand("update <organizationId> --name <name> --default-policy-id <defaultPolicyID...>",
 		fctl.WithAliases("update"),
-		fctl.WithShortDescription("Update organization"),
+		fctl.WithShortDescription("Update an organization"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(fctl.OrganizationCompletion),
 		fctl.WithConfirmFlag(),
-		fctl.WithStringFlag("name", "", "Organization Name"),
-		fctl.WithIntFlag("default-policy-id", 0, "Default policy id"),
-		fctl.WithStringFlag("domain", "", "Organization Domain"),
+		fctl.WithStringFlag("name", "", "Organization name"),
+		fctl.WithIntFlag("default-policy-id", 0, "Default policy ID"),
+		fctl.WithStringFlag("domain", "", "Organization domain"),
 		fctl.WithController(NewUpdateController()),
 	)
 }

@@ -34,7 +34,7 @@ func NewUpdateController() *UpdateController {
 
 func NewUpdateCommand() *cobra.Command {
 	return fctl.NewCommand(`update <clientId>`,
-		fctl.WithShortDescription("Update organization OAuth client"),
+		fctl.WithShortDescription("Update an organization OAuth client"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithStringFlag(descriptionFlag, "", "Description of the OAuth client usage"),

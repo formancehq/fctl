@@ -52,13 +52,13 @@ func NewHistoryCommand() *cobra.Command {
 		fctl.WithAliases("hist"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(fctl.StackCompletion),
-		fctl.WithStringFlag(actionFlag, "", "Filter on Action"),
-		fctl.WithStringFlag(userIdFlag, "", "Filter on UserId, use SYSTEM to filter on system logs"),
-		fctl.WithStringFlag(dataFlag, "", "Filter on modified Data with --data key=value, key is a jsonb text path"),
+		fctl.WithStringFlag(actionFlag, "", "Filter by action"),
+		fctl.WithStringFlag(userIdFlag, "", "Filter by user ID (use SYSTEM to filter by system logs)"),
+		fctl.WithStringFlag(dataFlag, "", "Filter by modified data (format: key=value, key is a JSONB text path)"),
 
 		fctl.WithBoolFlag(displayDataFlag, false, "Display data"),
 
-		fctl.WithStringFlag(cursorFlag, "", "Cursor"),
+		fctl.WithStringFlag(cursorFlag, "", "Pagination cursor"),
 		fctl.WithIntFlag(pageSizeFlag, 10, "Page size"),
 		fctl.WithController(NewHistoryController()),
 	)

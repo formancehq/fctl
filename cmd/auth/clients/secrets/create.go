@@ -37,7 +37,7 @@ func NewCreateCommand() *cobra.Command {
 	return fctl.NewCommand("create <client-id> <secret-name>",
 		fctl.WithAliases("c"),
 		fctl.WithArgs(cobra.ExactArgs(2)),
-		fctl.WithShortDescription("Create secret"),
+		fctl.WithShortDescription("Create a secret"),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*CreateStore](NewCreateController()),
 	)

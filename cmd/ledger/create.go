@@ -45,8 +45,8 @@ func NewCreateCommand() *cobra.Command {
 	c := NewCreateController()
 	return fctl.NewCommand("create <name>",
 		fctl.WithAliases("c", "cr"),
-		fctl.WithShortDescription("Create a new ledger (starting from ledger v2)"),
-		fctl.WithStringFlag(bucketNameFlag, "", "Bucket on which install the new ledger"),
+		fctl.WithShortDescription("Create a new ledger (requires ledger v2 or later)"),
+		fctl.WithStringFlag(bucketNameFlag, "", "Bucket in which to install the new ledger"),
 		fctl.WithStringSliceFlag(featuresFlag, []string{}, `Experimental! Features to enable on the newly created ledger (default: all)
 Starting from ledger v2.2`),
 		fctl.WithStringSliceFlag(c.metadataFlag, []string{}, "Metadata to apply on the newly created ledger"),

@@ -47,12 +47,12 @@ func NewInstancesListController() *InstancesListController {
 func NewListCommand() *cobra.Command {
 	c := NewInstancesListController()
 	return fctl.NewCommand("list",
-		fctl.WithShortDescription("List all workflows instances"),
+		fctl.WithShortDescription("List all workflow instances"),
 		fctl.WithAliases("ls", "l"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
-		fctl.WithStringFlag(c.workflowFlag, "", "Filter on workflow id"),
-		fctl.WithBoolFlag(c.runningFlag, false, "Filter on running instances"),
+		fctl.WithStringFlag(c.workflowFlag, "", "Filter by workflow ID"),
+		fctl.WithBoolFlag(c.runningFlag, false, "Show only running instances"),
 		fctl.WithController[*InstancesListStore](c),
 	)
 }

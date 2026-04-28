@@ -38,7 +38,7 @@ func NewPaymentsConnectorsGenericController() *PaymentsConnectorsGenericControll
 func NewGenericCommand() *cobra.Command {
 	c := NewPaymentsConnectorsGenericController()
 	return fctl.NewCommand(internal.GenericConnector+" <file>|-",
-		fctl.WithShortDescription("Install a Generic connector"),
+		fctl.WithShortDescription("Install a generic connector"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*PaymentsConnectorsGenericStore](c),

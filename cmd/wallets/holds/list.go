@@ -37,7 +37,7 @@ func NewListController() *ListController {
 func NewListCommand() *cobra.Command {
 	c := NewListController()
 	return fctl.NewCommand("list",
-		fctl.WithShortDescription("List holds of a wallets"),
+		fctl.WithShortDescription("List holds of a wallet"),
 		fctl.WithAliases("ls", "l"),
 		fctl.WithArgs(cobra.RangeArgs(0, 1)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),

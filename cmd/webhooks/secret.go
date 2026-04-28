@@ -82,7 +82,7 @@ func (c *ChangeSecretWebhookController) Render(cmd *cobra.Command, args []string
 
 func NewChangeSecretCommand() *cobra.Command {
 	return fctl.NewCommand("change-secret <config-id> <secret>",
-		fctl.WithShortDescription("Change the signing secret of a config. You can bring your own secret. If not passed or empty, a secret is automatically generated. The format is a string of bytes of size 24, base64 encoded. (larger size after encoding)"),
+		fctl.WithShortDescription("Change the signing secret of a webhook config. Optionally provide your own secret; if omitted, one is generated automatically (24-byte, base64-encoded string)."),
 		fctl.WithConfirmFlag(),
 		fctl.WithAliases("cs"),
 		fctl.WithArgs(cobra.RangeArgs(1, 2)),

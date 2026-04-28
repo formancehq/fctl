@@ -32,7 +32,7 @@ func NewSetMetadataController() *SetMetadataController {
 
 func NewSetMetadataCommand() *cobra.Command {
 	return fctl.NewCommand("set-metadata <transaction-id> [<key>=<value>...]",
-		fctl.WithShortDescription("Set metadata on transaction"),
+		fctl.WithShortDescription("Set metadata on a transaction"),
 		fctl.WithAliases("sm", "set-meta"),
 		fctl.WithConfirmFlag(),
 		fctl.WithValidArgs("last"),
