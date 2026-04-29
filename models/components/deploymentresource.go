@@ -16,7 +16,7 @@ type DeploymentResource struct {
 	HasInlineContent *bool     `json:"hasInlineContent,omitempty"`
 	WorkspaceID      string    `json:"workspaceId"`
 	RunID            *string   `json:"runId,omitempty"`
-	RunStatus        string    `json:"runStatus"`
+	Status           string    `json:"status"`
 	ConfigVersionID  *string   `json:"configVersionId,omitempty"`
 	CreatedAt        time.Time `json:"createdAt"`
 	UpdatedAt        time.Time `json:"updatedAt"`
@@ -83,11 +83,11 @@ func (d *DeploymentResource) GetRunID() *string {
 	return d.RunID
 }
 
-func (d *DeploymentResource) GetRunStatus() string {
+func (d *DeploymentResource) GetStatus() string {
 	if d == nil {
 		return ""
 	}
-	return d.RunStatus
+	return d.Status
 }
 
 func (d *DeploymentResource) GetConfigVersionID() *string {
