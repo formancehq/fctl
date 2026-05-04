@@ -15,6 +15,7 @@ func NewCommand() *cobra.Command {
 			NewList(),
 			NewShow(),
 			NewLogs(),
+			NewDownload(),
 		),
 	)
 }

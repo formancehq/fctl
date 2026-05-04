@@ -495,6 +495,11 @@ func NewAppDeployClient(
 	organizationID string,
 ) (*deployserverclient.DeployServer, error) {
 
+	appAlias := GetString(cmd, DeployAppAliasFlag)
+	if appAlias == "" {
+		appAlias = DefaultDeployAppAlias
+	}
+
 	appToken, err := EnsureAppAccess(
 		cmd,
 		relyingParty,
@@ -502,7 +507,7 @@ func NewAppDeployClient(
 		profileName,
 		profile,
 		organizationID,
-		"deploy",
+		appAlias,
 		[]string{
 			"apps:Read",
 			"apps:Write",

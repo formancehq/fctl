@@ -3,8 +3,6 @@ package deployments
 import (
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/pterm/pterm"
@@ -42,7 +40,8 @@ func NewCreate() *cobra.Command {
 	return fctl.NewCommand("create",
 		fctl.WithShortDescription("Create a deployment (deploy an app)"),
 		fctl.WithStringFlag("app-id", "", "App ID"),
-		fctl.WithStringFlag("path", "", "Path to the manifest file"),
+		fctl.WithStringFlag("manifest-id", "", "Manifest ID to deploy"),
+		fctl.WithIntFlag("manifest-version", 0, "Manifest version to deploy (omit or 0 for latest)"),
 		fctl.WithBoolFlag("wait", true, "Wait for the deployment to complete"),
 		fctl.WithController(NewCreateCtrl()),
 	)
@@ -72,17 +71,22 @@ func (c *CreateCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, er
 	if appID == "" {
 		return nil, fmt.Errorf("app-id is required")
 	}
-	path := fctl.GetString(cmd, "path")
-	if path == "" {
-		return nil, fmt.Errorf("path is required")
+	manifestID := fctl.GetString(cmd, "manifest-id")
+	if manifestID == "" {
+		return nil, fmt.Errorf("manifest-id is required")
 	}
-	data, err := os.ReadFile(filepath.Clean(path))
-	if err != nil {
-		return nil, err
+
+	req := components.CreateDeploymentRequest{
+		AppID:      appID,
+		ManifestID: &manifestID,
+	}
+	if v := fctl.GetInt(cmd, "manifest-version"); v > 0 {
+		version := int64(v)
+		req.ManifestVersion = &version
 	}
 
 	cmd.SilenceUsage = true
-	deployment, err := apiClient.CreateDeploymentRaw(cmd.Context(), data, &appID)
+	deployment, err := apiClient.CreateDeployment(cmd.Context(), req, &appID)
 	if err != nil {
 		return nil, err
 	}
@@ -147,8 +151,8 @@ func (c *CreateCtrl) waitDeploymentCompletion(cmd *cobra.Command) error {
 			}
 			c.store.DeploymentResource = &r.DeploymentResponse.Data
 
-			spinner.UpdateText(fmt.Sprintf("Deployment status: %s", r.DeploymentResponse.Data.RunStatus))
-			switch r.DeploymentResponse.Data.RunStatus {
+			spinner.UpdateText(fmt.Sprintf("Deployment status: %s", r.DeploymentResponse.Data.Status))
+			switch r.DeploymentResponse.Data.Status {
 			case "applied":
 				spinner.UpdateText("Deployment completed successfully")
 				return nil
@@ -172,7 +176,7 @@ func (c *CreateCtrl) waitDeploymentCompletion(cmd *cobra.Command) error {
 }
 
 func (c *CreateCtrl) Render(cmd *cobra.Command, args []string) error {
-	if c.store.DeploymentResource.RunStatus == "errored" {
+	if c.store.DeploymentResource.Status == "errored" {
 		if len(c.store.logs) > 0 {
 			if err := printer.RenderLogs(cmd.ErrOrStderr(), c.store.logs); err != nil {
 				return err

@@ -16,6 +16,7 @@ func NewCommand() *cobra.Command {
 		fctl.WithShortDescription("* New * Apps manifests management"),
 		fctl.WithPersistentBoolFlag("experimental", false, "Enable experimental commands"),
 		fctl.WithPersistentStringFlag(fctl.FrameworkURIFlag, "https://deploy.formance.cloud", "Framework URI"),
+		fctl.WithPersistentStringFlag(fctl.DeployAppAliasFlag, fctl.DefaultDeployAppAlias, "Membership application alias used to authenticate against the deploy server"),
 		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
 			ok, err := cmd.Flags().GetBool("experimental")
 			if err != nil {

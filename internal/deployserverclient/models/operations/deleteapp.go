@@ -4,11 +4,27 @@
 package operations
 
 import (
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/internal/utils"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 )
 
 type DeleteAppRequest struct {
 	ID string `pathParam:"style=simple,explode=false,name=id"`
+	// When `true`, the call blocks until the destroy deployment reaches a
+	// terminal status. Default `false` (returns 202 Accepted).
+	//
+	Wait *bool `default:"false" queryParam:"style=form,explode=true,name=wait"`
+}
+
+func (d DeleteAppRequest) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(d, "", false)
+}
+
+func (d *DeleteAppRequest) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &d, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (d *DeleteAppRequest) GetID() string {
@@ -18,8 +34,20 @@ func (d *DeleteAppRequest) GetID() string {
 	return d.ID
 }
 
+func (d *DeleteAppRequest) GetWait() *bool {
+	if d == nil {
+		return nil
+	}
+	return d.Wait
+}
+
 type DeleteAppResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
+	// Soft-delete accepted. Cleanup runs asynchronously. The
+	// `Location` header points at the destroy deployment if one was
+	// enqueued.
+	//
+	DeleteAppResponse *components.DeleteAppResponse
 	// Error
 	Error *components.Error
 }
@@ -29,6 +57,13 @@ func (d *DeleteAppResponse) GetHTTPMeta() components.HTTPMetadata {
 		return components.HTTPMetadata{}
 	}
 	return d.HTTPMeta
+}
+
+func (d *DeleteAppResponse) GetDeleteAppResponse() *components.DeleteAppResponse {
+	if d == nil {
+		return nil
+	}
+	return d.DeleteAppResponse
 }
 
 func (d *DeleteAppResponse) GetError() *components.Error {

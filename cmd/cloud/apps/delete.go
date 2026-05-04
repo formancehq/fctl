@@ -10,7 +10,9 @@ import (
 )
 
 type Delete struct {
-	ID string
+	ID                  string  `json:"id"`
+	DestroyDeploymentID *string `json:"destroyDeploymentId,omitempty"`
+	Waited              bool    `json:"waited"`
 }
 
 type DeleteCtrl struct {
@@ -31,8 +33,9 @@ func NewDeleteCtrl() *DeleteCtrl {
 
 func NewDelete() *cobra.Command {
 	return fctl.NewCommand("delete",
-		fctl.WithShortDescription("Delete apps"),
+		fctl.WithShortDescription("Soft-delete an app and enqueue a destroy deployment"),
 		fctl.WithStringFlag("id", "", "App ID"),
+		fctl.WithBoolFlag("wait", false, "Block until the destroy deployment reaches a terminal status"),
 		fctl.WithController(NewDeleteCtrl()),
 	)
 }
@@ -61,17 +64,34 @@ func (c *DeleteCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, er
 	if id == "" {
 		return nil, fmt.Errorf("id is required")
 	}
-	_, err = apiClient.DeleteApp(cmd.Context(), id)
+
+	wait := fctl.GetBool(cmd, "wait")
+	resp, err := apiClient.DeleteApp(cmd.Context(), id, &wait)
 	if err != nil {
 		return nil, err
 	}
 
 	c.store.ID = id
+	c.store.Waited = wait
+	if resp.DeleteAppResponse != nil {
+		c.store.DestroyDeploymentID = resp.DeleteAppResponse.DestroyDeploymentID
+	}
 
 	return c, nil
 }
 
 func (c *DeleteCtrl) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.Println("App deleted", c.store.ID)
+	switch {
+	case c.store.DestroyDeploymentID != nil && *c.store.DestroyDeploymentID != "":
+		if c.store.Waited {
+			pterm.Success.Printfln("App %s deleted (destroy deployment %s reached terminal status)",
+				c.store.ID, *c.store.DestroyDeploymentID)
+		} else {
+			pterm.Success.Printfln("App %s soft-deleted; destroy deployment %s enqueued (poll with `fctl cloud app deployments show --id %s`)",
+				c.store.ID, *c.store.DestroyDeploymentID, *c.store.DestroyDeploymentID)
+		}
+	default:
+		pterm.Success.Printfln("App %s deleted (no destroy deployment was needed)", c.store.ID)
+	}
 	return nil
 }

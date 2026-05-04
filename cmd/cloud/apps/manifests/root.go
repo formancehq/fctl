@@ -17,6 +17,7 @@ func NewCommand() *cobra.Command {
 			NewCreate(),
 			NewDelete(),
 			NewUpdate(),
+			NewDownload(),
 			versions.NewCommand(),
 		),
 	)

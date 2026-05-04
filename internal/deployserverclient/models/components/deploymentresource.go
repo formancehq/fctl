@@ -9,18 +9,14 @@ import (
 )
 
 type DeploymentResource struct {
-	ID               string    `json:"id"`
-	AppID            string    `json:"appId"`
-	ManifestID       *string   `json:"manifestId,omitempty"`
-	ManifestVersion  *int64    `json:"manifestVersion,omitempty"`
-	HasInlineContent *bool     `json:"hasInlineContent,omitempty"`
-	WorkspaceID      string    `json:"workspaceId"`
-	RunID            *string   `json:"runId,omitempty"`
-	RunStatus        string    `json:"runStatus"`
-	ConfigVersionID  *string   `json:"configVersionId,omitempty"`
-	CreatedAt        time.Time `json:"createdAt"`
-	UpdatedAt        time.Time `json:"updatedAt"`
-	State            *State    `json:"state,omitempty"`
+	ID              string    `json:"id"`
+	AppID           string    `json:"appId"`
+	ManifestID      *string   `json:"manifestId,omitempty"`
+	ManifestVersion *int64    `json:"manifestVersion,omitempty"`
+	Status          string    `json:"status"`
+	CreatedAt       time.Time `json:"createdAt"`
+	UpdatedAt       time.Time `json:"updatedAt"`
+	State           *State    `json:"state,omitempty"`
 }
 
 func (d DeploymentResource) MarshalJSON() ([]byte, error) {
@@ -62,39 +58,11 @@ func (d *DeploymentResource) GetManifestVersion() *int64 {
 	return d.ManifestVersion
 }
 
-func (d *DeploymentResource) GetHasInlineContent() *bool {
-	if d == nil {
-		return nil
-	}
-	return d.HasInlineContent
-}
-
-func (d *DeploymentResource) GetWorkspaceID() string {
+func (d *DeploymentResource) GetStatus() string {
 	if d == nil {
 		return ""
 	}
-	return d.WorkspaceID
-}
-
-func (d *DeploymentResource) GetRunID() *string {
-	if d == nil {
-		return nil
-	}
-	return d.RunID
-}
-
-func (d *DeploymentResource) GetRunStatus() string {
-	if d == nil {
-		return ""
-	}
-	return d.RunStatus
-}
-
-func (d *DeploymentResource) GetConfigVersionID() *string {
-	if d == nil {
-		return nil
-	}
-	return d.ConfigVersionID
+	return d.Status
 }
 
 func (d *DeploymentResource) GetCreatedAt() time.Time {

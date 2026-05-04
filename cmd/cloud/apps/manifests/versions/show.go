@@ -1,6 +1,7 @@
 package versions
 
 import (
+	"encoding/base64"
 	"fmt"
 	"strconv"
 
@@ -88,16 +89,23 @@ func (c *ShowCtrl) Render(cmd *cobra.Command, _ []string) error {
 		{Level: 0, Text: fmt.Sprintf("Created At: %s", c.store.CreatedAt)},
 	}
 
-	if c.store.Content != nil {
-		items = append(items, pterm.BulletListItem{Level: 0, Text: fmt.Sprintf("Content: %s", *c.store.Content)})
-	}
-
 	if err := pterm.
 		DefaultBulletList.
 		WithItems(items).
 		WithWriter(cmd.OutOrStdout()).
 		Render(); err != nil {
 		return err
+	}
+
+	if c.store.Content != nil {
+		pterm.DefaultSection.WithWriter(cmd.OutOrStdout()).Println("Content")
+
+		decoded, err := base64.StdEncoding.DecodeString(*c.store.Content)
+		if err != nil {
+			fmt.Fprintln(cmd.OutOrStdout(), *c.store.Content)
+		} else {
+			fmt.Fprintln(cmd.OutOrStdout(), string(decoded))
+		}
 	}
 
 	return nil

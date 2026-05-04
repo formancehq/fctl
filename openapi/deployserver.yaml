@@ -120,6 +120,16 @@ paths:
                 $ref: '#/components/schemas/Error'
     delete:
       summary: Delete an app
+      description: |
+        Soft-deletes the app immediately and enqueues a destroy deployment to
+        clean up any terraform-managed resources on Formance Cloud. The app
+        becomes invisible to all subsequent reads. The destroy runs through
+        the normal worker pipeline; the app row is hard-deleted by the worker
+        once the destroy reaches a terminal status.
+
+        By default this returns 202 Accepted as soon as the destroy is
+        enqueued (or 202 with no body if no destroy was needed). Pass
+        `?wait=true` to block until the destroy reaches a terminal status.
       operationId: deleteApp
       parameters:
       - name: id
@@ -127,9 +137,29 @@ paths:
         required: true
         schema:
           type: string
+      - name: wait
+        in: query
+        required: false
+        description: |
+          When `true`, the call blocks until the destroy deployment reaches a
+          terminal status. Default `false` (returns 202 Accepted).
+        schema:
+          type: boolean
+          default: false
       responses:
+        '202':
+          description: |
+            Soft-delete accepted. Cleanup runs asynchronously. The
+            `Location` header points at the destroy deployment if one was
+            enqueued.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteAppResponse'
         '204':
-          description: App details retrieved successfully
+          description: |
+            Returned when `wait=true` and the destroy reached a terminal
+            status successfully (or when no destroy was needed at all).
         default:
           description: Error
           content:
@@ -652,6 +682,16 @@ components:
           type: object
           description: The stack details from the Terraform state
           additionalProperties: true
+    DeleteAppResponse:
+      type: object
+      properties:
+        destroyDeploymentId:
+          type: string
+          description: |
+            ID of the destroy deployment enqueued to clean up the app's
+            resources. Empty when no destroy was needed (e.g. no prior
+            applied deployment). Use `GET /deployments/{id}` to poll its
+            status.
     ReadManifestResponse:
       type: object
       required:
@@ -960,8 +1000,7 @@ components:
       required:
       - id
       - appId
-      - workspaceId
-      - runStatus
+      - status
       - createdAt
       - updatedAt
       properties:
@@ -973,15 +1012,7 @@ components:
           type: string
         manifestVersion:
           type: integer
-        hasInlineContent:
-          type: boolean
-        workspaceId:
-          type: string
-        runId:
-          type: string
-        runStatus:
-          type: string
-        configVersionId:
+        status:
           type: string
         createdAt:
           type: string
