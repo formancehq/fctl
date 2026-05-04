@@ -235,7 +235,16 @@ func main() {
 
 ## DeleteApp
 
-Delete an app
+Soft-deletes the app immediately and enqueues a destroy deployment to
+clean up any terraform-managed resources on Formance Cloud. The app
+becomes invisible to all subsequent reads. The destroy runs through
+the normal worker pipeline; the app row is hard-deleted by the worker
+once the destroy reaches a terminal status.
+
+By default this returns 202 Accepted as soon as the destroy is
+enqueued (or 202 with no body if no destroy was needed). Pass
+`?wait=true` to block until the destroy reaches a terminal status.
+
 
 ### Example Usage
 
@@ -254,11 +263,11 @@ func main() {
 
     s := deployserverclient.New()
 
-    res, err := s.DeleteApp(ctx, "<id>")
+    res, err := s.DeleteApp(ctx, "<id>", deployserverclient.Pointer(false))
     if err != nil {
         log.Fatal(err)
     }
-    if res.Error != nil {
+    if res.DeleteAppResponse != nil {
         // handle response
     }
 }
@@ -266,11 +275,12 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
-| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
-| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+| Parameter                                                                                                                     | Type                                                                                                                          | Required                                                                                                                      | Description                                                                                                                   |
+| ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                                         | [context.Context](https://pkg.go.dev/context#Context)                                                                         | :heavy_check_mark:                                                                                                            | The context to use for the request.                                                                                           |
+| `id`                                                                                                                          | `string`                                                                                                                      | :heavy_check_mark:                                                                                                            | N/A                                                                                                                           |
+| `wait`                                                                                                                        | `*bool`                                                                                                                       | :heavy_minus_sign:                                                                                                            | When `true`, the call blocks until the destroy deployment reaches a<br/>terminal status. Default `false` (returns 202 Accepted).<br/> |
+| `opts`                                                                                                                        | [][operations.Option](../../models/operations/option.md)                                                                      | :heavy_minus_sign:                                                                                                            | The options for this request.                                                                                                 |
 
 ### Response
 

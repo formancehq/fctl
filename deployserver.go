@@ -1022,9 +1022,19 @@ func (s *DeployServer) ReadApp(ctx context.Context, id string, include []operati
 }
 
 // DeleteApp - Delete an app
-func (s *DeployServer) DeleteApp(ctx context.Context, id string, opts ...operations.Option) (*operations.DeleteAppResponse, error) {
+// Soft-deletes the app immediately and enqueues a destroy deployment to
+// clean up any terraform-managed resources on Formance Cloud. The app
+// becomes invisible to all subsequent reads. The destroy runs through
+// the normal worker pipeline; the app row is hard-deleted by the worker
+// once the destroy reaches a terminal status.
+//
+// By default this returns 202 Accepted as soon as the destroy is
+// enqueued (or 202 with no body if no destroy was needed). Pass
+// `?wait=true` to block until the destroy reaches a terminal status.
+func (s *DeployServer) DeleteApp(ctx context.Context, id string, wait *bool, opts ...operations.Option) (*operations.DeleteAppResponse, error) {
 	request := operations.DeleteAppRequest{
-		ID: id,
+		ID:   id,
+		Wait: wait,
 	}
 
 	o := operations.Options{}
@@ -1077,6 +1087,10 @@ func (s *DeployServer) DeleteApp(ctx context.Context, id string, opts ...operati
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+
+	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
+		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
 
 	for k, v := range o.SetHeaders {
 		req.Header.Set(k, v)
@@ -1181,6 +1195,27 @@ func (s *DeployServer) DeleteApp(ctx context.Context, id string, opts ...operati
 	}
 
 	switch {
+	case httpRes.StatusCode == 202:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out components.DeleteAppResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.DeleteAppResponse = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
 	case httpRes.StatusCode == 204:
 		utils.DrainBody(httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
