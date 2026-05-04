@@ -26,7 +26,7 @@ var ServerList = []string{
 	// Production server
 	"https://deploy.formance.cloud",
 	// Staging server
-	"https://deploy-server.staging.formance.cloud",
+	"https://deploy.staging.formance.cloud",
 	// Local server
 	"http://localhost:8080",
 }
