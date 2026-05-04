@@ -88,14 +88,14 @@ func (c *ListCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) 
 
 func (c *ListCtrl) Render(cmd *cobra.Command, _ []string) error {
 	data := [][]string{
-		{"ID", "App ID", "Run Status", "Manifest ID", "Created At"},
+		{"ID", "App ID", "Status", "Manifest ID", "Created At"},
 	}
 
 	for _, d := range c.store.Items {
 		data = append(data, []string{
 			d.ID,
 			d.AppID,
-			d.RunStatus,
+			d.Status,
 			func() string {
 				if d.ManifestID != nil {
 					return *d.ManifestID

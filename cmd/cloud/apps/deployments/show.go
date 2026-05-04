@@ -2,6 +2,7 @@ package deployments
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -88,7 +89,7 @@ func (c *ShowCtrl) Render(cmd *cobra.Command, _ []string) error {
 	items := []pterm.BulletListItem{
 		{Level: 0, Text: fmt.Sprintf("ID: %s", c.store.ID)},
 		{Level: 0, Text: fmt.Sprintf("App ID: %s", c.store.AppID)},
-		{Level: 0, Text: fmt.Sprintf("Run Status: %s", c.store.RunStatus)},
+		{Level: 0, Text: fmt.Sprintf("Status: %s", c.store.Status)},
 		{Level: 0, Text: fmt.Sprintf("Created At: %s", c.store.CreatedAt)},
 		{Level: 0, Text: fmt.Sprintf("Updated At: %s", c.store.UpdatedAt)},
 	}
@@ -99,8 +100,10 @@ func (c *ShowCtrl) Render(cmd *cobra.Command, _ []string) error {
 	if c.store.ManifestVersion != nil {
 		items = append(items, pterm.BulletListItem{Level: 0, Text: fmt.Sprintf("Manifest Version: %d", *c.store.ManifestVersion)})
 	}
-	if c.store.RunID != nil {
-		items = append(items, pterm.BulletListItem{Level: 0, Text: fmt.Sprintf("Run ID: %s", *c.store.RunID)})
+
+	if c.store.State != nil && len(c.store.State.Stack) > 0 {
+		items = append(items, pterm.BulletListItem{Level: 0, Text: "State"})
+		items = append(items, renderStackItems(c.store.State.Stack)...)
 	}
 
 	if err := pterm.
@@ -112,4 +115,25 @@ func (c *ShowCtrl) Render(cmd *cobra.Command, _ []string) error {
 	}
 
 	return nil
+}
+
+func renderStackItems(stack map[string]any) []pterm.BulletListItem {
+	keys := make([]string, 0, len(stack))
+	for k := range stack {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	items := make([]pterm.BulletListItem, 0, len(stack))
+	for _, k := range keys {
+		v := stack[k]
+		if v == nil {
+			continue
+		}
+		items = append(items, pterm.BulletListItem{
+			Level: 1,
+			Text:  fmt.Sprintf("%s: %v", k, v),
+		})
+	}
+	return items
 }
