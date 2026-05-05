@@ -26,12 +26,12 @@ jobs:
 
   Tests:
     name: Tests
-    runs-on: "shipfox-4vcpu-ubuntu-2404"
+    runs-on: "namespace-profile-linux-amd64-4vcpu"
     steps:
-      - uses: actions/checkout@v6
+      - uses: namespacelabs/nscloud-checkout-action@v7
         with:
           fetch-depth: 0
-          filter: tree:0
+          dissociate: true
       - name: Setup Env
         uses: ./.github/actions/default
         with:
@@ -39,15 +39,15 @@ jobs:
       - run: nix develop --impure --command just tests
 
   Dirty:
-    runs-on: "shipfox-4vcpu-ubuntu-2404"
+    runs-on: "namespace-profile-linux-amd64-4vcpu"
     env:
       GOPATH: /tmp/go
       GOLANGCI_LINT_CACHE: /tmp/golangci-lint
     steps:
-      - uses: actions/checkout@v6
+      - uses: namespacelabs/nscloud-checkout-action@v7
         with:
           fetch-depth: 0
-          filter: tree:0 # treeless clone, faster to clone as history and blobs are only fetched when needed.
+          dissociate: true
       - name: Setup Env
         uses: ./.github/actions/default
         with:
@@ -69,23 +69,21 @@ jobs:
           fi
 
   GoReleaser:
-    runs-on: "shipfox-4vcpu-ubuntu-2404"
+    runs-on: "namespace-profile-linux-amd64-4vcpu"
     if: contains(github.event.pull_request.labels.*.name, 'build-images') || github.ref == 'refs/heads/main' || github.event_name == 'merge_group'
     needs:
       - Dirty
     steps:
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: namespacelabs/nscloud-setup-buildx-action@v0
       - uses: earthly/actions-setup@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           version: "latest"
-      - uses: actions/checkout@v6
+      - uses: namespacelabs/nscloud-checkout-action@v7
         with:
           fetch-depth: 0
-          filter: tree:0 # treeless clone, faster to clone as history and blobs are only fetched when needed.
+          dissociate: true
       - name: Setup Env
         uses: ./.github/actions/default
         with:
