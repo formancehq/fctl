@@ -9,6 +9,8 @@
 * [UpdateApp](#updateapp) - Update an app
 * [ReadApp](#readapp) - read app details
 * [DeleteApp](#deleteapp) - Delete an app
+* [AttachAppManifest](#attachappmanifest) - Bind an app to a manifest
+* [DetachAppManifest](#detachappmanifest) - Unbind an app from its manifest
 * [ReadAppVariables](#readappvariables) - Get all variables of an app
 * [CreateAppVariable](#createappvariable) - Create variable for an app
 * [DeleteAppVariable](#deleteappvariable) - Delete a variable from an app
@@ -23,7 +25,6 @@
 * [ListManifestVersions](#listmanifestversions) - List versions of a manifest
 * [ReadManifestVersion](#readmanifestversion) - Get a specific manifest version with content
 * [CreateDeployment](#createdeployment) - Create a deployment (triggers a run)
-* [CreateDeploymentRaw](#createdeploymentraw) - Create a deployment (triggers a run)
 * [ListDeployments](#listdeployments) - List deployments
 * [ReadDeployment](#readdeployment) - Get a single deployment
 * [ReadDeploymentLogs](#readdeploymentlogs) - Get run logs for a deployment
@@ -292,6 +293,111 @@ func main() {
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
+## AttachAppManifest
+
+Updates the app's `manifest_id` pointer. Idempotent — re-binding to the
+same id is a no-op; rebinding to a different id moves the pointer.
+
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="attachAppManifest" method="put" path="/apps/{id}/manifest" -->
+```go
+package main
+
+import(
+	"context"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := deployserverclient.New()
+
+    res, err := s.AttachAppManifest(ctx, "<id>", components.AttachManifestRequest{
+        ManifestID: "<id>",
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.Error != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                            | Type                                                                                 | Required                                                                             | Description                                                                          |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `ctx`                                                                                | [context.Context](https://pkg.go.dev/context#Context)                                | :heavy_check_mark:                                                                   | The context to use for the request.                                                  |
+| `id`                                                                                 | `string`                                                                             | :heavy_check_mark:                                                                   | N/A                                                                                  |
+| `attachManifestRequest`                                                              | [components.AttachManifestRequest](../../models/components/attachmanifestrequest.md) | :heavy_check_mark:                                                                   | N/A                                                                                  |
+| `opts`                                                                               | [][operations.Option](../../models/operations/option.md)                             | :heavy_minus_sign:                                                                   | The options for this request.                                                        |
+
+### Response
+
+**[*operations.AttachAppManifestResponse](../../models/operations/attachappmanifestresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.Error    | 400, 404           | application/json   |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## DetachAppManifest
+
+Clears the app's `manifest_id` pointer. Idempotent.
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="detachAppManifest" method="delete" path="/apps/{id}/manifest" -->
+```go
+package main
+
+import(
+	"context"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := deployserverclient.New()
+
+    res, err := s.DetachAppManifest(ctx, "<id>")
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.Error != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
+| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
+| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+
+### Response
+
+**[*operations.DetachAppManifestResponse](../../models/operations/detachappmanifestresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
 ## ReadAppVariables
 
 Get all variables of an app
@@ -477,7 +583,7 @@ func main() {
         panic(fileErr)
     }
 
-    res, err := s.CreateManifestRaw(ctx, "<value>", example, nil)
+    res, err := s.CreateManifestRaw(ctx, "<value>", example)
     if err != nil {
         log.Fatal(err)
     }
@@ -494,7 +600,6 @@ func main() {
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
 | `name`                                                   | `string`                                                 | :heavy_check_mark:                                       | Name for the manifest                                    |
 | `requestBody`                                            | `any`                                                    | :heavy_check_mark:                                       | N/A                                                      |
-| `appID`                                                  | `*string`                                                | :heavy_minus_sign:                                       | Optional app ID to scope the manifest to a specific app  |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -529,7 +634,7 @@ func main() {
 
     s := deployserverclient.New()
 
-    res, err := s.CreateManifest(ctx, "<value>", operations.CreateManifestRequestBody{}, nil)
+    res, err := s.CreateManifest(ctx, "<value>", operations.CreateManifestRequestBody{})
     if err != nil {
         log.Fatal(err)
     }
@@ -546,7 +651,6 @@ func main() {
 | `ctx`                                                                                        | [context.Context](https://pkg.go.dev/context#Context)                                        | :heavy_check_mark:                                                                           | The context to use for the request.                                                          |
 | `name`                                                                                       | `string`                                                                                     | :heavy_check_mark:                                                                           | Name for the manifest                                                                        |
 | `requestBody`                                                                                | [operations.CreateManifestRequestBody](../../models/operations/createmanifestrequestbody.md) | :heavy_check_mark:                                                                           | N/A                                                                                          |
-| `appID`                                                                                      | `*string`                                                                                    | :heavy_minus_sign:                                                                           | Optional app ID to scope the manifest to a specific app                                      |
 | `opts`                                                                                       | [][operations.Option](../../models/operations/option.md)                                     | :heavy_minus_sign:                                                                           | The options for this request.                                                                |
 
 ### Response
@@ -580,7 +684,7 @@ func main() {
 
     s := deployserverclient.New()
 
-    res, err := s.ListManifests(ctx, nil, nil, nil)
+    res, err := s.ListManifests(ctx, nil, nil)
     if err != nil {
         log.Fatal(err)
     }
@@ -592,13 +696,12 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                            | Type                                                                 | Required                                                             | Description                                                          |
-| -------------------------------------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `ctx`                                                                | [context.Context](https://pkg.go.dev/context#Context)                | :heavy_check_mark:                                                   | The context to use for the request.                                  |
-| `pageNumber`                                                         | `*int64`                                                             | :heavy_minus_sign:                                                   | N/A                                                                  |
-| `pageSize`                                                           | `*int64`                                                             | :heavy_minus_sign:                                                   | N/A                                                                  |
-| `appID`                                                              | `*string`                                                            | :heavy_minus_sign:                                                   | Filter manifests by app ID (includes org-wide manifests as fallback) |
-| `opts`                                                               | [][operations.Option](../../models/operations/option.md)             | :heavy_minus_sign:                                                   | The options for this request.                                        |
+| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
+| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
+| `pageNumber`                                             | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
+| `pageSize`                                               | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
+| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
 
@@ -995,7 +1098,9 @@ func main() {
 
     res, err := s.CreateDeployment(ctx, components.CreateDeploymentRequest{
         AppID: "<id>",
-    }, nil)
+        ManifestID: "<id>",
+        ManifestVersion: 5649,
+    })
     if err != nil {
         log.Fatal(err)
     }
@@ -1010,64 +1115,12 @@ func main() {
 | Parameter                                                                                | Type                                                                                     | Required                                                                                 | Description                                                                              |
 | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `ctx`                                                                                    | [context.Context](https://pkg.go.dev/context#Context)                                    | :heavy_check_mark:                                                                       | The context to use for the request.                                                      |
-| `createDeploymentRequest`                                                                | [components.CreateDeploymentRequest](../../models/components/createdeploymentrequest.md) | :heavy_check_mark:                                                                       | N/A                                                                                      |
-| `appID`                                                                                  | `*string`                                                                                | :heavy_minus_sign:                                                                       | App ID (required for inline YAML deploys)                                                |
+| `request`                                                                                | [components.CreateDeploymentRequest](../../models/components/createdeploymentrequest.md) | :heavy_check_mark:                                                                       | The request object to use for the request.                                               |
 | `opts`                                                                                   | [][operations.Option](../../models/operations/option.md)                                 | :heavy_minus_sign:                                                                       | The options for this request.                                                            |
 
 ### Response
 
 **[*operations.CreateDeploymentResponse](../../models/operations/createdeploymentresponse.md), error**
-
-### Errors
-
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
-
-## CreateDeploymentRaw
-
-Create a deployment (triggers a run)
-
-### Example Usage
-
-<!-- UsageSnippet language="go" operationID="createDeployment_raw" method="post" path="/deployments" -->
-```go
-package main
-
-import(
-	"context"
-	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
-	"bytes"
-	"log"
-)
-
-func main() {
-    ctx := context.Background()
-
-    s := deployserverclient.New()
-
-    res, err := s.CreateDeploymentRaw(ctx, bytes.NewBuffer([]byte("{\"appId\":\"<id>\"}")), nil)
-    if err != nil {
-        log.Fatal(err)
-    }
-    if res.DeploymentResponse != nil {
-        // handle response
-    }
-}
-```
-
-### Parameters
-
-| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
-| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
-| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `requestBody`                                            | `any`                                                    | :heavy_check_mark:                                       | N/A                                                      |
-| `appID`                                                  | `*string`                                                | :heavy_minus_sign:                                       | App ID (required for inline YAML deploys)                |
-| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
-
-### Response
-
-**[*operations.CreateDeploymentRawResponse](../../models/operations/createdeploymentrawresponse.md), error**
 
 ### Errors
 
