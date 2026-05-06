@@ -1,0 +1,16 @@
+# AppCurrentManifest
+
+The manifest the app is currently bound to (apps.manifest_id), with
+catalog metadata and divergence vs the most recent applied deployment.
+Populated by GET /apps/{id} when a manifest is bound.
+
+
+
+## Fields
+
+| Field                                                                                                                        | Type                                                                                                                         | Required                                                                                                                     | Description                                                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `ID`                                                                                                                         | `string`                                                                                                                     | :heavy_check_mark:                                                                                                           | ID of the manifest the app is bound to                                                                                       |
+| `Name`                                                                                                                       | `string`                                                                                                                     | :heavy_check_mark:                                                                                                           | Name of the bound manifest                                                                                                   |
+| `LatestVersion`                                                                                                              | `int64`                                                                                                                      | :heavy_check_mark:                                                                                                           | Latest version available in the manifest's lineage                                                                           |
+| `Divergence`                                                                                                                 | [*components.AppManifestDivergence](../../models/components/appmanifestdivergence.md)                                        | :heavy_minus_sign:                                                                                                           | Relationship between the app's bound manifest and what's currently<br/>deployed (last `applied` deployment, ignoring destroys).<br/> |
