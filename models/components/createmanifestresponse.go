@@ -10,7 +10,6 @@ import (
 
 type CreateManifestResponseData struct {
 	ID        string    `json:"id"`
-	AppID     *string   `json:"appId,omitempty"`
 	Version   int64     `json:"version"`
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"createdAt"`
@@ -32,13 +31,6 @@ func (c *CreateManifestResponseData) GetID() string {
 		return ""
 	}
 	return c.ID
-}
-
-func (c *CreateManifestResponseData) GetAppID() *string {
-	if c == nil {
-		return nil
-	}
-	return c.AppID
 }
 
 func (c *CreateManifestResponseData) GetVersion() int64 {

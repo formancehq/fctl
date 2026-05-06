@@ -10,7 +10,14 @@ type App struct {
 	Name string `json:"name"`
 	// Optional existing stack ID claimed by this app
 	StackID *string `json:"stackId,omitempty"`
-	State   *State  `json:"state,omitempty"`
+	// Stack region ID (set when the app's stack lives in a specific region)
+	StackRegionID *string `json:"stackRegionId,omitempty"`
+	State         *State  `json:"state,omitempty"`
+	// The manifest the app is currently bound to (apps.manifest_id), with
+	// catalog metadata and divergence vs the most recent applied deployment.
+	// Populated by GET /apps/{id} when a manifest is bound.
+	//
+	CurrentManifest *AppCurrentManifest `json:"currentManifest,omitempty"`
 }
 
 func (a *App) GetID() string {
@@ -34,9 +41,23 @@ func (a *App) GetStackID() *string {
 	return a.StackID
 }
 
+func (a *App) GetStackRegionID() *string {
+	if a == nil {
+		return nil
+	}
+	return a.StackRegionID
+}
+
 func (a *App) GetState() *State {
 	if a == nil {
 		return nil
 	}
 	return a.State
+}
+
+func (a *App) GetCurrentManifest() *AppCurrentManifest {
+	if a == nil {
+		return nil
+	}
+	return a.CurrentManifest
 }

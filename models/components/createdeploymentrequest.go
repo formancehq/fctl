@@ -6,10 +6,10 @@ package components
 type CreateDeploymentRequest struct {
 	// ID of the app to deploy to
 	AppID string `json:"appId"`
-	// Manifest catalog ID (for manifest-reference mode)
-	ManifestID *string `json:"manifestId,omitempty"`
-	// Manifest version (for manifest-reference mode)
-	ManifestVersion *int64 `json:"manifestVersion,omitempty"`
+	// Manifest catalog ID
+	ManifestID string `json:"manifestId"`
+	// Manifest version
+	ManifestVersion int64 `json:"manifestVersion"`
 }
 
 func (c *CreateDeploymentRequest) GetAppID() string {
@@ -19,16 +19,16 @@ func (c *CreateDeploymentRequest) GetAppID() string {
 	return c.AppID
 }
 
-func (c *CreateDeploymentRequest) GetManifestID() *string {
+func (c *CreateDeploymentRequest) GetManifestID() string {
 	if c == nil {
-		return nil
+		return ""
 	}
 	return c.ManifestID
 }
 
-func (c *CreateDeploymentRequest) GetManifestVersion() *int64 {
+func (c *CreateDeploymentRequest) GetManifestVersion() int64 {
 	if c == nil {
-		return nil
+		return 0
 	}
 	return c.ManifestVersion
 }
