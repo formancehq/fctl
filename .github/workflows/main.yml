@@ -28,7 +28,7 @@ jobs:
     name: Tests
     runs-on: "namespace-profile-linux-amd64-4vcpu"
     steps:
-      - uses: namespacelabs/nscloud-checkout-action@v7
+      - uses: namespacelabs/nscloud-checkout-action@v8
         with:
           fetch-depth: 0
           dissociate: true
@@ -44,7 +44,7 @@ jobs:
       GOPATH: /tmp/go
       GOLANGCI_LINT_CACHE: /tmp/golangci-lint
     steps:
-      - uses: namespacelabs/nscloud-checkout-action@v7
+      - uses: namespacelabs/nscloud-checkout-action@v8
         with:
           fetch-depth: 0
           dissociate: true
@@ -80,7 +80,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           version: "latest"
-      - uses: namespacelabs/nscloud-checkout-action@v7
+      - uses: namespacelabs/nscloud-checkout-action@v8
         with:
           fetch-depth: 0
           dissociate: true
