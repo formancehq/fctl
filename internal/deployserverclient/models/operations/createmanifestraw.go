@@ -10,8 +10,6 @@ import (
 type CreateManifestRawRequest struct {
 	// Name for the manifest
 	Name string `queryParam:"style=form,explode=true,name=name"`
-	// Optional app ID to scope the manifest to a specific app
-	AppID *string `queryParam:"style=form,explode=true,name=appId"`
 	// This field accepts []byte data or io.Reader implementations, such as *os.File.
 	RequestBody any `request:"mediaType=application/yaml"`
 }
@@ -21,13 +19,6 @@ func (c *CreateManifestRawRequest) GetName() string {
 		return ""
 	}
 	return c.Name
-}
-
-func (c *CreateManifestRawRequest) GetAppID() *string {
-	if c == nil {
-		return nil
-	}
-	return c.AppID
 }
 
 func (c *CreateManifestRawRequest) GetRequestBody() any {

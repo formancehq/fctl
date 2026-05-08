@@ -12,9 +12,9 @@ import (
 )
 
 type Create struct {
-	ID      string
-	Name    string
-	Version int64
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Version int64  `json:"version"`
 }
 
 type CreateCtrl struct {
@@ -37,7 +37,6 @@ func NewCreate() *cobra.Command {
 	return fctl.NewCommand("create",
 		fctl.WithShortDescription("Create a new manifest"),
 		fctl.WithStringFlag("name", "", "Manifest name"),
-		fctl.WithStringFlag("app-id", "", "Optional app ID to scope the manifest"),
 		fctl.WithStringFlag("path", "", "Path to YAML manifest file"),
 		fctl.WithController(NewCreateCtrl()),
 	)
@@ -79,12 +78,7 @@ func (c *CreateCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error
 		return nil, err
 	}
 
-	var appID *string
-	if id := fctl.GetString(cmd, "app-id"); id != "" {
-		appID = &id
-	}
-
-	resp, err := apiClient.CreateManifestRaw(cmd.Context(), name, data, appID)
+	resp, err := apiClient.CreateManifestRaw(cmd.Context(), name, data)
 	if err != nil {
 		return nil, err
 	}

@@ -35,6 +35,8 @@ func NewCommand() *cobra.Command {
 			NewCreate(),
 			NewDelete(),
 			NewShow(),
+			NewBindManifest(),
+			NewUnbindManifest(),
 			deployments.NewCommand(),
 			manifests.NewCommand(),
 			variables.NewCommand(),

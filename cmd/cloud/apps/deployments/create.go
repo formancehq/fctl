@@ -1,6 +1,7 @@
 package deployments
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"time"
@@ -13,6 +14,18 @@ import (
 
 	"github.com/formancehq/fctl/v3/cmd/cloud/apps/printer"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+)
+
+// Deployment status values polled by the wait loop. Mirrors the strings the
+// deploy server emits — keep this list in sync with the server's status enum
+// (terraform-hcp-proxy `internal/storage/models/deployment.go`). The server
+// does not yet expose these as a typed enum in the OpenAPI spec; lift this
+// block once it does so a rename produces a compile error instead of a
+// silent polling deadlock.
+const (
+	statusApplied            = "applied"
+	statusPlannedAndFinished = "planned_and_finished"
+	statusErrored            = "errored"
 )
 
 type Create struct {
@@ -41,8 +54,9 @@ func NewCreate() *cobra.Command {
 		fctl.WithShortDescription("Create a deployment (deploy an app)"),
 		fctl.WithStringFlag("app-id", "", "App ID"),
 		fctl.WithStringFlag("manifest-id", "", "Manifest ID to deploy"),
-		fctl.WithIntFlag("manifest-version", 0, "Manifest version to deploy (omit or 0 for latest)"),
+		fctl.WithIntFlag("manifest-version", 0, "Manifest version to deploy (required, >= 1)"),
 		fctl.WithBoolFlag("wait", true, "Wait for the deployment to complete"),
+		fctl.WithStringFlag("wait-timeout", "30m", "Max duration to wait for the deployment when --wait is set"),
 		fctl.WithController(NewCreateCtrl()),
 	)
 }
@@ -75,18 +89,19 @@ func (c *CreateCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, er
 	if manifestID == "" {
 		return nil, fmt.Errorf("manifest-id is required")
 	}
+	manifestVersion := fctl.GetInt(cmd, "manifest-version")
+	if manifestVersion <= 0 {
+		return nil, fmt.Errorf("manifest-version is required (>= 1)")
+	}
 
 	req := components.CreateDeploymentRequest{
-		AppID:      appID,
-		ManifestID: &manifestID,
-	}
-	if v := fctl.GetInt(cmd, "manifest-version"); v > 0 {
-		version := int64(v)
-		req.ManifestVersion = &version
+		AppID:           appID,
+		ManifestID:      manifestID,
+		ManifestVersion: int64(manifestVersion),
 	}
 
 	cmd.SilenceUsage = true
-	deployment, err := apiClient.CreateDeployment(cmd.Context(), req, &appID)
+	deployment, err := apiClient.CreateDeployment(cmd.Context(), req)
 	if err != nil {
 		return nil, err
 	}
@@ -138,14 +153,38 @@ func (c *CreateCtrl) waitDeploymentCompletion(cmd *cobra.Command) error {
 		_ = spinner.Stop()
 	}()
 
+	timeout := 30 * time.Minute
+	if v := fctl.GetString(cmd, "wait-timeout"); v != "" {
+		parsed, err := time.ParseDuration(v)
+		if err != nil {
+			return fmt.Errorf("invalid --wait-timeout: %w", err)
+		}
+		timeout = parsed
+	}
+	ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
+	defer cancel()
+
 	waitFor := 0 * time.Second
 	for {
 		select {
-		case <-cmd.Context().Done():
-			return cmd.Context().Err()
+		case <-ctx.Done():
+			if ctx.Err() == context.DeadlineExceeded {
+				return fmt.Errorf("timed out after %s waiting for deployment %s (last status: %s)",
+					timeout, c.store.ID, c.store.DeploymentResource.Status)
+			}
+			return ctx.Err()
 		case <-time.After(waitFor):
-			waitFor = 2 * time.Second
-			r, err := apiClient.ReadDeployment(cmd.Context(), c.store.ID, nil)
+			// Backoff: 2s, 4s, 8s capped at 15s. A long-running terraform
+			// apply doesn't need sub-second polling.
+			if waitFor == 0 {
+				waitFor = 2 * time.Second
+			} else if waitFor < 15*time.Second {
+				waitFor *= 2
+				if waitFor > 15*time.Second {
+					waitFor = 15 * time.Second
+				}
+			}
+			r, err := apiClient.ReadDeployment(ctx, c.store.ID, nil)
 			if err != nil {
 				return err
 			}
@@ -153,14 +192,14 @@ func (c *CreateCtrl) waitDeploymentCompletion(cmd *cobra.Command) error {
 
 			spinner.UpdateText(fmt.Sprintf("Deployment status: %s", r.DeploymentResponse.Data.Status))
 			switch r.DeploymentResponse.Data.Status {
-			case "applied":
+			case statusApplied:
 				spinner.UpdateText("Deployment completed successfully")
 				return nil
-			case "planned_and_finished":
+			case statusPlannedAndFinished:
 				spinner.UpdateText("Deployment completed successfully, no changes to apply")
 				return nil
-			case "errored":
-				l, err := apiClient.ReadDeploymentLogs(cmd.Context(), c.store.ID)
+			case statusErrored:
+				l, err := apiClient.ReadDeploymentLogs(ctx, c.store.ID)
 				if err != nil {
 					return err
 				}
@@ -176,7 +215,7 @@ func (c *CreateCtrl) waitDeploymentCompletion(cmd *cobra.Command) error {
 }
 
 func (c *CreateCtrl) Render(cmd *cobra.Command, args []string) error {
-	if c.store.DeploymentResource.Status == "errored" {
+	if c.store.DeploymentResource.Status == statusErrored {
 		if len(c.store.logs) > 0 {
 			if err := printer.RenderLogs(cmd.ErrOrStderr(), c.store.logs); err != nil {
 				return err

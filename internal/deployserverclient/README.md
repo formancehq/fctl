@@ -90,6 +90,8 @@ func main() {
 * [UpdateApp](docs/sdks/deployserver/README.md#updateapp) - Update an app
 * [ReadApp](docs/sdks/deployserver/README.md#readapp) - read app details
 * [DeleteApp](docs/sdks/deployserver/README.md#deleteapp) - Delete an app
+* [AttachAppManifest](docs/sdks/deployserver/README.md#attachappmanifest) - Bind an app to a manifest
+* [DetachAppManifest](docs/sdks/deployserver/README.md#detachappmanifest) - Unbind an app from its manifest
 * [ReadAppVariables](docs/sdks/deployserver/README.md#readappvariables) - Get all variables of an app
 * [CreateAppVariable](docs/sdks/deployserver/README.md#createappvariable) - Create variable for an app
 * [DeleteAppVariable](docs/sdks/deployserver/README.md#deleteappvariable) - Delete a variable from an app
@@ -104,7 +106,6 @@ func main() {
 * [ListManifestVersions](docs/sdks/deployserver/README.md#listmanifestversions) - List versions of a manifest
 * [ReadManifestVersion](docs/sdks/deployserver/README.md#readmanifestversion) - Get a specific manifest version with content
 * [CreateDeployment](docs/sdks/deployserver/README.md#createdeployment) - Create a deployment (triggers a run)
-* [CreateDeploymentRaw](docs/sdks/deployserver/README.md#createdeploymentraw) - Create a deployment (triggers a run)
 * [ListDeployments](docs/sdks/deployserver/README.md#listdeployments) - List deployments
 * [ReadDeployment](docs/sdks/deployserver/README.md#readdeployment) - Get a single deployment
 * [ReadDeploymentLogs](docs/sdks/deployserver/README.md#readdeploymentlogs) - Get run logs for a deployment
@@ -202,11 +203,11 @@ Handling errors in this SDK should largely match your expectations. All operatio
 
 By Default, an API error will return `apierrors.APIError`. When custom error responses are specified for an operation, the SDK may also return their associated error. You can refer to respective *Errors* tables in SDK docs for more details on possible error types for each operation.
 
-For example, the `DeleteManifest` function may return the following errors:
+For example, the `AttachAppManifest` function may return the following errors:
 
 | Error Type         | Status Code | Content Type     |
 | ------------------ | ----------- | ---------------- |
-| apierrors.Error    | 409         | application/json |
+| apierrors.Error    | 400, 404    | application/json |
 | apierrors.APIError | 4XX, 5XX    | \*/\*            |
 
 ### Example
@@ -219,6 +220,7 @@ import (
 	"errors"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/apierrors"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
 )
 
@@ -227,7 +229,9 @@ func main() {
 
 	s := deployserverclient.New()
 
-	res, err := s.DeleteManifest(ctx, "<id>")
+	res, err := s.AttachAppManifest(ctx, "<id>", components.AttachManifestRequest{
+		ManifestID: "<id>",
+	})
 	if err != nil {
 
 		var e *apierrors.Error
@@ -254,11 +258,11 @@ func main() {
 
 You can override the default server globally using the `WithServerIndex(serverIndex int)` option when initializing the SDK client instance. The selected server will then be used as the default on the operations that use it. This table lists the indexes associated with the available servers:
 
-| #   | Server                                  | Description       |
-| --- | --------------------------------------- | ----------------- |
-| 0   | `https://deploy.formance.cloud`         | Production server |
-| 1   | `https://deploy.staging.formance.cloud` | Staging server    |
-| 2   | `http://localhost:8080`                 | Local server      |
+| #   | Server                                         | Description       |
+| --- | ---------------------------------------------- | ----------------- |
+| 0   | `https://deploy.formance.cloud`                | Production server |
+| 1   | `https://deploy-server.staging.formance.cloud` | Staging server    |
+| 2   | `http://localhost:8080`                        | Local server      |
 
 #### Example
 

@@ -14,6 +14,21 @@ import (
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
+func divergenceHint(k components.Kind) string {
+	switch k {
+	case components.KindUndeployed:
+		return "manifest bound but no successful deployment yet"
+	case components.KindSynced:
+		return "deployed (manifestId, version) matches the bound manifest's latest version"
+	case components.KindBehind:
+		return "deployed manifest matches the bound manifest but on an older version"
+	case components.KindRebound:
+		return "the app was rebound; deployed manifest is a different manifest"
+	default:
+		return ""
+	}
+}
+
 type Show struct {
 	components.App
 }
@@ -117,6 +132,44 @@ func (c *ShowCtrl) Render(cmd *cobra.Command, args []string) error {
 		WithWriter(cmd.OutOrStdout()).
 		Render(); err != nil {
 		return err
+	}
+
+	if cm := c.store.App.CurrentManifest; cm != nil {
+		pterm.DefaultSection.Println("Manifest")
+		manifestItems := []pterm.BulletListItem{
+			{Level: 0, Text: fmt.Sprintf("ID: %s", cm.ID)},
+			{Level: 0, Text: fmt.Sprintf("Name: %s", cm.Name)},
+			{Level: 0, Text: fmt.Sprintf("Latest Version: %d", cm.LatestVersion)},
+		}
+		if d := cm.Divergence; d != nil {
+			manifestItems = append(manifestItems, pterm.BulletListItem{
+				Level: 0,
+				Text:  fmt.Sprintf("Status: %s — %s", d.Kind, divergenceHint(d.Kind)),
+			})
+			if d.DeployedManifestID != nil {
+				manifestItems = append(manifestItems, pterm.BulletListItem{
+					Level: 1,
+					Text:  fmt.Sprintf("Deployed manifest: %s", *d.DeployedManifestID),
+				})
+			}
+			if d.DeployedVersion != nil {
+				manifestItems = append(manifestItems, pterm.BulletListItem{
+					Level: 1,
+					Text:  fmt.Sprintf("Deployed version: %d", *d.DeployedVersion),
+				})
+			}
+			manifestItems = append(manifestItems, pterm.BulletListItem{
+				Level: 1,
+				Text:  fmt.Sprintf("Latest version: %d", d.LatestVersion),
+			})
+		}
+		if err := pterm.
+			DefaultBulletList.
+			WithItems(manifestItems).
+			WithWriter(cmd.OutOrStdout()).
+			Render(); err != nil {
+			return err
+		}
 	}
 
 	if c.store.App.State != nil && c.store.App.State.Stack != nil {

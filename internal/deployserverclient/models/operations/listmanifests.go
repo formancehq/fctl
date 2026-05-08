@@ -10,8 +10,6 @@ import (
 type ListManifestsRequest struct {
 	PageNumber *int64 `queryParam:"style=form,explode=true,name=pageNumber"`
 	PageSize   *int64 `queryParam:"style=form,explode=true,name=pageSize"`
-	// Filter manifests by app ID (includes org-wide manifests as fallback)
-	AppID *string `queryParam:"style=form,explode=true,name=appId"`
 }
 
 func (l *ListManifestsRequest) GetPageNumber() *int64 {
@@ -26,13 +24,6 @@ func (l *ListManifestsRequest) GetPageSize() *int64 {
 		return nil
 	}
 	return l.PageSize
-}
-
-func (l *ListManifestsRequest) GetAppID() *string {
-	if l == nil {
-		return nil
-	}
-	return l.AppID
 }
 
 type ListManifestsResponse struct {

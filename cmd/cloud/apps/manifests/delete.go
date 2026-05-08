@@ -10,7 +10,7 @@ import (
 )
 
 type Delete struct {
-	ID string
+	ID string `json:"id"`
 }
 
 type DeleteCtrl struct {

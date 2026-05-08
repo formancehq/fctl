@@ -12,8 +12,8 @@ import (
 )
 
 type Push struct {
-	ManifestID string
-	Version    int64
+	ManifestID string `json:"manifestId"`
+	Version    int64  `json:"version"`
 }
 
 type PushCtrl struct {

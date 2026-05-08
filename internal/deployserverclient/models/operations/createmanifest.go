@@ -13,9 +13,7 @@ type CreateManifestRequestBody struct {
 
 type CreateManifestRequest struct {
 	// Name for the manifest
-	Name string `queryParam:"style=form,explode=true,name=name"`
-	// Optional app ID to scope the manifest to a specific app
-	AppID       *string                   `queryParam:"style=form,explode=true,name=appId"`
+	Name        string                    `queryParam:"style=form,explode=true,name=name"`
 	RequestBody CreateManifestRequestBody `request:"mediaType=application/json"`
 }
 
@@ -24,13 +22,6 @@ func (c *CreateManifestRequest) GetName() string {
 		return ""
 	}
 	return c.Name
-}
-
-func (c *CreateManifestRequest) GetAppID() *string {
-	if c == nil {
-		return nil
-	}
-	return c.AppID
 }
 
 func (c *CreateManifestRequest) GetRequestBody() CreateManifestRequestBody {

@@ -86,10 +86,6 @@ func (c *ShowCtrl) Render(cmd *cobra.Command, _ []string) error {
 		{Level: 0, Text: fmt.Sprintf("Updated At: %s", c.store.UpdatedAt)},
 	}
 
-	if c.store.AppID != nil {
-		items = append(items, pterm.BulletListItem{Level: 0, Text: fmt.Sprintf("App ID: %s", *c.store.AppID)})
-	}
-
 	if err := pterm.
 		DefaultBulletList.
 		WithItems(items).

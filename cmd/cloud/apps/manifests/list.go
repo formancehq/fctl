@@ -39,7 +39,6 @@ func NewList() *cobra.Command {
 	return fctl.NewCommand("list",
 		fctl.WithAliases("ls"),
 		fctl.WithShortDescription("List manifests"),
-		fctl.WithStringFlag("app-id", "", "Filter by app ID"),
 		fctl.WithIntFlag("page", 1, "Page number"),
 		fctl.WithIntFlag("page-size", 100, "Page size"),
 		fctl.WithController(NewListCtrl()),
@@ -67,16 +66,10 @@ func (c *ListCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) 
 		return nil, err
 	}
 
-	var appID *string
-	if id := fctl.GetString(cmd, "app-id"); id != "" {
-		appID = &id
-	}
-
 	manifests, err := apiClient.ListManifests(
 		cmd.Context(),
 		pointer.For(int64(fctl.GetInt(cmd, "page"))),
 		pointer.For(int64(fctl.GetInt(cmd, "page-size"))),
-		appID,
 	)
 	if err != nil {
 		return nil, err
@@ -89,19 +82,13 @@ func (c *ListCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) 
 
 func (c *ListCtrl) Render(cmd *cobra.Command, _ []string) error {
 	data := [][]string{
-		{"ID", "Name", "App ID", "Latest Version", "Created At"},
+		{"ID", "Name", "Latest Version", "Created At"},
 	}
 
 	for _, m := range c.store.Items {
 		data = append(data, []string{
 			m.ID,
 			m.Name,
-			func() string {
-				if m.AppID != nil {
-					return *m.AppID
-				}
-				return "org-wide"
-			}(),
 			strconv.FormatInt(m.LatestVersion, 10),
 			fmt.Sprint(m.CreatedAt),
 		})
