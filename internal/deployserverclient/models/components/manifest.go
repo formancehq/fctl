@@ -11,8 +11,6 @@ import (
 type Manifest struct {
 	// Unique identifier for the manifest
 	ID string `json:"id"`
-	// Optional app ID the manifest is scoped to
-	AppID *string `json:"appId,omitempty"`
 	// Name of the manifest
 	Name string `json:"name"`
 	// Latest version number
@@ -39,13 +37,6 @@ func (m *Manifest) GetID() string {
 		return ""
 	}
 	return m.ID
-}
-
-func (m *Manifest) GetAppID() *string {
-	if m == nil {
-		return nil
-	}
-	return m.AppID
 }
 
 func (m *Manifest) GetName() string {

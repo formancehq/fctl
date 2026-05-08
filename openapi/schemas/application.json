@@ -1,0 +1,350 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "required": [
+    "stack"
+  ],
+  "definitions": {
+    "DotSelf": {
+      "type": "object"
+    },
+    "Ledger": {
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "schema": {
+          "additionalProperties": {
+            "$ref": "#/definitions/V2SchemaData"
+          },
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "Ledgers": {
+      "items": {
+        "$ref": "#/definitions/Ledger"
+      },
+      "type": [
+        "null",
+        "array"
+      ]
+    },
+    "Payments": {
+      "properties": {
+        "connectors": {
+          "items": {
+            "required": [
+              "name",
+              "provider"
+            ],
+            "properties": {
+              "configuration": {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              "credentials": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "name": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "pools": {
+          "additionalProperties": {
+            "$ref": "#/definitions/Pool"
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "Pool": {
+      "properties": {
+        "accountIds": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "query": {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "Reconciliation": {
+      "properties": {
+        "policies": {
+          "items": {
+            "$ref": "#/definitions/ReconciliationPolicy"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "ReconciliationLedger": {
+      "required": [
+        "name",
+        "query"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "query": {
+          "additionalProperties": {},
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "ReconciliationPolicy": {
+      "required": [
+        "name",
+        "ledger",
+        "pool"
+      ],
+      "properties": {
+        "ledger": {
+          "$ref": "#/definitions/ReconciliationLedger"
+        },
+        "name": {
+          "type": "string"
+        },
+        "pool": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "RegionSelector": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Stack": {
+      "required": [
+        "name",
+        "region"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "region": {
+          "$ref": "#/definitions/RegionSelector"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "V2ChartAccountMetadata": {
+      "properties": {
+        "default": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "V2ChartAccountRules": {
+      "type": "object"
+    },
+    "V2ChartSegment": {
+      "additionalProperties": true,
+      "properties": {
+        ".metadata": {
+          "additionalProperties": {
+            "$ref": "#/definitions/V2ChartAccountMetadata"
+          },
+          "type": "object"
+        },
+        ".pattern": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        ".rules": {
+          "$ref": "#/definitions/V2ChartAccountRules"
+        },
+        ".self": {
+          "$ref": "#/definitions/DotSelf"
+        }
+      },
+      "type": "object"
+    },
+    "V2QueryTemplate": {
+      "properties": {
+        "body": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "description": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "params": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "resource": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "vars": {
+          "additionalProperties": {
+            "$ref": "#/definitions/V2QueryTemplateVar"
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "V2QueryTemplateVar": {
+      "properties": {
+        "default": {},
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "V2SchemaData": {
+      "properties": {
+        "chart": {
+          "additionalProperties": {
+            "$ref": "#/definitions/V2ChartSegment"
+          },
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "queries": {
+          "additionalProperties": {
+            "$ref": "#/definitions/V2QueryTemplate"
+          },
+          "type": "object"
+        },
+        "transactions": {
+          "additionalProperties": {
+            "$ref": "#/definitions/V2TransactionTemplate"
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "V2TransactionTemplate": {
+      "properties": {
+        "description": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "runtime": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "script": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "Webhook": {
+      "required": [
+        "name",
+        "endpoint"
+      ],
+      "properties": {
+        "endpoint": {
+          "type": "string"
+        },
+        "events": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "secret": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Webhooks": {
+      "items": {
+        "$ref": "#/definitions/Webhook"
+      },
+      "type": [
+        "null",
+        "array"
+      ]
+    }
+  },
+  "properties": {
+    "ledgers": {
+      "$ref": "#/definitions/Ledgers"
+    },
+    "payments": {
+      "$ref": "#/definitions/Payments"
+    },
+    "reconciliation": {
+      "$ref": "#/definitions/Reconciliation"
+    },
+    "stack": {
+      "$ref": "#/definitions/Stack"
+    },
+    "webhooks": {
+      "$ref": "#/definitions/Webhooks"
+    }
+  },
+  "type": "object"
+}

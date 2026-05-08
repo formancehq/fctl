@@ -7,26 +7,6 @@ import (
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 )
 
-type CreateDeploymentRequest struct {
-	// App ID (required for inline YAML deploys)
-	AppID                   *string                            `queryParam:"style=form,explode=true,name=appId"`
-	CreateDeploymentRequest components.CreateDeploymentRequest `request:"mediaType=application/json"`
-}
-
-func (c *CreateDeploymentRequest) GetAppID() *string {
-	if c == nil {
-		return nil
-	}
-	return c.AppID
-}
-
-func (c *CreateDeploymentRequest) GetCreateDeploymentRequest() components.CreateDeploymentRequest {
-	if c == nil {
-		return components.CreateDeploymentRequest{}
-	}
-	return c.CreateDeploymentRequest
-}
-
 type CreateDeploymentResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
 	// Deployment created successfully
