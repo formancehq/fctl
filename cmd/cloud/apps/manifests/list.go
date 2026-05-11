@@ -14,7 +14,7 @@ import (
 )
 
 type List struct {
-	components.ListManifestsResponseData
+	components.ListManifestsResponseCursor
 }
 
 type ListCtrl struct {
@@ -25,7 +25,7 @@ var _ fctl.Controller[*List] = (*ListCtrl)(nil)
 
 func newDefaultStore() *List {
 	return &List{
-		ListManifestsResponseData: components.ListManifestsResponseData{},
+		ListManifestsResponseCursor: components.ListManifestsResponseCursor{},
 	}
 }
 
@@ -39,8 +39,8 @@ func NewList() *cobra.Command {
 	return fctl.NewCommand("list",
 		fctl.WithAliases("ls"),
 		fctl.WithShortDescription("List manifests"),
-		fctl.WithIntFlag("page", 1, "Page number"),
 		fctl.WithIntFlag("page-size", 100, "Page size"),
+		fctl.WithStringFlag("cursor", "", "Opaque cursor token for the next page"),
 		fctl.WithController(NewListCtrl()),
 	)
 }
@@ -66,16 +66,21 @@ func (c *ListCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) 
 		return nil, err
 	}
 
+	var cursor *string
+	if v := fctl.GetString(cmd, "cursor"); v != "" {
+		cursor = &v
+	}
+
 	manifests, err := apiClient.ListManifests(
 		cmd.Context(),
-		pointer.For(int64(fctl.GetInt(cmd, "page"))),
 		pointer.For(int64(fctl.GetInt(cmd, "page-size"))),
+		cursor,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.ListManifestsResponseData = manifests.ListManifestsResponse.Data
+	c.store.ListManifestsResponseCursor = manifests.ListManifestsResponse.Cursor
 
 	return c, nil
 }
@@ -85,7 +90,7 @@ func (c *ListCtrl) Render(cmd *cobra.Command, _ []string) error {
 		{"ID", "Name", "Latest Version", "Created At"},
 	}
 
-	for _, m := range c.store.Items {
+	for _, m := range c.store.Data {
 		data = append(data, []string{
 			m.ID,
 			m.Name,

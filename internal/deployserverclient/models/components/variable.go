@@ -4,14 +4,18 @@
 package components
 
 type Variable struct {
-	// Key of the variable
+	// Snake-case identifier (case-insensitive at the API boundary,
+	// normalized to lowercase on storage to match `var.<name>` in the
+	// generated HCL). Either `MONEYCORP_API_KEY` or
+	// `moneycorp_api_key` is accepted.
+	//
 	Key string `json:"key"`
-	// Value of the variable
+	// Value of the variable. Always treated as sensitive: `value` is
+	// redacted (`REDACTED`) on every read endpoint.
+	//
 	Value string `json:"value"`
 	// Description of the variable
 	Description *string `json:"description,omitempty"`
-	// Whether the variable is sensitive
-	Sensitive bool `json:"sensitive"`
 	// Unique identifier for the variable
 	ID string `json:"id"`
 }
@@ -35,13 +39,6 @@ func (v *Variable) GetDescription() *string {
 		return nil
 	}
 	return v.Description
-}
-
-func (v *Variable) GetSensitive() bool {
-	if v == nil {
-		return false
-	}
-	return v.Sensitive
 }
 
 func (v *Variable) GetID() string {

@@ -3,69 +3,64 @@
 
 package components
 
-type ListAppsResponseData struct {
-	// Current page number
-	CurrentPage *int64 `json:"currentPage,omitempty"`
-	// Previous page number
-	PreviousPage *int64 `json:"previousPage,omitempty"`
-	// Next page number
-	NextPage *int64 `json:"nextPage,omitempty"`
-	// Total number of pages
-	TotalPages *int64 `json:"totalPages,omitempty"`
-	// Total number of items
-	TotalCount *int64 `json:"totalCount,omitempty"`
-	Items      []App  `json:"items"`
+// ListAppsResponseCursor - Cursor pagination envelope. `next` and `previous` are opaque tokens
+// produced by the server; pass them back as `?cursor=` to fetch the
+// adjacent page. `hasMore` is `true` when more results exist after the
+// current page. `pageSize` echoes the page size used for this page.
+type ListAppsResponseCursor struct {
+	// Number of items requested for this page
+	PageSize *int64 `json:"pageSize,omitempty"`
+	// True when more results exist after this page
+	HasMore bool `json:"hasMore"`
+	// Opaque cursor token for the previous page (empty when none)
+	Previous *string `json:"previous,omitempty"`
+	// Opaque cursor token for the next page (empty when none)
+	Next *string `json:"next,omitempty"`
+	Data []App   `json:"data"`
 }
 
-func (l *ListAppsResponseData) GetCurrentPage() *int64 {
+func (l *ListAppsResponseCursor) GetPageSize() *int64 {
 	if l == nil {
 		return nil
 	}
-	return l.CurrentPage
+	return l.PageSize
 }
 
-func (l *ListAppsResponseData) GetPreviousPage() *int64 {
+func (l *ListAppsResponseCursor) GetHasMore() bool {
+	if l == nil {
+		return false
+	}
+	return l.HasMore
+}
+
+func (l *ListAppsResponseCursor) GetPrevious() *string {
 	if l == nil {
 		return nil
 	}
-	return l.PreviousPage
+	return l.Previous
 }
 
-func (l *ListAppsResponseData) GetNextPage() *int64 {
+func (l *ListAppsResponseCursor) GetNext() *string {
 	if l == nil {
 		return nil
 	}
-	return l.NextPage
+	return l.Next
 }
 
-func (l *ListAppsResponseData) GetTotalPages() *int64 {
-	if l == nil {
-		return nil
-	}
-	return l.TotalPages
-}
-
-func (l *ListAppsResponseData) GetTotalCount() *int64 {
-	if l == nil {
-		return nil
-	}
-	return l.TotalCount
-}
-
-func (l *ListAppsResponseData) GetItems() []App {
+func (l *ListAppsResponseCursor) GetData() []App {
 	if l == nil {
 		return []App{}
 	}
-	return l.Items
+	return l.Data
 }
 
 type ListAppsResponse struct {
-	Data ListAppsResponseData `json:"data"`
+	Cursor ListAppsResponseCursor `json:"cursor"`
 }
 
-func (l *ListAppsResponse) GetData() ListAppsResponseData {
+func (l *ListAppsResponse) GetCursor() ListAppsResponseCursor {
 	if l == nil {
-		return ListAppsResponseData{}
+		return ListAppsResponseCursor{}
 	}
-	return l.Data
+	return l.Cursor
 }

@@ -13,7 +13,7 @@ import (
 )
 
 type List struct {
-	components.ListDeploymentsResponseData
+	components.ListDeploymentsResponseCursor
 }
 
 type ListCtrl struct {
@@ -24,7 +24,7 @@ var _ fctl.Controller[*List] = (*ListCtrl)(nil)
 
 func newDefaultStore() *List {
 	return &List{
-		ListDeploymentsResponseData: components.ListDeploymentsResponseData{},
+		ListDeploymentsResponseCursor: components.ListDeploymentsResponseCursor{},
 	}
 }
 
@@ -39,8 +39,8 @@ func NewList() *cobra.Command {
 		fctl.WithAliases("ls"),
 		fctl.WithShortDescription("List deployments"),
 		fctl.WithStringFlag("app-id", "", "Filter by app ID"),
-		fctl.WithIntFlag("page", 1, "Page number"),
 		fctl.WithIntFlag("page-size", 100, "Page size"),
+		fctl.WithStringFlag("cursor", "", "Opaque cursor token for the next page"),
 		fctl.WithController(NewListCtrl()),
 	)
 }
@@ -71,17 +71,22 @@ func (c *ListCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) 
 		appID = &id
 	}
 
+	var cursor *string
+	if v := fctl.GetString(cmd, "cursor"); v != "" {
+		cursor = &v
+	}
+
 	deployments, err := apiClient.ListDeployments(
 		cmd.Context(),
 		appID,
-		pointer.For(int64(fctl.GetInt(cmd, "page"))),
 		pointer.For(int64(fctl.GetInt(cmd, "page-size"))),
+		cursor,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.ListDeploymentsResponseData = deployments.ListDeploymentsResponse.Data
+	c.store.ListDeploymentsResponseCursor = deployments.ListDeploymentsResponse.Cursor
 
 	return c, nil
 }
@@ -91,7 +96,7 @@ func (c *ListCtrl) Render(cmd *cobra.Command, _ []string) error {
 		{"ID", "App ID", "Status", "Manifest ID", "Created At"},
 	}
 
-	for _, d := range c.store.Items {
+	for _, d := range c.store.Data {
 		data = append(data, []string{
 			d.ID,
 			d.AppID,

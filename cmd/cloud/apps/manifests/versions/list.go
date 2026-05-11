@@ -14,7 +14,7 @@ import (
 )
 
 type List struct {
-	components.ListManifestVersionsResponseData
+	components.ListManifestVersionsResponseCursor
 }
 
 type ListCtrl struct {
@@ -25,7 +25,7 @@ var _ fctl.Controller[*List] = (*ListCtrl)(nil)
 
 func newDefaultStore() *List {
 	return &List{
-		ListManifestVersionsResponseData: components.ListManifestVersionsResponseData{},
+		ListManifestVersionsResponseCursor: components.ListManifestVersionsResponseCursor{},
 	}
 }
 
@@ -40,8 +40,8 @@ func NewList() *cobra.Command {
 		fctl.WithAliases("ls"),
 		fctl.WithShortDescription("List manifest versions"),
 		fctl.WithStringFlag("manifest-id", "", "Manifest ID"),
-		fctl.WithIntFlag("page", 1, "Page number"),
 		fctl.WithIntFlag("page-size", 100, "Page size"),
+		fctl.WithStringFlag("cursor", "", "Opaque cursor token for the next page"),
 		fctl.WithController(NewListCtrl()),
 	)
 }
@@ -72,17 +72,22 @@ func (c *ListCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) 
 		return nil, fmt.Errorf("manifest-id is required")
 	}
 
+	var cursor *string
+	if v := fctl.GetString(cmd, "cursor"); v != "" {
+		cursor = &v
+	}
+
 	versions, err := apiClient.ListManifestVersions(
 		cmd.Context(),
 		manifestID,
-		pointer.For(int64(fctl.GetInt(cmd, "page"))),
 		pointer.For(int64(fctl.GetInt(cmd, "page-size"))),
+		cursor,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.ListManifestVersionsResponseData = versions.ListManifestVersionsResponse.Data
+	c.store.ListManifestVersionsResponseCursor = versions.ListManifestVersionsResponse.Cursor
 
 	return c, nil
 }
@@ -92,7 +97,7 @@ func (c *ListCtrl) Render(cmd *cobra.Command, _ []string) error {
 		{"Manifest ID", "Version", "Created At"},
 	}
 
-	for _, v := range c.store.Items {
+	for _, v := range c.store.Data {
 		data = append(data, []string{
 			v.ManifestID,
 			strconv.FormatInt(v.Version, 10),

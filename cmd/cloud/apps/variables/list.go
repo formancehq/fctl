@@ -13,7 +13,7 @@ import (
 )
 
 type List struct {
-	components.ReadVariablesResponseData
+	components.ReadVariablesResponseCursor
 }
 
 type ListCtrl struct {
@@ -24,7 +24,7 @@ var _ fctl.Controller[*List] = (*ListCtrl)(nil)
 
 func newDefaultStore() *List {
 	return &List{
-		ReadVariablesResponseData: components.ReadVariablesResponseData{},
+		ReadVariablesResponseCursor: components.ReadVariablesResponseCursor{},
 	}
 }
 
@@ -39,8 +39,8 @@ func NewList() *cobra.Command {
 		fctl.WithAliases("ls"),
 		fctl.WithShortDescription("List variables for an app"),
 		fctl.WithStringFlag("id", "", "App ID"),
-		fctl.WithIntFlag("page", 1, "Page number"),
 		fctl.WithIntFlag("page-size", 100, "Page size"),
+		fctl.WithStringFlag("cursor", "", "Opaque cursor token for the next page"),
 		fctl.WithController(NewListCtrl()),
 	)
 }
@@ -70,12 +70,22 @@ func (c *ListCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, erro
 		return nil, fmt.Errorf("id is required")
 	}
 
-	vars, err := apiClient.ReadAppVariables(cmd.Context(), id, pointer.For(int64(fctl.GetInt(cmd, "page"))), pointer.For(int64(fctl.GetInt(cmd, "page-size"))))
+	var cursor *string
+	if v := fctl.GetString(cmd, "cursor"); v != "" {
+		cursor = &v
+	}
+
+	vars, err := apiClient.ReadAppVariables(
+		cmd.Context(),
+		id,
+		pointer.For(int64(fctl.GetInt(cmd, "page-size"))),
+		cursor,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.ReadVariablesResponseData = vars.ReadVariablesResponse.Data
+	c.store.ReadVariablesResponseCursor = vars.ReadVariablesResponse.Cursor
 
 	return c, nil
 }
@@ -85,16 +95,11 @@ func (c *ListCtrl) Render(cmd *cobra.Command, args []string) error {
 		{"Id", "Key", "Value", "Description"},
 	}
 
-	for _, variable := range c.store.ReadVariablesResponseData.Items {
+	for _, variable := range c.store.Data {
 		data = append(data, []string{
 			variable.ID,
 			variable.Key,
-			func() string {
-				if variable.Sensitive {
-					return "****"
-				}
-				return variable.Value
-			}(),
+			variable.Value,
 			func() string {
 				if variable.Description == nil {
 					return ""

@@ -8,59 +8,59 @@ import (
 	"time"
 )
 
-type CreateManifestResponseData struct {
+type Data struct {
 	ID        string    `json:"id"`
 	Version   int64     `json:"version"`
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-func (c CreateManifestResponseData) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(c, "", false)
+func (d Data) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(d, "", false)
 }
 
-func (c *CreateManifestResponseData) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &c, "", false, nil); err != nil {
+func (d *Data) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &d, "", false, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *CreateManifestResponseData) GetID() string {
-	if c == nil {
+func (d *Data) GetID() string {
+	if d == nil {
 		return ""
 	}
-	return c.ID
+	return d.ID
 }
 
-func (c *CreateManifestResponseData) GetVersion() int64 {
-	if c == nil {
+func (d *Data) GetVersion() int64 {
+	if d == nil {
 		return 0
 	}
-	return c.Version
+	return d.Version
 }
 
-func (c *CreateManifestResponseData) GetName() string {
-	if c == nil {
+func (d *Data) GetName() string {
+	if d == nil {
 		return ""
 	}
-	return c.Name
+	return d.Name
 }
 
-func (c *CreateManifestResponseData) GetCreatedAt() time.Time {
-	if c == nil {
+func (d *Data) GetCreatedAt() time.Time {
+	if d == nil {
 		return time.Time{}
 	}
-	return c.CreatedAt
+	return d.CreatedAt
 }
 
 type CreateManifestResponse struct {
-	Data CreateManifestResponseData `json:"data"`
+	Data Data `json:"data"`
 }
 
-func (c *CreateManifestResponse) GetData() CreateManifestResponseData {
+func (c *CreateManifestResponse) GetData() Data {
 	if c == nil {
-		return CreateManifestResponseData{}
+		return Data{}
 	}
 	return c.Data
 }

@@ -3,69 +3,64 @@
 
 package components
 
-type ReadVariablesResponseData struct {
-	Items []Variable `json:"items,omitempty"`
-	// Current page number
-	CurrentPage *int64 `json:"currentPage,omitempty"`
-	// Previous page number
-	PreviousPage *int64 `json:"previousPage,omitempty"`
-	// Next page number
-	NextPage *int64 `json:"nextPage,omitempty"`
-	// Total number of pages
-	TotalPages *int64 `json:"totalPages,omitempty"`
-	// Total number of items
-	TotalCount *int64 `json:"totalCount,omitempty"`
+// ReadVariablesResponseCursor - Cursor pagination envelope. `next` and `previous` are opaque tokens
+// produced by the server; pass them back as `?cursor=` to fetch the
+// adjacent page. `hasMore` is `true` when more results exist after the
+// current page. `pageSize` echoes the page size used for this page.
+type ReadVariablesResponseCursor struct {
+	// Number of items requested for this page
+	PageSize *int64 `json:"pageSize,omitempty"`
+	// True when more results exist after this page
+	HasMore bool `json:"hasMore"`
+	// Opaque cursor token for the previous page (empty when none)
+	Previous *string `json:"previous,omitempty"`
+	// Opaque cursor token for the next page (empty when none)
+	Next *string    `json:"next,omitempty"`
+	Data []Variable `json:"data"`
 }
 
-func (r *ReadVariablesResponseData) GetItems() []Variable {
+func (r *ReadVariablesResponseCursor) GetPageSize() *int64 {
 	if r == nil {
 		return nil
 	}
-	return r.Items
+	return r.PageSize
 }
 
-func (r *ReadVariablesResponseData) GetCurrentPage() *int64 {
+func (r *ReadVariablesResponseCursor) GetHasMore() bool {
+	if r == nil {
+		return false
+	}
+	return r.HasMore
+}
+
+func (r *ReadVariablesResponseCursor) GetPrevious() *string {
 	if r == nil {
 		return nil
 	}
-	return r.CurrentPage
+	return r.Previous
 }
 
-func (r *ReadVariablesResponseData) GetPreviousPage() *int64 {
+func (r *ReadVariablesResponseCursor) GetNext() *string {
 	if r == nil {
 		return nil
 	}
-	return r.PreviousPage
+	return r.Next
 }
 
-func (r *ReadVariablesResponseData) GetNextPage() *int64 {
+func (r *ReadVariablesResponseCursor) GetData() []Variable {
 	if r == nil {
-		return nil
+		return []Variable{}
 	}
-	return r.NextPage
-}
-
-func (r *ReadVariablesResponseData) GetTotalPages() *int64 {
-	if r == nil {
-		return nil
-	}
-	return r.TotalPages
-}
-
-func (r *ReadVariablesResponseData) GetTotalCount() *int64 {
-	if r == nil {
-		return nil
-	}
-	return r.TotalCount
+	return r.Data
 }
 
 type ReadVariablesResponse struct {
-	Data ReadVariablesResponseData `json:"data"`
+	Cursor ReadVariablesResponseCursor `json:"cursor"`
 }
 
-func (r *ReadVariablesResponse) GetData() ReadVariablesResponseData {
+func (r *ReadVariablesResponse) GetCursor() ReadVariablesResponseCursor {
 	if r == nil {
-		return ReadVariablesResponseData{}
+		return ReadVariablesResponseCursor{}
 	}
-	return r.Data
+	return r.Cursor
 }

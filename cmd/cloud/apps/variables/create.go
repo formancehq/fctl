@@ -40,8 +40,6 @@ func NewCreate() *cobra.Command {
 		fctl.WithStringFlag("key", "", "Variable key"),
 		fctl.WithStringFlag("value", "", "Variable value"),
 		fctl.WithStringFlag("description", "", "Variable description"),
-		fctl.WithBoolFlag("sensitive", true, "Mark the variable as sensitive"),
-		fctl.WithStringFlag("category", "", "Variable category (env or terraform)"),
 		fctl.WithController(NewCreateCtrl()),
 	)
 }
@@ -71,7 +69,6 @@ func (c *CreateCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error
 			Key:         fctl.GetString(cmd, "key"),
 			Value:       fctl.GetString(cmd, "value"),
 			Description: func() *string { s := fctl.GetString(cmd, "description"); return &s }(),
-			Sensitive:   fctl.GetBool(cmd, "sensitive"),
 		},
 	})
 	if err != nil {
@@ -89,12 +86,7 @@ func (c *CreateCtrl) Render(cmd *cobra.Command, args []string) error {
 	items := []pterm.BulletListItem{
 		{Level: 0, Text: fmt.Sprintf("ID: %s", c.store.Variable.ID)},
 		{Level: 0, Text: fmt.Sprintf("Key: %s", c.store.Variable.Key)},
-		{Level: 0, Text: fmt.Sprintf("Value: %s", func() string {
-			if c.store.Variable.Sensitive {
-				return "****"
-			}
-			return c.store.Variable.Value
-		}())},
+		{Level: 0, Text: fmt.Sprintf("Value: %s", c.store.Variable.Value)},
 		{Level: 0, Text: fmt.Sprintf("Description: %s", func() string {
 			if c.store.Variable.Description == nil {
 				return "N/A"

@@ -118,9 +118,9 @@ func WithTimeout(timeout time.Duration) SDKOption {
 // New creates a new instance of the SDK with the provided options
 func New(opts ...SDKOption) *DeployServer {
 	sdk := &DeployServer{
-		SDKVersion: "0.1.0",
+		SDKVersion: "0.1.1",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 0.1.0 2.869.23 0.1.0 github.com/formancehq/fctl/internal/deployserverclient/v3",
+			UserAgent:  "speakeasy-sdk/go 0.1.1 2.869.23 0.1.0 github.com/formancehq/fctl/internal/deployserverclient/v3",
 			ServerList: ServerList,
 		},
 		hooks: hooks.New(),
@@ -140,10 +140,10 @@ func New(opts ...SDKOption) *DeployServer {
 }
 
 // ListApps - List organization apps
-func (s *DeployServer) ListApps(ctx context.Context, pageNumber *int64, pageSize *int64, opts ...operations.Option) (*operations.ListAppsResponse, error) {
+func (s *DeployServer) ListApps(ctx context.Context, pageSize *int64, cursor *string, opts ...operations.Option) (*operations.ListAppsResponse, error) {
 	request := operations.ListAppsRequest{
-		PageNumber: pageNumber,
-		PageSize:   pageSize,
+		PageSize: pageSize,
+		Cursor:   cursor,
 	}
 
 	o := operations.Options{}
@@ -1694,11 +1694,11 @@ func (s *DeployServer) DetachAppManifest(ctx context.Context, id string, opts ..
 }
 
 // ReadAppVariables - Get all variables of an app
-func (s *DeployServer) ReadAppVariables(ctx context.Context, id string, pageNumber *int64, pageSize *int64, opts ...operations.Option) (*operations.ReadAppVariablesResponse, error) {
+func (s *DeployServer) ReadAppVariables(ctx context.Context, id string, pageSize *int64, cursor *string, opts ...operations.Option) (*operations.ReadAppVariablesResponse, error) {
 	request := operations.ReadAppVariablesRequest{
-		ID:         id,
-		PageNumber: pageNumber,
-		PageSize:   pageSize,
+		ID:       id,
+		PageSize: pageSize,
+		Cursor:   cursor,
 	}
 
 	o := operations.Options{}
@@ -2814,10 +2814,10 @@ func (s *DeployServer) CreateManifest(ctx context.Context, name string, requestB
 }
 
 // ListManifests - List manifests in the organization
-func (s *DeployServer) ListManifests(ctx context.Context, pageNumber *int64, pageSize *int64, opts ...operations.Option) (*operations.ListManifestsResponse, error) {
+func (s *DeployServer) ListManifests(ctx context.Context, pageSize *int64, cursor *string, opts ...operations.Option) (*operations.ListManifestsResponse, error) {
 	request := operations.ListManifestsRequest{
-		PageNumber: pageNumber,
-		PageSize:   pageSize,
+		PageSize: pageSize,
+		Cursor:   cursor,
 	}
 
 	o := operations.Options{}
@@ -4180,11 +4180,11 @@ func (s *DeployServer) PushManifestVersion(ctx context.Context, manifestID strin
 }
 
 // ListManifestVersions - List versions of a manifest
-func (s *DeployServer) ListManifestVersions(ctx context.Context, manifestID string, pageNumber *int64, pageSize *int64, opts ...operations.Option) (*operations.ListManifestVersionsResponse, error) {
+func (s *DeployServer) ListManifestVersions(ctx context.Context, manifestID string, pageSize *int64, cursor *string, opts ...operations.Option) (*operations.ListManifestVersionsResponse, error) {
 	request := operations.ListManifestVersionsRequest{
 		ManifestID: manifestID,
-		PageNumber: pageNumber,
 		PageSize:   pageSize,
+		Cursor:     cursor,
 	}
 
 	o := operations.Options{}
@@ -4860,11 +4860,11 @@ func (s *DeployServer) CreateDeployment(ctx context.Context, request components.
 }
 
 // ListDeployments - List deployments
-func (s *DeployServer) ListDeployments(ctx context.Context, appID *string, pageNumber *int64, pageSize *int64, opts ...operations.Option) (*operations.ListDeploymentsResponse, error) {
+func (s *DeployServer) ListDeployments(ctx context.Context, appID *string, pageSize *int64, cursor *string, opts ...operations.Option) (*operations.ListDeploymentsResponse, error) {
 	request := operations.ListDeploymentsRequest{
-		AppID:      appID,
-		PageNumber: pageNumber,
-		PageSize:   pageSize,
+		AppID:    appID,
+		PageSize: pageSize,
+		Cursor:   cursor,
 	}
 
 	o := operations.Options{}
