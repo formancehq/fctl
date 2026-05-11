@@ -1,4 +1,4 @@
-# CreateManifestResponseData
+# Data
 
 
 ## Fields

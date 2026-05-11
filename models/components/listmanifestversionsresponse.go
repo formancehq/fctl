@@ -3,69 +3,64 @@
 
 package components
 
-type ListManifestVersionsResponseData struct {
-	// Current page number
-	CurrentPage *int64 `json:"currentPage,omitempty"`
-	// Previous page number
-	PreviousPage *int64 `json:"previousPage,omitempty"`
-	// Next page number
-	NextPage *int64 `json:"nextPage,omitempty"`
-	// Total number of pages
-	TotalPages *int64 `json:"totalPages,omitempty"`
-	// Total number of items
-	TotalCount *int64            `json:"totalCount,omitempty"`
-	Items      []ManifestVersion `json:"items"`
+// ListManifestVersionsResponseCursor - Cursor pagination envelope. `next` and `previous` are opaque tokens
+// produced by the server; pass them back as `?cursor=` to fetch the
+// adjacent page. `hasMore` is `true` when more results exist after the
+// current page. `pageSize` echoes the page size used for this page.
+type ListManifestVersionsResponseCursor struct {
+	// Number of items requested for this page
+	PageSize *int64 `json:"pageSize,omitempty"`
+	// True when more results exist after this page
+	HasMore bool `json:"hasMore"`
+	// Opaque cursor token for the previous page (empty when none)
+	Previous *string `json:"previous,omitempty"`
+	// Opaque cursor token for the next page (empty when none)
+	Next *string           `json:"next,omitempty"`
+	Data []ManifestVersion `json:"data"`
 }
 
-func (l *ListManifestVersionsResponseData) GetCurrentPage() *int64 {
+func (l *ListManifestVersionsResponseCursor) GetPageSize() *int64 {
 	if l == nil {
 		return nil
 	}
-	return l.CurrentPage
+	return l.PageSize
 }
 
-func (l *ListManifestVersionsResponseData) GetPreviousPage() *int64 {
+func (l *ListManifestVersionsResponseCursor) GetHasMore() bool {
+	if l == nil {
+		return false
+	}
+	return l.HasMore
+}
+
+func (l *ListManifestVersionsResponseCursor) GetPrevious() *string {
 	if l == nil {
 		return nil
 	}
-	return l.PreviousPage
+	return l.Previous
 }
 
-func (l *ListManifestVersionsResponseData) GetNextPage() *int64 {
+func (l *ListManifestVersionsResponseCursor) GetNext() *string {
 	if l == nil {
 		return nil
 	}
-	return l.NextPage
+	return l.Next
 }
 
-func (l *ListManifestVersionsResponseData) GetTotalPages() *int64 {
-	if l == nil {
-		return nil
-	}
-	return l.TotalPages
-}
-
-func (l *ListManifestVersionsResponseData) GetTotalCount() *int64 {
-	if l == nil {
-		return nil
-	}
-	return l.TotalCount
-}
-
-func (l *ListManifestVersionsResponseData) GetItems() []ManifestVersion {
+func (l *ListManifestVersionsResponseCursor) GetData() []ManifestVersion {
 	if l == nil {
 		return []ManifestVersion{}
 	}
-	return l.Items
+	return l.Data
 }
 
 type ListManifestVersionsResponse struct {
-	Data ListManifestVersionsResponseData `json:"data"`
+	Cursor ListManifestVersionsResponseCursor `json:"cursor"`
 }
 
-func (l *ListManifestVersionsResponse) GetData() ListManifestVersionsResponseData {
+func (l *ListManifestVersionsResponse) GetCursor() ListManifestVersionsResponseCursor {
 	if l == nil {
-		return ListManifestVersionsResponseData{}
+		return ListManifestVersionsResponseCursor{}
 	}
-	return l.Data
+	return l.Cursor
 }

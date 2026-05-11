@@ -9,8 +9,16 @@ import (
 
 type ListManifestVersionsRequest struct {
 	ManifestID string `pathParam:"style=simple,explode=false,name=manifestId"`
-	PageNumber *int64 `queryParam:"style=form,explode=true,name=pageNumber"`
-	PageSize   *int64 `queryParam:"style=form,explode=true,name=pageSize"`
+	// Maximum number of items to return on the first page. Capped at 100;
+	// ignored when `cursor` is supplied (subsequent pages reuse the page
+	// size baked into the cursor token). Defaults to 100.
+	//
+	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
+	// Opaque pagination token returned in `cursor.next` / `cursor.previous`
+	// on the previous page. Pass it back unchanged to fetch the adjacent
+	// page. Mutually exclusive with `pageSize` after the first request.
+	//
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
 }
 
 func (l *ListManifestVersionsRequest) GetManifestID() string {
@@ -20,18 +28,18 @@ func (l *ListManifestVersionsRequest) GetManifestID() string {
 	return l.ManifestID
 }
 
-func (l *ListManifestVersionsRequest) GetPageNumber() *int64 {
-	if l == nil {
-		return nil
-	}
-	return l.PageNumber
-}
-
 func (l *ListManifestVersionsRequest) GetPageSize() *int64 {
 	if l == nil {
 		return nil
 	}
 	return l.PageSize
+}
+
+func (l *ListManifestVersionsRequest) GetCursor() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Cursor
 }
 
 type ListManifestVersionsResponse struct {
