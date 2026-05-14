@@ -365,6 +365,88 @@ func TestCloudCommandsRejectStackContext(t *testing.T) {
 	}
 }
 
+func TestCloudStacksListShowAndDeprecatedAliases(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/organizations/org_1/stacks":
+			fmt.Fprint(w, `{"data":[{"id":"stack_1","name":"Production","organizationId":"org_1","uri":"https://stack.example/api","regionID":"eu-west-1","version":"v3.2.4","status":"READY","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":true,"stargateEnabled":true,"synchronised":true,"modules":[]}]}`)
+		case "/organizations/org_1/stacks/stack_1":
+			fmt.Fprint(w, `{"data":{"id":"stack_1","name":"Production","organizationId":"org_1","uri":"https://stack.example/api","regionID":"eu-west-1","version":"v3.2.4","status":"READY","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":true,"stargateEnabled":true,"synchronised":true,"modules":[]}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", server.URL,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud_stacks", "list")
+	if err != nil {
+		t.Fatalf("cloud_stacks list: %v stderr=%s", err, stderr)
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(stdout, "stack_1\tProduction\tREADY\thttps://stack.example/api") {
+		t.Fatalf("unexpected cloud_stacks list output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "show", "stack_1")
+	if err != nil {
+		t.Fatalf("cloud_stacks show: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{"ID\tstack_1", "Name\tProduction", "Status\tREADY", "URI\thttps://stack.example/api", "Version\tv3.2.4"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected stack output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+
+	_, stderr, err = executeCommand(t, "--config-dir", configDir, "stacks", "list")
+	if err != nil {
+		t.Fatalf("stacks alias list: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Command stacks has been deprecated, use cloud_stacks") {
+		t.Fatalf("expected stacks deprecation warning, got:\n%s", stderr)
+	}
+}
+
+func TestCloudStacksRejectStackContext(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatalf("cloud_stacks command must reject stack contexts before network calls")
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create stack context: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "list", "--organization", "org_1")
+	if err == nil {
+		t.Fatal("expected cloud_stacks command to reject stack context")
+	}
+	if !strings.Contains(err.Error(), "cloud commands require a cloud or cloud-stack context") {
+		t.Fatalf("unexpected error: %v stderr=%s", err, stderr)
+	}
+}
+
 func TestContextCommandsJSON(t *testing.T) {
 	configDir := t.TempDir()
 

@@ -25,6 +25,15 @@ This reference lists the current canonical v4 command families implemented under
 Cloud commands require a `cloud` or `cloud-stack` context. They are not required
 for direct local or self-hosted stack commands.
 
+## Cloud Stacks
+
+- `fctl cloud_stacks list --organization <organization-id>`
+- `fctl cloud_stacks show <stack-id> --organization <organization-id>`
+
+When the active context is `cloud-stack`, `--organization` defaults to the
+context organization. `stack` and `stacks` are deprecated aliases for
+`cloud_stacks`.
+
 ## Ledger
 
 - `fctl ledger transactions list`

@@ -136,18 +136,23 @@ func newCloudOrganizationsShowCommand(use string, aliases []string, deprecated b
 }
 
 func membershipClientFromCommand(cmd *cobra.Command) (*membership.SDK, error) {
+	_, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+	return client, err
+}
+
+func cloudRuntimeAndMembershipClientFromCommand(cmd *cobra.Command) (*runtime.Runtime, *membership.SDK, error) {
 	rt, err := runtimeFromCommand(cmd)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if rt.Target.Kind != runtime.TargetKindCloud && rt.Target.Kind != runtime.TargetKindCloudStack {
-		return nil, fmt.Errorf("cloud commands require a cloud or cloud-stack context")
+		return nil, nil, fmt.Errorf("cloud commands require a cloud or cloud-stack context")
 	}
 	httpClient, err := rt.HTTPClient(cmd.Context())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return newMembershipClient(rt.Target.URL, httpClient), nil
+	return rt, newMembershipClient(rt.Target.URL, httpClient), nil
 }
 
 func newMembershipClient(baseURL string, httpClient *http.Client) *membership.SDK {
