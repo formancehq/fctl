@@ -8,7 +8,7 @@
 - [x] 06 - runtime API version resolver
 - [x] 07 - first stack inspection command
 - [x] 08 - first Ledger versioned command
-- [ ] 09 - v3 config migration
+- [x] 09 - v3 config migration
 - [ ] 10 - integration tests and UX hardening
 - [ ] 11 - v4 cutover plan
 
