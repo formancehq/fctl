@@ -92,6 +92,27 @@ func (w Wizard) Input(title string, placeholder string, secret bool) (string, er
 	return value, nil
 }
 
+func (w Wizard) Confirm(title string, affirmative string, negative string) (bool, error) {
+	if !w.Available() {
+		return false, errors.New("interactive prompt is not available")
+	}
+
+	value := true
+	confirm := huh.NewConfirm().
+		Title(title).
+		Value(&value)
+	if affirmative != "" {
+		confirm.Affirmative(affirmative)
+	}
+	if negative != "" {
+		confirm.Negative(negative)
+	}
+	if err := w.run(confirm); err != nil {
+		return false, err
+	}
+	return value, nil
+}
+
 func (w Wizard) run(field huh.Field) error {
 	form := huh.NewForm(huh.NewGroup(field)).
 		WithInput(w.in).

@@ -15,6 +15,7 @@ import (
 
 	"github.com/formancehq/fctl/v4/internal/capabilities"
 	ledgercmd "github.com/formancehq/fctl/v4/internal/commands/ledger"
+	v4prompt "github.com/formancehq/fctl/v4/internal/prompt"
 	v4render "github.com/formancehq/fctl/v4/internal/render"
 )
 
@@ -992,10 +993,20 @@ func newLedgerCreateCommand() *cobra.Command {
 		Use:     "create <name>",
 		Aliases: []string{"c", "cr"},
 		Short:   "Create a ledger",
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ledgerName, err := resolveLedgerCreateName(cmd, args)
+			if err != nil {
+				return err
+			}
 			if !confirm {
-				return fmt.Errorf("ledger create requires --confirm")
+				approved, err := confirmLedgerCreate(cmd, ledgerName)
+				if err != nil {
+					return err
+				}
+				if !approved {
+					return v4prompt.ErrCancelled
+				}
 			}
 
 			parsedFeatures, err := parseKeyValueFlags(features, "feature")
@@ -1035,7 +1046,7 @@ func newLedgerCreateCommand() *cobra.Command {
 				},
 			}
 			output, err := service.Run(cmd.Context(), ledgercmd.CreateLedgerInput{
-				Name:     args[0],
+				Name:     ledgerName,
 				Bucket:   bucket,
 				Features: parsedFeatures,
 				Metadata: parsedMetadata,
@@ -1058,6 +1069,42 @@ func newLedgerCreateCommand() *cobra.Command {
 	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
 
 	return command
+}
+
+func resolveLedgerCreateName(cmd *cobra.Command, args []string) (string, error) {
+	if len(args) > 0 && strings.TrimSpace(args[0]) != "" {
+		return strings.TrimSpace(args[0]), nil
+	}
+	nonInteractive, err := cmd.Root().PersistentFlags().GetBool(nonInteractiveFlag)
+	if err != nil {
+		return "", err
+	}
+	wizard := v4prompt.NewWizardWithColor(cmd.InOrStdin(), cmd.ErrOrStderr(), commandColorEnabled(cmd))
+	if nonInteractive || !wizard.Available() {
+		return "", fmt.Errorf("ledger create requires <name>")
+	}
+	value, err := wizard.Input("Ledger name", "default", false)
+	if err != nil {
+		return "", err
+	}
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return "", fmt.Errorf("ledger name is required")
+	}
+	fmt.Fprintln(cmd.OutOrStdout(), styledKeyValueLine(cmd, "Name", value))
+	return value, nil
+}
+
+func confirmLedgerCreate(cmd *cobra.Command, ledgerName string) (bool, error) {
+	nonInteractive, err := cmd.Root().PersistentFlags().GetBool(nonInteractiveFlag)
+	if err != nil {
+		return false, err
+	}
+	wizard := v4prompt.NewWizardWithColor(cmd.InOrStdin(), cmd.ErrOrStderr(), commandColorEnabled(cmd))
+	if nonInteractive || !wizard.Available() {
+		return false, fmt.Errorf("ledger create requires --confirm")
+	}
+	return wizard.Confirm(fmt.Sprintf("Create ledger %s?", ledgerName), "Create", "Cancel")
 }
 
 func newLedgerInfoCommand(use string, aliases []string, deprecated bool) *cobra.Command {

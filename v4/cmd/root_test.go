@@ -4102,6 +4102,22 @@ func TestLedgerCreateRequiresConfirm(t *testing.T) {
 	}
 }
 
+func TestLedgerCreateRequiresNameWhenNonInteractive(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "ledger", "create")
+	if err == nil {
+		t.Fatal("expected ledger create to require a name without an interactive prompt")
+	}
+	if stdout != "" {
+		t.Fatalf("expected empty stdout, got %q", stdout)
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(err.Error(), "ledger create requires <name>") {
+		t.Fatalf("expected missing name error, got: %v", err)
+	}
+}
+
 func TestLedgerCreateSelectsV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
