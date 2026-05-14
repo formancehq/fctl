@@ -99,7 +99,7 @@ func newLoginCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: profileName, Current: true, Context: context}); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Logged in with profile %s.\n", profileName)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Logged in with profile %s.", profileName)))
 			return err
 		},
 	}
@@ -352,7 +352,7 @@ func newLogoutCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: true, Context: context}); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Logged out from profile %s.\n", name)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Logged out from profile %s.", name)))
 			return err
 		},
 	}
@@ -372,26 +372,18 @@ func newWhoamiCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
 				return err
 			}
-			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Profile\t%s\n", name); err != nil {
-				return err
-			}
-			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Target\t%s\n", context.Kind); err != nil {
-				return err
-			}
-			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Auth\t%s\n", context.Auth.Method); err != nil {
-				return err
+			rows := []styledKeyValue{
+				{Label: "Profile", Value: name},
+				{Label: "Target", Value: string(context.Kind)},
+				{Label: "Auth", Value: string(context.Auth.Method)},
 			}
 			if context.Organization != "" {
-				if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Organization\t%s\n", context.Organization); err != nil {
-					return err
-				}
+				rows = append(rows, styledKeyValue{Label: "Organization", Value: context.Organization})
 			}
 			if context.Stack != "" {
-				if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Stack\t%s\n", context.Stack); err != nil {
-					return err
-				}
+				rows = append(rows, styledKeyValue{Label: "Stack", Value: context.Stack})
 			}
-			return nil
+			return writeStyledKeyValues(cmd, rows...)
 		},
 	}
 }
@@ -531,7 +523,7 @@ func (i loginInput) report(cmd *cobra.Command, label string, value string) {
 	if i.nonInteractive || strings.TrimSpace(value) == "" {
 		return
 	}
-	fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\n", label, value)
+	fmt.Fprintln(cmd.OutOrStdout(), styledKeyValueLine(cmd, label, value))
 }
 
 func loginTargetLabel(target string) string {

@@ -93,7 +93,7 @@ func newContextListCommand() *cobra.Command {
 				return err
 			}
 			if len(names) == 0 {
-				_, err := fmt.Fprintln(cmd.OutOrStdout(), "No contexts found.")
+				_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No contexts found."))
 				return err
 			}
 			for _, name := range names {
@@ -134,8 +134,10 @@ func newContextShowCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, result); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Name: %s\nKind: %s\n", name, context.Kind)
-			return err
+			return writeStyledColonKeyValues(cmd,
+				styledKeyValue{Label: "Name", Value: name},
+				styledKeyValue{Label: "Kind", Value: string(context.Kind)},
+			)
 		},
 	}
 }
@@ -162,7 +164,7 @@ func newContextUseCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, map[string]string{"currentContext": name}); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Current context set to %s.\n", name)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Current context set to %s.", name)))
 			return err
 		},
 	}
@@ -204,7 +206,7 @@ func newContextDeleteCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, map[string]string{"deleted": name}); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Context %s deleted.\n", name)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Context %s deleted.", name)))
 			return err
 		},
 	}
@@ -243,7 +245,7 @@ func newContextRenameCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, map[string]string{"renamed": oldName, "name": newName}); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Context %s renamed to %s.\n", oldName, newName)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Context %s renamed to %s.", oldName, newName)))
 			return err
 		},
 	}
@@ -310,7 +312,7 @@ func newContextSetCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: name == cfg.CurrentContext, Context: context}); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Context %s updated.\n", name)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Context %s updated.", name)))
 			return err
 		},
 	}
@@ -354,7 +356,7 @@ func newContextUnsetDefaultsCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: name == cfg.CurrentContext, Context: context}); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Context %s defaults cleared.\n", name)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Context %s defaults cleared.", name)))
 			return err
 		},
 	}
@@ -404,7 +406,7 @@ func newProfilesSetDefaultOrganizationCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: true, Context: context}); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Context %s updated.\n", name)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Context %s updated.", name)))
 			return err
 		},
 	}
@@ -442,7 +444,7 @@ func newProfilesSetDefaultStackCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: true, Context: context}); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Context %s updated.\n", name)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Context %s updated.", name)))
 			return err
 		},
 	}
@@ -516,7 +518,7 @@ func newContextCreateStackCommand() *cobra.Command {
 			}); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Context %s created.\n", name)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Context %s created.", name)))
 			return err
 		},
 	}
@@ -571,7 +573,7 @@ func newContextCreateCloudCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: name == cfg.CurrentContext, Context: cfg.Contexts[name]}); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Context %s created.\n", name)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Context %s created.", name)))
 			return err
 		},
 	}
@@ -636,7 +638,7 @@ func newContextCreateCloudStackCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: name == cfg.CurrentContext, Context: cfg.Contexts[name]}); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Context %s created.\n", name)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Context %s created.", name)))
 			return err
 		},
 	}

@@ -168,6 +168,18 @@ func writeStyledKeyValues(cmd *cobra.Command, rows ...styledKeyValue) error {
 	return nil
 }
 
+func writeStyledColonKeyValues(cmd *cobra.Command, rows ...styledKeyValue) error {
+	if !terminalOutputEnabled(cmd) {
+		for _, row := range rows {
+			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s: %s\n", row.Label, row.Value); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	return writeStyledKeyValues(cmd, rows...)
+}
+
 func writeStyledRows(cmd *cobra.Command, headers []string, rows [][]string) error {
 	if !terminalOutputEnabled(cmd) {
 		for _, row := range rows {
