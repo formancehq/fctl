@@ -245,8 +245,9 @@ Regles de flags ledger:
 | `ledger accounts set-metadata <address> key=value...` | identique | | |
 | `ledger accounts delete-metadata <address> <key>` | identique | | |
 | `ledger transactions list --account --dst --src --reference --metadata --page-size --start --end` | `ledger transactions list --account --destination --source --reference --metadata --page-size --start --end` | aliases `--dst`, `--src`; adapter `account/address` selon API. | Deja commence en v4, etendre avec tous filtres. |
+| aucun equivalent v3 direct | `ledger transactions count --account --destination --source --reference` | retourne le header API `Count`; aliases `--dst`, `--src`. | Commande read-only exposee par les API Ledger v1/v2. |
 | `ledger transactions show <transaction-id>` | identique | ID type string cote CLI, adapter int/uuid selon API. | |
-| `ledger transactions num -|<filename>` | `ledger transactions count --file <path>|-` | alias `num`; documenter format d'entree. | |
+| `ledger transactions num -|<filename>` | `ledger transactions run-script --file <path>|-` ou `ledger transactions create --script-file <path>|-` | ne pas mapper vers `count`; garder `num` alias deprecie uniquement pour l'execution Numscript. | Nom canonique a choisir avant implementation. |
 | `ledger transactions revert <transaction-id> --at-effective-date --force` | identique | `--force` devient alias ou complement de `--confirm`; date RFC3339. | |
 | `ledger transactions set-metadata <transaction-id> key=value...` | identique | | |
 | `ledger transactions delete-metadata <transaction-id> <key>` | identique | | |

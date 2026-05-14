@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"strconv"
 	"time"
 
 	formance "github.com/formancehq/formance-sdk-go/v3"
@@ -15,6 +16,7 @@ import (
 
 const (
 	ProductLedger            capabilities.Product = "ledger"
+	FeatureCountTransactions capabilities.Feature = "countTransactions"
 	FeatureListTransactions  capabilities.Feature = "listTransactions"
 	FeatureGetTransaction    capabilities.Feature = "getTransaction"
 	FeatureRevertTransaction capabilities.Feature = "revertTransaction"
@@ -37,6 +39,19 @@ type ListTransactionsOutput struct {
 	PageSize     int64                   `json:"pageSize" yaml:"pageSize"`
 	Next         *string                 `json:"next,omitempty" yaml:"next,omitempty"`
 	Previous     *string                 `json:"previous,omitempty" yaml:"previous,omitempty"`
+}
+
+type CountTransactionsInput struct {
+	Ledger      string
+	Account     string
+	Source      string
+	Destination string
+	Reference   string
+}
+
+type CountTransactionsOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	Count      int64                   `json:"count" yaml:"count"`
 }
 
 type TransactionSummary struct {
@@ -75,6 +90,16 @@ type ListTransactionsHandler struct {
 
 type ListTransactionsService struct {
 	Handlers []ListTransactionsHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type CountTransactionsHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, CountTransactionsInput) (CountTransactionsOutput, error)
+}
+
+type CountTransactionsService struct {
+	Handlers []CountTransactionsHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -127,6 +152,35 @@ func (s ListTransactionsService) Run(ctx context.Context, input ListTransactions
 	return output, nil
 }
 
+func (s CountTransactionsService) Run(ctx context.Context, input CountTransactionsInput) (CountTransactionsOutput, error) {
+	if input.Ledger == "" {
+		return CountTransactionsOutput{}, fmt.Errorf("ledger is required")
+	}
+
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]CountTransactionsHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return CountTransactionsOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return CountTransactionsOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return CountTransactionsOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
 func SDKListTransactionsHandlers(sdk *formance.Formance) []ListTransactionsHandler {
 	return []ListTransactionsHandler{
 		{
@@ -153,6 +207,39 @@ func SDKListTransactionsHandlers(sdk *formance.Formance) []ListTransactionsHandl
 					return ListTransactionsOutput{}, fmt.Errorf("ledger v2 list transactions returned no cursor")
 				}
 				return fromV2ListTransactions(response.V2TransactionsCursorResponse.Cursor), nil
+			},
+		},
+	}
+}
+
+func SDKCountTransactionsHandlers(sdk *formance.Formance) []CountTransactionsHandler {
+	return []CountTransactionsHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input CountTransactionsInput) (CountTransactionsOutput, error) {
+				response, err := sdk.Ledger.V1.CountTransactions(ctx, toV1CountTransactionsRequest(input))
+				if err != nil {
+					return CountTransactionsOutput{}, err
+				}
+				count, err := countHeader(response.Headers)
+				if err != nil {
+					return CountTransactionsOutput{}, err
+				}
+				return CountTransactionsOutput{Count: count}, nil
+			},
+		},
+		{
+			APIVersion: "v2",
+			Run: func(ctx context.Context, input CountTransactionsInput) (CountTransactionsOutput, error) {
+				response, err := sdk.Ledger.V2.CountTransactions(ctx, toV2CountTransactionsRequest(input))
+				if err != nil {
+					return CountTransactionsOutput{}, err
+				}
+				count, err := countHeader(response.Headers)
+				if err != nil {
+					return CountTransactionsOutput{}, err
+				}
+				return CountTransactionsOutput{Count: count}, nil
 			},
 		},
 	}
@@ -369,6 +456,48 @@ func toV2ListTransactionsRequest(input ListTransactionsInput) operations.V2ListT
 	return request
 }
 
+func toV1CountTransactionsRequest(input CountTransactionsInput) operations.CountTransactionsRequest {
+	request := operations.CountTransactionsRequest{
+		Ledger: input.Ledger,
+	}
+	if input.Account != "" {
+		request.Account = pointer(input.Account)
+	}
+	if input.Source != "" {
+		request.Source = pointer(input.Source)
+	}
+	if input.Destination != "" {
+		request.Destination = pointer(input.Destination)
+	}
+	if input.Reference != "" {
+		request.Reference = pointer(input.Reference)
+	}
+	return request
+}
+
+func toV2CountTransactionsRequest(input CountTransactionsInput) operations.V2CountTransactionsRequest {
+	request := operations.V2CountTransactionsRequest{
+		Ledger: input.Ledger,
+	}
+	query := map[string]any{}
+	if input.Account != "" {
+		query["account"] = input.Account
+	}
+	if input.Source != "" {
+		query["source"] = input.Source
+	}
+	if input.Destination != "" {
+		query["destination"] = input.Destination
+	}
+	if input.Reference != "" {
+		query["reference"] = input.Reference
+	}
+	if len(query) > 0 {
+		request.Query = query
+	}
+	return request
+}
+
 func fromV1ListTransactions(cursor shared.TransactionsCursorResponseCursor) ListTransactionsOutput {
 	transactions := make([]TransactionSummary, 0, len(cursor.Data))
 	for _, transaction := range cursor.Data {
@@ -435,4 +564,16 @@ func stringMapToAny(values map[string]string) map[string]any {
 		ret[key] = value
 	}
 	return ret
+}
+
+func countHeader(headers map[string][]string) (int64, error) {
+	values := headers["Count"]
+	if len(values) == 0 || values[0] == "" {
+		return 0, fmt.Errorf("count response missing Count header")
+	}
+	count, err := strconv.ParseInt(values[0], 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("invalid Count header %q: %w", values[0], err)
+	}
+	return count, nil
 }

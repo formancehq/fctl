@@ -385,6 +385,7 @@ func newLedgerTransactionsCommand() *cobra.Command {
 		Use:   "transactions",
 		Short: "Manage ledger transactions",
 	}
+	command.AddCommand(newLedgerTransactionsCountCommand())
 	command.AddCommand(newLedgerTransactionsListCommand())
 	command.AddCommand(newLedgerTransactionsRevertCommand())
 	command.AddCommand(newLedgerTransactionsShowCommand())
@@ -682,6 +683,92 @@ func newLedgerTransactionsListCommand() *cobra.Command {
 	return command
 }
 
+func newLedgerTransactionsCountCommand() *cobra.Command {
+	var ledger string
+	var account string
+	var source string
+	var destination string
+	var reference string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "count",
+		Short: "Count ledger transactions",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if cmd.Flags().Changed("src") {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Flag --src has been deprecated, use --source")
+			}
+			if cmd.Flags().Changed("dst") {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Flag --dst has been deprecated, use --destination")
+			}
+
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			if ledger == "" {
+				ledger = rt.Context.Defaults["ledger"]
+			}
+			if ledger == "" {
+				ledger = "default"
+			}
+
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := ledgercmd.CountTransactionsService{
+				Handlers: ledgercmd.SDKCountTransactionsHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         ledgercmd.ProductLedger,
+						Feature:         ledgercmd.FeatureCountTransactions,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), ledgercmd.CountTransactionsInput{
+				Ledger:      ledger,
+				Account:     account,
+				Source:      source,
+				Destination: destination,
+				Reference:   reference,
+			})
+			if err != nil {
+				return err
+			}
+
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderLedgerTransactionsCount(cmd, output)
+		},
+	}
+
+	command.Flags().StringVar(&ledger, "ledger", "", "Ledger name")
+	command.Flags().StringVar(&account, "account", "", "Filter by account")
+	command.Flags().StringVar(&source, "source", "", "Filter by source account")
+	command.Flags().StringVar(&source, "src", "", "Deprecated alias for --source")
+	command.Flags().StringVar(&destination, "destination", "", "Filter by destination account")
+	command.Flags().StringVar(&destination, "dst", "", "Deprecated alias for --destination")
+	command.Flags().StringVar(&reference, "reference", "", "Filter by reference")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
+	_ = command.Flags().MarkDeprecated("src", "use --source")
+	_ = command.Flags().MarkDeprecated("dst", "use --destination")
+
+	return command
+}
+
 func newLedgerTransactionsRevertCommand() *cobra.Command {
 	var ledger string
 	var atEffectiveDate bool
@@ -858,6 +945,14 @@ func renderLedgerTransactions(cmd *cobra.Command, output ledgercmd.ListTransacti
 		}
 	}
 	return nil
+}
+
+func renderLedgerTransactionsCount(cmd *cobra.Command, output ledgercmd.CountTransactionsOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Count\t%d\n", output.Count)
+	return err
 }
 
 func renderLedgerTransaction(cmd *cobra.Command, output ledgercmd.GetTransactionOutput) error {

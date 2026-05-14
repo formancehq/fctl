@@ -61,6 +61,84 @@ func TestListTransactionsServiceReturnsResolverError(t *testing.T) {
 	}
 }
 
+func TestCountTransactionsServiceSelectsResolvedHandler(t *testing.T) {
+	service := CountTransactionsService{
+		Handlers: []CountTransactionsHandler{
+			{
+				APIVersion: "v1",
+				Run: func(context.Context, CountTransactionsInput) (CountTransactionsOutput, error) {
+					t.Fatal("v1 handler should not run")
+					return CountTransactionsOutput{}, nil
+				},
+			},
+			{
+				APIVersion: "v2",
+				Run: func(_ context.Context, input CountTransactionsInput) (CountTransactionsOutput, error) {
+					if input.Ledger != "default" || input.Source != "world" || input.Destination != "users:123" {
+						t.Fatalf("unexpected input: %#v", input)
+					}
+					return CountTransactionsOutput{Count: 42}, nil
+				},
+			},
+		},
+		Resolve: func(_ context.Context, versions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			assertAPIVersions(t, versions, []capabilities.APIVersion{"v1", "v2"})
+			return "v2", nil
+		},
+	}
+
+	output, err := service.Run(context.Background(), CountTransactionsInput{
+		Ledger:      "default",
+		Source:      "world",
+		Destination: "users:123",
+	})
+	if err != nil {
+		t.Fatalf("run service: %v", err)
+	}
+	if output.APIVersion != "v2" || output.Count != 42 {
+		t.Fatalf("unexpected output: %#v", output)
+	}
+}
+
+func TestCountTransactionsRequestMapsCanonicalFilters(t *testing.T) {
+	input := CountTransactionsInput{
+		Ledger:      "default",
+		Account:     "users:123",
+		Source:      "world",
+		Destination: "users:123",
+		Reference:   "ref",
+	}
+
+	v1 := toV1CountTransactionsRequest(input)
+	if v1.Ledger != "default" || *v1.Account != "users:123" || *v1.Source != "world" ||
+		*v1.Destination != "users:123" || *v1.Reference != "ref" {
+		t.Fatalf("unexpected v1 request: %#v", v1)
+	}
+
+	v2 := toV2CountTransactionsRequest(input)
+	if v2.Ledger != "default" || v2.Query["account"] != "users:123" || v2.Query["source"] != "world" ||
+		v2.Query["destination"] != "users:123" || v2.Query["reference"] != "ref" {
+		t.Fatalf("unexpected v2 request: %#v", v2)
+	}
+}
+
+func TestCountHeader(t *testing.T) {
+	count, err := countHeader(map[string][]string{"Count": {"42"}})
+	if err != nil {
+		t.Fatalf("parse count header: %v", err)
+	}
+	if count != 42 {
+		t.Fatalf("expected count 42, got %d", count)
+	}
+
+	if _, err := countHeader(map[string][]string{}); err == nil {
+		t.Fatal("expected missing Count header error")
+	}
+	if _, err := countHeader(map[string][]string{"Count": {"wat"}}); err == nil {
+		t.Fatal("expected invalid Count header error")
+	}
+}
+
 func TestToV2ListTransactionsRequestMapsCanonicalFilters(t *testing.T) {
 	request := toV2ListTransactionsRequest(ListTransactionsInput{
 		Ledger:      "default",
