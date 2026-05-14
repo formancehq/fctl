@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/formancehq/fctl/v4/internal/credentials"
@@ -75,6 +76,18 @@ func TestWriteMigrationStoresCredentials(t *testing.T) {
 	}
 	if value == "" {
 		t.Fatalf("expected migrated credential value")
+	}
+}
+
+func TestLoadV3StateExplainsMissingConfigDirectory(t *testing.T) {
+	_, err := LoadV3State(t.TempDir())
+	if err == nil {
+		t.Fatal("expected missing v3 config error")
+	}
+	for _, expected := range []string{"read v3 config", "config.yml", "profiles/"} {
+		if !strings.Contains(err.Error(), expected) {
+			t.Fatalf("expected error to contain %q, got %v", expected, err)
+		}
 	}
 }
 

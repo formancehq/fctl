@@ -26,6 +26,16 @@ Provide an explicit migration command:
 fctl config migrate-v3
 ```
 
+By default the command reads the v3 configuration from
+`$HOME/.config/formance/fctl`. Use `--from <dir>` only when the v3 config lives
+elsewhere. The source directory must contain the v3 `config.yml` file and the
+`profiles/` directory.
+
+The command writes the v4 config to the v4 config directory as `config.yaml`
+(`$HOME/.config/formance/fctl-v4/config.yaml` by default, or `--config-dir
+<dir>/config.yaml` when provided). It does not create or mutate the v3
+`config.yml` source file.
+
 The command should:
 
 1. Read v3 config and profiles.

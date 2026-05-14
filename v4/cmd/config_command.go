@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
@@ -29,7 +31,11 @@ func newConfigMigrateV3Command() *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if fromDir == "" {
-				return fmt.Errorf("--from is required")
+				defaultDir, err := defaultV3ConfigDir()
+				if err != nil {
+					return err
+				}
+				fromDir = defaultDir
 			}
 
 			state, err := v4config.LoadV3State(fromDir)
@@ -71,11 +77,19 @@ func newConfigMigrateV3Command() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringVar(&fromDir, "from", "", "Path to the fctl v3 configuration directory")
+	command.Flags().StringVar(&fromDir, "from", "", "Path to the fctl v3 configuration directory (default $HOME/.config/formance/fctl)")
 	command.Flags().BoolVar(&dryRun, "dry-run", false, "Show the migration plan without writing v4 config")
 	command.Flags().StringVar(&credentialDir, "credential-dir", "", "Explicit insecure credential directory for migrated v3 tokens")
 
 	return command
+}
+
+func defaultV3ConfigDir() (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("resolve home directory for default v3 config path: %w", err)
+	}
+	return filepath.Join(homeDir, ".config", "formance", "fctl"), nil
 }
 
 func renderMigrationPlan(cmd *cobra.Command, plan v4config.MigrationPlan) error {

@@ -50,6 +50,9 @@ func LoadV3State(dir string) (V3State, error) {
 
 	configBytes, err := os.ReadFile(filepath.Join(dir, "config.yml"))
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return V3State{}, fmt.Errorf("read v3 config: %w; --from must point to the fctl v3 config directory containing config.yml and profiles/", err)
+		}
 		return V3State{}, fmt.Errorf("read v3 config: %w", err)
 	}
 	var v3Config V3Config
@@ -60,6 +63,9 @@ func LoadV3State(dir string) (V3State, error) {
 	profilesDir := filepath.Join(dir, "profiles")
 	entries, err := os.ReadDir(profilesDir)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return V3State{}, fmt.Errorf("read v3 profiles: %w; --from must point to the fctl v3 config directory containing config.yml and profiles/", err)
+		}
 		return V3State{}, fmt.Errorf("read v3 profiles: %w", err)
 	}
 

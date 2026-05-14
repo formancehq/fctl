@@ -46,7 +46,7 @@ func renderSetupGuidance(cmd *cobra.Command) error {
 		Commands: []string{
 			"fctl context create stack <name> --stack-url <url>",
 			"fctl context use <name>",
-			"fctl config migrate-v3 --from <path>",
+			"fctl config migrate-v3",
 		},
 	}
 	if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {

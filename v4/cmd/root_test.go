@@ -9076,9 +9076,35 @@ func TestConfigMigrateV3Write(t *testing.T) {
 	}
 }
 
+func TestConfigMigrateV3UsesDefaultSourceDir(t *testing.T) {
+	homeDir := t.TempDir()
+	t.Setenv("HOME", homeDir)
+
+	v3Dir := filepath.Join(homeDir, ".config", "formance", "fctl")
+	writeV3CommandFixtureInDir(t, v3Dir, false)
+	configDir := t.TempDir()
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "config", "migrate-v3")
+	if err != nil {
+		t.Fatalf("migrate write from default v3 dir: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "Migrated 1 context(s)") {
+		t.Fatalf("unexpected migration output: %q", stdout)
+	}
+	if _, err := v4config.LoadFile(filepath.Join(configDir, "config.yaml")); err != nil {
+		t.Fatalf("load migrated config: %v", err)
+	}
+}
+
 func writeV3CommandFixture(t *testing.T, withTokens bool) string {
 	t.Helper()
 	dir := t.TempDir()
+	writeV3CommandFixtureInDir(t, dir, withTokens)
+	return dir
+}
+
+func writeV3CommandFixtureInDir(t *testing.T, dir string, withTokens bool) {
+	t.Helper()
 	if err := os.MkdirAll(filepath.Join(dir, "profiles", "default"), 0o700); err != nil {
 		t.Fatalf("create v3 fixture dirs: %v", err)
 	}
@@ -9098,5 +9124,4 @@ func writeV3CommandFixture(t *testing.T, withTokens bool) string {
 	if err := os.WriteFile(filepath.Join(dir, "profiles", "default", "profile.json"), []byte(profile), 0o600); err != nil {
 		t.Fatalf("write v3 profile: %v", err)
 	}
-	return dir
 }
