@@ -9115,6 +9115,8 @@ func TestMissingConfigErrorsAreActionable(t *testing.T) {
 				"v4 config not found",
 				filepath.Join(configDir, "config.yaml"),
 				"fctl context create stack",
+				"fctl context create cloud",
+				"fctl context create cloud-stack",
 				"fctl config migrate-v3",
 			} {
 				if !strings.Contains(err.Error(), expected) {
