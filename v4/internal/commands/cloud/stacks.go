@@ -10,6 +10,7 @@ import (
 )
 
 type StackClient interface {
+	GetServerInfo(context.Context, ...operations.Option) (*operations.GetServerInfoResponse, error)
 	ListStacks(context.Context, operations.ListStacksRequest, ...operations.Option) (*operations.ListStacksResponse, error)
 	GetStack(context.Context, operations.GetStackRequest, ...operations.Option) (*operations.GetStackResponse, error)
 	CreateStack(context.Context, operations.CreateStackRequest, ...operations.Option) (*operations.CreateStackResponse, error)
@@ -28,21 +29,24 @@ type StackClient interface {
 }
 
 type StackSummary struct {
-	ID             string            `json:"id" yaml:"id"`
-	Name           string            `json:"name" yaml:"name"`
-	OrganizationID string            `json:"organizationID" yaml:"organizationID"`
-	URI            string            `json:"uri,omitempty" yaml:"uri,omitempty"`
-	RegionID       string            `json:"regionID,omitempty" yaml:"regionID,omitempty"`
-	Version        string            `json:"version,omitempty" yaml:"version,omitempty"`
-	Status         string            `json:"status" yaml:"status"`
-	State          string            `json:"state" yaml:"state"`
-	ExpectedStatus string            `json:"expectedStatus" yaml:"expectedStatus"`
-	Reachable      bool              `json:"reachable" yaml:"reachable"`
-	Metadata       map[string]string `json:"metadata,omitempty" yaml:"metadata,omitempty"`
-	CreatedAt      *time.Time        `json:"createdAt,omitempty" yaml:"createdAt,omitempty"`
-	UpdatedAt      *time.Time        `json:"updatedAt,omitempty" yaml:"updatedAt,omitempty"`
-	DeletedAt      *time.Time        `json:"deletedAt,omitempty" yaml:"deletedAt,omitempty"`
-	DisabledAt     *time.Time        `json:"disabledAt,omitempty" yaml:"disabledAt,omitempty"`
+	ID              string            `json:"id" yaml:"id"`
+	Name            string            `json:"name" yaml:"name"`
+	OrganizationID  string            `json:"organizationID" yaml:"organizationID"`
+	Dashboard       string            `json:"dashboard,omitempty" yaml:"dashboard,omitempty"`
+	URI             string            `json:"uri,omitempty" yaml:"uri,omitempty"`
+	RegionID        string            `json:"regionID,omitempty" yaml:"regionID,omitempty"`
+	Version         string            `json:"version,omitempty" yaml:"version,omitempty"`
+	Status          string            `json:"status" yaml:"status"`
+	State           string            `json:"state" yaml:"state"`
+	ExpectedStatus  string            `json:"expectedStatus" yaml:"expectedStatus"`
+	Reachable       bool              `json:"reachable" yaml:"reachable"`
+	StargateEnabled bool              `json:"stargateEnabled" yaml:"stargateEnabled"`
+	AuditEnabled    *bool             `json:"auditEnabled,omitempty" yaml:"auditEnabled,omitempty"`
+	Metadata        map[string]string `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+	CreatedAt       *time.Time        `json:"createdAt,omitempty" yaml:"createdAt,omitempty"`
+	UpdatedAt       *time.Time        `json:"updatedAt,omitempty" yaml:"updatedAt,omitempty"`
+	DeletedAt       *time.Time        `json:"deletedAt,omitempty" yaml:"deletedAt,omitempty"`
+	DisabledAt      *time.Time        `json:"disabledAt,omitempty" yaml:"disabledAt,omitempty"`
 }
 
 type ListStacksInput struct {
@@ -179,9 +183,13 @@ func (s ListStacksService) Run(ctx context.Context, input ListStacksInput) (List
 		return ListStacksOutput{}, err
 	}
 	data := response.GetListStacksResponse().GetData()
+	dashboard, err := stackDashboardURL(ctx, s.Client)
+	if err != nil {
+		return ListStacksOutput{}, err
+	}
 	stacks := make([]StackSummary, 0, len(data))
 	for i := range data {
-		stacks = append(stacks, stackSummary(&data[i]))
+		stacks = append(stacks, stackSummary(&data[i], dashboard))
 	}
 	return ListStacksOutput{OrganizationID: input.OrganizationID, Stacks: stacks}, nil
 }
@@ -212,7 +220,7 @@ func (s ReadStackService) Run(ctx context.Context, input StackIDInput) (StackOut
 	}
 	return StackOutput{
 		OrganizationID: input.OrganizationID,
-		Stack:          stackSummary(response.GetReadStackResponse().GetData()),
+		Stack:          stackSummary(response.GetReadStackResponse().GetData(), defaultConsoleURL),
 	}, nil
 }
 
@@ -251,7 +259,7 @@ func (s CreateStackService) Run(ctx context.Context, input CreateStackInput) (St
 	if response.GetReadStackResponse().GetData() == nil {
 		return StackOutput{}, fmt.Errorf("cloud stacks create returned no stack")
 	}
-	return StackOutput{OrganizationID: input.OrganizationID, Stack: stackSummary(response.GetReadStackResponse().GetData())}, nil
+	return StackOutput{OrganizationID: input.OrganizationID, Stack: stackSummary(response.GetReadStackResponse().GetData(), defaultConsoleURL)}, nil
 }
 
 type UpdateStackService struct {
@@ -285,7 +293,7 @@ func (s UpdateStackService) Run(ctx context.Context, input UpdateStackInput) (St
 	if response.GetReadStackResponse().GetData() == nil {
 		return StackOutput{}, fmt.Errorf("cloud stacks update returned no stack")
 	}
-	return StackOutput{OrganizationID: input.OrganizationID, Stack: stackSummary(response.GetReadStackResponse().GetData())}, nil
+	return StackOutput{OrganizationID: input.OrganizationID, Stack: stackSummary(response.GetReadStackResponse().GetData(), defaultConsoleURL)}, nil
 }
 
 type DeleteStackService struct {
@@ -346,7 +354,7 @@ func (s StackActionService) Run(ctx context.Context, input StackActionInput) (St
 			return StackActionOutput{}, err
 		}
 		if response.GetReadStackResponse().GetData() != nil {
-			stack := stackSummary(response.GetReadStackResponse().GetData())
+			stack := stackSummary(response.GetReadStackResponse().GetData(), defaultConsoleURL)
 			output.Stack = &stack
 		}
 		return output, nil
@@ -486,25 +494,42 @@ func validateStackTarget(organizationID string, stackID string) error {
 	return nil
 }
 
-func stackSummary(stack *components.Stack) StackSummary {
+const defaultConsoleURL = "https://portal.formance.cloud"
+
+func stackDashboardURL(ctx context.Context, client StackClient) (string, error) {
+	response, err := client.GetServerInfo(ctx)
+	if err != nil {
+		return "", err
+	}
+	info := response.GetServerInfo()
+	if info != nil && info.GetConsoleURL() != nil {
+		return *info.GetConsoleURL(), nil
+	}
+	return defaultConsoleURL, nil
+}
+
+func stackSummary(stack *components.Stack, dashboard string) StackSummary {
 	if stack == nil {
 		return StackSummary{}
 	}
 	summary := StackSummary{
-		ID:             stack.ID,
-		Name:           stack.Name,
-		OrganizationID: stack.OrganizationID,
-		URI:            stack.URI,
-		RegionID:       stack.RegionID,
-		Status:         string(stack.Status),
-		State:          string(stack.State),
-		ExpectedStatus: string(stack.ExpectedStatus),
-		Reachable:      stack.Reachable,
-		Metadata:       stack.Metadata,
-		CreatedAt:      stack.CreatedAt,
-		UpdatedAt:      stack.UpdatedAt,
-		DeletedAt:      stack.DeletedAt,
-		DisabledAt:     stack.DisabledAt,
+		ID:              stack.ID,
+		Name:            stack.Name,
+		OrganizationID:  stack.OrganizationID,
+		Dashboard:       dashboard,
+		URI:             stack.URI,
+		RegionID:        stack.RegionID,
+		Status:          string(stack.Status),
+		State:           string(stack.State),
+		ExpectedStatus:  string(stack.ExpectedStatus),
+		Reachable:       stack.Reachable,
+		StargateEnabled: stack.StargateEnabled,
+		AuditEnabled:    stack.AuditEnabled,
+		Metadata:        stack.Metadata,
+		CreatedAt:       stack.CreatedAt,
+		UpdatedAt:       stack.UpdatedAt,
+		DeletedAt:       stack.DeletedAt,
+		DisabledAt:      stack.DisabledAt,
 	}
 	if stack.Version != nil {
 		summary.Version = *stack.Version

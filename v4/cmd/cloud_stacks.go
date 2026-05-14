@@ -9,6 +9,7 @@ import (
 
 	cloudcmd "github.com/formancehq/fctl/v4/internal/commands/cloud"
 	v4prompt "github.com/formancehq/fctl/v4/internal/prompt"
+	v4render "github.com/formancehq/fctl/v4/internal/render"
 	"github.com/formancehq/fctl/v4/internal/runtime"
 )
 
@@ -610,12 +611,29 @@ func renderCloudStacks(cmd *cobra.Command, output cloudcmd.ListStacksOutput) err
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No Cloud stacks found.")
 		return err
 	}
+	headers := []string{"ID", "Name", "Dashboard", "Region", "Status", "Audit Enabled"}
+	rows := make([][]string, 0, len(output.Stacks))
 	for _, stack := range output.Stacks {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\n", stack.ID, stack.Name, stack.Status, stack.URI); err != nil {
-			return err
-		}
+		rows = append(rows, []string{
+			stack.ID,
+			stack.Name,
+			stack.Dashboard,
+			stack.RegionID,
+			stack.State,
+			boolPointerLabel(stack.AuditEnabled),
+		})
 	}
-	return nil
+	return v4render.Table(cmd.OutOrStdout(), headers, rows)
+}
+
+func boolPointerLabel(value *bool) string {
+	if value == nil {
+		return "No"
+	}
+	if *value {
+		return "Yes"
+	}
+	return "No"
 }
 
 func renderCloudStackMutated(cmd *cobra.Command, output cloudcmd.StackOutput, action string) error {

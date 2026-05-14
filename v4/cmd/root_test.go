@@ -1948,8 +1948,10 @@ func TestCloudStacksListShowAndDeprecatedAliases(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
+		case "/_info":
+			fmt.Fprint(w, `{"version":"v1.0.0","consoleURL":"https://portal.example"}`)
 		case "/organizations/org_1/stacks":
-			fmt.Fprint(w, `{"data":[{"id":"stack_1","name":"Production","organizationId":"org_1","uri":"https://stack.example/api","regionID":"eu-west-1","version":"v3.2.4","status":"READY","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":true,"stargateEnabled":true,"synchronised":true,"modules":[]}]}`)
+			fmt.Fprint(w, `{"data":[{"id":"stack_1","name":"Production","organizationId":"org_1","uri":"https://stack.example/api","regionID":"eu-west-1","version":"v3.2.4","status":"READY","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":true,"stargateEnabled":true,"auditEnabled":false,"synchronised":true,"modules":[]}]}`)
 		case "/organizations/org_1/stacks/stack_1":
 			fmt.Fprint(w, `{"data":{"id":"stack_1","name":"Production","organizationId":"org_1","uri":"https://stack.example/api","regionID":"eu-west-1","version":"v3.2.4","status":"READY","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":true,"stargateEnabled":true,"synchronised":true,"modules":[]}}`)
 		default:
@@ -1978,8 +1980,10 @@ func TestCloudStacksListShowAndDeprecatedAliases(t *testing.T) {
 	if stderr != "" {
 		t.Fatalf("expected empty stderr, got %q", stderr)
 	}
-	if !strings.Contains(stdout, "stack_1\tProduction\tREADY\thttps://stack.example/api") {
-		t.Fatalf("unexpected cloud stacks list output:\n%s", stdout)
+	for _, expected := range []string{"ID", "Dashboard", "Audit Enabled", "stack_1", "Production", "https://portal.example", "eu-west-1", "ACTIVE", "No"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected cloud stacks list output to contain %q, got:\n%s", expected, stdout)
+		}
 	}
 
 	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "stacks", "show", "stack_1")
