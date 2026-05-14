@@ -14,6 +14,7 @@ import (
 
 const (
 	ProductOrchestration  capabilities.Product = "orchestration"
+	FeatureCancelEvent    capabilities.Feature = "cancelEvent"
 	FeatureCreateWorkflow capabilities.Feature = "createWorkflow"
 	FeatureDeleteWorkflow capabilities.Feature = "deleteWorkflow"
 	FeatureGetInstance    capabilities.Feature = "getInstance"
@@ -21,6 +22,7 @@ const (
 	FeatureListInstances  capabilities.Feature = "listInstances"
 	FeatureListWorkflows  capabilities.Feature = "listWorkflows"
 	FeatureRunWorkflow    capabilities.Feature = "runWorkflow"
+	FeatureSendEvent      capabilities.Feature = "sendEvent"
 )
 
 type WorkflowSummary struct {
@@ -116,6 +118,17 @@ type GetInstanceOutput struct {
 	Instance   InstanceSummary         `json:"instance" yaml:"instance"`
 }
 
+type InstanceActionInput struct {
+	InstanceID string
+	Event      string
+}
+
+type InstanceActionOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	InstanceID string                  `json:"instanceID" yaml:"instanceID"`
+	Event      string                  `json:"event,omitempty" yaml:"event,omitempty"`
+}
+
 type ListWorkflowsHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, ListWorkflowsInput) (ListWorkflowsOutput, error)
@@ -151,6 +164,11 @@ type GetInstanceHandler struct {
 	Run        func(context.Context, GetInstanceInput) (GetInstanceOutput, error)
 }
 
+type InstanceActionHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, InstanceActionInput) (InstanceActionOutput, error)
+}
+
 type ListWorkflowsService struct {
 	Handlers []ListWorkflowsHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
@@ -183,6 +201,16 @@ type ListInstancesService struct {
 
 type GetInstanceService struct {
 	Handlers []GetInstanceHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type SendEventService struct {
+	Handlers []InstanceActionHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type StopInstanceService struct {
+	Handlers []InstanceActionHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -359,6 +387,54 @@ func (s GetInstanceService) Run(ctx context.Context, input GetInstanceInput) (Ge
 		return GetInstanceOutput{}, err
 	}
 	output.APIVersion = selected
+	return output, nil
+}
+
+func (s SendEventService) Run(ctx context.Context, input InstanceActionInput) (InstanceActionOutput, error) {
+	if input.Event == "" {
+		return InstanceActionOutput{}, fmt.Errorf("event is required")
+	}
+	return runInstanceActionService(ctx, input, s.Handlers, s.Resolve)
+}
+
+func (s StopInstanceService) Run(ctx context.Context, input InstanceActionInput) (InstanceActionOutput, error) {
+	return runInstanceActionService(ctx, input, s.Handlers, s.Resolve)
+}
+
+func runInstanceActionService(
+	ctx context.Context,
+	input InstanceActionInput,
+	handlers []InstanceActionHandler,
+	resolve func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error),
+) (InstanceActionOutput, error) {
+	if input.InstanceID == "" {
+		return InstanceActionOutput{}, fmt.Errorf("instance id is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(handlers))
+	handlersByVersion := map[capabilities.APIVersion]InstanceActionHandler{}
+	for _, handler := range handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlersByVersion[handler.APIVersion] = handler
+	}
+	selected, err := resolve(ctx, handlerVersions)
+	if err != nil {
+		return InstanceActionOutput{}, err
+	}
+	handler, ok := handlersByVersion[selected]
+	if !ok {
+		return InstanceActionOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return InstanceActionOutput{}, err
+	}
+	output.APIVersion = selected
+	if output.InstanceID == "" {
+		output.InstanceID = input.InstanceID
+	}
+	if output.Event == "" {
+		output.Event = input.Event
+	}
 	return output, nil
 }
 
@@ -591,6 +667,66 @@ func SDKGetInstanceHandlers(sdk *formance.Formance) []GetInstanceHandler {
 					return GetInstanceOutput{}, fmt.Errorf("orchestration v2 get instance returned no data")
 				}
 				return GetInstanceOutput{Instance: fromV2Instance(response.V2GetWorkflowInstanceResponse.Data)}, nil
+			},
+		},
+	}
+}
+
+func SDKSendEventHandlers(sdk *formance.Formance) []InstanceActionHandler {
+	return []InstanceActionHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input InstanceActionInput) (InstanceActionOutput, error) {
+				_, err := sdk.Orchestration.V1.SendEvent(ctx, operations.SendEventRequest{
+					InstanceID: input.InstanceID,
+					RequestBody: &operations.SendEventRequestBody{
+						Name: input.Event,
+					},
+				})
+				if err != nil {
+					return InstanceActionOutput{}, err
+				}
+				return InstanceActionOutput{InstanceID: input.InstanceID, Event: input.Event}, nil
+			},
+		},
+		{
+			APIVersion: "v2",
+			Run: func(ctx context.Context, input InstanceActionInput) (InstanceActionOutput, error) {
+				_, err := sdk.Orchestration.V2.SendEvent(ctx, operations.V2SendEventRequest{
+					InstanceID: input.InstanceID,
+					RequestBody: &operations.V2SendEventRequestBody{
+						Name: input.Event,
+					},
+				})
+				if err != nil {
+					return InstanceActionOutput{}, err
+				}
+				return InstanceActionOutput{InstanceID: input.InstanceID, Event: input.Event}, nil
+			},
+		},
+	}
+}
+
+func SDKStopInstanceHandlers(sdk *formance.Formance) []InstanceActionHandler {
+	return []InstanceActionHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input InstanceActionInput) (InstanceActionOutput, error) {
+				_, err := sdk.Orchestration.V1.CancelEvent(ctx, operations.CancelEventRequest{InstanceID: input.InstanceID})
+				if err != nil {
+					return InstanceActionOutput{}, err
+				}
+				return InstanceActionOutput{InstanceID: input.InstanceID}, nil
+			},
+		},
+		{
+			APIVersion: "v2",
+			Run: func(ctx context.Context, input InstanceActionInput) (InstanceActionOutput, error) {
+				_, err := sdk.Orchestration.V2.CancelEvent(ctx, operations.V2CancelEventRequest{InstanceID: input.InstanceID})
+				if err != nil {
+					return InstanceActionOutput{}, err
+				}
+				return InstanceActionOutput{InstanceID: input.InstanceID}, nil
 			},
 		},
 	}

@@ -42,7 +42,105 @@ func newFlowsInstancesCommand() *cobra.Command {
 	command.AddCommand(newFlowsInstancesShowCommand("show", nil, false))
 	command.AddCommand(newFlowsInstancesShowCommand("inspect", nil, false))
 	command.AddCommand(newFlowsInstancesShowCommand("describe", nil, true))
+	command.AddCommand(newFlowsInstancesSendEventCommand())
+	command.AddCommand(newFlowsInstancesStopCommand())
 	return command
+}
+
+func newFlowsInstancesSendEventCommand() *cobra.Command {
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "send-event <instance-id> <event>",
+		Short: "Send an event to a workflow instance",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			output, err := runFlowsInstanceActionCommand(cmd, flowsInstanceActionCommandRequest{
+				Feature:    flowscmd.FeatureSendEvent,
+				Handlers:   flowscmd.SDKSendEventHandlers,
+				InstanceID: args[0],
+				Event:      args[1],
+				APIVersion: apiVersion,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderFlowsInstanceEventSent(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	return command
+}
+
+func newFlowsInstancesStopCommand() *cobra.Command {
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "stop <instance-id>",
+		Short: "Stop a workflow instance",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("flows instances stop requires --confirm")
+			}
+			output, err := runFlowsInstanceActionCommand(cmd, flowsInstanceActionCommandRequest{
+				Feature:    flowscmd.FeatureCancelEvent,
+				Handlers:   flowscmd.SDKStopInstanceHandlers,
+				InstanceID: args[0],
+				APIVersion: apiVersion,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderFlowsInstanceStopped(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm instance stop")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	return command
+}
+
+type flowsInstanceActionCommandRequest struct {
+	Feature    capabilities.Feature
+	Handlers   func(*formance.Formance) []flowscmd.InstanceActionHandler
+	InstanceID string
+	Event      string
+	APIVersion string
+}
+
+func runFlowsInstanceActionCommand(cmd *cobra.Command, request flowsInstanceActionCommandRequest) (flowscmd.InstanceActionOutput, error) {
+	rt, err := runtimeFromCommand(cmd)
+	if err != nil {
+		return flowscmd.InstanceActionOutput{}, err
+	}
+	httpClient, err := rt.HTTPClient(cmd.Context())
+	if err != nil {
+		return flowscmd.InstanceActionOutput{}, err
+	}
+	sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+	service := flowscmd.StopInstanceService{
+		Handlers: request.Handlers(sdk),
+		Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			versionRequest := capabilities.VersionResolutionRequest{
+				Product:         flowscmd.ProductOrchestration,
+				Feature:         request.Feature,
+				HandlerVersions: handlerVersions,
+			}
+			if request.APIVersion != "" {
+				versionRequest.Policy = capabilities.VersionPolicyPinned
+				versionRequest.PinnedVersion = capabilities.APIVersion(request.APIVersion)
+			}
+			return rt.ResolveAPIVersion(ctx, versionRequest)
+		},
+	}
+	return service.Run(cmd.Context(), flowscmd.InstanceActionInput{InstanceID: request.InstanceID, Event: request.Event})
 }
 
 func newFlowsInstancesListCommand() *cobra.Command {
@@ -553,5 +651,21 @@ func renderFlowsInstance(cmd *cobra.Command, output flowscmd.GetInstanceOutput) 
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", instance.CreatedAt.Format(time.RFC3339))
+	return err
+}
+
+func renderFlowsInstanceEventSent(cmd *cobra.Command, output flowscmd.InstanceActionOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Event %s sent to instance %s.\n", output.Event, output.InstanceID)
+	return err
+}
+
+func renderFlowsInstanceStopped(cmd *cobra.Command, output flowscmd.InstanceActionOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Workflow instance %s stopped.\n", output.InstanceID)
 	return err
 }

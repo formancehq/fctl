@@ -134,6 +134,34 @@ func TestGetInstanceServiceRequiresInstanceID(t *testing.T) {
 	}
 }
 
+func TestSendEventServiceRequiresEvent(t *testing.T) {
+	service := SendEventService{
+		Handlers: []InstanceActionHandler{{APIVersion: "v2"}},
+		Resolve: func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			t.Fatal("resolver should not run")
+			return "", nil
+		},
+	}
+
+	if _, err := service.Run(context.Background(), InstanceActionInput{InstanceID: "instance_1"}); err == nil {
+		t.Fatal("expected event validation error")
+	}
+}
+
+func TestStopInstanceServiceRequiresInstanceID(t *testing.T) {
+	service := StopInstanceService{
+		Handlers: []InstanceActionHandler{{APIVersion: "v2"}},
+		Resolve: func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			t.Fatal("resolver should not run")
+			return "", nil
+		},
+	}
+
+	if _, err := service.Run(context.Background(), InstanceActionInput{}); err == nil {
+		t.Fatal("expected instance id validation error")
+	}
+}
+
 func assertAPIVersions(t *testing.T, got []capabilities.APIVersion, want []capabilities.APIVersion) {
 	t.Helper()
 	if len(got) != len(want) {
