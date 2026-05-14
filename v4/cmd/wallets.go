@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"sort"
 	"time"
 
 	formance "github.com/formancehq/formance-sdk-go/v3"
@@ -21,10 +22,191 @@ func newWalletsCommand() *cobra.Command {
 	command.AddCommand(newWalletsCreateCommand())
 	command.AddCommand(newWalletsCreditCommand())
 	command.AddCommand(newWalletsDebitCommand())
+	command.AddCommand(newWalletsBalancesCommand())
 	command.AddCommand(newWalletsListCommand())
 	command.AddCommand(newWalletsShowCommand("show", nil, false))
 	command.AddCommand(newWalletsShowCommand("get", []string{"g"}, true))
 	command.AddCommand(newWalletsUpdateCommand())
+	return command
+}
+
+func newWalletsBalancesCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "balances",
+		Short: "Manage wallet balances",
+	}
+	command.AddCommand(newWalletsBalancesCreateCommand())
+	command.AddCommand(newWalletsBalancesListCommand())
+	command.AddCommand(newWalletsBalancesShowCommand())
+	return command
+}
+
+func newWalletsBalancesCreateCommand() *cobra.Command {
+	var confirm bool
+	var expiresAt string
+	var priority string
+	var idempotencyKey string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "create <wallet-id> <balance-name>",
+		Short: "Create a wallet balance",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("wallets balances create requires --confirm")
+			}
+			if cmd.Flags().Changed("ik") {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Flag --ik has been deprecated, use --idempotency-key")
+			}
+			parsedPriority, err := parseOptionalBigInt(priority, "priority")
+			if err != nil {
+				return err
+			}
+			parsedExpiresAt, err := parseOptionalRFC3339(expiresAt, "expires-at")
+			if err != nil {
+				return err
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := walletscmd.CreateBalanceService{
+				Handlers: walletscmd.SDKCreateBalanceHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         walletscmd.ProductWallets,
+						Feature:         walletscmd.FeatureCreateBalance,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), walletscmd.CreateBalanceInput{
+				WalletID:       args[0],
+				Name:           args[1],
+				Priority:       parsedPriority,
+				ExpiresAt:      parsedExpiresAt,
+				IdempotencyKey: idempotencyKey,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderWalletBalanceCreated(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm balance creation")
+	command.Flags().StringVar(&expiresAt, "expires-at", "", "Balance expiration time as RFC3339")
+	command.Flags().StringVar(&priority, "priority", "", "Balance priority")
+	command.Flags().StringVar(&idempotencyKey, "idempotency-key", "", "Idempotency key")
+	command.Flags().StringVar(&idempotencyKey, "ik", "", "Deprecated alias for --idempotency-key")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin wallets API version")
+	return command
+}
+
+func newWalletsBalancesListCommand() *cobra.Command {
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "list <wallet-id>",
+		Aliases: []string{"ls", "l"},
+		Short:   "List wallet balances",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := walletscmd.ListBalancesService{
+				Handlers: walletscmd.SDKListBalancesHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         walletscmd.ProductWallets,
+						Feature:         walletscmd.FeatureListBalances,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), walletscmd.ListBalancesInput{WalletID: args[0]})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderWalletBalances(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin wallets API version")
+	return command
+}
+
+func newWalletsBalancesShowCommand() *cobra.Command {
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "show <wallet-id> <balance-name>",
+		Aliases: []string{"get"},
+		Short:   "Show a wallet balance",
+		Args:    cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := walletscmd.GetBalanceService{
+				Handlers: walletscmd.SDKGetBalanceHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         walletscmd.ProductWallets,
+						Feature:         walletscmd.FeatureGetBalance,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), walletscmd.GetBalanceInput{WalletID: args[0], BalanceName: args[1]})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderWalletBalance(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin wallets API version")
 	return command
 }
 
@@ -469,12 +651,84 @@ func parseBigAmount(value string) (*big.Int, error) {
 	return amount, nil
 }
 
+func parseOptionalBigInt(value string, name string) (*big.Int, error) {
+	if value == "" {
+		return nil, nil
+	}
+	parsed, ok := big.NewInt(0).SetString(value, 10)
+	if !ok {
+		return nil, fmt.Errorf("%s must be an integer", name)
+	}
+	return parsed, nil
+}
+
 func renderWalletCreated(cmd *cobra.Command, output walletscmd.CreateWalletOutput) error {
 	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Wallet created with ID: %s\n", output.WalletID)
 	return err
+}
+
+func renderWalletBalanceCreated(cmd *cobra.Command, output walletscmd.CreateBalanceOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Balance %s created on wallet %s.\n", output.BalanceName, output.WalletID)
+	return err
+}
+
+func renderWalletBalances(cmd *cobra.Command, output walletscmd.ListBalancesOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if len(output.Balances) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No balances found.")
+		return err
+	}
+	for _, balance := range output.Balances {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\n", balance.Name, balance.Priority); err != nil {
+			return err
+		}
+	}
+	if output.HasMore && output.Next != nil {
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
+		return err
+	}
+	return nil
+}
+
+func renderWalletBalance(cmd *cobra.Command, output walletscmd.GetBalanceOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	balance := output.Balance
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Name\t%s\n", balance.Name); err != nil {
+		return err
+	}
+	if balance.Priority != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Priority\t%s\n", balance.Priority); err != nil {
+			return err
+		}
+	}
+	if balance.ExpiresAt != nil {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Expires at\t%s\n", balance.ExpiresAt.Format(time.RFC3339)); err != nil {
+			return err
+		}
+	}
+	if len(balance.Assets) > 0 {
+		assets := make([]string, 0, len(balance.Assets))
+		for asset := range balance.Assets {
+			assets = append(assets, asset)
+		}
+		sort.Strings(assets)
+		for _, asset := range assets {
+			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Asset\t%s\t%s\n", asset, balance.Assets[asset].String()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func renderWalletCredited(cmd *cobra.Command, output walletscmd.WalletMovementOutput) error {

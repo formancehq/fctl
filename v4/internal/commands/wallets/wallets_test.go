@@ -148,6 +148,76 @@ func TestDebitWalletServiceSelectsResolvedHandler(t *testing.T) {
 	}
 }
 
+func TestCreateBalanceServiceSelectsResolvedHandler(t *testing.T) {
+	service := CreateBalanceService{
+		Handlers: []CreateBalanceHandler{
+			{
+				APIVersion: "v1",
+				Run: func(_ context.Context, input CreateBalanceInput) (CreateBalanceOutput, error) {
+					if input.WalletID != "wallet_1" || input.Name != "main" || input.Priority.String() != "10" {
+						t.Fatalf("unexpected input: %#v", input)
+					}
+					return CreateBalanceOutput{BalanceName: input.Name}, nil
+				},
+			},
+		},
+		Resolve: func(_ context.Context, versions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			assertAPIVersions(t, versions, []capabilities.APIVersion{"v1"})
+			return "v1", nil
+		},
+	}
+
+	output, err := service.Run(context.Background(), CreateBalanceInput{WalletID: "wallet_1", Name: "main", Priority: big.NewInt(10)})
+	if err != nil {
+		t.Fatalf("run service: %v", err)
+	}
+	if output.APIVersion != "v1" || output.WalletID != "wallet_1" || output.BalanceName != "main" {
+		t.Fatalf("unexpected output: %#v", output)
+	}
+}
+
+func TestCreateBalanceServiceRequiresExplicitWalletID(t *testing.T) {
+	service := CreateBalanceService{
+		Handlers: []CreateBalanceHandler{{APIVersion: "v1"}},
+		Resolve: func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			t.Fatal("resolver should not run")
+			return "", nil
+		},
+	}
+
+	if _, err := service.Run(context.Background(), CreateBalanceInput{Name: "main"}); err == nil {
+		t.Fatal("expected wallet id validation error")
+	}
+}
+
+func TestListBalancesServiceRequiresExplicitWalletID(t *testing.T) {
+	service := ListBalancesService{
+		Handlers: []ListBalancesHandler{{APIVersion: "v1"}},
+		Resolve: func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			t.Fatal("resolver should not run")
+			return "", nil
+		},
+	}
+
+	if _, err := service.Run(context.Background(), ListBalancesInput{}); err == nil {
+		t.Fatal("expected wallet id validation error")
+	}
+}
+
+func TestGetBalanceServiceRequiresBalanceName(t *testing.T) {
+	service := GetBalanceService{
+		Handlers: []GetBalanceHandler{{APIVersion: "v1"}},
+		Resolve: func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			t.Fatal("resolver should not run")
+			return "", nil
+		},
+	}
+
+	if _, err := service.Run(context.Background(), GetBalanceInput{WalletID: "wallet_1"}); err == nil {
+		t.Fatal("expected balance name validation error")
+	}
+}
+
 func assertAPIVersions(t *testing.T, got []capabilities.APIVersion, want []capabilities.APIVersion) {
 	t.Helper()
 	if len(got) != len(want) {

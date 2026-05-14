@@ -4607,6 +4607,151 @@ func TestWalletsDebitSelectsV1(t *testing.T) {
 	}
 }
 
+func TestWalletsBalancesCreateRequiresConfirm(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "wallets", "balances", "create", "wallet_1", "main")
+	if err == nil {
+		t.Fatal("expected wallets balances create to require confirmation")
+	}
+	if stdout != "" {
+		t.Fatalf("expected empty stdout, got %q", stdout)
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(err.Error(), "wallets balances create requires --confirm") {
+		t.Fatalf("expected confirmation error, got: %v", err)
+	}
+}
+
+func TestWalletsBalancesCreateSelectsV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"wallets","version":"1.2.0","health":true}]}`)
+		case "/api/wallets/wallets/wallet_1/balances":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			if got := r.Header.Get("Idempotency-Key"); got != "ik_1" {
+				t.Fatalf("expected idempotency key ik_1, got %q", got)
+			}
+			body := readRequestBody(t, r)
+			for _, expected := range []string{`"name":"main"`, `"priority":10`} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected create balance body to contain %q, got:\n%s", expected, body)
+				}
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, `{"data":{"name":"main","priority":10}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"wallets", "balances", "create", "wallet_1", "main",
+		"--priority", "10",
+		"--idempotency-key", "ik_1",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("create wallet balance: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v1") || !strings.Contains(stdout, "Balance main created on wallet wallet_1.") {
+		t.Fatalf("unexpected create wallet balance output:\n%s", stdout)
+	}
+}
+
+func TestWalletsBalancesListSelectsV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"wallets","version":"1.2.0","health":true}]}`)
+		case "/api/wallets/wallets/wallet_1/balances":
+			if r.Method != http.MethodGet {
+				t.Fatalf("expected GET, got %s", r.Method)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"name":"main","priority":10}],"hasMore":false,"pageSize":15}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "wallets", "balances", "list", "wallet_1")
+	if err != nil {
+		t.Fatalf("list wallet balances: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v1") || !strings.Contains(stdout, "main\t10") {
+		t.Fatalf("unexpected list wallet balances output:\n%s", stdout)
+	}
+}
+
+func TestWalletsBalancesShowSelectsV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"wallets","version":"1.2.0","health":true}]}`)
+		case "/api/wallets/wallets/wallet_1/balances/main":
+			if r.Method != http.MethodGet {
+				t.Fatalf("expected GET, got %s", r.Method)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"name":"main","priority":10,"assets":{"USD/2":100}}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "wallets", "balances", "show", "wallet_1", "main")
+	if err != nil {
+		t.Fatalf("show wallet balance: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{"API version: v1", "Name\tmain", "Priority\t10", "Asset\tUSD/2\t100"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected wallet balance output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
 func TestConfigMigrateV3DryRun(t *testing.T) {
 	v3Dir := writeV3CommandFixture(t, true)
 

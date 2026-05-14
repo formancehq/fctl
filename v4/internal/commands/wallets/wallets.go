@@ -14,13 +14,16 @@ import (
 )
 
 const (
-	ProductWallets      capabilities.Product = "wallets"
-	FeatureCreateWallet capabilities.Feature = "createWallet"
-	FeatureCreditWallet capabilities.Feature = "creditWallet"
-	FeatureDebitWallet  capabilities.Feature = "debitWallet"
-	FeatureGetWallet    capabilities.Feature = "getWallet"
-	FeatureListWallets  capabilities.Feature = "listWallets"
-	FeatureUpdateWallet capabilities.Feature = "updateWallet"
+	ProductWallets       capabilities.Product = "wallets"
+	FeatureCreateWallet  capabilities.Feature = "createWallet"
+	FeatureCreateBalance capabilities.Feature = "createBalance"
+	FeatureCreditWallet  capabilities.Feature = "creditWallet"
+	FeatureDebitWallet   capabilities.Feature = "debitWallet"
+	FeatureGetBalance    capabilities.Feature = "getBalance"
+	FeatureGetWallet     capabilities.Feature = "getWallet"
+	FeatureListBalances  capabilities.Feature = "listBalances"
+	FeatureListWallets   capabilities.Feature = "listWallets"
+	FeatureUpdateWallet  capabilities.Feature = "updateWallet"
 )
 
 type WalletSummary struct {
@@ -29,6 +32,13 @@ type WalletSummary struct {
 	Ledger    string            `json:"ledger" yaml:"ledger"`
 	CreatedAt time.Time         `json:"createdAt,omitempty" yaml:"createdAt,omitempty"`
 	Metadata  map[string]string `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+}
+
+type BalanceSummary struct {
+	Name      string              `json:"name" yaml:"name"`
+	Priority  string              `json:"priority,omitempty" yaml:"priority,omitempty"`
+	ExpiresAt *time.Time          `json:"expiresAt,omitempty" yaml:"expiresAt,omitempty"`
+	Assets    map[string]*big.Int `json:"assets,omitempty" yaml:"assets,omitempty"`
 }
 
 type CreateWalletInput struct {
@@ -95,6 +105,45 @@ type WalletMovementOutput struct {
 	HoldID     string                  `json:"holdID,omitempty" yaml:"holdID,omitempty"`
 }
 
+type CreateBalanceInput struct {
+	WalletID       string
+	Name           string
+	Priority       *big.Int
+	ExpiresAt      *time.Time
+	IdempotencyKey string
+}
+
+type CreateBalanceOutput struct {
+	APIVersion  capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	WalletID    string                  `json:"walletID" yaml:"walletID"`
+	BalanceName string                  `json:"balanceName" yaml:"balanceName"`
+}
+
+type ListBalancesInput struct {
+	WalletID string
+}
+
+type ListBalancesOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	WalletID   string                  `json:"walletID" yaml:"walletID"`
+	Balances   []BalanceSummary        `json:"balances" yaml:"balances"`
+	HasMore    bool                    `json:"hasMore" yaml:"hasMore"`
+	PageSize   int64                   `json:"pageSize" yaml:"pageSize"`
+	Next       *string                 `json:"next,omitempty" yaml:"next,omitempty"`
+	Previous   *string                 `json:"previous,omitempty" yaml:"previous,omitempty"`
+}
+
+type GetBalanceInput struct {
+	WalletID    string
+	BalanceName string
+}
+
+type GetBalanceOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	WalletID   string                  `json:"walletID" yaml:"walletID"`
+	Balance    BalanceSummary          `json:"balance" yaml:"balance"`
+}
+
 type CreateWalletHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, CreateWalletInput) (CreateWalletOutput, error)
@@ -118,6 +167,21 @@ type UpdateWalletHandler struct {
 type WalletMovementHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, WalletMovementInput) (WalletMovementOutput, error)
+}
+
+type CreateBalanceHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, CreateBalanceInput) (CreateBalanceOutput, error)
+}
+
+type ListBalancesHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, ListBalancesInput) (ListBalancesOutput, error)
+}
+
+type GetBalanceHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, GetBalanceInput) (GetBalanceOutput, error)
 }
 
 type CreateWalletService struct {
@@ -147,6 +211,21 @@ type CreditWalletService struct {
 
 type DebitWalletService struct {
 	Handlers []WalletMovementHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type CreateBalanceService struct {
+	Handlers []CreateBalanceHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type ListBalancesService struct {
+	Handlers []ListBalancesHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type GetBalanceService struct {
+	Handlers []GetBalanceHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -305,6 +384,99 @@ func runWalletMovementService(
 	return output, nil
 }
 
+func (s CreateBalanceService) Run(ctx context.Context, input CreateBalanceInput) (CreateBalanceOutput, error) {
+	if input.WalletID == "" {
+		return CreateBalanceOutput{}, fmt.Errorf("wallet id is required")
+	}
+	if input.Name == "" {
+		return CreateBalanceOutput{}, fmt.Errorf("balance name is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]CreateBalanceHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return CreateBalanceOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return CreateBalanceOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return CreateBalanceOutput{}, err
+	}
+	output.APIVersion = selected
+	if output.WalletID == "" {
+		output.WalletID = input.WalletID
+	}
+	return output, nil
+}
+
+func (s ListBalancesService) Run(ctx context.Context, input ListBalancesInput) (ListBalancesOutput, error) {
+	if input.WalletID == "" {
+		return ListBalancesOutput{}, fmt.Errorf("wallet id is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]ListBalancesHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return ListBalancesOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return ListBalancesOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return ListBalancesOutput{}, err
+	}
+	output.APIVersion = selected
+	if output.WalletID == "" {
+		output.WalletID = input.WalletID
+	}
+	return output, nil
+}
+
+func (s GetBalanceService) Run(ctx context.Context, input GetBalanceInput) (GetBalanceOutput, error) {
+	if input.WalletID == "" {
+		return GetBalanceOutput{}, fmt.Errorf("wallet id is required")
+	}
+	if input.BalanceName == "" {
+		return GetBalanceOutput{}, fmt.Errorf("balance name is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]GetBalanceHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return GetBalanceOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return GetBalanceOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return GetBalanceOutput{}, err
+	}
+	output.APIVersion = selected
+	if output.WalletID == "" {
+		output.WalletID = input.WalletID
+	}
+	return output, nil
+}
+
 func SDKCreateWalletHandlers(sdk *formance.Formance) []CreateWalletHandler {
 	return []CreateWalletHandler{
 		{
@@ -449,6 +621,68 @@ func SDKDebitWalletHandlers(sdk *formance.Formance) []WalletMovementHandler {
 	}
 }
 
+func SDKCreateBalanceHandlers(sdk *formance.Formance) []CreateBalanceHandler {
+	return []CreateBalanceHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input CreateBalanceInput) (CreateBalanceOutput, error) {
+				response, err := sdk.Wallets.V1.CreateBalance(ctx, operations.CreateBalanceRequest{
+					ID:             input.WalletID,
+					IdempotencyKey: optionalString(input.IdempotencyKey),
+					CreateBalanceRequest: &shared.CreateBalanceRequest{
+						Name:      input.Name,
+						Priority:  input.Priority,
+						ExpiresAt: input.ExpiresAt,
+					},
+				})
+				if err != nil {
+					return CreateBalanceOutput{}, err
+				}
+				if response.CreateBalanceResponse == nil {
+					return CreateBalanceOutput{}, fmt.Errorf("wallets v1 create balance returned no data")
+				}
+				return CreateBalanceOutput{WalletID: input.WalletID, BalanceName: response.CreateBalanceResponse.Data.Name}, nil
+			},
+		},
+	}
+}
+
+func SDKListBalancesHandlers(sdk *formance.Formance) []ListBalancesHandler {
+	return []ListBalancesHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input ListBalancesInput) (ListBalancesOutput, error) {
+				response, err := sdk.Wallets.V1.ListBalances(ctx, operations.ListBalancesRequest{ID: input.WalletID})
+				if err != nil {
+					return ListBalancesOutput{}, err
+				}
+				if response.ListBalancesResponse == nil {
+					return ListBalancesOutput{}, fmt.Errorf("wallets v1 list balances returned no cursor")
+				}
+				return fromBalancesCursor(input.WalletID, response.ListBalancesResponse.Cursor), nil
+			},
+		},
+	}
+}
+
+func SDKGetBalanceHandlers(sdk *formance.Formance) []GetBalanceHandler {
+	return []GetBalanceHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input GetBalanceInput) (GetBalanceOutput, error) {
+				response, err := sdk.Wallets.V1.GetBalance(ctx, operations.GetBalanceRequest{ID: input.WalletID, BalanceName: input.BalanceName})
+				if err != nil {
+					return GetBalanceOutput{}, err
+				}
+				if response.GetBalanceResponse == nil {
+					return GetBalanceOutput{}, fmt.Errorf("wallets v1 get balance returned no data")
+				}
+				return GetBalanceOutput{WalletID: input.WalletID, Balance: fromBalanceWithAssets(response.GetBalanceResponse.Data)}, nil
+			},
+		},
+	}
+}
+
 func fromWalletsCursor(cursor shared.ListWalletsResponseCursor) ListWalletsOutput {
 	wallets := make([]WalletSummary, 0, len(cursor.Data))
 	for _, wallet := range cursor.Data {
@@ -464,6 +698,50 @@ func fromWalletsCursor(cursor shared.ListWalletsResponseCursor) ListWalletsOutpu
 		PageSize: cursor.PageSize,
 		Next:     cursor.Next,
 		Previous: cursor.Previous,
+	}
+}
+
+func fromBalancesCursor(walletID string, cursor shared.ListBalancesResponseCursor) ListBalancesOutput {
+	balances := make([]BalanceSummary, 0, len(cursor.Data))
+	for _, balance := range cursor.Data {
+		balances = append(balances, fromBalance(balance))
+	}
+	hasMore := false
+	if cursor.HasMore != nil {
+		hasMore = *cursor.HasMore
+	}
+	return ListBalancesOutput{
+		WalletID: walletID,
+		Balances: balances,
+		HasMore:  hasMore,
+		PageSize: cursor.PageSize,
+		Next:     cursor.Next,
+		Previous: cursor.Previous,
+	}
+}
+
+func fromBalance(balance shared.Balance) BalanceSummary {
+	priority := ""
+	if balance.Priority != nil {
+		priority = balance.Priority.String()
+	}
+	return BalanceSummary{
+		Name:      balance.Name,
+		Priority:  priority,
+		ExpiresAt: balance.ExpiresAt,
+	}
+}
+
+func fromBalanceWithAssets(balance shared.BalanceWithAssets) BalanceSummary {
+	priority := ""
+	if balance.Priority != nil {
+		priority = balance.Priority.String()
+	}
+	return BalanceSummary{
+		Name:      balance.Name,
+		Priority:  priority,
+		ExpiresAt: balance.ExpiresAt,
+		Assets:    balance.Assets,
 	}
 }
 
