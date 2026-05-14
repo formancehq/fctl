@@ -111,6 +111,44 @@ func TestLoginOpenSourceWizardCreatesDefaultProfile(t *testing.T) {
 	}
 }
 
+func TestLoginBrowserDeviceFlowIsDeferredForCloudAndEE(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		input string
+	}{
+		{
+			name:  "cloud",
+			input: "1\n1\n",
+		},
+		{
+			name:  "ee",
+			input: "2\nhttps://ee.example/api\n1\n",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			configDir := t.TempDir()
+
+			_, stderr, err := executeCommandWithInput(t,
+				tc.input,
+				"--config-dir", configDir,
+				"login",
+			)
+			if err == nil {
+				t.Fatal("expected browser/device login to be deferred")
+			}
+			if stderr != "" {
+				t.Fatalf("expected empty stderr, got %q", stderr)
+			}
+			if !strings.Contains(err.Error(), loginBrowserDeviceDeferredMessage) {
+				t.Fatalf("unexpected deferred login error: %v", err)
+			}
+			if _, err := os.Stat(filepath.Join(configDir, "config.yaml")); !os.IsNotExist(err) {
+				t.Fatalf("browser/device login must not write config, stat error: %v", err)
+			}
+		})
+	}
+}
+
 func TestLoginCloudClientCredentialsAndLogout(t *testing.T) {
 	configDir := t.TempDir()
 

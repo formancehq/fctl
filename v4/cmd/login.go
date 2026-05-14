@@ -17,6 +17,8 @@ const (
 	loginTargetEE         = "ee"
 	loginTargetOpenSource = "open-source"
 	defaultProfileName    = "default"
+
+	loginBrowserDeviceDeferredMessage = "login browser/device flow is deferred until the Cloud and EE device login contract is explicit; use --client-id/--client-secret or --token for now"
 )
 
 func newLoginCommand() *cobra.Command {
@@ -217,7 +219,7 @@ func authFromLoginOptions(cmd *cobra.Command, input loginInput, options loginCon
 		}
 		switch authMethod {
 		case "1", "browser", "browser/device login", "device":
-			return v4config.Auth{}, fmt.Errorf("login browser/device flow is deferred until the Cloud and EE device login contract is explicit; use --client-id/--client-secret or --token for now")
+			return v4config.Auth{}, fmt.Errorf(loginBrowserDeviceDeferredMessage)
 		case "2", "client credentials", "client-credentials":
 			clientID, err := input.prompt(cmd, "Client ID")
 			if err != nil {
@@ -306,7 +308,7 @@ func authFromLoginOptions(cmd *cobra.Command, input loginInput, options loginCon
 	}
 
 	if platform {
-		return v4config.Auth{}, fmt.Errorf("login browser/device flow is deferred until the Cloud and EE device login contract is explicit; use --client-id/--client-secret or --token for now")
+		return v4config.Auth{}, fmt.Errorf(loginBrowserDeviceDeferredMessage)
 	}
 	return v4config.Auth{Method: v4config.AuthMethodNone}, nil
 }
