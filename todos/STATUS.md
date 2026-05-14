@@ -6,7 +6,7 @@
 - [x] 04 - auth providers
 - [x] 05 - capabilities manifest generator
 - [x] 06 - runtime API version resolver
-- [ ] 07 - first stack inspection command
+- [x] 07 - first stack inspection command
 - [ ] 08 - first Ledger versioned command
 - [ ] 09 - v3 config migration
 - [ ] 10 - integration tests and UX hardening
