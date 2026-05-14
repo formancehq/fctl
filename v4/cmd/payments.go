@@ -27,6 +27,26 @@ func newPaymentsCommand() *cobra.Command {
 	command.AddCommand(newPaymentsPaymentsCommand())
 	command.AddCommand(newPaymentsPoolsCommand())
 	command.AddCommand(newPaymentsTasksCommand())
+	command.AddCommand(newPaymentsTransferInitiationCommand("transfer-initiation", []string{"ti"}, false))
+	command.AddCommand(newPaymentsTransferInitiationCommand("transfer_initiation", nil, true))
+	return command
+}
+
+func newPaymentsTransferInitiationCommand(use string, aliases []string, deprecated bool) *cobra.Command {
+	command := &cobra.Command{
+		Use:     use,
+		Aliases: aliases,
+		Short:   "Manage payment transfer initiations",
+	}
+	if deprecated {
+		command.Deprecated = "use payments transfer-initiation"
+		command.PersistentPreRun = func(cmd *cobra.Command, _ []string) {
+			fmt.Fprintln(cmd.ErrOrStderr(), "Command payments transfer_initiation has been deprecated, use payments transfer-initiation")
+		}
+	}
+	command.AddCommand(newPaymentsTransferInitiationListCommand())
+	command.AddCommand(newPaymentsTransferInitiationShowCommand("show", []string{"sh", "s"}, false))
+	command.AddCommand(newPaymentsTransferInitiationShowCommand("get", []string{"g"}, true))
 	return command
 }
 
@@ -1286,5 +1306,167 @@ func renderPaymentTask(cmd *cobra.Command, output paymentscmd.GetTaskOutput) err
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Updated at\t%s\n", task.UpdatedAt.Format(time.RFC3339))
+	return err
+}
+
+func newPaymentsTransferInitiationListCommand() *cobra.Command {
+	var pageSize int64 = 15
+	var cursor string
+	var query string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"ls", "l"},
+		Short:   "List payment transfer initiations",
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.ListTransferInitiationsService{
+				Handlers: paymentscmd.SDKListTransferInitiationsHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureListTransferInitiation,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.ListTransferInitiationsInput{PageSize: pageSize, Cursor: cursor, Query: query})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentTransferInitiations(cmd, output)
+		},
+	}
+	command.Flags().Int64Var(&pageSize, "page-size", 15, "Page size")
+	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
+	command.Flags().StringVar(&query, "query", "", "Filter transfer initiations with the API query syntax")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func newPaymentsTransferInitiationShowCommand(use string, aliases []string, deprecated bool) *cobra.Command {
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     use + " <transfer-initiation-id>",
+		Aliases: aliases,
+		Short:   "Show a payment transfer initiation",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if deprecated {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Command payments transfer-initiation get has been deprecated, use payments transfer-initiation show")
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.GetTransferInitiationService{
+				Handlers: paymentscmd.SDKGetTransferInitiationHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureGetTransferInitiation,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.GetTransferInitiationInput{TransferInitiationID: args[0]})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentTransferInitiation(cmd, output)
+		},
+	}
+	if deprecated {
+		command.Deprecated = "use payments transfer-initiation show"
+	}
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func renderPaymentTransferInitiations(cmd *cobra.Command, output paymentscmd.ListTransferInitiationsOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if len(output.TransferInitiations) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No transfer initiations found.")
+		return err
+	}
+	for _, transfer := range output.TransferInitiations {
+		if _, err := fmt.Fprintf(
+			cmd.OutOrStdout(),
+			"%s\t%s\t%s\t%s\t%s\t%s\n",
+			transfer.ID,
+			transfer.Type,
+			transfer.Amount,
+			transfer.Asset,
+			transfer.Status,
+			transfer.CreatedAt.Format(time.RFC3339),
+		); err != nil {
+			return err
+		}
+	}
+	if output.HasMore && output.Next != nil {
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
+		return err
+	}
+	return nil
+}
+
+func renderPaymentTransferInitiation(cmd *cobra.Command, output paymentscmd.GetTransferInitiationOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	transfer := output.TransferInitiation
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", transfer.ID); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Reference\t%s\n", transfer.Reference); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Amount\t%s\n", transfer.Amount); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Asset\t%s\n", transfer.Asset); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Status\t%s\n", transfer.Status); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector ID\t%s\n", transfer.ConnectorID); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", transfer.CreatedAt.Format(time.RFC3339))
 	return err
 }

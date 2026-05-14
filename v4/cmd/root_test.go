@@ -2709,6 +2709,142 @@ func TestPaymentsTasksGetDeprecatedAlias(t *testing.T) {
 	}
 }
 
+func TestPaymentsTransferInitiationListSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/payment-initiations":
+			if got := r.URL.Query().Get("pageSize"); got != "10" {
+				t.Fatalf("expected pageSize 10, got %q", got)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"id":"ti_1","reference":"ref","type":"TRANSFER","status":"PROCESSED","asset":"USD/2","amount":100,"connectorID":"conn_1","provider":"stripe","createdAt":"2026-01-01T00:00:00Z","scheduledAt":"2026-01-02T00:00:00Z","description":"desc","metadata":{}}],"hasMore":false,"pageSize":10}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "transfer-initiation", "list",
+		"--page-size", "10",
+	)
+	if err != nil {
+		t.Fatalf("list transfer initiations: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v3") || !strings.Contains(stdout, "ti_1\tTRANSFER\t100\tUSD/2\tPROCESSED\t2026-01-01T00:00:00Z") {
+		t.Fatalf("unexpected transfer initiation output:\n%s", stdout)
+	}
+}
+
+func TestPaymentsTransferInitiationShowSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/payment-initiations/ti_1":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":"ti_1","reference":"ref","type":"TRANSFER","status":"PROCESSED","asset":"USD/2","amount":100,"connectorID":"conn_1","provider":"stripe","createdAt":"2026-01-01T00:00:00Z","scheduledAt":"2026-01-02T00:00:00Z","description":"desc","metadata":{}}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "transfer-initiation", "show", "ti_1",
+	)
+	if err != nil {
+		t.Fatalf("show transfer initiation: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v3",
+		"ID\tti_1",
+		"Reference\tref",
+		"Amount\t100",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected transfer initiation output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestPaymentsTransferInitiationDeprecatedAliases(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/payment-initiations":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[],"hasMore":false,"pageSize":15}}`)
+		case "/api/payments/v3/payment-initiations/ti_1":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":"ti_1","reference":"ref","type":"TRANSFER","status":"PROCESSED","asset":"USD/2","amount":100,"connectorID":"conn_1","provider":"stripe","createdAt":"2026-01-01T00:00:00Z","scheduledAt":"2026-01-02T00:00:00Z","description":"desc","metadata":{}}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "transfer_initiation", "list",
+	)
+	if err != nil {
+		t.Fatalf("list transfer initiations through prefix alias: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "use payments transfer-initiation") {
+		t.Fatalf("expected prefix deprecation warning, got:\n%s", stderr)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "transfer-initiation", "get", "ti_1",
+	)
+	if err != nil {
+		t.Fatalf("show transfer initiation through get alias: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "use payments transfer-initiation show") {
+		t.Fatalf("expected get deprecation warning, got:\n%s", stderr)
+	}
+}
+
 func TestConfigMigrateV3DryRun(t *testing.T) {
 	v3Dir := writeV3CommandFixture(t, true)
 
