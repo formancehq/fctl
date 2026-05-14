@@ -194,6 +194,65 @@ func TestCloudDeviceAuthRefreshesWhenScopesAreMissing(t *testing.T) {
 	if !strings.Contains(stored, "next-refresh-token") {
 		t.Fatalf("expected refreshed token to be stored, got %s", stored)
 	}
+	if !strings.Contains(stored, "organization:ListStacks") {
+		t.Fatalf("expected refreshed token scopes to be stored, got %s", stored)
+	}
+}
+
+func TestCloudDeviceAuthRefreshesOpaqueTokenWithoutStoredScopes(t *testing.T) {
+	ctx := context.Background()
+	store := credentials.NewMemoryStore()
+	encoded, err := MarshalDeviceTokens(DeviceTokens{
+		AccessToken: StoredAccessToken{
+			Token:        "opaque-token",
+			TokenType:    "Bearer",
+			RefreshToken: "refresh-token",
+			Expiry:       time.Now().Add(time.Hour),
+		},
+		RefreshToken: "refresh-token",
+	})
+	if err != nil {
+		t.Fatalf("marshal device tokens: %v", err)
+	}
+	if err := store.Set(ctx, "root-token-ref", encoded); err != nil {
+		t.Fatalf("set device tokens: %v", err)
+	}
+
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/.well-known/openid-configuration":
+			fmt.Fprintf(w, `{"token_endpoint":%q}`, server.URL+"/token")
+		case "/token":
+			if err := r.ParseForm(); err != nil {
+				t.Fatalf("parse form: %v", err)
+			}
+			if r.Form.Get("scope") != "organization:ListRegions organization:ListStacks" {
+				t.Fatalf("unexpected scope %q", r.Form.Get("scope"))
+			}
+			fmt.Fprint(w, `{"access_token":"refreshed-token","token_type":"Bearer","refresh_token":"next-refresh-token","expires_in":3600}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	source, err := NewTokenSource(v4config.Auth{
+		Method:    v4config.AuthMethodCloudDevice,
+		IssuerURL: server.URL,
+		TokenRef:  "root-token-ref",
+		Scopes:    []string{"organization:ListRegions", "organization:ListStacks"},
+	}, store, Options{})
+	if err != nil {
+		t.Fatalf("new token source: %v", err)
+	}
+	token, err := source.Token(ctx)
+	if err != nil {
+		t.Fatalf("get token: %v", err)
+	}
+	if token.AccessToken != "refreshed-token" {
+		t.Fatalf("unexpected token: %#v", token)
+	}
 }
 
 func TestClientCredentialsAuth(t *testing.T) {

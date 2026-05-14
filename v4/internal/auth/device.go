@@ -39,6 +39,7 @@ type DeviceTokens struct {
 	AccessToken  StoredAccessToken `json:"accessToken"`
 	IDToken      string            `json:"idToken,omitempty"`
 	RefreshToken string            `json:"refreshToken,omitempty"`
+	Scopes       []string          `json:"scopes,omitempty"`
 }
 
 type StoredAccessToken struct {
@@ -106,6 +107,7 @@ func DeviceLogin(ctx context.Context, options DeviceLoginOptions) (DeviceTokens,
 	if err != nil {
 		return DeviceTokens{}, fmt.Errorf("failed to get access token: %w", err)
 	}
+	token.Scopes = append([]string(nil), options.Scopes...)
 	return token, nil
 }
 
@@ -162,7 +164,7 @@ func (s *DeviceTokenSource) Token(ctx context.Context) (Token, error) {
 	if tokens.AccessToken.Token == "" {
 		return Token{}, errors.New("stored device credentials do not include an access token")
 	}
-	if !s.tokenExpired(tokens.AccessToken) && s.tokenHasScopes(tokens.AccessToken) {
+	if !s.tokenExpired(tokens.AccessToken) && s.tokensHaveScopes(tokens) {
 		return normalizeToken(Token{AccessToken: tokens.AccessToken.Token, TokenType: tokens.AccessToken.TokenType}), nil
 	}
 	if tokens.AccessToken.RefreshToken == "" && tokens.RefreshToken == "" {
@@ -192,28 +194,38 @@ func (s *DeviceTokenSource) tokenExpired(token StoredAccessToken) bool {
 	return !token.Expiry.After(s.currentTime().Add(30 * time.Second))
 }
 
-func (s *DeviceTokenSource) tokenHasScopes(token StoredAccessToken) bool {
+func (s *DeviceTokenSource) tokensHaveScopes(tokens DeviceTokens) bool {
 	if len(s.Scopes) == 0 {
 		return true
 	}
+	token := tokens.AccessToken
 	claims, ok := jwtClaims(token.Token)
-	if !ok {
-		return true
-	}
-	available := map[string]struct{}{}
-	switch value := claims["scope"].(type) {
-	case string:
-		for _, scope := range strings.Fields(value) {
-			available[scope] = struct{}{}
-		}
-	case []any:
-		for _, scope := range value {
-			if text, ok := scope.(string); ok {
-				available[text] = struct{}{}
+	if ok {
+		available := map[string]struct{}{}
+		switch value := claims["scope"].(type) {
+		case string:
+			for _, scope := range strings.Fields(value) {
+				available[scope] = struct{}{}
+			}
+		case []any:
+			for _, scope := range value {
+				if text, ok := scope.(string); ok {
+					available[text] = struct{}{}
+				}
 			}
 		}
+		return containsAllScopes(available, s.Scopes)
 	}
-	for _, scope := range s.Scopes {
+
+	available := map[string]struct{}{}
+	for _, scope := range tokens.Scopes {
+		available[scope] = struct{}{}
+	}
+	return containsAllScopes(available, s.Scopes)
+}
+
+func containsAllScopes(available map[string]struct{}, required []string) bool {
+	for _, scope := range required {
 		if _, ok := available[scope]; !ok {
 			return false
 		}
@@ -261,6 +273,7 @@ func (s *DeviceTokenSource) refresh(ctx context.Context, tokens DeviceTokens) (D
 	if next.IDToken == "" {
 		next.IDToken = tokens.IDToken
 	}
+	next.Scopes = append([]string(nil), s.Scopes...)
 	return next, nil
 }
 
