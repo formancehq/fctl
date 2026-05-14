@@ -190,26 +190,28 @@ Les commandes Cloud restent sous `cloud`, mais elles doivent utiliser un context
 ## Mapping Stack lifecycle
 
 Les commandes `stack` v3 sont Cloud-control-plane. En v4, elles doivent etre clairement distinguees des commandes qui parlent a une stack data-plane.
+Le domaine canonique v4 est `cloud stacks ...` pour rester coherent avec les commandes multi-niveaux du CLI; il correspond au domaine produit `cloud_stacks`.
+Les anciens chemins `stack ...` restent des aliases deprecies pendant la v4, avec warning indiquant la commande `cloud stacks ...`, puis pourront etre supprimes en v5 ou dans une version mineure ulterieure si on decide de durcir la migration.
 
 | v3 | v4 canonique | Changements | Notes |
 | --- | --- | --- | --- |
-| `stack create` | `cloud stacks create` | `stack create` alias deprecie si contexte Cloud. | Ne doit pas exister pour contexte `stack` local. |
-| `stack list` | `cloud stacks list` | | |
-| `stack show` | `cloud stacks show <stack-id>` | | |
-| `stack update` | `cloud stacks update <stack-id>` | | |
-| `stack delete` | `cloud stacks delete <stack-id>` | `--confirm`. | |
-| `stack enable` | `cloud stacks enable <stack-id>` | | |
-| `stack disable` | `cloud stacks disable <stack-id>` | `--confirm`. | |
-| `stack restore` | `cloud stacks restore <stack-id>` | `--confirm`. | |
-| `stack upgrade` | `cloud stacks upgrade <stack-id>` | `--confirm`, afficher target version. | |
-| `stack history` | `cloud stacks history <stack-id>` | | |
-| `stack proxy` | `target proxy` ou `cloud stacks proxy <stack-id>` | Clarifier usage: proxy data-plane vs Cloud. | |
-| `stack users list` | `cloud stacks users list <stack-id>` | | |
-| `stack users link <user-id>` | `cloud stacks users link <stack-id> <user-id>` | stack explicite ou contexte courant. | |
-| `stack users unlink <user-id>` | `cloud stacks users unlink <stack-id> <user-id>` | `--confirm`. | |
-| `stack modules list` | `cloud stacks modules list <stack-id>` | | |
-| `stack modules enable` | `cloud stacks modules enable <stack-id> <module>` | | |
-| `stack modules disable` | `cloud stacks modules disable <stack-id> <module>` | `--confirm`. | |
+| `stack create` | `cloud stacks create` | `stack create` alias deprecie avec warning. | Ne doit pas exister pour contexte `stack` local. |
+| `stack list` | `cloud stacks list` | alias deprecie avec warning. | |
+| `stack show` | `cloud stacks show <stack-id>` | alias deprecie avec warning. | |
+| `stack update` | `cloud stacks update <stack-id>` | alias deprecie avec warning. | |
+| `stack delete` | `cloud stacks delete <stack-id>` | `--confirm`; alias deprecie avec warning. | |
+| `stack enable` | `cloud stacks enable <stack-id>` | alias deprecie avec warning. | |
+| `stack disable` | `cloud stacks disable <stack-id>` | `--confirm`; alias deprecie avec warning. | |
+| `stack restore` | `cloud stacks restore <stack-id>` | `--confirm`; alias deprecie avec warning. | |
+| `stack upgrade` | `cloud stacks upgrade <stack-id>` | `--confirm`, afficher target version; alias deprecie avec warning. | |
+| `stack history` | `cloud stacks history <stack-id>` | alias deprecie avec warning. | |
+| `stack proxy` | `target proxy` ou `cloud stacks proxy <stack-id>` | alias deprecie avec warning. | Clarifier usage: proxy data-plane vs Cloud. |
+| `stack users list` | `cloud stacks users list <stack-id>` | alias deprecie avec warning. | |
+| `stack users link <user-id>` | `cloud stacks users link <stack-id> <user-id>` | stack explicite ou contexte courant; alias deprecie avec warning. | |
+| `stack users unlink <user-id>` | `cloud stacks users unlink <stack-id> <user-id>` | `--confirm`; alias deprecie avec warning. | |
+| `stack modules list` | `cloud stacks modules list <stack-id>` | alias deprecie avec warning. | |
+| `stack modules enable` | `cloud stacks modules enable <stack-id> <module>` | alias deprecie avec warning. | |
+| `stack modules disable` | `cloud stacks modules disable <stack-id> <module>` | `--confirm`; alias deprecie avec warning. | |
 
 ## Mapping Ledger
 
@@ -330,12 +332,14 @@ Connecteurs v3 inventories:
 | `payments connectors list` | identique | sortie stable, inclure type, id, status. |
 | `payments connectors uninstall` | `payments connectors uninstall <connector-id>` | `--confirm`. |
 | `payments connectors install <connector> <file>|-` | `payments connectors install <connector> --file <path>|-` | garder ancien positionnel. |
-| `payments connectors update-config <connector> <file>|-` | `payments connectors config update <connector-id> --file <path>|-` | garder `update-config` alias; clarifier si argument est type ou id. |
-| `payments connectors update-config get-config` | `payments connectors config show <connector-id>` ou `config-template <connector>` | separer config installee et template. |
+| `payments connectors update-config <connector> <file>|- --connector-id <id>` | `payments connectors config update <connector-id> --file <path>|-` | l'identifiant cible est toujours le connector ID; le type connector v3 devient un detail d'adapter ou une option de compatibilite. |
+| `payments connectors update-config get-config --connector-id <id>` | `payments connectors config show <connector-id>` | la lecture de config cible un connector ID en v4. |
 
-Decision a prendre avant implementation:
+Decisions d'implementation:
 
-- si `install` prend un type (`stripe`) et `update-config` prend un id, les noms doivent le rendre explicite;
+- `install` prend un type de connecteur (`stripe`, `qonto`, etc.) et retourne un connector ID;
+- `config update` prend toujours un connector ID;
+- les anciens sous-chemins par type, comme `update-config stripe`, peuvent rester aliases deprecies quand ils aident l'autocompletion, mais ils doivent exiger `--connector-id` et afficher un warning;
 - eviter de multiplier les sous-commandes generees si une commande generique avec schema OpenAPI suffit;
 - garder les commandes par connecteur comme aliases pour l'autocompletion et la documentation.
 
@@ -345,6 +349,7 @@ Regles:
 
 - conserver `wallets`;
 - `--ik` devient `--idempotency-key`;
+- `credit` et `debit` prennent toujours un wallet cible explicite en v4;
 - commandes mutantes gardent `--confirm` si elles ont deja une confirmation v3;
 - identifiants documentes en kebab-case dans l'aide, sans changer la valeur attendue.
 
@@ -354,8 +359,8 @@ Regles:
 | `wallets list` | identique | pagination/filtres si disponibles. | |
 | `wallets show` | `wallets show <wallet-id>` | verifier si v3 lit un flag implicite; rendre explicite. | |
 | `wallets update <wallet-id>` | identique | metadata/name via flags ou `--file`. | |
-| `wallets credit <amount> <asset>` | `wallets credit <wallet-id> --amount --asset` ou garder positionnels si wallet vient d'un flag | A clarifier avec `cmd/wallets/internal/command.go`. | Doit etre teste car forte ambiguite. |
-| `wallets debit <amount> <asset>` | idem credit | | |
+| `wallets credit <amount> <asset>` | `wallets credit <wallet-id> --amount <amount> --asset <asset>` | wallet cible explicite obligatoire; ancienne forme seulement alias deprecie si elle peut etre resolue sans ambiguite. | |
+| `wallets debit <amount> <asset>` | `wallets debit <wallet-id> --amount <amount> --asset <asset>` | wallet cible explicite obligatoire; ancienne forme seulement alias deprecie si elle peut etre resolue sans ambiguite. | |
 | `wallets balances create <balance-name>` | identique | | |
 | `wallets balances list` | identique | | |
 | `wallets balances show <balance-name>` | identique | | |
@@ -403,25 +408,26 @@ Le chemin `orchestration ...` peut rester comme alias deprecie pendant la phase 
 
 ## Mapping Auth service
 
-La v3 utilise `auth` pour le service Auth de la stack. La v4 utilise aussi `auth login` pour l'authentification du CLI. Il faut eviter une ambiguite UX.
+La v3 utilise `auth` pour le service Auth de la stack. La v4 garde `auth` comme nom canonique du service, car `identity` pourra devenir un produit Formance distinct plus tard.
+Les commandes de session CLI peuvent vivre sous `auth login/status/logout/token`, mais les commandes du service restent `auth clients ...` et `auth users ...`.
 
-Decision recommandee:
+Decision:
 
 - `auth login/status/logout/token` = session CLI;
-- `identity ...` = service Auth de la stack;
-- `auth clients ...` et `auth users ...` restent aliases deprecies vers `identity`.
+- `auth clients ...` et `auth users ...` = service Auth de la stack;
+- ne pas introduire `identity` comme alias ou nom canonique dans cette migration.
 
 | v3 | v4 canonique | Changements d'arguments | Notes |
 | --- | --- | --- | --- |
-| `auth clients create <name>` | `identity clients create <name>` | flags scopes/redirects explicites. | |
-| `auth clients list` | `identity clients list` | | |
-| `auth clients show <client-id>` | `identity clients show <client-id>` | | |
-| `auth clients update <client-id>` | `identity clients update <client-id>` | | |
-| `auth clients delete <client-id>` | `identity clients delete <client-id>` | `--confirm`. | |
-| `auth clients secrets create <client-id> <secret-name>` | `identity clients secrets create <client-id> <secret-name>` | afficher secret seulement en sortie structuree controlee. | |
-| `auth clients secrets delete <client-id> <secret-id>` | `identity clients secrets delete <client-id> <secret-id>` | `--confirm`. | |
-| `auth users list` | `identity users list` | | |
-| `auth users show <user-id>` | `identity users show <user-id>` | | |
+| `auth clients create <name>` | identique | flags scopes/redirects explicites. | |
+| `auth clients list` | identique | | |
+| `auth clients show <client-id>` | identique | | |
+| `auth clients update <client-id>` | identique | | |
+| `auth clients delete <client-id>` | identique | `--confirm`. | |
+| `auth clients secrets create <client-id> <secret-name>` | identique | afficher secret seulement en sortie structuree controlee. | |
+| `auth clients secrets delete <client-id> <secret-id>` | identique | `--confirm`. | |
+| `auth users list` | identique | | |
+| `auth users show <user-id>` | identique | | |
 
 ## Mapping Webhooks
 
@@ -439,11 +445,10 @@ Decision recommandee:
 | v3 | Decision proposee | Raison |
 | --- | --- | --- |
 | `prompt` | remplacer par `setup`/`context wizard`, garder alias cache | Le nom ne decrit pas l'intention utilisateur. |
-| `stack ...` a la racine | deprecie vers `cloud stacks ...` | `stack` doit pouvoir signifier target data-plane; les operations lifecycle sont Cloud. |
-| `auth clients/users ...` | deprecie vers `identity ...` | Libere `auth` pour la session CLI. |
+| `stack ...` a la racine | deprecie vers `cloud stacks ...` avec warning | `stack` doit pouvoir signifier target data-plane; les operations lifecycle sont Cloud. |
 | `search ...` et alias `se` | supprimer | Le produit n'existe plus en v4. |
 | `payments ... get` | deprecie vers `show` | Coherence globale. |
-| commandes avec underscores | aliases deprecies | Coherence shell. |
+| commandes avec underscores | aliases deprecies avec warning | Coherence shell. |
 
 ## Documentation a produire depuis ce plan
 
@@ -560,7 +565,7 @@ Exemples:
 | `ledger transactions list` | operation list transactions existe pour chaque namespace handler. |
 | `payments transfer-initiation create` | payload fixture valide contre le schema. |
 | `cloud organizations list` | commande refuse contexte non Cloud avant tout appel reseau. |
-| `identity clients create` | operation auth service presente dans stack spec. |
+| `auth clients create` | operation auth service presente dans stack spec. |
 
 ### E2E de bout en bout
 
@@ -620,7 +625,7 @@ Ordre recommande:
 3. `flows` pour l'ancien `orchestration`;
 4. `reconciliation`;
 5. `webhooks`;
-6. `identity` pour l'ancien `auth clients/users`.
+6. `auth` service pour `auth clients/users`.
 
 Chaque famille doit etre livree avec:
 
@@ -633,7 +638,7 @@ Chaque famille doit etre livree avec:
 ### Phase 4: Cloud control plane
 
 - Migrer `cloud ...`;
-- migrer `stack ...` vers `cloud stacks ...`;
+- migrer `stack ...` vers `cloud stacks ...` avec warnings de deprecation;
 - garder aliases v3 quand non ambigus;
 - couvrir membership mock.
 
@@ -672,11 +677,11 @@ Pour chaque commande migree:
 - [ ] les fixtures mock couvrent au moins succes + une erreur;
 - [ ] la documentation avant/apres est mise a jour.
 
-## Points ouverts
+## Decisions actees
 
-1. Faut-il utiliser `identity` comme nom canonique pour l'ancien service `auth`, ou preferer `stack-auth`?
-2. Faut-il garder `stack ...` comme alias long terme vers `cloud stacks ...`, ou seulement sur une periode de transition?
-3. Pour `wallets credit/debit`, le wallet cible doit-il etre un argument obligatoire ou peut-il rester implicite via les helpers v3?
-4. Pour `payments connectors update-config`, l'argument principal est-il un connector type ou un connector id dans tous les cas?
-5. Faut-il exposer `fctl transaction list` comme alias court de `fctl ledger transactions list`, ou garder uniquement le namespace produit?
-6. Quelle est la politique de suppression des aliases deprecies: v4.x, v5, ou jamais pour les aliases peu couteux?
+1. Le service Auth garde le nom canonique `auth`; ne pas utiliser `identity` dans cette migration.
+2. Les operations Cloud de lifecycle de stack utilisent `cloud stacks ...`; les anciens chemins `stack ...` sont des aliases deprecies avec warning.
+3. `wallets credit` et `wallets debit` prennent un wallet cible explicite en v4.
+4. `payments connectors config update` cible toujours un connector ID.
+5. Ne pas ajouter d'alias court comme `fctl transaction list`; toujours garder le nom du service, par exemple `fctl ledger transactions list`.
+6. Les aliases v3 peu couteux peuvent rester pendant la v4, mais chaque utilisation doit afficher un warning avec la commande canonique. Leur suppression pourra arriver dans une version ulterieure, potentiellement `v4.1`, `v4.2` ou `v5` selon le cout de maintenance et l'usage observe.
