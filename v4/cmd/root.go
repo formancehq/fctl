@@ -40,6 +40,7 @@ func NewRootCommand(version string) *cobra.Command {
 	root.PersistentFlags().Bool(nonInteractiveFlag, false, "Disable interactive prompts")
 
 	root.AddCommand(newVersionCommand())
+	root.AddCommand(newContextCommand())
 
 	return root
 }
