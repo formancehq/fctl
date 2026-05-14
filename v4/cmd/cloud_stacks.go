@@ -105,7 +105,7 @@ func newCloudStacksCreateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			output, err := withTerminalSpinner(cmd, !noWait, "Creating stack and waiting for availability", "Stack is available", func() (cloudcmd.StackOutput, error) {
+			output, err := withTerminalSpinnerUpdates(cmd, !noWait, "Creating stack", "Stack is available", func(update func(string)) (cloudcmd.StackOutput, error) {
 				return cloudcmd.CreateStackService{Client: organizationClient, HTTPClient: baseHTTPClient(rt.AuthOptions)}.Run(cmd.Context(), cloudcmd.CreateStackInput{
 					OrganizationID: organizationID,
 					Name:           stackName,
@@ -113,6 +113,13 @@ func newCloudStacksCreateCommand() *cobra.Command {
 					Version:        version,
 					Metadata:       parsedMetadata,
 					Wait:           !noWait,
+					WaitProgress: func(progress cloudcmd.StackWaitProgress) {
+						if progress.StackURL != "" {
+							update("Waiting services availability at " + progress.StackURL)
+							return
+						}
+						update("Waiting services availability")
+					},
 				})
 			})
 			if err != nil {

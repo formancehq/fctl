@@ -78,6 +78,7 @@ type CreateStackInput struct {
 	Version        string
 	Metadata       map[string]string
 	Wait           bool
+	WaitProgress   func(StackWaitProgress)
 }
 
 type UpdateStackInput struct {
@@ -106,6 +107,11 @@ type WaitStackReadyInput struct {
 	InitialStack   StackSummary
 	PollInterval   time.Duration
 	Timeout        time.Duration
+	Progress       func(StackWaitProgress)
+}
+
+type StackWaitProgress struct {
+	StackURL string
 }
 
 type DeleteStackOutput struct {
@@ -279,6 +285,7 @@ func (s CreateStackService) Run(ctx context.Context, input CreateStackInput) (St
 			StackID:        output.Stack.ID,
 			StackURL:       output.Stack.URI,
 			InitialStack:   output.Stack,
+			Progress:       input.WaitProgress,
 		})
 	}
 	return output, nil
@@ -313,6 +320,7 @@ func (s WaitStackReadyService) Run(ctx context.Context, input WaitStackReadyInpu
 	if stackURL == "" {
 		stackURL = input.InitialStack.URI
 	}
+	reportStackWaitProgress(input.Progress, stackURL)
 	for attempt := 0; ; attempt++ {
 		if attempt > 0 {
 			waitTimer := time.NewTimer(pollInterval)
@@ -352,11 +360,19 @@ func (s WaitStackReadyService) Run(ctx context.Context, input WaitStackReadyInpu
 		last = output
 		if stackURL == "" {
 			stackURL = output.Stack.URI
+			reportStackWaitProgress(input.Progress, stackURL)
 		}
 		if output.Stack.Status == string(components.StackStatusReady) {
 			return output, nil
 		}
 	}
+}
+
+func reportStackWaitProgress(progress func(StackWaitProgress), stackURL string) {
+	if progress == nil {
+		return
+	}
+	progress(StackWaitProgress{StackURL: stackURL})
 }
 
 func stackVersionsEndpointReady(ctx context.Context, client *http.Client, stackURL string) bool {

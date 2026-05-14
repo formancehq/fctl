@@ -16,17 +16,29 @@ import (
 )
 
 func withTerminalSpinner[T any](cmd *cobra.Command, enabled bool, message string, doneMessage string, fn func() (T, error)) (T, error) {
-	if !enabled || !terminalSpinnerEnabled(cmd) {
+	return withTerminalSpinnerUpdates(cmd, enabled, message, doneMessage, func(func(string)) (T, error) {
 		return fn()
+	})
+}
+
+func withTerminalSpinnerUpdates[T any](cmd *cobra.Command, enabled bool, message string, doneMessage string, fn func(update func(string)) (T, error)) (T, error) {
+	if !enabled || !terminalSpinnerEnabled(cmd) {
+		return fn(func(string) {})
 	}
 
-	stop := startTerminalSpinner(cmd.ErrOrStderr(), message, doneMessage, commandColorEnabled(cmd))
-	output, err := fn()
-	stop(err == nil)
+	spinner := startTerminalSpinner(cmd.ErrOrStderr(), message, doneMessage, commandColorEnabled(cmd))
+	output, err := fn(spinner.Update)
+	spinner.Stop(err == nil)
 	return output, err
 }
 
-func startTerminalSpinner(writer io.Writer, message string, doneMessage string, color bool) func(bool) {
+type terminalSpinner struct {
+	update  chan string
+	done    chan bool
+	stopped chan struct{}
+}
+
+func startTerminalSpinner(writer io.Writer, message string, doneMessage string, color bool) *terminalSpinner {
 	model := spinner.MiniDot
 	spinnerStyle := lipgloss.NewStyle()
 	messageStyle := lipgloss.NewStyle()
@@ -37,13 +49,16 @@ func startTerminalSpinner(writer io.Writer, message string, doneMessage string, 
 		doneStyle = doneStyle.Foreground(v4render.FormancePalette.Success).Bold(true)
 	}
 
+	update := make(chan string, 1)
 	done := make(chan bool)
 	stopped := make(chan struct{})
 	go func() {
 		defer close(stopped)
 		frame := 0
+		currentMessage := message
+		startedAt := time.Now()
 		render := func() {
-			fmt.Fprintf(writer, "\r\033[2K%s %s", spinnerStyle.Render(model.Frames[frame]), messageStyle.Render(message))
+			fmt.Fprintf(writer, "\r\033[2K%s %s", spinnerStyle.Render(model.Frames[frame]), messageStyle.Render(spinnerMessageWithElapsed(currentMessage, time.Since(startedAt))))
 		}
 		render()
 		ticker := time.NewTicker(model.FPS)
@@ -56,16 +71,39 @@ func startTerminalSpinner(writer io.Writer, message string, doneMessage string, 
 					fmt.Fprintf(writer, "%s %s\n", doneStyle.Render("OK"), doneMessage)
 				}
 				return
+			case nextMessage := <-update:
+				if strings.TrimSpace(nextMessage) != "" {
+					currentMessage = nextMessage
+				}
+				render()
 			case <-ticker.C:
 				frame = (frame + 1) % len(model.Frames)
 				render()
 			}
 		}
 	}()
-	return func(success bool) {
-		done <- success
-		<-stopped
+	return &terminalSpinner{update: update, done: done, stopped: stopped}
+}
+
+func (s *terminalSpinner) Update(message string) {
+	select {
+	case s.update <- message:
+	default:
+		select {
+		case <-s.update:
+		default:
+		}
+		s.update <- message
 	}
+}
+
+func (s *terminalSpinner) Stop(success bool) {
+	s.done <- success
+	<-s.stopped
+}
+
+func spinnerMessageWithElapsed(message string, elapsed time.Duration) string {
+	return fmt.Sprintf("%s (%ds)", message, int(elapsed.Seconds()))
 }
 
 func terminalSpinnerEnabled(cmd *cobra.Command) bool {

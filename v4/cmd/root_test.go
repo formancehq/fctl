@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	v4config "github.com/formancehq/fctl/v4/internal/config"
 	v4prompt "github.com/formancehq/fctl/v4/internal/prompt"
@@ -3133,6 +3134,12 @@ func TestDebugHTTPTraceRedactsSensitiveHeaders(t *testing.T) {
 	}
 	if strings.Contains(trace, "Bearer secret-token") || strings.Contains(trace, "session=secret") {
 		t.Fatalf("debug trace leaked sensitive header:\n%s", trace)
+	}
+}
+
+func TestSpinnerMessageWithElapsed(t *testing.T) {
+	if got := spinnerMessageWithElapsed("Waiting services availability at https://stack.example", 6*time.Second); got != "Waiting services availability at https://stack.example (6s)" {
+		t.Fatalf("unexpected spinner message %q", got)
 	}
 }
 
