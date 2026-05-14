@@ -17,9 +17,72 @@ func newLedgerCommand() *cobra.Command {
 		Use:   "ledger",
 		Short: "Manage ledgers",
 	}
+	command.AddCommand(newLedgerInfoCommand("info", nil, false))
+	command.AddCommand(newLedgerInfoCommand("server-infos", []string{"si"}, true))
 	command.AddCommand(newLedgerListCommand())
 	command.AddCommand(newLedgerStatsCommand())
 	command.AddCommand(newLedgerTransactionsCommand())
+	return command
+}
+
+func newLedgerInfoCommand(use string, aliases []string, deprecated bool) *cobra.Command {
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     use,
+		Aliases: aliases,
+		Short:   "Read ledger server info",
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if deprecated {
+				fmt.Fprintf(cmd.ErrOrStderr(), "Command ledger %s has been deprecated, use ledger info\n", cmd.CalledAs())
+			}
+
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := ledgercmd.ReadInfoService{
+				Handlers: ledgercmd.SDKReadInfoHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         ledgercmd.ProductLedger,
+						Feature:         ledgercmd.FeatureGetInfo,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context())
+			if err != nil {
+				return err
+			}
+
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderLedgerInfo(cmd, output)
+		},
+	}
+
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
+	if deprecated {
+		command.Deprecated = "use ledger info"
+	}
+
 	return command
 }
 
@@ -271,6 +334,17 @@ func renderLedgers(cmd *cobra.Command, output ledgercmd.ListLedgersOutput) error
 		}
 	}
 	return nil
+}
+
+func renderLedgerInfo(cmd *cobra.Command, output ledgercmd.ReadInfoOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Server\t%s\n", output.Server); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Version\t%s\n", output.Version)
+	return err
 }
 
 func renderLedgerStats(cmd *cobra.Command, output ledgercmd.ReadStatsOutput) error {

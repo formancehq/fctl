@@ -277,6 +277,83 @@ func TestLedgerListSelectsV2(t *testing.T) {
 	}
 }
 
+func TestLedgerInfoUsesCanonicalCommand(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"1.9.0","health":true}]}`)
+		case "/api/ledger/_info":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"server":"ledger","version":"1.9.0","config":{}}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "ledger", "info")
+	if err != nil {
+		t.Fatalf("read ledger info: %v stderr=%s", err, stderr)
+	}
+	if stderr != "" {
+		t.Fatalf("expected canonical command to keep stderr empty, got:\n%s", stderr)
+	}
+	for _, expected := range []string{
+		"API version: v1",
+		"Server\tledger",
+		"Version\t1.9.0",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected info output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestLedgerServerInfosDeprecatedAlias(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"1.9.0","health":true}]}`)
+		case "/api/ledger/_info":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"server":"ledger","version":"1.9.0","config":{}}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t, "--config-dir", configDir, "ledger", "server-infos")
+	if err != nil {
+		t.Fatalf("read ledger info through alias: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "use ledger info") {
+		t.Fatalf("expected deprecation warning, got:\n%s", stderr)
+	}
+}
+
 func TestLedgerStatsSelectsV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
