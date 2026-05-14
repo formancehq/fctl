@@ -34,9 +34,66 @@ func newAuthLoginCommand() *cobra.Command {
 		Use:   "login",
 		Short: "Configure authentication for the selected context",
 	}
+	command.AddCommand(newAuthLoginCloudCommand(false))
 	command.AddCommand(newAuthLoginTokenCommand())
 	command.AddCommand(newAuthLoginClientCredentialsCommand())
+	command.AddCommand(newAuthLoginOIDCCommand())
 	command.AddCommand(newAuthLoginNoneCommand())
+	return command
+}
+
+func newLoginCommand() *cobra.Command {
+	command := newAuthLoginCloudCommand(true)
+	command.Use = "login"
+	command.Short = "Deprecated alias for auth login cloud"
+	command.Deprecated = "use auth login cloud"
+	return command
+}
+
+func newAuthLoginCloudCommand(deprecatedRootAlias bool) *cobra.Command {
+	var cloudURL string
+	var membershipURI string
+
+	command := &cobra.Command{
+		Use:   "cloud",
+		Short: "Log in to Formance Cloud (deferred)",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if deprecatedRootAlias {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Command login has been deprecated, use auth login cloud")
+			}
+			if cloudURL != "" && membershipURI != "" {
+				return fmt.Errorf("--cloud-url and --membership-uri are mutually exclusive")
+			}
+			return fmt.Errorf("auth login cloud is deferred until the Cloud device/browser login contract is explicit; use auth login token or auth login client-credentials for now")
+		},
+	}
+	command.Flags().StringVar(&cloudURL, "cloud-url", "", "Formance Cloud URL")
+	command.Flags().StringVar(&membershipURI, "membership-uri", "", "Deprecated alias for --cloud-url")
+	_ = command.Flags().MarkDeprecated("membership-uri", "use --cloud-url")
+	return command
+}
+
+func newAuthLoginOIDCCommand() *cobra.Command {
+	var issuerURL string
+	var clientID string
+
+	command := &cobra.Command{
+		Use:   "oidc",
+		Short: "Log in with generic OIDC device flow (deferred)",
+		Args:  cobra.NoArgs,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			if issuerURL == "" {
+				return fmt.Errorf("auth login oidc requires --issuer-url")
+			}
+			if clientID == "" {
+				return fmt.Errorf("auth login oidc requires --client-id")
+			}
+			return fmt.Errorf("auth login oidc is deferred until the generic device flow contract is specified; use auth login token or auth login client-credentials for now")
+		},
+	}
+	command.Flags().StringVar(&issuerURL, "issuer-url", "", "OIDC issuer URL")
+	command.Flags().StringVar(&clientID, "client-id", "", "OIDC client ID")
 	return command
 }
 

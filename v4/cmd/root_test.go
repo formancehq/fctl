@@ -2156,6 +2156,35 @@ func TestTargetInspectJSON(t *testing.T) {
 	}
 }
 
+func TestDeferredCloudAndOIDCLoginCommandsReturnActionableErrors(t *testing.T) {
+	_, stderr, err := executeCommand(t, "auth", "login", "cloud", "--cloud-url", "https://cloud.example")
+	if err == nil {
+		t.Fatal("expected auth login cloud to be deferred")
+	}
+	if !strings.Contains(err.Error(), "auth login cloud is deferred") {
+		t.Fatalf("unexpected cloud login error: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t, "login", "--membership-uri", "https://cloud.example")
+	if err == nil {
+		t.Fatal("expected deprecated root login to be deferred")
+	}
+	if !strings.Contains(stderr, "Command login has been deprecated, use auth login cloud") {
+		t.Fatalf("expected login deprecation warning, got:\n%s", stderr)
+	}
+	if !strings.Contains(err.Error(), "auth login cloud is deferred") {
+		t.Fatalf("unexpected root login error: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t, "auth", "login", "oidc", "--issuer-url", "https://issuer.example", "--client-id", "client")
+	if err == nil {
+		t.Fatal("expected auth login oidc to be deferred")
+	}
+	if !strings.Contains(err.Error(), "auth login oidc is deferred") {
+		t.Fatalf("unexpected oidc login error: %v stderr=%s", err, stderr)
+	}
+}
+
 func TestAuthLoginTokenStoresCredentialAndUpdatesContext(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") != "Bearer stack-token" {

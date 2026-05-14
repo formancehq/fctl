@@ -54,6 +54,7 @@ func NewRootCommand(version string) *cobra.Command {
 	root.AddCommand(newContextCommand())
 	root.AddCommand(newProfilesCommand())
 	root.AddCommand(newConfigCommand())
+	root.AddCommand(newLoginCommand())
 	root.AddCommand(newSetupCommand(false))
 	root.AddCommand(newSetupCommand(true))
 	root.AddCommand(newUICommand())

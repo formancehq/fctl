@@ -30,6 +30,7 @@ the isolated v4 implementation under `v4/`.
 | `--insecure-tls` | `--insecure-tls` | Kept as an explicit non-persistent runtime override. |
 | none | `--no-color` | New stable flag; v4 renderers are plain by default. |
 | `ui` | `ui --print` or `ui` | Kept for Cloud contexts; `--print` is non-browser/non-interactive friendly. |
+| `login --membership-uri <url>` | `auth login cloud --cloud-url <url>` | Deprecated root command exists, but Cloud device/browser login is deferred. |
 | `profiles ...` | `context ...` | `profiles` is a deprecated alias with a warning. |
 | `profiles reset <name>` | `context unset-defaults <name> --confirm` | `profiles reset` is a deprecated alias with a warning. |
 | `profiles set-default-organization <org>` | `context set --organization <org>` | Deprecated alias updates the current context. |

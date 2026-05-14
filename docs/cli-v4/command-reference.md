@@ -210,8 +210,10 @@ Wallet credit and debit require the wallet target explicitly.
 
 ## Auth
 
+- `fctl auth login cloud --cloud-url <url>` (deferred until Cloud device/browser login contract is explicit)
 - `fctl auth login token --token-stdin --credential-dir <dir>`
 - `fctl auth login client-credentials --issuer-url <url> --client-id <id> --client-secret-stdin --credential-dir <dir>`
+- `fctl auth login oidc --issuer-url <url> --client-id <id>` (deferred until generic device flow contract is specified)
 - `fctl auth login none`
 - `fctl auth status`
 - `fctl auth token`
