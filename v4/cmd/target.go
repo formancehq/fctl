@@ -170,8 +170,8 @@ func newTargetProxyCommand() *cobra.Command {
 				}
 			}()
 
-			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Starting proxy server at http://%s -> %s\n", listener.Addr().String(), rt.Target.URL)
-			_, _ = fmt.Fprintln(cmd.OutOrStdout(), "Press Ctrl+C to stop the server")
+			_, _ = fmt.Fprintln(cmd.OutOrStdout(), styledInfoLine(cmd, "Proxy", fmt.Sprintf("http://%s -> %s", listener.Addr().String(), rt.Target.URL)))
+			_, _ = fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "Press Ctrl+C to stop the server"))
 
 			ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
@@ -186,7 +186,7 @@ func newTargetProxyCommand() *cobra.Command {
 			if err := server.Shutdown(shutdownCtx); err != nil {
 				return fmt.Errorf("shutdown proxy: %w", err)
 			}
-			_, _ = fmt.Fprintln(cmd.OutOrStdout(), "Server stopped successfully")
+			_, _ = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, "Server stopped successfully."))
 			return nil
 		},
 	}

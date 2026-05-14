@@ -58,10 +58,10 @@ func newUICommand(deprecatedRootAlias bool) *cobra.Command {
 				return err
 			}
 			if opened {
-				_, err = fmt.Fprintf(cmd.OutOrStdout(), "Opening console: %s\n", consoleURL)
+				_, err = fmt.Fprintln(cmd.OutOrStdout(), styledInfoLine(cmd, "Opening console", consoleURL))
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Console URL: %s\n", consoleURL)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledInfoLine(cmd, "Console URL", consoleURL))
 			return err
 		},
 	}

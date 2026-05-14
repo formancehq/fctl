@@ -40,8 +40,6 @@ func TestHumanOutputUsesStyledRendering(t *testing.T) {
 		"newSessionStatusCommand":                                  true,
 		"newSessionTokenCommand":                                   true,
 		"newTargetInspectCommand":                                  true,
-		"newTargetProxyCommand":                                    true,
-		"newUICommand":                                             true,
 		"newVersionCommand":                                        true,
 		"promptValue":                                              true,
 		"renderCloudApp":                                           true,

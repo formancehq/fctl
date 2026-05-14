@@ -72,7 +72,7 @@ func newConfigMigrateV3Command() *cobra.Command {
 			}); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Migrated %d context(s) to %s.\n", len(plan.Contexts), path)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Migrated %d context(s) to %s.", len(plan.Contexts), path)))
 			return err
 		},
 	}
@@ -102,7 +102,7 @@ func renderMigrationPlan(cmd *cobra.Command, plan v4config.MigrationPlan) error 
 		return err
 	}
 
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Current context: %s\n", plan.CurrentContext); err != nil {
+	if _, err := fmt.Fprintln(cmd.OutOrStdout(), styledInfoLine(cmd, "Current context", plan.CurrentContext)); err != nil {
 		return err
 	}
 	if _, err := fmt.Fprintln(cmd.OutOrStdout(), "Contexts:"); err != nil {
@@ -114,7 +114,7 @@ func renderMigrationPlan(cmd *cobra.Command, plan v4config.MigrationPlan) error 
 			return err
 		}
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Credential moves: %d\n", len(plan.CredentialMoves))
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledInfoLine(cmd, "Credential moves", fmt.Sprintf("%d", len(plan.CredentialMoves))))
 	return err
 }
 
