@@ -65,6 +65,7 @@ func newCloudStacksCreateCommand() *cobra.Command {
 	var regionID string
 	var version string
 	var metadata []string
+	var noWait bool
 
 	command := &cobra.Command{
 		Use:   "create [name]",
@@ -109,6 +110,7 @@ func newCloudStacksCreateCommand() *cobra.Command {
 				RegionID:       regionID,
 				Version:        version,
 				Metadata:       parsedMetadata,
+				Wait:           !noWait,
 			})
 			if err != nil {
 				return err
@@ -123,6 +125,7 @@ func newCloudStacksCreateCommand() *cobra.Command {
 	command.Flags().StringVar(&regionID, "region", "", "Cloud region ID")
 	command.Flags().StringVar(&version, "version", "", "Stack version")
 	command.Flags().StringArrayVar(&metadata, "metadata", nil, "Stack metadata as key=value")
+	command.Flags().BoolVar(&noWait, "no-wait", false, "Do not wait for stack availability")
 	return command
 }
 

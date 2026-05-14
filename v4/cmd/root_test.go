@@ -2682,6 +2682,55 @@ func TestCloudStacksCreatePromptsForNameRegionAndVersion(t *testing.T) {
 	}
 }
 
+func TestCloudStacksCreateWaitsUntilReady(t *testing.T) {
+	progressingBody := `{"data":{"id":"stack_1","name":"Production","organizationId":"org_1","uri":"https://stack.example/api","regionID":"eu-west-1","version":"v3.2","status":"PROGRESSING","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":false,"stargateEnabled":true,"synchronised":false,"modules":[]}}`
+	readyBody := `{"data":{"id":"stack_1","name":"Production","organizationId":"org_1","uri":"https://stack.example/api","regionID":"eu-west-1","version":"v3.2","status":"READY","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":true,"stargateEnabled":true,"synchronised":true,"modules":[]}}`
+	getStackCalls := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodPost && r.URL.Path == "/organizations/org_1/stacks":
+			w.WriteHeader(http.StatusAccepted)
+			fmt.Fprint(w, progressingBody)
+		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/stacks/stack_1":
+			getStackCalls++
+			fmt.Fprint(w, readyBody)
+		default:
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", server.URL,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"cloud", "stacks", "create", "Production",
+		"--region", "eu-west-1",
+		"--version", "v3.2",
+	)
+	if err != nil {
+		t.Fatalf("cloud stacks create waits: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud stack stack_1 created.\n" {
+		t.Fatalf("unexpected create output: %q", stdout)
+	}
+	if getStackCalls != 1 {
+		t.Fatalf("expected one readiness poll, got %d", getStackCalls)
+	}
+}
+
 func TestCloudStacksHistory(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

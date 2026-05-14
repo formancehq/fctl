@@ -75,6 +75,7 @@ type CreateStackInput struct {
 	RegionID       string
 	Version        string
 	Metadata       map[string]string
+	Wait           bool
 }
 
 type UpdateStackInput struct {
@@ -94,6 +95,13 @@ type StackActionInput struct {
 	OrganizationID string
 	StackID        string
 	Version        string
+}
+
+type WaitStackReadyInput struct {
+	OrganizationID string
+	StackID        string
+	PollInterval   time.Duration
+	Timeout        time.Duration
 }
 
 type DeleteStackOutput struct {
@@ -259,7 +267,73 @@ func (s CreateStackService) Run(ctx context.Context, input CreateStackInput) (St
 	if response.GetReadStackResponse().GetData() == nil {
 		return StackOutput{}, fmt.Errorf("cloud stacks create returned no stack")
 	}
-	return StackOutput{OrganizationID: input.OrganizationID, Stack: stackSummary(response.GetReadStackResponse().GetData(), defaultConsoleURL)}, nil
+	output := StackOutput{OrganizationID: input.OrganizationID, Stack: stackSummary(response.GetReadStackResponse().GetData(), defaultConsoleURL)}
+	if input.Wait && output.Stack.Status != string(components.StackStatusReady) {
+		return WaitStackReadyService{Client: s.Client}.Run(ctx, WaitStackReadyInput{
+			OrganizationID: input.OrganizationID,
+			StackID:        output.Stack.ID,
+		})
+	}
+	return output, nil
+}
+
+type WaitStackReadyService struct {
+	Client StackClient
+}
+
+func (s WaitStackReadyService) Run(ctx context.Context, input WaitStackReadyInput) (StackOutput, error) {
+	if s.Client == nil {
+		return StackOutput{}, fmt.Errorf("membership client is required")
+	}
+	if err := validateStackTarget(input.OrganizationID, input.StackID); err != nil {
+		return StackOutput{}, err
+	}
+	pollInterval := input.PollInterval
+	if pollInterval <= 0 {
+		pollInterval = 2 * time.Second
+	}
+	timeout := input.Timeout
+	if timeout <= 0 {
+		timeout = 10 * time.Minute
+	}
+
+	timeoutTimer := time.NewTimer(timeout)
+	defer timeoutTimer.Stop()
+
+	var last StackOutput
+	for attempt := 0; ; attempt++ {
+		if attempt > 0 {
+			waitTimer := time.NewTimer(pollInterval)
+			select {
+			case <-ctx.Done():
+				waitTimer.Stop()
+				return StackOutput{}, ctx.Err()
+			case <-timeoutTimer.C:
+				waitTimer.Stop()
+				return last, stackReadyTimeoutError(input.OrganizationID, input.StackID, timeout, last.Stack.Status)
+			case <-waitTimer.C:
+			}
+		}
+
+		output, err := ReadStackService{Client: s.Client}.Run(ctx, StackIDInput{
+			OrganizationID: input.OrganizationID,
+			StackID:        input.StackID,
+		})
+		if err != nil {
+			return StackOutput{}, err
+		}
+		last = output
+		if output.Stack.Status == string(components.StackStatusReady) {
+			return output, nil
+		}
+	}
+}
+
+func stackReadyTimeoutError(organizationID string, stackID string, timeout time.Duration, lastStatus string) error {
+	if lastStatus == "" {
+		lastStatus = "unknown"
+	}
+	return fmt.Errorf("stack %s did not become READY after %s (last status: %s); check stack status with: fctl cloud stacks show %s --organization %s", stackID, timeout, lastStatus, stackID, organizationID)
 }
 
 type UpdateStackService struct {
