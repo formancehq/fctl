@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/mod/semver"
 
 	cloudcmd "github.com/formancehq/fctl/v4/internal/commands/cloud"
 	v4prompt "github.com/formancehq/fctl/v4/internal/prompt"
@@ -207,8 +209,9 @@ func (i cloudStackCreateInput) resolveVersion(cmd *cobra.Command, client cloudcm
 	if len(output.Versions) == 0 {
 		return "", nil
 	}
-	choices := make([]v4prompt.Choice, 0, len(output.Versions))
-	for _, version := range output.Versions {
+	versions := sortedCloudStackRegionVersions(output.Versions)
+	choices := make([]v4prompt.Choice, 0, len(versions))
+	for _, version := range versions {
 		if strings.TrimSpace(version.Name) == "" {
 			continue
 		}
@@ -316,6 +319,66 @@ func cloudStackRegionChoiceTitle(region cloudcmd.RegionSummary) string {
 		name = "<noname>"
 	}
 	return fmt.Sprintf("%s | %s | %s", region.ID, visibility, name)
+}
+
+func sortedCloudStackRegionVersions(versions []cloudcmd.RegionVersionSummary) []cloudcmd.RegionVersionSummary {
+	sorted := append([]cloudcmd.RegionVersionSummary(nil), versions...)
+	sort.SliceStable(sorted, func(i, j int) bool {
+		return compareCloudStackVersionNames(sorted[i].Name, sorted[j].Name) > 0
+	})
+	return sorted
+}
+
+func compareCloudStackVersionNames(left string, right string) int {
+	left = strings.TrimSpace(left)
+	right = strings.TrimSpace(right)
+	leftComparable, leftValid := comparableCloudStackVersionName(left)
+	rightComparable, rightValid := comparableCloudStackVersionName(right)
+	if leftValid && rightValid {
+		if comparison := semver.Compare(leftComparable, rightComparable); comparison != 0 {
+			return comparison
+		}
+		return strings.Compare(left, right)
+	}
+	if leftValid {
+		return 1
+	}
+	if rightValid {
+		return -1
+	}
+	return strings.Compare(left, right)
+}
+
+func comparableCloudStackVersionName(value string) (string, bool) {
+	value = strings.TrimSpace(value)
+	if semver.IsValid(value) {
+		return value, true
+	}
+	if !strings.HasPrefix(value, "v") {
+		return "", false
+	}
+
+	core, suffix, _ := strings.Cut(value, "-")
+	if suffix != "" {
+		suffix = "-" + suffix
+	} else if before, after, ok := strings.Cut(value, "+"); ok {
+		core = before
+		suffix = "+" + after
+	}
+
+	parts := strings.Split(strings.TrimPrefix(core, "v"), ".")
+	switch len(parts) {
+	case 1:
+		value = "v" + parts[0] + ".0.0" + suffix
+	case 2:
+		value = "v" + parts[0] + "." + parts[1] + ".0" + suffix
+	default:
+		return "", false
+	}
+	if semver.IsValid(value) {
+		return value, true
+	}
+	return "", false
 }
 
 func newCloudStacksListCommand() *cobra.Command {

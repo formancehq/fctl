@@ -2626,10 +2626,10 @@ func TestCloudStacksCreatePromptsForNameRegionAndVersion(t *testing.T) {
 		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/regions":
 			fmt.Fprint(w, `{"data":[{"id":"eu-west-1","name":"Europe","active":true,"public":true},{"id":"private-1","name":"Private region","active":true,"public":false}]}`)
 		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/regions/eu-west-1/versions":
-			fmt.Fprint(w, `{"data":[{"name":"v3.2.4","regionID":"eu-west-1"},{"name":"v3.2.3","regionID":"eu-west-1","deprecated":true}]}`)
+			fmt.Fprint(w, `{"data":[{"name":"v2.2","regionID":"eu-west-1"},{"name":"v3.2-rc","regionID":"eu-west-1"},{"name":"v3.1","regionID":"eu-west-1"},{"name":"v3.2","regionID":"eu-west-1"}]}`)
 		case r.Method == http.MethodPost && r.URL.Path == "/organizations/org_1/stacks":
 			body := readRequestBody(t, r)
-			for _, expected := range []string{`"name":"Production"`, `"regionID":"eu-west-1"`, `"version":"v3.2.4"`} {
+			for _, expected := range []string{`"name":"Production"`, `"regionID":"eu-west-1"`, `"version":"v3.2"`} {
 				if !strings.Contains(body, expected) {
 					t.Fatalf("expected create body to contain %s, got %s", expected, body)
 				}
@@ -2669,8 +2669,11 @@ func TestCloudStacksCreatePromptsForNameRegionAndVersion(t *testing.T) {
 		"1. eu-west-1 | Public | Europe",
 		"Region\teu-west-1",
 		"Please select a version",
-		"1. v3.2.4",
-		"Version\tv3.2.4",
+		"1. v3.2",
+		"2. v3.2-rc",
+		"3. v3.1",
+		"4. v2.2",
+		"Version\tv3.2",
 		"Cloud stack stack_1 created.",
 	} {
 		if !strings.Contains(stdout, expected) {
