@@ -208,16 +208,23 @@ Wallet credit and debit require the wallet target explicitly.
 - `fctl reconciliation policies delete <policy-id> --confirm`
 - `fctl reconciliation policies reconcile <policy-id> --ledger-at <time> --payments-at <time> --confirm`
 
+## Session
+
+- `fctl session login cloud --cloud-url <url>` (deferred until Cloud device/browser login contract is explicit)
+- `fctl session login token --token-stdin --credential-dir <dir>`
+- `fctl session login client-credentials --issuer-url <url> --client-id <id> --client-secret-stdin --credential-dir <dir>`
+- `fctl session login oidc --issuer-url <url> --client-id <id>` (deferred until generic device flow contract is specified)
+- `fctl session login none`
+- `fctl session status`
+- `fctl session token`
+- `fctl session logout --confirm`
+
+`session` owns CLI authentication state for the selected context. The former
+root `login` command and `auth login/status/token/logout` paths are not kept as
+aliases in v4, so `auth` can remain the stack Auth service command.
+
 ## Auth
 
-- `fctl auth login cloud --cloud-url <url>` (deferred until Cloud device/browser login contract is explicit)
-- `fctl auth login token --token-stdin --credential-dir <dir>`
-- `fctl auth login client-credentials --issuer-url <url> --client-id <id> --client-secret-stdin --credential-dir <dir>`
-- `fctl auth login oidc --issuer-url <url> --client-id <id>` (deferred until generic device flow contract is specified)
-- `fctl auth login none`
-- `fctl auth status`
-- `fctl auth token`
-- `fctl auth logout --confirm`
 - `fctl auth clients create <name>`
 - `fctl auth clients list`
 - `fctl auth clients show <client-id>`

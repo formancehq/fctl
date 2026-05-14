@@ -64,6 +64,7 @@ func TestRootHelp(t *testing.T) {
 		"--insecure-tls",
 		"--no-color",
 		"--non-interactive",
+		"session",
 		"version",
 	} {
 		if !strings.Contains(stdout, expected) {
@@ -2157,35 +2158,40 @@ func TestTargetInspectJSON(t *testing.T) {
 }
 
 func TestDeferredCloudAndOIDCLoginCommandsReturnActionableErrors(t *testing.T) {
-	_, stderr, err := executeCommand(t, "auth", "login", "cloud", "--cloud-url", "https://cloud.example")
+	_, stderr, err := executeCommand(t, "session", "login", "cloud", "--cloud-url", "https://cloud.example")
 	if err == nil {
-		t.Fatal("expected auth login cloud to be deferred")
+		t.Fatal("expected session login cloud to be deferred")
 	}
-	if !strings.Contains(err.Error(), "auth login cloud is deferred") {
+	if !strings.Contains(err.Error(), "session login cloud is deferred") {
 		t.Fatalf("unexpected cloud login error: %v stderr=%s", err, stderr)
 	}
 
-	_, stderr, err = executeCommand(t, "login", "--membership-uri", "https://cloud.example")
+	_, stderr, err = executeCommand(t, "login")
 	if err == nil {
-		t.Fatal("expected deprecated root login to be deferred")
+		t.Fatal("expected root login alias to be removed")
 	}
-	if !strings.Contains(stderr, "Command login has been deprecated, use auth login cloud") {
-		t.Fatalf("expected login deprecation warning, got:\n%s", stderr)
-	}
-	if !strings.Contains(err.Error(), "auth login cloud is deferred") {
+	if !strings.Contains(err.Error(), `unknown command "login"`) {
 		t.Fatalf("unexpected root login error: %v stderr=%s", err, stderr)
 	}
 
-	_, stderr, err = executeCommand(t, "auth", "login", "oidc", "--issuer-url", "https://issuer.example", "--client-id", "client")
+	_, stderr, err = executeCommand(t, "auth", "login")
 	if err == nil {
-		t.Fatal("expected auth login oidc to be deferred")
+		t.Fatal("expected auth login alias to be removed")
 	}
-	if !strings.Contains(err.Error(), "auth login oidc is deferred") {
+	if !strings.Contains(err.Error(), `unknown command "login"`) {
+		t.Fatalf("unexpected auth login error: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t, "session", "login", "oidc", "--issuer-url", "https://issuer.example", "--client-id", "client")
+	if err == nil {
+		t.Fatal("expected session login oidc to be deferred")
+	}
+	if !strings.Contains(err.Error(), "session login oidc is deferred") {
 		t.Fatalf("unexpected oidc login error: %v stderr=%s", err, stderr)
 	}
 }
 
-func TestAuthLoginTokenStoresCredentialAndUpdatesContext(t *testing.T) {
+func TestSessionLoginTokenStoresCredentialAndUpdatesContext(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") != "Bearer stack-token" {
 			t.Fatalf("expected bearer token, got %q", r.Header.Get("Authorization"))
@@ -2212,14 +2218,14 @@ func TestAuthLoginTokenStoresCredentialAndUpdatesContext(t *testing.T) {
 		"stack-token\n",
 		"--config-dir", configDir,
 		"--credential-dir", credentialDir,
-		"auth", "login", "token",
+		"session", "login", "token",
 		"--token-stdin",
 	)
 	if err != nil {
-		t.Fatalf("auth login token: %v stderr=%s", err, stderr)
+		t.Fatalf("session login token: %v stderr=%s", err, stderr)
 	}
 	if stdout != "Authentication for context local set to token.\n" {
-		t.Fatalf("unexpected auth login output: %q", stdout)
+		t.Fatalf("unexpected session login output: %q", stdout)
 	}
 
 	configData, err := os.ReadFile(filepath.Join(configDir, "config.yaml"))
@@ -2243,10 +2249,10 @@ func TestAuthLoginTokenStoresCredentialAndUpdatesContext(t *testing.T) {
 
 	stdout, stderr, err = executeCommand(t,
 		"--config-dir", configDir,
-		"auth", "status",
+		"session", "status",
 	)
 	if err != nil {
-		t.Fatalf("auth status: %v stderr=%s", err, stderr)
+		t.Fatalf("session status: %v stderr=%s", err, stderr)
 	}
 	for _, expected := range []string{
 		"Context\tlocal\n",
@@ -2254,20 +2260,20 @@ func TestAuthLoginTokenStoresCredentialAndUpdatesContext(t *testing.T) {
 		"TokenRef\tcontexts/local/token\n",
 	} {
 		if !strings.Contains(stdout, expected) {
-			t.Fatalf("expected auth status output to contain %q, got:\n%s", expected, stdout)
+			t.Fatalf("expected session status output to contain %q, got:\n%s", expected, stdout)
 		}
 	}
 
 	stdout, stderr, err = executeCommand(t,
 		"--config-dir", configDir,
 		"--credential-dir", credentialDir,
-		"auth", "token",
+		"session", "token",
 	)
 	if err != nil {
-		t.Fatalf("auth token: %v stderr=%s", err, stderr)
+		t.Fatalf("session token: %v stderr=%s", err, stderr)
 	}
 	if stdout != "stack-token\n" {
-		t.Fatalf("unexpected auth token output: %q", stdout)
+		t.Fatalf("unexpected session token output: %q", stdout)
 	}
 
 	stdout, stderr, err = executeCommand(t,
@@ -2285,26 +2291,26 @@ func TestAuthLoginTokenStoresCredentialAndUpdatesContext(t *testing.T) {
 	_, stderr, err = executeCommand(t,
 		"--config-dir", configDir,
 		"--credential-dir", credentialDir,
-		"auth", "logout",
+		"session", "logout",
 	)
 	if err == nil {
-		t.Fatal("expected auth logout to require confirmation")
+		t.Fatal("expected session logout to require confirmation")
 	}
-	if !strings.Contains(err.Error(), "auth logout requires --confirm") {
+	if !strings.Contains(err.Error(), "session logout requires --confirm") {
 		t.Fatalf("unexpected logout error: %v stderr=%s", err, stderr)
 	}
 
 	stdout, stderr, err = executeCommand(t,
 		"--config-dir", configDir,
 		"--credential-dir", credentialDir,
-		"auth", "logout",
+		"session", "logout",
 		"--confirm",
 	)
 	if err != nil {
-		t.Fatalf("auth logout: %v stderr=%s", err, stderr)
+		t.Fatalf("session logout: %v stderr=%s", err, stderr)
 	}
 	if stdout != "Authentication for context local cleared.\n" {
-		t.Fatalf("unexpected auth logout output: %q", stdout)
+		t.Fatalf("unexpected session logout output: %q", stdout)
 	}
 	if _, err := os.Stat(credentialPath); !os.IsNotExist(err) {
 		t.Fatalf("expected stored token to be deleted, got %v", err)
@@ -2314,22 +2320,22 @@ func TestAuthLoginTokenStoresCredentialAndUpdatesContext(t *testing.T) {
 		t.Fatalf("read config after logout: %v", err)
 	}
 	if !strings.Contains(string(configData), "method: none") || strings.Contains(string(configData), "tokenRef") {
-		t.Fatalf("expected auth logout to clear token auth:\n%s", string(configData))
+		t.Fatalf("expected session logout to clear token auth:\n%s", string(configData))
 	}
 	_, stderr, err = executeCommand(t,
 		"--config-dir", configDir,
 		"--credential-dir", credentialDir,
-		"auth", "token",
+		"session", "token",
 	)
 	if err == nil {
-		t.Fatal("expected auth token to require an authenticated context")
+		t.Fatal("expected session token to require an authenticated context")
 	}
-	if !strings.Contains(err.Error(), "auth token requires an authenticated context") {
-		t.Fatalf("unexpected auth token error: %v stderr=%s", err, stderr)
+	if !strings.Contains(err.Error(), "session token requires an authenticated context") {
+		t.Fatalf("unexpected session token error: %v stderr=%s", err, stderr)
 	}
 }
 
-func TestAuthLoginClientCredentialsStoresSecret(t *testing.T) {
+func TestSessionLoginClientCredentialsStoresSecret(t *testing.T) {
 	configDir := t.TempDir()
 	credentialDir := t.TempDir()
 	_, stderr, err := executeCommand(t,
@@ -2345,16 +2351,16 @@ func TestAuthLoginClientCredentialsStoresSecret(t *testing.T) {
 		"super-secret\n",
 		"--config-dir", configDir,
 		"--credential-dir", credentialDir,
-		"auth", "login", "client-credentials",
+		"session", "login", "client-credentials",
 		"--issuer-url", "http://issuer",
 		"--client-id", "client",
 		"--client-secret-stdin",
 	)
 	if err != nil {
-		t.Fatalf("auth login client-credentials: %v stderr=%s", err, stderr)
+		t.Fatalf("session login client-credentials: %v stderr=%s", err, stderr)
 	}
 	if stdout != "Authentication for context local set to client credentials.\n" {
-		t.Fatalf("unexpected auth login output: %q", stdout)
+		t.Fatalf("unexpected session login output: %q", stdout)
 	}
 
 	configData, err := os.ReadFile(filepath.Join(configDir, "config.yaml"))
@@ -2377,7 +2383,7 @@ func TestAuthLoginClientCredentialsStoresSecret(t *testing.T) {
 	}
 }
 
-func TestAuthLoginNoneRequiresConfirmForCloudContext(t *testing.T) {
+func TestSessionLoginNoneRequiresConfirmForCloudContext(t *testing.T) {
 	configDir := t.TempDir()
 	_, stderr, err := executeCommand(t,
 		"--config-dir", configDir,
@@ -2389,11 +2395,11 @@ func TestAuthLoginNoneRequiresConfirmForCloudContext(t *testing.T) {
 		t.Fatalf("create cloud context: %v stderr=%s", err, stderr)
 	}
 
-	_, stderr, err = executeCommand(t, "--config-dir", configDir, "auth", "login", "none")
+	_, stderr, err = executeCommand(t, "--config-dir", configDir, "session", "login", "none")
 	if err == nil {
-		t.Fatal("expected auth login none to require confirmation on cloud contexts")
+		t.Fatal("expected session login none to require confirmation on cloud contexts")
 	}
-	if !strings.Contains(err.Error(), "auth login none on cloud contexts requires --confirm") {
+	if !strings.Contains(err.Error(), "session login none on cloud contexts requires --confirm") {
 		t.Fatalf("unexpected error: %v stderr=%s", err, stderr)
 	}
 }

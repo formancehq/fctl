@@ -18,63 +18,66 @@ import (
 func newAuthCommand() *cobra.Command {
 	command := &cobra.Command{
 		Use:   "auth",
-		Short: "Manage Auth service resources and CLI sessions",
+		Short: "Manage Auth service resources",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return cmd.Help()
+		},
 	}
-	command.AddCommand(newAuthLoginCommand())
-	command.AddCommand(newAuthStatusCommand())
-	command.AddCommand(newAuthTokenCommand())
-	command.AddCommand(newAuthLogoutCommand())
 	command.AddCommand(newAuthClientsCommand())
 	command.AddCommand(newAuthUsersCommand(false))
 	return command
 }
 
-func newAuthLoginCommand() *cobra.Command {
+func newSessionCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "session",
+		Short: "Manage CLI authentication sessions",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return cmd.Help()
+		},
+	}
+	command.AddCommand(newSessionLoginCommand())
+	command.AddCommand(newSessionStatusCommand())
+	command.AddCommand(newSessionTokenCommand())
+	command.AddCommand(newSessionLogoutCommand())
+	return command
+}
+
+func newSessionLoginCommand() *cobra.Command {
 	command := &cobra.Command{
 		Use:   "login",
 		Short: "Configure authentication for the selected context",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return cmd.Help()
+		},
 	}
-	command.AddCommand(newAuthLoginCloudCommand(false))
-	command.AddCommand(newAuthLoginTokenCommand())
-	command.AddCommand(newAuthLoginClientCredentialsCommand())
-	command.AddCommand(newAuthLoginOIDCCommand())
-	command.AddCommand(newAuthLoginNoneCommand())
+	command.AddCommand(newSessionLoginCloudCommand())
+	command.AddCommand(newSessionLoginTokenCommand())
+	command.AddCommand(newSessionLoginClientCredentialsCommand())
+	command.AddCommand(newSessionLoginOIDCCommand())
+	command.AddCommand(newSessionLoginNoneCommand())
 	return command
 }
 
-func newLoginCommand() *cobra.Command {
-	command := newAuthLoginCloudCommand(true)
-	command.Use = "login"
-	command.Short = "Deprecated alias for auth login cloud"
-	command.Deprecated = "use auth login cloud"
-	return command
-}
-
-func newAuthLoginCloudCommand(deprecatedRootAlias bool) *cobra.Command {
+func newSessionLoginCloudCommand() *cobra.Command {
 	var cloudURL string
-	var membershipURI string
 
 	command := &cobra.Command{
 		Use:   "cloud",
 		Short: "Log in to Formance Cloud (deferred)",
 		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			if deprecatedRootAlias {
-				fmt.Fprintln(cmd.ErrOrStderr(), "Command login has been deprecated, use auth login cloud")
-			}
-			if cloudURL != "" && membershipURI != "" {
-				return fmt.Errorf("--cloud-url and --membership-uri are mutually exclusive")
-			}
-			return fmt.Errorf("auth login cloud is deferred until the Cloud device/browser login contract is explicit; use auth login token or auth login client-credentials for now")
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return fmt.Errorf("session login cloud is deferred until the Cloud device/browser login contract is explicit; use session login token or session login client-credentials for now")
 		},
 	}
 	command.Flags().StringVar(&cloudURL, "cloud-url", "", "Formance Cloud URL")
-	command.Flags().StringVar(&membershipURI, "membership-uri", "", "Deprecated alias for --cloud-url")
-	_ = command.Flags().MarkDeprecated("membership-uri", "use --cloud-url")
 	return command
 }
 
-func newAuthLoginOIDCCommand() *cobra.Command {
+func newSessionLoginOIDCCommand() *cobra.Command {
 	var issuerURL string
 	var clientID string
 
@@ -84,12 +87,12 @@ func newAuthLoginOIDCCommand() *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			if issuerURL == "" {
-				return fmt.Errorf("auth login oidc requires --issuer-url")
+				return fmt.Errorf("session login oidc requires --issuer-url")
 			}
 			if clientID == "" {
-				return fmt.Errorf("auth login oidc requires --client-id")
+				return fmt.Errorf("session login oidc requires --client-id")
 			}
-			return fmt.Errorf("auth login oidc is deferred until the generic device flow contract is specified; use auth login token or auth login client-credentials for now")
+			return fmt.Errorf("session login oidc is deferred until the generic device flow contract is specified; use session login token or session login client-credentials for now")
 		},
 	}
 	command.Flags().StringVar(&issuerURL, "issuer-url", "", "OIDC issuer URL")
@@ -97,7 +100,7 @@ func newAuthLoginOIDCCommand() *cobra.Command {
 	return command
 }
 
-func newAuthLoginTokenCommand() *cobra.Command {
+func newSessionLoginTokenCommand() *cobra.Command {
 	var token string
 	var tokenStdin bool
 	var tokenRef string
@@ -107,7 +110,7 @@ func newAuthLoginTokenCommand() *cobra.Command {
 		Short: "Use a static bearer token for the selected context",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			cfg, path, name, context, err := selectedContextForAuthLogin(cmd)
+			cfg, path, name, context, err := selectedContextForSession(cmd)
 			if err != nil {
 				return err
 			}
@@ -123,7 +126,7 @@ func newAuthLoginTokenCommand() *cobra.Command {
 				secret = strings.TrimSpace(string(data))
 			}
 			if secret == "" && tokenRef == "" {
-				return fmt.Errorf("auth login token requires --token, --token-stdin, or --token-ref")
+				return fmt.Errorf("session login token requires --token, --token-stdin, or --token-ref")
 			}
 			if secret != "" {
 				if tokenRef == "" {
@@ -155,7 +158,7 @@ func newAuthLoginTokenCommand() *cobra.Command {
 	return command
 }
 
-func newAuthLoginClientCredentialsCommand() *cobra.Command {
+func newSessionLoginClientCredentialsCommand() *cobra.Command {
 	var issuerURL string
 	var clientID string
 	var clientSecret string
@@ -167,15 +170,15 @@ func newAuthLoginClientCredentialsCommand() *cobra.Command {
 		Short: "Use OAuth client credentials for the selected context",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			cfg, path, name, context, err := selectedContextForAuthLogin(cmd)
+			cfg, path, name, context, err := selectedContextForSession(cmd)
 			if err != nil {
 				return err
 			}
 			if issuerURL == "" {
-				return fmt.Errorf("auth login client-credentials requires --issuer-url")
+				return fmt.Errorf("session login client-credentials requires --issuer-url")
 			}
 			if clientID == "" {
-				return fmt.Errorf("auth login client-credentials requires --client-id")
+				return fmt.Errorf("session login client-credentials requires --client-id")
 			}
 			if clientSecret != "" && clientSecretStdin {
 				return fmt.Errorf("--client-secret and --client-secret-stdin are mutually exclusive")
@@ -189,7 +192,7 @@ func newAuthLoginClientCredentialsCommand() *cobra.Command {
 				secret = strings.TrimSpace(string(data))
 			}
 			if secret == "" && secretRef == "" {
-				return fmt.Errorf("auth login client-credentials requires --client-secret, --client-secret-stdin, or --secret-ref")
+				return fmt.Errorf("session login client-credentials requires --client-secret, --client-secret-stdin, or --secret-ref")
 			}
 			if secret != "" {
 				if secretRef == "" {
@@ -228,7 +231,7 @@ func newAuthLoginClientCredentialsCommand() *cobra.Command {
 	return command
 }
 
-func newAuthLoginNoneCommand() *cobra.Command {
+func newSessionLoginNoneCommand() *cobra.Command {
 	var confirm bool
 
 	command := &cobra.Command{
@@ -236,12 +239,12 @@ func newAuthLoginNoneCommand() *cobra.Command {
 		Short: "Disable authentication for the selected context",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			cfg, path, name, context, err := selectedContextForAuthLogin(cmd)
+			cfg, path, name, context, err := selectedContextForSession(cmd)
 			if err != nil {
 				return err
 			}
 			if context.Kind != v4config.ContextKindStack && !confirm {
-				return fmt.Errorf("auth login none on %s contexts requires --confirm", context.Kind)
+				return fmt.Errorf("session login none on %s contexts requires --confirm", context.Kind)
 			}
 			context.Auth = v4config.Auth{Method: v4config.AuthMethodNone}
 			cfg.Contexts[name] = context
@@ -259,7 +262,7 @@ func newAuthLoginNoneCommand() *cobra.Command {
 	return command
 }
 
-func selectedContextForAuthLogin(cmd *cobra.Command) (v4config.Config, string, string, v4config.Context, error) {
+func selectedContextForSession(cmd *cobra.Command) (v4config.Config, string, string, v4config.Context, error) {
 	cfg, path, err := loadConfig(cmd, false)
 	if err != nil {
 		return v4config.Config{}, "", "", v4config.Context{}, err
@@ -275,13 +278,13 @@ func selectedContextForAuthLogin(cmd *cobra.Command) (v4config.Config, string, s
 	return cfg, path, name, context, nil
 }
 
-func newAuthStatusCommand() *cobra.Command {
+func newSessionStatusCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
 		Short: "Show authentication for the selected context",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			cfg, _, name, context, err := selectedContextForAuthLogin(cmd)
+			cfg, _, name, context, err := selectedContextForSession(cmd)
 			if err != nil {
 				return err
 			}
@@ -320,18 +323,18 @@ func newAuthStatusCommand() *cobra.Command {
 	}
 }
 
-func newAuthTokenCommand() *cobra.Command {
+func newSessionTokenCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "token",
 		Short: "Print an access token for the selected context",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			_, _, _, context, err := selectedContextForAuthLogin(cmd)
+			_, _, _, context, err := selectedContextForSession(cmd)
 			if err != nil {
 				return err
 			}
 			if context.Auth.Method == v4config.AuthMethodNone {
-				return fmt.Errorf("auth token requires an authenticated context")
+				return fmt.Errorf("session token requires an authenticated context")
 			}
 			authOptions, err := authOptionsFromCommand(cmd)
 			if err != nil {
@@ -346,7 +349,7 @@ func newAuthTokenCommand() *cobra.Command {
 				return err
 			}
 			if source == nil {
-				return fmt.Errorf("auth token requires an authenticated context")
+				return fmt.Errorf("session token requires an authenticated context")
 			}
 			token, err := source.Token(cmd.Context())
 			if err != nil {
@@ -358,7 +361,7 @@ func newAuthTokenCommand() *cobra.Command {
 	}
 }
 
-func newAuthLogoutCommand() *cobra.Command {
+func newSessionLogoutCommand() *cobra.Command {
 	var confirm bool
 
 	command := &cobra.Command{
@@ -367,9 +370,9 @@ func newAuthLogoutCommand() *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if !confirm {
-				return fmt.Errorf("auth logout requires --confirm")
+				return fmt.Errorf("session logout requires --confirm")
 			}
-			cfg, path, name, context, err := selectedContextForAuthLogin(cmd)
+			cfg, path, name, context, err := selectedContextForSession(cmd)
 			if err != nil {
 				return err
 			}

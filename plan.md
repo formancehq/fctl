@@ -118,11 +118,11 @@ Points bloques / differes:
 
 | v3 | v4 canonique | Changements | Tests critiques |
 | --- | --- | --- | --- |
-| `fctl login --membership-uri <url>` | `fctl auth login cloud --cloud-url <url>` | Cloud devient un provider d'auth, pas une condition pour la stack. | migration de token, erreurs sans browser, non-interactif. |
-| aucun equivalent local propre | `fctl auth login token --token <token>` | Pour self-hosted et CI. | secret jamais ecrit en clair dans config si keyring disponible. |
-| aucun equivalent local propre | `fctl auth login client-credentials --issuer-url --client-id --client-secret` | Auth machine-to-machine. | renouvellement, expiration, erreurs OAuth. |
-| aucun equivalent local propre | `fctl auth login oidc --issuer-url --client-id` | OIDC generique. | scopes, device flow si supporte. |
-| aucun equivalent local propre | `fctl auth login none` | Local/dev sans auth. | refuse sur contexte non local sauf confirmation explicite. |
+| `fctl login --membership-uri <url>` | `fctl session login cloud --cloud-url <url>` | La commande racine est supprimee sans alias; Cloud devient un provider d'auth, pas une condition pour la stack. | migration de token, erreurs sans browser, non-interactif. |
+| aucun equivalent local propre | `fctl session login token --token <token>` | Pour self-hosted et CI. | secret jamais ecrit en clair dans config si keyring disponible. |
+| aucun equivalent local propre | `fctl session login client-credentials --issuer-url --client-id --client-secret` | Auth machine-to-machine. | renouvellement, expiration, erreurs OAuth. |
+| aucun equivalent local propre | `fctl session login oidc --issuer-url --client-id` | OIDC generique. | scopes, device flow si supporte. |
+| aucun equivalent local propre | `fctl session login none` | Local/dev sans auth. | refuse sur contexte non local sauf confirmation explicite. |
 | `fctl profiles list` | `fctl context list` | `profiles` alias deprecie. | format table/json/yaml stable. |
 | `fctl profiles show <name>` | `fctl context show <name>` | meme argument. | masque les secrets. |
 | `fctl profiles use <name>` | `fctl context use <name>` | current context. | ecriture atomique. |
@@ -142,19 +142,19 @@ Points bloques / differes:
 
 Implementation v4:
 
-- `auth login token` met a jour le contexte selectionne et peut stocker le token dans un `--credential-dir` explicite via `--token` ou `--token-stdin`;
-- `auth login client-credentials` met a jour le contexte selectionne et peut stocker le secret client dans un `--credential-dir` explicite via `--client-secret` ou `--client-secret-stdin`;
-- `auth login none` desactive l'auth sur un contexte `stack`; sur `cloud`/`cloud-stack`, `--confirm` est requis pour eviter une desactivation accidentelle;
-- `auth status` affiche la methode d'auth du contexte courant sans exposer les secrets;
-- `auth token` imprime le token d'acces resolu pour les contextes authentifies, afin de faciliter CI et debug;
-- `auth logout --confirm` supprime les credentials stockes localement quand ils utilisent un ref gere par le CLI, puis repasse le contexte en `none`.
+- `session login token` met a jour le contexte selectionne et peut stocker le token dans un `--credential-dir` explicite via `--token` ou `--token-stdin`;
+- `session login client-credentials` met a jour le contexte selectionne et peut stocker le secret client dans un `--credential-dir` explicite via `--client-secret` ou `--client-secret-stdin`;
+- `session login none` desactive l'auth sur un contexte `stack`; sur `cloud`/`cloud-stack`, `--confirm` est requis pour eviter une desactivation accidentelle;
+- `session status` affiche la methode d'auth du contexte courant sans exposer les secrets;
+- `session token` imprime le token d'acces resolu pour les contextes authentifies, afin de faciliter CI et debug;
+- `session logout --confirm` supprime les credentials stockes localement quand ils utilisent un ref gere par le CLI, puis repasse le contexte en `none`.
 - `context unset-defaults [name] --confirm` supprime les defaults du contexte sans toucher a l'auth ni aux credentials; les aliases deprecies `profiles reset`, `profiles set-default-organization` et `profiles set-default-stack` restent disponibles pour les migrations peu couteuses.
 - `ui [--print]` reste disponible sur les contextes `cloud`/`cloud-stack`; il lit `/_info.consoleURL`, ouvre le navigateur seulement en mode interactif, et refuse les contextes `stack`.
 
 Points bloques / differes:
 
-- `auth login cloud` reste a implementer avec un vrai contrat de device/browser flow ou d'import de token Cloud; il ne doit pas recreer une dependance Cloud pour les commandes stack locales.
-- `auth login oidc` reste a implementer quand le contrat generic device flow est stabilise (device authorization endpoint, scopes, refresh, stockage); `auth login client-credentials` couvre deja le cas machine-to-machine.
+- `session login cloud` reste a implementer avec un vrai contrat de device/browser flow ou d'import de token Cloud; il ne doit pas recreer une dependance Cloud pour les commandes stack locales.
+- `session login oidc` reste a implementer quand le contrat generic device flow est stabilise (device authorization endpoint, scopes, refresh, stockage); `session login client-credentials` couvre deja le cas machine-to-machine.
 
 ## Mapping commandes Cloud
 
@@ -478,12 +478,13 @@ Le chemin `orchestration ...` peut rester comme alias deprecie pendant la phase 
 ## Mapping Auth service
 
 La v3 utilise `auth` pour le service Auth de la stack. La v4 garde `auth` comme nom canonique du service, car `identity` pourra devenir un produit Formance distinct plus tard.
-Les commandes de session CLI peuvent vivre sous `auth login/status/logout/token`, mais les commandes du service restent `auth clients ...` et `auth users ...`.
+Les commandes de session CLI vivent sous `session login/status/logout/token`, mais les commandes du service restent `auth clients ...` et `auth users ...`.
 
 Decision:
 
-- `auth login/status/logout/token` = session CLI;
+- `session login/status/logout/token` = session CLI;
 - `auth clients ...` et `auth users ...` = service Auth de la stack;
+- pas d'alias `login` racine ni `auth login/status/logout/token`, pour eviter de melanger session CLI et service Auth;
 - ne pas introduire `identity` comme alias ou nom canonique dans cette migration.
 
 | v3 | v4 canonique | Changements d'arguments | Notes |
@@ -577,9 +578,9 @@ Scenarios minimaux:
 | Scenario | Commandes |
 | --- | --- |
 | contexte local no-auth | `context create stack`, `context use`, `target inspect`, `ledger transactions list`. |
-| contexte token self-hosted | `auth login token`, `target inspect`, commande produit. |
-| contexte client credentials | `auth login client-credentials`, refresh token, commande produit. |
-| contexte Cloud stack | `auth login cloud`, `cloud organizations list`, `ledger transactions list`. |
+| contexte token self-hosted | `session login token`, `target inspect`, commande produit. |
+| contexte client credentials | `session login client-credentials`, refresh token, commande produit. |
+| contexte Cloud stack | `session login cloud`, `cloud organizations list`, `ledger transactions list`. |
 | migration v3 | `config migrate-v3`, puis `context list/show/use`. |
 | aliases v3 | `profiles list`, `payments transfer_initiation list`, `payments bank_accounts list`, `ledger transactions list --src --dst`. |
 | non-interactif | commandes mutantes sans `--confirm` doivent echouer proprement. |

@@ -6,7 +6,6 @@ tests, and explicit about their canonical replacement.
 | Alias | Canonical command | Status | Removal target |
 | --- | --- | --- | --- |
 | `--profile <name>` | `--context <name>` | Deprecated warning | v4.x |
-| `login --membership-uri <url>` | `auth login cloud --cloud-url <url>` | Deferred warning/error | v4.x |
 | `profiles ...` | `context ...` | Deprecated warning | v4.x |
 | `orchestration ...` | `flows ...` | Deprecated warning | v4.x or v5 |
 | `orchestration workflows create <file>\|-` | `flows workflows create --file <path>\|-` | Deprecated warning | v4.x |
@@ -34,6 +33,8 @@ tests, and explicit about their canonical replacement.
 
 | Command | Status | Reason |
 | --- | --- | --- |
+| `login --membership-uri <url>` | Removed | CLI authentication moved to `session login ...`, and no alias is kept to avoid mixing CLI session state with the Auth service. |
+| `auth login/status/token/logout` | Removed | `auth` is reserved for stack Auth service resources; CLI session commands live under `session`. |
 | `search ...` | Removed | The product no longer exists. |
 | `se` | Removed | Alias for removed `search`. |
 

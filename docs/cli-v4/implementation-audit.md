@@ -31,10 +31,13 @@ work.
 
 ## Explicitly Deferred Or Blocked
 
-- `auth login cloud` and deprecated root `login` are visible but return a clear
-  deferred error until the Cloud device/browser login contract is specified.
-- `auth login oidc` is visible but returns a clear deferred error until the
+- `session login cloud` is visible but returns a clear deferred error until the
+  Cloud device/browser login contract is specified.
+- `session login oidc` is visible but returns a clear deferred error until the
   generic device-flow contract is specified.
+- Root `login` and `auth login/status/token/logout` are not kept as aliases.
+  `session` owns CLI authentication state, while `auth` is reserved for stack
+  Auth service resources.
 - `cloud personal-tokens create` is not implemented because the v3 flow depends
   on Cloud claims, stack access checks, and an Auth token exchange model not yet
   present in the v4 runtime.

@@ -14,6 +14,10 @@ the isolated v4 implementation under `v4/`.
   `FCTL_LedgerTransactionList`.
 - `auth` remains the canonical service name. Do not introduce `identity` in this
   migration.
+- CLI authentication commands move to `session login/status/token/logout`.
+  `auth login/status/token/logout` and the root `login` command are removed
+  instead of kept as aliases, so `auth` is not overloaded between CLI session
+  state and the stack Auth service.
 - `flows` is the canonical command for the former `orchestration` product.
 - `cloud stacks` is the canonical command for Cloud stack lifecycle operations.
   `cloud_stacks`, `stack`, and `stacks` are deprecated migration aliases with
@@ -30,7 +34,7 @@ the isolated v4 implementation under `v4/`.
 | `--insecure-tls` | `--insecure-tls` | Kept as an explicit non-persistent runtime override. |
 | none | `--no-color` | New stable flag; v4 renderers are plain by default. |
 | `ui` | `ui --print` or `ui` | Kept for Cloud contexts; `--print` is non-browser/non-interactive friendly. |
-| `login --membership-uri <url>` | `auth login cloud --cloud-url <url>` | Deprecated root command exists, but Cloud device/browser login is deferred. |
+| `login --membership-uri <url>` | `session login cloud --cloud-url <url>` | Root `login` is removed; no alias is kept. Cloud device/browser login is deferred. |
 | `profiles ...` | `context ...` | `profiles` is a deprecated alias with a warning. |
 | `profiles reset <name>` | `context unset-defaults <name> --confirm` | `profiles reset` is a deprecated alias with a warning. |
 | `profiles set-default-organization <org>` | `context set --organization <org>` | Deprecated alias updates the current context. |
@@ -72,10 +76,10 @@ when the command is intentionally machine-readable.
 
 ## Deferred Items
 
-- `auth login cloud` is deferred until the Cloud device/browser login contract is
+- `session login cloud` is deferred until the Cloud device/browser login contract is
   explicit in v4. Stack commands must remain usable without Cloud membership.
-- `auth login oidc` is deferred until the generic device-flow contract is
-  specified. Use `auth login client-credentials` for machine-to-machine auth.
+- `session login oidc` is deferred until the generic device-flow contract is
+  specified. Use `session login client-credentials` for machine-to-machine auth.
 - `--telemetry` is deferred until opt-in/out behavior and stored state are
   documented.
 - `--quiet` is deferred until each command family defines its primary quiet
