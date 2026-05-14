@@ -5328,6 +5328,16 @@ func TestLedgerTransactionsExplainRequiresV3(t *testing.T) {
 	}
 }
 
+func TestLedgerTransactionsExplainHiddenUntilSDKSupport(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "ledger", "transactions", "--help")
+	if err != nil {
+		t.Fatalf("show ledger transactions help: %v stderr=%s", err, stderr)
+	}
+	if strings.Contains(stdout, "explain") {
+		t.Fatalf("ledger transactions explain must stay hidden until SDK/spec support is available, got:\n%s", stdout)
+	}
+}
+
 func TestLedgerTransactionsExplainDocumentsCurrentSDKGapOnV3(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

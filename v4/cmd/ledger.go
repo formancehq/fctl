@@ -1319,9 +1319,10 @@ func newLedgerTransactionsExplainCommand() *cobra.Command {
 	var apiVersion string
 
 	command := &cobra.Command{
-		Use:   "explain <transaction-id>",
-		Short: "Explain a ledger transaction (requires ledger API v3+)",
-		Args:  cobra.ExactArgs(1),
+		Use:    "explain <transaction-id>",
+		Short:  "Explain a ledger transaction (requires ledger API v3+)",
+		Hidden: true,
+		Args:   cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
