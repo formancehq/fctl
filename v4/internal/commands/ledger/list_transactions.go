@@ -20,6 +20,7 @@ const (
 	FeatureCountTransactions         capabilities.Feature = "countTransactions"
 	FeatureCreateTransaction         capabilities.Feature = "createTransaction"
 	FeatureDeleteTransactionMetadata capabilities.Feature = "deleteTransactionMetadata"
+	FeatureExplainTransaction        capabilities.Feature = "explainTransaction"
 	FeatureListTransactions          capabilities.Feature = "listTransactions"
 	FeatureGetTransaction            capabilities.Feature = "getTransaction"
 	FeatureRevertTransaction         capabilities.Feature = "revertTransaction"

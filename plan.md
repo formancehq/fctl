@@ -320,6 +320,11 @@ Commandes nouvelles possibles si l'API Ledger v3 les expose:
 | `ledger schemas list/show/insert` | selon manifeste | commande visible, validation runtime. |
 | `ledger accounts query` | selon manifeste | proposer `--api-version` seulement comme override technique. |
 
+Etat d'implementation:
+
+- `ledger transactions explain <id>` est visible et preflight la resolution `ledger API v3+`.
+- La spec stack `v3.2.4` (`generate.json`) et `formance-sdk-go` courant n'exposent pas encore `explainTransaction`; sur une cible Ledger v3, la commande retourne donc une erreur explicite de gap spec/SDK au lieu d'inventer un endpoint.
+
 ## Mapping Payments
 
 Regles:

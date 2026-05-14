@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -1255,6 +1256,7 @@ func newLedgerTransactionsCommand() *cobra.Command {
 	}
 	command.AddCommand(newLedgerTransactionsCountCommand())
 	command.AddCommand(newLedgerTransactionsDeleteMetadataCommand())
+	command.AddCommand(newLedgerTransactionsExplainCommand())
 	command.AddCommand(newLedgerTransactionsListCommand())
 	command.AddCommand(newLedgerTransactionsRevertCommand())
 	command.AddCommand(newLedgerTransactionsRunScriptCommand("run-script", nil, false))
@@ -1262,6 +1264,58 @@ func newLedgerTransactionsCommand() *cobra.Command {
 	command.AddCommand(newLedgerTransactionsSendCommand(false))
 	command.AddCommand(newLedgerTransactionsSetMetadataCommand())
 	command.AddCommand(newLedgerTransactionsShowCommand())
+	return command
+}
+
+func newLedgerTransactionsExplainCommand() *cobra.Command {
+	var ledger string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "explain <transaction-id>",
+		Short: "Explain a ledger transaction (requires ledger API v3+)",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			if ledger == "" {
+				ledger = rt.Context.Defaults["ledger"]
+			}
+			if ledger == "" {
+				ledger = "default"
+			}
+
+			request := capabilities.VersionResolutionRequest{
+				Product:         ledgercmd.ProductLedger,
+				Feature:         ledgercmd.FeatureExplainTransaction,
+				HandlerVersions: []capabilities.APIVersion{"v3"},
+			}
+			if apiVersion != "" {
+				request.Policy = capabilities.VersionPolicyPinned
+				request.PinnedVersion = capabilities.APIVersion(apiVersion)
+			}
+			selected, err := rt.ResolveAPIVersion(cmd.Context(), request)
+			if err != nil {
+				var unsupported *capabilities.UnsupportedFeatureError
+				if errors.As(err, &unsupported) {
+					return fmt.Errorf("ledger transactions explain requires ledger API v3+; target ledger component %s supports %s",
+						unsupported.ComponentVersion,
+						strings.Join(apiVersionsToStrings(unsupported.Supported), ","),
+					)
+				}
+				return err
+			}
+			return fmt.Errorf("ledger transactions explain resolved %s for ledger %s transaction %s, but explainTransaction is not exposed by the current stack v3.2.4 spec or formance-sdk-go yet",
+				selected,
+				ledger,
+				args[0],
+			)
+		},
+	}
+	command.Flags().StringVar(&ledger, "ledger", "", "Ledger name")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
 	return command
 }
 

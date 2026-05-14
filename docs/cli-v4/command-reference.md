@@ -125,6 +125,7 @@ aliases for `cloud stacks`.
 - `fctl ledger transactions run-script --file <path>|-`
 - `fctl ledger transactions revert <transaction-id>`
 - `fctl ledger transactions count`
+- `fctl ledger transactions explain <transaction-id>` (requires ledger API v3+; currently blocked until the public spec/SDK exposes `explainTransaction`)
 - `fctl ledger accounts list`
 - `fctl ledger accounts show <address>`
 - `fctl ledger accounts query <query-id> --schema-version <version>`

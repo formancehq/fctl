@@ -3543,6 +3543,86 @@ func TestLedgerTransactionsCountSelectsV2(t *testing.T) {
 	}
 }
 
+func TestLedgerTransactionsExplainRequiresV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	_, _, err = executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "transactions", "explain", "42",
+	)
+	if err == nil {
+		t.Fatal("expected ledger transactions explain to require ledger API v3")
+	}
+	for _, expected := range []string{
+		"ledger transactions explain requires ledger API v3+",
+		"target ledger component 2.3.4 supports v1,v2",
+	} {
+		if !strings.Contains(err.Error(), expected) {
+			t.Fatalf("expected error to contain %q, got %v", expected, err)
+		}
+	}
+}
+
+func TestLedgerTransactionsExplainDocumentsCurrentSDKGapOnV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"3.2.4","health":true}]}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	_, _, err = executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "transactions", "explain", "42",
+	)
+	if err == nil {
+		t.Fatal("expected ledger transactions explain to report the current SDK/spec gap")
+	}
+	for _, expected := range []string{
+		"ledger transactions explain resolved v3",
+		"explainTransaction is not exposed by the current stack v3.2.4 spec or formance-sdk-go yet",
+	} {
+		if !strings.Contains(err.Error(), expected) {
+			t.Fatalf("expected error to contain %q, got %v", expected, err)
+		}
+	}
+}
+
 func TestLedgerTransactionsSendSelectsV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
