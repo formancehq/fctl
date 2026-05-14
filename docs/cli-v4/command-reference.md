@@ -6,10 +6,14 @@ This reference lists the current canonical v4 command families implemented under
 ## Target and Configuration
 
 - `fctl context create stack <name> --stack-url <url>`
+- `fctl context create cloud <name> --cloud-url <url>`
+- `fctl context create cloud-stack <name> --cloud-url <url> --organization <organization-id> --stack <stack-id>`
 - `fctl context list`
 - `fctl context show <name>`
 - `fctl context use <name>`
+- `fctl context set [name] --organization <organization-id> --stack <stack-id> --default-ledger <ledger>`
 - `fctl config migrate-v3`
+- `fctl setup`
 - `fctl target inspect`
 
 ## Ledger

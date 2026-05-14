@@ -16,8 +16,8 @@ tests, and explicit about their canonical replacement.
 | `auth clients get` | `auth clients show` | Deprecated warning | v4.x |
 | `auth users get` | `auth users show` | Deprecated warning | v4.x |
 | `webhooks change-secret` | `webhooks secret rotate` | Deprecated warning | v4.x |
-| `stack ...` | `cloud_stacks ...` | Planned deprecated warning | v4.x or v5 |
-| `stacks ...` | `cloud_stacks ...` | Planned deprecated warning | v4.x or v5 |
+| `stack ...` | `cloud_stacks ...` | Deprecated warning | v4.1, v4.2, or v5 |
+| `stacks ...` | `cloud_stacks ...` | Deprecated warning | v4.1, v4.2, or v5 |
 
 ## Removed Commands
 
