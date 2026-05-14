@@ -19,6 +19,7 @@ func newContextCommand() *cobra.Command {
 		newContextShowCommand(),
 		newContextUseCommand(),
 		newContextCreateCommand(),
+		newContextSetCommand(),
 		newContextWizardCommand(),
 	)
 
@@ -126,6 +127,68 @@ func newContextCreateCommand() *cobra.Command {
 		Short: "Create contexts",
 	}
 	command.AddCommand(newContextCreateStackCommand())
+	command.AddCommand(newContextCreateCloudCommand())
+	command.AddCommand(newContextCreateCloudStackCommand())
+	return command
+}
+
+func newContextSetCommand() *cobra.Command {
+	var organization string
+	var stack string
+	var defaultLedger string
+
+	command := &cobra.Command{
+		Use:   "set [name]",
+		Short: "Update a configured context",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, path, err := loadConfig(cmd, false)
+			if err != nil {
+				return err
+			}
+			name := cfg.CurrentContext
+			if len(args) == 1 {
+				name = args[0]
+			}
+			if name == "" {
+				return fmt.Errorf("no context selected")
+			}
+			context, ok := cfg.Contexts[name]
+			if !ok {
+				return fmt.Errorf("context %q does not exist", name)
+			}
+			if organization != "" {
+				if context.Kind != v4config.ContextKindCloud && context.Kind != v4config.ContextKindCloudStack {
+					return fmt.Errorf("--organization can only be set on cloud or cloud-stack contexts")
+				}
+				context.Organization = organization
+			}
+			if stack != "" {
+				if context.Kind != v4config.ContextKindCloudStack {
+					return fmt.Errorf("--stack can only be set on cloud-stack contexts")
+				}
+				context.Stack = stack
+			}
+			if defaultLedger != "" {
+				if context.Defaults == nil {
+					context.Defaults = map[string]string{}
+				}
+				context.Defaults["ledger"] = defaultLedger
+			}
+			cfg.Contexts[name] = context
+			if err := v4config.SaveFile(path, cfg); err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: name == cfg.CurrentContext, Context: context}); handled || err != nil {
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Context %s updated.\n", name)
+			return err
+		},
+	}
+	command.Flags().StringVar(&organization, "organization", "", "Cloud organization ID")
+	command.Flags().StringVar(&stack, "stack", "", "Cloud stack ID")
+	command.Flags().StringVar(&defaultLedger, "default-ledger", "", "Default ledger for this context")
 	return command
 }
 
@@ -209,6 +272,135 @@ func newContextCreateStackCommand() *cobra.Command {
 	command.Flags().StringVar(&defaultLedger, "default-ledger", "", "Default ledger for this context")
 
 	return command
+}
+
+func newContextCreateCloudCommand() *cobra.Command {
+	var cloudURL string
+	var authMethod string
+	var tokenRef string
+	var account string
+
+	command := &cobra.Command{
+		Use:   "cloud <name>",
+		Short: "Create a Formance Cloud control-plane context",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, path, err := loadConfig(cmd, true)
+			if err != nil {
+				return err
+			}
+			if cfg.Contexts == nil {
+				cfg.Contexts = map[string]v4config.Context{}
+			}
+			name := args[0]
+			if _, exists := cfg.Contexts[name]; exists {
+				return fmt.Errorf("context %q already exists", name)
+			}
+			auth, err := cloudContextAuth(authMethod, tokenRef, account)
+			if err != nil {
+				return err
+			}
+			cfg.Contexts[name] = v4config.Context{
+				Kind:     v4config.ContextKindCloud,
+				CloudURL: cloudURL,
+				Auth:     auth,
+			}
+			if cfg.CurrentContext == "" {
+				cfg.CurrentContext = name
+			}
+			if err := v4config.SaveFile(path, cfg); err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: name == cfg.CurrentContext, Context: cfg.Contexts[name]}); handled || err != nil {
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Context %s created.\n", name)
+			return err
+		},
+	}
+	command.Flags().StringVar(&cloudURL, "cloud-url", v4config.DefaultCloudURL, "Cloud API URL")
+	command.Flags().StringVar(&authMethod, "auth-method", string(v4config.AuthMethodCloudDevice), "Authentication method (cloud_device, token, none)")
+	command.Flags().StringVar(&tokenRef, "token-ref", "", "Credential reference for token auth")
+	command.Flags().StringVar(&account, "account", "", "Cloud account label")
+	return command
+}
+
+func newContextCreateCloudStackCommand() *cobra.Command {
+	var cloudURL string
+	var organization string
+	var stack string
+	var authMethod string
+	var tokenRef string
+	var account string
+	var defaultLedger string
+
+	command := &cobra.Command{
+		Use:   "cloud-stack <name>",
+		Short: "Create a Formance Cloud stack context",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, path, err := loadConfig(cmd, true)
+			if err != nil {
+				return err
+			}
+			if cfg.Contexts == nil {
+				cfg.Contexts = map[string]v4config.Context{}
+			}
+			name := args[0]
+			if _, exists := cfg.Contexts[name]; exists {
+				return fmt.Errorf("context %q already exists", name)
+			}
+			auth, err := cloudContextAuth(authMethod, tokenRef, account)
+			if err != nil {
+				return err
+			}
+			defaults := map[string]string{}
+			if defaultLedger != "" {
+				defaults["ledger"] = defaultLedger
+			}
+			if len(defaults) == 0 {
+				defaults = nil
+			}
+			cfg.Contexts[name] = v4config.Context{
+				Kind:         v4config.ContextKindCloudStack,
+				CloudURL:     cloudURL,
+				Organization: organization,
+				Stack:        stack,
+				Auth:         auth,
+				Defaults:     defaults,
+				API:          map[string]string{"ledger": string(v4config.APIPolicyLatestCompatible)},
+			}
+			if cfg.CurrentContext == "" {
+				cfg.CurrentContext = name
+			}
+			if err := v4config.SaveFile(path, cfg); err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: name == cfg.CurrentContext, Context: cfg.Contexts[name]}); handled || err != nil {
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Context %s created.\n", name)
+			return err
+		},
+	}
+	command.Flags().StringVar(&cloudURL, "cloud-url", v4config.DefaultCloudURL, "Cloud API URL")
+	command.Flags().StringVar(&organization, "organization", "", "Cloud organization ID")
+	command.Flags().StringVar(&stack, "stack", "", "Cloud stack ID")
+	command.Flags().StringVar(&authMethod, "auth-method", string(v4config.AuthMethodCloudDevice), "Authentication method (cloud_device, token, none)")
+	command.Flags().StringVar(&tokenRef, "token-ref", "", "Credential reference for token auth")
+	command.Flags().StringVar(&account, "account", "", "Cloud account label")
+	command.Flags().StringVar(&defaultLedger, "default-ledger", "", "Default ledger for this context")
+	return command
+}
+
+func cloudContextAuth(authMethod string, tokenRef string, account string) (v4config.Auth, error) {
+	auth := v4config.Auth{Method: v4config.AuthMethod(authMethod), TokenRef: tokenRef, Account: account}
+	switch auth.Method {
+	case v4config.AuthMethodCloudDevice, v4config.AuthMethodToken, v4config.AuthMethodNone:
+		return auth, nil
+	default:
+		return v4config.Auth{}, fmt.Errorf("unsupported cloud auth method %q", authMethod)
+	}
 }
 
 type contextListOutput struct {

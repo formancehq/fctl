@@ -168,6 +168,91 @@ func TestContextCreateListShowUse(t *testing.T) {
 	}
 }
 
+func TestContextCreateCloudAndCloudStack(t *testing.T) {
+	configDir := t.TempDir()
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud", "cloud",
+		"--cloud-url", "https://cloud.example/api",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud context: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Context cloud created.\n" {
+		t.Fatalf("unexpected cloud create output: %q", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", "https://cloud.example/api",
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Context prod created.\n" {
+		t.Fatalf("unexpected cloud-stack create output: %q", stdout)
+	}
+
+	cfg, err := v4config.LoadFile(filepath.Join(configDir, "config.yaml"))
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+	if cfg.Contexts["cloud"].Kind != v4config.ContextKindCloud {
+		t.Fatalf("expected cloud context kind, got %q", cfg.Contexts["cloud"].Kind)
+	}
+	prod := cfg.Contexts["prod"]
+	if prod.Kind != v4config.ContextKindCloudStack || prod.Organization != "org_1" || prod.Stack != "stack_1" {
+		t.Fatalf("unexpected cloud-stack context: %#v", prod)
+	}
+	if prod.Defaults["ledger"] != "default" {
+		t.Fatalf("expected default ledger")
+	}
+}
+
+func TestContextSetUpdatesCloudStack(t *testing.T) {
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", "https://cloud.example/api",
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "set", "prod",
+		"--organization", "org_2",
+		"--stack", "stack_2",
+		"--default-ledger", "ledger_2",
+	)
+	if err != nil {
+		t.Fatalf("set context: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Context prod updated.\n" {
+		t.Fatalf("unexpected set output: %q", stdout)
+	}
+	cfg, err := v4config.LoadFile(filepath.Join(configDir, "config.yaml"))
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+	prod := cfg.Contexts["prod"]
+	if prod.Organization != "org_2" || prod.Stack != "stack_2" || prod.Defaults["ledger"] != "ledger_2" {
+		t.Fatalf("unexpected updated context: %#v", prod)
+	}
+}
+
 func TestContextCommandsJSON(t *testing.T) {
 	configDir := t.TempDir()
 
