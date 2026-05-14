@@ -39,6 +39,9 @@ type MembershipClient interface {
 	DeleteRegion(context.Context, operations.DeleteRegionRequest, ...operations.Option) (*operations.DeleteRegionResponse, error)
 	ListOrganizationApplications(context.Context, operations.ListOrganizationApplicationsRequest, ...operations.Option) (*operations.ListOrganizationApplicationsResponse, error)
 	GetOrganizationApplication(context.Context, operations.GetOrganizationApplicationRequest, ...operations.Option) (*operations.GetOrganizationApplicationResponse, error)
+	ReadAuthenticationProvider(context.Context, operations.ReadAuthenticationProviderRequest, ...operations.Option) (*operations.ReadAuthenticationProviderResponse, error)
+	UpsertAuthenticationProvider(context.Context, operations.UpsertAuthenticationProviderRequest, ...operations.Option) (*operations.UpsertAuthenticationProviderResponse, error)
+	DeleteAuthenticationProvider(context.Context, operations.DeleteAuthenticationProviderRequest, ...operations.Option) (*operations.DeleteAuthenticationProviderResponse, error)
 }
 
 type UserSummary struct {
@@ -291,6 +294,39 @@ type ApplicationInput struct {
 type ApplicationOutput struct {
 	OrganizationID string             `json:"organizationID" yaml:"organizationID"`
 	Application    ApplicationSummary `json:"application" yaml:"application"`
+}
+
+type AuthenticationProviderSummary struct {
+	Type         string    `json:"type" yaml:"type"`
+	Name         string    `json:"name" yaml:"name"`
+	ClientID     string    `json:"clientID" yaml:"clientID"`
+	RedirectURI  string    `json:"redirectURI,omitempty" yaml:"redirectURI,omitempty"`
+	Issuer       string    `json:"issuer,omitempty" yaml:"issuer,omitempty"`
+	Tenant       string    `json:"tenant,omitempty" yaml:"tenant,omitempty"`
+	CreatedAt    time.Time `json:"createdAt" yaml:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt" yaml:"updatedAt"`
+	Organization string    `json:"organizationID,omitempty" yaml:"organizationID,omitempty"`
+}
+
+type AuthenticationProviderInput struct {
+	OrganizationID  string
+	Type            string
+	Name            string
+	ClientID        string
+	ClientSecret    string
+	OIDCIssuer      string
+	OIDCDiscovery   string
+	MicrosoftTenant string
+}
+
+type AuthenticationProviderOutput struct {
+	OrganizationID string                        `json:"organizationID" yaml:"organizationID"`
+	Provider       AuthenticationProviderSummary `json:"provider" yaml:"provider"`
+}
+
+type AuthenticationProviderActionOutput struct {
+	OrganizationID string `json:"organizationID" yaml:"organizationID"`
+	Action         string `json:"action" yaml:"action"`
 }
 
 type MeService struct {
@@ -952,6 +988,132 @@ func (s ReadApplicationService) Run(ctx context.Context, input ApplicationInput)
 	return ApplicationOutput{OrganizationID: input.OrganizationID, Application: applicationSummaryWithScopes(response.GetGetApplicationResponse().GetData())}, nil
 }
 
+type ReadAuthenticationProviderService struct {
+	Client MembershipClient
+}
+
+func (s ReadAuthenticationProviderService) Run(ctx context.Context, organizationID string) (AuthenticationProviderOutput, error) {
+	if s.Client == nil {
+		return AuthenticationProviderOutput{}, fmt.Errorf("membership client is required")
+	}
+	if organizationID == "" {
+		return AuthenticationProviderOutput{}, fmt.Errorf("organization id is required")
+	}
+	response, err := s.Client.ReadAuthenticationProvider(ctx, operations.ReadAuthenticationProviderRequest{OrganizationID: organizationID})
+	if err != nil {
+		return AuthenticationProviderOutput{}, err
+	}
+	if response.GetAuthenticationProviderResponse() == nil || response.GetAuthenticationProviderResponse().GetData() == nil {
+		return AuthenticationProviderOutput{}, fmt.Errorf("cloud organizations authentication-provider show returned no provider")
+	}
+	return AuthenticationProviderOutput{OrganizationID: organizationID, Provider: authenticationProviderSummary(response.GetAuthenticationProviderResponse().GetData())}, nil
+}
+
+type ConfigureAuthenticationProviderService struct {
+	Client MembershipClient
+}
+
+func (s ConfigureAuthenticationProviderService) Run(ctx context.Context, input AuthenticationProviderInput) (AuthenticationProviderOutput, error) {
+	if s.Client == nil {
+		return AuthenticationProviderOutput{}, fmt.Errorf("membership client is required")
+	}
+	body, err := authenticationProviderRequest(input)
+	if err != nil {
+		return AuthenticationProviderOutput{}, err
+	}
+	response, err := s.Client.UpsertAuthenticationProvider(ctx, operations.UpsertAuthenticationProviderRequest{
+		OrganizationID: input.OrganizationID,
+		Body:           &body,
+	})
+	if err != nil {
+		return AuthenticationProviderOutput{}, err
+	}
+	if response.GetAuthenticationProviderResponse() == nil || response.GetAuthenticationProviderResponse().GetData() == nil {
+		return AuthenticationProviderOutput{}, fmt.Errorf("cloud organizations authentication-provider configure returned no provider")
+	}
+	return AuthenticationProviderOutput{OrganizationID: input.OrganizationID, Provider: authenticationProviderSummary(response.GetAuthenticationProviderResponse().GetData())}, nil
+}
+
+type DeleteAuthenticationProviderService struct {
+	Client MembershipClient
+}
+
+func (s DeleteAuthenticationProviderService) Run(ctx context.Context, organizationID string) (AuthenticationProviderActionOutput, error) {
+	if s.Client == nil {
+		return AuthenticationProviderActionOutput{}, fmt.Errorf("membership client is required")
+	}
+	if organizationID == "" {
+		return AuthenticationProviderActionOutput{}, fmt.Errorf("organization id is required")
+	}
+	_, err := s.Client.DeleteAuthenticationProvider(ctx, operations.DeleteAuthenticationProviderRequest{OrganizationID: organizationID})
+	if err != nil {
+		return AuthenticationProviderActionOutput{}, err
+	}
+	return AuthenticationProviderActionOutput{OrganizationID: organizationID, Action: "delete"}, nil
+}
+
+func authenticationProviderRequest(input AuthenticationProviderInput) (components.UpsertAuthenticationProviderRequest, error) {
+	if input.OrganizationID == "" {
+		return components.UpsertAuthenticationProviderRequest{}, fmt.Errorf("organization id is required")
+	}
+	if input.Type == "" {
+		return components.UpsertAuthenticationProviderRequest{}, fmt.Errorf("authentication provider type is required")
+	}
+	if input.Name == "" {
+		return components.UpsertAuthenticationProviderRequest{}, fmt.Errorf("authentication provider name is required")
+	}
+	if input.ClientID == "" {
+		return components.UpsertAuthenticationProviderRequest{}, fmt.Errorf("authentication provider client id is required")
+	}
+	if input.ClientSecret == "" {
+		return components.UpsertAuthenticationProviderRequest{}, fmt.Errorf("authentication provider client secret is required")
+	}
+	switch input.Type {
+	case "github":
+		return components.CreateUpsertAuthenticationProviderRequestUpsertAuthenticationProviderRequestGithubIDPConfig(components.UpsertAuthenticationProviderRequestGithubIDPConfig{
+			Type:         components.UpsertAuthenticationProviderRequestGithubIDPConfigTypeGithub,
+			Name:         input.Name,
+			ClientID:     input.ClientID,
+			ClientSecret: input.ClientSecret,
+			Config:       components.UpsertAuthenticationProviderRequestGithubIDPConfigConfig{},
+		}), nil
+	case "google":
+		return components.CreateUpsertAuthenticationProviderRequestUpsertAuthenticationProviderRequestGoogleIDPConfig(components.UpsertAuthenticationProviderRequestGoogleIDPConfig{
+			Type:         components.UpsertAuthenticationProviderRequestGoogleIDPConfigTypeGoogle,
+			Name:         input.Name,
+			ClientID:     input.ClientID,
+			ClientSecret: input.ClientSecret,
+			Config:       components.UpsertAuthenticationProviderRequestGoogleIDPConfigConfig{},
+		}), nil
+	case "microsoft":
+		tenant := input.MicrosoftTenant
+		return components.CreateUpsertAuthenticationProviderRequestUpsertAuthenticationProviderRequestMicrosoftIDPConfig(components.UpsertAuthenticationProviderRequestMicrosoftIDPConfig{
+			Type:         components.UpsertAuthenticationProviderRequestMicrosoftIDPConfigTypeMicrosoft,
+			Name:         input.Name,
+			ClientID:     input.ClientID,
+			ClientSecret: input.ClientSecret,
+			Config:       components.UpsertAuthenticationProviderRequestMicrosoftIDPConfigConfig{Tenant: &tenant},
+		}), nil
+	case "oidc":
+		if input.OIDCIssuer == "" {
+			return components.UpsertAuthenticationProviderRequest{}, fmt.Errorf("oidc issuer is required")
+		}
+		config := components.UpsertAuthenticationProviderRequestOIDCConfigConfig{Issuer: input.OIDCIssuer}
+		if input.OIDCDiscovery != "" {
+			config.DiscoveryPath = &input.OIDCDiscovery
+		}
+		return components.CreateUpsertAuthenticationProviderRequestUpsertAuthenticationProviderRequestOIDCConfig(components.UpsertAuthenticationProviderRequestOIDCConfig{
+			Type:         components.UpsertAuthenticationProviderRequestOIDCConfigTypeOidc,
+			Name:         input.Name,
+			ClientID:     input.ClientID,
+			ClientSecret: input.ClientSecret,
+			Config:       config,
+		}), nil
+	default:
+		return components.UpsertAuthenticationProviderRequest{}, fmt.Errorf("unsupported authentication provider type %q", input.Type)
+	}
+}
+
 func validateRegionTarget(organizationID string, regionID string) error {
 	if organizationID == "" {
 		return fmt.Errorf("organization id is required")
@@ -1115,6 +1277,70 @@ func applicationSummaryWithScopes(application *components.ApplicationWithScope) 
 		}
 	}
 	return summary
+}
+
+func authenticationProviderSummary(provider *components.Data) AuthenticationProviderSummary {
+	if provider == nil {
+		return AuthenticationProviderSummary{}
+	}
+	switch provider.Type {
+	case components.DataTypeAuthenticationProviderResponseGithubIDPConfig:
+		if p := provider.AuthenticationProviderResponseGithubIDPConfig; p != nil {
+			return AuthenticationProviderSummary{
+				Type:         string(p.GetType()),
+				Name:         p.GetName(),
+				ClientID:     p.GetClientID(),
+				RedirectURI:  p.GetRedirectURI(),
+				CreatedAt:    p.GetCreatedAt(),
+				UpdatedAt:    p.GetUpdatedAt(),
+				Organization: p.GetOrganizationID(),
+			}
+		}
+	case components.DataTypeAuthenticationProviderResponseGoogleIDPConfig:
+		if p := provider.AuthenticationProviderResponseGoogleIDPConfig; p != nil {
+			return AuthenticationProviderSummary{
+				Type:         string(p.GetType()),
+				Name:         p.GetName(),
+				ClientID:     p.GetClientID(),
+				RedirectURI:  p.GetRedirectURI(),
+				CreatedAt:    p.GetCreatedAt(),
+				UpdatedAt:    p.GetUpdatedAt(),
+				Organization: p.GetOrganizationID(),
+			}
+		}
+	case components.DataTypeAuthenticationProviderResponseMicrosoftIDPConfig:
+		if p := provider.AuthenticationProviderResponseMicrosoftIDPConfig; p != nil {
+			summary := AuthenticationProviderSummary{
+				Type:         string(p.GetType()),
+				Name:         p.GetName(),
+				ClientID:     p.GetClientID(),
+				RedirectURI:  p.GetRedirectURI(),
+				CreatedAt:    p.GetCreatedAt(),
+				UpdatedAt:    p.GetUpdatedAt(),
+				Organization: p.GetOrganizationID(),
+			}
+			config := p.GetConfig()
+			if config.GetTenant() != nil {
+				summary.Tenant = *config.GetTenant()
+			}
+			return summary
+		}
+	case components.DataTypeAuthenticationProviderResponseOIDCConfig:
+		if p := provider.AuthenticationProviderResponseOIDCConfig; p != nil {
+			config := p.GetConfig()
+			return AuthenticationProviderSummary{
+				Type:         string(p.GetType()),
+				Name:         p.GetName(),
+				ClientID:     p.GetClientID(),
+				RedirectURI:  p.GetRedirectURI(),
+				Issuer:       config.GetIssuer(),
+				CreatedAt:    p.GetCreatedAt(),
+				UpdatedAt:    p.GetUpdatedAt(),
+				Organization: p.GetOrganizationID(),
+			}
+		}
+	}
+	return AuthenticationProviderSummary{}
 }
 
 func invitationSummary(invitation *components.Invitation) InvitationSummary {

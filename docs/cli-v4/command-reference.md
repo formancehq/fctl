@@ -31,6 +31,9 @@ This reference lists the current canonical v4 command families implemented under
 - `fctl cloud organizations delete <organization-id> --confirm`
 - `fctl cloud organizations applications list --organization <organization-id>`
 - `fctl cloud organizations applications show <application-id> --organization <organization-id>`
+- `fctl cloud organizations authentication-provider show --organization <organization-id>`
+- `fctl cloud organizations authentication-provider configure --type <type> --name <name> --client-id <client-id> --client-secret-stdin --organization <organization-id>`
+- `fctl cloud organizations authentication-provider delete --organization <organization-id> --confirm`
 - `fctl cloud organizations invitations list --organization <organization-id>`
 - `fctl cloud organizations invitations send <email> --organization <organization-id>`
 - `fctl cloud organizations invitations delete <invitation-id> --organization <organization-id> --confirm`

@@ -623,6 +623,81 @@ func TestCloudOrganizationApplications(t *testing.T) {
 	}
 }
 
+func TestCloudOrganizationAuthenticationProvider(t *testing.T) {
+	providerBody := `{"data":{"type":"oidc","name":"Acme OIDC","clientID":"client_1","clientSecret":"secret","config":{"issuer":"https://issuer.example"},"organizationID":"org_1","createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-02T00:00:00Z","redirectURI":"https://cloud.example/callback"}}`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/authentication-provider":
+			fmt.Fprint(w, providerBody)
+		case r.Method == http.MethodPut && r.URL.Path == "/organizations/org_1/authentication-provider":
+			body := readRequestBody(t, r)
+			for _, expected := range []string{`"type":"oidc"`, `"name":"Acme OIDC"`, `"clientID":"client_1"`, `"clientSecret":"secret"`, `"issuer":"https://issuer.example"`} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected authentication provider body to contain %s, got %s", expected, body)
+				}
+			}
+			fmt.Fprint(w, providerBody)
+		case r.Method == http.MethodDelete && r.URL.Path == "/organizations/org_1/authentication-provider":
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", server.URL,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "authentication-provider", "show")
+	if err != nil {
+		t.Fatalf("cloud organizations authentication-provider show: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{"Type\toidc", "Name\tAcme OIDC", "ClientID\tclient_1", "RedirectURI\thttps://cloud.example/callback", "Issuer\thttps://issuer.example"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected provider output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+
+	stdout, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"cloud", "organizations", "authentication-provider", "configure",
+		"--type", "oidc",
+		"--name", "Acme OIDC",
+		"--client-id", "client_1",
+		"--client-secret", "secret",
+		"--oidc-issuer", "https://issuer.example",
+	)
+	if err != nil {
+		t.Fatalf("cloud organizations authentication-provider configure: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud authentication provider Acme OIDC configured.\n" {
+		t.Fatalf("unexpected configure output: %q", stdout)
+	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "authentication-provider", "delete")
+	if err == nil {
+		t.Fatal("expected authentication provider delete to require --confirm")
+	}
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "authentication-provider", "delete", "--confirm")
+	if err != nil {
+		t.Fatalf("cloud organizations authentication-provider delete: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud authentication provider for organization org_1 deleted.\n" {
+		t.Fatalf("unexpected delete output: %q", stdout)
+	}
+}
+
 func TestCloudOrganizationInvitations(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

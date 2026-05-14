@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	membership "github.com/formancehq/fctl/internal/membershipclient/v3"
 	"github.com/spf13/cobra"
@@ -148,9 +150,137 @@ func newCloudOrganizationsCommand() *cobra.Command {
 	command.AddCommand(newCloudOrganizationsUpdateCommand())
 	command.AddCommand(newCloudOrganizationsDeleteCommand())
 	command.AddCommand(newCloudOrganizationsApplicationsCommand())
+	command.AddCommand(newCloudOrganizationsAuthenticationProviderCommand())
 	command.AddCommand(newCloudOrganizationsInvitationsCommand())
 	command.AddCommand(newCloudOrganizationsUsersCommand())
 	command.AddCommand(newCloudOrganizationsPoliciesCommand())
+	return command
+}
+
+func newCloudOrganizationsAuthenticationProviderCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "authentication-provider",
+		Short: "Manage Cloud organization authentication provider",
+	}
+	command.AddCommand(newCloudOrganizationsAuthenticationProviderShowCommand())
+	command.AddCommand(newCloudOrganizationsAuthenticationProviderConfigureCommand())
+	command.AddCommand(newCloudOrganizationsAuthenticationProviderDeleteCommand())
+	return command
+}
+
+func newCloudOrganizationsAuthenticationProviderShowCommand() *cobra.Command {
+	var organizationID string
+
+	command := &cobra.Command{
+		Use:   "show",
+		Short: "Show Cloud organization authentication provider",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ReadAuthenticationProviderService{Client: client}.Run(cmd.Context(), resolveCloudOrganizationID(rt, organizationID))
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudAuthenticationProvider(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	return command
+}
+
+func newCloudOrganizationsAuthenticationProviderConfigureCommand() *cobra.Command {
+	var organizationID string
+	var providerType string
+	var name string
+	var clientID string
+	var clientSecret string
+	var clientSecretStdin bool
+	var oidcIssuer string
+	var oidcDiscovery string
+	var microsoftTenant string
+
+	command := &cobra.Command{
+		Use:   "configure",
+		Short: "Configure Cloud organization authentication provider",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if clientSecretStdin {
+				data, err := io.ReadAll(cmd.InOrStdin())
+				if err != nil {
+					return err
+				}
+				clientSecret = strings.TrimSpace(string(data))
+			}
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ConfigureAuthenticationProviderService{Client: client}.Run(cmd.Context(), cloudcmd.AuthenticationProviderInput{
+				OrganizationID:  resolveCloudOrganizationID(rt, organizationID),
+				Type:            providerType,
+				Name:            name,
+				ClientID:        clientID,
+				ClientSecret:    clientSecret,
+				OIDCIssuer:      oidcIssuer,
+				OIDCDiscovery:   oidcDiscovery,
+				MicrosoftTenant: microsoftTenant,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudAuthenticationProviderMutated(cmd, output, "configured")
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	command.Flags().StringVar(&providerType, "type", "", "Authentication provider type (github, google, microsoft, oidc)")
+	command.Flags().StringVar(&name, "name", "", "Authentication provider name")
+	command.Flags().StringVar(&clientID, "client-id", "", "Authentication provider client ID")
+	command.Flags().StringVar(&clientSecret, "client-secret", "", "Authentication provider client secret")
+	command.Flags().BoolVar(&clientSecretStdin, "client-secret-stdin", false, "Read authentication provider client secret from stdin")
+	command.Flags().StringVar(&oidcIssuer, "oidc-issuer", "", "OIDC issuer URL")
+	command.Flags().StringVar(&oidcDiscovery, "oidc-discovery-path", "", "OIDC discovery path")
+	command.Flags().StringVar(&microsoftTenant, "microsoft-tenant", "", "Microsoft tenant ID")
+	return command
+}
+
+func newCloudOrganizationsAuthenticationProviderDeleteCommand() *cobra.Command {
+	var organizationID string
+	var confirm bool
+
+	command := &cobra.Command{
+		Use:   "delete",
+		Short: "Delete Cloud organization authentication provider",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if !confirm {
+				return fmt.Errorf("cloud organizations authentication-provider delete requires --confirm")
+			}
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.DeleteAuthenticationProviderService{Client: client}.Run(cmd.Context(), resolveCloudOrganizationID(rt, organizationID))
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Cloud authentication provider for organization %s deleted.\n", output.OrganizationID)
+			return err
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm authentication provider deletion")
 	return command
 }
 
@@ -1125,6 +1255,34 @@ func renderCloudApplication(cmd *cobra.Command, output cloudcmd.ApplicationOutpu
 		}
 	}
 	return nil
+}
+
+func renderCloudAuthenticationProvider(cmd *cobra.Command, output cloudcmd.AuthenticationProviderOutput) error {
+	provider := output.Provider
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Type\t%s\nName\t%s\nClientID\t%s\n", provider.Type, provider.Name, provider.ClientID); err != nil {
+		return err
+	}
+	if provider.RedirectURI != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "RedirectURI\t%s\n", provider.RedirectURI); err != nil {
+			return err
+		}
+	}
+	if provider.Issuer != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Issuer\t%s\n", provider.Issuer); err != nil {
+			return err
+		}
+	}
+	if provider.Tenant != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Tenant\t%s\n", provider.Tenant); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func renderCloudAuthenticationProviderMutated(cmd *cobra.Command, output cloudcmd.AuthenticationProviderOutput, action string) error {
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud authentication provider %s %s.\n", output.Provider.Name, action)
+	return err
 }
 
 func renderCloudOrganizationUsers(cmd *cobra.Command, output cloudcmd.ListOrganizationUsersOutput) error {
