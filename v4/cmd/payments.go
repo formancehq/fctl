@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	formance "github.com/formancehq/formance-sdk-go/v3"
@@ -21,6 +22,19 @@ func newPaymentsCommand() *cobra.Command {
 	command.AddCommand(newPaymentsBankAccountsCommand("bank-accounts", nil, false))
 	command.AddCommand(newPaymentsBankAccountsCommand("bank_accounts", []string{"bacc", "ba", "bac", "baccount"}, true))
 	command.AddCommand(newPaymentsPaymentsCommand())
+	command.AddCommand(newPaymentsPoolsCommand())
+	return command
+}
+
+func newPaymentsPoolsCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "pools",
+		Short: "Manage payment pools",
+	}
+	command.AddCommand(newPaymentsPoolsListCommand())
+	command.AddCommand(newPaymentsPoolsShowCommand("show", nil, false))
+	command.AddCommand(newPaymentsPoolsShowCommand("get", []string{"g"}, true))
+	command.AddCommand(newPaymentsPoolsDeleteCommand())
 	return command
 }
 
@@ -624,5 +638,216 @@ func renderPayment(cmd *cobra.Command, output paymentscmd.GetPaymentOutput) erro
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", payment.CreatedAt.Format(time.RFC3339))
+	return err
+}
+
+func newPaymentsPoolsListCommand() *cobra.Command {
+	var pageSize int64 = 15
+	var cursor string
+	var query string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"ls", "l"},
+		Short:   "List payment pools",
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.ListPoolsService{
+				Handlers: paymentscmd.SDKListPoolsHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureListPools,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.ListPoolsInput{PageSize: pageSize, Cursor: cursor, Query: query})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentPools(cmd, output)
+		},
+	}
+	command.Flags().Int64Var(&pageSize, "page-size", 15, "Page size")
+	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
+	command.Flags().StringVar(&query, "query", "", "Filter pools with the API query syntax")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func newPaymentsPoolsShowCommand(use string, aliases []string, deprecated bool) *cobra.Command {
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     use + " <pool-id>",
+		Aliases: aliases,
+		Short:   "Show a payment pool",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if deprecated {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Command payments pools get has been deprecated, use payments pools show")
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.GetPoolService{
+				Handlers: paymentscmd.SDKGetPoolHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureGetPool,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.GetPoolInput{PoolID: args[0]})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentPool(cmd, output)
+		},
+	}
+	if deprecated {
+		command.Deprecated = "use payments pools show"
+	}
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func newPaymentsPoolsDeleteCommand() *cobra.Command {
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "delete <pool-id>",
+		Short: "Delete a payment pool",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("payments pools delete requires --confirm")
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.DeletePoolService{
+				Handlers: paymentscmd.SDKDeletePoolHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureDeletePool,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.DeletePoolInput{PoolID: args[0]})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentPoolDeleted(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm pool deletion")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func renderPaymentPools(cmd *cobra.Command, output paymentscmd.ListPoolsOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if len(output.Pools) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No payment pools found.")
+		return err
+	}
+	for _, pool := range output.Pools {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\n", pool.ID, pool.Name, strings.Join(pool.Accounts, ",")); err != nil {
+			return err
+		}
+	}
+	if output.HasMore && output.Next != nil {
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
+		return err
+	}
+	return nil
+}
+
+func renderPaymentPool(cmd *cobra.Command, output paymentscmd.GetPoolOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	pool := output.Pool
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", pool.ID); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Name\t%s\n", pool.Name); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Accounts\t%s\n", strings.Join(pool.Accounts, ",")); err != nil {
+		return err
+	}
+	if pool.Type != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Type\t%s\n", pool.Type); err != nil {
+			return err
+		}
+	}
+	if !pool.CreatedAt.IsZero() {
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", pool.CreatedAt.Format(time.RFC3339))
+		return err
+	}
+	return nil
+}
+
+func renderPaymentPoolDeleted(cmd *cobra.Command, output paymentscmd.DeletePoolOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Pool %s deleted.\n", output.PoolID)
 	return err
 }
