@@ -1613,6 +1613,47 @@ func TestCloudStacksMutations(t *testing.T) {
 	}
 }
 
+func TestCloudStacksHistory(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method != http.MethodGet || r.URL.Path != "/organizations/org_1/logs" {
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+		}
+		if got := r.URL.Query().Get("stackId"); got != "stack_1" {
+			t.Fatalf("expected stackId stack_1, got %q", got)
+		}
+		if got := r.URL.Query().Get("pageSize"); got != "10" {
+			t.Fatalf("expected pageSize 10, got %q", got)
+		}
+		if got := r.URL.Query().Get("action"); got != "stacks.updated" {
+			t.Fatalf("expected action stacks.updated, got %q", got)
+		}
+		fmt.Fprint(w, `{"data":{"pageSize":10,"hasMore":false,"data":[{"seq":"1","organizationId":"org_1","userId":"user_1","action":"stacks.updated","date":"2026-01-01T00:00:00Z","data":{}}]}}`)
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", server.URL,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud", "stacks", "history", "stack_1", "--action", "stacks.updated")
+	if err != nil {
+		t.Fatalf("cloud stacks history: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "1\torg_1\tuser_1\tstacks.updated\t2026-01-01T00:00:00Z") {
+		t.Fatalf("unexpected stack history output:\n%s", stdout)
+	}
+}
+
 func TestCloudStacksUsersAndModules(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

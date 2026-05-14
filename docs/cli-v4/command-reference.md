@@ -90,6 +90,7 @@ server.
 - `fctl cloud stacks disable <stack-id> --confirm`
 - `fctl cloud stacks restore <stack-id> --confirm`
 - `fctl cloud stacks upgrade <stack-id> --version <version> --confirm`
+- `fctl cloud stacks history <stack-id>`
 - `fctl cloud stacks users list <stack-id>`
 - `fctl cloud stacks users link <stack-id> <user-id> --policy-id <policy-id>`
 - `fctl cloud stacks users unlink <stack-id> <user-id> --confirm`

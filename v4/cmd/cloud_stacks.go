@@ -31,6 +31,7 @@ func newCloudStacksCommand(use string, canonical string, deprecated bool) *cobra
 	command.AddCommand(newCloudStacksDisableCommand())
 	command.AddCommand(newCloudStacksRestoreCommand())
 	command.AddCommand(newCloudStacksUpgradeCommand())
+	command.AddCommand(newCloudStacksHistoryCommand())
 	command.AddCommand(newCloudStacksUsersCommand())
 	command.AddCommand(newCloudStacksModulesCommand())
 	return command
@@ -299,6 +300,51 @@ func newCloudStacksActionCommand(action string, requiresConfirm bool) *cobra.Com
 	if requiresConfirm {
 		command.Flags().BoolVar(&confirm, "confirm", false, "Confirm Cloud stack "+action)
 	}
+	return command
+}
+
+func newCloudStacksHistoryCommand() *cobra.Command {
+	var organizationID string
+	var cursor string
+	var pageSize int64
+	var action string
+	var userID string
+	var data string
+
+	command := &cobra.Command{
+		Use:     "history <stack-id>",
+		Aliases: []string{"hist"},
+		Short:   "Query Cloud stack history",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ListLogsService{Client: client}.Run(cmd.Context(), cloudcmd.ListLogsInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				StackID:        args[0],
+				Cursor:         cursor,
+				PageSize:       pageSize,
+				Action:         action,
+				UserID:         userID,
+				Data:           data,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudLogs(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
+	command.Flags().Int64Var(&pageSize, "page-size", 10, "Page size")
+	command.Flags().StringVar(&action, "action", "", "Filter by action")
+	command.Flags().StringVar(&userID, "user-id", "", "Filter by user ID")
+	command.Flags().StringVar(&data, "data", "", "Filter by modified data as key=value")
 	return command
 }
 

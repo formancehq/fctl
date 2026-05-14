@@ -205,6 +205,10 @@ Le chemin canonique v4 est `cloud stacks ...`, car ces operations appartiennent 
 L'ancien chemin v4 intermediaire `cloud_stacks ...` et les anciens chemins v3 `stacks ...` et `stack ...` restent des aliases deprecies pendant la v4 quand ils sont peu couteux a maintenir, avec warning indiquant la commande `cloud stacks ...`.
 Ces aliases pourront etre supprimes en v5 ou dans une version mineure ulterieure si on decide de durcir la migration.
 
+Implementation v4:
+
+- `cloud stacks history <stack-id>` est implemente avec le meme service d'audit que `cloud organizations history`, en imposant le filtre `stackId` au niveau membership.
+
 | v3 | v4 canonique | Changements | Notes |
 | --- | --- | --- | --- |
 | `stack create` | `cloud stacks create` | `cloud_stacks create`, `stack create` et `stacks create` aliases deprecies avec warning. | Ne doit pas exister pour contexte `stack` local. |
