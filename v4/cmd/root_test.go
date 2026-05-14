@@ -2000,6 +2000,128 @@ func TestPaymentsAccountsBalancesSelectsV3(t *testing.T) {
 	}
 }
 
+func TestPaymentsBankAccountsListSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/bank-accounts":
+			if got := r.URL.Query().Get("pageSize"); got != "10" {
+				t.Fatalf("expected pageSize 10, got %q", got)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"id":"ba_1","name":"Main","createdAt":"2026-01-01T00:00:00Z","country":"FR","metadata":{}}],"hasMore":false,"pageSize":10}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "bank-accounts", "list",
+		"--page-size", "10",
+	)
+	if err != nil {
+		t.Fatalf("list bank accounts: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v3") || !strings.Contains(stdout, "ba_1\tMain\t2026-01-01T00:00:00Z\tFR") {
+		t.Fatalf("unexpected bank accounts output:\n%s", stdout)
+	}
+}
+
+func TestPaymentsBankAccountsShowSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/bank-accounts/ba_1":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":"ba_1","name":"Main","createdAt":"2026-01-01T00:00:00Z","country":"FR","iban":"FR7630006000011234567890189","swiftBicCode":"BNPAFRPP","metadata":{}}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "bank-accounts", "show", "ba_1",
+	)
+	if err != nil {
+		t.Fatalf("show bank account: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v3",
+		"ID\tba_1",
+		"Country\tFR",
+		"IBAN\tFR7630006000011234567890189",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected bank account output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestPaymentsBankAccountsDeprecatedAlias(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/bank-accounts":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[],"hasMore":false,"pageSize":15}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "bank_accounts", "list",
+	)
+	if err != nil {
+		t.Fatalf("list bank accounts through alias: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "use payments bank-accounts") {
+		t.Fatalf("expected deprecation warning, got:\n%s", stderr)
+	}
+}
+
 func TestConfigMigrateV3DryRun(t *testing.T) {
 	v3Dir := writeV3CommandFixture(t, true)
 
