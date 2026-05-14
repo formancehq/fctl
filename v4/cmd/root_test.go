@@ -1179,6 +1179,236 @@ func TestCloudRegions(t *testing.T) {
 	}
 }
 
+func TestCloudAppsLifecycle(t *testing.T) {
+	manifestFile := filepath.Join(t.TempDir(), "manifest.yaml")
+	if err := os.WriteFile(manifestFile, []byte("stack:\n  name: prod\n"), 0o600); err != nil {
+		t.Fatalf("write manifest: %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/apps":
+			if got := r.URL.Query().Get("organizationId"); got != "org_1" {
+				t.Fatalf("expected organization org_1, got %q", got)
+			}
+			if got := r.URL.Query().Get("pageNumber"); got != "1" {
+				t.Fatalf("expected pageNumber 1, got %q", got)
+			}
+			fmt.Fprint(w, `{"data":{"currentPage":1,"totalCount":1,"items":[{"id":"app_1","name":"prod","currentRun":{"id":"run_1","createdAt":"2026-01-01T00:00:00Z","status":"applied","message":"ok"},"currentConfigurationVersion":{"id":"ver_1","autoQueueRuns":true,"status":"uploaded"}}]}}`)
+		case r.Method == http.MethodGet && r.URL.Path == "/apps/app_1":
+			fmt.Fprint(w, `{"data":{"id":"app_1","name":"prod","currentRun":{"id":"run_1","createdAt":"2026-01-01T00:00:00Z","status":"applied","message":"ok"},"currentConfigurationVersion":{"id":"ver_1","autoQueueRuns":true,"status":"uploaded"}}}`)
+		case r.Method == http.MethodGet && r.URL.Path == "/apps/app_1/current-state-version":
+			fmt.Fprint(w, `{"data":{"stack":{"id":"stack_1","region_id":"reg_1"}}}`)
+		case r.Method == http.MethodPost && r.URL.Path == "/apps":
+			body := readRequestBody(t, r)
+			if !strings.Contains(body, `"organizationId":"org_1"`) {
+				t.Fatalf("expected create app body to contain organization, got %s", body)
+			}
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, `{"data":{"id":"app_1","name":"prod"}}`)
+		case r.Method == http.MethodPost && r.URL.Path == "/apps/app_1/deploy":
+			body := readRequestBody(t, r)
+			if !strings.Contains(body, "stack:") {
+				t.Fatalf("expected manifest body, got %s", body)
+			}
+			w.WriteHeader(http.StatusAccepted)
+			fmt.Fprint(w, `{"data":{"id":"run_1","createdAt":"2026-01-01T00:00:00Z","status":"planned","message":"queued","configurationVersion":{"id":"ver_1","autoQueueRuns":true,"status":"uploaded"}}}`)
+		case r.Method == http.MethodDelete && r.URL.Path == "/apps/app_1":
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", server.URL,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud", "apps", "--deploy-url", server.URL, "list")
+	if err != nil {
+		t.Fatalf("cloud apps list: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "app_1\tprod\tapplied\tver_1") {
+		t.Fatalf("unexpected cloud apps list output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "apps", "--deploy-url", server.URL, "show", "app_1")
+	if err != nil {
+		t.Fatalf("cloud apps show: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{"ID\tapp_1", "Name\tprod", "RunStatus\tapplied", "State\tid\tstack_1"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected cloud app output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "apps", "--deploy-url", server.URL, "create")
+	if err != nil {
+		t.Fatalf("cloud apps create: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud app app_1 created.\n" {
+		t.Fatalf("unexpected cloud apps create output: %q", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "apps", "--deploy-url", server.URL, "deploy", "app_1", "--file", manifestFile)
+	if err != nil {
+		t.Fatalf("cloud apps deploy: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud app deployment accepted with run run_1.\n" {
+		t.Fatalf("unexpected cloud apps deploy output: %q", stdout)
+	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud", "apps", "--deploy-url", server.URL, "delete", "app_1")
+	if err == nil {
+		t.Fatal("expected cloud apps delete to require --confirm")
+	}
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "apps", "--deploy-url", server.URL, "delete", "app_1", "--confirm")
+	if err != nil {
+		t.Fatalf("cloud apps delete: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud app app_1 deleted.\n" {
+		t.Fatalf("unexpected cloud apps delete output: %q", stdout)
+	}
+}
+
+func TestCloudAppsRunsVersionsAndVariables(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/apps/app_1/runs":
+			if got := r.URL.Query().Get("pageSize"); got != "25" {
+				t.Fatalf("expected pageSize 25, got %q", got)
+			}
+			fmt.Fprint(w, `{"data":{"items":[{"id":"run_1","createdAt":"2026-01-01T00:00:00Z","status":"applied","message":"ok","configurationVersion":{"id":"ver_1","autoQueueRuns":true,"status":"uploaded"}}]}}`)
+		case r.Method == http.MethodGet && r.URL.Path == "/runs/run_1":
+			fmt.Fprint(w, `{"data":{"id":"run_1","createdAt":"2026-01-01T00:00:00Z","status":"applied","message":"ok","configurationVersion":{"id":"ver_1","autoQueueRuns":true,"status":"uploaded"}}}`)
+		case r.Method == http.MethodGet && r.URL.Path == "/runs/run_1/logs":
+			fmt.Fprint(w, `{"data":[{"timestamp":"2026-01-01T00:00:00Z","module":"terraform","message":"done","diagnostic":{"severity":"info","summary":"ok","detail":"done"}}]}`)
+		case r.Method == http.MethodGet && r.URL.Path == "/apps/app_1/versions":
+			fmt.Fprint(w, `{"data":{"items":[{"id":"ver_1","autoQueueRuns":true,"status":"uploaded"}]}}`)
+		case r.Method == http.MethodGet && r.URL.Path == "/versions/ver_1" && strings.Contains(r.Header.Get("Accept"), "application/json"):
+			fmt.Fprint(w, `{"data":{"id":"ver_1","autoQueueRuns":true,"status":"uploaded"}}`)
+		case r.Method == http.MethodGet && r.URL.Path == "/versions/ver_1" && r.Header.Get("Accept") == "application/yaml":
+			w.Header().Set("Content-Type", "application/yaml")
+			fmt.Fprint(w, "stack:\n  name: prod\n")
+		case r.Method == http.MethodGet && r.URL.Path == "/apps/app_1/variables":
+			fmt.Fprint(w, `{"data":{"items":[{"id":"var_1","key":"TOKEN","value":"secret","sensitive":true},{"id":"var_2","key":"ENV","value":"prod","description":"Environment","sensitive":false}]}}`)
+		case r.Method == http.MethodPost && r.URL.Path == "/apps/app_1/variables":
+			body := readRequestBody(t, r)
+			for _, expected := range []string{`"key":"TOKEN"`, `"value":"secret"`, `"sensitive":true`} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected variable body to contain %s, got %s", expected, body)
+				}
+			}
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, `{"data":{"id":"var_1","key":"TOKEN","value":"secret","sensitive":true}}`)
+		case r.Method == http.MethodDelete && r.URL.Path == "/apps/app_1/variables/var_1":
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected request %s %s accept=%s", r.Method, r.URL.String(), r.Header.Get("Accept"))
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud", "cloud",
+		"--cloud-url", server.URL,
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud", "apps", "--deploy-url", server.URL, "runs", "list", "app_1", "--page-size", "25")
+	if err != nil {
+		t.Fatalf("cloud apps runs list: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "run_1\tapplied\tver_1\tok") {
+		t.Fatalf("unexpected runs list output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "apps", "--deploy-url", server.URL, "runs", "show", "run_1")
+	if err != nil {
+		t.Fatalf("cloud apps runs show: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "Status\tapplied") || !strings.Contains(stdout, "ConfigurationVersionID\tver_1") {
+		t.Fatalf("unexpected run show output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "apps", "--deploy-url", server.URL, "runs", "logs", "run_1")
+	if err != nil {
+		t.Fatalf("cloud apps runs logs: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "2026-01-01T00:00:00Z\tterraform\tdone\tinfo") {
+		t.Fatalf("unexpected run logs output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "apps", "--deploy-url", server.URL, "versions", "list", "app_1")
+	if err != nil {
+		t.Fatalf("cloud apps versions list: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "ver_1\tuploaded\ttrue") {
+		t.Fatalf("unexpected versions list output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "apps", "--deploy-url", server.URL, "versions", "show", "ver_1")
+	if err != nil {
+		t.Fatalf("cloud apps versions show: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "ID\tver_1") || !strings.Contains(stdout, "Status\tuploaded") {
+		t.Fatalf("unexpected version show output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "apps", "--deploy-url", server.URL, "versions", "manifest", "ver_1")
+	if err != nil {
+		t.Fatalf("cloud apps versions manifest: %v stderr=%s", err, stderr)
+	}
+	if stdout != "stack:\n  name: prod\n" {
+		t.Fatalf("unexpected manifest output: %q", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "apps", "--deploy-url", server.URL, "variables", "list", "app_1")
+	if err != nil {
+		t.Fatalf("cloud apps variables list: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "var_1\tTOKEN\t****") || !strings.Contains(stdout, "var_2\tENV\tprod\tEnvironment") {
+		t.Fatalf("unexpected variables list output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "apps", "--deploy-url", server.URL, "variables", "create", "app_1", "--key", "TOKEN", "--value", "secret")
+	if err != nil {
+		t.Fatalf("cloud apps variables create: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "ID\tvar_1") || !strings.Contains(stdout, "Value\t****") {
+		t.Fatalf("unexpected variable create output:\n%s", stdout)
+	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud", "apps", "--deploy-url", server.URL, "variables", "delete", "app_1", "var_1")
+	if err == nil {
+		t.Fatal("expected cloud apps variables delete to require --confirm")
+	}
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "apps", "--deploy-url", server.URL, "variables", "delete", "app_1", "var_1", "--confirm")
+	if err != nil {
+		t.Fatalf("cloud apps variables delete: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud app variable var_1 deleted.\n" {
+		t.Fatalf("unexpected variable delete output: %q", stdout)
+	}
+}
+
 func TestCloudCommandsRejectStackContext(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Fatalf("cloud command must reject stack contexts before network calls")

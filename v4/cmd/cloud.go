@@ -24,6 +24,7 @@ func newCloudCommand() *cobra.Command {
 	command.AddCommand(newCloudOrganizationsCommand())
 	command.AddCommand(newCloudRegionsCommand())
 	command.AddCommand(newCloudStacksCommand("stacks", "cloud stacks", false))
+	command.AddCommand(newCloudAppsCommand())
 	return command
 }
 

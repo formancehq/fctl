@@ -12,6 +12,7 @@ require (
 )
 
 require (
+	github.com/formancehq/fctl/internal/deployserverclient/v3 v3.1.1
 	github.com/formancehq/fctl/internal/membershipclient/v3 v3.1.1
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
@@ -19,3 +20,5 @@ require (
 )
 
 replace github.com/formancehq/fctl/internal/membershipclient/v3 => ../internal/membershipclient
+
+replace github.com/formancehq/fctl/internal/deployserverclient/v3 => ../internal/deployserverclient

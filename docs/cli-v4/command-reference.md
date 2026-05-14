@@ -58,9 +58,26 @@ This reference lists the current canonical v4 command families implemented under
 - `fctl cloud regions list --organization <organization-id>`
 - `fctl cloud regions show <region-id> --organization <organization-id>`
 - `fctl cloud regions delete <region-id> --organization <organization-id> --confirm`
+- `fctl cloud apps create --organization <organization-id>`
+- `fctl cloud apps list --organization <organization-id>`
+- `fctl cloud apps show <app-id> --organization <organization-id>`
+- `fctl cloud apps delete <app-id> --organization <organization-id> --confirm`
+- `fctl cloud apps deploy <app-id> --file <manifest.yaml>`
+- `fctl cloud apps runs list <app-id>`
+- `fctl cloud apps runs show <run-id>`
+- `fctl cloud apps runs logs <run-id>`
+- `fctl cloud apps versions list <app-id>`
+- `fctl cloud apps versions show <version-id>`
+- `fctl cloud apps versions manifest <version-id>`
+- `fctl cloud apps versions show-archive <version-id>`
+- `fctl cloud apps variables list <app-id>`
+- `fctl cloud apps variables create <app-id> --key <key> --value <value>|--value-stdin`
+- `fctl cloud apps variables delete <app-id> <variable-id> --confirm`
 
 Cloud commands require a `cloud` or `cloud-stack` context. They are not required
-for direct local or self-hosted stack commands.
+for direct local or self-hosted stack commands. `cloud apps` talks to the Cloud
+apps deploy server; use `--deploy-url <url>` to target a non-production deploy
+server.
 
 ## Cloud Stacks
 

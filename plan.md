@@ -189,6 +189,15 @@ Les commandes Cloud restent sous `cloud`, mais elles doivent utiliser un context
 | `cloud apps variables create` | identique | Secret via stdin/prompt si sensible. | |
 | `cloud apps variables delete` | identique | `--confirm`. | |
 
+Implementation v4 initiale:
+
+- `cloud apps` est implemente sous le contexte `cloud`/`cloud-stack` et utilise un client deployserver separe du client membership;
+- `--organization` reste optionnel avec un contexte `cloud-stack` et obligatoire avec un contexte `cloud`;
+- `--deploy-url` permet de cibler un deployserver non-production sans changer l'URL membership du contexte Cloud;
+- les commandes destructives ajoutees dans cette tranche exigent `--confirm` quand le plan le demande;
+- `cloud apps variables create` accepte `--value-stdin` pour eviter d'exposer une variable sensible dans l'historique shell;
+- `cloud apps versions manifest` est le nom canonique, avec `show-manifest` alias deprecie cache.
+
 ## Mapping Cloud stacks lifecycle
 
 Les commandes `stack` v3 sont Cloud-control-plane. En v4, elles doivent etre clairement distinguees des commandes qui parlent a une stack data-plane.
