@@ -925,7 +925,7 @@ func resolveCloudOrganizationIDOrPrompt(cmd *cobra.Command, rt *runtime.Runtime,
 
 func renderCloudStacks(cmd *cobra.Command, output cloudcmd.ListStacksOutput) error {
 	if len(output.Stacks) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No Cloud stacks found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No Cloud stacks found."))
 		return err
 	}
 	headers := []string{"ID", "Name", "Dashboard", "Region", "Status", "Audit Enabled"}
@@ -965,7 +965,7 @@ func renderCloudStackMutated(cmd *cobra.Command, output cloudcmd.StackOutput, ac
 }
 
 func renderCloudStackDeleted(cmd *cobra.Command, output cloudcmd.DeleteStackOutput) error {
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud stack %s deleted.\n", output.StackID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud stack %s deleted.", output.StackID)))
 	return err
 }
 
@@ -975,24 +975,23 @@ func renderCloudStackAction(cmd *cobra.Command, output cloudcmd.StackActionOutpu
 		if version == "" {
 			version = "latest"
 		}
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud stack %s upgrade requested to %s.\n", output.StackID, version)
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud stack %s upgrade requested to %s.", output.StackID, version)))
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud stack %s %s requested.\n", output.StackID, output.Action)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud stack %s %s requested.", output.StackID, output.Action)))
 	return err
 }
 
 func renderCloudStackUsers(cmd *cobra.Command, output cloudcmd.ListStackUsersOutput) error {
 	if len(output.Users) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No Cloud stack users found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No Cloud stack users found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Users))
 	for _, user := range output.Users {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%d\n", user.UserID, user.Email, user.StackID, user.PolicyID); err != nil {
-			return err
-		}
+		rows = append(rows, []string{user.UserID, user.Email, user.StackID, fmt.Sprint(user.PolicyID)})
 	}
-	return nil
+	return writeStyledRows(cmd, []string{"User", "Email", "Stack", "Policy"}, rows)
 }
 
 func renderCloudStackUserAction(cmd *cobra.Command, output cloudcmd.StackUserAccessOutput) error {
@@ -1000,42 +999,40 @@ func renderCloudStackUserAction(cmd *cobra.Command, output cloudcmd.StackUserAcc
 	if output.Action == "unlink" {
 		done = "unlinked"
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud stack %s user %s %s.\n", output.StackID, output.UserID, done)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud stack %s user %s %s.", output.StackID, output.UserID, done)))
 	return err
 }
 
 func renderCloudStackModules(cmd *cobra.Command, output cloudcmd.ListModulesOutput) error {
 	if len(output.Modules) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No Cloud stack modules found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No Cloud stack modules found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Modules))
 	for _, module := range output.Modules {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\n", module.Name, module.State, module.Status); err != nil {
-			return err
-		}
+		rows = append(rows, []string{module.Name, module.State, module.Status})
 	}
-	return nil
+	return writeStyledRows(cmd, []string{"Name", "State", "Status"}, rows)
 }
 
 func renderCloudStackModuleAction(cmd *cobra.Command, output cloudcmd.ModuleActionOutput) error {
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud stack %s module %s %sd.\n", output.StackID, output.Name, output.Action)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud stack %s module %s %sd.", output.StackID, output.Name, output.Action)))
 	return err
 }
 
 func renderCloudStack(cmd *cobra.Command, output cloudcmd.StackOutput) error {
 	stack := output.Stack
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\nName\t%s\nStatus\t%s\nState\t%s\n", stack.ID, stack.Name, stack.Status, stack.State); err != nil {
-		return err
+	rows := []styledKeyValue{
+		{Label: "ID", Value: stack.ID},
+		{Label: "Name", Value: stack.Name},
+		{Label: "Status", Value: stack.Status},
+		{Label: "State", Value: stack.State},
 	}
 	if stack.URI != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "URI\t%s\n", stack.URI); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "URI", Value: stack.URI})
 	}
 	if stack.Version != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Version\t%s\n", stack.Version); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Version", Value: stack.Version})
 	}
-	return nil
+	return writeStyledKeyValues(cmd, rows...)
 }

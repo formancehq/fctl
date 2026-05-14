@@ -1582,21 +1582,23 @@ func newMembershipClient(baseURL string, httpClient *http.Client) *membership.SD
 }
 
 func renderCloudMe(cmd *cobra.Command, output cloudcmd.MeOutput) error {
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\nEmail\t%s\nRole\t%s\n", output.User.ID, output.User.Email, output.User.Role)
-	return err
+	return writeStyledKeyValues(cmd,
+		styledKeyValue{Label: "ID", Value: output.User.ID},
+		styledKeyValue{Label: "Email", Value: output.User.Email},
+		styledKeyValue{Label: "Role", Value: output.User.Role},
+	)
 }
 
 func renderCloudInvitations(cmd *cobra.Command, output cloudcmd.ListInvitationsOutput) error {
 	if len(output.Invitations) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No invitations found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No invitations found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Invitations))
 	for _, invitation := range output.Invitations {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\n", invitation.ID, invitation.OrganizationID, invitation.UserEmail, invitation.Status); err != nil {
-			return err
-		}
+		rows = append(rows, []string{invitation.ID, invitation.OrganizationID, invitation.UserEmail, invitation.Status})
 	}
-	return nil
+	return writeStyledRows(cmd, []string{"ID", "Organization", "Email", "Status"}, rows)
 }
 
 func renderCloudInvitationAction(cmd *cobra.Command, output cloudcmd.InvitationActionOutput) error {
@@ -1604,155 +1606,145 @@ func renderCloudInvitationAction(cmd *cobra.Command, output cloudcmd.InvitationA
 	if output.Action == "decline" {
 		done = "declined"
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud invitation %s %s.\n", output.InvitationID, done)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud invitation %s %s.", output.InvitationID, done)))
 	return err
 }
 
 func renderCloudRegions(cmd *cobra.Command, output cloudcmd.ListRegionsOutput) error {
 	if len(output.Regions) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No regions found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No regions found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Regions))
 	for _, region := range output.Regions {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%t\t%t\n", region.ID, region.Name, region.Active, region.Public); err != nil {
-			return err
-		}
+		rows = append(rows, []string{region.ID, region.Name, fmt.Sprint(region.Active), fmt.Sprint(region.Public)})
 	}
-	return nil
+	return writeStyledRows(cmd, []string{"ID", "Name", "Active", "Public"}, rows)
 }
 
 func renderCloudRegion(cmd *cobra.Command, output cloudcmd.RegionOutput) error {
 	region := output.Region
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\nName\t%s\nActive\t%t\nPublic\t%t\n", region.ID, region.Name, region.Active, region.Public); err != nil {
-		return err
+	rows := []styledKeyValue{
+		{Label: "ID", Value: region.ID},
+		{Label: "Name", Value: region.Name},
+		{Label: "Active", Value: fmt.Sprint(region.Active)},
+		{Label: "Public", Value: fmt.Sprint(region.Public)},
 	}
 	if region.BaseURL != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "BaseURL\t%s\n", region.BaseURL); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "BaseURL", Value: region.BaseURL})
 	}
 	if region.Version != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Version\t%s\n", region.Version); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Version", Value: region.Version})
 	}
-	return nil
+	return writeStyledKeyValues(cmd, rows...)
 }
 
 func renderCloudRegionMutated(cmd *cobra.Command, output cloudcmd.RegionOutput, action string) error {
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud region %s %s.\n", output.Region.ID, action)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud region %s %s.", output.Region.ID, action)))
 	return err
 }
 
 func renderCloudOrganizations(cmd *cobra.Command, output cloudcmd.ListOrganizationsOutput) error {
 	if len(output.Organizations) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No organizations found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No organizations found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Organizations))
 	for _, organization := range output.Organizations {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\n", organization.ID, organization.Name, organization.OwnerID); err != nil {
-			return err
-		}
+		rows = append(rows, []string{organization.ID, organization.Name, organization.OwnerID})
 	}
-	return nil
+	return writeStyledRows(cmd, []string{"ID", "Name", "Owner"}, rows)
 }
 
 func renderCloudLogs(cmd *cobra.Command, output cloudcmd.ListLogsOutput) error {
 	if len(output.Logs) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No logs found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No logs found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Logs))
 	for _, log := range output.Logs {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\t%s\n", log.Seq, log.OrganizationID, log.UserID, log.Action, log.Date.Format(time.RFC3339)); err != nil {
-			return err
-		}
+		rows = append(rows, []string{log.Seq, log.OrganizationID, log.UserID, log.Action, log.Date.Format(time.RFC3339)})
 	}
-	return nil
+	return writeStyledRows(cmd, []string{"Seq", "Organization", "User", "Action", "Date"}, rows)
 }
 
 func renderCloudApplications(cmd *cobra.Command, output cloudcmd.ListApplicationsOutput) error {
 	if len(output.Applications) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No applications found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No applications found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Applications))
 	for _, application := range output.Applications {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\n", application.ID, application.Name, application.Alias, application.URL); err != nil {
-			return err
-		}
+		rows = append(rows, []string{application.ID, application.Name, application.Alias, application.URL})
 	}
-	return nil
+	return writeStyledRows(cmd, []string{"ID", "Name", "Alias", "URL"}, rows)
 }
 
 func renderCloudApplication(cmd *cobra.Command, output cloudcmd.ApplicationOutput) error {
 	application := output.Application
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\nName\t%s\nAlias\t%s\nURL\t%s\n", application.ID, application.Name, application.Alias, application.URL); err != nil {
-		return err
+	rows := []styledKeyValue{
+		{Label: "ID", Value: application.ID},
+		{Label: "Name", Value: application.Name},
+		{Label: "Alias", Value: application.Alias},
+		{Label: "URL", Value: application.URL},
 	}
 	if application.Description != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Description\t%s\n", application.Description); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Description", Value: application.Description})
 	}
 	for _, scope := range application.Scopes {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Scope\t%d\t%s\n", scope.ID, scope.Label); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Scope", Value: fmt.Sprintf("%d\t%s", scope.ID, scope.Label)})
 	}
-	return nil
+	return writeStyledKeyValues(cmd, rows...)
 }
 
 func renderCloudAuthenticationProvider(cmd *cobra.Command, output cloudcmd.AuthenticationProviderOutput) error {
 	provider := output.Provider
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Type\t%s\nName\t%s\nClientID\t%s\n", provider.Type, provider.Name, provider.ClientID); err != nil {
-		return err
+	rows := []styledKeyValue{
+		{Label: "Type", Value: provider.Type},
+		{Label: "Name", Value: provider.Name},
+		{Label: "ClientID", Value: provider.ClientID},
 	}
 	if provider.RedirectURI != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "RedirectURI\t%s\n", provider.RedirectURI); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "RedirectURI", Value: provider.RedirectURI})
 	}
 	if provider.Issuer != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Issuer\t%s\n", provider.Issuer); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Issuer", Value: provider.Issuer})
 	}
 	if provider.Tenant != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Tenant\t%s\n", provider.Tenant); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Tenant", Value: provider.Tenant})
 	}
-	return nil
+	return writeStyledKeyValues(cmd, rows...)
 }
 
 func renderCloudAuthenticationProviderMutated(cmd *cobra.Command, output cloudcmd.AuthenticationProviderOutput, action string) error {
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud authentication provider %s %s.\n", output.Provider.Name, action)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud authentication provider %s %s.", output.Provider.Name, action)))
 	return err
 }
 
 func renderCloudOAuthClients(cmd *cobra.Command, output cloudcmd.ListOAuthClientsOutput) error {
 	if len(output.Clients) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No OAuth clients found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No OAuth clients found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Clients))
 	for _, client := range output.Clients {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\n", client.ClientID, client.Name, client.SecretLastDigits, client.Description); err != nil {
-			return err
-		}
+		rows = append(rows, []string{client.ClientID, client.Name, client.SecretLastDigits, client.Description})
 	}
-	return nil
+	return writeStyledRows(cmd, []string{"ClientID", "Name", "SecretLastDigits", "Description"}, rows)
 }
 
 func renderCloudOAuthClient(cmd *cobra.Command, output cloudcmd.OAuthClientOutput, includeSecret bool) error {
 	client := output.Client
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ClientID\t%s\nName\t%s\nSecretLastDigits\t%s\nDescription\t%s\n", client.ClientID, client.Name, client.SecretLastDigits, client.Description); err != nil {
-		return err
+	rows := []styledKeyValue{
+		{Label: "ClientID", Value: client.ClientID},
+		{Label: "Name", Value: client.Name},
+		{Label: "SecretLastDigits", Value: client.SecretLastDigits},
+		{Label: "Description", Value: client.Description},
 	}
 	if includeSecret && client.Secret != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Secret\t%s\n", client.Secret); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Secret", Value: client.Secret})
 	}
-	return nil
+	return writeStyledKeyValues(cmd, rows...)
 }
 
 func renderCloudOAuthClientCreated(cmd *cobra.Command, output cloudcmd.OAuthClientOutput) error {
@@ -1760,26 +1752,28 @@ func renderCloudOAuthClientCreated(cmd *cobra.Command, output cloudcmd.OAuthClie
 }
 
 func renderCloudOAuthClientMutated(cmd *cobra.Command, output cloudcmd.OAuthClientOutput, action string) error {
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud OAuth client %s %s.\n", output.Client.ClientID, action)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud OAuth client %s %s.", output.Client.ClientID, action)))
 	return err
 }
 
 func renderCloudOrganizationUsers(cmd *cobra.Command, output cloudcmd.ListOrganizationUsersOutput) error {
 	if len(output.Users) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No organization users found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No organization users found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Users))
 	for _, user := range output.Users {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%d\n", user.ID, user.Email, user.PolicyID); err != nil {
-			return err
-		}
+		rows = append(rows, []string{user.ID, user.Email, fmt.Sprint(user.PolicyID)})
 	}
-	return nil
+	return writeStyledRows(cmd, []string{"ID", "Email", "Policy"}, rows)
 }
 
 func renderCloudOrganizationUser(cmd *cobra.Command, output cloudcmd.OrganizationUserOutput) error {
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\nEmail\t%s\nPolicy\t%d\n", output.User.ID, output.User.Email, output.User.PolicyID)
-	return err
+	return writeStyledKeyValues(cmd,
+		styledKeyValue{Label: "ID", Value: output.User.ID},
+		styledKeyValue{Label: "Email", Value: output.User.Email},
+		styledKeyValue{Label: "Policy", Value: fmt.Sprint(output.User.PolicyID)},
+	)
 }
 
 func renderCloudOrganizationUserAction(cmd *cobra.Command, output cloudcmd.OrganizationUserActionOutput) error {
@@ -1787,77 +1781,74 @@ func renderCloudOrganizationUserAction(cmd *cobra.Command, output cloudcmd.Organ
 	if output.Action == "unlink" {
 		done = "unlinked"
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud organization %s user %s %s.\n", output.OrganizationID, output.UserID, done)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud organization %s user %s %s.", output.OrganizationID, output.UserID, done)))
 	return err
 }
 
 func renderCloudPolicies(cmd *cobra.Command, output cloudcmd.ListPoliciesOutput) error {
 	if len(output.Policies) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No policies found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No policies found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Policies))
 	for _, policy := range output.Policies {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%d\t%s\t%t\n", policy.ID, policy.Name, policy.Protected); err != nil {
-			return err
-		}
+		rows = append(rows, []string{fmt.Sprint(policy.ID), policy.Name, fmt.Sprint(policy.Protected)})
 	}
-	return nil
+	return writeStyledRows(cmd, []string{"ID", "Name", "Protected"}, rows)
 }
 
 func renderCloudPolicy(cmd *cobra.Command, output cloudcmd.PolicyOutput) error {
 	policy := output.Policy
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%d\nName\t%s\nProtected\t%t\n", policy.ID, policy.Name, policy.Protected); err != nil {
-		return err
+	rows := []styledKeyValue{
+		{Label: "ID", Value: fmt.Sprint(policy.ID)},
+		{Label: "Name", Value: policy.Name},
+		{Label: "Protected", Value: fmt.Sprint(policy.Protected)},
 	}
 	if policy.Description != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Description\t%s\n", policy.Description); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Description", Value: policy.Description})
 	}
 	for _, scope := range policy.Scopes {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Scope\t%d\t%s\n", scope.ID, scope.Label); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Scope", Value: fmt.Sprintf("%d\t%s", scope.ID, scope.Label)})
 	}
-	return nil
+	return writeStyledKeyValues(cmd, rows...)
 }
 
 func renderCloudPolicyMutated(cmd *cobra.Command, output cloudcmd.PolicyOutput, action string) error {
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud policy %d %s.\n", output.Policy.ID, action)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud policy %d %s.", output.Policy.ID, action)))
 	return err
 }
 
 func renderCloudPolicyAction(cmd *cobra.Command, output cloudcmd.PolicyActionOutput) error {
 	switch output.Action {
 	case "delete":
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud policy %d deleted.\n", output.PolicyID)
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud policy %d deleted.", output.PolicyID)))
 		return err
 	case "add-scope":
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud policy %d scope %d added.\n", output.PolicyID, output.ScopeID)
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud policy %d scope %d added.", output.PolicyID, output.ScopeID)))
 		return err
 	case "remove-scope":
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud policy %d scope %d removed.\n", output.PolicyID, output.ScopeID)
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud policy %d scope %d removed.", output.PolicyID, output.ScopeID)))
 		return err
 	default:
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud policy %d %s completed.\n", output.PolicyID, output.Action)
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud policy %d %s completed.", output.PolicyID, output.Action)))
 		return err
 	}
 }
 
 func renderCloudOrganization(cmd *cobra.Command, output cloudcmd.OrganizationOutput) error {
 	organization := output.Organization
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\nName\t%s\nOwner\t%s\n", organization.ID, organization.Name, organization.OwnerID); err != nil {
-		return err
+	rows := []styledKeyValue{
+		{Label: "ID", Value: organization.ID},
+		{Label: "Name", Value: organization.Name},
+		{Label: "Owner", Value: organization.OwnerID},
 	}
 	if organization.Domain != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Domain\t%s\n", organization.Domain); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Domain", Value: organization.Domain})
 	}
-	return nil
+	return writeStyledKeyValues(cmd, rows...)
 }
 
 func renderCloudOrganizationMutated(cmd *cobra.Command, output cloudcmd.OrganizationOutput, action string) error {
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud organization %s %s.\n", output.Organization.ID, action)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud organization %s %s.", output.Organization.ID, action)))
 	return err
 }

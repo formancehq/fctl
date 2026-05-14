@@ -37,6 +37,14 @@ Read ADRs as needed:
 - Follow `todos/*.md` in order unless the user explicitly reprioritizes.
 - Commit after each logical step.
 
+## CLI Rendering Policy
+
+- Human `plain` output must go through shared rendering helpers instead of writing raw strings directly to `cmd.OutOrStdout()`.
+- Use `styledSuccessLine` for successful mutations, `writeStyledKeyValues` for detail views, `writeStyledRows`/`v4render.Table` for lists, `styledEmptyLine` for empty states, and `styledInfoLine` for supporting metadata such as API versions.
+- Keep scriptability intact: JSON/YAML output must stay unstyled, non-TTY plain output must remain stable, and ANSI styling must only be emitted for terminal output.
+- Direct writes to `cmd.OutOrStdout()` are allowed only for raw payloads such as archives, manifests, logs, or compatibility-preserving fallback paths that are explicitly tracked by tests.
+- When adding or touching a command renderer, remove it from the raw-output baseline in `v4/cmd/rendering_policy_test.go` and route its output through the shared helpers.
+
 ## Implementation Shape
 
 Prefer this package split under `v4/` during the transition:

@@ -136,11 +136,56 @@ func commandColorEnabled(cmd *cobra.Command) bool {
 }
 
 func styledKeyValueLine(cmd *cobra.Command, label string, value string) string {
+	return styledKeyValueLineWithWidth(cmd, label, value, 8)
+}
+
+type styledKeyValue struct {
+	Label string
+	Value string
+}
+
+func writeStyledKeyValues(cmd *cobra.Command, rows ...styledKeyValue) error {
+	if !terminalOutputEnabled(cmd) {
+		for _, row := range rows {
+			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\n", row.Label, row.Value); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	width := 8
+	for _, row := range rows {
+		if len(row.Label) > width {
+			width = len(row.Label)
+		}
+	}
+	for _, row := range rows {
+		if _, err := fmt.Fprintln(cmd.OutOrStdout(), styledKeyValueLineWithWidth(cmd, row.Label, row.Value, width)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func writeStyledRows(cmd *cobra.Command, headers []string, rows [][]string) error {
+	if !terminalOutputEnabled(cmd) {
+		for _, row := range rows {
+			if _, err := fmt.Fprintln(cmd.OutOrStdout(), strings.Join(row, "\t")); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	return v4render.Table(cmd.OutOrStdout(), headers, rows)
+}
+
+func styledKeyValueLineWithWidth(cmd *cobra.Command, label string, value string, width int) string {
 	if !terminalOutputEnabled(cmd) {
 		return fmt.Sprintf("%s\t%s", label, value)
 	}
 
-	labelStyle := lipgloss.NewStyle().Width(8).PaddingRight(1)
+	labelStyle := lipgloss.NewStyle().Width(width).PaddingRight(1)
 	valueStyle := lipgloss.NewStyle().Bold(true)
 	prefixStyle := lipgloss.NewStyle()
 	if commandColorEnabled(cmd) {
@@ -149,6 +194,32 @@ func styledKeyValueLine(cmd *cobra.Command, label string, value string) string {
 		prefixStyle = prefixStyle.Foreground(v4render.FormancePalette.Success).Bold(true)
 	}
 	return fmt.Sprintf("%s %s %s", prefixStyle.Render("OK"), labelStyle.Render(label), valueStyle.Render(value))
+}
+
+func styledEmptyLine(cmd *cobra.Command, message string) string {
+	if !terminalOutputEnabled(cmd) {
+		return message
+	}
+
+	style := lipgloss.NewStyle()
+	if commandColorEnabled(cmd) {
+		style = style.Foreground(v4render.FormancePalette.Muted)
+	}
+	return style.Render(message)
+}
+
+func styledInfoLine(cmd *cobra.Command, label string, value string) string {
+	if !terminalOutputEnabled(cmd) {
+		return fmt.Sprintf("%s: %s", label, value)
+	}
+
+	labelStyle := lipgloss.NewStyle()
+	valueStyle := lipgloss.NewStyle().Bold(true)
+	if commandColorEnabled(cmd) {
+		labelStyle = labelStyle.Foreground(v4render.FormancePalette.Muted)
+		valueStyle = valueStyle.Foreground(v4render.FormancePalette.Text)
+	}
+	return fmt.Sprintf("%s %s", labelStyle.Render(label), valueStyle.Render(value))
 }
 
 func styledSuccessLine(cmd *cobra.Command, message string) string {
