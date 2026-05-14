@@ -1145,6 +1145,9 @@ func TestLedgerTransactionsListSelectsV2(t *testing.T) {
 			if !strings.Contains(query, `"destination":"users:123"`) {
 				t.Fatalf("expected query to contain destination users:123, got %q", query)
 			}
+			if !strings.Contains(query, `"metadata[tier]":"gold"`) {
+				t.Fatalf("expected query to contain metadata tier, got %q", query)
+			}
 			w.Header().Set("Content-Type", "application/json")
 			fmt.Fprint(w, `{"cursor":{"data":[{"id":1,"metadata":{"foo":"bar"},"postings":[],"reverted":false,"timestamp":"2026-01-01T00:00:00Z","reference":"ref"}],"hasMore":false,"pageSize":15}}`)
 		default:
@@ -1169,6 +1172,7 @@ func TestLedgerTransactionsListSelectsV2(t *testing.T) {
 		"ledger", "transactions", "list",
 		"--source", "world",
 		"--destination", "users:123",
+		"--metadata", "tier=gold",
 	)
 	if err != nil {
 		t.Fatalf("list transactions: %v stderr=%s", err, stderr)
@@ -1180,6 +1184,52 @@ func TestLedgerTransactionsListSelectsV2(t *testing.T) {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected ledger output to contain %q, got:\n%s", expected, stdout)
 		}
+	}
+}
+
+func TestLedgerTransactionsListTimeFiltersSelectV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/default/transactions":
+			if got := r.URL.Query().Get("startTime"); got != "2026-01-01T00:00:00Z" {
+				t.Fatalf("expected startTime, got %q", got)
+			}
+			if got := r.URL.Query().Get("endTime"); got != "2026-01-02T00:00:00Z" {
+				t.Fatalf("expected endTime, got %q", got)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"txid":1,"metadata":{"foo":"bar"},"postings":[],"timestamp":"2026-01-01T00:00:00Z","reference":"ref"}],"hasMore":false,"pageSize":15}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "transactions", "list",
+		"--start", "2026-01-01T00:00:00Z",
+		"--end", "2026-01-02T00:00:00Z",
+	)
+	if err != nil {
+		t.Fatalf("list transactions: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v1") {
+		t.Fatalf("expected v1 output, got:\n%s", stdout)
 	}
 }
 

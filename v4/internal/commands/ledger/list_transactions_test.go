@@ -221,14 +221,71 @@ func TestToV2ListTransactionsRequestMapsCanonicalFilters(t *testing.T) {
 		Source:      "world",
 		Destination: "users:123",
 		Reference:   "ref",
+		Metadata:    map[string]string{"tier": "gold"},
 	})
 
 	if request.Ledger != "default" || *request.PageSize != 10 {
 		t.Fatalf("unexpected base request: %#v", request)
 	}
 	if request.Query["account"] != "users:123" || request.Query["source"] != "world" ||
-		request.Query["destination"] != "users:123" || request.Query["reference"] != "ref" {
+		request.Query["destination"] != "users:123" || request.Query["reference"] != "ref" ||
+		request.Query["metadata[tier]"] != "gold" {
 		t.Fatalf("unexpected query mapping: %#v", request.Query)
+	}
+}
+
+func TestToV1ListTransactionsRequestMapsTimeAndMetadataFilters(t *testing.T) {
+	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC)
+	request := toV1ListTransactionsRequest(ListTransactionsInput{
+		Ledger:    "default",
+		PageSize:  10,
+		Metadata:  map[string]string{"tier": "gold"},
+		StartTime: &start,
+		EndTime:   &end,
+	})
+
+	if request.StartTime == nil || !request.StartTime.Equal(start) {
+		t.Fatalf("unexpected start time: %#v", request.StartTime)
+	}
+	if request.EndTime == nil || !request.EndTime.Equal(end) {
+		t.Fatalf("unexpected end time: %#v", request.EndTime)
+	}
+	if request.Metadata["tier"] != "gold" {
+		t.Fatalf("unexpected metadata: %#v", request.Metadata)
+	}
+}
+
+func TestListTransactionsServiceUsesV1ForTimeFilters(t *testing.T) {
+	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	service := ListTransactionsService{
+		Handlers: []ListTransactionsHandler{
+			{
+				APIVersion: "v1",
+				Run: func(context.Context, ListTransactionsInput) (ListTransactionsOutput, error) {
+					return ListTransactionsOutput{}, nil
+				},
+			},
+			{
+				APIVersion: "v2",
+				Run: func(context.Context, ListTransactionsInput) (ListTransactionsOutput, error) {
+					t.Fatal("v2 handler should not run for time filters")
+					return ListTransactionsOutput{}, nil
+				},
+			},
+		},
+		Resolve: func(_ context.Context, versions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			assertAPIVersions(t, versions, []capabilities.APIVersion{"v1"})
+			return "v1", nil
+		},
+	}
+
+	output, err := service.Run(context.Background(), ListTransactionsInput{Ledger: "default", StartTime: &start})
+	if err != nil {
+		t.Fatalf("run service: %v", err)
+	}
+	if output.APIVersion != "v1" {
+		t.Fatalf("unexpected API version: %s", output.APIVersion)
 	}
 }
 

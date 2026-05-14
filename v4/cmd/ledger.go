@@ -1458,6 +1458,9 @@ func newLedgerTransactionsListCommand() *cobra.Command {
 	var source string
 	var destination string
 	var reference string
+	var metadata []string
+	var start string
+	var end string
 	var apiVersion string
 
 	command := &cobra.Command{
@@ -1470,6 +1473,25 @@ func newLedgerTransactionsListCommand() *cobra.Command {
 			}
 			if cmd.Flags().Changed("dst") {
 				fmt.Fprintln(cmd.ErrOrStderr(), "Flag --dst has been deprecated, use --destination")
+			}
+			if cmd.Flags().Changed("start-time") {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Flag --start-time has been deprecated, use --start")
+			}
+			if cmd.Flags().Changed("end-time") {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Flag --end-time has been deprecated, use --end")
+			}
+
+			parsedMetadata, err := parseMetadataFlags(metadata)
+			if err != nil {
+				return err
+			}
+			parsedStart, err := parseOptionalRFC3339(start, "start")
+			if err != nil {
+				return err
+			}
+			parsedEnd, err := parseOptionalRFC3339(end, "end")
+			if err != nil {
+				return err
 			}
 
 			rt, err := runtimeFromCommand(cmd)
@@ -1514,6 +1536,9 @@ func newLedgerTransactionsListCommand() *cobra.Command {
 				Source:      source,
 				Destination: destination,
 				Reference:   reference,
+				Metadata:    parsedMetadata,
+				StartTime:   parsedStart,
+				EndTime:     parsedEnd,
 			})
 			if err != nil {
 				return err
@@ -1535,9 +1560,16 @@ func newLedgerTransactionsListCommand() *cobra.Command {
 	command.Flags().StringVar(&destination, "destination", "", "Filter by destination account")
 	command.Flags().StringVar(&destination, "dst", "", "Deprecated alias for --destination")
 	command.Flags().StringVar(&reference, "reference", "", "Filter by reference")
+	command.Flags().StringSliceVar(&metadata, "metadata", nil, "Filter by metadata key=value")
+	command.Flags().StringVar(&start, "start", "", "Filter transactions after this RFC3339 timestamp")
+	command.Flags().StringVar(&start, "start-time", "", "Deprecated alias for --start")
+	command.Flags().StringVar(&end, "end", "", "Filter transactions before this RFC3339 timestamp")
+	command.Flags().StringVar(&end, "end-time", "", "Deprecated alias for --end")
 	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
 	_ = command.Flags().MarkDeprecated("src", "use --source")
 	_ = command.Flags().MarkDeprecated("dst", "use --destination")
+	_ = command.Flags().MarkDeprecated("start-time", "use --start")
+	_ = command.Flags().MarkDeprecated("end-time", "use --end")
 
 	return command
 }

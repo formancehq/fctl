@@ -33,6 +33,9 @@ type ListTransactionsInput struct {
 	Source      string
 	Destination string
 	Reference   string
+	Metadata    map[string]string
+	StartTime   *time.Time
+	EndTime     *time.Time
 }
 
 type ListTransactionsOutput struct {
@@ -159,6 +162,9 @@ func (s ListTransactionsService) Run(ctx context.Context, input ListTransactions
 	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
 	handlers := map[capabilities.APIVersion]ListTransactionsHandler{}
 	for _, handler := range s.Handlers {
+		if (input.StartTime != nil || input.EndTime != nil) && handler.APIVersion != "v1" {
+			continue
+		}
 		handlerVersions = append(handlerVersions, handler.APIVersion)
 		handlers[handler.APIVersion] = handler
 	}
@@ -558,6 +564,15 @@ func toV1ListTransactionsRequest(input ListTransactionsInput) operations.ListTra
 	if input.Reference != "" {
 		request.Reference = pointer(input.Reference)
 	}
+	if len(input.Metadata) > 0 {
+		request.Metadata = stringMapToAny(input.Metadata)
+	}
+	if input.StartTime != nil {
+		request.StartTime = input.StartTime
+	}
+	if input.EndTime != nil {
+		request.EndTime = input.EndTime
+	}
 	return request
 }
 
@@ -581,6 +596,9 @@ func toV2ListTransactionsRequest(input ListTransactionsInput) operations.V2ListT
 	}
 	if input.Reference != "" {
 		query["reference"] = input.Reference
+	}
+	for key, value := range input.Metadata {
+		query["metadata["+key+"]"] = value
 	}
 	if len(query) > 0 {
 		request.Query = query
