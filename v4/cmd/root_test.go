@@ -253,6 +253,118 @@ func TestContextSetUpdatesCloudStack(t *testing.T) {
 	}
 }
 
+func TestCloudMeShow(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/me" {
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `{"data":{"id":"user_1","email":"user@example.com","role":"USER"}}`)
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud", "cloud",
+		"--cloud-url", server.URL,
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud", "me", "show")
+	if err != nil {
+		t.Fatalf("cloud me show: %v stderr=%s", err, stderr)
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	for _, expected := range []string{"ID\tuser_1", "Email\tuser@example.com", "Role\tUSER"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected cloud me output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestCloudOrganizationsListAndShow(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/organizations":
+			fmt.Fprint(w, `{"data":[{"id":"org_1","name":"Acme","ownerId":"user_1","domain":"acme.test","totalStacks":2,"totalUsers":3}]}`)
+		case "/organizations/org_1":
+			fmt.Fprint(w, `{"data":{"id":"org_1","name":"Acme","ownerId":"user_1","domain":"acme.test","totalStacks":2,"totalUsers":3}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", server.URL,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "list")
+	if err != nil {
+		t.Fatalf("cloud organizations list: %v stderr=%s", err, stderr)
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(stdout, "org_1\tAcme\tuser_1") {
+		t.Fatalf("unexpected organizations list output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "describe", "org_1")
+	if err != nil {
+		t.Fatalf("cloud organizations describe: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Command cloud organizations describe has been deprecated, use cloud organizations show") {
+		t.Fatalf("expected describe deprecation warning, got:\n%s", stderr)
+	}
+	for _, expected := range []string{"ID\torg_1", "Name\tAcme", "Owner\tuser_1", "Domain\tacme.test"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected organization output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestCloudCommandsRejectStackContext(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatalf("cloud command must reject stack contexts before network calls")
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create stack context: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "me", "show")
+	if err == nil {
+		t.Fatal("expected cloud command to reject stack context")
+	}
+	if !strings.Contains(err.Error(), "cloud commands require a cloud or cloud-stack context") {
+		t.Fatalf("unexpected error: %v stderr=%s", err, stderr)
+	}
+}
+
 func TestContextCommandsJSON(t *testing.T) {
 	configDir := t.TempDir()
 

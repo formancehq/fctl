@@ -45,6 +45,7 @@ func NewRootCommand(version string) *cobra.Command {
 	root.AddCommand(newSetupCommand(false))
 	root.AddCommand(newSetupCommand(true))
 	root.AddCommand(newTargetCommand())
+	root.AddCommand(newCloudCommand())
 	root.AddCommand(newLedgerCommand())
 	root.AddCommand(newPaymentsCommand())
 	root.AddCommand(newWalletsCommand())

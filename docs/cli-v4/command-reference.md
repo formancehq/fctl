@@ -16,6 +16,15 @@ This reference lists the current canonical v4 command families implemented under
 - `fctl setup`
 - `fctl target inspect`
 
+## Cloud
+
+- `fctl cloud me show`
+- `fctl cloud organizations list`
+- `fctl cloud organizations show <organization-id>`
+
+Cloud commands require a `cloud` or `cloud-stack` context. They are not required
+for direct local or self-hosted stack commands.
+
 ## Ledger
 
 - `fctl ledger transactions list`

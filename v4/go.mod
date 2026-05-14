@@ -12,7 +12,10 @@ require (
 )
 
 require (
+	github.com/formancehq/fctl/internal/membershipclient/v3 v3.1.1
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 )
+
+replace github.com/formancehq/fctl/internal/membershipclient/v3 => ../internal/membershipclient

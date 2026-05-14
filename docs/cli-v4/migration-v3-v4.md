@@ -30,6 +30,8 @@ the isolated v4 implementation under `v4/`.
 | `auth clients get` | `auth clients show` | `get` remains a deprecated alias. |
 | `auth users get` | `auth users show` | `get` remains a deprecated alias. |
 | `webhooks change-secret` | `webhooks secret rotate` | `change-secret` remains a deprecated alias. |
+| `cloud me info` | `cloud me show` | `info` remains a deprecated alias. |
+| `cloud organizations describe` | `cloud organizations show` | `describe` remains a deprecated alias. |
 | `stack ...` / `stacks ...` | `cloud_stacks ...` | Deprecated aliases with warnings for Cloud lifecycle commands. |
 | `search ...` | none | Removed. |
 
