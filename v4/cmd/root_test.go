@@ -6783,6 +6783,21 @@ func TestPaymentsConnectorsConfigShowSelectsV3(t *testing.T) {
 			t.Fatalf("expected payment connector config output to contain %q, got:\n%s", expected, stdout)
 		}
 	}
+
+	stdout, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "connectors", "get-config",
+		"--connector-id", "conn_1",
+	)
+	if err != nil {
+		t.Fatalf("show payment connector config through deprecated get-config: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Command payments connectors get-config has been deprecated, use payments connectors config show <connector-id>") {
+		t.Fatalf("expected get-config deprecation warning, got:\n%s", stderr)
+	}
+	if !strings.Contains(stdout, "API version: v3") || !strings.Contains(stdout, "Connector ID: conn_1") {
+		t.Fatalf("unexpected deprecated get-config output:\n%s", stdout)
+	}
 }
 
 func TestPaymentsConnectorsConfigUpdateSelectsV3(t *testing.T) {

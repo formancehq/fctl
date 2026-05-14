@@ -37,6 +37,7 @@ the isolated v4 implementation under `v4/`.
 | `profiles set-default-stack <stack>` | `context set --stack <stack>` | Deprecated alias updates the current context. |
 | `orchestration ...` | `flows ...` | `orchestration` is a deprecated alias with a warning. |
 | `orchestration instances describe` | `flows instances inspect` | `describe` remains a deprecated alias. |
+| `payments connectors get-config --connector-id <id>` | `payments connectors config show <connector-id>` | Deprecated alias with a warning. |
 | `payments ... get` | `payments ... show` | `get` remains a deprecated alias when cheap to maintain. |
 | `reconciliation ... get` | `reconciliation ... show` | `get` remains a deprecated alias. |
 | `auth clients get` | `auth clients show` | `get` remains a deprecated alias. |

@@ -10,6 +10,7 @@ tests, and explicit about their canonical replacement.
 | `profiles ...` | `context ...` | Deprecated warning | v4.x |
 | `orchestration ...` | `flows ...` | Deprecated warning | v4.x or v5 |
 | `flows instances describe` | `flows instances inspect` | Deprecated warning | v4.x |
+| `payments connectors get-config --connector-id <id>` | `payments connectors config show <connector-id>` | Deprecated warning | v4.x |
 | `payments connectors config get` | `payments connectors config show` | Deprecated warning | v4.x |
 | `payments connectors update-config` | `payments connectors config update` | Deprecated warning | v4.x |
 | `payments transfer-initiation get` | `payments transfer-initiation show` | Deprecated warning | v4.x |

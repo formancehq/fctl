@@ -96,6 +96,7 @@ func newPaymentsConnectorsCommand() *cobra.Command {
 	command.AddCommand(newPaymentsConnectorsInstallCommand())
 	command.AddCommand(newPaymentsConnectorsListCommand())
 	command.AddCommand(newPaymentsConnectorsConfigCommand())
+	command.AddCommand(newPaymentsConnectorsDeprecatedGetConfigCommand())
 	command.AddCommand(newPaymentsConnectorsDeprecatedUpdateConfigCommand())
 	command.AddCommand(newPaymentsConnectorsUninstallCommand())
 	return command
@@ -295,6 +296,64 @@ func newPaymentsConnectorsConfigShowCommand(use string, aliases []string, deprec
 	if deprecated {
 		command.Deprecated = "use payments connectors config show"
 	}
+	command.Flags().StringVar(&provider, "provider", "", "Connector provider, required only when pinned to payments API v1")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func newPaymentsConnectorsDeprecatedGetConfigCommand() *cobra.Command {
+	var connectorID string
+	var provider string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:        "get-config",
+		Short:      "Show a payment connector configuration",
+		Deprecated: "use payments connectors config show",
+		Args:       cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			fmt.Fprintln(cmd.ErrOrStderr(), "Command payments connectors get-config has been deprecated, use payments connectors config show <connector-id>")
+			if connectorID == "" {
+				return fmt.Errorf("payments connectors get-config requires --connector-id")
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.GetConnectorConfigService{
+				Handlers: paymentscmd.SDKGetConnectorConfigHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureGetConnectorConfig,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.GetConnectorConfigInput{
+				ConnectorID: connectorID,
+				Provider:    provider,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentConnectorConfig(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&connectorID, "connector-id", "", "Connector ID")
 	command.Flags().StringVar(&provider, "provider", "", "Connector provider, required only when pinned to payments API v1")
 	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
 	return command
