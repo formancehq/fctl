@@ -60,6 +60,7 @@ func TestRootHelp(t *testing.T) {
 		"--context",
 		"--config-dir",
 		"-c, --config-dir",
+		"-d, --debug",
 		"--insecure-tls",
 		"--non-interactive",
 		"version",
@@ -2059,6 +2060,17 @@ func TestTargetInspect(t *testing.T) {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected inspect output to contain %q, got:\n%s", expected, stdout)
 		}
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "--debug", "target", "inspect")
+	if err != nil {
+		t.Fatalf("inspect target with debug: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "Context: local") {
+		t.Fatalf("expected inspect stdout, got:\n%s", stdout)
+	}
+	if !strings.Contains(stderr, "debug: context=local target=stack url="+server.URL+"/api") {
+		t.Fatalf("expected debug stderr, got:\n%s", stderr)
 	}
 }
 

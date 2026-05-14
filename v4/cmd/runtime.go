@@ -33,7 +33,7 @@ func runtimeFromCommand(cmd *cobra.Command) (*runtime.Runtime, error) {
 		return nil, err
 	}
 
-	return runtime.New(cmd.Context(), runtime.Options{
+	rt, err := runtime.New(cmd.Context(), runtime.Options{
 		ConfigPath:      path,
 		ContextOverride: v4config.ContextOverride{Name: contextName},
 		Credentials:     store,
@@ -41,6 +41,15 @@ func runtimeFromCommand(cmd *cobra.Command) (*runtime.Runtime, error) {
 		Manifest:        capabilities.GeneratedManifest,
 		Compatibility:   capabilities.DefaultComponentCompatibility,
 	})
+	if err != nil {
+		return nil, err
+	}
+	if debug, err := cmd.Root().PersistentFlags().GetBool(debugFlag); err != nil {
+		return nil, err
+	} else if debug {
+		fmt.Fprintf(cmd.ErrOrStderr(), "debug: context=%s target=%s url=%s\n", rt.ContextName, rt.Target.Kind, rt.Target.URL)
+	}
+	return rt, nil
 }
 
 func contextNameFromCommand(cmd *cobra.Command) (string, error) {

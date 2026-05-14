@@ -12,6 +12,7 @@ This reference lists the current canonical v4 command families implemented under
 - `--output plain|json|yaml`
 - `--non-interactive`
 - `--insecure-tls`
+- `--debug`, `-d`
 
 ## Target and Configuration
 
