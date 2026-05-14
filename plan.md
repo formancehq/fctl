@@ -68,7 +68,7 @@ Le runtime v4 choisit l'API comme suit:
 | Flags API-specifiques | flag produit stable | `--account` reste `--account` meme si l'API v2 attend `address` |
 | Flags v3 tres utilises | conserver comme alias cache ou deprecie | `--src` -> `--source`, `--dst` -> `--destination` |
 | Saisie fichier | `--file <path>|-` quand l'objet principal n'est pas naturellement positionnel | `create <file>|-` peut rester alias |
-| Pagination | `--cursor`, `--page-size`; `--limit` pour la recherche globale | `search --limit 20` |
+| Pagination | `--cursor`, `--page-size` | `ledger transactions list --page-size 20` |
 | Metadata | `--metadata key=value` repetable, `--metadata-file <path>|-` si utile | toutes familles |
 | Confirmation | `--confirm` pour scripts, prompt interactif seulement si TTY | commandes destructives ou mutantes |
 
@@ -365,28 +365,29 @@ Regles:
 | `wallets holds confirm <hold-id>` | identique | `--confirm` si irreversible. | |
 | `wallets transactions list` | identique | pagination/filtres. | |
 
-## Mapping Orchestration
+## Mapping Flows
 
-`orchestration` est long mais clair. On peut ajouter `flows` comme alias plus court plus tard, mais le plan de migration doit d'abord garder la compatibilite.
+L'ancien produit `orchestration` doit etre expose sous le nom canonique `flows` en v4.
+Le chemin `orchestration ...` peut rester comme alias deprecie pendant la phase de migration si cela ne complique pas le routeur Cobra.
 
 | v3 | v4 canonique | Changements d'arguments | Notes |
 | --- | --- | --- | --- |
-| `orchestration workflows create <file>|-` | `orchestration workflows create --file <path>|-` | ancien positionnel alias. | |
-| `orchestration workflows list` | identique | | |
-| `orchestration workflows show <id>` | identique | | |
-| `orchestration workflows run <id>` | identique | payload vars via `--input`/`--file` si API. | |
-| `orchestration workflows delete <workflow-id>` | identique | `--confirm`. | |
-| `orchestration instances list` | identique | | |
-| `orchestration instances show <instance-id>` | identique | | |
-| `orchestration instances describe <instance-id>` | `orchestration instances inspect <instance-id>` ou garder `describe` | Choisir selon distinction show/inspect. |
-| `orchestration instances send-event <instance-id> <event>` | identique | event JSON via `--event` ou `--file` si necessaire. | |
-| `orchestration instances stop <instance-id>` | identique | `--confirm`. | |
-| `orchestration triggers create <event> <workflow-id>` | identique | flags pour conditions si API. | |
-| `orchestration triggers list` | identique | | |
-| `orchestration triggers show <trigger-id>` | identique | | |
-| `orchestration triggers delete <trigger-id>` | identique | `--confirm`. | |
-| `orchestration triggers test <trigger-id> <event>` | identique | event JSON/file si possible. | |
-| `orchestration triggers occurrences list` | identique | | |
+| `orchestration workflows create <file>|-` | `flows workflows create --file <path>|-` | ancien positionnel alias; ancien prefixe `orchestration` alias deprecie. | |
+| `orchestration workflows list` | `flows workflows list` | prefixe v3 alias deprecie. | |
+| `orchestration workflows show <id>` | `flows workflows show <id>` | prefixe v3 alias deprecie. | |
+| `orchestration workflows run <id>` | `flows workflows run <id>` | payload vars via `--input`/`--file` si API; prefixe v3 alias deprecie. | |
+| `orchestration workflows delete <workflow-id>` | `flows workflows delete <workflow-id>` | `--confirm`; prefixe v3 alias deprecie. | |
+| `orchestration instances list` | `flows instances list` | prefixe v3 alias deprecie. | |
+| `orchestration instances show <instance-id>` | `flows instances show <instance-id>` | prefixe v3 alias deprecie. | |
+| `orchestration instances describe <instance-id>` | `flows instances inspect <instance-id>` | alias `describe`; prefixe v3 alias deprecie. | Choisir selon distinction show/inspect. |
+| `orchestration instances send-event <instance-id> <event>` | `flows instances send-event <instance-id> <event>` | event JSON via `--event` ou `--file` si necessaire; prefixe v3 alias deprecie. | |
+| `orchestration instances stop <instance-id>` | `flows instances stop <instance-id>` | `--confirm`; prefixe v3 alias deprecie. | |
+| `orchestration triggers create <event> <workflow-id>` | `flows triggers create <event> <workflow-id>` | flags pour conditions si API; prefixe v3 alias deprecie. | |
+| `orchestration triggers list` | `flows triggers list` | prefixe v3 alias deprecie. | |
+| `orchestration triggers show <trigger-id>` | `flows triggers show <trigger-id>` | prefixe v3 alias deprecie. | |
+| `orchestration triggers delete <trigger-id>` | `flows triggers delete <trigger-id>` | `--confirm`; prefixe v3 alias deprecie. | |
+| `orchestration triggers test <trigger-id> <event>` | `flows triggers test <trigger-id> <event>` | event JSON/file si possible; prefixe v3 alias deprecie. | |
+| `orchestration triggers occurrences list` | `flows triggers occurrences list` | prefixe v3 alias deprecie. | |
 
 ## Mapping Reconciliation
 
@@ -422,14 +423,6 @@ Decision recommandee:
 | `auth users list` | `identity users list` | | |
 | `auth users show <user-id>` | `identity users show <user-id>` | | |
 
-## Mapping Search
-
-| v3 | v4 canonique | Changements d'arguments | Notes |
-| --- | --- | --- | --- |
-| `search <query> --size <n>` | `search <query> --limit <n>` | alias `--size`. | |
-| alias `se` | garder `se` | | Raccourci utile. |
-| vues accounts/transactions/assets/payment | sortie typee par resource | `--resource account|transaction|asset|payment` si necessaire. | Ne pas casser recherche globale simple. |
-
 ## Mapping Webhooks
 
 | v3 | v4 canonique | Changements d'arguments | Notes |
@@ -448,6 +441,7 @@ Decision recommandee:
 | `prompt` | remplacer par `setup`/`context wizard`, garder alias cache | Le nom ne decrit pas l'intention utilisateur. |
 | `stack ...` a la racine | deprecie vers `cloud stacks ...` | `stack` doit pouvoir signifier target data-plane; les operations lifecycle sont Cloud. |
 | `auth clients/users ...` | deprecie vers `identity ...` | Libere `auth` pour la session CLI. |
+| `search ...` et alias `se` | supprimer | Le produit n'existe plus en v4. |
 | `payments ... get` | deprecie vers `show` | Coherence globale. |
 | commandes avec underscores | aliases deprecies | Coherence shell. |
 
@@ -623,11 +617,10 @@ Ordre recommande:
 
 1. `payments`, car beaucoup de payloads et connecteurs;
 2. `wallets`, car sujet/wallet implicite a clarifier;
-3. `orchestration`;
+3. `flows` pour l'ancien `orchestration`;
 4. `reconciliation`;
 5. `webhooks`;
-6. `search`;
-7. `identity` pour l'ancien `auth clients/users`.
+6. `identity` pour l'ancien `auth clients/users`.
 
 Chaque famille doit etre livree avec:
 
