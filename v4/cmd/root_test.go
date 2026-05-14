@@ -317,6 +317,29 @@ func TestContextRenameAndDelete(t *testing.T) {
 	}
 }
 
+func TestProfilesDeprecatedAlias(t *testing.T) {
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", "http://localhost/api",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "profiles", "list")
+	if err != nil {
+		t.Fatalf("profiles list: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Command profiles has been deprecated, use context") {
+		t.Fatalf("expected profiles warning, got:\n%s", stderr)
+	}
+	if stdout != "* local\n" {
+		t.Fatalf("unexpected profiles list output: %q", stdout)
+	}
+}
+
 func TestCloudMeShow(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/me" {

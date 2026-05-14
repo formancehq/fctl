@@ -28,6 +28,25 @@ func newContextCommand() *cobra.Command {
 	return command
 }
 
+func newProfilesCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "profiles",
+		Short: "Manage fctl v4 contexts",
+		PersistentPreRun: func(cmd *cobra.Command, _ []string) {
+			fmt.Fprintln(cmd.ErrOrStderr(), "Command profiles has been deprecated, use context")
+		},
+	}
+	command.Deprecated = "use context"
+	command.AddCommand(
+		newContextListCommand(),
+		newContextShowCommand(),
+		newContextUseCommand(),
+		newContextDeleteCommand(),
+		newContextRenameCommand(),
+	)
+	return command
+}
+
 func newContextListCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",

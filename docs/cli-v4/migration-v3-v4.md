@@ -23,6 +23,7 @@ the isolated v4 implementation under `v4/`.
 
 | v3 command | v4 command | Migration behavior |
 | --- | --- | --- |
+| `profiles ...` | `context ...` | `profiles` is a deprecated alias with a warning. |
 | `orchestration ...` | `flows ...` | `orchestration` is a deprecated alias with a warning. |
 | `orchestration instances describe` | `flows instances inspect` | `describe` remains a deprecated alias. |
 | `payments ... get` | `payments ... show` | `get` remains a deprecated alias when cheap to maintain. |
