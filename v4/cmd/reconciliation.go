@@ -516,7 +516,7 @@ func renderReconciliationPolicyCreated(cmd *cobra.Command, output reconciliation
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Policy created with ID: %s\n", output.Policy.ID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Policy created with ID: %s", output.Policy.ID)))
 	return err
 }
 
@@ -528,14 +528,15 @@ func renderReconciliationPolicies(cmd *cobra.Command, output reconciliationcmd.L
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No reconciliation policies found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Policies))
 	for _, policy := range output.Policies {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\n", policy.ID, policy.Name, policy.LedgerName, policy.PaymentsPoolID); err != nil {
-			return err
-		}
+		rows = append(rows, []string{policy.ID, policy.Name, policy.LedgerName, policy.PaymentsPoolID})
+	}
+	if err := writeStyledRows(cmd, []string{"ID", "Name", "Ledger", "Payments pool ID"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore && output.Next != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
-		return err
+		return writeStyledNext(cmd, *output.Next)
 	}
 	return nil
 }
@@ -545,30 +546,23 @@ func renderReconciliationPolicy(cmd *cobra.Command, output reconciliationcmd.Get
 		return err
 	}
 	policy := output.Policy
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", policy.ID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Name\t%s\n", policy.Name); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Ledger\t%s\n", policy.LedgerName); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Payments pool ID\t%s\n", policy.PaymentsPoolID); err != nil {
-		return err
+	rows := []styledKeyValue{
+		{Label: "ID", Value: policy.ID},
+		{Label: "Name", Value: policy.Name},
+		{Label: "Ledger", Value: policy.LedgerName},
+		{Label: "Payments pool ID", Value: policy.PaymentsPoolID},
 	}
 	if !policy.CreatedAt.IsZero() {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", policy.CreatedAt.Format(time.RFC3339))
-		return err
+		rows = append(rows, styledKeyValue{Label: "Created at", Value: policy.CreatedAt.Format(time.RFC3339)})
 	}
-	return nil
+	return writeStyledKeyValues(cmd, rows...)
 }
 
 func renderReconciliationPolicyDeleted(cmd *cobra.Command, output reconciliationcmd.DeletePolicyOutput) error {
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Policy %s deleted.\n", output.PolicyID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Policy %s deleted.", output.PolicyID)))
 	return err
 }
 
@@ -576,7 +570,7 @@ func renderReconciliationStarted(cmd *cobra.Command, output reconciliationcmd.Re
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Reconciliation started with ID: %s\n", output.Reconciliation.ID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Reconciliation started with ID: %s", output.Reconciliation.ID)))
 	return err
 }
 
@@ -588,14 +582,15 @@ func renderReconciliations(cmd *cobra.Command, output reconciliationcmd.ListReco
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No reconciliations found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Reconciliations))
 	for _, reconciliation := range output.Reconciliations {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\n", reconciliation.ID, reconciliation.PolicyID, reconciliation.Status, reconciliation.CreatedAt.Format(time.RFC3339)); err != nil {
-			return err
-		}
+		rows = append(rows, []string{reconciliation.ID, reconciliation.PolicyID, reconciliation.Status, reconciliation.CreatedAt.Format(time.RFC3339)})
+	}
+	if err := writeStyledRows(cmd, []string{"ID", "Policy ID", "Status", "Created at"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore && output.Next != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
-		return err
+		return writeStyledNext(cmd, *output.Next)
 	}
 	return nil
 }
@@ -605,33 +600,22 @@ func renderReconciliation(cmd *cobra.Command, output reconciliationcmd.GetReconc
 		return err
 	}
 	reconciliation := output.Reconciliation
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", reconciliation.ID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Policy ID\t%s\n", reconciliation.PolicyID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Status\t%s\n", reconciliation.Status); err != nil {
-		return err
+	rows := []styledKeyValue{
+		{Label: "ID", Value: reconciliation.ID},
+		{Label: "Policy ID", Value: reconciliation.PolicyID},
+		{Label: "Status", Value: reconciliation.Status},
 	}
 	if reconciliation.Error != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Error\t%s\n", reconciliation.Error); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Error", Value: reconciliation.Error})
 	}
 	if !reconciliation.ReconciledAtLedger.IsZero() {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Reconciled at ledger\t%s\n", reconciliation.ReconciledAtLedger.Format(time.RFC3339)); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Reconciled at ledger", Value: reconciliation.ReconciledAtLedger.Format(time.RFC3339)})
 	}
 	if !reconciliation.ReconciledAtPayments.IsZero() {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Reconciled at payments\t%s\n", reconciliation.ReconciledAtPayments.Format(time.RFC3339)); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Reconciled at payments", Value: reconciliation.ReconciledAtPayments.Format(time.RFC3339)})
 	}
 	if !reconciliation.CreatedAt.IsZero() {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", reconciliation.CreatedAt.Format(time.RFC3339))
-		return err
+		rows = append(rows, styledKeyValue{Label: "Created at", Value: reconciliation.CreatedAt.Format(time.RFC3339)})
 	}
-	return nil
+	return writeStyledKeyValues(cmd, rows...)
 }

@@ -404,13 +404,15 @@ func renderWebhookConfigs(cmd *cobra.Command, output webhookscmd.ListConfigsOutp
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No webhook configs found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Configs))
 	for _, config := range output.Configs {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%t\t%s\n", config.ID, config.Endpoint, config.Active, strings.Join(config.EventTypes, ",")); err != nil {
-			return err
-		}
+		rows = append(rows, []string{config.ID, config.Endpoint, fmt.Sprintf("%t", config.Active), strings.Join(config.EventTypes, ",")})
+	}
+	if err := writeStyledRows(cmd, []string{"ID", "Endpoint", "Active", "Event types"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "More webhook configs are available.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledInfoLine(cmd, "More", "webhook configs are available"))
 		return err
 	}
 	return nil
@@ -420,7 +422,7 @@ func renderWebhookConfigMutated(cmd *cobra.Command, output webhookscmd.ConfigOut
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Webhook config %s %s.\n", output.Config.ID, action)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Webhook config %s %s.", output.Config.ID, action)))
 	return err
 }
 
@@ -428,7 +430,7 @@ func renderWebhookConfigDeleted(cmd *cobra.Command, output webhookscmd.DeleteCon
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Webhook config %s deleted.\n", output.ConfigID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Webhook config %s deleted.", output.ConfigID)))
 	return err
 }
 

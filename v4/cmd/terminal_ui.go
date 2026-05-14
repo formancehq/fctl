@@ -179,6 +179,28 @@ func writeStyledKeyValueRows(cmd *cobra.Command, rows [][]string) error {
 	return writeStyledKeyValues(cmd, values...)
 }
 
+func writeStyledNamedKeyValueRows(cmd *cobra.Command, label string, rows [][]string) error {
+	if !terminalOutputEnabled(cmd) {
+		for _, row := range rows {
+			if len(row) < 2 {
+				continue
+			}
+			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\n", label, row[0], row[1]); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	values := make([]styledKeyValue, 0, len(rows))
+	for _, row := range rows {
+		if len(row) < 2 {
+			continue
+		}
+		values = append(values, styledKeyValue{Label: label + " " + row[0], Value: row[1]})
+	}
+	return writeStyledKeyValues(cmd, values...)
+}
+
 func writeStyledColonKeyValues(cmd *cobra.Command, rows ...styledKeyValue) error {
 	if !terminalOutputEnabled(cmd) {
 		for _, row := range rows {

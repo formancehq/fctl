@@ -991,7 +991,7 @@ func renderWalletCreated(cmd *cobra.Command, output walletscmd.CreateWalletOutpu
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Wallet created with ID: %s\n", output.WalletID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Wallet created with ID: %s", output.WalletID)))
 	return err
 }
 
@@ -999,7 +999,7 @@ func renderWalletBalanceCreated(cmd *cobra.Command, output walletscmd.CreateBala
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Balance %s created on wallet %s.\n", output.BalanceName, output.WalletID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Balance %s created on wallet %s.", output.BalanceName, output.WalletID)))
 	return err
 }
 
@@ -1011,14 +1011,15 @@ func renderWalletBalances(cmd *cobra.Command, output walletscmd.ListBalancesOutp
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No balances found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Balances))
 	for _, balance := range output.Balances {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\n", balance.Name, balance.Priority); err != nil {
-			return err
-		}
+		rows = append(rows, []string{balance.Name, balance.Priority})
+	}
+	if err := writeStyledRows(cmd, []string{"Name", "Priority"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore && output.Next != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
-		return err
+		return writeStyledNext(cmd, *output.Next)
 	}
 	return nil
 }
@@ -1028,18 +1029,12 @@ func renderWalletBalance(cmd *cobra.Command, output walletscmd.GetBalanceOutput)
 		return err
 	}
 	balance := output.Balance
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Name\t%s\n", balance.Name); err != nil {
-		return err
-	}
+	rows := []styledKeyValue{{Label: "Name", Value: balance.Name}}
 	if balance.Priority != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Priority\t%s\n", balance.Priority); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Priority", Value: balance.Priority})
 	}
 	if balance.ExpiresAt != nil {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Expires at\t%s\n", balance.ExpiresAt.Format(time.RFC3339)); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Expires at", Value: balance.ExpiresAt.Format(time.RFC3339)})
 	}
 	if len(balance.Assets) > 0 {
 		assets := make([]string, 0, len(balance.Assets))
@@ -1047,13 +1042,16 @@ func renderWalletBalance(cmd *cobra.Command, output walletscmd.GetBalanceOutput)
 			assets = append(assets, asset)
 		}
 		sort.Strings(assets)
-		for _, asset := range assets {
-			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Asset\t%s\t%s\n", asset, balance.Assets[asset].String()); err != nil {
-				return err
-			}
+		if err := writeStyledKeyValues(cmd, rows...); err != nil {
+			return err
 		}
+		assetRows := make([][]string, 0, len(assets))
+		for _, asset := range assets {
+			assetRows = append(assetRows, []string{asset, balance.Assets[asset].String()})
+		}
+		return writeStyledNamedKeyValueRows(cmd, "Asset", assetRows)
 	}
-	return nil
+	return writeStyledKeyValues(cmd, rows...)
 }
 
 func renderWalletHolds(cmd *cobra.Command, output walletscmd.ListHoldsOutput) error {
@@ -1064,14 +1062,15 @@ func renderWalletHolds(cmd *cobra.Command, output walletscmd.ListHoldsOutput) er
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No holds found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Holds))
 	for _, hold := range output.Holds {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\n", hold.ID, hold.WalletID, hold.Asset); err != nil {
-			return err
-		}
+		rows = append(rows, []string{hold.ID, hold.WalletID, hold.Asset})
+	}
+	if err := writeStyledRows(cmd, []string{"ID", "Wallet ID", "Asset"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore && output.Next != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
-		return err
+		return writeStyledNext(cmd, *output.Next)
 	}
 	return nil
 }
@@ -1081,33 +1080,25 @@ func renderWalletHold(cmd *cobra.Command, output walletscmd.GetHoldOutput) error
 		return err
 	}
 	hold := output.Hold
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", hold.ID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Wallet ID\t%s\n", hold.WalletID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Asset\t%s\n", hold.Asset); err != nil {
-		return err
+	rows := []styledKeyValue{
+		{Label: "ID", Value: hold.ID},
+		{Label: "Wallet ID", Value: hold.WalletID},
+		{Label: "Asset", Value: hold.Asset},
 	}
 	if hold.OriginalAmount != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Original amount\t%s\n", hold.OriginalAmount); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Original amount", Value: hold.OriginalAmount})
 	}
 	if hold.Remaining != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Remaining\t%s\n", hold.Remaining); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Remaining", Value: hold.Remaining})
 	}
-	return nil
+	return writeStyledKeyValues(cmd, rows...)
 }
 
 func renderWalletHoldVoided(cmd *cobra.Command, output walletscmd.HoldActionOutput) error {
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Hold %s voided.\n", output.HoldID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Hold %s voided.", output.HoldID)))
 	return err
 }
 
@@ -1115,7 +1106,7 @@ func renderWalletHoldConfirmed(cmd *cobra.Command, output walletscmd.HoldActionO
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Hold %s confirmed.\n", output.HoldID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Hold %s confirmed.", output.HoldID)))
 	return err
 }
 
@@ -1127,21 +1118,20 @@ func renderWalletTransactions(cmd *cobra.Command, output walletscmd.ListTransact
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No transactions found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Transactions))
 	for _, transaction := range output.Transactions {
-		if _, err := fmt.Fprintf(
-			cmd.OutOrStdout(),
-			"%d\t%s\t%s\t%s\n",
-			transaction.ID,
+		rows = append(rows, []string{
+			fmt.Sprintf("%d", transaction.ID),
 			transaction.Timestamp.Format(time.RFC3339),
 			transaction.Ledger,
 			transaction.Reference,
-		); err != nil {
-			return err
-		}
+		})
+	}
+	if err := writeStyledRows(cmd, []string{"ID", "Timestamp", "Ledger", "Reference"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore && output.Next != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
-		return err
+		return writeStyledNext(cmd, *output.Next)
 	}
 	return nil
 }
@@ -1150,7 +1140,7 @@ func renderWalletCredited(cmd *cobra.Command, output walletscmd.WalletMovementOu
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Wallet %s credited.\n", output.WalletID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Wallet %s credited.", output.WalletID)))
 	return err
 }
 
@@ -1159,11 +1149,11 @@ func renderWalletDebited(cmd *cobra.Command, output walletscmd.WalletMovementOut
 		return err
 	}
 	if output.HoldID != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Hold ID: %s\n", output.HoldID); err != nil {
+		if err := writeStyledColonKeyValues(cmd, styledKeyValue{Label: "Hold ID", Value: output.HoldID}); err != nil {
 			return err
 		}
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Wallet %s debited.\n", output.WalletID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Wallet %s debited.", output.WalletID)))
 	return err
 }
 
@@ -1175,14 +1165,15 @@ func renderWallets(cmd *cobra.Command, output walletscmd.ListWalletsOutput) erro
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No wallets found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Wallets))
 	for _, wallet := range output.Wallets {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\n", wallet.ID, wallet.Name, wallet.Ledger, wallet.CreatedAt.Format(time.RFC3339)); err != nil {
-			return err
-		}
+		rows = append(rows, []string{wallet.ID, wallet.Name, wallet.Ledger, wallet.CreatedAt.Format(time.RFC3339)})
+	}
+	if err := writeStyledRows(cmd, []string{"ID", "Name", "Ledger", "Created at"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore && output.Next != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
-		return err
+		return writeStyledNext(cmd, *output.Next)
 	}
 	return nil
 }
@@ -1192,23 +1183,18 @@ func renderWallet(cmd *cobra.Command, output walletscmd.GetWalletOutput) error {
 		return err
 	}
 	wallet := output.Wallet
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", wallet.ID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Name\t%s\n", wallet.Name); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Ledger\t%s\n", wallet.Ledger); err != nil {
-		return err
-	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", wallet.CreatedAt.Format(time.RFC3339))
-	return err
+	return writeStyledKeyValues(cmd,
+		styledKeyValue{Label: "ID", Value: wallet.ID},
+		styledKeyValue{Label: "Name", Value: wallet.Name},
+		styledKeyValue{Label: "Ledger", Value: wallet.Ledger},
+		styledKeyValue{Label: "Created at", Value: wallet.CreatedAt.Format(time.RFC3339)},
+	)
 }
 
 func renderWalletUpdated(cmd *cobra.Command, output walletscmd.UpdateWalletOutput) error {
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Wallet %s updated.\n", output.WalletID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Wallet %s updated.", output.WalletID)))
 	return err
 }

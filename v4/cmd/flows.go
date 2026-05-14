@@ -950,14 +950,15 @@ func renderFlowsWorkflows(cmd *cobra.Command, output flowscmd.ListWorkflowsOutpu
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No workflows found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Workflows))
 	for _, workflow := range output.Workflows {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\n", workflow.ID, workflow.Name, workflow.CreatedAt.Format(time.RFC3339)); err != nil {
-			return err
-		}
+		rows = append(rows, []string{workflow.ID, workflow.Name, workflow.CreatedAt.Format(time.RFC3339)})
+	}
+	if err := writeStyledRows(cmd, []string{"ID", "Name", "Created at"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore && output.Next != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
-		return err
+		return writeStyledNext(cmd, *output.Next)
 	}
 	return nil
 }
@@ -967,24 +968,19 @@ func renderFlowsWorkflow(cmd *cobra.Command, output flowscmd.GetWorkflowOutput) 
 		return err
 	}
 	workflow := output.Workflow
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", workflow.ID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Name\t%s\n", workflow.Name); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", workflow.CreatedAt.Format(time.RFC3339)); err != nil {
-		return err
-	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Updated at\t%s\n", workflow.UpdatedAt.Format(time.RFC3339))
-	return err
+	return writeStyledKeyValues(cmd,
+		styledKeyValue{Label: "ID", Value: workflow.ID},
+		styledKeyValue{Label: "Name", Value: workflow.Name},
+		styledKeyValue{Label: "Created at", Value: workflow.CreatedAt.Format(time.RFC3339)},
+		styledKeyValue{Label: "Updated at", Value: workflow.UpdatedAt.Format(time.RFC3339)},
+	)
 }
 
 func renderFlowsWorkflowCreated(cmd *cobra.Command, output flowscmd.CreateWorkflowOutput) error {
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Workflow created with ID: %s\n", output.Workflow.ID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Workflow created with ID: %s", output.Workflow.ID)))
 	return err
 }
 
@@ -992,7 +988,7 @@ func renderFlowsWorkflowDeleted(cmd *cobra.Command, output flowscmd.DeleteWorkfl
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Workflow %s deleted.\n", output.WorkflowID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Workflow %s deleted.", output.WorkflowID)))
 	return err
 }
 
@@ -1000,7 +996,7 @@ func renderFlowsWorkflowRun(cmd *cobra.Command, output flowscmd.RunWorkflowOutpu
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Workflow instance created with ID: %s\n", output.Instance.ID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Workflow instance created with ID: %s", output.Instance.ID)))
 	return err
 }
 
@@ -1012,14 +1008,15 @@ func renderFlowsInstances(cmd *cobra.Command, output flowscmd.ListInstancesOutpu
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No workflow instances found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Instances))
 	for _, instance := range output.Instances {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%t\t%s\n", instance.ID, instance.WorkflowID, instance.Terminated, instance.CreatedAt.Format(time.RFC3339)); err != nil {
-			return err
-		}
+		rows = append(rows, []string{instance.ID, instance.WorkflowID, fmt.Sprintf("%t", instance.Terminated), instance.CreatedAt.Format(time.RFC3339)})
+	}
+	if err := writeStyledRows(cmd, []string{"ID", "Workflow ID", "Terminated", "Created at"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore && output.Next != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
-		return err
+		return writeStyledNext(cmd, *output.Next)
 	}
 	return nil
 }
@@ -1029,24 +1026,19 @@ func renderFlowsInstance(cmd *cobra.Command, output flowscmd.GetInstanceOutput) 
 		return err
 	}
 	instance := output.Instance
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", instance.ID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Workflow ID\t%s\n", instance.WorkflowID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Terminated\t%t\n", instance.Terminated); err != nil {
-		return err
-	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", instance.CreatedAt.Format(time.RFC3339))
-	return err
+	return writeStyledKeyValues(cmd,
+		styledKeyValue{Label: "ID", Value: instance.ID},
+		styledKeyValue{Label: "Workflow ID", Value: instance.WorkflowID},
+		styledKeyValue{Label: "Terminated", Value: fmt.Sprintf("%t", instance.Terminated)},
+		styledKeyValue{Label: "Created at", Value: instance.CreatedAt.Format(time.RFC3339)},
+	)
 }
 
 func renderFlowsInstanceEventSent(cmd *cobra.Command, output flowscmd.InstanceActionOutput) error {
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Event %s sent to instance %s.\n", output.Event, output.InstanceID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Event %s sent to instance %s.", output.Event, output.InstanceID)))
 	return err
 }
 
@@ -1054,7 +1046,7 @@ func renderFlowsInstanceStopped(cmd *cobra.Command, output flowscmd.InstanceActi
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Workflow instance %s stopped.\n", output.InstanceID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Workflow instance %s stopped.", output.InstanceID)))
 	return err
 }
 
@@ -1062,7 +1054,7 @@ func renderFlowsTriggerCreated(cmd *cobra.Command, output flowscmd.CreateTrigger
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Trigger created with ID: %s\n", output.Trigger.ID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Trigger created with ID: %s", output.Trigger.ID)))
 	return err
 }
 
@@ -1074,14 +1066,15 @@ func renderFlowsTriggers(cmd *cobra.Command, output flowscmd.ListTriggersOutput)
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No triggers found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Triggers))
 	for _, trigger := range output.Triggers {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\n", trigger.ID, trigger.Name, trigger.Event, trigger.WorkflowID); err != nil {
-			return err
-		}
+		rows = append(rows, []string{trigger.ID, trigger.Name, trigger.Event, trigger.WorkflowID})
+	}
+	if err := writeStyledRows(cmd, []string{"ID", "Name", "Event", "Workflow ID"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore && output.Next != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
-		return err
+		return writeStyledNext(cmd, *output.Next)
 	}
 	return nil
 }
@@ -1091,24 +1084,19 @@ func renderFlowsTrigger(cmd *cobra.Command, output flowscmd.GetTriggerOutput) er
 		return err
 	}
 	trigger := output.Trigger
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", trigger.ID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Name\t%s\n", trigger.Name); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Event\t%s\n", trigger.Event); err != nil {
-		return err
-	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Workflow ID\t%s\n", trigger.WorkflowID)
-	return err
+	return writeStyledKeyValues(cmd,
+		styledKeyValue{Label: "ID", Value: trigger.ID},
+		styledKeyValue{Label: "Name", Value: trigger.Name},
+		styledKeyValue{Label: "Event", Value: trigger.Event},
+		styledKeyValue{Label: "Workflow ID", Value: trigger.WorkflowID},
+	)
 }
 
 func renderFlowsTriggerDeleted(cmd *cobra.Command, output flowscmd.DeleteTriggerOutput) error {
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Trigger %s deleted.\n", output.TriggerID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Trigger %s deleted.", output.TriggerID)))
 	return err
 }
 
@@ -1117,10 +1105,9 @@ func renderFlowsTriggerTest(cmd *cobra.Command, output flowscmd.TestTriggerOutpu
 		return err
 	}
 	if output.Matched != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Filter match\t%t\n", *output.Matched)
-		return err
+		return writeStyledKeyValues(cmd, styledKeyValue{Label: "Filter match", Value: fmt.Sprintf("%t", *output.Matched)})
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Trigger %s tested.\n", output.TriggerID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Trigger %s tested.", output.TriggerID)))
 	return err
 }
 
@@ -1132,14 +1119,15 @@ func renderFlowsTriggerOccurrences(cmd *cobra.Command, output flowscmd.ListTrigg
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No trigger occurrences found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Occurrences))
 	for _, occurrence := range output.Occurrences {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\n", occurrence.TriggerID, occurrence.WorkflowInstanceID, occurrence.Date.Format(time.RFC3339), occurrence.Error); err != nil {
-			return err
-		}
+		rows = append(rows, []string{occurrence.TriggerID, occurrence.WorkflowInstanceID, occurrence.Date.Format(time.RFC3339), occurrence.Error})
+	}
+	if err := writeStyledRows(cmd, []string{"Trigger ID", "Workflow instance ID", "Date", "Error"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore && output.Next != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
-		return err
+		return writeStyledNext(cmd, *output.Next)
 	}
 	return nil
 }
