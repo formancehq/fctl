@@ -38,9 +38,6 @@ work.
 
 ## Explicitly Deferred Or Blocked
 
-- Browser/device login in root `login` returns a clear deferred error until the
-  Cloud, EE, and generic OIDC device-flow contracts are specified. Client
-  credentials and static token login are available now.
 - `auth login/status/token/logout` are not kept as aliases. `auth` is reserved
   for stack Auth service resources.
 - `cloud personal-tokens create` is not implemented because the v3 flow depends

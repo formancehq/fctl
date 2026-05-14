@@ -68,6 +68,59 @@ func TestTokenAuthFromEnvRef(t *testing.T) {
 	}
 }
 
+func TestCloudDeviceAuthFromCredentialRef(t *testing.T) {
+	ctx := context.Background()
+	store := credentials.NewMemoryStore()
+	encoded, err := MarshalDeviceTokens(DeviceTokens{
+		AccessToken: StoredAccessToken{
+			Token:     "device-token",
+			TokenType: "Bearer",
+		},
+	})
+	if err != nil {
+		t.Fatalf("marshal device tokens: %v", err)
+	}
+	if err := store.Set(ctx, "root-token-ref", encoded); err != nil {
+		t.Fatalf("set device tokens: %v", err)
+	}
+	server := authHeaderServer(t, "Bearer device-token")
+	defer server.Close()
+
+	client, err := NewHTTPClient(ctx, v4config.Auth{
+		Method:   v4config.AuthMethodCloudDevice,
+		TokenRef: "root-token-ref",
+	}, store, Options{})
+	if err != nil {
+		t.Fatalf("new http client: %v", err)
+	}
+	if _, err := client.Get(server.URL); err != nil {
+		t.Fatalf("request: %v", err)
+	}
+}
+
+func TestCloudDeviceAuthReadsMigratedV3RootTokens(t *testing.T) {
+	ctx := context.Background()
+	store := credentials.NewMemoryStore()
+	if err := store.Set(ctx, "root-token-ref", `{"access":{"token":"migrated-token"},"id":{"token":"id-token"}}`); err != nil {
+		t.Fatalf("set migrated tokens: %v", err)
+	}
+
+	source, err := NewTokenSource(v4config.Auth{
+		Method:   v4config.AuthMethodCloudDevice,
+		TokenRef: "root-token-ref",
+	}, store, Options{})
+	if err != nil {
+		t.Fatalf("new token source: %v", err)
+	}
+	token, err := source.Token(ctx)
+	if err != nil {
+		t.Fatalf("get token: %v", err)
+	}
+	if token.AccessToken != "migrated-token" || token.TokenType != "Bearer" {
+		t.Fatalf("unexpected token: %#v", token)
+	}
+}
+
 func TestClientCredentialsAuth(t *testing.T) {
 	ctx := context.Background()
 	store := credentials.NewMemoryStore()

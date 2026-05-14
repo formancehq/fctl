@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -111,45 +113,159 @@ func TestLoginOpenSourceWizardCreatesDefaultProfile(t *testing.T) {
 	}
 }
 
-func TestLoginBrowserDeviceFlowIsDeferredForCloudAndEE(t *testing.T) {
+func TestLoginBrowserDeviceFlowCreatesCloudAndEEProfiles(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
-		input string
+		name       string
+		target     string
+		wantKind   v4config.ContextKind
+		extraFlags []string
 	}{
 		{
-			name:  "cloud",
-			input: "1\n1\n",
+			name:     "cloud",
+			target:   "cloud",
+			wantKind: v4config.ContextKindCloud,
 		},
 		{
-			name:  "ee",
-			input: "2\nhttps://ee.example/api\n1\n",
+			name:     "ee",
+			target:   "ee",
+			wantKind: v4config.ContextKindCloudStack,
+			extraFlags: []string{
+				"--organization", "org_1",
+				"--stack", "stack_1",
+			},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			configDir := t.TempDir()
+			openedURL := ""
+			previousOpenURL := loginOpenURL
+			loginOpenURL = func(url string) error {
+				openedURL = url
+				return nil
+			}
+			t.Cleanup(func() {
+				loginOpenURL = previousOpenURL
+			})
+
+			server := newDeviceLoginOIDCServer(t)
+			defer server.Close()
+
+			args := []string{"--config-dir", configDir}
+			args = append(args, tc.extraFlags...)
+			args = append(args,
+				"login",
+				"--target", tc.target,
+				"--membership-url", server.URL,
+			)
 
 			stdout, stderr, err := executeCommandWithInput(t,
-				tc.input,
-				"--config-dir", configDir,
-				"login",
+				"1\n",
+				args...,
 			)
-			if err == nil {
-				t.Fatal("expected browser/device login to be deferred")
+			if err != nil {
+				t.Fatalf("login browser/device: %v stderr=%s", err, stderr)
 			}
 			if stderr != "" {
 				t.Fatalf("expected empty stderr, got %q", stderr)
 			}
-			if !strings.Contains(err.Error(), loginBrowserDeviceDeferredMessage) {
-				t.Fatalf("unexpected deferred login error: %v", err)
-			}
 			if strings.Contains(stdout, "Static token") {
 				t.Fatalf("login prompt must not offer static token auth, got:\n%s", stdout)
 			}
-			if _, err := os.Stat(filepath.Join(configDir, "config.yaml")); !os.IsNotExist(err) {
-				t.Fatalf("browser/device login must not write config, stat error: %v", err)
+			if !strings.Contains(stdout, "A browser window has been opened on https://verify.example?user_code=USER-CODE") ||
+				!strings.Contains(stdout, "Waiting for authentication...") ||
+				!strings.Contains(stdout, "Logged in with profile default.") {
+				t.Fatalf("unexpected login output:\n%s", stdout)
+			}
+			if openedURL != "https://verify.example?user_code=USER-CODE" {
+				t.Fatalf("unexpected opened URL %q", openedURL)
+			}
+
+			cfg, err := v4config.LoadFile(filepath.Join(configDir, "config.yaml"))
+			if err != nil {
+				t.Fatalf("load login config: %v", err)
+			}
+			profile := cfg.Contexts["default"]
+			if cfg.CurrentContext != "default" ||
+				profile.Kind != tc.wantKind ||
+				profile.CloudURL != server.URL ||
+				profile.Auth.Method != v4config.AuthMethodCloudDevice ||
+				profile.Auth.IssuerURL != server.URL ||
+				profile.Auth.TokenRef != "contexts/default/root-tokens" ||
+				profile.Auth.Account != "user@example.com" {
+				t.Fatalf("unexpected device login profile: current=%q profile=%#v", cfg.CurrentContext, profile)
+			}
+			if tc.wantKind == v4config.ContextKindCloudStack &&
+				(profile.Organization != "org_1" || profile.Stack != "stack_1") {
+				t.Fatalf("unexpected cloud-stack selection: %#v", profile)
+			}
+			storedTokens, err := os.ReadFile(filepath.Join(configDir, "credentials", "contexts", "default", "root-tokens"))
+			if err != nil {
+				t.Fatalf("expected stored root tokens: %v", err)
+			}
+			if !strings.Contains(string(storedTokens), "access-token") ||
+				!strings.Contains(string(storedTokens), "refresh-token") {
+				t.Fatalf("unexpected stored root tokens: %s", string(storedTokens))
 			}
 		})
 	}
+}
+
+func newDeviceLoginOIDCServer(t *testing.T) *httptest.Server {
+	t.Helper()
+
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/.well-known/openid-configuration":
+			fmt.Fprintf(w, `{"device_authorization_endpoint":%q,"token_endpoint":%q}`, server.URL+"/device", server.URL+"/token")
+		case "/device":
+			clientID, clientSecret, ok := r.BasicAuth()
+			if !ok || clientID != "fctl" || clientSecret != "" {
+				t.Fatalf("unexpected device basic auth: %q %q %v", clientID, clientSecret, ok)
+			}
+			if err := r.ParseForm(); err != nil {
+				t.Fatalf("parse device form: %v", err)
+			}
+			if r.Form.Get("scope") != "openid offline_access accesses on_behalf" {
+				t.Fatalf("unexpected device scope %q", r.Form.Get("scope"))
+			}
+			if r.Form.Get("prompt") != "no-org" {
+				t.Fatalf("unexpected device prompt %q", r.Form.Get("prompt"))
+			}
+			fmt.Fprint(w, `{"device_code":"device-code","user_code":"USER-CODE","verification_uri":"https://verify.example","interval":1}`)
+		case "/token":
+			clientID, clientSecret, ok := r.BasicAuth()
+			if !ok || clientID != "fctl" || clientSecret != "" {
+				t.Fatalf("unexpected token basic auth: %q %q %v", clientID, clientSecret, ok)
+			}
+			if err := r.ParseForm(); err != nil {
+				t.Fatalf("parse token form: %v", err)
+			}
+			if r.Form.Get("grant_type") != "urn:ietf:params:oauth:grant-type:device_code" ||
+				r.Form.Get("device_code") != "device-code" {
+				t.Fatalf("unexpected token form: %s", r.Form.Encode())
+			}
+			fmt.Fprintf(w, `{"access_token":"access-token","token_type":"Bearer","refresh_token":"refresh-token","id_token":%q,"expires_in":3600}`,
+				testJWT(t, map[string]any{"email": "user@example.com"}))
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	return server
+}
+
+func testJWT(t *testing.T, claims map[string]any) string {
+	t.Helper()
+
+	header, err := json.Marshal(map[string]string{"alg": "none"})
+	if err != nil {
+		t.Fatalf("marshal jwt header: %v", err)
+	}
+	payload, err := json.Marshal(claims)
+	if err != nil {
+		t.Fatalf("marshal jwt payload: %v", err)
+	}
+	return base64.RawURLEncoding.EncodeToString(header) + "." + base64.RawURLEncoding.EncodeToString(payload) + "."
 }
 
 func TestLoginDoesNotExposeStaticTokenAuth(t *testing.T) {

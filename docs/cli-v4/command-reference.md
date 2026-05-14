@@ -234,8 +234,9 @@ profile, defaulting to `default` when `--profile` is not provided.
 - Formance Open Source asks for `--stack-url` and defaults to no auth.
 - `--organization` and `--stack` select a Cloud or EE stack for commands that
   need stack scope.
-- Browser/device login is deferred until the Cloud and EE device-flow contract
-  is explicit. Use client credentials flags for now.
+- Browser/device login uses the Cloud/EE device authorization flow and stores
+  root tokens outside the config file. Non-interactive login can use client
+  credentials flags.
 
 `auth` remains reserved for the stack Auth service command family.
 

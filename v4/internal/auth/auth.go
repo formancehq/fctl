@@ -82,7 +82,20 @@ func NewTokenSource(authConfig v4config.Auth, store credentials.Store, options O
 			HTTPClient: httpClient,
 		}, nil
 	case v4config.AuthMethodCloudDevice, v4config.AuthMethodOIDCDevice:
-		return nil, fmt.Errorf("auth method %q is not implemented yet", authConfig.Method)
+		if store == nil {
+			return nil, errors.New("credential store is required for device auth")
+		}
+		httpClient := options.HTTPClient
+		if httpClient == nil {
+			httpClient = http.DefaultClient
+		}
+		return &DeviceTokenSource{
+			IssuerURL:  authConfig.IssuerURL,
+			TokenRef:   authConfig.TokenRef,
+			Store:      store,
+			HTTPClient: httpClient,
+			ClientID:   DeviceClientID,
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported auth method %q", authConfig.Method)
 	}

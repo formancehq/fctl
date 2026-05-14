@@ -36,7 +36,7 @@ the isolated v4 implementation under `v4/`.
 | `--insecure-tls` | `--insecure-tls` | Kept as an explicit non-persistent runtime override. |
 | none | `--no-color` | New stable flag; v4 renderers are plain by default. |
 | `ui` | `cloud ui --print` or `cloud ui` | Root `ui` is a hidden deprecated alias. `--print` is non-browser/non-interactive friendly. |
-| `login --membership-uri <url>` | `login --target cloud` or `login --target ee --membership-url <url>` | Browser/device login is deferred; use client credentials flags for now. |
+| `login --membership-uri <url>` | `login --target cloud` or `login --target ee --membership-url <url>` | Browser/device login uses the v3-style device authorization flow and stores root tokens outside config. |
 | `profiles ...` | `profile ...` | `profiles` is a hidden deprecated alias with a warning. |
 | `profiles reset <name>` | `profile unset-defaults <name> --confirm` | Deprecated alias. |
 | `profiles set-default-organization <org>` | `profile set --organization <org>` | Deprecated alias updates the current profile. |
@@ -78,9 +78,6 @@ when the command is intentionally machine-readable.
 
 ## Deferred Items
 
-- Browser/device login in `fctl login` is deferred until the Cloud, EE, and
-  generic OIDC device-flow contracts are explicit. Stack commands must remain
-  usable without Cloud membership.
 - `--telemetry` is deferred until opt-in/out behavior and stored state are
   documented.
 - `--quiet` is deferred until each command family defines its primary quiet

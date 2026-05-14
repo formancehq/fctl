@@ -153,15 +153,11 @@ Implementation v4:
 - `fctl login --target open-source` cree un profil `stack` no-auth qui parle directement a la stack;
 - `fctl login --target cloud` utilise l'URL Cloud production par defaut;
 - `fctl login --target ee` demande ou prend `--membership-url`;
-- `fctl login` stocke tokens et secrets hors config via `<config-dir>/credentials` tant que le backend keyring v4 n'est pas branche, avec override possible par `--credential-dir`;
+- `fctl login` implemente le browser/device flow Cloud/EE dans le style v3 et stocke tokens et secrets hors config via `<config-dir>/credentials` tant que le backend keyring v4 n'est pas branche, avec override possible par `--credential-dir`;
 - `fctl logout` supprime les credentials geres par le CLI du profil courant et repasse son auth a `none`;
 - `fctl whoami` affiche profil, cible, methode d'auth, organisation et stack sans exposer les secrets;
 - `profile unset-defaults [name] --confirm` supprime les defaults du profil sans toucher a l'auth ni aux credentials; les aliases deprecies `profiles reset`, `profiles set-default-organization` et `profiles set-default-stack` restent disponibles pour les migrations peu couteuses.
 - `cloud ui [--print]` reste disponible sur les profils `cloud`/`cloud-stack`; il lit `/_info.consoleURL`, ouvre le navigateur seulement en mode interactif, et refuse les profils `stack`; `ui` racine reste un alias cache deprecie.
-
-Points bloques / differes:
-
-- le mode browser/device de `fctl login` reste a implementer avec un vrai contrat de device/browser flow ou d'import de token Cloud/EE/OIDC; il ne doit pas recreer une dependance Cloud pour les commandes stack locales.
 
 ## Mapping commandes Cloud
 

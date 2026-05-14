@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	v4auth "github.com/formancehq/fctl/v4/internal/auth"
 	v4config "github.com/formancehq/fctl/v4/internal/config"
 	v4prompt "github.com/formancehq/fctl/v4/internal/prompt"
 )
@@ -17,9 +18,9 @@ const (
 	loginTargetEE         = "ee"
 	loginTargetOpenSource = "open-source"
 	defaultProfileName    = "default"
-
-	loginBrowserDeviceDeferredMessage = "login browser/device flow is deferred until the Cloud and EE device login contract is explicit; use --client-id/--client-secret for now"
 )
+
+var loginOpenURL = v4auth.OpenURL
 
 func newLoginCommand() *cobra.Command {
 	var target string
@@ -211,7 +212,7 @@ func authFromLoginOptions(cmd *cobra.Command, input loginInput, options loginCon
 		}
 		switch authMethod {
 		case "1", "browser", "browser/device login", "device":
-			return v4config.Auth{}, fmt.Errorf(loginBrowserDeviceDeferredMessage)
+			return cloudDeviceAuthFromLoginOptions(cmd, options)
 		case "2", "client credentials", "client-credentials":
 			clientID, err := input.prompt(cmd, "Client ID")
 			if err != nil {
@@ -271,9 +272,46 @@ func authFromLoginOptions(cmd *cobra.Command, input loginInput, options loginCon
 	}
 
 	if platform {
-		return v4config.Auth{}, fmt.Errorf(loginBrowserDeviceDeferredMessage)
+		return cloudDeviceAuthFromLoginOptions(cmd, options)
 	}
 	return v4config.Auth{Method: v4config.AuthMethodNone}, nil
+}
+
+func cloudDeviceAuthFromLoginOptions(cmd *cobra.Command, options loginContextInput) (v4config.Auth, error) {
+	store, err := persistentCredentialStoreFromCommand(cmd)
+	if err != nil {
+		return v4config.Auth{}, err
+	}
+	authOptions, err := authOptionsFromCommand(cmd)
+	if err != nil {
+		return v4config.Auth{}, err
+	}
+	tokens, err := v4auth.DeviceLogin(cmd.Context(), v4auth.DeviceLoginOptions{
+		IssuerURL:  options.MembershipURL,
+		ClientID:   v4auth.DeviceClientID,
+		Scopes:     []string{"openid", "offline_access", "accesses", "on_behalf"},
+		Prompt:     []string{"no-org"},
+		HTTPClient: authOptions.HTTPClient,
+		OpenURL:    loginOpenURL,
+		Out:        cmd.OutOrStdout(),
+	})
+	if err != nil {
+		return v4config.Auth{}, err
+	}
+	ref := "contexts/" + options.ProfileName + "/root-tokens"
+	encoded, err := v4auth.MarshalDeviceTokens(tokens)
+	if err != nil {
+		return v4config.Auth{}, err
+	}
+	if err := store.Set(cmd.Context(), ref, encoded); err != nil {
+		return v4config.Auth{}, err
+	}
+	return v4config.Auth{
+		Method:    v4config.AuthMethodCloudDevice,
+		IssuerURL: options.MembershipURL,
+		TokenRef:  ref,
+		Account:   v4auth.EmailFromIDToken(tokens.IDToken),
+	}, nil
 }
 
 func defaultsFromLogin(defaultLedger string) map[string]string {
