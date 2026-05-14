@@ -74,7 +74,9 @@ type Auth struct {
 }
 
 type ContextOverride struct {
-	Name string
+	Name         string
+	Organization string
+	Stack        string
 }
 
 func New() Config {

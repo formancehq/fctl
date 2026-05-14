@@ -25,13 +25,14 @@ Objectif du document:
 
 La v4 ne doit plus supposer que l'utilisateur dispose d'un compte Formance Cloud ou d'un membership.
 
-Les commandes parlent a un contexte:
+Les commandes parlent a un profil utilisateur, qui encapsule le contexte
+technique cible:
 
 - `stack`: stack locale ou self-hosted;
 - `cloud`: controle plane Formance Cloud;
 - `cloud-stack`: stack Formance Cloud selectionnee par organisation et stack.
 
-L'authentification est une propriete du contexte, pas une hypothese globale du CLI.
+L'authentification est une propriete du profil, pas une hypothese globale du CLI.
 
 ### Resolution des versions API
 
@@ -90,8 +91,10 @@ Regles:
 
 | v3 | v4 canonique | Compatibilite | Notes |
 | --- | --- | --- | --- |
-| `--profile`, `-p` | `--context`, `-c` si non conflictuel | `--profile` alias deprecie | La v3 utilise `-c` pour config dir, donc la v4 doit eviter une collision si `-c` reste config. |
-| `--config-dir`, `-c` | `--config-dir` | garder `-c` seulement si `--context` n'a pas `-c` | Preferer `--context` sans short pour eviter ambiguite. |
+| `--profile` | `--profile` | canonique | Selectionne le profil cible. |
+| `--context` | `--profile` | alias cache deprecie | Reste temporairement pour compatibilite interne, avec warning. |
+| `--organization` / `--stack` | `--organization` / `--stack` | canonique | Override global pour profils Cloud/EE; invalide pour stack directe. |
+| `--config-dir`, `-c` | `--config-dir` | garder `-c` | Le short `-c` reste reserve au repertoire de config. |
 | `--debug`, `-d` | `--debug` | garder `-d` | Active logs techniques sur stderr. |
 | `--output`, `-o plain,json` | `--output`, `-o plain,json,yaml` | extension compatible | Les sorties structurees doivent etre stables. |
 | `--insecure-tls` | `--insecure-tls` dans le contexte ou flag override | garder flag | Ne pas persister implicitement sans action explicite. |
@@ -103,8 +106,10 @@ Regles:
 
 Implementation v4:
 
-- `--profile <name>` est conserve comme alias deprecie de `--context <name>`; fournir les deux produit une erreur explicite.
-- `--config-dir <dir>` conserve le short `-c`, car `--context` n'a volontairement pas de short pour eviter l'ambiguite avec la v3;
+- `--profile <name>` est le selecteur public principal;
+- `--context <name>` est conserve comme alias cache deprecie de `--profile <name>`; fournir les deux produit une erreur explicite;
+- `--organization <org>` et `--stack <stack>` permettent de cibler une stack Cloud/EE depuis un profil Cloud/EE;
+- `--config-dir <dir>` conserve le short `-c`;
 - `--debug`, `-d` active des logs runtime techniques sur stderr sans modifier stdout;
 - `--insecure-tls` est conserve comme override runtime explicite et non persistant; il configure le client HTTP partage par `/versions`, les SDK stack, les SDK Cloud et les flux `client_credentials`.
 - `--no-color` est expose comme flag stable pour CI/golden tests; les renderers v4 restent sans couleur par defaut.
@@ -118,45 +123,42 @@ Points bloques / differes:
 
 | v3 | v4 canonique | Changements | Tests critiques |
 | --- | --- | --- | --- |
-| `fctl login --membership-uri <url>` | `fctl session login cloud --cloud-url <url>` | La commande racine est supprimee sans alias; Cloud devient un provider d'auth, pas une condition pour la stack. | migration de token, erreurs sans browser, non-interactif. |
-| aucun equivalent local propre | `fctl session login token --token <token>` | Pour self-hosted et CI. | secret jamais ecrit en clair dans config si keyring disponible. |
-| aucun equivalent local propre | `fctl session login client-credentials --issuer-url --client-id --client-secret` | Auth machine-to-machine. | renouvellement, expiration, erreurs OAuth. |
-| aucun equivalent local propre | `fctl session login oidc --issuer-url --client-id` | OIDC generique. | scopes, device flow si supporte. |
-| aucun equivalent local propre | `fctl session login none` | Local/dev sans auth. | refuse sur contexte non local sauf confirmation explicite. |
-| `fctl profiles list` | `fctl context list` | `profiles` alias deprecie. | format table/json/yaml stable. |
-| `fctl profiles show <name>` | `fctl context show <name>` | meme argument. | masque les secrets. |
-| `fctl profiles use <name>` | `fctl context use <name>` | current context. | ecriture atomique. |
-| `fctl profiles delete <name>` | `fctl context delete <name>` | refuse si current sans `--force`. | deletion config + references credentials. |
-| `fctl profiles rename <old> <new>` | `fctl context rename <old> <new>` | meme forme. | conserve current si necessaire. |
-| `fctl profiles reset <name>` | `fctl context unset-defaults <name> --confirm` | Clarifie le reset comme suppression des defaults de contexte uniquement; ne supprime jamais les credentials. Alias deprecie `profiles reset`. | confirmation et non-interactif. |
-| `fctl profiles set-default-organization <org>` | `fctl context set <name> --organization <org>` | Peut prendre current context par defaut. | validation kind cloud/cloud-stack. |
-| `fctl profiles set-default-stack <stack>` | `fctl context set <name> --stack <stack>` | Peut prendre current context par defaut. | validation kind cloud-stack. |
-| aucun equivalent v3 | `fctl context create stack <name> --stack-url <url> [--auth ...]` | Base self-hosted/local. | config schema, auth method. |
-| aucun equivalent v3 | `fctl context create cloud <name> --cloud-url <url>` | Controle plane Cloud. | aucun stack requis. |
-| aucun equivalent v3 | `fctl context create cloud-stack <name> --cloud-url --organization --stack` | Stack Cloud data-plane. | resolution d'URL stack. |
+| `fctl login --membership-uri <url>` | `fctl login --target cloud` ou `fctl login --target ee --membership-url <url>` | Wizard racine; browser/device flow differe tant que le contrat n'est pas explicite. | migration de token, erreurs sans browser, non-interactif. |
+| aucun equivalent local propre | `fctl login --target open-source --stack-url <url>` | Local/dev sans auth par defaut. | config schema, no-auth explicite. |
+| aucun equivalent local propre | `fctl login --target cloud --client-id --client-secret-stdin` | Auth machine-to-machine Cloud. | secret jamais ecrit en clair dans config si keyring disponible. |
+| aucun equivalent local propre | `fctl login --target ee --membership-url --client-id --client-secret-stdin` | Auth machine-to-machine EE self-hosted. | renouvellement, expiration, erreurs OAuth. |
+| `fctl profiles list` | `fctl profile list` | `profiles` alias cache deprecie. | format table/json/yaml stable. |
+| `fctl profiles show <name>` | `fctl profile show <name>` | meme argument. | masque les secrets. |
+| `fctl profiles use <name>` | `fctl profile use <name>` | current profile. | ecriture atomique. |
+| `fctl profiles delete <name>` | `fctl profile delete <name>` | refuse si current sans `--force`. | deletion config + references credentials. |
+| `fctl profiles rename <old> <new>` | `fctl profile rename <old> <new>` | meme forme. | conserve current si necessaire. |
+| `fctl profiles reset <name>` | `fctl profile unset-defaults <name> --confirm` | Clarifie le reset comme suppression des defaults uniquement; ne supprime jamais les credentials. Alias deprecie `profiles reset`. | confirmation et non-interactif. |
+| `fctl profiles set-default-organization <org>` | `fctl profile set <name> --organization <org>` | Peut prendre current profile par defaut. | validation kind cloud/cloud-stack. |
+| `fctl profiles set-default-stack <stack>` | `fctl profile set <name> --stack <stack>` | Peut prendre current profile par defaut. | validation kind cloud-stack. |
+| aucun equivalent v3 | `fctl profile create stack <name> --stack-url <url> [--auth ...]` | Base self-hosted/local. | config schema, auth method. |
+| aucun equivalent v3 | `fctl profile create cloud <name> --cloud-url <url>` | Controle plane Cloud. | aucun stack requis. |
+| aucun equivalent v3 | `fctl profile create cloud-stack <name> --cloud-url --organization --stack` | Stack Cloud data-plane. | resolution d'URL stack. |
 | aucun equivalent v3 | `fctl target inspect` | Montre target, auth, `/versions`, API choisies. | mock `/versions`. |
 | aucun equivalent v3 | `fctl config migrate-v3` | Importe les profiles v3 sans les modifier. | fixtures v3, keyring fake, idempotence. |
-| `fctl prompt` | `fctl setup` ou `fctl context wizard` | Garder `prompt` alias cache/deprecie. | ne jamais bloquer en `--non-interactive`. |
+| `fctl prompt` | `fctl setup` ou `fctl login` | Garder `prompt` alias cache/deprecie. | ne jamais bloquer en `--non-interactive`. |
 | `fctl version` | `fctl version` | Ajouter build metadata v4. | stdout stable. |
 | `fctl ui` | `fctl ui [--print]` | Garder pour les contextes Cloud uniquement; `--print` donne une sortie scriptable sans navigateur. | detection browser/TTY. |
 
 Implementation v4:
 
-- `session login token` met a jour le contexte selectionne et stocke le token hors config via `--token` ou `--token-stdin`;
-- `session login client-credentials` met a jour le contexte selectionne et stocke le secret client hors config via `--client-secret` ou `--client-secret-stdin`;
-- tant que le backend keyring v4 n'est pas branche, les secrets vont par defaut dans `<config-dir>/credentials`, avec override possible par `--credential-dir`;
-- si aucune config v4 n'existe, `session login token` et `session login client-credentials` creent un contexte Cloud par defaut `formance-cloud` pointant vers `https://app.formance.cloud/api`;
-- `session login none` desactive l'auth sur un contexte `stack`; sur `cloud`/`cloud-stack`, `--confirm` est requis pour eviter une desactivation accidentelle;
-- `session status` affiche la methode d'auth du contexte courant sans exposer les secrets;
-- `session token` imprime le token d'acces resolu pour les contextes authentifies, afin de faciliter CI et debug;
-- `session logout --confirm` supprime les credentials stockes localement quand ils utilisent un ref gere par le CLI, puis repasse le contexte en `none`.
-- `context unset-defaults [name] --confirm` supprime les defaults du contexte sans toucher a l'auth ni aux credentials; les aliases deprecies `profiles reset`, `profiles set-default-organization` et `profiles set-default-stack` restent disponibles pour les migrations peu couteuses.
+- `fctl login` cree ou remplace le profil selectionne par `--profile`, avec `default` comme nom par defaut;
+- `fctl login --target open-source` cree un profil `stack` no-auth qui parle directement a la stack;
+- `fctl login --target cloud` utilise l'URL Cloud production par defaut;
+- `fctl login --target ee` demande ou prend `--membership-url`;
+- `fctl login` stocke tokens et secrets hors config via `<config-dir>/credentials` tant que le backend keyring v4 n'est pas branche, avec override possible par `--credential-dir`;
+- `fctl logout` supprime les credentials geres par le CLI du profil courant et repasse son auth a `none`;
+- `fctl whoami` affiche profil, cible, methode d'auth, organisation et stack sans exposer les secrets;
+- `profile unset-defaults [name] --confirm` supprime les defaults du profil sans toucher a l'auth ni aux credentials; les aliases deprecies `profiles reset`, `profiles set-default-organization` et `profiles set-default-stack` restent disponibles pour les migrations peu couteuses.
 - `ui [--print]` reste disponible sur les contextes `cloud`/`cloud-stack`; il lit `/_info.consoleURL`, ouvre le navigateur seulement en mode interactif, et refuse les contextes `stack`.
 
 Points bloques / differes:
 
-- `session login cloud` reste a implementer avec un vrai contrat de device/browser flow ou d'import de token Cloud; il ne doit pas recreer une dependance Cloud pour les commandes stack locales.
-- `session login oidc` reste a implementer quand le contrat generic device flow est stabilise (device authorization endpoint, scopes, refresh, stockage); `session login client-credentials` couvre deja le cas machine-to-machine.
+- le mode browser/device de `fctl login` reste a implementer avec un vrai contrat de device/browser flow ou d'import de token Cloud/EE/OIDC; il ne doit pas recreer une dependance Cloud pour les commandes stack locales.
 
 ## Mapping commandes Cloud
 
@@ -480,13 +482,16 @@ Le chemin `orchestration ...` peut rester comme alias deprecie pendant la phase 
 ## Mapping Auth service
 
 La v3 utilise `auth` pour le service Auth de la stack. La v4 garde `auth` comme nom canonique du service, car `identity` pourra devenir un produit Formance distinct plus tard.
-Les commandes de session CLI vivent sous `session login/status/logout/token`, mais les commandes du service restent `auth clients ...` et `auth users ...`.
+Les commandes d'authentification CLI vivent au niveau racine (`login`, `logout`,
+`whoami`) et les commandes du service restent `auth clients ...` et
+`auth users ...`.
 
 Decision:
 
-- `session login/status/logout/token` = session CLI;
+- `login/logout/whoami` = session CLI publique;
+- `session login/status/logout/token` = implementation cachee transitoire;
 - `auth clients ...` et `auth users ...` = service Auth de la stack;
-- pas d'alias `login` racine ni `auth login/status/logout/token`, pour eviter de melanger session CLI et service Auth;
+- pas d'alias `auth login/status/logout/token`, pour eviter de melanger session CLI et service Auth;
 - ne pas introduire `identity` comme alias ou nom canonique dans cette migration.
 
 | v3 | v4 canonique | Changements d'arguments | Notes |
@@ -516,7 +521,7 @@ Decision:
 
 | v3 | Decision proposee | Raison |
 | --- | --- | --- |
-| `prompt` | remplacer par `setup`/`context wizard`, garder alias cache | Le nom ne decrit pas l'intention utilisateur. |
+| `prompt` | remplacer par `setup`/`login`, garder alias cache | Le nom ne decrit pas l'intention utilisateur. |
 | `cloud_stacks ...`, `stack ...` et `stacks ...` a la racine | deprecie vers `cloud stacks ...` avec warning | `stack` doit pouvoir signifier target data-plane; les operations lifecycle sont Cloud. |
 | `search ...` et alias `se` | supprimer | Le produit n'existe plus en v4. |
 | `payments ... get` | deprecie vers `show` | Coherence globale. |
@@ -579,11 +584,11 @@ Scenarios minimaux:
 
 | Scenario | Commandes |
 | --- | --- |
-| contexte local no-auth | `context create stack`, `context use`, `target inspect`, `ledger transactions list`. |
-| contexte token self-hosted | `session login token`, `target inspect`, commande produit. |
-| contexte client credentials | `session login client-credentials`, refresh token, commande produit. |
-| contexte Cloud stack | `session login cloud`, `cloud organizations list`, `ledger transactions list`. |
-| migration v3 | `config migrate-v3`, puis `context list/show/use`. |
+| contexte local no-auth | `login --target open-source`, `target inspect`, `ledger transactions list`. |
+| contexte token self-hosted | `login --target open-source --token`, `target inspect`, commande produit. |
+| contexte client credentials | `login --target ee --client-id --client-secret`, refresh token, commande produit. |
+| contexte Cloud stack | `login --target cloud --organization --stack`, `cloud organizations list`, `ledger transactions list`. |
+| migration v3 | `config migrate-v3`, puis `profile list/show/use`. |
 | aliases v3 | `profiles list`, `payments transfer_initiation list`, `payments bank_accounts list`, `ledger transactions list --src --dst`. |
 | non-interactif | commandes mutantes sans `--confirm` doivent echouer proprement. |
 | sortie stable | chaque famille avec `--output json` et `--output yaml`. |
@@ -679,7 +684,7 @@ Ils ne doivent pas etre requis pour les PR ordinaires.
 ### Phase 1: fondations transverses
 
 - Finaliser contextes/auth/credentials/runtime/render.
-- Stabiliser `--context`, `--output`, `--non-interactive`, `--api-version`.
+- Stabiliser `--profile`, `--organization`, `--stack`, `--output`, `--non-interactive`, `--api-version`.
 - Ajouter le mock OpenAPI minimal et le harness CLI.
 - Ajouter les tests de migration config.
 

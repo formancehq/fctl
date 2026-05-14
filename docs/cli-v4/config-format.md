@@ -41,25 +41,25 @@ contexts:
 - `cloud`: Formance Cloud control plane target.
 - `cloud-stack`: stack target discovered or authorized through Formance Cloud.
 
-## Default Bootstrap Context
+## Default Login Profile
 
-When no v4 config exists yet, `session login token` and
-`session login client-credentials` may bootstrap a default Cloud control-plane
-context:
+When no v4 config exists yet, `fctl login` creates a default profile named
+`default` unless `--profile` selects another name. Formance Cloud defaults to
+the production membership URL:
 
 ```yaml
-currentContext: formance-cloud
+currentContext: default
 contexts:
-  formance-cloud:
+  default:
     kind: cloud
     cloudURL: https://app.formance.cloud/api
     auth:
       method: none
 ```
 
-The login command then replaces `auth` on that context with the requested
-method. Product commands still require an explicit `stack` or `cloud-stack`
-context before they can target a stack.
+The login command then replaces `auth` with the selected method. Product stack
+commands need either a direct `stack` profile or a Cloud/EE profile plus
+`--organization` and `--stack` when the profile does not already store them.
 
 ## Auth Methods
 

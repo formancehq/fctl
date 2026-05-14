@@ -31,7 +31,7 @@ func NewRootCommand(version string) *cobra.Command {
 	root := &cobra.Command{
 		Use:           "fctl",
 		Short:         "Formance Control CLI v4",
-		Long:          "Formance Control CLI v4 targets Cloud, self-hosted, and local Formance stacks through explicit contexts.",
+		Long:          "Formance Control CLI v4 targets Cloud, self-hosted, and local Formance stacks through explicit profiles.",
 		Version:       version,
 		SilenceErrors: true,
 		SilenceUsage:  true,
@@ -56,6 +56,9 @@ func NewRootCommand(version string) *cobra.Command {
 	_ = root.PersistentFlags().MarkHidden(contextFlag)
 
 	root.AddCommand(newVersionCommand())
+	root.AddCommand(newLoginCommand())
+	root.AddCommand(newLogoutCommand())
+	root.AddCommand(newWhoamiCommand())
 	root.AddCommand(newProfileCommand())
 	root.AddCommand(newContextCommand())
 	root.AddCommand(newProfilesCommand())

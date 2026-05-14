@@ -5,8 +5,10 @@ This reference lists the current canonical v4 command families implemented under
 
 ## Global Flags
 
-- `--context <name>`
-- `--profile <name>` deprecated alias for `--context`
+- `--profile <name>`
+- `--context <name>` hidden deprecated alias for `--profile`
+- `--organization <organization-id>` Cloud or EE organization override
+- `--stack <stack-id>` Cloud or EE stack override
 - `--config-dir <dir>`, `-c <dir>`
 - `--credential-dir <dir>`
 - `--output plain|json|yaml`
@@ -17,21 +19,31 @@ This reference lists the current canonical v4 command families implemented under
 
 ## Target and Configuration
 
-- `fctl context create stack <name> --stack-url <url>`
-- `fctl context create cloud <name> --cloud-url <url>`
-- `fctl context create cloud-stack <name> --cloud-url <url> --organization <organization-id> --stack <stack-id>`
-- `fctl context list`
-- `fctl context show <name>`
-- `fctl context use <name>`
-- `fctl context rename <old-name> <new-name>`
-- `fctl context delete <name> --confirm`
-- `fctl context set [name] --organization <organization-id> --stack <stack-id> --default-ledger <ledger>`
-- `fctl context unset-defaults [name] --confirm`
+- `fctl login`
+- `fctl login --target cloud --client-id <id> --client-secret-stdin`
+- `fctl login --target ee --membership-url <url> --client-id <id> --client-secret-stdin`
+- `fctl login --target open-source --stack-url <url>`
+- `fctl logout`
+- `fctl whoami`
+- `fctl profile create stack <name> --stack-url <url>`
+- `fctl profile create cloud <name> --cloud-url <url>`
+- `fctl profile create cloud-stack <name> --cloud-url <url> --organization <organization-id> --stack <stack-id>`
+- `fctl profile list`
+- `fctl profile show <name>`
+- `fctl profile use <name>`
+- `fctl profile rename <old-name> <new-name>`
+- `fctl profile delete <name> --confirm`
+- `fctl profile set [name] --organization <organization-id> --stack <stack-id> --default-ledger <ledger>`
+- `fctl profile unset-defaults [name] --confirm`
 - `fctl config migrate-v3`
 - `fctl setup`
 - `fctl ui --print`
 - `fctl target inspect`
 - `fctl target proxy --port 55001`
+
+`context` and `session` commands remain hidden implementation/compatibility
+commands for now. New user flows should use `login`, `logout`, `whoami`, and
+`profile`.
 
 ## Cloud
 
@@ -208,23 +220,20 @@ Wallet credit and debit require the wallet target explicitly.
 - `fctl reconciliation policies delete <policy-id> --confirm`
 - `fctl reconciliation policies reconcile <policy-id> --ledger-at <time> --payments-at <time> --confirm`
 
-## Session
+## Login and Profiles
 
-- `fctl session login cloud --cloud-url <url>` (deferred until Cloud device/browser login contract is explicit)
-- `fctl session login token --token-stdin`
-- `fctl session login client-credentials --issuer-url <url> --client-id <id> --client-secret-stdin`
-- `fctl session login oidc --issuer-url <url> --client-id <id>` (deferred until generic device flow contract is specified)
-- `fctl session login none`
-- `fctl session status`
-- `fctl session token`
-- `fctl session logout --confirm`
+`fctl login` is the primary setup flow. It creates or replaces the selected
+profile, defaulting to `default` when `--profile` is not provided.
 
-`session` owns CLI authentication state for the selected context. The former
-root `login` command and `auth login/status/token/logout` paths are not kept as
-aliases in v4, so `auth` can remain the stack Auth service command.
-If no v4 config exists yet, `session login token` and
-`session login client-credentials` bootstrap a `formance-cloud` Cloud context
-pointing at `https://app.formance.cloud/api`.
+- Formance Cloud uses `https://app.formance.cloud/api` by default.
+- Formance EE Self-Hosted asks for `--membership-url` or prompts for it.
+- Formance Open Source asks for `--stack-url` and defaults to no auth.
+- `--organization` and `--stack` select a Cloud or EE stack for commands that
+  need stack scope.
+- Browser/device login is deferred until the Cloud and EE device-flow contract
+  is explicit. Use client credentials or static token flags for now.
+
+`auth` remains reserved for the stack Auth service command family.
 
 ## Auth
 

@@ -48,7 +48,7 @@ func loadConfig(cmd *cobra.Command, allowMissing bool) (v4config.Config, string,
 }
 
 func missingConfigError(path string) error {
-	return fmt.Errorf("v4 config not found at %s; create a context with `fctl context create stack <name> --stack-url <url>`, `fctl context create cloud <name> --cloud-url <url>`, or `fctl context create cloud-stack <name> --cloud-url <url> --organization <org> --stack <stack>`; alternatively migrate an existing v3 config with `fctl config migrate-v3`", path)
+	return fmt.Errorf("v4 config not found at %s; run `fctl login`, create a profile with `fctl profile create stack <name> --stack-url <url>`, `fctl profile create cloud <name> --cloud-url <url>`, or `fctl profile create cloud-stack <name> --cloud-url <url> --organization <org> --stack <stack>`; alternatively migrate an existing v3 config with `fctl config migrate-v3`", path)
 }
 
 func outputFormat(cmd *cobra.Command) (string, error) {

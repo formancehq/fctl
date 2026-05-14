@@ -368,7 +368,7 @@ func newProfilesResetCommand() *cobra.Command {
 	command.Short = "Clear defaults from a configured context"
 	command.Args = cobra.ExactArgs(1)
 	command.PreRun = func(cmd *cobra.Command, _ []string) {
-		fmt.Fprintln(cmd.ErrOrStderr(), "Command profiles reset has been deprecated, use context unset-defaults <name> --confirm")
+		fmt.Fprintln(cmd.ErrOrStderr(), "Command profiles reset has been deprecated, use profile unset-defaults <name> --confirm")
 	}
 	return command
 }
@@ -380,7 +380,7 @@ func newProfilesSetDefaultOrganizationCommand() *cobra.Command {
 		Short:   "Set the default organization on the current context",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Fprintln(cmd.ErrOrStderr(), "Command profiles set-default-organization has been deprecated, use context set --organization <organization-id>")
+			fmt.Fprintln(cmd.ErrOrStderr(), "Command profiles set-default-organization has been deprecated, use profile set --organization <organization-id>")
 			cfg, path, err := loadConfig(cmd, false)
 			if err != nil {
 				return err
@@ -418,7 +418,7 @@ func newProfilesSetDefaultStackCommand() *cobra.Command {
 		Short:   "Set the default stack on the current context",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Fprintln(cmd.ErrOrStderr(), "Command profiles set-default-stack has been deprecated, use context set --stack <stack-id>")
+			fmt.Fprintln(cmd.ErrOrStderr(), "Command profiles set-default-stack has been deprecated, use profile set --stack <stack-id>")
 			cfg, path, err := loadConfig(cmd, false)
 			if err != nil {
 				return err

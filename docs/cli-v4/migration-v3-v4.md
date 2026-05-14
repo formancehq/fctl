@@ -5,8 +5,8 @@ the isolated v4 implementation under `v4/`.
 
 ## Core Changes
 
-- Contexts are the primary target selector. A command targets a local,
-  self-hosted, Cloud, or Cloud stack context instead of assuming Formance Cloud.
+- Profiles are the primary target selector. A command targets a local,
+  self-hosted, Cloud, or Cloud stack profile instead of assuming Formance Cloud.
 - API versions are selected by capability resolution. Commands expose product
   intent and use the latest compatible API by default.
 - Generated SDK namespaces remain an implementation detail. Command names and
@@ -14,10 +14,10 @@ the isolated v4 implementation under `v4/`.
   `FCTL_LedgerTransactionList`.
 - `auth` remains the canonical service name. Do not introduce `identity` in this
   migration.
-- CLI authentication commands move to `session login/status/token/logout`.
-  `auth login/status/token/logout` and the root `login` command are removed
-  instead of kept as aliases, so `auth` is not overloaded between CLI session
-  state and the stack Auth service.
+- CLI setup and authentication starts at root `login`, with `logout` and
+  `whoami` for daily use. `session` remains hidden implementation detail, so
+  `auth` is not overloaded between CLI authentication state and the stack Auth
+  service.
 - `flows` is the canonical command for the former `orchestration` product.
 - `cloud stacks` is the canonical command for Cloud stack lifecycle operations.
   `cloud_stacks`, `stack`, and `stacks` are deprecated migration aliases with
@@ -28,17 +28,19 @@ the isolated v4 implementation under `v4/`.
 
 | v3 command | v4 command | Migration behavior |
 | --- | --- | --- |
-| `--profile <name>` | `--context <name>` | `--profile` is a deprecated alias with a warning. |
-| `-c`, `--config-dir <dir>` | `-c`, `--config-dir <dir>` | Kept for config directory selection; `--context` has no short flag. |
+| `--profile <name>` | `--profile <name>` | Primary selector. |
+| `--context <name>` | `--profile <name>` | Hidden deprecated alias with a warning. |
+| `--organization <org>` / `--stack <stack>` | `--organization <org>` / `--stack <stack>` | Global Cloud/EE target overrides for profiles that support them. |
+| `-c`, `--config-dir <dir>` | `-c`, `--config-dir <dir>` | Kept for config directory selection. |
 | `-d`, `--debug` | `-d`, `--debug` | Kept; runtime diagnostics are written to stderr. |
 | `--insecure-tls` | `--insecure-tls` | Kept as an explicit non-persistent runtime override. |
 | none | `--no-color` | New stable flag; v4 renderers are plain by default. |
 | `ui` | `ui --print` or `ui` | Kept for Cloud contexts; `--print` is non-browser/non-interactive friendly. |
-| `login --membership-uri <url>` | `session login cloud --cloud-url <url>` | Root `login` is removed; no alias is kept. Cloud device/browser login is deferred. |
-| `profiles ...` | `context ...` | `profiles` is a deprecated alias with a warning. |
-| `profiles reset <name>` | `context unset-defaults <name> --confirm` | `profiles reset` is a deprecated alias with a warning. |
-| `profiles set-default-organization <org>` | `context set --organization <org>` | Deprecated alias updates the current context. |
-| `profiles set-default-stack <stack>` | `context set --stack <stack>` | Deprecated alias updates the current context. |
+| `login --membership-uri <url>` | `login --target cloud` or `login --target ee --membership-url <url>` | Browser/device login is deferred; use client credentials or token flags for now. |
+| `profiles ...` | `profile ...` | `profiles` is a hidden deprecated alias with a warning. |
+| `profiles reset <name>` | `profile unset-defaults <name> --confirm` | Deprecated alias. |
+| `profiles set-default-organization <org>` | `profile set --organization <org>` | Deprecated alias updates the current profile. |
+| `profiles set-default-stack <stack>` | `profile set --stack <stack>` | Deprecated alias updates the current profile. |
 | `orchestration ...` | `flows ...` | `orchestration` is a deprecated alias with a warning. |
 | `orchestration workflows create <file>\|-` | `flows workflows create --file <path>\|-` | Deprecated positional file form warns on stderr. |
 | `orchestration instances describe` | `flows instances inspect` | `describe` remains a deprecated alias. |
@@ -76,10 +78,9 @@ when the command is intentionally machine-readable.
 
 ## Deferred Items
 
-- `session login cloud` is deferred until the Cloud device/browser login contract is
-  explicit in v4. Stack commands must remain usable without Cloud membership.
-- `session login oidc` is deferred until the generic device-flow contract is
-  specified. Use `session login client-credentials` for machine-to-machine auth.
+- Browser/device login in `fctl login` is deferred until the Cloud, EE, and
+  generic OIDC device-flow contracts are explicit. Stack commands must remain
+  usable without Cloud membership.
 - `--telemetry` is deferred until opt-in/out behavior and stored state are
   documented.
 - `--quiet` is deferred until each command family defines its primary quiet

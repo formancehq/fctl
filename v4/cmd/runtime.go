@@ -26,6 +26,10 @@ func runtimeFromCommand(cmd *cobra.Command) (*runtime.Runtime, error) {
 	if err != nil {
 		return nil, err
 	}
+	organization, stack, err := organizationAndStackFromCommand(cmd)
+	if err != nil {
+		return nil, err
+	}
 
 	store, err := credentialStoreFromCommand(cmd)
 	if err != nil {
@@ -38,7 +42,7 @@ func runtimeFromCommand(cmd *cobra.Command) (*runtime.Runtime, error) {
 
 	rt, err := runtime.New(cmd.Context(), runtime.Options{
 		ConfigPath:      path,
-		ContextOverride: v4config.ContextOverride{Name: contextName},
+		ContextOverride: v4config.ContextOverride{Name: contextName, Organization: organization, Stack: stack},
 		Credentials:     store,
 		Auth:            authOptions,
 		Manifest:        capabilities.GeneratedManifest,
@@ -76,6 +80,19 @@ func contextNameFromCommand(cmd *cobra.Command) (string, error) {
 		return contextName, nil
 	}
 	return profileName, nil
+}
+
+func organizationAndStackFromCommand(cmd *cobra.Command) (string, string, error) {
+	flags := cmd.Root().PersistentFlags()
+	organization, err := flags.GetString(organizationFlag)
+	if err != nil {
+		return "", "", err
+	}
+	stack, err := flags.GetString(stackFlag)
+	if err != nil {
+		return "", "", err
+	}
+	return organization, stack, nil
 }
 
 func credentialStoreFromCommand(cmd *cobra.Command) (credentials.Store, error) {

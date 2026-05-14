@@ -69,6 +69,10 @@ func New(ctx context.Context, options Options) (*Runtime, error) {
 	if err != nil {
 		return nil, err
 	}
+	selectedContext, err = applyTargetOverrides(selectedContext, options.ContextOverride)
+	if err != nil {
+		return nil, err
+	}
 
 	target, err := TargetFromContext(selectedContext)
 	if err != nil {
@@ -88,6 +92,25 @@ func New(ctx context.Context, options Options) (*Runtime, error) {
 	}, nil
 }
 
+func applyTargetOverrides(selectedContext config.Context, override config.ContextOverride) (config.Context, error) {
+	if override.Organization == "" && override.Stack == "" {
+		return selectedContext, nil
+	}
+	if selectedContext.Kind == config.ContextKindStack {
+		return config.Context{}, fmt.Errorf("--organization and --stack can only be used with Cloud or EE profiles")
+	}
+	if override.Organization != "" {
+		selectedContext.Organization = override.Organization
+	}
+	if override.Stack != "" {
+		selectedContext.Stack = override.Stack
+		if selectedContext.Kind == config.ContextKindCloud {
+			selectedContext.Kind = config.ContextKindCloudStack
+		}
+	}
+	return selectedContext, nil
+}
+
 func TargetFromContext(context config.Context) (Target, error) {
 	switch context.Kind {
 	case config.ContextKindStack:
@@ -101,6 +124,12 @@ func TargetFromContext(context config.Context) (Target, error) {
 			URL:  context.CloudURL,
 		}, nil
 	case config.ContextKindCloudStack:
+		if context.Organization == "" {
+			return Target{}, fmt.Errorf("organization is required for cloud-stack targets")
+		}
+		if context.Stack == "" {
+			return Target{}, fmt.Errorf("stack is required for cloud-stack targets")
+		}
 		return Target{
 			Kind:         TargetKindCloudStack,
 			URL:          context.CloudURL,

@@ -30,7 +30,7 @@ func TestCLIIntegrationCoreWorkflow(t *testing.T) {
 	result := runCLI(t,
 		"--config-dir", configDir,
 		"--non-interactive",
-		"context", "create", "stack", "local",
+		"profile", "create", "stack", "local",
 		"--stack-url", server.URL,
 	)
 	result.requireSuccess(t)
@@ -38,7 +38,7 @@ func TestCLIIntegrationCoreWorkflow(t *testing.T) {
 		t.Fatalf("unexpected create output: %q", result.stdout)
 	}
 
-	result = runCLI(t, "--config-dir", configDir, "-o", "yaml", "context", "list")
+	result = runCLI(t, "--config-dir", configDir, "-o", "yaml", "profile", "list")
 	result.requireSuccess(t)
 	for _, expected := range []string{"currentContext: local", "- local"} {
 		if !strings.Contains(result.stdout, expected) {
@@ -76,7 +76,9 @@ func TestCLIIntegrationMissingConfigError(t *testing.T) {
 	if result.exitCode == 0 {
 		t.Fatalf("expected missing config to fail")
 	}
-	if !strings.Contains(result.stderr, "read config") && !strings.Contains(result.stderr, "no such file") {
+	if !strings.Contains(result.stderr, "v4 config not found") ||
+		!strings.Contains(result.stderr, "fctl login") ||
+		!strings.Contains(result.stderr, "fctl profile create stack") {
 		t.Fatalf("unexpected stderr:\n%s", result.stderr)
 	}
 }
@@ -84,7 +86,7 @@ func TestCLIIntegrationMissingConfigError(t *testing.T) {
 func TestCLIIntegrationInvalidConfigError(t *testing.T) {
 	result := runCLI(t,
 		"--config-dir", t.TempDir(),
-		"context", "create", "stack", "local",
+		"profile", "create", "stack", "local",
 	)
 	if result.exitCode == 0 {
 		t.Fatalf("expected invalid context creation to fail")
@@ -103,7 +105,7 @@ func TestCLIIntegrationMissingAuthError(t *testing.T) {
 	configDir := t.TempDir()
 	result := runCLI(t,
 		"--config-dir", configDir,
-		"context", "create", "stack", "local",
+		"profile", "create", "stack", "local",
 		"--stack-url", server.URL,
 		"--auth-method", "client_credentials",
 		"--issuer-url", server.URL,

@@ -17,7 +17,7 @@ func newSetupCommand(deprecatedPromptAlias bool) *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if deprecatedPromptAlias {
-				fmt.Fprintln(cmd.ErrOrStderr(), "Command prompt has been deprecated, use setup or context wizard")
+				fmt.Fprintln(cmd.ErrOrStderr(), "Command prompt has been deprecated, use setup or login")
 			}
 			return renderSetupGuidance(cmd)
 		},
@@ -25,7 +25,7 @@ func newSetupCommand(deprecatedPromptAlias bool) *cobra.Command {
 	if deprecatedPromptAlias {
 		command.Use = "prompt"
 		command.Hidden = true
-		command.Deprecated = "use setup or context wizard"
+		command.Deprecated = "use setup or login"
 	}
 	return command
 }
@@ -44,8 +44,9 @@ func newContextWizardCommand() *cobra.Command {
 func renderSetupGuidance(cmd *cobra.Command) error {
 	output := setupOutput{
 		Commands: []string{
-			"fctl context create stack <name> --stack-url <url>",
-			"fctl context use <name>",
+			"fctl login",
+			"fctl profile create stack <name> --stack-url <url>",
+			"fctl profile use <name>",
 			"fctl config migrate-v3",
 		},
 	}

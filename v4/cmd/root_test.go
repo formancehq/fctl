@@ -66,8 +66,11 @@ func TestRootHelp(t *testing.T) {
 		"--insecure-tls",
 		"--no-color",
 		"--non-interactive",
+		"login",
+		"logout",
 		"profile",
 		"version",
+		"whoami",
 	} {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected help output to contain %q, got:\n%s", expected, stdout)
@@ -77,6 +80,114 @@ func TestRootHelp(t *testing.T) {
 		if strings.Contains(stdout, hidden) {
 			t.Fatalf("expected help output not to contain hidden %q, got:\n%s", hidden, stdout)
 		}
+	}
+}
+
+func TestLoginOpenSourceWizardCreatesDefaultProfile(t *testing.T) {
+	configDir := t.TempDir()
+
+	stdout, stderr, err := executeCommandWithInput(t,
+		"3\nhttp://localhost:8080\n",
+		"--config-dir", configDir,
+		"login",
+	)
+	if err != nil {
+		t.Fatalf("login wizard open-source: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "Logged in with profile default.") {
+		t.Fatalf("unexpected login output:\n%s", stdout)
+	}
+
+	cfg, err := v4config.LoadFile(filepath.Join(configDir, "config.yaml"))
+	if err != nil {
+		t.Fatalf("load login config: %v", err)
+	}
+	profile := cfg.Contexts["default"]
+	if cfg.CurrentContext != "default" ||
+		profile.Kind != v4config.ContextKindStack ||
+		profile.StackURL != "http://localhost:8080" ||
+		profile.Auth.Method != v4config.AuthMethodNone {
+		t.Fatalf("unexpected default profile: current=%q profile=%#v", cfg.CurrentContext, profile)
+	}
+}
+
+func TestLoginCloudClientCredentialsAndLogout(t *testing.T) {
+	configDir := t.TempDir()
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"--profile", "production",
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"login",
+		"--target", "cloud",
+		"--client-id", "client",
+		"--client-secret", "super-secret",
+	)
+	if err != nil {
+		t.Fatalf("login cloud client credentials: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Logged in with profile production.\n" {
+		t.Fatalf("unexpected login output: %q", stdout)
+	}
+
+	cfg, err := v4config.LoadFile(filepath.Join(configDir, "config.yaml"))
+	if err != nil {
+		t.Fatalf("load login config: %v", err)
+	}
+	profile := cfg.Contexts["production"]
+	if cfg.CurrentContext != "production" ||
+		profile.Kind != v4config.ContextKindCloudStack ||
+		profile.CloudURL != v4config.DefaultCloudURL ||
+		profile.Organization != "org_1" ||
+		profile.Stack != "stack_1" ||
+		profile.Auth.Method != v4config.AuthMethodClientCredentials ||
+		profile.Auth.ClientID != "client" ||
+		profile.Auth.SecretRef != "contexts/production/client-secret" {
+		t.Fatalf("unexpected production profile: current=%q profile=%#v", cfg.CurrentContext, profile)
+	}
+	if strings.Contains(fmt.Sprintf("%#v", profile), "super-secret") {
+		t.Fatalf("profile must not contain clear client secret: %#v", profile)
+	}
+	if _, err := os.Stat(filepath.Join(configDir, "credentials", "contexts", "production", "client-secret")); err != nil {
+		t.Fatalf("expected stored client secret: %v", err)
+	}
+
+	stdout, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"whoami",
+	)
+	if err != nil {
+		t.Fatalf("whoami: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"Profile\tproduction\n",
+		"Target\tcloud-stack\n",
+		"Auth\tclient_credentials\n",
+		"Organization\torg_1\n",
+		"Stack\tstack_1\n",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected whoami output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+
+	stdout, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"logout",
+	)
+	if err != nil {
+		t.Fatalf("logout: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Logged out from profile production.\n" {
+		t.Fatalf("unexpected logout output: %q", stdout)
+	}
+	cfg, err = v4config.LoadFile(filepath.Join(configDir, "config.yaml"))
+	if err != nil {
+		t.Fatalf("load logout config: %v", err)
+	}
+	if cfg.Contexts["production"].Auth.Method != v4config.AuthMethodNone {
+		t.Fatalf("expected logout to clear auth: %#v", cfg.Contexts["production"].Auth)
 	}
 }
 
@@ -152,7 +263,8 @@ func TestSetupAndPromptAlias(t *testing.T) {
 	if stderr != "" {
 		t.Fatalf("expected empty stderr, got %q", stderr)
 	}
-	if !strings.Contains(stdout, "fctl context create stack <name> --stack-url <url>") {
+	if !strings.Contains(stdout, "fctl login") ||
+		!strings.Contains(stdout, "fctl profile create stack <name> --stack-url <url>") {
 		t.Fatalf("unexpected setup output:\n%s", stdout)
 	}
 
@@ -160,10 +272,11 @@ func TestSetupAndPromptAlias(t *testing.T) {
 	if err != nil {
 		t.Fatalf("prompt alias: %v stderr=%s", err, stderr)
 	}
-	if !strings.Contains(stderr, "Command prompt has been deprecated, use setup or context wizard") {
+	if !strings.Contains(stderr, "Command prompt has been deprecated, use setup or login") {
 		t.Fatalf("expected prompt warning, got:\n%s", stderr)
 	}
-	if !strings.Contains(stdout, "fctl context create stack <name> --stack-url <url>") {
+	if !strings.Contains(stdout, "fctl login") ||
+		!strings.Contains(stdout, "fctl profile create stack <name> --stack-url <url>") {
 		t.Fatalf("unexpected prompt output:\n%s", stdout)
 	}
 }
@@ -338,6 +451,76 @@ func TestContextCreateCloudAndCloudStack(t *testing.T) {
 	}
 }
 
+func TestGlobalOrganizationStackOverride(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/versions" {
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"3.2.4","health":true}]}`)
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"profile", "create", "cloud", "cloud",
+		"--cloud-url", server.URL,
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud profile: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"target", "inspect",
+	)
+	if err != nil {
+		t.Fatalf("inspect cloud-stack override: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "Target: "+server.URL+" (cloud-stack)") ||
+		!strings.Contains(stdout, "ledger 3.2.4 healthy") {
+		t.Fatalf("unexpected target inspect output:\n%s", stdout)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"--stack", "stack_1",
+		"target", "inspect",
+	)
+	if err == nil {
+		t.Fatal("expected stack override without organization to fail")
+	}
+	if !strings.Contains(err.Error(), "organization is required for cloud-stack targets") {
+		t.Fatalf("unexpected missing organization error: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"profile", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create stack profile: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"--profile", "local",
+		"--organization", "org_1",
+		"target", "inspect",
+	)
+	if err == nil {
+		t.Fatal("expected organization override on stack profile to fail")
+	}
+	if !strings.Contains(err.Error(), "--organization and --stack can only be used with Cloud or EE profiles") {
+		t.Fatalf("unexpected stack profile override error: %v stderr=%s", err, stderr)
+	}
+}
+
 func TestContextSetUpdatesCloudStack(t *testing.T) {
 	configDir := t.TempDir()
 	_, stderr, err := executeCommand(t,
@@ -416,8 +599,8 @@ func TestProfilesDefaultAliases(t *testing.T) {
 	if stdout != "Context prod updated.\n" {
 		t.Fatalf("unexpected set-default-organization output: %q", stdout)
 	}
-	if !strings.Contains(stderr, "Command profiles has been deprecated, use context") ||
-		!strings.Contains(stderr, "use context set --organization <organization-id>") {
+	if !strings.Contains(stderr, "Command profiles has been deprecated, use profile") ||
+		!strings.Contains(stderr, "use profile set --organization <organization-id>") {
 		t.Fatalf("expected profiles organization deprecation warnings, got:\n%s", stderr)
 	}
 
@@ -428,8 +611,8 @@ func TestProfilesDefaultAliases(t *testing.T) {
 	if stdout != "Context prod updated.\n" {
 		t.Fatalf("unexpected set-default-stack output: %q", stdout)
 	}
-	if !strings.Contains(stderr, "Command profiles has been deprecated, use context") ||
-		!strings.Contains(stderr, "use context set --stack <stack-id>") {
+	if !strings.Contains(stderr, "Command profiles has been deprecated, use profile") ||
+		!strings.Contains(stderr, "use profile set --stack <stack-id>") {
 		t.Fatalf("expected profiles stack deprecation warnings, got:\n%s", stderr)
 	}
 
@@ -448,8 +631,8 @@ func TestProfilesDefaultAliases(t *testing.T) {
 	if stdout != "Context prod defaults cleared.\n" {
 		t.Fatalf("unexpected profiles reset output: %q", stdout)
 	}
-	if !strings.Contains(stderr, "Command profiles has been deprecated, use context") ||
-		!strings.Contains(stderr, "use context unset-defaults <name> --confirm") {
+	if !strings.Contains(stderr, "Command profiles has been deprecated, use profile") ||
+		!strings.Contains(stderr, "use profile unset-defaults <name> --confirm") {
 		t.Fatalf("expected profiles reset deprecation warnings, got:\n%s", stderr)
 	}
 	cfg, err = v4config.LoadFile(filepath.Join(configDir, "config.yaml"))
@@ -540,7 +723,7 @@ func TestProfilesDeprecatedAlias(t *testing.T) {
 	if err != nil {
 		t.Fatalf("profiles list: %v stderr=%s", err, stderr)
 	}
-	if !strings.Contains(stderr, "Command profiles has been deprecated, use context") {
+	if !strings.Contains(stderr, "Command profiles has been deprecated, use profile") {
 		t.Fatalf("expected profiles warning, got:\n%s", stderr)
 	}
 	if stdout != "* local\n" {
@@ -2175,9 +2358,9 @@ func TestDeferredCloudAndOIDCLoginCommandsReturnActionableErrors(t *testing.T) {
 
 	_, stderr, err = executeCommand(t, "login")
 	if err == nil {
-		t.Fatal("expected root login alias to be removed")
+		t.Fatal("expected interactive root login without input to fail")
 	}
-	if !strings.Contains(err.Error(), `unknown command "login"`) {
+	if !strings.Contains(err.Error(), "unsupported login choice") {
 		t.Fatalf("unexpected root login error: %v stderr=%s", err, stderr)
 	}
 
@@ -2519,7 +2702,7 @@ func TestSessionLoginNoneRequiresConfirmForCloudContext(t *testing.T) {
 	}
 }
 
-func TestProfileFlagSelectsContextWithDeprecationWarning(t *testing.T) {
+func TestProfileFlagSelectsContext(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/versions" {
 			t.Fatalf("unexpected path %s", r.URL.Path)
@@ -2540,10 +2723,41 @@ func TestProfileFlagSelectsContextWithDeprecationWarning(t *testing.T) {
 
 	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "--profile", "local", "target", "inspect")
 	if err != nil {
-		t.Fatalf("inspect target with profile alias: %v stderr=%s", err, stderr)
+		t.Fatalf("inspect target with profile: %v stderr=%s", err, stderr)
 	}
-	if !strings.Contains(stderr, "Flag --profile has been deprecated, use --context") {
-		t.Fatalf("expected profile deprecation warning, got:\n%s", stderr)
+	if stderr != "" {
+		t.Fatalf("expected empty stderr for primary profile flag, got:\n%s", stderr)
+	}
+	if !strings.Contains(stdout, "Context: local") {
+		t.Fatalf("unexpected inspect output:\n%s", stdout)
+	}
+}
+
+func TestContextFlagSelectsProfileWithDeprecationWarning(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/versions" {
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+		fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL+"/api",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "--context", "local", "target", "inspect")
+	if err != nil {
+		t.Fatalf("inspect target with context alias: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Flag --context has been deprecated, use --profile") {
+		t.Fatalf("expected context deprecation warning, got:\n%s", stderr)
 	}
 	if !strings.Contains(stdout, "Context: local") {
 		t.Fatalf("unexpected inspect output:\n%s", stdout)
@@ -9229,9 +9443,10 @@ func TestMissingConfigErrorsAreActionable(t *testing.T) {
 			for _, expected := range []string{
 				"v4 config not found",
 				filepath.Join(configDir, "config.yaml"),
-				"fctl context create stack",
-				"fctl context create cloud",
-				"fctl context create cloud-stack",
+				"fctl login",
+				"fctl profile create stack",
+				"fctl profile create cloud",
+				"fctl profile create cloud-stack",
 				"fctl config migrate-v3",
 			} {
 				if !strings.Contains(err.Error(), expected) {

@@ -7,11 +7,15 @@ work.
 ## Implemented
 
 - v4 remains isolated under `v4/`; v3 root command behavior has not been moved.
-- Contexts, credentials, auth strategies, runtime target resolution, `/versions`
+- Profiles/contexts, credentials, auth strategies, runtime target resolution, `/versions`
   parsing, and API version selection are implemented in v4 packages.
 - Global flags from the migration plan are implemented when actionable:
-  `--context`, deprecated `--profile`, `--config-dir/-c`, `--debug/-d`,
-  `--insecure-tls`, `--non-interactive`, `--no-color`, and `--output`.
+  `--profile`, hidden deprecated `--context`, `--organization`, `--stack`,
+  `--config-dir/-c`, `--debug/-d`, `--insecure-tls`, `--non-interactive`,
+  `--no-color`, and `--output`.
+- Root `login`, `logout`, and `whoami` provide the primary user-facing
+  authentication flow. `profile` is the primary target-management command, while
+  `context` and `session` are hidden from help.
 - `--telemetry` and `--quiet` are intentionally not exposed as silent no-ops.
 - Cloud control-plane commands are grouped under `cloud`, with `cloud stacks`
   as the canonical stack lifecycle command and deprecated `cloud_stacks`,
@@ -31,13 +35,11 @@ work.
 
 ## Explicitly Deferred Or Blocked
 
-- `session login cloud` is visible but returns a clear deferred error until the
-  Cloud device/browser login contract is specified.
-- `session login oidc` is visible but returns a clear deferred error until the
-  generic device-flow contract is specified.
-- Root `login` and `auth login/status/token/logout` are not kept as aliases.
-  `session` owns CLI authentication state, while `auth` is reserved for stack
-  Auth service resources.
+- Browser/device login in root `login` returns a clear deferred error until the
+  Cloud, EE, and generic OIDC device-flow contracts are specified. Client
+  credentials and static token login are available now.
+- `auth login/status/token/logout` are not kept as aliases. `auth` is reserved
+  for stack Auth service resources.
 - `cloud personal-tokens create` is not implemented because the v3 flow depends
   on Cloud claims, stack access checks, and an Auth token exchange model not yet
   present in the v4 runtime.
