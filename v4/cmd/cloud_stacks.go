@@ -147,7 +147,7 @@ func newCloudStackCreateInput(cmd *cobra.Command) (cloudStackCreateInput, error)
 	_, inputIsFile := in.(*os.File)
 	return cloudStackCreateInput{
 		nonInteractive: nonInteractive,
-		wizard:         v4prompt.NewWizard(in, cmd.ErrOrStderr()),
+		wizard:         v4prompt.NewWizardWithColor(in, cmd.ErrOrStderr(), commandColorEnabled(cmd)),
 		reader:         bufio.NewReader(in),
 		customInput:    !inputIsFile,
 	}, nil
@@ -876,7 +876,7 @@ func resolveCloudOrganizationIDOrPrompt(cmd *cobra.Command, rt *runtime.Runtime,
 	if err != nil {
 		return "", err
 	}
-	wizard := v4prompt.NewWizard(cmd.InOrStdin(), cmd.ErrOrStderr())
+	wizard := v4prompt.NewWizardWithColor(cmd.InOrStdin(), cmd.ErrOrStderr(), commandColorEnabled(cmd))
 	if nonInteractive || !wizard.Available() {
 		return "", errors.New(message)
 	}

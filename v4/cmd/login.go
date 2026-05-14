@@ -418,7 +418,9 @@ func newLoginInput(cmd *cobra.Command) (loginInput, error) {
 		nonInteractive: nonInteractive,
 	}
 	if !nonInteractive && !noColor {
-		input.wizard = v4prompt.NewWizard(in, cmd.ErrOrStderr())
+		input.wizard = v4prompt.NewWizardWithColor(in, cmd.ErrOrStderr(), true)
+	} else if !nonInteractive {
+		input.wizard = v4prompt.NewWizardWithColor(in, cmd.ErrOrStderr(), false)
 	}
 	return input, nil
 }
