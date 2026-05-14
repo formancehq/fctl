@@ -3869,6 +3869,152 @@ func TestPaymentsTransferInitiationUpdateStatusDeprecatedAlias(t *testing.T) {
 	}
 }
 
+func TestPaymentsConnectorsListSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/connectors":
+			if got := r.URL.Query().Get("pageSize"); got != "10" {
+				t.Fatalf("expected pageSize 10, got %q", got)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"id":"conn_1","name":"Stripe EU","provider":"stripe","reference":"ref","createdAt":"2026-01-01T00:00:00Z","scheduledForDeletion":false,"config":{}}],"hasMore":false,"pageSize":10}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "connectors", "list",
+		"--page-size", "10",
+	)
+	if err != nil {
+		t.Fatalf("list payment connectors: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v3",
+		"stripe\tStripe EU\tconn_1",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected payment connectors output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestPaymentsConnectorsUninstallRequiresConfirm(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "payments", "connectors", "uninstall", "conn_1")
+	if err == nil {
+		t.Fatal("expected payments connectors uninstall to require confirmation")
+	}
+	if stdout != "" {
+		t.Fatalf("expected empty stdout, got %q", stdout)
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(err.Error(), "payments connectors uninstall requires --confirm") {
+		t.Fatalf("expected confirmation error, got: %v", err)
+	}
+}
+
+func TestPaymentsConnectorsUninstallSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/connectors/conn_1":
+			if r.Method != http.MethodDelete {
+				t.Fatalf("expected DELETE, got %s", r.Method)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusAccepted)
+			fmt.Fprint(w, `{"data":{"taskID":"task_1"}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "connectors", "uninstall", "conn_1",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("uninstall payment connector: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v3",
+		"Task ID: task_1",
+		"Connector conn_1 uninstall scheduled.",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected payment connector uninstall output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestPaymentsConnectorsUninstallPinnedV1RequiresProvider(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"1.9.0","health":true}]}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "connectors", "uninstall", "conn_1",
+		"--api-version", "v1",
+		"--confirm",
+	)
+	if err == nil {
+		t.Fatal("expected v1 uninstall without provider to fail")
+	}
+	if !strings.Contains(err.Error(), "provider is required") {
+		t.Fatalf("expected provider error, got: %v stderr=%s", err, stderr)
+	}
+}
+
 func TestConfigMigrateV3DryRun(t *testing.T) {
 	v3Dir := writeV3CommandFixture(t, true)
 

@@ -26,12 +26,176 @@ func newPaymentsCommand() *cobra.Command {
 	command.AddCommand(newPaymentsAccountsCommand())
 	command.AddCommand(newPaymentsBankAccountsCommand("bank-accounts", nil, false))
 	command.AddCommand(newPaymentsBankAccountsCommand("bank_accounts", []string{"bacc", "ba", "bac", "baccount"}, true))
+	command.AddCommand(newPaymentsConnectorsCommand())
 	command.AddCommand(newPaymentsPaymentsCommand())
 	command.AddCommand(newPaymentsPoolsCommand())
 	command.AddCommand(newPaymentsTasksCommand())
 	command.AddCommand(newPaymentsTransferInitiationCommand("transfer-initiation", []string{"ti"}, false))
 	command.AddCommand(newPaymentsTransferInitiationCommand("transfer_initiation", nil, true))
 	return command
+}
+
+func newPaymentsConnectorsCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:     "connectors",
+		Aliases: []string{"connector", "co"},
+		Short:   "Manage payment connectors",
+	}
+	command.AddCommand(newPaymentsConnectorsListCommand())
+	command.AddCommand(newPaymentsConnectorsUninstallCommand())
+	return command
+}
+
+func newPaymentsConnectorsListCommand() *cobra.Command {
+	var pageSize int64 = 15
+	var cursor string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"ls", "l"},
+		Short:   "List payment connectors",
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.ListConnectorsService{
+				Handlers: paymentscmd.SDKListConnectorsHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureListConnectors,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.ListConnectorsInput{
+				PageSize: pageSize,
+				Cursor:   cursor,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentConnectors(cmd, output)
+		},
+	}
+	command.Flags().Int64Var(&pageSize, "page-size", 15, "Page size")
+	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func newPaymentsConnectorsUninstallCommand() *cobra.Command {
+	var confirm bool
+	var provider string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "uninstall <connector-id>",
+		Aliases: []string{"un", "u"},
+		Short:   "Uninstall a payment connector",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("payments connectors uninstall requires --confirm")
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.UninstallConnectorService{
+				Handlers: paymentscmd.SDKUninstallConnectorHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureUninstallConnector,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.UninstallConnectorInput{
+				ConnectorID: args[0],
+				Provider:    provider,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentConnectorUninstalled(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm connector uninstall")
+	command.Flags().StringVar(&provider, "provider", "", "Connector provider, required only when pinned to payments API v1")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func renderPaymentConnectors(cmd *cobra.Command, output paymentscmd.ListConnectorsOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if len(output.Connectors) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No payment connectors found.")
+		return err
+	}
+	for _, connector := range output.Connectors {
+		if _, err := fmt.Fprintf(
+			cmd.OutOrStdout(),
+			"%s\t%s\t%s\n",
+			connector.Provider,
+			connector.Name,
+			connector.ID,
+		); err != nil {
+			return err
+		}
+	}
+	if output.HasMore && output.Next != nil {
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
+		return err
+	}
+	return nil
+}
+
+func renderPaymentConnectorUninstalled(cmd *cobra.Command, output paymentscmd.UninstallConnectorOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if output.TaskID != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Task ID: %s\n", output.TaskID); err != nil {
+			return err
+		}
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector %s uninstall scheduled.\n", output.ConnectorID)
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector %s uninstalled.\n", output.ConnectorID)
+	return err
 }
 
 func newPaymentsTransferInitiationCommand(use string, aliases []string, deprecated bool) *cobra.Command {
