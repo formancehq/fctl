@@ -59,6 +59,7 @@ func TestRootHelp(t *testing.T) {
 		"Formance Control CLI v4",
 		"--context",
 		"--config-dir",
+		"-c, --config-dir",
 		"--insecure-tls",
 		"--non-interactive",
 		"version",
@@ -99,6 +100,24 @@ func TestInsecureTLSFlagAllowsSelfSignedStackTarget(t *testing.T) {
 	}
 	if !strings.Contains(stdout, "Context: tls-local") || !strings.Contains(stdout, "ledger 2.3.4 healthy") {
 		t.Fatalf("unexpected inspect output:\n%s", stdout)
+	}
+}
+
+func TestConfigDirShortFlag(t *testing.T) {
+	configDir := t.TempDir()
+	stdout, stderr, err := executeCommand(t,
+		"-c", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", "http://localhost/api",
+	)
+	if err != nil {
+		t.Fatalf("create context with -c: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Context local created.\n" {
+		t.Fatalf("unexpected create output: %q", stdout)
+	}
+	if _, err := os.Stat(filepath.Join(configDir, "config.yaml")); err != nil {
+		t.Fatalf("expected config written through -c: %v", err)
 	}
 }
 

@@ -25,6 +25,7 @@ the isolated v4 implementation under `v4/`.
 | v3 command | v4 command | Migration behavior |
 | --- | --- | --- |
 | `--profile <name>` | `--context <name>` | `--profile` is a deprecated alias with a warning. |
+| `-c`, `--config-dir <dir>` | `-c`, `--config-dir <dir>` | Kept for config directory selection; `--context` has no short flag. |
 | `--insecure-tls` | `--insecure-tls` | Kept as an explicit non-persistent runtime override. |
 | `profiles ...` | `context ...` | `profiles` is a deprecated alias with a warning. |
 | `profiles reset <name>` | `context unset-defaults <name> --confirm` | `profiles reset` is a deprecated alias with a warning. |

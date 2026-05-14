@@ -7,7 +7,7 @@ This reference lists the current canonical v4 command families implemented under
 
 - `--context <name>`
 - `--profile <name>` deprecated alias for `--context`
-- `--config-dir <dir>`
+- `--config-dir <dir>`, `-c <dir>`
 - `--credential-dir <dir>`
 - `--output plain|json|yaml`
 - `--non-interactive`
