@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	formance "github.com/formancehq/formance-sdk-go/v3"
@@ -19,9 +20,172 @@ func newLedgerCommand() *cobra.Command {
 	}
 	command.AddCommand(newLedgerInfoCommand("info", nil, false))
 	command.AddCommand(newLedgerInfoCommand("server-infos", []string{"si"}, true))
+	command.AddCommand(newLedgerAccountsCommand())
 	command.AddCommand(newLedgerListCommand())
 	command.AddCommand(newLedgerStatsCommand())
 	command.AddCommand(newLedgerTransactionsCommand())
+	return command
+}
+
+func newLedgerAccountsCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "accounts",
+		Short: "Manage ledger accounts",
+	}
+	command.AddCommand(newLedgerAccountsListCommand())
+	command.AddCommand(newLedgerAccountsShowCommand())
+	return command
+}
+
+func newLedgerAccountsListCommand() *cobra.Command {
+	var ledger string
+	var pageSize int64
+	var cursor string
+	var account string
+	var metadata []string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"ls", "l"},
+		Short:   "List ledger accounts",
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if cmd.Flags().Changed("address") {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Flag --address has been deprecated, use --account")
+			}
+
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			if ledger == "" {
+				ledger = rt.Context.Defaults["ledger"]
+			}
+			if ledger == "" {
+				ledger = "default"
+			}
+
+			parsedMetadata, err := parseMetadataFlags(metadata)
+			if err != nil {
+				return err
+			}
+
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := ledgercmd.ListAccountsService{
+				Handlers: ledgercmd.SDKListAccountsHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         ledgercmd.ProductLedger,
+						Feature:         ledgercmd.FeatureListAccounts,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), ledgercmd.ListAccountsInput{
+				Ledger:   ledger,
+				PageSize: pageSize,
+				Cursor:   cursor,
+				Account:  account,
+				Metadata: parsedMetadata,
+			})
+			if err != nil {
+				return err
+			}
+
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderLedgerAccounts(cmd, output)
+		},
+	}
+
+	command.Flags().StringVar(&ledger, "ledger", "", "Ledger name")
+	command.Flags().Int64Var(&pageSize, "page-size", 15, "Page size")
+	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
+	command.Flags().StringVar(&account, "account", "", "Filter by account address")
+	command.Flags().StringVar(&account, "address", "", "Deprecated alias for --account")
+	command.Flags().StringSliceVar(&metadata, "metadata", nil, "Filter by metadata key=value")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
+	_ = command.Flags().MarkDeprecated("address", "use --account")
+
+	return command
+}
+
+func newLedgerAccountsShowCommand() *cobra.Command {
+	var ledger string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "show <account>",
+		Aliases: []string{"sh", "s"},
+		Short:   "Show a ledger account",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			if ledger == "" {
+				ledger = rt.Context.Defaults["ledger"]
+			}
+			if ledger == "" {
+				ledger = "default"
+			}
+
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := ledgercmd.GetAccountService{
+				Handlers: ledgercmd.SDKGetAccountHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         ledgercmd.ProductLedger,
+						Feature:         ledgercmd.FeatureGetAccount,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), ledgercmd.GetAccountInput{
+				Ledger:  ledger,
+				Account: args[0],
+			})
+			if err != nil {
+				return err
+			}
+
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderLedgerAccount(cmd, output)
+		},
+	}
+
+	command.Flags().StringVar(&ledger, "ledger", "", "Ledger name")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
+
 	return command
 }
 
@@ -336,6 +500,42 @@ func renderLedgers(cmd *cobra.Command, output ledgercmd.ListLedgersOutput) error
 	return nil
 }
 
+func renderLedgerAccounts(cmd *cobra.Command, output ledgercmd.ListAccountsOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if len(output.Accounts) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No accounts found.")
+		return err
+	}
+	for _, account := range output.Accounts {
+		if _, err := fmt.Fprintln(cmd.OutOrStdout(), account.Address); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func renderLedgerAccount(cmd *cobra.Command, output ledgercmd.GetAccountOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Address\t%s\n", output.Account.Address); err != nil {
+		return err
+	}
+	if len(output.Account.Volumes) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No volumes.")
+		return err
+	}
+	for asset, volume := range output.Account.Volumes {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\tinput=%s\toutput=%s\tbalance=%s\n",
+			asset, volume.Input, volume.Output, volume.Balance); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func renderLedgerInfo(cmd *cobra.Command, output ledgercmd.ReadInfoOutput) error {
 	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
 		return err
@@ -380,4 +580,25 @@ func renderLedgerTransactions(cmd *cobra.Command, output ledgercmd.ListTransacti
 		}
 	}
 	return nil
+}
+
+func parseMetadataFlags(values []string) (map[string]string, error) {
+	if len(values) == 0 {
+		return nil, nil
+	}
+	ret := map[string]string{}
+	for _, value := range values {
+		if value == "" {
+			continue
+		}
+		key, val, ok := strings.Cut(value, "=")
+		if !ok || key == "" {
+			return nil, fmt.Errorf("metadata must use key=value format")
+		}
+		ret[key] = val
+	}
+	if len(ret) == 0 {
+		return nil, nil
+	}
+	return ret, nil
 }

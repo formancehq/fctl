@@ -354,6 +354,133 @@ func TestLedgerServerInfosDeprecatedAlias(t *testing.T) {
 	}
 }
 
+func TestLedgerAccountsListSelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default/accounts":
+			query := r.URL.Query().Get("query")
+			if !strings.Contains(query, `"address":"users:123"`) {
+				t.Fatalf("expected query to contain account address, got %q", query)
+			}
+			if !strings.Contains(query, `"metadata[tier]":"gold"`) {
+				t.Fatalf("expected query to contain metadata filter, got %q", query)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"address":"users:123","metadata":{"tier":"gold"}}],"hasMore":false,"pageSize":15}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "accounts", "list",
+		"--account", "users:123",
+		"--metadata", "tier=gold",
+	)
+	if err != nil {
+		t.Fatalf("list accounts: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v2") || !strings.Contains(stdout, "users:123") {
+		t.Fatalf("unexpected accounts output:\n%s", stdout)
+	}
+}
+
+func TestLedgerAccountsListDeprecatedAddressAlias(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default/accounts":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[],"hasMore":false,"pageSize":15}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "accounts", "list",
+		"--address", "users:123",
+	)
+	if err != nil {
+		t.Fatalf("list accounts with deprecated alias: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Flag --address has been deprecated, use --account") {
+		t.Fatalf("expected deprecation warning, got:\n%s", stderr)
+	}
+}
+
+func TestLedgerAccountsShowSelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default/accounts/users:123":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"address":"users:123","metadata":{"tier":"gold"},"volumes":{"USD/2":{"input":100,"output":40,"balance":60}}}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "ledger", "accounts", "show", "users:123")
+	if err != nil {
+		t.Fatalf("show account: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v2",
+		"Address\tusers:123",
+		"USD/2\tinput=100\toutput=40\tbalance=60",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected account output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
 func TestLedgerStatsSelectsV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
