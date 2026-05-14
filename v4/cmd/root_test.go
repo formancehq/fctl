@@ -59,12 +59,46 @@ func TestRootHelp(t *testing.T) {
 		"Formance Control CLI v4",
 		"--context",
 		"--config-dir",
+		"--insecure-tls",
 		"--non-interactive",
 		"version",
 	} {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected help output to contain %q, got:\n%s", expected, stdout)
 		}
+	}
+}
+
+func TestInsecureTLSFlagAllowsSelfSignedStackTarget(t *testing.T) {
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/versions" {
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+		fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "tls-local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create TLS context: %v stderr=%s", err, stderr)
+	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "target", "inspect")
+	if err == nil {
+		t.Fatal("expected self-signed TLS target to fail without --insecure-tls")
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "--insecure-tls", "target", "inspect")
+	if err != nil {
+		t.Fatalf("inspect target with --insecure-tls: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "Context: tls-local") || !strings.Contains(stdout, "ledger 2.3.4 healthy") {
+		t.Fatalf("unexpected inspect output:\n%s", stdout)
 	}
 }
 

@@ -3,6 +3,16 @@
 This reference lists the current canonical v4 command families implemented under
 `v4/`. It should eventually be generated from Cobra help to avoid drift.
 
+## Global Flags
+
+- `--context <name>`
+- `--profile <name>` deprecated alias for `--context`
+- `--config-dir <dir>`
+- `--credential-dir <dir>`
+- `--output plain|json|yaml`
+- `--non-interactive`
+- `--insecure-tls`
+
 ## Target and Configuration
 
 - `fctl context create stack <name> --stack-url <url>`

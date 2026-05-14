@@ -1,10 +1,13 @@
 package cmd
 
 import (
+	"crypto/tls"
 	"fmt"
+	"net/http"
 
 	"github.com/spf13/cobra"
 
+	v4auth "github.com/formancehq/fctl/v4/internal/auth"
 	"github.com/formancehq/fctl/v4/internal/capabilities"
 	v4config "github.com/formancehq/fctl/v4/internal/config"
 	"github.com/formancehq/fctl/v4/internal/credentials"
@@ -25,11 +28,16 @@ func runtimeFromCommand(cmd *cobra.Command) (*runtime.Runtime, error) {
 	if err != nil {
 		return nil, err
 	}
+	authOptions, err := authOptionsFromCommand(cmd)
+	if err != nil {
+		return nil, err
+	}
 
 	return runtime.New(cmd.Context(), runtime.Options{
 		ConfigPath:      path,
 		ContextOverride: v4config.ContextOverride{Name: contextName},
 		Credentials:     store,
+		Auth:            authOptions,
 		Manifest:        capabilities.GeneratedManifest,
 		Compatibility:   capabilities.DefaultComponentCompatibility,
 	})
@@ -75,4 +83,20 @@ func persistentCredentialStoreFromCommand(cmd *cobra.Command) (credentials.Store
 		return nil, fmt.Errorf("--credential-dir is required to store credentials without a keyring backend")
 	}
 	return credentials.NewInsecureFileStore(dir), nil
+}
+
+func authOptionsFromCommand(cmd *cobra.Command) (v4auth.Options, error) {
+	insecureTLS, err := cmd.Root().PersistentFlags().GetBool(insecureTLSFlag)
+	if err != nil {
+		return v4auth.Options{}, err
+	}
+	if !insecureTLS {
+		return v4auth.Options{}, nil
+	}
+
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec // Explicit user opt-in via --insecure-tls.
+	return v4auth.Options{
+		HTTPClient: &http.Client{Transport: transport},
+	}, nil
 }

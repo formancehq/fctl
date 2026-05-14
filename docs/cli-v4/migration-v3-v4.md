@@ -25,6 +25,7 @@ the isolated v4 implementation under `v4/`.
 | v3 command | v4 command | Migration behavior |
 | --- | --- | --- |
 | `--profile <name>` | `--context <name>` | `--profile` is a deprecated alias with a warning. |
+| `--insecure-tls` | `--insecure-tls` | Kept as an explicit non-persistent runtime override. |
 | `profiles ...` | `context ...` | `profiles` is a deprecated alias with a warning. |
 | `profiles reset <name>` | `context unset-defaults <name> --confirm` | `profiles reset` is a deprecated alias with a warning. |
 | `profiles set-default-organization <org>` | `context set --organization <org>` | Deprecated alias updates the current context. |

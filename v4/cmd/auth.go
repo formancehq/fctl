@@ -276,11 +276,15 @@ func newAuthTokenCommand() *cobra.Command {
 			if context.Auth.Method == v4config.AuthMethodNone {
 				return fmt.Errorf("auth token requires an authenticated context")
 			}
+			authOptions, err := authOptionsFromCommand(cmd)
+			if err != nil {
+				return err
+			}
 			store, err := credentialStoreFromCommand(cmd)
 			if err != nil {
 				return err
 			}
-			source, err := v4auth.NewTokenSource(context.Auth, store, v4auth.Options{})
+			source, err := v4auth.NewTokenSource(context.Auth, store, authOptions)
 			if err != nil {
 				return err
 			}

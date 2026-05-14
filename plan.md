@@ -104,6 +104,7 @@ Regles:
 Implementation v4:
 
 - `--profile <name>` est conserve comme alias deprecie de `--context <name>`; fournir les deux produit une erreur explicite.
+- `--insecure-tls` est conserve comme override runtime explicite et non persistant; il configure le client HTTP partage par `/versions`, les SDK stack, les SDK Cloud et les flux `client_credentials`.
 
 ## Migration configuration et session
 
