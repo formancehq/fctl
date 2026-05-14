@@ -141,6 +141,46 @@ func TestHTTPClientUsesContextAuth(t *testing.T) {
 	}
 }
 
+func TestCloudClientCredentialsDefaultOrganizationScopes(t *testing.T) {
+	rt := &Runtime{
+		Context: config.Context{
+			Kind: config.ContextKindCloud,
+			Auth: config.Auth{
+				Method:    config.AuthMethodClientCredentials,
+				IssuerURL: "https://app.formance.cloud/api",
+				ClientID:  "client",
+				SecretRef: "secret-ref",
+			},
+		},
+		Target: Target{Kind: TargetKindCloud},
+	}
+
+	authConfig := rt.authForTarget()
+	if !containsString(authConfig.Scopes, "organization:ListStacks") {
+		t.Fatalf("expected default organization scopes, got %#v", authConfig.Scopes)
+	}
+}
+
+func TestStackClientCredentialsDoNotDefaultOrganizationScopes(t *testing.T) {
+	rt := &Runtime{
+		Context: config.Context{
+			Kind: config.ContextKindStack,
+			Auth: config.Auth{
+				Method:    config.AuthMethodClientCredentials,
+				IssuerURL: "https://auth.example",
+				ClientID:  "client",
+				SecretRef: "secret-ref",
+			},
+		},
+		Target: Target{Kind: TargetKindStack},
+	}
+
+	authConfig := rt.authForTarget()
+	if len(authConfig.Scopes) != 0 {
+		t.Fatalf("expected no default scopes for stack targets, got %#v", authConfig.Scopes)
+	}
+}
+
 func TestHTTPVersionsClientParsesVersions(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/versions" {
@@ -203,6 +243,15 @@ type staticVersionsClient struct {
 
 func (c staticVersionsClient) GetVersions(context.Context) ([]capabilities.ComponentVersion, error) {
 	return c.versions, nil
+}
+
+func containsString(values []string, expected string) bool {
+	for _, value := range values {
+		if value == expected {
+			return true
+		}
+	}
+	return false
 }
 
 func writeRuntimeConfig(t *testing.T, cfg config.Config) string {

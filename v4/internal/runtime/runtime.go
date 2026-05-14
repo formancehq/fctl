@@ -155,7 +155,18 @@ func (r *Runtime) HTTPClient(ctx context.Context) (*http.Client, error) {
 	if r == nil {
 		return nil, errors.New("runtime is nil")
 	}
-	return auth.NewHTTPClient(ctx, r.Context.Auth, r.Credentials, r.AuthOptions)
+	return auth.NewHTTPClient(ctx, r.authForTarget(), r.Credentials, r.AuthOptions)
+}
+
+func (r *Runtime) authForTarget() config.Auth {
+	authConfig := r.Context.Auth
+	if authConfig.Method == config.AuthMethodClientCredentials && len(authConfig.Scopes) == 0 {
+		switch r.Target.Kind {
+		case TargetKindCloud, TargetKindCloudStack:
+			authConfig.Scopes = append([]string(nil), auth.OrganizationScopes...)
+		}
+	}
+	return authConfig
 }
 
 func (r *Runtime) ComponentVersions(ctx context.Context) ([]capabilities.ComponentVersion, error) {
