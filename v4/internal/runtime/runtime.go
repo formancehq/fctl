@@ -6,7 +6,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 
+	"github.com/formancehq/fctl/v4/internal/auth"
 	"github.com/formancehq/fctl/v4/internal/capabilities"
 	"github.com/formancehq/fctl/v4/internal/config"
 	"github.com/formancehq/fctl/v4/internal/credentials"
@@ -24,6 +26,7 @@ type Options struct {
 	ConfigPath      string
 	ContextOverride config.ContextOverride
 	Credentials     credentials.Store
+	Auth            auth.Options
 	Manifest        capabilities.Manifest
 	Compatibility   capabilities.ComponentCompatibility
 }
@@ -35,6 +38,7 @@ type Runtime struct {
 	Target      Target
 
 	Credentials   credentials.Store
+	AuthOptions   auth.Options
 	Manifest      capabilities.Manifest
 	Compatibility capabilities.ComponentCompatibility
 }
@@ -75,6 +79,7 @@ func New(ctx context.Context, options Options) (*Runtime, error) {
 		Context:       selectedContext,
 		Target:        target,
 		Credentials:   options.Credentials,
+		AuthOptions:   options.Auth,
 		Manifest:      options.Manifest,
 		Compatibility: options.Compatibility,
 	}, nil
@@ -112,4 +117,11 @@ func (r *Runtime) APIPolicyFor(product capabilities.Product) config.APIPolicy {
 		return config.APIPolicy(policy)
 	}
 	return config.APIPolicyLatestCompatible
+}
+
+func (r *Runtime) HTTPClient(ctx context.Context) (*http.Client, error) {
+	if r == nil {
+		return nil, errors.New("runtime is nil")
+	}
+	return auth.NewHTTPClient(ctx, r.Context.Auth, r.Credentials, r.AuthOptions)
 }

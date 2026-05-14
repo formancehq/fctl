@@ -2,6 +2,8 @@ package runtime
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"testing"
 
@@ -86,6 +88,55 @@ func TestNewRequiresConfigPath(t *testing.T) {
 	_, err := New(context.Background(), Options{})
 	if err == nil {
 		t.Fatal("expected config path error")
+	}
+}
+
+func TestHTTPClientUsesContextAuth(t *testing.T) {
+	ctx := context.Background()
+	store := credentials.NewMemoryStore()
+	if err := store.Set(ctx, "token-ref", "runtime-token"); err != nil {
+		t.Fatalf("set token: %v", err)
+	}
+
+	configPath := writeRuntimeConfig(t, config.Config{
+		Version:        config.Version,
+		CurrentContext: "local",
+		Contexts: map[string]config.Context{
+			"local": {
+				Kind:     config.ContextKindStack,
+				StackURL: "http://localhost/api",
+				Auth: config.Auth{
+					Method:   config.AuthMethodToken,
+					TokenRef: "token-ref",
+				},
+			},
+		},
+	})
+
+	rt, err := New(ctx, Options{ConfigPath: configPath, Credentials: store})
+	if err != nil {
+		t.Fatalf("new runtime: %v", err)
+	}
+	client, err := rt.HTTPClient(ctx)
+	if err != nil {
+		t.Fatalf("runtime http client: %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got := r.Header.Get("Authorization"); got != "Bearer runtime-token" {
+			t.Fatalf("unexpected authorization header %q", got)
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	rsp, err := client.Get(server.URL)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer rsp.Body.Close()
+	if rsp.StatusCode != http.StatusNoContent {
+		t.Fatalf("expected 204, got %d", rsp.StatusCode)
 	}
 }
 
