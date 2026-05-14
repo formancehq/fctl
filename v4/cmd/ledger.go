@@ -45,6 +45,13 @@ func newLedgerTransactionsListCommand() *cobra.Command {
 		Short: "List ledger transactions",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			if cmd.Flags().Changed("src") {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Flag --src has been deprecated, use --source")
+			}
+			if cmd.Flags().Changed("dst") {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Flag --dst has been deprecated, use --destination")
+			}
+
 			rt, err := runtimeFromCommand(cmd)
 			if err != nil {
 				return err
@@ -103,10 +110,14 @@ func newLedgerTransactionsListCommand() *cobra.Command {
 	command.Flags().Int64Var(&pageSize, "page-size", 15, "Page size")
 	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
 	command.Flags().StringVar(&account, "account", "", "Filter by account")
-	command.Flags().StringVar(&source, "src", "", "Filter by source account")
-	command.Flags().StringVar(&destination, "dst", "", "Filter by destination account")
+	command.Flags().StringVar(&source, "source", "", "Filter by source account")
+	command.Flags().StringVar(&source, "src", "", "Deprecated alias for --source")
+	command.Flags().StringVar(&destination, "destination", "", "Filter by destination account")
+	command.Flags().StringVar(&destination, "dst", "", "Deprecated alias for --destination")
 	command.Flags().StringVar(&reference, "reference", "", "Filter by reference")
 	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
+	_ = command.Flags().MarkDeprecated("src", "use --source")
+	_ = command.Flags().MarkDeprecated("dst", "use --destination")
 
 	return command
 }
