@@ -9,6 +9,7 @@ import (
 
 const (
 	contextFlag        = "context"
+	profileFlag        = "profile"
 	configDirFlag      = "config-dir"
 	outputFlag         = "output"
 	nonInteractiveFlag = "non-interactive"
@@ -35,9 +36,11 @@ func NewRootCommand(version string) *cobra.Command {
 
 	root.SetVersionTemplate("fctl v4 {{.Version}}\n")
 	root.PersistentFlags().String(contextFlag, "", "Context to use")
+	root.PersistentFlags().String(profileFlag, "", "Deprecated alias for --context")
 	root.PersistentFlags().String(configDirFlag, "", "Path to the v4 configuration directory")
 	root.PersistentFlags().StringP(outputFlag, "o", "plain", "Output format (plain, json, yaml)")
 	root.PersistentFlags().Bool(nonInteractiveFlag, false, "Disable interactive prompts")
+	_ = root.PersistentFlags().MarkDeprecated(profileFlag, "use --context")
 
 	root.AddCommand(newVersionCommand())
 	root.AddCommand(newContextCommand())

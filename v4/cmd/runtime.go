@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/v4/internal/capabilities"
@@ -14,7 +16,7 @@ func runtimeFromCommand(cmd *cobra.Command) (*runtime.Runtime, error) {
 	if err != nil {
 		return nil, err
 	}
-	contextName, err := cmd.Root().PersistentFlags().GetString(contextFlag)
+	contextName, err := contextNameFromCommand(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -26,4 +28,24 @@ func runtimeFromCommand(cmd *cobra.Command) (*runtime.Runtime, error) {
 		Manifest:        capabilities.GeneratedManifest,
 		Compatibility:   capabilities.DefaultComponentCompatibility,
 	})
+}
+
+func contextNameFromCommand(cmd *cobra.Command) (string, error) {
+	flags := cmd.Root().PersistentFlags()
+	contextName, err := flags.GetString(contextFlag)
+	if err != nil {
+		return "", err
+	}
+	profileName, err := flags.GetString(profileFlag)
+	if err != nil {
+		return "", err
+	}
+	if contextName != "" && profileName != "" {
+		return "", fmt.Errorf("--profile and --context are mutually exclusive")
+	}
+	if profileName != "" {
+		fmt.Fprintln(cmd.ErrOrStderr(), "Flag --profile has been deprecated, use --context")
+		return profileName, nil
+	}
+	return contextName, nil
 }

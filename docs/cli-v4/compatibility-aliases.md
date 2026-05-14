@@ -5,6 +5,7 @@ tests, and explicit about their canonical replacement.
 
 | Alias | Canonical command | Status | Removal target |
 | --- | --- | --- | --- |
+| `--profile <name>` | `--context <name>` | Deprecated warning | v4.x |
 | `profiles ...` | `context ...` | Deprecated warning | v4.x |
 | `orchestration ...` | `flows ...` | Deprecated warning | v4.x or v5 |
 | `flows instances describe` | `flows instances inspect` | Deprecated warning | v4.x |

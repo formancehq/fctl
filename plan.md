@@ -101,6 +101,10 @@ Regles:
 | absent | `--no-color` | nouveau | Necessaire pour CI et golden tests. |
 | absent | `--quiet` | nouveau | Ne sortir que la donnee principale ou l'identifiant cree. |
 
+Implementation v4:
+
+- `--profile <name>` est conserve comme alias deprecie de `--context <name>`; fournir les deux produit une erreur explicite.
+
 ## Migration configuration et session
 
 | v3 | v4 canonique | Changements | Tests critiques |

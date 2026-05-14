@@ -1897,6 +1897,57 @@ func TestTargetInspectJSON(t *testing.T) {
 	}
 }
 
+func TestProfileFlagSelectsContextWithDeprecationWarning(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/versions" {
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+		fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL+"/api",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "--profile", "local", "target", "inspect")
+	if err != nil {
+		t.Fatalf("inspect target with profile alias: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Flag --profile has been deprecated, use --context") {
+		t.Fatalf("expected profile deprecation warning, got:\n%s", stderr)
+	}
+	if !strings.Contains(stdout, "Context: local") {
+		t.Fatalf("unexpected inspect output:\n%s", stdout)
+	}
+}
+
+func TestProfileAndContextFlagsAreMutuallyExclusive(t *testing.T) {
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", "http://localhost",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t, "--config-dir", configDir, "--context", "local", "--profile", "local", "target", "inspect")
+	if err == nil {
+		t.Fatal("expected mutually exclusive context/profile error")
+	}
+	if !strings.Contains(err.Error(), "--profile and --context are mutually exclusive") {
+		t.Fatalf("unexpected error: %v stderr=%s", err, stderr)
+	}
+}
+
 func TestTargetProxyRejectsCloudContext(t *testing.T) {
 	configDir := t.TempDir()
 	_, stderr, err := executeCommand(t,
