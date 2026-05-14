@@ -489,6 +489,53 @@ func TestCloudOrganizationsListAndShow(t *testing.T) {
 	}
 }
 
+func TestCloudOrganizationsHistory(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method != http.MethodGet || r.URL.Path != "/organizations/org_1/logs" {
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+		}
+		if got := r.URL.Query().Get("pageSize"); got != "10" {
+			t.Fatalf("expected pageSize 10, got %q", got)
+		}
+		if got := r.URL.Query().Get("action"); got != "regions.created" {
+			t.Fatalf("expected action regions.created, got %q", got)
+		}
+		if got := r.URL.Query().Get("userId"); got != "user_1" {
+			t.Fatalf("expected userId user_1, got %q", got)
+		}
+		if got := r.URL.Query().Get("key"); got != "region.id" {
+			t.Fatalf("expected key region.id, got %q", got)
+		}
+		if got := r.URL.Query().Get("value"); got != "reg_1" {
+			t.Fatalf("expected value reg_1, got %q", got)
+		}
+		fmt.Fprint(w, `{"data":{"pageSize":10,"hasMore":false,"data":[{"seq":"1","organizationId":"org_1","userId":"user_1","action":"regions.created","date":"2026-01-01T00:00:00Z","data":{}}]}}`)
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", server.URL,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "history", "--action", "regions.created", "--user-id", "user_1", "--data", "region.id=reg_1")
+	if err != nil {
+		t.Fatalf("cloud organizations history: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "1\torg_1\tuser_1\tregions.created\t2026-01-01T00:00:00Z") {
+		t.Fatalf("unexpected history output:\n%s", stdout)
+	}
+}
+
 func TestCloudOrganizationsMutations(t *testing.T) {
 	orgBody := `{"data":{"id":"org_1","name":"Acme","ownerId":"user_1","domain":"acme.test","defaultPolicyID":42}}`
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

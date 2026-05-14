@@ -27,6 +27,7 @@ This reference lists the current canonical v4 command families implemented under
 - `fctl cloud organizations create <name>`
 - `fctl cloud organizations list`
 - `fctl cloud organizations show <organization-id>`
+- `fctl cloud organizations history [organization-id] --action <action> --user-id <user-id> --data key=value`
 - `fctl cloud organizations update <organization-id> --name <name>`
 - `fctl cloud organizations delete <organization-id> --confirm`
 - `fctl cloud organizations applications list --organization <organization-id>`

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	membership "github.com/formancehq/fctl/internal/membershipclient/v3"
 	"github.com/spf13/cobra"
@@ -147,6 +148,7 @@ func newCloudOrganizationsCommand() *cobra.Command {
 	command.AddCommand(newCloudOrganizationsListCommand())
 	command.AddCommand(newCloudOrganizationsShowCommand("show", nil, false))
 	command.AddCommand(newCloudOrganizationsShowCommand("describe", nil, true))
+	command.AddCommand(newCloudOrganizationsHistoryCommand())
 	command.AddCommand(newCloudOrganizationsUpdateCommand())
 	command.AddCommand(newCloudOrganizationsDeleteCommand())
 	command.AddCommand(newCloudOrganizationsApplicationsCommand())
@@ -155,6 +157,57 @@ func newCloudOrganizationsCommand() *cobra.Command {
 	command.AddCommand(newCloudOrganizationsOAuthClientsCommand())
 	command.AddCommand(newCloudOrganizationsUsersCommand())
 	command.AddCommand(newCloudOrganizationsPoliciesCommand())
+	return command
+}
+
+func newCloudOrganizationsHistoryCommand() *cobra.Command {
+	var organizationID string
+	var stackID string
+	var cursor string
+	var pageSize int64
+	var action string
+	var userID string
+	var data string
+
+	command := &cobra.Command{
+		Use:     "history [organization-id]",
+		Aliases: []string{"hist"},
+		Short:   "Query Cloud organization history",
+		Args:    cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			targetOrganizationID := organizationID
+			if len(args) == 1 {
+				targetOrganizationID = args[0]
+			}
+			output, err := cloudcmd.ListLogsService{Client: client}.Run(cmd.Context(), cloudcmd.ListLogsInput{
+				OrganizationID: resolveCloudOrganizationID(rt, targetOrganizationID),
+				StackID:        stackID,
+				Cursor:         cursor,
+				PageSize:       pageSize,
+				Action:         action,
+				UserID:         userID,
+				Data:           data,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudLogs(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	command.Flags().StringVar(&stackID, "stack", "", "Cloud stack ID")
+	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
+	command.Flags().Int64Var(&pageSize, "page-size", 10, "Page size")
+	command.Flags().StringVar(&action, "action", "", "Filter by action")
+	command.Flags().StringVar(&userID, "user-id", "", "Filter by user ID")
+	command.Flags().StringVar(&data, "data", "", "Filter by modified data as key=value")
 	return command
 }
 
@@ -1412,6 +1465,19 @@ func renderCloudOrganizations(cmd *cobra.Command, output cloudcmd.ListOrganizati
 	}
 	for _, organization := range output.Organizations {
 		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\n", organization.ID, organization.Name, organization.OwnerID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func renderCloudLogs(cmd *cobra.Command, output cloudcmd.ListLogsOutput) error {
+	if len(output.Logs) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No logs found.")
+		return err
+	}
+	for _, log := range output.Logs {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\t%s\n", log.Seq, log.OrganizationID, log.UserID, log.Action, log.Date.Format(time.RFC3339)); err != nil {
 			return err
 		}
 	}

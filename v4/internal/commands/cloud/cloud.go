@@ -48,6 +48,7 @@ type MembershipClient interface {
 	OrganizationClientCreate(context.Context, operations.OrganizationClientCreateRequest, ...operations.Option) (*operations.OrganizationClientCreateResponse, error)
 	OrganizationClientUpdate(context.Context, operations.OrganizationClientUpdateRequest, ...operations.Option) (*operations.OrganizationClientUpdateResponse, error)
 	OrganizationClientDelete(context.Context, operations.OrganizationClientDeleteRequest, ...operations.Option) (*operations.OrganizationClientDeleteResponse, error)
+	ListLogs(context.Context, operations.ListLogsRequest, ...operations.Option) (*operations.ListLogsResponse, error)
 }
 
 type UserSummary struct {
@@ -377,6 +378,33 @@ type OAuthClientActionOutput struct {
 	OrganizationID string `json:"organizationID" yaml:"organizationID"`
 	ClientID       string `json:"clientID" yaml:"clientID"`
 	Action         string `json:"action" yaml:"action"`
+}
+
+type LogSummary struct {
+	Seq            string    `json:"seq" yaml:"seq"`
+	OrganizationID string    `json:"organizationID" yaml:"organizationID"`
+	UserID         string    `json:"userID" yaml:"userID"`
+	Action         string    `json:"action" yaml:"action"`
+	Date           time.Time `json:"date" yaml:"date"`
+}
+
+type ListLogsInput struct {
+	OrganizationID string
+	StackID        string
+	Cursor         string
+	PageSize       int64
+	Action         string
+	UserID         string
+	Data           string
+}
+
+type ListLogsOutput struct {
+	OrganizationID string       `json:"organizationID" yaml:"organizationID"`
+	Logs           []LogSummary `json:"logs" yaml:"logs"`
+	HasMore        bool         `json:"hasMore" yaml:"hasMore"`
+	PageSize       int64        `json:"pageSize" yaml:"pageSize"`
+	Next           string       `json:"next,omitempty" yaml:"next,omitempty"`
+	Previous       string       `json:"previous,omitempty" yaml:"previous,omitempty"`
 }
 
 type MeService struct {
@@ -1250,6 +1278,68 @@ func (s DeleteOAuthClientService) Run(ctx context.Context, input OAuthClientInpu
 	return OAuthClientActionOutput{OrganizationID: input.OrganizationID, ClientID: oauthClientDisplayID(clientID), Action: "delete"}, nil
 }
 
+type ListLogsService struct {
+	Client MembershipClient
+}
+
+func (s ListLogsService) Run(ctx context.Context, input ListLogsInput) (ListLogsOutput, error) {
+	if s.Client == nil {
+		return ListLogsOutput{}, fmt.Errorf("membership client is required")
+	}
+	if input.OrganizationID == "" {
+		return ListLogsOutput{}, fmt.Errorf("organization id is required")
+	}
+	if input.PageSize <= 0 {
+		return ListLogsOutput{}, fmt.Errorf("page-size must be a positive integer")
+	}
+	if input.Cursor != "" && (input.UserID != "" || input.Action != "" || input.Data != "" || input.StackID != "") {
+		return ListLogsOutput{}, fmt.Errorf("cursor cannot be used with other filters")
+	}
+	request := operations.ListLogsRequest{OrganizationID: input.OrganizationID, PageSize: &input.PageSize}
+	if input.Cursor != "" {
+		request.Cursor = &input.Cursor
+	}
+	if input.StackID != "" {
+		request.StackID = &input.StackID
+	}
+	if input.UserID != "" {
+		request.UserID = &input.UserID
+	}
+	if input.Action != "" {
+		action := components.Action(input.Action)
+		request.Action = &action
+	}
+	if input.Data != "" {
+		key, value, ok := strings.Cut(input.Data, "=")
+		if !ok || key == "" {
+			return ListLogsOutput{}, fmt.Errorf("data filter must be in the form key=value")
+		}
+		request.Key = &key
+		request.Value = &value
+	}
+	response, err := s.Client.ListLogs(ctx, request)
+	if err != nil {
+		return ListLogsOutput{}, err
+	}
+	if response.GetLogCursor() == nil {
+		return ListLogsOutput{}, fmt.Errorf("cloud organizations history returned no logs")
+	}
+	cursor := response.GetLogCursor().GetData()
+	data := cursor.GetData()
+	logs := make([]LogSummary, 0, len(data))
+	for i := range data {
+		logs = append(logs, logSummary(&data[i]))
+	}
+	output := ListLogsOutput{OrganizationID: input.OrganizationID, Logs: logs, HasMore: cursor.GetHasMore(), PageSize: cursor.GetPageSize()}
+	if cursor.GetNext() != nil {
+		output.Next = *cursor.GetNext()
+	}
+	if cursor.GetPrevious() != nil {
+		output.Previous = *cursor.GetPrevious()
+	}
+	return output, nil
+}
+
 func authenticationProviderRequest(input AuthenticationProviderInput) (components.UpsertAuthenticationProviderRequest, error) {
 	if input.OrganizationID == "" {
 		return components.UpsertAuthenticationProviderRequest{}, fmt.Errorf("organization id is required")
@@ -1582,6 +1672,19 @@ func oauthClientDisplayID(clientID string) string {
 		return ""
 	}
 	return "organization_" + clientID
+}
+
+func logSummary(log *components.Log) LogSummary {
+	if log == nil {
+		return LogSummary{}
+	}
+	return LogSummary{
+		Seq:            log.Seq,
+		OrganizationID: log.OrganizationID,
+		UserID:         log.UserID,
+		Action:         log.Action,
+		Date:           log.Date,
+	}
 }
 
 func invitationSummary(invitation *components.Invitation) InvitationSummary {
