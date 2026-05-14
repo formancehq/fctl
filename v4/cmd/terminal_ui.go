@@ -150,3 +150,17 @@ func styledKeyValueLine(cmd *cobra.Command, label string, value string) string {
 	}
 	return fmt.Sprintf("%s %s %s", prefixStyle.Render("OK"), labelStyle.Render(label), valueStyle.Render(value))
 }
+
+func styledSuccessLine(cmd *cobra.Command, message string) string {
+	if !terminalOutputEnabled(cmd) {
+		return message
+	}
+
+	prefixStyle := lipgloss.NewStyle()
+	messageStyle := lipgloss.NewStyle().Bold(true)
+	if commandColorEnabled(cmd) {
+		prefixStyle = prefixStyle.Foreground(v4render.FormancePalette.Success).Bold(true)
+		messageStyle = messageStyle.Foreground(v4render.FormancePalette.Text)
+	}
+	return fmt.Sprintf("%s %s", prefixStyle.Render("OK"), messageStyle.Render(message))
+}

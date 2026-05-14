@@ -954,7 +954,7 @@ func boolPointerLabel(value *bool) string {
 }
 
 func renderCloudStackMutated(cmd *cobra.Command, output cloudcmd.StackOutput, action string) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud stack %s %s.\n", output.Stack.ID, action); err != nil {
+	if _, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud stack %s %s.", output.Stack.ID, action))); err != nil {
 		return err
 	}
 	if action == "created" && output.Stack.URI != "" {
