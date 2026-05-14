@@ -1950,6 +1950,56 @@ func TestPaymentsAccountsGetDeprecatedAlias(t *testing.T) {
 	}
 }
 
+func TestPaymentsAccountsBalancesSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/accounts/acc_1/balances":
+			if got := r.URL.Query().Get("pageSize"); got != "10" {
+				t.Fatalf("expected pageSize 10, got %q", got)
+			}
+			if got := r.URL.Query().Get("asset"); got != "USD/2" {
+				t.Fatalf("expected asset USD/2, got %q", got)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"accountID":"acc_1","asset":"USD/2","balance":100,"createdAt":"2026-01-01T00:00:00Z","lastUpdatedAt":"2026-01-02T00:00:00Z"}],"hasMore":false,"pageSize":10}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "accounts", "balances", "acc_1",
+		"--asset", "USD/2",
+		"--page-size", "10",
+	)
+	if err != nil {
+		t.Fatalf("list account balances: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v3",
+		"acc_1\tUSD/2\t100\t2026-01-01T00:00:00Z\t2026-01-02T00:00:00Z",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected account balances output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
 func TestConfigMigrateV3DryRun(t *testing.T) {
 	v3Dir := writeV3CommandFixture(t, true)
 

@@ -3,6 +3,7 @@ package payments
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"time"
 
 	formance "github.com/formancehq/formance-sdk-go/v3"
@@ -13,9 +14,10 @@ import (
 )
 
 const (
-	ProductPayments     capabilities.Product = "payments"
-	FeatureListAccounts capabilities.Feature = "listAccounts"
-	FeatureGetAccount   capabilities.Feature = "getAccount"
+	ProductPayments           capabilities.Product = "payments"
+	FeatureGetAccount         capabilities.Feature = "getAccount"
+	FeatureGetAccountBalances capabilities.Feature = "getAccountBalances"
+	FeatureListAccounts       capabilities.Feature = "listAccounts"
 )
 
 type ListAccountsInput struct {
@@ -54,6 +56,30 @@ type GetAccountOutput struct {
 	Account    AccountSummary          `json:"account" yaml:"account"`
 }
 
+type ListAccountBalancesInput struct {
+	AccountID string
+	PageSize  int64
+	Cursor    string
+	Asset     string
+}
+
+type AccountBalance struct {
+	AccountID     string    `json:"accountID" yaml:"accountID"`
+	Asset         string    `json:"asset" yaml:"asset"`
+	Balance       string    `json:"balance" yaml:"balance"`
+	CreatedAt     time.Time `json:"createdAt" yaml:"createdAt"`
+	LastUpdatedAt time.Time `json:"lastUpdatedAt" yaml:"lastUpdatedAt"`
+}
+
+type ListAccountBalancesOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	Balances   []AccountBalance        `json:"balances" yaml:"balances"`
+	HasMore    bool                    `json:"hasMore" yaml:"hasMore"`
+	PageSize   int64                   `json:"pageSize" yaml:"pageSize"`
+	Next       *string                 `json:"next,omitempty" yaml:"next,omitempty"`
+	Previous   *string                 `json:"previous,omitempty" yaml:"previous,omitempty"`
+}
+
 type ListAccountsHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, ListAccountsInput) (ListAccountsOutput, error)
@@ -64,6 +90,11 @@ type GetAccountHandler struct {
 	Run        func(context.Context, GetAccountInput) (GetAccountOutput, error)
 }
 
+type ListAccountBalancesHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, ListAccountBalancesInput) (ListAccountBalancesOutput, error)
+}
+
 type ListAccountsService struct {
 	Handlers []ListAccountsHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
@@ -71,6 +102,11 @@ type ListAccountsService struct {
 
 type GetAccountService struct {
 	Handlers []GetAccountHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type ListAccountBalancesService struct {
+	Handlers []ListAccountBalancesHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -118,6 +154,32 @@ func (s GetAccountService) Run(ctx context.Context, input GetAccountInput) (GetA
 	output, err := handler.Run(ctx, input)
 	if err != nil {
 		return GetAccountOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func (s ListAccountBalancesService) Run(ctx context.Context, input ListAccountBalancesInput) (ListAccountBalancesOutput, error) {
+	if input.AccountID == "" {
+		return ListAccountBalancesOutput{}, fmt.Errorf("account id is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]ListAccountBalancesHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return ListAccountBalancesOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return ListAccountBalancesOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return ListAccountBalancesOutput{}, err
 	}
 	output.APIVersion = selected
 	return output, nil
@@ -189,6 +251,37 @@ func SDKGetAccountHandlers(sdk *formance.Formance) []GetAccountHandler {
 	}
 }
 
+func SDKListAccountBalancesHandlers(sdk *formance.Formance) []ListAccountBalancesHandler {
+	return []ListAccountBalancesHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input ListAccountBalancesInput) (ListAccountBalancesOutput, error) {
+				response, err := sdk.Payments.V1.GetAccountBalances(ctx, toV1ListAccountBalancesRequest(input))
+				if err != nil {
+					return ListAccountBalancesOutput{}, err
+				}
+				if response.BalancesCursor == nil {
+					return ListAccountBalancesOutput{}, fmt.Errorf("payments v1 account balances returned no cursor")
+				}
+				return fromV1BalancesCursor(response.BalancesCursor.Cursor), nil
+			},
+		},
+		{
+			APIVersion: "v3",
+			Run: func(ctx context.Context, input ListAccountBalancesInput) (ListAccountBalancesOutput, error) {
+				response, err := sdk.Payments.V3.GetAccountBalances(ctx, toV3ListAccountBalancesRequest(input))
+				if err != nil {
+					return ListAccountBalancesOutput{}, err
+				}
+				if response.V3BalancesCursorResponse == nil {
+					return ListAccountBalancesOutput{}, fmt.Errorf("payments v3 account balances returned no cursor")
+				}
+				return fromV3BalancesCursor(response.V3BalancesCursorResponse.Cursor), nil
+			},
+		},
+	}
+}
+
 func toV1ListAccountsRequest(input ListAccountsInput) operations.PaymentslistAccountsRequest {
 	request := operations.PaymentslistAccountsRequest{
 		PageSize: pointer(input.PageSize),
@@ -205,6 +298,34 @@ func toV3ListAccountsRequest(input ListAccountsInput) operations.V3ListAccountsR
 	}
 	if input.Cursor != "" {
 		request.Cursor = pointer(input.Cursor)
+	}
+	return request
+}
+
+func toV1ListAccountBalancesRequest(input ListAccountBalancesInput) operations.GetAccountBalancesRequest {
+	request := operations.GetAccountBalancesRequest{
+		AccountID: input.AccountID,
+		PageSize:  pointer(input.PageSize),
+	}
+	if input.Cursor != "" {
+		request.Cursor = pointer(input.Cursor)
+	}
+	if input.Asset != "" {
+		request.Asset = pointer(input.Asset)
+	}
+	return request
+}
+
+func toV3ListAccountBalancesRequest(input ListAccountBalancesInput) operations.V3GetAccountBalancesRequest {
+	request := operations.V3GetAccountBalancesRequest{
+		AccountID: input.AccountID,
+		PageSize:  pointer(input.PageSize),
+	}
+	if input.Cursor != "" {
+		request.Cursor = pointer(input.Cursor)
+	}
+	if input.Asset != "" {
+		request.Asset = pointer(input.Asset)
 	}
 	return request
 }
@@ -230,6 +351,34 @@ func fromV3AccountsCursor(cursor shared.V3AccountsCursorResponseCursor) ListAcco
 	}
 	return ListAccountsOutput{
 		Accounts: accounts,
+		HasMore:  cursor.HasMore,
+		PageSize: cursor.PageSize,
+		Next:     cursor.Next,
+		Previous: cursor.Previous,
+	}
+}
+
+func fromV1BalancesCursor(cursor shared.BalancesCursorCursor) ListAccountBalancesOutput {
+	balances := make([]AccountBalance, 0, len(cursor.Data))
+	for _, balance := range cursor.Data {
+		balances = append(balances, fromV1Balance(balance))
+	}
+	return ListAccountBalancesOutput{
+		Balances: balances,
+		HasMore:  cursor.HasMore,
+		PageSize: cursor.PageSize,
+		Next:     cursor.Next,
+		Previous: cursor.Previous,
+	}
+}
+
+func fromV3BalancesCursor(cursor shared.V3BalancesCursorResponseCursor) ListAccountBalancesOutput {
+	balances := make([]AccountBalance, 0, len(cursor.Data))
+	for _, balance := range cursor.Data {
+		balances = append(balances, fromV3Balance(balance))
+	}
+	return ListAccountBalancesOutput{
+		Balances: balances,
 		HasMore:  cursor.HasMore,
 		PageSize: cursor.PageSize,
 		Next:     cursor.Next,
@@ -276,6 +425,33 @@ func fromV3Account(account shared.V3Account) AccountSummary {
 		Type:         string(account.Type),
 		Metadata:     account.Metadata,
 	}
+}
+
+func fromV1Balance(balance shared.AccountBalance) AccountBalance {
+	return AccountBalance{
+		AccountID:     balance.AccountID,
+		Asset:         balance.Asset,
+		Balance:       bigIntString(balance.Balance),
+		CreatedAt:     balance.CreatedAt,
+		LastUpdatedAt: balance.LastUpdatedAt,
+	}
+}
+
+func fromV3Balance(balance shared.V3Balance) AccountBalance {
+	return AccountBalance{
+		AccountID:     balance.AccountID,
+		Asset:         balance.Asset,
+		Balance:       bigIntString(balance.Balance),
+		CreatedAt:     balance.CreatedAt,
+		LastUpdatedAt: balance.LastUpdatedAt,
+	}
+}
+
+func bigIntString(value *big.Int) string {
+	if value == nil {
+		return "0"
+	}
+	return value.String()
 }
 
 func pointer[T any](value T) *T {

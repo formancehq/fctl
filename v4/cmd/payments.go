@@ -29,6 +29,7 @@ func newPaymentsAccountsCommand() *cobra.Command {
 	command.AddCommand(newPaymentsAccountsListCommand())
 	command.AddCommand(newPaymentsAccountsShowCommand("show", nil, false))
 	command.AddCommand(newPaymentsAccountsShowCommand("get", []string{"g"}, true))
+	command.AddCommand(newPaymentsAccountsBalancesCommand())
 	return command
 }
 
@@ -147,6 +148,68 @@ func newPaymentsAccountsShowCommand(use string, aliases []string, deprecated boo
 	return command
 }
 
+func newPaymentsAccountsBalancesCommand() *cobra.Command {
+	var pageSize int64 = 15
+	var cursor string
+	var asset string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "balances <account-id>",
+		Short: "List payment account balances",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := paymentscmd.ListAccountBalancesService{
+				Handlers: paymentscmd.SDKListAccountBalancesHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureGetAccountBalances,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.ListAccountBalancesInput{
+				AccountID: args[0],
+				PageSize:  pageSize,
+				Cursor:    cursor,
+				Asset:     asset,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentAccountBalances(cmd, output)
+		},
+	}
+
+	command.Flags().Int64Var(&pageSize, "page-size", 15, "Page size")
+	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
+	command.Flags().StringVar(&asset, "asset", "", "Filter by asset")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+
+	return command
+}
+
 func renderPaymentAccounts(cmd *cobra.Command, output paymentscmd.ListAccountsOutput) error {
 	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
 		return err
@@ -165,6 +228,34 @@ func renderPaymentAccounts(cmd *cobra.Command, output paymentscmd.ListAccountsOu
 			account.Name,
 			account.DefaultAsset,
 			account.ConnectorID,
+		); err != nil {
+			return err
+		}
+	}
+	if output.HasMore && output.Next != nil {
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
+		return err
+	}
+	return nil
+}
+
+func renderPaymentAccountBalances(cmd *cobra.Command, output paymentscmd.ListAccountBalancesOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if len(output.Balances) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No account balances found.")
+		return err
+	}
+	for _, balance := range output.Balances {
+		if _, err := fmt.Fprintf(
+			cmd.OutOrStdout(),
+			"%s\t%s\t%s\t%s\t%s\n",
+			balance.AccountID,
+			balance.Asset,
+			balance.Balance,
+			balance.CreatedAt.Format(time.RFC3339),
+			balance.LastUpdatedAt.Format(time.RFC3339),
 		); err != nil {
 			return err
 		}
