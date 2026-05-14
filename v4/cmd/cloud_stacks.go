@@ -104,13 +104,15 @@ func newCloudStacksCreateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			output, err := cloudcmd.CreateStackService{Client: organizationClient}.Run(cmd.Context(), cloudcmd.CreateStackInput{
-				OrganizationID: organizationID,
-				Name:           stackName,
-				RegionID:       regionID,
-				Version:        version,
-				Metadata:       parsedMetadata,
-				Wait:           !noWait,
+			output, err := withTerminalSpinner(cmd, !noWait, "Creating stack and waiting for availability", "Stack is available", func() (cloudcmd.StackOutput, error) {
+				return cloudcmd.CreateStackService{Client: organizationClient}.Run(cmd.Context(), cloudcmd.CreateStackInput{
+					OrganizationID: organizationID,
+					Name:           stackName,
+					RegionID:       regionID,
+					Version:        version,
+					Metadata:       parsedMetadata,
+					Wait:           !noWait,
+				})
 			})
 			if err != nil {
 				return err
@@ -309,7 +311,7 @@ func (i cloudStackCreateInput) report(cmd *cobra.Command, label string, value st
 	if i.nonInteractive || strings.TrimSpace(value) == "" {
 		return
 	}
-	fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\n", label, value)
+	fmt.Fprintln(cmd.OutOrStdout(), styledKeyValueLine(cmd, label, value))
 }
 
 func cloudStackRegionChoiceTitle(region cloudcmd.RegionSummary) string {
