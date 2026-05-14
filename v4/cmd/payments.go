@@ -11,6 +11,7 @@ import (
 	"time"
 
 	formance "github.com/formancehq/formance-sdk-go/v3"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/v4/internal/capabilities"
@@ -93,6 +94,7 @@ func newPaymentsPaymentsCommand() *cobra.Command {
 		Aliases: []string{"p"},
 		Short:   "Manage payments",
 	}
+	command.AddCommand(newPaymentsPaymentsCreateCommand())
 	command.AddCommand(newPaymentsPaymentsListCommand())
 	command.AddCommand(newPaymentsPaymentsShowCommand("show", nil, false))
 	command.AddCommand(newPaymentsPaymentsShowCommand("get", []string{"g"}, true))
@@ -911,6 +913,109 @@ func renderPaymentBankAccount(cmd *cobra.Command, output paymentscmd.GetBankAcco
 		}
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Swift BIC\t%s\n", account.SwiftBicCode)
+	return err
+}
+
+func newPaymentsPaymentsCreateCommand() *cobra.Command {
+	var confirm bool
+	var file string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "create",
+		Aliases: []string{"cr", "c"},
+		Short:   "Create a payment",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return nil
+			}
+			if len(args) == 1 {
+				return nil
+			}
+			return fmt.Errorf("accepts 0 arg(s), received %d", len(args))
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("payments payments create requires --confirm")
+			}
+			if len(args) == 1 {
+				if file != "" {
+					return fmt.Errorf("use either --file or positional file, not both")
+				}
+				file = args[0]
+				fmt.Fprintln(cmd.ErrOrStderr(), "Positional file has been deprecated, use payments payments create --file <path>|-")
+			}
+			if file == "" {
+				return fmt.Errorf("payments payments create requires --file <path>|-")
+			}
+			data, err := readPaymentCommandFile(cmd, file)
+			if err != nil {
+				return err
+			}
+			request, err := parseCreatePaymentRequest(data)
+			if err != nil {
+				return err
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.CreatePaymentService{
+				Handlers: paymentscmd.SDKCreatePaymentHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureCreatePayment,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), request)
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentCreated(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm payment creation")
+	command.Flags().StringVar(&file, "file", "", "JSON payment request file, or - for stdin")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func parseCreatePaymentRequest(data []byte) (paymentscmd.CreatePaymentInput, error) {
+	var v1 shared.PaymentRequest
+	if err := json.Unmarshal(data, &v1); err != nil {
+		return paymentscmd.CreatePaymentInput{}, err
+	}
+	var v3 shared.V3CreatePaymentRequest
+	if err := json.Unmarshal(data, &v3); err != nil {
+		return paymentscmd.CreatePaymentInput{}, err
+	}
+	if v3.InitialAmount == nil {
+		v3.InitialAmount = v3.Amount
+	}
+	return paymentscmd.CreatePaymentInput{V1: v1, V3: v3}, nil
+}
+
+func renderPaymentCreated(cmd *cobra.Command, output paymentscmd.CreatePaymentOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Payment created with ID: %s\n", output.PaymentID)
 	return err
 }
 

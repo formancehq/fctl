@@ -13,10 +13,21 @@ import (
 )
 
 const (
+	FeatureCreatePayment      capabilities.Feature = "createPayment"
 	FeatureGetPayment         capabilities.Feature = "getPayment"
 	FeatureListPayments       capabilities.Feature = "listPayments"
 	FeatureSetPaymentMetadata capabilities.Feature = "updatePaymentMetadata"
 )
+
+type CreatePaymentInput struct {
+	V1 shared.PaymentRequest
+	V3 shared.V3CreatePaymentRequest
+}
+
+type CreatePaymentOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	PaymentID  string                  `json:"paymentID" yaml:"paymentID"`
+}
 
 type PaymentSummary struct {
 	ID                   string            `json:"id" yaml:"id"`
@@ -72,6 +83,11 @@ type ListPaymentsHandler struct {
 	Run        func(context.Context, ListPaymentsInput) (ListPaymentsOutput, error)
 }
 
+type CreatePaymentHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, CreatePaymentInput) (CreatePaymentOutput, error)
+}
+
 type SetPaymentMetadataHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, SetPaymentMetadataInput) (SetPaymentMetadataOutput, error)
@@ -84,6 +100,11 @@ type GetPaymentHandler struct {
 
 type ListPaymentsService struct {
 	Handlers []ListPaymentsHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type CreatePaymentService struct {
+	Handlers []CreatePaymentHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -115,6 +136,38 @@ func (s ListPaymentsService) Run(ctx context.Context, input ListPaymentsInput) (
 	output, err := handler.Run(ctx, input)
 	if err != nil {
 		return ListPaymentsOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func (s CreatePaymentService) Run(ctx context.Context, input CreatePaymentInput) (CreatePaymentOutput, error) {
+	if input.V3.Amount == nil {
+		return CreatePaymentOutput{}, fmt.Errorf("payment amount is required")
+	}
+	if input.V3.Asset == "" {
+		return CreatePaymentOutput{}, fmt.Errorf("payment asset is required")
+	}
+	if input.V3.ConnectorID == "" {
+		return CreatePaymentOutput{}, fmt.Errorf("connector id is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]CreatePaymentHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return CreatePaymentOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return CreatePaymentOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return CreatePaymentOutput{}, err
 	}
 	output.APIVersion = selected
 	return output, nil
@@ -173,6 +226,37 @@ func (s SetPaymentMetadataService) Run(ctx context.Context, input SetPaymentMeta
 	}
 	output.APIVersion = selected
 	return output, nil
+}
+
+func SDKCreatePaymentHandlers(sdk *formance.Formance) []CreatePaymentHandler {
+	return []CreatePaymentHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input CreatePaymentInput) (CreatePaymentOutput, error) {
+				response, err := sdk.Payments.V1.CreatePayment(ctx, input.V1)
+				if err != nil {
+					return CreatePaymentOutput{}, err
+				}
+				if response.PaymentResponse == nil {
+					return CreatePaymentOutput{}, fmt.Errorf("payments v1 create payment returned no data")
+				}
+				return CreatePaymentOutput{PaymentID: response.PaymentResponse.Data.ID}, nil
+			},
+		},
+		{
+			APIVersion: "v3",
+			Run: func(ctx context.Context, input CreatePaymentInput) (CreatePaymentOutput, error) {
+				response, err := sdk.Payments.V3.CreatePayment(ctx, &input.V3)
+				if err != nil {
+					return CreatePaymentOutput{}, err
+				}
+				if response.V3CreatePaymentResponse == nil {
+					return CreatePaymentOutput{}, fmt.Errorf("payments v3 create payment returned no data")
+				}
+				return CreatePaymentOutput{PaymentID: response.V3CreatePaymentResponse.Data.ID}, nil
+			},
+		},
+	}
 }
 
 func SDKListPaymentsHandlers(sdk *formance.Formance) []ListPaymentsHandler {

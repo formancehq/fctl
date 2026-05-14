@@ -2531,6 +2531,115 @@ func TestPaymentsPaymentsListSelectsV3(t *testing.T) {
 	}
 }
 
+func TestPaymentsPaymentsCreateRequiresConfirm(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "payments", "payments", "create", "--file", "request.json")
+	if err == nil {
+		t.Fatal("expected payments payments create to require confirmation")
+	}
+	if stdout != "" || stderr != "" {
+		t.Fatalf("expected empty output, got stdout=%q stderr=%q", stdout, stderr)
+	}
+	if !strings.Contains(err.Error(), "payments payments create requires --confirm") {
+		t.Fatalf("expected confirmation error, got: %v", err)
+	}
+}
+
+func TestPaymentsPaymentsCreateSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/payments":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			body := readRequestBody(t, r)
+			for _, expected := range []string{
+				`"amount":100`,
+				`"initialAmount":100`,
+				`"asset":"USD/2"`,
+				`"connectorID":"conn_1"`,
+				`"type":"PAYOUT"`,
+			} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected create payment body to contain %q, got %s", expected, body)
+				}
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, `{"data":{"id":"pay_1","reference":"ref","type":"PAYOUT","status":"SUCCEEDED","scheme":"visa","asset":"USD/2","amount":100,"initialAmount":100,"connectorID":"conn_1","createdAt":"2026-01-01T00:00:00Z","provider":"stripe","metadata":{}}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t, "--config-dir", configDir, "context", "create", "stack", "local", "--stack-url", server.URL)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	requestFile := filepath.Join(t.TempDir(), "payment.json")
+	if err := os.WriteFile(requestFile, []byte(`{"amount":100,"asset":"USD/2","connectorID":"conn_1","createdAt":"2026-01-01T00:00:00Z","metadata":{"env":"dev"},"reference":"ref","scheme":"visa","type":"PAYOUT","status":"SUCCEEDED"}`), 0o600); err != nil {
+		t.Fatalf("write request file: %v", err)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "payments", "create",
+		"--file", requestFile,
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("create payment: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v3") || !strings.Contains(stdout, "Payment created with ID: pay_1") {
+		t.Fatalf("unexpected create payment output:\n%s", stdout)
+	}
+}
+
+func TestPaymentsPaymentsCreateDeprecatedPositionalFile(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/payments":
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, `{"data":{"id":"pay_1","reference":"ref","type":"PAYOUT","status":"SUCCEEDED","scheme":"visa","asset":"USD/2","amount":100,"initialAmount":100,"connectorID":"conn_1","createdAt":"2026-01-01T00:00:00Z","provider":"stripe","metadata":{}}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t, "--config-dir", configDir, "context", "create", "stack", "local", "--stack-url", server.URL)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	requestFile := filepath.Join(t.TempDir(), "payment.json")
+	if err := os.WriteFile(requestFile, []byte(`{"amount":100,"asset":"USD/2","connectorID":"conn_1","createdAt":"2026-01-01T00:00:00Z","reference":"ref","scheme":"visa","type":"PAYOUT","status":"SUCCEEDED"}`), 0o600); err != nil {
+		t.Fatalf("write request file: %v", err)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "payments", "create", requestFile,
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("create payment with positional file: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "use payments payments create --file <path>|-") {
+		t.Fatalf("expected positional file deprecation warning, got:\n%s", stderr)
+	}
+}
+
 func TestPaymentsPaymentsShowSelectsV3(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
