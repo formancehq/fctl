@@ -106,6 +106,7 @@ aliases for `cloud stacks`.
 - `fctl ledger transactions list`
 - `fctl ledger transactions show <transaction-id>`
 - `fctl ledger transactions send`
+- `fctl ledger transactions run-script --file <path>|-`
 - `fctl ledger transactions revert <transaction-id>`
 - `fctl ledger transactions count`
 - `fctl ledger accounts list`

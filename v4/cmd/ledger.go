@@ -1146,9 +1146,143 @@ func newLedgerTransactionsCommand() *cobra.Command {
 	command.AddCommand(newLedgerTransactionsDeleteMetadataCommand())
 	command.AddCommand(newLedgerTransactionsListCommand())
 	command.AddCommand(newLedgerTransactionsRevertCommand())
+	command.AddCommand(newLedgerTransactionsRunScriptCommand("run-script", nil, false))
+	command.AddCommand(newLedgerTransactionsRunScriptCommand("num", nil, true))
 	command.AddCommand(newLedgerTransactionsSendCommand(false))
 	command.AddCommand(newLedgerTransactionsSetMetadataCommand())
 	command.AddCommand(newLedgerTransactionsShowCommand())
+	return command
+}
+
+func newLedgerTransactionsRunScriptCommand(use string, aliases []string, deprecated bool) *cobra.Command {
+	var ledger string
+	var file string
+	var accountVars []string
+	var amountVars []string
+	var portionVars []string
+	var metadata []string
+	var timestamp string
+	var reference string
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     use,
+		Aliases: aliases,
+		Short:   "Execute a Numscript program on a ledger",
+		Args:    cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if deprecated {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Command ledger transactions num has been deprecated, use ledger transactions run-script --file <path>|-")
+			}
+			if file != "" && len(args) == 1 {
+				return fmt.Errorf("positional file and --file are mutually exclusive")
+			}
+			if file == "" && len(args) == 1 {
+				file = args[0]
+				fmt.Fprintln(cmd.ErrOrStderr(), "Positional file has been deprecated, use ledger transactions run-script --file <path>|-")
+			}
+			if file == "" {
+				return fmt.Errorf("ledger transactions run-script requires --file <path>|-")
+			}
+			if !confirm {
+				return fmt.Errorf("ledger transactions run-script requires --confirm")
+			}
+
+			script, err := readLedgerCommandFile(cmd, file)
+			if err != nil {
+				return err
+			}
+			parsedAccountVars, err := parseKeyValueFlags(accountVars, "account-var")
+			if err != nil {
+				return err
+			}
+			parsedAmountVars, err := parseKeyValueFlags(amountVars, "amount-var")
+			if err != nil {
+				return err
+			}
+			parsedPortionVars, err := parseKeyValueFlags(portionVars, "portion-var")
+			if err != nil {
+				return err
+			}
+			parsedMetadata, err := parseMetadataFlags(metadata)
+			if err != nil {
+				return err
+			}
+			parsedTimestamp, err := parseOptionalRFC3339(timestamp, "timestamp")
+			if err != nil {
+				return err
+			}
+
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			if ledger == "" {
+				ledger = rt.Context.Defaults["ledger"]
+			}
+			if ledger == "" {
+				ledger = "default"
+			}
+
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := ledgercmd.RunScriptService{
+				Handlers: ledgercmd.SDKRunScriptHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         ledgercmd.ProductLedger,
+						Feature:         ledgercmd.FeatureCreateTransaction,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), ledgercmd.RunScriptInput{
+				Ledger:      ledger,
+				Script:      string(script),
+				AccountVars: parsedAccountVars,
+				AmountVars:  parsedAmountVars,
+				PortionVars: parsedPortionVars,
+				Metadata:    parsedMetadata,
+				Reference:   reference,
+				Timestamp:   parsedTimestamp,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderLedgerSentTransaction(cmd, ledgercmd.SendTransactionOutput{
+				APIVersion:  output.APIVersion,
+				Transaction: output.Transaction,
+			})
+		},
+	}
+	if deprecated {
+		command.Deprecated = "use ledger transactions run-script --file <path>|-"
+	}
+	command.Flags().StringVar(&ledger, "ledger", "", "Ledger name")
+	command.Flags().StringVar(&file, "file", "", "Path to Numscript file or - for stdin")
+	command.Flags().StringSliceVar(&accountVars, "account-var", nil, "Numscript account variable as key=value")
+	command.Flags().StringSliceVar(&amountVars, "amount-var", nil, "Numscript amount variable as key=amount/asset")
+	command.Flags().StringSliceVar(&portionVars, "portion-var", nil, "Numscript portion variable as key=value")
+	command.Flags().StringSliceVar(&metadata, "metadata", nil, "Metadata key=value to apply")
+	command.Flags().StringVar(&timestamp, "timestamp", "", "Transaction timestamp (RFC3339)")
+	command.Flags().StringVar(&reference, "reference", "", "Transaction reference")
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm the transaction creation")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
 	return command
 }
 
@@ -2220,6 +2354,13 @@ func renderLedgerVolumes(cmd *cobra.Command, output ledgercmd.ListVolumesOutput)
 
 func parseMetadataFlags(values []string) (map[string]string, error) {
 	return parseKeyValueFlags(values, "metadata")
+}
+
+func readLedgerCommandFile(cmd *cobra.Command, file string) ([]byte, error) {
+	if file == "-" {
+		return io.ReadAll(cmd.InOrStdin())
+	}
+	return os.ReadFile(file)
 }
 
 func parseKeyValueFlags(values []string, name string) (map[string]string, error) {

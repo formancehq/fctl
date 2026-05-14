@@ -263,6 +263,12 @@ Regles de flags ledger:
 | `ledger transactions delete-metadata <transaction-id> <key>` | identique | | |
 | `ledger volumes list --pit --oot --use-insertion-date --group-by --address --metadata --cursor --page-size` | `ledger volumes list --start-time --end-time --use-insertion-date --group-by --account --metadata --cursor --page-size` | `--address` alias deprecie de `--account`, `--oot` alias de `--start-time`, `--pit` alias de `--end-time`; `--group-by` enum validee. | |
 
+Implementation v4:
+
+- le nom canonique retenu est `ledger transactions run-script --file <path>|-`;
+- `ledger transactions num <file>` est conserve comme alias deprecie avec warning;
+- la commande reutilise la resolution API Ledger et mappe vers `createTransaction` v1/v2 avec payload Numscript.
+
 Commandes nouvelles possibles si l'API Ledger v3 les expose:
 
 | Nouvelle commande | Condition | Comportement si cible trop ancienne |
