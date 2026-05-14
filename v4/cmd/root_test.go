@@ -15,6 +15,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	v4config "github.com/formancehq/fctl/v4/internal/config"
 	v4prompt "github.com/formancehq/fctl/v4/internal/prompt"
 )
@@ -105,6 +107,57 @@ func TestCloudHelpHidesApps(t *testing.T) {
 	if !strings.Contains(stdout, "stacks") {
 		t.Fatalf("expected cloud help to keep visible stack commands, got:\n%s", stdout)
 	}
+}
+
+func TestVisibleLeafCommandHelpIsRoutable(t *testing.T) {
+	leaves := visibleLeafCommandPaths(NewRootCommand("test-version"))
+	if len(leaves) == 0 {
+		t.Fatal("expected visible leaf commands")
+	}
+	for _, leaf := range leaves {
+		leaf := leaf
+		t.Run(strings.Join(leaf, "_"), func(t *testing.T) {
+			args := append(append([]string{}, leaf...), "--help")
+			stdout, stderr, err := executeCommand(t, args...)
+			if err != nil {
+				t.Fatalf("%s --help failed: %v stderr=%s", strings.Join(leaf, " "), err, stderr)
+			}
+			if stdout == "" {
+				t.Fatalf("%s --help returned empty stdout", strings.Join(leaf, " "))
+			}
+		})
+	}
+}
+
+func visibleLeafCommandPaths(root *cobra.Command) [][]string {
+	paths := [][]string{}
+	var walk func(command *cobra.Command, path []string)
+	walk = func(command *cobra.Command, path []string) {
+		children := visibleRunnableSubcommands(command)
+		if len(children) == 0 {
+			if len(path) > 0 {
+				paths = append(paths, append([]string{}, path...))
+			}
+			return
+		}
+		for _, child := range children {
+			walk(child, append(path, child.Name()))
+		}
+	}
+	walk(root, nil)
+	paths = append(paths, []string{"help"})
+	return paths
+}
+
+func visibleRunnableSubcommands(command *cobra.Command) []*cobra.Command {
+	children := []*cobra.Command{}
+	for _, child := range command.Commands() {
+		if child.Hidden || child.Name() == "help" {
+			continue
+		}
+		children = append(children, child)
+	}
+	return children
 }
 
 func TestPromptCancelledIsSilentExit(t *testing.T) {
