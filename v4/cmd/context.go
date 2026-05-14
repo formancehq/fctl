@@ -22,6 +22,7 @@ func newContextCommand() *cobra.Command {
 		newContextRenameCommand(),
 		newContextCreateCommand(),
 		newContextSetCommand(),
+		newContextUnsetDefaultsCommand(),
 		newContextWizardCommand(),
 	)
 
@@ -43,6 +44,9 @@ func newProfilesCommand() *cobra.Command {
 		newContextUseCommand(),
 		newContextDeleteCommand(),
 		newContextRenameCommand(),
+		newProfilesResetCommand(),
+		newProfilesSetDefaultOrganizationCommand(),
+		newProfilesSetDefaultStackCommand(),
 	)
 	return command
 }
@@ -291,6 +295,135 @@ func newContextSetCommand() *cobra.Command {
 	command.Flags().StringVar(&organization, "organization", "", "Cloud organization ID")
 	command.Flags().StringVar(&stack, "stack", "", "Cloud stack ID")
 	command.Flags().StringVar(&defaultLedger, "default-ledger", "", "Default ledger for this context")
+	return command
+}
+
+func newContextUnsetDefaultsCommand() *cobra.Command {
+	var confirm bool
+
+	command := &cobra.Command{
+		Use:   "unset-defaults [name]",
+		Short: "Clear defaults from a configured context",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("context unset-defaults requires --confirm")
+			}
+			cfg, path, err := loadConfig(cmd, false)
+			if err != nil {
+				return err
+			}
+			name := cfg.CurrentContext
+			if len(args) == 1 {
+				name = args[0]
+			}
+			if name == "" {
+				return fmt.Errorf("no context selected")
+			}
+			context, ok := cfg.Contexts[name]
+			if !ok {
+				return fmt.Errorf("context %q does not exist", name)
+			}
+			context.Defaults = nil
+			cfg.Contexts[name] = context
+			if err := v4config.SaveFile(path, cfg); err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: name == cfg.CurrentContext, Context: context}); handled || err != nil {
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Context %s defaults cleared.\n", name)
+			return err
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm clearing context defaults")
+	return command
+}
+
+func newProfilesResetCommand() *cobra.Command {
+	command := newContextUnsetDefaultsCommand()
+	command.Use = "reset <name>"
+	command.Short = "Clear defaults from a configured context"
+	command.Args = cobra.ExactArgs(1)
+	command.PreRun = func(cmd *cobra.Command, _ []string) {
+		fmt.Fprintln(cmd.ErrOrStderr(), "Command profiles reset has been deprecated, use context unset-defaults <name> --confirm")
+	}
+	return command
+}
+
+func newProfilesSetDefaultOrganizationCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:     "set-default-organization <organization-id>",
+		Aliases: []string{"sdo"},
+		Short:   "Set the default organization on the current context",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Fprintln(cmd.ErrOrStderr(), "Command profiles set-default-organization has been deprecated, use context set --organization <organization-id>")
+			cfg, path, err := loadConfig(cmd, false)
+			if err != nil {
+				return err
+			}
+			name := cfg.CurrentContext
+			if name == "" {
+				return fmt.Errorf("no context selected")
+			}
+			context, ok := cfg.Contexts[name]
+			if !ok {
+				return fmt.Errorf("context %q does not exist", name)
+			}
+			if context.Kind != v4config.ContextKindCloud && context.Kind != v4config.ContextKindCloudStack {
+				return fmt.Errorf("--organization can only be set on cloud or cloud-stack contexts")
+			}
+			context.Organization = args[0]
+			cfg.Contexts[name] = context
+			if err := v4config.SaveFile(path, cfg); err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: true, Context: context}); handled || err != nil {
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Context %s updated.\n", name)
+			return err
+		},
+	}
+	return command
+}
+
+func newProfilesSetDefaultStackCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:     "set-default-stack <stack-id>",
+		Aliases: []string{"sds"},
+		Short:   "Set the default stack on the current context",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Fprintln(cmd.ErrOrStderr(), "Command profiles set-default-stack has been deprecated, use context set --stack <stack-id>")
+			cfg, path, err := loadConfig(cmd, false)
+			if err != nil {
+				return err
+			}
+			name := cfg.CurrentContext
+			if name == "" {
+				return fmt.Errorf("no context selected")
+			}
+			context, ok := cfg.Contexts[name]
+			if !ok {
+				return fmt.Errorf("context %q does not exist", name)
+			}
+			if context.Kind != v4config.ContextKindCloudStack {
+				return fmt.Errorf("--stack can only be set on cloud-stack contexts")
+			}
+			context.Stack = args[0]
+			cfg.Contexts[name] = context
+			if err := v4config.SaveFile(path, cfg); err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: true, Context: context}); handled || err != nil {
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Context %s updated.\n", name)
+			return err
+		},
+	}
 	return command
 }
 

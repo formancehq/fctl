@@ -260,6 +260,92 @@ func TestContextSetUpdatesCloudStack(t *testing.T) {
 	if prod.Organization != "org_2" || prod.Stack != "stack_2" || prod.Defaults["ledger"] != "ledger_2" {
 		t.Fatalf("unexpected updated context: %#v", prod)
 	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "context", "unset-defaults", "prod")
+	if err == nil {
+		t.Fatal("expected context unset-defaults to require --confirm")
+	}
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "context", "unset-defaults", "prod", "--confirm")
+	if err != nil {
+		t.Fatalf("unset context defaults: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Context prod defaults cleared.\n" {
+		t.Fatalf("unexpected unset-defaults output: %q", stdout)
+	}
+	cfg, err = v4config.LoadFile(filepath.Join(configDir, "config.yaml"))
+	if err != nil {
+		t.Fatalf("load config after unset defaults: %v", err)
+	}
+	if cfg.Contexts["prod"].Defaults != nil {
+		t.Fatalf("expected defaults to be cleared, got %#v", cfg.Contexts["prod"].Defaults)
+	}
+}
+
+func TestProfilesDefaultAliases(t *testing.T) {
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", "https://cloud.example/api",
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "profiles", "set-default-organization", "org_2")
+	if err != nil {
+		t.Fatalf("profiles set-default-organization: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Context prod updated.\n" {
+		t.Fatalf("unexpected set-default-organization output: %q", stdout)
+	}
+	if !strings.Contains(stderr, "Command profiles has been deprecated, use context") ||
+		!strings.Contains(stderr, "use context set --organization <organization-id>") {
+		t.Fatalf("expected profiles organization deprecation warnings, got:\n%s", stderr)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "profiles", "set-default-stack", "stack_2")
+	if err != nil {
+		t.Fatalf("profiles set-default-stack: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Context prod updated.\n" {
+		t.Fatalf("unexpected set-default-stack output: %q", stdout)
+	}
+	if !strings.Contains(stderr, "Command profiles has been deprecated, use context") ||
+		!strings.Contains(stderr, "use context set --stack <stack-id>") {
+		t.Fatalf("expected profiles stack deprecation warnings, got:\n%s", stderr)
+	}
+
+	cfg, err := v4config.LoadFile(filepath.Join(configDir, "config.yaml"))
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+	if cfg.Contexts["prod"].Organization != "org_2" || cfg.Contexts["prod"].Stack != "stack_2" {
+		t.Fatalf("expected profile aliases to update cloud-stack defaults: %#v", cfg.Contexts["prod"])
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "profiles", "reset", "prod", "--confirm")
+	if err != nil {
+		t.Fatalf("profiles reset: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Context prod defaults cleared.\n" {
+		t.Fatalf("unexpected profiles reset output: %q", stdout)
+	}
+	if !strings.Contains(stderr, "Command profiles has been deprecated, use context") ||
+		!strings.Contains(stderr, "use context unset-defaults <name> --confirm") {
+		t.Fatalf("expected profiles reset deprecation warnings, got:\n%s", stderr)
+	}
+	cfg, err = v4config.LoadFile(filepath.Join(configDir, "config.yaml"))
+	if err != nil {
+		t.Fatalf("load config after reset: %v", err)
+	}
+	if cfg.Contexts["prod"].Defaults != nil {
+		t.Fatalf("expected profile reset alias to clear defaults, got %#v", cfg.Contexts["prod"].Defaults)
+	}
 }
 
 func TestContextRenameAndDelete(t *testing.T) {

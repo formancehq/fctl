@@ -26,6 +26,9 @@ the isolated v4 implementation under `v4/`.
 | --- | --- | --- |
 | `--profile <name>` | `--context <name>` | `--profile` is a deprecated alias with a warning. |
 | `profiles ...` | `context ...` | `profiles` is a deprecated alias with a warning. |
+| `profiles reset <name>` | `context unset-defaults <name> --confirm` | `profiles reset` is a deprecated alias with a warning. |
+| `profiles set-default-organization <org>` | `context set --organization <org>` | Deprecated alias updates the current context. |
+| `profiles set-default-stack <stack>` | `context set --stack <stack>` | Deprecated alias updates the current context. |
 | `orchestration ...` | `flows ...` | `orchestration` is a deprecated alias with a warning. |
 | `orchestration instances describe` | `flows instances inspect` | `describe` remains a deprecated alias. |
 | `payments ... get` | `payments ... show` | `get` remains a deprecated alias when cheap to maintain. |

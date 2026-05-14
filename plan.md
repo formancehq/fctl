@@ -119,7 +119,7 @@ Implementation v4:
 | `fctl profiles use <name>` | `fctl context use <name>` | current context. | ecriture atomique. |
 | `fctl profiles delete <name>` | `fctl context delete <name>` | refuse si current sans `--force`. | deletion config + references credentials. |
 | `fctl profiles rename <old> <new>` | `fctl context rename <old> <new>` | meme forme. | conserve current si necessaire. |
-| `fctl profiles reset <name>` | `fctl context reset <name>` ou `context unset-defaults` | A clarifier pendant implementation; ne pas supprimer credentials sans confirmation. | confirmation et non-interactif. |
+| `fctl profiles reset <name>` | `fctl context unset-defaults <name> --confirm` | Clarifie le reset comme suppression des defaults de contexte uniquement; ne supprime jamais les credentials. Alias deprecie `profiles reset`. | confirmation et non-interactif. |
 | `fctl profiles set-default-organization <org>` | `fctl context set <name> --organization <org>` | Peut prendre current context par defaut. | validation kind cloud/cloud-stack. |
 | `fctl profiles set-default-stack <stack>` | `fctl context set <name> --stack <stack>` | Peut prendre current context par defaut. | validation kind cloud-stack. |
 | aucun equivalent v3 | `fctl context create stack <name> --stack-url <url> [--auth ...]` | Base self-hosted/local. | config schema, auth method. |
@@ -139,6 +139,7 @@ Implementation v4:
 - `auth status` affiche la methode d'auth du contexte courant sans exposer les secrets;
 - `auth token` imprime le token d'acces resolu pour les contextes authentifies, afin de faciliter CI et debug;
 - `auth logout --confirm` supprime les credentials stockes localement quand ils utilisent un ref gere par le CLI, puis repasse le contexte en `none`.
+- `context unset-defaults [name] --confirm` supprime les defaults du contexte sans toucher a l'auth ni aux credentials; les aliases deprecies `profiles reset`, `profiles set-default-organization` et `profiles set-default-stack` restent disponibles pour les migrations peu couteuses.
 
 ## Mapping commandes Cloud
 
