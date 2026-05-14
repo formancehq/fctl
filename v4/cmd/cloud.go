@@ -66,9 +66,47 @@ func newCloudOrganizationsCommand() *cobra.Command {
 		Use:   "organizations",
 		Short: "Manage Cloud organizations",
 	}
+	command.AddCommand(newCloudOrganizationsCreateCommand())
 	command.AddCommand(newCloudOrganizationsListCommand())
 	command.AddCommand(newCloudOrganizationsShowCommand("show", nil, false))
 	command.AddCommand(newCloudOrganizationsShowCommand("describe", nil, true))
+	command.AddCommand(newCloudOrganizationsUpdateCommand())
+	command.AddCommand(newCloudOrganizationsDeleteCommand())
+	return command
+}
+
+func newCloudOrganizationsCreateCommand() *cobra.Command {
+	var domain string
+	var defaultPolicyID int64
+	var ownerID string
+
+	command := &cobra.Command{
+		Use:   "create <name>",
+		Short: "Create a Cloud organization",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := membershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.CreateOrganizationService{Client: client}.Run(cmd.Context(), cloudcmd.CreateOrganizationInput{
+				Name:            args[0],
+				Domain:          domain,
+				DefaultPolicyID: optionalInt64(defaultPolicyID),
+				OwnerID:         ownerID,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudOrganizationMutated(cmd, output, "created")
+		},
+	}
+	command.Flags().StringVar(&domain, "domain", "", "Organization domain")
+	command.Flags().Int64Var(&defaultPolicyID, "default-policy-id", 0, "Default policy ID")
+	command.Flags().StringVar(&ownerID, "owner-id", "", "Organization owner user ID")
 	return command
 }
 
@@ -135,6 +173,78 @@ func newCloudOrganizationsShowCommand(use string, aliases []string, deprecated b
 	return command
 }
 
+func newCloudOrganizationsUpdateCommand() *cobra.Command {
+	var name string
+	var domain string
+	var defaultPolicyID int64
+
+	command := &cobra.Command{
+		Use:   "update <organization-id>",
+		Short: "Update a Cloud organization",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := membershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.UpdateOrganizationService{Client: client}.Run(cmd.Context(), cloudcmd.UpdateOrganizationInput{
+				OrganizationID:  args[0],
+				Name:            name,
+				Domain:          domain,
+				DefaultPolicyID: optionalInt64(defaultPolicyID),
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudOrganizationMutated(cmd, output, "updated")
+		},
+	}
+	command.Flags().StringVar(&name, "name", "", "Organization name")
+	command.Flags().StringVar(&domain, "domain", "", "Organization domain")
+	command.Flags().Int64Var(&defaultPolicyID, "default-policy-id", 0, "Default policy ID")
+	return command
+}
+
+func newCloudOrganizationsDeleteCommand() *cobra.Command {
+	var confirm bool
+
+	command := &cobra.Command{
+		Use:   "delete <organization-id>",
+		Short: "Delete a Cloud organization",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("cloud organizations delete requires --confirm")
+			}
+			client, err := membershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.DeleteOrganizationService{Client: client}.Run(cmd.Context(), args[0])
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Cloud organization %s deleted.\n", output.OrganizationID)
+			return err
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm Cloud organization deletion")
+	return command
+}
+
+func optionalInt64(value int64) *int64 {
+	if value == 0 {
+		return nil
+	}
+	return &value
+}
+
 func membershipClientFromCommand(cmd *cobra.Command) (*membership.SDK, error) {
 	_, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
 	return client, err
@@ -192,4 +302,9 @@ func renderCloudOrganization(cmd *cobra.Command, output cloudcmd.OrganizationOut
 		}
 	}
 	return nil
+}
+
+func renderCloudOrganizationMutated(cmd *cobra.Command, output cloudcmd.OrganizationOutput, action string) error {
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud organization %s %s.\n", output.Organization.ID, action)
+	return err
 }

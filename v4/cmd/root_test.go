@@ -340,6 +340,88 @@ func TestCloudOrganizationsListAndShow(t *testing.T) {
 	}
 }
 
+func TestCloudOrganizationsMutations(t *testing.T) {
+	orgBody := `{"data":{"id":"org_1","name":"Acme","ownerId":"user_1","domain":"acme.test","defaultPolicyID":42}}`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodPost && r.URL.Path == "/organizations":
+			body := readRequestBody(t, r)
+			for _, expected := range []string{`"name":"Acme"`, `"domain":"acme.test"`, `"defaultPolicyID":42`, `"ownerID":"user_1"`} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected create organization body to contain %s, got %s", expected, body)
+				}
+			}
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, orgBody)
+		case r.Method == http.MethodPut && r.URL.Path == "/organizations/org_1":
+			body := readRequestBody(t, r)
+			for _, expected := range []string{`"name":"Acme Updated"`, `"domain":"acme.test"`, `"defaultPolicyID":42`} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected update organization body to contain %s, got %s", expected, body)
+				}
+			}
+			fmt.Fprint(w, orgBody)
+		case r.Method == http.MethodDelete && r.URL.Path == "/organizations/org_1":
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud", "cloud",
+		"--cloud-url", server.URL,
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"cloud", "organizations", "create", "Acme",
+		"--domain", "acme.test",
+		"--default-policy-id", "42",
+		"--owner-id", "user_1",
+	)
+	if err != nil {
+		t.Fatalf("cloud organizations create: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud organization org_1 created.\n" {
+		t.Fatalf("unexpected create output: %q", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"cloud", "organizations", "update", "org_1",
+		"--name", "Acme Updated",
+		"--domain", "acme.test",
+		"--default-policy-id", "42",
+	)
+	if err != nil {
+		t.Fatalf("cloud organizations update: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud organization org_1 updated.\n" {
+		t.Fatalf("unexpected update output: %q", stdout)
+	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "delete", "org_1")
+	if err == nil {
+		t.Fatal("expected organization delete to require --confirm")
+	}
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "delete", "org_1", "--confirm")
+	if err != nil {
+		t.Fatalf("cloud organizations delete: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud organization org_1 deleted.\n" {
+		t.Fatalf("unexpected delete output: %q", stdout)
+	}
+}
+
 func TestCloudCommandsRejectStackContext(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Fatalf("cloud command must reject stack contexts before network calls")

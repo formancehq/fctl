@@ -13,6 +13,9 @@ type MembershipClient interface {
 	ReadConnectedUser(context.Context, ...operations.Option) (*operations.ReadConnectedUserResponse, error)
 	ListOrganizations(context.Context, operations.ListOrganizationsRequest, ...operations.Option) (*operations.ListOrganizationsResponse, error)
 	ReadOrganization(context.Context, operations.ReadOrganizationRequest, ...operations.Option) (*operations.ReadOrganizationResponse, error)
+	CreateOrganization(context.Context, *components.CreateOrganizationRequest, ...operations.Option) (*operations.CreateOrganizationResponse, error)
+	UpdateOrganization(context.Context, operations.UpdateOrganizationRequest, ...operations.Option) (*operations.UpdateOrganizationResponse, error)
+	DeleteOrganization(context.Context, operations.DeleteOrganizationRequest, ...operations.Option) (*operations.DeleteOrganizationResponse, error)
 }
 
 type UserSummary struct {
@@ -55,6 +58,24 @@ type OrganizationIDInput struct {
 
 type OrganizationOutput struct {
 	Organization OrganizationSummary `json:"organization" yaml:"organization"`
+}
+
+type CreateOrganizationInput struct {
+	Name            string
+	Domain          string
+	DefaultPolicyID *int64
+	OwnerID         string
+}
+
+type UpdateOrganizationInput struct {
+	OrganizationID  string
+	Name            string
+	Domain          string
+	DefaultPolicyID *int64
+}
+
+type DeleteOrganizationOutput struct {
+	OrganizationID string `json:"organizationID" yaml:"organizationID"`
 }
 
 type MeService struct {
@@ -117,6 +138,89 @@ func (s ReadOrganizationService) Run(ctx context.Context, input OrganizationIDIn
 		return OrganizationOutput{}, fmt.Errorf("cloud organizations show returned no organization")
 	}
 	return OrganizationOutput{Organization: organizationSummary(response.GetReadOrganizationResponse().GetData())}, nil
+}
+
+type CreateOrganizationService struct {
+	Client MembershipClient
+}
+
+func (s CreateOrganizationService) Run(ctx context.Context, input CreateOrganizationInput) (OrganizationOutput, error) {
+	if s.Client == nil {
+		return OrganizationOutput{}, fmt.Errorf("membership client is required")
+	}
+	if input.Name == "" {
+		return OrganizationOutput{}, fmt.Errorf("organization name is required")
+	}
+	body := &components.CreateOrganizationRequest{
+		Name:            input.Name,
+		DefaultPolicyID: input.DefaultPolicyID,
+	}
+	if input.Domain != "" {
+		body.Domain = &input.Domain
+	}
+	if input.OwnerID != "" {
+		body.OwnerID = &input.OwnerID
+	}
+	response, err := s.Client.CreateOrganization(ctx, body)
+	if err != nil {
+		return OrganizationOutput{}, err
+	}
+	if response.GetCreateOrganizationResponse().GetData() == nil {
+		return OrganizationOutput{}, fmt.Errorf("cloud organizations create returned no organization")
+	}
+	return OrganizationOutput{Organization: organizationSummary(response.GetCreateOrganizationResponse().GetData())}, nil
+}
+
+type UpdateOrganizationService struct {
+	Client MembershipClient
+}
+
+func (s UpdateOrganizationService) Run(ctx context.Context, input UpdateOrganizationInput) (OrganizationOutput, error) {
+	if s.Client == nil {
+		return OrganizationOutput{}, fmt.Errorf("membership client is required")
+	}
+	if input.OrganizationID == "" {
+		return OrganizationOutput{}, fmt.Errorf("organization id is required")
+	}
+	if input.Name == "" {
+		return OrganizationOutput{}, fmt.Errorf("organization name is required")
+	}
+	body := &components.OrganizationData{
+		Name:            input.Name,
+		DefaultPolicyID: input.DefaultPolicyID,
+	}
+	if input.Domain != "" {
+		body.Domain = &input.Domain
+	}
+	response, err := s.Client.UpdateOrganization(ctx, operations.UpdateOrganizationRequest{
+		OrganizationID: input.OrganizationID,
+		Body:           body,
+	})
+	if err != nil {
+		return OrganizationOutput{}, err
+	}
+	if response.GetReadOrganizationResponse().GetData() == nil {
+		return OrganizationOutput{}, fmt.Errorf("cloud organizations update returned no organization")
+	}
+	return OrganizationOutput{Organization: organizationSummary(response.GetReadOrganizationResponse().GetData())}, nil
+}
+
+type DeleteOrganizationService struct {
+	Client MembershipClient
+}
+
+func (s DeleteOrganizationService) Run(ctx context.Context, organizationID string) (DeleteOrganizationOutput, error) {
+	if s.Client == nil {
+		return DeleteOrganizationOutput{}, fmt.Errorf("membership client is required")
+	}
+	if organizationID == "" {
+		return DeleteOrganizationOutput{}, fmt.Errorf("organization id is required")
+	}
+	_, err := s.Client.DeleteOrganization(ctx, operations.DeleteOrganizationRequest{OrganizationID: organizationID})
+	if err != nil {
+		return DeleteOrganizationOutput{}, err
+	}
+	return DeleteOrganizationOutput{OrganizationID: organizationID}, nil
 }
 
 func organizationSummary(organization *components.OrganizationExpanded) OrganizationSummary {
