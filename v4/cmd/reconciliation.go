@@ -3,6 +3,8 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
 	"time"
 
 	formance "github.com/formancehq/formance-sdk-go/v3"
@@ -30,8 +32,11 @@ func newReconciliationPoliciesCommand() *cobra.Command {
 		Short: "Manage reconciliation policies",
 	}
 	command.AddCommand(newReconciliationPoliciesListCommand())
+	command.AddCommand(newReconciliationPoliciesCreateCommand())
 	command.AddCommand(newReconciliationPoliciesShowCommand("show", []string{"sh"}, false))
 	command.AddCommand(newReconciliationPoliciesShowCommand("get", nil, true))
+	command.AddCommand(newReconciliationPoliciesDeleteCommand())
+	command.AddCommand(newReconciliationPoliciesReconcileCommand())
 	return command
 }
 
@@ -167,6 +172,61 @@ func newReconciliationPoliciesListCommand() *cobra.Command {
 	return command
 }
 
+func newReconciliationPoliciesCreateCommand() *cobra.Command {
+	var confirm bool
+	var file string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "create",
+		Short: "Create a reconciliation policy",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return nil
+			}
+			if len(args) == 1 {
+				return nil
+			}
+			return fmt.Errorf("accepts 0 arg(s), received %d", len(args))
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("reconciliation policies create requires --confirm")
+			}
+			if len(args) == 1 {
+				if file != "" {
+					return fmt.Errorf("use either --file or positional file, not both")
+				}
+				file = args[0]
+				fmt.Fprintln(cmd.ErrOrStderr(), "Positional file has been deprecated, use reconciliation policies create --file <path>|-")
+			}
+			if file == "" {
+				return fmt.Errorf("reconciliation policies create requires --file <path>|-")
+			}
+			payload, err := readReconciliationCommandFile(cmd, file)
+			if err != nil {
+				return err
+			}
+			service, err := newCreatePolicyService(cmd, apiVersion)
+			if err != nil {
+				return err
+			}
+			output, err := service.Run(cmd.Context(), reconciliationcmd.CreatePolicyInput{Payload: payload})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderReconciliationPolicyCreated(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm policy creation")
+	command.Flags().StringVar(&file, "file", "", "JSON policy request file, or - for stdin")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin reconciliation API version")
+	return command
+}
+
 func newReconciliationPoliciesShowCommand(use string, aliases []string, deprecated bool) *cobra.Command {
 	var apiVersion string
 
@@ -200,6 +260,106 @@ func newReconciliationPoliciesShowCommand(use string, aliases []string, deprecat
 	return command
 }
 
+func newReconciliationPoliciesDeleteCommand() *cobra.Command {
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "delete <policy-id>",
+		Short: "Delete a reconciliation policy",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("reconciliation policies delete requires --confirm")
+			}
+			service, err := newDeletePolicyService(cmd, apiVersion)
+			if err != nil {
+				return err
+			}
+			output, err := service.Run(cmd.Context(), reconciliationcmd.DeletePolicyInput{PolicyID: args[0]})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderReconciliationPolicyDeleted(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm policy deletion")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin reconciliation API version")
+	return command
+}
+
+func newReconciliationPoliciesReconcileCommand() *cobra.Command {
+	var confirm bool
+	var ledgerAt string
+	var paymentsAt string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "reconcile <policy-id>",
+		Short: "Run reconciliation for a policy",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("reconciliation policies reconcile requires --confirm")
+			}
+			parsedLedgerAt, err := parseOptionalRFC3339(ledgerAt, "ledger-at")
+			if err != nil {
+				return err
+			}
+			if parsedLedgerAt == nil {
+				return fmt.Errorf("reconciliation policies reconcile requires --ledger-at")
+			}
+			parsedPaymentsAt, err := parseOptionalRFC3339(paymentsAt, "payments-at")
+			if err != nil {
+				return err
+			}
+			if parsedPaymentsAt == nil {
+				return fmt.Errorf("reconciliation policies reconcile requires --payments-at")
+			}
+			service, err := newReconcileService(cmd, apiVersion)
+			if err != nil {
+				return err
+			}
+			output, err := service.Run(cmd.Context(), reconciliationcmd.ReconcileInput{
+				PolicyID:             args[0],
+				ReconciledAtLedger:   *parsedLedgerAt,
+				ReconciledAtPayments: *parsedPaymentsAt,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderReconciliationStarted(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm reconciliation run")
+	command.Flags().StringVar(&ledgerAt, "ledger-at", "", "Ledger reconciliation timestamp (RFC3339)")
+	command.Flags().StringVar(&paymentsAt, "payments-at", "", "Payments reconciliation timestamp (RFC3339)")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin reconciliation API version")
+	return command
+}
+
+func newCreatePolicyService(cmd *cobra.Command, apiVersion string) (reconciliationcmd.CreatePolicyService, error) {
+	rt, err := runtimeFromCommand(cmd)
+	if err != nil {
+		return reconciliationcmd.CreatePolicyService{}, err
+	}
+	httpClient, err := rt.HTTPClient(cmd.Context())
+	if err != nil {
+		return reconciliationcmd.CreatePolicyService{}, err
+	}
+	sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+	return reconciliationcmd.CreatePolicyService{
+		Handlers: reconciliationcmd.SDKCreatePolicyHandlers(sdk),
+		Resolve:  reconciliationVersionResolver(rt, reconciliationcmd.FeatureCreatePolicy, apiVersion),
+	}, nil
+}
+
 func newListPoliciesService(cmd *cobra.Command, apiVersion string) (reconciliationcmd.ListPoliciesService, error) {
 	rt, err := runtimeFromCommand(cmd)
 	if err != nil {
@@ -229,6 +389,22 @@ func newGetPolicyService(cmd *cobra.Command, apiVersion string) (reconciliationc
 	return reconciliationcmd.GetPolicyService{
 		Handlers: reconciliationcmd.SDKGetPolicyHandlers(sdk),
 		Resolve:  reconciliationVersionResolver(rt, reconciliationcmd.FeatureGetPolicy, apiVersion),
+	}, nil
+}
+
+func newDeletePolicyService(cmd *cobra.Command, apiVersion string) (reconciliationcmd.DeletePolicyService, error) {
+	rt, err := runtimeFromCommand(cmd)
+	if err != nil {
+		return reconciliationcmd.DeletePolicyService{}, err
+	}
+	httpClient, err := rt.HTTPClient(cmd.Context())
+	if err != nil {
+		return reconciliationcmd.DeletePolicyService{}, err
+	}
+	sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+	return reconciliationcmd.DeletePolicyService{
+		Handlers: reconciliationcmd.SDKDeletePolicyHandlers(sdk),
+		Resolve:  reconciliationVersionResolver(rt, reconciliationcmd.FeatureDeletePolicy, apiVersion),
 	}, nil
 }
 
@@ -264,6 +440,22 @@ func newGetReconciliationService(cmd *cobra.Command, apiVersion string) (reconci
 	}, nil
 }
 
+func newReconcileService(cmd *cobra.Command, apiVersion string) (reconciliationcmd.ReconcileService, error) {
+	rt, err := runtimeFromCommand(cmd)
+	if err != nil {
+		return reconciliationcmd.ReconcileService{}, err
+	}
+	httpClient, err := rt.HTTPClient(cmd.Context())
+	if err != nil {
+		return reconciliationcmd.ReconcileService{}, err
+	}
+	sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+	return reconciliationcmd.ReconcileService{
+		Handlers: reconciliationcmd.SDKReconcileHandlers(sdk),
+		Resolve:  reconciliationVersionResolver(rt, reconciliationcmd.FeatureReconcile, apiVersion),
+	}, nil
+}
+
 func reconciliationVersionResolver(rt interface {
 	ResolveAPIVersion(context.Context, capabilities.VersionResolutionRequest) (capabilities.APIVersion, error)
 }, feature capabilities.Feature, apiVersion string) func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
@@ -279,6 +471,13 @@ func reconciliationVersionResolver(rt interface {
 		}
 		return rt.ResolveAPIVersion(ctx, request)
 	}
+}
+
+func readReconciliationCommandFile(cmd *cobra.Command, file string) ([]byte, error) {
+	if file == "-" {
+		return io.ReadAll(cmd.InOrStdin())
+	}
+	return os.ReadFile(file)
 }
 
 func parseReconciliationQueryFlags(values []string, filters map[string]string) (map[string]any, error) {
@@ -298,6 +497,14 @@ func parseReconciliationQueryFlags(values []string, filters map[string]string) (
 		return nil, nil
 	}
 	return query, nil
+}
+
+func renderReconciliationPolicyCreated(cmd *cobra.Command, output reconciliationcmd.CreatePolicyOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Policy created with ID: %s\n", output.Policy.ID)
+	return err
 }
 
 func renderReconciliationPolicies(cmd *cobra.Command, output reconciliationcmd.ListPoliciesOutput) error {
@@ -342,6 +549,22 @@ func renderReconciliationPolicy(cmd *cobra.Command, output reconciliationcmd.Get
 		return err
 	}
 	return nil
+}
+
+func renderReconciliationPolicyDeleted(cmd *cobra.Command, output reconciliationcmd.DeletePolicyOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Policy %s deleted.\n", output.PolicyID)
+	return err
+}
+
+func renderReconciliationStarted(cmd *cobra.Command, output reconciliationcmd.ReconcileOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Reconciliation started with ID: %s\n", output.Reconciliation.ID)
+	return err
 }
 
 func renderReconciliations(cmd *cobra.Command, output reconciliationcmd.ListReconciliationsOutput) error {
