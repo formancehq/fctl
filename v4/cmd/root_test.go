@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 	"testing"
 
 	v4config "github.com/formancehq/fctl/v4/internal/config"
+	v4prompt "github.com/formancehq/fctl/v4/internal/prompt"
 )
 
 func executeCommand(t *testing.T, args ...string) (string, string, error) {
@@ -82,6 +84,18 @@ func TestRootHelp(t *testing.T) {
 		if strings.Contains(stdout, hidden) {
 			t.Fatalf("expected help output not to contain hidden %q, got:\n%s", hidden, stdout)
 		}
+	}
+}
+
+func TestPromptCancelledIsSilentExit(t *testing.T) {
+	if !isSilentExitError(v4prompt.ErrCancelled) {
+		t.Fatal("expected prompt cancellation to be a silent exit")
+	}
+	if !isSilentExitError(fmt.Errorf("wrapped: %w", v4prompt.ErrCancelled)) {
+		t.Fatal("expected wrapped prompt cancellation to be a silent exit")
+	}
+	if isSilentExitError(errors.New("other error")) {
+		t.Fatal("unexpected silent exit for unrelated error")
 	}
 }
 

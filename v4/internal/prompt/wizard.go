@@ -2,7 +2,6 @@ package prompt
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"os"
 
@@ -17,6 +16,8 @@ type Choice struct {
 	Title string
 	Value string
 }
+
+var ErrCancelled = errors.New("prompt cancelled")
 
 type Wizard struct {
 	in          io.Reader
@@ -99,7 +100,7 @@ func (w Wizard) run(field huh.Field) error {
 		WithShowHelp(false)
 	if err := form.Run(); err != nil {
 		if errors.Is(err, huh.ErrUserAborted) {
-			return fmt.Errorf("prompt cancelled")
+			return ErrCancelled
 		}
 		return err
 	}

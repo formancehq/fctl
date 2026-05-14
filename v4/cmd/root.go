@@ -1,10 +1,13 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
+
+	v4prompt "github.com/formancehq/fctl/v4/internal/prompt"
 )
 
 const (
@@ -100,7 +103,14 @@ func newVersionCommand() *cobra.Command {
 func Execute(version string) {
 	root := NewRootCommand(version)
 	if err := root.Execute(); err != nil {
+		if isSilentExitError(err) {
+			return
+		}
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+func isSilentExitError(err error) bool {
+	return errors.Is(err, v4prompt.ErrCancelled)
 }
