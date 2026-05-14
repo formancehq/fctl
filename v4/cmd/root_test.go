@@ -825,6 +825,81 @@ func TestCloudOrganizationPolicies(t *testing.T) {
 	}
 }
 
+func TestCloudRegions(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/regions":
+			fmt.Fprint(w, `{"data":[{"id":"reg_1","name":"EU","baseUrl":"https://region.example","createdAt":"2026-01-01T00:00:00Z","active":true,"public":false,"agentID":"agent_1","outdated":false,"version":"v1"}]}`)
+		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/regions/reg_1":
+			fmt.Fprint(w, `{"data":{"id":"reg_1","name":"EU","baseUrl":"https://region.example","createdAt":"2026-01-01T00:00:00Z","active":true,"public":false,"agentID":"agent_1","outdated":false,"version":"v1"}}`)
+		case r.Method == http.MethodPost && r.URL.Path == "/organizations/org_1/regions":
+			body := readRequestBody(t, r)
+			if !strings.Contains(body, `"name":"EU Private"`) {
+				t.Fatalf("expected region create body, got %s", body)
+			}
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, `{"data":{"id":"reg_2","name":"EU Private","baseUrl":"https://private.example","createdAt":"2026-01-01T00:00:00Z","active":true,"agentID":"agent_2","outdated":false,"organizationID":"org_1","version":"v1"}}`)
+		case r.Method == http.MethodDelete && r.URL.Path == "/organizations/org_1/regions/reg_1":
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", server.URL,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud", "regions", "list")
+	if err != nil {
+		t.Fatalf("cloud regions list: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "reg_1\tEU\ttrue\tfalse") {
+		t.Fatalf("unexpected regions list output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "regions", "show", "reg_1")
+	if err != nil {
+		t.Fatalf("cloud regions show: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{"ID\treg_1", "Name\tEU", "Active\ttrue", "Public\tfalse", "BaseURL\thttps://region.example", "Version\tv1"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected region output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "regions", "create", "EU Private")
+	if err != nil {
+		t.Fatalf("cloud regions create: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud region reg_2 created.\n" {
+		t.Fatalf("unexpected region create output: %q", stdout)
+	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud", "regions", "delete", "reg_1")
+	if err == nil {
+		t.Fatal("expected region delete to require --confirm")
+	}
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "regions", "delete", "reg_1", "--confirm")
+	if err != nil {
+		t.Fatalf("cloud regions delete: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud region reg_1 deleted.\n" {
+		t.Fatalf("unexpected region delete output: %q", stdout)
+	}
+}
+
 func TestCloudCommandsRejectStackContext(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Fatalf("cloud command must reject stack contexts before network calls")

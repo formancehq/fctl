@@ -19,6 +19,7 @@ func newCloudCommand() *cobra.Command {
 	}
 	command.AddCommand(newCloudMeCommand())
 	command.AddCommand(newCloudOrganizationsCommand())
+	command.AddCommand(newCloudRegionsCommand())
 	command.AddCommand(newCloudStacksCommand("stacks", "cloud stacks", false))
 	return command
 }
@@ -149,6 +150,138 @@ func newCloudOrganizationsCommand() *cobra.Command {
 	command.AddCommand(newCloudOrganizationsInvitationsCommand())
 	command.AddCommand(newCloudOrganizationsUsersCommand())
 	command.AddCommand(newCloudOrganizationsPoliciesCommand())
+	return command
+}
+
+func newCloudRegionsCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "regions",
+		Short: "Manage Cloud regions",
+	}
+	command.AddCommand(newCloudRegionsCreateCommand())
+	command.AddCommand(newCloudRegionsListCommand())
+	command.AddCommand(newCloudRegionsShowCommand())
+	command.AddCommand(newCloudRegionsDeleteCommand())
+	return command
+}
+
+func newCloudRegionsCreateCommand() *cobra.Command {
+	var organizationID string
+
+	command := &cobra.Command{
+		Use:   "create <name>",
+		Short: "Create a private Cloud region",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.CreateRegionService{Client: client}.Run(cmd.Context(), cloudcmd.RegionInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				Name:           args[0],
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudRegionMutated(cmd, output, "created")
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	return command
+}
+
+func newCloudRegionsListCommand() *cobra.Command {
+	var organizationID string
+
+	command := &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"ls", "l"},
+		Short:   "List Cloud regions",
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ListRegionsService{Client: client}.Run(cmd.Context(), resolveCloudOrganizationID(rt, organizationID))
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudRegions(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	return command
+}
+
+func newCloudRegionsShowCommand() *cobra.Command {
+	var organizationID string
+
+	command := &cobra.Command{
+		Use:   "show <region-id>",
+		Short: "Show a Cloud region",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ReadRegionService{Client: client}.Run(cmd.Context(), cloudcmd.RegionInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				RegionID:       args[0],
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudRegion(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	return command
+}
+
+func newCloudRegionsDeleteCommand() *cobra.Command {
+	var organizationID string
+	var confirm bool
+
+	command := &cobra.Command{
+		Use:   "delete <region-id>",
+		Short: "Delete a Cloud region",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("cloud regions delete requires --confirm")
+			}
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.DeleteRegionService{Client: client}.Run(cmd.Context(), cloudcmd.RegionInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				RegionID:       args[0],
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Cloud region %s deleted.\n", output.RegionID)
+			return err
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm Cloud region deletion")
 	return command
 }
 
@@ -836,6 +969,42 @@ func renderCloudInvitationAction(cmd *cobra.Command, output cloudcmd.InvitationA
 		done = "declined"
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud invitation %s %s.\n", output.InvitationID, done)
+	return err
+}
+
+func renderCloudRegions(cmd *cobra.Command, output cloudcmd.ListRegionsOutput) error {
+	if len(output.Regions) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No regions found.")
+		return err
+	}
+	for _, region := range output.Regions {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%t\t%t\n", region.ID, region.Name, region.Active, region.Public); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func renderCloudRegion(cmd *cobra.Command, output cloudcmd.RegionOutput) error {
+	region := output.Region
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\nName\t%s\nActive\t%t\nPublic\t%t\n", region.ID, region.Name, region.Active, region.Public); err != nil {
+		return err
+	}
+	if region.BaseURL != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "BaseURL\t%s\n", region.BaseURL); err != nil {
+			return err
+		}
+	}
+	if region.Version != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Version\t%s\n", region.Version); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func renderCloudRegionMutated(cmd *cobra.Command, output cloudcmd.RegionOutput, action string) error {
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud region %s %s.\n", output.Region.ID, action)
 	return err
 }
 

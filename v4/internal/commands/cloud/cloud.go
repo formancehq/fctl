@@ -33,6 +33,10 @@ type MembershipClient interface {
 	DeletePolicy(context.Context, operations.DeletePolicyRequest, ...operations.Option) (*operations.DeletePolicyResponse, error)
 	AddScopeToPolicy(context.Context, operations.AddScopeToPolicyRequest, ...operations.Option) (*operations.AddScopeToPolicyResponse, error)
 	RemoveScopeFromPolicy(context.Context, operations.RemoveScopeFromPolicyRequest, ...operations.Option) (*operations.RemoveScopeFromPolicyResponse, error)
+	ListRegions(context.Context, operations.ListRegionsRequest, ...operations.Option) (*operations.ListRegionsResponse, error)
+	GetRegion(context.Context, operations.GetRegionRequest, ...operations.Option) (*operations.GetRegionResponse, error)
+	CreatePrivateRegion(context.Context, operations.CreatePrivateRegionRequest, ...operations.Option) (*operations.CreatePrivateRegionResponse, error)
+	DeleteRegion(context.Context, operations.DeleteRegionRequest, ...operations.Option) (*operations.DeleteRegionResponse, error)
 }
 
 type UserSummary struct {
@@ -216,6 +220,38 @@ type PolicyActionOutput struct {
 	OrganizationID string `json:"organizationID" yaml:"organizationID"`
 	PolicyID       int64  `json:"policyID" yaml:"policyID"`
 	ScopeID        int64  `json:"scopeID,omitempty" yaml:"scopeID,omitempty"`
+	Action         string `json:"action" yaml:"action"`
+}
+
+type RegionSummary struct {
+	ID             string `json:"id" yaml:"id"`
+	Name           string `json:"name" yaml:"name"`
+	BaseURL        string `json:"baseURL,omitempty" yaml:"baseURL,omitempty"`
+	Active         bool   `json:"active" yaml:"active"`
+	Public         bool   `json:"public" yaml:"public"`
+	Version        string `json:"version,omitempty" yaml:"version,omitempty"`
+	OrganizationID string `json:"organizationID,omitempty" yaml:"organizationID,omitempty"`
+}
+
+type ListRegionsOutput struct {
+	OrganizationID string          `json:"organizationID" yaml:"organizationID"`
+	Regions        []RegionSummary `json:"regions" yaml:"regions"`
+}
+
+type RegionInput struct {
+	OrganizationID string
+	RegionID       string
+	Name           string
+}
+
+type RegionOutput struct {
+	OrganizationID string        `json:"organizationID" yaml:"organizationID"`
+	Region         RegionSummary `json:"region" yaml:"region"`
+}
+
+type RegionActionOutput struct {
+	OrganizationID string `json:"organizationID" yaml:"organizationID"`
+	RegionID       string `json:"regionID" yaml:"regionID"`
 	Action         string `json:"action" yaml:"action"`
 }
 
@@ -702,6 +738,116 @@ func (s PolicyActionService) Run(ctx context.Context, input PolicyActionInput) (
 	}
 }
 
+type ListRegionsService struct {
+	Client MembershipClient
+}
+
+func (s ListRegionsService) Run(ctx context.Context, organizationID string) (ListRegionsOutput, error) {
+	if s.Client == nil {
+		return ListRegionsOutput{}, fmt.Errorf("membership client is required")
+	}
+	if organizationID == "" {
+		return ListRegionsOutput{}, fmt.Errorf("organization id is required")
+	}
+	response, err := s.Client.ListRegions(ctx, operations.ListRegionsRequest{OrganizationID: organizationID})
+	if err != nil {
+		return ListRegionsOutput{}, err
+	}
+	if response.GetListRegionsResponse() == nil {
+		return ListRegionsOutput{}, fmt.Errorf("cloud regions list returned no regions")
+	}
+	data := response.GetListRegionsResponse().GetData()
+	regions := make([]RegionSummary, 0, len(data))
+	for i := range data {
+		regions = append(regions, regionSummaryFromAny(&data[i]))
+	}
+	return ListRegionsOutput{OrganizationID: organizationID, Regions: regions}, nil
+}
+
+type ReadRegionService struct {
+	Client MembershipClient
+}
+
+func (s ReadRegionService) Run(ctx context.Context, input RegionInput) (RegionOutput, error) {
+	if s.Client == nil {
+		return RegionOutput{}, fmt.Errorf("membership client is required")
+	}
+	if err := validateRegionTarget(input.OrganizationID, input.RegionID); err != nil {
+		return RegionOutput{}, err
+	}
+	response, err := s.Client.GetRegion(ctx, operations.GetRegionRequest{
+		OrganizationID: input.OrganizationID,
+		RegionID:       input.RegionID,
+	})
+	if err != nil {
+		return RegionOutput{}, err
+	}
+	if response.GetGetRegionResponse() == nil {
+		return RegionOutput{}, fmt.Errorf("cloud regions show returned no region")
+	}
+	region := response.GetGetRegionResponse().GetData()
+	return RegionOutput{OrganizationID: input.OrganizationID, Region: regionSummaryFromAny(&region)}, nil
+}
+
+type CreateRegionService struct {
+	Client MembershipClient
+}
+
+func (s CreateRegionService) Run(ctx context.Context, input RegionInput) (RegionOutput, error) {
+	if s.Client == nil {
+		return RegionOutput{}, fmt.Errorf("membership client is required")
+	}
+	if input.OrganizationID == "" {
+		return RegionOutput{}, fmt.Errorf("organization id is required")
+	}
+	if input.Name == "" {
+		return RegionOutput{}, fmt.Errorf("region name is required")
+	}
+	response, err := s.Client.CreatePrivateRegion(ctx, operations.CreatePrivateRegionRequest{
+		OrganizationID: input.OrganizationID,
+		Body:           &components.CreatePrivateRegionRequest{Name: input.Name},
+	})
+	if err != nil {
+		return RegionOutput{}, err
+	}
+	if response.GetCreatedPrivateRegionResponse() == nil {
+		return RegionOutput{}, fmt.Errorf("cloud regions create returned no region")
+	}
+	region := response.GetCreatedPrivateRegionResponse().GetData()
+	return RegionOutput{OrganizationID: input.OrganizationID, Region: regionSummaryFromPrivate(&region)}, nil
+}
+
+type DeleteRegionService struct {
+	Client MembershipClient
+}
+
+func (s DeleteRegionService) Run(ctx context.Context, input RegionInput) (RegionActionOutput, error) {
+	if s.Client == nil {
+		return RegionActionOutput{}, fmt.Errorf("membership client is required")
+	}
+	if err := validateRegionTarget(input.OrganizationID, input.RegionID); err != nil {
+		return RegionActionOutput{}, err
+	}
+	_, err := s.Client.DeleteRegion(ctx, operations.DeleteRegionRequest{
+		OrganizationID: input.OrganizationID,
+		RegionID:       input.RegionID,
+	})
+	if err != nil {
+		return RegionActionOutput{}, err
+	}
+	return RegionActionOutput{OrganizationID: input.OrganizationID, RegionID: input.RegionID, Action: "delete"}, nil
+}
+
+func validateRegionTarget(organizationID string, regionID string) error {
+	if organizationID == "" {
+		return fmt.Errorf("organization id is required")
+	}
+	if regionID == "" {
+		return fmt.Errorf("region id is required")
+	}
+	return nil
+}
+
 func validatePolicyTarget(organizationID string, policyID int64) error {
 	if organizationID == "" {
 		return fmt.Errorf("organization id is required")
@@ -774,6 +920,43 @@ func scopeSummary(scope *components.Scope) ScopeSummary {
 	}
 	if scope.ApplicationID != nil {
 		summary.ApplicationID = *scope.ApplicationID
+	}
+	return summary
+}
+
+func regionSummaryFromAny(region *components.AnyRegion) RegionSummary {
+	if region == nil {
+		return RegionSummary{}
+	}
+	summary := RegionSummary{
+		ID:      region.ID,
+		Name:    region.Name,
+		BaseURL: region.BaseURL,
+		Active:  region.Active,
+		Public:  region.Public,
+	}
+	if region.Version != nil {
+		summary.Version = *region.Version
+	}
+	if region.OrganizationID != nil {
+		summary.OrganizationID = *region.OrganizationID
+	}
+	return summary
+}
+
+func regionSummaryFromPrivate(region *components.PrivateRegion) RegionSummary {
+	if region == nil {
+		return RegionSummary{}
+	}
+	summary := RegionSummary{
+		ID:             region.ID,
+		Name:           region.Name,
+		BaseURL:        region.BaseURL,
+		Active:         region.Active,
+		OrganizationID: region.OrganizationID,
+	}
+	if region.Version != nil {
+		summary.Version = *region.Version
 	}
 	return summary
 }
