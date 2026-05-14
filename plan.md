@@ -109,6 +109,10 @@ Implementation v4:
 - `--insecure-tls` est conserve comme override runtime explicite et non persistant; il configure le client HTTP partage par `/versions`, les SDK stack, les SDK Cloud et les flux `client_credentials`.
 - `--no-color` est expose comme flag stable pour CI/golden tests; les renderers v4 restent sans couleur par defaut.
 
+Points bloques / differes:
+
+- `--telemetry` est differe tant que le modele opt-in/opt-out, l'emplacement d'etat et les donnees collectees ne sont pas documentes; ne pas ajouter de flag no-op silencieux.
+
 ## Migration configuration et session
 
 | v3 | v4 canonique | Changements | Tests critiques |
@@ -145,6 +149,11 @@ Implementation v4:
 - `auth logout --confirm` supprime les credentials stockes localement quand ils utilisent un ref gere par le CLI, puis repasse le contexte en `none`.
 - `context unset-defaults [name] --confirm` supprime les defaults du contexte sans toucher a l'auth ni aux credentials; les aliases deprecies `profiles reset`, `profiles set-default-organization` et `profiles set-default-stack` restent disponibles pour les migrations peu couteuses.
 - `ui [--print]` reste disponible sur les contextes `cloud`/`cloud-stack`; il lit `/_info.consoleURL`, ouvre le navigateur seulement en mode interactif, et refuse les contextes `stack`.
+
+Points bloques / differes:
+
+- `auth login cloud` reste a implementer avec un vrai contrat de device/browser flow ou d'import de token Cloud; il ne doit pas recreer une dependance Cloud pour les commandes stack locales.
+- `auth login oidc` reste a implementer quand le contrat generic device flow est stabilise (device authorization endpoint, scopes, refresh, stockage); `auth login client-credentials` couvre deja le cas machine-to-machine.
 
 ## Mapping commandes Cloud
 

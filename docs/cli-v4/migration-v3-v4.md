@@ -64,6 +64,15 @@ such as `--secret-stdin` when available. Plain text output must not print clear
 secrets returned by APIs. Structured output can expose explicit response fields
 when the command is intentionally machine-readable.
 
+## Deferred Items
+
+- `auth login cloud` is deferred until the Cloud device/browser login contract is
+  explicit in v4. Stack commands must remain usable without Cloud membership.
+- `auth login oidc` is deferred until the generic device-flow contract is
+  specified. Use `auth login client-credentials` for machine-to-machine auth.
+- `--telemetry` is deferred until opt-in/out behavior and stored state are
+  documented.
+
 ## Compatibility Warnings
 
 Deprecated aliases should write warnings to stderr and include the canonical v4
