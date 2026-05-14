@@ -16,7 +16,9 @@ import (
 const (
 	Version = 4
 
-	EnvContext = "FCTL_CONTEXT"
+	EnvContext              = "FCTL_CONTEXT"
+	DefaultCloudContextName = "formance-cloud"
+	DefaultCloudURL         = "https://app.formance.cloud/api"
 )
 
 type ContextKind string
@@ -79,6 +81,14 @@ func New() Config {
 	return Config{
 		Version:  Version,
 		Contexts: map[string]Context{},
+	}
+}
+
+func DefaultCloudContext() Context {
+	return Context{
+		Kind:     ContextKindCloud,
+		CloudURL: DefaultCloudURL,
+		Auth:     Auth{Method: AuthMethodNone},
 	}
 }
 

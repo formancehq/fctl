@@ -41,6 +41,26 @@ contexts:
 - `cloud`: Formance Cloud control plane target.
 - `cloud-stack`: stack target discovered or authorized through Formance Cloud.
 
+## Default Bootstrap Context
+
+When no v4 config exists yet, `session login token` and
+`session login client-credentials` may bootstrap a default Cloud control-plane
+context:
+
+```yaml
+currentContext: formance-cloud
+contexts:
+  formance-cloud:
+    kind: cloud
+    cloudURL: https://app.formance.cloud/api
+    auth:
+      method: none
+```
+
+The login command then replaces `auth` on that context with the requested
+method. Product commands still require an explicit `stack` or `cloud-stack`
+context before they can target a stack.
+
 ## Auth Methods
 
 - `cloud_device`
@@ -59,4 +79,7 @@ Use XDG-aware locations:
 - cache: discovery and temporary API tokens
 - state: telemetry IDs and non-secret local state
 
-Keep credentials in a system keyring when available.
+Keep credentials in a system keyring when available. Until the v4 keyring
+backend is wired, commands store secrets under the v4 config directory
+`credentials/` subdirectory by default, or under `--credential-dir` when
+provided. Secret values must not be written to `config.yaml`.

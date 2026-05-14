@@ -110,7 +110,7 @@ func newSessionLoginTokenCommand() *cobra.Command {
 		Short: "Use a static bearer token for the selected context",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			cfg, path, name, context, err := selectedContextForSession(cmd)
+			cfg, path, name, context, err := selectedContextForSessionLogin(cmd)
 			if err != nil {
 				return err
 			}
@@ -170,7 +170,7 @@ func newSessionLoginClientCredentialsCommand() *cobra.Command {
 		Short: "Use OAuth client credentials for the selected context",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			cfg, path, name, context, err := selectedContextForSession(cmd)
+			cfg, path, name, context, err := selectedContextForSessionLogin(cmd)
 			if err != nil {
 				return err
 			}
@@ -270,6 +270,29 @@ func selectedContextForSession(cmd *cobra.Command) (v4config.Config, string, str
 	contextName, err := contextNameFromCommand(cmd)
 	if err != nil {
 		return v4config.Config{}, "", "", v4config.Context{}, err
+	}
+	name, context, err := v4config.ResolveCurrentContext(cfg, v4config.ContextOverride{Name: contextName})
+	if err != nil {
+		return v4config.Config{}, "", "", v4config.Context{}, err
+	}
+	return cfg, path, name, context, nil
+}
+
+func selectedContextForSessionLogin(cmd *cobra.Command) (v4config.Config, string, string, v4config.Context, error) {
+	cfg, path, err := loadConfig(cmd, true)
+	if err != nil {
+		return v4config.Config{}, "", "", v4config.Context{}, err
+	}
+	contextName, err := contextNameFromCommand(cmd)
+	if err != nil {
+		return v4config.Config{}, "", "", v4config.Context{}, err
+	}
+	if len(cfg.Contexts) == 0 && contextName == "" {
+		contextName = v4config.DefaultCloudContextName
+		cfg.Contexts = map[string]v4config.Context{
+			contextName: v4config.DefaultCloudContext(),
+		}
+		cfg.CurrentContext = contextName
 	}
 	name, context, err := v4config.ResolveCurrentContext(cfg, v4config.ContextOverride{Name: contextName})
 	if err != nil {

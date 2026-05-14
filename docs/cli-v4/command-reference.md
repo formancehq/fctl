@@ -211,8 +211,8 @@ Wallet credit and debit require the wallet target explicitly.
 ## Session
 
 - `fctl session login cloud --cloud-url <url>` (deferred until Cloud device/browser login contract is explicit)
-- `fctl session login token --token-stdin --credential-dir <dir>`
-- `fctl session login client-credentials --issuer-url <url> --client-id <id> --client-secret-stdin --credential-dir <dir>`
+- `fctl session login token --token-stdin`
+- `fctl session login client-credentials --issuer-url <url> --client-id <id> --client-secret-stdin`
 - `fctl session login oidc --issuer-url <url> --client-id <id>` (deferred until generic device flow contract is specified)
 - `fctl session login none`
 - `fctl session status`
@@ -222,6 +222,9 @@ Wallet credit and debit require the wallet target explicitly.
 `session` owns CLI authentication state for the selected context. The former
 root `login` command and `auth login/status/token/logout` paths are not kept as
 aliases in v4, so `auth` can remain the stack Auth service command.
+If no v4 config exists yet, `session login token` and
+`session login client-credentials` bootstrap a `formance-cloud` Cloud context
+pointing at `https://app.formance.cloud/api`.
 
 ## Auth
 

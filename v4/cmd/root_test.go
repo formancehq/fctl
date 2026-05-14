@@ -2335,6 +2335,41 @@ func TestSessionLoginTokenStoresCredentialAndUpdatesContext(t *testing.T) {
 	}
 }
 
+func TestSessionLoginTokenUsesDefaultCredentialDir(t *testing.T) {
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", "http://localhost",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"session", "login", "token",
+		"--token", "stack-token",
+	)
+	if err != nil {
+		t.Fatalf("session login token with default credential dir: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"session", "token",
+	)
+	if err != nil {
+		t.Fatalf("session token with default credential dir: %v stderr=%s", err, stderr)
+	}
+	if stdout != "stack-token\n" {
+		t.Fatalf("unexpected session token output: %q", stdout)
+	}
+	if _, err := os.Stat(filepath.Join(configDir, "credentials", "contexts", "local", "token")); err != nil {
+		t.Fatalf("expected token in default credential dir: %v", err)
+	}
+}
+
 func TestSessionLoginClientCredentialsStoresSecret(t *testing.T) {
 	configDir := t.TempDir()
 	credentialDir := t.TempDir()
@@ -2375,6 +2410,45 @@ func TestSessionLoginClientCredentialsStoresSecret(t *testing.T) {
 		t.Fatalf("expected client credentials config:\n%s", string(configData))
 	}
 	secretData, err := os.ReadFile(filepath.Join(credentialDir, "contexts", "local", "client-secret"))
+	if err != nil {
+		t.Fatalf("read stored secret: %v", err)
+	}
+	if string(secretData) != "super-secret" {
+		t.Fatalf("unexpected stored secret %q", secretData)
+	}
+}
+
+func TestSessionLoginClientCredentialsBootstrapsDefaultCloudContext(t *testing.T) {
+	configDir := t.TempDir()
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"session", "login", "client-credentials",
+		"--issuer-url", "https://app.formance.cloud/api",
+		"--client-id", "client",
+		"--client-secret", "super-secret",
+	)
+	if err != nil {
+		t.Fatalf("session login client-credentials bootstrap: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Authentication for context formance-cloud set to client credentials.\n" {
+		t.Fatalf("unexpected session login output: %q", stdout)
+	}
+
+	cfg, err := v4config.LoadFile(filepath.Join(configDir, "config.yaml"))
+	if err != nil {
+		t.Fatalf("load bootstrapped config: %v", err)
+	}
+	context := cfg.Contexts[v4config.DefaultCloudContextName]
+	if cfg.CurrentContext != v4config.DefaultCloudContextName ||
+		context.Kind != v4config.ContextKindCloud ||
+		context.CloudURL != v4config.DefaultCloudURL ||
+		context.Auth.Method != v4config.AuthMethodClientCredentials ||
+		context.Auth.ClientID != "client" ||
+		context.Auth.SecretRef != "contexts/formance-cloud/client-secret" {
+		t.Fatalf("unexpected bootstrapped context: current=%q context=%#v", cfg.CurrentContext, context)
+	}
+	secretData, err := os.ReadFile(filepath.Join(configDir, "credentials", "contexts", "formance-cloud", "client-secret"))
 	if err != nil {
 		t.Fatalf("read stored secret: %v", err)
 	}

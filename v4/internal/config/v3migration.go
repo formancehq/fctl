@@ -13,8 +13,6 @@ import (
 	"github.com/formancehq/fctl/v4/internal/credentials"
 )
 
-const DefaultCloudURL = "https://app.formance.cloud/api"
-
 type V3State struct {
 	Config   V3Config
 	Profiles map[string]V3Profile

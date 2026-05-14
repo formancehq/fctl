@@ -142,8 +142,10 @@ Points bloques / differes:
 
 Implementation v4:
 
-- `session login token` met a jour le contexte selectionne et peut stocker le token dans un `--credential-dir` explicite via `--token` ou `--token-stdin`;
-- `session login client-credentials` met a jour le contexte selectionne et peut stocker le secret client dans un `--credential-dir` explicite via `--client-secret` ou `--client-secret-stdin`;
+- `session login token` met a jour le contexte selectionne et stocke le token hors config via `--token` ou `--token-stdin`;
+- `session login client-credentials` met a jour le contexte selectionne et stocke le secret client hors config via `--client-secret` ou `--client-secret-stdin`;
+- tant que le backend keyring v4 n'est pas branche, les secrets vont par defaut dans `<config-dir>/credentials`, avec override possible par `--credential-dir`;
+- si aucune config v4 n'existe, `session login token` et `session login client-credentials` creent un contexte Cloud par defaut `formance-cloud` pointant vers `https://app.formance.cloud/api`;
 - `session login none` desactive l'auth sur un contexte `stack`; sur `cloud`/`cloud-stack`, `--confirm` est requis pour eviter une desactivation accidentelle;
 - `session status` affiche la methode d'auth du contexte courant sans exposer les secrets;
 - `session token` imprime le token d'acces resolu pour les contextes authentifies, afin de faciliter CI et debug;
