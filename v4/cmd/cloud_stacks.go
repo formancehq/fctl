@@ -1,8 +1,12 @@
 package cmd
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"io"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -61,11 +65,35 @@ func newCloudStacksCreateCommand() *cobra.Command {
 	var metadata []string
 
 	command := &cobra.Command{
-		Use:   "create <name>",
+		Use:   "create [name]",
 		Short: "Create a Cloud stack",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			input, err := newCloudStackCreateInput(cmd)
+			if err != nil {
+				return err
+			}
+			organizationID, err := resolveCloudOrganizationIDOrPrompt(cmd, rt, client, organizationID)
+			if err != nil {
+				return err
+			}
+			organizationClient, err := organizationMembershipClientFromRuntime(cmd, rt, organizationID)
+			if err != nil {
+				return err
+			}
+			stackName, err := input.resolveName(cmd, args)
+			if err != nil {
+				return err
+			}
+			regionID, err := input.resolveRegion(cmd, organizationClient, organizationID, regionID)
+			if err != nil {
+				return err
+			}
+			version, err := input.resolveVersion(cmd, organizationClient, organizationID, regionID, version)
 			if err != nil {
 				return err
 			}
@@ -73,9 +101,9 @@ func newCloudStacksCreateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			output, err := cloudcmd.CreateStackService{Client: client}.Run(cmd.Context(), cloudcmd.CreateStackInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
-				Name:           args[0],
+			output, err := cloudcmd.CreateStackService{Client: organizationClient}.Run(cmd.Context(), cloudcmd.CreateStackInput{
+				OrganizationID: organizationID,
+				Name:           stackName,
 				RegionID:       regionID,
 				Version:        version,
 				Metadata:       parsedMetadata,
@@ -94,6 +122,200 @@ func newCloudStacksCreateCommand() *cobra.Command {
 	command.Flags().StringVar(&version, "version", "", "Stack version")
 	command.Flags().StringArrayVar(&metadata, "metadata", nil, "Stack metadata as key=value")
 	return command
+}
+
+type cloudStackCreateInput struct {
+	nonInteractive bool
+	wizard         v4prompt.Wizard
+	reader         *bufio.Reader
+	customInput    bool
+}
+
+func newCloudStackCreateInput(cmd *cobra.Command) (cloudStackCreateInput, error) {
+	nonInteractive, err := cmd.Root().PersistentFlags().GetBool(nonInteractiveFlag)
+	if err != nil {
+		return cloudStackCreateInput{}, err
+	}
+	in := cmd.InOrStdin()
+	_, inputIsFile := in.(*os.File)
+	return cloudStackCreateInput{
+		nonInteractive: nonInteractive,
+		wizard:         v4prompt.NewWizard(in, cmd.ErrOrStderr()),
+		reader:         bufio.NewReader(in),
+		customInput:    !inputIsFile,
+	}, nil
+}
+
+func (i cloudStackCreateInput) resolveName(cmd *cobra.Command, args []string) (string, error) {
+	if len(args) > 0 && strings.TrimSpace(args[0]) != "" {
+		return strings.TrimSpace(args[0]), nil
+	}
+	value, err := i.input(cmd, "Enter a name", "cloud stacks create requires a stack name in non-interactive mode")
+	if err != nil {
+		return "", err
+	}
+	if value == "" {
+		return "", fmt.Errorf("stack name is required")
+	}
+	i.report(cmd, "Name", value)
+	return value, nil
+}
+
+func (i cloudStackCreateInput) resolveRegion(cmd *cobra.Command, client cloudcmd.MembershipClient, organizationID string, explicit string) (string, error) {
+	if strings.TrimSpace(explicit) != "" {
+		return strings.TrimSpace(explicit), nil
+	}
+	if i.nonInteractive {
+		return "", fmt.Errorf("cloud stacks create requires --region in non-interactive mode")
+	}
+	output, err := cloudcmd.ListRegionsService{Client: client}.Run(cmd.Context(), organizationID)
+	if err != nil {
+		return "", fmt.Errorf("list regions for selection: %w", err)
+	}
+	if len(output.Regions) == 0 {
+		return "", fmt.Errorf("cloud stacks create requires --region and no regions are available")
+	}
+	choices := make([]v4prompt.Choice, 0, len(output.Regions))
+	for _, region := range output.Regions {
+		choices = append(choices, v4prompt.Choice{
+			Title: cloudStackRegionChoiceTitle(region),
+			Value: region.ID,
+		})
+	}
+	value, err := i.selectRequired(cmd, "Please select a region", choices, "region id is required")
+	if err != nil {
+		return "", err
+	}
+	i.report(cmd, "Region", value)
+	return value, nil
+}
+
+func (i cloudStackCreateInput) resolveVersion(cmd *cobra.Command, client cloudcmd.MembershipClient, organizationID string, regionID string, explicit string) (string, error) {
+	if strings.TrimSpace(explicit) != "" {
+		return strings.TrimSpace(explicit), nil
+	}
+	if i.nonInteractive || (!i.wizard.Available() && !i.customInput) {
+		return "", nil
+	}
+	output, err := cloudcmd.ListRegionVersionsService{Client: client}.Run(cmd.Context(), cloudcmd.RegionInput{
+		OrganizationID: organizationID,
+		RegionID:       regionID,
+	})
+	if err != nil {
+		return "", fmt.Errorf("list region versions for selection: %w", err)
+	}
+	if len(output.Versions) == 0 {
+		return "", nil
+	}
+	choices := make([]v4prompt.Choice, 0, len(output.Versions))
+	for _, version := range output.Versions {
+		if strings.TrimSpace(version.Name) == "" {
+			continue
+		}
+		title := version.Name
+		if version.Deprecated {
+			title += " (deprecated)"
+		}
+		choices = append(choices, v4prompt.Choice{Title: title, Value: version.Name})
+	}
+	if len(choices) == 0 {
+		return "", nil
+	}
+	value, err := i.selectOptional(cmd, "Please select a version", choices)
+	if err != nil {
+		return "", err
+	}
+	i.report(cmd, "Version", value)
+	return value, nil
+}
+
+func (i cloudStackCreateInput) input(cmd *cobra.Command, label string, nonInteractiveMessage string) (string, error) {
+	if i.nonInteractive {
+		return "", errors.New(nonInteractiveMessage)
+	}
+	if i.wizard.Available() {
+		value, err := i.wizard.Input(label, "", false)
+		return strings.TrimSpace(value), err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s: ", label); err != nil {
+		return "", err
+	}
+	value, err := i.reader.ReadString('\n')
+	if err != nil && err != io.EOF {
+		return "", err
+	}
+	return strings.TrimSpace(value), nil
+}
+
+func (i cloudStackCreateInput) selectRequired(cmd *cobra.Command, title string, choices []v4prompt.Choice, emptyMessage string) (string, error) {
+	value, err := i.selectValue(cmd, title, choices)
+	if err != nil {
+		return "", err
+	}
+	if value == "" {
+		return "", errors.New(emptyMessage)
+	}
+	return value, nil
+}
+
+func (i cloudStackCreateInput) selectOptional(cmd *cobra.Command, title string, choices []v4prompt.Choice) (string, error) {
+	return i.selectValue(cmd, title, choices)
+}
+
+func (i cloudStackCreateInput) selectValue(cmd *cobra.Command, title string, choices []v4prompt.Choice) (string, error) {
+	if len(choices) == 0 {
+		return "", nil
+	}
+	if i.wizard.Available() {
+		return i.wizard.Select(title, choices)
+	}
+	if _, err := fmt.Fprintln(cmd.OutOrStdout(), title); err != nil {
+		return "", err
+	}
+	for index, choice := range choices {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%d. %s\n", index+1, choice.Title); err != nil {
+			return "", err
+		}
+	}
+	answer, err := i.input(cmd, "Choice", "interactive selection is disabled")
+	if err != nil {
+		return "", err
+	}
+	answer = strings.TrimSpace(answer)
+	if answer == "" {
+		return "", nil
+	}
+	if index, err := strconv.Atoi(answer); err == nil {
+		if index < 1 || index > len(choices) {
+			return "", fmt.Errorf("choice %d is out of range", index)
+		}
+		return choices[index-1].Value, nil
+	}
+	for _, choice := range choices {
+		if strings.EqualFold(answer, choice.Value) || strings.EqualFold(answer, choice.Title) {
+			return choice.Value, nil
+		}
+	}
+	return "", fmt.Errorf("unsupported choice %q", answer)
+}
+
+func (i cloudStackCreateInput) report(cmd *cobra.Command, label string, value string) {
+	if i.nonInteractive || strings.TrimSpace(value) == "" {
+		return
+	}
+	fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\n", label, value)
+}
+
+func cloudStackRegionChoiceTitle(region cloudcmd.RegionSummary) string {
+	visibility := "Private"
+	if region.Public {
+		visibility = "Public"
+	}
+	name := strings.TrimSpace(region.Name)
+	if name == "" {
+		name = "<noname>"
+	}
+	return fmt.Sprintf("%s | %s | %s", region.ID, visibility, name)
 }
 
 func newCloudStacksListCommand() *cobra.Command {

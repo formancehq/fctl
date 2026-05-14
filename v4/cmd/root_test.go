@@ -2618,6 +2618,67 @@ func TestCloudStacksMutations(t *testing.T) {
 	}
 }
 
+func TestCloudStacksCreatePromptsForNameRegionAndVersion(t *testing.T) {
+	stackBody := `{"data":{"id":"stack_1","name":"Production","organizationId":"org_1","uri":"https://stack.example/api","regionID":"eu-west-1","version":"v3.2.4","status":"READY","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":true,"stargateEnabled":true,"synchronised":true,"modules":[]}}`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/regions":
+			fmt.Fprint(w, `{"data":[{"id":"eu-west-1","name":"Europe","active":true,"public":true},{"id":"private-1","name":"Private region","active":true,"public":false}]}`)
+		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/regions/eu-west-1/versions":
+			fmt.Fprint(w, `{"data":[{"name":"v3.2.4","regionID":"eu-west-1"},{"name":"v3.2.3","regionID":"eu-west-1","deprecated":true}]}`)
+		case r.Method == http.MethodPost && r.URL.Path == "/organizations/org_1/stacks":
+			body := readRequestBody(t, r)
+			for _, expected := range []string{`"name":"Production"`, `"regionID":"eu-west-1"`, `"version":"v3.2.4"`} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected create body to contain %s, got %s", expected, body)
+				}
+			}
+			w.WriteHeader(http.StatusAccepted)
+			fmt.Fprint(w, stackBody)
+		default:
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud", "prod",
+		"--cloud-url", server.URL,
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommandWithInput(t,
+		"Production\n1\n1\n",
+		"--config-dir", configDir,
+		"--organization", "org_1",
+		"cloud", "stacks", "create",
+	)
+	if err != nil {
+		t.Fatalf("cloud stacks create wizard: %v stderr=%s stdout=%s", err, stderr, stdout)
+	}
+	for _, expected := range []string{
+		"Enter a name:",
+		"Name\tProduction",
+		"Please select a region",
+		"1. eu-west-1 | Public | Europe",
+		"Region\teu-west-1",
+		"Please select a version",
+		"1. v3.2.4",
+		"Version\tv3.2.4",
+		"Cloud stack stack_1 created.",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected wizard output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
 func TestCloudStacksHistory(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

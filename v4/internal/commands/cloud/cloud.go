@@ -38,6 +38,7 @@ type MembershipClient interface {
 	GetRegion(context.Context, operations.GetRegionRequest, ...operations.Option) (*operations.GetRegionResponse, error)
 	CreatePrivateRegion(context.Context, operations.CreatePrivateRegionRequest, ...operations.Option) (*operations.CreatePrivateRegionResponse, error)
 	DeleteRegion(context.Context, operations.DeleteRegionRequest, ...operations.Option) (*operations.DeleteRegionResponse, error)
+	GetRegionVersions(context.Context, operations.GetRegionVersionsRequest, ...operations.Option) (*operations.GetRegionVersionsResponse, error)
 	ListOrganizationApplications(context.Context, operations.ListOrganizationApplicationsRequest, ...operations.Option) (*operations.ListOrganizationApplicationsResponse, error)
 	GetOrganizationApplication(context.Context, operations.GetOrganizationApplicationRequest, ...operations.Option) (*operations.GetOrganizationApplicationResponse, error)
 	ReadAuthenticationProvider(context.Context, operations.ReadAuthenticationProviderRequest, ...operations.Option) (*operations.ReadAuthenticationProviderResponse, error)
@@ -248,6 +249,18 @@ type RegionSummary struct {
 type ListRegionsOutput struct {
 	OrganizationID string          `json:"organizationID" yaml:"organizationID"`
 	Regions        []RegionSummary `json:"regions" yaml:"regions"`
+}
+
+type RegionVersionSummary struct {
+	Name       string `json:"name" yaml:"name"`
+	RegionID   string `json:"regionID,omitempty" yaml:"regionID,omitempty"`
+	Deprecated bool   `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+}
+
+type ListRegionVersionsOutput struct {
+	OrganizationID string                 `json:"organizationID" yaml:"organizationID"`
+	RegionID       string                 `json:"regionID" yaml:"regionID"`
+	Versions       []RegionVersionSummary `json:"versions" yaml:"versions"`
 }
 
 type RegionInput struct {
@@ -914,6 +927,46 @@ func (s ListRegionsService) Run(ctx context.Context, organizationID string) (Lis
 		regions = append(regions, regionSummaryFromAny(&data[i]))
 	}
 	return ListRegionsOutput{OrganizationID: organizationID, Regions: regions}, nil
+}
+
+type ListRegionVersionsService struct {
+	Client MembershipClient
+}
+
+func (s ListRegionVersionsService) Run(ctx context.Context, input RegionInput) (ListRegionVersionsOutput, error) {
+	if s.Client == nil {
+		return ListRegionVersionsOutput{}, fmt.Errorf("membership client is required")
+	}
+	if input.OrganizationID == "" {
+		return ListRegionVersionsOutput{}, fmt.Errorf("organization id is required")
+	}
+	if input.RegionID == "" {
+		return ListRegionVersionsOutput{}, fmt.Errorf("region id is required")
+	}
+	response, err := s.Client.GetRegionVersions(ctx, operations.GetRegionVersionsRequest{
+		OrganizationID: input.OrganizationID,
+		RegionID:       input.RegionID,
+	})
+	if err != nil {
+		return ListRegionVersionsOutput{}, err
+	}
+	if response.GetGetRegionVersionsResponse() == nil {
+		return ListRegionVersionsOutput{}, fmt.Errorf("cloud region versions list returned no versions")
+	}
+	data := response.GetGetRegionVersionsResponse().GetData()
+	versions := make([]RegionVersionSummary, 0, len(data))
+	for i := range data {
+		deprecated := false
+		if data[i].Deprecated != nil {
+			deprecated = *data[i].Deprecated
+		}
+		versions = append(versions, RegionVersionSummary{
+			Name:       data[i].Name,
+			RegionID:   data[i].RegionID,
+			Deprecated: deprecated,
+		})
+	}
+	return ListRegionVersionsOutput{OrganizationID: input.OrganizationID, RegionID: input.RegionID, Versions: versions}, nil
 }
 
 type ReadRegionService struct {
