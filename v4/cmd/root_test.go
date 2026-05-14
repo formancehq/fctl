@@ -571,6 +571,70 @@ func TestCloudOrganizationsMutations(t *testing.T) {
 	}
 }
 
+func TestCloudOrganizationInvitations(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/invitations":
+			if got := r.URL.Query().Get("status"); got != "PENDING" {
+				t.Fatalf("expected status PENDING, got %q", got)
+			}
+			fmt.Fprint(w, `{"data":[{"id":"inv_1","organizationId":"org_1","userEmail":"user@example.com","status":"PENDING","creationDate":"2026-01-01T00:00:00Z"}]}`)
+		case r.Method == http.MethodPost && r.URL.Path == "/organizations/org_1/invitations":
+			if got := r.URL.Query().Get("email"); got != "user@example.com" {
+				t.Fatalf("expected email query, got %q", got)
+			}
+			fmt.Fprint(w, `{"data":{"id":"inv_1","organizationId":"org_1","userEmail":"user@example.com","status":"PENDING","creationDate":"2026-01-01T00:00:00Z"}}`)
+		case r.Method == http.MethodDelete && r.URL.Path == "/organizations/org_1/invitations/inv_1":
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", server.URL,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "invitations", "list", "--status", "PENDING")
+	if err != nil {
+		t.Fatalf("cloud organizations invitations list: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "inv_1\torg_1\tuser@example.com\tPENDING") {
+		t.Fatalf("unexpected invitations list output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "invitations", "send", "user@example.com")
+	if err != nil {
+		t.Fatalf("cloud organizations invitations send: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud invitation inv_1 sent.\n" {
+		t.Fatalf("unexpected invitation send output: %q", stdout)
+	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "invitations", "delete", "inv_1")
+	if err == nil {
+		t.Fatal("expected invitation delete to require --confirm")
+	}
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "invitations", "delete", "inv_1", "--confirm")
+	if err != nil {
+		t.Fatalf("cloud organizations invitations delete: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud invitation inv_1 deleted.\n" {
+		t.Fatalf("unexpected invitation delete output: %q", stdout)
+	}
+}
+
 func TestCloudCommandsRejectStackContext(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Fatalf("cloud command must reject stack contexts before network calls")

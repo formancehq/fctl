@@ -144,6 +144,7 @@ func newCloudOrganizationsCommand() *cobra.Command {
 	command.AddCommand(newCloudOrganizationsShowCommand("describe", nil, true))
 	command.AddCommand(newCloudOrganizationsUpdateCommand())
 	command.AddCommand(newCloudOrganizationsDeleteCommand())
+	command.AddCommand(newCloudOrganizationsInvitationsCommand())
 	return command
 }
 
@@ -179,6 +180,113 @@ func newCloudOrganizationsCreateCommand() *cobra.Command {
 	command.Flags().StringVar(&domain, "domain", "", "Organization domain")
 	command.Flags().Int64Var(&defaultPolicyID, "default-policy-id", 0, "Default policy ID")
 	command.Flags().StringVar(&ownerID, "owner-id", "", "Organization owner user ID")
+	return command
+}
+
+func newCloudOrganizationsInvitationsCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "invitations",
+		Short: "Manage Cloud organization invitations",
+	}
+	command.AddCommand(newCloudOrganizationsInvitationsListCommand())
+	command.AddCommand(newCloudOrganizationsInvitationsSendCommand())
+	command.AddCommand(newCloudOrganizationsInvitationsDeleteCommand())
+	return command
+}
+
+func newCloudOrganizationsInvitationsListCommand() *cobra.Command {
+	var organizationID string
+	var status string
+
+	command := &cobra.Command{
+		Use:   "list",
+		Short: "List Cloud organization invitations",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ListOrganizationInvitationsService{Client: client}.Run(cmd.Context(), cloudcmd.ListOrganizationInvitationsInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				Status:         status,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudInvitations(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	command.Flags().StringVar(&status, "status", "", "Invitation status")
+	return command
+}
+
+func newCloudOrganizationsInvitationsSendCommand() *cobra.Command {
+	var organizationID string
+
+	command := &cobra.Command{
+		Use:   "send <email>",
+		Short: "Send a Cloud organization invitation",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			invitation, err := cloudcmd.CreateInvitationService{Client: client}.Run(cmd.Context(), cloudcmd.CreateInvitationInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				Email:          args[0],
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, map[string]cloudcmd.InvitationSummary{"invitation": invitation}); handled || err != nil {
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Cloud invitation %s sent.\n", invitation.ID)
+			return err
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	return command
+}
+
+func newCloudOrganizationsInvitationsDeleteCommand() *cobra.Command {
+	var organizationID string
+	var confirm bool
+
+	command := &cobra.Command{
+		Use:   "delete <invitation-id>",
+		Short: "Delete a Cloud organization invitation",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("cloud organizations invitations delete requires --confirm")
+			}
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.DeleteInvitationService{Client: client}.Run(cmd.Context(), cloudcmd.OrganizationInvitationActionInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				InvitationID:   args[0],
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Cloud invitation %s deleted.\n", output.InvitationID)
+			return err
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm invitation deletion")
 	return command
 }
 

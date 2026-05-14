@@ -29,6 +29,9 @@ This reference lists the current canonical v4 command families implemented under
 - `fctl cloud organizations show <organization-id>`
 - `fctl cloud organizations update <organization-id> --name <name>`
 - `fctl cloud organizations delete <organization-id> --confirm`
+- `fctl cloud organizations invitations list --organization <organization-id>`
+- `fctl cloud organizations invitations send <email> --organization <organization-id>`
+- `fctl cloud organizations invitations delete <invitation-id> --organization <organization-id> --confirm`
 
 Cloud commands require a `cloud` or `cloud-stack` context. They are not required
 for direct local or self-hosted stack commands.

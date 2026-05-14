@@ -19,6 +19,9 @@ type MembershipClient interface {
 	ListInvitations(context.Context, operations.ListInvitationsRequest, ...operations.Option) (*operations.ListInvitationsResponse, error)
 	AcceptInvitation(context.Context, operations.AcceptInvitationRequest, ...operations.Option) (*operations.AcceptInvitationResponse, error)
 	DeclineInvitation(context.Context, operations.DeclineInvitationRequest, ...operations.Option) (*operations.DeclineInvitationResponse, error)
+	ListOrganizationInvitations(context.Context, operations.ListOrganizationInvitationsRequest, ...operations.Option) (*operations.ListOrganizationInvitationsResponse, error)
+	CreateInvitation(context.Context, operations.CreateInvitationRequest, ...operations.Option) (*operations.CreateInvitationResponse, error)
+	DeleteInvitation(context.Context, operations.DeleteInvitationRequest, ...operations.Option) (*operations.DeleteInvitationResponse, error)
 }
 
 type UserSummary struct {
@@ -104,6 +107,27 @@ type ListInvitationsOutput struct {
 type InvitationActionOutput struct {
 	InvitationID string `json:"invitationID" yaml:"invitationID"`
 	Action       string `json:"action" yaml:"action"`
+}
+
+type ListOrganizationInvitationsInput struct {
+	OrganizationID string
+	Status         string
+}
+
+type CreateInvitationInput struct {
+	OrganizationID string
+	Email          string
+}
+
+type OrganizationInvitationActionInput struct {
+	OrganizationID string
+	InvitationID   string
+}
+
+type OrganizationInvitationActionOutput struct {
+	OrganizationID string `json:"organizationID" yaml:"organizationID"`
+	InvitationID   string `json:"invitationID" yaml:"invitationID"`
+	Action         string `json:"action" yaml:"action"`
 }
 
 type MeService struct {
@@ -300,6 +324,84 @@ func (s InvitationActionService) Run(ctx context.Context, invitationID string) (
 	default:
 		return InvitationActionOutput{}, fmt.Errorf("unsupported invitation action %q", s.Action)
 	}
+}
+
+type ListOrganizationInvitationsService struct {
+	Client MembershipClient
+}
+
+func (s ListOrganizationInvitationsService) Run(ctx context.Context, input ListOrganizationInvitationsInput) (ListInvitationsOutput, error) {
+	if s.Client == nil {
+		return ListInvitationsOutput{}, fmt.Errorf("membership client is required")
+	}
+	if input.OrganizationID == "" {
+		return ListInvitationsOutput{}, fmt.Errorf("organization id is required")
+	}
+	request := operations.ListOrganizationInvitationsRequest{OrganizationID: input.OrganizationID}
+	if input.Status != "" {
+		request.Status = &input.Status
+	}
+	response, err := s.Client.ListOrganizationInvitations(ctx, request)
+	if err != nil {
+		return ListInvitationsOutput{}, err
+	}
+	data := response.GetListInvitationsResponse().GetData()
+	invitations := make([]InvitationSummary, 0, len(data))
+	for i := range data {
+		invitations = append(invitations, invitationSummary(&data[i]))
+	}
+	return ListInvitationsOutput{Invitations: invitations}, nil
+}
+
+type CreateInvitationService struct {
+	Client MembershipClient
+}
+
+func (s CreateInvitationService) Run(ctx context.Context, input CreateInvitationInput) (InvitationSummary, error) {
+	if s.Client == nil {
+		return InvitationSummary{}, fmt.Errorf("membership client is required")
+	}
+	if input.OrganizationID == "" {
+		return InvitationSummary{}, fmt.Errorf("organization id is required")
+	}
+	if input.Email == "" {
+		return InvitationSummary{}, fmt.Errorf("invitation email is required")
+	}
+	response, err := s.Client.CreateInvitation(ctx, operations.CreateInvitationRequest{
+		OrganizationID: input.OrganizationID,
+		Email:          input.Email,
+	})
+	if err != nil {
+		return InvitationSummary{}, err
+	}
+	if response.GetCreateInvitationResponse().GetData() == nil {
+		return InvitationSummary{}, fmt.Errorf("cloud organizations invitations send returned no invitation")
+	}
+	return invitationSummary(response.GetCreateInvitationResponse().GetData()), nil
+}
+
+type DeleteInvitationService struct {
+	Client MembershipClient
+}
+
+func (s DeleteInvitationService) Run(ctx context.Context, input OrganizationInvitationActionInput) (OrganizationInvitationActionOutput, error) {
+	if s.Client == nil {
+		return OrganizationInvitationActionOutput{}, fmt.Errorf("membership client is required")
+	}
+	if input.OrganizationID == "" {
+		return OrganizationInvitationActionOutput{}, fmt.Errorf("organization id is required")
+	}
+	if input.InvitationID == "" {
+		return OrganizationInvitationActionOutput{}, fmt.Errorf("invitation id is required")
+	}
+	_, err := s.Client.DeleteInvitation(ctx, operations.DeleteInvitationRequest{
+		OrganizationID: input.OrganizationID,
+		InvitationID:   input.InvitationID,
+	})
+	if err != nil {
+		return OrganizationInvitationActionOutput{}, err
+	}
+	return OrganizationInvitationActionOutput{OrganizationID: input.OrganizationID, InvitationID: input.InvitationID, Action: "delete"}, nil
 }
 
 func organizationSummary(organization *components.OrganizationExpanded) OrganizationSummary {
