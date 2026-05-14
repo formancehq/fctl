@@ -15,10 +15,26 @@ import (
 
 const (
 	ProductPayments           capabilities.Product = "payments"
+	FeatureCreateAccount      capabilities.Feature = "createAccount"
 	FeatureGetAccount         capabilities.Feature = "getAccount"
 	FeatureGetAccountBalances capabilities.Feature = "getAccountBalances"
 	FeatureListAccounts       capabilities.Feature = "listAccounts"
 )
+
+type CreateAccountInput struct {
+	AccountName  string
+	ConnectorID  string
+	CreatedAt    time.Time
+	DefaultAsset string
+	Metadata     map[string]string
+	Reference    string
+	Type         string
+}
+
+type CreateAccountOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	AccountID  string                  `json:"accountID" yaml:"accountID"`
+}
 
 type ListAccountsInput struct {
 	PageSize int64
@@ -85,6 +101,11 @@ type ListAccountsHandler struct {
 	Run        func(context.Context, ListAccountsInput) (ListAccountsOutput, error)
 }
 
+type CreateAccountHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, CreateAccountInput) (CreateAccountOutput, error)
+}
+
 type GetAccountHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, GetAccountInput) (GetAccountOutput, error)
@@ -97,6 +118,11 @@ type ListAccountBalancesHandler struct {
 
 type ListAccountsService struct {
 	Handlers []ListAccountsHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type CreateAccountService struct {
+	Handlers []CreateAccountHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -128,6 +154,35 @@ func (s ListAccountsService) Run(ctx context.Context, input ListAccountsInput) (
 	output, err := handler.Run(ctx, input)
 	if err != nil {
 		return ListAccountsOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func (s CreateAccountService) Run(ctx context.Context, input CreateAccountInput) (CreateAccountOutput, error) {
+	if input.ConnectorID == "" {
+		return CreateAccountOutput{}, fmt.Errorf("connector id is required")
+	}
+	if input.Type != "INTERNAL" && input.Type != "EXTERNAL" && input.Type != "UNKNOWN" {
+		return CreateAccountOutput{}, fmt.Errorf("unsupported account type %q: expected INTERNAL, EXTERNAL, or UNKNOWN", input.Type)
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]CreateAccountHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return CreateAccountOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return CreateAccountOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return CreateAccountOutput{}, err
 	}
 	output.APIVersion = selected
 	return output, nil
@@ -183,6 +238,53 @@ func (s ListAccountBalancesService) Run(ctx context.Context, input ListAccountBa
 	}
 	output.APIVersion = selected
 	return output, nil
+}
+
+func SDKCreateAccountHandlers(sdk *formance.Formance) []CreateAccountHandler {
+	return []CreateAccountHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input CreateAccountInput) (CreateAccountOutput, error) {
+				response, err := sdk.Payments.V1.CreateAccount(ctx, shared.AccountRequest{
+					AccountName:  optionalString(input.AccountName),
+					ConnectorID:  input.ConnectorID,
+					CreatedAt:    input.CreatedAt,
+					DefaultAsset: optionalString(input.DefaultAsset),
+					Metadata:     input.Metadata,
+					Reference:    input.Reference,
+					Type:         shared.AccountType(input.Type),
+				})
+				if err != nil {
+					return CreateAccountOutput{}, err
+				}
+				if response.PaymentsAccountResponse == nil {
+					return CreateAccountOutput{}, fmt.Errorf("payments v1 create account returned no data")
+				}
+				return CreateAccountOutput{AccountID: response.PaymentsAccountResponse.Data.ID}, nil
+			},
+		},
+		{
+			APIVersion: "v3",
+			Run: func(ctx context.Context, input CreateAccountInput) (CreateAccountOutput, error) {
+				response, err := sdk.Payments.V3.CreateAccount(ctx, &shared.V3CreateAccountRequest{
+					AccountName:  input.AccountName,
+					ConnectorID:  input.ConnectorID,
+					CreatedAt:    input.CreatedAt,
+					DefaultAsset: optionalString(input.DefaultAsset),
+					Metadata:     input.Metadata,
+					Reference:    input.Reference,
+					Type:         shared.V3AccountTypeEnum(input.Type),
+				})
+				if err != nil {
+					return CreateAccountOutput{}, err
+				}
+				if response.V3CreateAccountResponse == nil {
+					return CreateAccountOutput{}, fmt.Errorf("payments v3 create account returned no data")
+				}
+				return CreateAccountOutput{AccountID: response.V3CreateAccountResponse.Data.ID}, nil
+			},
+		},
+	}
 }
 
 func SDKListAccountsHandlers(sdk *formance.Formance) []ListAccountsHandler {
