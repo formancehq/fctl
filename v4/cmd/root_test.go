@@ -632,6 +632,104 @@ func TestLedgerExportSelectsV2ToStdout(t *testing.T) {
 	}
 }
 
+func TestLedgerImportSelectsV2FromFile(t *testing.T) {
+	input := "{\"id\":1}\n{\"id\":2}\n"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default/logs/import":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			body := readRequestBody(t, r)
+			if body != input {
+				t.Fatalf("unexpected import body: %q", body)
+			}
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	inputPath := filepath.Join(t.TempDir(), "import.jsonl")
+	if err := os.WriteFile(inputPath, []byte(input), 0o600); err != nil {
+		t.Fatalf("write import file: %v", err)
+	}
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "import", "default",
+		"--file", inputPath,
+	)
+	if err != nil {
+		t.Fatalf("import ledger: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v2",
+		"Ledger default imported.",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestLedgerImportAcceptsDeprecatedPositionalFile(t *testing.T) {
+	input := "{\"id\":1}\n"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default/logs/import":
+			if body := readRequestBody(t, r); body != input {
+				t.Fatalf("unexpected import body: %q", body)
+			}
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	inputPath := filepath.Join(t.TempDir(), "import.jsonl")
+	if err := os.WriteFile(inputPath, []byte(input), 0o600); err != nil {
+		t.Fatalf("write import file: %v", err)
+	}
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "import", "default", inputPath,
+	)
+	if err != nil {
+		t.Fatalf("import ledger: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "Ledger default imported.") {
+		t.Fatalf("unexpected output:\n%s", stdout)
+	}
+}
+
 func TestLedgerAccountsListSelectsV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

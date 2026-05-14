@@ -16,6 +16,7 @@ const (
 	FeatureCreateLedger         capabilities.Feature = "createLedger"
 	FeatureDeleteLedgerMetadata capabilities.Feature = "deleteLedgerMetadata"
 	FeatureExportLogs           capabilities.Feature = "exportLogs"
+	FeatureImportLogs           capabilities.Feature = "importLogs"
 	FeatureListLedgers          capabilities.Feature = "listLedgers"
 	FeatureUpdateLedgerMetadata capabilities.Feature = "updateLedgerMetadata"
 )

@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -25,6 +26,7 @@ func newLedgerCommand() *cobra.Command {
 	command.AddCommand(newLedgerCreateCommand())
 	command.AddCommand(newLedgerDeleteMetadataCommand())
 	command.AddCommand(newLedgerExportCommand())
+	command.AddCommand(newLedgerImportCommand())
 	command.AddCommand(newLedgerListCommand())
 	command.AddCommand(newLedgerSetMetadataCommand())
 	command.AddCommand(newLedgerTransactionsSendCommand(true))
@@ -411,6 +413,95 @@ func newLedgerExportCommand() *cobra.Command {
 
 	command.Flags().StringVar(&ledger, "ledger", "", "Ledger name")
 	command.Flags().StringVar(&file, "file", "", "Write export to file, or - for stdout")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
+
+	return command
+}
+
+func newLedgerImportCommand() *cobra.Command {
+	var file string
+	var input string
+	var resume bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "import <ledger> [file]",
+		Short: "Import ledger logs",
+		Args:  cobra.RangeArgs(1, 2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if input != "" {
+				if file != "" {
+					return fmt.Errorf("--input and --file are mutually exclusive")
+				}
+				file = input
+			}
+			if len(args) == 2 {
+				if file != "" {
+					return fmt.Errorf("positional file and --file are mutually exclusive")
+				}
+				file = args[1]
+			}
+			if file == "" {
+				return fmt.Errorf("ledger import requires --file <path>|-")
+			}
+
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := ledgercmd.ImportLogsService{
+				Handlers: ledgercmd.SDKImportLogsHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         ledgercmd.ProductLedger,
+						Feature:         ledgercmd.FeatureImportLogs,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+
+			importInput := ledgercmd.ImportLogsInput{
+				Ledger:            args[0],
+				FilePath:          file,
+				ResumeFromLastLog: resume,
+			}
+			if file == "-" {
+				data, err := io.ReadAll(cmd.InOrStdin())
+				if err != nil {
+					return err
+				}
+				importInput.FilePath = ""
+				importInput.Data = data
+			}
+
+			output, err := service.Run(cmd.Context(), importInput)
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderLedgerImported(cmd, output)
+		},
+	}
+
+	command.Flags().StringVar(&file, "file", "", "Read import from file, or - for stdin")
+	command.Flags().StringVar(&input, "input", "", "Read import from file, or - for stdin")
+	_ = command.Flags().MarkDeprecated("input", "use --file")
+	command.Flags().BoolVar(&resume, "resume-from-last-log", false, "Resume import after the latest log already present in the ledger")
 	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
 
 	return command
@@ -1615,6 +1706,14 @@ func renderLedgerExported(cmd *cobra.Command, output ledgercmd.ExportLogsOutput,
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Ledger %s exported to %s.\n", output.Ledger, file)
+	return err
+}
+
+func renderLedgerImported(cmd *cobra.Command, output ledgercmd.ImportLogsOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Ledger %s imported.\n", output.Ledger)
 	return err
 }
 
