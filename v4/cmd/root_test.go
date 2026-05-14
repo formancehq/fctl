@@ -1363,6 +1363,17 @@ func TestLedgerSendDeprecatedAlias(t *testing.T) {
 			w.Header().Set("Content-Type", "application/json")
 			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
 		case "/api/ledger/v2/default/transactions":
+			body := readRequestBody(t, r)
+			for _, expected := range []string{
+				`"source":"world"`,
+				`"destination":"users:123"`,
+				`"amount":100`,
+				`"asset":"USD/2"`,
+			} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected body to contain %q, got %s", expected, body)
+				}
+			}
 			w.Header().Set("Content-Type", "application/json")
 			fmt.Fprint(w, `{"data":{"id":42,"metadata":{},"postings":[],"reverted":false,"timestamp":"2026-01-01T00:00:00Z"}}`)
 		default:
@@ -1385,10 +1396,7 @@ func TestLedgerSendDeprecatedAlias(t *testing.T) {
 	_, stderr, err = executeCommand(t,
 		"--config-dir", configDir,
 		"ledger", "send",
-		"--source", "world",
-		"--destination", "users:123",
-		"--amount", "100",
-		"--asset", "USD/2",
+		"users:123", "100", "USD/2",
 		"--confirm",
 	)
 	if err != nil {
@@ -1396,6 +1404,9 @@ func TestLedgerSendDeprecatedAlias(t *testing.T) {
 	}
 	if !strings.Contains(stderr, "use ledger transactions send") {
 		t.Fatalf("expected deprecation warning, got:\n%s", stderr)
+	}
+	if !strings.Contains(stderr, "Positional ledger send arguments have been deprecated") {
+		t.Fatalf("expected positional deprecation warning, got:\n%s", stderr)
 	}
 }
 

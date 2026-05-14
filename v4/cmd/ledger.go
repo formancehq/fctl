@@ -1163,13 +1163,37 @@ func newLedgerTransactionsSendCommand(deprecatedRootAlias bool) *cobra.Command {
 	var confirm bool
 	var apiVersion string
 
+	argsValidator := cobra.NoArgs
+	if deprecatedRootAlias {
+		argsValidator = func(_ *cobra.Command, args []string) error {
+			if len(args) == 0 || len(args) == 3 || len(args) == 4 {
+				return nil
+			}
+			return fmt.Errorf("ledger send accepts either flags or [source] <destination> <amount> <asset>")
+		}
+	}
+
 	command := &cobra.Command{
 		Use:   "send",
 		Short: "Send from one ledger account to another",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		Args:  argsValidator,
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if deprecatedRootAlias {
 				fmt.Fprintln(cmd.ErrOrStderr(), "Command ledger send has been deprecated, use ledger transactions send")
+			}
+			if deprecatedRootAlias && len(args) > 0 {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Positional ledger send arguments have been deprecated, use ledger transactions send with explicit flags")
+				if len(args) == 3 {
+					source = "world"
+					destination = args[0]
+					amount = args[1]
+					asset = args[2]
+				} else {
+					source = args[0]
+					destination = args[1]
+					amount = args[2]
+					asset = args[3]
+				}
 			}
 			if !confirm {
 				return fmt.Errorf("ledger transactions send requires --confirm")
