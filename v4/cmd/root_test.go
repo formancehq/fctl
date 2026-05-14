@@ -277,6 +277,47 @@ func TestLedgerListSelectsV2(t *testing.T) {
 	}
 }
 
+func TestLedgerStatsSelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default/stats":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"accounts":2,"transactions":42}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "ledger", "stats")
+	if err != nil {
+		t.Fatalf("read stats: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v2",
+		"Transactions\t42",
+		"Accounts\t2",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected stats output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
 func TestLedgerTransactionsListSelectsV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
