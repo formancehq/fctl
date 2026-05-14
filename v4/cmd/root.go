@@ -16,6 +16,7 @@ const (
 	nonInteractiveFlag = "non-interactive"
 	insecureTLSFlag    = "insecure-tls"
 	debugFlag          = "debug"
+	noColorFlag        = "no-color"
 )
 
 // NewRootCommand builds the v4 command tree. Keep this package focused on
@@ -46,6 +47,7 @@ func NewRootCommand(version string) *cobra.Command {
 	root.PersistentFlags().Bool(nonInteractiveFlag, false, "Disable interactive prompts")
 	root.PersistentFlags().Bool(insecureTLSFlag, false, "Skip TLS certificate verification")
 	root.PersistentFlags().BoolP(debugFlag, "d", false, "Enable technical debug logs on stderr")
+	root.PersistentFlags().Bool(noColorFlag, false, "Disable colored output")
 	_ = root.PersistentFlags().MarkDeprecated(profileFlag, "use --context")
 
 	root.AddCommand(newVersionCommand())

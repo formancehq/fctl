@@ -13,6 +13,7 @@ This reference lists the current canonical v4 command families implemented under
 - `--non-interactive`
 - `--insecure-tls`
 - `--debug`, `-d`
+- `--no-color`
 
 ## Target and Configuration
 

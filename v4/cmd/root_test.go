@@ -62,6 +62,7 @@ func TestRootHelp(t *testing.T) {
 		"-c, --config-dir",
 		"-d, --debug",
 		"--insecure-tls",
+		"--no-color",
 		"--non-interactive",
 		"version",
 	} {

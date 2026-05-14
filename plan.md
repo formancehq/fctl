@@ -107,6 +107,7 @@ Implementation v4:
 - `--config-dir <dir>` conserve le short `-c`, car `--context` n'a volontairement pas de short pour eviter l'ambiguite avec la v3;
 - `--debug`, `-d` active des logs runtime techniques sur stderr sans modifier stdout;
 - `--insecure-tls` est conserve comme override runtime explicite et non persistant; il configure le client HTTP partage par `/versions`, les SDK stack, les SDK Cloud et les flux `client_credentials`.
+- `--no-color` est expose comme flag stable pour CI/golden tests; les renderers v4 restent sans couleur par defaut.
 
 ## Migration configuration et session
 
