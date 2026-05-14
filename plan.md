@@ -65,7 +65,7 @@ Le runtime v4 choisit l'API comme suit:
 | Commandes avec `_` | kebab-case canonique, alias underscore deprecie | `transfer_initiation` -> `transfer-initiation` |
 | `get` et `describe` melanges | `show` canonique, aliases `get`/`describe` si existants | `payments payments get` -> `payments payments show` |
 | Abreviations peu claires | flag explicite canonique, alias court deprecie | `--ik` -> `--idempotency-key` |
-| Commandes produit historiques avec `_` | kebab-case canonique sauf exception actee | `cloud_stacks` reste le vrai nom canonique du lifecycle Cloud des stacks |
+| Commandes produit historiques avec `_` | grouper sous le service parent quand cela clarifie l'UX | `cloud_stacks` devient `cloud stacks`, avec alias deprecie |
 | Flags API-specifiques | flag produit stable | `--account` reste `--account` meme si l'API v2 attend `address` |
 | Flags v3 tres utilises | conserver comme alias cache ou deprecie | `--src` -> `--source`, `--dst` -> `--destination` |
 | Saisie fichier | `--file <path>|-` quand l'objet principal n'est pas naturellement positionnel | `create <file>|-` peut rester alias |
@@ -192,29 +192,29 @@ Les commandes Cloud restent sous `cloud`, mais elles doivent utiliser un context
 ## Mapping Cloud stacks lifecycle
 
 Les commandes `stack` v3 sont Cloud-control-plane. En v4, elles doivent etre clairement distinguees des commandes qui parlent a une stack data-plane.
-Le domaine canonique v4 est `cloud_stacks ...`, qui correspond au nom produit/service `cloud_stacks`; ce n'est pas un alias de transition.
-Les anciens chemins `stacks ...` et `stack ...` restent des aliases deprecies pendant la v4 quand ils sont peu couteux a maintenir, avec warning indiquant la commande `cloud_stacks ...`.
+Le chemin canonique v4 est `cloud stacks ...`, car ces operations appartiennent naturellement au controle plane Cloud.
+L'ancien chemin v4 intermediaire `cloud_stacks ...` et les anciens chemins v3 `stacks ...` et `stack ...` restent des aliases deprecies pendant la v4 quand ils sont peu couteux a maintenir, avec warning indiquant la commande `cloud stacks ...`.
 Ces aliases pourront etre supprimes en v5 ou dans une version mineure ulterieure si on decide de durcir la migration.
 
 | v3 | v4 canonique | Changements | Notes |
 | --- | --- | --- | --- |
-| `stack create` | `cloud_stacks create` | `stack create` et `stacks create` aliases deprecies avec warning. | Ne doit pas exister pour contexte `stack` local. |
-| `stack list` | `cloud_stacks list` | aliases deprecies avec warning. | |
-| `stack show` | `cloud_stacks show <stack-id>` | aliases deprecies avec warning. | |
-| `stack update` | `cloud_stacks update <stack-id>` | aliases deprecies avec warning. | |
-| `stack delete` | `cloud_stacks delete <stack-id>` | `--confirm`; aliases deprecies avec warning. | |
-| `stack enable` | `cloud_stacks enable <stack-id>` | aliases deprecies avec warning. | |
-| `stack disable` | `cloud_stacks disable <stack-id>` | `--confirm`; aliases deprecies avec warning. | |
-| `stack restore` | `cloud_stacks restore <stack-id>` | `--confirm`; aliases deprecies avec warning. | |
-| `stack upgrade` | `cloud_stacks upgrade <stack-id>` | `--confirm`, afficher target version; aliases deprecies avec warning. | |
-| `stack history` | `cloud_stacks history <stack-id>` | aliases deprecies avec warning. | |
-| `stack proxy` | `target proxy` ou `cloud_stacks proxy <stack-id>` | aliases deprecies avec warning. | Clarifier usage: proxy data-plane vs Cloud. |
-| `stack users list` | `cloud_stacks users list <stack-id>` | aliases deprecies avec warning. | |
-| `stack users link <user-id>` | `cloud_stacks users link <stack-id> <user-id>` | stack explicite ou contexte courant; aliases deprecies avec warning. | |
-| `stack users unlink <user-id>` | `cloud_stacks users unlink <stack-id> <user-id>` | `--confirm`; aliases deprecies avec warning. | |
-| `stack modules list` | `cloud_stacks modules list <stack-id>` | aliases deprecies avec warning. | |
-| `stack modules enable` | `cloud_stacks modules enable <stack-id> <module>` | aliases deprecies avec warning. | |
-| `stack modules disable` | `cloud_stacks modules disable <stack-id> <module>` | `--confirm`; aliases deprecies avec warning. | |
+| `stack create` | `cloud stacks create` | `cloud_stacks create`, `stack create` et `stacks create` aliases deprecies avec warning. | Ne doit pas exister pour contexte `stack` local. |
+| `stack list` | `cloud stacks list` | aliases deprecies avec warning. | |
+| `stack show` | `cloud stacks show <stack-id>` | aliases deprecies avec warning. | |
+| `stack update` | `cloud stacks update <stack-id>` | aliases deprecies avec warning. | |
+| `stack delete` | `cloud stacks delete <stack-id>` | `--confirm`; aliases deprecies avec warning. | |
+| `stack enable` | `cloud stacks enable <stack-id>` | aliases deprecies avec warning. | |
+| `stack disable` | `cloud stacks disable <stack-id>` | `--confirm`; aliases deprecies avec warning. | |
+| `stack restore` | `cloud stacks restore <stack-id>` | `--confirm`; aliases deprecies avec warning. | |
+| `stack upgrade` | `cloud stacks upgrade <stack-id>` | `--confirm`, afficher target version; aliases deprecies avec warning. | |
+| `stack history` | `cloud stacks history <stack-id>` | aliases deprecies avec warning. | |
+| `stack proxy` | `target proxy` ou `cloud stacks proxy <stack-id>` | aliases deprecies avec warning. | Clarifier usage: proxy data-plane vs Cloud. |
+| `stack users list` | `cloud stacks users list <stack-id>` | aliases deprecies avec warning. | |
+| `stack users link <user-id>` | `cloud stacks users link <stack-id> <user-id>` | stack explicite ou contexte courant; aliases deprecies avec warning. | |
+| `stack users unlink <user-id>` | `cloud stacks users unlink <stack-id> <user-id>` | `--confirm`; aliases deprecies avec warning. | |
+| `stack modules list` | `cloud stacks modules list <stack-id>` | aliases deprecies avec warning. | |
+| `stack modules enable` | `cloud stacks modules enable <stack-id> <module>` | aliases deprecies avec warning. | |
+| `stack modules disable` | `cloud stacks modules disable <stack-id> <module>` | `--confirm`; aliases deprecies avec warning. | |
 
 ## Mapping Ledger
 
@@ -451,7 +451,7 @@ Decision:
 | v3 | Decision proposee | Raison |
 | --- | --- | --- |
 | `prompt` | remplacer par `setup`/`context wizard`, garder alias cache | Le nom ne decrit pas l'intention utilisateur. |
-| `stack ...` et `stacks ...` a la racine | deprecie vers `cloud_stacks ...` avec warning | `stack` doit pouvoir signifier target data-plane; les operations lifecycle sont Cloud. |
+| `cloud_stacks ...`, `stack ...` et `stacks ...` a la racine | deprecie vers `cloud stacks ...` avec warning | `stack` doit pouvoir signifier target data-plane; les operations lifecycle sont Cloud. |
 | `search ...` et alias `se` | supprimer | Le produit n'existe plus en v4. |
 | `payments ... get` | deprecie vers `show` | Coherence globale. |
 | commandes avec underscores | aliases deprecies avec warning | Coherence shell. |
@@ -646,7 +646,7 @@ Chaque famille doit etre livree avec:
 ### Phase 4: Cloud control plane
 
 - Migrer `cloud ...`;
-- migrer `stack ...` et `stacks ...` vers `cloud_stacks ...` avec warnings de deprecation;
+- migrer `cloud_stacks ...`, `stack ...` et `stacks ...` vers `cloud stacks ...` avec warnings de deprecation;
 - garder aliases v3 quand non ambigus;
 - couvrir membership mock.
 
@@ -688,7 +688,7 @@ Pour chaque commande migree:
 ## Decisions actees
 
 1. Le service Auth garde le nom canonique `auth`; ne pas utiliser `identity` dans cette migration.
-2. Les operations Cloud de lifecycle de stack utilisent `cloud_stacks ...`; les anciens chemins `stacks ...` et `stack ...` sont des aliases deprecies avec warning.
+2. Les operations Cloud de lifecycle de stack utilisent `cloud stacks ...`; l'ancien chemin `cloud_stacks ...` et les anciens chemins `stacks ...` et `stack ...` sont des aliases deprecies avec warning.
 3. `wallets credit` et `wallets debit` prennent un wallet cible explicite en v4.
 4. `payments connectors config update` cible toujours un connector ID.
 5. Ne pas ajouter d'alias court comme `fctl transaction list`; toujours garder le nom du service, par exemple `fctl ledger transactions list`.

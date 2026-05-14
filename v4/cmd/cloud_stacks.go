@@ -9,18 +9,18 @@ import (
 	"github.com/formancehq/fctl/v4/internal/runtime"
 )
 
-func newCloudStacksCommand(use string, deprecated bool) *cobra.Command {
+func newCloudStacksCommand(use string, canonical string, deprecated bool) *cobra.Command {
 	command := &cobra.Command{
 		Use:   use,
 		Short: "Manage Formance Cloud stacks",
 		PersistentPreRun: func(cmd *cobra.Command, _ []string) {
 			if deprecated {
-				fmt.Fprintf(cmd.ErrOrStderr(), "Command %s has been deprecated, use cloud_stacks\n", use)
+				fmt.Fprintf(cmd.ErrOrStderr(), "Command %s has been deprecated, use %s\n", use, canonical)
 			}
 		},
 	}
 	if deprecated {
-		command.Deprecated = "use cloud_stacks"
+		command.Deprecated = "use " + canonical
 	}
 	command.AddCommand(newCloudStacksCreateCommand())
 	command.AddCommand(newCloudStacksListCommand())
@@ -191,7 +191,7 @@ func newCloudStacksDeleteCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !confirm {
-				return fmt.Errorf("cloud_stacks delete requires --confirm")
+				return fmt.Errorf("cloud stacks delete requires --confirm")
 			}
 			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
 			if err != nil {
@@ -240,7 +240,7 @@ func newCloudStacksUpgradeCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !confirm {
-				return fmt.Errorf("cloud_stacks upgrade requires --confirm")
+				return fmt.Errorf("cloud stacks upgrade requires --confirm")
 			}
 			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
 			if err != nil {
@@ -276,7 +276,7 @@ func newCloudStacksActionCommand(action string, requiresConfirm bool) *cobra.Com
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if requiresConfirm && !confirm {
-				return fmt.Errorf("cloud_stacks %s requires --confirm", action)
+				return fmt.Errorf("cloud stacks %s requires --confirm", action)
 			}
 			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
 			if err != nil {
@@ -385,7 +385,7 @@ func newCloudStacksUsersUnlinkCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !confirm {
-				return fmt.Errorf("cloud_stacks users unlink requires --confirm")
+				return fmt.Errorf("cloud stacks users unlink requires --confirm")
 			}
 			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
 			if err != nil {
@@ -468,7 +468,7 @@ func newCloudStacksModulesActionCommand(action string, requiresConfirm bool) *co
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if requiresConfirm && !confirm {
-				return fmt.Errorf("cloud_stacks modules %s requires --confirm", action)
+				return fmt.Errorf("cloud stacks modules %s requires --confirm", action)
 			}
 			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
 			if err != nil {

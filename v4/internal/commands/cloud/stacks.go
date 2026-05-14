@@ -208,7 +208,7 @@ func (s ReadStackService) Run(ctx context.Context, input StackIDInput) (StackOut
 		return StackOutput{}, err
 	}
 	if response.GetReadStackResponse().GetData() == nil {
-		return StackOutput{}, fmt.Errorf("cloud_stacks show returned no stack")
+		return StackOutput{}, fmt.Errorf("cloud stacks show returned no stack")
 	}
 	return StackOutput{
 		OrganizationID: input.OrganizationID,
@@ -249,7 +249,7 @@ func (s CreateStackService) Run(ctx context.Context, input CreateStackInput) (St
 		return StackOutput{}, err
 	}
 	if response.GetReadStackResponse().GetData() == nil {
-		return StackOutput{}, fmt.Errorf("cloud_stacks create returned no stack")
+		return StackOutput{}, fmt.Errorf("cloud stacks create returned no stack")
 	}
 	return StackOutput{OrganizationID: input.OrganizationID, Stack: stackSummary(response.GetReadStackResponse().GetData())}, nil
 }
@@ -283,7 +283,7 @@ func (s UpdateStackService) Run(ctx context.Context, input UpdateStackInput) (St
 		return StackOutput{}, err
 	}
 	if response.GetReadStackResponse().GetData() == nil {
-		return StackOutput{}, fmt.Errorf("cloud_stacks update returned no stack")
+		return StackOutput{}, fmt.Errorf("cloud stacks update returned no stack")
 	}
 	return StackOutput{OrganizationID: input.OrganizationID, Stack: stackSummary(response.GetReadStackResponse().GetData())}, nil
 }

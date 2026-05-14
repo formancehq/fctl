@@ -15,8 +15,9 @@ the isolated v4 implementation under `v4/`.
 - `auth` remains the canonical service name. Do not introduce `identity` in this
   migration.
 - `flows` is the canonical command for the former `orchestration` product.
-- `cloud_stacks` is the canonical command for Cloud stack lifecycle operations.
-  `stack` and `stacks` are deprecated migration aliases with warnings.
+- `cloud stacks` is the canonical command for Cloud stack lifecycle operations.
+  `cloud_stacks`, `stack`, and `stacks` are deprecated migration aliases with
+  warnings.
 - `search` is removed from v4 because the product no longer exists.
 
 ## Command Renames
@@ -33,7 +34,8 @@ the isolated v4 implementation under `v4/`.
 | `webhooks change-secret` | `webhooks secret rotate` | `change-secret` remains a deprecated alias. |
 | `cloud me info` | `cloud me show` | `info` remains a deprecated alias. |
 | `cloud organizations describe` | `cloud organizations show` | `describe` remains a deprecated alias. |
-| `stack ...` / `stacks ...` | `cloud_stacks ...` | Deprecated aliases with warnings for Cloud lifecycle commands. |
+| `cloud_stacks ...` | `cloud stacks ...` | Deprecated alias with warnings for Cloud lifecycle commands. |
+| `stack ...` / `stacks ...` | `cloud stacks ...` | Deprecated aliases with warnings for Cloud lifecycle commands. |
 | `search ...` | none | Removed. |
 
 ## Argument Changes

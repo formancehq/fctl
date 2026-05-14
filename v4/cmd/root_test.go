@@ -877,20 +877,20 @@ func TestCloudStacksListShowAndDeprecatedAliases(t *testing.T) {
 		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
 	}
 
-	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud_stacks", "list")
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud", "stacks", "list")
 	if err != nil {
-		t.Fatalf("cloud_stacks list: %v stderr=%s", err, stderr)
+		t.Fatalf("cloud stacks list: %v stderr=%s", err, stderr)
 	}
 	if stderr != "" {
 		t.Fatalf("expected empty stderr, got %q", stderr)
 	}
 	if !strings.Contains(stdout, "stack_1\tProduction\tREADY\thttps://stack.example/api") {
-		t.Fatalf("unexpected cloud_stacks list output:\n%s", stdout)
+		t.Fatalf("unexpected cloud stacks list output:\n%s", stdout)
 	}
 
-	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "show", "stack_1")
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "stacks", "show", "stack_1")
 	if err != nil {
-		t.Fatalf("cloud_stacks show: %v stderr=%s", err, stderr)
+		t.Fatalf("cloud stacks show: %v stderr=%s", err, stderr)
 	}
 	for _, expected := range []string{"ID\tstack_1", "Name\tProduction", "Status\tREADY", "URI\thttps://stack.example/api", "Version\tv3.2.4"} {
 		if !strings.Contains(stdout, expected) {
@@ -902,8 +902,16 @@ func TestCloudStacksListShowAndDeprecatedAliases(t *testing.T) {
 	if err != nil {
 		t.Fatalf("stacks alias list: %v stderr=%s", err, stderr)
 	}
-	if !strings.Contains(stderr, "Command stacks has been deprecated, use cloud_stacks") {
+	if !strings.Contains(stderr, "Command stacks has been deprecated, use cloud stacks") {
 		t.Fatalf("expected stacks deprecation warning, got:\n%s", stderr)
+	}
+
+	_, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "list")
+	if err != nil {
+		t.Fatalf("cloud_stacks alias list: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Command cloud_stacks has been deprecated, use cloud stacks") {
+		t.Fatalf("expected cloud_stacks deprecation warning, got:\n%s", stderr)
 	}
 }
 
@@ -968,13 +976,13 @@ func TestCloudStacksMutations(t *testing.T) {
 
 	stdout, stderr, err := executeCommand(t,
 		"--config-dir", configDir,
-		"cloud_stacks", "create", "Production",
+		"cloud", "stacks", "create", "Production",
 		"--region", "eu-west-1",
 		"--version", "v3.2.4",
 		"--metadata", "env=prod",
 	)
 	if err != nil {
-		t.Fatalf("cloud_stacks create: %v stderr=%s", err, stderr)
+		t.Fatalf("cloud stacks create: %v stderr=%s", err, stderr)
 	}
 	if stdout != "Cloud stack stack_1 created.\n" {
 		t.Fatalf("unexpected create output: %q", stdout)
@@ -982,24 +990,24 @@ func TestCloudStacksMutations(t *testing.T) {
 
 	stdout, stderr, err = executeCommand(t,
 		"--config-dir", configDir,
-		"cloud_stacks", "update", "stack_1",
+		"cloud", "stacks", "update", "stack_1",
 		"--name", "Renamed",
 		"--metadata", "env=prod",
 	)
 	if err != nil {
-		t.Fatalf("cloud_stacks update: %v stderr=%s", err, stderr)
+		t.Fatalf("cloud stacks update: %v stderr=%s", err, stderr)
 	}
 	if stdout != "Cloud stack stack_1 updated.\n" {
 		t.Fatalf("unexpected update output: %q", stdout)
 	}
 
-	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "delete", "stack_1")
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud", "stacks", "delete", "stack_1")
 	if err == nil {
 		t.Fatal("expected delete to require --confirm")
 	}
-	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "delete", "stack_1", "--force", "--confirm")
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "stacks", "delete", "stack_1", "--force", "--confirm")
 	if err != nil {
-		t.Fatalf("cloud_stacks delete: %v stderr=%s", err, stderr)
+		t.Fatalf("cloud stacks delete: %v stderr=%s", err, stderr)
 	}
 	if stdout != "Cloud stack stack_1 deleted.\n" {
 		t.Fatalf("unexpected delete output: %q", stdout)
@@ -1011,9 +1019,9 @@ func TestCloudStacksMutations(t *testing.T) {
 		{"restore", "stack_1", "--confirm"},
 		{"upgrade", "stack_1", "--version", "v3.2.5", "--confirm"},
 	} {
-		stdout, stderr, err = executeCommand(t, append([]string{"--config-dir", configDir, "cloud_stacks"}, args...)...)
+		stdout, stderr, err = executeCommand(t, append([]string{"--config-dir", configDir, "cloud", "stacks"}, args...)...)
 		if err != nil {
-			t.Fatalf("cloud_stacks %v: %v stderr=%s", args, err, stderr)
+			t.Fatalf("cloud stacks %v: %v stderr=%s", args, err, stderr)
 		}
 		if !strings.Contains(stdout, "Cloud stack stack_1") {
 			t.Fatalf("unexpected action output for %v: %q", args, stdout)
@@ -1066,57 +1074,57 @@ func TestCloudStacksUsersAndModules(t *testing.T) {
 		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
 	}
 
-	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud_stacks", "users", "list", "stack_1")
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud", "stacks", "users", "list", "stack_1")
 	if err != nil {
-		t.Fatalf("cloud_stacks users list: %v stderr=%s", err, stderr)
+		t.Fatalf("cloud stacks users list: %v stderr=%s", err, stderr)
 	}
 	if !strings.Contains(stdout, "user_1\tuser@example.com\tstack_1\t42") {
 		t.Fatalf("unexpected users list output:\n%s", stdout)
 	}
 
-	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "users", "link", "stack_1", "user_1", "--policy-id", "42")
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "stacks", "users", "link", "stack_1", "user_1", "--policy-id", "42")
 	if err != nil {
-		t.Fatalf("cloud_stacks users link: %v stderr=%s", err, stderr)
+		t.Fatalf("cloud stacks users link: %v stderr=%s", err, stderr)
 	}
 	if stdout != "Cloud stack stack_1 user user_1 linked.\n" {
 		t.Fatalf("unexpected user link output: %q", stdout)
 	}
 
-	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "users", "unlink", "stack_1", "user_1")
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud", "stacks", "users", "unlink", "stack_1", "user_1")
 	if err == nil {
 		t.Fatal("expected users unlink to require --confirm")
 	}
-	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "users", "unlink", "stack_1", "user_1", "--confirm")
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "stacks", "users", "unlink", "stack_1", "user_1", "--confirm")
 	if err != nil {
-		t.Fatalf("cloud_stacks users unlink: %v stderr=%s", err, stderr)
+		t.Fatalf("cloud stacks users unlink: %v stderr=%s", err, stderr)
 	}
 	if stdout != "Cloud stack stack_1 user user_1 unlinked.\n" {
 		t.Fatalf("unexpected user unlink output: %q", stdout)
 	}
 
-	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "modules", "list", "stack_1")
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "stacks", "modules", "list", "stack_1")
 	if err != nil {
-		t.Fatalf("cloud_stacks modules list: %v stderr=%s", err, stderr)
+		t.Fatalf("cloud stacks modules list: %v stderr=%s", err, stderr)
 	}
 	if !strings.Contains(stdout, "ledger\tENABLED\tREADY") {
 		t.Fatalf("unexpected modules list output:\n%s", stdout)
 	}
 
-	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "modules", "enable", "stack_1", "ledger")
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "stacks", "modules", "enable", "stack_1", "ledger")
 	if err != nil {
-		t.Fatalf("cloud_stacks modules enable: %v stderr=%s", err, stderr)
+		t.Fatalf("cloud stacks modules enable: %v stderr=%s", err, stderr)
 	}
 	if stdout != "Cloud stack stack_1 module ledger enabled.\n" {
 		t.Fatalf("unexpected module enable output: %q", stdout)
 	}
 
-	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "modules", "disable", "stack_1", "ledger")
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud", "stacks", "modules", "disable", "stack_1", "ledger")
 	if err == nil {
 		t.Fatal("expected modules disable to require --confirm")
 	}
-	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "modules", "disable", "stack_1", "ledger", "--confirm")
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "stacks", "modules", "disable", "stack_1", "ledger", "--confirm")
 	if err != nil {
-		t.Fatalf("cloud_stacks modules disable: %v stderr=%s", err, stderr)
+		t.Fatalf("cloud stacks modules disable: %v stderr=%s", err, stderr)
 	}
 	if stdout != "Cloud stack stack_1 module ledger disabled.\n" {
 		t.Fatalf("unexpected module disable output: %q", stdout)
@@ -1125,7 +1133,7 @@ func TestCloudStacksUsersAndModules(t *testing.T) {
 
 func TestCloudStacksRejectStackContext(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		t.Fatalf("cloud_stacks command must reject stack contexts before network calls")
+		t.Fatalf("cloud stacks command must reject stack contexts before network calls")
 	}))
 	defer server.Close()
 
@@ -1139,9 +1147,9 @@ func TestCloudStacksRejectStackContext(t *testing.T) {
 		t.Fatalf("create stack context: %v stderr=%s", err, stderr)
 	}
 
-	_, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "list", "--organization", "org_1")
+	_, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "stacks", "list", "--organization", "org_1")
 	if err == nil {
-		t.Fatal("expected cloud_stacks command to reject stack context")
+		t.Fatal("expected cloud stacks command to reject stack context")
 	}
 	if !strings.Contains(err.Error(), "cloud commands require a cloud or cloud-stack context") {
 		t.Fatalf("unexpected error: %v stderr=%s", err, stderr)
