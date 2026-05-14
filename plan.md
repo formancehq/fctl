@@ -131,6 +131,12 @@ Implementation v4:
 | `fctl version` | `fctl version` | Ajouter build metadata v4. | stdout stable. |
 | `fctl ui` | `fctl ui` | A reevaluer: garder si encore utile, sinon documenter retrait. | detection browser/TTY. |
 
+Implementation v4:
+
+- `auth login token` met a jour le contexte selectionne et peut stocker le token dans un `--credential-dir` explicite via `--token` ou `--token-stdin`;
+- `auth login client-credentials` met a jour le contexte selectionne et peut stocker le secret client dans un `--credential-dir` explicite via `--client-secret` ou `--client-secret-stdin`;
+- `auth login none` desactive l'auth sur un contexte `stack`; sur `cloud`/`cloud-stack`, `--confirm` est requis pour eviter une desactivation accidentelle.
+
 ## Mapping commandes Cloud
 
 Les commandes Cloud restent sous `cloud`, mais elles doivent utiliser un contexte `cloud` ou `cloud-stack`. Elles ne doivent pas etre requises pour utiliser les produits stack (`ledger`, `payments`, etc.) contre une stack locale.

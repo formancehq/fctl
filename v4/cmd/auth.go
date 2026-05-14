@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
 
 	formance "github.com/formancehq/formance-sdk-go/v3"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/formancehq/fctl/v4/internal/capabilities"
 	authcmd "github.com/formancehq/fctl/v4/internal/commands/auth"
+	v4config "github.com/formancehq/fctl/v4/internal/config"
 )
 
 func newAuthCommand() *cobra.Command {
@@ -17,9 +19,199 @@ func newAuthCommand() *cobra.Command {
 		Use:   "auth",
 		Short: "Manage Auth service resources and CLI sessions",
 	}
+	command.AddCommand(newAuthLoginCommand())
 	command.AddCommand(newAuthClientsCommand())
 	command.AddCommand(newAuthUsersCommand())
 	return command
+}
+
+func newAuthLoginCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "login",
+		Short: "Configure authentication for the selected context",
+	}
+	command.AddCommand(newAuthLoginTokenCommand())
+	command.AddCommand(newAuthLoginClientCredentialsCommand())
+	command.AddCommand(newAuthLoginNoneCommand())
+	return command
+}
+
+func newAuthLoginTokenCommand() *cobra.Command {
+	var token string
+	var tokenStdin bool
+	var tokenRef string
+
+	command := &cobra.Command{
+		Use:   "token",
+		Short: "Use a static bearer token for the selected context",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			cfg, path, name, context, err := selectedContextForAuthLogin(cmd)
+			if err != nil {
+				return err
+			}
+			if token != "" && tokenStdin {
+				return fmt.Errorf("--token and --token-stdin are mutually exclusive")
+			}
+			secret := token
+			if tokenStdin {
+				data, err := io.ReadAll(cmd.InOrStdin())
+				if err != nil {
+					return err
+				}
+				secret = strings.TrimSpace(string(data))
+			}
+			if secret == "" && tokenRef == "" {
+				return fmt.Errorf("auth login token requires --token, --token-stdin, or --token-ref")
+			}
+			if secret != "" {
+				if tokenRef == "" {
+					tokenRef = "contexts/" + name + "/token"
+				}
+				store, err := persistentCredentialStoreFromCommand(cmd)
+				if err != nil {
+					return err
+				}
+				if err := store.Set(cmd.Context(), tokenRef, secret); err != nil {
+					return err
+				}
+			}
+			context.Auth = v4config.Auth{Method: v4config.AuthMethodToken, TokenRef: tokenRef}
+			cfg.Contexts[name] = context
+			if err := v4config.SaveFile(path, cfg); err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: name == cfg.CurrentContext, Context: context}); handled || err != nil {
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Authentication for context %s set to token.\n", name)
+			return err
+		},
+	}
+	command.Flags().StringVar(&token, "token", "", "Bearer token value")
+	command.Flags().BoolVar(&tokenStdin, "token-stdin", false, "Read bearer token from stdin")
+	command.Flags().StringVar(&tokenRef, "token-ref", "", "Existing credential reference for token auth")
+	return command
+}
+
+func newAuthLoginClientCredentialsCommand() *cobra.Command {
+	var issuerURL string
+	var clientID string
+	var clientSecret string
+	var clientSecretStdin bool
+	var secretRef string
+
+	command := &cobra.Command{
+		Use:   "client-credentials",
+		Short: "Use OAuth client credentials for the selected context",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			cfg, path, name, context, err := selectedContextForAuthLogin(cmd)
+			if err != nil {
+				return err
+			}
+			if issuerURL == "" {
+				return fmt.Errorf("auth login client-credentials requires --issuer-url")
+			}
+			if clientID == "" {
+				return fmt.Errorf("auth login client-credentials requires --client-id")
+			}
+			if clientSecret != "" && clientSecretStdin {
+				return fmt.Errorf("--client-secret and --client-secret-stdin are mutually exclusive")
+			}
+			secret := clientSecret
+			if clientSecretStdin {
+				data, err := io.ReadAll(cmd.InOrStdin())
+				if err != nil {
+					return err
+				}
+				secret = strings.TrimSpace(string(data))
+			}
+			if secret == "" && secretRef == "" {
+				return fmt.Errorf("auth login client-credentials requires --client-secret, --client-secret-stdin, or --secret-ref")
+			}
+			if secret != "" {
+				if secretRef == "" {
+					secretRef = "contexts/" + name + "/client-secret"
+				}
+				store, err := persistentCredentialStoreFromCommand(cmd)
+				if err != nil {
+					return err
+				}
+				if err := store.Set(cmd.Context(), secretRef, secret); err != nil {
+					return err
+				}
+			}
+			context.Auth = v4config.Auth{
+				Method:    v4config.AuthMethodClientCredentials,
+				IssuerURL: issuerURL,
+				ClientID:  clientID,
+				SecretRef: secretRef,
+			}
+			cfg.Contexts[name] = context
+			if err := v4config.SaveFile(path, cfg); err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: name == cfg.CurrentContext, Context: context}); handled || err != nil {
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Authentication for context %s set to client credentials.\n", name)
+			return err
+		},
+	}
+	command.Flags().StringVar(&issuerURL, "issuer-url", "", "OIDC issuer URL")
+	command.Flags().StringVar(&clientID, "client-id", "", "OAuth client ID")
+	command.Flags().StringVar(&clientSecret, "client-secret", "", "OAuth client secret")
+	command.Flags().BoolVar(&clientSecretStdin, "client-secret-stdin", false, "Read OAuth client secret from stdin")
+	command.Flags().StringVar(&secretRef, "secret-ref", "", "Existing credential reference for client secret")
+	return command
+}
+
+func newAuthLoginNoneCommand() *cobra.Command {
+	var confirm bool
+
+	command := &cobra.Command{
+		Use:   "none",
+		Short: "Disable authentication for the selected context",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			cfg, path, name, context, err := selectedContextForAuthLogin(cmd)
+			if err != nil {
+				return err
+			}
+			if context.Kind != v4config.ContextKindStack && !confirm {
+				return fmt.Errorf("auth login none on %s contexts requires --confirm", context.Kind)
+			}
+			context.Auth = v4config.Auth{Method: v4config.AuthMethodNone}
+			cfg.Contexts[name] = context
+			if err := v4config.SaveFile(path, cfg); err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: name == cfg.CurrentContext, Context: context}); handled || err != nil {
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Authentication for context %s disabled.\n", name)
+			return err
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm disabling auth on non-stack contexts")
+	return command
+}
+
+func selectedContextForAuthLogin(cmd *cobra.Command) (v4config.Config, string, string, v4config.Context, error) {
+	cfg, path, err := loadConfig(cmd, false)
+	if err != nil {
+		return v4config.Config{}, "", "", v4config.Context{}, err
+	}
+	contextName, err := contextNameFromCommand(cmd)
+	if err != nil {
+		return v4config.Config{}, "", "", v4config.Context{}, err
+	}
+	name, context, err := v4config.ResolveCurrentContext(cfg, v4config.ContextOverride{Name: contextName})
+	if err != nil {
+		return v4config.Config{}, "", "", v4config.Context{}, err
+	}
+	return cfg, path, name, context, nil
 }
 
 func newAuthClientsCommand() *cobra.Command {

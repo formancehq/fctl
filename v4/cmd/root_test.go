@@ -17,11 +17,20 @@ import (
 func executeCommand(t *testing.T, args ...string) (string, string, error) {
 	t.Helper()
 
+	return executeCommandWithInput(t, "", args...)
+}
+
+func executeCommandWithInput(t *testing.T, input string, args ...string) (string, string, error) {
+	t.Helper()
+
 	command := NewRootCommand("test-version")
 	stdout := bytes.Buffer{}
 	stderr := bytes.Buffer{}
 	command.SetOut(&stdout)
 	command.SetErr(&stderr)
+	if input != "" {
+		command.SetIn(strings.NewReader(input))
+	}
 	command.SetArgs(args)
 
 	err := command.Execute()
@@ -1894,6 +1903,136 @@ func TestTargetInspectJSON(t *testing.T) {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected JSON inspect output to contain %q, got:\n%s", expected, stdout)
 		}
+	}
+}
+
+func TestAuthLoginTokenStoresCredentialAndUpdatesContext(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer stack-token" {
+			t.Fatalf("expected bearer token, got %q", r.Header.Get("Authorization"))
+		}
+		if r.URL.Path != "/versions" {
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+		fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	credentialDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommandWithInput(t,
+		"stack-token\n",
+		"--config-dir", configDir,
+		"--credential-dir", credentialDir,
+		"auth", "login", "token",
+		"--token-stdin",
+	)
+	if err != nil {
+		t.Fatalf("auth login token: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Authentication for context local set to token.\n" {
+		t.Fatalf("unexpected auth login output: %q", stdout)
+	}
+
+	configData, err := os.ReadFile(filepath.Join(configDir, "config.yaml"))
+	if err != nil {
+		t.Fatalf("read config: %v", err)
+	}
+	if strings.Contains(string(configData), "stack-token") {
+		t.Fatalf("config should not contain clear token:\n%s", string(configData))
+	}
+	if !strings.Contains(string(configData), "tokenRef: contexts/local/token") {
+		t.Fatalf("expected token ref in config:\n%s", string(configData))
+	}
+
+	stdout, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"--credential-dir", credentialDir,
+		"target", "inspect",
+	)
+	if err != nil {
+		t.Fatalf("target inspect with stored token: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "Context: local") {
+		t.Fatalf("unexpected inspect output:\n%s", stdout)
+	}
+}
+
+func TestAuthLoginClientCredentialsStoresSecret(t *testing.T) {
+	configDir := t.TempDir()
+	credentialDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", "http://localhost",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommandWithInput(t,
+		"super-secret\n",
+		"--config-dir", configDir,
+		"--credential-dir", credentialDir,
+		"auth", "login", "client-credentials",
+		"--issuer-url", "http://issuer",
+		"--client-id", "client",
+		"--client-secret-stdin",
+	)
+	if err != nil {
+		t.Fatalf("auth login client-credentials: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Authentication for context local set to client credentials.\n" {
+		t.Fatalf("unexpected auth login output: %q", stdout)
+	}
+
+	configData, err := os.ReadFile(filepath.Join(configDir, "config.yaml"))
+	if err != nil {
+		t.Fatalf("read config: %v", err)
+	}
+	if strings.Contains(string(configData), "super-secret") {
+		t.Fatalf("config should not contain clear client secret:\n%s", string(configData))
+	}
+	if !strings.Contains(string(configData), "method: client_credentials") ||
+		!strings.Contains(string(configData), "secretRef: contexts/local/client-secret") {
+		t.Fatalf("expected client credentials config:\n%s", string(configData))
+	}
+	secretData, err := os.ReadFile(filepath.Join(credentialDir, "contexts", "local", "client-secret"))
+	if err != nil {
+		t.Fatalf("read stored secret: %v", err)
+	}
+	if string(secretData) != "super-secret" {
+		t.Fatalf("unexpected stored secret %q", secretData)
+	}
+}
+
+func TestAuthLoginNoneRequiresConfirmForCloudContext(t *testing.T) {
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud", "cloud",
+		"--cloud-url", "http://localhost",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud context: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t, "--config-dir", configDir, "auth", "login", "none")
+	if err == nil {
+		t.Fatal("expected auth login none to require confirmation on cloud contexts")
+	}
+	if !strings.Contains(err.Error(), "auth login none on cloud contexts requires --confirm") {
+		t.Fatalf("unexpected error: %v stderr=%s", err, stderr)
 	}
 }
 

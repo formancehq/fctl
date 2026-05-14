@@ -21,10 +21,15 @@ func runtimeFromCommand(cmd *cobra.Command) (*runtime.Runtime, error) {
 		return nil, err
 	}
 
+	store, err := credentialStoreFromCommand(cmd)
+	if err != nil {
+		return nil, err
+	}
+
 	return runtime.New(cmd.Context(), runtime.Options{
 		ConfigPath:      path,
 		ContextOverride: v4config.ContextOverride{Name: contextName},
-		Credentials:     credentials.NewMemoryStore(),
+		Credentials:     store,
 		Manifest:        capabilities.GeneratedManifest,
 		Compatibility:   capabilities.DefaultComponentCompatibility,
 	})
@@ -48,4 +53,26 @@ func contextNameFromCommand(cmd *cobra.Command) (string, error) {
 		return profileName, nil
 	}
 	return contextName, nil
+}
+
+func credentialStoreFromCommand(cmd *cobra.Command) (credentials.Store, error) {
+	dir, err := cmd.Root().PersistentFlags().GetString(credentialDirFlag)
+	if err != nil {
+		return nil, err
+	}
+	if dir == "" {
+		return credentials.NewMemoryStore(), nil
+	}
+	return credentials.NewInsecureFileStore(dir), nil
+}
+
+func persistentCredentialStoreFromCommand(cmd *cobra.Command) (credentials.Store, error) {
+	dir, err := cmd.Root().PersistentFlags().GetString(credentialDirFlag)
+	if err != nil {
+		return nil, err
+	}
+	if dir == "" {
+		return nil, fmt.Errorf("--credential-dir is required to store credentials without a keyring backend")
+	}
+	return credentials.NewInsecureFileStore(dir), nil
 }

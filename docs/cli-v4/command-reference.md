@@ -195,6 +195,9 @@ Wallet credit and debit require the wallet target explicitly.
 
 ## Auth
 
+- `fctl auth login token --token-stdin --credential-dir <dir>`
+- `fctl auth login client-credentials --issuer-url <url> --client-id <id> --client-secret-stdin --credential-dir <dir>`
+- `fctl auth login none`
 - `fctl auth clients create <name>`
 - `fctl auth clients list`
 - `fctl auth clients show <client-id>`
