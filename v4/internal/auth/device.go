@@ -23,13 +23,15 @@ const DeviceClientID = "fctl"
 var ErrOpeningBrowser = errors.New("opening browser")
 
 type DeviceLoginOptions struct {
-	IssuerURL  string
-	ClientID   string
-	Scopes     []string
-	Prompt     []string
-	HTTPClient *http.Client
-	OpenURL    func(string) error
-	Out        io.Writer
+	IssuerURL      string
+	ClientID       string
+	Scopes         []string
+	Prompt         []string
+	OrganizationID string
+	IDTokenHint    string
+	HTTPClient     *http.Client
+	OpenURL        func(string) error
+	Out            io.Writer
 }
 
 type DeviceTokens struct {
@@ -53,6 +55,10 @@ func MarshalDeviceTokens(tokens DeviceTokens) (string, error) {
 	return string(encoded), nil
 }
 
+func ParseDeviceTokens(value string) (DeviceTokens, error) {
+	return parseStoredDeviceTokens(value)
+}
+
 func DeviceLogin(ctx context.Context, options DeviceLoginOptions) (DeviceTokens, error) {
 	if options.IssuerURL == "" {
 		return DeviceTokens{}, errors.New("issuer URL is required")
@@ -74,7 +80,7 @@ func DeviceLogin(ctx context.Context, options DeviceLoginOptions) (DeviceTokens,
 		return DeviceTokens{}, errors.New("oidc discovery did not include device_authorization_endpoint")
 	}
 
-	deviceCode, err := initiateDeviceAuthorization(ctx, httpClient, discovery.DeviceAuthorizationEndpoint, clientID, options.Scopes, options.Prompt)
+	deviceCode, err := initiateDeviceAuthorization(ctx, httpClient, discovery.DeviceAuthorizationEndpoint, clientID, options)
 	if err != nil {
 		return DeviceTokens{}, fmt.Errorf("failed to initiate device authorization flow: %w", err)
 	}
@@ -296,13 +302,19 @@ type deviceAuthorizationResponse struct {
 	ExpiresIn               int    `json:"expires_in"`
 }
 
-func initiateDeviceAuthorization(ctx context.Context, httpClient *http.Client, endpoint string, clientID string, scopes []string, prompt []string) (deviceAuthorizationResponse, error) {
+func initiateDeviceAuthorization(ctx context.Context, httpClient *http.Client, endpoint string, clientID string, options DeviceLoginOptions) (deviceAuthorizationResponse, error) {
 	form := url.Values{}
-	if len(scopes) > 0 {
-		form.Set("scope", strings.Join(scopes, " "))
+	if len(options.Scopes) > 0 {
+		form.Set("scope", strings.Join(options.Scopes, " "))
 	}
-	if len(prompt) > 0 {
-		form.Set("prompt", strings.Join(prompt, " "))
+	if len(options.Prompt) > 0 {
+		form.Set("prompt", strings.Join(options.Prompt, " "))
+	}
+	if options.OrganizationID != "" {
+		form.Set("organization_id", options.OrganizationID)
+	}
+	if options.IDTokenHint != "" {
+		form.Set("id_token_hint", options.IDTokenHint)
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(form.Encode()))
 	if err != nil {

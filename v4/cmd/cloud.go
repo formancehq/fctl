@@ -11,7 +11,10 @@ import (
 	membership "github.com/formancehq/fctl/internal/membershipclient/v3"
 	"github.com/spf13/cobra"
 
+	v4auth "github.com/formancehq/fctl/v4/internal/auth"
 	cloudcmd "github.com/formancehq/fctl/v4/internal/commands/cloud"
+	v4config "github.com/formancehq/fctl/v4/internal/config"
+	"github.com/formancehq/fctl/v4/internal/credentials"
 	"github.com/formancehq/fctl/v4/internal/runtime"
 )
 
@@ -1402,6 +1405,100 @@ func cloudRuntimeAndMembershipClientFromCommand(cmd *cobra.Command) (*runtime.Ru
 		return nil, nil, err
 	}
 	return rt, newMembershipClient(rt.Target.URL, httpClient), nil
+}
+
+func organizationMembershipClientFromRuntime(cmd *cobra.Command, rt *runtime.Runtime, organizationID string) (*membership.SDK, error) {
+	if rt == nil {
+		return nil, fmt.Errorf("runtime is required")
+	}
+	if rt.Context.Auth.Method != v4config.AuthMethodCloudDevice {
+		httpClient, err := rt.HTTPClient(cmd.Context())
+		if err != nil {
+			return nil, err
+		}
+		return newMembershipClient(rt.Target.URL, httpClient), nil
+	}
+	if organizationID == "" {
+		return nil, fmt.Errorf("organization id is required")
+	}
+	scopedAuth, err := ensureCloudDeviceOrganizationAuth(cmd, rt, organizationID)
+	if err != nil {
+		return nil, err
+	}
+	httpClient, err := v4auth.NewHTTPClient(cmd.Context(), scopedAuth, rt.Credentials, rt.AuthOptions)
+	if err != nil {
+		return nil, err
+	}
+	return newMembershipClient(rt.Target.URL, httpClient), nil
+}
+
+func ensureCloudDeviceOrganizationAuth(cmd *cobra.Command, rt *runtime.Runtime, organizationID string) (v4config.Auth, error) {
+	rootAuth := rt.Context.Auth
+	scopedRef := organizationTokenRef(rootAuth.TokenRef, organizationID)
+	issuerURL := rootAuth.IssuerURL
+	if issuerURL == "" {
+		issuerURL = rt.Context.CloudURL
+	}
+	scopedAuth := v4config.Auth{
+		Method:    v4config.AuthMethodCloudDevice,
+		IssuerURL: issuerURL,
+		TokenRef:  scopedRef,
+		Scopes:    append([]string(nil), v4auth.OrganizationScopes...),
+	}
+	source, err := v4auth.NewTokenSource(scopedAuth, rt.Credentials, rt.AuthOptions)
+	if err == nil {
+		if _, tokenErr := source.Token(cmd.Context()); tokenErr == nil {
+			return scopedAuth, nil
+		} else if !isCredentialNotFound(tokenErr) {
+			return v4config.Auth{}, tokenErr
+		}
+	}
+
+	rootValue, err := rt.Credentials.Get(cmd.Context(), rootAuth.TokenRef)
+	if err != nil {
+		return v4config.Auth{}, err
+	}
+	rootTokens, err := v4auth.ParseDeviceTokens(rootValue)
+	if err != nil {
+		return v4config.Auth{}, err
+	}
+	authOptions, err := authOptionsFromCommand(cmd)
+	if err != nil {
+		return v4config.Auth{}, err
+	}
+	tokens, err := v4auth.DeviceLogin(cmd.Context(), v4auth.DeviceLoginOptions{
+		IssuerURL:      issuerURL,
+		ClientID:       v4auth.DeviceClientID,
+		Scopes:         append([]string{"openid", "offline_access"}, v4auth.OrganizationScopes...),
+		OrganizationID: organizationID,
+		IDTokenHint:    rootTokens.IDToken,
+		HTTPClient:     authOptions.HTTPClient,
+		OpenURL:        loginOpenURL,
+		Out:            cmd.OutOrStdout(),
+	})
+	if err != nil {
+		return v4config.Auth{}, err
+	}
+	encoded, err := v4auth.MarshalDeviceTokens(tokens)
+	if err != nil {
+		return v4config.Auth{}, err
+	}
+	if err := rt.Credentials.Set(cmd.Context(), scopedRef, encoded); err != nil {
+		return v4config.Auth{}, err
+	}
+	return scopedAuth, nil
+}
+
+func organizationTokenRef(rootRef string, organizationID string) string {
+	base := strings.TrimSuffix(rootRef, "/root-tokens")
+	if base == rootRef {
+		base = strings.TrimSuffix(rootRef, "/token")
+	}
+	return base + "/organizations/" + organizationID + "/root-tokens"
+}
+
+func isCredentialNotFound(err error) bool {
+	return strings.Contains(err.Error(), credentials.ErrNotFound.Error())
 }
 
 func newMembershipClient(baseURL string, httpClient *http.Client) *membership.SDK {

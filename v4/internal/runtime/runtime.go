@@ -162,7 +162,10 @@ func (r *Runtime) HTTPClient(ctx context.Context) (*http.Client, error) {
 
 func (r *Runtime) authForTarget() config.Auth {
 	authConfig := r.Context.Auth
-	if (authConfig.Method == config.AuthMethodClientCredentials || authConfig.Method == config.AuthMethodCloudDevice) && len(authConfig.Scopes) == 0 {
+	if authConfig.Method == config.AuthMethodCloudDevice {
+		authConfig.Scopes = nil
+	}
+	if authConfig.Method == config.AuthMethodClientCredentials && len(authConfig.Scopes) == 0 {
 		switch r.Target.Kind {
 		case TargetKindCloud, TargetKindCloudStack:
 			authConfig.Scopes = append([]string(nil), auth.OrganizationScopes...)

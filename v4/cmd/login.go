@@ -314,13 +314,11 @@ func cloudDeviceAuthFromLoginOptions(cmd *cobra.Command, options loginContextInp
 		IssuerURL: options.MembershipURL,
 		TokenRef:  ref,
 		Account:   v4auth.EmailFromIDToken(tokens.IDToken),
-		Scopes:    cloneOrganizationScopes(),
 	}, nil
 }
 
 func cloudDeviceLoginScopes() []string {
-	scopes := []string{"openid", "offline_access", "accesses", "on_behalf"}
-	return append(scopes, cloneOrganizationScopes()...)
+	return []string{"openid", "offline_access", "accesses", "on_behalf"}
 }
 
 func defaultsFromLogin(defaultLedger string) map[string]string {

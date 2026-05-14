@@ -114,7 +114,11 @@ func newCloudStacksListCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			output, err := cloudcmd.ListStacksService{Client: client}.Run(cmd.Context(), cloudcmd.ListStacksInput{
+			organizationClient, err := organizationMembershipClientFromRuntime(cmd, rt, organizationID)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ListStacksService{Client: organizationClient}.Run(cmd.Context(), cloudcmd.ListStacksInput{
 				OrganizationID: organizationID,
 				All:            all,
 			})

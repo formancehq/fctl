@@ -161,21 +161,23 @@ func TestCloudClientCredentialsDefaultOrganizationScopes(t *testing.T) {
 	}
 }
 
-func TestCloudDeviceDefaultOrganizationScopes(t *testing.T) {
+func TestCloudDeviceClearsStoredOrganizationScopesForMembershipClient(t *testing.T) {
 	rt := &Runtime{
 		Context: config.Context{
 			Kind: config.ContextKindCloud,
 			Auth: config.Auth{
-				Method:   config.AuthMethodCloudDevice,
-				TokenRef: "root-token-ref",
+				Method: config.AuthMethodCloudDevice,
+				Scopes: []string{
+					"organization:ListStacks",
+				},
 			},
 		},
 		Target: Target{Kind: TargetKindCloud},
 	}
 
 	authConfig := rt.authForTarget()
-	if !containsString(authConfig.Scopes, "organization:ListStacks") {
-		t.Fatalf("expected default organization scopes, got %#v", authConfig.Scopes)
+	if len(authConfig.Scopes) != 0 {
+		t.Fatalf("expected root cloud_device auth to clear organization scopes, got %#v", authConfig.Scopes)
 	}
 }
 
