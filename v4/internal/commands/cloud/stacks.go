@@ -3,6 +3,7 @@ package cloud
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
@@ -100,6 +101,8 @@ type StackActionInput struct {
 type WaitStackReadyInput struct {
 	OrganizationID string
 	StackID        string
+	StackURL       string
+	InitialStack   StackSummary
 	PollInterval   time.Duration
 	Timeout        time.Duration
 }
@@ -272,13 +275,16 @@ func (s CreateStackService) Run(ctx context.Context, input CreateStackInput) (St
 		return WaitStackReadyService{Client: s.Client}.Run(ctx, WaitStackReadyInput{
 			OrganizationID: input.OrganizationID,
 			StackID:        output.Stack.ID,
+			StackURL:       output.Stack.URI,
+			InitialStack:   output.Stack,
 		})
 	}
 	return output, nil
 }
 
 type WaitStackReadyService struct {
-	Client StackClient
+	Client     StackClient
+	HTTPClient *http.Client
 }
 
 func (s WaitStackReadyService) Run(ctx context.Context, input WaitStackReadyInput) (StackOutput, error) {
@@ -300,7 +306,11 @@ func (s WaitStackReadyService) Run(ctx context.Context, input WaitStackReadyInpu
 	timeoutTimer := time.NewTimer(timeout)
 	defer timeoutTimer.Stop()
 
-	var last StackOutput
+	last := StackOutput{OrganizationID: input.OrganizationID, Stack: input.InitialStack}
+	stackURL := input.StackURL
+	if stackURL == "" {
+		stackURL = input.InitialStack.URI
+	}
 	for attempt := 0; ; attempt++ {
 		if attempt > 0 {
 			waitTimer := time.NewTimer(pollInterval)
@@ -315,6 +325,21 @@ func (s WaitStackReadyService) Run(ctx context.Context, input WaitStackReadyInpu
 			}
 		}
 
+		if stackVersionsEndpointReady(ctx, s.HTTPClient, stackURL) {
+			if last.Stack.ID == "" {
+				last.Stack.ID = input.StackID
+			}
+			if last.Stack.OrganizationID == "" {
+				last.Stack.OrganizationID = input.OrganizationID
+			}
+			if last.Stack.URI == "" {
+				last.Stack.URI = stackURL
+			}
+			last.Stack.Status = string(components.StackStatusReady)
+			last.Stack.Reachable = true
+			return last, nil
+		}
+
 		output, err := ReadStackService{Client: s.Client}.Run(ctx, StackIDInput{
 			OrganizationID: input.OrganizationID,
 			StackID:        input.StackID,
@@ -323,10 +348,41 @@ func (s WaitStackReadyService) Run(ctx context.Context, input WaitStackReadyInpu
 			return StackOutput{}, err
 		}
 		last = output
+		if stackURL == "" {
+			stackURL = output.Stack.URI
+		}
 		if output.Stack.Status == string(components.StackStatusReady) {
 			return output, nil
 		}
 	}
+}
+
+func stackVersionsEndpointReady(ctx context.Context, client *http.Client, stackURL string) bool {
+	if stackURL == "" {
+		return false
+	}
+	if client == nil {
+		client = http.DefaultClient
+	}
+	requestCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	request, err := http.NewRequestWithContext(requestCtx, http.MethodGet, stackVersionsURL(stackURL), nil)
+	if err != nil {
+		return false
+	}
+	response, err := client.Do(request)
+	if err != nil {
+		return false
+	}
+	defer response.Body.Close()
+	return response.StatusCode == http.StatusOK
+}
+
+func stackVersionsURL(stackURL string) string {
+	for len(stackURL) > 0 && stackURL[len(stackURL)-1] == '/' {
+		stackURL = stackURL[:len(stackURL)-1]
+	}
+	return stackURL + "/versions"
 }
 
 func stackReadyTimeoutError(organizationID string, stackID string, timeout time.Duration, lastStatus string) error {

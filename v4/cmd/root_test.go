@@ -2699,8 +2699,18 @@ func TestCloudStacksCreatePromptsForNameRegionAndVersion(t *testing.T) {
 }
 
 func TestCloudStacksCreateWaitsUntilReady(t *testing.T) {
-	progressingBody := `{"data":{"id":"stack_1","name":"Production","organizationId":"org_1","uri":"https://stack.example/api","regionID":"eu-west-1","version":"v3.2","status":"PROGRESSING","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":false,"stargateEnabled":true,"synchronised":false,"modules":[]}}`
-	readyBody := `{"data":{"id":"stack_1","name":"Production","organizationId":"org_1","uri":"https://stack.example/api","regionID":"eu-west-1","version":"v3.2","status":"READY","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":true,"stargateEnabled":true,"synchronised":true,"modules":[]}}`
+	stackVersionsCalls := 0
+	stackServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || r.URL.Path != "/versions" {
+			t.Fatalf("unexpected stack request %s %s", r.Method, r.URL.String())
+		}
+		stackVersionsCalls++
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	defer stackServer.Close()
+
+	progressingBody := fmt.Sprintf(`{"data":{"id":"stack_1","name":"Production","organizationId":"org_1","uri":%q,"regionID":"eu-west-1","version":"v3.2","status":"PROGRESSING","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":false,"stargateEnabled":true,"synchronised":false,"modules":[]}}`, stackServer.URL)
+	readyBody := fmt.Sprintf(`{"data":{"id":"stack_1","name":"Production","organizationId":"org_1","uri":%q,"regionID":"eu-west-1","version":"v3.2","status":"READY","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":true,"stargateEnabled":true,"synchronised":true,"modules":[]}}`, stackServer.URL)
 	getStackCalls := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -2744,6 +2754,71 @@ func TestCloudStacksCreateWaitsUntilReady(t *testing.T) {
 	}
 	if getStackCalls != 1 {
 		t.Fatalf("expected one readiness poll, got %d", getStackCalls)
+	}
+	if stackVersionsCalls != 1 {
+		t.Fatalf("expected one stack /versions fallback attempt, got %d", stackVersionsCalls)
+	}
+}
+
+func TestCloudStacksCreateAvailabilityUsesStackVersionsFirst(t *testing.T) {
+	stackVersionsCalls := 0
+	stackServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || r.URL.Path != "/versions" {
+			t.Fatalf("unexpected stack request %s %s", r.Method, r.URL.String())
+		}
+		stackVersionsCalls++
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"v2.0.0","health":true}]}`)
+	}))
+	defer stackServer.Close()
+
+	progressingBody := fmt.Sprintf(`{"data":{"id":"stack_1","name":"Production","organizationId":"org_1","uri":%q,"regionID":"eu-west-1","version":"v3.2","status":"PROGRESSING","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":false,"stargateEnabled":true,"synchronised":false,"modules":[]}}`, stackServer.URL)
+	getStackCalls := 0
+	membershipServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodPost && r.URL.Path == "/organizations/org_1/stacks":
+			w.WriteHeader(http.StatusAccepted)
+			fmt.Fprint(w, progressingBody)
+		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/stacks/stack_1":
+			getStackCalls++
+			t.Fatalf("membership readiness fallback should not be used after stack /versions succeeds")
+		default:
+			t.Fatalf("unexpected membership request %s %s", r.Method, r.URL.String())
+		}
+	}))
+	defer membershipServer.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", membershipServer.URL,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"cloud", "stacks", "create", "Production",
+		"--region", "eu-west-1",
+		"--version", "v3.2",
+	)
+	if err != nil {
+		t.Fatalf("cloud stacks create direct availability: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud stack stack_1 created.\n" {
+		t.Fatalf("unexpected create output: %q", stdout)
+	}
+	if stackVersionsCalls != 1 {
+		t.Fatalf("expected one stack /versions check, got %d", stackVersionsCalls)
+	}
+	if getStackCalls != 0 {
+		t.Fatalf("expected no membership fallback calls, got %d", getStackCalls)
 	}
 }
 
