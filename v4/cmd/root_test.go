@@ -2991,6 +2991,103 @@ func TestPaymentsTransferInitiationDeleteSelectsV3(t *testing.T) {
 	}
 }
 
+func TestPaymentsTransferInitiationUpdateStatusRequiresConfirm(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "payments", "transfer-initiation", "update-status", "ti_1", "VALIDATED")
+	if err == nil {
+		t.Fatal("expected payments transfer-initiation update-status to require confirmation")
+	}
+	if stdout != "" {
+		t.Fatalf("expected empty stdout, got %q", stdout)
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(err.Error(), "payments transfer-initiation update-status requires --confirm") {
+		t.Fatalf("expected confirmation error, got: %v", err)
+	}
+}
+
+func TestPaymentsTransferInitiationUpdateStatusSelectsV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/transfer-initiations/ti_1/status":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			body := readRequestBody(t, r)
+			if !strings.Contains(body, `"status":"VALIDATED"`) {
+				t.Fatalf("expected status body, got %s", body)
+			}
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "transfer-initiation", "update-status", "ti_1", "validated",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("update transfer initiation status: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v1") || !strings.Contains(stdout, "Transfer initiation ti_1 status updated to VALIDATED.") {
+		t.Fatalf("unexpected update-status output:\n%s", stdout)
+	}
+}
+
+func TestPaymentsTransferInitiationUpdateStatusDeprecatedAlias(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/transfer-initiations/ti_1/status":
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "transfer-initiation", "update_status", "ti_1", "REJECTED",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("update transfer initiation status through alias: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "use payments transfer-initiation update-status") {
+		t.Fatalf("expected update_status deprecation warning, got:\n%s", stderr)
+	}
+}
+
 func TestConfigMigrateV3DryRun(t *testing.T) {
 	v3Dir := writeV3CommandFixture(t, true)
 

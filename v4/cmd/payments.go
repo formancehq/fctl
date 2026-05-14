@@ -51,6 +51,8 @@ func newPaymentsTransferInitiationCommand(use string, aliases []string, deprecat
 	command.AddCommand(newPaymentsTransferInitiationActionCommand("reject", []string{"rj"}, "Reject a payment transfer initiation", paymentscmd.FeatureRejectPaymentInitiation, paymentscmd.SDKRejectPaymentInitiationHandlers, "rejected", true))
 	command.AddCommand(newPaymentsTransferInitiationActionCommand("retry", []string{"r"}, "Retry a payment transfer initiation", paymentscmd.FeatureRetryPaymentInitiation, paymentscmd.SDKRetryPaymentInitiationHandlers, "queued for retry", true))
 	command.AddCommand(newPaymentsTransferInitiationActionCommand("delete", []string{"d"}, "Delete a payment transfer initiation", paymentscmd.FeatureDeletePaymentInitiation, paymentscmd.SDKDeletePaymentInitiationHandlers, "deleted", true))
+	command.AddCommand(newPaymentsTransferInitiationUpdateStatusCommand("update-status", []string{"u"}, false))
+	command.AddCommand(newPaymentsTransferInitiationUpdateStatusCommand("update_status", nil, true))
 	return command
 }
 
@@ -1547,5 +1549,75 @@ func renderPaymentTransferInitiationAction(cmd *cobra.Command, output paymentscm
 		}
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Transfer initiation %s %s.\n", output.TransferInitiationID, done)
+	return err
+}
+
+func newPaymentsTransferInitiationUpdateStatusCommand(use string, aliases []string, deprecated bool) *cobra.Command {
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     use + " <transfer-initiation-id> <status>",
+		Aliases: aliases,
+		Short:   "Update a payment transfer initiation status",
+		Args:    cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if deprecated {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Command payments transfer-initiation update_status has been deprecated, use payments transfer-initiation update-status")
+			}
+			if !confirm {
+				return fmt.Errorf("payments transfer-initiation %s requires --confirm", use)
+			}
+			status := strings.ToUpper(args[1])
+			if status != "REJECTED" && status != "VALIDATED" {
+				return fmt.Errorf("unsupported transfer initiation status %q: expected REJECTED or VALIDATED", args[1])
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.UpdateTransferInitiationStatusService{
+				Handlers: paymentscmd.SDKUpdateTransferInitiationStatusHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureUpdateTransferInitiationStatus,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.UpdateTransferInitiationStatusInput{TransferInitiationID: args[0], Status: status})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentTransferInitiationStatusUpdated(cmd, output)
+		},
+	}
+	if deprecated {
+		command.Deprecated = "use payments transfer-initiation update-status"
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm transfer initiation status update")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func renderPaymentTransferInitiationStatusUpdated(cmd *cobra.Command, output paymentscmd.UpdateTransferInitiationStatusOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Transfer initiation %s status updated to %s.\n", output.TransferInitiationID, output.Status)
 	return err
 }

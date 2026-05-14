@@ -104,3 +104,17 @@ func TestTransferInitiationActionServiceRequiresID(t *testing.T) {
 		t.Fatal("expected transfer initiation id validation error")
 	}
 }
+
+func TestUpdateTransferInitiationStatusServiceRequiresStatus(t *testing.T) {
+	service := UpdateTransferInitiationStatusService{
+		Handlers: []UpdateTransferInitiationStatusHandler{{APIVersion: "v1"}},
+		Resolve: func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			t.Fatal("resolver should not run")
+			return "", nil
+		},
+	}
+
+	if _, err := service.Run(context.Background(), UpdateTransferInitiationStatusInput{TransferInitiationID: "ti_1"}); err == nil {
+		t.Fatal("expected transfer initiation status validation error")
+	}
+}

@@ -13,12 +13,13 @@ import (
 )
 
 const (
-	FeatureApprovePaymentInitiation capabilities.Feature = "approvePaymentInitiation"
-	FeatureDeletePaymentInitiation  capabilities.Feature = "deletePaymentInitiation"
-	FeatureGetTransferInitiation    capabilities.Feature = "getTransferInitiation"
-	FeatureListTransferInitiation   capabilities.Feature = "listTransferInitiations"
-	FeatureRejectPaymentInitiation  capabilities.Feature = "rejectPaymentInitiation"
-	FeatureRetryPaymentInitiation   capabilities.Feature = "retryPaymentInitiation"
+	FeatureApprovePaymentInitiation       capabilities.Feature = "approvePaymentInitiation"
+	FeatureDeletePaymentInitiation        capabilities.Feature = "deletePaymentInitiation"
+	FeatureGetTransferInitiation          capabilities.Feature = "getTransferInitiation"
+	FeatureListTransferInitiation         capabilities.Feature = "listTransferInitiations"
+	FeatureRejectPaymentInitiation        capabilities.Feature = "rejectPaymentInitiation"
+	FeatureRetryPaymentInitiation         capabilities.Feature = "retryPaymentInitiation"
+	FeatureUpdateTransferInitiationStatus capabilities.Feature = "updateTransferInitiationStatus"
 )
 
 type TransferInitiationSummary struct {
@@ -74,6 +75,17 @@ type TransferInitiationActionOutput struct {
 	TaskID               string                  `json:"taskID,omitempty" yaml:"taskID,omitempty"`
 }
 
+type UpdateTransferInitiationStatusInput struct {
+	TransferInitiationID string
+	Status               string
+}
+
+type UpdateTransferInitiationStatusOutput struct {
+	APIVersion           capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	TransferInitiationID string                  `json:"transferInitiationID" yaml:"transferInitiationID"`
+	Status               string                  `json:"status" yaml:"status"`
+}
+
 type ListTransferInitiationsHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, ListTransferInitiationsInput) (ListTransferInitiationsOutput, error)
@@ -89,6 +101,11 @@ type TransferInitiationActionHandler struct {
 	Run        func(context.Context, TransferInitiationActionInput) (TransferInitiationActionOutput, error)
 }
 
+type UpdateTransferInitiationStatusHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, UpdateTransferInitiationStatusInput) (UpdateTransferInitiationStatusOutput, error)
+}
+
 type ListTransferInitiationsService struct {
 	Handlers []ListTransferInitiationsHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
@@ -101,6 +118,11 @@ type GetTransferInitiationService struct {
 
 type TransferInitiationActionService struct {
 	Handlers []TransferInitiationActionHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type UpdateTransferInitiationStatusService struct {
+	Handlers []UpdateTransferInitiationStatusHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -174,6 +196,35 @@ func (s TransferInitiationActionService) Run(ctx context.Context, input Transfer
 	output, err := handler.Run(ctx, input)
 	if err != nil {
 		return TransferInitiationActionOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func (s UpdateTransferInitiationStatusService) Run(ctx context.Context, input UpdateTransferInitiationStatusInput) (UpdateTransferInitiationStatusOutput, error) {
+	if input.TransferInitiationID == "" {
+		return UpdateTransferInitiationStatusOutput{}, fmt.Errorf("transfer initiation id is required")
+	}
+	if input.Status == "" {
+		return UpdateTransferInitiationStatusOutput{}, fmt.Errorf("transfer initiation status is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]UpdateTransferInitiationStatusHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return UpdateTransferInitiationStatusOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return UpdateTransferInitiationStatusOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return UpdateTransferInitiationStatusOutput{}, err
 	}
 	output.APIVersion = selected
 	return output, nil
@@ -343,6 +394,28 @@ func SDKDeletePaymentInitiationHandlers(sdk *formance.Formance) []TransferInitia
 					return TransferInitiationActionOutput{}, err
 				}
 				return TransferInitiationActionOutput{TransferInitiationID: input.TransferInitiationID}, nil
+			},
+		},
+	}
+}
+
+func SDKUpdateTransferInitiationStatusHandlers(sdk *formance.Formance) []UpdateTransferInitiationStatusHandler {
+	return []UpdateTransferInitiationStatusHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input UpdateTransferInitiationStatusInput) (UpdateTransferInitiationStatusOutput, error) {
+				if _, err := sdk.Payments.V1.UpdateTransferInitiationStatus(ctx, operations.UpdateTransferInitiationStatusRequest{
+					TransferID: input.TransferInitiationID,
+					UpdateTransferInitiationStatusRequest: shared.UpdateTransferInitiationStatusRequest{
+						Status: shared.Status(input.Status),
+					},
+				}); err != nil {
+					return UpdateTransferInitiationStatusOutput{}, err
+				}
+				return UpdateTransferInitiationStatusOutput{
+					TransferInitiationID: input.TransferInitiationID,
+					Status:               input.Status,
+				}, nil
 			},
 		},
 	}
