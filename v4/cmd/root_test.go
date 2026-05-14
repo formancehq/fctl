@@ -302,12 +302,23 @@ func TestUIPrintsCloudConsoleURL(t *testing.T) {
 		t.Fatalf("create cloud context: %v stderr=%s", err, stderr)
 	}
 
-	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "ui", "--print")
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud", "ui", "--print")
 	if err != nil {
-		t.Fatalf("ui print: %v stderr=%s", err, stderr)
+		t.Fatalf("cloud ui print: %v stderr=%s", err, stderr)
 	}
 	if stdout != "Console URL: https://console.example\n" {
-		t.Fatalf("unexpected ui output: %q", stdout)
+		t.Fatalf("unexpected cloud ui output: %q", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "ui", "--print")
+	if err != nil {
+		t.Fatalf("root ui alias print: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Command ui has been deprecated, use cloud ui") {
+		t.Fatalf("expected root ui deprecation warning, got:\n%s", stderr)
+	}
+	if stdout != "Console URL: https://console.example\n" {
+		t.Fatalf("unexpected root ui alias output: %q", stdout)
 	}
 }
 
@@ -322,9 +333,9 @@ func TestUIRejectsStackContext(t *testing.T) {
 		t.Fatalf("create stack context: %v stderr=%s", err, stderr)
 	}
 
-	_, stderr, err = executeCommand(t, "--config-dir", configDir, "ui", "--print")
+	_, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "ui", "--print")
 	if err == nil {
-		t.Fatal("expected ui to reject stack contexts")
+		t.Fatal("expected cloud ui to reject stack contexts")
 	}
 	if !strings.Contains(err.Error(), "cloud commands require a cloud or cloud-stack context") {
 		t.Fatalf("unexpected ui error: %v stderr=%s", err, stderr)

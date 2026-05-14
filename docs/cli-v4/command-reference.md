@@ -37,7 +37,6 @@ This reference lists the current canonical v4 command families implemented under
 - `fctl profile unset-defaults [name] --confirm`
 - `fctl config migrate-v3`
 - `fctl setup`
-- `fctl ui --print`
 - `fctl target inspect`
 - `fctl target proxy --port 55001`
 - `fctl stack proxy --port 55001` deprecated alias for `fctl target proxy`
@@ -52,6 +51,7 @@ commands for now. New user flows should use `login`, `logout`, `whoami`, and
 - `fctl cloud me invitations list`
 - `fctl cloud me invitations accept <invitation-id> --confirm`
 - `fctl cloud me invitations decline <invitation-id> --confirm`
+- `fctl cloud ui --print`
 - `fctl cloud organizations create <name>`
 - `fctl cloud organizations list`
 - `fctl cloud organizations show <organization-id>`
@@ -105,7 +105,7 @@ commands for now. New user flows should use `login`, `logout`, `whoami`, and
 Cloud commands require a `cloud` or `cloud-stack` context. They are not required
 for direct local or self-hosted stack commands. `cloud apps` talks to the Cloud
 apps deploy server; use `--deploy-url <url>` to target a non-production deploy
-server.
+server. The root `ui` command is a hidden deprecated alias for `cloud ui`.
 
 ## Cloud Stacks
 

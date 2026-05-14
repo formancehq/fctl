@@ -11,7 +11,7 @@ import (
 
 var openBrowserURL = openURL
 
-func newUICommand() *cobra.Command {
+func newUICommand(deprecatedRootAlias bool) *cobra.Command {
 	var printOnly bool
 
 	command := &cobra.Command{
@@ -19,6 +19,9 @@ func newUICommand() *cobra.Command {
 		Short: "Open the Formance Cloud console",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			if deprecatedRootAlias {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Command ui has been deprecated, use cloud ui")
+			}
 			_, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
 			if err != nil {
 				return err
@@ -61,6 +64,9 @@ func newUICommand() *cobra.Command {
 			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Console URL: %s\n", consoleURL)
 			return err
 		},
+	}
+	if deprecatedRootAlias {
+		command.Hidden = true
 	}
 	command.Flags().BoolVar(&printOnly, "print", false, "Print the console URL without opening a browser")
 	return command

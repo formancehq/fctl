@@ -66,7 +66,7 @@ func NewRootCommand(version string) *cobra.Command {
 	root.AddCommand(newSetupCommand(false))
 	root.AddCommand(newSetupCommand(true))
 	root.AddCommand(newSessionCommand())
-	root.AddCommand(newUICommand())
+	root.AddCommand(newUICommand(true))
 	root.AddCommand(newTargetCommand())
 	root.AddCommand(newCloudCommand())
 	root.AddCommand(newCloudStacksCommand("cloud_stacks", "cloud stacks", true))

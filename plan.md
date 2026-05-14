@@ -142,7 +142,7 @@ Points bloques / differes:
 | aucun equivalent v3 | `fctl config migrate-v3` | Importe les profiles v3 sans les modifier. | fixtures v3, keyring fake, idempotence. |
 | `fctl prompt` | `fctl setup` ou `fctl login` | Garder `prompt` alias cache/deprecie. | ne jamais bloquer en `--non-interactive`. |
 | `fctl version` | `fctl version` | Ajouter build metadata v4. | stdout stable. |
-| `fctl ui` | `fctl ui [--print]` | Garder pour les contextes Cloud uniquement; `--print` donne une sortie scriptable sans navigateur. | detection browser/TTY. |
+| `fctl ui` | `fctl cloud ui [--print]` | `ui` racine devient alias cache deprecie; `--print` donne une sortie scriptable sans navigateur. | detection browser/TTY. |
 
 Implementation v4:
 
@@ -154,7 +154,7 @@ Implementation v4:
 - `fctl logout` supprime les credentials geres par le CLI du profil courant et repasse son auth a `none`;
 - `fctl whoami` affiche profil, cible, methode d'auth, organisation et stack sans exposer les secrets;
 - `profile unset-defaults [name] --confirm` supprime les defaults du profil sans toucher a l'auth ni aux credentials; les aliases deprecies `profiles reset`, `profiles set-default-organization` et `profiles set-default-stack` restent disponibles pour les migrations peu couteuses.
-- `ui [--print]` reste disponible sur les contextes `cloud`/`cloud-stack`; il lit `/_info.consoleURL`, ouvre le navigateur seulement en mode interactif, et refuse les contextes `stack`.
+- `cloud ui [--print]` reste disponible sur les profils `cloud`/`cloud-stack`; il lit `/_info.consoleURL`, ouvre le navigateur seulement en mode interactif, et refuse les profils `stack`; `ui` racine reste un alias cache deprecie.
 
 Points bloques / differes:
 
