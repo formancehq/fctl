@@ -2737,6 +2737,80 @@ func TestPaymentsPaymentsSetMetadataRequiresConfirm(t *testing.T) {
 	}
 }
 
+func TestPaymentsPoolsCreateRequiresConfirm(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "payments", "pools", "create", "--file", "request.json")
+	if err == nil {
+		t.Fatal("expected payments pools create to require confirmation")
+	}
+	if stdout != "" {
+		t.Fatalf("expected empty stdout, got %q", stdout)
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(err.Error(), "payments pools create requires --confirm") {
+		t.Fatalf("expected confirmation error, got: %v", err)
+	}
+}
+
+func TestPaymentsPoolsCreateSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/pools":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			body := readRequestBody(t, r)
+			for _, expected := range []string{`"name":"Main"`, `"accountIDs":["acc_1"]`} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected create pool body to contain %q, got:\n%s", expected, body)
+				}
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, `{"data":"pool_1"}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+	requestFile := filepath.Join(t.TempDir(), "pool.json")
+	if err := os.WriteFile(requestFile, []byte(`{"name":"Main","accountIDs":["acc_1"]}`), 0o600); err != nil {
+		t.Fatalf("write request file: %v", err)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "pools", "create",
+		"--file", requestFile,
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("create payment pool: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v3",
+		"Pool created with ID: pool_1",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected payment pool create output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
 func TestPaymentsPoolsListSelectsV3(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

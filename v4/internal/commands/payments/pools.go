@@ -2,6 +2,7 @@ package payments
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 
 const (
 	FeatureAddAccountToPool      capabilities.Feature = "addAccountToPool"
+	FeatureCreatePool            capabilities.Feature = "createPool"
 	FeatureDeletePool            capabilities.Feature = "deletePool"
 	FeatureGetPool               capabilities.Feature = "getPool"
 	FeatureGetPoolBalances       capabilities.Feature = "getPoolBalances"
@@ -45,6 +47,15 @@ type ListPoolsOutput struct {
 	PageSize   int64                   `json:"pageSize" yaml:"pageSize"`
 	Next       *string                 `json:"next,omitempty" yaml:"next,omitempty"`
 	Previous   *string                 `json:"previous,omitempty" yaml:"previous,omitempty"`
+}
+
+type CreatePoolInput struct {
+	Payload []byte
+}
+
+type CreatePoolOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	PoolID     string                  `json:"poolID" yaml:"poolID"`
 }
 
 type GetPoolInput struct {
@@ -109,6 +120,11 @@ type ListPoolsHandler struct {
 	Run        func(context.Context, ListPoolsInput) (ListPoolsOutput, error)
 }
 
+type CreatePoolHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, CreatePoolInput) (CreatePoolOutput, error)
+}
+
 type GetPoolHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, GetPoolInput) (GetPoolOutput, error)
@@ -136,6 +152,11 @@ type GetPoolBalancesHandler struct {
 
 type ListPoolsService struct {
 	Handlers []ListPoolsHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type CreatePoolService struct {
+	Handlers []CreatePoolHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -187,6 +208,32 @@ func (s ListPoolsService) Run(ctx context.Context, input ListPoolsInput) (ListPo
 	output, err := handler.Run(ctx, input)
 	if err != nil {
 		return ListPoolsOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func (s CreatePoolService) Run(ctx context.Context, input CreatePoolInput) (CreatePoolOutput, error) {
+	if len(input.Payload) == 0 {
+		return CreatePoolOutput{}, fmt.Errorf("pool request is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]CreatePoolHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return CreatePoolOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return CreatePoolOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return CreatePoolOutput{}, err
 	}
 	output.APIVersion = selected
 	return output, nil
@@ -377,6 +424,45 @@ func SDKListPoolsHandlers(sdk *formance.Formance) []ListPoolsHandler {
 					return ListPoolsOutput{}, fmt.Errorf("payments v3 list pools returned no cursor")
 				}
 				return fromV3PoolsCursor(response.V3PoolsCursorResponse.Cursor), nil
+			},
+		},
+	}
+}
+
+func SDKCreatePoolHandlers(sdk *formance.Formance) []CreatePoolHandler {
+	return []CreatePoolHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input CreatePoolInput) (CreatePoolOutput, error) {
+				var request shared.PoolRequest
+				if err := json.Unmarshal(input.Payload, &request); err != nil {
+					return CreatePoolOutput{}, err
+				}
+				response, err := sdk.Payments.V1.CreatePool(ctx, request)
+				if err != nil {
+					return CreatePoolOutput{}, err
+				}
+				if response.PoolResponse == nil {
+					return CreatePoolOutput{}, fmt.Errorf("payments v1 create pool returned no data")
+				}
+				return CreatePoolOutput{PoolID: response.PoolResponse.Data.ID}, nil
+			},
+		},
+		{
+			APIVersion: "v3",
+			Run: func(ctx context.Context, input CreatePoolInput) (CreatePoolOutput, error) {
+				var request shared.V3CreatePoolRequest
+				if err := json.Unmarshal(input.Payload, &request); err != nil {
+					return CreatePoolOutput{}, err
+				}
+				response, err := sdk.Payments.V3.CreatePool(ctx, &request)
+				if err != nil {
+					return CreatePoolOutput{}, err
+				}
+				if response.V3CreatePoolResponse == nil {
+					return CreatePoolOutput{}, fmt.Errorf("payments v3 create pool returned no data")
+				}
+				return CreatePoolOutput{PoolID: response.V3CreatePoolResponse.Data}, nil
 			},
 		},
 	}
