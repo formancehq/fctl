@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
@@ -238,7 +239,7 @@ func (s ReadStackService) Run(ctx context.Context, input StackIDInput) (StackOut
 	}
 	return StackOutput{
 		OrganizationID: input.OrganizationID,
-		Stack:          stackSummary(response.GetReadStackResponse().GetData(), defaultConsoleURL),
+		Stack:          stackSummary(response.GetReadStackResponse().GetData(), DefaultConsoleURL),
 	}, nil
 }
 
@@ -278,7 +279,7 @@ func (s CreateStackService) Run(ctx context.Context, input CreateStackInput) (St
 	if response.GetReadStackResponse().GetData() == nil {
 		return StackOutput{}, fmt.Errorf("cloud stacks create returned no stack")
 	}
-	output := StackOutput{OrganizationID: input.OrganizationID, Stack: stackSummary(response.GetReadStackResponse().GetData(), defaultConsoleURL)}
+	output := StackOutput{OrganizationID: input.OrganizationID, Stack: stackSummary(response.GetReadStackResponse().GetData(), DefaultConsoleURL)}
 	if input.Wait && output.Stack.Status != string(components.StackStatusReady) {
 		return WaitStackReadyService{Client: s.Client, HTTPClient: s.HTTPClient}.Run(ctx, WaitStackReadyInput{
 			OrganizationID: input.OrganizationID,
@@ -464,7 +465,7 @@ func (s UpdateStackService) Run(ctx context.Context, input UpdateStackInput) (St
 	if response.GetReadStackResponse().GetData() == nil {
 		return StackOutput{}, fmt.Errorf("cloud stacks update returned no stack")
 	}
-	return StackOutput{OrganizationID: input.OrganizationID, Stack: stackSummary(response.GetReadStackResponse().GetData(), defaultConsoleURL)}, nil
+	return StackOutput{OrganizationID: input.OrganizationID, Stack: stackSummary(response.GetReadStackResponse().GetData(), DefaultConsoleURL)}, nil
 }
 
 type DeleteStackService struct {
@@ -525,7 +526,7 @@ func (s StackActionService) Run(ctx context.Context, input StackActionInput) (St
 			return StackActionOutput{}, err
 		}
 		if response.GetReadStackResponse().GetData() != nil {
-			stack := stackSummary(response.GetReadStackResponse().GetData(), defaultConsoleURL)
+			stack := stackSummary(response.GetReadStackResponse().GetData(), DefaultConsoleURL)
 			output.Stack = &stack
 		}
 		return output, nil
@@ -665,18 +666,26 @@ func validateStackTarget(organizationID string, stackID string) error {
 	return nil
 }
 
-const defaultConsoleURL = "https://portal.formance.cloud"
+const DefaultConsoleURL = "https://portal.formance.cloud"
 
 func stackDashboardURL(ctx context.Context, client StackClient) (string, error) {
 	response, err := client.GetServerInfo(ctx)
 	if err != nil {
 		return "", err
 	}
-	info := response.GetServerInfo()
-	if info != nil && info.GetConsoleURL() != nil {
-		return *info.GetConsoleURL(), nil
+	return ConsoleURL(response), nil
+}
+
+func ConsoleURL(response *operations.GetServerInfoResponse) string {
+	if response != nil {
+		info := response.GetServerInfo()
+		if info != nil && info.GetConsoleURL() != nil {
+			if consoleURL := strings.TrimSpace(*info.GetConsoleURL()); consoleURL != "" {
+				return consoleURL
+			}
+		}
 	}
-	return defaultConsoleURL, nil
+	return DefaultConsoleURL
 }
 
 func stackSummary(stack *components.Stack, dashboard string) StackSummary {

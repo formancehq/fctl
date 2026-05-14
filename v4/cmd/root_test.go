@@ -651,6 +651,36 @@ func TestUIPrintsCloudConsoleURL(t *testing.T) {
 	}
 }
 
+func TestUIPrintsDefaultConsoleURLWhenCloudInfoOmitsIt(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/_info" {
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `{"version":"test"}`)
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud", "cloud",
+		"--cloud-url", server.URL,
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud", "ui", "--print")
+	if err != nil {
+		t.Fatalf("cloud ui print: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Console URL: https://portal.formance.cloud\n" {
+		t.Fatalf("unexpected cloud ui fallback output: %q", stdout)
+	}
+}
+
 func TestUIRejectsStackContext(t *testing.T) {
 	configDir := t.TempDir()
 	_, stderr, err := executeCommand(t,

@@ -7,6 +7,8 @@ import (
 	goruntime "runtime"
 
 	"github.com/spf13/cobra"
+
+	cloudcmd "github.com/formancehq/fctl/v4/internal/commands/cloud"
 )
 
 var openBrowserURL = openURL
@@ -30,16 +32,7 @@ func newUICommand(deprecatedRootAlias bool) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if response.ServerInfo == nil {
-				return fmt.Errorf("cloud server info response did not include server info")
-			}
-			consoleURL := ""
-			if response.ServerInfo.ConsoleURL != nil {
-				consoleURL = *response.ServerInfo.ConsoleURL
-			}
-			if consoleURL == "" {
-				return fmt.Errorf("cloud server info response did not include consoleURL")
-			}
+			consoleURL := cloudcmd.ConsoleURL(response)
 
 			nonInteractive, err := cmd.Root().PersistentFlags().GetBool(nonInteractiveFlag)
 			if err != nil {
