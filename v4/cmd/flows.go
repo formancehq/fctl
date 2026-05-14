@@ -30,6 +30,218 @@ func newFlowsCommand(deprecatedAlias bool) *cobra.Command {
 	}
 	command.AddCommand(newFlowsWorkflowsCommand())
 	command.AddCommand(newFlowsInstancesCommand())
+	command.AddCommand(newFlowsTriggersCommand())
+	return command
+}
+
+func newFlowsTriggersCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "triggers",
+		Short: "Manage workflow triggers",
+	}
+	command.AddCommand(newFlowsTriggersCreateCommand())
+	command.AddCommand(newFlowsTriggersListCommand())
+	command.AddCommand(newFlowsTriggersShowCommand())
+	command.AddCommand(newFlowsTriggersDeleteCommand())
+	command.AddCommand(newFlowsTriggersTestCommand())
+	return command
+}
+
+func newFlowsTriggersCreateCommand() *cobra.Command {
+	var confirm bool
+	var name string
+	var filter string
+	var version string
+	var variable []string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "create <event> <workflow-id>",
+		Short: "Create a workflow trigger",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("flows triggers create requires --confirm")
+			}
+			vars, err := parseAnyMapFlags(variable)
+			if err != nil {
+				return err
+			}
+			output, err := runFlowsCreateTriggerCommand(cmd, flowscmd.CreateTriggerInput{
+				Event:      args[0],
+				WorkflowID: args[1],
+				Name:       name,
+				Filter:     filter,
+				Version:    version,
+				Vars:       vars,
+			}, apiVersion)
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderFlowsTriggerCreated(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm trigger creation")
+	command.Flags().StringVar(&name, "name", "", "Trigger name")
+	command.Flags().StringVar(&filter, "filter", "", "Trigger filter expression")
+	command.Flags().StringVar(&version, "version", "", "Workflow version")
+	command.Flags().StringArrayVar(&variable, "variable", nil, "Variable as key=value")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	return command
+}
+
+func newFlowsTriggersListCommand() *cobra.Command {
+	var pageSize int64 = 15
+	var cursor string
+	var name string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"ls", "l"},
+		Short:   "List workflow triggers",
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := flowscmd.ListTriggersService{
+				Handlers: flowscmd.SDKListTriggersHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         flowscmd.ProductOrchestration,
+						Feature:         flowscmd.FeatureListTriggers,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), flowscmd.ListTriggersInput{PageSize: pageSize, Cursor: cursor, Name: name})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderFlowsTriggers(cmd, output)
+		},
+	}
+	command.Flags().Int64Var(&pageSize, "page-size", 15, "Page size")
+	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
+	command.Flags().StringVar(&name, "name", "", "Filter triggers by name")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	return command
+}
+
+func newFlowsTriggersShowCommand() *cobra.Command {
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "show <trigger-id>",
+		Short: "Show a workflow trigger",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := flowscmd.GetTriggerService{
+				Handlers: flowscmd.SDKGetTriggerHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         flowscmd.ProductOrchestration,
+						Feature:         flowscmd.FeatureReadTrigger,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), flowscmd.GetTriggerInput{TriggerID: args[0]})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderFlowsTrigger(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	return command
+}
+
+func newFlowsTriggersDeleteCommand() *cobra.Command {
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "delete <trigger-id>",
+		Short: "Delete a workflow trigger",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("flows triggers delete requires --confirm")
+			}
+			output, err := runFlowsDeleteTriggerCommand(cmd, args[0], apiVersion)
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderFlowsTriggerDeleted(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm trigger deletion")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	return command
+}
+
+func newFlowsTriggersTestCommand() *cobra.Command {
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "test <trigger-id> <event-json>",
+		Short: "Test a workflow trigger",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			event := map[string]any{}
+			if err := json.Unmarshal([]byte(args[1]), &event); err != nil {
+				return fmt.Errorf("decode event json: %w", err)
+			}
+			output, err := runFlowsTestTriggerCommand(cmd, flowscmd.TestTriggerInput{TriggerID: args[0], Event: event}, apiVersion)
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderFlowsTriggerTest(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
 	return command
 }
 
@@ -454,6 +666,105 @@ func runFlowsCreateWorkflowCommand(cmd *cobra.Command, workflowRequest shared.Cr
 	return service.Run(cmd.Context(), flowscmd.CreateWorkflowInput{Workflow: workflowRequest})
 }
 
+func runFlowsCreateTriggerCommand(cmd *cobra.Command, input flowscmd.CreateTriggerInput, apiVersion string) (flowscmd.CreateTriggerOutput, error) {
+	rt, err := runtimeFromCommand(cmd)
+	if err != nil {
+		return flowscmd.CreateTriggerOutput{}, err
+	}
+	httpClient, err := rt.HTTPClient(cmd.Context())
+	if err != nil {
+		return flowscmd.CreateTriggerOutput{}, err
+	}
+	sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+	service := flowscmd.CreateTriggerService{
+		Handlers: flowscmd.SDKCreateTriggerHandlers(sdk),
+		Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			request := capabilities.VersionResolutionRequest{
+				Product:         flowscmd.ProductOrchestration,
+				Feature:         flowscmd.FeatureCreateTrigger,
+				HandlerVersions: handlerVersions,
+			}
+			if apiVersion != "" {
+				request.Policy = capabilities.VersionPolicyPinned
+				request.PinnedVersion = capabilities.APIVersion(apiVersion)
+			}
+			return rt.ResolveAPIVersion(ctx, request)
+		},
+	}
+	return service.Run(cmd.Context(), input)
+}
+
+func runFlowsDeleteTriggerCommand(cmd *cobra.Command, triggerID string, apiVersion string) (flowscmd.DeleteTriggerOutput, error) {
+	rt, err := runtimeFromCommand(cmd)
+	if err != nil {
+		return flowscmd.DeleteTriggerOutput{}, err
+	}
+	httpClient, err := rt.HTTPClient(cmd.Context())
+	if err != nil {
+		return flowscmd.DeleteTriggerOutput{}, err
+	}
+	sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+	service := flowscmd.DeleteTriggerService{
+		Handlers: flowscmd.SDKDeleteTriggerHandlers(sdk),
+		Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			request := capabilities.VersionResolutionRequest{
+				Product:         flowscmd.ProductOrchestration,
+				Feature:         flowscmd.FeatureDeleteTrigger,
+				HandlerVersions: handlerVersions,
+			}
+			if apiVersion != "" {
+				request.Policy = capabilities.VersionPolicyPinned
+				request.PinnedVersion = capabilities.APIVersion(apiVersion)
+			}
+			return rt.ResolveAPIVersion(ctx, request)
+		},
+	}
+	return service.Run(cmd.Context(), flowscmd.DeleteTriggerInput{TriggerID: triggerID})
+}
+
+func runFlowsTestTriggerCommand(cmd *cobra.Command, input flowscmd.TestTriggerInput, apiVersion string) (flowscmd.TestTriggerOutput, error) {
+	rt, err := runtimeFromCommand(cmd)
+	if err != nil {
+		return flowscmd.TestTriggerOutput{}, err
+	}
+	httpClient, err := rt.HTTPClient(cmd.Context())
+	if err != nil {
+		return flowscmd.TestTriggerOutput{}, err
+	}
+	sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+	service := flowscmd.TestTriggerService{
+		Handlers: flowscmd.SDKTestTriggerHandlers(sdk),
+		Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			request := capabilities.VersionResolutionRequest{
+				Product:         flowscmd.ProductOrchestration,
+				Feature:         flowscmd.FeatureTestTrigger,
+				HandlerVersions: handlerVersions,
+			}
+			if apiVersion != "" {
+				request.Policy = capabilities.VersionPolicyPinned
+				request.PinnedVersion = capabilities.APIVersion(apiVersion)
+			}
+			return rt.ResolveAPIVersion(ctx, request)
+		},
+	}
+	return service.Run(cmd.Context(), input)
+}
+
+func parseAnyMapFlags(values []string) (map[string]any, error) {
+	parsed, err := parseMetadataFlags(values)
+	if err != nil {
+		return nil, err
+	}
+	if parsed == nil {
+		return nil, nil
+	}
+	ret := make(map[string]any, len(parsed))
+	for key, value := range parsed {
+		ret[key] = value
+	}
+	return ret, nil
+}
+
 func newFlowsWorkflowsListCommand() *cobra.Command {
 	var pageSize int64 = 15
 	var cursor string
@@ -667,5 +978,71 @@ func renderFlowsInstanceStopped(cmd *cobra.Command, output flowscmd.InstanceActi
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Workflow instance %s stopped.\n", output.InstanceID)
+	return err
+}
+
+func renderFlowsTriggerCreated(cmd *cobra.Command, output flowscmd.CreateTriggerOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Trigger created with ID: %s\n", output.Trigger.ID)
+	return err
+}
+
+func renderFlowsTriggers(cmd *cobra.Command, output flowscmd.ListTriggersOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if len(output.Triggers) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No triggers found.")
+		return err
+	}
+	for _, trigger := range output.Triggers {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\n", trigger.ID, trigger.Name, trigger.Event, trigger.WorkflowID); err != nil {
+			return err
+		}
+	}
+	if output.HasMore && output.Next != nil {
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
+		return err
+	}
+	return nil
+}
+
+func renderFlowsTrigger(cmd *cobra.Command, output flowscmd.GetTriggerOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	trigger := output.Trigger
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", trigger.ID); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Name\t%s\n", trigger.Name); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Event\t%s\n", trigger.Event); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Workflow ID\t%s\n", trigger.WorkflowID)
+	return err
+}
+
+func renderFlowsTriggerDeleted(cmd *cobra.Command, output flowscmd.DeleteTriggerOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Trigger %s deleted.\n", output.TriggerID)
+	return err
+}
+
+func renderFlowsTriggerTest(cmd *cobra.Command, output flowscmd.TestTriggerOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if output.Matched != nil {
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Filter match\t%t\n", *output.Matched)
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Trigger %s tested.\n", output.TriggerID)
 	return err
 }

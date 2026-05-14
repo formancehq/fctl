@@ -162,6 +162,91 @@ func TestStopInstanceServiceRequiresInstanceID(t *testing.T) {
 	}
 }
 
+func TestCreateTriggerServiceRequiresWorkflowID(t *testing.T) {
+	service := CreateTriggerService{
+		Handlers: []CreateTriggerHandler{{APIVersion: "v2"}},
+		Resolve: func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			t.Fatal("resolver should not run")
+			return "", nil
+		},
+	}
+
+	if _, err := service.Run(context.Background(), CreateTriggerInput{Event: "approved"}); err == nil {
+		t.Fatal("expected workflow id validation error")
+	}
+}
+
+func TestListTriggersServiceSelectsResolvedHandler(t *testing.T) {
+	service := ListTriggersService{
+		Handlers: []ListTriggersHandler{
+			{
+				APIVersion: "v2",
+				Run: func(_ context.Context, input ListTriggersInput) (ListTriggersOutput, error) {
+					if input.PageSize != 10 || input.Name != "Payout" {
+						t.Fatalf("unexpected input: %#v", input)
+					}
+					return ListTriggersOutput{PageSize: input.PageSize}, nil
+				},
+			},
+		},
+		Resolve: func(_ context.Context, versions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			assertAPIVersions(t, versions, []capabilities.APIVersion{"v2"})
+			return "v2", nil
+		},
+	}
+
+	output, err := service.Run(context.Background(), ListTriggersInput{PageSize: 10, Name: "Payout"})
+	if err != nil {
+		t.Fatalf("run service: %v", err)
+	}
+	if output.APIVersion != "v2" || output.PageSize != 10 {
+		t.Fatalf("unexpected output: %#v", output)
+	}
+}
+
+func TestDeleteTriggerServiceRequiresTriggerID(t *testing.T) {
+	service := DeleteTriggerService{
+		Handlers: []DeleteTriggerHandler{{APIVersion: "v2"}},
+		Resolve: func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			t.Fatal("resolver should not run")
+			return "", nil
+		},
+	}
+
+	if _, err := service.Run(context.Background(), DeleteTriggerInput{}); err == nil {
+		t.Fatal("expected trigger id validation error")
+	}
+}
+
+func TestTestTriggerServiceSelectsV2Handler(t *testing.T) {
+	service := TestTriggerService{
+		Handlers: []TestTriggerHandler{
+			{
+				APIVersion: "v2",
+				Run: func(_ context.Context, input TestTriggerInput) (TestTriggerOutput, error) {
+					if input.TriggerID != "trigger_1" || input.Event["name"] != "approved" {
+						t.Fatalf("unexpected input: %#v", input)
+					}
+					matched := true
+					return TestTriggerOutput{TriggerID: input.TriggerID, Matched: &matched}, nil
+				},
+			},
+		},
+		Resolve: func(_ context.Context, versions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			assertAPIVersions(t, versions, []capabilities.APIVersion{"v2"})
+			return "v2", nil
+		},
+	}
+
+	output, err := service.Run(context.Background(), TestTriggerInput{TriggerID: "trigger_1", Event: map[string]any{"name": "approved"}})
+	if err != nil {
+		t.Fatalf("run service: %v", err)
+	}
+	if output.APIVersion != "v2" || output.Matched == nil || !*output.Matched {
+		t.Fatalf("unexpected output: %#v", output)
+	}
+}
+
 func assertAPIVersions(t *testing.T, got []capabilities.APIVersion, want []capabilities.APIVersion) {
 	t.Helper()
 	if len(got) != len(want) {

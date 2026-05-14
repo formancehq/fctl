@@ -5383,6 +5383,211 @@ func TestFlowsInstancesStopSelectsV2(t *testing.T) {
 	}
 }
 
+func TestFlowsTriggersCreateSelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"orchestration","version":"2.1.0","health":true}]}`)
+		case "/api/orchestration/v2/triggers":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			body := readRequestBody(t, r)
+			for _, expected := range []string{`"event":"approved"`, `"workflowID":"workflow_1"`, `"name":"Payout"`} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected trigger create body to contain %q, got:\n%s", expected, body)
+				}
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, `{"data":{"id":"trigger_1","name":"Payout","event":"approved","workflowID":"workflow_1","createdAt":"2026-01-01T00:00:00Z"}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"flows", "triggers", "create", "approved", "workflow_1",
+		"--name", "Payout",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("create flow trigger: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v2") || !strings.Contains(stdout, "Trigger created with ID: trigger_1") {
+		t.Fatalf("unexpected create trigger output:\n%s", stdout)
+	}
+}
+
+func TestFlowsTriggersListSelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"orchestration","version":"2.1.0","health":true}]}`)
+		case "/api/orchestration/v2/triggers":
+			if r.Method != http.MethodGet {
+				t.Fatalf("expected GET, got %s", r.Method)
+			}
+			if got := r.URL.Query().Get("name"); got != "Payout" {
+				t.Fatalf("expected name Payout, got %q", got)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"id":"trigger_1","name":"Payout","event":"approved","workflowID":"workflow_1","createdAt":"2026-01-01T00:00:00Z"}],"hasMore":false,"pageSize":10}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "flows", "triggers", "list", "--name", "Payout")
+	if err != nil {
+		t.Fatalf("list flow triggers: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v2") || !strings.Contains(stdout, "trigger_1\tPayout\tapproved\tworkflow_1") {
+		t.Fatalf("unexpected list triggers output:\n%s", stdout)
+	}
+}
+
+func TestFlowsTriggersShowSelectsV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"orchestration","version":"1.5.0","health":true}]}`)
+		case "/api/orchestration/triggers/trigger_1":
+			if r.Method != http.MethodGet {
+				t.Fatalf("expected GET, got %s", r.Method)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":"trigger_1","name":"Payout","event":"approved","workflowID":"workflow_1","createdAt":"2026-01-01T00:00:00Z"}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "flows", "triggers", "show", "trigger_1")
+	if err != nil {
+		t.Fatalf("show flow trigger: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{"API version: v1", "ID\ttrigger_1", "Name\tPayout", "Event\tapproved"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected trigger output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestFlowsTriggersDeleteSelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"orchestration","version":"2.1.0","health":true}]}`)
+		case "/api/orchestration/v2/triggers/trigger_1":
+			if r.Method != http.MethodDelete {
+				t.Fatalf("expected DELETE, got %s", r.Method)
+			}
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "flows", "triggers", "delete", "trigger_1", "--confirm")
+	if err != nil {
+		t.Fatalf("delete flow trigger: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v2") || !strings.Contains(stdout, "Trigger trigger_1 deleted.") {
+		t.Fatalf("unexpected delete trigger output:\n%s", stdout)
+	}
+}
+
+func TestFlowsTriggersTestSelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"orchestration","version":"2.1.0","health":true}]}`)
+		case "/api/orchestration/v2/triggers/trigger_1/test":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			body := readRequestBody(t, r)
+			if !strings.Contains(body, `"name":"approved"`) {
+				t.Fatalf("expected trigger test body to contain event name, got:\n%s", body)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"filter":{"match":true},"variables":{}}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "flows", "triggers", "test", "trigger_1", `{"name":"approved"}`)
+	if err != nil {
+		t.Fatalf("test flow trigger: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v2") || !strings.Contains(stdout, "Filter match\ttrue") {
+		t.Fatalf("unexpected trigger test output:\n%s", stdout)
+	}
+}
+
 func TestOrchestrationAliasWarns(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
