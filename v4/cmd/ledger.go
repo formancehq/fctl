@@ -21,6 +21,7 @@ func newLedgerCommand() *cobra.Command {
 	command.AddCommand(newLedgerInfoCommand("info", nil, false))
 	command.AddCommand(newLedgerInfoCommand("server-infos", []string{"si"}, true))
 	command.AddCommand(newLedgerAccountsCommand())
+	command.AddCommand(newLedgerCreateCommand())
 	command.AddCommand(newLedgerListCommand())
 	command.AddCommand(newLedgerStatsCommand())
 	command.AddCommand(newLedgerTransactionsCommand())
@@ -336,6 +337,85 @@ func newLedgerAccountsDeleteMetadataCommand() *cobra.Command {
 
 	command.Flags().StringVar(&ledger, "ledger", "", "Ledger name")
 	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm the metadata deletion")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
+
+	return command
+}
+
+func newLedgerCreateCommand() *cobra.Command {
+	var bucket string
+	var features []string
+	var metadata []string
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "create <name>",
+		Aliases: []string{"c", "cr"},
+		Short:   "Create a ledger",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("ledger create requires --confirm")
+			}
+
+			parsedFeatures, err := parseKeyValueFlags(features, "feature")
+			if err != nil {
+				return err
+			}
+			parsedMetadata, err := parseMetadataFlags(metadata)
+			if err != nil {
+				return err
+			}
+
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := ledgercmd.CreateLedgerService{
+				Handlers: ledgercmd.SDKCreateLedgerHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         ledgercmd.ProductLedger,
+						Feature:         ledgercmd.FeatureCreateLedger,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), ledgercmd.CreateLedgerInput{
+				Name:     args[0],
+				Bucket:   bucket,
+				Features: parsedFeatures,
+				Metadata: parsedMetadata,
+			})
+			if err != nil {
+				return err
+			}
+
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderLedgerCreated(cmd, output)
+		},
+	}
+
+	command.Flags().StringVar(&bucket, "bucket", "", "Bucket in which to create the ledger")
+	command.Flags().StringSliceVar(&features, "feature", nil, "Feature key=value to enable")
+	command.Flags().StringSliceVar(&metadata, "metadata", nil, "Metadata key=value to apply")
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm the ledger creation")
 	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
 
 	return command
@@ -1219,6 +1299,14 @@ func renderLedgerAccountMetadataDeleted(cmd *cobra.Command, output ledgercmd.Del
 	return err
 }
 
+func renderLedgerCreated(cmd *cobra.Command, output ledgercmd.CreateLedgerOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Ledger %s created.\n", output.Name)
+	return err
+}
+
 func renderLedgerInfo(cmd *cobra.Command, output ledgercmd.ReadInfoOutput) error {
 	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
 		return err
@@ -1343,6 +1431,10 @@ func renderLedgerVolumes(cmd *cobra.Command, output ledgercmd.ListVolumesOutput)
 }
 
 func parseMetadataFlags(values []string) (map[string]string, error) {
+	return parseKeyValueFlags(values, "metadata")
+}
+
+func parseKeyValueFlags(values []string, name string) (map[string]string, error) {
 	if len(values) == 0 {
 		return nil, nil
 	}
@@ -1353,7 +1445,7 @@ func parseMetadataFlags(values []string) (map[string]string, error) {
 		}
 		key, val, ok := strings.Cut(value, "=")
 		if !ok || key == "" {
-			return nil, fmt.Errorf("metadata must use key=value format")
+			return nil, fmt.Errorf("%s must use key=value format", name)
 		}
 		ret[key] = val
 	}

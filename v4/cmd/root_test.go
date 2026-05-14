@@ -365,6 +365,80 @@ func TestLedgerServerInfosDeprecatedAlias(t *testing.T) {
 	}
 }
 
+func TestLedgerCreateRequiresConfirm(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "ledger", "create", "default")
+	if err == nil {
+		t.Fatal("expected ledger create to require confirmation")
+	}
+	if stdout != "" {
+		t.Fatalf("expected empty stdout, got %q", stdout)
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(err.Error(), "ledger create requires --confirm") {
+		t.Fatalf("expected confirmation error, got: %v", err)
+	}
+}
+
+func TestLedgerCreateSelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			body := readRequestBody(t, r)
+			for _, expected := range []string{
+				`"bucket":"bucket-a"`,
+				`"features":{"hash":"true"}`,
+				`"metadata":{"tier":"gold"}`,
+			} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected body to contain %q, got %s", expected, body)
+				}
+			}
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "create", "default",
+		"--bucket", "bucket-a",
+		"--feature", "hash=true",
+		"--metadata", "tier=gold",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("create ledger: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v2",
+		"Ledger default created.",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
 func TestLedgerAccountsListSelectsV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

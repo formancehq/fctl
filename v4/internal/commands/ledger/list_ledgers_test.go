@@ -38,6 +38,53 @@ func TestListLedgersServiceSelectsResolvedHandler(t *testing.T) {
 	}
 }
 
+func TestCreateLedgerServiceSelectsResolvedHandler(t *testing.T) {
+	service := CreateLedgerService{
+		Handlers: []CreateLedgerHandler{
+			{
+				APIVersion: "v2",
+				Run: func(_ context.Context, input CreateLedgerInput) (CreateLedgerOutput, error) {
+					if input.Name != "default" || input.Bucket != "bucket" || input.Features["hash"] != "true" || input.Metadata["tier"] != "gold" {
+						t.Fatalf("unexpected input: %#v", input)
+					}
+					return CreateLedgerOutput{Name: input.Name, Created: true}, nil
+				},
+			},
+		},
+		Resolve: func(_ context.Context, versions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			assertAPIVersions(t, versions, []capabilities.APIVersion{"v2"})
+			return "v2", nil
+		},
+	}
+
+	output, err := service.Run(context.Background(), CreateLedgerInput{
+		Name:     "default",
+		Bucket:   "bucket",
+		Features: map[string]string{"hash": "true"},
+		Metadata: map[string]string{"tier": "gold"},
+	})
+	if err != nil {
+		t.Fatalf("run service: %v", err)
+	}
+	if output.APIVersion != "v2" || output.Name != "default" || !output.Created {
+		t.Fatalf("unexpected output: %#v", output)
+	}
+}
+
+func TestCreateLedgerServiceRequiresName(t *testing.T) {
+	service := CreateLedgerService{
+		Handlers: []CreateLedgerHandler{{APIVersion: "v2"}},
+		Resolve: func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			t.Fatal("resolver should not run")
+			return "", nil
+		},
+	}
+
+	if _, err := service.Run(context.Background(), CreateLedgerInput{}); err == nil {
+		t.Fatal("expected ledger name validation error")
+	}
+}
+
 func TestToV2ListLedgersRequestMapsCanonicalInput(t *testing.T) {
 	request := toV2ListLedgersRequest(ListLedgersInput{
 		PageSize:       10,
