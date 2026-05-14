@@ -5,7 +5,7 @@
 - [x] 03 - context commands
 - [x] 04 - auth providers
 - [x] 05 - capabilities manifest generator
-- [ ] 06 - runtime API version resolver
+- [x] 06 - runtime API version resolver
 - [ ] 07 - first stack inspection command
 - [ ] 08 - first Ledger versioned command
 - [ ] 09 - v3 config migration
