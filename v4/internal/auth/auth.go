@@ -77,6 +77,7 @@ func NewTokenSource(authConfig v4config.Auth, store credentials.Store, options O
 			ClientID:   authConfig.ClientID,
 			SecretRef:  authConfig.SecretRef,
 			Scopes:     authConfig.Scopes,
+			Resources:  authConfig.Resources,
 			Store:      store,
 			HTTPClient: httpClient,
 		}, nil
@@ -116,6 +117,7 @@ type ClientCredentialsSource struct {
 	ClientID   string
 	SecretRef  string
 	Scopes     []string
+	Resources  []string
 	Store      credentials.Store
 	HTTPClient *http.Client
 
@@ -158,6 +160,9 @@ func (s *ClientCredentialsSource) Token(ctx context.Context) (Token, error) {
 	if len(s.Scopes) > 0 {
 		form.Set("scope", strings.Join(s.Scopes, " "))
 	}
+	for _, resource := range s.Resources {
+		form.Add("resource", resource)
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, tokenURL, strings.NewReader(form.Encode()))
 	if err != nil {
 		return Token{}, err
@@ -190,6 +195,80 @@ func (s *ClientCredentialsSource) Token(ctx context.Context) (Token, error) {
 		return Token{}, errors.New("token response did not include access_token")
 	}
 	s.cachedToken = &token
+	return token, nil
+}
+
+func StackResource(organizationID string, stackID string) string {
+	return "stack://" + organizationID + "/" + stackID + "|" + strings.Join(StackScopes, " ")
+}
+
+func ExchangeStackToken(ctx context.Context, httpClient *http.Client, stackURL string, assertion string) (Token, error) {
+	if httpClient == nil {
+		httpClient = http.DefaultClient
+	}
+	if stackURL == "" {
+		return Token{}, errors.New("stack URL is required")
+	}
+	if assertion == "" {
+		return Token{}, errors.New("assertion token is required")
+	}
+
+	discoveryURL := strings.TrimRight(stackURL, "/") + "/api/auth/.well-known/openid-configuration"
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, discoveryURL, nil)
+	if err != nil {
+		return Token{}, err
+	}
+	rsp, err := httpClient.Do(req)
+	if err != nil {
+		return Token{}, err
+	}
+	defer rsp.Body.Close()
+	if rsp.StatusCode < 200 || rsp.StatusCode >= 300 {
+		body, _ := io.ReadAll(io.LimitReader(rsp.Body, 4096))
+		return Token{}, fmt.Errorf("stack oidc discovery failed: status %d: %s", rsp.StatusCode, string(body))
+	}
+
+	var discovery struct {
+		TokenEndpoint string `json:"token_endpoint"`
+	}
+	if err := json.NewDecoder(rsp.Body).Decode(&discovery); err != nil {
+		return Token{}, fmt.Errorf("decode stack oidc discovery: %w", err)
+	}
+	if discovery.TokenEndpoint == "" {
+		return Token{}, errors.New("stack oidc discovery did not include token_endpoint")
+	}
+
+	form := url.Values{}
+	form.Set("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer")
+	form.Set("assertion", assertion)
+	form.Set("scope", "openid email")
+	req, err = http.NewRequestWithContext(ctx, http.MethodPost, discovery.TokenEndpoint, strings.NewReader(form.Encode()))
+	if err != nil {
+		return Token{}, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	rsp, err = httpClient.Do(req)
+	if err != nil {
+		return Token{}, err
+	}
+	defer rsp.Body.Close()
+	if rsp.StatusCode < 200 || rsp.StatusCode >= 300 {
+		body, _ := io.ReadAll(io.LimitReader(rsp.Body, 4096))
+		return Token{}, fmt.Errorf("stack token exchange failed: status %d: %s", rsp.StatusCode, string(body))
+	}
+
+	var tokenResponse struct {
+		AccessToken string `json:"access_token"`
+		TokenType   string `json:"token_type"`
+	}
+	if err := json.NewDecoder(rsp.Body).Decode(&tokenResponse); err != nil {
+		return Token{}, fmt.Errorf("decode stack token response: %w", err)
+	}
+	token := normalizeToken(Token{AccessToken: tokenResponse.AccessToken, TokenType: tokenResponse.TokenType})
+	if token.AccessToken == "" {
+		return Token{}, errors.New("stack token response did not include access_token")
+	}
 	return token, nil
 }
 

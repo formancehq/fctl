@@ -56,3 +56,8 @@ var OrganizationScopes = []string{
 	"organization:ListFeatures",
 	"organization:ReadFeature",
 }
+
+var StackScopes = []string{
+	"stack:Read",
+	"stack:Write",
+}

@@ -15,6 +15,7 @@ import (
 
 	"github.com/formancehq/fctl/v4/internal/capabilities"
 	ledgercmd "github.com/formancehq/fctl/v4/internal/commands/ledger"
+	v4render "github.com/formancehq/fctl/v4/internal/render"
 )
 
 func newLedgerCommand() *cobra.Command {
@@ -74,7 +75,7 @@ func newLedgerSchemasListCommand() *cobra.Command {
 		Short: "List ledger schemas",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -140,7 +141,7 @@ func newLedgerSchemasShowCommand() *cobra.Command {
 		Short: "Show a ledger schema",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -224,7 +225,7 @@ func newLedgerSchemasInsertCommand() *cobra.Command {
 				return err
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -301,7 +302,7 @@ func newLedgerAccountsListCommand() *cobra.Command {
 				fmt.Fprintln(cmd.ErrOrStderr(), "Flag --address has been deprecated, use --account")
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -396,7 +397,7 @@ func newLedgerAccountsQueryCommand() *cobra.Command {
 				return err
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -477,7 +478,7 @@ func newLedgerAccountsShowCommand() *cobra.Command {
 		Short:   "Show a ledger account",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -547,7 +548,7 @@ func newLedgerAccountsSetMetadataCommand() *cobra.Command {
 				return fmt.Errorf("ledger accounts set-metadata requires --confirm")
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -624,7 +625,7 @@ func newLedgerAccountsDeleteMetadataCommand() *cobra.Command {
 				return fmt.Errorf("ledger accounts delete-metadata requires --confirm")
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -691,7 +692,7 @@ func newLedgerExportCommand() *cobra.Command {
 		Short: "Export ledger logs",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -777,7 +778,7 @@ func newLedgerImportCommand() *cobra.Command {
 				return fmt.Errorf("ledger import requires --file <path>|-")
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -869,7 +870,7 @@ func newLedgerSetMetadataCommand() *cobra.Command {
 				metadata[key] = value
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -932,7 +933,7 @@ func newLedgerDeleteMetadataCommand() *cobra.Command {
 				return fmt.Errorf("ledger delete-metadata requires --confirm")
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1006,7 +1007,7 @@ func newLedgerCreateCommand() *cobra.Command {
 				return err
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1072,7 +1073,7 @@ func newLedgerInfoCommand(use string, aliases []string, deprecated bool) *cobra.
 				fmt.Fprintf(cmd.ErrOrStderr(), "Command ledger %s has been deprecated, use ledger info\n", cmd.CalledAs())
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1133,7 +1134,7 @@ func newLedgerListCommand() *cobra.Command {
 		Short:   "List ledgers",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1197,7 +1198,7 @@ func newLedgerStatsCommand() *cobra.Command {
 		Short:   "Read ledger stats",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1276,7 +1277,7 @@ func newLedgerTransactionsExplainCommand() *cobra.Command {
 		Short: "Explain a ledger transaction (requires ledger API v3+)",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1379,7 +1380,7 @@ func newLedgerTransactionsRunScriptCommand(use string, aliases []string, depreca
 				return err
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1503,7 +1504,7 @@ func newLedgerTransactionsSendCommand(deprecatedRootAlias bool) *cobra.Command {
 				return err
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1615,7 +1616,7 @@ func newLedgerVolumesListCommand() *cobra.Command {
 				fmt.Fprintln(cmd.ErrOrStderr(), "Flag --insertion-date has been deprecated, use --use-insertion-date")
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1718,7 +1719,7 @@ func newLedgerTransactionsShowCommand() *cobra.Command {
 		Short:   "Show a ledger transaction",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1817,7 +1818,7 @@ func newLedgerTransactionsListCommand() *cobra.Command {
 				return err
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1917,7 +1918,7 @@ func newLedgerTransactionsCountCommand() *cobra.Command {
 				fmt.Fprintln(cmd.ErrOrStderr(), "Flag --dst has been deprecated, use --destination")
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1998,7 +1999,7 @@ func newLedgerTransactionsSetMetadataCommand() *cobra.Command {
 				return fmt.Errorf("ledger transactions set-metadata requires --confirm")
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -2075,7 +2076,7 @@ func newLedgerTransactionsDeleteMetadataCommand() *cobra.Command {
 				return fmt.Errorf("ledger transactions delete-metadata requires --confirm")
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -2148,7 +2149,7 @@ func newLedgerTransactionsRevertCommand() *cobra.Command {
 				return fmt.Errorf("ledger transactions revert requires --confirm")
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -2216,16 +2217,15 @@ func renderLedgers(cmd *cobra.Command, output ledgercmd.ListLedgersOutput) error
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No ledgers found.")
 		return err
 	}
+	rows := make([][]string, 0, len(output.Ledgers))
 	for _, ledger := range output.Ledgers {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\n",
+		rows = append(rows, []string{
 			ledger.Name,
 			ledger.Bucket,
 			ledger.AddedAt.Format(time.RFC3339),
-		); err != nil {
-			return err
-		}
+		})
 	}
-	return nil
+	return v4render.Table(cmd.OutOrStdout(), []string{"Name", "Bucket", "Created at"}, rows)
 }
 
 func renderLedgerAccounts(cmd *cobra.Command, output ledgercmd.ListAccountsOutput) error {
@@ -2236,49 +2236,48 @@ func renderLedgerAccounts(cmd *cobra.Command, output ledgercmd.ListAccountsOutpu
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No accounts found.")
 		return err
 	}
+	rows := make([][]string, 0, len(output.Accounts))
 	for _, account := range output.Accounts {
-		if _, err := fmt.Fprintln(cmd.OutOrStdout(), account.Address); err != nil {
-			return err
-		}
+		rows = append(rows, []string{account.Address})
 	}
-	return nil
+	return v4render.Table(cmd.OutOrStdout(), []string{"Address"}, rows)
 }
 
 func renderLedgerAccount(cmd *cobra.Command, output ledgercmd.GetAccountOutput) error {
 	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Address\t%s\n", output.Account.Address); err != nil {
+	if err := v4render.KeyValues(cmd.OutOrStdout(), [][]string{{"Address", output.Account.Address}}); err != nil {
 		return err
 	}
 	if len(output.Account.Volumes) == 0 {
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No volumes.")
 		return err
 	}
+	rows := make([][]string, 0, len(output.Account.Volumes))
 	for asset, volume := range output.Account.Volumes {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\tinput=%s\toutput=%s\tbalance=%s\n",
-			asset, volume.Input, volume.Output, volume.Balance); err != nil {
-			return err
-		}
+		rows = append(rows, []string{asset, volume.Input, volume.Output, volume.Balance})
 	}
-	return nil
+	return v4render.Table(cmd.OutOrStdout(), []string{"Asset", "Input", "Output", "Balance"}, rows)
 }
 
 func renderLedgerAccountQuery(cmd *cobra.Command, output ledgercmd.RunAccountQueryOutput) error {
 	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Query\t%s\n", output.QueryID); err != nil {
+	if err := v4render.KeyValues(cmd.OutOrStdout(), [][]string{{"Query", output.QueryID}}); err != nil {
 		return err
 	}
 	if len(output.Accounts) == 0 {
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No accounts found.")
 		return err
 	}
+	rows := make([][]string, 0, len(output.Accounts))
 	for _, account := range output.Accounts {
-		if _, err := fmt.Fprintln(cmd.OutOrStdout(), account.Address); err != nil {
-			return err
-		}
+		rows = append(rows, []string{account.Address})
+	}
+	if err := v4render.Table(cmd.OutOrStdout(), []string{"Address"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore && output.Next != nil {
 		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
@@ -2335,18 +2334,18 @@ func renderLedgerSchemas(cmd *cobra.Command, output ledgercmd.ListSchemasOutput)
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No schemas found.")
 		return err
 	}
+	rows := make([][]string, 0, len(output.Schemas))
 	for _, schema := range output.Schemas {
-		if _, err := fmt.Fprintf(
-			cmd.OutOrStdout(),
-			"%s\t%s\tchart=%d\tqueries=%d\ttransactions=%d\n",
+		rows = append(rows, []string{
 			schema.Version,
 			schema.CreatedAt.Format(time.RFC3339),
-			schema.ChartSegments,
-			schema.QueryTemplates,
-			schema.TransactionModels,
-		); err != nil {
-			return err
-		}
+			fmt.Sprintf("%d", schema.ChartSegments),
+			fmt.Sprintf("%d", schema.QueryTemplates),
+			fmt.Sprintf("%d", schema.TransactionModels),
+		})
+	}
+	if err := v4render.Table(cmd.OutOrStdout(), []string{"Version", "Created at", "Chart segments", "Query templates", "Transaction models"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore && output.Next != nil {
 		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
@@ -2359,20 +2358,13 @@ func renderLedgerSchema(cmd *cobra.Command, output ledgercmd.GetSchemaOutput) er
 	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Version\t%s\n", output.Schema.Version); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", output.Schema.CreatedAt.Format(time.RFC3339)); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Chart segments\t%d\n", len(output.Schema.Chart)); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Query templates\t%d\n", len(output.Schema.Queries)); err != nil {
-		return err
-	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Transaction models\t%d\n", len(output.Schema.Transactions))
-	return err
+	return v4render.KeyValues(cmd.OutOrStdout(), [][]string{
+		{"Version", output.Schema.Version},
+		{"Created at", output.Schema.CreatedAt.Format(time.RFC3339)},
+		{"Chart segments", fmt.Sprintf("%d", len(output.Schema.Chart))},
+		{"Query templates", fmt.Sprintf("%d", len(output.Schema.Queries))},
+		{"Transaction models", fmt.Sprintf("%d", len(output.Schema.Transactions))},
+	})
 }
 
 func renderLedgerSchemaInserted(cmd *cobra.Command, output ledgercmd.InsertSchemaOutput) error {
@@ -2403,22 +2395,20 @@ func renderLedgerInfo(cmd *cobra.Command, output ledgercmd.ReadInfoOutput) error
 	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Server\t%s\n", output.Server); err != nil {
-		return err
-	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Version\t%s\n", output.Version)
-	return err
+	return v4render.KeyValues(cmd.OutOrStdout(), [][]string{
+		{"Server", output.Server},
+		{"Version", output.Version},
+	})
 }
 
 func renderLedgerStats(cmd *cobra.Command, output ledgercmd.ReadStatsOutput) error {
 	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Transactions\t%s\n", output.Transactions); err != nil {
-		return err
-	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Accounts\t%d\n", output.Accounts)
-	return err
+	return v4render.KeyValues(cmd.OutOrStdout(), [][]string{
+		{"Transactions", output.Transactions},
+		{"Accounts", fmt.Sprintf("%d", output.Accounts)},
+	})
 }
 
 func renderLedgerTransactions(cmd *cobra.Command, output ledgercmd.ListTransactionsOutput) error {
@@ -2429,28 +2419,26 @@ func renderLedgerTransactions(cmd *cobra.Command, output ledgercmd.ListTransacti
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No transactions found.")
 		return err
 	}
+	rows := make([][]string, 0, len(output.Transactions))
 	for _, transaction := range output.Transactions {
 		reference := ""
 		if transaction.Reference != nil {
 			reference = *transaction.Reference
 		}
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\n",
+		rows = append(rows, []string{
 			transaction.ID,
 			reference,
 			transaction.Timestamp.Format(time.RFC3339),
-		); err != nil {
-			return err
-		}
+		})
 	}
-	return nil
+	return v4render.Table(cmd.OutOrStdout(), []string{"ID", "Reference", "Timestamp"}, rows)
 }
 
 func renderLedgerTransactionsCount(cmd *cobra.Command, output ledgercmd.CountTransactionsOutput) error {
 	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Count\t%d\n", output.Count)
-	return err
+	return v4render.KeyValues(cmd.OutOrStdout(), [][]string{{"Count", fmt.Sprintf("%d", output.Count)}})
 }
 
 func renderLedgerSentTransaction(cmd *cobra.Command, output ledgercmd.SendTransactionOutput) error {
@@ -2461,14 +2449,7 @@ func renderLedgerSentTransaction(cmd *cobra.Command, output ledgercmd.SendTransa
 	if output.Transaction.Reference != nil {
 		reference = *output.Transaction.Reference
 	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", output.Transaction.ID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Reference\t%s\n", reference); err != nil {
-		return err
-	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Timestamp\t%s\n", output.Transaction.Timestamp.Format(time.RFC3339))
-	return err
+	return renderLedgerTransactionSummary(cmd, output.Transaction.ID, reference, output.Transaction.Timestamp)
 }
 
 func renderLedgerTransactionMetadataSet(cmd *cobra.Command, output ledgercmd.AddTransactionMetadataOutput) error {
@@ -2495,14 +2476,7 @@ func renderLedgerTransaction(cmd *cobra.Command, output ledgercmd.GetTransaction
 	if output.Transaction.Reference != nil {
 		reference = *output.Transaction.Reference
 	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", output.Transaction.ID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Reference\t%s\n", reference); err != nil {
-		return err
-	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Timestamp\t%s\n", output.Transaction.Timestamp.Format(time.RFC3339))
-	return err
+	return renderLedgerTransactionSummary(cmd, output.Transaction.ID, reference, output.Transaction.Timestamp)
 }
 
 func renderLedgerRevertedTransaction(cmd *cobra.Command, output ledgercmd.RevertTransactionOutput) error {
@@ -2513,14 +2487,7 @@ func renderLedgerRevertedTransaction(cmd *cobra.Command, output ledgercmd.Revert
 	if output.Transaction.Reference != nil {
 		reference = *output.Transaction.Reference
 	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", output.Transaction.ID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Reference\t%s\n", reference); err != nil {
-		return err
-	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Timestamp\t%s\n", output.Transaction.Timestamp.Format(time.RFC3339))
-	return err
+	return renderLedgerTransactionSummary(cmd, output.Transaction.ID, reference, output.Transaction.Timestamp)
 }
 
 func renderLedgerVolumes(cmd *cobra.Command, output ledgercmd.ListVolumesOutput) error {
@@ -2531,13 +2498,19 @@ func renderLedgerVolumes(cmd *cobra.Command, output ledgercmd.ListVolumesOutput)
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No volumes found.")
 		return err
 	}
+	rows := make([][]string, 0, len(output.Volumes))
 	for _, volume := range output.Volumes {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\t%s\n",
-			volume.Account, volume.Asset, volume.Input, volume.Output, volume.Balance); err != nil {
-			return err
-		}
+		rows = append(rows, []string{volume.Account, volume.Asset, volume.Input, volume.Output, volume.Balance})
 	}
-	return nil
+	return v4render.Table(cmd.OutOrStdout(), []string{"Account", "Asset", "Input", "Output", "Balance"}, rows)
+}
+
+func renderLedgerTransactionSummary(cmd *cobra.Command, id string, reference string, timestamp time.Time) error {
+	return v4render.KeyValues(cmd.OutOrStdout(), [][]string{
+		{"ID", id},
+		{"Reference", reference},
+		{"Timestamp", timestamp.Format(time.RFC3339)},
+	})
 }
 
 func parseMetadataFlags(values []string) (map[string]string, error) {

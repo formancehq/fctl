@@ -501,12 +501,21 @@ func TestContextCreateCloudAndCloudStack(t *testing.T) {
 }
 
 func TestGlobalOrganizationStackOverride(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	stackServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/versions" {
 			t.Fatalf("unexpected path %s", r.URL.Path)
 		}
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"3.2.4","health":true}]}`)
+	}))
+	defer stackServer.Close()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/organizations/org_1/stacks/stack_1" {
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, `{"data":{"id":"stack_1","name":"Production","organizationId":"org_1","uri":%q,"regionID":"eu-west-1","version":"v3.2.4","status":"READY","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":true,"stargateEnabled":true,"synchronised":true,"modules":[]}}`, stackServer.URL)
 	}))
 	defer server.Close()
 
@@ -530,7 +539,7 @@ func TestGlobalOrganizationStackOverride(t *testing.T) {
 	if err != nil {
 		t.Fatalf("inspect cloud-stack override: %v stderr=%s", err, stderr)
 	}
-	if !strings.Contains(stdout, "Target: "+server.URL+" (cloud-stack)") ||
+	if !strings.Contains(stdout, "Target: "+stackServer.URL+" (cloud-stack)") ||
 		!strings.Contains(stdout, "ledger 3.2.4 healthy") {
 		t.Fatalf("unexpected target inspect output:\n%s", stdout)
 	}
@@ -2956,10 +2965,124 @@ func TestLedgerListSelectsV2(t *testing.T) {
 	}
 	for _, expected := range []string{
 		"API version: v2",
-		"default\tbucket\t2026-01-01T00:00:00Z",
+		"Name",
+		"Bucket",
+		"Created at",
+		"default",
+		"bucket",
+		"2026-01-01T00:00:00Z",
 	} {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected ledger list output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestLedgerListCloudStackExchangesStackToken(t *testing.T) {
+	var stackServer *httptest.Server
+	stackServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/api/auth/.well-known/openid-configuration":
+			fmt.Fprintf(w, `{"token_endpoint":%q}`, stackServer.URL+"/api/auth/oauth/token")
+		case "/api/auth/oauth/token":
+			if err := r.ParseForm(); err != nil {
+				t.Fatalf("parse stack token form: %v", err)
+			}
+			if r.Form.Get("grant_type") != "urn:ietf:params:oauth:grant-type:jwt-bearer" ||
+				r.Form.Get("assertion") != "stack-assertion" ||
+				r.Form.Get("scope") != "openid email" {
+				t.Fatalf("unexpected stack token form: %v", r.Form)
+			}
+			fmt.Fprint(w, `{"access_token":"stack-token","token_type":"Bearer"}`)
+		case "/versions":
+			if got := r.Header.Get("Authorization"); got != "Bearer stack-token" {
+				t.Fatalf("expected stack token on versions, got %q", got)
+			}
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2":
+			if got := r.Header.Get("Authorization"); got != "Bearer stack-token" {
+				t.Fatalf("expected stack token on ledger list, got %q", got)
+			}
+			fmt.Fprint(w, `{"cursor":{"data":[{"name":"default","bucket":"bucket","addedAt":"2026-01-01T00:00:00Z"}],"hasMore":false,"pageSize":15}}`)
+		default:
+			t.Fatalf("unexpected stack path %s", r.URL.Path)
+		}
+	}))
+	defer stackServer.Close()
+
+	membershipTokenRequests := 0
+	var membershipServer *httptest.Server
+	membershipServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/.well-known/openid-configuration":
+			fmt.Fprintf(w, `{"token_endpoint":%q}`, membershipServer.URL+"/token")
+		case "/token":
+			clientID, clientSecret, ok := r.BasicAuth()
+			if !ok || clientID != "client" || clientSecret != "secret" {
+				t.Fatalf("unexpected basic auth: %q %q %v", clientID, clientSecret, ok)
+			}
+			if err := r.ParseForm(); err != nil {
+				t.Fatalf("parse membership token form: %v", err)
+			}
+			membershipTokenRequests++
+			switch membershipTokenRequests {
+			case 1:
+				if !strings.Contains(r.Form.Get("scope"), "organization:ReadStack") {
+					t.Fatalf("expected organization scopes, got %q", r.Form.Get("scope"))
+				}
+				fmt.Fprint(w, `{"access_token":"org-token","token_type":"Bearer"}`)
+			case 2:
+				if r.Form.Get("resource") != "stack://org_1/stack_1|stack:Read stack:Write" {
+					t.Fatalf("unexpected stack resource: %q", r.Form.Get("resource"))
+				}
+				if r.Form.Get("scope") != "openid offline_access" {
+					t.Fatalf("unexpected stack assertion scope: %q", r.Form.Get("scope"))
+				}
+				fmt.Fprint(w, `{"access_token":"stack-assertion","token_type":"Bearer"}`)
+			default:
+				t.Fatalf("unexpected membership token request %d", membershipTokenRequests)
+			}
+		case "/organizations/org_1/stacks/stack_1":
+			if got := r.Header.Get("Authorization"); got != "Bearer org-token" {
+				t.Fatalf("expected org token on stack lookup, got %q", got)
+			}
+			fmt.Fprintf(w, `{"data":{"id":"stack_1","name":"Production","organizationId":"org_1","uri":%q,"regionID":"eu-west-1","version":"v3.2.4","status":"READY","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":true,"stargateEnabled":true,"synchronised":true,"modules":[]}}`, stackServer.URL)
+		default:
+			t.Fatalf("unexpected membership path %s", r.URL.Path)
+		}
+	}))
+	defer membershipServer.Close()
+
+	configDir := t.TempDir()
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"login",
+		"--target", "cloud",
+		"--membership-url", membershipServer.URL,
+		"--client-id", "client",
+		"--client-secret", "secret",
+	)
+	if err != nil {
+		t.Fatalf("login cloud client credentials: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Logged in with profile default.\n" {
+		t.Fatalf("unexpected login output: %q", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "list",
+	)
+	if err != nil {
+		t.Fatalf("ledger list cloud-stack: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{"API version: v2", "Name", "Bucket", "default", "bucket"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected cloud-stack ledger list output to contain %q, got:\n%s", expected, stdout)
 		}
 	}
 }
@@ -2998,8 +3121,10 @@ func TestLedgerInfoUsesCanonicalCommand(t *testing.T) {
 	}
 	for _, expected := range []string{
 		"API version: v1",
-		"Server\tledger",
-		"Version\t1.9.0",
+		"Server",
+		"ledger",
+		"Version",
+		"1.9.0",
 	} {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected info output to contain %q, got:\n%s", expected, stdout)
@@ -3447,8 +3572,10 @@ func TestLedgerSchemasListSelectsV2(t *testing.T) {
 	if err != nil {
 		t.Fatalf("list schemas: %v stderr=%s", err, stderr)
 	}
-	if !strings.Contains(stdout, "API version: v2") || !strings.Contains(stdout, "v1\t2026-01-01T00:00:00Z") {
-		t.Fatalf("unexpected schemas output:\n%s", stdout)
+	for _, expected := range []string{"API version: v2", "Version", "Created at", "Chart segments", "v1", "2026-01-01T00:00:00Z"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected schemas output to contain %q, got:\n%s", expected, stdout)
+		}
 	}
 }
 
@@ -3484,8 +3611,10 @@ func TestLedgerSchemasShowSelectsV2(t *testing.T) {
 	}
 	for _, expected := range []string{
 		"API version: v2",
-		"Version\tv1",
-		"Created at\t2026-01-01T00:00:00Z",
+		"Version",
+		"v1",
+		"Created at",
+		"2026-01-01T00:00:00Z",
 	} {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected output to contain %q, got:\n%s", expected, stdout)
@@ -3692,7 +3821,9 @@ func TestLedgerAccountsQuerySelectsV2(t *testing.T) {
 	}
 	for _, expected := range []string{
 		"API version: v2",
-		"Query\tactive_accounts",
+		"Query",
+		"active_accounts",
+		"Address",
 		"users:123",
 		"Next: next",
 	} {
@@ -3758,8 +3889,16 @@ func TestLedgerAccountsShowSelectsV2(t *testing.T) {
 	}
 	for _, expected := range []string{
 		"API version: v2",
-		"Address\tusers:123",
-		"USD/2\tinput=100\toutput=40\tbalance=60",
+		"Address",
+		"users:123",
+		"Asset",
+		"Input",
+		"Output",
+		"Balance",
+		"USD/2",
+		"100",
+		"40",
+		"60",
 	} {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected account output to contain %q, got:\n%s", expected, stdout)
@@ -3895,8 +4034,10 @@ func TestLedgerStatsSelectsV2(t *testing.T) {
 	}
 	for _, expected := range []string{
 		"API version: v2",
-		"Transactions\t42",
-		"Accounts\t2",
+		"Transactions",
+		"42",
+		"Accounts",
+		"2",
 	} {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected stats output to contain %q, got:\n%s", expected, stdout)
@@ -3955,7 +4096,12 @@ func TestLedgerTransactionsListSelectsV2(t *testing.T) {
 	}
 	for _, expected := range []string{
 		"API version: v2",
-		"1\tref\t2026-01-01T00:00:00Z",
+		"ID",
+		"Reference",
+		"Timestamp",
+		"1",
+		"ref",
+		"2026-01-01T00:00:00Z",
 	} {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected ledger output to contain %q, got:\n%s", expected, stdout)
@@ -4056,7 +4202,8 @@ func TestLedgerTransactionsCountSelectsV2(t *testing.T) {
 	}
 	for _, expected := range []string{
 		"API version: v2",
-		"Count\t42",
+		"Count",
+		"42",
 	} {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected ledger output to contain %q, got:\n%s", expected, stdout)
@@ -4202,9 +4349,12 @@ func TestLedgerTransactionsSendSelectsV2(t *testing.T) {
 	}
 	for _, expected := range []string{
 		"API version: v2",
-		"ID\t42",
-		"Reference\tref",
-		"Timestamp\t2026-01-01T00:00:00Z",
+		"ID",
+		"42",
+		"Reference",
+		"ref",
+		"Timestamp",
+		"2026-01-01T00:00:00Z",
 	} {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected output to contain %q, got:\n%s", expected, stdout)
@@ -4285,8 +4435,10 @@ func TestLedgerTransactionsRunScriptSelectsV2(t *testing.T) {
 	}
 	for _, expected := range []string{
 		"API version: v2",
-		"ID\t43",
-		"Reference\tref",
+		"ID",
+		"43",
+		"Reference",
+		"ref",
 	} {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected output to contain %q, got:\n%s", expected, stdout)
@@ -4432,9 +4584,12 @@ func TestLedgerTransactionsShowSelectsV2(t *testing.T) {
 	}
 	for _, expected := range []string{
 		"API version: v2",
-		"ID\t42",
-		"Reference\tref",
-		"Timestamp\t2026-01-01T00:00:00Z",
+		"ID",
+		"42",
+		"Reference",
+		"ref",
+		"Timestamp",
+		"2026-01-01T00:00:00Z",
 	} {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected transaction output to contain %q, got:\n%s", expected, stdout)
@@ -4506,9 +4661,12 @@ func TestLedgerTransactionsRevertSelectsV2(t *testing.T) {
 	}
 	for _, expected := range []string{
 		"API version: v2",
-		"ID\t43",
-		"Reference\trevert-ref",
-		"Timestamp\t2026-01-01T00:00:00Z",
+		"ID",
+		"43",
+		"Reference",
+		"revert-ref",
+		"Timestamp",
+		"2026-01-01T00:00:00Z",
 	} {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected transaction output to contain %q, got:\n%s", expected, stdout)
@@ -4664,7 +4822,16 @@ func TestLedgerVolumesListSelectsV2(t *testing.T) {
 	}
 	for _, expected := range []string{
 		"API version: v2",
-		"users:123\tUSD/2\t100\t40\t60",
+		"Account",
+		"Asset",
+		"Input",
+		"Output",
+		"Balance",
+		"users:123",
+		"USD/2",
+		"100",
+		"40",
+		"60",
 	} {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected volumes output to contain %q, got:\n%s", expected, stdout)

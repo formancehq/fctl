@@ -33,7 +33,7 @@ func newTargetInspectCommand() *cobra.Command {
 		Short: "Inspect the current target and inferred capabilities",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -102,11 +102,11 @@ func newTargetProxyCommand() *cobra.Command {
 		Short: "Start a local proxy for the current stack target",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
-			if rt.Target.Kind != runtime.TargetKindStack {
+			if rt.Target.Kind != runtime.TargetKindStack && rt.Target.Kind != runtime.TargetKindCloudStack {
 				return fmt.Errorf("target proxy requires a stack context")
 			}
 			httpClient, err := rt.HTTPClient(cmd.Context())
