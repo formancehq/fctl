@@ -25,6 +25,7 @@ func newCloudAppsCommand() *cobra.Command {
 		Use:     "apps",
 		Aliases: []string{"app"},
 		Short:   "Manage Cloud apps",
+		Hidden:  true,
 	}
 	command.PersistentFlags().StringVar(&deployURL, "deploy-url", defaultDeployURL, "Cloud apps deploy server URL")
 	command.PersistentFlags().StringVar(&organizationID, "organization", "", "Cloud organization ID")

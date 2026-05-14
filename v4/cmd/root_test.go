@@ -94,6 +94,19 @@ func TestRootHelp(t *testing.T) {
 	}
 }
 
+func TestCloudHelpHidesApps(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "cloud", "--help")
+	if err != nil {
+		t.Fatalf("cloud help: %v stderr=%s", err, stderr)
+	}
+	if strings.Contains(stdout, "apps") || strings.Contains(stdout, "app ") {
+		t.Fatalf("cloud help should not expose apps commands, got:\n%s", stdout)
+	}
+	if !strings.Contains(stdout, "stacks") {
+		t.Fatalf("expected cloud help to keep visible stack commands, got:\n%s", stdout)
+	}
+}
+
 func TestPromptCancelledIsSilentExit(t *testing.T) {
 	if !isSilentExitError(v4prompt.ErrCancelled) {
 		t.Fatal("expected prompt cancellation to be a silent exit")
