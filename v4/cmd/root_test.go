@@ -730,6 +730,140 @@ func TestLedgerImportAcceptsDeprecatedPositionalFile(t *testing.T) {
 	}
 }
 
+func TestLedgerSchemasListSelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default/schemas":
+			if got := r.URL.Query().Get("pageSize"); got != "15" {
+				t.Fatalf("expected pageSize 15, got %q", got)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"version":"v1","createdAt":"2026-01-01T00:00:00Z","chart":{}}],"hasMore":false,"pageSize":15}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "ledger", "schemas", "list")
+	if err != nil {
+		t.Fatalf("list schemas: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v2") || !strings.Contains(stdout, "v1\t2026-01-01T00:00:00Z") {
+		t.Fatalf("unexpected schemas output:\n%s", stdout)
+	}
+}
+
+func TestLedgerSchemasShowSelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default/schemas/v1":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"version":"v1","createdAt":"2026-01-01T00:00:00Z","chart":{}}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "ledger", "schemas", "show", "v1")
+	if err != nil {
+		t.Fatalf("show schema: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v2",
+		"Version\tv1",
+		"Created at\t2026-01-01T00:00:00Z",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestLedgerSchemasInsertSelectsV2(t *testing.T) {
+	schema := `{"chart":{}}`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default/schemas/v1":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			if got := r.Header.Get("Idempotency-Key"); got != "schema-key" {
+				t.Fatalf("expected idempotency key, got %q", got)
+			}
+			body := readRequestBody(t, r)
+			if !strings.Contains(body, `"chart":{}`) {
+				t.Fatalf("expected schema body, got %s", body)
+			}
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	schemaPath := filepath.Join(t.TempDir(), "schema.json")
+	if err := os.WriteFile(schemaPath, []byte(schema), 0o600); err != nil {
+		t.Fatalf("write schema file: %v", err)
+	}
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "schemas", "insert", "v1",
+		"--file", schemaPath,
+		"--idempotency-key", "schema-key",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("insert schema: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "Schema v1 inserted in ledger default.") {
+		t.Fatalf("unexpected output:\n%s", stdout)
+	}
+}
+
 func TestLedgerAccountsListSelectsV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

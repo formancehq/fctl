@@ -28,6 +28,7 @@ func newLedgerCommand() *cobra.Command {
 	command.AddCommand(newLedgerExportCommand())
 	command.AddCommand(newLedgerImportCommand())
 	command.AddCommand(newLedgerListCommand())
+	command.AddCommand(newLedgerSchemasCommand())
 	command.AddCommand(newLedgerSetMetadataCommand())
 	command.AddCommand(newLedgerTransactionsSendCommand(true))
 	command.AddCommand(newLedgerStatsCommand())
@@ -45,6 +46,237 @@ func newLedgerAccountsCommand() *cobra.Command {
 	command.AddCommand(newLedgerAccountsDeleteMetadataCommand())
 	command.AddCommand(newLedgerAccountsSetMetadataCommand())
 	command.AddCommand(newLedgerAccountsShowCommand())
+	return command
+}
+
+func newLedgerSchemasCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "schemas",
+		Short: "Manage ledger schemas",
+	}
+	command.AddCommand(newLedgerSchemasListCommand())
+	command.AddCommand(newLedgerSchemasShowCommand())
+	command.AddCommand(newLedgerSchemasInsertCommand())
+	return command
+}
+
+func newLedgerSchemasListCommand() *cobra.Command {
+	var ledger string
+	var pageSize int64 = 15
+	var cursor string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "list",
+		Short: "List ledger schemas",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			if ledger == "" {
+				ledger = rt.Context.Defaults["ledger"]
+			}
+			if ledger == "" {
+				ledger = "default"
+			}
+
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := ledgercmd.ListSchemasService{
+				Handlers: ledgercmd.SDKListSchemasHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         ledgercmd.ProductLedger,
+						Feature:         ledgercmd.FeatureListSchemas,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), ledgercmd.ListSchemasInput{
+				Ledger:   ledger,
+				PageSize: pageSize,
+				Cursor:   cursor,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderLedgerSchemas(cmd, output)
+		},
+	}
+
+	command.Flags().StringVar(&ledger, "ledger", "", "Ledger name")
+	command.Flags().Int64Var(&pageSize, "page-size", 15, "Page size")
+	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
+
+	return command
+}
+
+func newLedgerSchemasShowCommand() *cobra.Command {
+	var ledger string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "show <version>",
+		Short: "Show a ledger schema",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			if ledger == "" {
+				ledger = rt.Context.Defaults["ledger"]
+			}
+			if ledger == "" {
+				ledger = "default"
+			}
+
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := ledgercmd.GetSchemaService{
+				Handlers: ledgercmd.SDKGetSchemaHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         ledgercmd.ProductLedger,
+						Feature:         ledgercmd.FeatureGetSchema,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), ledgercmd.GetSchemaInput{
+				Ledger:  ledger,
+				Version: args[0],
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderLedgerSchema(cmd, output)
+		},
+	}
+
+	command.Flags().StringVar(&ledger, "ledger", "", "Ledger name")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
+
+	return command
+}
+
+func newLedgerSchemasInsertCommand() *cobra.Command {
+	var ledger string
+	var file string
+	var confirm bool
+	var idempotencyKey string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "insert <version>",
+		Short: "Insert a ledger schema",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("ledger schemas insert requires --confirm")
+			}
+			if file == "" {
+				return fmt.Errorf("ledger schemas insert requires --file <path>|-")
+			}
+
+			var data []byte
+			var err error
+			if file == "-" {
+				data, err = io.ReadAll(cmd.InOrStdin())
+			} else {
+				data, err = os.ReadFile(file)
+			}
+			if err != nil {
+				return err
+			}
+
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			if ledger == "" {
+				ledger = rt.Context.Defaults["ledger"]
+			}
+			if ledger == "" {
+				ledger = "default"
+			}
+
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := ledgercmd.InsertSchemaService{
+				Handlers: ledgercmd.SDKInsertSchemaHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         ledgercmd.ProductLedger,
+						Feature:         ledgercmd.FeatureInsertSchema,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), ledgercmd.InsertSchemaInput{
+				Ledger:         ledger,
+				Version:        args[0],
+				Data:           data,
+				IdempotencyKey: idempotencyKey,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderLedgerSchemaInserted(cmd, output)
+		},
+	}
+
+	command.Flags().StringVar(&ledger, "ledger", "", "Ledger name")
+	command.Flags().StringVar(&file, "file", "", "Read schema JSON from file, or - for stdin")
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm the schema insertion")
+	command.Flags().StringVar(&idempotencyKey, "idempotency-key", "", "Idempotency key")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
+
 	return command
 }
 
@@ -1714,6 +1946,62 @@ func renderLedgerImported(cmd *cobra.Command, output ledgercmd.ImportLogsOutput)
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Ledger %s imported.\n", output.Ledger)
+	return err
+}
+
+func renderLedgerSchemas(cmd *cobra.Command, output ledgercmd.ListSchemasOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if len(output.Schemas) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No schemas found.")
+		return err
+	}
+	for _, schema := range output.Schemas {
+		if _, err := fmt.Fprintf(
+			cmd.OutOrStdout(),
+			"%s\t%s\tchart=%d\tqueries=%d\ttransactions=%d\n",
+			schema.Version,
+			schema.CreatedAt.Format(time.RFC3339),
+			schema.ChartSegments,
+			schema.QueryTemplates,
+			schema.TransactionModels,
+		); err != nil {
+			return err
+		}
+	}
+	if output.HasMore && output.Next != nil {
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
+		return err
+	}
+	return nil
+}
+
+func renderLedgerSchema(cmd *cobra.Command, output ledgercmd.GetSchemaOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Version\t%s\n", output.Schema.Version); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", output.Schema.CreatedAt.Format(time.RFC3339)); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Chart segments\t%d\n", len(output.Schema.Chart)); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Query templates\t%d\n", len(output.Schema.Queries)); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Transaction models\t%d\n", len(output.Schema.Transactions))
+	return err
+}
+
+func renderLedgerSchemaInserted(cmd *cobra.Command, output ledgercmd.InsertSchemaOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Schema %s inserted in ledger %s.\n", output.Version, output.Ledger)
 	return err
 }
 
