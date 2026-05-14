@@ -283,6 +283,7 @@ func newCloudAppsVersionsCommand(deployURL *string) *cobra.Command {
 	command.AddCommand(newCloudAppsVersionsManifestCommand(deployURL, "manifest"))
 	command.AddCommand(newCloudAppsVersionsManifestCommand(deployURL, "show-manifest"))
 	command.AddCommand(newCloudAppsVersionsArchiveCommand(deployURL))
+	command.AddCommand(newCloudAppsVersionsArchiveShowCommand(deployURL, "show-archive", true))
 	return command
 }
 
@@ -369,10 +370,22 @@ func newCloudAppsVersionsManifestCommand(deployURL *string, use string) *cobra.C
 
 func newCloudAppsVersionsArchiveCommand(deployURL *string) *cobra.Command {
 	command := &cobra.Command{
-		Use:   "show-archive <version-id>",
+		Use:   "archive",
+		Short: "Manage Cloud app version archives",
+	}
+	command.AddCommand(newCloudAppsVersionsArchiveShowCommand(deployURL, "show", false))
+	return command
+}
+
+func newCloudAppsVersionsArchiveShowCommand(deployURL *string, use string, deprecated bool) *cobra.Command {
+	command := &cobra.Command{
+		Use:   use + " <version-id>",
 		Short: "Show a Cloud app version archive",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if deprecated {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Command cloud apps versions show-archive has been deprecated, use cloud apps versions archive show")
+			}
 			_, client, err := deployClientFromCommand(cmd, *deployURL)
 			if err != nil {
 				return err
@@ -387,6 +400,9 @@ func newCloudAppsVersionsArchiveCommand(deployURL *string) *cobra.Command {
 			_, err = cmd.OutOrStdout().Write(output.Data)
 			return err
 		},
+	}
+	if deprecated {
+		command.Hidden = true
 	}
 	return command
 }

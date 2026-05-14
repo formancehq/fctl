@@ -1302,6 +1302,9 @@ func TestCloudAppsRunsVersionsAndVariables(t *testing.T) {
 		case r.Method == http.MethodGet && r.URL.Path == "/versions/ver_1" && r.Header.Get("Accept") == "application/yaml":
 			w.Header().Set("Content-Type", "application/yaml")
 			fmt.Fprint(w, "stack:\n  name: prod\n")
+		case r.Method == http.MethodGet && r.URL.Path == "/versions/ver_1" && r.Header.Get("Accept") == "application/gzip":
+			w.Header().Set("Content-Type", "application/gzip")
+			fmt.Fprint(w, "archive")
 		case r.Method == http.MethodGet && r.URL.Path == "/apps/app_1/variables":
 			fmt.Fprint(w, `{"data":{"items":[{"id":"var_1","key":"TOKEN","value":"secret","sensitive":true},{"id":"var_2","key":"ENV","value":"prod","description":"Environment","sensitive":false}]}}`)
 		case r.Method == http.MethodPost && r.URL.Path == "/apps/app_1/variables":
@@ -1378,6 +1381,25 @@ func TestCloudAppsRunsVersionsAndVariables(t *testing.T) {
 	}
 	if stdout != "stack:\n  name: prod\n" {
 		t.Fatalf("unexpected manifest output: %q", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "apps", "--deploy-url", server.URL, "versions", "archive", "show", "ver_1")
+	if err != nil {
+		t.Fatalf("cloud apps versions archive show: %v stderr=%s", err, stderr)
+	}
+	if stdout != "archive" {
+		t.Fatalf("unexpected archive output: %q", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "apps", "--deploy-url", server.URL, "versions", "show-archive", "ver_1")
+	if err != nil {
+		t.Fatalf("cloud apps versions show-archive: %v stderr=%s", err, stderr)
+	}
+	if stdout != "archive" {
+		t.Fatalf("unexpected deprecated archive output: %q", stdout)
+	}
+	if !strings.Contains(stderr, "Command cloud apps versions show-archive has been deprecated, use cloud apps versions archive show") {
+		t.Fatalf("expected show-archive deprecation warning, got:\n%s", stderr)
 	}
 
 	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "apps", "--deploy-url", server.URL, "variables", "list", "app_1")

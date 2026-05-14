@@ -69,7 +69,7 @@ This reference lists the current canonical v4 command families implemented under
 - `fctl cloud apps versions list <app-id>`
 - `fctl cloud apps versions show <version-id>`
 - `fctl cloud apps versions manifest <version-id>`
-- `fctl cloud apps versions show-archive <version-id>`
+- `fctl cloud apps versions archive show <version-id>`
 - `fctl cloud apps variables list <app-id>`
 - `fctl cloud apps variables create <app-id> --key <key> --value <value>|--value-stdin`
 - `fctl cloud apps variables delete <app-id> <variable-id> --confirm`

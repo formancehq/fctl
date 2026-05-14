@@ -197,6 +197,7 @@ Implementation v4 initiale:
 - les commandes destructives ajoutees dans cette tranche exigent `--confirm` quand le plan le demande;
 - `cloud apps variables create` accepte `--value-stdin` pour eviter d'exposer une variable sensible dans l'historique shell;
 - `cloud apps versions manifest` est le nom canonique, avec `show-manifest` alias deprecie cache.
+- `cloud apps versions archive show` est le nom canonique pour lire l'archive, avec `show-archive` alias deprecie cache.
 
 ## Mapping Cloud stacks lifecycle
 
