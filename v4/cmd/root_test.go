@@ -8587,6 +8587,17 @@ func TestAuthUsersListSelectsV1(t *testing.T) {
 	if !strings.Contains(stdout, "API version: v1") || !strings.Contains(stdout, "user_1\tuser@example.com\tsub_1") {
 		t.Fatalf("unexpected auth users output:\n%s", stdout)
 	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "auth", "clients", "users", "list")
+	if err != nil {
+		t.Fatalf("list auth users through clients alias: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Command auth clients users has been deprecated, use auth users") {
+		t.Fatalf("expected auth clients users deprecation warning, got:\n%s", stderr)
+	}
+	if !strings.Contains(stdout, "API version: v1") || !strings.Contains(stdout, "user_1\tuser@example.com\tsub_1") {
+		t.Fatalf("unexpected auth clients users output:\n%s", stdout)
+	}
 }
 
 func TestAuthUsersShowGetWarns(t *testing.T) {

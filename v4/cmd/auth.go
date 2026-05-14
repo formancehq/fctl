@@ -25,7 +25,7 @@ func newAuthCommand() *cobra.Command {
 	command.AddCommand(newAuthTokenCommand())
 	command.AddCommand(newAuthLogoutCommand())
 	command.AddCommand(newAuthClientsCommand())
-	command.AddCommand(newAuthUsersCommand())
+	command.AddCommand(newAuthUsersCommand(false))
 	return command
 }
 
@@ -365,6 +365,7 @@ func newAuthClientsCommand() *cobra.Command {
 	command.AddCommand(newAuthClientsUpdateCommand())
 	command.AddCommand(newAuthClientsDeleteCommand())
 	command.AddCommand(newAuthClientsSecretsCommand())
+	command.AddCommand(newAuthUsersCommand(true))
 	return command
 }
 
@@ -410,10 +411,19 @@ func newAuthClientsCreateCommand() *cobra.Command {
 	return command
 }
 
-func newAuthUsersCommand() *cobra.Command {
+func newAuthUsersCommand(deprecatedClientsAlias bool) *cobra.Command {
 	command := &cobra.Command{
-		Use:   "users",
-		Short: "Manage Auth users",
+		Use:     "users",
+		Aliases: []string{"u", "user"},
+		Short:   "Manage Auth users",
+		PersistentPreRun: func(cmd *cobra.Command, _ []string) {
+			if deprecatedClientsAlias {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Command auth clients users has been deprecated, use auth users")
+			}
+		},
+	}
+	if deprecatedClientsAlias {
+		command.Deprecated = "use auth users"
 	}
 	command.AddCommand(newAuthUsersListCommand())
 	command.AddCommand(newAuthUsersShowCommand("show", []string{"sh"}, false))

@@ -17,6 +17,7 @@ tests, and explicit about their canonical replacement.
 | `reconciliation policies get` | `reconciliation policies show` | Deprecated warning | v4.x |
 | `auth clients get` | `auth clients show` | Deprecated warning | v4.x |
 | `auth users get` | `auth users show` | Deprecated warning | v4.x |
+| `auth clients users ...` | `auth users ...` | Deprecated warning | v4.x |
 | `webhooks change-secret` | `webhooks secret rotate` | Deprecated warning | v4.x |
 | `cloud me info` | `cloud me show` | Deprecated warning | v4.x |
 | `cloud organizations describe` | `cloud organizations show` | Deprecated warning | v4.x |
