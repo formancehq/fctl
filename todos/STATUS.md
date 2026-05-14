@@ -4,7 +4,7 @@
 - [x] 02 - v4 foundation packages
 - [x] 03 - context commands
 - [x] 04 - auth providers
-- [ ] 05 - capabilities manifest generator
+- [x] 05 - capabilities manifest generator
 - [ ] 06 - runtime API version resolver
 - [ ] 07 - first stack inspection command
 - [ ] 08 - first Ledger versioned command
