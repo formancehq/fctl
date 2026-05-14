@@ -9,6 +9,7 @@ import (
 	formance "github.com/formancehq/formance-sdk-go/v3"
 	"github.com/spf13/cobra"
 
+	v4auth "github.com/formancehq/fctl/v4/internal/auth"
 	"github.com/formancehq/fctl/v4/internal/capabilities"
 	authcmd "github.com/formancehq/fctl/v4/internal/commands/auth"
 	v4config "github.com/formancehq/fctl/v4/internal/config"
@@ -20,6 +21,9 @@ func newAuthCommand() *cobra.Command {
 		Short: "Manage Auth service resources and CLI sessions",
 	}
 	command.AddCommand(newAuthLoginCommand())
+	command.AddCommand(newAuthStatusCommand())
+	command.AddCommand(newAuthTokenCommand())
+	command.AddCommand(newAuthLogoutCommand())
 	command.AddCommand(newAuthClientsCommand())
 	command.AddCommand(newAuthUsersCommand())
 	return command
@@ -212,6 +216,137 @@ func selectedContextForAuthLogin(cmd *cobra.Command) (v4config.Config, string, s
 		return v4config.Config{}, "", "", v4config.Context{}, err
 	}
 	return cfg, path, name, context, nil
+}
+
+func newAuthStatusCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "status",
+		Short: "Show authentication for the selected context",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			cfg, _, name, context, err := selectedContextForAuthLogin(cmd)
+			if err != nil {
+				return err
+			}
+			output := authStatusOutput{Name: name, Current: name == cfg.CurrentContext, Auth: context.Auth}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Context\t%s\n", name); err != nil {
+				return err
+			}
+			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Method\t%s\n", context.Auth.Method); err != nil {
+				return err
+			}
+			if context.Auth.TokenRef != "" {
+				if _, err := fmt.Fprintf(cmd.OutOrStdout(), "TokenRef\t%s\n", context.Auth.TokenRef); err != nil {
+					return err
+				}
+			}
+			if context.Auth.SecretRef != "" {
+				if _, err := fmt.Fprintf(cmd.OutOrStdout(), "SecretRef\t%s\n", context.Auth.SecretRef); err != nil {
+					return err
+				}
+			}
+			if context.Auth.ClientID != "" {
+				if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ClientID\t%s\n", context.Auth.ClientID); err != nil {
+					return err
+				}
+			}
+			if context.Auth.IssuerURL != "" {
+				if _, err := fmt.Fprintf(cmd.OutOrStdout(), "IssuerURL\t%s\n", context.Auth.IssuerURL); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	}
+}
+
+func newAuthTokenCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "token",
+		Short: "Print an access token for the selected context",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			_, _, _, context, err := selectedContextForAuthLogin(cmd)
+			if err != nil {
+				return err
+			}
+			if context.Auth.Method == v4config.AuthMethodNone {
+				return fmt.Errorf("auth token requires an authenticated context")
+			}
+			store, err := credentialStoreFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			source, err := v4auth.NewTokenSource(context.Auth, store, v4auth.Options{})
+			if err != nil {
+				return err
+			}
+			if source == nil {
+				return fmt.Errorf("auth token requires an authenticated context")
+			}
+			token, err := source.Token(cmd.Context())
+			if err != nil {
+				return err
+			}
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), token.AccessToken)
+			return err
+		},
+	}
+}
+
+func newAuthLogoutCommand() *cobra.Command {
+	var confirm bool
+
+	command := &cobra.Command{
+		Use:   "logout",
+		Short: "Clear authentication for the selected context",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if !confirm {
+				return fmt.Errorf("auth logout requires --confirm")
+			}
+			cfg, path, name, context, err := selectedContextForAuthLogin(cmd)
+			if err != nil {
+				return err
+			}
+			store, err := credentialStoreFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			deleteCredentialRef(cmd, store, context.Auth.TokenRef)
+			deleteCredentialRef(cmd, store, context.Auth.SecretRef)
+			context.Auth = v4config.Auth{Method: v4config.AuthMethodNone}
+			cfg.Contexts[name] = context
+			if err := v4config.SaveFile(path, cfg); err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: name == cfg.CurrentContext, Context: context}); handled || err != nil {
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Authentication for context %s cleared.\n", name)
+			return err
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm clearing authentication")
+	return command
+}
+
+func deleteCredentialRef(cmd *cobra.Command, store interface {
+	Delete(context.Context, string) error
+}, ref string) {
+	if ref == "" || strings.HasPrefix(ref, "env://") || strings.HasPrefix(ref, "file://") || strings.HasPrefix(ref, "stdin://") {
+		return
+	}
+	_ = store.Delete(cmd.Context(), ref)
+}
+
+type authStatusOutput struct {
+	Name    string        `json:"name" yaml:"name"`
+	Current bool          `json:"current" yaml:"current"`
+	Auth    v4config.Auth `json:"auth" yaml:"auth"`
 }
 
 func newAuthClientsCommand() *cobra.Command {

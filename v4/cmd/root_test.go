@@ -1953,6 +1953,43 @@ func TestAuthLoginTokenStoresCredentialAndUpdatesContext(t *testing.T) {
 	if !strings.Contains(string(configData), "tokenRef: contexts/local/token") {
 		t.Fatalf("expected token ref in config:\n%s", string(configData))
 	}
+	credentialPath := filepath.Join(credentialDir, "contexts", "local", "token")
+	credentialData, err := os.ReadFile(credentialPath)
+	if err != nil {
+		t.Fatalf("read stored token: %v", err)
+	}
+	if string(credentialData) != "stack-token" {
+		t.Fatalf("unexpected stored token %q", credentialData)
+	}
+
+	stdout, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"auth", "status",
+	)
+	if err != nil {
+		t.Fatalf("auth status: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"Context\tlocal\n",
+		"Method\ttoken\n",
+		"TokenRef\tcontexts/local/token\n",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected auth status output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+
+	stdout, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"--credential-dir", credentialDir,
+		"auth", "token",
+	)
+	if err != nil {
+		t.Fatalf("auth token: %v stderr=%s", err, stderr)
+	}
+	if stdout != "stack-token\n" {
+		t.Fatalf("unexpected auth token output: %q", stdout)
+	}
 
 	stdout, stderr, err = executeCommand(t,
 		"--config-dir", configDir,
@@ -1964,6 +2001,52 @@ func TestAuthLoginTokenStoresCredentialAndUpdatesContext(t *testing.T) {
 	}
 	if !strings.Contains(stdout, "Context: local") {
 		t.Fatalf("unexpected inspect output:\n%s", stdout)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"--credential-dir", credentialDir,
+		"auth", "logout",
+	)
+	if err == nil {
+		t.Fatal("expected auth logout to require confirmation")
+	}
+	if !strings.Contains(err.Error(), "auth logout requires --confirm") {
+		t.Fatalf("unexpected logout error: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"--credential-dir", credentialDir,
+		"auth", "logout",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("auth logout: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Authentication for context local cleared.\n" {
+		t.Fatalf("unexpected auth logout output: %q", stdout)
+	}
+	if _, err := os.Stat(credentialPath); !os.IsNotExist(err) {
+		t.Fatalf("expected stored token to be deleted, got %v", err)
+	}
+	configData, err = os.ReadFile(filepath.Join(configDir, "config.yaml"))
+	if err != nil {
+		t.Fatalf("read config after logout: %v", err)
+	}
+	if !strings.Contains(string(configData), "method: none") || strings.Contains(string(configData), "tokenRef") {
+		t.Fatalf("expected auth logout to clear token auth:\n%s", string(configData))
+	}
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"--credential-dir", credentialDir,
+		"auth", "token",
+	)
+	if err == nil {
+		t.Fatal("expected auth token to require an authenticated context")
+	}
+	if !strings.Contains(err.Error(), "auth token requires an authenticated context") {
+		t.Fatalf("unexpected auth token error: %v stderr=%s", err, stderr)
 	}
 }
 

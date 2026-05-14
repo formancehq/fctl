@@ -135,7 +135,10 @@ Implementation v4:
 
 - `auth login token` met a jour le contexte selectionne et peut stocker le token dans un `--credential-dir` explicite via `--token` ou `--token-stdin`;
 - `auth login client-credentials` met a jour le contexte selectionne et peut stocker le secret client dans un `--credential-dir` explicite via `--client-secret` ou `--client-secret-stdin`;
-- `auth login none` desactive l'auth sur un contexte `stack`; sur `cloud`/`cloud-stack`, `--confirm` est requis pour eviter une desactivation accidentelle.
+- `auth login none` desactive l'auth sur un contexte `stack`; sur `cloud`/`cloud-stack`, `--confirm` est requis pour eviter une desactivation accidentelle;
+- `auth status` affiche la methode d'auth du contexte courant sans exposer les secrets;
+- `auth token` imprime le token d'acces resolu pour les contextes authentifies, afin de faciliter CI et debug;
+- `auth logout --confirm` supprime les credentials stockes localement quand ils utilisent un ref gere par le CLI, puis repasse le contexte en `none`.
 
 ## Mapping commandes Cloud
 
