@@ -27,8 +27,15 @@ for direct local or self-hosted stack commands.
 
 ## Cloud Stacks
 
+- `fctl cloud_stacks create <name> --region <region-id>`
 - `fctl cloud_stacks list --organization <organization-id>`
 - `fctl cloud_stacks show <stack-id> --organization <organization-id>`
+- `fctl cloud_stacks update <stack-id> --name <name>`
+- `fctl cloud_stacks delete <stack-id> --confirm`
+- `fctl cloud_stacks enable <stack-id>`
+- `fctl cloud_stacks disable <stack-id> --confirm`
+- `fctl cloud_stacks restore <stack-id> --confirm`
+- `fctl cloud_stacks upgrade <stack-id> --version <version> --confirm`
 
 When the active context is `cloud-stack`, `--organization` defaults to the
 context organization. `stack` and `stacks` are deprecated aliases for

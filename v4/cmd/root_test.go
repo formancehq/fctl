@@ -422,6 +422,120 @@ func TestCloudStacksListShowAndDeprecatedAliases(t *testing.T) {
 	}
 }
 
+func TestCloudStacksMutations(t *testing.T) {
+	stackBody := `{"data":{"id":"stack_1","name":"Production","organizationId":"org_1","uri":"https://stack.example/api","regionID":"eu-west-1","version":"v3.2.4","status":"READY","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":true,"stargateEnabled":true,"synchronised":true,"modules":[]}}`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodPost && r.URL.Path == "/organizations/org_1/stacks":
+			body := readRequestBody(t, r)
+			for _, expected := range []string{`"name":"Production"`, `"regionID":"eu-west-1"`, `"version":"v3.2.4"`, `"metadata":{"env":"prod"}`} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected create body to contain %s, got %s", expected, body)
+				}
+			}
+			w.WriteHeader(http.StatusAccepted)
+			fmt.Fprint(w, stackBody)
+		case r.Method == http.MethodPut && r.URL.Path == "/organizations/org_1/stacks/stack_1":
+			body := readRequestBody(t, r)
+			for _, expected := range []string{`"name":"Renamed"`, `"metadata":{"env":"prod"}`} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected update body to contain %s, got %s", expected, body)
+				}
+			}
+			fmt.Fprint(w, stackBody)
+		case r.Method == http.MethodDelete && r.URL.Path == "/organizations/org_1/stacks/stack_1":
+			if got := r.URL.Query().Get("force"); got != "true" {
+				t.Fatalf("expected force=true, got %q", got)
+			}
+			w.WriteHeader(http.StatusNoContent)
+		case r.Method == http.MethodPut && r.URL.Path == "/organizations/org_1/stacks/stack_1/enable":
+			w.WriteHeader(http.StatusAccepted)
+		case r.Method == http.MethodPut && r.URL.Path == "/organizations/org_1/stacks/stack_1/disable":
+			w.WriteHeader(http.StatusAccepted)
+		case r.Method == http.MethodPut && r.URL.Path == "/organizations/org_1/stacks/stack_1/restore":
+			w.WriteHeader(http.StatusAccepted)
+			fmt.Fprint(w, stackBody)
+		case r.Method == http.MethodPut && r.URL.Path == "/organizations/org_1/stacks/stack_1/upgrade":
+			body := readRequestBody(t, r)
+			if !strings.Contains(body, `"version":"v3.2.5"`) {
+				t.Fatalf("expected upgrade body to contain version, got %s", body)
+			}
+			w.WriteHeader(http.StatusAccepted)
+		default:
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", server.URL,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"cloud_stacks", "create", "Production",
+		"--region", "eu-west-1",
+		"--version", "v3.2.4",
+		"--metadata", "env=prod",
+	)
+	if err != nil {
+		t.Fatalf("cloud_stacks create: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud stack stack_1 created.\n" {
+		t.Fatalf("unexpected create output: %q", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"cloud_stacks", "update", "stack_1",
+		"--name", "Renamed",
+		"--metadata", "env=prod",
+	)
+	if err != nil {
+		t.Fatalf("cloud_stacks update: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud stack stack_1 updated.\n" {
+		t.Fatalf("unexpected update output: %q", stdout)
+	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "delete", "stack_1")
+	if err == nil {
+		t.Fatal("expected delete to require --confirm")
+	}
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "delete", "stack_1", "--force", "--confirm")
+	if err != nil {
+		t.Fatalf("cloud_stacks delete: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud stack stack_1 deleted.\n" {
+		t.Fatalf("unexpected delete output: %q", stdout)
+	}
+
+	for _, args := range [][]string{
+		{"enable", "stack_1"},
+		{"disable", "stack_1", "--confirm"},
+		{"restore", "stack_1", "--confirm"},
+		{"upgrade", "stack_1", "--version", "v3.2.5", "--confirm"},
+	} {
+		stdout, stderr, err = executeCommand(t, append([]string{"--config-dir", configDir, "cloud_stacks"}, args...)...)
+		if err != nil {
+			t.Fatalf("cloud_stacks %v: %v stderr=%s", args, err, stderr)
+		}
+		if !strings.Contains(stdout, "Cloud stack stack_1") {
+			t.Fatalf("unexpected action output for %v: %q", args, stdout)
+		}
+	}
+}
+
 func TestCloudStacksRejectStackContext(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Fatalf("cloud_stacks command must reject stack contexts before network calls")
