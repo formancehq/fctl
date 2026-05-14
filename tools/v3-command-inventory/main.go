@@ -90,10 +90,10 @@ func main() {
 		return
 	}
 
-	if err := os.MkdirAll(filepath.Dir(output), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(output), 0o750); err != nil {
 		exitf("create output directory: %v", err)
 	}
-	if err := os.WriteFile(output, payload, 0o644); err != nil {
+	if err := os.WriteFile(output, payload, 0o600); err != nil {
 		exitf("write %s: %v", output, err)
 	}
 }
