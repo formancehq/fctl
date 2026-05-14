@@ -619,6 +619,80 @@ func TestLedgerTransactionsShowSelectsV2(t *testing.T) {
 	}
 }
 
+func TestLedgerTransactionsRevertRequiresConfirm(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "ledger", "transactions", "revert", "42")
+	if err == nil {
+		t.Fatal("expected revert to require confirmation")
+	}
+	if stdout != "" {
+		t.Fatalf("expected empty stdout, got %q", stdout)
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(err.Error(), "ledger transactions revert requires --confirm") {
+		t.Fatalf("expected confirmation error, got: %v", err)
+	}
+}
+
+func TestLedgerTransactionsRevertSelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default/transactions/42/revert":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			if got := r.URL.Query().Get("atEffectiveDate"); got != "true" {
+				t.Fatalf("expected atEffectiveDate true, got %q", got)
+			}
+			if got := r.URL.Query().Get("force"); got != "true" {
+				t.Fatalf("expected force true, got %q", got)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, `{"data":{"id":43,"metadata":{"foo":"bar"},"postings":[],"reverted":false,"timestamp":"2026-01-01T00:00:00Z","reference":"revert-ref"}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "transactions", "revert", "42",
+		"--at-effective-date",
+		"--force",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("revert transaction: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v2",
+		"ID\t43",
+		"Reference\trevert-ref",
+		"Timestamp\t2026-01-01T00:00:00Z",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected transaction output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
 func TestLedgerVolumesListSelectsV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

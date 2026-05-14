@@ -115,6 +115,63 @@ func TestGetTransactionServiceSelectsResolvedHandler(t *testing.T) {
 	}
 }
 
+func TestRevertTransactionServiceSelectsResolvedHandler(t *testing.T) {
+	service := RevertTransactionService{
+		Handlers: []RevertTransactionHandler{
+			{
+				APIVersion: "v1",
+				Run: func(context.Context, RevertTransactionInput) (RevertTransactionOutput, error) {
+					t.Fatal("v1 handler should not run")
+					return RevertTransactionOutput{}, nil
+				},
+			},
+			{
+				APIVersion: "v2",
+				Run: func(_ context.Context, input RevertTransactionInput) (RevertTransactionOutput, error) {
+					if input.Ledger != "default" || input.TransactionID != "42" || !input.AtEffectiveDate || !input.Force {
+						t.Fatalf("unexpected input: %#v", input)
+					}
+					return RevertTransactionOutput{Transaction: TransactionSummary{ID: input.TransactionID}}, nil
+				},
+			},
+		},
+		Resolve: func(_ context.Context, versions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			assertAPIVersions(t, versions, []capabilities.APIVersion{"v1", "v2"})
+			return "v2", nil
+		},
+	}
+
+	output, err := service.Run(context.Background(), RevertTransactionInput{
+		Ledger:          "default",
+		TransactionID:   "42",
+		AtEffectiveDate: true,
+		Force:           true,
+	})
+	if err != nil {
+		t.Fatalf("run service: %v", err)
+	}
+	if output.APIVersion != "v2" || output.Transaction.ID != "42" {
+		t.Fatalf("unexpected output: %#v", output)
+	}
+}
+
+func TestRevertTransactionServiceRequiresInput(t *testing.T) {
+	service := RevertTransactionService{
+		Handlers: []RevertTransactionHandler{{APIVersion: "v2"}},
+		Resolve: func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			t.Fatal("resolver should not run")
+			return "", nil
+		},
+	}
+
+	if _, err := service.Run(context.Background(), RevertTransactionInput{TransactionID: "42"}); err == nil {
+		t.Fatal("expected ledger validation error")
+	}
+	if _, err := service.Run(context.Background(), RevertTransactionInput{Ledger: "default"}); err == nil {
+		t.Fatal("expected transaction id validation error")
+	}
+}
+
 func TestTransactionMapping(t *testing.T) {
 	timestamp := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
 	reference := "ref"

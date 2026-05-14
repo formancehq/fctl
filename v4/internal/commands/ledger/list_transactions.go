@@ -14,9 +14,10 @@ import (
 )
 
 const (
-	ProductLedger           capabilities.Product = "ledger"
-	FeatureListTransactions capabilities.Feature = "listTransactions"
-	FeatureGetTransaction   capabilities.Feature = "getTransaction"
+	ProductLedger            capabilities.Product = "ledger"
+	FeatureListTransactions  capabilities.Feature = "listTransactions"
+	FeatureGetTransaction    capabilities.Feature = "getTransaction"
+	FeatureRevertTransaction capabilities.Feature = "revertTransaction"
 )
 
 type ListTransactionsInput struct {
@@ -55,6 +56,18 @@ type GetTransactionOutput struct {
 	Transaction TransactionSummary      `json:"transaction" yaml:"transaction"`
 }
 
+type RevertTransactionInput struct {
+	Ledger          string
+	TransactionID   string
+	AtEffectiveDate bool
+	Force           bool
+}
+
+type RevertTransactionOutput struct {
+	APIVersion  capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	Transaction TransactionSummary      `json:"transaction" yaml:"transaction"`
+}
+
 type ListTransactionsHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, ListTransactionsInput) (ListTransactionsOutput, error)
@@ -72,6 +85,16 @@ type GetTransactionHandler struct {
 
 type GetTransactionService struct {
 	Handlers []GetTransactionHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type RevertTransactionHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, RevertTransactionInput) (RevertTransactionOutput, error)
+}
+
+type RevertTransactionService struct {
+	Handlers []RevertTransactionHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -207,6 +230,90 @@ func SDKGetTransactionHandlers(sdk *formance.Formance) []GetTransactionHandler {
 					return GetTransactionOutput{}, fmt.Errorf("ledger v2 get transaction returned no data")
 				}
 				return GetTransactionOutput{Transaction: fromV2Transaction(response.V2GetTransactionResponse.Data)}, nil
+			},
+		},
+	}
+}
+
+func (s RevertTransactionService) Run(ctx context.Context, input RevertTransactionInput) (RevertTransactionOutput, error) {
+	if input.Ledger == "" {
+		return RevertTransactionOutput{}, fmt.Errorf("ledger is required")
+	}
+	if input.TransactionID == "" {
+		return RevertTransactionOutput{}, fmt.Errorf("transaction id is required")
+	}
+
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]RevertTransactionHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return RevertTransactionOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return RevertTransactionOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return RevertTransactionOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func SDKRevertTransactionHandlers(sdk *formance.Formance) []RevertTransactionHandler {
+	return []RevertTransactionHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input RevertTransactionInput) (RevertTransactionOutput, error) {
+				if input.AtEffectiveDate {
+					return RevertTransactionOutput{}, fmt.Errorf("--at-effective-date requires ledger API v2+")
+				}
+				txid, ok := new(big.Int).SetString(input.TransactionID, 10)
+				if !ok {
+					return RevertTransactionOutput{}, fmt.Errorf("transaction id must be an integer")
+				}
+				response, err := sdk.Ledger.V1.RevertTransaction(ctx, operations.RevertTransactionRequest{
+					Ledger:        input.Ledger,
+					Txid:          txid,
+					DisableChecks: pointer(input.Force),
+				})
+				if err != nil {
+					return RevertTransactionOutput{}, err
+				}
+				if response.TransactionResponse == nil {
+					return RevertTransactionOutput{}, fmt.Errorf("ledger v1 revert transaction returned no data")
+				}
+				return RevertTransactionOutput{Transaction: fromV1Transaction(response.TransactionResponse.Data)}, nil
+			},
+		},
+		{
+			APIVersion: "v2",
+			Run: func(ctx context.Context, input RevertTransactionInput) (RevertTransactionOutput, error) {
+				txid, ok := new(big.Int).SetString(input.TransactionID, 10)
+				if !ok {
+					return RevertTransactionOutput{}, fmt.Errorf("transaction id must be an integer")
+				}
+				response, err := sdk.Ledger.V2.RevertTransaction(ctx, operations.V2RevertTransactionRequest{
+					Ledger:                     input.Ledger,
+					ID:                         txid,
+					AtEffectiveDate:            pointer(input.AtEffectiveDate),
+					Force:                      pointer(input.Force),
+					V2RevertTransactionRequest: &shared.V2RevertTransactionRequest{},
+				})
+				if err != nil {
+					return RevertTransactionOutput{}, err
+				}
+				if response.V2RevertTransactionResponse == nil {
+					return RevertTransactionOutput{}, fmt.Errorf("ledger v2 revert transaction returned no data")
+				}
+				return RevertTransactionOutput{Transaction: fromV2Transaction(response.V2RevertTransactionResponse.Data)}, nil
 			},
 		},
 	}
