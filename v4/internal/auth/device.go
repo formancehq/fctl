@@ -130,6 +130,7 @@ func OpenURL(urlString string) error {
 type DeviceTokenSource struct {
 	IssuerURL  string
 	TokenRef   string
+	Scopes     []string
 	Store      credentials.Store
 	HTTPClient *http.Client
 	ClientID   string
@@ -154,11 +155,11 @@ func (s *DeviceTokenSource) Token(ctx context.Context) (Token, error) {
 	if tokens.AccessToken.Token == "" {
 		return Token{}, errors.New("stored device credentials do not include an access token")
 	}
-	if !s.tokenExpired(tokens.AccessToken) {
+	if !s.tokenExpired(tokens.AccessToken) && s.tokenHasScopes(tokens.AccessToken) {
 		return normalizeToken(Token{AccessToken: tokens.AccessToken.Token, TokenType: tokens.AccessToken.TokenType}), nil
 	}
 	if tokens.AccessToken.RefreshToken == "" && tokens.RefreshToken == "" {
-		return Token{}, errors.New("device access token expired; run `fctl login` again")
+		return Token{}, errors.New("device access token is expired or missing required scopes; run `fctl login` again")
 	}
 	refreshed, err := s.refresh(ctx, tokens)
 	if err != nil {
@@ -182,6 +183,35 @@ func (s *DeviceTokenSource) tokenExpired(token StoredAccessToken) bool {
 		return false
 	}
 	return !token.Expiry.After(s.currentTime().Add(30 * time.Second))
+}
+
+func (s *DeviceTokenSource) tokenHasScopes(token StoredAccessToken) bool {
+	if len(s.Scopes) == 0 {
+		return true
+	}
+	claims, ok := jwtClaims(token.Token)
+	if !ok {
+		return true
+	}
+	available := map[string]struct{}{}
+	switch value := claims["scope"].(type) {
+	case string:
+		for _, scope := range strings.Fields(value) {
+			available[scope] = struct{}{}
+		}
+	case []any:
+		for _, scope := range value {
+			if text, ok := scope.(string); ok {
+				available[text] = struct{}{}
+			}
+		}
+	}
+	for _, scope := range s.Scopes {
+		if _, ok := available[scope]; !ok {
+			return false
+		}
+	}
+	return true
 }
 
 func (s *DeviceTokenSource) currentTime() time.Time {
@@ -211,7 +241,7 @@ func (s *DeviceTokenSource) refresh(ctx context.Context, tokens DeviceTokens) (D
 	if refreshToken == "" {
 		refreshToken = tokens.RefreshToken
 	}
-	next, err := refreshDeviceToken(ctx, httpClient, discovery.TokenEndpoint, clientID, refreshToken)
+	next, err := refreshDeviceToken(ctx, httpClient, discovery.TokenEndpoint, clientID, refreshToken, s.Scopes)
 	if err != nil {
 		return DeviceTokens{}, err
 	}
@@ -348,14 +378,18 @@ func pollDeviceToken(ctx context.Context, httpClient *http.Client, endpoint stri
 	}
 }
 
-func refreshDeviceToken(ctx context.Context, httpClient *http.Client, endpoint string, clientID string, refreshToken string) (DeviceTokens, error) {
+func refreshDeviceToken(ctx context.Context, httpClient *http.Client, endpoint string, clientID string, refreshToken string, scopes []string) (DeviceTokens, error) {
 	if refreshToken == "" {
 		return DeviceTokens{}, errors.New("refresh token is required")
 	}
-	tokens, _, _, err := requestDeviceToken(ctx, httpClient, endpoint, clientID, url.Values{
+	form := url.Values{
 		"grant_type":    {"refresh_token"},
 		"refresh_token": {refreshToken},
-	}, 0)
+	}
+	if len(scopes) > 0 {
+		form.Set("scope", strings.Join(scopes, " "))
+	}
+	tokens, _, _, err := requestDeviceToken(ctx, httpClient, endpoint, clientID, form, 0)
 	return tokens, err
 }
 

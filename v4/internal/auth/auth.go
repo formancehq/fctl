@@ -92,6 +92,7 @@ func NewTokenSource(authConfig v4config.Auth, store credentials.Store, options O
 		return &DeviceTokenSource{
 			IssuerURL:  authConfig.IssuerURL,
 			TokenRef:   authConfig.TokenRef,
+			Scopes:     authConfig.Scopes,
 			Store:      store,
 			HTTPClient: httpClient,
 			ClientID:   DeviceClientID,

@@ -161,6 +161,24 @@ func TestCloudClientCredentialsDefaultOrganizationScopes(t *testing.T) {
 	}
 }
 
+func TestCloudDeviceDefaultOrganizationScopes(t *testing.T) {
+	rt := &Runtime{
+		Context: config.Context{
+			Kind: config.ContextKindCloud,
+			Auth: config.Auth{
+				Method:   config.AuthMethodCloudDevice,
+				TokenRef: "root-token-ref",
+			},
+		},
+		Target: Target{Kind: TargetKindCloud},
+	}
+
+	authConfig := rt.authForTarget()
+	if !containsString(authConfig.Scopes, "organization:ListStacks") {
+		t.Fatalf("expected default organization scopes, got %#v", authConfig.Scopes)
+	}
+}
+
 func TestStackClientCredentialsDoNotDefaultOrganizationScopes(t *testing.T) {
 	rt := &Runtime{
 		Context: config.Context{

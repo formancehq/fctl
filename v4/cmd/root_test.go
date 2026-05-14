@@ -251,7 +251,8 @@ func newDeviceLoginOIDCServer(t *testing.T) *httptest.Server {
 			if err := r.ParseForm(); err != nil {
 				t.Fatalf("parse device form: %v", err)
 			}
-			if r.Form.Get("scope") != "openid offline_access accesses on_behalf" {
+			if !strings.Contains(r.Form.Get("scope"), "openid offline_access accesses on_behalf") ||
+				!strings.Contains(r.Form.Get("scope"), "organization:ListStacks") {
 				t.Fatalf("unexpected device scope %q", r.Form.Get("scope"))
 			}
 			if r.Form.Get("prompt") != "no-org" {
