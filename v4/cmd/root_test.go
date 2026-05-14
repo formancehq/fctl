@@ -6199,6 +6199,216 @@ func TestAuthClientsSecretsCreateDoesNotPrintClearSecretInPlainOutput(t *testing
 	}
 }
 
+func TestWebhooksListSelectsV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"webhooks","version":"1.0.0","health":true}]}`)
+		case "/api/webhooks/configs":
+			if got := r.URL.Query().Get("endpoint"); got != "https://example.com/webhook" {
+				t.Fatalf("expected endpoint filter, got %q", got)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"id":"wh_1","endpoint":"https://example.com/webhook","eventTypes":["ledger.transaction.created"],"active":true,"secret":"super-secret","createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-01T00:00:00Z"}],"hasMore":false}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "webhooks", "list", "--endpoint", "https://example.com/webhook")
+	if err != nil {
+		t.Fatalf("list webhooks: %v stderr=%s", err, stderr)
+	}
+	if strings.Contains(stdout, "super-secret") {
+		t.Fatalf("plain output must not include webhook secret:\n%s", stdout)
+	}
+	if !strings.Contains(stdout, "API version: v1") || !strings.Contains(stdout, "wh_1\thttps://example.com/webhook\ttrue\tledger.transaction.created") {
+		t.Fatalf("unexpected webhooks output:\n%s", stdout)
+	}
+}
+
+func TestWebhooksCreateSelectsV1AndMasksSecret(t *testing.T) {
+	var requestBody string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"webhooks","version":"1.0.0","health":true}]}`)
+		case "/api/webhooks/configs":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			requestBody = readRequestBody(t, r)
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":"wh_1","endpoint":"https://example.com/webhook","eventTypes":["ledger.transaction.created"],"active":false,"secret":"super-secret","createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-01T00:00:00Z"}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"webhooks", "create", "https://example.com/webhook", "ledger.transaction.created",
+		"--secret", "super-secret",
+	)
+	if err != nil {
+		t.Fatalf("create webhook: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{`"endpoint":"https://example.com/webhook"`, `"eventTypes":["ledger.transaction.created"]`, `"secret":"super-secret"`} {
+		if !strings.Contains(requestBody, expected) {
+			t.Fatalf("expected request body to contain %s, got %s", expected, requestBody)
+		}
+	}
+	if strings.Contains(stdout, "super-secret") {
+		t.Fatalf("plain output must not include webhook secret:\n%s", stdout)
+	}
+	if !strings.Contains(stdout, "Webhook config wh_1 created.") {
+		t.Fatalf("unexpected create webhook output:\n%s", stdout)
+	}
+}
+
+func TestWebhooksDeleteRequiresConfirm(t *testing.T) {
+	_, _, err := executeCommand(t, "webhooks", "delete", "wh_1")
+	if err == nil || !strings.Contains(err.Error(), "requires --confirm") {
+		t.Fatalf("expected confirm error, got %v", err)
+	}
+}
+
+func TestWebhooksActionsSelectV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"webhooks","version":"1.0.0","health":true}]}`)
+		case "/api/webhooks/configs/wh_1/activate":
+			if r.Method != http.MethodPut {
+				t.Fatalf("expected PUT activate, got %s", r.Method)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":"wh_1","endpoint":"https://example.com/webhook","eventTypes":["ledger.transaction.created"],"active":true,"secret":"secret","createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-01T00:01:00Z"}}`)
+		case "/api/webhooks/configs/wh_1/deactivate":
+			if r.Method != http.MethodPut {
+				t.Fatalf("expected PUT deactivate, got %s", r.Method)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":"wh_1","endpoint":"https://example.com/webhook","eventTypes":["ledger.transaction.created"],"active":false,"secret":"secret","createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-01T00:02:00Z"}}`)
+		case "/api/webhooks/configs/wh_1":
+			if r.Method != http.MethodDelete {
+				t.Fatalf("expected DELETE, got %s", r.Method)
+			}
+			w.WriteHeader(http.StatusOK)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "webhooks", "activate", "wh_1")
+	if err != nil {
+		t.Fatalf("activate webhook: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "Webhook config wh_1 activated.") {
+		t.Fatalf("unexpected activate output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "webhooks", "deactivate", "wh_1", "--confirm")
+	if err != nil {
+		t.Fatalf("deactivate webhook: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "Webhook config wh_1 deactivated.") {
+		t.Fatalf("unexpected deactivate output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "webhooks", "delete", "wh_1", "--confirm")
+	if err != nil {
+		t.Fatalf("delete webhook: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "Webhook config wh_1 deleted.") {
+		t.Fatalf("unexpected delete output:\n%s", stdout)
+	}
+}
+
+func TestWebhooksChangeSecretAliasWarns(t *testing.T) {
+	var requestBody string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"webhooks","version":"1.0.0","health":true}]}`)
+		case "/api/webhooks/configs/wh_1/secret/change":
+			if r.Method != http.MethodPut {
+				t.Fatalf("expected PUT, got %s", r.Method)
+			}
+			requestBody = readRequestBody(t, r)
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":"wh_1","endpoint":"https://example.com/webhook","eventTypes":["ledger.transaction.created"],"active":true,"secret":"rotated-secret","createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-01T00:01:00Z"}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "webhooks", "change-secret", "wh_1", "--secret", "rotated-secret")
+	if err != nil {
+		t.Fatalf("rotate webhook secret through alias: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Command webhooks change-secret has been deprecated, use webhooks secret rotate") {
+		t.Fatalf("expected change-secret deprecation warning, got:\n%s", stderr)
+	}
+	if !strings.Contains(requestBody, `"secret":"rotated-secret"`) {
+		t.Fatalf("unexpected change secret request body: %s", requestBody)
+	}
+	if strings.Contains(stdout, "rotated-secret") {
+		t.Fatalf("plain output must not include webhook secret:\n%s", stdout)
+	}
+	if !strings.Contains(stdout, "Webhook config wh_1 secret rotated.") {
+		t.Fatalf("unexpected change secret output:\n%s", stdout)
+	}
+}
+
 func TestConfigMigrateV3DryRun(t *testing.T) {
 	v3Dir := writeV3CommandFixture(t, true)
 
