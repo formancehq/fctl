@@ -1897,6 +1897,27 @@ func TestTargetInspectJSON(t *testing.T) {
 	}
 }
 
+func TestTargetProxyRejectsCloudContext(t *testing.T) {
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud", "cloud",
+		"--cloud-url", "http://localhost",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud context: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t, "--config-dir", configDir, "target", "proxy")
+	if err == nil {
+		t.Fatal("expected target proxy to reject cloud context")
+	}
+	if !strings.Contains(err.Error(), "target proxy requires a stack context") {
+		t.Fatalf("unexpected proxy error: %v stderr=%s", err, stderr)
+	}
+}
+
 func TestLedgerListSelectsV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

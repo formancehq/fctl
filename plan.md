@@ -209,6 +209,7 @@ Ces aliases pourront etre supprimes en v5 ou dans une version mineure ulterieure
 Implementation v4:
 
 - `cloud stacks history <stack-id>` est implemente avec le meme service d'audit que `cloud organizations history`, en imposant le filtre `stackId` au niveau membership.
+- `target proxy --port <port>` est implemente pour les contextes `stack` directs; le proxy Cloud stack reste separe tant que la resolution d'URI data-plane Cloud n'est pas dans le runtime v4.
 
 | v3 | v4 canonique | Changements | Notes |
 | --- | --- | --- | --- |

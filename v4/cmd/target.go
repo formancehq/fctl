@@ -1,11 +1,20 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"net"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/v4/internal/capabilities"
+	targetcmd "github.com/formancehq/fctl/v4/internal/commands/target"
+	"github.com/formancehq/fctl/v4/internal/runtime"
 )
 
 func newTargetCommand() *cobra.Command {
@@ -14,6 +23,7 @@ func newTargetCommand() *cobra.Command {
 		Short: "Inspect the active fctl v4 target",
 	}
 	command.AddCommand(newTargetInspectCommand())
+	command.AddCommand(newTargetProxyCommand())
 	return command
 }
 
@@ -81,6 +91,82 @@ func newTargetInspectCommand() *cobra.Command {
 			return nil
 		},
 	}
+}
+
+func newTargetProxyCommand() *cobra.Command {
+	var port int
+	var allowedOrigins []string
+
+	command := &cobra.Command{
+		Use:   "proxy",
+		Short: "Start a local proxy for the current stack target",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			if rt.Target.Kind != runtime.TargetKindStack {
+				return fmt.Errorf("target proxy requires a stack context")
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			transport := http.DefaultTransport
+			if httpClient.Transport != nil {
+				transport = httpClient.Transport
+			}
+			handler, err := targetcmd.NewProxyHandler(targetcmd.ProxyInput{
+				TargetURL:      rt.Target.URL,
+				Transport:      transport,
+				AllowedOrigins: allowedOrigins,
+				LogWriter:      cmd.OutOrStdout(),
+				ErrorWriter:    cmd.ErrOrStderr(),
+			})
+			if err != nil {
+				return err
+			}
+			listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+			if err != nil {
+				return fmt.Errorf("listen on port %d: %w", port, err)
+			}
+			defer listener.Close()
+
+			server := &http.Server{
+				Handler:           handler,
+				ReadHeaderTimeout: 10 * time.Second,
+			}
+			serverErrors := make(chan error, 1)
+			go func() {
+				if err := server.Serve(listener); err != nil && err != http.ErrServerClosed {
+					serverErrors <- err
+				}
+			}()
+
+			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Starting proxy server at http://%s -> %s\n", listener.Addr().String(), rt.Target.URL)
+			_, _ = fmt.Fprintln(cmd.OutOrStdout(), "Press Ctrl+C to stop the server")
+
+			ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
+			defer stop()
+			select {
+			case err := <-serverErrors:
+				return err
+			case <-ctx.Done():
+			}
+
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if err := server.Shutdown(shutdownCtx); err != nil {
+				return fmt.Errorf("shutdown proxy: %w", err)
+			}
+			_, _ = fmt.Fprintln(cmd.OutOrStdout(), "Server stopped successfully")
+			return nil
+		},
+	}
+	command.Flags().IntVar(&port, "port", 55001, "Local proxy port")
+	command.Flags().StringSliceVar(&allowedOrigins, "allowed-origins", nil, "Allowed CORS origins; CORS is disabled when empty")
+	return command
 }
 
 type targetInspectOutput struct {

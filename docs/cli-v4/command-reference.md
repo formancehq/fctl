@@ -17,6 +17,7 @@ This reference lists the current canonical v4 command families implemented under
 - `fctl config migrate-v3`
 - `fctl setup`
 - `fctl target inspect`
+- `fctl target proxy --port 55001`
 
 ## Cloud
 
