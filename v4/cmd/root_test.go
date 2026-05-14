@@ -1249,6 +1249,151 @@ func TestCloudDeviceUsesRootTokenForMembershipAndOrganizationTokenForStacks(t *t
 	}
 }
 
+func TestLedgerInfoCloudDeviceScopesOrganizationAndStackTokens(t *testing.T) {
+	var stackServer *httptest.Server
+	stackServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/api/auth/.well-known/openid-configuration":
+			fmt.Fprintf(w, `{"token_endpoint":%q}`, stackServer.URL+"/api/auth/token")
+		case "/api/auth/token":
+			if err := r.ParseForm(); err != nil {
+				t.Fatalf("parse stack token form: %v", err)
+			}
+			if r.Form.Get("assertion") != "stack-assertion" {
+				t.Fatalf("unexpected stack assertion %q", r.Form.Get("assertion"))
+			}
+			fmt.Fprint(w, `{"access_token":"stack-token","token_type":"Bearer","expires_in":3600}`)
+		case "/versions":
+			if got := r.Header.Get("Authorization"); got != "Bearer stack-token" {
+				t.Fatalf("expected stack token on versions, got %q", got)
+			}
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"1.9.0","health":true}]}`)
+		case "/api/ledger/_info":
+			if got := r.Header.Get("Authorization"); got != "Bearer stack-token" {
+				t.Fatalf("expected stack token on ledger info, got %q", got)
+			}
+			fmt.Fprint(w, `{"data":{"server":"ledger","version":"1.9.0","config":{}}}`)
+		default:
+			t.Fatalf("unexpected stack path %s", r.URL.Path)
+		}
+	}))
+	defer stackServer.Close()
+
+	var membershipServer *httptest.Server
+	membershipServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/.well-known/openid-configuration":
+			fmt.Fprintf(w, `{"device_authorization_endpoint":%q,"token_endpoint":%q}`, membershipServer.URL+"/device", membershipServer.URL+"/token")
+		case "/device":
+			if err := r.ParseForm(); err != nil {
+				t.Fatalf("parse device form: %v", err)
+			}
+			if r.Form.Get("organization_id") != "org_1" {
+				t.Fatalf("unexpected organization_id %q", r.Form.Get("organization_id"))
+			}
+			if r.Form.Get("id_token_hint") != "root-id-token" {
+				t.Fatalf("unexpected id_token_hint %q", r.Form.Get("id_token_hint"))
+			}
+			switch {
+			case r.Form.Get("resource") == "":
+				if !strings.Contains(r.Form.Get("scope"), "organization:ReadStack") {
+					t.Fatalf("expected organization scopes, got %q", r.Form.Get("scope"))
+				}
+				fmt.Fprint(w, `{"device_code":"org-device-code","user_code":"ORG-CODE","verification_uri":"https://verify.example","interval":1}`)
+			case r.Form.Get("resource") == "stack://org_1/stack_1|stack:Read stack:Write":
+				if r.Form.Get("scope") != "openid offline_access" {
+					t.Fatalf("unexpected stack scope %q", r.Form.Get("scope"))
+				}
+				fmt.Fprint(w, `{"device_code":"stack-device-code","user_code":"STACK-CODE","verification_uri":"https://verify.example","interval":1}`)
+			default:
+				t.Fatalf("unexpected resource %q", r.Form.Get("resource"))
+			}
+		case "/token":
+			if err := r.ParseForm(); err != nil {
+				t.Fatalf("parse token form: %v", err)
+			}
+			switch r.Form.Get("device_code") {
+			case "org-device-code":
+				fmt.Fprint(w, `{"access_token":"org-token","token_type":"Bearer","refresh_token":"org-refresh-token","expires_in":3600}`)
+			case "stack-device-code":
+				if r.Form.Get("resource") != "stack://org_1/stack_1|stack:Read stack:Write" {
+					t.Fatalf("unexpected token resource %q", r.Form.Get("resource"))
+				}
+				fmt.Fprint(w, `{"access_token":"stack-assertion","token_type":"Bearer","refresh_token":"stack-refresh-token","expires_in":3600}`)
+			default:
+				t.Fatalf("unexpected device_code %q", r.Form.Get("device_code"))
+			}
+		case "/organizations/org_1/stacks/stack_1":
+			if got := r.Header.Get("Authorization"); got != "Bearer org-token" {
+				t.Fatalf("expected organization token on stack lookup, got %q", got)
+			}
+			fmt.Fprintf(w, `{"data":{"id":"stack_1","name":"Production","organizationId":"org_1","uri":%q,"regionID":"eu-west-1","version":"v3.2.4","status":"READY","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":true,"stargateEnabled":true,"synchronised":true,"modules":[]}}`, stackServer.URL)
+		default:
+			t.Fatalf("unexpected membership path %s", r.URL.Path)
+		}
+	}))
+	defer membershipServer.Close()
+
+	openedURLs := []string{}
+	previousOpenURL := loginOpenURL
+	loginOpenURL = func(url string) error {
+		openedURLs = append(openedURLs, url)
+		return nil
+	}
+	t.Cleanup(func() {
+		loginOpenURL = previousOpenURL
+	})
+
+	configDir := t.TempDir()
+	cfg := v4config.Config{
+		Version:        v4config.Version,
+		CurrentContext: "cloud",
+		Contexts: map[string]v4config.Context{
+			"cloud": {
+				Kind:     v4config.ContextKindCloud,
+				CloudURL: membershipServer.URL,
+				Auth: v4config.Auth{
+					Method:    v4config.AuthMethodCloudDevice,
+					IssuerURL: membershipServer.URL,
+					TokenRef:  "contexts/cloud/root-tokens",
+				},
+			},
+		},
+	}
+	if err := v4config.SaveFile(filepath.Join(configDir, "config.yaml"), cfg); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+	tokenPath := filepath.Join(configDir, "credentials", "contexts", "cloud", "root-tokens")
+	if err := os.MkdirAll(filepath.Dir(tokenPath), 0o700); err != nil {
+		t.Fatalf("create credential dir: %v", err)
+	}
+	if err := os.WriteFile(tokenPath, []byte(`{"accessToken":{"token":"root-token","tokenType":"Bearer","refreshToken":"root-refresh"},"idToken":"root-id-token","refreshToken":"root-refresh"}`), 0o600); err != nil {
+		t.Fatalf("write root token: %v", err)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"ledger", "info",
+	)
+	if err != nil {
+		t.Fatalf("ledger info cloud device: %v stderr=%s", err, stderr)
+	}
+	if len(openedURLs) != 2 ||
+		openedURLs[0] != "https://verify.example?user_code=ORG-CODE" ||
+		openedURLs[1] != "https://verify.example?user_code=STACK-CODE" {
+		t.Fatalf("unexpected opened URLs: %#v", openedURLs)
+	}
+	for _, expected := range []string{"API version: v1", "Server", "ledger", "Version", "1.9.0"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected ledger info output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
 func TestCloudOrganizationsHistory(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

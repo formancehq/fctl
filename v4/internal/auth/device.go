@@ -26,6 +26,7 @@ type DeviceLoginOptions struct {
 	IssuerURL      string
 	ClientID       string
 	Scopes         []string
+	Resources      []string
 	Prompt         []string
 	OrganizationID string
 	IDTokenHint    string
@@ -300,6 +301,7 @@ type deviceAuthorizationResponse struct {
 	VerificationURIComplete string `json:"verification_uri_complete"`
 	Interval                int    `json:"interval"`
 	ExpiresIn               int    `json:"expires_in"`
+	Resources               []string
 }
 
 func initiateDeviceAuthorization(ctx context.Context, httpClient *http.Client, endpoint string, clientID string, options DeviceLoginOptions) (deviceAuthorizationResponse, error) {
@@ -315,6 +317,9 @@ func initiateDeviceAuthorization(ctx context.Context, httpClient *http.Client, e
 	}
 	if options.IDTokenHint != "" {
 		form.Set("id_token_hint", options.IDTokenHint)
+	}
+	for _, resource := range options.Resources {
+		form.Add("resource", resource)
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(form.Encode()))
 	if err != nil {
@@ -339,6 +344,7 @@ func initiateDeviceAuthorization(ctx context.Context, httpClient *http.Client, e
 	if output.DeviceCode == "" {
 		return deviceAuthorizationResponse{}, errors.New("device authorization response did not include device_code")
 	}
+	output.Resources = append([]string(nil), options.Resources...)
 	return output, nil
 }
 
@@ -366,10 +372,14 @@ func pollDeviceToken(ctx context.Context, httpClient *http.Client, endpoint stri
 		deadline = time.Now().Add(time.Duration(deviceCode.ExpiresIn) * time.Second)
 	}
 	for {
-		tokens, retry, nextInterval, err := requestDeviceToken(ctx, httpClient, endpoint, clientID, url.Values{
+		form := url.Values{
 			"grant_type":  {"urn:ietf:params:oauth:grant-type:device_code"},
 			"device_code": {deviceCode.DeviceCode},
-		}, interval)
+		}
+		for _, resource := range deviceCode.Resources {
+			form.Add("resource", resource)
+		}
+		tokens, retry, nextInterval, err := requestDeviceToken(ctx, httpClient, endpoint, clientID, form, interval)
 		if err == nil {
 			return tokens, nil
 		}

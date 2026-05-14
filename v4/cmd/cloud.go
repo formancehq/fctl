@@ -1489,12 +1489,84 @@ func ensureCloudDeviceOrganizationAuth(cmd *cobra.Command, rt *runtime.Runtime, 
 	return scopedAuth, nil
 }
 
+func ensureCloudDeviceStackAuth(cmd *cobra.Command, rt *runtime.Runtime, stack cloudcmd.StackSummary) (v4config.Auth, error) {
+	if stack.ID == "" {
+		return v4config.Auth{}, fmt.Errorf("stack id is required")
+	}
+	if rt.Target.Organization == "" {
+		return v4config.Auth{}, fmt.Errorf("organization id is required")
+	}
+	rootAuth := rt.Context.Auth
+	scopedRef := stackTokenRef(rootAuth.TokenRef, rt.Target.Organization, stack.ID)
+	issuerURL := rootAuth.IssuerURL
+	if issuerURL == "" {
+		issuerURL = rt.Context.CloudURL
+	}
+	resource := v4auth.StackResource(rt.Target.Organization, stack.ID)
+	scopedAuth := v4config.Auth{
+		Method:    v4config.AuthMethodCloudDevice,
+		IssuerURL: issuerURL,
+		TokenRef:  scopedRef,
+	}
+	source, err := v4auth.NewTokenSource(scopedAuth, rt.Credentials, rt.AuthOptions)
+	if err == nil {
+		if _, tokenErr := source.Token(cmd.Context()); tokenErr == nil {
+			return scopedAuth, nil
+		} else if !isCredentialNotFound(tokenErr) {
+			return v4config.Auth{}, tokenErr
+		}
+	}
+
+	rootValue, err := rt.Credentials.Get(cmd.Context(), rootAuth.TokenRef)
+	if err != nil {
+		return v4config.Auth{}, err
+	}
+	rootTokens, err := v4auth.ParseDeviceTokens(rootValue)
+	if err != nil {
+		return v4config.Auth{}, err
+	}
+	authOptions, err := authOptionsFromCommand(cmd)
+	if err != nil {
+		return v4config.Auth{}, err
+	}
+	tokens, err := v4auth.DeviceLogin(cmd.Context(), v4auth.DeviceLoginOptions{
+		IssuerURL:      issuerURL,
+		ClientID:       v4auth.DeviceClientID,
+		Scopes:         []string{"openid", "offline_access"},
+		Resources:      []string{resource},
+		OrganizationID: rt.Target.Organization,
+		IDTokenHint:    rootTokens.IDToken,
+		HTTPClient:     authOptions.HTTPClient,
+		OpenURL:        loginOpenURL,
+		Out:            cmd.OutOrStdout(),
+	})
+	if err != nil {
+		return v4config.Auth{}, err
+	}
+	encoded, err := v4auth.MarshalDeviceTokens(tokens)
+	if err != nil {
+		return v4config.Auth{}, err
+	}
+	if err := rt.Credentials.Set(cmd.Context(), scopedRef, encoded); err != nil {
+		return v4config.Auth{}, err
+	}
+	return scopedAuth, nil
+}
+
 func organizationTokenRef(rootRef string, organizationID string) string {
 	base := strings.TrimSuffix(rootRef, "/root-tokens")
 	if base == rootRef {
 		base = strings.TrimSuffix(rootRef, "/token")
 	}
 	return base + "/organizations/" + organizationID + "/root-tokens"
+}
+
+func stackTokenRef(rootRef string, organizationID string, stackID string) string {
+	base := strings.TrimSuffix(rootRef, "/root-tokens")
+	if base == rootRef {
+		base = strings.TrimSuffix(rootRef, "/token")
+	}
+	return base + "/organizations/" + organizationID + "/stacks/" + stackID + "/root-tokens"
 }
 
 func isCredentialNotFound(err error) bool {

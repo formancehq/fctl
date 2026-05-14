@@ -92,7 +92,11 @@ func resolveCloudProfileStackRuntime(cmd *cobra.Command, rt *runtime.Runtime) (*
 	if err != nil {
 		return nil, err
 	}
-	output, err := cloudcmd.ListStacksService{Client: newMembershipClient(rt.Context.CloudURL, httpClient)}.Run(cmd.Context(), cloudcmd.ListStacksInput{
+	client, err := organizationMembershipClientFromRuntime(cmd, rt, rt.Target.Organization)
+	if err != nil {
+		return nil, err
+	}
+	output, err := cloudcmd.ListStacksService{Client: client}.Run(cmd.Context(), cloudcmd.ListStacksInput{
 		OrganizationID: rt.Target.Organization,
 	})
 	if err != nil {
@@ -115,12 +119,16 @@ func resolveExplicitCloudStackRuntime(cmd *cobra.Command, rt *runtime.Runtime) (
 	if err != nil {
 		return nil, err
 	}
-	output, err := cloudcmd.ReadStackService{Client: newMembershipClient(rt.Context.CloudURL, httpClient)}.Run(cmd.Context(), cloudcmd.StackIDInput{
+	client, err := organizationMembershipClientFromRuntime(cmd, rt, rt.Target.Organization)
+	if err != nil {
+		return nil, err
+	}
+	output, err := cloudcmd.ReadStackService{Client: client}.Run(cmd.Context(), cloudcmd.StackIDInput{
 		OrganizationID: rt.Target.Organization,
 		StackID:        rt.Target.Stack,
 	})
 	if err != nil {
-		if notFoundErr := cloudStackNotFoundError(cmd, rt, httpClient); notFoundErr != nil {
+		if notFoundErr := cloudStackNotFoundError(cmd, rt, client); notFoundErr != nil {
 			return nil, notFoundErr
 		}
 		return nil, fmt.Errorf("resolve cloud stack target: %w", err)
@@ -145,6 +153,12 @@ func useCloudStackRuntime(cmd *cobra.Command, rt *runtime.Runtime, httpClient *h
 	if assertionAuth.Method == v4config.AuthMethodClientCredentials {
 		assertionAuth.Scopes = []string{"openid", "offline_access"}
 		assertionAuth.Resources = []string{v4auth.StackResource(rt.Target.Organization, rt.Target.Stack)}
+	} else if assertionAuth.Method == v4config.AuthMethodCloudDevice {
+		var err error
+		assertionAuth, err = ensureCloudDeviceStackAuth(cmd, rt, stack)
+		if err != nil {
+			return nil, err
+		}
 	}
 	source, err := v4auth.NewTokenSource(assertionAuth, rt.Credentials, rt.AuthOptions)
 	if err != nil {
@@ -171,8 +185,8 @@ func useCloudStackRuntime(cmd *cobra.Command, rt *runtime.Runtime, httpClient *h
 	return rt, nil
 }
 
-func cloudStackNotFoundError(cmd *cobra.Command, rt *runtime.Runtime, httpClient *http.Client) error {
-	output, err := cloudcmd.ListStacksService{Client: newMembershipClient(rt.Context.CloudURL, httpClient)}.Run(cmd.Context(), cloudcmd.ListStacksInput{
+func cloudStackNotFoundError(cmd *cobra.Command, rt *runtime.Runtime, client cloudcmd.StackClient) error {
+	output, err := cloudcmd.ListStacksService{Client: client}.Run(cmd.Context(), cloudcmd.ListStacksInput{
 		OrganizationID: rt.Target.Organization,
 	})
 	if err != nil {
