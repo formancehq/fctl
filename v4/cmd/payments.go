@@ -20,6 +20,19 @@ func newPaymentsCommand() *cobra.Command {
 	command.AddCommand(newPaymentsAccountsCommand())
 	command.AddCommand(newPaymentsBankAccountsCommand("bank-accounts", nil, false))
 	command.AddCommand(newPaymentsBankAccountsCommand("bank_accounts", []string{"bacc", "ba", "bac", "baccount"}, true))
+	command.AddCommand(newPaymentsPaymentsCommand())
+	return command
+}
+
+func newPaymentsPaymentsCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:     "payments",
+		Aliases: []string{"p"},
+		Short:   "Manage payments",
+	}
+	command.AddCommand(newPaymentsPaymentsListCommand())
+	command.AddCommand(newPaymentsPaymentsShowCommand("show", nil, false))
+	command.AddCommand(newPaymentsPaymentsShowCommand("get", []string{"g"}, true))
 	return command
 }
 
@@ -463,5 +476,153 @@ func renderPaymentBankAccount(cmd *cobra.Command, output paymentscmd.GetBankAcco
 		}
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Swift BIC\t%s\n", account.SwiftBicCode)
+	return err
+}
+
+func newPaymentsPaymentsListCommand() *cobra.Command {
+	var pageSize int64 = 15
+	var cursor string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"ls", "l"},
+		Short:   "List payments",
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.ListPaymentsService{
+				Handlers: paymentscmd.SDKListPaymentsHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureListPayments,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.ListPaymentsInput{PageSize: pageSize, Cursor: cursor})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPayments(cmd, output)
+		},
+	}
+	command.Flags().Int64Var(&pageSize, "page-size", 15, "Page size")
+	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func newPaymentsPaymentsShowCommand(use string, aliases []string, deprecated bool) *cobra.Command {
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     use + " <payment-id>",
+		Aliases: aliases,
+		Short:   "Show a payment",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if deprecated {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Command payments payments get has been deprecated, use payments payments show")
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.GetPaymentService{
+				Handlers: paymentscmd.SDKGetPaymentHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureGetPayment,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.GetPaymentInput{PaymentID: args[0]})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPayment(cmd, output)
+		},
+	}
+	if deprecated {
+		command.Deprecated = "use payments payments show"
+	}
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func renderPayments(cmd *cobra.Command, output paymentscmd.ListPaymentsOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if len(output.Payments) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No payments found.")
+		return err
+	}
+	for _, payment := range output.Payments {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\t%s\t%s\n", payment.ID, payment.Type, payment.Amount, payment.Asset, payment.Status, payment.CreatedAt.Format(time.RFC3339)); err != nil {
+			return err
+		}
+	}
+	if output.HasMore && output.Next != nil {
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
+		return err
+	}
+	return nil
+}
+
+func renderPayment(cmd *cobra.Command, output paymentscmd.GetPaymentOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	payment := output.Payment
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", payment.ID); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Reference\t%s\n", payment.Reference); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Amount\t%s\n", payment.Amount); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Asset\t%s\n", payment.Asset); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Status\t%s\n", payment.Status); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", payment.CreatedAt.Format(time.RFC3339))
 	return err
 }

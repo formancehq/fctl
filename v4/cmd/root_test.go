@@ -2122,6 +2122,91 @@ func TestPaymentsBankAccountsDeprecatedAlias(t *testing.T) {
 	}
 }
 
+func TestPaymentsPaymentsListSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/payments":
+			if got := r.URL.Query().Get("pageSize"); got != "10" {
+				t.Fatalf("expected pageSize 10, got %q", got)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"id":"pay_1","reference":"ref","type":"PAYOUT","status":"SUCCEEDED","scheme":"visa","asset":"USD/2","amount":100,"initialAmount":100,"connectorID":"conn_1","createdAt":"2026-01-01T00:00:00Z","provider":"stripe","metadata":{}}],"hasMore":false,"pageSize":10}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "payments", "list",
+		"--page-size", "10",
+	)
+	if err != nil {
+		t.Fatalf("list payments: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v3") || !strings.Contains(stdout, "pay_1\tPAYOUT\t100\tUSD/2\tSUCCEEDED\t2026-01-01T00:00:00Z") {
+		t.Fatalf("unexpected payments output:\n%s", stdout)
+	}
+}
+
+func TestPaymentsPaymentsShowSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/payments/pay_1":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":"pay_1","reference":"ref","type":"PAYOUT","status":"SUCCEEDED","scheme":"visa","asset":"USD/2","amount":100,"initialAmount":100,"connectorID":"conn_1","createdAt":"2026-01-01T00:00:00Z","provider":"stripe","metadata":{}}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "payments", "show", "pay_1",
+	)
+	if err != nil {
+		t.Fatalf("show payment: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v3",
+		"ID\tpay_1",
+		"Reference\tref",
+		"Amount\t100",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected payment output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
 func TestConfigMigrateV3DryRun(t *testing.T) {
 	v3Dir := writeV3CommandFixture(t, true)
 
