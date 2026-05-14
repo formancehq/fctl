@@ -13,9 +13,25 @@ import (
 )
 
 const (
-	FeatureGetBankAccount   capabilities.Feature = "getBankAccount"
-	FeatureListBankAccounts capabilities.Feature = "listBankAccounts"
+	FeatureCreateBankAccount capabilities.Feature = "createBankAccount"
+	FeatureGetBankAccount    capabilities.Feature = "getBankAccount"
+	FeatureListBankAccounts  capabilities.Feature = "listBankAccounts"
 )
+
+type CreateBankAccountInput struct {
+	AccountNumber string
+	ConnectorID   string
+	Country       string
+	Iban          string
+	Metadata      map[string]string
+	Name          string
+	SwiftBicCode  string
+}
+
+type CreateBankAccountOutput struct {
+	APIVersion    capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	BankAccountID string                  `json:"bankAccountID" yaml:"bankAccountID"`
+}
 
 type BankAccountSummary struct {
 	ID            string            `json:"id" yaml:"id"`
@@ -56,6 +72,11 @@ type ListBankAccountsHandler struct {
 	Run        func(context.Context, ListBankAccountsInput) (ListBankAccountsOutput, error)
 }
 
+type CreateBankAccountHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, CreateBankAccountInput) (CreateBankAccountOutput, error)
+}
+
 type GetBankAccountHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, GetBankAccountInput) (GetBankAccountOutput, error)
@@ -63,6 +84,11 @@ type GetBankAccountHandler struct {
 
 type ListBankAccountsService struct {
 	Handlers []ListBankAccountsHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type CreateBankAccountService struct {
+	Handlers []CreateBankAccountHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -94,6 +120,32 @@ func (s ListBankAccountsService) Run(ctx context.Context, input ListBankAccounts
 	return output, nil
 }
 
+func (s CreateBankAccountService) Run(ctx context.Context, input CreateBankAccountInput) (CreateBankAccountOutput, error) {
+	if input.Name == "" {
+		return CreateBankAccountOutput{}, fmt.Errorf("bank account name is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]CreateBankAccountHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return CreateBankAccountOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return CreateBankAccountOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return CreateBankAccountOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
 func (s GetBankAccountService) Run(ctx context.Context, input GetBankAccountInput) (GetBankAccountOutput, error) {
 	if input.BankAccountID == "" {
 		return GetBankAccountOutput{}, fmt.Errorf("bank account id is required")
@@ -118,6 +170,52 @@ func (s GetBankAccountService) Run(ctx context.Context, input GetBankAccountInpu
 	}
 	output.APIVersion = selected
 	return output, nil
+}
+
+func SDKCreateBankAccountHandlers(sdk *formance.Formance) []CreateBankAccountHandler {
+	return []CreateBankAccountHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input CreateBankAccountInput) (CreateBankAccountOutput, error) {
+				response, err := sdk.Payments.V1.CreateBankAccount(ctx, shared.BankAccountRequest{
+					AccountNumber: optionalString(input.AccountNumber),
+					ConnectorID:   optionalString(input.ConnectorID),
+					Country:       input.Country,
+					Iban:          optionalString(input.Iban),
+					Metadata:      input.Metadata,
+					Name:          input.Name,
+					SwiftBicCode:  optionalString(input.SwiftBicCode),
+				})
+				if err != nil {
+					return CreateBankAccountOutput{}, err
+				}
+				if response.BankAccountResponse == nil {
+					return CreateBankAccountOutput{}, fmt.Errorf("payments v1 create bank account returned no data")
+				}
+				return CreateBankAccountOutput{BankAccountID: response.BankAccountResponse.Data.ID}, nil
+			},
+		},
+		{
+			APIVersion: "v3",
+			Run: func(ctx context.Context, input CreateBankAccountInput) (CreateBankAccountOutput, error) {
+				response, err := sdk.Payments.V3.CreateBankAccount(ctx, &shared.V3CreateBankAccountRequest{
+					AccountNumber: optionalString(input.AccountNumber),
+					Country:       optionalString(input.Country),
+					Iban:          optionalString(input.Iban),
+					Metadata:      input.Metadata,
+					Name:          input.Name,
+					SwiftBicCode:  optionalString(input.SwiftBicCode),
+				})
+				if err != nil {
+					return CreateBankAccountOutput{}, err
+				}
+				if response.V3CreateBankAccountResponse == nil {
+					return CreateBankAccountOutput{}, fmt.Errorf("payments v3 create bank account returned no data")
+				}
+				return CreateBankAccountOutput{BankAccountID: response.V3CreateBankAccountResponse.Data}, nil
+			},
+		},
+	}
 }
 
 func SDKListBankAccountsHandlers(sdk *formance.Formance) []ListBankAccountsHandler {

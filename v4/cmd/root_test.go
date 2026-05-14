@@ -2119,6 +2119,127 @@ func TestPaymentsAccountsBalancesSelectsV3(t *testing.T) {
 	}
 }
 
+func TestPaymentsBankAccountsCreateRequiresConfirm(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "payments", "bank-accounts", "create", "--file", "request.json")
+	if err == nil {
+		t.Fatal("expected payments bank-accounts create to require confirmation")
+	}
+	if stdout != "" {
+		t.Fatalf("expected empty stdout, got %q", stdout)
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(err.Error(), "payments bank-accounts create requires --confirm") {
+		t.Fatalf("expected confirmation error, got: %v", err)
+	}
+}
+
+func TestPaymentsBankAccountsCreateSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/bank-accounts":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			body := readRequestBody(t, r)
+			for _, expected := range []string{
+				`"name":"Main"`,
+				`"country":"FR"`,
+				`"iban":"FR7630006000011234567890189"`,
+			} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected create bank account body to contain %q, got %s", expected, body)
+				}
+			}
+			if strings.Contains(body, "connectorID") {
+				t.Fatalf("v3 bank account create body must not contain connectorID, got %s", body)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, `{"data":"ba_1"}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	requestFile := filepath.Join(t.TempDir(), "bank-account.json")
+	if err := os.WriteFile(requestFile, []byte(`{"accountNumber":"123","connectorID":"conn_1","country":"FR","iban":"FR7630006000011234567890189","metadata":{"env":"dev"},"name":"Main","swiftBicCode":"AGRIFRPP"}`), 0o600); err != nil {
+		t.Fatalf("write request file: %v", err)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "bank-accounts", "create",
+		"--file", requestFile,
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("create payment bank account: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v3") || !strings.Contains(stdout, "Bank account created with ID: ba_1") {
+		t.Fatalf("unexpected create bank account output:\n%s", stdout)
+	}
+}
+
+func TestPaymentsBankAccountsCreateDeprecatedAliases(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/bank-accounts":
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, `{"data":"ba_1"}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	requestFile := filepath.Join(t.TempDir(), "bank-account.json")
+	if err := os.WriteFile(requestFile, []byte(`{"country":"FR","name":"Main"}`), 0o600); err != nil {
+		t.Fatalf("write request file: %v", err)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "bank_accounts", "create", requestFile,
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("create payment bank account with aliases: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "use payments bank-accounts") || !strings.Contains(stderr, "use payments bank-accounts create --file <path>|-") {
+		t.Fatalf("expected bank account deprecation warnings, got:\n%s", stderr)
+	}
+}
+
 func TestPaymentsBankAccountsListSelectsV3(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

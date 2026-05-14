@@ -111,10 +111,125 @@ func newPaymentsBankAccountsCommand(use string, aliases []string, deprecated boo
 			fmt.Fprintln(cmd.ErrOrStderr(), "Command payments bank_accounts has been deprecated, use payments bank-accounts")
 		}
 	}
+	command.AddCommand(newPaymentsBankAccountsCreateCommand())
 	command.AddCommand(newPaymentsBankAccountsListCommand())
 	command.AddCommand(newPaymentsBankAccountsShowCommand("show", nil, false))
 	command.AddCommand(newPaymentsBankAccountsShowCommand("get", []string{"g"}, true))
 	return command
+}
+
+func newPaymentsBankAccountsCreateCommand() *cobra.Command {
+	var confirm bool
+	var file string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "create",
+		Aliases: []string{"cr", "c"},
+		Short:   "Create a payment bank account",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return nil
+			}
+			if len(args) == 1 {
+				return nil
+			}
+			return fmt.Errorf("accepts 0 arg(s), received %d", len(args))
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("payments bank-accounts create requires --confirm")
+			}
+			if len(args) == 1 {
+				if file != "" {
+					return fmt.Errorf("use either --file or positional file, not both")
+				}
+				file = args[0]
+				fmt.Fprintln(cmd.ErrOrStderr(), "Positional file has been deprecated, use payments bank-accounts create --file <path>|-")
+			}
+			if file == "" {
+				return fmt.Errorf("payments bank-accounts create requires --file <path>|-")
+			}
+			data, err := readPaymentCommandFile(cmd, file)
+			if err != nil {
+				return err
+			}
+			request, err := parseCreatePaymentBankAccountRequest(data)
+			if err != nil {
+				return err
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.CreateBankAccountService{
+				Handlers: paymentscmd.SDKCreateBankAccountHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureCreateBankAccount,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.CreateBankAccountInput{
+				AccountNumber: request.AccountNumber,
+				ConnectorID:   request.ConnectorID,
+				Country:       request.Country,
+				Iban:          request.Iban,
+				Metadata:      request.Metadata,
+				Name:          request.Name,
+				SwiftBicCode:  request.SwiftBicCode,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentBankAccountCreated(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm bank account creation")
+	command.Flags().StringVar(&file, "file", "", "JSON bank account request file, or - for stdin")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+type createPaymentBankAccountRequestFile struct {
+	AccountNumber string            `json:"accountNumber"`
+	ConnectorID   string            `json:"connectorID"`
+	Country       string            `json:"country"`
+	Iban          string            `json:"iban"`
+	Metadata      map[string]string `json:"metadata"`
+	Name          string            `json:"name"`
+	SwiftBicCode  string            `json:"swiftBicCode"`
+}
+
+func parseCreatePaymentBankAccountRequest(data []byte) (createPaymentBankAccountRequestFile, error) {
+	var request createPaymentBankAccountRequestFile
+	if err := json.Unmarshal(data, &request); err != nil {
+		return createPaymentBankAccountRequestFile{}, err
+	}
+	return request, nil
+}
+
+func renderPaymentBankAccountCreated(cmd *cobra.Command, output paymentscmd.CreateBankAccountOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Bank account created with ID: %s\n", output.BankAccountID)
+	return err
 }
 
 func newPaymentsAccountsCommand() *cobra.Command {
