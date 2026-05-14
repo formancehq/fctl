@@ -3,7 +3,7 @@
 - [x] 01 - v4 isolated skeleton
 - [x] 02 - v4 foundation packages
 - [x] 03 - context commands
-- [ ] 04 - auth providers
+- [x] 04 - auth providers
 - [ ] 05 - capabilities manifest generator
 - [ ] 06 - runtime API version resolver
 - [ ] 07 - first stack inspection command
