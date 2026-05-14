@@ -19,6 +19,12 @@ type StackClient interface {
 	DisableStack(context.Context, operations.DisableStackRequest, ...operations.Option) (*operations.DisableStackResponse, error)
 	RestoreStack(context.Context, operations.RestoreStackRequest, ...operations.Option) (*operations.RestoreStackResponse, error)
 	UpgradeStack(context.Context, operations.UpgradeStackRequest, ...operations.Option) (*operations.UpgradeStackResponse, error)
+	ListModules(context.Context, operations.ListModulesRequest, ...operations.Option) (*operations.ListModulesResponse, error)
+	EnableModule(context.Context, operations.EnableModuleRequest, ...operations.Option) (*operations.EnableModuleResponse, error)
+	DisableModule(context.Context, operations.DisableModuleRequest, ...operations.Option) (*operations.DisableModuleResponse, error)
+	ListStackUsersAccesses(context.Context, operations.ListStackUsersAccessesRequest, ...operations.Option) (*operations.ListStackUsersAccessesResponse, error)
+	UpsertStackUserAccess(context.Context, operations.UpsertStackUserAccessRequest, ...operations.Option) (*operations.UpsertStackUserAccessResponse, error)
+	DeleteStackUserAccess(context.Context, operations.DeleteStackUserAccessRequest, ...operations.Option) (*operations.DeleteStackUserAccessResponse, error)
 }
 
 type StackSummary struct {
@@ -97,6 +103,61 @@ type StackActionOutput struct {
 	Action         string        `json:"action" yaml:"action"`
 	Version        string        `json:"version,omitempty" yaml:"version,omitempty"`
 	Stack          *StackSummary `json:"stack,omitempty" yaml:"stack,omitempty"`
+}
+
+type ModuleSummary struct {
+	Name             string    `json:"name" yaml:"name"`
+	State            string    `json:"state" yaml:"state"`
+	Status           string    `json:"status" yaml:"status"`
+	LastStatusUpdate time.Time `json:"lastStatusUpdate" yaml:"lastStatusUpdate"`
+	LastStateUpdate  time.Time `json:"lastStateUpdate" yaml:"lastStateUpdate"`
+}
+
+type ListModulesOutput struct {
+	OrganizationID string          `json:"organizationID" yaml:"organizationID"`
+	StackID        string          `json:"stackID" yaml:"stackID"`
+	Modules        []ModuleSummary `json:"modules" yaml:"modules"`
+}
+
+type ModuleActionInput struct {
+	OrganizationID string
+	StackID        string
+	Name           string
+}
+
+type ModuleActionOutput struct {
+	OrganizationID string `json:"organizationID" yaml:"organizationID"`
+	StackID        string `json:"stackID" yaml:"stackID"`
+	Name           string `json:"name" yaml:"name"`
+	Action         string `json:"action" yaml:"action"`
+}
+
+type StackUserAccessSummary struct {
+	StackID  string `json:"stackID" yaml:"stackID"`
+	UserID   string `json:"userID" yaml:"userID"`
+	Email    string `json:"email" yaml:"email"`
+	PolicyID int64  `json:"policyID" yaml:"policyID"`
+}
+
+type ListStackUsersOutput struct {
+	OrganizationID string                   `json:"organizationID" yaml:"organizationID"`
+	StackID        string                   `json:"stackID" yaml:"stackID"`
+	Users          []StackUserAccessSummary `json:"users" yaml:"users"`
+}
+
+type StackUserAccessInput struct {
+	OrganizationID string
+	StackID        string
+	UserID         string
+	PolicyID       int64
+}
+
+type StackUserAccessOutput struct {
+	OrganizationID string `json:"organizationID" yaml:"organizationID"`
+	StackID        string `json:"stackID" yaml:"stackID"`
+	UserID         string `json:"userID" yaml:"userID"`
+	Action         string `json:"action" yaml:"action"`
+	PolicyID       int64  `json:"policyID,omitempty" yaml:"policyID,omitempty"`
 }
 
 type ListStacksService struct {
@@ -304,6 +365,125 @@ func (s StackActionService) Run(ctx context.Context, input StackActionInput) (St
 	default:
 		return StackActionOutput{}, fmt.Errorf("unsupported stack action %q", s.Action)
 	}
+}
+
+type ListModulesService struct {
+	Client StackClient
+}
+
+func (s ListModulesService) Run(ctx context.Context, input StackIDInput) (ListModulesOutput, error) {
+	if err := validateStackTarget(input.OrganizationID, input.StackID); err != nil {
+		return ListModulesOutput{}, err
+	}
+	response, err := s.Client.ListModules(ctx, operations.ListModulesRequest{OrganizationID: input.OrganizationID, StackID: input.StackID})
+	if err != nil {
+		return ListModulesOutput{}, err
+	}
+	data := response.GetListModulesResponse().GetData()
+	modules := make([]ModuleSummary, 0, len(data))
+	for _, module := range data {
+		modules = append(modules, ModuleSummary{
+			Name:             module.Name,
+			State:            string(module.State),
+			Status:           string(module.Status),
+			LastStatusUpdate: module.LastStatusUpdate,
+			LastStateUpdate:  module.LastStateUpdate,
+		})
+	}
+	return ListModulesOutput{OrganizationID: input.OrganizationID, StackID: input.StackID, Modules: modules}, nil
+}
+
+type ModuleActionService struct {
+	Client StackClient
+	Action string
+}
+
+func (s ModuleActionService) Run(ctx context.Context, input ModuleActionInput) (ModuleActionOutput, error) {
+	if err := validateStackTarget(input.OrganizationID, input.StackID); err != nil {
+		return ModuleActionOutput{}, err
+	}
+	if input.Name == "" {
+		return ModuleActionOutput{}, fmt.Errorf("module name is required")
+	}
+	output := ModuleActionOutput{OrganizationID: input.OrganizationID, StackID: input.StackID, Name: input.Name, Action: s.Action}
+	switch s.Action {
+	case "enable":
+		_, err := s.Client.EnableModule(ctx, operations.EnableModuleRequest{OrganizationID: input.OrganizationID, StackID: input.StackID, Name: input.Name})
+		return output, err
+	case "disable":
+		_, err := s.Client.DisableModule(ctx, operations.DisableModuleRequest{OrganizationID: input.OrganizationID, StackID: input.StackID, Name: input.Name})
+		return output, err
+	default:
+		return ModuleActionOutput{}, fmt.Errorf("unsupported module action %q", s.Action)
+	}
+}
+
+type ListStackUsersService struct {
+	Client StackClient
+}
+
+func (s ListStackUsersService) Run(ctx context.Context, input StackIDInput) (ListStackUsersOutput, error) {
+	if err := validateStackTarget(input.OrganizationID, input.StackID); err != nil {
+		return ListStackUsersOutput{}, err
+	}
+	response, err := s.Client.ListStackUsersAccesses(ctx, operations.ListStackUsersAccessesRequest{OrganizationID: input.OrganizationID, StackID: input.StackID})
+	if err != nil {
+		return ListStackUsersOutput{}, err
+	}
+	data := response.GetStackUserAccessResponse().GetData()
+	users := make([]StackUserAccessSummary, 0, len(data))
+	for _, user := range data {
+		users = append(users, StackUserAccessSummary{
+			StackID:  user.StackID,
+			UserID:   user.UserID,
+			Email:    user.Email,
+			PolicyID: user.PolicyID,
+		})
+	}
+	return ListStackUsersOutput{OrganizationID: input.OrganizationID, StackID: input.StackID, Users: users}, nil
+}
+
+type StackUserAccessService struct {
+	Client StackClient
+	Action string
+}
+
+func (s StackUserAccessService) Run(ctx context.Context, input StackUserAccessInput) (StackUserAccessOutput, error) {
+	if err := validateStackTarget(input.OrganizationID, input.StackID); err != nil {
+		return StackUserAccessOutput{}, err
+	}
+	if input.UserID == "" {
+		return StackUserAccessOutput{}, fmt.Errorf("user id is required")
+	}
+	output := StackUserAccessOutput{OrganizationID: input.OrganizationID, StackID: input.StackID, UserID: input.UserID, Action: s.Action, PolicyID: input.PolicyID}
+	switch s.Action {
+	case "link":
+		if input.PolicyID == 0 {
+			return StackUserAccessOutput{}, fmt.Errorf("policy id is required")
+		}
+		_, err := s.Client.UpsertStackUserAccess(ctx, operations.UpsertStackUserAccessRequest{
+			OrganizationID: input.OrganizationID,
+			StackID:        input.StackID,
+			UserID:         input.UserID,
+			Body:           &components.UpdateStackUserRequest{PolicyID: input.PolicyID},
+		})
+		return output, err
+	case "unlink":
+		_, err := s.Client.DeleteStackUserAccess(ctx, operations.DeleteStackUserAccessRequest{OrganizationID: input.OrganizationID, StackID: input.StackID, UserID: input.UserID})
+		return output, err
+	default:
+		return StackUserAccessOutput{}, fmt.Errorf("unsupported stack user action %q", s.Action)
+	}
+}
+
+func validateStackTarget(organizationID string, stackID string) error {
+	if organizationID == "" {
+		return fmt.Errorf("organization id is required")
+	}
+	if stackID == "" {
+		return fmt.Errorf("stack id is required")
+	}
+	return nil
 }
 
 func stackSummary(stack *components.Stack) StackSummary {

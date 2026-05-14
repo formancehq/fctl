@@ -31,6 +31,8 @@ func newCloudStacksCommand(use string, deprecated bool) *cobra.Command {
 	command.AddCommand(newCloudStacksDisableCommand())
 	command.AddCommand(newCloudStacksRestoreCommand())
 	command.AddCommand(newCloudStacksUpgradeCommand())
+	command.AddCommand(newCloudStacksUsersCommand())
+	command.AddCommand(newCloudStacksModulesCommand())
 	return command
 }
 
@@ -300,6 +302,199 @@ func newCloudStacksActionCommand(action string, requiresConfirm bool) *cobra.Com
 	return command
 }
 
+func newCloudStacksUsersCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "users",
+		Short: "Manage Cloud stack user access",
+	}
+	command.AddCommand(newCloudStacksUsersListCommand())
+	command.AddCommand(newCloudStacksUsersLinkCommand())
+	command.AddCommand(newCloudStacksUsersUnlinkCommand())
+	return command
+}
+
+func newCloudStacksUsersListCommand() *cobra.Command {
+	var organizationID string
+
+	command := &cobra.Command{
+		Use:   "list <stack-id>",
+		Short: "List Cloud stack users",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ListStackUsersService{Client: client}.Run(cmd.Context(), cloudcmd.StackIDInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				StackID:        args[0],
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudStackUsers(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	return command
+}
+
+func newCloudStacksUsersLinkCommand() *cobra.Command {
+	var organizationID string
+	var policyID int64
+
+	command := &cobra.Command{
+		Use:   "link <stack-id> <user-id>",
+		Short: "Link a user to a Cloud stack",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.StackUserAccessService{Client: client, Action: "link"}.Run(cmd.Context(), cloudcmd.StackUserAccessInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				StackID:        args[0],
+				UserID:         args[1],
+				PolicyID:       policyID,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudStackUserAction(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	command.Flags().Int64Var(&policyID, "policy-id", 0, "Cloud stack policy ID")
+	return command
+}
+
+func newCloudStacksUsersUnlinkCommand() *cobra.Command {
+	var organizationID string
+	var confirm bool
+
+	command := &cobra.Command{
+		Use:   "unlink <stack-id> <user-id>",
+		Short: "Unlink a user from a Cloud stack",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("cloud_stacks users unlink requires --confirm")
+			}
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.StackUserAccessService{Client: client, Action: "unlink"}.Run(cmd.Context(), cloudcmd.StackUserAccessInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				StackID:        args[0],
+				UserID:         args[1],
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudStackUserAction(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm Cloud stack user unlink")
+	return command
+}
+
+func newCloudStacksModulesCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "modules",
+		Short: "Manage Cloud stack modules",
+	}
+	command.AddCommand(newCloudStacksModulesListCommand())
+	command.AddCommand(newCloudStacksModulesEnableCommand())
+	command.AddCommand(newCloudStacksModulesDisableCommand())
+	return command
+}
+
+func newCloudStacksModulesListCommand() *cobra.Command {
+	var organizationID string
+
+	command := &cobra.Command{
+		Use:   "list <stack-id>",
+		Short: "List Cloud stack modules",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ListModulesService{Client: client}.Run(cmd.Context(), cloudcmd.StackIDInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				StackID:        args[0],
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudStackModules(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	return command
+}
+
+func newCloudStacksModulesEnableCommand() *cobra.Command {
+	return newCloudStacksModulesActionCommand("enable", false)
+}
+
+func newCloudStacksModulesDisableCommand() *cobra.Command {
+	return newCloudStacksModulesActionCommand("disable", true)
+}
+
+func newCloudStacksModulesActionCommand(action string, requiresConfirm bool) *cobra.Command {
+	var organizationID string
+	var confirm bool
+
+	command := &cobra.Command{
+		Use:   action + " <stack-id> <module>",
+		Short: fmt.Sprintf("%s a Cloud stack module", action),
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if requiresConfirm && !confirm {
+				return fmt.Errorf("cloud_stacks modules %s requires --confirm", action)
+			}
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ModuleActionService{Client: client, Action: action}.Run(cmd.Context(), cloudcmd.ModuleActionInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				StackID:        args[0],
+				Name:           args[1],
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudStackModuleAction(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	if requiresConfirm {
+		command.Flags().BoolVar(&confirm, "confirm", false, "Confirm Cloud stack module "+action)
+	}
+	return command
+}
+
 func resolveCloudOrganizationID(rt *runtime.Runtime, explicit string) string {
 	if explicit != "" {
 		return explicit
@@ -343,6 +538,46 @@ func renderCloudStackAction(cmd *cobra.Command, output cloudcmd.StackActionOutpu
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud stack %s %s requested.\n", output.StackID, output.Action)
+	return err
+}
+
+func renderCloudStackUsers(cmd *cobra.Command, output cloudcmd.ListStackUsersOutput) error {
+	if len(output.Users) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No Cloud stack users found.")
+		return err
+	}
+	for _, user := range output.Users {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%d\n", user.UserID, user.Email, user.StackID, user.PolicyID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func renderCloudStackUserAction(cmd *cobra.Command, output cloudcmd.StackUserAccessOutput) error {
+	done := "linked"
+	if output.Action == "unlink" {
+		done = "unlinked"
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud stack %s user %s %s.\n", output.StackID, output.UserID, done)
+	return err
+}
+
+func renderCloudStackModules(cmd *cobra.Command, output cloudcmd.ListModulesOutput) error {
+	if len(output.Modules) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No Cloud stack modules found.")
+		return err
+	}
+	for _, module := range output.Modules {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\n", module.Name, module.State, module.Status); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func renderCloudStackModuleAction(cmd *cobra.Command, output cloudcmd.ModuleActionOutput) error {
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud stack %s module %s %sd.\n", output.StackID, output.Name, output.Action)
 	return err
 }
 

@@ -536,6 +536,108 @@ func TestCloudStacksMutations(t *testing.T) {
 	}
 }
 
+func TestCloudStacksUsersAndModules(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/stacks/stack_1/users":
+			fmt.Fprint(w, `{"data":[{"stackId":"stack_1","userId":"user_1","email":"user@example.com","policyId":42}]}`)
+		case r.Method == http.MethodPut && r.URL.Path == "/organizations/org_1/stacks/stack_1/users/user_1":
+			body := readRequestBody(t, r)
+			if !strings.Contains(body, `"policyId":42`) {
+				t.Fatalf("expected policy id body, got %s", body)
+			}
+			w.WriteHeader(http.StatusNoContent)
+		case r.Method == http.MethodDelete && r.URL.Path == "/organizations/org_1/stacks/stack_1/users/user_1":
+			w.WriteHeader(http.StatusNoContent)
+		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/stacks/stack_1/modules":
+			fmt.Fprint(w, `{"data":[{"name":"ledger","state":"ENABLED","status":"READY","lastStatusUpdate":"2026-01-01T00:00:00Z","lastStateUpdate":"2026-01-01T00:00:00Z"}]}`)
+		case r.Method == http.MethodPost && r.URL.Path == "/organizations/org_1/stacks/stack_1/modules":
+			if got := r.URL.Query().Get("name"); got != "ledger" {
+				t.Fatalf("expected module name ledger, got %q", got)
+			}
+			w.WriteHeader(http.StatusAccepted)
+		case r.Method == http.MethodDelete && r.URL.Path == "/organizations/org_1/stacks/stack_1/modules":
+			if got := r.URL.Query().Get("name"); got != "ledger" {
+				t.Fatalf("expected module name ledger, got %q", got)
+			}
+			w.WriteHeader(http.StatusAccepted)
+		default:
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", server.URL,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud_stacks", "users", "list", "stack_1")
+	if err != nil {
+		t.Fatalf("cloud_stacks users list: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "user_1\tuser@example.com\tstack_1\t42") {
+		t.Fatalf("unexpected users list output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "users", "link", "stack_1", "user_1", "--policy-id", "42")
+	if err != nil {
+		t.Fatalf("cloud_stacks users link: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud stack stack_1 user user_1 linked.\n" {
+		t.Fatalf("unexpected user link output: %q", stdout)
+	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "users", "unlink", "stack_1", "user_1")
+	if err == nil {
+		t.Fatal("expected users unlink to require --confirm")
+	}
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "users", "unlink", "stack_1", "user_1", "--confirm")
+	if err != nil {
+		t.Fatalf("cloud_stacks users unlink: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud stack stack_1 user user_1 unlinked.\n" {
+		t.Fatalf("unexpected user unlink output: %q", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "modules", "list", "stack_1")
+	if err != nil {
+		t.Fatalf("cloud_stacks modules list: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "ledger\tENABLED\tREADY") {
+		t.Fatalf("unexpected modules list output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "modules", "enable", "stack_1", "ledger")
+	if err != nil {
+		t.Fatalf("cloud_stacks modules enable: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud stack stack_1 module ledger enabled.\n" {
+		t.Fatalf("unexpected module enable output: %q", stdout)
+	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "modules", "disable", "stack_1", "ledger")
+	if err == nil {
+		t.Fatal("expected modules disable to require --confirm")
+	}
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud_stacks", "modules", "disable", "stack_1", "ledger", "--confirm")
+	if err != nil {
+		t.Fatalf("cloud_stacks modules disable: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud stack stack_1 module ledger disabled.\n" {
+		t.Fatalf("unexpected module disable output: %q", stdout)
+	}
+}
+
 func TestCloudStacksRejectStackContext(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Fatalf("cloud_stacks command must reject stack contexts before network calls")
