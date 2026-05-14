@@ -33,7 +33,58 @@ func newPaymentsCommand() *cobra.Command {
 	command.AddCommand(newPaymentsTasksCommand())
 	command.AddCommand(newPaymentsTransferInitiationCommand("transfer-initiation", []string{"ti"}, false))
 	command.AddCommand(newPaymentsTransferInitiationCommand("transfer_initiation", nil, true))
+	command.AddCommand(newPaymentsVersionsCommand())
 	return command
+}
+
+func newPaymentsVersionsCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "versions",
+		Short: "Show payments component and API versions",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			versions, err := rt.ComponentVersions(cmd.Context())
+			if err != nil {
+				return err
+			}
+			for _, version := range versions {
+				if version.Product != paymentscmd.ProductPayments {
+					continue
+				}
+				apiVersions, _ := rt.Compatibility.APIVersionsFor(version.Product, version.Version)
+				output := paymentsVersionsOutput{
+					Name:        string(version.Product),
+					Version:     version.Version,
+					Health:      version.Health,
+					APIVersions: apiVersionsToStrings(apiVersions),
+					APIPolicy:   string(rt.APIPolicyFor(version.Product)),
+				}
+				if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+					return err
+				}
+				health := "unhealthy"
+				if output.Health {
+					health = "healthy"
+				}
+				_, err := fmt.Fprintf(cmd.OutOrStdout(), "%s %s %s api=%v policy=%s\n",
+					output.Name, output.Version, health, output.APIVersions, output.APIPolicy)
+				return err
+			}
+			return fmt.Errorf("payments component not found in target versions")
+		},
+	}
+}
+
+type paymentsVersionsOutput struct {
+	Name        string   `json:"name" yaml:"name"`
+	Version     string   `json:"version" yaml:"version"`
+	Health      bool     `json:"health" yaml:"health"`
+	APIVersions []string `json:"apiVersions" yaml:"apiVersions"`
+	APIPolicy   string   `json:"apiPolicy" yaml:"apiPolicy"`
 }
 
 func newPaymentsConnectorsCommand() *cobra.Command {

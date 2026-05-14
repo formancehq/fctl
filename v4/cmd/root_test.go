@@ -1869,6 +1869,38 @@ func TestPaymentsAccountsListSelectsV3(t *testing.T) {
 	}
 }
 
+func TestPaymentsVersionsShowsPaymentsComponent(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true},{"name":"ledger","version":"2.3.4","health":true}]}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "payments", "versions")
+	if err != nil {
+		t.Fatalf("show payments versions: %v stderr=%s", err, stderr)
+	}
+	expected := "payments 3.1.0 healthy api=[v1 v3] policy=latest-compatible"
+	if !strings.Contains(stdout, expected) {
+		t.Fatalf("expected payments versions output to contain %q, got:\n%s", expected, stdout)
+	}
+}
+
 func TestPaymentsAccountsCreateRequiresConfirm(t *testing.T) {
 	stdout, stderr, err := executeCommand(t, "payments", "accounts", "create", "--file", "request.json")
 	if err == nil {
