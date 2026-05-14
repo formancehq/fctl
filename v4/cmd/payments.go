@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -41,8 +42,87 @@ func newPaymentsConnectorsCommand() *cobra.Command {
 		Aliases: []string{"connector", "co"},
 		Short:   "Manage payment connectors",
 	}
+	command.AddCommand(newPaymentsConnectorsInstallCommand())
 	command.AddCommand(newPaymentsConnectorsListCommand())
+	command.AddCommand(newPaymentsConnectorsConfigCommand())
+	command.AddCommand(newPaymentsConnectorsDeprecatedUpdateConfigCommand())
 	command.AddCommand(newPaymentsConnectorsUninstallCommand())
+	return command
+}
+
+func newPaymentsConnectorsInstallCommand() *cobra.Command {
+	var confirm bool
+	var file string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "install <connector>",
+		Aliases: []string{"i"},
+		Short:   "Install a payment connector",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 1 || len(args) == 2 {
+				return nil
+			}
+			return fmt.Errorf("accepts 1 or 2 arg(s), received %d", len(args))
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("payments connectors install requires --confirm")
+			}
+			if len(args) == 2 {
+				if file != "" {
+					return fmt.Errorf("use either --file or positional file, not both")
+				}
+				file = args[1]
+				fmt.Fprintln(cmd.ErrOrStderr(), "Positional file has been deprecated, use payments connectors install <connector> --file <path>|-")
+			}
+			if file == "" {
+				return fmt.Errorf("payments connectors install requires --file <path>|-")
+			}
+			data, err := readPaymentCommandFile(cmd, file)
+			if err != nil {
+				return err
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.InstallConnectorService{
+				Handlers: paymentscmd.SDKInstallConnectorHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureInstallConnector,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.InstallConnectorInput{
+				Connector: args[0],
+				Config:    data,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentConnectorInstalled(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm connector installation")
+	command.Flags().StringVar(&file, "file", "", "JSON connector config file, or - for stdin")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
 	return command
 }
 
@@ -97,6 +177,188 @@ func newPaymentsConnectorsListCommand() *cobra.Command {
 	command.Flags().Int64Var(&pageSize, "page-size", 15, "Page size")
 	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
 	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func newPaymentsConnectorsConfigCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "config",
+		Short: "Manage payment connector configuration",
+	}
+	command.AddCommand(newPaymentsConnectorsConfigShowCommand("show", nil, false))
+	command.AddCommand(newPaymentsConnectorsConfigShowCommand("get", []string{"g"}, true))
+	command.AddCommand(newPaymentsConnectorsConfigUpdateCommand("update", nil, false))
+	return command
+}
+
+func newPaymentsConnectorsConfigShowCommand(use string, aliases []string, deprecated bool) *cobra.Command {
+	var provider string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     use + " <connector-id>",
+		Aliases: aliases,
+		Short:   "Show a payment connector configuration",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if deprecated {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Command payments connectors config get has been deprecated, use payments connectors config show")
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.GetConnectorConfigService{
+				Handlers: paymentscmd.SDKGetConnectorConfigHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureGetConnectorConfig,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.GetConnectorConfigInput{
+				ConnectorID: args[0],
+				Provider:    provider,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentConnectorConfig(cmd, output)
+		},
+	}
+	if deprecated {
+		command.Deprecated = "use payments connectors config show"
+	}
+	command.Flags().StringVar(&provider, "provider", "", "Connector provider, required only when pinned to payments API v1")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func newPaymentsConnectorsConfigUpdateCommand(use string, aliases []string, deprecated bool) *cobra.Command {
+	var confirm bool
+	var file string
+	var provider string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     use + " <connector-id>",
+		Aliases: aliases,
+		Short:   "Update a payment connector configuration",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 1 || len(args) == 2 {
+				return nil
+			}
+			return fmt.Errorf("accepts 1 or 2 arg(s), received %d", len(args))
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if deprecated {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Command payments connectors update-config has been deprecated, use payments connectors config update <connector-id> --file <path>|-")
+			}
+			if !confirm {
+				return fmt.Errorf("payments connectors config update requires --confirm")
+			}
+			if len(args) == 2 {
+				if file != "" {
+					return fmt.Errorf("use either --file or positional file, not both")
+				}
+				file = args[1]
+				fmt.Fprintln(cmd.ErrOrStderr(), "Positional file has been deprecated, use payments connectors config update <connector-id> --file <path>|-")
+			}
+			if file == "" {
+				return fmt.Errorf("payments connectors config update requires --file <path>|-")
+			}
+			data, err := readPaymentCommandFile(cmd, file)
+			if err != nil {
+				return err
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.UpdateConnectorConfigService{
+				Handlers: paymentscmd.SDKUpdateConnectorConfigHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureUpdateConnectorConfig,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.UpdateConnectorConfigInput{
+				ConnectorID: args[0],
+				Provider:    provider,
+				Config:      data,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentConnectorConfigUpdated(cmd, output)
+		},
+	}
+	if deprecated {
+		command.Deprecated = "use payments connectors config update"
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm connector configuration update")
+	command.Flags().StringVar(&file, "file", "", "JSON connector config file, or - for stdin")
+	command.Flags().StringVar(&provider, "provider", "", "Connector provider, required for payments API v1 and used to infer a missing provider in v3 payloads")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func newPaymentsConnectorsDeprecatedUpdateConfigCommand() *cobra.Command {
+	var connectorID string
+	command := newPaymentsConnectorsConfigUpdateCommand("update-config <connector>", []string{"uc"}, true)
+	command.Use = "update-config <connector>"
+	command.Args = func(cmd *cobra.Command, args []string) error {
+		if len(args) == 1 || len(args) == 2 {
+			return nil
+		}
+		return fmt.Errorf("accepts 1 or 2 arg(s), received %d", len(args))
+	}
+	originalRunE := command.RunE
+	command.RunE = func(cmd *cobra.Command, args []string) error {
+		if connectorID == "" {
+			return fmt.Errorf("payments connectors update-config requires --connector-id")
+		}
+		providerFlag := cmd.Flags().Lookup("provider")
+		if providerFlag != nil && providerFlag.Value.String() == "" {
+			if err := cmd.Flags().Set("provider", args[0]); err != nil {
+				return err
+			}
+		}
+		args[0] = connectorID
+		return originalRunE(cmd, args)
+	}
+	command.Flags().StringVar(&connectorID, "connector-id", "", "Connector ID")
 	return command
 }
 
@@ -157,6 +419,18 @@ func newPaymentsConnectorsUninstallCommand() *cobra.Command {
 	return command
 }
 
+func renderPaymentConnectorInstalled(cmd *cobra.Command, output paymentscmd.InstallConnectorOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if output.ConnectorID != "" {
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector %s installed with ID: %s\n", output.Connector, output.ConnectorID)
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector %s installed.\n", output.Connector)
+	return err
+}
+
 func renderPaymentConnectors(cmd *cobra.Command, output paymentscmd.ListConnectorsOutput) error {
 	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
 		return err
@@ -181,6 +455,35 @@ func renderPaymentConnectors(cmd *cobra.Command, output paymentscmd.ListConnecto
 		return err
 	}
 	return nil
+}
+
+func renderPaymentConnectorConfig(cmd *cobra.Command, output paymentscmd.GetConnectorConfigOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector ID: %s\n", output.ConnectorID); err != nil {
+		return err
+	}
+	if output.Provider != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Provider: %s\n", output.Provider); err != nil {
+			return err
+		}
+	}
+	formatted := output.Config
+	var indented bytes.Buffer
+	if err := json.Indent(&indented, output.Config, "", "  "); err == nil {
+		formatted = indented.Bytes()
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\n", formatted)
+	return err
+}
+
+func renderPaymentConnectorConfigUpdated(cmd *cobra.Command, output paymentscmd.UpdateConnectorConfigOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector %s config updated.\n", output.ConnectorID)
+	return err
 }
 
 func renderPaymentConnectorUninstalled(cmd *cobra.Command, output paymentscmd.UninstallConnectorOutput) error {

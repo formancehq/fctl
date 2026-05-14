@@ -4015,6 +4015,181 @@ func TestPaymentsConnectorsUninstallPinnedV1RequiresProvider(t *testing.T) {
 	}
 }
 
+func TestPaymentsConnectorsInstallRequiresConfirm(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "payments", "connectors", "install", "stripe", "--file", "request.json")
+	if err == nil {
+		t.Fatal("expected payments connectors install to require confirmation")
+	}
+	if stdout != "" {
+		t.Fatalf("expected empty stdout, got %q", stdout)
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(err.Error(), "payments connectors install requires --confirm") {
+		t.Fatalf("expected confirmation error, got: %v", err)
+	}
+}
+
+func TestPaymentsConnectorsInstallSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/connectors/install/stripe":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			body := readRequestBody(t, r)
+			for _, expected := range []string{`"apiKey":"sk_test"`, `"name":"Stripe EU"`, `"provider":"Stripe"`} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected install body to contain %q, got:\n%s", expected, body)
+				}
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusAccepted)
+			fmt.Fprint(w, `{"data":"conn_1"}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+	requestFile := filepath.Join(t.TempDir(), "stripe.json")
+	if err := os.WriteFile(requestFile, []byte(`{"apiKey":"sk_test","name":"Stripe EU"}`), 0o600); err != nil {
+		t.Fatalf("write request file: %v", err)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "connectors", "install", "stripe",
+		"--file", requestFile,
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("install payment connector: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v3",
+		"Connector stripe installed with ID: conn_1",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected payment connector install output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestPaymentsConnectorsConfigShowSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/connectors/conn_1/config":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"apiKey":"sk_test","name":"Stripe EU","provider":"Stripe"}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "connectors", "config", "show", "conn_1",
+	)
+	if err != nil {
+		t.Fatalf("show payment connector config: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v3",
+		"Connector ID: conn_1",
+		"Provider: stripe",
+		`"name": "Stripe EU"`,
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected payment connector config output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestPaymentsConnectorsConfigUpdateSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/connectors/conn_1/config":
+			if r.Method != http.MethodPatch {
+				t.Fatalf("expected PATCH, got %s", r.Method)
+			}
+			body := readRequestBody(t, r)
+			for _, expected := range []string{`"apiKey":"sk_test"`, `"name":"Stripe EU"`, `"provider":"Stripe"`} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected update body to contain %q, got:\n%s", expected, body)
+				}
+			}
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+	requestFile := filepath.Join(t.TempDir(), "stripe.json")
+	if err := os.WriteFile(requestFile, []byte(`{"apiKey":"sk_test","name":"Stripe EU"}`), 0o600); err != nil {
+		t.Fatalf("write request file: %v", err)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "connectors", "config", "update", "conn_1",
+		"--provider", "stripe",
+		"--file", requestFile,
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("update payment connector config: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v3",
+		"Connector conn_1 config updated.",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected payment connector update output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
 func TestConfigMigrateV3DryRun(t *testing.T) {
 	v3Dir := writeV3CommandFixture(t, true)
 
