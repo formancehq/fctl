@@ -16,6 +16,9 @@ type MembershipClient interface {
 	CreateOrganization(context.Context, *components.CreateOrganizationRequest, ...operations.Option) (*operations.CreateOrganizationResponse, error)
 	UpdateOrganization(context.Context, operations.UpdateOrganizationRequest, ...operations.Option) (*operations.UpdateOrganizationResponse, error)
 	DeleteOrganization(context.Context, operations.DeleteOrganizationRequest, ...operations.Option) (*operations.DeleteOrganizationResponse, error)
+	ListInvitations(context.Context, operations.ListInvitationsRequest, ...operations.Option) (*operations.ListInvitationsResponse, error)
+	AcceptInvitation(context.Context, operations.AcceptInvitationRequest, ...operations.Option) (*operations.AcceptInvitationResponse, error)
+	DeclineInvitation(context.Context, operations.DeclineInvitationRequest, ...operations.Option) (*operations.DeclineInvitationResponse, error)
 }
 
 type UserSummary struct {
@@ -76,6 +79,31 @@ type UpdateOrganizationInput struct {
 
 type DeleteOrganizationOutput struct {
 	OrganizationID string `json:"organizationID" yaml:"organizationID"`
+}
+
+type InvitationSummary struct {
+	ID             string     `json:"id" yaml:"id"`
+	OrganizationID string     `json:"organizationID" yaml:"organizationID"`
+	UserEmail      string     `json:"userEmail" yaml:"userEmail"`
+	Status         string     `json:"status" yaml:"status"`
+	CreationDate   time.Time  `json:"creationDate" yaml:"creationDate"`
+	ExpiresAt      *time.Time `json:"expiresAt,omitempty" yaml:"expiresAt,omitempty"`
+	UserID         string     `json:"userID,omitempty" yaml:"userID,omitempty"`
+	CreatorID      string     `json:"creatorID,omitempty" yaml:"creatorID,omitempty"`
+}
+
+type ListInvitationsInput struct {
+	Status       string
+	Organization string
+}
+
+type ListInvitationsOutput struct {
+	Invitations []InvitationSummary `json:"invitations" yaml:"invitations"`
+}
+
+type InvitationActionOutput struct {
+	InvitationID string `json:"invitationID" yaml:"invitationID"`
+	Action       string `json:"action" yaml:"action"`
 }
 
 type MeService struct {
@@ -223,6 +251,57 @@ func (s DeleteOrganizationService) Run(ctx context.Context, organizationID strin
 	return DeleteOrganizationOutput{OrganizationID: organizationID}, nil
 }
 
+type ListInvitationsService struct {
+	Client MembershipClient
+}
+
+func (s ListInvitationsService) Run(ctx context.Context, input ListInvitationsInput) (ListInvitationsOutput, error) {
+	if s.Client == nil {
+		return ListInvitationsOutput{}, fmt.Errorf("membership client is required")
+	}
+	request := operations.ListInvitationsRequest{}
+	if input.Status != "" {
+		request.Status = &input.Status
+	}
+	if input.Organization != "" {
+		request.Organization = &input.Organization
+	}
+	response, err := s.Client.ListInvitations(ctx, request)
+	if err != nil {
+		return ListInvitationsOutput{}, err
+	}
+	data := response.GetListInvitationsResponse().GetData()
+	invitations := make([]InvitationSummary, 0, len(data))
+	for i := range data {
+		invitations = append(invitations, invitationSummary(&data[i]))
+	}
+	return ListInvitationsOutput{Invitations: invitations}, nil
+}
+
+type InvitationActionService struct {
+	Client MembershipClient
+	Action string
+}
+
+func (s InvitationActionService) Run(ctx context.Context, invitationID string) (InvitationActionOutput, error) {
+	if s.Client == nil {
+		return InvitationActionOutput{}, fmt.Errorf("membership client is required")
+	}
+	if invitationID == "" {
+		return InvitationActionOutput{}, fmt.Errorf("invitation id is required")
+	}
+	switch s.Action {
+	case "accept":
+		_, err := s.Client.AcceptInvitation(ctx, operations.AcceptInvitationRequest{InvitationID: invitationID})
+		return InvitationActionOutput{InvitationID: invitationID, Action: s.Action}, err
+	case "decline":
+		_, err := s.Client.DeclineInvitation(ctx, operations.DeclineInvitationRequest{InvitationID: invitationID})
+		return InvitationActionOutput{InvitationID: invitationID, Action: s.Action}, err
+	default:
+		return InvitationActionOutput{}, fmt.Errorf("unsupported invitation action %q", s.Action)
+	}
+}
+
 func organizationSummary(organization *components.OrganizationExpanded) OrganizationSummary {
 	if organization == nil {
 		return OrganizationSummary{}
@@ -245,6 +324,27 @@ func organizationSummary(organization *components.OrganizationExpanded) Organiza
 	if organization.Owner != nil {
 		owner := userSummary(organization.Owner)
 		summary.Owner = &owner
+	}
+	return summary
+}
+
+func invitationSummary(invitation *components.Invitation) InvitationSummary {
+	if invitation == nil {
+		return InvitationSummary{}
+	}
+	summary := InvitationSummary{
+		ID:             invitation.ID,
+		OrganizationID: invitation.OrganizationID,
+		UserEmail:      invitation.UserEmail,
+		Status:         string(invitation.Status),
+		CreationDate:   invitation.CreationDate,
+		ExpiresAt:      invitation.ExpiresAt,
+	}
+	if invitation.UserID != nil {
+		summary.UserID = *invitation.UserID
+	}
+	if invitation.CreatorID != nil {
+		summary.CreatorID = *invitation.CreatorID
 	}
 	return summary
 }

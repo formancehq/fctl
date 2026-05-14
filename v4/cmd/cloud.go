@@ -28,6 +28,7 @@ func newCloudMeCommand() *cobra.Command {
 	}
 	command.AddCommand(newCloudMeShowCommand("show", nil, false))
 	command.AddCommand(newCloudMeShowCommand("info", nil, true))
+	command.AddCommand(newCloudMeInvitationsCommand())
 	return command
 }
 
@@ -58,6 +59,77 @@ func newCloudMeShowCommand(use string, aliases []string, deprecated bool) *cobra
 	if deprecated {
 		command.Hidden = true
 	}
+	return command
+}
+
+func newCloudMeInvitationsCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "invitations",
+		Short: "Manage invitations for the connected Cloud user",
+	}
+	command.AddCommand(newCloudMeInvitationsListCommand())
+	command.AddCommand(newCloudMeInvitationsActionCommand("accept"))
+	command.AddCommand(newCloudMeInvitationsActionCommand("decline"))
+	return command
+}
+
+func newCloudMeInvitationsListCommand() *cobra.Command {
+	var status string
+	var organization string
+
+	command := &cobra.Command{
+		Use:   "list",
+		Short: "List invitations for the connected Cloud user",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			client, err := membershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ListInvitationsService{Client: client}.Run(cmd.Context(), cloudcmd.ListInvitationsInput{
+				Status:       status,
+				Organization: organization,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudInvitations(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&status, "status", "", "Invitation status")
+	command.Flags().StringVar(&organization, "organization", "", "Organization ID")
+	return command
+}
+
+func newCloudMeInvitationsActionCommand(action string) *cobra.Command {
+	var confirm bool
+
+	command := &cobra.Command{
+		Use:   action + " <invitation-id>",
+		Short: action + " a Cloud invitation",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("cloud me invitations %s requires --confirm", action)
+			}
+			client, err := membershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.InvitationActionService{Client: client, Action: action}.Run(cmd.Context(), args[0])
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudInvitationAction(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm invitation "+action)
 	return command
 }
 
@@ -275,6 +347,28 @@ func newMembershipClient(baseURL string, httpClient *http.Client) *membership.SD
 
 func renderCloudMe(cmd *cobra.Command, output cloudcmd.MeOutput) error {
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\nEmail\t%s\nRole\t%s\n", output.User.ID, output.User.Email, output.User.Role)
+	return err
+}
+
+func renderCloudInvitations(cmd *cobra.Command, output cloudcmd.ListInvitationsOutput) error {
+	if len(output.Invitations) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No invitations found.")
+		return err
+	}
+	for _, invitation := range output.Invitations {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\n", invitation.ID, invitation.OrganizationID, invitation.UserEmail, invitation.Status); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func renderCloudInvitationAction(cmd *cobra.Command, output cloudcmd.InvitationActionOutput) error {
+	done := "accepted"
+	if output.Action == "decline" {
+		done = "declined"
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud invitation %s %s.\n", output.InvitationID, done)
 	return err
 }
 

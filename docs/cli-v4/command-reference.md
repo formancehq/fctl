@@ -21,6 +21,9 @@ This reference lists the current canonical v4 command families implemented under
 ## Cloud
 
 - `fctl cloud me show`
+- `fctl cloud me invitations list`
+- `fctl cloud me invitations accept <invitation-id> --confirm`
+- `fctl cloud me invitations decline <invitation-id> --confirm`
 - `fctl cloud organizations create <name>`
 - `fctl cloud organizations list`
 - `fctl cloud organizations show <organization-id>`

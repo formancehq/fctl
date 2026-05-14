@@ -375,6 +375,68 @@ func TestCloudMeShow(t *testing.T) {
 	}
 }
 
+func TestCloudMeInvitations(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/me/invitations":
+			if got := r.URL.Query().Get("status"); got != "PENDING" {
+				t.Fatalf("expected status PENDING, got %q", got)
+			}
+			if got := r.URL.Query().Get("organization"); got != "org_1" {
+				t.Fatalf("expected organization org_1, got %q", got)
+			}
+			fmt.Fprint(w, `{"data":[{"id":"inv_1","organizationId":"org_1","userEmail":"user@example.com","status":"PENDING","creationDate":"2026-01-01T00:00:00Z"}]}`)
+		case r.Method == http.MethodPost && r.URL.Path == "/me/invitations/inv_1/accept":
+			w.WriteHeader(http.StatusNoContent)
+		case r.Method == http.MethodPost && r.URL.Path == "/me/invitations/inv_1/reject":
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud", "cloud",
+		"--cloud-url", server.URL,
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud", "me", "invitations", "list", "--status", "PENDING", "--organization", "org_1")
+	if err != nil {
+		t.Fatalf("cloud me invitations list: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "inv_1\torg_1\tuser@example.com\tPENDING") {
+		t.Fatalf("unexpected invitations list output:\n%s", stdout)
+	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud", "me", "invitations", "accept", "inv_1")
+	if err == nil {
+		t.Fatal("expected invitation accept to require --confirm")
+	}
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "me", "invitations", "accept", "inv_1", "--confirm")
+	if err != nil {
+		t.Fatalf("cloud me invitations accept: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud invitation inv_1 accepted.\n" {
+		t.Fatalf("unexpected accept output: %q", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "me", "invitations", "decline", "inv_1", "--confirm")
+	if err != nil {
+		t.Fatalf("cloud me invitations decline: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud invitation inv_1 declined.\n" {
+		t.Fatalf("unexpected decline output: %q", stdout)
+	}
+}
+
 func TestCloudOrganizationsListAndShow(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
