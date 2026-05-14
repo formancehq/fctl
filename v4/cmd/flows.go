@@ -556,12 +556,24 @@ func newFlowsWorkflowsCreateCommand() *cobra.Command {
 	var apiVersion string
 
 	command := &cobra.Command{
-		Use:   "create",
+		Use:   "create [file]",
 		Short: "Create a workflow",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		Args: func(_ *cobra.Command, args []string) error {
+			if len(args) == 0 || len(args) == 1 {
+				return nil
+			}
+			return fmt.Errorf("accepts 0 or 1 arg(s), received %d", len(args))
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if !confirm {
 				return fmt.Errorf("flows workflows create requires --confirm")
+			}
+			if len(args) == 1 {
+				if file != "" {
+					return fmt.Errorf("use either --file or positional file, not both")
+				}
+				file = args[0]
+				fmt.Fprintln(cmd.ErrOrStderr(), "Positional file has been deprecated, use flows workflows create --file <path>|-")
 			}
 			if file == "" {
 				return fmt.Errorf("flows workflows create requires --file <path>|-")

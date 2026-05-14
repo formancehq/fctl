@@ -7688,6 +7688,22 @@ func TestFlowsWorkflowsCreateSelectsV2(t *testing.T) {
 	if !strings.Contains(stdout, "API version: v2") || !strings.Contains(stdout, "Workflow created with ID: workflow_1") {
 		t.Fatalf("unexpected workflow create output:\n%s", stdout)
 	}
+
+	stdout, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"flows", "workflows", "create",
+		requestFile,
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("create workflow with deprecated positional file: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Positional file has been deprecated, use flows workflows create --file <path>|-") {
+		t.Fatalf("expected positional file warning, got:\n%s", stderr)
+	}
+	if !strings.Contains(stdout, "API version: v2") || !strings.Contains(stdout, "Workflow created with ID: workflow_1") {
+		t.Fatalf("unexpected deprecated workflow create output:\n%s", stdout)
+	}
 }
 
 func TestFlowsWorkflowsDeleteSelectsV2(t *testing.T) {

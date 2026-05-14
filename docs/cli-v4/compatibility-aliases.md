@@ -9,6 +9,7 @@ tests, and explicit about their canonical replacement.
 | `login --membership-uri <url>` | `auth login cloud --cloud-url <url>` | Deferred warning/error | v4.x |
 | `profiles ...` | `context ...` | Deprecated warning | v4.x |
 | `orchestration ...` | `flows ...` | Deprecated warning | v4.x or v5 |
+| `orchestration workflows create <file>\|-` | `flows workflows create --file <path>\|-` | Deprecated warning | v4.x |
 | `flows instances describe` | `flows instances inspect` | Deprecated warning | v4.x |
 | `payments connectors get-config --connector-id <id>` | `payments connectors config show <connector-id>` | Deprecated warning | v4.x |
 | `payments connectors config get` | `payments connectors config show` | Deprecated warning | v4.x |

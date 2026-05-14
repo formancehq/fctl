@@ -36,6 +36,7 @@ the isolated v4 implementation under `v4/`.
 | `profiles set-default-organization <org>` | `context set --organization <org>` | Deprecated alias updates the current context. |
 | `profiles set-default-stack <stack>` | `context set --stack <stack>` | Deprecated alias updates the current context. |
 | `orchestration ...` | `flows ...` | `orchestration` is a deprecated alias with a warning. |
+| `orchestration workflows create <file>\|-` | `flows workflows create --file <path>\|-` | Deprecated positional file form warns on stderr. |
 | `orchestration instances describe` | `flows instances inspect` | `describe` remains a deprecated alias. |
 | `payments connectors get-config --connector-id <id>` | `payments connectors config show <connector-id>` | Deprecated alias with a warning. |
 | `payments ... get` | `payments ... show` | `get` remains a deprecated alias when cheap to maintain. |
