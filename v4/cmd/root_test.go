@@ -2546,6 +2546,98 @@ func TestLedgerAccountsListDeprecatedAddressAlias(t *testing.T) {
 	}
 }
 
+func TestLedgerAccountsQuerySelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default/queries/active_accounts/run":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			if got := r.URL.Query().Get("schemaVersion"); got != "v1" {
+				t.Fatalf("expected schemaVersion v1, got %q", got)
+			}
+			if got := r.URL.Query().Get("pageSize"); got != "10" {
+				t.Fatalf("expected pageSize 10, got %q", got)
+			}
+			if got := r.URL.Query().Get("sort"); got != "address:asc" {
+				t.Fatalf("expected sort address:asc, got %q", got)
+			}
+			body := readRequestBody(t, r)
+			if !strings.Contains(body, `"resource":"accounts"`) {
+				t.Fatalf("expected account query params, got %s", body)
+			}
+			if !strings.Contains(body, `"segment":"vip"`) {
+				t.Fatalf("expected query variable, got %s", body)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"address":"users:123","metadata":{"segment":"vip"}}],"hasMore":true,"pageSize":10,"next":"next"},"resource":"accounts"}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "accounts", "query", "active_accounts",
+		"--schema-version", "v1",
+		"--page-size", "10",
+		"--sort", "address:asc",
+		"--var", "segment=vip",
+	)
+	if err != nil {
+		t.Fatalf("run account query: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v2",
+		"Query\tactive_accounts",
+		"users:123",
+		"Next: next",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected account query output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestLedgerAccountsQueryRequiresSchemaVersion(t *testing.T) {
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", "http://localhost",
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "accounts", "query", "active_accounts",
+	)
+	if err == nil {
+		t.Fatal("expected account query without schema version to fail")
+	}
+	if !strings.Contains(err.Error(), "schema version is required") {
+		t.Fatalf("expected schema version error, got err=%v stderr=%s", err, stderr)
+	}
+}
+
 func TestLedgerAccountsShowSelectsV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

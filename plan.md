@@ -268,6 +268,8 @@ Implementation v4:
 - le nom canonique retenu est `ledger transactions run-script --file <path>|-`;
 - `ledger transactions num <file>` est conserve comme alias deprecie avec warning;
 - la commande reutilise la resolution API Ledger et mappe vers `createTransaction` v1/v2 avec payload Numscript.
+- `ledger accounts query <query-id> --schema-version <version>` est implemente via `v2RunQuery`;
+- la commande reste product-oriented: elle force le resource template `accounts`, accepte `--var key=value`, et garde `--api-version` comme override technique uniquement.
 
 Commandes nouvelles possibles si l'API Ledger v3 les expose:
 

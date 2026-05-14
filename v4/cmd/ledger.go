@@ -44,6 +44,7 @@ func newLedgerAccountsCommand() *cobra.Command {
 	}
 	command.AddCommand(newLedgerAccountsListCommand())
 	command.AddCommand(newLedgerAccountsDeleteMetadataCommand())
+	command.AddCommand(newLedgerAccountsQueryCommand())
 	command.AddCommand(newLedgerAccountsSetMetadataCommand())
 	command.AddCommand(newLedgerAccountsShowCommand())
 	return command
@@ -363,6 +364,103 @@ func newLedgerAccountsListCommand() *cobra.Command {
 	command.Flags().StringSliceVar(&metadata, "metadata", nil, "Filter by metadata key=value")
 	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
 	_ = command.Flags().MarkDeprecated("address", "use --account")
+
+	return command
+}
+
+func newLedgerAccountsQueryCommand() *cobra.Command {
+	var ledger string
+	var schemaVersion string
+	var pageSize int64
+	var cursor string
+	var expand string
+	var pit string
+	var reverse bool
+	var sort string
+	var variables []string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "query <query-id>",
+		Short: "Run a ledger account query template",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			parsedVars, err := parseKeyValueFlags(variables, "var")
+			if err != nil {
+				return err
+			}
+			parsedPit, err := parseOptionalRFC3339(pit, "pit")
+			if err != nil {
+				return err
+			}
+
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			if ledger == "" {
+				ledger = rt.Context.Defaults["ledger"]
+			}
+			if ledger == "" {
+				ledger = "default"
+			}
+
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := ledgercmd.RunAccountQueryService{
+				Handlers: ledgercmd.SDKRunAccountQueryHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         ledgercmd.ProductLedger,
+						Feature:         ledgercmd.FeatureRunQuery,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), ledgercmd.RunAccountQueryInput{
+				Ledger:        ledger,
+				QueryID:       args[0],
+				SchemaVersion: schemaVersion,
+				PageSize:      pageSize,
+				Cursor:        cursor,
+				Expand:        expand,
+				Pit:           parsedPit,
+				Reverse:       reverse,
+				Sort:          sort,
+				Vars:          parsedVars,
+			})
+			if err != nil {
+				return err
+			}
+
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderLedgerAccountQuery(cmd, output)
+		},
+	}
+
+	command.Flags().StringVar(&ledger, "ledger", "", "Ledger name")
+	command.Flags().StringVar(&schemaVersion, "schema-version", "", "Ledger schema version")
+	command.Flags().Int64Var(&pageSize, "page-size", 15, "Page size")
+	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
+	command.Flags().StringVar(&expand, "expand", "", "Expand response fields")
+	command.Flags().StringVar(&pit, "pit", "", "Point-in-time timestamp (RFC3339)")
+	command.Flags().BoolVar(&reverse, "reverse", false, "Reverse result order")
+	command.Flags().StringVar(&sort, "sort", "", "Sort results as field:asc or field:desc")
+	command.Flags().StringArrayVar(&variables, "var", nil, "Query template variable as key=value")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
 
 	return command
 }
@@ -2095,6 +2193,29 @@ func renderLedgerAccount(cmd *cobra.Command, output ledgercmd.GetAccountOutput) 
 			asset, volume.Input, volume.Output, volume.Balance); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func renderLedgerAccountQuery(cmd *cobra.Command, output ledgercmd.RunAccountQueryOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Query\t%s\n", output.QueryID); err != nil {
+		return err
+	}
+	if len(output.Accounts) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No accounts found.")
+		return err
+	}
+	for _, account := range output.Accounts {
+		if _, err := fmt.Fprintln(cmd.OutOrStdout(), account.Address); err != nil {
+			return err
+		}
+	}
+	if output.HasMore && output.Next != nil {
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
+		return err
 	}
 	return nil
 }

@@ -111,6 +111,7 @@ aliases for `cloud stacks`.
 - `fctl ledger transactions count`
 - `fctl ledger accounts list`
 - `fctl ledger accounts show <address>`
+- `fctl ledger accounts query <query-id> --schema-version <version>`
 - `fctl ledger schemas list`
 - `fctl ledger schemas show <schema-id>`
 - `fctl ledger schemas insert`
