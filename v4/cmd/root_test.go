@@ -2805,6 +2805,33 @@ func TestTargetProxyRejectsCloudContext(t *testing.T) {
 	}
 }
 
+func TestStackProxyAliasRoutesToTargetProxy(t *testing.T) {
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"profile", "create", "cloud", "cloud",
+		"--cloud-url", "http://localhost:8080",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud profile: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"stack", "proxy",
+	)
+	if err == nil {
+		t.Fatal("expected stack proxy alias to reach target proxy and reject cloud profile")
+	}
+	if !strings.Contains(stderr, "Command stack proxy has been deprecated, use target proxy") {
+		t.Fatalf("expected stack proxy deprecation warning, got:\n%s", stderr)
+	}
+	if !strings.Contains(err.Error(), "target proxy requires a stack context") {
+		t.Fatalf("unexpected stack proxy error: %v stderr=%s", err, stderr)
+	}
+}
+
 func TestLedgerListSelectsV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

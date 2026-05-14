@@ -247,7 +247,10 @@ Ces aliases pourront etre supprimes en v5 ou dans une version mineure ulterieure
 Implementation v4:
 
 - `cloud stacks history <stack-id>` est implemente avec le meme service d'audit que `cloud organizations history`, en imposant le filtre `stackId` au niveau membership.
-- `target proxy --port <port>` est implemente pour les contextes `stack` directs; le proxy Cloud stack reste separe tant que la resolution d'URI data-plane Cloud n'est pas dans le runtime v4.
+- `target proxy --port <port>` est implemente pour les profils `stack` directs;
+  `stack proxy --port <port>` reste disponible comme alias deprecie vers
+  `target proxy` pour recuperer l'usage v3 historique;
+  le proxy Cloud stack reste separe tant que la resolution d'URI data-plane Cloud n'est pas dans le runtime v4.
 
 | v3 | v4 canonique | Changements | Notes |
 | --- | --- | --- | --- |
@@ -261,7 +264,7 @@ Implementation v4:
 | `stack restore` | `cloud stacks restore <stack-id>` | `--confirm`; aliases deprecies avec warning. | |
 | `stack upgrade` | `cloud stacks upgrade <stack-id>` | `--confirm`, afficher target version; aliases deprecies avec warning. | |
 | `stack history` | `cloud stacks history <stack-id>` | aliases deprecies avec warning. | |
-| `stack proxy` | `target proxy` ou `cloud stacks proxy <stack-id>` | aliases deprecies avec warning. | Clarifier usage: proxy data-plane vs Cloud. |
+| `stack proxy` | `target proxy` | alias deprecie avec warning. | Proxy data-plane de la cible courante. |
 | `stack users list` | `cloud stacks users list <stack-id>` | aliases deprecies avec warning. | |
 | `stack users link <user-id>` | `cloud stacks users link <stack-id> <user-id>` | stack explicite ou contexte courant; aliases deprecies avec warning. | |
 | `stack users unlink <user-id>` | `cloud stacks users unlink <stack-id> <user-id>` | `--confirm`; aliases deprecies avec warning. | |

@@ -15,6 +15,10 @@ func newCloudStacksCommand(use string, canonical string, deprecated bool) *cobra
 		Short: "Manage Formance Cloud stacks",
 		PersistentPreRun: func(cmd *cobra.Command, _ []string) {
 			if deprecated {
+				if use == "stack" && cmd.Name() == "proxy" {
+					fmt.Fprintln(cmd.ErrOrStderr(), "Command stack proxy has been deprecated, use target proxy")
+					return
+				}
 				fmt.Fprintf(cmd.ErrOrStderr(), "Command %s has been deprecated, use %s\n", use, canonical)
 			}
 		},
@@ -34,6 +38,15 @@ func newCloudStacksCommand(use string, canonical string, deprecated bool) *cobra
 	command.AddCommand(newCloudStacksHistoryCommand())
 	command.AddCommand(newCloudStacksUsersCommand())
 	command.AddCommand(newCloudStacksModulesCommand())
+	if use == "stack" {
+		command.AddCommand(newStackProxyCommand())
+	}
+	return command
+}
+
+func newStackProxyCommand() *cobra.Command {
+	command := newTargetProxyCommand()
+	command.Short = "Deprecated alias for target proxy"
 	return command
 }
 

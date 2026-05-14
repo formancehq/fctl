@@ -40,6 +40,7 @@ This reference lists the current canonical v4 command families implemented under
 - `fctl ui --print`
 - `fctl target inspect`
 - `fctl target proxy --port 55001`
+- `fctl stack proxy --port 55001` deprecated alias for `fctl target proxy`
 
 `context` and `session` commands remain hidden implementation/compatibility
 commands for now. New user flows should use `login`, `logout`, `whoami`, and
@@ -127,7 +128,8 @@ server.
 
 When the active context is `cloud-stack`, `--organization` defaults to the
 context organization. `cloud_stacks`, `stack`, and `stacks` are deprecated
-aliases for `cloud stacks`.
+aliases for `cloud stacks`, except `stack proxy`, which remains a deprecated
+alias for the data-plane `target proxy` command.
 
 ## Ledger
 
