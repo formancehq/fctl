@@ -41,6 +41,7 @@ func NewRootCommand(version string) *cobra.Command {
 
 	root.AddCommand(newVersionCommand())
 	root.AddCommand(newContextCommand())
+	root.AddCommand(newConfigCommand())
 	root.AddCommand(newTargetCommand())
 	root.AddCommand(newLedgerCommand())
 

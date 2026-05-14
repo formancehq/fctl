@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -307,4 +308,68 @@ func TestLedgerTransactionsListJSON(t *testing.T) {
 			t.Fatalf("expected ledger JSON output to contain %q, got:\n%s", expected, stdout)
 		}
 	}
+}
+
+func TestConfigMigrateV3DryRun(t *testing.T) {
+	v3Dir := writeV3CommandFixture(t, true)
+
+	stdout, stderr, err := executeCommand(t, "config", "migrate-v3", "--from", v3Dir, "--dry-run")
+	if err != nil {
+		t.Fatalf("migrate dry-run: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"Current context: default",
+		"- default (cloud-stack)",
+		"Credential moves: 1",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected migration output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestConfigMigrateV3Write(t *testing.T) {
+	v3Dir := writeV3CommandFixture(t, false)
+	configDir := t.TempDir()
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "config", "migrate-v3", "--from", v3Dir)
+	if err != nil {
+		t.Fatalf("migrate write: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "Migrated 1 context(s)") {
+		t.Fatalf("unexpected migration output: %q", stdout)
+	}
+
+	cfg, err := v4config.LoadFile(filepath.Join(configDir, "config.yaml"))
+	if err != nil {
+		t.Fatalf("load migrated config: %v", err)
+	}
+	if cfg.CurrentContext != "default" || cfg.Contexts["default"].Kind != v4config.ContextKindCloudStack {
+		t.Fatalf("unexpected migrated config: %#v", cfg)
+	}
+}
+
+func writeV3CommandFixture(t *testing.T, withTokens bool) string {
+	t.Helper()
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, "profiles", "default"), 0o700); err != nil {
+		t.Fatalf("create v3 fixture dirs: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "config.yml"), []byte(`{"currentProfile":"default"}`), 0o600); err != nil {
+		t.Fatalf("write v3 config: %v", err)
+	}
+	rootTokens := "null"
+	if withTokens {
+		rootTokens = `{"access":{"token":"access-token"},"id":{"token":"id-token"}}`
+	}
+	profile := `{
+	  "membershipURI": "https://app.formance.cloud/api",
+	  "rootTokens": ` + rootTokens + `,
+	  "defaultOrganization": "org_123",
+	  "defaultStack": "stack_123"
+	}`
+	if err := os.WriteFile(filepath.Join(dir, "profiles", "default", "profile.json"), []byte(profile), 0o600); err != nil {
+		t.Fatalf("write v3 profile: %v", err)
+	}
+	return dir
 }
