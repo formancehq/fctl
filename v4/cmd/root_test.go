@@ -4171,6 +4171,9 @@ func TestLedgerCreateRequiresNameWhenNonInteractive(t *testing.T) {
 	if !strings.Contains(err.Error(), "ledger create requires <name>") {
 		t.Fatalf("expected missing name error, got: %v", err)
 	}
+	if strings.Contains(err.Error(), "accepts") {
+		t.Fatalf("expected ledger create to own missing-name validation, got: %v", err)
+	}
 }
 
 func TestLedgerCreateSelectsV2(t *testing.T) {

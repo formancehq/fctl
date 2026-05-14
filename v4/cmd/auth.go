@@ -149,7 +149,7 @@ func newSessionLoginTokenCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: name == cfg.CurrentContext, Context: context}); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Authentication for context %s set to token.\n", name)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Authentication for context %s set to token.", name)))
 			return err
 		},
 	}
@@ -221,7 +221,7 @@ func newSessionLoginClientCredentialsCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: name == cfg.CurrentContext, Context: context}); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Authentication for context %s set to client credentials.\n", name)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Authentication for context %s set to client credentials.", name)))
 			return err
 		},
 	}
@@ -256,7 +256,7 @@ func newSessionLoginNoneCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: name == cfg.CurrentContext, Context: context}); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Authentication for context %s disabled.\n", name)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Authentication for context %s disabled.", name)))
 			return err
 		},
 	}
@@ -317,33 +317,23 @@ func newSessionStatusCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
 				return err
 			}
-			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Context\t%s\n", name); err != nil {
-				return err
-			}
-			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Method\t%s\n", context.Auth.Method); err != nil {
-				return err
+			rows := []styledKeyValue{
+				{Label: "Context", Value: name},
+				{Label: "Method", Value: string(context.Auth.Method)},
 			}
 			if context.Auth.TokenRef != "" {
-				if _, err := fmt.Fprintf(cmd.OutOrStdout(), "TokenRef\t%s\n", context.Auth.TokenRef); err != nil {
-					return err
-				}
+				rows = append(rows, styledKeyValue{Label: "TokenRef", Value: context.Auth.TokenRef})
 			}
 			if context.Auth.SecretRef != "" {
-				if _, err := fmt.Fprintf(cmd.OutOrStdout(), "SecretRef\t%s\n", context.Auth.SecretRef); err != nil {
-					return err
-				}
+				rows = append(rows, styledKeyValue{Label: "SecretRef", Value: context.Auth.SecretRef})
 			}
 			if context.Auth.ClientID != "" {
-				if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ClientID\t%s\n", context.Auth.ClientID); err != nil {
-					return err
-				}
+				rows = append(rows, styledKeyValue{Label: "ClientID", Value: context.Auth.ClientID})
 			}
 			if context.Auth.IssuerURL != "" {
-				if _, err := fmt.Fprintf(cmd.OutOrStdout(), "IssuerURL\t%s\n", context.Auth.IssuerURL); err != nil {
-					return err
-				}
+				rows = append(rows, styledKeyValue{Label: "IssuerURL", Value: context.Auth.IssuerURL})
 			}
-			return nil
+			return writeStyledKeyValues(cmd, rows...)
 		},
 	}
 }
@@ -415,7 +405,7 @@ func newSessionLogoutCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, contextShowOutput{Name: name, Current: name == cfg.CurrentContext, Context: context}); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Authentication for context %s cleared.\n", name)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Authentication for context %s cleared.", name)))
 			return err
 		},
 	}
@@ -989,12 +979,11 @@ func renderAuthClients(cmd *cobra.Command, output authcmd.ListClientsOutput) err
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No Auth clients found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Clients))
 	for _, client := range output.Clients {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\n", client.ID, client.Name, strings.Join(client.Scopes, ",")); err != nil {
-			return err
-		}
+		rows = append(rows, []string{client.ID, client.Name, strings.Join(client.Scopes, ",")})
 	}
-	return nil
+	return writeStyledRows(cmd, []string{"ID", "Name", "Scopes"}, rows)
 }
 
 func renderAuthClient(cmd *cobra.Command, output authcmd.GetClientOutput) error {
@@ -1002,35 +991,27 @@ func renderAuthClient(cmd *cobra.Command, output authcmd.GetClientOutput) error 
 		return err
 	}
 	client := output.Client
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", client.ID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Name\t%s\n", client.Name); err != nil {
-		return err
+	rows := []styledKeyValue{
+		{Label: "ID", Value: client.ID},
+		{Label: "Name", Value: client.Name},
 	}
 	if len(client.Scopes) > 0 {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Scopes\t%s\n", strings.Join(client.Scopes, ",")); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Scopes", Value: strings.Join(client.Scopes, ",")})
 	}
 	if len(client.RedirectURIs) > 0 {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Redirect URIs\t%s\n", strings.Join(client.RedirectURIs, ",")); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Redirect URIs", Value: strings.Join(client.RedirectURIs, ",")})
 	}
 	if len(client.Secrets) > 0 {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Secrets\t%d\n", len(client.Secrets)); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Secrets", Value: fmt.Sprintf("%d", len(client.Secrets))})
 	}
-	return nil
+	return writeStyledKeyValues(cmd, rows...)
 }
 
 func renderAuthClientMutated(cmd *cobra.Command, output authcmd.ClientMutationOutput, action string) error {
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Client %s %s.\n", output.Client.ID, action)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Client %s %s.", output.Client.ID, action)))
 	return err
 }
 
@@ -1038,7 +1019,7 @@ func renderAuthClientDeleted(cmd *cobra.Command, output authcmd.DeleteClientOutp
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Client %s deleted.\n", output.ClientID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Client %s deleted.", output.ClientID)))
 	return err
 }
 
@@ -1047,11 +1028,11 @@ func renderAuthSecretCreated(cmd *cobra.Command, output authcmd.CreateSecretOutp
 		return err
 	}
 	if output.Secret.ID != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Secret ID: %s\n", output.Secret.ID); err != nil {
+		if err := writeStyledKeyValues(cmd, styledKeyValue{Label: "Secret ID", Value: output.Secret.ID}); err != nil {
 			return err
 		}
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Secret %s created for client %s. Use -o json to retrieve the clear secret.\n", output.Secret.Name, output.ClientID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Secret %s created for client %s. Use -o json to retrieve the clear secret.", output.Secret.Name, output.ClientID)))
 	return err
 }
 
@@ -1059,7 +1040,7 @@ func renderAuthSecretDeleted(cmd *cobra.Command, output authcmd.DeleteSecretOutp
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Secret %s deleted for client %s.\n", output.SecretID, output.ClientID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Secret %s deleted for client %s.", output.SecretID, output.ClientID)))
 	return err
 }
 
@@ -1071,12 +1052,11 @@ func renderAuthUsers(cmd *cobra.Command, output authcmd.ListUsersOutput) error {
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No Auth users found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Users))
 	for _, user := range output.Users {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\n", user.ID, user.Email, user.Subject); err != nil {
-			return err
-		}
+		rows = append(rows, []string{user.ID, user.Email, user.Subject})
 	}
-	return nil
+	return writeStyledRows(cmd, []string{"ID", "Email", "Subject"}, rows)
 }
 
 func renderAuthUser(cmd *cobra.Command, output authcmd.GetUserOutput) error {
@@ -1084,12 +1064,9 @@ func renderAuthUser(cmd *cobra.Command, output authcmd.GetUserOutput) error {
 		return err
 	}
 	user := output.User
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", user.ID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Email\t%s\n", user.Email); err != nil {
-		return err
-	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Subject\t%s\n", user.Subject)
-	return err
+	return writeStyledKeyValues(cmd,
+		styledKeyValue{Label: "ID", Value: user.ID},
+		styledKeyValue{Label: "Email", Value: user.Email},
+		styledKeyValue{Label: "Subject", Value: user.Subject},
+	)
 }

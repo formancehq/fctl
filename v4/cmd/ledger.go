@@ -16,7 +16,6 @@ import (
 	"github.com/formancehq/fctl/v4/internal/capabilities"
 	ledgercmd "github.com/formancehq/fctl/v4/internal/commands/ledger"
 	v4prompt "github.com/formancehq/fctl/v4/internal/prompt"
-	v4render "github.com/formancehq/fctl/v4/internal/render"
 )
 
 func newLedgerCommand() *cobra.Command {
@@ -990,7 +989,7 @@ func newLedgerCreateCommand() *cobra.Command {
 	var apiVersion string
 
 	command := &cobra.Command{
-		Use:     "create <name>",
+		Use:     "create [name]",
 		Aliases: []string{"c", "cr"},
 		Short:   "Create a ledger",
 		Args:    cobra.MaximumNArgs(1),
@@ -2272,7 +2271,7 @@ func renderLedgers(cmd *cobra.Command, output ledgercmd.ListLedgersOutput) error
 			ledger.AddedAt.Format(time.RFC3339),
 		})
 	}
-	return v4render.Table(cmd.OutOrStdout(), []string{"Name", "Bucket", "Created at"}, rows)
+	return writeStyledTable(cmd, []string{"Name", "Bucket", "Created at"}, rows)
 }
 
 func renderLedgerAccounts(cmd *cobra.Command, output ledgercmd.ListAccountsOutput) error {
@@ -2287,14 +2286,14 @@ func renderLedgerAccounts(cmd *cobra.Command, output ledgercmd.ListAccountsOutpu
 	for _, account := range output.Accounts {
 		rows = append(rows, []string{account.Address})
 	}
-	return v4render.Table(cmd.OutOrStdout(), []string{"Address"}, rows)
+	return writeStyledTable(cmd, []string{"Address"}, rows)
 }
 
 func renderLedgerAccount(cmd *cobra.Command, output ledgercmd.GetAccountOutput) error {
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	if err := v4render.KeyValues(cmd.OutOrStdout(), [][]string{{"Address", output.Account.Address}}); err != nil {
+	if err := writeStyledKeyValueRows(cmd, [][]string{{"Address", output.Account.Address}}); err != nil {
 		return err
 	}
 	if len(output.Account.Volumes) == 0 {
@@ -2305,14 +2304,14 @@ func renderLedgerAccount(cmd *cobra.Command, output ledgercmd.GetAccountOutput) 
 	for asset, volume := range output.Account.Volumes {
 		rows = append(rows, []string{asset, volume.Input, volume.Output, volume.Balance})
 	}
-	return v4render.Table(cmd.OutOrStdout(), []string{"Asset", "Input", "Output", "Balance"}, rows)
+	return writeStyledTable(cmd, []string{"Asset", "Input", "Output", "Balance"}, rows)
 }
 
 func renderLedgerAccountQuery(cmd *cobra.Command, output ledgercmd.RunAccountQueryOutput) error {
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	if err := v4render.KeyValues(cmd.OutOrStdout(), [][]string{{"Query", output.QueryID}}); err != nil {
+	if err := writeStyledKeyValueRows(cmd, [][]string{{"Query", output.QueryID}}); err != nil {
 		return err
 	}
 	if len(output.Accounts) == 0 {
@@ -2323,12 +2322,11 @@ func renderLedgerAccountQuery(cmd *cobra.Command, output ledgercmd.RunAccountQue
 	for _, account := range output.Accounts {
 		rows = append(rows, []string{account.Address})
 	}
-	if err := v4render.Table(cmd.OutOrStdout(), []string{"Address"}, rows); err != nil {
+	if err := writeStyledTable(cmd, []string{"Address"}, rows); err != nil {
 		return err
 	}
 	if output.HasMore && output.Next != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
-		return err
+		return writeStyledNext(cmd, *output.Next)
 	}
 	return nil
 }
@@ -2337,7 +2335,7 @@ func renderLedgerAccountMetadataSet(cmd *cobra.Command, output ledgercmd.AddAcco
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintln(cmd.OutOrStdout(), "Metadata added.")
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, "Metadata added."))
 	return err
 }
 
@@ -2345,7 +2343,7 @@ func renderLedgerAccountMetadataDeleted(cmd *cobra.Command, output ledgercmd.Del
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintln(cmd.OutOrStdout(), "Metadata deleted.")
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, "Metadata deleted."))
 	return err
 }
 
@@ -2353,7 +2351,7 @@ func renderLedgerCreated(cmd *cobra.Command, output ledgercmd.CreateLedgerOutput
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Ledger %s created.\n", output.Name)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Ledger %s created.", output.Name)))
 	return err
 }
 
@@ -2361,7 +2359,7 @@ func renderLedgerExported(cmd *cobra.Command, output ledgercmd.ExportLogsOutput,
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Ledger %s exported to %s.\n", output.Ledger, file)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Ledger %s exported to %s.", output.Ledger, file)))
 	return err
 }
 
@@ -2369,7 +2367,7 @@ func renderLedgerImported(cmd *cobra.Command, output ledgercmd.ImportLogsOutput)
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Ledger %s imported.\n", output.Ledger)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Ledger %s imported.", output.Ledger)))
 	return err
 }
 
@@ -2391,12 +2389,11 @@ func renderLedgerSchemas(cmd *cobra.Command, output ledgercmd.ListSchemasOutput)
 			fmt.Sprintf("%d", schema.TransactionModels),
 		})
 	}
-	if err := v4render.Table(cmd.OutOrStdout(), []string{"Version", "Created at", "Chart segments", "Query templates", "Transaction models"}, rows); err != nil {
+	if err := writeStyledTable(cmd, []string{"Version", "Created at", "Chart segments", "Query templates", "Transaction models"}, rows); err != nil {
 		return err
 	}
 	if output.HasMore && output.Next != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
-		return err
+		return writeStyledNext(cmd, *output.Next)
 	}
 	return nil
 }
@@ -2405,7 +2402,7 @@ func renderLedgerSchema(cmd *cobra.Command, output ledgercmd.GetSchemaOutput) er
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	return v4render.KeyValues(cmd.OutOrStdout(), [][]string{
+	return writeStyledKeyValueRows(cmd, [][]string{
 		{"Version", output.Schema.Version},
 		{"Created at", output.Schema.CreatedAt.Format(time.RFC3339)},
 		{"Chart segments", fmt.Sprintf("%d", len(output.Schema.Chart))},
@@ -2418,7 +2415,7 @@ func renderLedgerSchemaInserted(cmd *cobra.Command, output ledgercmd.InsertSchem
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Schema %s inserted in ledger %s.\n", output.Version, output.Ledger)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Schema %s inserted in ledger %s.", output.Version, output.Ledger)))
 	return err
 }
 
@@ -2426,7 +2423,7 @@ func renderLedgerMetadataSet(cmd *cobra.Command, output ledgercmd.UpdateLedgerMe
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintln(cmd.OutOrStdout(), "Metadata added.")
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, "Metadata added."))
 	return err
 }
 
@@ -2434,7 +2431,7 @@ func renderLedgerMetadataDeleted(cmd *cobra.Command, output ledgercmd.DeleteLedg
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintln(cmd.OutOrStdout(), "Metadata deleted.")
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, "Metadata deleted."))
 	return err
 }
 
@@ -2442,7 +2439,7 @@ func renderLedgerInfo(cmd *cobra.Command, output ledgercmd.ReadInfoOutput) error
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	return v4render.KeyValues(cmd.OutOrStdout(), [][]string{
+	return writeStyledKeyValueRows(cmd, [][]string{
 		{"Server", output.Server},
 		{"Version", output.Version},
 	})
@@ -2452,7 +2449,7 @@ func renderLedgerStats(cmd *cobra.Command, output ledgercmd.ReadStatsOutput) err
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	return v4render.KeyValues(cmd.OutOrStdout(), [][]string{
+	return writeStyledKeyValueRows(cmd, [][]string{
 		{"Transactions", output.Transactions},
 		{"Accounts", fmt.Sprintf("%d", output.Accounts)},
 	})
@@ -2478,14 +2475,14 @@ func renderLedgerTransactions(cmd *cobra.Command, output ledgercmd.ListTransacti
 			transaction.Timestamp.Format(time.RFC3339),
 		})
 	}
-	return v4render.Table(cmd.OutOrStdout(), []string{"ID", "Reference", "Timestamp"}, rows)
+	return writeStyledTable(cmd, []string{"ID", "Reference", "Timestamp"}, rows)
 }
 
 func renderLedgerTransactionsCount(cmd *cobra.Command, output ledgercmd.CountTransactionsOutput) error {
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	return v4render.KeyValues(cmd.OutOrStdout(), [][]string{{"Count", fmt.Sprintf("%d", output.Count)}})
+	return writeStyledKeyValueRows(cmd, [][]string{{"Count", fmt.Sprintf("%d", output.Count)}})
 }
 
 func renderLedgerSentTransaction(cmd *cobra.Command, output ledgercmd.SendTransactionOutput) error {
@@ -2503,7 +2500,7 @@ func renderLedgerTransactionMetadataSet(cmd *cobra.Command, output ledgercmd.Add
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintln(cmd.OutOrStdout(), "Metadata added.")
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, "Metadata added."))
 	return err
 }
 
@@ -2511,7 +2508,7 @@ func renderLedgerTransactionMetadataDeleted(cmd *cobra.Command, output ledgercmd
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintln(cmd.OutOrStdout(), "Metadata deleted.")
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, "Metadata deleted."))
 	return err
 }
 
@@ -2549,11 +2546,11 @@ func renderLedgerVolumes(cmd *cobra.Command, output ledgercmd.ListVolumesOutput)
 	for _, volume := range output.Volumes {
 		rows = append(rows, []string{volume.Account, volume.Asset, volume.Input, volume.Output, volume.Balance})
 	}
-	return v4render.Table(cmd.OutOrStdout(), []string{"Account", "Asset", "Input", "Output", "Balance"}, rows)
+	return writeStyledTable(cmd, []string{"Account", "Asset", "Input", "Output", "Balance"}, rows)
 }
 
 func renderLedgerTransactionSummary(cmd *cobra.Command, id string, reference string, timestamp time.Time) error {
-	return v4render.KeyValues(cmd.OutOrStdout(), [][]string{
+	return writeStyledKeyValueRows(cmd, [][]string{
 		{"ID", id},
 		{"Reference", reference},
 		{"Timestamp", timestamp.Format(time.RFC3339)},

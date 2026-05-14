@@ -168,6 +168,17 @@ func writeStyledKeyValues(cmd *cobra.Command, rows ...styledKeyValue) error {
 	return nil
 }
 
+func writeStyledKeyValueRows(cmd *cobra.Command, rows [][]string) error {
+	values := make([]styledKeyValue, 0, len(rows))
+	for _, row := range rows {
+		if len(row) < 2 {
+			continue
+		}
+		values = append(values, styledKeyValue{Label: row[0], Value: row[1]})
+	}
+	return writeStyledKeyValues(cmd, values...)
+}
+
 func writeStyledColonKeyValues(cmd *cobra.Command, rows ...styledKeyValue) error {
 	if !terminalOutputEnabled(cmd) {
 		for _, row := range rows {
@@ -190,6 +201,13 @@ func writeStyledRows(cmd *cobra.Command, headers []string, rows [][]string) erro
 		return nil
 	}
 	return v4render.Table(cmd.OutOrStdout(), headers, rows)
+}
+
+func writeStyledTable(cmd *cobra.Command, headers []string, rows [][]string) error {
+	if !terminalOutputEnabled(cmd) {
+		return v4render.Table(cmd.OutOrStdout(), headers, rows)
+	}
+	return writeStyledRows(cmd, headers, rows)
 }
 
 func styledKeyValueLineWithWidth(cmd *cobra.Command, label string, value string, width int) string {
@@ -236,6 +254,11 @@ func styledInfoLine(cmd *cobra.Command, label string, value string) string {
 
 func writeStyledAPIVersion(cmd *cobra.Command, version any) error {
 	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledInfoLine(cmd, "API version", fmt.Sprint(version)))
+	return err
+}
+
+func writeStyledNext(cmd *cobra.Command, next string) error {
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledInfoLine(cmd, "Next", next))
 	return err
 }
 

@@ -543,10 +543,10 @@ func renderPaymentConnectorInstalled(cmd *cobra.Command, output paymentscmd.Inst
 		return err
 	}
 	if output.ConnectorID != "" {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector %s installed with ID: %s\n", output.Connector, output.ConnectorID)
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Connector %s installed with ID: %s", output.Connector, output.ConnectorID)))
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector %s installed.\n", output.Connector)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Connector %s installed.", output.Connector)))
 	return err
 }
 
@@ -558,20 +558,15 @@ func renderPaymentConnectors(cmd *cobra.Command, output paymentscmd.ListConnecto
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No payment connectors found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Connectors))
 	for _, connector := range output.Connectors {
-		if _, err := fmt.Fprintf(
-			cmd.OutOrStdout(),
-			"%s\t%s\t%s\n",
-			connector.Provider,
-			connector.Name,
-			connector.ID,
-		); err != nil {
-			return err
-		}
+		rows = append(rows, []string{connector.Provider, connector.Name, connector.ID})
+	}
+	if err := writeStyledRows(cmd, []string{"Provider", "Name", "ID"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore && output.Next != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
-		return err
+		return writeStyledNext(cmd, *output.Next)
 	}
 	return nil
 }
@@ -580,13 +575,12 @@ func renderPaymentConnectorConfig(cmd *cobra.Command, output paymentscmd.GetConn
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector ID: %s\n", output.ConnectorID); err != nil {
-		return err
-	}
+	rows := []styledKeyValue{{Label: "Connector ID", Value: output.ConnectorID}}
 	if output.Provider != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Provider: %s\n", output.Provider); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Provider", Value: output.Provider})
+	}
+	if err := writeStyledColonKeyValues(cmd, rows...); err != nil {
+		return err
 	}
 	formatted := output.Config
 	var indented bytes.Buffer
@@ -601,7 +595,7 @@ func renderPaymentConnectorConfigUpdated(cmd *cobra.Command, output paymentscmd.
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector %s config updated.\n", output.ConnectorID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Connector %s config updated.", output.ConnectorID)))
 	return err
 }
 
@@ -610,13 +604,13 @@ func renderPaymentConnectorUninstalled(cmd *cobra.Command, output paymentscmd.Un
 		return err
 	}
 	if output.TaskID != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Task ID: %s\n", output.TaskID); err != nil {
+		if err := writeStyledColonKeyValues(cmd, styledKeyValue{Label: "Task ID", Value: output.TaskID}); err != nil {
 			return err
 		}
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector %s uninstall scheduled.\n", output.ConnectorID)
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Connector %s uninstall scheduled.", output.ConnectorID)))
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector %s uninstalled.\n", output.ConnectorID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Connector %s uninstalled.", output.ConnectorID)))
 	return err
 }
 
@@ -821,7 +815,7 @@ func renderPaymentBankAccountCreated(cmd *cobra.Command, output paymentscmd.Crea
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Bank account created with ID: %s\n", output.BankAccountID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Bank account created with ID: %s", output.BankAccountID)))
 	return err
 }
 
@@ -885,10 +879,10 @@ func renderPaymentBankAccountForwarded(cmd *cobra.Command, output paymentscmd.Fo
 		return err
 	}
 	if output.TaskID != "" {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Bank account forwarding scheduled with task ID: %s\n", output.TaskID)
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Bank account forwarding scheduled with task ID: %s", output.TaskID)))
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Bank account %s forwarded to connector %s.\n", output.BankAccountID, output.ConnectorID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Bank account %s forwarded to connector %s.", output.BankAccountID, output.ConnectorID)))
 	return err
 }
 
@@ -958,7 +952,7 @@ func renderPaymentBankAccountMetadataSet(cmd *cobra.Command, output paymentscmd.
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Metadata set on bank account %s.\n", output.BankAccountID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Metadata set on bank account %s.", output.BankAccountID)))
 	return err
 }
 
@@ -1086,7 +1080,7 @@ func renderPaymentAccountCreated(cmd *cobra.Command, output paymentscmd.CreateAc
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Account created with ID: %s\n", output.AccountID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Account created with ID: %s", output.AccountID)))
 	return err
 }
 
@@ -1275,23 +1269,15 @@ func renderPaymentAccounts(cmd *cobra.Command, output paymentscmd.ListAccountsOu
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No payment accounts found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Accounts))
 	for _, account := range output.Accounts {
-		if _, err := fmt.Fprintf(
-			cmd.OutOrStdout(),
-			"%s\t%s\t%s\t%s\t%s\t%s\n",
-			account.ID,
-			account.Reference,
-			account.CreatedAt.Format(time.RFC3339),
-			account.Name,
-			account.DefaultAsset,
-			account.ConnectorID,
-		); err != nil {
-			return err
-		}
+		rows = append(rows, []string{account.ID, account.Reference, account.CreatedAt.Format(time.RFC3339), account.Name, account.DefaultAsset, account.ConnectorID})
+	}
+	if err := writeStyledRows(cmd, []string{"ID", "Reference", "Created at", "Name", "Default asset", "Connector"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore && output.Next != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
-		return err
+		return writeStyledNext(cmd, *output.Next)
 	}
 	return nil
 }
@@ -1304,22 +1290,15 @@ func renderPaymentAccountBalances(cmd *cobra.Command, output paymentscmd.ListAcc
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No account balances found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Balances))
 	for _, balance := range output.Balances {
-		if _, err := fmt.Fprintf(
-			cmd.OutOrStdout(),
-			"%s\t%s\t%s\t%s\t%s\n",
-			balance.AccountID,
-			balance.Asset,
-			balance.Balance,
-			balance.CreatedAt.Format(time.RFC3339),
-			balance.LastUpdatedAt.Format(time.RFC3339),
-		); err != nil {
-			return err
-		}
+		rows = append(rows, []string{balance.AccountID, balance.Asset, balance.Balance, balance.CreatedAt.Format(time.RFC3339), balance.LastUpdatedAt.Format(time.RFC3339)})
+	}
+	if err := writeStyledRows(cmd, []string{"Account", "Asset", "Balance", "Created at", "Updated at"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore && output.Next != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
-		return err
+		return writeStyledNext(cmd, *output.Next)
 	}
 	return nil
 }
@@ -1329,26 +1308,15 @@ func renderPaymentAccount(cmd *cobra.Command, output paymentscmd.GetAccountOutpu
 		return err
 	}
 	account := output.Account
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", account.ID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Reference\t%s\n", account.Reference); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Name\t%s\n", account.Name); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", account.CreatedAt.Format(time.RFC3339)); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector ID\t%s\n", account.ConnectorID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Default asset\t%s\n", account.DefaultAsset); err != nil {
-		return err
-	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Type\t%s\n", account.Type)
-	return err
+	return writeStyledKeyValues(cmd,
+		styledKeyValue{Label: "ID", Value: account.ID},
+		styledKeyValue{Label: "Reference", Value: account.Reference},
+		styledKeyValue{Label: "Name", Value: account.Name},
+		styledKeyValue{Label: "Created at", Value: account.CreatedAt.Format(time.RFC3339)},
+		styledKeyValue{Label: "Connector ID", Value: account.ConnectorID},
+		styledKeyValue{Label: "Default asset", Value: account.DefaultAsset},
+		styledKeyValue{Label: "Type", Value: account.Type},
+	)
 }
 
 func newPaymentsBankAccountsListCommand() *cobra.Command {
@@ -1463,14 +1431,15 @@ func renderPaymentBankAccounts(cmd *cobra.Command, output paymentscmd.ListBankAc
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No bank accounts found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.BankAccounts))
 	for _, account := range output.BankAccounts {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\n", account.ID, account.Name, account.CreatedAt.Format(time.RFC3339), account.Country); err != nil {
-			return err
-		}
+		rows = append(rows, []string{account.ID, account.Name, account.CreatedAt.Format(time.RFC3339), account.Country})
+	}
+	if err := writeStyledRows(cmd, []string{"ID", "Name", "Created at", "Country"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore && output.Next != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
-		return err
+		return writeStyledNext(cmd, *output.Next)
 	}
 	return nil
 }
@@ -1480,27 +1449,19 @@ func renderPaymentBankAccount(cmd *cobra.Command, output paymentscmd.GetBankAcco
 		return err
 	}
 	account := output.BankAccount
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", account.ID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Name\t%s\n", account.Name); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", account.CreatedAt.Format(time.RFC3339)); err != nil {
-		return err
+	rows := []styledKeyValue{
+		{Label: "ID", Value: account.ID},
+		{Label: "Name", Value: account.Name},
+		{Label: "Created at", Value: account.CreatedAt.Format(time.RFC3339)},
 	}
 	if account.Country != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Country\t%s\n", account.Country); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Country", Value: account.Country})
 	}
 	if account.Iban != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "IBAN\t%s\n", account.Iban); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "IBAN", Value: account.Iban})
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Swift BIC\t%s\n", account.SwiftBicCode)
-	return err
+	rows = append(rows, styledKeyValue{Label: "Swift BIC", Value: account.SwiftBicCode})
+	return writeStyledKeyValues(cmd, rows...)
 }
 
 func newPaymentsPaymentsCreateCommand() *cobra.Command {
@@ -1602,7 +1563,7 @@ func renderPaymentCreated(cmd *cobra.Command, output paymentscmd.CreatePaymentOu
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Payment created with ID: %s\n", output.PaymentID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Payment created with ID: %s", output.PaymentID)))
 	return err
 }
 
@@ -1770,7 +1731,7 @@ func renderPaymentMetadataSet(cmd *cobra.Command, output paymentscmd.SetPaymentM
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Metadata set on payment %s.\n", output.PaymentID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Metadata set on payment %s.", output.PaymentID)))
 	return err
 }
 
@@ -1782,14 +1743,15 @@ func renderPayments(cmd *cobra.Command, output paymentscmd.ListPaymentsOutput) e
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No payments found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Payments))
 	for _, payment := range output.Payments {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\t%s\t%s\n", payment.ID, payment.Type, payment.Amount, payment.Asset, payment.Status, payment.CreatedAt.Format(time.RFC3339)); err != nil {
-			return err
-		}
+		rows = append(rows, []string{payment.ID, payment.Type, payment.Amount, payment.Asset, payment.Status, payment.CreatedAt.Format(time.RFC3339)})
+	}
+	if err := writeStyledRows(cmd, []string{"ID", "Type", "Amount", "Asset", "Status", "Created at"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore && output.Next != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
-		return err
+		return writeStyledNext(cmd, *output.Next)
 	}
 	return nil
 }
@@ -1799,23 +1761,14 @@ func renderPayment(cmd *cobra.Command, output paymentscmd.GetPaymentOutput) erro
 		return err
 	}
 	payment := output.Payment
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", payment.ID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Reference\t%s\n", payment.Reference); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Amount\t%s\n", payment.Amount); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Asset\t%s\n", payment.Asset); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Status\t%s\n", payment.Status); err != nil {
-		return err
-	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", payment.CreatedAt.Format(time.RFC3339))
-	return err
+	return writeStyledKeyValues(cmd,
+		styledKeyValue{Label: "ID", Value: payment.ID},
+		styledKeyValue{Label: "Reference", Value: payment.Reference},
+		styledKeyValue{Label: "Amount", Value: payment.Amount},
+		styledKeyValue{Label: "Asset", Value: payment.Asset},
+		styledKeyValue{Label: "Status", Value: payment.Status},
+		styledKeyValue{Label: "Created at", Value: payment.CreatedAt.Format(time.RFC3339)},
+	)
 }
 
 func newPaymentsPoolsListCommand() *cobra.Command {
@@ -2052,7 +2005,7 @@ func renderPaymentPoolCreated(cmd *cobra.Command, output paymentscmd.CreatePoolO
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Pool created with ID: %s\n", output.PoolID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Pool created with ID: %s", output.PoolID)))
 	return err
 }
 
@@ -2064,14 +2017,15 @@ func renderPaymentPools(cmd *cobra.Command, output paymentscmd.ListPoolsOutput) 
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No payment pools found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Pools))
 	for _, pool := range output.Pools {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\n", pool.ID, pool.Name, strings.Join(pool.Accounts, ",")); err != nil {
-			return err
-		}
+		rows = append(rows, []string{pool.ID, pool.Name, strings.Join(pool.Accounts, ",")})
+	}
+	if err := writeStyledRows(cmd, []string{"ID", "Name", "Accounts"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore && output.Next != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
-		return err
+		return writeStyledNext(cmd, *output.Next)
 	}
 	return nil
 }
@@ -2081,32 +2035,25 @@ func renderPaymentPool(cmd *cobra.Command, output paymentscmd.GetPoolOutput) err
 		return err
 	}
 	pool := output.Pool
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", pool.ID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Name\t%s\n", pool.Name); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Accounts\t%s\n", strings.Join(pool.Accounts, ",")); err != nil {
-		return err
+	rows := []styledKeyValue{
+		{Label: "ID", Value: pool.ID},
+		{Label: "Name", Value: pool.Name},
+		{Label: "Accounts", Value: strings.Join(pool.Accounts, ",")},
 	}
 	if pool.Type != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Type\t%s\n", pool.Type); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Type", Value: pool.Type})
 	}
 	if !pool.CreatedAt.IsZero() {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", pool.CreatedAt.Format(time.RFC3339))
-		return err
+		rows = append(rows, styledKeyValue{Label: "Created at", Value: pool.CreatedAt.Format(time.RFC3339)})
 	}
-	return nil
+	return writeStyledKeyValues(cmd, rows...)
 }
 
 func renderPaymentPoolDeleted(cmd *cobra.Command, output paymentscmd.DeletePoolOutput) error {
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Pool %s deleted.\n", output.PoolID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Pool %s deleted.", output.PoolID)))
 	return err
 }
 
@@ -2213,7 +2160,7 @@ func renderPaymentPoolAccountAdded(cmd *cobra.Command, output paymentscmd.PoolAc
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Account %s added to pool %s.\n", output.AccountID, output.PoolID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Account %s added to pool %s.", output.AccountID, output.PoolID)))
 	return err
 }
 
@@ -2221,7 +2168,7 @@ func renderPaymentPoolAccountRemoved(cmd *cobra.Command, output paymentscmd.Pool
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Account %s removed from pool %s.\n", output.AccountID, output.PoolID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Account %s removed from pool %s.", output.AccountID, output.PoolID)))
 	return err
 }
 
@@ -2421,7 +2368,7 @@ func renderPaymentPoolQueryUpdated(cmd *cobra.Command, output paymentscmd.Update
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Query updated for pool %s.\n", output.PoolID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Query updated for pool %s.", output.PoolID)))
 	return err
 }
 
@@ -2433,12 +2380,11 @@ func renderPaymentPoolBalances(cmd *cobra.Command, output paymentscmd.GetPoolBal
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No pool balances found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.Balances))
 	for _, balance := range output.Balances {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\n", balance.Asset, balance.Amount, strings.Join(balance.RelatedAccounts, ",")); err != nil {
-			return err
-		}
+		rows = append(rows, []string{balance.Asset, balance.Amount, strings.Join(balance.RelatedAccounts, ",")})
 	}
-	return nil
+	return writeStyledRows(cmd, []string{"Asset", "Amount", "Related accounts"}, rows)
 }
 
 func newPaymentsTasksShowCommand(use string, aliases []string, deprecated bool) *cobra.Command {
@@ -2499,32 +2445,22 @@ func renderPaymentTask(cmd *cobra.Command, output paymentscmd.GetTaskOutput) err
 		return err
 	}
 	task := output.Task
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", task.ID); err != nil {
-		return err
-	}
+	rows := []styledKeyValue{{Label: "ID", Value: task.ID}}
 	if task.ConnectorID != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector ID\t%s\n", task.ConnectorID); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Connector ID", Value: task.ConnectorID})
 	}
 	if task.CreatedObjectID != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Created object ID\t%s\n", task.CreatedObjectID); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Created object ID", Value: task.CreatedObjectID})
 	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Status\t%s\n", task.Status); err != nil {
-		return err
-	}
+	rows = append(rows, styledKeyValue{Label: "Status", Value: task.Status})
 	if task.Error != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Error\t%s\n", task.Error); err != nil {
-			return err
-		}
+		rows = append(rows, styledKeyValue{Label: "Error", Value: task.Error})
 	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", task.CreatedAt.Format(time.RFC3339)); err != nil {
-		return err
-	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Updated at\t%s\n", task.UpdatedAt.Format(time.RFC3339))
-	return err
+	rows = append(rows,
+		styledKeyValue{Label: "Created at", Value: task.CreatedAt.Format(time.RFC3339)},
+		styledKeyValue{Label: "Updated at", Value: task.UpdatedAt.Format(time.RFC3339)},
+	)
+	return writeStyledKeyValues(cmd, rows...)
 }
 
 func newPaymentsTransferInitiationListCommand() *cobra.Command {
@@ -2730,11 +2666,11 @@ func renderPaymentTransferInitiationCreated(cmd *cobra.Command, output paymentsc
 		return err
 	}
 	if output.TaskID != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Task ID: %s\n", output.TaskID); err != nil {
+		if err := writeStyledColonKeyValues(cmd, styledKeyValue{Label: "Task ID", Value: output.TaskID}); err != nil {
 			return err
 		}
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Transfer initiation created with ID: %s\n", output.TransferInitiationID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Transfer initiation created with ID: %s", output.TransferInitiationID)))
 	return err
 }
 
@@ -2799,23 +2735,15 @@ func renderPaymentTransferInitiations(cmd *cobra.Command, output paymentscmd.Lis
 		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No transfer initiations found."))
 		return err
 	}
+	rows := make([][]string, 0, len(output.TransferInitiations))
 	for _, transfer := range output.TransferInitiations {
-		if _, err := fmt.Fprintf(
-			cmd.OutOrStdout(),
-			"%s\t%s\t%s\t%s\t%s\t%s\n",
-			transfer.ID,
-			transfer.Type,
-			transfer.Amount,
-			transfer.Asset,
-			transfer.Status,
-			transfer.CreatedAt.Format(time.RFC3339),
-		); err != nil {
-			return err
-		}
+		rows = append(rows, []string{transfer.ID, transfer.Type, transfer.Amount, transfer.Asset, transfer.Status, transfer.CreatedAt.Format(time.RFC3339)})
+	}
+	if err := writeStyledRows(cmd, []string{"ID", "Type", "Amount", "Asset", "Status", "Created at"}, rows); err != nil {
+		return err
 	}
 	if output.HasMore && output.Next != nil {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
-		return err
+		return writeStyledNext(cmd, *output.Next)
 	}
 	return nil
 }
@@ -2825,26 +2753,15 @@ func renderPaymentTransferInitiation(cmd *cobra.Command, output paymentscmd.GetT
 		return err
 	}
 	transfer := output.TransferInitiation
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", transfer.ID); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Reference\t%s\n", transfer.Reference); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Amount\t%s\n", transfer.Amount); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Asset\t%s\n", transfer.Asset); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Status\t%s\n", transfer.Status); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector ID\t%s\n", transfer.ConnectorID); err != nil {
-		return err
-	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", transfer.CreatedAt.Format(time.RFC3339))
-	return err
+	return writeStyledKeyValues(cmd,
+		styledKeyValue{Label: "ID", Value: transfer.ID},
+		styledKeyValue{Label: "Reference", Value: transfer.Reference},
+		styledKeyValue{Label: "Amount", Value: transfer.Amount},
+		styledKeyValue{Label: "Asset", Value: transfer.Asset},
+		styledKeyValue{Label: "Status", Value: transfer.Status},
+		styledKeyValue{Label: "Connector ID", Value: transfer.ConnectorID},
+		styledKeyValue{Label: "Created at", Value: transfer.CreatedAt.Format(time.RFC3339)},
+	)
 }
 
 func newPaymentsTransferInitiationActionCommand(
@@ -2914,11 +2831,11 @@ func renderPaymentTransferInitiationAction(cmd *cobra.Command, output paymentscm
 		return err
 	}
 	if output.TaskID != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Task ID: %s\n", output.TaskID); err != nil {
+		if err := writeStyledColonKeyValues(cmd, styledKeyValue{Label: "Task ID", Value: output.TaskID}); err != nil {
 			return err
 		}
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Transfer initiation %s %s.\n", output.TransferInitiationID, done)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Transfer initiation %s %s.", output.TransferInitiationID, done)))
 	return err
 }
 
@@ -2988,7 +2905,7 @@ func renderPaymentTransferInitiationStatusUpdated(cmd *cobra.Command, output pay
 	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Transfer initiation %s status updated to %s.\n", output.TransferInitiationID, output.Status)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Transfer initiation %s status updated to %s.", output.TransferInitiationID, output.Status)))
 	return err
 }
 
@@ -3132,15 +3049,15 @@ func renderPaymentTransferInitiationReversed(cmd *cobra.Command, output payments
 		return err
 	}
 	if output.TaskID != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Task ID: %s\n", output.TaskID); err != nil {
+		if err := writeStyledColonKeyValues(cmd, styledKeyValue{Label: "Task ID", Value: output.TaskID}); err != nil {
 			return err
 		}
 	}
 	if output.ReversalID != "" {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Reversal ID: %s\n", output.ReversalID); err != nil {
+		if err := writeStyledColonKeyValues(cmd, styledKeyValue{Label: "Reversal ID", Value: output.ReversalID}); err != nil {
 			return err
 		}
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Transfer initiation %s reversed.\n", output.TransferInitiationID)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Transfer initiation %s reversed.", output.TransferInitiationID)))
 	return err
 }
