@@ -3087,6 +3087,62 @@ func TestLedgerListCloudStackExchangesStackToken(t *testing.T) {
 	}
 }
 
+func TestLedgerCloudStackMissingStackSuggestsAvailableStacks(t *testing.T) {
+	membershipTokenRequests := 0
+	var membershipServer *httptest.Server
+	membershipServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/.well-known/openid-configuration":
+			fmt.Fprintf(w, `{"token_endpoint":%q}`, membershipServer.URL+"/token")
+		case "/token":
+			membershipTokenRequests++
+			fmt.Fprint(w, `{"access_token":"org-token","token_type":"Bearer"}`)
+		case "/organizations/org_1/stacks/missing":
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, `{"errorCode":"INTERNAL","errorMessage":"not found"}`)
+		case "/_info":
+			fmt.Fprint(w, `{"version":"v1.0.0","consoleURL":"https://portal.example"}`)
+		case "/organizations/org_1/stacks":
+			fmt.Fprint(w, `{"data":[{"id":"stack_1","name":"Production","organizationId":"org_1","uri":"https://stack.example/api","regionID":"eu-west-1","version":"v3.2.4","status":"READY","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":true,"stargateEnabled":true,"synchronised":true,"modules":[]}]}`)
+		default:
+			t.Fatalf("unexpected membership path %s", r.URL.Path)
+		}
+	}))
+	defer membershipServer.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"--organization", "org_1",
+		"--stack", "missing",
+		"login",
+		"--target", "cloud",
+		"--membership-url", membershipServer.URL,
+		"--client-id", "client",
+		"--client-secret", "secret",
+	)
+	if err != nil {
+		t.Fatalf("login cloud client credentials: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t, "--config-dir", configDir, "ledger", "info")
+	if err == nil {
+		t.Fatal("expected missing stack to fail")
+	}
+	for _, expected := range []string{
+		`stack "missing" was not found in organization "org_1"`,
+		"available stacks: stack_1 (Production)",
+	} {
+		if !strings.Contains(err.Error(), expected) {
+			t.Fatalf("expected error to contain %q, got err=%v stderr=%s", expected, err, stderr)
+		}
+	}
+	if membershipTokenRequests == 0 {
+		t.Fatal("expected membership token request")
+	}
+}
+
 func TestLedgerInfoUsesCanonicalCommand(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

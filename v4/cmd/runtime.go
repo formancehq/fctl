@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -83,6 +84,9 @@ func stackRuntimeFromCommand(cmd *cobra.Command) (*runtime.Runtime, error) {
 		StackID:        rt.Target.Stack,
 	})
 	if err != nil {
+		if notFoundErr := cloudStackNotFoundError(cmd, rt, httpClient); notFoundErr != nil {
+			return nil, notFoundErr
+		}
 		return nil, fmt.Errorf("resolve cloud stack target: %w", err)
 	}
 	if output.Stack.URI == "" {
@@ -119,6 +123,30 @@ func stackRuntimeFromCommand(cmd *cobra.Command) (*runtime.Runtime, error) {
 	rt.Credentials = store
 	rt.Context.Auth = v4config.Auth{Method: v4config.AuthMethodToken, TokenRef: tokenRef}
 	return rt, nil
+}
+
+func cloudStackNotFoundError(cmd *cobra.Command, rt *runtime.Runtime, httpClient *http.Client) error {
+	output, err := cloudcmd.ListStacksService{Client: newMembershipClient(rt.Context.CloudURL, httpClient)}.Run(cmd.Context(), cloudcmd.ListStacksInput{
+		OrganizationID: rt.Target.Organization,
+	})
+	if err != nil {
+		return nil
+	}
+	available := make([]string, 0, len(output.Stacks))
+	for _, stack := range output.Stacks {
+		if stack.ID == rt.Target.Stack {
+			return nil
+		}
+		label := stack.ID
+		if stack.Name != "" {
+			label += " (" + stack.Name + ")"
+		}
+		available = append(available, label)
+	}
+	if len(available) == 0 {
+		return fmt.Errorf("resolve cloud stack target: stack %q was not found in organization %q", rt.Target.Stack, rt.Target.Organization)
+	}
+	return fmt.Errorf("resolve cloud stack target: stack %q was not found in organization %q; available stacks: %s", rt.Target.Stack, rt.Target.Organization, strings.Join(available, ", "))
 }
 
 func baseHTTPClient(options v4auth.Options) *http.Client {
