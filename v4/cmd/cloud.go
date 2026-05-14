@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	membership "github.com/formancehq/fctl/internal/membershipclient/v3"
 	"github.com/spf13/cobra"
@@ -146,6 +147,7 @@ func newCloudOrganizationsCommand() *cobra.Command {
 	command.AddCommand(newCloudOrganizationsDeleteCommand())
 	command.AddCommand(newCloudOrganizationsInvitationsCommand())
 	command.AddCommand(newCloudOrganizationsUsersCommand())
+	command.AddCommand(newCloudOrganizationsPoliciesCommand())
 	return command
 }
 
@@ -326,6 +328,220 @@ func newCloudOrganizationsUsersUnlinkCommand() *cobra.Command {
 	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
 	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm organization user unlink")
 	return command
+}
+
+func newCloudOrganizationsPoliciesCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "policies",
+		Short: "Manage Cloud organization policies",
+	}
+	command.AddCommand(newCloudOrganizationsPoliciesCreateCommand())
+	command.AddCommand(newCloudOrganizationsPoliciesListCommand())
+	command.AddCommand(newCloudOrganizationsPoliciesShowCommand())
+	command.AddCommand(newCloudOrganizationsPoliciesUpdateCommand())
+	command.AddCommand(newCloudOrganizationsPoliciesDeleteCommand())
+	command.AddCommand(newCloudOrganizationsPoliciesScopeActionCommand("add-scope", false))
+	command.AddCommand(newCloudOrganizationsPoliciesScopeActionCommand("remove-scope", true))
+	return command
+}
+
+func newCloudOrganizationsPoliciesCreateCommand() *cobra.Command {
+	var organizationID string
+	var description string
+
+	command := &cobra.Command{
+		Use:   "create <name>",
+		Short: "Create a Cloud organization policy",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.CreatePolicyService{Client: client}.Run(cmd.Context(), cloudcmd.PolicyInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				Name:           args[0],
+				Description:    description,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudPolicyMutated(cmd, output, "created")
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	command.Flags().StringVar(&description, "description", "", "Policy description")
+	return command
+}
+
+func newCloudOrganizationsPoliciesListCommand() *cobra.Command {
+	var organizationID string
+
+	command := &cobra.Command{
+		Use:   "list",
+		Short: "List Cloud organization policies",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ListPoliciesService{Client: client}.Run(cmd.Context(), resolveCloudOrganizationID(rt, organizationID))
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudPolicies(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	return command
+}
+
+func newCloudOrganizationsPoliciesShowCommand() *cobra.Command {
+	var organizationID string
+
+	command := &cobra.Command{
+		Use:   "show <policy-id>",
+		Short: "Show a Cloud organization policy",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			policyID, err := parseInt64Arg("policy id", args[0])
+			if err != nil {
+				return err
+			}
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ReadPolicyService{Client: client}.Run(cmd.Context(), cloudcmd.PolicyInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				PolicyID:       policyID,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudPolicy(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	return command
+}
+
+func newCloudOrganizationsPoliciesUpdateCommand() *cobra.Command {
+	var organizationID string
+	var name string
+	var description string
+
+	command := &cobra.Command{
+		Use:   "update <policy-id>",
+		Short: "Update a Cloud organization policy",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			policyID, err := parseInt64Arg("policy id", args[0])
+			if err != nil {
+				return err
+			}
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.UpdatePolicyService{Client: client}.Run(cmd.Context(), cloudcmd.PolicyInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				PolicyID:       policyID,
+				Name:           name,
+				Description:    description,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudPolicyMutated(cmd, output, "updated")
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	command.Flags().StringVar(&name, "name", "", "Policy name")
+	command.Flags().StringVar(&description, "description", "", "Policy description")
+	return command
+}
+
+func newCloudOrganizationsPoliciesDeleteCommand() *cobra.Command {
+	var organizationID string
+	var confirm bool
+
+	command := &cobra.Command{
+		Use:   "delete <policy-id>",
+		Short: "Delete a Cloud organization policy",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("cloud organizations policies delete requires --confirm")
+			}
+			return runCloudPolicyAction(cmd, organizationID, args[0], 0, "delete")
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm policy deletion")
+	return command
+}
+
+func newCloudOrganizationsPoliciesScopeActionCommand(action string, requiresConfirm bool) *cobra.Command {
+	var organizationID string
+	var confirm bool
+
+	command := &cobra.Command{
+		Use:   action + " <policy-id> <scope-id>",
+		Short: action + " on a Cloud organization policy",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if requiresConfirm && !confirm {
+				return fmt.Errorf("cloud organizations policies %s requires --confirm", action)
+			}
+			scopeID, err := parseInt64Arg("scope id", args[1])
+			if err != nil {
+				return err
+			}
+			return runCloudPolicyAction(cmd, organizationID, args[0], scopeID, action)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	if requiresConfirm {
+		command.Flags().BoolVar(&confirm, "confirm", false, "Confirm policy scope removal")
+	}
+	return command
+}
+
+func runCloudPolicyAction(cmd *cobra.Command, organizationID string, policyIDArg string, scopeID int64, action string) error {
+	policyID, err := parseInt64Arg("policy id", policyIDArg)
+	if err != nil {
+		return err
+	}
+	rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+	if err != nil {
+		return err
+	}
+	output, err := cloudcmd.PolicyActionService{Client: client, Action: action}.Run(cmd.Context(), cloudcmd.PolicyActionInput{
+		OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+		PolicyID:       policyID,
+		ScopeID:        scopeID,
+	})
+	if err != nil {
+		return err
+	}
+	if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+		return err
+	}
+	return renderCloudPolicyAction(cmd, output)
 }
 
 func newCloudOrganizationsInvitationsListCommand() *cobra.Command {
@@ -559,6 +775,14 @@ func optionalInt64(value int64) *int64 {
 	return &value
 }
 
+func parseInt64Arg(name string, value string) (int64, error) {
+	ret, err := strconv.ParseInt(value, 10, 64)
+	if err != nil || ret <= 0 {
+		return 0, fmt.Errorf("%s must be a positive integer", name)
+	}
+	return ret, nil
+}
+
 func membershipClientFromCommand(cmd *cobra.Command) (*membership.SDK, error) {
 	_, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
 	return client, err
@@ -652,6 +876,59 @@ func renderCloudOrganizationUserAction(cmd *cobra.Command, output cloudcmd.Organ
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud organization %s user %s %s.\n", output.OrganizationID, output.UserID, done)
 	return err
+}
+
+func renderCloudPolicies(cmd *cobra.Command, output cloudcmd.ListPoliciesOutput) error {
+	if len(output.Policies) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No policies found.")
+		return err
+	}
+	for _, policy := range output.Policies {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%d\t%s\t%t\n", policy.ID, policy.Name, policy.Protected); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func renderCloudPolicy(cmd *cobra.Command, output cloudcmd.PolicyOutput) error {
+	policy := output.Policy
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%d\nName\t%s\nProtected\t%t\n", policy.ID, policy.Name, policy.Protected); err != nil {
+		return err
+	}
+	if policy.Description != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Description\t%s\n", policy.Description); err != nil {
+			return err
+		}
+	}
+	for _, scope := range policy.Scopes {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Scope\t%d\t%s\n", scope.ID, scope.Label); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func renderCloudPolicyMutated(cmd *cobra.Command, output cloudcmd.PolicyOutput, action string) error {
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud policy %d %s.\n", output.Policy.ID, action)
+	return err
+}
+
+func renderCloudPolicyAction(cmd *cobra.Command, output cloudcmd.PolicyActionOutput) error {
+	switch output.Action {
+	case "delete":
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud policy %d deleted.\n", output.PolicyID)
+		return err
+	case "add-scope":
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud policy %d scope %d added.\n", output.PolicyID, output.ScopeID)
+		return err
+	case "remove-scope":
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud policy %d scope %d removed.\n", output.PolicyID, output.ScopeID)
+		return err
+	default:
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud policy %d %s completed.\n", output.PolicyID, output.Action)
+		return err
+	}
 }
 
 func renderCloudOrganization(cmd *cobra.Command, output cloudcmd.OrganizationOutput) error {

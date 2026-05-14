@@ -709,6 +709,122 @@ func TestCloudOrganizationUsers(t *testing.T) {
 	}
 }
 
+func TestCloudOrganizationPolicies(t *testing.T) {
+	policyBody := `{"data":{"id":42,"name":"Admin","description":"Admin policy","organizationId":"org_1","protected":false,"createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-01T00:00:00Z","scopes":[{"id":7,"label":"ledger:read","protected":false,"createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-01T00:00:00Z"}]}}`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/policies":
+			fmt.Fprint(w, `{"data":[{"id":42,"name":"Admin","description":"Admin policy","organizationId":"org_1","protected":false,"createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-01T00:00:00Z"}]}`)
+		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/policies/42":
+			fmt.Fprint(w, policyBody)
+		case r.Method == http.MethodPost && r.URL.Path == "/organizations/org_1/policies":
+			body := readRequestBody(t, r)
+			for _, expected := range []string{`"name":"Admin"`, `"description":"Admin policy"`} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected create policy body to contain %s, got %s", expected, body)
+				}
+			}
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, policyBody)
+		case r.Method == http.MethodPut && r.URL.Path == "/organizations/org_1/policies/42":
+			body := readRequestBody(t, r)
+			if !strings.Contains(body, `"name":"Admin updated"`) {
+				t.Fatalf("expected update policy body, got %s", body)
+			}
+			fmt.Fprint(w, policyBody)
+		case r.Method == http.MethodDelete && r.URL.Path == "/organizations/org_1/policies/42":
+			w.WriteHeader(http.StatusNoContent)
+		case r.Method == http.MethodPut && r.URL.Path == "/organizations/org_1/policies/42/scopes/7":
+			w.WriteHeader(http.StatusNoContent)
+		case r.Method == http.MethodDelete && r.URL.Path == "/organizations/org_1/policies/42/scopes/7":
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", server.URL,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "policies", "list")
+	if err != nil {
+		t.Fatalf("cloud organizations policies list: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "42\tAdmin\tfalse") {
+		t.Fatalf("unexpected policies list output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "policies", "show", "42")
+	if err != nil {
+		t.Fatalf("cloud organizations policies show: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{"ID\t42", "Name\tAdmin", "Scope\t7\tledger:read"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected policy output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "policies", "create", "Admin", "--description", "Admin policy")
+	if err != nil {
+		t.Fatalf("cloud organizations policies create: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud policy 42 created.\n" {
+		t.Fatalf("unexpected policy create output: %q", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "policies", "update", "42", "--name", "Admin updated")
+	if err != nil {
+		t.Fatalf("cloud organizations policies update: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud policy 42 updated.\n" {
+		t.Fatalf("unexpected policy update output: %q", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "policies", "add-scope", "42", "7")
+	if err != nil {
+		t.Fatalf("cloud organizations policies add-scope: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud policy 42 scope 7 added.\n" {
+		t.Fatalf("unexpected add-scope output: %q", stdout)
+	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "policies", "remove-scope", "42", "7")
+	if err == nil {
+		t.Fatal("expected remove-scope to require --confirm")
+	}
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "policies", "remove-scope", "42", "7", "--confirm")
+	if err != nil {
+		t.Fatalf("cloud organizations policies remove-scope: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud policy 42 scope 7 removed.\n" {
+		t.Fatalf("unexpected remove-scope output: %q", stdout)
+	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "policies", "delete", "42")
+	if err == nil {
+		t.Fatal("expected policy delete to require --confirm")
+	}
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "policies", "delete", "42", "--confirm")
+	if err != nil {
+		t.Fatalf("cloud organizations policies delete: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud policy 42 deleted.\n" {
+		t.Fatalf("unexpected policy delete output: %q", stdout)
+	}
+}
+
 func TestCloudCommandsRejectStackContext(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Fatalf("cloud command must reject stack contexts before network calls")

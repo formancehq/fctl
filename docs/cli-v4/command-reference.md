@@ -36,6 +36,13 @@ This reference lists the current canonical v4 command families implemented under
 - `fctl cloud organizations users show <user-id> --organization <organization-id>`
 - `fctl cloud organizations users link <user-id> --organization <organization-id> --policy-id <policy-id>`
 - `fctl cloud organizations users unlink <user-id> --organization <organization-id> --confirm`
+- `fctl cloud organizations policies create <name> --organization <organization-id>`
+- `fctl cloud organizations policies list --organization <organization-id>`
+- `fctl cloud organizations policies show <policy-id> --organization <organization-id>`
+- `fctl cloud organizations policies update <policy-id> --organization <organization-id> --name <name>`
+- `fctl cloud organizations policies delete <policy-id> --organization <organization-id> --confirm`
+- `fctl cloud organizations policies add-scope <policy-id> <scope-id> --organization <organization-id>`
+- `fctl cloud organizations policies remove-scope <policy-id> <scope-id> --organization <organization-id> --confirm`
 
 Cloud commands require a `cloud` or `cloud-stack` context. They are not required
 for direct local or self-hosted stack commands.

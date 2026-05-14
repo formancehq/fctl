@@ -26,6 +26,13 @@ type MembershipClient interface {
 	ReadUserOfOrganization(context.Context, operations.ReadUserOfOrganizationRequest, ...operations.Option) (*operations.ReadUserOfOrganizationResponse, error)
 	UpsertOrganizationUser(context.Context, operations.UpsertOrganizationUserRequest, ...operations.Option) (*operations.UpsertOrganizationUserResponse, error)
 	DeleteUserFromOrganization(context.Context, operations.DeleteUserFromOrganizationRequest, ...operations.Option) (*operations.DeleteUserFromOrganizationResponse, error)
+	ListPolicies(context.Context, operations.ListPoliciesRequest, ...operations.Option) (*operations.ListPoliciesResponse, error)
+	CreatePolicy(context.Context, operations.CreatePolicyRequest, ...operations.Option) (*operations.CreatePolicyResponse, error)
+	ReadPolicy(context.Context, operations.ReadPolicyRequest, ...operations.Option) (*operations.ReadPolicyResponse, error)
+	UpdatePolicy(context.Context, operations.UpdatePolicyRequest, ...operations.Option) (*operations.UpdatePolicyResponse, error)
+	DeletePolicy(context.Context, operations.DeletePolicyRequest, ...operations.Option) (*operations.DeletePolicyResponse, error)
+	AddScopeToPolicy(context.Context, operations.AddScopeToPolicyRequest, ...operations.Option) (*operations.AddScopeToPolicyResponse, error)
+	RemoveScopeFromPolicy(context.Context, operations.RemoveScopeFromPolicyRequest, ...operations.Option) (*operations.RemoveScopeFromPolicyResponse, error)
 }
 
 type UserSummary struct {
@@ -161,6 +168,55 @@ type OrganizationUserActionOutput struct {
 	UserID         string `json:"userID" yaml:"userID"`
 	Action         string `json:"action" yaml:"action"`
 	PolicyID       int64  `json:"policyID,omitempty" yaml:"policyID,omitempty"`
+}
+
+type ScopeSummary struct {
+	ID            int64  `json:"id" yaml:"id"`
+	Label         string `json:"label" yaml:"label"`
+	Description   string `json:"description,omitempty" yaml:"description,omitempty"`
+	ApplicationID string `json:"applicationID,omitempty" yaml:"applicationID,omitempty"`
+	Protected     *bool  `json:"protected,omitempty" yaml:"protected,omitempty"`
+}
+
+type PolicySummary struct {
+	ID             int64          `json:"id" yaml:"id"`
+	Name           string         `json:"name" yaml:"name"`
+	Description    string         `json:"description,omitempty" yaml:"description,omitempty"`
+	OrganizationID string         `json:"organizationID,omitempty" yaml:"organizationID,omitempty"`
+	Protected      bool           `json:"protected" yaml:"protected"`
+	Scopes         []ScopeSummary `json:"scopes,omitempty" yaml:"scopes,omitempty"`
+	CreatedAt      time.Time      `json:"createdAt" yaml:"createdAt"`
+	UpdatedAt      time.Time      `json:"updatedAt" yaml:"updatedAt"`
+}
+
+type ListPoliciesOutput struct {
+	OrganizationID string          `json:"organizationID" yaml:"organizationID"`
+	Policies       []PolicySummary `json:"policies" yaml:"policies"`
+}
+
+type PolicyOutput struct {
+	OrganizationID string        `json:"organizationID" yaml:"organizationID"`
+	Policy         PolicySummary `json:"policy" yaml:"policy"`
+}
+
+type PolicyInput struct {
+	OrganizationID string
+	PolicyID       int64
+	Name           string
+	Description    string
+}
+
+type PolicyActionInput struct {
+	OrganizationID string
+	PolicyID       int64
+	ScopeID        int64
+}
+
+type PolicyActionOutput struct {
+	OrganizationID string `json:"organizationID" yaml:"organizationID"`
+	PolicyID       int64  `json:"policyID" yaml:"policyID"`
+	ScopeID        int64  `json:"scopeID,omitempty" yaml:"scopeID,omitempty"`
+	Action         string `json:"action" yaml:"action"`
 }
 
 type MeService struct {
@@ -521,6 +577,141 @@ func (s OrganizationUserActionService) Run(ctx context.Context, input Organizati
 	}
 }
 
+type ListPoliciesService struct {
+	Client MembershipClient
+}
+
+func (s ListPoliciesService) Run(ctx context.Context, organizationID string) (ListPoliciesOutput, error) {
+	if s.Client == nil {
+		return ListPoliciesOutput{}, fmt.Errorf("membership client is required")
+	}
+	if organizationID == "" {
+		return ListPoliciesOutput{}, fmt.Errorf("organization id is required")
+	}
+	response, err := s.Client.ListPolicies(ctx, operations.ListPoliciesRequest{OrganizationID: organizationID})
+	if err != nil {
+		return ListPoliciesOutput{}, err
+	}
+	data := response.GetListPoliciesResponse().GetData()
+	policies := make([]PolicySummary, 0, len(data))
+	for i := range data {
+		policies = append(policies, policySummary(&data[i]))
+	}
+	return ListPoliciesOutput{OrganizationID: organizationID, Policies: policies}, nil
+}
+
+type CreatePolicyService struct {
+	Client MembershipClient
+}
+
+func (s CreatePolicyService) Run(ctx context.Context, input PolicyInput) (PolicyOutput, error) {
+	if s.Client == nil {
+		return PolicyOutput{}, fmt.Errorf("membership client is required")
+	}
+	if input.OrganizationID == "" {
+		return PolicyOutput{}, fmt.Errorf("organization id is required")
+	}
+	if input.Name == "" {
+		return PolicyOutput{}, fmt.Errorf("policy name is required")
+	}
+	body := &components.CreatePolicyRequest{Name: input.Name}
+	if input.Description != "" {
+		body.Description = &input.Description
+	}
+	response, err := s.Client.CreatePolicy(ctx, operations.CreatePolicyRequest{OrganizationID: input.OrganizationID, Body: body})
+	if err != nil {
+		return PolicyOutput{}, err
+	}
+	if response.GetCreatePolicyResponse().GetData() == nil {
+		return PolicyOutput{}, fmt.Errorf("cloud organizations policies create returned no policy")
+	}
+	return PolicyOutput{OrganizationID: input.OrganizationID, Policy: policySummary(response.GetCreatePolicyResponse().GetData())}, nil
+}
+
+type ReadPolicyService struct {
+	Client MembershipClient
+}
+
+func (s ReadPolicyService) Run(ctx context.Context, input PolicyInput) (PolicyOutput, error) {
+	if err := validatePolicyTarget(input.OrganizationID, input.PolicyID); err != nil {
+		return PolicyOutput{}, err
+	}
+	response, err := s.Client.ReadPolicy(ctx, operations.ReadPolicyRequest{OrganizationID: input.OrganizationID, PolicyID: input.PolicyID})
+	if err != nil {
+		return PolicyOutput{}, err
+	}
+	if response.GetReadPolicyResponse().GetData() == nil {
+		return PolicyOutput{}, fmt.Errorf("cloud organizations policies show returned no policy")
+	}
+	return PolicyOutput{OrganizationID: input.OrganizationID, Policy: policySummary(response.GetReadPolicyResponse().GetData())}, nil
+}
+
+type UpdatePolicyService struct {
+	Client MembershipClient
+}
+
+func (s UpdatePolicyService) Run(ctx context.Context, input PolicyInput) (PolicyOutput, error) {
+	if err := validatePolicyTarget(input.OrganizationID, input.PolicyID); err != nil {
+		return PolicyOutput{}, err
+	}
+	if input.Name == "" {
+		return PolicyOutput{}, fmt.Errorf("policy name is required")
+	}
+	body := &components.CreatePolicyRequest{Name: input.Name}
+	if input.Description != "" {
+		body.Description = &input.Description
+	}
+	response, err := s.Client.UpdatePolicy(ctx, operations.UpdatePolicyRequest{OrganizationID: input.OrganizationID, PolicyID: input.PolicyID, Body: body})
+	if err != nil {
+		return PolicyOutput{}, err
+	}
+	if response.GetUpdatePolicyResponse().GetData() == nil {
+		return PolicyOutput{}, fmt.Errorf("cloud organizations policies update returned no policy")
+	}
+	return PolicyOutput{OrganizationID: input.OrganizationID, Policy: policySummary(response.GetUpdatePolicyResponse().GetData())}, nil
+}
+
+type PolicyActionService struct {
+	Client MembershipClient
+	Action string
+}
+
+func (s PolicyActionService) Run(ctx context.Context, input PolicyActionInput) (PolicyActionOutput, error) {
+	if err := validatePolicyTarget(input.OrganizationID, input.PolicyID); err != nil {
+		return PolicyActionOutput{}, err
+	}
+	output := PolicyActionOutput{OrganizationID: input.OrganizationID, PolicyID: input.PolicyID, ScopeID: input.ScopeID, Action: s.Action}
+	switch s.Action {
+	case "delete":
+		_, err := s.Client.DeletePolicy(ctx, operations.DeletePolicyRequest{OrganizationID: input.OrganizationID, PolicyID: input.PolicyID})
+		return output, err
+	case "add-scope":
+		if input.ScopeID == 0 {
+			return PolicyActionOutput{}, fmt.Errorf("scope id is required")
+		}
+		_, err := s.Client.AddScopeToPolicy(ctx, operations.AddScopeToPolicyRequest{OrganizationID: input.OrganizationID, PolicyID: input.PolicyID, ScopeID: input.ScopeID})
+		return output, err
+	case "remove-scope":
+		if input.ScopeID == 0 {
+			return PolicyActionOutput{}, fmt.Errorf("scope id is required")
+		}
+		_, err := s.Client.RemoveScopeFromPolicy(ctx, operations.RemoveScopeFromPolicyRequest{OrganizationID: input.OrganizationID, PolicyID: input.PolicyID, ScopeID: input.ScopeID})
+		return output, err
+	default:
+		return PolicyActionOutput{}, fmt.Errorf("unsupported policy action %q", s.Action)
+	}
+}
+
+func validatePolicyTarget(organizationID string, policyID int64) error {
+	if organizationID == "" {
+		return fmt.Errorf("organization id is required")
+	}
+	if policyID == 0 {
+		return fmt.Errorf("policy id is required")
+	}
+	return nil
+}
+
 func organizationSummary(organization *components.OrganizationExpanded) OrganizationSummary {
 	if organization == nil {
 		return OrganizationSummary{}
@@ -543,6 +734,46 @@ func organizationSummary(organization *components.OrganizationExpanded) Organiza
 	if organization.Owner != nil {
 		owner := userSummary(organization.Owner)
 		summary.Owner = &owner
+	}
+	return summary
+}
+
+func policySummary(policy *components.Policy) PolicySummary {
+	if policy == nil {
+		return PolicySummary{}
+	}
+	summary := PolicySummary{
+		ID:        policy.ID,
+		Name:      policy.Name,
+		Protected: policy.Protected,
+		CreatedAt: policy.CreatedAt,
+		UpdatedAt: policy.UpdatedAt,
+	}
+	if policy.Description != nil {
+		summary.Description = *policy.Description
+	}
+	if policy.OrganizationID != nil {
+		summary.OrganizationID = *policy.OrganizationID
+	}
+	if len(policy.Scopes) > 0 {
+		summary.Scopes = make([]ScopeSummary, 0, len(policy.Scopes))
+		for i := range policy.Scopes {
+			summary.Scopes = append(summary.Scopes, scopeSummary(&policy.Scopes[i]))
+		}
+	}
+	return summary
+}
+
+func scopeSummary(scope *components.Scope) ScopeSummary {
+	if scope == nil {
+		return ScopeSummary{}
+	}
+	summary := ScopeSummary{ID: scope.ID, Label: scope.Label, Protected: scope.Protected}
+	if scope.Description != nil {
+		summary.Description = *scope.Description
+	}
+	if scope.ApplicationID != nil {
+		summary.ApplicationID = *scope.ApplicationID
 	}
 	return summary
 }
