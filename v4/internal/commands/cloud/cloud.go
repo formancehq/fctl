@@ -3,6 +3,7 @@ package cloud
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
@@ -42,6 +43,11 @@ type MembershipClient interface {
 	ReadAuthenticationProvider(context.Context, operations.ReadAuthenticationProviderRequest, ...operations.Option) (*operations.ReadAuthenticationProviderResponse, error)
 	UpsertAuthenticationProvider(context.Context, operations.UpsertAuthenticationProviderRequest, ...operations.Option) (*operations.UpsertAuthenticationProviderResponse, error)
 	DeleteAuthenticationProvider(context.Context, operations.DeleteAuthenticationProviderRequest, ...operations.Option) (*operations.DeleteAuthenticationProviderResponse, error)
+	OrganizationClientsRead(context.Context, operations.OrganizationClientsReadRequest, ...operations.Option) (*operations.OrganizationClientsReadResponse, error)
+	OrganizationClientRead(context.Context, operations.OrganizationClientReadRequest, ...operations.Option) (*operations.OrganizationClientReadResponse, error)
+	OrganizationClientCreate(context.Context, operations.OrganizationClientCreateRequest, ...operations.Option) (*operations.OrganizationClientCreateResponse, error)
+	OrganizationClientUpdate(context.Context, operations.OrganizationClientUpdateRequest, ...operations.Option) (*operations.OrganizationClientUpdateResponse, error)
+	OrganizationClientDelete(context.Context, operations.OrganizationClientDeleteRequest, ...operations.Option) (*operations.OrganizationClientDeleteResponse, error)
 }
 
 type UserSummary struct {
@@ -326,6 +332,50 @@ type AuthenticationProviderOutput struct {
 
 type AuthenticationProviderActionOutput struct {
 	OrganizationID string `json:"organizationID" yaml:"organizationID"`
+	Action         string `json:"action" yaml:"action"`
+}
+
+type OAuthClientSummary struct {
+	ID               string    `json:"id" yaml:"id"`
+	ClientID         string    `json:"clientID" yaml:"clientID"`
+	Name             string    `json:"name" yaml:"name"`
+	Description      string    `json:"description,omitempty" yaml:"description,omitempty"`
+	SecretLastDigits string    `json:"secretLastDigits,omitempty" yaml:"secretLastDigits,omitempty"`
+	Secret           string    `json:"secret,omitempty" yaml:"secret,omitempty"`
+	CreatedAt        time.Time `json:"createdAt" yaml:"createdAt"`
+	UpdatedAt        time.Time `json:"updatedAt" yaml:"updatedAt"`
+}
+
+type ListOAuthClientsInput struct {
+	OrganizationID string
+	Cursor         string
+	PageSize       int64
+}
+
+type ListOAuthClientsOutput struct {
+	OrganizationID string               `json:"organizationID" yaml:"organizationID"`
+	Clients        []OAuthClientSummary `json:"clients" yaml:"clients"`
+	HasMore        bool                 `json:"hasMore" yaml:"hasMore"`
+	PageSize       int64                `json:"pageSize" yaml:"pageSize"`
+	Next           string               `json:"next,omitempty" yaml:"next,omitempty"`
+	Previous       string               `json:"previous,omitempty" yaml:"previous,omitempty"`
+}
+
+type OAuthClientInput struct {
+	OrganizationID string
+	ClientID       string
+	Name           string
+	Description    string
+}
+
+type OAuthClientOutput struct {
+	OrganizationID string             `json:"organizationID" yaml:"organizationID"`
+	Client         OAuthClientSummary `json:"client" yaml:"client"`
+}
+
+type OAuthClientActionOutput struct {
+	OrganizationID string `json:"organizationID" yaml:"organizationID"`
+	ClientID       string `json:"clientID" yaml:"clientID"`
 	Action         string `json:"action" yaml:"action"`
 }
 
@@ -1052,6 +1102,154 @@ func (s DeleteAuthenticationProviderService) Run(ctx context.Context, organizati
 	return AuthenticationProviderActionOutput{OrganizationID: organizationID, Action: "delete"}, nil
 }
 
+type ListOAuthClientsService struct {
+	Client MembershipClient
+}
+
+func (s ListOAuthClientsService) Run(ctx context.Context, input ListOAuthClientsInput) (ListOAuthClientsOutput, error) {
+	if s.Client == nil {
+		return ListOAuthClientsOutput{}, fmt.Errorf("membership client is required")
+	}
+	if input.OrganizationID == "" {
+		return ListOAuthClientsOutput{}, fmt.Errorf("organization id is required")
+	}
+	if input.PageSize < 0 {
+		return ListOAuthClientsOutput{}, fmt.Errorf("page-size must be zero or greater")
+	}
+	request := operations.OrganizationClientsReadRequest{OrganizationID: input.OrganizationID}
+	if input.Cursor != "" {
+		request.Cursor = &input.Cursor
+	}
+	if input.PageSize > 0 {
+		request.PageSize = &input.PageSize
+	}
+	response, err := s.Client.OrganizationClientsRead(ctx, request)
+	if err != nil {
+		return ListOAuthClientsOutput{}, err
+	}
+	if response.GetReadOrganizationClientsResponse() == nil {
+		return ListOAuthClientsOutput{}, fmt.Errorf("cloud organizations oauth-clients list returned no clients")
+	}
+	cursor := response.GetReadOrganizationClientsResponse().GetData()
+	data := cursor.GetData()
+	clients := make([]OAuthClientSummary, 0, len(data))
+	for i := range data {
+		clients = append(clients, oauthClientSummary(&data[i], false))
+	}
+	output := ListOAuthClientsOutput{OrganizationID: input.OrganizationID, Clients: clients, HasMore: cursor.GetHasMore(), PageSize: cursor.GetPageSize()}
+	if cursor.GetNext() != nil {
+		output.Next = *cursor.GetNext()
+	}
+	if cursor.GetPrevious() != nil {
+		output.Previous = *cursor.GetPrevious()
+	}
+	return output, nil
+}
+
+type ReadOAuthClientService struct {
+	Client MembershipClient
+}
+
+func (s ReadOAuthClientService) Run(ctx context.Context, input OAuthClientInput) (OAuthClientOutput, error) {
+	if s.Client == nil {
+		return OAuthClientOutput{}, fmt.Errorf("membership client is required")
+	}
+	clientID, err := validateOAuthClientTarget(input.OrganizationID, input.ClientID)
+	if err != nil {
+		return OAuthClientOutput{}, err
+	}
+	response, err := s.Client.OrganizationClientRead(ctx, operations.OrganizationClientReadRequest{OrganizationID: input.OrganizationID, ClientID: clientID})
+	if err != nil {
+		return OAuthClientOutput{}, err
+	}
+	if response.GetReadOrganizationClientResponse() == nil {
+		return OAuthClientOutput{}, fmt.Errorf("cloud organizations oauth-clients show returned no client")
+	}
+	client := response.GetReadOrganizationClientResponse().GetData()
+	return OAuthClientOutput{OrganizationID: input.OrganizationID, Client: oauthClientSummary(&client, false)}, nil
+}
+
+type CreateOAuthClientService struct {
+	Client MembershipClient
+}
+
+func (s CreateOAuthClientService) Run(ctx context.Context, input OAuthClientInput) (OAuthClientOutput, error) {
+	if s.Client == nil {
+		return OAuthClientOutput{}, fmt.Errorf("membership client is required")
+	}
+	if input.OrganizationID == "" {
+		return OAuthClientOutput{}, fmt.Errorf("organization id is required")
+	}
+	body := &components.CreateOrganizationClientRequest{}
+	if input.Name != "" {
+		body.Name = &input.Name
+	}
+	if input.Description != "" {
+		body.Description = &input.Description
+	}
+	response, err := s.Client.OrganizationClientCreate(ctx, operations.OrganizationClientCreateRequest{OrganizationID: input.OrganizationID, Body: body})
+	if err != nil {
+		return OAuthClientOutput{}, err
+	}
+	if response.GetCreateOrganizationClientResponse() == nil {
+		return OAuthClientOutput{}, fmt.Errorf("cloud organizations oauth-clients create returned no client")
+	}
+	client := response.GetCreateOrganizationClientResponse().GetData()
+	return OAuthClientOutput{OrganizationID: input.OrganizationID, Client: oauthClientSummary(&client, true)}, nil
+}
+
+type UpdateOAuthClientService struct {
+	Client MembershipClient
+}
+
+func (s UpdateOAuthClientService) Run(ctx context.Context, input OAuthClientInput) (OAuthClientOutput, error) {
+	if s.Client == nil {
+		return OAuthClientOutput{}, fmt.Errorf("membership client is required")
+	}
+	clientID, err := validateOAuthClientTarget(input.OrganizationID, input.ClientID)
+	if err != nil {
+		return OAuthClientOutput{}, err
+	}
+	if input.Name == "" {
+		return OAuthClientOutput{}, fmt.Errorf("oauth client name is required")
+	}
+	body := &components.UpdateOrganizationClientRequest{Name: input.Name}
+	if input.Description != "" {
+		body.Description = &input.Description
+	}
+	if _, err := s.Client.OrganizationClientUpdate(ctx, operations.OrganizationClientUpdateRequest{OrganizationID: input.OrganizationID, ClientID: clientID, Body: body}); err != nil {
+		return OAuthClientOutput{}, err
+	}
+	response, err := s.Client.OrganizationClientRead(ctx, operations.OrganizationClientReadRequest{OrganizationID: input.OrganizationID, ClientID: clientID})
+	if err != nil {
+		return OAuthClientOutput{}, err
+	}
+	if response.GetReadOrganizationClientResponse() == nil {
+		return OAuthClientOutput{}, fmt.Errorf("cloud organizations oauth-clients update returned no client")
+	}
+	client := response.GetReadOrganizationClientResponse().GetData()
+	return OAuthClientOutput{OrganizationID: input.OrganizationID, Client: oauthClientSummary(&client, false)}, nil
+}
+
+type DeleteOAuthClientService struct {
+	Client MembershipClient
+}
+
+func (s DeleteOAuthClientService) Run(ctx context.Context, input OAuthClientInput) (OAuthClientActionOutput, error) {
+	if s.Client == nil {
+		return OAuthClientActionOutput{}, fmt.Errorf("membership client is required")
+	}
+	clientID, err := validateOAuthClientTarget(input.OrganizationID, input.ClientID)
+	if err != nil {
+		return OAuthClientActionOutput{}, err
+	}
+	_, err = s.Client.OrganizationClientDelete(ctx, operations.OrganizationClientDeleteRequest{OrganizationID: input.OrganizationID, ClientID: clientID})
+	if err != nil {
+		return OAuthClientActionOutput{}, err
+	}
+	return OAuthClientActionOutput{OrganizationID: input.OrganizationID, ClientID: oauthClientDisplayID(clientID), Action: "delete"}, nil
+}
+
 func authenticationProviderRequest(input AuthenticationProviderInput) (components.UpsertAuthenticationProviderRequest, error) {
 	if input.OrganizationID == "" {
 		return components.UpsertAuthenticationProviderRequest{}, fmt.Errorf("organization id is required")
@@ -1122,6 +1320,17 @@ func validateRegionTarget(organizationID string, regionID string) error {
 		return fmt.Errorf("region id is required")
 	}
 	return nil
+}
+
+func validateOAuthClientTarget(organizationID string, clientID string) (string, error) {
+	if organizationID == "" {
+		return "", fmt.Errorf("organization id is required")
+	}
+	clientID = normalizeOAuthClientID(clientID)
+	if clientID == "" {
+		return "", fmt.Errorf("oauth client id is required")
+	}
+	return clientID, nil
 }
 
 func validatePolicyTarget(organizationID string, policyID int64) error {
@@ -1341,6 +1550,38 @@ func authenticationProviderSummary(provider *components.Data) AuthenticationProv
 		}
 	}
 	return AuthenticationProviderSummary{}
+}
+
+func oauthClientSummary(client *components.OrganizationClient, includeSecret bool) OAuthClientSummary {
+	if client == nil {
+		return OAuthClientSummary{}
+	}
+	secret := client.GetSecret()
+	summary := OAuthClientSummary{
+		ID:               client.GetID(),
+		ClientID:         oauthClientDisplayID(client.GetID()),
+		Name:             client.GetName(),
+		Description:      client.GetDescription(),
+		SecretLastDigits: secret.GetLastDigits(),
+		CreatedAt:        client.GetCreatedAt(),
+		UpdatedAt:        client.GetUpdatedAt(),
+	}
+	if includeSecret && secret.GetClear() != nil {
+		summary.Secret = *secret.GetClear()
+	}
+	return summary
+}
+
+func normalizeOAuthClientID(clientID string) string {
+	return strings.TrimPrefix(clientID, "organization_")
+}
+
+func oauthClientDisplayID(clientID string) string {
+	clientID = normalizeOAuthClientID(clientID)
+	if clientID == "" {
+		return ""
+	}
+	return "organization_" + clientID
 }
 
 func invitationSummary(invitation *components.Invitation) InvitationSummary {

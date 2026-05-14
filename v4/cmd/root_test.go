@@ -698,6 +698,111 @@ func TestCloudOrganizationAuthenticationProvider(t *testing.T) {
 	}
 }
 
+func TestCloudOrganizationOAuthClients(t *testing.T) {
+	clientBody := `{"data":{"id":"client_1","name":"Robot","description":"CI client","secret":{"lastDigits":"1234"},"createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-02T00:00:00Z"}}`
+	createdClientBody := `{"data":{"id":"client_1","name":"Robot","description":"CI client","secret":{"lastDigits":"1234","clear":"clear-secret"},"createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-02T00:00:00Z"}}`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/clients":
+			fmt.Fprint(w, `{"data":{"pageSize":15,"hasMore":false,"data":[{"id":"client_1","name":"Robot","description":"CI client","secret":{"lastDigits":"1234"},"createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-02T00:00:00Z"}]}}`)
+		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/clients/client_1":
+			fmt.Fprint(w, clientBody)
+		case r.Method == http.MethodPost && r.URL.Path == "/organizations/org_1/clients":
+			body := readRequestBody(t, r)
+			for _, expected := range []string{`"name":"Robot"`, `"description":"CI client"`} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected OAuth client create body to contain %s, got %s", expected, body)
+				}
+			}
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, createdClientBody)
+		case r.Method == http.MethodPut && r.URL.Path == "/organizations/org_1/clients/client_1":
+			body := readRequestBody(t, r)
+			for _, expected := range []string{`"name":"Robot Updated"`, `"description":"Updated client"`} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected OAuth client update body to contain %s, got %s", expected, body)
+				}
+			}
+			w.WriteHeader(http.StatusNoContent)
+		case r.Method == http.MethodDelete && r.URL.Path == "/organizations/org_1/clients/client_1":
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", server.URL,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "oauth-clients", "list")
+	if err != nil {
+		t.Fatalf("cloud organizations oauth-clients list: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "organization_client_1\tRobot\t1234\tCI client") {
+		t.Fatalf("unexpected oauth clients list output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "oauth-clients", "show", "organization_client_1")
+	if err != nil {
+		t.Fatalf("cloud organizations oauth-clients show: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{"ClientID\torganization_client_1", "Name\tRobot", "SecretLastDigits\t1234", "Description\tCI client"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected oauth client output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "oauth-clients", "create", "--name", "Robot", "--description", "CI client")
+	if err == nil {
+		t.Fatal("expected oauth client create to require --confirm")
+	}
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "oauth-clients", "create", "--name", "Robot", "--description", "CI client", "--confirm")
+	if err != nil {
+		t.Fatalf("cloud organizations oauth-clients create: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{"ClientID\torganization_client_1", "Secret\tclear-secret"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected create output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "oauth-clients", "update", "organization_client_1", "--name", "Robot Updated", "--description", "Updated client")
+	if err == nil {
+		t.Fatal("expected oauth client update to require --confirm")
+	}
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "oauth-clients", "update", "organization_client_1", "--name", "Robot Updated", "--description", "Updated client", "--confirm")
+	if err != nil {
+		t.Fatalf("cloud organizations oauth-clients update: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud OAuth client organization_client_1 updated.\n" {
+		t.Fatalf("unexpected update output: %q", stdout)
+	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "oauth-clients", "delete", "organization_client_1")
+	if err == nil {
+		t.Fatal("expected oauth client delete to require --confirm")
+	}
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "oauth-clients", "delete", "organization_client_1", "--confirm")
+	if err != nil {
+		t.Fatalf("cloud organizations oauth-clients delete: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud OAuth client organization_client_1 deleted.\n" {
+		t.Fatalf("unexpected delete output: %q", stdout)
+	}
+}
+
 func TestCloudOrganizationInvitations(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

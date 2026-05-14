@@ -152,8 +152,200 @@ func newCloudOrganizationsCommand() *cobra.Command {
 	command.AddCommand(newCloudOrganizationsApplicationsCommand())
 	command.AddCommand(newCloudOrganizationsAuthenticationProviderCommand())
 	command.AddCommand(newCloudOrganizationsInvitationsCommand())
+	command.AddCommand(newCloudOrganizationsOAuthClientsCommand())
 	command.AddCommand(newCloudOrganizationsUsersCommand())
 	command.AddCommand(newCloudOrganizationsPoliciesCommand())
+	return command
+}
+
+func newCloudOrganizationsOAuthClientsCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "oauth-clients",
+		Short: "Manage Cloud organization OAuth clients",
+	}
+	command.AddCommand(newCloudOrganizationsOAuthClientsCreateCommand())
+	command.AddCommand(newCloudOrganizationsOAuthClientsListCommand())
+	command.AddCommand(newCloudOrganizationsOAuthClientsShowCommand())
+	command.AddCommand(newCloudOrganizationsOAuthClientsUpdateCommand())
+	command.AddCommand(newCloudOrganizationsOAuthClientsDeleteCommand())
+	return command
+}
+
+func newCloudOrganizationsOAuthClientsCreateCommand() *cobra.Command {
+	var organizationID string
+	var name string
+	var description string
+	var confirm bool
+
+	command := &cobra.Command{
+		Use:   "create",
+		Short: "Create a Cloud organization OAuth client",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if !confirm {
+				return fmt.Errorf("cloud organizations oauth-clients create requires --confirm")
+			}
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.CreateOAuthClientService{Client: client}.Run(cmd.Context(), cloudcmd.OAuthClientInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				Name:           name,
+				Description:    description,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudOAuthClientCreated(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	command.Flags().StringVar(&name, "name", "", "OAuth client name")
+	command.Flags().StringVar(&description, "description", "", "OAuth client description")
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm OAuth client creation")
+	return command
+}
+
+func newCloudOrganizationsOAuthClientsListCommand() *cobra.Command {
+	var organizationID string
+	var cursor string
+	var pageSize int64
+
+	command := &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"ls", "l"},
+		Short:   "List Cloud organization OAuth clients",
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ListOAuthClientsService{Client: client}.Run(cmd.Context(), cloudcmd.ListOAuthClientsInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				Cursor:         cursor,
+				PageSize:       pageSize,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudOAuthClients(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
+	command.Flags().Int64Var(&pageSize, "page-size", 0, "Page size")
+	return command
+}
+
+func newCloudOrganizationsOAuthClientsShowCommand() *cobra.Command {
+	var organizationID string
+
+	command := &cobra.Command{
+		Use:   "show <client-id>",
+		Short: "Show a Cloud organization OAuth client",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ReadOAuthClientService{Client: client}.Run(cmd.Context(), cloudcmd.OAuthClientInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				ClientID:       args[0],
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudOAuthClient(cmd, output, false)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	return command
+}
+
+func newCloudOrganizationsOAuthClientsUpdateCommand() *cobra.Command {
+	var organizationID string
+	var name string
+	var description string
+	var confirm bool
+
+	command := &cobra.Command{
+		Use:   "update <client-id>",
+		Short: "Update a Cloud organization OAuth client",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("cloud organizations oauth-clients update requires --confirm")
+			}
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.UpdateOAuthClientService{Client: client}.Run(cmd.Context(), cloudcmd.OAuthClientInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				ClientID:       args[0],
+				Name:           name,
+				Description:    description,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudOAuthClientMutated(cmd, output, "updated")
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	command.Flags().StringVar(&name, "name", "", "OAuth client name")
+	command.Flags().StringVar(&description, "description", "", "OAuth client description")
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm OAuth client update")
+	return command
+}
+
+func newCloudOrganizationsOAuthClientsDeleteCommand() *cobra.Command {
+	var organizationID string
+	var confirm bool
+
+	command := &cobra.Command{
+		Use:   "delete <client-id>",
+		Short: "Delete a Cloud organization OAuth client",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("cloud organizations oauth-clients delete requires --confirm")
+			}
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.DeleteOAuthClientService{Client: client}.Run(cmd.Context(), cloudcmd.OAuthClientInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				ClientID:       args[0],
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Cloud OAuth client %s deleted.\n", output.ClientID)
+			return err
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm OAuth client deletion")
 	return command
 }
 
@@ -1282,6 +1474,41 @@ func renderCloudAuthenticationProvider(cmd *cobra.Command, output cloudcmd.Authe
 
 func renderCloudAuthenticationProviderMutated(cmd *cobra.Command, output cloudcmd.AuthenticationProviderOutput, action string) error {
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud authentication provider %s %s.\n", output.Provider.Name, action)
+	return err
+}
+
+func renderCloudOAuthClients(cmd *cobra.Command, output cloudcmd.ListOAuthClientsOutput) error {
+	if len(output.Clients) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No OAuth clients found.")
+		return err
+	}
+	for _, client := range output.Clients {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\n", client.ClientID, client.Name, client.SecretLastDigits, client.Description); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func renderCloudOAuthClient(cmd *cobra.Command, output cloudcmd.OAuthClientOutput, includeSecret bool) error {
+	client := output.Client
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ClientID\t%s\nName\t%s\nSecretLastDigits\t%s\nDescription\t%s\n", client.ClientID, client.Name, client.SecretLastDigits, client.Description); err != nil {
+		return err
+	}
+	if includeSecret && client.Secret != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Secret\t%s\n", client.Secret); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func renderCloudOAuthClientCreated(cmd *cobra.Command, output cloudcmd.OAuthClientOutput) error {
+	return renderCloudOAuthClient(cmd, output, true)
+}
+
+func renderCloudOAuthClientMutated(cmd *cobra.Command, output cloudcmd.OAuthClientOutput, action string) error {
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud OAuth client %s %s.\n", output.Client.ClientID, action)
 	return err
 }
 
