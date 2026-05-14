@@ -2575,6 +2575,59 @@ func TestPaymentsPaymentsShowSelectsV3(t *testing.T) {
 	}
 }
 
+func TestPaymentsPaymentsSetMetadataSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/payments/pay_1/metadata":
+			if r.Method != http.MethodPatch {
+				t.Fatalf("expected PATCH, got %s", r.Method)
+			}
+			body := readRequestBody(t, r)
+			if !strings.Contains(body, `"metadata":{"env":"dev"}`) {
+				t.Fatalf("expected metadata body, got %s", body)
+			}
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t, "--config-dir", configDir, "context", "create", "stack", "local", "--stack-url", server.URL)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "payments", "set-metadata", "pay_1", "env=dev",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("set payment metadata: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v3") || !strings.Contains(stdout, "Metadata set on payment pay_1.") {
+		t.Fatalf("unexpected set payment metadata output:\n%s", stdout)
+	}
+}
+
+func TestPaymentsPaymentsSetMetadataRequiresConfirm(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "payments", "payments", "set-metadata", "pay_1", "env=dev")
+	if err == nil {
+		t.Fatal("expected payments payments set-metadata to require confirmation")
+	}
+	if stdout != "" || stderr != "" {
+		t.Fatalf("expected empty output, got stdout=%q stderr=%q", stdout, stderr)
+	}
+	if !strings.Contains(err.Error(), "payments payments set-metadata requires --confirm") {
+		t.Fatalf("expected confirmation error, got: %v", err)
+	}
+}
+
 func TestPaymentsPoolsListSelectsV3(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

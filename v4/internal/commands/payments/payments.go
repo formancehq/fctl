@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	FeatureGetPayment   capabilities.Feature = "getPayment"
-	FeatureListPayments capabilities.Feature = "listPayments"
+	FeatureGetPayment         capabilities.Feature = "getPayment"
+	FeatureListPayments       capabilities.Feature = "listPayments"
+	FeatureSetPaymentMetadata capabilities.Feature = "updatePaymentMetadata"
 )
 
 type PaymentSummary struct {
@@ -56,9 +57,24 @@ type GetPaymentOutput struct {
 	Payment    PaymentSummary          `json:"payment" yaml:"payment"`
 }
 
+type SetPaymentMetadataInput struct {
+	PaymentID string
+	Metadata  map[string]string
+}
+
+type SetPaymentMetadataOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	PaymentID  string                  `json:"paymentID" yaml:"paymentID"`
+}
+
 type ListPaymentsHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, ListPaymentsInput) (ListPaymentsOutput, error)
+}
+
+type SetPaymentMetadataHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, SetPaymentMetadataInput) (SetPaymentMetadataOutput, error)
 }
 
 type GetPaymentHandler struct {
@@ -68,6 +84,11 @@ type GetPaymentHandler struct {
 
 type ListPaymentsService struct {
 	Handlers []ListPaymentsHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type SetPaymentMetadataService struct {
+	Handlers []SetPaymentMetadataHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -125,6 +146,35 @@ func (s GetPaymentService) Run(ctx context.Context, input GetPaymentInput) (GetP
 	return output, nil
 }
 
+func (s SetPaymentMetadataService) Run(ctx context.Context, input SetPaymentMetadataInput) (SetPaymentMetadataOutput, error) {
+	if input.PaymentID == "" {
+		return SetPaymentMetadataOutput{}, fmt.Errorf("payment id is required")
+	}
+	if len(input.Metadata) == 0 {
+		return SetPaymentMetadataOutput{}, fmt.Errorf("payment metadata is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]SetPaymentMetadataHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return SetPaymentMetadataOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return SetPaymentMetadataOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return SetPaymentMetadataOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
 func SDKListPaymentsHandlers(sdk *formance.Formance) []ListPaymentsHandler {
 	return []ListPaymentsHandler{
 		{
@@ -157,6 +207,37 @@ func SDKListPaymentsHandlers(sdk *formance.Formance) []ListPaymentsHandler {
 					return ListPaymentsOutput{}, fmt.Errorf("payments v3 list payments returned no cursor")
 				}
 				return fromV3PaymentsCursor(response.V3PaymentsCursorResponse.Cursor), nil
+			},
+		},
+	}
+}
+
+func SDKSetPaymentMetadataHandlers(sdk *formance.Formance) []SetPaymentMetadataHandler {
+	return []SetPaymentMetadataHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input SetPaymentMetadataInput) (SetPaymentMetadataOutput, error) {
+				if _, err := sdk.Payments.V1.UpdateMetadata(ctx, operations.UpdateMetadataRequest{
+					PaymentID:   input.PaymentID,
+					RequestBody: input.Metadata,
+				}); err != nil {
+					return SetPaymentMetadataOutput{}, err
+				}
+				return SetPaymentMetadataOutput{PaymentID: input.PaymentID}, nil
+			},
+		},
+		{
+			APIVersion: "v3",
+			Run: func(ctx context.Context, input SetPaymentMetadataInput) (SetPaymentMetadataOutput, error) {
+				if _, err := sdk.Payments.V3.UpdatePaymentMetadata(ctx, operations.V3UpdatePaymentMetadataRequest{
+					PaymentID: input.PaymentID,
+					V3UpdatePaymentMetadataRequest: &shared.V3UpdatePaymentMetadataRequest{
+						Metadata: input.Metadata,
+					},
+				}); err != nil {
+					return SetPaymentMetadataOutput{}, err
+				}
+				return SetPaymentMetadataOutput{PaymentID: input.PaymentID}, nil
 			},
 		},
 	}

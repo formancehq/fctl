@@ -96,6 +96,7 @@ func newPaymentsPaymentsCommand() *cobra.Command {
 	command.AddCommand(newPaymentsPaymentsListCommand())
 	command.AddCommand(newPaymentsPaymentsShowCommand("show", nil, false))
 	command.AddCommand(newPaymentsPaymentsShowCommand("get", []string{"g"}, true))
+	command.AddCommand(newPaymentsPaymentsSetMetadataCommand())
 	return command
 }
 
@@ -1015,6 +1016,70 @@ func newPaymentsPaymentsShowCommand(use string, aliases []string, deprecated boo
 	}
 	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
 	return command
+}
+
+func newPaymentsPaymentsSetMetadataCommand() *cobra.Command {
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "set-metadata <payment-id> <key=value>...",
+		Aliases: []string{"sm", "set-meta"},
+		Short:   "Set payment metadata",
+		Args:    cobra.MinimumNArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("payments payments set-metadata requires --confirm")
+			}
+			metadata, err := parseMetadataFlags(args[1:])
+			if err != nil {
+				return err
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.SetPaymentMetadataService{
+				Handlers: paymentscmd.SDKSetPaymentMetadataHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureSetPaymentMetadata,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.SetPaymentMetadataInput{PaymentID: args[0], Metadata: metadata})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentMetadataSet(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm payment metadata update")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func renderPaymentMetadataSet(cmd *cobra.Command, output paymentscmd.SetPaymentMetadataOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Metadata set on payment %s.\n", output.PaymentID)
+	return err
 }
 
 func renderPayments(cmd *cobra.Command, output paymentscmd.ListPaymentsOutput) error {
