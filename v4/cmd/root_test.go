@@ -4752,6 +4752,201 @@ func TestWalletsBalancesShowSelectsV1(t *testing.T) {
 	}
 }
 
+func TestWalletsHoldsListSelectsV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"wallets","version":"1.2.0","health":true}]}`)
+		case "/api/wallets/holds":
+			if r.Method != http.MethodGet {
+				t.Fatalf("expected GET, got %s", r.Method)
+			}
+			if got := r.URL.Query().Get("walletID"); got != "wallet_1" {
+				t.Fatalf("expected walletID wallet_1, got %q", got)
+			}
+			if got := r.URL.Query().Get("pageSize"); got != "10" {
+				t.Fatalf("expected pageSize 10, got %q", got)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"id":"hold_1","walletID":"wallet_1","asset":"USD/2","description":"test","metadata":{"env":"dev"}}],"hasMore":false,"pageSize":10}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"wallets", "holds", "list",
+		"--wallet-id", "wallet_1",
+		"--page-size", "10",
+	)
+	if err != nil {
+		t.Fatalf("list wallet holds: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v1") || !strings.Contains(stdout, "hold_1\twallet_1\tUSD/2") {
+		t.Fatalf("unexpected list wallet holds output:\n%s", stdout)
+	}
+}
+
+func TestWalletsHoldsShowSelectsV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"wallets","version":"1.2.0","health":true}]}`)
+		case "/api/wallets/holds/hold_1":
+			if r.Method != http.MethodGet {
+				t.Fatalf("expected GET, got %s", r.Method)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":"hold_1","walletID":"wallet_1","asset":"USD/2","description":"test","originalAmount":100,"remaining":40,"metadata":{"env":"dev"}}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "wallets", "holds", "show", "hold_1")
+	if err != nil {
+		t.Fatalf("show wallet hold: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{"API version: v1", "ID\thold_1", "Wallet ID\twallet_1", "Asset\tUSD/2", "Remaining\t40"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected wallet hold output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestWalletsHoldsVoidRequiresConfirm(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "wallets", "holds", "void", "hold_1")
+	if err == nil {
+		t.Fatal("expected wallets holds void to require confirmation")
+	}
+	if stdout != "" {
+		t.Fatalf("expected empty stdout, got %q", stdout)
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(err.Error(), "wallets holds void requires --confirm") {
+		t.Fatalf("expected confirmation error, got: %v", err)
+	}
+}
+
+func TestWalletsHoldsVoidSelectsV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"wallets","version":"1.2.0","health":true}]}`)
+		case "/api/wallets/holds/hold_1/void":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			if got := r.Header.Get("Idempotency-Key"); got != "ik_1" {
+				t.Fatalf("expected idempotency key ik_1, got %q", got)
+			}
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"wallets", "holds", "void", "hold_1",
+		"--idempotency-key", "ik_1",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("void wallet hold: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v1") || !strings.Contains(stdout, "Hold hold_1 voided.") {
+		t.Fatalf("unexpected void wallet hold output:\n%s", stdout)
+	}
+}
+
+func TestWalletsHoldsConfirmSelectsV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"wallets","version":"1.2.0","health":true}]}`)
+		case "/api/wallets/holds/hold_1/confirm":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			body := readRequestBody(t, r)
+			for _, expected := range []string{`"amount":40`, `"final":true`} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected confirm hold body to contain %q, got:\n%s", expected, body)
+				}
+			}
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"wallets", "holds", "confirm", "hold_1",
+		"--amount", "40",
+		"--final",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("confirm wallet hold: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v1") || !strings.Contains(stdout, "Hold hold_1 confirmed.") {
+		t.Fatalf("unexpected confirm wallet hold output:\n%s", stdout)
+	}
+}
+
 func TestConfigMigrateV3DryRun(t *testing.T) {
 	v3Dir := writeV3CommandFixture(t, true)
 

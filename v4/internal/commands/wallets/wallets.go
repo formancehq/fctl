@@ -19,11 +19,15 @@ const (
 	FeatureCreateBalance capabilities.Feature = "createBalance"
 	FeatureCreditWallet  capabilities.Feature = "creditWallet"
 	FeatureDebitWallet   capabilities.Feature = "debitWallet"
+	FeatureConfirmHold   capabilities.Feature = "confirmHold"
 	FeatureGetBalance    capabilities.Feature = "getBalance"
+	FeatureGetHold       capabilities.Feature = "getHold"
 	FeatureGetWallet     capabilities.Feature = "getWallet"
 	FeatureListBalances  capabilities.Feature = "listBalances"
+	FeatureListHolds     capabilities.Feature = "listHolds"
 	FeatureListWallets   capabilities.Feature = "listWallets"
 	FeatureUpdateWallet  capabilities.Feature = "updateWallet"
+	FeatureVoidHold      capabilities.Feature = "voidHold"
 )
 
 type WalletSummary struct {
@@ -39,6 +43,16 @@ type BalanceSummary struct {
 	Priority  string              `json:"priority,omitempty" yaml:"priority,omitempty"`
 	ExpiresAt *time.Time          `json:"expiresAt,omitempty" yaml:"expiresAt,omitempty"`
 	Assets    map[string]*big.Int `json:"assets,omitempty" yaml:"assets,omitempty"`
+}
+
+type HoldSummary struct {
+	ID             string            `json:"id" yaml:"id"`
+	WalletID       string            `json:"walletID" yaml:"walletID"`
+	Asset          string            `json:"asset" yaml:"asset"`
+	Description    string            `json:"description,omitempty" yaml:"description,omitempty"`
+	OriginalAmount string            `json:"originalAmount,omitempty" yaml:"originalAmount,omitempty"`
+	Remaining      string            `json:"remaining,omitempty" yaml:"remaining,omitempty"`
+	Metadata       map[string]string `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 }
 
 type CreateWalletInput struct {
@@ -144,6 +158,43 @@ type GetBalanceOutput struct {
 	Balance    BalanceSummary          `json:"balance" yaml:"balance"`
 }
 
+type ListHoldsInput struct {
+	PageSize int64
+	Cursor   string
+	WalletID string
+	Metadata map[string]string
+}
+
+type ListHoldsOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	Holds      []HoldSummary           `json:"holds" yaml:"holds"`
+	HasMore    bool                    `json:"hasMore" yaml:"hasMore"`
+	PageSize   int64                   `json:"pageSize" yaml:"pageSize"`
+	Next       *string                 `json:"next,omitempty" yaml:"next,omitempty"`
+	Previous   *string                 `json:"previous,omitempty" yaml:"previous,omitempty"`
+}
+
+type GetHoldInput struct {
+	HoldID string
+}
+
+type GetHoldOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	Hold       HoldSummary             `json:"hold" yaml:"hold"`
+}
+
+type HoldActionInput struct {
+	HoldID         string
+	Amount         *big.Int
+	Final          *bool
+	IdempotencyKey string
+}
+
+type HoldActionOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	HoldID     string                  `json:"holdID" yaml:"holdID"`
+}
+
 type CreateWalletHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, CreateWalletInput) (CreateWalletOutput, error)
@@ -182,6 +233,21 @@ type ListBalancesHandler struct {
 type GetBalanceHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, GetBalanceInput) (GetBalanceOutput, error)
+}
+
+type ListHoldsHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, ListHoldsInput) (ListHoldsOutput, error)
+}
+
+type GetHoldHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, GetHoldInput) (GetHoldOutput, error)
+}
+
+type HoldActionHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, HoldActionInput) (HoldActionOutput, error)
 }
 
 type CreateWalletService struct {
@@ -226,6 +292,26 @@ type ListBalancesService struct {
 
 type GetBalanceService struct {
 	Handlers []GetBalanceHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type ListHoldsService struct {
+	Handlers []ListHoldsHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type GetHoldService struct {
+	Handlers []GetHoldHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type VoidHoldService struct {
+	Handlers []HoldActionHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type ConfirmHoldService struct {
+	Handlers []HoldActionHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -477,6 +563,97 @@ func (s GetBalanceService) Run(ctx context.Context, input GetBalanceInput) (GetB
 	return output, nil
 }
 
+func (s ListHoldsService) Run(ctx context.Context, input ListHoldsInput) (ListHoldsOutput, error) {
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]ListHoldsHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return ListHoldsOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return ListHoldsOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return ListHoldsOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func (s GetHoldService) Run(ctx context.Context, input GetHoldInput) (GetHoldOutput, error) {
+	if input.HoldID == "" {
+		return GetHoldOutput{}, fmt.Errorf("hold id is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]GetHoldHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return GetHoldOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return GetHoldOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return GetHoldOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func (s VoidHoldService) Run(ctx context.Context, input HoldActionInput) (HoldActionOutput, error) {
+	return runHoldActionService(ctx, input, s.Handlers, s.Resolve)
+}
+
+func (s ConfirmHoldService) Run(ctx context.Context, input HoldActionInput) (HoldActionOutput, error) {
+	return runHoldActionService(ctx, input, s.Handlers, s.Resolve)
+}
+
+func runHoldActionService(
+	ctx context.Context,
+	input HoldActionInput,
+	handlers []HoldActionHandler,
+	resolve func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error),
+) (HoldActionOutput, error) {
+	if input.HoldID == "" {
+		return HoldActionOutput{}, fmt.Errorf("hold id is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(handlers))
+	handlersByVersion := map[capabilities.APIVersion]HoldActionHandler{}
+	for _, handler := range handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlersByVersion[handler.APIVersion] = handler
+	}
+	selected, err := resolve(ctx, handlerVersions)
+	if err != nil {
+		return HoldActionOutput{}, err
+	}
+	handler, ok := handlersByVersion[selected]
+	if !ok {
+		return HoldActionOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return HoldActionOutput{}, err
+	}
+	output.APIVersion = selected
+	if output.HoldID == "" {
+		output.HoldID = input.HoldID
+	}
+	return output, nil
+}
+
 func SDKCreateWalletHandlers(sdk *formance.Formance) []CreateWalletHandler {
 	return []CreateWalletHandler{
 		{
@@ -683,6 +860,87 @@ func SDKGetBalanceHandlers(sdk *formance.Formance) []GetBalanceHandler {
 	}
 }
 
+func SDKListHoldsHandlers(sdk *formance.Formance) []ListHoldsHandler {
+	return []ListHoldsHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input ListHoldsInput) (ListHoldsOutput, error) {
+				response, err := sdk.Wallets.V1.GetHolds(ctx, operations.GetHoldsRequest{
+					PageSize: optionalInt64(input.PageSize),
+					Cursor:   optionalString(input.Cursor),
+					WalletID: optionalString(input.WalletID),
+					Metadata: input.Metadata,
+				})
+				if err != nil {
+					return ListHoldsOutput{}, err
+				}
+				if response.GetHoldsResponse == nil {
+					return ListHoldsOutput{}, fmt.Errorf("wallets v1 list holds returned no cursor")
+				}
+				return fromHoldsCursor(response.GetHoldsResponse.Cursor), nil
+			},
+		},
+	}
+}
+
+func SDKGetHoldHandlers(sdk *formance.Formance) []GetHoldHandler {
+	return []GetHoldHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input GetHoldInput) (GetHoldOutput, error) {
+				response, err := sdk.Wallets.V1.GetHold(ctx, operations.GetHoldRequest{HoldID: input.HoldID})
+				if err != nil {
+					return GetHoldOutput{}, err
+				}
+				if response.GetHoldResponse == nil {
+					return GetHoldOutput{}, fmt.Errorf("wallets v1 get hold returned no data")
+				}
+				return GetHoldOutput{Hold: fromExpandedHold(response.GetHoldResponse.Data)}, nil
+			},
+		},
+	}
+}
+
+func SDKVoidHoldHandlers(sdk *formance.Formance) []HoldActionHandler {
+	return []HoldActionHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input HoldActionInput) (HoldActionOutput, error) {
+				_, err := sdk.Wallets.V1.VoidHold(ctx, operations.VoidHoldRequest{
+					HoldID:         input.HoldID,
+					IdempotencyKey: optionalString(input.IdempotencyKey),
+				})
+				if err != nil {
+					return HoldActionOutput{}, err
+				}
+				return HoldActionOutput{HoldID: input.HoldID}, nil
+			},
+		},
+	}
+}
+
+func SDKConfirmHoldHandlers(sdk *formance.Formance) []HoldActionHandler {
+	return []HoldActionHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input HoldActionInput) (HoldActionOutput, error) {
+				_, err := sdk.Wallets.V1.ConfirmHold(ctx, operations.ConfirmHoldRequest{
+					HoldID:         input.HoldID,
+					IdempotencyKey: optionalString(input.IdempotencyKey),
+					ConfirmHoldRequest: &shared.ConfirmHoldRequest{
+						Amount: input.Amount,
+						Final:  input.Final,
+					},
+				})
+				if err != nil {
+					return HoldActionOutput{}, err
+				}
+				return HoldActionOutput{HoldID: input.HoldID}, nil
+			},
+		},
+	}
+}
+
 func fromWalletsCursor(cursor shared.ListWalletsResponseCursor) ListWalletsOutput {
 	wallets := make([]WalletSummary, 0, len(cursor.Data))
 	for _, wallet := range cursor.Data {
@@ -717,6 +975,54 @@ func fromBalancesCursor(walletID string, cursor shared.ListBalancesResponseCurso
 		PageSize: cursor.PageSize,
 		Next:     cursor.Next,
 		Previous: cursor.Previous,
+	}
+}
+
+func fromHoldsCursor(cursor shared.GetHoldsResponseCursor) ListHoldsOutput {
+	holds := make([]HoldSummary, 0, len(cursor.Data))
+	for _, hold := range cursor.Data {
+		holds = append(holds, fromHold(hold))
+	}
+	hasMore := false
+	if cursor.HasMore != nil {
+		hasMore = *cursor.HasMore
+	}
+	return ListHoldsOutput{
+		Holds:    holds,
+		HasMore:  hasMore,
+		PageSize: cursor.PageSize,
+		Next:     cursor.Next,
+		Previous: cursor.Previous,
+	}
+}
+
+func fromHold(hold shared.Hold) HoldSummary {
+	return HoldSummary{
+		ID:          hold.ID,
+		WalletID:    hold.WalletID,
+		Asset:       hold.Asset,
+		Description: hold.Description,
+		Metadata:    hold.Metadata,
+	}
+}
+
+func fromExpandedHold(hold shared.ExpandedDebitHold) HoldSummary {
+	originalAmount := ""
+	if hold.OriginalAmount != nil {
+		originalAmount = hold.OriginalAmount.String()
+	}
+	remaining := ""
+	if hold.Remaining != nil {
+		remaining = hold.Remaining.String()
+	}
+	return HoldSummary{
+		ID:             hold.ID,
+		WalletID:       hold.WalletID,
+		Asset:          hold.Asset,
+		Description:    hold.Description,
+		OriginalAmount: originalAmount,
+		Remaining:      remaining,
+		Metadata:       hold.Metadata,
 	}
 }
 

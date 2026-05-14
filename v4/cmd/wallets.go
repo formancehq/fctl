@@ -23,11 +23,269 @@ func newWalletsCommand() *cobra.Command {
 	command.AddCommand(newWalletsCreditCommand())
 	command.AddCommand(newWalletsDebitCommand())
 	command.AddCommand(newWalletsBalancesCommand())
+	command.AddCommand(newWalletsHoldsCommand())
 	command.AddCommand(newWalletsListCommand())
 	command.AddCommand(newWalletsShowCommand("show", nil, false))
 	command.AddCommand(newWalletsShowCommand("get", []string{"g"}, true))
 	command.AddCommand(newWalletsUpdateCommand())
 	return command
+}
+
+func newWalletsHoldsCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "holds",
+		Short: "Manage wallet holds",
+	}
+	command.AddCommand(newWalletsHoldsListCommand())
+	command.AddCommand(newWalletsHoldsShowCommand())
+	command.AddCommand(newWalletsHoldsVoidCommand())
+	command.AddCommand(newWalletsHoldsConfirmCommand())
+	return command
+}
+
+func newWalletsHoldsListCommand() *cobra.Command {
+	var pageSize int64 = 15
+	var cursor string
+	var walletID string
+	var metadata []string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"ls", "l"},
+		Short:   "List wallet holds",
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			parsedMetadata, err := parseMetadataFlags(metadata)
+			if err != nil {
+				return err
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := walletscmd.ListHoldsService{
+				Handlers: walletscmd.SDKListHoldsHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         walletscmd.ProductWallets,
+						Feature:         walletscmd.FeatureListHolds,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), walletscmd.ListHoldsInput{
+				PageSize: pageSize,
+				Cursor:   cursor,
+				WalletID: walletID,
+				Metadata: parsedMetadata,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderWalletHolds(cmd, output)
+		},
+	}
+	command.Flags().Int64Var(&pageSize, "page-size", 15, "Page size")
+	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
+	command.Flags().StringVar(&walletID, "wallet-id", "", "Filter holds by wallet ID")
+	command.Flags().StringArrayVar(&metadata, "metadata", nil, "Metadata filter as key=value")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin wallets API version")
+	return command
+}
+
+func newWalletsHoldsShowCommand() *cobra.Command {
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "show <hold-id>",
+		Short: "Show a wallet hold",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := walletscmd.GetHoldService{
+				Handlers: walletscmd.SDKGetHoldHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         walletscmd.ProductWallets,
+						Feature:         walletscmd.FeatureGetHold,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), walletscmd.GetHoldInput{HoldID: args[0]})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderWalletHold(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin wallets API version")
+	return command
+}
+
+func newWalletsHoldsVoidCommand() *cobra.Command {
+	var confirm bool
+	var idempotencyKey string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "void <hold-id>",
+		Short: "Void a wallet hold",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("wallets holds void requires --confirm")
+			}
+			if cmd.Flags().Changed("ik") {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Flag --ik has been deprecated, use --idempotency-key")
+			}
+			output, err := runWalletHoldActionCommand(cmd, walletHoldActionCommandRequest{
+				Feature:        walletscmd.FeatureVoidHold,
+				Handlers:       walletscmd.SDKVoidHoldHandlers,
+				HoldID:         args[0],
+				IdempotencyKey: idempotencyKey,
+				APIVersion:     apiVersion,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderWalletHoldVoided(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm hold void")
+	command.Flags().StringVar(&idempotencyKey, "idempotency-key", "", "Idempotency key")
+	command.Flags().StringVar(&idempotencyKey, "ik", "", "Deprecated alias for --idempotency-key")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin wallets API version")
+	return command
+}
+
+func newWalletsHoldsConfirmCommand() *cobra.Command {
+	var confirm bool
+	var amount string
+	var final bool
+	var idempotencyKey string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "confirm <hold-id>",
+		Short: "Confirm a wallet hold",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("wallets holds confirm requires --confirm")
+			}
+			if cmd.Flags().Changed("ik") {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Flag --ik has been deprecated, use --idempotency-key")
+			}
+			parsedAmount, err := parseOptionalBigInt(amount, "amount")
+			if err != nil {
+				return err
+			}
+			var finalPtr *bool
+			if cmd.Flags().Changed("final") {
+				finalPtr = &final
+			}
+			output, err := runWalletHoldActionCommand(cmd, walletHoldActionCommandRequest{
+				Feature:        walletscmd.FeatureConfirmHold,
+				Handlers:       walletscmd.SDKConfirmHoldHandlers,
+				HoldID:         args[0],
+				Amount:         parsedAmount,
+				Final:          finalPtr,
+				IdempotencyKey: idempotencyKey,
+				APIVersion:     apiVersion,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderWalletHoldConfirmed(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm hold confirmation")
+	command.Flags().StringVar(&amount, "amount", "", "Amount to confirm")
+	command.Flags().BoolVar(&final, "final", false, "Finalize the hold confirmation")
+	command.Flags().StringVar(&idempotencyKey, "idempotency-key", "", "Idempotency key")
+	command.Flags().StringVar(&idempotencyKey, "ik", "", "Deprecated alias for --idempotency-key")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin wallets API version")
+	return command
+}
+
+type walletHoldActionCommandRequest struct {
+	Feature        capabilities.Feature
+	Handlers       func(*formance.Formance) []walletscmd.HoldActionHandler
+	HoldID         string
+	Amount         *big.Int
+	Final          *bool
+	IdempotencyKey string
+	APIVersion     string
+}
+
+func runWalletHoldActionCommand(cmd *cobra.Command, request walletHoldActionCommandRequest) (walletscmd.HoldActionOutput, error) {
+	rt, err := runtimeFromCommand(cmd)
+	if err != nil {
+		return walletscmd.HoldActionOutput{}, err
+	}
+	httpClient, err := rt.HTTPClient(cmd.Context())
+	if err != nil {
+		return walletscmd.HoldActionOutput{}, err
+	}
+	sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+	service := walletscmd.VoidHoldService{
+		Handlers: request.Handlers(sdk),
+		Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			versionRequest := capabilities.VersionResolutionRequest{
+				Product:         walletscmd.ProductWallets,
+				Feature:         request.Feature,
+				HandlerVersions: handlerVersions,
+			}
+			if request.APIVersion != "" {
+				versionRequest.Policy = capabilities.VersionPolicyPinned
+				versionRequest.PinnedVersion = capabilities.APIVersion(request.APIVersion)
+			}
+			return rt.ResolveAPIVersion(ctx, versionRequest)
+		},
+	}
+	return service.Run(cmd.Context(), walletscmd.HoldActionInput{
+		HoldID:         request.HoldID,
+		Amount:         request.Amount,
+		Final:          request.Final,
+		IdempotencyKey: request.IdempotencyKey,
+	})
 }
 
 func newWalletsBalancesCommand() *cobra.Command {
@@ -729,6 +987,69 @@ func renderWalletBalance(cmd *cobra.Command, output walletscmd.GetBalanceOutput)
 		}
 	}
 	return nil
+}
+
+func renderWalletHolds(cmd *cobra.Command, output walletscmd.ListHoldsOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if len(output.Holds) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No holds found.")
+		return err
+	}
+	for _, hold := range output.Holds {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\n", hold.ID, hold.WalletID, hold.Asset); err != nil {
+			return err
+		}
+	}
+	if output.HasMore && output.Next != nil {
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
+		return err
+	}
+	return nil
+}
+
+func renderWalletHold(cmd *cobra.Command, output walletscmd.GetHoldOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	hold := output.Hold
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", hold.ID); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Wallet ID\t%s\n", hold.WalletID); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Asset\t%s\n", hold.Asset); err != nil {
+		return err
+	}
+	if hold.OriginalAmount != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Original amount\t%s\n", hold.OriginalAmount); err != nil {
+			return err
+		}
+	}
+	if hold.Remaining != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Remaining\t%s\n", hold.Remaining); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func renderWalletHoldVoided(cmd *cobra.Command, output walletscmd.HoldActionOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Hold %s voided.\n", output.HoldID)
+	return err
+}
+
+func renderWalletHoldConfirmed(cmd *cobra.Command, output walletscmd.HoldActionOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Hold %s confirmed.\n", output.HoldID)
+	return err
 }
 
 func renderWalletCredited(cmd *cobra.Command, output walletscmd.WalletMovementOutput) error {

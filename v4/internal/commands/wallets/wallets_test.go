@@ -218,6 +218,91 @@ func TestGetBalanceServiceRequiresBalanceName(t *testing.T) {
 	}
 }
 
+func TestListHoldsServiceSelectsResolvedHandler(t *testing.T) {
+	service := ListHoldsService{
+		Handlers: []ListHoldsHandler{
+			{
+				APIVersion: "v1",
+				Run: func(_ context.Context, input ListHoldsInput) (ListHoldsOutput, error) {
+					if input.PageSize != 10 || input.WalletID != "wallet_1" || input.Metadata["env"] != "dev" {
+						t.Fatalf("unexpected input: %#v", input)
+					}
+					return ListHoldsOutput{PageSize: input.PageSize}, nil
+				},
+			},
+		},
+		Resolve: func(_ context.Context, versions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			assertAPIVersions(t, versions, []capabilities.APIVersion{"v1"})
+			return "v1", nil
+		},
+	}
+
+	output, err := service.Run(context.Background(), ListHoldsInput{PageSize: 10, WalletID: "wallet_1", Metadata: map[string]string{"env": "dev"}})
+	if err != nil {
+		t.Fatalf("run service: %v", err)
+	}
+	if output.APIVersion != "v1" || output.PageSize != 10 {
+		t.Fatalf("unexpected output: %#v", output)
+	}
+}
+
+func TestGetHoldServiceRequiresHoldID(t *testing.T) {
+	service := GetHoldService{
+		Handlers: []GetHoldHandler{{APIVersion: "v1"}},
+		Resolve: func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			t.Fatal("resolver should not run")
+			return "", nil
+		},
+	}
+
+	if _, err := service.Run(context.Background(), GetHoldInput{}); err == nil {
+		t.Fatal("expected hold id validation error")
+	}
+}
+
+func TestConfirmHoldServiceSelectsResolvedHandler(t *testing.T) {
+	service := ConfirmHoldService{
+		Handlers: []HoldActionHandler{
+			{
+				APIVersion: "v1",
+				Run: func(_ context.Context, input HoldActionInput) (HoldActionOutput, error) {
+					if input.HoldID != "hold_1" || input.Amount.String() != "100" || input.Final == nil || !*input.Final {
+						t.Fatalf("unexpected input: %#v", input)
+					}
+					return HoldActionOutput{HoldID: input.HoldID}, nil
+				},
+			},
+		},
+		Resolve: func(_ context.Context, versions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			assertAPIVersions(t, versions, []capabilities.APIVersion{"v1"})
+			return "v1", nil
+		},
+	}
+
+	final := true
+	output, err := service.Run(context.Background(), HoldActionInput{HoldID: "hold_1", Amount: big.NewInt(100), Final: &final})
+	if err != nil {
+		t.Fatalf("run service: %v", err)
+	}
+	if output.APIVersion != "v1" || output.HoldID != "hold_1" {
+		t.Fatalf("unexpected output: %#v", output)
+	}
+}
+
+func TestVoidHoldServiceRequiresHoldID(t *testing.T) {
+	service := VoidHoldService{
+		Handlers: []HoldActionHandler{{APIVersion: "v1"}},
+		Resolve: func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			t.Fatal("resolver should not run")
+			return "", nil
+		},
+	}
+
+	if _, err := service.Run(context.Background(), HoldActionInput{}); err == nil {
+		t.Fatal("expected hold id validation error")
+	}
+}
+
 func assertAPIVersions(t *testing.T, got []capabilities.APIVersion, want []capabilities.APIVersion) {
 	t.Helper()
 	if len(got) != len(want) {
