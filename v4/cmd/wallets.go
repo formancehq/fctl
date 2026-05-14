@@ -53,7 +53,7 @@ func newWalletsTransactionsListCommand() *cobra.Command {
 		Short:   "List wallet transactions",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -127,7 +127,7 @@ func newWalletsHoldsListCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -182,7 +182,7 @@ func newWalletsHoldsShowCommand() *cobra.Command {
 		Short: "Show a wallet hold",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -323,7 +323,7 @@ type walletHoldActionCommandRequest struct {
 }
 
 func runWalletHoldActionCommand(cmd *cobra.Command, request walletHoldActionCommandRequest) (walletscmd.HoldActionOutput, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return walletscmd.HoldActionOutput{}, err
 	}
@@ -392,7 +392,7 @@ func newWalletsBalancesCreateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -450,7 +450,7 @@ func newWalletsBalancesListCommand() *cobra.Command {
 		Short:   "List wallet balances",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -497,7 +497,7 @@ func newWalletsBalancesShowCommand() *cobra.Command {
 		Short:   "Show a wallet balance",
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -676,7 +676,7 @@ type walletMovementCommandRequest struct {
 }
 
 func runWalletMovementCommand(cmd *cobra.Command, request walletMovementCommandRequest) (walletscmd.WalletMovementOutput, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return walletscmd.WalletMovementOutput{}, err
 	}
@@ -734,7 +734,7 @@ func newWalletsCreateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -797,7 +797,7 @@ func newWalletsListCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -856,7 +856,7 @@ func newWalletsShowCommand(use string, aliases []string, deprecated bool) *cobra
 			if deprecated {
 				fmt.Fprintln(cmd.ErrOrStderr(), "Command wallets get has been deprecated, use wallets show")
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -919,7 +919,7 @@ func newWalletsUpdateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -988,7 +988,7 @@ func parseOptionalBigInt(value string, name string) (*big.Int, error) {
 }
 
 func renderWalletCreated(cmd *cobra.Command, output walletscmd.CreateWalletOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Wallet created with ID: %s\n", output.WalletID)
@@ -996,7 +996,7 @@ func renderWalletCreated(cmd *cobra.Command, output walletscmd.CreateWalletOutpu
 }
 
 func renderWalletBalanceCreated(cmd *cobra.Command, output walletscmd.CreateBalanceOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Balance %s created on wallet %s.\n", output.BalanceName, output.WalletID)
@@ -1004,11 +1004,11 @@ func renderWalletBalanceCreated(cmd *cobra.Command, output walletscmd.CreateBala
 }
 
 func renderWalletBalances(cmd *cobra.Command, output walletscmd.ListBalancesOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Balances) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No balances found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No balances found."))
 		return err
 	}
 	for _, balance := range output.Balances {
@@ -1024,7 +1024,7 @@ func renderWalletBalances(cmd *cobra.Command, output walletscmd.ListBalancesOutp
 }
 
 func renderWalletBalance(cmd *cobra.Command, output walletscmd.GetBalanceOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	balance := output.Balance
@@ -1057,11 +1057,11 @@ func renderWalletBalance(cmd *cobra.Command, output walletscmd.GetBalanceOutput)
 }
 
 func renderWalletHolds(cmd *cobra.Command, output walletscmd.ListHoldsOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Holds) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No holds found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No holds found."))
 		return err
 	}
 	for _, hold := range output.Holds {
@@ -1077,7 +1077,7 @@ func renderWalletHolds(cmd *cobra.Command, output walletscmd.ListHoldsOutput) er
 }
 
 func renderWalletHold(cmd *cobra.Command, output walletscmd.GetHoldOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	hold := output.Hold
@@ -1104,7 +1104,7 @@ func renderWalletHold(cmd *cobra.Command, output walletscmd.GetHoldOutput) error
 }
 
 func renderWalletHoldVoided(cmd *cobra.Command, output walletscmd.HoldActionOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Hold %s voided.\n", output.HoldID)
@@ -1112,7 +1112,7 @@ func renderWalletHoldVoided(cmd *cobra.Command, output walletscmd.HoldActionOutp
 }
 
 func renderWalletHoldConfirmed(cmd *cobra.Command, output walletscmd.HoldActionOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Hold %s confirmed.\n", output.HoldID)
@@ -1120,11 +1120,11 @@ func renderWalletHoldConfirmed(cmd *cobra.Command, output walletscmd.HoldActionO
 }
 
 func renderWalletTransactions(cmd *cobra.Command, output walletscmd.ListTransactionsOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Transactions) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No transactions found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No transactions found."))
 		return err
 	}
 	for _, transaction := range output.Transactions {
@@ -1147,7 +1147,7 @@ func renderWalletTransactions(cmd *cobra.Command, output walletscmd.ListTransact
 }
 
 func renderWalletCredited(cmd *cobra.Command, output walletscmd.WalletMovementOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Wallet %s credited.\n", output.WalletID)
@@ -1155,7 +1155,7 @@ func renderWalletCredited(cmd *cobra.Command, output walletscmd.WalletMovementOu
 }
 
 func renderWalletDebited(cmd *cobra.Command, output walletscmd.WalletMovementOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if output.HoldID != "" {
@@ -1168,11 +1168,11 @@ func renderWalletDebited(cmd *cobra.Command, output walletscmd.WalletMovementOut
 }
 
 func renderWallets(cmd *cobra.Command, output walletscmd.ListWalletsOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Wallets) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No wallets found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No wallets found."))
 		return err
 	}
 	for _, wallet := range output.Wallets {
@@ -1188,7 +1188,7 @@ func renderWallets(cmd *cobra.Command, output walletscmd.ListWalletsOutput) erro
 }
 
 func renderWallet(cmd *cobra.Command, output walletscmd.GetWalletOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	wallet := output.Wallet
@@ -1206,7 +1206,7 @@ func renderWallet(cmd *cobra.Command, output walletscmd.GetWalletOutput) error {
 }
 
 func renderWalletUpdated(cmd *cobra.Command, output walletscmd.UpdateWalletOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Wallet %s updated.\n", output.WalletID)

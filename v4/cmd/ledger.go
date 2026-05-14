@@ -2257,11 +2257,11 @@ func newLedgerTransactionsRevertCommand() *cobra.Command {
 }
 
 func renderLedgers(cmd *cobra.Command, output ledgercmd.ListLedgersOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Ledgers) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No ledgers found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No ledgers found."))
 		return err
 	}
 	rows := make([][]string, 0, len(output.Ledgers))
@@ -2276,11 +2276,11 @@ func renderLedgers(cmd *cobra.Command, output ledgercmd.ListLedgersOutput) error
 }
 
 func renderLedgerAccounts(cmd *cobra.Command, output ledgercmd.ListAccountsOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Accounts) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No accounts found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No accounts found."))
 		return err
 	}
 	rows := make([][]string, 0, len(output.Accounts))
@@ -2291,14 +2291,14 @@ func renderLedgerAccounts(cmd *cobra.Command, output ledgercmd.ListAccountsOutpu
 }
 
 func renderLedgerAccount(cmd *cobra.Command, output ledgercmd.GetAccountOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if err := v4render.KeyValues(cmd.OutOrStdout(), [][]string{{"Address", output.Account.Address}}); err != nil {
 		return err
 	}
 	if len(output.Account.Volumes) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No volumes.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No volumes."))
 		return err
 	}
 	rows := make([][]string, 0, len(output.Account.Volumes))
@@ -2309,14 +2309,14 @@ func renderLedgerAccount(cmd *cobra.Command, output ledgercmd.GetAccountOutput) 
 }
 
 func renderLedgerAccountQuery(cmd *cobra.Command, output ledgercmd.RunAccountQueryOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if err := v4render.KeyValues(cmd.OutOrStdout(), [][]string{{"Query", output.QueryID}}); err != nil {
 		return err
 	}
 	if len(output.Accounts) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No accounts found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No accounts found."))
 		return err
 	}
 	rows := make([][]string, 0, len(output.Accounts))
@@ -2334,7 +2334,7 @@ func renderLedgerAccountQuery(cmd *cobra.Command, output ledgercmd.RunAccountQue
 }
 
 func renderLedgerAccountMetadataSet(cmd *cobra.Command, output ledgercmd.AddAccountMetadataOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintln(cmd.OutOrStdout(), "Metadata added.")
@@ -2342,7 +2342,7 @@ func renderLedgerAccountMetadataSet(cmd *cobra.Command, output ledgercmd.AddAcco
 }
 
 func renderLedgerAccountMetadataDeleted(cmd *cobra.Command, output ledgercmd.DeleteAccountMetadataOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintln(cmd.OutOrStdout(), "Metadata deleted.")
@@ -2350,7 +2350,7 @@ func renderLedgerAccountMetadataDeleted(cmd *cobra.Command, output ledgercmd.Del
 }
 
 func renderLedgerCreated(cmd *cobra.Command, output ledgercmd.CreateLedgerOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Ledger %s created.\n", output.Name)
@@ -2358,7 +2358,7 @@ func renderLedgerCreated(cmd *cobra.Command, output ledgercmd.CreateLedgerOutput
 }
 
 func renderLedgerExported(cmd *cobra.Command, output ledgercmd.ExportLogsOutput, file string) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Ledger %s exported to %s.\n", output.Ledger, file)
@@ -2366,7 +2366,7 @@ func renderLedgerExported(cmd *cobra.Command, output ledgercmd.ExportLogsOutput,
 }
 
 func renderLedgerImported(cmd *cobra.Command, output ledgercmd.ImportLogsOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Ledger %s imported.\n", output.Ledger)
@@ -2374,11 +2374,11 @@ func renderLedgerImported(cmd *cobra.Command, output ledgercmd.ImportLogsOutput)
 }
 
 func renderLedgerSchemas(cmd *cobra.Command, output ledgercmd.ListSchemasOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Schemas) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No schemas found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No schemas found."))
 		return err
 	}
 	rows := make([][]string, 0, len(output.Schemas))
@@ -2402,7 +2402,7 @@ func renderLedgerSchemas(cmd *cobra.Command, output ledgercmd.ListSchemasOutput)
 }
 
 func renderLedgerSchema(cmd *cobra.Command, output ledgercmd.GetSchemaOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	return v4render.KeyValues(cmd.OutOrStdout(), [][]string{
@@ -2415,7 +2415,7 @@ func renderLedgerSchema(cmd *cobra.Command, output ledgercmd.GetSchemaOutput) er
 }
 
 func renderLedgerSchemaInserted(cmd *cobra.Command, output ledgercmd.InsertSchemaOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Schema %s inserted in ledger %s.\n", output.Version, output.Ledger)
@@ -2423,7 +2423,7 @@ func renderLedgerSchemaInserted(cmd *cobra.Command, output ledgercmd.InsertSchem
 }
 
 func renderLedgerMetadataSet(cmd *cobra.Command, output ledgercmd.UpdateLedgerMetadataOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintln(cmd.OutOrStdout(), "Metadata added.")
@@ -2431,7 +2431,7 @@ func renderLedgerMetadataSet(cmd *cobra.Command, output ledgercmd.UpdateLedgerMe
 }
 
 func renderLedgerMetadataDeleted(cmd *cobra.Command, output ledgercmd.DeleteLedgerMetadataOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintln(cmd.OutOrStdout(), "Metadata deleted.")
@@ -2439,7 +2439,7 @@ func renderLedgerMetadataDeleted(cmd *cobra.Command, output ledgercmd.DeleteLedg
 }
 
 func renderLedgerInfo(cmd *cobra.Command, output ledgercmd.ReadInfoOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	return v4render.KeyValues(cmd.OutOrStdout(), [][]string{
@@ -2449,7 +2449,7 @@ func renderLedgerInfo(cmd *cobra.Command, output ledgercmd.ReadInfoOutput) error
 }
 
 func renderLedgerStats(cmd *cobra.Command, output ledgercmd.ReadStatsOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	return v4render.KeyValues(cmd.OutOrStdout(), [][]string{
@@ -2459,11 +2459,11 @@ func renderLedgerStats(cmd *cobra.Command, output ledgercmd.ReadStatsOutput) err
 }
 
 func renderLedgerTransactions(cmd *cobra.Command, output ledgercmd.ListTransactionsOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Transactions) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No transactions found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No transactions found."))
 		return err
 	}
 	rows := make([][]string, 0, len(output.Transactions))
@@ -2482,14 +2482,14 @@ func renderLedgerTransactions(cmd *cobra.Command, output ledgercmd.ListTransacti
 }
 
 func renderLedgerTransactionsCount(cmd *cobra.Command, output ledgercmd.CountTransactionsOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	return v4render.KeyValues(cmd.OutOrStdout(), [][]string{{"Count", fmt.Sprintf("%d", output.Count)}})
 }
 
 func renderLedgerSentTransaction(cmd *cobra.Command, output ledgercmd.SendTransactionOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	reference := ""
@@ -2500,7 +2500,7 @@ func renderLedgerSentTransaction(cmd *cobra.Command, output ledgercmd.SendTransa
 }
 
 func renderLedgerTransactionMetadataSet(cmd *cobra.Command, output ledgercmd.AddTransactionMetadataOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintln(cmd.OutOrStdout(), "Metadata added.")
@@ -2508,7 +2508,7 @@ func renderLedgerTransactionMetadataSet(cmd *cobra.Command, output ledgercmd.Add
 }
 
 func renderLedgerTransactionMetadataDeleted(cmd *cobra.Command, output ledgercmd.DeleteTransactionMetadataOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintln(cmd.OutOrStdout(), "Metadata deleted.")
@@ -2516,7 +2516,7 @@ func renderLedgerTransactionMetadataDeleted(cmd *cobra.Command, output ledgercmd
 }
 
 func renderLedgerTransaction(cmd *cobra.Command, output ledgercmd.GetTransactionOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	reference := ""
@@ -2527,7 +2527,7 @@ func renderLedgerTransaction(cmd *cobra.Command, output ledgercmd.GetTransaction
 }
 
 func renderLedgerRevertedTransaction(cmd *cobra.Command, output ledgercmd.RevertTransactionOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	reference := ""
@@ -2538,11 +2538,11 @@ func renderLedgerRevertedTransaction(cmd *cobra.Command, output ledgercmd.Revert
 }
 
 func renderLedgerVolumes(cmd *cobra.Command, output ledgercmd.ListVolumesOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Volumes) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No volumes found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No volumes found."))
 		return err
 	}
 	rows := make([][]string, 0, len(output.Volumes))

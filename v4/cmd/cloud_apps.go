@@ -569,7 +569,7 @@ func deployClientFromCommand(cmd *cobra.Command, deployURL string) (*runtime.Run
 
 func renderCloudApps(cmd *cobra.Command, output cloudcmd.ListCloudAppsOutput) error {
 	if len(output.Apps) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No Cloud apps found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No Cloud apps found."))
 		return err
 	}
 	for _, app := range output.Apps {
@@ -595,7 +595,7 @@ func renderCloudApp(cmd *cobra.Command, output cloudcmd.CloudAppOutput) error {
 
 func renderCloudRuns(cmd *cobra.Command, output cloudcmd.ListCloudRunsOutput) error {
 	if len(output.Runs) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No Cloud app runs found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No Cloud app runs found."))
 		return err
 	}
 	for _, run := range output.Runs {
@@ -623,7 +623,7 @@ func renderCloudRunLogs(cmd *cobra.Command, output cloudcmd.CloudRunLogsOutput) 
 
 func renderCloudVersions(cmd *cobra.Command, output cloudcmd.ListCloudVersionsOutput) error {
 	if len(output.Versions) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No Cloud app versions found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No Cloud app versions found."))
 		return err
 	}
 	for _, version := range output.Versions {
@@ -642,7 +642,7 @@ func renderCloudVersion(cmd *cobra.Command, output cloudcmd.CloudVersionOutput) 
 
 func renderCloudVariables(cmd *cobra.Command, output cloudcmd.ListCloudVariablesOutput) error {
 	if len(output.Variables) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No Cloud app variables found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No Cloud app variables found."))
 		return err
 	}
 	for _, variable := range output.Variables {

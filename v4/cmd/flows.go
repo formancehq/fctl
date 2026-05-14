@@ -68,7 +68,7 @@ func newFlowsTriggersOccurrencesListCommand() *cobra.Command {
 		Short:   "List trigger occurrences",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -170,7 +170,7 @@ func newFlowsTriggersListCommand() *cobra.Command {
 		Short:   "List workflow triggers",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -219,7 +219,7 @@ func newFlowsTriggersShowCommand() *cobra.Command {
 		Short: "Show a workflow trigger",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -393,7 +393,7 @@ type flowsInstanceActionCommandRequest struct {
 }
 
 func runFlowsInstanceActionCommand(cmd *cobra.Command, request flowsInstanceActionCommandRequest) (flowscmd.InstanceActionOutput, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return flowscmd.InstanceActionOutput{}, err
 	}
@@ -437,7 +437,7 @@ func newFlowsInstancesListCommand() *cobra.Command {
 			if cmd.Flags().Changed("running") {
 				runningPtr = &running
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -496,7 +496,7 @@ func newFlowsInstancesShowCommand(use string, aliases []string, deprecated bool)
 			if deprecated {
 				fmt.Fprintln(cmd.ErrOrStderr(), "Command flows instances describe has been deprecated, use flows instances inspect")
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -614,7 +614,7 @@ func newFlowsWorkflowsDeleteCommand() *cobra.Command {
 			if !confirm {
 				return fmt.Errorf("flows workflows delete requires --confirm")
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -671,7 +671,7 @@ func newFlowsWorkflowsRunCommand() *cobra.Command {
 			if cmd.Flags().Changed("wait") {
 				waitPtr = &wait
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -716,7 +716,7 @@ func newFlowsWorkflowsRunCommand() *cobra.Command {
 }
 
 func runFlowsCreateWorkflowCommand(cmd *cobra.Command, workflowRequest shared.CreateWorkflowRequest, apiVersion string) (flowscmd.CreateWorkflowOutput, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return flowscmd.CreateWorkflowOutput{}, err
 	}
@@ -744,7 +744,7 @@ func runFlowsCreateWorkflowCommand(cmd *cobra.Command, workflowRequest shared.Cr
 }
 
 func runFlowsCreateTriggerCommand(cmd *cobra.Command, input flowscmd.CreateTriggerInput, apiVersion string) (flowscmd.CreateTriggerOutput, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return flowscmd.CreateTriggerOutput{}, err
 	}
@@ -772,7 +772,7 @@ func runFlowsCreateTriggerCommand(cmd *cobra.Command, input flowscmd.CreateTrigg
 }
 
 func runFlowsDeleteTriggerCommand(cmd *cobra.Command, triggerID string, apiVersion string) (flowscmd.DeleteTriggerOutput, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return flowscmd.DeleteTriggerOutput{}, err
 	}
@@ -800,7 +800,7 @@ func runFlowsDeleteTriggerCommand(cmd *cobra.Command, triggerID string, apiVersi
 }
 
 func runFlowsTestTriggerCommand(cmd *cobra.Command, input flowscmd.TestTriggerInput, apiVersion string) (flowscmd.TestTriggerOutput, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return flowscmd.TestTriggerOutput{}, err
 	}
@@ -853,7 +853,7 @@ func newFlowsWorkflowsListCommand() *cobra.Command {
 		Short:   "List workflows",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -904,7 +904,7 @@ func newFlowsWorkflowsShowCommand() *cobra.Command {
 		Short: "Show a workflow",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -943,11 +943,11 @@ func newFlowsWorkflowsShowCommand() *cobra.Command {
 }
 
 func renderFlowsWorkflows(cmd *cobra.Command, output flowscmd.ListWorkflowsOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Workflows) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No workflows found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No workflows found."))
 		return err
 	}
 	for _, workflow := range output.Workflows {
@@ -963,7 +963,7 @@ func renderFlowsWorkflows(cmd *cobra.Command, output flowscmd.ListWorkflowsOutpu
 }
 
 func renderFlowsWorkflow(cmd *cobra.Command, output flowscmd.GetWorkflowOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	workflow := output.Workflow
@@ -981,7 +981,7 @@ func renderFlowsWorkflow(cmd *cobra.Command, output flowscmd.GetWorkflowOutput) 
 }
 
 func renderFlowsWorkflowCreated(cmd *cobra.Command, output flowscmd.CreateWorkflowOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Workflow created with ID: %s\n", output.Workflow.ID)
@@ -989,7 +989,7 @@ func renderFlowsWorkflowCreated(cmd *cobra.Command, output flowscmd.CreateWorkfl
 }
 
 func renderFlowsWorkflowDeleted(cmd *cobra.Command, output flowscmd.DeleteWorkflowOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Workflow %s deleted.\n", output.WorkflowID)
@@ -997,7 +997,7 @@ func renderFlowsWorkflowDeleted(cmd *cobra.Command, output flowscmd.DeleteWorkfl
 }
 
 func renderFlowsWorkflowRun(cmd *cobra.Command, output flowscmd.RunWorkflowOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Workflow instance created with ID: %s\n", output.Instance.ID)
@@ -1005,11 +1005,11 @@ func renderFlowsWorkflowRun(cmd *cobra.Command, output flowscmd.RunWorkflowOutpu
 }
 
 func renderFlowsInstances(cmd *cobra.Command, output flowscmd.ListInstancesOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Instances) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No workflow instances found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No workflow instances found."))
 		return err
 	}
 	for _, instance := range output.Instances {
@@ -1025,7 +1025,7 @@ func renderFlowsInstances(cmd *cobra.Command, output flowscmd.ListInstancesOutpu
 }
 
 func renderFlowsInstance(cmd *cobra.Command, output flowscmd.GetInstanceOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	instance := output.Instance
@@ -1043,7 +1043,7 @@ func renderFlowsInstance(cmd *cobra.Command, output flowscmd.GetInstanceOutput) 
 }
 
 func renderFlowsInstanceEventSent(cmd *cobra.Command, output flowscmd.InstanceActionOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Event %s sent to instance %s.\n", output.Event, output.InstanceID)
@@ -1051,7 +1051,7 @@ func renderFlowsInstanceEventSent(cmd *cobra.Command, output flowscmd.InstanceAc
 }
 
 func renderFlowsInstanceStopped(cmd *cobra.Command, output flowscmd.InstanceActionOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Workflow instance %s stopped.\n", output.InstanceID)
@@ -1059,7 +1059,7 @@ func renderFlowsInstanceStopped(cmd *cobra.Command, output flowscmd.InstanceActi
 }
 
 func renderFlowsTriggerCreated(cmd *cobra.Command, output flowscmd.CreateTriggerOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Trigger created with ID: %s\n", output.Trigger.ID)
@@ -1067,11 +1067,11 @@ func renderFlowsTriggerCreated(cmd *cobra.Command, output flowscmd.CreateTrigger
 }
 
 func renderFlowsTriggers(cmd *cobra.Command, output flowscmd.ListTriggersOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Triggers) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No triggers found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No triggers found."))
 		return err
 	}
 	for _, trigger := range output.Triggers {
@@ -1087,7 +1087,7 @@ func renderFlowsTriggers(cmd *cobra.Command, output flowscmd.ListTriggersOutput)
 }
 
 func renderFlowsTrigger(cmd *cobra.Command, output flowscmd.GetTriggerOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	trigger := output.Trigger
@@ -1105,7 +1105,7 @@ func renderFlowsTrigger(cmd *cobra.Command, output flowscmd.GetTriggerOutput) er
 }
 
 func renderFlowsTriggerDeleted(cmd *cobra.Command, output flowscmd.DeleteTriggerOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Trigger %s deleted.\n", output.TriggerID)
@@ -1113,7 +1113,7 @@ func renderFlowsTriggerDeleted(cmd *cobra.Command, output flowscmd.DeleteTrigger
 }
 
 func renderFlowsTriggerTest(cmd *cobra.Command, output flowscmd.TestTriggerOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if output.Matched != nil {
@@ -1125,11 +1125,11 @@ func renderFlowsTriggerTest(cmd *cobra.Command, output flowscmd.TestTriggerOutpu
 }
 
 func renderFlowsTriggerOccurrences(cmd *cobra.Command, output flowscmd.ListTriggerOccurrencesOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Occurrences) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No trigger occurrences found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No trigger occurrences found."))
 		return err
 	}
 	for _, occurrence := range output.Occurrences {

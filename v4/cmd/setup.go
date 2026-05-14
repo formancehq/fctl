@@ -54,7 +54,11 @@ func renderSetupGuidance(cmd *cobra.Command) error {
 		return err
 	}
 	for _, command := range output.Commands {
-		if _, err := fmt.Fprintln(cmd.OutOrStdout(), command); err != nil {
+		line := command
+		if terminalOutputEnabled(cmd) {
+			line = styledInfoLine(cmd, "Run", command)
+		}
+		if _, err := fmt.Fprintln(cmd.OutOrStdout(), line); err != nil {
 			return err
 		}
 	}

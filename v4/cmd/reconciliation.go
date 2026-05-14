@@ -358,7 +358,7 @@ func newReconciliationPoliciesReconcileCommand() *cobra.Command {
 }
 
 func newCreatePolicyService(cmd *cobra.Command, apiVersion string) (reconciliationcmd.CreatePolicyService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return reconciliationcmd.CreatePolicyService{}, err
 	}
@@ -374,7 +374,7 @@ func newCreatePolicyService(cmd *cobra.Command, apiVersion string) (reconciliati
 }
 
 func newListPoliciesService(cmd *cobra.Command, apiVersion string) (reconciliationcmd.ListPoliciesService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return reconciliationcmd.ListPoliciesService{}, err
 	}
@@ -390,7 +390,7 @@ func newListPoliciesService(cmd *cobra.Command, apiVersion string) (reconciliati
 }
 
 func newGetPolicyService(cmd *cobra.Command, apiVersion string) (reconciliationcmd.GetPolicyService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return reconciliationcmd.GetPolicyService{}, err
 	}
@@ -406,7 +406,7 @@ func newGetPolicyService(cmd *cobra.Command, apiVersion string) (reconciliationc
 }
 
 func newDeletePolicyService(cmd *cobra.Command, apiVersion string) (reconciliationcmd.DeletePolicyService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return reconciliationcmd.DeletePolicyService{}, err
 	}
@@ -422,7 +422,7 @@ func newDeletePolicyService(cmd *cobra.Command, apiVersion string) (reconciliati
 }
 
 func newListReconciliationsService(cmd *cobra.Command, apiVersion string) (reconciliationcmd.ListReconciliationsService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return reconciliationcmd.ListReconciliationsService{}, err
 	}
@@ -438,7 +438,7 @@ func newListReconciliationsService(cmd *cobra.Command, apiVersion string) (recon
 }
 
 func newGetReconciliationService(cmd *cobra.Command, apiVersion string) (reconciliationcmd.GetReconciliationService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return reconciliationcmd.GetReconciliationService{}, err
 	}
@@ -454,7 +454,7 @@ func newGetReconciliationService(cmd *cobra.Command, apiVersion string) (reconci
 }
 
 func newReconcileService(cmd *cobra.Command, apiVersion string) (reconciliationcmd.ReconcileService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return reconciliationcmd.ReconcileService{}, err
 	}
@@ -513,7 +513,7 @@ func parseReconciliationQueryFlags(values []string, filters map[string]string) (
 }
 
 func renderReconciliationPolicyCreated(cmd *cobra.Command, output reconciliationcmd.CreatePolicyOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Policy created with ID: %s\n", output.Policy.ID)
@@ -521,11 +521,11 @@ func renderReconciliationPolicyCreated(cmd *cobra.Command, output reconciliation
 }
 
 func renderReconciliationPolicies(cmd *cobra.Command, output reconciliationcmd.ListPoliciesOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Policies) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No reconciliation policies found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No reconciliation policies found."))
 		return err
 	}
 	for _, policy := range output.Policies {
@@ -541,7 +541,7 @@ func renderReconciliationPolicies(cmd *cobra.Command, output reconciliationcmd.L
 }
 
 func renderReconciliationPolicy(cmd *cobra.Command, output reconciliationcmd.GetPolicyOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	policy := output.Policy
@@ -565,7 +565,7 @@ func renderReconciliationPolicy(cmd *cobra.Command, output reconciliationcmd.Get
 }
 
 func renderReconciliationPolicyDeleted(cmd *cobra.Command, output reconciliationcmd.DeletePolicyOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Policy %s deleted.\n", output.PolicyID)
@@ -573,7 +573,7 @@ func renderReconciliationPolicyDeleted(cmd *cobra.Command, output reconciliation
 }
 
 func renderReconciliationStarted(cmd *cobra.Command, output reconciliationcmd.ReconcileOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Reconciliation started with ID: %s\n", output.Reconciliation.ID)
@@ -581,11 +581,11 @@ func renderReconciliationStarted(cmd *cobra.Command, output reconciliationcmd.Re
 }
 
 func renderReconciliations(cmd *cobra.Command, output reconciliationcmd.ListReconciliationsOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Reconciliations) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No reconciliations found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No reconciliations found."))
 		return err
 	}
 	for _, reconciliation := range output.Reconciliations {
@@ -601,7 +601,7 @@ func renderReconciliations(cmd *cobra.Command, output reconciliationcmd.ListReco
 }
 
 func renderReconciliation(cmd *cobra.Command, output reconciliationcmd.GetReconciliationOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	reconciliation := output.Reconciliation

@@ -267,7 +267,7 @@ func newWebhooksChangeSecretCommand() *cobra.Command {
 }
 
 func newListWebhookConfigsService(cmd *cobra.Command, apiVersion string) (webhookscmd.ListConfigsService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return webhookscmd.ListConfigsService{}, err
 	}
@@ -283,7 +283,7 @@ func newListWebhookConfigsService(cmd *cobra.Command, apiVersion string) (webhoo
 }
 
 func newInsertWebhookConfigService(cmd *cobra.Command, apiVersion string) (webhookscmd.InsertConfigService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return webhookscmd.InsertConfigService{}, err
 	}
@@ -299,7 +299,7 @@ func newInsertWebhookConfigService(cmd *cobra.Command, apiVersion string) (webho
 }
 
 func newActivateWebhookConfigService(cmd *cobra.Command, apiVersion string) (webhookscmd.ActivateConfigService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return webhookscmd.ActivateConfigService{}, err
 	}
@@ -315,7 +315,7 @@ func newActivateWebhookConfigService(cmd *cobra.Command, apiVersion string) (web
 }
 
 func newDeactivateWebhookConfigService(cmd *cobra.Command, apiVersion string) (webhookscmd.DeactivateConfigService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return webhookscmd.DeactivateConfigService{}, err
 	}
@@ -331,7 +331,7 @@ func newDeactivateWebhookConfigService(cmd *cobra.Command, apiVersion string) (w
 }
 
 func newDeleteWebhookConfigService(cmd *cobra.Command, apiVersion string) (webhookscmd.DeleteConfigService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return webhookscmd.DeleteConfigService{}, err
 	}
@@ -347,7 +347,7 @@ func newDeleteWebhookConfigService(cmd *cobra.Command, apiVersion string) (webho
 }
 
 func newChangeWebhookSecretService(cmd *cobra.Command, apiVersion string) (webhookscmd.ChangeSecretService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return webhookscmd.ChangeSecretService{}, err
 	}
@@ -397,11 +397,11 @@ func webhookSecretValue(cmd *cobra.Command, secret string, secretStdin bool, req
 }
 
 func renderWebhookConfigs(cmd *cobra.Command, output webhookscmd.ListConfigsOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Configs) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No webhook configs found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No webhook configs found."))
 		return err
 	}
 	for _, config := range output.Configs {
@@ -417,7 +417,7 @@ func renderWebhookConfigs(cmd *cobra.Command, output webhookscmd.ListConfigsOutp
 }
 
 func renderWebhookConfigMutated(cmd *cobra.Command, output webhookscmd.ConfigOutput, action string) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Webhook config %s %s.\n", output.Config.ID, action)
@@ -425,7 +425,7 @@ func renderWebhookConfigMutated(cmd *cobra.Command, output webhookscmd.ConfigOut
 }
 
 func renderWebhookConfigDeleted(cmd *cobra.Command, output webhookscmd.DeleteConfigOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Webhook config %s deleted.\n", output.ConfigID)

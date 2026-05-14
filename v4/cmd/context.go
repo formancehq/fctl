@@ -96,6 +96,17 @@ func newContextListCommand() *cobra.Command {
 				_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No contexts found."))
 				return err
 			}
+			if terminalOutputEnabled(cmd) {
+				rows := make([][]string, 0, len(names))
+				for _, name := range names {
+					current := ""
+					if name == cfg.CurrentContext {
+						current = "yes"
+					}
+					rows = append(rows, []string{name, current})
+				}
+				return writeStyledRows(cmd, []string{"Profile", "Current"}, rows)
+			}
 			for _, name := range names {
 				prefix := " "
 				if name == cfg.CurrentContext {

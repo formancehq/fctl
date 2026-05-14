@@ -93,7 +93,7 @@ func newVersionCommand() *cobra.Command {
 		Short: "Print the fctl v4 version",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			_, err := fmt.Fprintf(cmd.OutOrStdout(), "fctl v4 %s\n", cmd.Root().Version)
+			_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("fctl v4 %s", cmd.Root().Version)))
 			return err
 		},
 	}

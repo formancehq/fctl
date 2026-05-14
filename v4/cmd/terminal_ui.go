@@ -197,7 +197,7 @@ func styledKeyValueLineWithWidth(cmd *cobra.Command, label string, value string,
 		return fmt.Sprintf("%s\t%s", label, value)
 	}
 
-	labelStyle := lipgloss.NewStyle().Width(width).PaddingRight(1)
+	labelStyle := lipgloss.NewStyle().Width(width + 1)
 	valueStyle := lipgloss.NewStyle().Bold(true)
 	prefixStyle := lipgloss.NewStyle()
 	if commandColorEnabled(cmd) {
@@ -232,6 +232,11 @@ func styledInfoLine(cmd *cobra.Command, label string, value string) string {
 		valueStyle = valueStyle.Foreground(v4render.FormancePalette.Text)
 	}
 	return fmt.Sprintf("%s %s", labelStyle.Render(label), valueStyle.Render(value))
+}
+
+func writeStyledAPIVersion(cmd *cobra.Command, version any) error {
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledInfoLine(cmd, "API version", fmt.Sprint(version)))
+	return err
 }
 
 func styledSuccessLine(cmd *cobra.Command, message string) string {

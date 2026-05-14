@@ -43,7 +43,7 @@ func newPaymentsVersionsCommand() *cobra.Command {
 		Short: "Show payments component and API versions",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -69,6 +69,15 @@ func newPaymentsVersionsCommand() *cobra.Command {
 				health := "unhealthy"
 				if output.Health {
 					health = "healthy"
+				}
+				if terminalOutputEnabled(cmd) {
+					return writeStyledKeyValues(cmd,
+						styledKeyValue{Label: "Component", Value: output.Name},
+						styledKeyValue{Label: "Version", Value: output.Version},
+						styledKeyValue{Label: "Health", Value: health},
+						styledKeyValue{Label: "API", Value: fmt.Sprintf("%v", output.APIVersions)},
+						styledKeyValue{Label: "Policy", Value: output.APIPolicy},
+					)
 				}
 				_, err := fmt.Fprintf(cmd.OutOrStdout(), "%s %s %s api=%v policy=%s\n",
 					output.Name, output.Version, health, output.APIVersions, output.APIPolicy)
@@ -135,7 +144,7 @@ func newPaymentsConnectorsInstallCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -189,7 +198,7 @@ func newPaymentsConnectorsListCommand() *cobra.Command {
 		Short:   "List payment connectors",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -256,7 +265,7 @@ func newPaymentsConnectorsConfigShowCommand(use string, aliases []string, deprec
 			if deprecated {
 				fmt.Fprintln(cmd.ErrOrStderr(), "Command payments connectors config get has been deprecated, use payments connectors config show")
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -316,7 +325,7 @@ func newPaymentsConnectorsDeprecatedGetConfigCommand() *cobra.Command {
 			if connectorID == "" {
 				return fmt.Errorf("payments connectors get-config requires --connector-id")
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -396,7 +405,7 @@ func newPaymentsConnectorsConfigUpdateCommand(use string, aliases []string, depr
 			if err != nil {
 				return err
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -486,7 +495,7 @@ func newPaymentsConnectorsUninstallCommand() *cobra.Command {
 			if !confirm {
 				return fmt.Errorf("payments connectors uninstall requires --confirm")
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -530,7 +539,7 @@ func newPaymentsConnectorsUninstallCommand() *cobra.Command {
 }
 
 func renderPaymentConnectorInstalled(cmd *cobra.Command, output paymentscmd.InstallConnectorOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if output.ConnectorID != "" {
@@ -542,11 +551,11 @@ func renderPaymentConnectorInstalled(cmd *cobra.Command, output paymentscmd.Inst
 }
 
 func renderPaymentConnectors(cmd *cobra.Command, output paymentscmd.ListConnectorsOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Connectors) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No payment connectors found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No payment connectors found."))
 		return err
 	}
 	for _, connector := range output.Connectors {
@@ -568,7 +577,7 @@ func renderPaymentConnectors(cmd *cobra.Command, output paymentscmd.ListConnecto
 }
 
 func renderPaymentConnectorConfig(cmd *cobra.Command, output paymentscmd.GetConnectorConfigOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector ID: %s\n", output.ConnectorID); err != nil {
@@ -589,7 +598,7 @@ func renderPaymentConnectorConfig(cmd *cobra.Command, output paymentscmd.GetConn
 }
 
 func renderPaymentConnectorConfigUpdated(cmd *cobra.Command, output paymentscmd.UpdateConnectorConfigOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector %s config updated.\n", output.ConnectorID)
@@ -597,7 +606,7 @@ func renderPaymentConnectorConfigUpdated(cmd *cobra.Command, output paymentscmd.
 }
 
 func renderPaymentConnectorUninstalled(cmd *cobra.Command, output paymentscmd.UninstallConnectorOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if output.TaskID != "" {
@@ -742,7 +751,7 @@ func newPaymentsBankAccountsCreateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -809,7 +818,7 @@ func parseCreatePaymentBankAccountRequest(data []byte) (createPaymentBankAccount
 }
 
 func renderPaymentBankAccountCreated(cmd *cobra.Command, output paymentscmd.CreateBankAccountOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Bank account created with ID: %s\n", output.BankAccountID)
@@ -829,7 +838,7 @@ func newPaymentsBankAccountsForwardCommand() *cobra.Command {
 			if !confirm {
 				return fmt.Errorf("payments bank-accounts forward requires --confirm")
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -872,7 +881,7 @@ func newPaymentsBankAccountsForwardCommand() *cobra.Command {
 }
 
 func renderPaymentBankAccountForwarded(cmd *cobra.Command, output paymentscmd.ForwardBankAccountOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if output.TaskID != "" {
@@ -903,7 +912,7 @@ func newPaymentsBankAccountsSetMetadataCommand(use string, aliases []string, dep
 			if err != nil {
 				return err
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -946,7 +955,7 @@ func newPaymentsBankAccountsSetMetadataCommand(use string, aliases []string, dep
 }
 
 func renderPaymentBankAccountMetadataSet(cmd *cobra.Command, output paymentscmd.SetBankAccountMetadataOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Metadata set on bank account %s.\n", output.BankAccountID)
@@ -1006,7 +1015,7 @@ func newPaymentsAccountsCreateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1074,7 +1083,7 @@ func parseCreatePaymentAccountRequest(data []byte) (createPaymentAccountRequestF
 }
 
 func renderPaymentAccountCreated(cmd *cobra.Command, output paymentscmd.CreateAccountOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Account created with ID: %s\n", output.AccountID)
@@ -1092,7 +1101,7 @@ func newPaymentsAccountsListCommand() *cobra.Command {
 		Short:   "List payment accounts",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1152,7 +1161,7 @@ func newPaymentsAccountsShowCommand(use string, aliases []string, deprecated boo
 			if deprecated {
 				fmt.Fprintln(cmd.ErrOrStderr(), "Command payments accounts get has been deprecated, use payments accounts show")
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1207,7 +1216,7 @@ func newPaymentsAccountsBalancesCommand() *cobra.Command {
 		Short: "List payment account balances",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1259,11 +1268,11 @@ func newPaymentsAccountsBalancesCommand() *cobra.Command {
 }
 
 func renderPaymentAccounts(cmd *cobra.Command, output paymentscmd.ListAccountsOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Accounts) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No payment accounts found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No payment accounts found."))
 		return err
 	}
 	for _, account := range output.Accounts {
@@ -1288,11 +1297,11 @@ func renderPaymentAccounts(cmd *cobra.Command, output paymentscmd.ListAccountsOu
 }
 
 func renderPaymentAccountBalances(cmd *cobra.Command, output paymentscmd.ListAccountBalancesOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Balances) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No account balances found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No account balances found."))
 		return err
 	}
 	for _, balance := range output.Balances {
@@ -1316,7 +1325,7 @@ func renderPaymentAccountBalances(cmd *cobra.Command, output paymentscmd.ListAcc
 }
 
 func renderPaymentAccount(cmd *cobra.Command, output paymentscmd.GetAccountOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	account := output.Account
@@ -1353,7 +1362,7 @@ func newPaymentsBankAccountsListCommand() *cobra.Command {
 		Short:   "List payment bank accounts",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1405,7 +1414,7 @@ func newPaymentsBankAccountsShowCommand(use string, aliases []string, deprecated
 			if deprecated {
 				fmt.Fprintln(cmd.ErrOrStderr(), "Command payments bank-accounts get has been deprecated, use payments bank-accounts show")
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1447,11 +1456,11 @@ func newPaymentsBankAccountsShowCommand(use string, aliases []string, deprecated
 }
 
 func renderPaymentBankAccounts(cmd *cobra.Command, output paymentscmd.ListBankAccountsOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.BankAccounts) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No bank accounts found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No bank accounts found."))
 		return err
 	}
 	for _, account := range output.BankAccounts {
@@ -1467,7 +1476,7 @@ func renderPaymentBankAccounts(cmd *cobra.Command, output paymentscmd.ListBankAc
 }
 
 func renderPaymentBankAccount(cmd *cobra.Command, output paymentscmd.GetBankAccountOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	account := output.BankAccount
@@ -1534,7 +1543,7 @@ func newPaymentsPaymentsCreateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1590,7 +1599,7 @@ func parseCreatePaymentRequest(data []byte) (paymentscmd.CreatePaymentInput, err
 }
 
 func renderPaymentCreated(cmd *cobra.Command, output paymentscmd.CreatePaymentOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Payment created with ID: %s\n", output.PaymentID)
@@ -1608,7 +1617,7 @@ func newPaymentsPaymentsListCommand() *cobra.Command {
 		Short:   "List payments",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1660,7 +1669,7 @@ func newPaymentsPaymentsShowCommand(use string, aliases []string, deprecated boo
 			if deprecated {
 				fmt.Fprintln(cmd.ErrOrStderr(), "Command payments payments get has been deprecated, use payments payments show")
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1718,7 +1727,7 @@ func newPaymentsPaymentsSetMetadataCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1758,7 +1767,7 @@ func newPaymentsPaymentsSetMetadataCommand() *cobra.Command {
 }
 
 func renderPaymentMetadataSet(cmd *cobra.Command, output paymentscmd.SetPaymentMetadataOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Metadata set on payment %s.\n", output.PaymentID)
@@ -1766,11 +1775,11 @@ func renderPaymentMetadataSet(cmd *cobra.Command, output paymentscmd.SetPaymentM
 }
 
 func renderPayments(cmd *cobra.Command, output paymentscmd.ListPaymentsOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Payments) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No payments found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No payments found."))
 		return err
 	}
 	for _, payment := range output.Payments {
@@ -1786,7 +1795,7 @@ func renderPayments(cmd *cobra.Command, output paymentscmd.ListPaymentsOutput) e
 }
 
 func renderPayment(cmd *cobra.Command, output paymentscmd.GetPaymentOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	payment := output.Payment
@@ -1821,7 +1830,7 @@ func newPaymentsPoolsListCommand() *cobra.Command {
 		Short:   "List payment pools",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1895,7 +1904,7 @@ func newPaymentsPoolsCreateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -1947,7 +1956,7 @@ func newPaymentsPoolsShowCommand(use string, aliases []string, deprecated bool) 
 			if deprecated {
 				fmt.Fprintln(cmd.ErrOrStderr(), "Command payments pools get has been deprecated, use payments pools show")
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -2000,7 +2009,7 @@ func newPaymentsPoolsDeleteCommand() *cobra.Command {
 			if !confirm {
 				return fmt.Errorf("payments pools delete requires --confirm")
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -2040,7 +2049,7 @@ func newPaymentsPoolsDeleteCommand() *cobra.Command {
 }
 
 func renderPaymentPoolCreated(cmd *cobra.Command, output paymentscmd.CreatePoolOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Pool created with ID: %s\n", output.PoolID)
@@ -2048,11 +2057,11 @@ func renderPaymentPoolCreated(cmd *cobra.Command, output paymentscmd.CreatePoolO
 }
 
 func renderPaymentPools(cmd *cobra.Command, output paymentscmd.ListPoolsOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Pools) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No payment pools found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No payment pools found."))
 		return err
 	}
 	for _, pool := range output.Pools {
@@ -2068,7 +2077,7 @@ func renderPaymentPools(cmd *cobra.Command, output paymentscmd.ListPoolsOutput) 
 }
 
 func renderPaymentPool(cmd *cobra.Command, output paymentscmd.GetPoolOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	pool := output.Pool
@@ -2094,7 +2103,7 @@ func renderPaymentPool(cmd *cobra.Command, output paymentscmd.GetPoolOutput) err
 }
 
 func renderPaymentPoolDeleted(cmd *cobra.Command, output paymentscmd.DeletePoolOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Pool %s deleted.\n", output.PoolID)
@@ -2110,7 +2119,7 @@ func newPaymentsPoolsAddAccountCommand() *cobra.Command {
 		Short:   "Add an account to a payment pool",
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -2161,7 +2170,7 @@ func newPaymentsPoolsRemoveAccountCommand() *cobra.Command {
 			if !confirm {
 				return fmt.Errorf("payments pools remove-account requires --confirm")
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -2201,7 +2210,7 @@ func newPaymentsPoolsRemoveAccountCommand() *cobra.Command {
 }
 
 func renderPaymentPoolAccountAdded(cmd *cobra.Command, output paymentscmd.PoolAccountOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Account %s added to pool %s.\n", output.AccountID, output.PoolID)
@@ -2209,7 +2218,7 @@ func renderPaymentPoolAccountAdded(cmd *cobra.Command, output paymentscmd.PoolAc
 }
 
 func renderPaymentPoolAccountRemoved(cmd *cobra.Command, output paymentscmd.PoolAccountOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Account %s removed from pool %s.\n", output.AccountID, output.PoolID)
@@ -2252,7 +2261,7 @@ func newPaymentsPoolsUpdateQueryCommand() *cobra.Command {
 				return err
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -2316,7 +2325,7 @@ func newPaymentsPoolsBalancesCommand() *cobra.Command {
 				return fmt.Errorf("parse --at as RFC3339: %w", err)
 			}
 
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -2363,7 +2372,7 @@ func newPaymentsPoolsLatestBalancesCommand() *cobra.Command {
 		Short: "List latest payment pool balances",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -2409,7 +2418,7 @@ func readPaymentCommandFile(cmd *cobra.Command, file string) ([]byte, error) {
 }
 
 func renderPaymentPoolQueryUpdated(cmd *cobra.Command, output paymentscmd.UpdatePoolQueryOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Query updated for pool %s.\n", output.PoolID)
@@ -2417,11 +2426,11 @@ func renderPaymentPoolQueryUpdated(cmd *cobra.Command, output paymentscmd.Update
 }
 
 func renderPaymentPoolBalances(cmd *cobra.Command, output paymentscmd.GetPoolBalancesOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Balances) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No pool balances found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No pool balances found."))
 		return err
 	}
 	for _, balance := range output.Balances {
@@ -2444,7 +2453,7 @@ func newPaymentsTasksShowCommand(use string, aliases []string, deprecated bool) 
 			if deprecated {
 				fmt.Fprintln(cmd.ErrOrStderr(), "Command payments tasks get has been deprecated, use payments tasks show")
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -2486,7 +2495,7 @@ func newPaymentsTasksShowCommand(use string, aliases []string, deprecated bool) 
 }
 
 func renderPaymentTask(cmd *cobra.Command, output paymentscmd.GetTaskOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	task := output.Task
@@ -2530,7 +2539,7 @@ func newPaymentsTransferInitiationListCommand() *cobra.Command {
 		Short:   "List payment transfer initiations",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -2611,7 +2620,7 @@ func newPaymentsTransferInitiationCreateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -2717,7 +2726,7 @@ func parseCreateTransferInitiationRequest(data []byte) (createTransferInitiation
 }
 
 func renderPaymentTransferInitiationCreated(cmd *cobra.Command, output paymentscmd.CreateTransferInitiationOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if output.TaskID != "" {
@@ -2741,7 +2750,7 @@ func newPaymentsTransferInitiationShowCommand(use string, aliases []string, depr
 			if deprecated {
 				fmt.Fprintln(cmd.ErrOrStderr(), "Command payments transfer-initiation get has been deprecated, use payments transfer-initiation show")
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -2783,11 +2792,11 @@ func newPaymentsTransferInitiationShowCommand(use string, aliases []string, depr
 }
 
 func renderPaymentTransferInitiations(cmd *cobra.Command, output paymentscmd.ListTransferInitiationsOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.TransferInitiations) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No transfer initiations found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No transfer initiations found."))
 		return err
 	}
 	for _, transfer := range output.TransferInitiations {
@@ -2812,7 +2821,7 @@ func renderPaymentTransferInitiations(cmd *cobra.Command, output paymentscmd.Lis
 }
 
 func renderPaymentTransferInitiation(cmd *cobra.Command, output paymentscmd.GetTransferInitiationOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	transfer := output.TransferInitiation
@@ -2859,7 +2868,7 @@ func newPaymentsTransferInitiationActionCommand(
 			if requiresConfirm && !confirm {
 				return fmt.Errorf("payments transfer-initiation %s requires --confirm", use)
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -2901,7 +2910,7 @@ func newPaymentsTransferInitiationActionCommand(
 }
 
 func renderPaymentTransferInitiationAction(cmd *cobra.Command, output paymentscmd.TransferInitiationActionOutput, done string) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if output.TaskID != "" {
@@ -2933,7 +2942,7 @@ func newPaymentsTransferInitiationUpdateStatusCommand(use string, aliases []stri
 			if status != "REJECTED" && status != "VALIDATED" {
 				return fmt.Errorf("unsupported transfer initiation status %q: expected REJECTED or VALIDATED", args[1])
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -2976,7 +2985,7 @@ func newPaymentsTransferInitiationUpdateStatusCommand(use string, aliases []stri
 }
 
 func renderPaymentTransferInitiationStatusUpdated(cmd *cobra.Command, output paymentscmd.UpdateTransferInitiationStatusOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Transfer initiation %s status updated to %s.\n", output.TransferInitiationID, output.Status)
@@ -3023,7 +3032,7 @@ func newPaymentsTransferInitiationReverseCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			rt, err := runtimeFromCommand(cmd)
+			rt, err := stackRuntimeFromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -3119,7 +3128,7 @@ func parseBigIntJSON(data []byte) (*big.Int, error) {
 }
 
 func renderPaymentTransferInitiationReversed(cmd *cobra.Command, output paymentscmd.ReverseTransferInitiationOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if output.TaskID != "" {

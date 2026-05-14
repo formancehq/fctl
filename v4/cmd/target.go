@@ -64,16 +64,45 @@ func newTargetInspectCommand() *cobra.Command {
 				return err
 			}
 
-			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Context: %s\nTarget: %s (%s)\n", output.Context, output.TargetURL, output.TargetKind); err != nil {
+			if !terminalOutputEnabled(cmd) {
+				if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Context: %s\nTarget: %s (%s)\n", output.Context, output.TargetURL, output.TargetKind); err != nil {
+					return err
+				}
+				if len(output.Components) == 0 {
+					_, err := fmt.Fprintln(cmd.OutOrStdout(), "Components: none")
+					return err
+				}
+				if _, err := fmt.Fprintln(cmd.OutOrStdout(), "Components:"); err != nil {
+					return err
+				}
+				for _, component := range output.Components {
+					health := "unhealthy"
+					if component.Health {
+						health = "healthy"
+					}
+					apiVersions := "<none>"
+					if len(component.APIVersions) > 0 {
+						apiVersions = fmt.Sprintf("%v", component.APIVersions)
+					}
+					if _, err := fmt.Fprintf(cmd.OutOrStdout(), "- %s %s %s api=%s policy=%s\n",
+						component.Name, component.Version, health, apiVersions, component.APIPolicy); err != nil {
+						return err
+					}
+				}
+				return nil
+			}
+			if err := writeStyledKeyValues(cmd,
+				styledKeyValue{Label: "Context", Value: output.Context},
+				styledKeyValue{Label: "Target", Value: output.TargetURL},
+				styledKeyValue{Label: "Kind", Value: output.TargetKind},
+			); err != nil {
 				return err
 			}
 			if len(output.Components) == 0 {
-				_, err := fmt.Fprintln(cmd.OutOrStdout(), "Components: none")
+				_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No components found."))
 				return err
 			}
-			if _, err := fmt.Fprintln(cmd.OutOrStdout(), "Components:"); err != nil {
-				return err
-			}
+			rows := make([][]string, 0, len(output.Components))
 			for _, component := range output.Components {
 				health := "unhealthy"
 				if component.Health {
@@ -83,12 +112,9 @@ func newTargetInspectCommand() *cobra.Command {
 				if len(component.APIVersions) > 0 {
 					apiVersions = fmt.Sprintf("%v", component.APIVersions)
 				}
-				if _, err := fmt.Fprintf(cmd.OutOrStdout(), "- %s %s %s api=%s policy=%s\n",
-					component.Name, component.Version, health, apiVersions, component.APIPolicy); err != nil {
-					return err
-				}
+				rows = append(rows, []string{component.Name, component.Version, health, apiVersions, component.APIPolicy})
 			}
-			return nil
+			return writeStyledRows(cmd, []string{"Component", "Version", "Health", "API", "Policy"}, rows)
 		},
 	}
 }

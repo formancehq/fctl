@@ -821,7 +821,7 @@ func (f authClientFlags) mutationInput(cmd *cobra.Command, clientID string, name
 }
 
 func newCreateAuthClientService(cmd *cobra.Command, apiVersion string) (authcmd.CreateClientService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return authcmd.CreateClientService{}, err
 	}
@@ -837,7 +837,7 @@ func newCreateAuthClientService(cmd *cobra.Command, apiVersion string) (authcmd.
 }
 
 func newListAuthClientsService(cmd *cobra.Command, apiVersion string) (authcmd.ListClientsService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return authcmd.ListClientsService{}, err
 	}
@@ -853,7 +853,7 @@ func newListAuthClientsService(cmd *cobra.Command, apiVersion string) (authcmd.L
 }
 
 func newGetAuthClientService(cmd *cobra.Command, apiVersion string) (authcmd.GetClientService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return authcmd.GetClientService{}, err
 	}
@@ -869,7 +869,7 @@ func newGetAuthClientService(cmd *cobra.Command, apiVersion string) (authcmd.Get
 }
 
 func newUpdateAuthClientService(cmd *cobra.Command, apiVersion string) (authcmd.UpdateClientService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return authcmd.UpdateClientService{}, err
 	}
@@ -885,7 +885,7 @@ func newUpdateAuthClientService(cmd *cobra.Command, apiVersion string) (authcmd.
 }
 
 func newDeleteAuthClientService(cmd *cobra.Command, apiVersion string) (authcmd.DeleteClientService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return authcmd.DeleteClientService{}, err
 	}
@@ -901,7 +901,7 @@ func newDeleteAuthClientService(cmd *cobra.Command, apiVersion string) (authcmd.
 }
 
 func newCreateAuthSecretService(cmd *cobra.Command, apiVersion string) (authcmd.CreateSecretService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return authcmd.CreateSecretService{}, err
 	}
@@ -917,7 +917,7 @@ func newCreateAuthSecretService(cmd *cobra.Command, apiVersion string) (authcmd.
 }
 
 func newDeleteAuthSecretService(cmd *cobra.Command, apiVersion string) (authcmd.DeleteSecretService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return authcmd.DeleteSecretService{}, err
 	}
@@ -933,7 +933,7 @@ func newDeleteAuthSecretService(cmd *cobra.Command, apiVersion string) (authcmd.
 }
 
 func newListAuthUsersService(cmd *cobra.Command, apiVersion string) (authcmd.ListUsersService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return authcmd.ListUsersService{}, err
 	}
@@ -949,7 +949,7 @@ func newListAuthUsersService(cmd *cobra.Command, apiVersion string) (authcmd.Lis
 }
 
 func newGetAuthUserService(cmd *cobra.Command, apiVersion string) (authcmd.GetUserService, error) {
-	rt, err := runtimeFromCommand(cmd)
+	rt, err := stackRuntimeFromCommand(cmd)
 	if err != nil {
 		return authcmd.GetUserService{}, err
 	}
@@ -982,11 +982,11 @@ func authVersionResolver(rt interface {
 }
 
 func renderAuthClients(cmd *cobra.Command, output authcmd.ListClientsOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Clients) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No Auth clients found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No Auth clients found."))
 		return err
 	}
 	for _, client := range output.Clients {
@@ -998,7 +998,7 @@ func renderAuthClients(cmd *cobra.Command, output authcmd.ListClientsOutput) err
 }
 
 func renderAuthClient(cmd *cobra.Command, output authcmd.GetClientOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	client := output.Client
@@ -1027,7 +1027,7 @@ func renderAuthClient(cmd *cobra.Command, output authcmd.GetClientOutput) error 
 }
 
 func renderAuthClientMutated(cmd *cobra.Command, output authcmd.ClientMutationOutput, action string) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Client %s %s.\n", output.Client.ID, action)
@@ -1035,7 +1035,7 @@ func renderAuthClientMutated(cmd *cobra.Command, output authcmd.ClientMutationOu
 }
 
 func renderAuthClientDeleted(cmd *cobra.Command, output authcmd.DeleteClientOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Client %s deleted.\n", output.ClientID)
@@ -1043,7 +1043,7 @@ func renderAuthClientDeleted(cmd *cobra.Command, output authcmd.DeleteClientOutp
 }
 
 func renderAuthSecretCreated(cmd *cobra.Command, output authcmd.CreateSecretOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if output.Secret.ID != "" {
@@ -1056,7 +1056,7 @@ func renderAuthSecretCreated(cmd *cobra.Command, output authcmd.CreateSecretOutp
 }
 
 func renderAuthSecretDeleted(cmd *cobra.Command, output authcmd.DeleteSecretOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Secret %s deleted for client %s.\n", output.SecretID, output.ClientID)
@@ -1064,11 +1064,11 @@ func renderAuthSecretDeleted(cmd *cobra.Command, output authcmd.DeleteSecretOutp
 }
 
 func renderAuthUsers(cmd *cobra.Command, output authcmd.ListUsersOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	if len(output.Users) == 0 {
-		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No Auth users found.")
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledEmptyLine(cmd, "No Auth users found."))
 		return err
 	}
 	for _, user := range output.Users {
@@ -1080,7 +1080,7 @@ func renderAuthUsers(cmd *cobra.Command, output authcmd.ListUsersOutput) error {
 }
 
 func renderAuthUser(cmd *cobra.Command, output authcmd.GetUserOutput) error {
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+	if err := writeStyledAPIVersion(cmd, output.APIVersion); err != nil {
 		return err
 	}
 	user := output.User

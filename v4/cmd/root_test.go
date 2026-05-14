@@ -1371,7 +1371,7 @@ func TestLedgerInfoCloudDeviceScopesOrganizationAndStackTokens(t *testing.T) {
 			if got := r.Header.Get("Authorization"); got != "Bearer stack-token" {
 				t.Fatalf("expected stack token on versions, got %q", got)
 			}
-			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"1.9.0","health":true}]}`)
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"1.9.0","health":true},{"name":"payments","version":"3.2.0","health":true}]}`)
 		case "/api/ledger/_info":
 			if got := r.Header.Get("Authorization"); got != "Bearer stack-token" {
 				t.Fatalf("expected stack token on ledger info, got %q", got)
@@ -1494,6 +1494,22 @@ func TestLedgerInfoCloudDeviceScopesOrganizationAndStackTokens(t *testing.T) {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected ledger info output to contain %q, got:\n%s", expected, stdout)
 		}
+	}
+
+	stdout, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"payments", "versions",
+	)
+	if err != nil {
+		t.Fatalf("payments versions cloud device: %v stderr=%s", err, stderr)
+	}
+	if len(openedURLs) != 2 {
+		t.Fatalf("expected cached stack auth after ledger info, got opened URLs: %#v", openedURLs)
+	}
+	if !strings.Contains(stdout, "payments 3.2.0 healthy api=[v1 v3] policy=latest-compatible") {
+		t.Fatalf("unexpected payments versions output:\n%s", stdout)
 	}
 }
 
