@@ -49,6 +49,7 @@ func NewRootCommand(version string) *cobra.Command {
 	root.AddCommand(newFlowsCommand(false))
 	root.AddCommand(newFlowsCommand(true))
 	root.AddCommand(newReconciliationCommand())
+	root.AddCommand(newAuthCommand())
 
 	return root
 }

@@ -5954,6 +5954,148 @@ func TestReconciliationPoliciesReconcileSelectsV1(t *testing.T) {
 	}
 }
 
+func TestAuthClientsListSelectsV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"auth","version":"1.0.0","health":true}]}`)
+		case "/api/auth/clients":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":[{"id":"client_1","name":"backend","scopes":["ledger:read"],"redirectUris":["http://localhost/callback"],"secrets":[{"id":"secret_1","name":"default","lastDigits":"1234"}]}]}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "auth", "clients", "list")
+	if err != nil {
+		t.Fatalf("list auth clients: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v1") || !strings.Contains(stdout, "client_1\tbackend\tledger:read") {
+		t.Fatalf("unexpected auth clients output:\n%s", stdout)
+	}
+}
+
+func TestAuthClientsShowGetWarns(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"auth","version":"1.0.0","health":true}]}`)
+		case "/api/auth/clients/client_1":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":"client_1","name":"backend","scopes":["ledger:read"],"redirectUris":["http://localhost/callback"],"secrets":[{"id":"secret_1","name":"default","lastDigits":"1234"}]}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "auth", "clients", "get", "client_1")
+	if err != nil {
+		t.Fatalf("show auth client through alias: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Command auth clients get has been deprecated, use auth clients show") {
+		t.Fatalf("expected get deprecation warning, got:\n%s", stderr)
+	}
+	if !strings.Contains(stdout, "ID\tclient_1") || !strings.Contains(stdout, "Secrets\t1") {
+		t.Fatalf("unexpected auth client output:\n%s", stdout)
+	}
+}
+
+func TestAuthUsersListSelectsV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"auth","version":"1.0.0","health":true}]}`)
+		case "/api/auth/users":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":[{"id":"user_1","email":"user@example.com","subject":"sub_1"}]}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "auth", "users", "list")
+	if err != nil {
+		t.Fatalf("list auth users: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v1") || !strings.Contains(stdout, "user_1\tuser@example.com\tsub_1") {
+		t.Fatalf("unexpected auth users output:\n%s", stdout)
+	}
+}
+
+func TestAuthUsersShowGetWarns(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"auth","version":"1.0.0","health":true}]}`)
+		case "/api/auth/users/user_1":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":"user_1","email":"user@example.com","subject":"sub_1"}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "auth", "users", "get", "user_1")
+	if err != nil {
+		t.Fatalf("show auth user through alias: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Command auth users get has been deprecated, use auth users show") {
+		t.Fatalf("expected get deprecation warning, got:\n%s", stderr)
+	}
+	if !strings.Contains(stdout, "ID\tuser_1") || !strings.Contains(stdout, "Email\tuser@example.com") {
+		t.Fatalf("unexpected auth user output:\n%s", stdout)
+	}
+}
+
 func TestConfigMigrateV3DryRun(t *testing.T) {
 	v3Dir := writeV3CommandFixture(t, true)
 
