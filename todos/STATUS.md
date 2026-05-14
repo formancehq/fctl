@@ -7,7 +7,7 @@
 - [x] 05 - capabilities manifest generator
 - [x] 06 - runtime API version resolver
 - [x] 07 - first stack inspection command
-- [ ] 08 - first Ledger versioned command
+- [x] 08 - first Ledger versioned command
 - [ ] 09 - v3 config migration
 - [ ] 10 - integration tests and UX hardening
 - [ ] 11 - v4 cutover plan
