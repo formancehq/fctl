@@ -55,3 +55,52 @@ func TestGetTransferInitiationServiceRequiresID(t *testing.T) {
 		t.Fatal("expected transfer initiation id validation error")
 	}
 }
+
+func TestTransferInitiationActionServiceSelectsResolvedHandler(t *testing.T) {
+	service := TransferInitiationActionService{
+		Handlers: []TransferInitiationActionHandler{
+			{
+				APIVersion: "v1",
+				Run: func(context.Context, TransferInitiationActionInput) (TransferInitiationActionOutput, error) {
+					t.Fatal("v1 handler should not run")
+					return TransferInitiationActionOutput{}, nil
+				},
+			},
+			{
+				APIVersion: "v3",
+				Run: func(_ context.Context, input TransferInitiationActionInput) (TransferInitiationActionOutput, error) {
+					if input.TransferInitiationID != "ti_1" {
+						t.Fatalf("unexpected input: %#v", input)
+					}
+					return TransferInitiationActionOutput{TransferInitiationID: input.TransferInitiationID}, nil
+				},
+			},
+		},
+		Resolve: func(_ context.Context, versions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			assertAPIVersions(t, versions, []capabilities.APIVersion{"v1", "v3"})
+			return "v3", nil
+		},
+	}
+
+	output, err := service.Run(context.Background(), TransferInitiationActionInput{TransferInitiationID: "ti_1"})
+	if err != nil {
+		t.Fatalf("run service: %v", err)
+	}
+	if output.APIVersion != "v3" || output.TransferInitiationID != "ti_1" {
+		t.Fatalf("unexpected output: %#v", output)
+	}
+}
+
+func TestTransferInitiationActionServiceRequiresID(t *testing.T) {
+	service := TransferInitiationActionService{
+		Handlers: []TransferInitiationActionHandler{{APIVersion: "v3"}},
+		Resolve: func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			t.Fatal("resolver should not run")
+			return "", nil
+		},
+	}
+
+	if _, err := service.Run(context.Background(), TransferInitiationActionInput{}); err == nil {
+		t.Fatal("expected transfer initiation id validation error")
+	}
+}

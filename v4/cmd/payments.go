@@ -47,6 +47,10 @@ func newPaymentsTransferInitiationCommand(use string, aliases []string, deprecat
 	command.AddCommand(newPaymentsTransferInitiationListCommand())
 	command.AddCommand(newPaymentsTransferInitiationShowCommand("show", []string{"sh", "s"}, false))
 	command.AddCommand(newPaymentsTransferInitiationShowCommand("get", []string{"g"}, true))
+	command.AddCommand(newPaymentsTransferInitiationActionCommand("approve", []string{"a"}, "Approve a payment transfer initiation", paymentscmd.FeatureApprovePaymentInitiation, paymentscmd.SDKApprovePaymentInitiationHandlers, "approved", true))
+	command.AddCommand(newPaymentsTransferInitiationActionCommand("reject", []string{"rj"}, "Reject a payment transfer initiation", paymentscmd.FeatureRejectPaymentInitiation, paymentscmd.SDKRejectPaymentInitiationHandlers, "rejected", true))
+	command.AddCommand(newPaymentsTransferInitiationActionCommand("retry", []string{"r"}, "Retry a payment transfer initiation", paymentscmd.FeatureRetryPaymentInitiation, paymentscmd.SDKRetryPaymentInitiationHandlers, "queued for retry", true))
+	command.AddCommand(newPaymentsTransferInitiationActionCommand("delete", []string{"d"}, "Delete a payment transfer initiation", paymentscmd.FeatureDeletePaymentInitiation, paymentscmd.SDKDeletePaymentInitiationHandlers, "deleted", true))
 	return command
 }
 
@@ -1468,5 +1472,80 @@ func renderPaymentTransferInitiation(cmd *cobra.Command, output paymentscmd.GetT
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", transfer.CreatedAt.Format(time.RFC3339))
+	return err
+}
+
+func newPaymentsTransferInitiationActionCommand(
+	use string,
+	aliases []string,
+	short string,
+	feature capabilities.Feature,
+	handlers func(*formance.Formance) []paymentscmd.TransferInitiationActionHandler,
+	done string,
+	requiresConfirm bool,
+) *cobra.Command {
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     use + " <transfer-initiation-id>",
+		Aliases: aliases,
+		Short:   short,
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if requiresConfirm && !confirm {
+				return fmt.Errorf("payments transfer-initiation %s requires --confirm", use)
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.TransferInitiationActionService{
+				Handlers: handlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         feature,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.TransferInitiationActionInput{TransferInitiationID: args[0]})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentTransferInitiationAction(cmd, output, done)
+		},
+	}
+	if requiresConfirm {
+		command.Flags().BoolVar(&confirm, "confirm", false, "Confirm transfer initiation action")
+	}
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func renderPaymentTransferInitiationAction(cmd *cobra.Command, output paymentscmd.TransferInitiationActionOutput, done string) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if output.TaskID != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Task ID: %s\n", output.TaskID); err != nil {
+			return err
+		}
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Transfer initiation %s %s.\n", output.TransferInitiationID, done)
 	return err
 }

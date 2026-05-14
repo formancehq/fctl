@@ -13,8 +13,12 @@ import (
 )
 
 const (
-	FeatureGetTransferInitiation  capabilities.Feature = "getTransferInitiation"
-	FeatureListTransferInitiation capabilities.Feature = "listTransferInitiations"
+	FeatureApprovePaymentInitiation capabilities.Feature = "approvePaymentInitiation"
+	FeatureDeletePaymentInitiation  capabilities.Feature = "deletePaymentInitiation"
+	FeatureGetTransferInitiation    capabilities.Feature = "getTransferInitiation"
+	FeatureListTransferInitiation   capabilities.Feature = "listTransferInitiations"
+	FeatureRejectPaymentInitiation  capabilities.Feature = "rejectPaymentInitiation"
+	FeatureRetryPaymentInitiation   capabilities.Feature = "retryPaymentInitiation"
 )
 
 type TransferInitiationSummary struct {
@@ -60,6 +64,16 @@ type GetTransferInitiationOutput struct {
 	TransferInitiation TransferInitiationSummary `json:"transferInitiation" yaml:"transferInitiation"`
 }
 
+type TransferInitiationActionInput struct {
+	TransferInitiationID string
+}
+
+type TransferInitiationActionOutput struct {
+	APIVersion           capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	TransferInitiationID string                  `json:"transferInitiationID" yaml:"transferInitiationID"`
+	TaskID               string                  `json:"taskID,omitempty" yaml:"taskID,omitempty"`
+}
+
 type ListTransferInitiationsHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, ListTransferInitiationsInput) (ListTransferInitiationsOutput, error)
@@ -70,6 +84,11 @@ type GetTransferInitiationHandler struct {
 	Run        func(context.Context, GetTransferInitiationInput) (GetTransferInitiationOutput, error)
 }
 
+type TransferInitiationActionHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, TransferInitiationActionInput) (TransferInitiationActionOutput, error)
+}
+
 type ListTransferInitiationsService struct {
 	Handlers []ListTransferInitiationsHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
@@ -77,6 +96,11 @@ type ListTransferInitiationsService struct {
 
 type GetTransferInitiationService struct {
 	Handlers []GetTransferInitiationHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type TransferInitiationActionService struct {
+	Handlers []TransferInitiationActionHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -124,6 +148,32 @@ func (s GetTransferInitiationService) Run(ctx context.Context, input GetTransfer
 	output, err := handler.Run(ctx, input)
 	if err != nil {
 		return GetTransferInitiationOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func (s TransferInitiationActionService) Run(ctx context.Context, input TransferInitiationActionInput) (TransferInitiationActionOutput, error) {
+	if input.TransferInitiationID == "" {
+		return TransferInitiationActionOutput{}, fmt.Errorf("transfer initiation id is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]TransferInitiationActionHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return TransferInitiationActionOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return TransferInitiationActionOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return TransferInitiationActionOutput{}, err
 	}
 	output.APIVersion = selected
 	return output, nil
@@ -193,6 +243,106 @@ func SDKGetTransferInitiationHandlers(sdk *formance.Formance) []GetTransferIniti
 					return GetTransferInitiationOutput{}, fmt.Errorf("payments v3 get payment initiation returned no data")
 				}
 				return GetTransferInitiationOutput{TransferInitiation: fromV3PaymentInitiation(response.V3GetPaymentInitiationResponse.Data)}, nil
+			},
+		},
+	}
+}
+
+func SDKApprovePaymentInitiationHandlers(sdk *formance.Formance) []TransferInitiationActionHandler {
+	return []TransferInitiationActionHandler{
+		{
+			APIVersion: "v3",
+			Run: func(ctx context.Context, input TransferInitiationActionInput) (TransferInitiationActionOutput, error) {
+				response, err := sdk.Payments.V3.ApprovePaymentInitiation(ctx, operations.V3ApprovePaymentInitiationRequest{
+					PaymentInitiationID: input.TransferInitiationID,
+				})
+				if err != nil {
+					return TransferInitiationActionOutput{}, err
+				}
+				if response.V3ApprovePaymentInitiationResponse == nil {
+					return TransferInitiationActionOutput{}, fmt.Errorf("payments v3 approve payment initiation returned no data")
+				}
+				return TransferInitiationActionOutput{
+					TransferInitiationID: input.TransferInitiationID,
+					TaskID:               response.V3ApprovePaymentInitiationResponse.Data.TaskID,
+				}, nil
+			},
+		},
+	}
+}
+
+func SDKRejectPaymentInitiationHandlers(sdk *formance.Formance) []TransferInitiationActionHandler {
+	return []TransferInitiationActionHandler{
+		{
+			APIVersion: "v3",
+			Run: func(ctx context.Context, input TransferInitiationActionInput) (TransferInitiationActionOutput, error) {
+				if _, err := sdk.Payments.V3.RejectPaymentInitiation(ctx, operations.V3RejectPaymentInitiationRequest{
+					PaymentInitiationID: input.TransferInitiationID,
+				}); err != nil {
+					return TransferInitiationActionOutput{}, err
+				}
+				return TransferInitiationActionOutput{TransferInitiationID: input.TransferInitiationID}, nil
+			},
+		},
+	}
+}
+
+func SDKRetryPaymentInitiationHandlers(sdk *formance.Formance) []TransferInitiationActionHandler {
+	return []TransferInitiationActionHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input TransferInitiationActionInput) (TransferInitiationActionOutput, error) {
+				if _, err := sdk.Payments.V1.RetryTransferInitiation(ctx, operations.RetryTransferInitiationRequest{
+					TransferID: input.TransferInitiationID,
+				}); err != nil {
+					return TransferInitiationActionOutput{}, err
+				}
+				return TransferInitiationActionOutput{TransferInitiationID: input.TransferInitiationID}, nil
+			},
+		},
+		{
+			APIVersion: "v3",
+			Run: func(ctx context.Context, input TransferInitiationActionInput) (TransferInitiationActionOutput, error) {
+				response, err := sdk.Payments.V3.RetryPaymentInitiation(ctx, operations.V3RetryPaymentInitiationRequest{
+					PaymentInitiationID: input.TransferInitiationID,
+				})
+				if err != nil {
+					return TransferInitiationActionOutput{}, err
+				}
+				if response.V3RetryPaymentInitiationResponse == nil {
+					return TransferInitiationActionOutput{}, fmt.Errorf("payments v3 retry payment initiation returned no data")
+				}
+				return TransferInitiationActionOutput{
+					TransferInitiationID: input.TransferInitiationID,
+					TaskID:               response.V3RetryPaymentInitiationResponse.Data.TaskID,
+				}, nil
+			},
+		},
+	}
+}
+
+func SDKDeletePaymentInitiationHandlers(sdk *formance.Formance) []TransferInitiationActionHandler {
+	return []TransferInitiationActionHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input TransferInitiationActionInput) (TransferInitiationActionOutput, error) {
+				if _, err := sdk.Payments.V1.DeleteTransferInitiation(ctx, operations.DeleteTransferInitiationRequest{
+					TransferID: input.TransferInitiationID,
+				}); err != nil {
+					return TransferInitiationActionOutput{}, err
+				}
+				return TransferInitiationActionOutput{TransferInitiationID: input.TransferInitiationID}, nil
+			},
+		},
+		{
+			APIVersion: "v3",
+			Run: func(ctx context.Context, input TransferInitiationActionInput) (TransferInitiationActionOutput, error) {
+				if _, err := sdk.Payments.V3.DeletePaymentInitiation(ctx, operations.V3DeletePaymentInitiationRequest{
+					PaymentInitiationID: input.TransferInitiationID,
+				}); err != nil {
+					return TransferInitiationActionOutput{}, err
+				}
+				return TransferInitiationActionOutput{TransferInitiationID: input.TransferInitiationID}, nil
 			},
 		},
 	}
