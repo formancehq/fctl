@@ -115,6 +115,9 @@ func newPaymentsBankAccountsCommand(use string, aliases []string, deprecated boo
 	command.AddCommand(newPaymentsBankAccountsListCommand())
 	command.AddCommand(newPaymentsBankAccountsShowCommand("show", nil, false))
 	command.AddCommand(newPaymentsBankAccountsShowCommand("get", []string{"g"}, true))
+	command.AddCommand(newPaymentsBankAccountsForwardCommand())
+	command.AddCommand(newPaymentsBankAccountsSetMetadataCommand("set-metadata", nil, false))
+	command.AddCommand(newPaymentsBankAccountsSetMetadataCommand("update-metadata", []string{"update-meta"}, true))
 	return command
 }
 
@@ -229,6 +232,143 @@ func renderPaymentBankAccountCreated(cmd *cobra.Command, output paymentscmd.Crea
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Bank account created with ID: %s\n", output.BankAccountID)
+	return err
+}
+
+func newPaymentsBankAccountsForwardCommand() *cobra.Command {
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "forward <bank-account-id> <connector-id>",
+		Aliases: []string{"fo", "f"},
+		Short:   "Forward a payment bank account to a connector",
+		Args:    cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("payments bank-accounts forward requires --confirm")
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.ForwardBankAccountService{
+				Handlers: paymentscmd.SDKForwardBankAccountHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureForwardBankAccount,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.ForwardBankAccountInput{
+				BankAccountID: args[0],
+				ConnectorID:   args[1],
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentBankAccountForwarded(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm bank account forwarding")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func renderPaymentBankAccountForwarded(cmd *cobra.Command, output paymentscmd.ForwardBankAccountOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if output.TaskID != "" {
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Bank account forwarding scheduled with task ID: %s\n", output.TaskID)
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Bank account %s forwarded to connector %s.\n", output.BankAccountID, output.ConnectorID)
+	return err
+}
+
+func newPaymentsBankAccountsSetMetadataCommand(use string, aliases []string, deprecated bool) *cobra.Command {
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     use + " <bank-account-id> <key=value>...",
+		Aliases: aliases,
+		Short:   "Set payment bank account metadata",
+		Args:    cobra.MinimumNArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if deprecated {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Command payments bank-accounts update-metadata has been deprecated, use payments bank-accounts set-metadata")
+			}
+			if !confirm {
+				return fmt.Errorf("payments bank-accounts %s requires --confirm", use)
+			}
+			metadata, err := parseMetadataFlags(args[1:])
+			if err != nil {
+				return err
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.SetBankAccountMetadataService{
+				Handlers: paymentscmd.SDKSetBankAccountMetadataHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureSetBankAccountMetadata,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.SetBankAccountMetadataInput{BankAccountID: args[0], Metadata: metadata})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentBankAccountMetadataSet(cmd, output)
+		},
+	}
+	if deprecated {
+		command.Deprecated = "use payments bank-accounts set-metadata"
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm bank account metadata update")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func renderPaymentBankAccountMetadataSet(cmd *cobra.Command, output paymentscmd.SetBankAccountMetadataOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Metadata set on bank account %s.\n", output.BankAccountID)
 	return err
 }
 

@@ -13,9 +13,11 @@ import (
 )
 
 const (
-	FeatureCreateBankAccount capabilities.Feature = "createBankAccount"
-	FeatureGetBankAccount    capabilities.Feature = "getBankAccount"
-	FeatureListBankAccounts  capabilities.Feature = "listBankAccounts"
+	FeatureCreateBankAccount      capabilities.Feature = "createBankAccount"
+	FeatureForwardBankAccount     capabilities.Feature = "forwardBankAccount"
+	FeatureGetBankAccount         capabilities.Feature = "getBankAccount"
+	FeatureListBankAccounts       capabilities.Feature = "listBankAccounts"
+	FeatureSetBankAccountMetadata capabilities.Feature = "updateBankAccountMetadata"
 )
 
 type CreateBankAccountInput struct {
@@ -29,6 +31,28 @@ type CreateBankAccountInput struct {
 }
 
 type CreateBankAccountOutput struct {
+	APIVersion    capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	BankAccountID string                  `json:"bankAccountID" yaml:"bankAccountID"`
+}
+
+type ForwardBankAccountInput struct {
+	BankAccountID string
+	ConnectorID   string
+}
+
+type ForwardBankAccountOutput struct {
+	APIVersion    capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	BankAccountID string                  `json:"bankAccountID" yaml:"bankAccountID"`
+	ConnectorID   string                  `json:"connectorID" yaml:"connectorID"`
+	TaskID        string                  `json:"taskID,omitempty" yaml:"taskID,omitempty"`
+}
+
+type SetBankAccountMetadataInput struct {
+	BankAccountID string
+	Metadata      map[string]string
+}
+
+type SetBankAccountMetadataOutput struct {
 	APIVersion    capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
 	BankAccountID string                  `json:"bankAccountID" yaml:"bankAccountID"`
 }
@@ -77,6 +101,16 @@ type CreateBankAccountHandler struct {
 	Run        func(context.Context, CreateBankAccountInput) (CreateBankAccountOutput, error)
 }
 
+type ForwardBankAccountHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, ForwardBankAccountInput) (ForwardBankAccountOutput, error)
+}
+
+type SetBankAccountMetadataHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, SetBankAccountMetadataInput) (SetBankAccountMetadataOutput, error)
+}
+
 type GetBankAccountHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, GetBankAccountInput) (GetBankAccountOutput, error)
@@ -89,6 +123,16 @@ type ListBankAccountsService struct {
 
 type CreateBankAccountService struct {
 	Handlers []CreateBankAccountHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type ForwardBankAccountService struct {
+	Handlers []ForwardBankAccountHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type SetBankAccountMetadataService struct {
+	Handlers []SetBankAccountMetadataHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -141,6 +185,64 @@ func (s CreateBankAccountService) Run(ctx context.Context, input CreateBankAccou
 	output, err := handler.Run(ctx, input)
 	if err != nil {
 		return CreateBankAccountOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func (s ForwardBankAccountService) Run(ctx context.Context, input ForwardBankAccountInput) (ForwardBankAccountOutput, error) {
+	if input.BankAccountID == "" {
+		return ForwardBankAccountOutput{}, fmt.Errorf("bank account id is required")
+	}
+	if input.ConnectorID == "" {
+		return ForwardBankAccountOutput{}, fmt.Errorf("connector id is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]ForwardBankAccountHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return ForwardBankAccountOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return ForwardBankAccountOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return ForwardBankAccountOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func (s SetBankAccountMetadataService) Run(ctx context.Context, input SetBankAccountMetadataInput) (SetBankAccountMetadataOutput, error) {
+	if input.BankAccountID == "" {
+		return SetBankAccountMetadataOutput{}, fmt.Errorf("bank account id is required")
+	}
+	if len(input.Metadata) == 0 {
+		return SetBankAccountMetadataOutput{}, fmt.Errorf("bank account metadata is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]SetBankAccountMetadataHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return SetBankAccountMetadataOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return SetBankAccountMetadataOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return SetBankAccountMetadataOutput{}, err
 	}
 	output.APIVersion = selected
 	return output, nil
@@ -213,6 +315,88 @@ func SDKCreateBankAccountHandlers(sdk *formance.Formance) []CreateBankAccountHan
 					return CreateBankAccountOutput{}, fmt.Errorf("payments v3 create bank account returned no data")
 				}
 				return CreateBankAccountOutput{BankAccountID: response.V3CreateBankAccountResponse.Data}, nil
+			},
+		},
+	}
+}
+
+func SDKForwardBankAccountHandlers(sdk *formance.Formance) []ForwardBankAccountHandler {
+	return []ForwardBankAccountHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input ForwardBankAccountInput) (ForwardBankAccountOutput, error) {
+				response, err := sdk.Payments.V1.ForwardBankAccount(ctx, operations.ForwardBankAccountRequest{
+					BankAccountID: input.BankAccountID,
+					ForwardBankAccountRequest: shared.ForwardBankAccountRequest{
+						ConnectorID: input.ConnectorID,
+					},
+				})
+				if err != nil {
+					return ForwardBankAccountOutput{}, err
+				}
+				if response.BankAccountResponse == nil {
+					return ForwardBankAccountOutput{}, fmt.Errorf("payments v1 forward bank account returned no data")
+				}
+				bankAccount := response.BankAccountResponse.Data
+				return ForwardBankAccountOutput{
+					BankAccountID: bankAccount.ID,
+					ConnectorID:   stringValue(bankAccount.ConnectorID),
+				}, nil
+			},
+		},
+		{
+			APIVersion: "v3",
+			Run: func(ctx context.Context, input ForwardBankAccountInput) (ForwardBankAccountOutput, error) {
+				response, err := sdk.Payments.V3.ForwardBankAccount(ctx, operations.V3ForwardBankAccountRequest{
+					BankAccountID: input.BankAccountID,
+					V3ForwardBankAccountRequest: &shared.V3ForwardBankAccountRequest{
+						ConnectorID: input.ConnectorID,
+					},
+				})
+				if err != nil {
+					return ForwardBankAccountOutput{}, err
+				}
+				if response.V3ForwardBankAccountResponse == nil {
+					return ForwardBankAccountOutput{}, fmt.Errorf("payments v3 forward bank account returned no data")
+				}
+				return ForwardBankAccountOutput{
+					BankAccountID: input.BankAccountID,
+					ConnectorID:   input.ConnectorID,
+					TaskID:        response.V3ForwardBankAccountResponse.Data.TaskID,
+				}, nil
+			},
+		},
+	}
+}
+
+func SDKSetBankAccountMetadataHandlers(sdk *formance.Formance) []SetBankAccountMetadataHandler {
+	return []SetBankAccountMetadataHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input SetBankAccountMetadataInput) (SetBankAccountMetadataOutput, error) {
+				if _, err := sdk.Payments.V1.UpdateBankAccountMetadata(ctx, operations.UpdateBankAccountMetadataRequest{
+					BankAccountID: input.BankAccountID,
+					UpdateBankAccountMetadataRequest: shared.UpdateBankAccountMetadataRequest{
+						Metadata: input.Metadata,
+					},
+				}); err != nil {
+					return SetBankAccountMetadataOutput{}, err
+				}
+				return SetBankAccountMetadataOutput{BankAccountID: input.BankAccountID}, nil
+			},
+		},
+		{
+			APIVersion: "v3",
+			Run: func(ctx context.Context, input SetBankAccountMetadataInput) (SetBankAccountMetadataOutput, error) {
+				if _, err := sdk.Payments.V3.UpdateBankAccountMetadata(ctx, operations.V3UpdateBankAccountMetadataRequest{
+					BankAccountID: input.BankAccountID,
+					V3UpdateBankAccountMetadataRequest: &shared.V3UpdateBankAccountMetadataRequest{
+						Metadata: input.Metadata,
+					},
+				}); err != nil {
+					return SetBankAccountMetadataOutput{}, err
+				}
+				return SetBankAccountMetadataOutput{BankAccountID: input.BankAccountID}, nil
 			},
 		},
 	}

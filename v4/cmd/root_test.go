@@ -2240,6 +2240,134 @@ func TestPaymentsBankAccountsCreateDeprecatedAliases(t *testing.T) {
 	}
 }
 
+func TestPaymentsBankAccountsForwardSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/bank-accounts/ba_1/forward":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			body := readRequestBody(t, r)
+			if !strings.Contains(body, `"connectorID":"conn_1"`) {
+				t.Fatalf("expected connector body, got %s", body)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusAccepted)
+			fmt.Fprint(w, `{"data":{"taskID":"task_1"}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t, "--config-dir", configDir, "context", "create", "stack", "local", "--stack-url", server.URL)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "bank-accounts", "forward", "ba_1", "conn_1",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("forward payment bank account: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v3") || !strings.Contains(stdout, "Bank account forwarding scheduled with task ID: task_1") {
+		t.Fatalf("unexpected forward bank account output:\n%s", stdout)
+	}
+}
+
+func TestPaymentsBankAccountsForwardRequiresConfirm(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "payments", "bank-accounts", "forward", "ba_1", "conn_1")
+	if err == nil {
+		t.Fatal("expected payments bank-accounts forward to require confirmation")
+	}
+	if stdout != "" || stderr != "" {
+		t.Fatalf("expected empty output, got stdout=%q stderr=%q", stdout, stderr)
+	}
+	if !strings.Contains(err.Error(), "payments bank-accounts forward requires --confirm") {
+		t.Fatalf("expected confirmation error, got: %v", err)
+	}
+}
+
+func TestPaymentsBankAccountsSetMetadataSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/bank-accounts/ba_1/metadata":
+			if r.Method != http.MethodPatch {
+				t.Fatalf("expected PATCH, got %s", r.Method)
+			}
+			body := readRequestBody(t, r)
+			if !strings.Contains(body, `"metadata":{"env":"dev"}`) {
+				t.Fatalf("expected metadata body, got %s", body)
+			}
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t, "--config-dir", configDir, "context", "create", "stack", "local", "--stack-url", server.URL)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "bank-accounts", "set-metadata", "ba_1", "env=dev",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("set payment bank account metadata: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v3") || !strings.Contains(stdout, "Metadata set on bank account ba_1.") {
+		t.Fatalf("unexpected set bank account metadata output:\n%s", stdout)
+	}
+}
+
+func TestPaymentsBankAccountsUpdateMetadataDeprecatedAlias(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/bank-accounts/ba_1/metadata":
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t, "--config-dir", configDir, "context", "create", "stack", "local", "--stack-url", server.URL)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "bank-accounts", "update-metadata", "ba_1", "env=dev",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("set payment bank account metadata through alias: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "use payments bank-accounts set-metadata") {
+		t.Fatalf("expected update-metadata deprecation warning, got:\n%s", stderr)
+	}
+}
+
 func TestPaymentsBankAccountsListSelectsV3(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
