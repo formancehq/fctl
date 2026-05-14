@@ -39,9 +39,16 @@ func loadConfig(cmd *cobra.Command, allowMissing bool) (v4config.Config, string,
 		if allowMissing && errors.Is(err, os.ErrNotExist) {
 			return v4config.New(), path, nil
 		}
+		if errors.Is(err, os.ErrNotExist) {
+			return v4config.Config{}, "", missingConfigError(path)
+		}
 		return v4config.Config{}, "", err
 	}
 	return cfg, path, nil
+}
+
+func missingConfigError(path string) error {
+	return fmt.Errorf("v4 config not found at %s; create a context with `fctl context create stack <name> --stack-url <url>` or migrate an existing v3 config with `fctl config migrate-v3`", path)
 }
 
 func outputFormat(cmd *cobra.Command) (string, error) {

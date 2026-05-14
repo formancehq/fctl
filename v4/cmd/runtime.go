@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -42,6 +44,9 @@ func runtimeFromCommand(cmd *cobra.Command) (*runtime.Runtime, error) {
 		Compatibility:   capabilities.DefaultComponentCompatibility,
 	})
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, missingConfigError(path)
+		}
 		return nil, err
 	}
 	if debug, err := cmd.Root().PersistentFlags().GetBool(debugFlag); err != nil {

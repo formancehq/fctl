@@ -31,10 +31,10 @@ By default the command reads the v3 configuration from
 elsewhere. The source directory must contain the v3 `config.yml` file and the
 `profiles/` directory.
 
-The command writes the v4 config to the v4 config directory as `config.yaml`
-(`$HOME/.config/formance/fctl-v4/config.yaml` by default, or `--config-dir
-<dir>/config.yaml` when provided). It does not create or mutate the v3
-`config.yml` source file.
+The command writes the v4 config to the platform user config directory as
+`config.yaml` (`$HOME/Library/Application Support/formance/fctl-v4/config.yaml`
+on macOS, or `--config-dir <dir>/config.yaml` when provided). It does not create
+or mutate the v3 `config.yml` source file.
 
 The command should:
 

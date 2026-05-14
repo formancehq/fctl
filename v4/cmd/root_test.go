@@ -9096,6 +9096,35 @@ func TestConfigMigrateV3UsesDefaultSourceDir(t *testing.T) {
 	}
 }
 
+func TestMissingConfigErrorsAreActionable(t *testing.T) {
+	configDir := filepath.Join(t.TempDir(), "missing")
+
+	for _, tc := range []struct {
+		name string
+		args []string
+	}{
+		{name: "session", args: []string{"session", "status"}},
+		{name: "runtime", args: []string{"target", "inspect"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, stderr, err := executeCommand(t, append([]string{"--config-dir", configDir}, tc.args...)...)
+			if err == nil {
+				t.Fatal("expected missing config error")
+			}
+			for _, expected := range []string{
+				"v4 config not found",
+				filepath.Join(configDir, "config.yaml"),
+				"fctl context create stack",
+				"fctl config migrate-v3",
+			} {
+				if !strings.Contains(err.Error(), expected) {
+					t.Fatalf("expected missing config error to contain %q, got %v stderr=%s", expected, err, stderr)
+				}
+			}
+		})
+	}
+}
+
 func writeV3CommandFixture(t *testing.T, withTokens bool) string {
 	t.Helper()
 	dir := t.TempDir()
