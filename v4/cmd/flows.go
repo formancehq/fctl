@@ -2,10 +2,12 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
 	formance "github.com/formancehq/formance-sdk-go/v3"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/v4/internal/capabilities"
@@ -37,7 +39,191 @@ func newFlowsWorkflowsCommand() *cobra.Command {
 	}
 	command.AddCommand(newFlowsWorkflowsListCommand())
 	command.AddCommand(newFlowsWorkflowsShowCommand())
+	command.AddCommand(newFlowsWorkflowsCreateCommand())
+	command.AddCommand(newFlowsWorkflowsDeleteCommand())
+	command.AddCommand(newFlowsWorkflowsRunCommand())
 	return command
+}
+
+func newFlowsWorkflowsCreateCommand() *cobra.Command {
+	var file string
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "create",
+		Short: "Create a workflow",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if !confirm {
+				return fmt.Errorf("flows workflows create requires --confirm")
+			}
+			if file == "" {
+				return fmt.Errorf("flows workflows create requires --file <path>|-")
+			}
+			data, err := readPaymentCommandFile(cmd, file)
+			if err != nil {
+				return err
+			}
+			var workflowRequest shared.CreateWorkflowRequest
+			if err := json.Unmarshal(data, &workflowRequest); err != nil {
+				return fmt.Errorf("decode workflow request: %w", err)
+			}
+			output, err := runFlowsCreateWorkflowCommand(cmd, workflowRequest, apiVersion)
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderFlowsWorkflowCreated(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&file, "file", "", "Workflow JSON file path or - for stdin")
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm workflow creation")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	return command
+}
+
+func newFlowsWorkflowsDeleteCommand() *cobra.Command {
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "delete <workflow-id>",
+		Short: "Delete a workflow",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("flows workflows delete requires --confirm")
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := flowscmd.DeleteWorkflowService{
+				Handlers: flowscmd.SDKDeleteWorkflowHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         flowscmd.ProductOrchestration,
+						Feature:         flowscmd.FeatureDeleteWorkflow,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), flowscmd.DeleteWorkflowInput{WorkflowID: args[0]})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderFlowsWorkflowDeleted(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm workflow deletion")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	return command
+}
+
+func newFlowsWorkflowsRunCommand() *cobra.Command {
+	var variable []string
+	var wait bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "run <workflow-id>",
+		Short: "Run a workflow",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vars, err := parseMetadataFlags(variable)
+			if err != nil {
+				return err
+			}
+			var waitPtr *bool
+			if cmd.Flags().Changed("wait") {
+				waitPtr = &wait
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := flowscmd.RunWorkflowService{
+				Handlers: flowscmd.SDKRunWorkflowHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         flowscmd.ProductOrchestration,
+						Feature:         flowscmd.FeatureRunWorkflow,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), flowscmd.RunWorkflowInput{
+				WorkflowID: args[0],
+				Vars:       vars,
+				Wait:       waitPtr,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderFlowsWorkflowRun(cmd, output)
+		},
+	}
+	command.Flags().StringArrayVar(&variable, "variable", nil, "Variable as key=value")
+	command.Flags().BoolVar(&wait, "wait", false, "Wait for workflow completion")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	return command
+}
+
+func runFlowsCreateWorkflowCommand(cmd *cobra.Command, workflowRequest shared.CreateWorkflowRequest, apiVersion string) (flowscmd.CreateWorkflowOutput, error) {
+	rt, err := runtimeFromCommand(cmd)
+	if err != nil {
+		return flowscmd.CreateWorkflowOutput{}, err
+	}
+	httpClient, err := rt.HTTPClient(cmd.Context())
+	if err != nil {
+		return flowscmd.CreateWorkflowOutput{}, err
+	}
+	sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+	service := flowscmd.CreateWorkflowService{
+		Handlers: flowscmd.SDKCreateWorkflowHandlers(sdk),
+		Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			request := capabilities.VersionResolutionRequest{
+				Product:         flowscmd.ProductOrchestration,
+				Feature:         flowscmd.FeatureCreateWorkflow,
+				HandlerVersions: handlerVersions,
+			}
+			if apiVersion != "" {
+				request.Policy = capabilities.VersionPolicyPinned
+				request.PinnedVersion = capabilities.APIVersion(apiVersion)
+			}
+			return rt.ResolveAPIVersion(ctx, request)
+		},
+	}
+	return service.Run(cmd.Context(), flowscmd.CreateWorkflowInput{Workflow: workflowRequest})
 }
 
 func newFlowsWorkflowsListCommand() *cobra.Command {
@@ -175,5 +361,29 @@ func renderFlowsWorkflow(cmd *cobra.Command, output flowscmd.GetWorkflowOutput) 
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Updated at\t%s\n", workflow.UpdatedAt.Format(time.RFC3339))
+	return err
+}
+
+func renderFlowsWorkflowCreated(cmd *cobra.Command, output flowscmd.CreateWorkflowOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Workflow created with ID: %s\n", output.Workflow.ID)
+	return err
+}
+
+func renderFlowsWorkflowDeleted(cmd *cobra.Command, output flowscmd.DeleteWorkflowOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Workflow %s deleted.\n", output.WorkflowID)
+	return err
+}
+
+func renderFlowsWorkflowRun(cmd *cobra.Command, output flowscmd.RunWorkflowOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Workflow instance created with ID: %s\n", output.Instance.ID)
 	return err
 }
