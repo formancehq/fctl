@@ -45,6 +45,7 @@ func NewRootCommand(version string) *cobra.Command {
 	root.AddCommand(newTargetCommand())
 	root.AddCommand(newLedgerCommand())
 	root.AddCommand(newPaymentsCommand())
+	root.AddCommand(newWalletsCommand())
 
 	return root
 }
