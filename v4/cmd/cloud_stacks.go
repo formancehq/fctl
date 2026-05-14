@@ -1,11 +1,14 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	cloudcmd "github.com/formancehq/fctl/v4/internal/commands/cloud"
+	v4prompt "github.com/formancehq/fctl/v4/internal/prompt"
 	"github.com/formancehq/fctl/v4/internal/runtime"
 )
 
@@ -106,7 +109,10 @@ func newCloudStacksListCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			organizationID := resolveCloudOrganizationID(rt, organizationID)
+			organizationID, err := resolveCloudOrganizationIDOrPrompt(cmd, rt, client, organizationID)
+			if err != nil {
+				return err
+			}
 			output, err := cloudcmd.ListStacksService{Client: client}.Run(cmd.Context(), cloudcmd.ListStacksInput{
 				OrganizationID: organizationID,
 				All:            all,
@@ -562,6 +568,41 @@ func resolveCloudOrganizationID(rt *runtime.Runtime, explicit string) string {
 		return ""
 	}
 	return rt.Target.Organization
+}
+
+func resolveCloudOrganizationIDOrPrompt(cmd *cobra.Command, rt *runtime.Runtime, client cloudcmd.MembershipClient, explicit string) (string, error) {
+	organizationID := resolveCloudOrganizationID(rt, explicit)
+	if organizationID != "" {
+		return organizationID, nil
+	}
+
+	message := "organization id is required; pass --organization or select a cloud-stack profile"
+	nonInteractive, err := cmd.Root().PersistentFlags().GetBool(nonInteractiveFlag)
+	if err != nil {
+		return "", err
+	}
+	wizard := v4prompt.NewWizard(cmd.InOrStdin(), cmd.ErrOrStderr())
+	if nonInteractive || !wizard.Available() {
+		return "", errors.New(message)
+	}
+
+	output, err := cloudcmd.ListOrganizationsService{Client: client}.Run(cmd.Context(), cloudcmd.ListOrganizationsInput{})
+	if err != nil {
+		return "", fmt.Errorf("list organizations for selection: %w", err)
+	}
+	if len(output.Organizations) == 0 {
+		return "", fmt.Errorf("organization id is required and no organizations are available")
+	}
+
+	choices := make([]v4prompt.Choice, 0, len(output.Organizations))
+	for _, organization := range output.Organizations {
+		title := organization.ID
+		if strings.TrimSpace(organization.Name) != "" {
+			title = fmt.Sprintf("%s (%s)", organization.Name, organization.ID)
+		}
+		choices = append(choices, v4prompt.Choice{Title: title, Value: organization.ID})
+	}
+	return wizard.Select("Organization ID is required. Select an organization:", choices)
 }
 
 func renderCloudStacks(cmd *cobra.Command, output cloudcmd.ListStacksOutput) error {

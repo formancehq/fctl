@@ -71,6 +71,7 @@ type Auth struct {
 	SecretRef string     `json:"secretRef,omitempty" yaml:"secretRef,omitempty"`
 	TokenRef  string     `json:"tokenRef,omitempty" yaml:"tokenRef,omitempty"`
 	Account   string     `json:"account,omitempty" yaml:"account,omitempty"`
+	Scopes    []string   `json:"scopes,omitempty" yaml:"scopes,omitempty"`
 }
 
 type ContextOverride struct {

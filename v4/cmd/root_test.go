@@ -146,6 +146,9 @@ func TestLoginCloudClientCredentialsAndLogout(t *testing.T) {
 		profile.Auth.SecretRef != "contexts/production/client-secret" {
 		t.Fatalf("unexpected production profile: current=%q profile=%#v", cfg.CurrentContext, profile)
 	}
+	if !stringSliceContains(profile.Auth.Scopes, "organization:ListStacks") {
+		t.Fatalf("expected cloud client credentials to include organization scopes, got %#v", profile.Auth.Scopes)
+	}
 	if strings.Contains(fmt.Sprintf("%#v", profile), "super-secret") {
 		t.Fatalf("profile must not contain clear client secret: %#v", profile)
 	}
@@ -2006,6 +2009,32 @@ func TestCloudStacksListShowAndDeprecatedAliases(t *testing.T) {
 	}
 }
 
+func TestCloudStacksListMissingOrganizationIsActionable(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatalf("cloud stacks list without organization must not call membership in non-interactive tests")
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud", "prod",
+		"--cloud-url", server.URL,
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud context: %v stderr=%s", err, stderr)
+	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud", "stacks", "list")
+	if err == nil {
+		t.Fatal("expected cloud stacks list to require an organization")
+	}
+	if !strings.Contains(err.Error(), "organization id is required; pass --organization or select a cloud-stack profile") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestCloudStacksMutations(t *testing.T) {
 	stackBody := `{"data":{"id":"stack_1","name":"Production","organizationId":"org_1","uri":"https://stack.example/api","regionID":"eu-west-1","version":"v3.2.4","status":"READY","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":true,"stargateEnabled":true,"synchronised":true,"modules":[]}}`
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2683,6 +2712,9 @@ func TestSessionLoginClientCredentialsBootstrapsDefaultCloudContext(t *testing.T
 		context.Auth.ClientID != "client" ||
 		context.Auth.SecretRef != "contexts/formance-cloud/client-secret" {
 		t.Fatalf("unexpected bootstrapped context: current=%q context=%#v", cfg.CurrentContext, context)
+	}
+	if !stringSliceContains(context.Auth.Scopes, "organization:ListStacks") {
+		t.Fatalf("expected cloud client credentials to include organization scopes, got %#v", context.Auth.Scopes)
 	}
 	secretData, err := os.ReadFile(filepath.Join(configDir, "credentials", "contexts", "formance-cloud", "client-secret"))
 	if err != nil {
@@ -9535,6 +9567,15 @@ func writeV3CommandFixture(t *testing.T, withTokens bool) string {
 	dir := t.TempDir()
 	writeV3CommandFixtureInDir(t, dir, withTokens)
 	return dir
+}
+
+func stringSliceContains(values []string, expected string) bool {
+	for _, value := range values {
+		if value == expected {
+			return true
+		}
+	}
+	return false
 }
 
 func writeV3CommandFixtureInDir(t *testing.T, dir string, withTokens bool) {

@@ -301,6 +301,7 @@ func authFromLoginOptions(cmd *cobra.Command, input loginInput, options loginCon
 			IssuerURL: issuerURL,
 			ClientID:  options.ClientID,
 			SecretRef: ref,
+			Scopes:    clientCredentialsScopesForPlatform(platform),
 		}, nil
 	}
 

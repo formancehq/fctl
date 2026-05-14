@@ -212,6 +212,7 @@ func newSessionLoginClientCredentialsCommand() *cobra.Command {
 				IssuerURL: issuerURL,
 				ClientID:  clientID,
 				SecretRef: secretRef,
+				Scopes:    clientCredentialsScopesForContext(context),
 			}
 			cfg.Contexts[name] = context
 			if err := v4config.SaveFile(path, cfg); err != nil {

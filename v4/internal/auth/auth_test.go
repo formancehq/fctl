@@ -91,6 +91,9 @@ func TestClientCredentialsAuth(t *testing.T) {
 			if r.Form.Get("grant_type") != "client_credentials" {
 				t.Fatalf("unexpected grant_type %q", r.Form.Get("grant_type"))
 			}
+			if r.Form.Get("scope") != "organization:Read organization:ListStacks" {
+				t.Fatalf("unexpected scope %q", r.Form.Get("scope"))
+			}
 			fmt.Fprint(w, `{"access_token":"cc-token","token_type":"Bearer"}`)
 		case "/resource":
 			if got := r.Header.Get("Authorization"); got != "Bearer cc-token" {
@@ -108,6 +111,7 @@ func TestClientCredentialsAuth(t *testing.T) {
 		IssuerURL: server.URL,
 		ClientID:  "client",
 		SecretRef: "secret-ref",
+		Scopes:    []string{"organization:Read", "organization:ListStacks"},
 	}, store, Options{})
 	if err != nil {
 		t.Fatalf("new http client: %v", err)

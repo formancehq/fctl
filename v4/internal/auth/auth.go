@@ -76,6 +76,7 @@ func NewTokenSource(authConfig v4config.Auth, store credentials.Store, options O
 			IssuerURL:  authConfig.IssuerURL,
 			ClientID:   authConfig.ClientID,
 			SecretRef:  authConfig.SecretRef,
+			Scopes:     authConfig.Scopes,
 			Store:      store,
 			HTTPClient: httpClient,
 		}, nil
@@ -114,6 +115,7 @@ type ClientCredentialsSource struct {
 	IssuerURL  string
 	ClientID   string
 	SecretRef  string
+	Scopes     []string
 	Store      credentials.Store
 	HTTPClient *http.Client
 
@@ -153,6 +155,9 @@ func (s *ClientCredentialsSource) Token(ctx context.Context) (Token, error) {
 
 	form := url.Values{}
 	form.Set("grant_type", "client_credentials")
+	if len(s.Scopes) > 0 {
+		form.Set("scope", strings.Join(s.Scopes, " "))
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, tokenURL, strings.NewReader(form.Encode()))
 	if err != nil {
 		return Token{}, err
