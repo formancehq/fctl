@@ -6096,6 +6096,109 @@ func TestAuthUsersShowGetWarns(t *testing.T) {
 	}
 }
 
+func TestAuthClientsCreateSelectsV1(t *testing.T) {
+	var requestBody string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"auth","version":"1.0.0","health":true}]}`)
+		case "/api/auth/clients":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			requestBody = readRequestBody(t, r)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, `{"data":{"id":"client_1","name":"backend","scopes":["ledger:read"],"redirectUris":["http://localhost/callback"],"trusted":true}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"auth", "clients", "create", "backend",
+		"--scope", "ledger:read",
+		"--redirect-uri", "http://localhost/callback",
+		"--trusted",
+	)
+	if err != nil {
+		t.Fatalf("create auth client: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{`"name":"backend"`, `"scopes":["ledger:read"]`, `"redirectUris":["http://localhost/callback"]`, `"trusted":true`} {
+		if !strings.Contains(requestBody, expected) {
+			t.Fatalf("expected request body to contain %s, got %s", expected, requestBody)
+		}
+	}
+	if !strings.Contains(stdout, "API version: v1") || !strings.Contains(stdout, "Client client_1 created.") {
+		t.Fatalf("unexpected create auth client output:\n%s", stdout)
+	}
+}
+
+func TestAuthClientsDeleteRequiresConfirm(t *testing.T) {
+	_, _, err := executeCommand(t, "auth", "clients", "delete", "client_1")
+	if err == nil || !strings.Contains(err.Error(), "requires --confirm") {
+		t.Fatalf("expected confirm error, got %v", err)
+	}
+}
+
+func TestAuthClientsSecretsCreateDoesNotPrintClearSecretInPlainOutput(t *testing.T) {
+	var requestBody string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"auth","version":"1.0.0","health":true}]}`)
+		case "/api/auth/clients/client_1/secrets":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			requestBody = readRequestBody(t, r)
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":"secret_1","name":"default","lastDigits":"1234","clear":"super-secret"}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "auth", "clients", "secrets", "create", "client_1", "default")
+	if err != nil {
+		t.Fatalf("create auth secret: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(requestBody, `"name":"default"`) {
+		t.Fatalf("unexpected secret request body: %s", requestBody)
+	}
+	if strings.Contains(stdout, "super-secret") {
+		t.Fatalf("plain output must not include clear secret:\n%s", stdout)
+	}
+	if !strings.Contains(stdout, "Secret default created for client client_1") {
+		t.Fatalf("unexpected create secret output:\n%s", stdout)
+	}
+}
+
 func TestConfigMigrateV3DryRun(t *testing.T) {
 	v3Dir := writeV3CommandFixture(t, true)
 

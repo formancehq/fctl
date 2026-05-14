@@ -14,10 +14,15 @@ import (
 const (
 	ProductAuth capabilities.Product = "auth"
 
-	FeatureListClients capabilities.Feature = "listClients"
-	FeatureReadClient  capabilities.Feature = "readClient"
-	FeatureListUsers   capabilities.Feature = "listUsers"
-	FeatureReadUser    capabilities.Feature = "readUser"
+	FeatureCreateClient capabilities.Feature = "createClient"
+	FeatureCreateSecret capabilities.Feature = "createSecret"
+	FeatureDeleteClient capabilities.Feature = "deleteClient"
+	FeatureDeleteSecret capabilities.Feature = "deleteSecret"
+	FeatureListClients  capabilities.Feature = "listClients"
+	FeatureReadClient   capabilities.Feature = "readClient"
+	FeatureListUsers    capabilities.Feature = "listUsers"
+	FeatureReadUser     capabilities.Feature = "readUser"
+	FeatureUpdateClient capabilities.Feature = "updateClient"
 )
 
 type ClientSecretSummary struct {
@@ -51,6 +56,23 @@ type ListClientsOutput struct {
 	Clients    []ClientSummary         `json:"clients" yaml:"clients"`
 }
 
+type ClientMutationInput struct {
+	ClientID               string
+	Name                   string
+	Description            *string
+	Metadata               map[string]string
+	Scopes                 []string
+	RedirectURIs           []string
+	PostLogoutRedirectURIs []string
+	Public                 *bool
+	Trusted                *bool
+}
+
+type ClientMutationOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	Client     ClientSummary           `json:"client" yaml:"client"`
+}
+
 type GetClientInput struct {
 	ClientID string
 }
@@ -58,6 +80,46 @@ type GetClientInput struct {
 type GetClientOutput struct {
 	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
 	Client     ClientSummary           `json:"client" yaml:"client"`
+}
+
+type DeleteClientInput struct {
+	ClientID string
+}
+
+type DeleteClientOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	ClientID   string                  `json:"clientID" yaml:"clientID"`
+}
+
+type CreateSecretInput struct {
+	ClientID string
+	Name     string
+	Metadata map[string]string
+}
+
+type SecretSummary struct {
+	ID         string            `json:"id" yaml:"id"`
+	Name       string            `json:"name" yaml:"name"`
+	LastDigits string            `json:"lastDigits" yaml:"lastDigits"`
+	Clear      string            `json:"clear,omitempty" yaml:"clear,omitempty"`
+	Metadata   map[string]string `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+}
+
+type CreateSecretOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	ClientID   string                  `json:"clientID" yaml:"clientID"`
+	Secret     SecretSummary           `json:"secret" yaml:"secret"`
+}
+
+type DeleteSecretInput struct {
+	ClientID string
+	SecretID string
+}
+
+type DeleteSecretOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	ClientID   string                  `json:"clientID" yaml:"clientID"`
+	SecretID   string                  `json:"secretID" yaml:"secretID"`
 }
 
 type ListUsersOutput struct {
@@ -79,9 +141,29 @@ type ListClientsHandler struct {
 	Run        func(context.Context) (ListClientsOutput, error)
 }
 
+type ClientMutationHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, ClientMutationInput) (ClientMutationOutput, error)
+}
+
 type GetClientHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, GetClientInput) (GetClientOutput, error)
+}
+
+type DeleteClientHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, DeleteClientInput) (DeleteClientOutput, error)
+}
+
+type CreateSecretHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, CreateSecretInput) (CreateSecretOutput, error)
+}
+
+type DeleteSecretHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, DeleteSecretInput) (DeleteSecretOutput, error)
 }
 
 type ListUsersHandler struct {
@@ -99,8 +181,33 @@ type ListClientsService struct {
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
+type CreateClientService struct {
+	Handlers []ClientMutationHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
 type GetClientService struct {
 	Handlers []GetClientHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type UpdateClientService struct {
+	Handlers []ClientMutationHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type DeleteClientService struct {
+	Handlers []DeleteClientHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type CreateSecretService struct {
+	Handlers []CreateSecretHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type DeleteSecretService struct {
+	Handlers []DeleteSecretHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -129,6 +236,13 @@ func (s ListClientsService) Run(ctx context.Context) (ListClientsOutput, error) 
 	return output, nil
 }
 
+func (s CreateClientService) Run(ctx context.Context, input ClientMutationInput) (ClientMutationOutput, error) {
+	if input.Name == "" {
+		return ClientMutationOutput{}, fmt.Errorf("client name is required")
+	}
+	return runClientMutationService(ctx, input, s.Handlers, s.Resolve)
+}
+
 func (s GetClientService) Run(ctx context.Context, input GetClientInput) (GetClientOutput, error) {
 	if input.ClientID == "" {
 		return GetClientOutput{}, fmt.Errorf("client id is required")
@@ -142,6 +256,76 @@ func (s GetClientService) Run(ctx context.Context, input GetClientInput) (GetCli
 	output, err := handler.Run(ctx, input)
 	if err != nil {
 		return GetClientOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func (s UpdateClientService) Run(ctx context.Context, input ClientMutationInput) (ClientMutationOutput, error) {
+	if input.ClientID == "" {
+		return ClientMutationOutput{}, fmt.Errorf("client id is required")
+	}
+	if input.Name == "" {
+		return ClientMutationOutput{}, fmt.Errorf("client name is required")
+	}
+	return runClientMutationService(ctx, input, s.Handlers, s.Resolve)
+}
+
+func (s DeleteClientService) Run(ctx context.Context, input DeleteClientInput) (DeleteClientOutput, error) {
+	if input.ClientID == "" {
+		return DeleteClientOutput{}, fmt.Errorf("client id is required")
+	}
+	handler, selected, err := resolveHandler(ctx, s.Handlers, s.Resolve, func(handler DeleteClientHandler) capabilities.APIVersion {
+		return handler.APIVersion
+	})
+	if err != nil {
+		return DeleteClientOutput{}, err
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return DeleteClientOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func (s CreateSecretService) Run(ctx context.Context, input CreateSecretInput) (CreateSecretOutput, error) {
+	if input.ClientID == "" {
+		return CreateSecretOutput{}, fmt.Errorf("client id is required")
+	}
+	if input.Name == "" {
+		return CreateSecretOutput{}, fmt.Errorf("secret name is required")
+	}
+	handler, selected, err := resolveHandler(ctx, s.Handlers, s.Resolve, func(handler CreateSecretHandler) capabilities.APIVersion {
+		return handler.APIVersion
+	})
+	if err != nil {
+		return CreateSecretOutput{}, err
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return CreateSecretOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func (s DeleteSecretService) Run(ctx context.Context, input DeleteSecretInput) (DeleteSecretOutput, error) {
+	if input.ClientID == "" {
+		return DeleteSecretOutput{}, fmt.Errorf("client id is required")
+	}
+	if input.SecretID == "" {
+		return DeleteSecretOutput{}, fmt.Errorf("secret id is required")
+	}
+	handler, selected, err := resolveHandler(ctx, s.Handlers, s.Resolve, func(handler DeleteSecretHandler) capabilities.APIVersion {
+		return handler.APIVersion
+	})
+	if err != nil {
+		return DeleteSecretOutput{}, err
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return DeleteSecretOutput{}, err
 	}
 	output.APIVersion = selected
 	return output, nil
@@ -180,6 +364,26 @@ func (s GetUserService) Run(ctx context.Context, input GetUserInput) (GetUserOut
 	return output, nil
 }
 
+func runClientMutationService(
+	ctx context.Context,
+	input ClientMutationInput,
+	serviceHandlers []ClientMutationHandler,
+	resolve func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error),
+) (ClientMutationOutput, error) {
+	handler, selected, err := resolveHandler(ctx, serviceHandlers, resolve, func(handler ClientMutationHandler) capabilities.APIVersion {
+		return handler.APIVersion
+	})
+	if err != nil {
+		return ClientMutationOutput{}, err
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return ClientMutationOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
 func resolveHandler[H any](
 	ctx context.Context,
 	serviceHandlers []H,
@@ -203,6 +407,24 @@ func resolveHandler[H any](
 		return zero, "", fmt.Errorf("resolved api version %s has no handler", selected)
 	}
 	return handler, selected, nil
+}
+
+func SDKCreateClientHandlers(sdk *formance.Formance) []ClientMutationHandler {
+	return []ClientMutationHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input ClientMutationInput) (ClientMutationOutput, error) {
+				response, err := sdk.Auth.V1.CreateClient(ctx, clientRequest(input))
+				if err != nil {
+					return ClientMutationOutput{}, err
+				}
+				if response.CreateClientResponse == nil || response.CreateClientResponse.Data == nil {
+					return ClientMutationOutput{}, fmt.Errorf("auth v1 create client returned no data")
+				}
+				return ClientMutationOutput{Client: fromClient(*response.CreateClientResponse.Data)}, nil
+			},
+		},
+	}
 }
 
 func SDKListClientsHandlers(sdk *formance.Formance) []ListClientsHandler {
@@ -240,6 +462,85 @@ func SDKGetClientHandlers(sdk *formance.Formance) []GetClientHandler {
 					return GetClientOutput{}, fmt.Errorf("auth v1 read client returned no data")
 				}
 				return GetClientOutput{Client: fromClient(*response.ReadClientResponse.Data)}, nil
+			},
+		},
+	}
+}
+
+func SDKUpdateClientHandlers(sdk *formance.Formance) []ClientMutationHandler {
+	return []ClientMutationHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input ClientMutationInput) (ClientMutationOutput, error) {
+				response, err := sdk.Auth.V1.UpdateClient(ctx, operations.UpdateClientRequest{
+					ClientID:            input.ClientID,
+					CreateClientRequest: clientRequest(input),
+				})
+				if err != nil {
+					return ClientMutationOutput{}, err
+				}
+				if response.UpdateClientResponse == nil || response.UpdateClientResponse.Data == nil {
+					return ClientMutationOutput{}, fmt.Errorf("auth v1 update client returned no data")
+				}
+				return ClientMutationOutput{Client: fromClient(*response.UpdateClientResponse.Data)}, nil
+			},
+		},
+	}
+}
+
+func SDKDeleteClientHandlers(sdk *formance.Formance) []DeleteClientHandler {
+	return []DeleteClientHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input DeleteClientInput) (DeleteClientOutput, error) {
+				if _, err := sdk.Auth.V1.DeleteClient(ctx, operations.DeleteClientRequest{ClientID: input.ClientID}); err != nil {
+					return DeleteClientOutput{}, err
+				}
+				return DeleteClientOutput{ClientID: input.ClientID}, nil
+			},
+		},
+	}
+}
+
+func SDKCreateSecretHandlers(sdk *formance.Formance) []CreateSecretHandler {
+	return []CreateSecretHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input CreateSecretInput) (CreateSecretOutput, error) {
+				response, err := sdk.Auth.V1.CreateSecret(ctx, operations.CreateSecretRequest{
+					ClientID: input.ClientID,
+					CreateSecretRequest: &shared.CreateSecretRequest{
+						Name:     input.Name,
+						Metadata: input.Metadata,
+					},
+				})
+				if err != nil {
+					return CreateSecretOutput{}, err
+				}
+				if response.CreateSecretResponse == nil || response.CreateSecretResponse.Data == nil {
+					return CreateSecretOutput{}, fmt.Errorf("auth v1 create secret returned no data")
+				}
+				return CreateSecretOutput{
+					ClientID: input.ClientID,
+					Secret:   fromSecret(*response.CreateSecretResponse.Data),
+				}, nil
+			},
+		},
+	}
+}
+
+func SDKDeleteSecretHandlers(sdk *formance.Formance) []DeleteSecretHandler {
+	return []DeleteSecretHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input DeleteSecretInput) (DeleteSecretOutput, error) {
+				if _, err := sdk.Auth.V1.DeleteSecret(ctx, operations.DeleteSecretRequest{
+					ClientID: input.ClientID,
+					SecretID: input.SecretID,
+				}); err != nil {
+					return DeleteSecretOutput{}, err
+				}
+				return DeleteSecretOutput{ClientID: input.ClientID, SecretID: input.SecretID}, nil
 			},
 		},
 	}
@@ -285,6 +586,19 @@ func SDKGetUserHandlers(sdk *formance.Formance) []GetUserHandler {
 	}
 }
 
+func clientRequest(input ClientMutationInput) *shared.CreateClientRequest {
+	return &shared.CreateClientRequest{
+		Description:            input.Description,
+		Metadata:               input.Metadata,
+		Name:                   input.Name,
+		PostLogoutRedirectUris: input.PostLogoutRedirectURIs,
+		Public:                 input.Public,
+		RedirectUris:           input.RedirectURIs,
+		Scopes:                 input.Scopes,
+		Trusted:                input.Trusted,
+	}
+}
+
 func fromClient(client shared.Client) ClientSummary {
 	description := ""
 	if client.Description != nil {
@@ -310,6 +624,16 @@ func fromClient(client shared.Client) ClientSummary {
 		Public:                 client.Public,
 		Trusted:                client.Trusted,
 		Secrets:                secrets,
+	}
+}
+
+func fromSecret(secret shared.Secret) SecretSummary {
+	return SecretSummary{
+		ID:         secret.ID,
+		Name:       secret.Name,
+		LastDigits: secret.LastDigits,
+		Clear:      secret.Clear,
+		Metadata:   secret.Metadata,
 	}
 }
 
