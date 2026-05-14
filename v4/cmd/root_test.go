@@ -2390,6 +2390,111 @@ func TestPaymentsPoolsDeleteSelectsV3(t *testing.T) {
 	}
 }
 
+func TestPaymentsPoolsAddAccountSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/pools/pool_1/accounts/acc_1":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "pools", "add-account", "pool_1", "acc_1",
+	)
+	if err != nil {
+		t.Fatalf("add account to payment pool: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v3",
+		"Account acc_1 added to pool pool_1.",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected payment pool add-account output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestPaymentsPoolsRemoveAccountRequiresConfirm(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "payments", "pools", "remove-account", "pool_1", "acc_1")
+	if err == nil {
+		t.Fatal("expected payments pools remove-account to require confirmation")
+	}
+	if stdout != "" {
+		t.Fatalf("expected empty stdout, got %q", stdout)
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(err.Error(), "payments pools remove-account requires --confirm") {
+		t.Fatalf("expected confirmation error, got: %v", err)
+	}
+}
+
+func TestPaymentsPoolsRemoveAccountSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/pools/pool_1/accounts/acc_1":
+			if r.Method != http.MethodDelete {
+				t.Fatalf("expected DELETE, got %s", r.Method)
+			}
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "pools", "remove-account", "pool_1", "acc_1",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("remove account from payment pool: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v3",
+		"Account acc_1 removed from pool pool_1.",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected payment pool remove-account output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
 func TestConfigMigrateV3DryRun(t *testing.T) {
 	v3Dir := writeV3CommandFixture(t, true)
 

@@ -35,6 +35,8 @@ func newPaymentsPoolsCommand() *cobra.Command {
 	command.AddCommand(newPaymentsPoolsShowCommand("show", nil, false))
 	command.AddCommand(newPaymentsPoolsShowCommand("get", []string{"g"}, true))
 	command.AddCommand(newPaymentsPoolsDeleteCommand())
+	command.AddCommand(newPaymentsPoolsAddAccountCommand())
+	command.AddCommand(newPaymentsPoolsRemoveAccountCommand())
 	return command
 }
 
@@ -849,5 +851,120 @@ func renderPaymentPoolDeleted(cmd *cobra.Command, output paymentscmd.DeletePoolO
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Pool %s deleted.\n", output.PoolID)
+	return err
+}
+
+func newPaymentsPoolsAddAccountCommand() *cobra.Command {
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "add-account <pool-id> <account-id>",
+		Aliases: []string{"add", "a"},
+		Short:   "Add an account to a payment pool",
+		Args:    cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.AddAccountToPoolService{
+				Handlers: paymentscmd.SDKAddAccountToPoolHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureAddAccountToPool,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.PoolAccountInput{PoolID: args[0], AccountID: args[1]})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentPoolAccountAdded(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func newPaymentsPoolsRemoveAccountCommand() *cobra.Command {
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "remove-account <pool-id> <account-id>",
+		Aliases: []string{"remove", "rm"},
+		Short:   "Remove an account from a payment pool",
+		Args:    cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("payments pools remove-account requires --confirm")
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.RemoveAccountFromPoolService{
+				Handlers: paymentscmd.SDKRemoveAccountFromPoolHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureRemoveAccountFromPool,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.PoolAccountInput{PoolID: args[0], AccountID: args[1]})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentPoolAccountRemoved(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm account removal")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func renderPaymentPoolAccountAdded(cmd *cobra.Command, output paymentscmd.PoolAccountOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Account %s added to pool %s.\n", output.AccountID, output.PoolID)
+	return err
+}
+
+func renderPaymentPoolAccountRemoved(cmd *cobra.Command, output paymentscmd.PoolAccountOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Account %s removed from pool %s.\n", output.AccountID, output.PoolID)
 	return err
 }

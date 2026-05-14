@@ -13,9 +13,11 @@ import (
 )
 
 const (
-	FeatureDeletePool capabilities.Feature = "deletePool"
-	FeatureGetPool    capabilities.Feature = "getPool"
-	FeatureListPools  capabilities.Feature = "listPools"
+	FeatureAddAccountToPool      capabilities.Feature = "addAccountToPool"
+	FeatureDeletePool            capabilities.Feature = "deletePool"
+	FeatureGetPool               capabilities.Feature = "getPool"
+	FeatureListPools             capabilities.Feature = "listPools"
+	FeatureRemoveAccountFromPool capabilities.Feature = "removeAccountFromPool"
 )
 
 type PoolSummary struct {
@@ -60,6 +62,17 @@ type DeletePoolOutput struct {
 	PoolID     string                  `json:"poolID" yaml:"poolID"`
 }
 
+type PoolAccountInput struct {
+	PoolID    string
+	AccountID string
+}
+
+type PoolAccountOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	PoolID     string                  `json:"poolID" yaml:"poolID"`
+	AccountID  string                  `json:"accountID" yaml:"accountID"`
+}
+
 type ListPoolsHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, ListPoolsInput) (ListPoolsOutput, error)
@@ -75,6 +88,11 @@ type DeletePoolHandler struct {
 	Run        func(context.Context, DeletePoolInput) (DeletePoolOutput, error)
 }
 
+type PoolAccountHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, PoolAccountInput) (PoolAccountOutput, error)
+}
+
 type ListPoolsService struct {
 	Handlers []ListPoolsHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
@@ -87,6 +105,16 @@ type GetPoolService struct {
 
 type DeletePoolService struct {
 	Handlers []DeletePoolHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type AddAccountToPoolService struct {
+	Handlers []PoolAccountHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type RemoveAccountFromPoolService struct {
+	Handlers []PoolAccountHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -160,6 +188,48 @@ func (s DeletePoolService) Run(ctx context.Context, input DeletePoolInput) (Dele
 	output, err := handler.Run(ctx, input)
 	if err != nil {
 		return DeletePoolOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func (s AddAccountToPoolService) Run(ctx context.Context, input PoolAccountInput) (PoolAccountOutput, error) {
+	return runPoolAccountService(ctx, input, s.Handlers, s.Resolve)
+}
+
+func (s RemoveAccountFromPoolService) Run(ctx context.Context, input PoolAccountInput) (PoolAccountOutput, error) {
+	return runPoolAccountService(ctx, input, s.Handlers, s.Resolve)
+}
+
+func runPoolAccountService(
+	ctx context.Context,
+	input PoolAccountInput,
+	serviceHandlers []PoolAccountHandler,
+	resolve func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error),
+) (PoolAccountOutput, error) {
+	if input.PoolID == "" {
+		return PoolAccountOutput{}, fmt.Errorf("pool id is required")
+	}
+	if input.AccountID == "" {
+		return PoolAccountOutput{}, fmt.Errorf("account id is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(serviceHandlers))
+	handlers := map[capabilities.APIVersion]PoolAccountHandler{}
+	for _, handler := range serviceHandlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := resolve(ctx, handlerVersions)
+	if err != nil {
+		return PoolAccountOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return PoolAccountOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return PoolAccountOutput{}, err
 	}
 	output.APIVersion = selected
 	return output, nil
@@ -252,6 +322,66 @@ func SDKDeletePoolHandlers(sdk *formance.Formance) []DeletePoolHandler {
 					return DeletePoolOutput{}, err
 				}
 				return DeletePoolOutput{PoolID: input.PoolID}, nil
+			},
+		},
+	}
+}
+
+func SDKAddAccountToPoolHandlers(sdk *formance.Formance) []PoolAccountHandler {
+	return []PoolAccountHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input PoolAccountInput) (PoolAccountOutput, error) {
+				if _, err := sdk.Payments.V1.AddAccountToPool(ctx, operations.AddAccountToPoolRequest{
+					PoolID: input.PoolID,
+					AddAccountToPoolRequest: shared.AddAccountToPoolRequest{
+						AccountID: input.AccountID,
+					},
+				}); err != nil {
+					return PoolAccountOutput{}, err
+				}
+				return PoolAccountOutput{PoolID: input.PoolID, AccountID: input.AccountID}, nil
+			},
+		},
+		{
+			APIVersion: "v3",
+			Run: func(ctx context.Context, input PoolAccountInput) (PoolAccountOutput, error) {
+				if _, err := sdk.Payments.V3.AddAccountToPool(ctx, operations.V3AddAccountToPoolRequest{
+					PoolID:    input.PoolID,
+					AccountID: input.AccountID,
+				}); err != nil {
+					return PoolAccountOutput{}, err
+				}
+				return PoolAccountOutput{PoolID: input.PoolID, AccountID: input.AccountID}, nil
+			},
+		},
+	}
+}
+
+func SDKRemoveAccountFromPoolHandlers(sdk *formance.Formance) []PoolAccountHandler {
+	return []PoolAccountHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input PoolAccountInput) (PoolAccountOutput, error) {
+				if _, err := sdk.Payments.V1.RemoveAccountFromPool(ctx, operations.RemoveAccountFromPoolRequest{
+					PoolID:    input.PoolID,
+					AccountID: input.AccountID,
+				}); err != nil {
+					return PoolAccountOutput{}, err
+				}
+				return PoolAccountOutput{PoolID: input.PoolID, AccountID: input.AccountID}, nil
+			},
+		},
+		{
+			APIVersion: "v3",
+			Run: func(ctx context.Context, input PoolAccountInput) (PoolAccountOutput, error) {
+				if _, err := sdk.Payments.V3.RemoveAccountFromPool(ctx, operations.V3RemoveAccountFromPoolRequest{
+					PoolID:    input.PoolID,
+					AccountID: input.AccountID,
+				}); err != nil {
+					return PoolAccountOutput{}, err
+				}
+				return PoolAccountOutput{PoolID: input.PoolID, AccountID: input.AccountID}, nil
 			},
 		},
 	}
