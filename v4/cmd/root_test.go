@@ -4995,6 +4995,123 @@ func TestWalletsTransactionsListSelectsV1(t *testing.T) {
 	}
 }
 
+func TestFlowsWorkflowsListSelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"orchestration","version":"2.1.0","health":true}]}`)
+		case "/api/orchestration/v2/workflows":
+			if r.Method != http.MethodGet {
+				t.Fatalf("expected GET, got %s", r.Method)
+			}
+			if got := r.URL.Query().Get("pageSize"); got != "10" {
+				t.Fatalf("expected pageSize 10, got %q", got)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"id":"workflow_1","config":{"name":"Payout","stages":[]},"createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-01T00:00:00Z"}],"hasMore":false,"pageSize":10}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"flows", "workflows", "list",
+		"--page-size", "10",
+	)
+	if err != nil {
+		t.Fatalf("list workflows: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v2") || !strings.Contains(stdout, "workflow_1\tPayout\t2026-01-01T00:00:00Z") {
+		t.Fatalf("unexpected workflows list output:\n%s", stdout)
+	}
+}
+
+func TestFlowsWorkflowsShowSelectsV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"orchestration","version":"1.5.0","health":true}]}`)
+		case "/api/orchestration/workflows/workflow_1":
+			if r.Method != http.MethodGet {
+				t.Fatalf("expected GET, got %s", r.Method)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":"workflow_1","config":{"name":"Payout","stages":[]},"createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-02T00:00:00Z"}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "flows", "workflows", "show", "workflow_1")
+	if err != nil {
+		t.Fatalf("show workflow: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{"API version: v1", "ID\tworkflow_1", "Name\tPayout", "Updated at\t2026-01-02T00:00:00Z"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected workflow output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestOrchestrationAliasWarns(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"orchestration","version":"2.1.0","health":true}]}`)
+		case "/api/orchestration/v2/workflows":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[],"hasMore":false,"pageSize":15}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t, "--config-dir", configDir, "orchestration", "workflows", "list")
+	if err != nil {
+		t.Fatalf("list workflows through alias: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Command orchestration has been deprecated, use flows") {
+		t.Fatalf("expected orchestration alias warning, got:\n%s", stderr)
+	}
+}
+
 func TestConfigMigrateV3DryRun(t *testing.T) {
 	v3Dir := writeV3CommandFixture(t, true)
 
