@@ -15,6 +15,7 @@ import (
 const (
 	FeatureCreateLedger         capabilities.Feature = "createLedger"
 	FeatureDeleteLedgerMetadata capabilities.Feature = "deleteLedgerMetadata"
+	FeatureExportLogs           capabilities.Feature = "exportLogs"
 	FeatureListLedgers          capabilities.Feature = "listLedgers"
 	FeatureUpdateLedgerMetadata capabilities.Feature = "updateLedgerMetadata"
 )

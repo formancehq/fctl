@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -23,6 +24,7 @@ func newLedgerCommand() *cobra.Command {
 	command.AddCommand(newLedgerAccountsCommand())
 	command.AddCommand(newLedgerCreateCommand())
 	command.AddCommand(newLedgerDeleteMetadataCommand())
+	command.AddCommand(newLedgerExportCommand())
 	command.AddCommand(newLedgerListCommand())
 	command.AddCommand(newLedgerSetMetadataCommand())
 	command.AddCommand(newLedgerTransactionsSendCommand(true))
@@ -340,6 +342,75 @@ func newLedgerAccountsDeleteMetadataCommand() *cobra.Command {
 
 	command.Flags().StringVar(&ledger, "ledger", "", "Ledger name")
 	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm the metadata deletion")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
+
+	return command
+}
+
+func newLedgerExportCommand() *cobra.Command {
+	var ledger string
+	var file string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "export",
+		Short: "Export ledger logs",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			if ledger == "" {
+				ledger = rt.Context.Defaults["ledger"]
+			}
+			if ledger == "" {
+				ledger = "default"
+			}
+
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := ledgercmd.ExportLogsService{
+				Handlers: ledgercmd.SDKExportLogsHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         ledgercmd.ProductLedger,
+						Feature:         ledgercmd.FeatureExportLogs,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), ledgercmd.ExportLogsInput{
+				Ledger: ledger,
+			})
+			if err != nil {
+				return err
+			}
+
+			if file != "" && file != "-" {
+				if err := os.WriteFile(file, output.Data, 0o600); err != nil {
+					return err
+				}
+				return renderLedgerExported(cmd, output, file)
+			}
+			_, err = cmd.OutOrStdout().Write(output.Data)
+			return err
+		},
+	}
+
+	command.Flags().StringVar(&ledger, "ledger", "", "Ledger name")
+	command.Flags().StringVar(&file, "file", "", "Write export to file, or - for stdout")
 	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
 
 	return command
@@ -1536,6 +1607,14 @@ func renderLedgerCreated(cmd *cobra.Command, output ledgercmd.CreateLedgerOutput
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Ledger %s created.\n", output.Name)
+	return err
+}
+
+func renderLedgerExported(cmd *cobra.Command, output ledgercmd.ExportLogsOutput, file string) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Ledger %s exported to %s.\n", output.Ledger, file)
 	return err
 }
 

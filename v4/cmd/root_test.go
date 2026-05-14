@@ -533,6 +533,105 @@ func TestLedgerDeleteMetadataSelectsV2(t *testing.T) {
 	}
 }
 
+func TestLedgerExportSelectsV2ToFile(t *testing.T) {
+	export := "log-entry-1\nlog-entry-2\n"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default/logs/export":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			w.Header().Set("Content-Type", "application/octet-stream")
+			fmt.Fprint(w, export)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	outputPath := filepath.Join(t.TempDir(), "export.jsonl")
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "export",
+		"--file", outputPath,
+	)
+	if err != nil {
+		t.Fatalf("export ledger: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v2",
+		"Ledger default exported to " + outputPath + ".",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+	data, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("read export: %v", err)
+	}
+	if string(data) != export {
+		t.Fatalf("unexpected export data: %q", string(data))
+	}
+}
+
+func TestLedgerExportSelectsV2ToStdout(t *testing.T) {
+	export := "log-entry-1\nlog-entry-2\n"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default/logs/export":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			w.Header().Set("Content-Type", "application/octet-stream")
+			fmt.Fprint(w, export)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "export",
+		"--file", "-",
+	)
+	if err != nil {
+		t.Fatalf("export ledger: %v stderr=%s", err, stderr)
+	}
+	if stdout != export {
+		t.Fatalf("unexpected stdout export: %q", stdout)
+	}
+}
+
 func TestLedgerAccountsListSelectsV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
