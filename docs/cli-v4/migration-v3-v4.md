@@ -72,6 +72,8 @@ when the command is intentionally machine-readable.
   specified. Use `auth login client-credentials` for machine-to-machine auth.
 - `--telemetry` is deferred until opt-in/out behavior and stored state are
   documented.
+- `--quiet` is deferred until each command family defines its primary quiet
+  output, so v4 does not expose a silent no-op flag.
 
 ## Compatibility Warnings
 

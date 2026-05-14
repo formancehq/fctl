@@ -95,11 +95,11 @@ Regles:
 | `--debug`, `-d` | `--debug` | garder `-d` | Active logs techniques sur stderr. |
 | `--output`, `-o plain,json` | `--output`, `-o plain,json,yaml` | extension compatible | Les sorties structurees doivent etre stables. |
 | `--insecure-tls` | `--insecure-tls` dans le contexte ou flag override | garder flag | Ne pas persister implicitement sans action explicite. |
-| `--telemetry` | `--telemetry` / config | a confirmer | La v4 doit documenter opt-in/opt-out. |
+| `--telemetry` | differe | bloque | La v4 doit documenter opt-in/opt-out avant d'exposer le flag. |
 | absent | `--non-interactive` | nouveau | Aucune question, erreurs propres. |
 | absent | `--api-version` | nouveau | Pin produit ou commande, ex: `ledger=v2`. |
 | absent | `--no-color` | nouveau | Necessaire pour CI et golden tests. |
-| absent | `--quiet` | nouveau | Ne sortir que la donnee principale ou l'identifiant cree. |
+| absent | `--quiet` | differe | Necessite un contrat par commande pour definir la donnee principale ou l'identifiant cree. |
 
 Implementation v4:
 
@@ -112,6 +112,7 @@ Implementation v4:
 Points bloques / differes:
 
 - `--telemetry` est differe tant que le modele opt-in/opt-out, l'emplacement d'etat et les donnees collectees ne sont pas documentes; ne pas ajouter de flag no-op silencieux.
+- `--quiet` est differe tant que le contrat de sortie principale n'est pas defini par famille de commandes; ne pas ajouter de flag no-op silencieux.
 
 ## Migration configuration et session
 
