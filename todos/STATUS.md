@@ -10,6 +10,6 @@
 - [x] 08 - first Ledger versioned command
 - [x] 09 - v3 config migration
 - [x] 10 - integration tests and UX hardening
-- [ ] 11 - v4 cutover plan
+- [x] 11 - v4 cutover plan
 
 Update this file after each completed todo. Keep implementation commits separate from status-only commits when practical.
