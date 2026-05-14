@@ -1185,6 +1185,14 @@ func TestCloudDeviceUsesRootTokenForMembershipAndOrganizationTokenForStacks(t *t
 				t.Fatalf("expected organization token for stacks list, got %q", got)
 			}
 			fmt.Fprint(w, `{"data":[{"id":"stack_1","name":"Production","organizationId":"org_1","uri":"https://stack.example/api","regionID":"eu-west-1","version":"v3.2.4","status":"READY","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":true,"stargateEnabled":true,"auditEnabled":false,"synchronised":true,"modules":[]}]}`)
+		case "/organizations/org_1/stacks/stack_1":
+			if r.Method != http.MethodDelete {
+				t.Fatalf("unexpected method %s for stack endpoint", r.Method)
+			}
+			if got := r.Header.Get("Authorization"); got != "Bearer org-token" {
+				t.Fatalf("expected organization token for stack delete, got %q", got)
+			}
+			w.WriteHeader(http.StatusNoContent)
 		default:
 			t.Fatalf("unexpected path %s", r.URL.Path)
 		}
@@ -1246,6 +1254,14 @@ func TestCloudDeviceUsesRootTokenForMembershipAndOrganizationTokenForStacks(t *t
 	}
 	if !strings.Contains(stdout, "stack_1") {
 		t.Fatalf("unexpected stacks output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "stacks", "delete", "stack_1", "--organization", "org_1", "--confirm")
+	if err != nil {
+		t.Fatalf("cloud stacks delete: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud stack stack_1 deleted.\n" {
+		t.Fatalf("unexpected delete output: %q", stdout)
 	}
 }
 

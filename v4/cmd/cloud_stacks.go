@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	membership "github.com/formancehq/fctl/internal/membershipclient/v3"
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/semver"
 
@@ -434,12 +435,11 @@ func newCloudStacksShowCommand() *cobra.Command {
 		Short: "Show a Cloud stack",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			organizationID, organizationClient, err := cloudStackOrganizationClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
-			organizationID := resolveCloudOrganizationID(rt, organizationID)
-			output, err := cloudcmd.ReadStackService{Client: client}.Run(cmd.Context(), cloudcmd.StackIDInput{
+			output, err := cloudcmd.ReadStackService{Client: organizationClient}.Run(cmd.Context(), cloudcmd.StackIDInput{
 				OrganizationID: organizationID,
 				StackID:        args[0],
 			})
@@ -466,7 +466,7 @@ func newCloudStacksUpdateCommand() *cobra.Command {
 		Short: "Update a Cloud stack",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			organizationID, organizationClient, err := cloudStackOrganizationClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
@@ -474,8 +474,8 @@ func newCloudStacksUpdateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			output, err := cloudcmd.UpdateStackService{Client: client}.Run(cmd.Context(), cloudcmd.UpdateStackInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+			output, err := cloudcmd.UpdateStackService{Client: organizationClient}.Run(cmd.Context(), cloudcmd.UpdateStackInput{
+				OrganizationID: organizationID,
 				StackID:        args[0],
 				Name:           name,
 				Metadata:       parsedMetadata,
@@ -508,12 +508,12 @@ func newCloudStacksDeleteCommand() *cobra.Command {
 			if !confirm {
 				return fmt.Errorf("cloud stacks delete requires --confirm")
 			}
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			organizationID, organizationClient, err := cloudStackOrganizationClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
-			output, err := cloudcmd.DeleteStackService{Client: client}.Run(cmd.Context(), cloudcmd.DeleteStackInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+			output, err := cloudcmd.DeleteStackService{Client: organizationClient}.Run(cmd.Context(), cloudcmd.DeleteStackInput{
+				OrganizationID: organizationID,
 				StackID:        args[0],
 				Force:          force,
 			})
@@ -557,12 +557,12 @@ func newCloudStacksUpgradeCommand() *cobra.Command {
 			if !confirm {
 				return fmt.Errorf("cloud stacks upgrade requires --confirm")
 			}
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			organizationID, organizationClient, err := cloudStackOrganizationClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
-			output, err := cloudcmd.StackActionService{Client: client, Action: "upgrade"}.Run(cmd.Context(), cloudcmd.StackActionInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+			output, err := cloudcmd.StackActionService{Client: organizationClient, Action: "upgrade"}.Run(cmd.Context(), cloudcmd.StackActionInput{
+				OrganizationID: organizationID,
 				StackID:        args[0],
 				Version:        version,
 			})
@@ -593,12 +593,12 @@ func newCloudStacksActionCommand(action string, requiresConfirm bool) *cobra.Com
 			if requiresConfirm && !confirm {
 				return fmt.Errorf("cloud stacks %s requires --confirm", action)
 			}
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			organizationID, organizationClient, err := cloudStackOrganizationClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
-			output, err := cloudcmd.StackActionService{Client: client, Action: action}.Run(cmd.Context(), cloudcmd.StackActionInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+			output, err := cloudcmd.StackActionService{Client: organizationClient, Action: action}.Run(cmd.Context(), cloudcmd.StackActionInput{
+				OrganizationID: organizationID,
 				StackID:        args[0],
 			})
 			if err != nil {
@@ -631,12 +631,12 @@ func newCloudStacksHistoryCommand() *cobra.Command {
 		Short:   "Query Cloud stack history",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			organizationID, organizationClient, err := cloudStackOrganizationClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
-			output, err := cloudcmd.ListLogsService{Client: client}.Run(cmd.Context(), cloudcmd.ListLogsInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+			output, err := cloudcmd.ListLogsService{Client: organizationClient}.Run(cmd.Context(), cloudcmd.ListLogsInput{
+				OrganizationID: organizationID,
 				StackID:        args[0],
 				Cursor:         cursor,
 				PageSize:       pageSize,
@@ -681,12 +681,12 @@ func newCloudStacksUsersListCommand() *cobra.Command {
 		Short: "List Cloud stack users",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			organizationID, organizationClient, err := cloudStackOrganizationClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
-			output, err := cloudcmd.ListStackUsersService{Client: client}.Run(cmd.Context(), cloudcmd.StackIDInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+			output, err := cloudcmd.ListStackUsersService{Client: organizationClient}.Run(cmd.Context(), cloudcmd.StackIDInput{
+				OrganizationID: organizationID,
 				StackID:        args[0],
 			})
 			if err != nil {
@@ -711,12 +711,12 @@ func newCloudStacksUsersLinkCommand() *cobra.Command {
 		Short: "Link a user to a Cloud stack",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			organizationID, organizationClient, err := cloudStackOrganizationClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
-			output, err := cloudcmd.StackUserAccessService{Client: client, Action: "link"}.Run(cmd.Context(), cloudcmd.StackUserAccessInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+			output, err := cloudcmd.StackUserAccessService{Client: organizationClient, Action: "link"}.Run(cmd.Context(), cloudcmd.StackUserAccessInput{
+				OrganizationID: organizationID,
 				StackID:        args[0],
 				UserID:         args[1],
 				PolicyID:       policyID,
@@ -747,12 +747,12 @@ func newCloudStacksUsersUnlinkCommand() *cobra.Command {
 			if !confirm {
 				return fmt.Errorf("cloud stacks users unlink requires --confirm")
 			}
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			organizationID, organizationClient, err := cloudStackOrganizationClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
-			output, err := cloudcmd.StackUserAccessService{Client: client, Action: "unlink"}.Run(cmd.Context(), cloudcmd.StackUserAccessInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+			output, err := cloudcmd.StackUserAccessService{Client: organizationClient, Action: "unlink"}.Run(cmd.Context(), cloudcmd.StackUserAccessInput{
+				OrganizationID: organizationID,
 				StackID:        args[0],
 				UserID:         args[1],
 			})
@@ -789,12 +789,12 @@ func newCloudStacksModulesListCommand() *cobra.Command {
 		Short: "List Cloud stack modules",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			organizationID, organizationClient, err := cloudStackOrganizationClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
-			output, err := cloudcmd.ListModulesService{Client: client}.Run(cmd.Context(), cloudcmd.StackIDInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+			output, err := cloudcmd.ListModulesService{Client: organizationClient}.Run(cmd.Context(), cloudcmd.StackIDInput{
+				OrganizationID: organizationID,
 				StackID:        args[0],
 			})
 			if err != nil {
@@ -830,12 +830,12 @@ func newCloudStacksModulesActionCommand(action string, requiresConfirm bool) *co
 			if requiresConfirm && !confirm {
 				return fmt.Errorf("cloud stacks modules %s requires --confirm", action)
 			}
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			organizationID, organizationClient, err := cloudStackOrganizationClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
-			output, err := cloudcmd.ModuleActionService{Client: client, Action: action}.Run(cmd.Context(), cloudcmd.ModuleActionInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+			output, err := cloudcmd.ModuleActionService{Client: organizationClient, Action: action}.Run(cmd.Context(), cloudcmd.ModuleActionInput{
+				OrganizationID: organizationID,
 				StackID:        args[0],
 				Name:           args[1],
 			})
@@ -863,6 +863,22 @@ func resolveCloudOrganizationID(rt *runtime.Runtime, explicit string) string {
 		return ""
 	}
 	return rt.Target.Organization
+}
+
+func cloudStackOrganizationClientFromCommand(cmd *cobra.Command, explicit string) (string, *membership.SDK, error) {
+	rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+	if err != nil {
+		return "", nil, err
+	}
+	organizationID, err := resolveCloudOrganizationIDOrPrompt(cmd, rt, client, explicit)
+	if err != nil {
+		return "", nil, err
+	}
+	organizationClient, err := organizationMembershipClientFromRuntime(cmd, rt, organizationID)
+	if err != nil {
+		return "", nil, err
+	}
+	return organizationID, organizationClient, nil
 }
 
 func resolveCloudOrganizationIDOrPrompt(cmd *cobra.Command, rt *runtime.Runtime, client cloudcmd.MembershipClient, explicit string) (string, error) {
