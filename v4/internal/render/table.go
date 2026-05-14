@@ -19,11 +19,10 @@ func Table(writer io.Writer, headers []string, rows [][]string) error {
 		Headers(headers...).
 		Rows(rows...).
 		StyleFunc(func(row, _ int) lipgloss.Style {
-			style := lipgloss.NewStyle().PaddingRight(1)
 			if row == table.HeaderRow {
-				return style.Foreground(lipgloss.Color("14"))
+				return Styles.TableHeader
 			}
-			return style
+			return Styles.TableCell
 		}).
 		String()
 	_, err := fmt.Fprintln(writer, rendered)
