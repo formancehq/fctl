@@ -227,6 +227,8 @@ Wallet credit and debit require the wallet target explicitly.
 `fctl login` is the primary setup flow. It creates or replaces the selected
 profile, defaulting to `default` when `--profile` is not provided.
 
+- Interactive terminal sessions use a Charmbracelet Huh wizard. Non-TTY input,
+  `--non-interactive`, and scripts keep stable flag/error behavior.
 - Formance Cloud uses `https://app.formance.cloud/api` by default.
 - Formance EE Self-Hosted asks for `--membership-url` or prompts for it.
 - Formance Open Source asks for `--stack-url` and defaults to no auth.

@@ -147,6 +147,9 @@ Points bloques / differes:
 Implementation v4:
 
 - `fctl login` cree ou remplace le profil selectionne par `--profile`, avec `default` comme nom par defaut;
+- `fctl login` utilise un wizard Charmbracelet Huh en terminal interactif, tout
+  en gardant des prompts texte deterministes hors TTY et aucune question en
+  `--non-interactive`;
 - `fctl login --target open-source` cree un profil `stack` no-auth qui parle directement a la stack;
 - `fctl login --target cloud` utilise l'URL Cloud production par defaut;
 - `fctl login --target ee` demande ou prend `--membership-url`;

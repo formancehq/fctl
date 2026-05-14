@@ -191,6 +191,41 @@ func TestLoginCloudClientCredentialsAndLogout(t *testing.T) {
 	}
 }
 
+func TestLoginNonInteractiveDoesNotPrompt(t *testing.T) {
+	configDir := t.TempDir()
+
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"--non-interactive",
+		"login",
+	)
+	if err == nil {
+		t.Fatal("expected missing target to fail in non-interactive mode")
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(err.Error(), "login requires --target in non-interactive mode") {
+		t.Fatalf("unexpected missing target error: %v", err)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"--non-interactive",
+		"login",
+		"--target", "open-source",
+	)
+	if err == nil {
+		t.Fatal("expected missing stack URL to fail in non-interactive mode")
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(err.Error(), "login open-source requires --stack-url") {
+		t.Fatalf("unexpected missing stack URL error: %v", err)
+	}
+}
+
 func TestInsecureTLSFlagAllowsSelfSignedStackTarget(t *testing.T) {
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/versions" {

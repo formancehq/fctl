@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	v4config "github.com/formancehq/fctl/v4/internal/config"
+	v4prompt "github.com/formancehq/fctl/v4/internal/prompt"
 )
 
 const (
@@ -35,14 +36,16 @@ func newLoginCommand() *cobra.Command {
 		Short: "Connect fctl to Formance Cloud, Enterprise, or an open-source stack",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			input := newLoginInput(cmd.InOrStdin())
+			input, err := newLoginInput(cmd)
+			if err != nil {
+				return err
+			}
 			if target == "" {
 				if nonInteractive, err := cmd.Root().PersistentFlags().GetBool(nonInteractiveFlag); err != nil {
 					return err
 				} else if nonInteractive {
 					return fmt.Errorf("login requires --target in non-interactive mode")
 				}
-				var err error
 				target, err = input.chooseTarget(cmd)
 				if err != nil {
 					return err
@@ -139,6 +142,9 @@ func loginContextForTarget(cmd *cobra.Command, input loginInput, options loginCo
 		return platformLoginContext(cmd, input, options)
 	case loginTargetEE:
 		if options.MembershipURL == "" {
+			if input.nonInteractive {
+				return v4config.Context{}, fmt.Errorf("login ee requires --membership-url")
+			}
 			membershipURL, err := input.prompt(cmd, "Membership URL")
 			if err != nil {
 				return v4config.Context{}, err
@@ -148,6 +154,9 @@ func loginContextForTarget(cmd *cobra.Command, input loginInput, options loginCo
 		return platformLoginContext(cmd, input, options)
 	case loginTargetOpenSource:
 		if options.StackURL == "" {
+			if input.nonInteractive {
+				return v4config.Context{}, fmt.Errorf("login open-source requires --stack-url")
+			}
 			stackURL, err := input.prompt(cmd, "Stack URL")
 			if err != nil {
 				return v4config.Context{}, err
@@ -214,14 +223,14 @@ func authFromLoginOptions(cmd *cobra.Command, input loginInput, options loginCon
 			if err != nil {
 				return v4config.Auth{}, err
 			}
-			clientSecret, err := input.prompt(cmd, "Client secret")
+			clientSecret, err := input.secretPrompt(cmd, "Client secret")
 			if err != nil {
 				return v4config.Auth{}, err
 			}
 			options.ClientID = clientID
 			options.ClientSecret = clientSecret
 		case "3", "token", "static token":
-			token, err := input.prompt(cmd, "Token")
+			token, err := input.secretPrompt(cmd, "Token")
 			if err != nil {
 				return v4config.Auth{}, err
 			}
@@ -377,14 +386,40 @@ func newWhoamiCommand() *cobra.Command {
 }
 
 type loginInput struct {
-	reader *bufio.Reader
+	reader         *bufio.Reader
+	wizard         v4prompt.Wizard
+	nonInteractive bool
 }
 
-func newLoginInput(in io.Reader) loginInput {
-	return loginInput{reader: bufio.NewReader(in)}
+func newLoginInput(cmd *cobra.Command) (loginInput, error) {
+	nonInteractive, err := cmd.Root().PersistentFlags().GetBool(nonInteractiveFlag)
+	if err != nil {
+		return loginInput{}, err
+	}
+	noColor, err := cmd.Root().PersistentFlags().GetBool(noColorFlag)
+	if err != nil {
+		return loginInput{}, err
+	}
+
+	in := cmd.InOrStdin()
+	input := loginInput{
+		reader:         bufio.NewReader(in),
+		nonInteractive: nonInteractive,
+	}
+	if !nonInteractive && !noColor {
+		input.wizard = v4prompt.NewWizard(in, cmd.ErrOrStderr())
+	}
+	return input, nil
 }
 
 func (i loginInput) chooseTarget(cmd *cobra.Command) (string, error) {
+	if i.wizard.Available() {
+		return i.wizard.Select("What do you want to connect to?", []v4prompt.Choice{
+			{Title: "Formance Cloud", Value: loginTargetCloud},
+			{Title: "Formance EE Self-Hosted", Value: loginTargetEE},
+			{Title: "Formance Open Source / local", Value: loginTargetOpenSource},
+		})
+	}
 	if _, err := fmt.Fprintln(cmd.OutOrStdout(), "What do you want to connect to?"); err != nil {
 		return "", err
 	}
@@ -414,6 +449,16 @@ func (i loginInput) chooseTarget(cmd *cobra.Command) (string, error) {
 }
 
 func (i loginInput) choosePlatformAuth(cmd *cobra.Command) (string, error) {
+	if i.nonInteractive {
+		return "", fmt.Errorf("login requires --client-id/--client-secret or --token in non-interactive mode")
+	}
+	if i.wizard.Available() {
+		return i.wizard.Select("How do you want to authenticate?", []v4prompt.Choice{
+			{Title: "Browser/device login", Value: "browser"},
+			{Title: "Client credentials", Value: "client-credentials"},
+			{Title: "Static token", Value: "token"},
+		})
+	}
 	if _, err := fmt.Fprintln(cmd.OutOrStdout(), "How do you want to authenticate?"); err != nil {
 		return "", err
 	}
@@ -434,6 +479,20 @@ func (i loginInput) choosePlatformAuth(cmd *cobra.Command) (string, error) {
 }
 
 func (i loginInput) prompt(cmd *cobra.Command, label string) (string, error) {
+	return i.promptValue(cmd, label, "", false)
+}
+
+func (i loginInput) secretPrompt(cmd *cobra.Command, label string) (string, error) {
+	return i.promptValue(cmd, label, "", true)
+}
+
+func (i loginInput) promptValue(cmd *cobra.Command, label string, placeholder string, secret bool) (string, error) {
+	if i.nonInteractive {
+		return "", fmt.Errorf("%s is required in non-interactive mode", label)
+	}
+	if i.wizard.Available() {
+		return i.wizard.Input(label, placeholder, secret)
+	}
 	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s: ", label); err != nil {
 		return "", err
 	}

@@ -16,6 +16,9 @@ work.
 - Root `login`, `logout`, and `whoami` provide the primary user-facing
   authentication flow. `profile` is the primary target-management command, while
   `context` and `session` are hidden from help.
+- Interactive `login` uses Charmbracelet Huh when stdin/stderr are terminals.
+  Non-TTY runs, `--non-interactive`, and tests keep deterministic plain prompts
+  and flag errors.
 - `--telemetry` and `--quiet` are intentionally not exposed as silent no-ops.
 - Cloud control-plane commands are grouped under `cloud`, with `cloud stacks`
   as the canonical stack lifecycle command and deprecated `cloud_stacks`,
