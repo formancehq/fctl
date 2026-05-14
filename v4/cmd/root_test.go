@@ -128,7 +128,7 @@ func TestLoginBrowserDeviceFlowIsDeferredForCloudAndEE(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			configDir := t.TempDir()
 
-			_, stderr, err := executeCommandWithInput(t,
+			stdout, stderr, err := executeCommandWithInput(t,
 				tc.input,
 				"--config-dir", configDir,
 				"login",
@@ -142,10 +142,33 @@ func TestLoginBrowserDeviceFlowIsDeferredForCloudAndEE(t *testing.T) {
 			if !strings.Contains(err.Error(), loginBrowserDeviceDeferredMessage) {
 				t.Fatalf("unexpected deferred login error: %v", err)
 			}
+			if strings.Contains(stdout, "Static token") {
+				t.Fatalf("login prompt must not offer static token auth, got:\n%s", stdout)
+			}
 			if _, err := os.Stat(filepath.Join(configDir, "config.yaml")); !os.IsNotExist(err) {
 				t.Fatalf("browser/device login must not write config, stat error: %v", err)
 			}
 		})
+	}
+}
+
+func TestLoginDoesNotExposeStaticTokenAuth(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "login", "--help")
+	if err != nil {
+		t.Fatalf("login help: %v stderr=%s", err, stderr)
+	}
+	for _, hidden := range []string{"Static token", "--token", "--token-stdin"} {
+		if strings.Contains(stdout, hidden) {
+			t.Fatalf("login help must not expose %q, got:\n%s", hidden, stdout)
+		}
+	}
+
+	_, stderr, err = executeCommand(t, "login", "--target", "cloud", "--token", "secret")
+	if err == nil {
+		t.Fatal("expected --token to be rejected by login")
+	}
+	if !strings.Contains(err.Error(), "unknown flag: --token") {
+		t.Fatalf("unexpected --token error: %v stderr=%s", err, stderr)
 	}
 }
 

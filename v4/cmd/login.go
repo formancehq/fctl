@@ -18,7 +18,7 @@ const (
 	loginTargetOpenSource = "open-source"
 	defaultProfileName    = "default"
 
-	loginBrowserDeviceDeferredMessage = "login browser/device flow is deferred until the Cloud and EE device login contract is explicit; use --client-id/--client-secret or --token for now"
+	loginBrowserDeviceDeferredMessage = "login browser/device flow is deferred until the Cloud and EE device login contract is explicit; use --client-id/--client-secret for now"
 )
 
 func newLoginCommand() *cobra.Command {
@@ -29,8 +29,6 @@ func newLoginCommand() *cobra.Command {
 	var clientID string
 	var clientSecret string
 	var clientSecretStdin bool
-	var token string
-	var tokenStdin bool
 	var defaultLedger string
 
 	command := &cobra.Command{
@@ -86,8 +84,6 @@ func newLoginCommand() *cobra.Command {
 				ClientID:          clientID,
 				ClientSecret:      clientSecret,
 				ClientSecretStdin: clientSecretStdin,
-				Token:             token,
-				TokenStdin:        tokenStdin,
 				ProfileName:       profileName,
 			})
 			if err != nil {
@@ -113,8 +109,6 @@ func newLoginCommand() *cobra.Command {
 	command.Flags().StringVar(&clientID, "client-id", "", "OAuth client ID")
 	command.Flags().StringVar(&clientSecret, "client-secret", "", "OAuth client secret")
 	command.Flags().BoolVar(&clientSecretStdin, "client-secret-stdin", false, "Read OAuth client secret from stdin")
-	command.Flags().StringVar(&token, "token", "", "Bearer token value")
-	command.Flags().BoolVar(&tokenStdin, "token-stdin", false, "Read bearer token from stdin")
 	command.Flags().StringVar(&defaultLedger, "default-ledger", "", "Default ledger for this profile")
 	return command
 }
@@ -130,8 +124,6 @@ type loginContextInput struct {
 	ClientID          string
 	ClientSecret      string
 	ClientSecretStdin bool
-	Token             string
-	TokenStdin        bool
 	ProfileName       string
 }
 
@@ -212,7 +204,7 @@ func platformLoginContext(cmd *cobra.Command, input loginInput, options loginCon
 }
 
 func authFromLoginOptions(cmd *cobra.Command, input loginInput, options loginContextInput, platform bool) (v4config.Auth, error) {
-	if platform && options.Token == "" && !options.TokenStdin && options.ClientID == "" && options.ClientSecret == "" && !options.ClientSecretStdin {
+	if platform && options.ClientID == "" && options.ClientSecret == "" && !options.ClientSecretStdin {
 		authMethod, err := input.choosePlatformAuth(cmd)
 		if err != nil {
 			return v4config.Auth{}, err
@@ -231,38 +223,9 @@ func authFromLoginOptions(cmd *cobra.Command, input loginInput, options loginCon
 			}
 			options.ClientID = clientID
 			options.ClientSecret = clientSecret
-		case "3", "token", "static token":
-			token, err := input.secretPrompt(cmd, "Token")
-			if err != nil {
-				return v4config.Auth{}, err
-			}
-			options.Token = token
 		default:
 			return v4config.Auth{}, fmt.Errorf("unsupported authentication choice %q", authMethod)
 		}
-	}
-
-	if options.Token != "" || options.TokenStdin {
-		if options.Token != "" && options.TokenStdin {
-			return v4config.Auth{}, fmt.Errorf("--token and --token-stdin are mutually exclusive")
-		}
-		secret := options.Token
-		if options.TokenStdin {
-			data, err := io.ReadAll(cmd.InOrStdin())
-			if err != nil {
-				return v4config.Auth{}, err
-			}
-			secret = strings.TrimSpace(string(data))
-		}
-		ref := "contexts/" + options.ProfileName + "/token"
-		store, err := persistentCredentialStoreFromCommand(cmd)
-		if err != nil {
-			return v4config.Auth{}, err
-		}
-		if err := store.Set(cmd.Context(), ref, secret); err != nil {
-			return v4config.Auth{}, err
-		}
-		return v4config.Auth{Method: v4config.AuthMethodToken, TokenRef: ref}, nil
 	}
 
 	if options.ClientID != "" || options.ClientSecret != "" || options.ClientSecretStdin {
@@ -453,13 +416,12 @@ func (i loginInput) chooseTarget(cmd *cobra.Command) (string, error) {
 
 func (i loginInput) choosePlatformAuth(cmd *cobra.Command) (string, error) {
 	if i.nonInteractive {
-		return "", fmt.Errorf("login requires --client-id/--client-secret or --token in non-interactive mode")
+		return "", fmt.Errorf("login requires --client-id/--client-secret in non-interactive mode")
 	}
 	if i.wizard.Available() {
 		return i.wizard.Select("How do you want to authenticate?", []v4prompt.Choice{
 			{Title: "Browser/device login", Value: "browser"},
 			{Title: "Client credentials", Value: "client-credentials"},
-			{Title: "Static token", Value: "token"},
 		})
 	}
 	if _, err := fmt.Fprintln(cmd.OutOrStdout(), "How do you want to authenticate?"); err != nil {
@@ -469,9 +431,6 @@ func (i loginInput) choosePlatformAuth(cmd *cobra.Command) (string, error) {
 		return "", err
 	}
 	if _, err := fmt.Fprintln(cmd.OutOrStdout(), "2. Client credentials"); err != nil {
-		return "", err
-	}
-	if _, err := fmt.Fprintln(cmd.OutOrStdout(), "3. Static token"); err != nil {
 		return "", err
 	}
 	answer, err := i.prompt(cmd, "Choice")

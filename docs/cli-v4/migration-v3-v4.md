@@ -36,7 +36,7 @@ the isolated v4 implementation under `v4/`.
 | `--insecure-tls` | `--insecure-tls` | Kept as an explicit non-persistent runtime override. |
 | none | `--no-color` | New stable flag; v4 renderers are plain by default. |
 | `ui` | `cloud ui --print` or `cloud ui` | Root `ui` is a hidden deprecated alias. `--print` is non-browser/non-interactive friendly. |
-| `login --membership-uri <url>` | `login --target cloud` or `login --target ee --membership-url <url>` | Browser/device login is deferred; use client credentials or token flags for now. |
+| `login --membership-uri <url>` | `login --target cloud` or `login --target ee --membership-url <url>` | Browser/device login is deferred; use client credentials flags for now. |
 | `profiles ...` | `profile ...` | `profiles` is a hidden deprecated alias with a warning. |
 | `profiles reset <name>` | `profile unset-defaults <name> --confirm` | Deprecated alias. |
 | `profiles set-default-organization <org>` | `profile set --organization <org>` | Deprecated alias updates the current profile. |

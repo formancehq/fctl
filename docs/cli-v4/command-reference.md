@@ -235,7 +235,7 @@ profile, defaulting to `default` when `--profile` is not provided.
 - `--organization` and `--stack` select a Cloud or EE stack for commands that
   need stack scope.
 - Browser/device login is deferred until the Cloud and EE device-flow contract
-  is explicit. Use client credentials or static token flags for now.
+  is explicit. Use client credentials flags for now.
 
 `auth` remains reserved for the stack Auth service command family.
 

@@ -591,7 +591,7 @@ Scenarios minimaux:
 | Scenario | Commandes |
 | --- | --- |
 | contexte local no-auth | `login --target open-source`, `target inspect`, `ledger transactions list`. |
-| contexte token self-hosted | `login --target open-source --token`, `target inspect`, commande produit. |
+| contexte open-source no-auth | `login --target open-source --stack-url <url>`, `target inspect`, commande produit. |
 | contexte client credentials | `login --target ee --client-id --client-secret`, refresh token, commande produit. |
 | contexte Cloud stack | `login --target cloud --organization --stack`, `cloud organizations list`, `ledger transactions list`. |
 | migration v3 | `config migrate-v3`, puis `profile list/show/use`. |
