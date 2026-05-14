@@ -46,6 +46,7 @@ func newPaymentsTransferInitiationCommand(use string, aliases []string, deprecat
 		}
 	}
 	command.AddCommand(newPaymentsTransferInitiationListCommand())
+	command.AddCommand(newPaymentsTransferInitiationCreateCommand())
 	command.AddCommand(newPaymentsTransferInitiationShowCommand("show", []string{"sh", "s"}, false))
 	command.AddCommand(newPaymentsTransferInitiationShowCommand("get", []string{"g"}, true))
 	command.AddCommand(newPaymentsTransferInitiationActionCommand("approve", []string{"a"}, "Approve a payment transfer initiation", paymentscmd.FeatureApprovePaymentInitiation, paymentscmd.SDKApprovePaymentInitiationHandlers, "approved", true))
@@ -1368,6 +1369,164 @@ func newPaymentsTransferInitiationListCommand() *cobra.Command {
 	command.Flags().StringVar(&query, "query", "", "Filter transfer initiations with the API query syntax")
 	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
 	return command
+}
+
+func newPaymentsTransferInitiationCreateCommand() *cobra.Command {
+	var confirm bool
+	var file string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "create",
+		Aliases: []string{"cr", "c"},
+		Short:   "Create a payment transfer initiation",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return nil
+			}
+			if len(args) == 1 {
+				return nil
+			}
+			return fmt.Errorf("accepts 0 arg(s), received %d", len(args))
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("payments transfer-initiation create requires --confirm")
+			}
+			if len(args) == 1 {
+				if file != "" {
+					return fmt.Errorf("use either --file or positional file, not both")
+				}
+				file = args[0]
+				fmt.Fprintln(cmd.ErrOrStderr(), "Positional file has been deprecated, use payments transfer-initiation create --file <path>|-")
+			}
+			if file == "" {
+				return fmt.Errorf("payments transfer-initiation create requires --file <path>|-")
+			}
+			data, err := readPaymentCommandFile(cmd, file)
+			if err != nil {
+				return err
+			}
+			request, err := parseCreateTransferInitiationRequest(data)
+			if err != nil {
+				return err
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.CreateTransferInitiationService{
+				Handlers: paymentscmd.SDKCreateTransferInitiationHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureCreateTransferInitiation,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.CreateTransferInitiationInput{
+				Amount:               request.Amount,
+				Asset:                request.Asset,
+				ConnectorID:          request.ConnectorID,
+				Description:          request.Description,
+				DestinationAccountID: request.DestinationAccountID,
+				Metadata:             request.Metadata,
+				Reference:            request.Reference,
+				ScheduledAt:          request.ScheduledAt,
+				SourceAccountID:      request.SourceAccountID,
+				Type:                 request.Type,
+				Validated:            request.Validated,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentTransferInitiationCreated(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm transfer initiation creation")
+	command.Flags().StringVar(&file, "file", "", "JSON transfer initiation request file, or - for stdin")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+type createTransferInitiationRequestFile struct {
+	Amount               *big.Int          `json:"amount"`
+	Asset                string            `json:"asset"`
+	ConnectorID          string            `json:"connectorID"`
+	Description          string            `json:"description"`
+	DestinationAccountID string            `json:"destinationAccountID"`
+	Metadata             map[string]string `json:"metadata"`
+	Reference            string            `json:"reference"`
+	ScheduledAt          time.Time         `json:"scheduledAt"`
+	SourceAccountID      string            `json:"sourceAccountID"`
+	Type                 string            `json:"type"`
+	Validated            bool              `json:"validated"`
+}
+
+func parseCreateTransferInitiationRequest(data []byte) (createTransferInitiationRequestFile, error) {
+	var raw struct {
+		Amount               json.RawMessage   `json:"amount"`
+		Asset                string            `json:"asset"`
+		ConnectorID          string            `json:"connectorID"`
+		Description          string            `json:"description"`
+		DestinationAccountID string            `json:"destinationAccountID"`
+		Metadata             map[string]string `json:"metadata"`
+		Reference            string            `json:"reference"`
+		ScheduledAt          time.Time         `json:"scheduledAt"`
+		SourceAccountID      string            `json:"sourceAccountID"`
+		Type                 string            `json:"type"`
+		Validated            bool              `json:"validated"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return createTransferInitiationRequestFile{}, err
+	}
+	if len(raw.Amount) == 0 {
+		return createTransferInitiationRequestFile{}, fmt.Errorf("transfer initiation amount is required")
+	}
+	amount, err := parseBigIntJSON(raw.Amount)
+	if err != nil {
+		return createTransferInitiationRequestFile{}, fmt.Errorf("invalid transfer initiation amount: %w", err)
+	}
+	return createTransferInitiationRequestFile{
+		Amount:               amount,
+		Asset:                raw.Asset,
+		ConnectorID:          raw.ConnectorID,
+		Description:          raw.Description,
+		DestinationAccountID: raw.DestinationAccountID,
+		Metadata:             raw.Metadata,
+		Reference:            raw.Reference,
+		ScheduledAt:          raw.ScheduledAt,
+		SourceAccountID:      raw.SourceAccountID,
+		Type:                 strings.ToUpper(raw.Type),
+		Validated:            raw.Validated,
+	}, nil
+}
+
+func renderPaymentTransferInitiationCreated(cmd *cobra.Command, output paymentscmd.CreateTransferInitiationOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if output.TaskID != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Task ID: %s\n", output.TaskID); err != nil {
+			return err
+		}
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Transfer initiation created with ID: %s\n", output.TransferInitiationID)
+	return err
 }
 
 func newPaymentsTransferInitiationShowCommand(use string, aliases []string, deprecated bool) *cobra.Command {

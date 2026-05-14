@@ -2750,6 +2750,136 @@ func TestPaymentsTransferInitiationListSelectsV3(t *testing.T) {
 	}
 }
 
+func TestPaymentsTransferInitiationCreateRequiresConfirm(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "payments", "transfer-initiation", "create", "--file", "request.json")
+	if err == nil {
+		t.Fatal("expected payments transfer-initiation create to require confirmation")
+	}
+	if stdout != "" {
+		t.Fatalf("expected empty stdout, got %q", stdout)
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(err.Error(), "payments transfer-initiation create requires --confirm") {
+		t.Fatalf("expected confirmation error, got: %v", err)
+	}
+}
+
+func TestPaymentsTransferInitiationCreateSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/payment-initiations":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			if got := r.URL.Query().Get("noValidation"); got != "true" {
+				t.Fatalf("expected noValidation=true, got %q", got)
+			}
+			body := readRequestBody(t, r)
+			for _, expected := range []string{
+				`"amount":100`,
+				`"asset":"USD/2"`,
+				`"connectorID":"conn_1"`,
+				`"sourceAccountID":"acc_src"`,
+				`"destinationAccountID":"acc_dst"`,
+				`"type":"TRANSFER"`,
+			} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected create body to contain %q, got %s", expected, body)
+				}
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusAccepted)
+			fmt.Fprint(w, `{"data":{"paymentInitiationID":"ti_1","taskID":"task_1"}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	requestFile := filepath.Join(t.TempDir(), "create.json")
+	if err := os.WriteFile(requestFile, []byte(`{"amount":100,"asset":"USD/2","connectorID":"conn_1","description":"desc","destinationAccountID":"acc_dst","metadata":{"env":"dev"},"reference":"ref","scheduledAt":"2026-01-02T00:00:00Z","sourceAccountID":"acc_src","type":"transfer","validated":true}`), 0o600); err != nil {
+		t.Fatalf("write request file: %v", err)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "transfer-initiation", "create",
+		"--file", requestFile,
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("create transfer initiation: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v3",
+		"Task ID: task_1",
+		"Transfer initiation created with ID: ti_1",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected create output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestPaymentsTransferInitiationCreateDeprecatedPositionalFile(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/payment-initiations":
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusAccepted)
+			fmt.Fprint(w, `{"data":{"paymentInitiationID":"ti_1"}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	requestFile := filepath.Join(t.TempDir(), "create.json")
+	if err := os.WriteFile(requestFile, []byte(`{"amount":"100","asset":"USD/2","connectorID":"conn_1","reference":"ref","scheduledAt":"2026-01-02T00:00:00Z","type":"PAYOUT"}`), 0o600); err != nil {
+		t.Fatalf("write request file: %v", err)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "transfer-initiation", "create", requestFile,
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("create transfer initiation with positional file: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "use payments transfer-initiation create --file <path>|-") {
+		t.Fatalf("expected positional file deprecation warning, got:\n%s", stderr)
+	}
+}
+
 func TestPaymentsTransferInitiationShowSelectsV3(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

@@ -15,6 +15,7 @@ import (
 
 const (
 	FeatureApprovePaymentInitiation       capabilities.Feature = "approvePaymentInitiation"
+	FeatureCreateTransferInitiation       capabilities.Feature = "createTransferInitiation"
 	FeatureDeletePaymentInitiation        capabilities.Feature = "deletePaymentInitiation"
 	FeatureGetTransferInitiation          capabilities.Feature = "getTransferInitiation"
 	FeatureListTransferInitiation         capabilities.Feature = "listTransferInitiations"
@@ -47,6 +48,26 @@ type ListTransferInitiationsInput struct {
 	PageSize int64
 	Cursor   string
 	Query    string
+}
+
+type CreateTransferInitiationInput struct {
+	Amount               *big.Int
+	Asset                string
+	ConnectorID          string
+	Description          string
+	DestinationAccountID string
+	Metadata             map[string]string
+	Reference            string
+	ScheduledAt          time.Time
+	SourceAccountID      string
+	Type                 string
+	Validated            bool
+}
+
+type CreateTransferInitiationOutput struct {
+	APIVersion           capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	TransferInitiationID string                  `json:"transferInitiationID" yaml:"transferInitiationID"`
+	TaskID               string                  `json:"taskID,omitempty" yaml:"taskID,omitempty"`
 }
 
 type ListTransferInitiationsOutput struct {
@@ -109,6 +130,11 @@ type ListTransferInitiationsHandler struct {
 	Run        func(context.Context, ListTransferInitiationsInput) (ListTransferInitiationsOutput, error)
 }
 
+type CreateTransferInitiationHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, CreateTransferInitiationInput) (CreateTransferInitiationOutput, error)
+}
+
 type GetTransferInitiationHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, GetTransferInitiationInput) (GetTransferInitiationOutput, error)
@@ -131,6 +157,11 @@ type ReverseTransferInitiationHandler struct {
 
 type ListTransferInitiationsService struct {
 	Handlers []ListTransferInitiationsHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type CreateTransferInitiationService struct {
+	Handlers []CreateTransferInitiationHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -172,6 +203,38 @@ func (s ListTransferInitiationsService) Run(ctx context.Context, input ListTrans
 	output, err := handler.Run(ctx, input)
 	if err != nil {
 		return ListTransferInitiationsOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func (s CreateTransferInitiationService) Run(ctx context.Context, input CreateTransferInitiationInput) (CreateTransferInitiationOutput, error) {
+	if input.Amount == nil {
+		return CreateTransferInitiationOutput{}, fmt.Errorf("transfer initiation amount is required")
+	}
+	if input.Asset == "" {
+		return CreateTransferInitiationOutput{}, fmt.Errorf("transfer initiation asset is required")
+	}
+	if input.Type != "TRANSFER" && input.Type != "PAYOUT" {
+		return CreateTransferInitiationOutput{}, fmt.Errorf("unsupported transfer initiation type %q: expected TRANSFER or PAYOUT", input.Type)
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]CreateTransferInitiationHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return CreateTransferInitiationOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return CreateTransferInitiationOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return CreateTransferInitiationOutput{}, err
 	}
 	output.APIVersion = selected
 	return output, nil
@@ -323,6 +386,67 @@ func SDKListTransferInitiationsHandlers(sdk *formance.Formance) []ListTransferIn
 					return ListTransferInitiationsOutput{}, fmt.Errorf("payments v3 list payment initiations returned no cursor")
 				}
 				return fromV3PaymentInitiationsCursor(response.V3PaymentInitiationsCursorResponse.Cursor), nil
+			},
+		},
+	}
+}
+
+func SDKCreateTransferInitiationHandlers(sdk *formance.Formance) []CreateTransferInitiationHandler {
+	return []CreateTransferInitiationHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input CreateTransferInitiationInput) (CreateTransferInitiationOutput, error) {
+				response, err := sdk.Payments.V1.CreateTransferInitiation(ctx, shared.TransferInitiationRequest{
+					Amount:               input.Amount,
+					Asset:                input.Asset,
+					ConnectorID:          optionalString(input.ConnectorID),
+					Description:          input.Description,
+					DestinationAccountID: input.DestinationAccountID,
+					Metadata:             input.Metadata,
+					Reference:            input.Reference,
+					ScheduledAt:          input.ScheduledAt,
+					SourceAccountID:      input.SourceAccountID,
+					Type:                 shared.TransferInitiationRequestType(input.Type),
+					Validated:            input.Validated,
+				})
+				if err != nil {
+					return CreateTransferInitiationOutput{}, err
+				}
+				if response.TransferInitiationResponse == nil {
+					return CreateTransferInitiationOutput{}, fmt.Errorf("payments v1 create transfer initiation returned no data")
+				}
+				return CreateTransferInitiationOutput{TransferInitiationID: response.TransferInitiationResponse.Data.ID}, nil
+			},
+		},
+		{
+			APIVersion: "v3",
+			Run: func(ctx context.Context, input CreateTransferInitiationInput) (CreateTransferInitiationOutput, error) {
+				response, err := sdk.Payments.V3.InitiatePayment(ctx, operations.V3InitiatePaymentRequest{
+					NoValidation: pointer(input.Validated),
+					V3InitiatePaymentRequest: &shared.V3InitiatePaymentRequest{
+						Amount:               input.Amount,
+						Asset:                input.Asset,
+						ConnectorID:          input.ConnectorID,
+						Description:          input.Description,
+						DestinationAccountID: optionalString(input.DestinationAccountID),
+						Metadata:             input.Metadata,
+						Reference:            input.Reference,
+						ScheduledAt:          input.ScheduledAt,
+						SourceAccountID:      optionalString(input.SourceAccountID),
+						Type:                 shared.V3PaymentInitiationTypeEnum(input.Type),
+					},
+				})
+				if err != nil {
+					return CreateTransferInitiationOutput{}, err
+				}
+				if response.V3InitiatePaymentResponse == nil {
+					return CreateTransferInitiationOutput{}, fmt.Errorf("payments v3 initiate payment returned no data")
+				}
+				data := response.V3InitiatePaymentResponse.Data
+				return CreateTransferInitiationOutput{
+					TransferInitiationID: stringValue(data.PaymentInitiationID),
+					TaskID:               stringValue(data.TaskID),
+				}, nil
 			},
 		},
 	}
