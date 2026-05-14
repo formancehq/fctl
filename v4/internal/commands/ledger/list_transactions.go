@@ -18,6 +18,7 @@ const (
 	ProductLedger                    capabilities.Product = "ledger"
 	FeatureAddTransactionMetadata    capabilities.Feature = "addMetadataOnTransaction"
 	FeatureCountTransactions         capabilities.Feature = "countTransactions"
+	FeatureCreateTransaction         capabilities.Feature = "createTransaction"
 	FeatureDeleteTransactionMetadata capabilities.Feature = "deleteTransactionMetadata"
 	FeatureListTransactions          capabilities.Feature = "listTransactions"
 	FeatureGetTransaction            capabilities.Feature = "getTransaction"
@@ -54,6 +55,21 @@ type CountTransactionsInput struct {
 type CountTransactionsOutput struct {
 	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
 	Count      int64                   `json:"count" yaml:"count"`
+}
+
+type SendTransactionInput struct {
+	Ledger      string
+	Source      string
+	Destination string
+	Amount      string
+	Asset       string
+	Reference   string
+	Metadata    map[string]string
+}
+
+type SendTransactionOutput struct {
+	APIVersion  capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	Transaction TransactionSummary      `json:"transaction" yaml:"transaction"`
 }
 
 type TransactionSummary struct {
@@ -102,6 +118,16 @@ type CountTransactionsHandler struct {
 
 type CountTransactionsService struct {
 	Handlers []CountTransactionsHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type SendTransactionHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, SendTransactionInput) (SendTransactionOutput, error)
+}
+
+type SendTransactionService struct {
+	Handlers []SendTransactionHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -242,6 +268,110 @@ func SDKCountTransactionsHandlers(sdk *formance.Formance) []CountTransactionsHan
 					return CountTransactionsOutput{}, err
 				}
 				return CountTransactionsOutput{Count: count}, nil
+			},
+		},
+	}
+}
+
+func (s SendTransactionService) Run(ctx context.Context, input SendTransactionInput) (SendTransactionOutput, error) {
+	if input.Ledger == "" {
+		return SendTransactionOutput{}, fmt.Errorf("ledger is required")
+	}
+	if input.Source == "" {
+		return SendTransactionOutput{}, fmt.Errorf("source is required")
+	}
+	if input.Destination == "" {
+		return SendTransactionOutput{}, fmt.Errorf("destination is required")
+	}
+	if input.Amount == "" {
+		return SendTransactionOutput{}, fmt.Errorf("amount is required")
+	}
+	if input.Asset == "" {
+		return SendTransactionOutput{}, fmt.Errorf("asset is required")
+	}
+
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]SendTransactionHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return SendTransactionOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return SendTransactionOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return SendTransactionOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func SDKSendTransactionHandlers(sdk *formance.Formance) []SendTransactionHandler {
+	return []SendTransactionHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input SendTransactionInput) (SendTransactionOutput, error) {
+				amount, err := parseAmount(input.Amount)
+				if err != nil {
+					return SendTransactionOutput{}, err
+				}
+				response, err := sdk.Ledger.V1.CreateTransaction(ctx, operations.CreateTransactionRequest{
+					Ledger: input.Ledger,
+					PostTransaction: shared.PostTransaction{
+						Metadata: stringMapToAny(input.Metadata),
+						Postings: []shared.Posting{{
+							Amount:      amount,
+							Asset:       input.Asset,
+							Destination: input.Destination,
+							Source:      input.Source,
+						}},
+						Reference: optionalString(input.Reference),
+					},
+				})
+				if err != nil {
+					return SendTransactionOutput{}, err
+				}
+				if response.TransactionsResponse == nil || len(response.TransactionsResponse.Data) == 0 {
+					return SendTransactionOutput{}, fmt.Errorf("ledger v1 create transaction returned no data")
+				}
+				return SendTransactionOutput{Transaction: fromV1Transaction(response.TransactionsResponse.Data[0])}, nil
+			},
+		},
+		{
+			APIVersion: "v2",
+			Run: func(ctx context.Context, input SendTransactionInput) (SendTransactionOutput, error) {
+				amount, err := parseAmount(input.Amount)
+				if err != nil {
+					return SendTransactionOutput{}, err
+				}
+				response, err := sdk.Ledger.V2.CreateTransaction(ctx, operations.V2CreateTransactionRequest{
+					Ledger: input.Ledger,
+					V2PostTransaction: shared.V2PostTransaction{
+						Metadata: input.Metadata,
+						Postings: []shared.V2Posting{{
+							Amount:      amount,
+							Asset:       input.Asset,
+							Destination: input.Destination,
+							Source:      input.Source,
+						}},
+						Reference: optionalString(input.Reference),
+					},
+				})
+				if err != nil {
+					return SendTransactionOutput{}, err
+				}
+				if response.V2CreateTransactionResponse == nil {
+					return SendTransactionOutput{}, fmt.Errorf("ledger v2 create transaction returned no data")
+				}
+				return SendTransactionOutput{Transaction: fromV2Transaction(response.V2CreateTransactionResponse.Data)}, nil
 			},
 		},
 	}
@@ -548,6 +678,21 @@ func fromV2Transaction(transaction shared.V2Transaction) TransactionSummary {
 
 func pointer[T any](value T) *T {
 	return &value
+}
+
+func optionalString(value string) *string {
+	if value == "" {
+		return nil
+	}
+	return &value
+}
+
+func parseAmount(value string) (*big.Int, error) {
+	amount, ok := new(big.Int).SetString(value, 10)
+	if !ok {
+		return nil, fmt.Errorf("amount must be an integer")
+	}
+	return amount, nil
 }
 
 func bigIntString(value *big.Int) string {

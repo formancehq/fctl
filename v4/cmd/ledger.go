@@ -25,6 +25,7 @@ func newLedgerCommand() *cobra.Command {
 	command.AddCommand(newLedgerDeleteMetadataCommand())
 	command.AddCommand(newLedgerListCommand())
 	command.AddCommand(newLedgerSetMetadataCommand())
+	command.AddCommand(newLedgerTransactionsSendCommand(true))
 	command.AddCommand(newLedgerStatsCommand())
 	command.AddCommand(newLedgerTransactionsCommand())
 	command.AddCommand(newLedgerVolumesCommand())
@@ -751,8 +752,108 @@ func newLedgerTransactionsCommand() *cobra.Command {
 	command.AddCommand(newLedgerTransactionsDeleteMetadataCommand())
 	command.AddCommand(newLedgerTransactionsListCommand())
 	command.AddCommand(newLedgerTransactionsRevertCommand())
+	command.AddCommand(newLedgerTransactionsSendCommand(false))
 	command.AddCommand(newLedgerTransactionsSetMetadataCommand())
 	command.AddCommand(newLedgerTransactionsShowCommand())
+	return command
+}
+
+func newLedgerTransactionsSendCommand(deprecatedRootAlias bool) *cobra.Command {
+	var ledger string
+	var source string
+	var destination string
+	var amount string
+	var asset string
+	var reference string
+	var metadata []string
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "send",
+		Short: "Send from one ledger account to another",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if deprecatedRootAlias {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Command ledger send has been deprecated, use ledger transactions send")
+			}
+			if !confirm {
+				return fmt.Errorf("ledger transactions send requires --confirm")
+			}
+
+			parsedMetadata, err := parseMetadataFlags(metadata)
+			if err != nil {
+				return err
+			}
+
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			if ledger == "" {
+				ledger = rt.Context.Defaults["ledger"]
+			}
+			if ledger == "" {
+				ledger = "default"
+			}
+
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := ledgercmd.SendTransactionService{
+				Handlers: ledgercmd.SDKSendTransactionHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         ledgercmd.ProductLedger,
+						Feature:         ledgercmd.FeatureCreateTransaction,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), ledgercmd.SendTransactionInput{
+				Ledger:      ledger,
+				Source:      source,
+				Destination: destination,
+				Amount:      amount,
+				Asset:       asset,
+				Reference:   reference,
+				Metadata:    parsedMetadata,
+			})
+			if err != nil {
+				return err
+			}
+
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderLedgerSentTransaction(cmd, output)
+		},
+	}
+	if deprecatedRootAlias {
+		command.Aliases = []string{"s"}
+		command.Deprecated = "use ledger transactions send"
+	}
+
+	command.Flags().StringVar(&ledger, "ledger", "", "Ledger name")
+	command.Flags().StringVar(&source, "source", "", "Source account")
+	command.Flags().StringVar(&destination, "destination", "", "Destination account")
+	command.Flags().StringVar(&amount, "amount", "", "Amount to send")
+	command.Flags().StringVar(&asset, "asset", "", "Asset to send")
+	command.Flags().StringVar(&reference, "reference", "", "Transaction reference")
+	command.Flags().StringSliceVar(&metadata, "metadata", nil, "Metadata key=value to apply")
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm the transaction creation")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
+
 	return command
 }
 
@@ -1505,6 +1606,24 @@ func renderLedgerTransactionsCount(cmd *cobra.Command, output ledgercmd.CountTra
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Count\t%d\n", output.Count)
+	return err
+}
+
+func renderLedgerSentTransaction(cmd *cobra.Command, output ledgercmd.SendTransactionOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	reference := ""
+	if output.Transaction.Reference != nil {
+		reference = *output.Transaction.Reference
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", output.Transaction.ID); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Reference\t%s\n", reference); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Timestamp\t%s\n", output.Transaction.Timestamp.Format(time.RFC3339))
 	return err
 }
 

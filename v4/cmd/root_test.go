@@ -907,6 +907,117 @@ func TestLedgerTransactionsCountSelectsV2(t *testing.T) {
 	}
 }
 
+func TestLedgerTransactionsSendSelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default/transactions":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			body := readRequestBody(t, r)
+			for _, expected := range []string{
+				`"amount":100`,
+				`"asset":"USD/2"`,
+				`"source":"world"`,
+				`"destination":"users:123"`,
+				`"metadata":{"foo":"bar"}`,
+				`"reference":"ref"`,
+			} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected body to contain %q, got %s", expected, body)
+				}
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":42,"metadata":{"foo":"bar"},"postings":[],"reverted":false,"timestamp":"2026-01-01T00:00:00Z","reference":"ref"}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "transactions", "send",
+		"--source", "world",
+		"--destination", "users:123",
+		"--amount", "100",
+		"--asset", "USD/2",
+		"--metadata", "foo=bar",
+		"--reference", "ref",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("send transaction: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v2",
+		"ID\t42",
+		"Reference\tref",
+		"Timestamp\t2026-01-01T00:00:00Z",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestLedgerSendDeprecatedAlias(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default/transactions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":42,"metadata":{},"postings":[],"reverted":false,"timestamp":"2026-01-01T00:00:00Z"}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "send",
+		"--source", "world",
+		"--destination", "users:123",
+		"--amount", "100",
+		"--asset", "USD/2",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("send through deprecated alias: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "use ledger transactions send") {
+		t.Fatalf("expected deprecation warning, got:\n%s", stderr)
+	}
+}
+
 func TestLedgerTransactionsShowSelectsV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

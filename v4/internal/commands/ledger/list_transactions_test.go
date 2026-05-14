@@ -139,6 +139,80 @@ func TestCountHeader(t *testing.T) {
 	}
 }
 
+func TestSendTransactionServiceSelectsResolvedHandler(t *testing.T) {
+	service := SendTransactionService{
+		Handlers: []SendTransactionHandler{
+			{
+				APIVersion: "v1",
+				Run: func(context.Context, SendTransactionInput) (SendTransactionOutput, error) {
+					t.Fatal("v1 handler should not run")
+					return SendTransactionOutput{}, nil
+				},
+			},
+			{
+				APIVersion: "v2",
+				Run: func(_ context.Context, input SendTransactionInput) (SendTransactionOutput, error) {
+					if input.Ledger != "default" || input.Source != "world" || input.Destination != "users:123" ||
+						input.Amount != "100" || input.Asset != "USD/2" || input.Metadata["foo"] != "bar" {
+						t.Fatalf("unexpected input: %#v", input)
+					}
+					return SendTransactionOutput{Transaction: TransactionSummary{ID: "42"}}, nil
+				},
+			},
+		},
+		Resolve: func(_ context.Context, versions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			assertAPIVersions(t, versions, []capabilities.APIVersion{"v1", "v2"})
+			return "v2", nil
+		},
+	}
+
+	output, err := service.Run(context.Background(), SendTransactionInput{
+		Ledger:      "default",
+		Source:      "world",
+		Destination: "users:123",
+		Amount:      "100",
+		Asset:       "USD/2",
+		Metadata:    map[string]string{"foo": "bar"},
+	})
+	if err != nil {
+		t.Fatalf("run service: %v", err)
+	}
+	if output.APIVersion != "v2" || output.Transaction.ID != "42" {
+		t.Fatalf("unexpected output: %#v", output)
+	}
+}
+
+func TestSendTransactionServiceRequiresInput(t *testing.T) {
+	service := SendTransactionService{
+		Handlers: []SendTransactionHandler{{APIVersion: "v2"}},
+		Resolve: func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			t.Fatal("resolver should not run")
+			return "", nil
+		},
+	}
+
+	if _, err := service.Run(context.Background(), SendTransactionInput{}); err == nil {
+		t.Fatal("expected ledger validation error")
+	}
+	if _, err := service.Run(context.Background(), SendTransactionInput{Ledger: "default"}); err == nil {
+		t.Fatal("expected source validation error")
+	}
+}
+
+func TestParseAmount(t *testing.T) {
+	amount, err := parseAmount("100")
+	if err != nil {
+		t.Fatalf("parse amount: %v", err)
+	}
+	if amount.String() != "100" {
+		t.Fatalf("expected amount 100, got %s", amount)
+	}
+
+	if _, err := parseAmount("not-an-int"); err == nil {
+		t.Fatal("expected invalid amount error")
+	}
+}
+
 func TestToV2ListTransactionsRequestMapsCanonicalFilters(t *testing.T) {
 	request := toV2ListTransactionsRequest(ListTransactionsInput{
 		Ledger:      "default",
