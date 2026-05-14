@@ -11,6 +11,5 @@ var DefaultComponentCompatibility = ComponentCompatibility{
 	{Product: "auth", Range: ">=0.0.0", APIVersions: []APIVersion{"v1"}},
 	{Product: "wallets", Range: ">=0.0.0", APIVersions: []APIVersion{"v1"}},
 	{Product: "webhooks", Range: ">=0.0.0", APIVersions: []APIVersion{"v1"}},
-	{Product: "search", Range: ">=0.0.0", APIVersions: []APIVersion{"v1"}},
 	{Product: "reconciliation", Range: ">=0.0.0", APIVersions: []APIVersion{"v1"}},
 }

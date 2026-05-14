@@ -590,17 +590,6 @@ var GeneratedManifest = Manifest{
 				},
 			},
 		},
-		Product("search"): {
-			APIVersions: []APIVersion{APIVersion("v1")},
-			Operations: map[Feature]map[APIVersion]Operation{
-				Feature("getServerInfo_search"): {
-					APIVersion("v1"): {OperationID: "getServerInfo_search", Method: "GET", Path: "/api/search/_info", Tags: []string{"search.v1"}},
-				},
-				Feature("search"): {
-					APIVersion("v1"): {OperationID: "search", Method: "POST", Path: "/api/search/", Tags: []string{"search.v1"}},
-				},
-			},
-		},
 		Product("wallets"): {
 			APIVersions: []APIVersion{APIVersion("v1")},
 			Operations: map[Feature]map[APIVersion]Operation{

@@ -13,6 +13,9 @@ import (
 
 var versionedTagPattern = regexp.MustCompile(`^([A-Za-z0-9_-]+)\.(v[0-9]+)$`)
 var pathVersionPattern = regexp.MustCompile(`^/api/([^/]+)/((?:v)[0-9]+)(?:/|$)`)
+var retiredProducts = map[Product]struct{}{
+	"search": {},
+}
 
 func ParseOpenAPIManifest(reader io.Reader) (Manifest, error) {
 	var document openAPIDocument
@@ -53,6 +56,9 @@ func ParseOpenAPIManifest(reader io.Reader) (Manifest, error) {
 
 			product, apiVersion, ok := operationProductVersion(path, operation.Tags)
 			if !ok {
+				continue
+			}
+			if _, retired := retiredProducts[product]; retired {
 				continue
 			}
 

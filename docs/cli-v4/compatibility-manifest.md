@@ -19,8 +19,10 @@ The spec contains versioned tags such as:
 - `auth.v1`
 - `wallets.v1`
 - `webhooks.v1`
-- `search.v1`
 - `reconciliation.v1`
+
+Retired products such as `search` must be ignored even if an old stack spec still
+contains their tags.
 
 ## Generated Data
 

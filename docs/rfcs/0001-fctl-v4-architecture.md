@@ -194,6 +194,10 @@ The v4 CLI should import v3 profiles into contexts:
 ## Open Questions
 
 - Exact naming for `context` versus `target`.
-- Whether `fctl transaction list` aliases should exist beside `fctl ledger transactions list`.
 - Whether compatibility ranges should live in the CLI repo, the SDK repo, or both.
 - How aggressively to warn when a newer API namespace is available.
+
+## Resolved Decisions
+
+- Do not create generic command aliases such as `fctl transaction list`; commands
+  stay service-qualified, for example `fctl ledger transactions list`.

@@ -18,6 +18,9 @@ func TestParseOpenAPIManifest(t *testing.T) {
 	    "/api/payments/v3/payments": {
 	      "get": {"operationId": "v3ListPayments", "tags": ["payments.v3"]}
 	    },
+	    "/api/search/": {
+	      "post": {"operationId": "search", "tags": ["search.v1"]}
+	    },
 	    "/versions": {
 	      "get": {"operationId": "getVersions", "tags": []}
 	    }
@@ -48,6 +51,9 @@ func TestParseOpenAPIManifest(t *testing.T) {
 	}
 	if _, ok := manifest.Products["versions"]; ok {
 		t.Fatalf("/versions should not be included as a product")
+	}
+	if _, ok := manifest.Products["search"]; ok {
+		t.Fatalf("retired search product should not be included")
 	}
 }
 
