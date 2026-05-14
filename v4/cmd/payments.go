@@ -26,6 +26,18 @@ func newPaymentsCommand() *cobra.Command {
 	command.AddCommand(newPaymentsBankAccountsCommand("bank_accounts", []string{"bacc", "ba", "bac", "baccount"}, true))
 	command.AddCommand(newPaymentsPaymentsCommand())
 	command.AddCommand(newPaymentsPoolsCommand())
+	command.AddCommand(newPaymentsTasksCommand())
+	return command
+}
+
+func newPaymentsTasksCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:     "tasks",
+		Aliases: []string{"t"},
+		Short:   "Manage payment tasks",
+	}
+	command.AddCommand(newPaymentsTasksShowCommand("show", []string{"sh", "s"}, false))
+	command.AddCommand(newPaymentsTasksShowCommand("get", nil, true))
 	return command
 }
 
@@ -1189,4 +1201,90 @@ func renderPaymentPoolBalances(cmd *cobra.Command, output paymentscmd.GetPoolBal
 		}
 	}
 	return nil
+}
+
+func newPaymentsTasksShowCommand(use string, aliases []string, deprecated bool) *cobra.Command {
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     use + " <task-id>",
+		Aliases: aliases,
+		Short:   "Show a payment task",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if deprecated {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Command payments tasks get has been deprecated, use payments tasks show")
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.GetTaskService{
+				Handlers: paymentscmd.SDKGetTaskHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureGetTask,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.GetTaskInput{TaskID: args[0]})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentTask(cmd, output)
+		},
+	}
+	if deprecated {
+		command.Deprecated = "use payments tasks show"
+	}
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func renderPaymentTask(cmd *cobra.Command, output paymentscmd.GetTaskOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	task := output.Task
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", task.ID); err != nil {
+		return err
+	}
+	if task.ConnectorID != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector ID\t%s\n", task.ConnectorID); err != nil {
+			return err
+		}
+	}
+	if task.CreatedObjectID != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Created object ID\t%s\n", task.CreatedObjectID); err != nil {
+			return err
+		}
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Status\t%s\n", task.Status); err != nil {
+		return err
+	}
+	if task.Error != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Error\t%s\n", task.Error); err != nil {
+			return err
+		}
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", task.CreatedAt.Format(time.RFC3339)); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Updated at\t%s\n", task.UpdatedAt.Format(time.RFC3339))
+	return err
 }

@@ -2628,6 +2628,87 @@ func TestPaymentsPoolsLatestBalancesSelectsV3(t *testing.T) {
 	}
 }
 
+func TestPaymentsTasksShowSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/tasks/task_1":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":"task_1","connectorID":"conn_1","createdObjectID":"pay_1","status":"SUCCEEDED","createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-01T00:01:00Z"}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "tasks", "show", "task_1",
+	)
+	if err != nil {
+		t.Fatalf("show payment task: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v3",
+		"ID\ttask_1",
+		"Connector ID\tconn_1",
+		"Status\tSUCCEEDED",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected payment task output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestPaymentsTasksGetDeprecatedAlias(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/tasks/task_1":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":"task_1","status":"SUCCEEDED","createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-01T00:01:00Z"}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "tasks", "get", "task_1",
+	)
+	if err != nil {
+		t.Fatalf("show payment task through alias: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "use payments tasks show") {
+		t.Fatalf("expected deprecation warning, got:\n%s", stderr)
+	}
+}
+
 func TestConfigMigrateV3DryRun(t *testing.T) {
 	v3Dir := writeV3CommandFixture(t, true)
 
