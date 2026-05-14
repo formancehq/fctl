@@ -2457,6 +2457,40 @@ func TestSessionLoginClientCredentialsBootstrapsDefaultCloudContext(t *testing.T
 	}
 }
 
+func TestSessionLoginClientCredentialsUsesDefaultFctlConfigDir(t *testing.T) {
+	homeDir := t.TempDir()
+	t.Setenv("HOME", homeDir)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(homeDir, ".config"))
+
+	stdout, stderr, err := executeCommand(t,
+		"session", "login", "client-credentials",
+		"--issuer-url", "https://app.formance.cloud/api",
+		"--client-id", "client",
+		"--client-secret", "super-secret",
+	)
+	if err != nil {
+		t.Fatalf("session login client-credentials with default config dir: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Authentication for context formance-cloud set to client credentials.\n" {
+		t.Fatalf("unexpected session login output: %q", stdout)
+	}
+
+	userConfigDir, err := os.UserConfigDir()
+	if err != nil {
+		t.Fatalf("resolve user config dir: %v", err)
+	}
+	expectedDir := filepath.Join(userConfigDir, "formance", "fctl")
+	if _, err := os.Stat(filepath.Join(expectedDir, "config.yaml")); err != nil {
+		t.Fatalf("expected config in default fctl dir: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(expectedDir, "credentials", "contexts", "formance-cloud", "client-secret")); err != nil {
+		t.Fatalf("expected credentials in default fctl dir: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(userConfigDir, "formance", "fctl-v4", "config.yaml")); !os.IsNotExist(err) {
+		t.Fatalf("did not expect config in fctl-v4 dir, got %v", err)
+	}
+}
+
 func TestSessionLoginNoneRequiresConfirmForCloudContext(t *testing.T) {
 	configDir := t.TempDir()
 	_, stderr, err := executeCommand(t,

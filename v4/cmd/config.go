@@ -23,7 +23,7 @@ func configPath(cmd *cobra.Command) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("resolve user config directory: %w", err)
 		}
-		configDir = filepath.Join(userConfigDir, "formance", "fctl-v4")
+		configDir = filepath.Join(userConfigDir, "formance", "fctl")
 	}
 	return filepath.Join(configDir, configFilename), nil
 }

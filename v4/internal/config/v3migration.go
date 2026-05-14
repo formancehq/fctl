@@ -109,7 +109,7 @@ func PlanV3Migration(state V3State) (MigrationPlan, error) {
 
 		auth := Auth{Method: AuthMethodCloudDevice}
 		if len(profile.RootTokens) > 0 && string(profile.RootTokens) != "null" {
-			ref := "keyring://formance/fctl-v4/" + name + "/rootTokens"
+			ref := "keyring://formance/fctl/" + name + "/rootTokens"
 			auth.TokenRef = ref
 			plan.CredentialMoves = append(plan.CredentialMoves, CredentialMove{
 				Profile: name,
