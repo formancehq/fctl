@@ -4947,6 +4947,54 @@ func TestWalletsHoldsConfirmSelectsV1(t *testing.T) {
 	}
 }
 
+func TestWalletsTransactionsListSelectsV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"wallets","version":"1.2.0","health":true}]}`)
+		case "/api/wallets/transactions":
+			if r.Method != http.MethodGet {
+				t.Fatalf("expected GET, got %s", r.Method)
+			}
+			if got := r.URL.Query().Get("walletID"); got != "wallet_1" {
+				t.Fatalf("expected walletID wallet_1, got %q", got)
+			}
+			if got := r.URL.Query().Get("pageSize"); got != "10" {
+				t.Fatalf("expected pageSize 10, got %q", got)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"id":42,"ledger":"default","reference":"ref_1","timestamp":"2026-01-01T00:00:00Z","postings":[],"metadata":{"env":"dev"}}],"hasMore":false,"pageSize":10}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"wallets", "transactions", "list",
+		"--wallet-id", "wallet_1",
+		"--page-size", "10",
+	)
+	if err != nil {
+		t.Fatalf("list wallet transactions: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v1") || !strings.Contains(stdout, "42\t2026-01-01T00:00:00Z\tdefault\tref_1") {
+		t.Fatalf("unexpected list wallet transactions output:\n%s", stdout)
+	}
+}
+
 func TestConfigMigrateV3DryRun(t *testing.T) {
 	v3Dir := writeV3CommandFixture(t, true)
 

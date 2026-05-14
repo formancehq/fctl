@@ -303,6 +303,34 @@ func TestVoidHoldServiceRequiresHoldID(t *testing.T) {
 	}
 }
 
+func TestListTransactionsServiceSelectsResolvedHandler(t *testing.T) {
+	service := ListTransactionsService{
+		Handlers: []ListTransactionsHandler{
+			{
+				APIVersion: "v1",
+				Run: func(_ context.Context, input ListTransactionsInput) (ListTransactionsOutput, error) {
+					if input.PageSize != 10 || input.WalletID != "wallet_1" {
+						t.Fatalf("unexpected input: %#v", input)
+					}
+					return ListTransactionsOutput{PageSize: input.PageSize}, nil
+				},
+			},
+		},
+		Resolve: func(_ context.Context, versions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			assertAPIVersions(t, versions, []capabilities.APIVersion{"v1"})
+			return "v1", nil
+		},
+	}
+
+	output, err := service.Run(context.Background(), ListTransactionsInput{PageSize: 10, WalletID: "wallet_1"})
+	if err != nil {
+		t.Fatalf("run service: %v", err)
+	}
+	if output.APIVersion != "v1" || output.PageSize != 10 {
+		t.Fatalf("unexpected output: %#v", output)
+	}
+}
+
 func assertAPIVersions(t *testing.T, got []capabilities.APIVersion, want []capabilities.APIVersion) {
 	t.Helper()
 	if len(got) != len(want) {

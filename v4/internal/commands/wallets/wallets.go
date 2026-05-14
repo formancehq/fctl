@@ -14,20 +14,21 @@ import (
 )
 
 const (
-	ProductWallets       capabilities.Product = "wallets"
-	FeatureCreateWallet  capabilities.Feature = "createWallet"
-	FeatureCreateBalance capabilities.Feature = "createBalance"
-	FeatureCreditWallet  capabilities.Feature = "creditWallet"
-	FeatureDebitWallet   capabilities.Feature = "debitWallet"
-	FeatureConfirmHold   capabilities.Feature = "confirmHold"
-	FeatureGetBalance    capabilities.Feature = "getBalance"
-	FeatureGetHold       capabilities.Feature = "getHold"
-	FeatureGetWallet     capabilities.Feature = "getWallet"
-	FeatureListBalances  capabilities.Feature = "listBalances"
-	FeatureListHolds     capabilities.Feature = "listHolds"
-	FeatureListWallets   capabilities.Feature = "listWallets"
-	FeatureUpdateWallet  capabilities.Feature = "updateWallet"
-	FeatureVoidHold      capabilities.Feature = "voidHold"
+	ProductWallets          capabilities.Product = "wallets"
+	FeatureCreateWallet     capabilities.Feature = "createWallet"
+	FeatureCreateBalance    capabilities.Feature = "createBalance"
+	FeatureCreditWallet     capabilities.Feature = "creditWallet"
+	FeatureDebitWallet      capabilities.Feature = "debitWallet"
+	FeatureConfirmHold      capabilities.Feature = "confirmHold"
+	FeatureGetBalance       capabilities.Feature = "getBalance"
+	FeatureGetHold          capabilities.Feature = "getHold"
+	FeatureGetWallet        capabilities.Feature = "getWallet"
+	FeatureListBalances     capabilities.Feature = "listBalances"
+	FeatureListHolds        capabilities.Feature = "listHolds"
+	FeatureListTransactions capabilities.Feature = "listTransactions"
+	FeatureListWallets      capabilities.Feature = "listWallets"
+	FeatureUpdateWallet     capabilities.Feature = "updateWallet"
+	FeatureVoidHold         capabilities.Feature = "voidHold"
 )
 
 type WalletSummary struct {
@@ -53,6 +54,14 @@ type HoldSummary struct {
 	OriginalAmount string            `json:"originalAmount,omitempty" yaml:"originalAmount,omitempty"`
 	Remaining      string            `json:"remaining,omitempty" yaml:"remaining,omitempty"`
 	Metadata       map[string]string `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+}
+
+type TransactionSummary struct {
+	ID        int64             `json:"id" yaml:"id"`
+	Ledger    string            `json:"ledger,omitempty" yaml:"ledger,omitempty"`
+	Reference string            `json:"reference,omitempty" yaml:"reference,omitempty"`
+	Timestamp time.Time         `json:"timestamp" yaml:"timestamp"`
+	Metadata  map[string]string `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 }
 
 type CreateWalletInput struct {
@@ -195,6 +204,21 @@ type HoldActionOutput struct {
 	HoldID     string                  `json:"holdID" yaml:"holdID"`
 }
 
+type ListTransactionsInput struct {
+	PageSize int64
+	Cursor   string
+	WalletID string
+}
+
+type ListTransactionsOutput struct {
+	APIVersion   capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	Transactions []TransactionSummary    `json:"transactions" yaml:"transactions"`
+	HasMore      bool                    `json:"hasMore" yaml:"hasMore"`
+	PageSize     int64                   `json:"pageSize" yaml:"pageSize"`
+	Next         *string                 `json:"next,omitempty" yaml:"next,omitempty"`
+	Previous     *string                 `json:"previous,omitempty" yaml:"previous,omitempty"`
+}
+
 type CreateWalletHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, CreateWalletInput) (CreateWalletOutput, error)
@@ -248,6 +272,11 @@ type GetHoldHandler struct {
 type HoldActionHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, HoldActionInput) (HoldActionOutput, error)
+}
+
+type ListTransactionsHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, ListTransactionsInput) (ListTransactionsOutput, error)
 }
 
 type CreateWalletService struct {
@@ -312,6 +341,11 @@ type VoidHoldService struct {
 
 type ConfirmHoldService struct {
 	Handlers []HoldActionHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type ListTransactionsService struct {
+	Handlers []ListTransactionsHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -654,6 +688,29 @@ func runHoldActionService(
 	return output, nil
 }
 
+func (s ListTransactionsService) Run(ctx context.Context, input ListTransactionsInput) (ListTransactionsOutput, error) {
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]ListTransactionsHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return ListTransactionsOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return ListTransactionsOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return ListTransactionsOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
 func SDKCreateWalletHandlers(sdk *formance.Formance) []CreateWalletHandler {
 	return []CreateWalletHandler{
 		{
@@ -941,6 +998,28 @@ func SDKConfirmHoldHandlers(sdk *formance.Formance) []HoldActionHandler {
 	}
 }
 
+func SDKListTransactionsHandlers(sdk *formance.Formance) []ListTransactionsHandler {
+	return []ListTransactionsHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input ListTransactionsInput) (ListTransactionsOutput, error) {
+				response, err := sdk.Wallets.V1.GetTransactions(ctx, operations.GetTransactionsRequest{
+					PageSize: optionalInt64(input.PageSize),
+					Cursor:   optionalString(input.Cursor),
+					WalletID: optionalString(input.WalletID),
+				})
+				if err != nil {
+					return ListTransactionsOutput{}, err
+				}
+				if response.GetTransactionsResponse == nil {
+					return ListTransactionsOutput{}, fmt.Errorf("wallets v1 list transactions returned no cursor")
+				}
+				return fromTransactionsCursor(response.GetTransactionsResponse.Cursor), nil
+			},
+		},
+	}
+}
+
 func fromWalletsCursor(cursor shared.ListWalletsResponseCursor) ListWalletsOutput {
 	wallets := make([]WalletSummary, 0, len(cursor.Data))
 	for _, wallet := range cursor.Data {
@@ -1023,6 +1102,42 @@ func fromExpandedHold(hold shared.ExpandedDebitHold) HoldSummary {
 		OriginalAmount: originalAmount,
 		Remaining:      remaining,
 		Metadata:       hold.Metadata,
+	}
+}
+
+func fromTransactionsCursor(cursor shared.GetTransactionsResponseCursor) ListTransactionsOutput {
+	transactions := make([]TransactionSummary, 0, len(cursor.Data))
+	for _, transaction := range cursor.Data {
+		transactions = append(transactions, fromWalletTransaction(transaction))
+	}
+	hasMore := false
+	if cursor.HasMore != nil {
+		hasMore = *cursor.HasMore
+	}
+	return ListTransactionsOutput{
+		Transactions: transactions,
+		HasMore:      hasMore,
+		PageSize:     cursor.PageSize,
+		Next:         cursor.Next,
+		Previous:     cursor.Previous,
+	}
+}
+
+func fromWalletTransaction(transaction shared.WalletsTransaction) TransactionSummary {
+	ledger := ""
+	if transaction.Ledger != nil {
+		ledger = *transaction.Ledger
+	}
+	reference := ""
+	if transaction.Reference != nil {
+		reference = *transaction.Reference
+	}
+	return TransactionSummary{
+		ID:        transaction.ID,
+		Ledger:    ledger,
+		Reference: reference,
+		Timestamp: transaction.Timestamp,
+		Metadata:  transaction.Metadata,
 	}
 }
 
