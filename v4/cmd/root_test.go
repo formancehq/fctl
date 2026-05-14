@@ -253,6 +253,70 @@ func TestContextSetUpdatesCloudStack(t *testing.T) {
 	}
 }
 
+func TestContextRenameAndDelete(t *testing.T) {
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", "http://localhost/api",
+	)
+	if err != nil {
+		t.Fatalf("create local context: %v stderr=%s", err, stderr)
+	}
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "other",
+		"--stack-url", "http://other/api",
+	)
+	if err != nil {
+		t.Fatalf("create other context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "context", "rename", "local", "renamed")
+	if err != nil {
+		t.Fatalf("rename context: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Context local renamed to renamed.\n" {
+		t.Fatalf("unexpected rename output: %q", stdout)
+	}
+	cfg, err := v4config.LoadFile(filepath.Join(configDir, "config.yaml"))
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+	if cfg.CurrentContext != "renamed" {
+		t.Fatalf("expected current context renamed, got %q", cfg.CurrentContext)
+	}
+	if _, ok := cfg.Contexts["local"]; ok {
+		t.Fatalf("old context name still exists")
+	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "context", "delete", "renamed")
+	if err == nil {
+		t.Fatal("expected context delete to require --confirm")
+	}
+	_, _, err = executeCommand(t, "--config-dir", configDir, "context", "delete", "renamed", "--confirm")
+	if err == nil {
+		t.Fatal("expected current context delete to require --force")
+	}
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "context", "delete", "renamed", "--confirm", "--force")
+	if err != nil {
+		t.Fatalf("delete context: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Context renamed deleted.\n" {
+		t.Fatalf("unexpected delete output: %q", stdout)
+	}
+	cfg, err = v4config.LoadFile(filepath.Join(configDir, "config.yaml"))
+	if err != nil {
+		t.Fatalf("load config after delete: %v", err)
+	}
+	if _, ok := cfg.Contexts["renamed"]; ok {
+		t.Fatalf("deleted context still exists")
+	}
+	if cfg.CurrentContext != "" {
+		t.Fatalf("expected current context to be cleared, got %q", cfg.CurrentContext)
+	}
+}
+
 func TestCloudMeShow(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/me" {

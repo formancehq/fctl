@@ -11,6 +11,8 @@ This reference lists the current canonical v4 command families implemented under
 - `fctl context list`
 - `fctl context show <name>`
 - `fctl context use <name>`
+- `fctl context rename <old-name> <new-name>`
+- `fctl context delete <name> --confirm`
 - `fctl context set [name] --organization <organization-id> --stack <stack-id> --default-ledger <ledger>`
 - `fctl config migrate-v3`
 - `fctl setup`

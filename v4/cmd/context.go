@@ -18,6 +18,8 @@ func newContextCommand() *cobra.Command {
 		newContextListCommand(),
 		newContextShowCommand(),
 		newContextUseCommand(),
+		newContextDeleteCommand(),
+		newContextRenameCommand(),
 		newContextCreateCommand(),
 		newContextSetCommand(),
 		newContextWizardCommand(),
@@ -116,6 +118,87 @@ func newContextUseCommand() *cobra.Command {
 				return err
 			}
 			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Current context set to %s.\n", name)
+			return err
+		},
+	}
+}
+
+func newContextDeleteCommand() *cobra.Command {
+	var force bool
+	var confirm bool
+
+	command := &cobra.Command{
+		Use:   "delete <name>",
+		Short: "Delete a configured context",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("context delete requires --confirm")
+			}
+			cfg, path, err := loadConfig(cmd, false)
+			if err != nil {
+				return err
+			}
+			name := args[0]
+			if _, ok := cfg.Contexts[name]; !ok {
+				return fmt.Errorf("context %q does not exist", name)
+			}
+			if len(cfg.Contexts) == 1 {
+				return fmt.Errorf("cannot delete the last context")
+			}
+			if cfg.CurrentContext == name && !force {
+				return fmt.Errorf("context %q is current; pass --force to delete it", name)
+			}
+			delete(cfg.Contexts, name)
+			if cfg.CurrentContext == name {
+				cfg.CurrentContext = ""
+			}
+			if err := v4config.SaveFile(path, cfg); err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, map[string]string{"deleted": name}); handled || err != nil {
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Context %s deleted.\n", name)
+			return err
+		},
+	}
+	command.Flags().BoolVar(&force, "force", false, "Delete the current context")
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm context deletion")
+	return command
+}
+
+func newContextRenameCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "rename <old-name> <new-name>",
+		Short: "Rename a configured context",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, path, err := loadConfig(cmd, false)
+			if err != nil {
+				return err
+			}
+			oldName := args[0]
+			newName := args[1]
+			context, ok := cfg.Contexts[oldName]
+			if !ok {
+				return fmt.Errorf("context %q does not exist", oldName)
+			}
+			if _, exists := cfg.Contexts[newName]; exists {
+				return fmt.Errorf("context %q already exists", newName)
+			}
+			delete(cfg.Contexts, oldName)
+			cfg.Contexts[newName] = context
+			if cfg.CurrentContext == oldName {
+				cfg.CurrentContext = newName
+			}
+			if err := v4config.SaveFile(path, cfg); err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, map[string]string{"renamed": oldName, "name": newName}); handled || err != nil {
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Context %s renamed to %s.\n", oldName, newName)
 			return err
 		},
 	}
