@@ -8131,6 +8131,19 @@ func TestOrchestrationAliasWarns(t *testing.T) {
 	}
 }
 
+func TestFlowsHelpUsesCanonicalProductName(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "flows", "workflows", "create", "--help")
+	if err != nil {
+		t.Fatalf("flows workflows create help: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "Pin flows API version") {
+		t.Fatalf("expected flows API version help, got:\n%s", stdout)
+	}
+	if strings.Contains(stdout, "Pin orchestration API version") {
+		t.Fatalf("help should not expose orchestration as the canonical product name:\n%s", stdout)
+	}
+}
+
 func TestReconciliationListSelectsV1(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

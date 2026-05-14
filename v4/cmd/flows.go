@@ -108,7 +108,7 @@ func newFlowsTriggersOccurrencesListCommand() *cobra.Command {
 	}
 	command.Flags().Int64Var(&pageSize, "page-size", 15, "Page size")
 	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
-	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin flows API version")
 	return command
 }
 
@@ -154,7 +154,7 @@ func newFlowsTriggersCreateCommand() *cobra.Command {
 	command.Flags().StringVar(&filter, "filter", "", "Trigger filter expression")
 	command.Flags().StringVar(&version, "version", "", "Workflow version")
 	command.Flags().StringArrayVar(&variable, "variable", nil, "Variable as key=value")
-	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin flows API version")
 	return command
 }
 
@@ -207,7 +207,7 @@ func newFlowsTriggersListCommand() *cobra.Command {
 	command.Flags().Int64Var(&pageSize, "page-size", 15, "Page size")
 	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
 	command.Flags().StringVar(&name, "name", "", "Filter triggers by name")
-	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin flows API version")
 	return command
 }
 
@@ -253,7 +253,7 @@ func newFlowsTriggersShowCommand() *cobra.Command {
 			return renderFlowsTrigger(cmd, output)
 		},
 	}
-	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin flows API version")
 	return command
 }
 
@@ -280,7 +280,7 @@ func newFlowsTriggersDeleteCommand() *cobra.Command {
 		},
 	}
 	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm trigger deletion")
-	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin flows API version")
 	return command
 }
 
@@ -306,7 +306,7 @@ func newFlowsTriggersTestCommand() *cobra.Command {
 			return renderFlowsTriggerTest(cmd, output)
 		},
 	}
-	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin flows API version")
 	return command
 }
 
@@ -348,7 +348,7 @@ func newFlowsInstancesSendEventCommand() *cobra.Command {
 			return renderFlowsInstanceEventSent(cmd, output)
 		},
 	}
-	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin flows API version")
 	return command
 }
 
@@ -380,7 +380,7 @@ func newFlowsInstancesStopCommand() *cobra.Command {
 		},
 	}
 	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm instance stop")
-	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin flows API version")
 	return command
 }
 
@@ -480,7 +480,7 @@ func newFlowsInstancesListCommand() *cobra.Command {
 	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
 	command.Flags().StringVar(&workflowID, "workflow-id", "", "Filter by workflow ID")
 	command.Flags().BoolVar(&running, "running", false, "Filter running instances")
-	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin flows API version")
 	return command
 }
 
@@ -533,7 +533,7 @@ func newFlowsInstancesShowCommand(use string, aliases []string, deprecated bool)
 	if deprecated {
 		command.Deprecated = "use flows instances inspect"
 	}
-	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin flows API version")
 	return command
 }
 
@@ -586,7 +586,7 @@ func newFlowsWorkflowsCreateCommand() *cobra.Command {
 	}
 	command.Flags().StringVar(&file, "file", "", "Workflow JSON file path or - for stdin")
 	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm workflow creation")
-	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin flows API version")
 	return command
 }
 
@@ -637,7 +637,7 @@ func newFlowsWorkflowsDeleteCommand() *cobra.Command {
 		},
 	}
 	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm workflow deletion")
-	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin flows API version")
 	return command
 }
 
@@ -699,7 +699,7 @@ func newFlowsWorkflowsRunCommand() *cobra.Command {
 	}
 	command.Flags().StringArrayVar(&variable, "variable", nil, "Variable as key=value")
 	command.Flags().BoolVar(&wait, "wait", false, "Wait for workflow completion")
-	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin flows API version")
 	return command
 }
 
@@ -880,7 +880,7 @@ func newFlowsWorkflowsListCommand() *cobra.Command {
 	}
 	command.Flags().Int64Var(&pageSize, "page-size", 15, "Page size")
 	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
-	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin flows API version")
 	return command
 }
 
@@ -926,7 +926,7 @@ func newFlowsWorkflowsShowCommand() *cobra.Command {
 			return renderFlowsWorkflow(cmd, output)
 		},
 	}
-	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin flows API version")
 	return command
 }
 
