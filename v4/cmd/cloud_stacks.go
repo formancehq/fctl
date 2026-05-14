@@ -105,7 +105,7 @@ func newCloudStacksCreateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			output, err := withTerminalSpinnerUpdates(cmd, !noWait, "Creating stack", "Stack is available", func(update func(string)) (cloudcmd.StackOutput, error) {
+			output, err := withTerminalSpinnerUpdates(cmd, !noWait, "Creating stack", "", func(update func(string)) (cloudcmd.StackOutput, error) {
 				return cloudcmd.CreateStackService{Client: organizationClient, HTTPClient: baseHTTPClient(rt.AuthOptions)}.Run(cmd.Context(), cloudcmd.CreateStackInput{
 					OrganizationID: organizationID,
 					Name:           stackName,
@@ -958,7 +958,7 @@ func renderCloudStackMutated(cmd *cobra.Command, output cloudcmd.StackOutput, ac
 		return err
 	}
 	if action == "created" && output.Stack.URI != "" {
-		_, err := fmt.Fprintf(cmd.OutOrStdout(), "URL %s\n", output.Stack.URI)
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), styledKeyValueLine(cmd, "URL", output.Stack.URI))
 		return err
 	}
 	return nil
