@@ -2,6 +2,7 @@ package cloud
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -375,7 +376,30 @@ func stackVersionsEndpointReady(ctx context.Context, client *http.Client, stackU
 		return false
 	}
 	defer response.Body.Close()
-	return response.StatusCode == http.StatusOK
+	if response.StatusCode != http.StatusOK {
+		return false
+	}
+	var versions stackVersionsResponse
+	if err := json.NewDecoder(response.Body).Decode(&versions); err != nil {
+		return false
+	}
+	if len(versions.Versions) == 0 {
+		return false
+	}
+	for _, version := range versions.Versions {
+		if !version.Health {
+			return false
+		}
+	}
+	return true
+}
+
+type stackVersionsResponse struct {
+	Versions []stackVersionHealth `json:"versions"`
+}
+
+type stackVersionHealth struct {
+	Health bool `json:"health"`
 }
 
 func stackVersionsURL(stackURL string) string {

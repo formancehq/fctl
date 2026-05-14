@@ -2719,7 +2719,8 @@ func TestCloudStacksCreateWaitsUntilReady(t *testing.T) {
 			t.Fatalf("unexpected stack request %s %s", r.Method, r.URL.String())
 		}
 		stackVersionsCalls++
-		w.WriteHeader(http.StatusServiceUnavailable)
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"v2.0.0","health":false}]}`)
 	}))
 	defer stackServer.Close()
 
