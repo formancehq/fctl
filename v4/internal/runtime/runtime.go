@@ -120,8 +120,10 @@ func TargetFromContext(context config.Context) (Target, error) {
 		}, nil
 	case config.ContextKindCloud:
 		return Target{
-			Kind: TargetKindCloud,
-			URL:  context.CloudURL,
+			Kind:         TargetKindCloud,
+			URL:          context.CloudURL,
+			Organization: context.Organization,
+			Stack:        context.Stack,
 		}, nil
 	case config.ContextKindCloudStack:
 		if context.Organization == "" {

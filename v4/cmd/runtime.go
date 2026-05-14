@@ -69,9 +69,45 @@ func stackRuntimeFromCommand(cmd *cobra.Command) (*runtime.Runtime, error) {
 	if err != nil {
 		return nil, err
 	}
-	if rt.Target.Kind != runtime.TargetKindCloudStack {
+	switch rt.Target.Kind {
+	case runtime.TargetKindStack:
+		return rt, nil
+	case runtime.TargetKindCloud:
+		return resolveCloudProfileStackRuntime(cmd, rt)
+	case runtime.TargetKindCloudStack:
+		return resolveExplicitCloudStackRuntime(cmd, rt)
+	default:
 		return rt, nil
 	}
+}
+
+func resolveCloudProfileStackRuntime(cmd *cobra.Command, rt *runtime.Runtime) (*runtime.Runtime, error) {
+	if rt.Context.CloudURL == "" {
+		return nil, fmt.Errorf("cloud profiles require a cloud URL")
+	}
+	if rt.Target.Organization == "" {
+		return nil, fmt.Errorf("stack target commands on Cloud profiles require --organization and --stack, or a cloud-stack profile")
+	}
+	httpClient, err := rt.HTTPClient(cmd.Context())
+	if err != nil {
+		return nil, err
+	}
+	output, err := cloudcmd.ListStacksService{Client: newMembershipClient(rt.Context.CloudURL, httpClient)}.Run(cmd.Context(), cloudcmd.ListStacksInput{
+		OrganizationID: rt.Target.Organization,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("resolve cloud stack target: %w", err)
+	}
+	if len(output.Stacks) == 0 {
+		return nil, fmt.Errorf("resolve cloud stack target: no stacks found in organization %q", rt.Target.Organization)
+	}
+	if len(output.Stacks) > 1 {
+		return nil, fmt.Errorf("resolve cloud stack target: --stack is required when organization %q has multiple stacks; available stacks: %s", rt.Target.Organization, stackLabels(output.Stacks))
+	}
+	return useCloudStackRuntime(cmd, rt, httpClient, output.Stacks[0])
+}
+
+func resolveExplicitCloudStackRuntime(cmd *cobra.Command, rt *runtime.Runtime) (*runtime.Runtime, error) {
 	if rt.Context.CloudURL == "" {
 		return nil, fmt.Errorf("cloud-stack profiles require a cloud URL")
 	}
@@ -89,12 +125,22 @@ func stackRuntimeFromCommand(cmd *cobra.Command) (*runtime.Runtime, error) {
 		}
 		return nil, fmt.Errorf("resolve cloud stack target: %w", err)
 	}
-	if output.Stack.URI == "" {
-		return nil, fmt.Errorf("resolve cloud stack target: stack %s has no URI", rt.Target.Stack)
-	}
-	rt.Target.URL = output.Stack.URI
-	rt.Context.StackURL = output.Stack.URI
+	return useCloudStackRuntime(cmd, rt, httpClient, output.Stack)
+}
 
+func useCloudStackRuntime(cmd *cobra.Command, rt *runtime.Runtime, httpClient *http.Client, stack cloudcmd.StackSummary) (*runtime.Runtime, error) {
+	if stack.ID == "" {
+		return nil, fmt.Errorf("resolve cloud stack target: stack id is empty")
+	}
+	if stack.URI == "" {
+		return nil, fmt.Errorf("resolve cloud stack target: stack %s has no URI", stack.ID)
+	}
+	rt.Target.Kind = runtime.TargetKindCloudStack
+	rt.Target.Stack = stack.ID
+	rt.Context.Kind = v4config.ContextKindCloudStack
+	rt.Context.Stack = stack.ID
+	rt.Target.URL = stack.URI
+	rt.Context.StackURL = stack.URI
 	assertionAuth := rt.Context.Auth
 	if assertionAuth.Method == v4config.AuthMethodClientCredentials {
 		assertionAuth.Scopes = []string{"openid", "offline_access"}
@@ -111,7 +157,7 @@ func stackRuntimeFromCommand(cmd *cobra.Command) (*runtime.Runtime, error) {
 	if err != nil {
 		return nil, fmt.Errorf("resolve cloud stack target token: %w", err)
 	}
-	stackToken, err := v4auth.ExchangeStackToken(cmd.Context(), baseHTTPClient(rt.AuthOptions), output.Stack.URI, assertion.AccessToken)
+	stackToken, err := v4auth.ExchangeStackToken(cmd.Context(), baseHTTPClient(rt.AuthOptions), stack.URI, assertion.AccessToken)
 	if err != nil {
 		return nil, fmt.Errorf("resolve cloud stack target token: %w", err)
 	}
@@ -132,21 +178,27 @@ func cloudStackNotFoundError(cmd *cobra.Command, rt *runtime.Runtime, httpClient
 	if err != nil {
 		return nil
 	}
-	available := make([]string, 0, len(output.Stacks))
 	for _, stack := range output.Stacks {
 		if stack.ID == rt.Target.Stack {
 			return nil
 		}
+	}
+	if len(output.Stacks) == 0 {
+		return fmt.Errorf("resolve cloud stack target: stack %q was not found in organization %q", rt.Target.Stack, rt.Target.Organization)
+	}
+	return fmt.Errorf("resolve cloud stack target: stack %q was not found in organization %q; available stacks: %s", rt.Target.Stack, rt.Target.Organization, stackLabels(output.Stacks))
+}
+
+func stackLabels(stacks []cloudcmd.StackSummary) string {
+	available := make([]string, 0, len(stacks))
+	for _, stack := range stacks {
 		label := stack.ID
 		if stack.Name != "" {
 			label += " (" + stack.Name + ")"
 		}
 		available = append(available, label)
 	}
-	if len(available) == 0 {
-		return fmt.Errorf("resolve cloud stack target: stack %q was not found in organization %q", rt.Target.Stack, rt.Target.Organization)
-	}
-	return fmt.Errorf("resolve cloud stack target: stack %q was not found in organization %q; available stacks: %s", rt.Target.Stack, rt.Target.Organization, strings.Join(available, ", "))
+	return strings.Join(available, ", ")
 }
 
 func baseHTTPClient(options v4auth.Options) *http.Client {

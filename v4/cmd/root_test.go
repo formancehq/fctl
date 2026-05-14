@@ -2891,7 +2891,7 @@ func TestTargetProxyRejectsCloudContext(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected target proxy to reject cloud context")
 	}
-	if !strings.Contains(err.Error(), "target proxy requires a stack context") {
+	if !strings.Contains(err.Error(), "stack target commands on Cloud profiles require --organization and --stack") {
 		t.Fatalf("unexpected proxy error: %v stderr=%s", err, stderr)
 	}
 }
@@ -2918,7 +2918,7 @@ func TestStackProxyAliasRoutesToTargetProxy(t *testing.T) {
 	if !strings.Contains(stderr, "Command stack proxy has been deprecated, use target proxy") {
 		t.Fatalf("expected stack proxy deprecation warning, got:\n%s", stderr)
 	}
-	if !strings.Contains(err.Error(), "target proxy requires a stack context") {
+	if !strings.Contains(err.Error(), "stack target commands on Cloud profiles require --organization and --stack") {
 		t.Fatalf("unexpected stack proxy error: %v stderr=%s", err, stderr)
 	}
 }
@@ -3083,6 +3083,102 @@ func TestLedgerListCloudStackExchangesStackToken(t *testing.T) {
 	for _, expected := range []string{"API version: v2", "Name", "Bucket", "default", "bucket"} {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected cloud-stack ledger list output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestLedgerCloudOrganizationAutoSelectsSingleStack(t *testing.T) {
+	stackServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/versions":
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"1.9.0","health":true}]}`)
+		case "/api/ledger/_info":
+			fmt.Fprint(w, `{"data":{"server":"ledger","version":"1.9.0","config":{}}}`)
+		default:
+			t.Fatalf("unexpected stack path %s", r.URL.Path)
+		}
+	}))
+	defer stackServer.Close()
+
+	membershipServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/_info":
+			fmt.Fprint(w, `{"version":"v1.0.0","consoleURL":"https://portal.example"}`)
+		case "/organizations/org_1/stacks":
+			fmt.Fprintf(w, `{"data":[{"id":"stack_1","name":"Production","organizationId":"org_1","uri":%q,"regionID":"eu-west-1","version":"v3.2.4","status":"READY","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":true,"stargateEnabled":true,"synchronised":true,"modules":[]}]}`, stackServer.URL)
+		default:
+			t.Fatalf("unexpected membership path %s", r.URL.Path)
+		}
+	}))
+	defer membershipServer.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"profile", "create", "cloud", "cloud",
+		"--cloud-url", membershipServer.URL,
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud profile: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"--organization", "org_1",
+		"ledger", "info",
+	)
+	if err != nil {
+		t.Fatalf("ledger info with single cloud stack: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{"API version: v1", "Server", "ledger", "Version", "1.9.0"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected ledger info output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestLedgerCloudOrganizationRequiresStackWhenMultipleStacks(t *testing.T) {
+	membershipServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/_info":
+			fmt.Fprint(w, `{"version":"v1.0.0","consoleURL":"https://portal.example"}`)
+		case "/organizations/org_1/stacks":
+			fmt.Fprint(w, `{"data":[{"id":"stack_1","name":"Production","organizationId":"org_1","uri":"https://stack1.example","regionID":"eu-west-1","version":"v3.2.4","status":"READY","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":true,"stargateEnabled":true,"synchronised":true,"modules":[]},{"id":"stack_2","name":"Staging","organizationId":"org_1","uri":"https://stack2.example","regionID":"eu-west-1","version":"v3.2.4","status":"READY","state":"ACTIVE","expectedStatus":"READY","lastStateUpdate":"2026-01-01T00:00:00Z","lastExpectedStatusUpdate":"2026-01-01T00:00:00Z","lastStatusUpdate":"2026-01-01T00:00:00Z","reachable":true,"stargateEnabled":true,"synchronised":true,"modules":[]}]}`)
+		default:
+			t.Fatalf("unexpected membership path %s", r.URL.Path)
+		}
+	}))
+	defer membershipServer.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"profile", "create", "cloud", "cloud",
+		"--cloud-url", membershipServer.URL,
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud profile: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"--organization", "org_1",
+		"ledger", "info",
+	)
+	if err == nil {
+		t.Fatal("expected multiple stacks to require --stack")
+	}
+	for _, expected := range []string{
+		`--stack is required when organization "org_1" has multiple stacks`,
+		"available stacks: stack_1 (Production), stack_2 (Staging)",
+	} {
+		if !strings.Contains(err.Error(), expected) {
+			t.Fatalf("expected error to contain %q, got err=%v stderr=%s", expected, err, stderr)
 		}
 	}
 }
