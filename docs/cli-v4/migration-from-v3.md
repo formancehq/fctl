@@ -1,0 +1,39 @@
+# Migration From fctl v3
+
+The v4 CLI should import v3 configuration without deleting or rewriting it in place.
+
+## Mapping
+
+Current v3 profile fields:
+
+- `membershipURI`
+- `rootTokens`
+- `defaultOrganization`
+- `defaultStack`
+
+Suggested v4 mapping:
+
+- `membershipURI` -> `cloudURL`
+- `defaultOrganization` -> context `organization`
+- `defaultStack` -> context `stack`
+- `rootTokens` -> keyring credential, referenced by `tokenRef`
+
+## Command
+
+Provide an explicit migration command:
+
+```bash
+fctl config migrate-v3
+```
+
+The command should:
+
+1. Read v3 config and profiles.
+2. Show the contexts that will be created.
+3. Move secrets to keyring when possible.
+4. Write v4 config.
+5. Leave v3 files untouched.
+
+## Compatibility
+
+During early v4 releases, support a read-only fallback that can detect v3 profiles and suggest migration. Do not silently mutate v3 profile files during normal command execution.
