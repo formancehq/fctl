@@ -12,8 +12,10 @@ import (
 )
 
 const (
-	FeatureListAccounts capabilities.Feature = "listAccounts"
-	FeatureGetAccount   capabilities.Feature = "getAccount"
+	FeatureAddAccountMetadata    capabilities.Feature = "addMetadataToAccount"
+	FeatureDeleteAccountMetadata capabilities.Feature = "deleteAccountMetadata"
+	FeatureListAccounts          capabilities.Feature = "listAccounts"
+	FeatureGetAccount            capabilities.Feature = "getAccount"
 )
 
 type ListAccountsInput struct {
