@@ -14,6 +14,7 @@ Before changing v4 architecture or commands, read these repository files:
 - `docs/rfcs/0001-fctl-v4-architecture.md`
 - `docs/cli-v4/command-design.md`
 - `docs/cli-v4/compatibility-manifest.md`
+- `todos/01-v4-isolated-skeleton.md`
 
 Read ADRs as needed:
 
@@ -21,6 +22,7 @@ Read ADRs as needed:
 - `docs/adr/0002-auth-is-decoupled-from-cloud.md`
 - `docs/adr/0003-api-version-resolution.md`
 - `docs/adr/0004-cobra-thin-runtime.md`
+- `docs/adr/0005-build-v4-in-isolated-directory.md`
 
 ## Core Rules
 
@@ -31,20 +33,23 @@ Read ADRs as needed:
 - Commands express product intent; they must not expose API versions as the primary UX.
 - Keep CLI flags canonical and product-oriented; map them to version-specific SDK request fields internally.
 - Keep Cobra thin. Runtime concerns belong in typed internal packages.
+- Build the rewrite under `v4/` until the explicit cutover goal.
+- Follow `todos/*.md` in order unless the user explicitly reprioritizes.
+- Commit after each logical step.
 
 ## Implementation Shape
 
-Prefer this package split:
+Prefer this package split under `v4/` during the transition:
 
 ```text
-cmd/                  Cobra declarations only
-internal/runtime/     target resolution, auth, versions, API selection
-internal/config/      contexts, defaults, XDG paths, migrations
-internal/credentials/ keyring and insecure fallback
-internal/capabilities generated manifest and compatibility ranges
-internal/commands/    typed product command implementations
-internal/render/      table, json, yaml, markdown
-internal/prompt/      optional interactive flows
+v4/cmd/                  Cobra declarations only
+v4/internal/runtime/     target resolution, auth, versions, API selection
+v4/internal/config/      contexts, defaults, XDG paths, migrations
+v4/internal/credentials/ keyring and insecure fallback
+v4/internal/capabilities generated manifest and compatibility ranges
+v4/internal/commands/    typed product command implementations
+v4/internal/render/      table, json, yaml, markdown
+v4/internal/prompt/      optional interactive flows
 ```
 
 ## Validation

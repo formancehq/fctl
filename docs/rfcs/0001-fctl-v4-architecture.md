@@ -167,18 +167,19 @@ Rules:
 - Use XDG-aware paths for config, cache, and state.
 - Use `testscript` style integration tests for real CLI behavior.
 - Use GoReleaser for packaging, checksums, completions, and package manager artifacts.
+- Build the rewrite under a top-level `v4/` directory during the transition. Keep the current root implementation intact until the explicit cutover.
 
 ## Proposed Package Shape
 
 ```text
-cmd/                  Cobra declarations only
-internal/runtime/     target resolution, auth, versions, API selection
-internal/config/      contexts, defaults, XDG paths, migrations
-internal/credentials/ keyring and insecure fallback
-internal/capabilities generated manifest and compatibility ranges
-internal/commands/    typed product command implementations
-internal/render/      table, json, yaml, markdown
-internal/prompt/      optional interactive flows
+v4/cmd/                  Cobra declarations only
+v4/internal/runtime/     target resolution, auth, versions, API selection
+v4/internal/config/      contexts, defaults, XDG paths, migrations
+v4/internal/credentials/ keyring and insecure fallback
+v4/internal/capabilities generated manifest and compatibility ranges
+v4/internal/commands/    typed product command implementations
+v4/internal/render/      table, json, yaml, markdown
+v4/internal/prompt/      optional interactive flows
 ```
 
 ## Migration
