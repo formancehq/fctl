@@ -1190,6 +1190,21 @@ func TestCloudDeviceUsesRootTokenForMembershipAndOrganizationTokenForStacks(t *t
 				t.Fatalf("expected root token for organizations list, got %q", got)
 			}
 			fmt.Fprint(w, `{"data":[{"id":"org_1","name":"Acme","ownerId":"user_1","domain":"acme.test","totalStacks":1,"totalUsers":3}]}`)
+		case "/organizations/org_1":
+			if got := r.Header.Get("Authorization"); got != "Bearer org-token" {
+				t.Fatalf("expected organization token for organization show, got %q", got)
+			}
+			fmt.Fprint(w, `{"data":{"id":"org_1","name":"Acme","ownerId":"user_1","domain":"acme.test","totalStacks":1,"totalUsers":3}}`)
+		case "/organizations/org_1/users":
+			if got := r.Header.Get("Authorization"); got != "Bearer org-token" {
+				t.Fatalf("expected organization token for organization users list, got %q", got)
+			}
+			fmt.Fprint(w, `{"data":[{"id":"user_1","email":"user@example.com","policyId":8}]}`)
+		case "/organizations/org_1/policies":
+			if got := r.Header.Get("Authorization"); got != "Bearer org-token" {
+				t.Fatalf("expected organization token for organization policies list, got %q", got)
+			}
+			fmt.Fprint(w, `{"data":[{"id":8,"name":"OrganizationAdmin","description":"Admin policy","organizationId":"org_1","protected":true,"createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-01T00:00:00Z"}]}`)
 		case "/device":
 			if err := r.ParseForm(); err != nil {
 				t.Fatalf("parse device form: %v", err)
@@ -1285,12 +1300,36 @@ func TestCloudDeviceUsesRootTokenForMembershipAndOrganizationTokenForStacks(t *t
 		t.Fatalf("unexpected organizations output:\n%s", stdout)
 	}
 
-	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "stacks", "list", "--organization", "org_1")
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "show", "org_1")
 	if err != nil {
-		t.Fatalf("cloud stacks list: %v stderr=%s", err, stderr)
+		t.Fatalf("cloud organizations show: %v stderr=%s", err, stderr)
 	}
 	if openedURL != "https://verify.example?user_code=ORG-CODE" {
 		t.Fatalf("unexpected organization auth URL %q", openedURL)
+	}
+	if !strings.Contains(stdout, "ID\torg_1") {
+		t.Fatalf("unexpected organization show output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "users", "list", "--organization", "org_1")
+	if err != nil {
+		t.Fatalf("cloud organizations users list: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "user_1\tuser@example.com\t8") {
+		t.Fatalf("unexpected organization users output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "policies", "list", "--organization", "org_1")
+	if err != nil {
+		t.Fatalf("cloud organizations policies list: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "8\tOrganizationAdmin\ttrue") {
+		t.Fatalf("unexpected organization policies output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "stacks", "list", "--organization", "org_1")
+	if err != nil {
+		t.Fatalf("cloud stacks list: %v stderr=%s", err, stderr)
 	}
 	if !strings.Contains(stdout, "stack_1") {
 		t.Fatalf("unexpected stacks output:\n%s", stdout)

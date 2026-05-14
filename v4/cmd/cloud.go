@@ -180,16 +180,16 @@ func newCloudOrganizationsHistoryCommand() *cobra.Command {
 		Short:   "Query Cloud organization history",
 		Args:    cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
-			if err != nil {
-				return err
-			}
 			targetOrganizationID := organizationID
 			if len(args) == 1 {
 				targetOrganizationID = args[0]
 			}
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, targetOrganizationID)
+			if err != nil {
+				return err
+			}
 			output, err := cloudcmd.ListLogsService{Client: client}.Run(cmd.Context(), cloudcmd.ListLogsInput{
-				OrganizationID: resolveCloudOrganizationID(rt, targetOrganizationID),
+				OrganizationID: resolvedOrganizationID,
 				StackID:        stackID,
 				Cursor:         cursor,
 				PageSize:       pageSize,
@@ -243,12 +243,12 @@ func newCloudOrganizationsOAuthClientsCreateCommand() *cobra.Command {
 			if !confirm {
 				return fmt.Errorf("cloud organizations oauth-clients create requires --confirm")
 			}
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
 			output, err := cloudcmd.CreateOAuthClientService{Client: client}.Run(cmd.Context(), cloudcmd.OAuthClientInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID: resolvedOrganizationID,
 				Name:           name,
 				Description:    description,
 			})
@@ -279,12 +279,12 @@ func newCloudOrganizationsOAuthClientsListCommand() *cobra.Command {
 		Short:   "List Cloud organization OAuth clients",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
 			output, err := cloudcmd.ListOAuthClientsService{Client: client}.Run(cmd.Context(), cloudcmd.ListOAuthClientsInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID: resolvedOrganizationID,
 				Cursor:         cursor,
 				PageSize:       pageSize,
 			})
@@ -311,12 +311,12 @@ func newCloudOrganizationsOAuthClientsShowCommand() *cobra.Command {
 		Short: "Show a Cloud organization OAuth client",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
 			output, err := cloudcmd.ReadOAuthClientService{Client: client}.Run(cmd.Context(), cloudcmd.OAuthClientInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID: resolvedOrganizationID,
 				ClientID:       args[0],
 			})
 			if err != nil {
@@ -346,12 +346,12 @@ func newCloudOrganizationsOAuthClientsUpdateCommand() *cobra.Command {
 			if !confirm {
 				return fmt.Errorf("cloud organizations oauth-clients update requires --confirm")
 			}
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
 			output, err := cloudcmd.UpdateOAuthClientService{Client: client}.Run(cmd.Context(), cloudcmd.OAuthClientInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID: resolvedOrganizationID,
 				ClientID:       args[0],
 				Name:           name,
 				Description:    description,
@@ -384,12 +384,12 @@ func newCloudOrganizationsOAuthClientsDeleteCommand() *cobra.Command {
 			if !confirm {
 				return fmt.Errorf("cloud organizations oauth-clients delete requires --confirm")
 			}
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
 			output, err := cloudcmd.DeleteOAuthClientService{Client: client}.Run(cmd.Context(), cloudcmd.OAuthClientInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID: resolvedOrganizationID,
 				ClientID:       args[0],
 			})
 			if err != nil {
@@ -398,7 +398,7 @@ func newCloudOrganizationsOAuthClientsDeleteCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Cloud OAuth client %s deleted.\n", output.ClientID)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud OAuth client %s deleted.", output.ClientID)))
 			return err
 		},
 	}
@@ -426,11 +426,11 @@ func newCloudOrganizationsAuthenticationProviderShowCommand() *cobra.Command {
 		Short: "Show Cloud organization authentication provider",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
-			output, err := cloudcmd.ReadAuthenticationProviderService{Client: client}.Run(cmd.Context(), resolveCloudOrganizationID(rt, organizationID))
+			output, err := cloudcmd.ReadAuthenticationProviderService{Client: client}.Run(cmd.Context(), resolvedOrganizationID)
 			if err != nil {
 				return err
 			}
@@ -482,12 +482,12 @@ func newCloudOrganizationsAuthenticationProviderConfigureCommand() *cobra.Comman
 				}
 				clientSecret = strings.TrimSpace(string(data))
 			}
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
 			output, err := cloudcmd.ConfigureAuthenticationProviderService{Client: client}.Run(cmd.Context(), cloudcmd.AuthenticationProviderInput{
-				OrganizationID:  resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID:  resolvedOrganizationID,
 				Type:            providerType,
 				Name:            name,
 				ClientID:        clientID,
@@ -529,18 +529,18 @@ func newCloudOrganizationsAuthenticationProviderDeleteCommand() *cobra.Command {
 			if !confirm {
 				return fmt.Errorf("cloud organizations authentication-provider delete requires --confirm")
 			}
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
-			output, err := cloudcmd.DeleteAuthenticationProviderService{Client: client}.Run(cmd.Context(), resolveCloudOrganizationID(rt, organizationID))
+			output, err := cloudcmd.DeleteAuthenticationProviderService{Client: client}.Run(cmd.Context(), resolvedOrganizationID)
 			if err != nil {
 				return err
 			}
 			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Cloud authentication provider for organization %s deleted.\n", output.OrganizationID)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud authentication provider for organization %s deleted.", output.OrganizationID)))
 			return err
 		},
 	}
@@ -570,12 +570,12 @@ func newCloudOrganizationsApplicationsListCommand() *cobra.Command {
 		Short:   "List Cloud organization applications",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
 			output, err := cloudcmd.ListApplicationsService{Client: client}.Run(cmd.Context(), cloudcmd.ListApplicationsInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID: resolvedOrganizationID,
 				Page:           page,
 				PageSize:       pageSize,
 			})
@@ -602,12 +602,12 @@ func newCloudOrganizationsApplicationsShowCommand() *cobra.Command {
 		Short: "Show a Cloud organization application",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
 			output, err := cloudcmd.ReadApplicationService{Client: client}.Run(cmd.Context(), cloudcmd.ApplicationInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID: resolvedOrganizationID,
 				ApplicationID:  args[0],
 			})
 			if err != nil {
@@ -766,7 +766,7 @@ func newCloudRegionsDeleteCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Cloud region %s deleted.\n", output.RegionID)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud region %s deleted.", output.RegionID)))
 			return err
 		},
 	}
@@ -841,11 +841,11 @@ func newCloudOrganizationsUsersListCommand() *cobra.Command {
 		Short: "List Cloud organization users",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
-			output, err := cloudcmd.ListOrganizationUsersService{Client: client}.Run(cmd.Context(), resolveCloudOrganizationID(rt, organizationID))
+			output, err := cloudcmd.ListOrganizationUsersService{Client: client}.Run(cmd.Context(), resolvedOrganizationID)
 			if err != nil {
 				return err
 			}
@@ -867,12 +867,12 @@ func newCloudOrganizationsUsersShowCommand() *cobra.Command {
 		Short: "Show a Cloud organization user",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
 			output, err := cloudcmd.ReadOrganizationUserService{Client: client}.Run(cmd.Context(), cloudcmd.OrganizationUserActionInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID: resolvedOrganizationID,
 				UserID:         args[0],
 			})
 			if err != nil {
@@ -897,12 +897,12 @@ func newCloudOrganizationsUsersLinkCommand() *cobra.Command {
 		Short: "Link a user to a Cloud organization",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
 			output, err := cloudcmd.OrganizationUserActionService{Client: client, Action: "link"}.Run(cmd.Context(), cloudcmd.OrganizationUserActionInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID: resolvedOrganizationID,
 				UserID:         args[0],
 				PolicyID:       policyID,
 			})
@@ -932,12 +932,12 @@ func newCloudOrganizationsUsersUnlinkCommand() *cobra.Command {
 			if !confirm {
 				return fmt.Errorf("cloud organizations users unlink requires --confirm")
 			}
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
 			output, err := cloudcmd.OrganizationUserActionService{Client: client, Action: "unlink"}.Run(cmd.Context(), cloudcmd.OrganizationUserActionInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID: resolvedOrganizationID,
 				UserID:         args[0],
 			})
 			if err != nil {
@@ -978,12 +978,12 @@ func newCloudOrganizationsPoliciesCreateCommand() *cobra.Command {
 		Short: "Create a Cloud organization policy",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
 			output, err := cloudcmd.CreatePolicyService{Client: client}.Run(cmd.Context(), cloudcmd.PolicyInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID: resolvedOrganizationID,
 				Name:           args[0],
 				Description:    description,
 			})
@@ -1009,11 +1009,11 @@ func newCloudOrganizationsPoliciesListCommand() *cobra.Command {
 		Short: "List Cloud organization policies",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
-			output, err := cloudcmd.ListPoliciesService{Client: client}.Run(cmd.Context(), resolveCloudOrganizationID(rt, organizationID))
+			output, err := cloudcmd.ListPoliciesService{Client: client}.Run(cmd.Context(), resolvedOrganizationID)
 			if err != nil {
 				return err
 			}
@@ -1039,12 +1039,12 @@ func newCloudOrganizationsPoliciesShowCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
 			output, err := cloudcmd.ReadPolicyService{Client: client}.Run(cmd.Context(), cloudcmd.PolicyInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID: resolvedOrganizationID,
 				PolicyID:       policyID,
 			})
 			if err != nil {
@@ -1074,12 +1074,12 @@ func newCloudOrganizationsPoliciesUpdateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
 			output, err := cloudcmd.UpdatePolicyService{Client: client}.Run(cmd.Context(), cloudcmd.PolicyInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID: resolvedOrganizationID,
 				PolicyID:       policyID,
 				Name:           name,
 				Description:    description,
@@ -1150,12 +1150,12 @@ func runCloudPolicyAction(cmd *cobra.Command, organizationID string, policyIDArg
 	if err != nil {
 		return err
 	}
-	rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+	_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 	if err != nil {
 		return err
 	}
 	output, err := cloudcmd.PolicyActionService{Client: client, Action: action}.Run(cmd.Context(), cloudcmd.PolicyActionInput{
-		OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+		OrganizationID: resolvedOrganizationID,
 		PolicyID:       policyID,
 		ScopeID:        scopeID,
 	})
@@ -1177,12 +1177,12 @@ func newCloudOrganizationsInvitationsListCommand() *cobra.Command {
 		Short: "List Cloud organization invitations",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
 			output, err := cloudcmd.ListOrganizationInvitationsService{Client: client}.Run(cmd.Context(), cloudcmd.ListOrganizationInvitationsInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID: resolvedOrganizationID,
 				Status:         status,
 			})
 			if err != nil {
@@ -1207,12 +1207,12 @@ func newCloudOrganizationsInvitationsSendCommand() *cobra.Command {
 		Short: "Send a Cloud organization invitation",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
 			invitation, err := cloudcmd.CreateInvitationService{Client: client}.Run(cmd.Context(), cloudcmd.CreateInvitationInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID: resolvedOrganizationID,
 				Email:          args[0],
 			})
 			if err != nil {
@@ -1221,7 +1221,7 @@ func newCloudOrganizationsInvitationsSendCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, map[string]cloudcmd.InvitationSummary{"invitation": invitation}); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Cloud invitation %s sent.\n", invitation.ID)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud invitation %s sent.", invitation.ID)))
 			return err
 		},
 	}
@@ -1241,12 +1241,12 @@ func newCloudOrganizationsInvitationsDeleteCommand() *cobra.Command {
 			if !confirm {
 				return fmt.Errorf("cloud organizations invitations delete requires --confirm")
 			}
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			_, resolvedOrganizationID, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, organizationID)
 			if err != nil {
 				return err
 			}
 			output, err := cloudcmd.DeleteInvitationService{Client: client}.Run(cmd.Context(), cloudcmd.OrganizationInvitationActionInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID: resolvedOrganizationID,
 				InvitationID:   args[0],
 			})
 			if err != nil {
@@ -1255,7 +1255,7 @@ func newCloudOrganizationsInvitationsDeleteCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Cloud invitation %s deleted.\n", output.InvitationID)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud invitation %s deleted.", output.InvitationID)))
 			return err
 		},
 	}
@@ -1303,7 +1303,7 @@ func newCloudOrganizationsShowCommand(use string, aliases []string, deprecated b
 			if deprecated {
 				fmt.Fprintln(cmd.ErrOrStderr(), "Command cloud organizations describe has been deprecated, use cloud organizations show")
 			}
-			client, err := membershipClientFromCommand(cmd)
+			_, _, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, args[0])
 			if err != nil {
 				return err
 			}
@@ -1337,7 +1337,7 @@ func newCloudOrganizationsUpdateCommand() *cobra.Command {
 		Short: "Update a Cloud organization",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client, err := membershipClientFromCommand(cmd)
+			_, _, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, args[0])
 			if err != nil {
 				return err
 			}
@@ -1373,7 +1373,7 @@ func newCloudOrganizationsDeleteCommand() *cobra.Command {
 			if !confirm {
 				return fmt.Errorf("cloud organizations delete requires --confirm")
 			}
-			client, err := membershipClientFromCommand(cmd)
+			_, _, client, err := cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd, args[0])
 			if err != nil {
 				return err
 			}
@@ -1384,7 +1384,7 @@ func newCloudOrganizationsDeleteCommand() *cobra.Command {
 			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Cloud organization %s deleted.\n", output.OrganizationID)
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("Cloud organization %s deleted.", output.OrganizationID)))
 			return err
 		},
 	}
@@ -1425,6 +1425,19 @@ func cloudRuntimeAndMembershipClientFromCommand(cmd *cobra.Command) (*runtime.Ru
 		return nil, nil, err
 	}
 	return rt, newMembershipClient(rt.Target.URL, httpClient), nil
+}
+
+func cloudRuntimeAndOrganizationMembershipClientFromCommand(cmd *cobra.Command, organizationID string) (*runtime.Runtime, string, *membership.SDK, error) {
+	rt, _, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+	if err != nil {
+		return nil, "", nil, err
+	}
+	resolvedOrganizationID := resolveCloudOrganizationID(rt, organizationID)
+	client, err := organizationMembershipClientFromRuntime(cmd, rt, resolvedOrganizationID)
+	if err != nil {
+		return nil, "", nil, err
+	}
+	return rt, resolvedOrganizationID, client, nil
 }
 
 func organizationMembershipClientFromRuntime(cmd *cobra.Command, rt *runtime.Runtime, organizationID string) (*membership.SDK, error) {
