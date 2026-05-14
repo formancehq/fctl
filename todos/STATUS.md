@@ -1,7 +1,7 @@
 # v4 Todo Status
 
 - [x] 01 - v4 isolated skeleton
-- [ ] 02 - v4 foundation packages
+- [x] 02 - v4 foundation packages
 - [ ] 03 - context commands
 - [ ] 04 - auth providers
 - [ ] 05 - capabilities manifest generator
