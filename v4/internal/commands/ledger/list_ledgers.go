@@ -13,8 +13,10 @@ import (
 )
 
 const (
-	FeatureCreateLedger capabilities.Feature = "createLedger"
-	FeatureListLedgers  capabilities.Feature = "listLedgers"
+	FeatureCreateLedger         capabilities.Feature = "createLedger"
+	FeatureDeleteLedgerMetadata capabilities.Feature = "deleteLedgerMetadata"
+	FeatureListLedgers          capabilities.Feature = "listLedgers"
+	FeatureUpdateLedgerMetadata capabilities.Feature = "updateLedgerMetadata"
 )
 
 type ListLedgersInput struct {

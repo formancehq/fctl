@@ -439,6 +439,100 @@ func TestLedgerCreateSelectsV2(t *testing.T) {
 	}
 }
 
+func TestLedgerSetMetadataSelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default/metadata":
+			if r.Method != http.MethodPut {
+				t.Fatalf("expected PUT, got %s", r.Method)
+			}
+			body := readRequestBody(t, r)
+			if !strings.Contains(body, `"tier":"gold"`) {
+				t.Fatalf("expected metadata body, got %s", body)
+			}
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "set-metadata", "default", "tier=gold",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("set ledger metadata: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v2",
+		"Metadata added.",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestLedgerDeleteMetadataSelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default/metadata/tier":
+			if r.Method != http.MethodDelete {
+				t.Fatalf("expected DELETE, got %s", r.Method)
+			}
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "delete-metadata", "default", "tier",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("delete ledger metadata: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v2",
+		"Metadata deleted.",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
 func TestLedgerAccountsListSelectsV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

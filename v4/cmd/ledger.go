@@ -22,7 +22,9 @@ func newLedgerCommand() *cobra.Command {
 	command.AddCommand(newLedgerInfoCommand("server-infos", []string{"si"}, true))
 	command.AddCommand(newLedgerAccountsCommand())
 	command.AddCommand(newLedgerCreateCommand())
+	command.AddCommand(newLedgerDeleteMetadataCommand())
 	command.AddCommand(newLedgerListCommand())
+	command.AddCommand(newLedgerSetMetadataCommand())
 	command.AddCommand(newLedgerStatsCommand())
 	command.AddCommand(newLedgerTransactionsCommand())
 	command.AddCommand(newLedgerVolumesCommand())
@@ -336,6 +338,135 @@ func newLedgerAccountsDeleteMetadataCommand() *cobra.Command {
 	}
 
 	command.Flags().StringVar(&ledger, "ledger", "", "Ledger name")
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm the metadata deletion")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
+
+	return command
+}
+
+func newLedgerSetMetadataCommand() *cobra.Command {
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "set-metadata <ledger> <key=value>...",
+		Aliases: []string{"sm", "set-meta"},
+		Short:   "Set metadata on a ledger",
+		Args:    cobra.MinimumNArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("ledger set-metadata requires --confirm")
+			}
+
+			metadata, err := parseMetadataFlags(args[1:])
+			if err != nil {
+				return err
+			}
+
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := ledgercmd.UpdateLedgerMetadataService{
+				Handlers: ledgercmd.SDKUpdateLedgerMetadataHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         ledgercmd.ProductLedger,
+						Feature:         ledgercmd.FeatureUpdateLedgerMetadata,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), ledgercmd.UpdateLedgerMetadataInput{
+				Ledger:   args[0],
+				Metadata: metadata,
+			})
+			if err != nil {
+				return err
+			}
+
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderLedgerMetadataSet(cmd, output)
+		},
+	}
+
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm the metadata update")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
+
+	return command
+}
+
+func newLedgerDeleteMetadataCommand() *cobra.Command {
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "delete-metadata <ledger> <key>",
+		Aliases: []string{"dm", "del-meta"},
+		Short:   "Delete metadata from a ledger",
+		Args:    cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("ledger delete-metadata requires --confirm")
+			}
+
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := ledgercmd.DeleteLedgerMetadataService{
+				Handlers: ledgercmd.SDKDeleteLedgerMetadataHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         ledgercmd.ProductLedger,
+						Feature:         ledgercmd.FeatureDeleteLedgerMetadata,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), ledgercmd.DeleteLedgerMetadataInput{
+				Ledger: args[0],
+				Key:    args[1],
+			})
+			if err != nil {
+				return err
+			}
+
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderLedgerMetadataDeleted(cmd, output)
+		},
+	}
+
 	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm the metadata deletion")
 	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
 
@@ -1304,6 +1435,22 @@ func renderLedgerCreated(cmd *cobra.Command, output ledgercmd.CreateLedgerOutput
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Ledger %s created.\n", output.Name)
+	return err
+}
+
+func renderLedgerMetadataSet(cmd *cobra.Command, output ledgercmd.UpdateLedgerMetadataOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), "Metadata added.")
+	return err
+}
+
+func renderLedgerMetadataDeleted(cmd *cobra.Command, output ledgercmd.DeleteLedgerMetadataOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), "Metadata deleted.")
 	return err
 }
 
