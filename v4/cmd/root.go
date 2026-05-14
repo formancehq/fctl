@@ -42,6 +42,7 @@ func NewRootCommand(version string) *cobra.Command {
 	root.AddCommand(newVersionCommand())
 	root.AddCommand(newContextCommand())
 	root.AddCommand(newTargetCommand())
+	root.AddCommand(newLedgerCommand())
 
 	return root
 }
