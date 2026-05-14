@@ -3,6 +3,7 @@ package wallets
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"time"
 
 	formance "github.com/formancehq/formance-sdk-go/v3"
@@ -15,6 +16,8 @@ import (
 const (
 	ProductWallets      capabilities.Product = "wallets"
 	FeatureCreateWallet capabilities.Feature = "createWallet"
+	FeatureCreditWallet capabilities.Feature = "creditWallet"
+	FeatureDebitWallet  capabilities.Feature = "debitWallet"
 	FeatureGetWallet    capabilities.Feature = "getWallet"
 	FeatureListWallets  capabilities.Feature = "listWallets"
 	FeatureUpdateWallet capabilities.Feature = "updateWallet"
@@ -75,6 +78,23 @@ type UpdateWalletOutput struct {
 	WalletID   string                  `json:"walletID" yaml:"walletID"`
 }
 
+type WalletMovementInput struct {
+	WalletID       string
+	Amount         *big.Int
+	Asset          string
+	Balance        string
+	Metadata       map[string]string
+	IdempotencyKey string
+	Description    string
+	Pending        bool
+}
+
+type WalletMovementOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	WalletID   string                  `json:"walletID" yaml:"walletID"`
+	HoldID     string                  `json:"holdID,omitempty" yaml:"holdID,omitempty"`
+}
+
 type CreateWalletHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, CreateWalletInput) (CreateWalletOutput, error)
@@ -95,6 +115,11 @@ type UpdateWalletHandler struct {
 	Run        func(context.Context, UpdateWalletInput) (UpdateWalletOutput, error)
 }
 
+type WalletMovementHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, WalletMovementInput) (WalletMovementOutput, error)
+}
+
 type CreateWalletService struct {
 	Handlers []CreateWalletHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
@@ -112,6 +137,16 @@ type GetWalletService struct {
 
 type UpdateWalletService struct {
 	Handlers []UpdateWalletHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type CreditWalletService struct {
+	Handlers []WalletMovementHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type DebitWalletService struct {
+	Handlers []WalletMovementHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -222,6 +257,54 @@ func (s UpdateWalletService) Run(ctx context.Context, input UpdateWalletInput) (
 	return output, nil
 }
 
+func (s CreditWalletService) Run(ctx context.Context, input WalletMovementInput) (WalletMovementOutput, error) {
+	return runWalletMovementService(ctx, input, s.Handlers, s.Resolve)
+}
+
+func (s DebitWalletService) Run(ctx context.Context, input WalletMovementInput) (WalletMovementOutput, error) {
+	return runWalletMovementService(ctx, input, s.Handlers, s.Resolve)
+}
+
+func runWalletMovementService(
+	ctx context.Context,
+	input WalletMovementInput,
+	handlers []WalletMovementHandler,
+	resolve func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error),
+) (WalletMovementOutput, error) {
+	if input.WalletID == "" {
+		return WalletMovementOutput{}, fmt.Errorf("wallet id is required")
+	}
+	if input.Amount == nil {
+		return WalletMovementOutput{}, fmt.Errorf("amount is required")
+	}
+	if input.Asset == "" {
+		return WalletMovementOutput{}, fmt.Errorf("asset is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(handlers))
+	handlersByVersion := map[capabilities.APIVersion]WalletMovementHandler{}
+	for _, handler := range handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlersByVersion[handler.APIVersion] = handler
+	}
+	selected, err := resolve(ctx, handlerVersions)
+	if err != nil {
+		return WalletMovementOutput{}, err
+	}
+	handler, ok := handlersByVersion[selected]
+	if !ok {
+		return WalletMovementOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return WalletMovementOutput{}, err
+	}
+	output.APIVersion = selected
+	if output.WalletID == "" {
+		output.WalletID = input.WalletID
+	}
+	return output, nil
+}
+
 func SDKCreateWalletHandlers(sdk *formance.Formance) []CreateWalletHandler {
 	return []CreateWalletHandler{
 		{
@@ -308,6 +391,64 @@ func SDKUpdateWalletHandlers(sdk *formance.Formance) []UpdateWalletHandler {
 	}
 }
 
+func SDKCreditWalletHandlers(sdk *formance.Formance) []WalletMovementHandler {
+	return []WalletMovementHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input WalletMovementInput) (WalletMovementOutput, error) {
+				_, err := sdk.Wallets.V1.CreditWallet(ctx, operations.CreditWalletRequest{
+					ID:             input.WalletID,
+					IdempotencyKey: optionalString(input.IdempotencyKey),
+					CreditWalletRequest: &shared.CreditWalletRequest{
+						Amount: shared.Monetary{
+							Amount: input.Amount,
+							Asset:  input.Asset,
+						},
+						Balance:  optionalString(input.Balance),
+						Metadata: input.Metadata,
+					},
+				})
+				if err != nil {
+					return WalletMovementOutput{}, err
+				}
+				return WalletMovementOutput{WalletID: input.WalletID}, nil
+			},
+		},
+	}
+}
+
+func SDKDebitWalletHandlers(sdk *formance.Formance) []WalletMovementHandler {
+	return []WalletMovementHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input WalletMovementInput) (WalletMovementOutput, error) {
+				response, err := sdk.Wallets.V1.DebitWallet(ctx, operations.DebitWalletRequest{
+					ID:             input.WalletID,
+					IdempotencyKey: optionalString(input.IdempotencyKey),
+					DebitWalletRequest: &shared.DebitWalletRequest{
+						Amount: shared.Monetary{
+							Amount: input.Amount,
+							Asset:  input.Asset,
+						},
+						Balances:    optionalStringSlice(input.Balance),
+						Description: optionalString(input.Description),
+						Metadata:    input.Metadata,
+						Pending:     &input.Pending,
+					},
+				})
+				if err != nil {
+					return WalletMovementOutput{}, err
+				}
+				output := WalletMovementOutput{WalletID: input.WalletID}
+				if response.DebitWalletResponse != nil {
+					output.HoldID = response.DebitWalletResponse.Data.ID
+				}
+				return output, nil
+			},
+		},
+	}
+}
+
 func fromWalletsCursor(cursor shared.ListWalletsResponseCursor) ListWalletsOutput {
 	wallets := make([]WalletSummary, 0, len(cursor.Data))
 	for _, wallet := range cursor.Data {
@@ -358,4 +499,11 @@ func optionalInt64(value int64) *int64 {
 		return nil
 	}
 	return &value
+}
+
+func optionalStringSlice(value string) []string {
+	if value == "" {
+		return nil
+	}
+	return []string{value}
 }

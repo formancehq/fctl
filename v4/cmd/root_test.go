@@ -4487,6 +4487,126 @@ func TestWalletsUpdateSelectsV1(t *testing.T) {
 	}
 }
 
+func TestWalletsCreditRequiresExplicitWalletID(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "wallets", "credit", "--amount", "100", "--asset", "USD/2", "--confirm")
+	if err == nil {
+		t.Fatal("expected wallets credit to require wallet id")
+	}
+	if stdout != "" {
+		t.Fatalf("expected empty stdout, got %q", stdout)
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(err.Error(), "accepts 1 arg") {
+		t.Fatalf("expected explicit wallet id error, got: %v", err)
+	}
+}
+
+func TestWalletsCreditSelectsV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"wallets","version":"1.2.0","health":true}]}`)
+		case "/api/wallets/wallets/wallet_1/credit":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			body := readRequestBody(t, r)
+			for _, expected := range []string{`"amount":100`, `"asset":"USD/2"`, `"balance":"main"`, `"env":"dev"`} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected credit body to contain %q, got:\n%s", expected, body)
+				}
+			}
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"wallets", "credit", "wallet_1",
+		"--amount", "100",
+		"--asset", "USD/2",
+		"--balance", "main",
+		"--metadata", "env=dev",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("credit wallet: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v1") || !strings.Contains(stdout, "Wallet wallet_1 credited.") {
+		t.Fatalf("unexpected credit wallet output:\n%s", stdout)
+	}
+}
+
+func TestWalletsDebitSelectsV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"wallets","version":"1.2.0","health":true}]}`)
+		case "/api/wallets/wallets/wallet_1/debit":
+			if r.Method != http.MethodPost {
+				t.Fatalf("expected POST, got %s", r.Method)
+			}
+			body := readRequestBody(t, r)
+			for _, expected := range []string{`"amount":100`, `"asset":"USD/2"`, `"balances":["main"]`, `"pending":true`} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected debit body to contain %q, got:\n%s", expected, body)
+				}
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, `{"data":{"id":"hold_1","walletID":"wallet_1","asset":"USD/2","description":"test","metadata":{}}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"wallets", "debit", "wallet_1",
+		"--amount", "100",
+		"--asset", "USD/2",
+		"--balance", "main",
+		"--pending",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("debit wallet: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{"API version: v1", "Hold ID: hold_1", "Wallet wallet_1 debited."} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected debit wallet output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
 func TestConfigMigrateV3DryRun(t *testing.T) {
 	v3Dir := writeV3CommandFixture(t, true)
 

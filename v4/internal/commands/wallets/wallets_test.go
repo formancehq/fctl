@@ -2,6 +2,7 @@ package wallets
 
 import (
 	"context"
+	"math/big"
 	"testing"
 
 	"github.com/formancehq/fctl/v4/internal/capabilities"
@@ -102,6 +103,48 @@ func TestUpdateWalletServiceRequiresMetadata(t *testing.T) {
 
 	if _, err := service.Run(context.Background(), UpdateWalletInput{WalletID: "wallet_1"}); err == nil {
 		t.Fatal("expected metadata validation error")
+	}
+}
+
+func TestCreditWalletServiceRequiresExplicitWalletID(t *testing.T) {
+	service := CreditWalletService{
+		Handlers: []WalletMovementHandler{{APIVersion: "v1"}},
+		Resolve: func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			t.Fatal("resolver should not run")
+			return "", nil
+		},
+	}
+
+	if _, err := service.Run(context.Background(), WalletMovementInput{Amount: big.NewInt(100), Asset: "USD/2"}); err == nil {
+		t.Fatal("expected wallet id validation error")
+	}
+}
+
+func TestDebitWalletServiceSelectsResolvedHandler(t *testing.T) {
+	service := DebitWalletService{
+		Handlers: []WalletMovementHandler{
+			{
+				APIVersion: "v1",
+				Run: func(_ context.Context, input WalletMovementInput) (WalletMovementOutput, error) {
+					if input.WalletID != "wallet_1" || input.Amount.String() != "100" || input.Asset != "USD/2" {
+						t.Fatalf("unexpected input: %#v", input)
+					}
+					return WalletMovementOutput{WalletID: input.WalletID, HoldID: "hold_1"}, nil
+				},
+			},
+		},
+		Resolve: func(_ context.Context, versions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			assertAPIVersions(t, versions, []capabilities.APIVersion{"v1"})
+			return "v1", nil
+		},
+	}
+
+	output, err := service.Run(context.Background(), WalletMovementInput{WalletID: "wallet_1", Amount: big.NewInt(100), Asset: "USD/2"})
+	if err != nil {
+		t.Fatalf("run service: %v", err)
+	}
+	if output.APIVersion != "v1" || output.HoldID != "hold_1" {
+		t.Fatalf("unexpected output: %#v", output)
 	}
 }
 

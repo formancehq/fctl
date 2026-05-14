@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"time"
 
 	formance "github.com/formancehq/formance-sdk-go/v3"
@@ -18,11 +19,190 @@ func newWalletsCommand() *cobra.Command {
 		Short: "Manage wallets",
 	}
 	command.AddCommand(newWalletsCreateCommand())
+	command.AddCommand(newWalletsCreditCommand())
+	command.AddCommand(newWalletsDebitCommand())
 	command.AddCommand(newWalletsListCommand())
 	command.AddCommand(newWalletsShowCommand("show", nil, false))
 	command.AddCommand(newWalletsShowCommand("get", []string{"g"}, true))
 	command.AddCommand(newWalletsUpdateCommand())
 	return command
+}
+
+func newWalletsCreditCommand() *cobra.Command {
+	var confirm bool
+	var amount string
+	var asset string
+	var balance string
+	var metadata []string
+	var idempotencyKey string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "credit <wallet-id>",
+		Aliases: []string{"cr"},
+		Short:   "Credit a wallet",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("wallets credit requires --confirm")
+			}
+			if cmd.Flags().Changed("ik") {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Flag --ik has been deprecated, use --idempotency-key")
+			}
+			parsedAmount, err := parseBigAmount(amount)
+			if err != nil {
+				return err
+			}
+			parsedMetadata, err := parseMetadataFlags(metadata)
+			if err != nil {
+				return err
+			}
+			output, err := runWalletMovementCommand(cmd, walletMovementCommandRequest{
+				Feature:        walletscmd.FeatureCreditWallet,
+				Handlers:       walletscmd.SDKCreditWalletHandlers,
+				WalletID:       args[0],
+				Amount:         parsedAmount,
+				Asset:          asset,
+				Balance:        balance,
+				Metadata:       parsedMetadata,
+				IdempotencyKey: idempotencyKey,
+				APIVersion:     apiVersion,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderWalletCredited(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm wallet credit")
+	command.Flags().StringVar(&amount, "amount", "", "Amount to credit")
+	command.Flags().StringVar(&asset, "asset", "", "Asset to credit")
+	command.Flags().StringVar(&balance, "balance", "", "Balance to credit")
+	command.Flags().StringArrayVar(&metadata, "metadata", nil, "Metadata as key=value")
+	command.Flags().StringVar(&idempotencyKey, "idempotency-key", "", "Idempotency key")
+	command.Flags().StringVar(&idempotencyKey, "ik", "", "Deprecated alias for --idempotency-key")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin wallets API version")
+	return command
+}
+
+func newWalletsDebitCommand() *cobra.Command {
+	var confirm bool
+	var amount string
+	var asset string
+	var balance string
+	var description string
+	var metadata []string
+	var pending bool
+	var idempotencyKey string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "debit <wallet-id>",
+		Aliases: []string{"deb"},
+		Short:   "Debit a wallet",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("wallets debit requires --confirm")
+			}
+			if cmd.Flags().Changed("ik") {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Flag --ik has been deprecated, use --idempotency-key")
+			}
+			parsedAmount, err := parseBigAmount(amount)
+			if err != nil {
+				return err
+			}
+			parsedMetadata, err := parseMetadataFlags(metadata)
+			if err != nil {
+				return err
+			}
+			output, err := runWalletMovementCommand(cmd, walletMovementCommandRequest{
+				Feature:        walletscmd.FeatureDebitWallet,
+				Handlers:       walletscmd.SDKDebitWalletHandlers,
+				WalletID:       args[0],
+				Amount:         parsedAmount,
+				Asset:          asset,
+				Balance:        balance,
+				Description:    description,
+				Metadata:       parsedMetadata,
+				Pending:        pending,
+				IdempotencyKey: idempotencyKey,
+				APIVersion:     apiVersion,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderWalletDebited(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm wallet debit")
+	command.Flags().StringVar(&amount, "amount", "", "Amount to debit")
+	command.Flags().StringVar(&asset, "asset", "", "Asset to debit")
+	command.Flags().StringVar(&balance, "balance", "", "Balance to debit")
+	command.Flags().StringVar(&description, "description", "", "Debit description")
+	command.Flags().BoolVar(&pending, "pending", false, "Create a pending hold")
+	command.Flags().StringArrayVar(&metadata, "metadata", nil, "Metadata as key=value")
+	command.Flags().StringVar(&idempotencyKey, "idempotency-key", "", "Idempotency key")
+	command.Flags().StringVar(&idempotencyKey, "ik", "", "Deprecated alias for --idempotency-key")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin wallets API version")
+	return command
+}
+
+type walletMovementCommandRequest struct {
+	Feature        capabilities.Feature
+	Handlers       func(*formance.Formance) []walletscmd.WalletMovementHandler
+	WalletID       string
+	Amount         *big.Int
+	Asset          string
+	Balance        string
+	Description    string
+	Metadata       map[string]string
+	Pending        bool
+	IdempotencyKey string
+	APIVersion     string
+}
+
+func runWalletMovementCommand(cmd *cobra.Command, request walletMovementCommandRequest) (walletscmd.WalletMovementOutput, error) {
+	rt, err := runtimeFromCommand(cmd)
+	if err != nil {
+		return walletscmd.WalletMovementOutput{}, err
+	}
+	httpClient, err := rt.HTTPClient(cmd.Context())
+	if err != nil {
+		return walletscmd.WalletMovementOutput{}, err
+	}
+	sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+	service := walletscmd.CreditWalletService{
+		Handlers: request.Handlers(sdk),
+		Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			versionRequest := capabilities.VersionResolutionRequest{
+				Product:         walletscmd.ProductWallets,
+				Feature:         request.Feature,
+				HandlerVersions: handlerVersions,
+			}
+			if request.APIVersion != "" {
+				versionRequest.Policy = capabilities.VersionPolicyPinned
+				versionRequest.PinnedVersion = capabilities.APIVersion(request.APIVersion)
+			}
+			return rt.ResolveAPIVersion(ctx, versionRequest)
+		},
+	}
+	return service.Run(cmd.Context(), walletscmd.WalletMovementInput{
+		WalletID:       request.WalletID,
+		Amount:         request.Amount,
+		Asset:          request.Asset,
+		Balance:        request.Balance,
+		Description:    request.Description,
+		Metadata:       request.Metadata,
+		Pending:        request.Pending,
+		IdempotencyKey: request.IdempotencyKey,
+	})
 }
 
 func newWalletsCreateCommand() *cobra.Command {
@@ -278,11 +458,43 @@ func newWalletsUpdateCommand() *cobra.Command {
 	return command
 }
 
+func parseBigAmount(value string) (*big.Int, error) {
+	if value == "" {
+		return nil, fmt.Errorf("amount is required")
+	}
+	amount, ok := big.NewInt(0).SetString(value, 10)
+	if !ok {
+		return nil, fmt.Errorf("amount must be an integer")
+	}
+	return amount, nil
+}
+
 func renderWalletCreated(cmd *cobra.Command, output walletscmd.CreateWalletOutput) error {
 	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Wallet created with ID: %s\n", output.WalletID)
+	return err
+}
+
+func renderWalletCredited(cmd *cobra.Command, output walletscmd.WalletMovementOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Wallet %s credited.\n", output.WalletID)
+	return err
+}
+
+func renderWalletDebited(cmd *cobra.Command, output walletscmd.WalletMovementOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if output.HoldID != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Hold ID: %s\n", output.HoldID); err != nil {
+			return err
+		}
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Wallet %s debited.\n", output.WalletID)
 	return err
 }
 
