@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
@@ -78,25 +79,34 @@ func contextNameFromCommand(cmd *cobra.Command) (string, error) {
 }
 
 func credentialStoreFromCommand(cmd *cobra.Command) (credentials.Store, error) {
-	dir, err := cmd.Root().PersistentFlags().GetString(credentialDirFlag)
+	dir, err := credentialDirFromCommand(cmd)
 	if err != nil {
 		return nil, err
-	}
-	if dir == "" {
-		return credentials.NewMemoryStore(), nil
 	}
 	return credentials.NewInsecureFileStore(dir), nil
 }
 
 func persistentCredentialStoreFromCommand(cmd *cobra.Command) (credentials.Store, error) {
-	dir, err := cmd.Root().PersistentFlags().GetString(credentialDirFlag)
+	dir, err := credentialDirFromCommand(cmd)
 	if err != nil {
 		return nil, err
 	}
-	if dir == "" {
-		return nil, fmt.Errorf("--credential-dir is required to store credentials without a keyring backend")
-	}
 	return credentials.NewInsecureFileStore(dir), nil
+}
+
+func credentialDirFromCommand(cmd *cobra.Command) (string, error) {
+	dir, err := cmd.Root().PersistentFlags().GetString(credentialDirFlag)
+	if err != nil {
+		return "", err
+	}
+	if dir != "" {
+		return dir, nil
+	}
+	path, err := configPath(cmd)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(filepath.Dir(path), "credentials"), nil
 }
 
 func authOptionsFromCommand(cmd *cobra.Command) (v4auth.Options, error) {

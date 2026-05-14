@@ -42,7 +42,7 @@ func NewRootCommand(version string) *cobra.Command {
 	root.PersistentFlags().String(contextFlag, "", "Context to use")
 	root.PersistentFlags().String(profileFlag, "", "Deprecated alias for --context")
 	root.PersistentFlags().StringP(configDirFlag, "c", "", "Path to the v4 configuration directory")
-	root.PersistentFlags().String(credentialDirFlag, "", "Explicit insecure credential directory")
+	root.PersistentFlags().String(credentialDirFlag, "", "Credential directory (defaults to the v4 config directory credentials subdirectory)")
 	root.PersistentFlags().StringP(outputFlag, "o", "plain", "Output format (plain, json, yaml)")
 	root.PersistentFlags().Bool(nonInteractiveFlag, false, "Disable interactive prompts")
 	root.PersistentFlags().Bool(insecureTLSFlag, false, "Skip TLS certificate verification")
