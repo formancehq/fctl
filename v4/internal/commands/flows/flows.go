@@ -13,21 +13,22 @@ import (
 )
 
 const (
-	ProductOrchestration  capabilities.Product = "orchestration"
-	FeatureCancelEvent    capabilities.Feature = "cancelEvent"
-	FeatureCreateTrigger  capabilities.Feature = "createTrigger"
-	FeatureCreateWorkflow capabilities.Feature = "createWorkflow"
-	FeatureDeleteTrigger  capabilities.Feature = "deleteTrigger"
-	FeatureDeleteWorkflow capabilities.Feature = "deleteWorkflow"
-	FeatureGetInstance    capabilities.Feature = "getInstance"
-	FeatureGetWorkflow    capabilities.Feature = "getWorkflow"
-	FeatureListInstances  capabilities.Feature = "listInstances"
-	FeatureListTriggers   capabilities.Feature = "listTriggers"
-	FeatureListWorkflows  capabilities.Feature = "listWorkflows"
-	FeatureReadTrigger    capabilities.Feature = "readTrigger"
-	FeatureRunWorkflow    capabilities.Feature = "runWorkflow"
-	FeatureSendEvent      capabilities.Feature = "sendEvent"
-	FeatureTestTrigger    capabilities.Feature = "testTrigger"
+	ProductOrchestration          capabilities.Product = "orchestration"
+	FeatureCancelEvent            capabilities.Feature = "cancelEvent"
+	FeatureCreateTrigger          capabilities.Feature = "createTrigger"
+	FeatureCreateWorkflow         capabilities.Feature = "createWorkflow"
+	FeatureDeleteTrigger          capabilities.Feature = "deleteTrigger"
+	FeatureDeleteWorkflow         capabilities.Feature = "deleteWorkflow"
+	FeatureGetInstance            capabilities.Feature = "getInstance"
+	FeatureGetWorkflow            capabilities.Feature = "getWorkflow"
+	FeatureListInstances          capabilities.Feature = "listInstances"
+	FeatureListTriggers           capabilities.Feature = "listTriggers"
+	FeatureListTriggerOccurrences capabilities.Feature = "listTriggersOccurrences"
+	FeatureListWorkflows          capabilities.Feature = "listWorkflows"
+	FeatureReadTrigger            capabilities.Feature = "readTrigger"
+	FeatureRunWorkflow            capabilities.Feature = "runWorkflow"
+	FeatureSendEvent              capabilities.Feature = "sendEvent"
+	FeatureTestTrigger            capabilities.Feature = "testTrigger"
 )
 
 type WorkflowSummary struct {
@@ -53,6 +54,13 @@ type TriggerSummary struct {
 	WorkflowID string    `json:"workflowID" yaml:"workflowID"`
 	CreatedAt  time.Time `json:"createdAt,omitempty" yaml:"createdAt,omitempty"`
 	Version    string    `json:"version,omitempty" yaml:"version,omitempty"`
+}
+
+type TriggerOccurrenceSummary struct {
+	TriggerID          string    `json:"triggerID" yaml:"triggerID"`
+	WorkflowInstanceID string    `json:"workflowInstanceID,omitempty" yaml:"workflowInstanceID,omitempty"`
+	Date               time.Time `json:"date" yaml:"date"`
+	Error              string    `json:"error,omitempty" yaml:"error,omitempty"`
 }
 
 type ListWorkflowsInput struct {
@@ -201,6 +209,21 @@ type TestTriggerOutput struct {
 	Matched    *bool                   `json:"matched,omitempty" yaml:"matched,omitempty"`
 }
 
+type ListTriggerOccurrencesInput struct {
+	TriggerID string
+	PageSize  int64
+	Cursor    string
+}
+
+type ListTriggerOccurrencesOutput struct {
+	APIVersion  capabilities.APIVersion    `json:"apiVersion" yaml:"apiVersion"`
+	Occurrences []TriggerOccurrenceSummary `json:"occurrences" yaml:"occurrences"`
+	HasMore     bool                       `json:"hasMore" yaml:"hasMore"`
+	PageSize    int64                      `json:"pageSize" yaml:"pageSize"`
+	Next        *string                    `json:"next,omitempty" yaml:"next,omitempty"`
+	Previous    *string                    `json:"previous,omitempty" yaml:"previous,omitempty"`
+}
+
 type ListWorkflowsHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, ListWorkflowsInput) (ListWorkflowsOutput, error)
@@ -264,6 +287,11 @@ type DeleteTriggerHandler struct {
 type TestTriggerHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, TestTriggerInput) (TestTriggerOutput, error)
+}
+
+type ListTriggerOccurrencesHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, ListTriggerOccurrencesInput) (ListTriggerOccurrencesOutput, error)
 }
 
 type ListWorkflowsService struct {
@@ -333,6 +361,11 @@ type DeleteTriggerService struct {
 
 type TestTriggerService struct {
 	Handlers []TestTriggerHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type ListTriggerOccurrencesService struct {
+	Handlers []ListTriggerOccurrencesHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -693,6 +726,32 @@ func (s TestTriggerService) Run(ctx context.Context, input TestTriggerInput) (Te
 	if output.TriggerID == "" {
 		output.TriggerID = input.TriggerID
 	}
+	return output, nil
+}
+
+func (s ListTriggerOccurrencesService) Run(ctx context.Context, input ListTriggerOccurrencesInput) (ListTriggerOccurrencesOutput, error) {
+	if input.TriggerID == "" {
+		return ListTriggerOccurrencesOutput{}, fmt.Errorf("trigger id is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]ListTriggerOccurrencesHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return ListTriggerOccurrencesOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return ListTriggerOccurrencesOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return ListTriggerOccurrencesOutput{}, err
+	}
+	output.APIVersion = selected
 	return output, nil
 }
 
@@ -1148,6 +1207,41 @@ func SDKTestTriggerHandlers(sdk *formance.Formance) []TestTriggerHandler {
 	}
 }
 
+func SDKListTriggerOccurrencesHandlers(sdk *formance.Formance) []ListTriggerOccurrencesHandler {
+	return []ListTriggerOccurrencesHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input ListTriggerOccurrencesInput) (ListTriggerOccurrencesOutput, error) {
+				response, err := sdk.Orchestration.V1.ListTriggersOccurrences(ctx, operations.ListTriggersOccurrencesRequest{TriggerID: input.TriggerID})
+				if err != nil {
+					return ListTriggerOccurrencesOutput{}, err
+				}
+				if response.ListTriggersOccurrencesResponse == nil {
+					return ListTriggerOccurrencesOutput{}, fmt.Errorf("orchestration v1 list trigger occurrences returned no data")
+				}
+				return fromV1TriggerOccurrences(response.ListTriggersOccurrencesResponse.Data), nil
+			},
+		},
+		{
+			APIVersion: "v2",
+			Run: func(ctx context.Context, input ListTriggerOccurrencesInput) (ListTriggerOccurrencesOutput, error) {
+				response, err := sdk.Orchestration.V2.ListTriggersOccurrences(ctx, operations.V2ListTriggersOccurrencesRequest{
+					TriggerID: input.TriggerID,
+					PageSize:  optionalInt64(input.PageSize),
+					Cursor:    optionalString(input.Cursor),
+				})
+				if err != nil {
+					return ListTriggerOccurrencesOutput{}, err
+				}
+				if response.V2ListTriggersOccurrencesResponse == nil {
+					return ListTriggerOccurrencesOutput{}, fmt.Errorf("orchestration v2 list trigger occurrences returned no cursor")
+				}
+				return fromV2TriggerOccurrencesCursor(response.V2ListTriggersOccurrencesResponse.Cursor), nil
+			},
+		},
+	}
+}
+
 func fromV1Workflows(workflows []shared.Workflow) ListWorkflowsOutput {
 	ret := make([]WorkflowSummary, 0, len(workflows))
 	for _, workflow := range workflows {
@@ -1253,6 +1347,62 @@ func fromV2Trigger(trigger shared.V2Trigger) TriggerSummary {
 		WorkflowID: trigger.WorkflowID,
 		CreatedAt:  trigger.CreatedAt,
 		Version:    version,
+	}
+}
+
+func fromV1TriggerOccurrences(occurrences []shared.TriggerOccurrence) ListTriggerOccurrencesOutput {
+	ret := make([]TriggerOccurrenceSummary, 0, len(occurrences))
+	for _, occurrence := range occurrences {
+		ret = append(ret, fromV1TriggerOccurrence(occurrence))
+	}
+	return ListTriggerOccurrencesOutput{Occurrences: ret, PageSize: int64(len(ret))}
+}
+
+func fromV2TriggerOccurrencesCursor(cursor shared.V2ListTriggersOccurrencesResponseCursor) ListTriggerOccurrencesOutput {
+	occurrences := make([]TriggerOccurrenceSummary, 0, len(cursor.Data))
+	for _, occurrence := range cursor.Data {
+		occurrences = append(occurrences, fromV2TriggerOccurrence(occurrence))
+	}
+	return ListTriggerOccurrencesOutput{
+		Occurrences: occurrences,
+		HasMore:     cursor.HasMore,
+		PageSize:    cursor.PageSize,
+		Next:        cursor.Next,
+		Previous:    cursor.Previous,
+	}
+}
+
+func fromV1TriggerOccurrence(occurrence shared.TriggerOccurrence) TriggerOccurrenceSummary {
+	instanceID := ""
+	if occurrence.WorkflowInstanceID != nil {
+		instanceID = *occurrence.WorkflowInstanceID
+	}
+	errText := ""
+	if occurrence.Error != nil {
+		errText = *occurrence.Error
+	}
+	return TriggerOccurrenceSummary{
+		TriggerID:          occurrence.TriggerID,
+		WorkflowInstanceID: instanceID,
+		Date:               occurrence.Date,
+		Error:              errText,
+	}
+}
+
+func fromV2TriggerOccurrence(occurrence shared.V2TriggerOccurrence) TriggerOccurrenceSummary {
+	instanceID := ""
+	if occurrence.WorkflowInstanceID != nil {
+		instanceID = *occurrence.WorkflowInstanceID
+	}
+	errText := ""
+	if occurrence.Error != nil {
+		errText = *occurrence.Error
+	}
+	return TriggerOccurrenceSummary{
+		TriggerID:          occurrence.TriggerID,
+		WorkflowInstanceID: instanceID,
+		Date:               occurrence.Date,
+		Error:              errText,
 	}
 }
 

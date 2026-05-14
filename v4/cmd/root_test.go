@@ -5588,6 +5588,46 @@ func TestFlowsTriggersTestSelectsV2(t *testing.T) {
 	}
 }
 
+func TestFlowsTriggersOccurrencesListSelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"orchestration","version":"2.1.0","health":true}]}`)
+		case "/api/orchestration/v2/triggers/trigger_1/occurrences":
+			if r.Method != http.MethodGet {
+				t.Fatalf("expected GET, got %s", r.Method)
+			}
+			if got := r.URL.Query().Get("pageSize"); got != "10" {
+				t.Fatalf("expected pageSize 10, got %q", got)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"triggerID":"trigger_1","workflowInstanceID":"instance_1","date":"2026-01-01T00:00:00Z","event":{"name":"approved"}}],"hasMore":false,"pageSize":10}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "flows", "triggers", "occurrences", "list", "trigger_1", "--page-size", "10")
+	if err != nil {
+		t.Fatalf("list trigger occurrences: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v2") || !strings.Contains(stdout, "trigger_1\tinstance_1\t2026-01-01T00:00:00Z") {
+		t.Fatalf("unexpected trigger occurrences output:\n%s", stdout)
+	}
+}
+
 func TestOrchestrationAliasWarns(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

@@ -44,6 +44,71 @@ func newFlowsTriggersCommand() *cobra.Command {
 	command.AddCommand(newFlowsTriggersShowCommand())
 	command.AddCommand(newFlowsTriggersDeleteCommand())
 	command.AddCommand(newFlowsTriggersTestCommand())
+	command.AddCommand(newFlowsTriggersOccurrencesCommand())
+	return command
+}
+
+func newFlowsTriggersOccurrencesCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "occurrences",
+		Short: "Manage trigger occurrences",
+	}
+	command.AddCommand(newFlowsTriggersOccurrencesListCommand())
+	return command
+}
+
+func newFlowsTriggersOccurrencesListCommand() *cobra.Command {
+	var pageSize int64 = 15
+	var cursor string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "list <trigger-id>",
+		Aliases: []string{"ls", "l"},
+		Short:   "List trigger occurrences",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := flowscmd.ListTriggerOccurrencesService{
+				Handlers: flowscmd.SDKListTriggerOccurrencesHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         flowscmd.ProductOrchestration,
+						Feature:         flowscmd.FeatureListTriggerOccurrences,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), flowscmd.ListTriggerOccurrencesInput{
+				TriggerID: args[0],
+				PageSize:  pageSize,
+				Cursor:    cursor,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderFlowsTriggerOccurrences(cmd, output)
+		},
+	}
+	command.Flags().Int64Var(&pageSize, "page-size", 15, "Page size")
+	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
 	return command
 }
 
@@ -1045,4 +1110,24 @@ func renderFlowsTriggerTest(cmd *cobra.Command, output flowscmd.TestTriggerOutpu
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Trigger %s tested.\n", output.TriggerID)
 	return err
+}
+
+func renderFlowsTriggerOccurrences(cmd *cobra.Command, output flowscmd.ListTriggerOccurrencesOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if len(output.Occurrences) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No trigger occurrences found.")
+		return err
+	}
+	for _, occurrence := range output.Occurrences {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\n", occurrence.TriggerID, occurrence.WorkflowInstanceID, occurrence.Date.Format(time.RFC3339), occurrence.Error); err != nil {
+			return err
+		}
+	}
+	if output.HasMore && output.Next != nil {
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
+		return err
+	}
+	return nil
 }

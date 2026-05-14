@@ -247,6 +247,20 @@ func TestTestTriggerServiceSelectsV2Handler(t *testing.T) {
 	}
 }
 
+func TestListTriggerOccurrencesServiceRequiresTriggerID(t *testing.T) {
+	service := ListTriggerOccurrencesService{
+		Handlers: []ListTriggerOccurrencesHandler{{APIVersion: "v2"}},
+		Resolve: func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			t.Fatal("resolver should not run")
+			return "", nil
+		},
+	}
+
+	if _, err := service.Run(context.Background(), ListTriggerOccurrencesInput{}); err == nil {
+		t.Fatal("expected trigger id validation error")
+	}
+}
+
 func assertAPIVersions(t *testing.T, got []capabilities.APIVersion, want []capabilities.APIVersion) {
 	t.Helper()
 	if len(got) != len(want) {
