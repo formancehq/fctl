@@ -1,22 +1,31 @@
 package render
 
 import (
+	"fmt"
 	"io"
 
-	"github.com/pterm/pterm"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/table"
 )
 
 func Table(writer io.Writer, headers []string, rows [][]string) error {
-	data := make(pterm.TableData, 0, len(rows)+1)
-	header := make([]string, 0, len(headers))
-	for _, value := range headers {
-		header = append(header, pterm.LightCyan(value))
-	}
-	data = append(data, header)
-	data = append(data, rows...)
-	return pterm.DefaultTable.
-		WithHasHeader().
-		WithWriter(writer).
-		WithData(data).
-		Render()
+	rendered := table.New().
+		Border(lipgloss.NormalBorder()).
+		BorderTop(false).
+		BorderBottom(false).
+		BorderLeft(false).
+		BorderRight(false).
+		BorderHeader(false).
+		Headers(headers...).
+		Rows(rows...).
+		StyleFunc(func(row, _ int) lipgloss.Style {
+			style := lipgloss.NewStyle().PaddingRight(1)
+			if row == table.HeaderRow {
+				return style.Foreground(lipgloss.Color("14"))
+			}
+			return style
+		}).
+		String()
+	_, err := fmt.Fprintln(writer, rendered)
+	return err
 }
