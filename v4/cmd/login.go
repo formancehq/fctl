@@ -145,6 +145,7 @@ func loginContextForTarget(cmd *cobra.Command, input loginInput, options loginCo
 				return v4config.Context{}, err
 			}
 			options.MembershipURL = membershipURL
+			input.report(cmd, "Membership URL", options.MembershipURL)
 		}
 		return platformLoginContext(cmd, input, options)
 	case loginTargetOpenSource:
@@ -157,6 +158,7 @@ func loginContextForTarget(cmd *cobra.Command, input loginInput, options loginCo
 				return v4config.Context{}, err
 			}
 			options.StackURL = stackURL
+			input.report(cmd, "Stack URL", options.StackURL)
 		}
 		if options.StackURL == "" {
 			return v4config.Context{}, fmt.Errorf("login open-source requires --stack-url")
@@ -223,6 +225,7 @@ func authFromLoginOptions(cmd *cobra.Command, input loginInput, options loginCon
 				return v4config.Auth{}, err
 			}
 			options.ClientID = clientID
+			input.report(cmd, "Client ID", options.ClientID)
 			options.ClientSecret = clientSecret
 		default:
 			return v4config.Auth{}, fmt.Errorf("unsupported authentication choice %q", authMethod)
@@ -418,11 +421,16 @@ func newLoginInput(cmd *cobra.Command) (loginInput, error) {
 
 func (i loginInput) chooseTarget(cmd *cobra.Command) (string, error) {
 	if i.wizard.Available() {
-		return i.wizard.Select("What do you want to connect to?", []v4prompt.Choice{
+		selected, err := i.wizard.Select("What do you want to connect to?", []v4prompt.Choice{
 			{Title: "Formance Cloud", Value: loginTargetCloud},
 			{Title: "Formance EE Self-Hosted", Value: loginTargetEE},
 			{Title: "Formance Open Source / local", Value: loginTargetOpenSource},
 		})
+		if err != nil {
+			return "", err
+		}
+		i.report(cmd, "Target", loginTargetLabel(selected))
+		return selected, nil
 	}
 	if _, err := fmt.Fprintln(cmd.OutOrStdout(), "What do you want to connect to?"); err != nil {
 		return "", err
@@ -442,10 +450,13 @@ func (i loginInput) chooseTarget(cmd *cobra.Command) (string, error) {
 	}
 	switch strings.TrimSpace(strings.ToLower(answer)) {
 	case "1", "cloud", "formance cloud":
+		i.report(cmd, "Target", loginTargetLabel(loginTargetCloud))
 		return loginTargetCloud, nil
 	case "2", "ee", "self-hosted", "enterprise":
+		i.report(cmd, "Target", loginTargetLabel(loginTargetEE))
 		return loginTargetEE, nil
 	case "3", "open-source", "oss", "local":
+		i.report(cmd, "Target", loginTargetLabel(loginTargetOpenSource))
 		return loginTargetOpenSource, nil
 	default:
 		return "", fmt.Errorf("unsupported login choice %q", answer)
@@ -457,10 +468,15 @@ func (i loginInput) choosePlatformAuth(cmd *cobra.Command) (string, error) {
 		return "", fmt.Errorf("login requires --client-id/--client-secret in non-interactive mode")
 	}
 	if i.wizard.Available() {
-		return i.wizard.Select("How do you want to authenticate?", []v4prompt.Choice{
+		selected, err := i.wizard.Select("How do you want to authenticate?", []v4prompt.Choice{
 			{Title: "Browser/device login", Value: "browser"},
 			{Title: "Client credentials", Value: "client-credentials"},
 		})
+		if err != nil {
+			return "", err
+		}
+		i.report(cmd, "Authentication", loginAuthLabel(selected))
+		return selected, nil
 	}
 	if _, err := fmt.Fprintln(cmd.OutOrStdout(), "How do you want to authenticate?"); err != nil {
 		return "", err
@@ -475,7 +491,9 @@ func (i loginInput) choosePlatformAuth(cmd *cobra.Command) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return strings.TrimSpace(strings.ToLower(answer)), nil
+	normalized := strings.TrimSpace(strings.ToLower(answer))
+	i.report(cmd, "Authentication", loginAuthLabel(normalized))
+	return normalized, nil
 }
 
 func (i loginInput) prompt(cmd *cobra.Command, label string) (string, error) {
@@ -501,6 +519,37 @@ func (i loginInput) promptValue(cmd *cobra.Command, label string, placeholder st
 		return "", err
 	}
 	return strings.TrimSpace(value), nil
+}
+
+func (i loginInput) report(cmd *cobra.Command, label string, value string) {
+	if i.nonInteractive || strings.TrimSpace(value) == "" {
+		return
+	}
+	fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\n", label, value)
+}
+
+func loginTargetLabel(target string) string {
+	switch target {
+	case loginTargetCloud:
+		return "Formance Cloud"
+	case loginTargetEE:
+		return "Formance EE Self-Hosted"
+	case loginTargetOpenSource:
+		return "Formance Open Source / local"
+	default:
+		return target
+	}
+}
+
+func loginAuthLabel(authMethod string) string {
+	switch strings.TrimSpace(strings.ToLower(authMethod)) {
+	case "1", "browser", "browser/device login", "device":
+		return "Browser/device login"
+	case "2", "client credentials", "client-credentials":
+		return "Client credentials"
+	default:
+		return authMethod
+	}
 }
 
 func normalizeLoginTarget(value string) (string, error) {

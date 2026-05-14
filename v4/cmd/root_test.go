@@ -99,6 +99,14 @@ func TestLoginOpenSourceWizardCreatesDefaultProfile(t *testing.T) {
 	if !strings.Contains(stdout, "Logged in with profile default.") {
 		t.Fatalf("unexpected login output:\n%s", stdout)
 	}
+	for _, expected := range []string{
+		"Target\tFormance Open Source / local\n",
+		"Stack URL\thttp://localhost:8080\n",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected login output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
 
 	cfg, err := v4config.LoadFile(filepath.Join(configDir, "config.yaml"))
 	if err != nil {
@@ -117,21 +125,31 @@ func TestLoginBrowserDeviceFlowCreatesCloudAndEEProfiles(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
 		target     string
+		input      string
 		wantKind   v4config.ContextKind
 		extraFlags []string
+		wantOutput []string
 	}{
 		{
 			name:     "cloud",
-			target:   "cloud",
+			input:    "1\n1\n",
 			wantKind: v4config.ContextKindCloud,
+			wantOutput: []string{
+				"Target\tFormance Cloud\n",
+				"Authentication\tBrowser/device login\n",
+			},
 		},
 		{
 			name:     "ee",
 			target:   "ee",
+			input:    "1\n",
 			wantKind: v4config.ContextKindCloudStack,
 			extraFlags: []string{
 				"--organization", "org_1",
 				"--stack", "stack_1",
+			},
+			wantOutput: []string{
+				"Authentication\tBrowser/device login\n",
 			},
 		},
 	} {
@@ -154,12 +172,14 @@ func TestLoginBrowserDeviceFlowCreatesCloudAndEEProfiles(t *testing.T) {
 			args = append(args, tc.extraFlags...)
 			args = append(args,
 				"login",
-				"--target", tc.target,
 				"--membership-url", server.URL,
 			)
+			if tc.target != "" {
+				args = append(args, "--target", tc.target)
+			}
 
 			stdout, stderr, err := executeCommandWithInput(t,
-				"1\n",
+				tc.input,
 				args...,
 			)
 			if err != nil {
@@ -175,6 +195,11 @@ func TestLoginBrowserDeviceFlowCreatesCloudAndEEProfiles(t *testing.T) {
 				!strings.Contains(stdout, "Waiting for authentication...") ||
 				!strings.Contains(stdout, "Logged in with profile default.") {
 				t.Fatalf("unexpected login output:\n%s", stdout)
+			}
+			for _, expected := range tc.wantOutput {
+				if !strings.Contains(stdout, expected) {
+					t.Fatalf("expected login output to contain %q, got:\n%s", expected, stdout)
+				}
 			}
 			if openedURL != "https://verify.example?user_code=USER-CODE" {
 				t.Fatalf("unexpected opened URL %q", openedURL)
