@@ -131,7 +131,7 @@ Implementation v4:
 | aucun equivalent v3 | `fctl config migrate-v3` | Importe les profiles v3 sans les modifier. | fixtures v3, keyring fake, idempotence. |
 | `fctl prompt` | `fctl setup` ou `fctl context wizard` | Garder `prompt` alias cache/deprecie. | ne jamais bloquer en `--non-interactive`. |
 | `fctl version` | `fctl version` | Ajouter build metadata v4. | stdout stable. |
-| `fctl ui` | `fctl ui` | A reevaluer: garder si encore utile, sinon documenter retrait. | detection browser/TTY. |
+| `fctl ui` | `fctl ui [--print]` | Garder pour les contextes Cloud uniquement; `--print` donne une sortie scriptable sans navigateur. | detection browser/TTY. |
 
 Implementation v4:
 
@@ -142,6 +142,7 @@ Implementation v4:
 - `auth token` imprime le token d'acces resolu pour les contextes authentifies, afin de faciliter CI et debug;
 - `auth logout --confirm` supprime les credentials stockes localement quand ils utilisent un ref gere par le CLI, puis repasse le contexte en `none`.
 - `context unset-defaults [name] --confirm` supprime les defaults du contexte sans toucher a l'auth ni aux credentials; les aliases deprecies `profiles reset`, `profiles set-default-organization` et `profiles set-default-stack` restent disponibles pour les migrations peu couteuses.
+- `ui [--print]` reste disponible sur les contextes `cloud`/`cloud-stack`; il lit `/_info.consoleURL`, ouvre le navigateur seulement en mode interactif, et refuse les contextes `stack`.
 
 ## Mapping commandes Cloud
 

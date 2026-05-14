@@ -27,6 +27,7 @@ the isolated v4 implementation under `v4/`.
 | `--profile <name>` | `--context <name>` | `--profile` is a deprecated alias with a warning. |
 | `-c`, `--config-dir <dir>` | `-c`, `--config-dir <dir>` | Kept for config directory selection; `--context` has no short flag. |
 | `--insecure-tls` | `--insecure-tls` | Kept as an explicit non-persistent runtime override. |
+| `ui` | `ui --print` or `ui` | Kept for Cloud contexts; `--print` is non-browser/non-interactive friendly. |
 | `profiles ...` | `context ...` | `profiles` is a deprecated alias with a warning. |
 | `profiles reset <name>` | `context unset-defaults <name> --confirm` | `profiles reset` is a deprecated alias with a warning. |
 | `profiles set-default-organization <org>` | `context set --organization <org>` | Deprecated alias updates the current context. |

@@ -1,0 +1,92 @@
+package cmd
+
+import (
+	"fmt"
+	"net/url"
+	"os/exec"
+	goruntime "runtime"
+
+	"github.com/spf13/cobra"
+)
+
+var openBrowserURL = openURL
+
+func newUICommand() *cobra.Command {
+	var printOnly bool
+
+	command := &cobra.Command{
+		Use:   "ui",
+		Short: "Open the Formance Cloud console",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			_, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			response, err := client.GetServerInfo(cmd.Context())
+			if err != nil {
+				return err
+			}
+			if response.ServerInfo == nil {
+				return fmt.Errorf("cloud server info response did not include server info")
+			}
+			consoleURL := ""
+			if response.ServerInfo.ConsoleURL != nil {
+				consoleURL = *response.ServerInfo.ConsoleURL
+			}
+			if consoleURL == "" {
+				return fmt.Errorf("cloud server info response did not include consoleURL")
+			}
+
+			nonInteractive, err := cmd.Root().PersistentFlags().GetBool(nonInteractiveFlag)
+			if err != nil {
+				return err
+			}
+			opened := false
+			if !printOnly && !nonInteractive {
+				if err := openBrowserURL(consoleURL); err != nil {
+					return err
+				}
+				opened = true
+			}
+
+			output := uiOutput{URL: consoleURL, Opened: opened}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			if opened {
+				_, err = fmt.Fprintf(cmd.OutOrStdout(), "Opening console: %s\n", consoleURL)
+				return err
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Console URL: %s\n", consoleURL)
+			return err
+		},
+	}
+	command.Flags().BoolVar(&printOnly, "print", false, "Print the console URL without opening a browser")
+	return command
+}
+
+func openURL(rawURL string) error {
+	if _, err := url.ParseRequestURI(rawURL); err != nil {
+		return fmt.Errorf("invalid URL: %s", rawURL)
+	}
+
+	var command string
+	var args []string
+	switch goruntime.GOOS {
+	case "windows":
+		command = "cmd"
+		args = []string{"/c", "start"}
+	case "darwin":
+		command = "open"
+	default:
+		command = "xdg-open"
+	}
+	args = append(args, rawURL)
+	return exec.Command(command, args...).Start() //nolint:gosec // URL opener is selected by OS and URL is parsed above.
+}
+
+type uiOutput struct {
+	URL    string `json:"url" yaml:"url"`
+	Opened bool   `json:"opened" yaml:"opened"`
+}

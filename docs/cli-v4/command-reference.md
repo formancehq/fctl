@@ -27,6 +27,7 @@ This reference lists the current canonical v4 command families implemented under
 - `fctl context unset-defaults [name] --confirm`
 - `fctl config migrate-v3`
 - `fctl setup`
+- `fctl ui --print`
 - `fctl target inspect`
 - `fctl target proxy --port 55001`
 
