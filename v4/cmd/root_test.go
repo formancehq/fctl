@@ -2049,6 +2049,9 @@ func TestLedgerSetMetadataSelectsV2(t *testing.T) {
 			if !strings.Contains(body, `"tier":"gold"`) {
 				t.Fatalf("expected metadata body, got %s", body)
 			}
+			if !strings.Contains(body, `"team":"finance"`) {
+				t.Fatalf("expected metadata file body, got %s", body)
+			}
 			w.WriteHeader(http.StatusNoContent)
 		default:
 			t.Fatalf("unexpected path %s", r.URL.Path)
@@ -2066,9 +2069,14 @@ func TestLedgerSetMetadataSelectsV2(t *testing.T) {
 		t.Fatalf("create context: %v stderr=%s", err, stderr)
 	}
 
+	metadataPath := filepath.Join(t.TempDir(), "metadata.json")
+	if err := os.WriteFile(metadataPath, []byte(`{"team":"finance","tier":"silver"}`), 0o600); err != nil {
+		t.Fatalf("write metadata fixture: %v", err)
+	}
 	stdout, stderr, err := executeCommand(t,
 		"--config-dir", configDir,
 		"ledger", "set-metadata", "default", "tier=gold",
+		"--metadata-file", metadataPath,
 		"--confirm",
 	)
 	if err != nil {

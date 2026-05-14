@@ -112,6 +112,7 @@ aliases for `cloud stacks`.
 - `fctl ledger accounts list`
 - `fctl ledger accounts show <address>`
 - `fctl ledger accounts query <query-id> --schema-version <version>`
+- `fctl ledger set-metadata <ledger> [key=value]... --metadata-file <path>|- --confirm`
 - `fctl ledger schemas list`
 - `fctl ledger schemas show <schema-id>`
 - `fctl ledger schemas insert`

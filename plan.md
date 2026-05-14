@@ -270,6 +270,7 @@ Implementation v4:
 - la commande reutilise la resolution API Ledger et mappe vers `createTransaction` v1/v2 avec payload Numscript.
 - `ledger accounts query <query-id> --schema-version <version>` est implemente via `v2RunQuery`;
 - la commande reste product-oriented: elle force le resource template `accounts`, accepte `--var key=value`, et garde `--api-version` comme override technique uniquement.
+- `ledger set-metadata <ledger> [key=value]... --metadata-file <path>|-` accepte un objet JSON de metadata et laisse les `key=value` explicites surcharger le fichier.
 
 Commandes nouvelles possibles si l'API Ledger v3 les expose:
 

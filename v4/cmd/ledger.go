@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -839,21 +840,32 @@ func newLedgerImportCommand() *cobra.Command {
 
 func newLedgerSetMetadataCommand() *cobra.Command {
 	var confirm bool
+	var metadataFile string
 	var apiVersion string
 
 	command := &cobra.Command{
-		Use:     "set-metadata <ledger> <key=value>...",
+		Use:     "set-metadata <ledger> [key=value]...",
 		Aliases: []string{"sm", "set-meta"},
 		Short:   "Set metadata on a ledger",
-		Args:    cobra.MinimumNArgs(2),
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !confirm {
 				return fmt.Errorf("ledger set-metadata requires --confirm")
 			}
 
-			metadata, err := parseMetadataFlags(args[1:])
+			metadata, err := parseMetadataFile(cmd, metadataFile)
 			if err != nil {
 				return err
+			}
+			argMetadata, err := parseMetadataFlags(args[1:])
+			if err != nil {
+				return err
+			}
+			for key, value := range argMetadata {
+				if metadata == nil {
+					metadata = map[string]string{}
+				}
+				metadata[key] = value
 			}
 
 			rt, err := runtimeFromCommand(cmd)
@@ -899,6 +911,7 @@ func newLedgerSetMetadataCommand() *cobra.Command {
 	}
 
 	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm the metadata update")
+	command.Flags().StringVar(&metadataFile, "metadata-file", "", "Read metadata JSON object from path or stdin with -")
 	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
 
 	return command
@@ -2475,6 +2488,24 @@ func renderLedgerVolumes(cmd *cobra.Command, output ledgercmd.ListVolumesOutput)
 
 func parseMetadataFlags(values []string) (map[string]string, error) {
 	return parseKeyValueFlags(values, "metadata")
+}
+
+func parseMetadataFile(cmd *cobra.Command, file string) (map[string]string, error) {
+	if file == "" {
+		return nil, nil
+	}
+	data, err := readLedgerCommandFile(cmd, file)
+	if err != nil {
+		return nil, err
+	}
+	var metadata map[string]string
+	if err := json.Unmarshal(data, &metadata); err != nil {
+		return nil, fmt.Errorf("parse metadata file: %w", err)
+	}
+	if len(metadata) == 0 {
+		return nil, nil
+	}
+	return metadata, nil
 }
 
 func readLedgerCommandFile(cmd *cobra.Command, file string) ([]byte, error) {
