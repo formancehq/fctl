@@ -5662,6 +5662,160 @@ func TestOrchestrationAliasWarns(t *testing.T) {
 	}
 }
 
+func TestReconciliationListSelectsV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"reconciliation","version":"1.0.0","health":true}]}`)
+		case "/api/reconciliation/reconciliations":
+			if got := r.URL.Query().Get("pageSize"); got != "10" {
+				t.Fatalf("expected pageSize 10, got %q", got)
+			}
+			if got := r.URL.Query().Get("query"); !strings.Contains(got, "policy_1") || !strings.Contains(got, "COMPLETED") {
+				t.Fatalf("expected policy and status query filters, got %q", got)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"id":"rec_1","policyID":"policy_1","status":"COMPLETED","ledgerBalances":{},"paymentsBalances":{},"driftBalances":{},"reconciledAtLedger":"2026-01-01T00:00:00Z","reconciledAtPayments":"2026-01-01T00:00:00Z","createdAt":"2026-01-01T00:01:00Z"}],"hasMore":false,"pageSize":10}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "reconciliation", "list", "--page-size", "10", "--policy-id", "policy_1", "--status", "COMPLETED")
+	if err != nil {
+		t.Fatalf("list reconciliations: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v1") || !strings.Contains(stdout, "rec_1\tpolicy_1\tCOMPLETED\t2026-01-01T00:01:00Z") {
+		t.Fatalf("unexpected reconciliations output:\n%s", stdout)
+	}
+}
+
+func TestReconciliationShowGetWarns(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"reconciliation","version":"1.0.0","health":true}]}`)
+		case "/api/reconciliation/reconciliations/rec_1":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":"rec_1","policyID":"policy_1","status":"FAILED","error":"drift detected","ledgerBalances":{},"paymentsBalances":{},"driftBalances":{},"reconciledAtLedger":"2026-01-01T00:00:00Z","reconciledAtPayments":"2026-01-01T00:00:00Z","createdAt":"2026-01-01T00:01:00Z"}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "reconciliation", "get", "rec_1")
+	if err != nil {
+		t.Fatalf("show reconciliation through alias: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Command reconciliation get has been deprecated, use reconciliation show") {
+		t.Fatalf("expected get deprecation warning, got:\n%s", stderr)
+	}
+	if !strings.Contains(stdout, "Status\tFAILED") || !strings.Contains(stdout, "Error\tdrift detected") {
+		t.Fatalf("unexpected reconciliation output:\n%s", stdout)
+	}
+}
+
+func TestReconciliationPoliciesListSelectsV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"reconciliation","version":"1.0.0","health":true}]}`)
+		case "/api/reconciliation/policies":
+			if got := r.URL.Query().Get("pageSize"); got != "10" {
+				t.Fatalf("expected pageSize 10, got %q", got)
+			}
+			if got := r.URL.Query().Get("query"); !strings.Contains(got, "default") || !strings.Contains(got, "pool_1") {
+				t.Fatalf("expected ledger and pool query filters, got %q", got)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"id":"policy_1","name":"daily","ledgerName":"default","paymentsPoolID":"pool_1","ledgerQuery":{},"createdAt":"2026-01-01T00:00:00Z"}],"hasMore":false,"pageSize":10}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "reconciliation", "policies", "list", "--page-size", "10", "--ledger", "default", "--payments-pool-id", "pool_1")
+	if err != nil {
+		t.Fatalf("list policies: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v1") || !strings.Contains(stdout, "policy_1\tdaily\tdefault\tpool_1") {
+		t.Fatalf("unexpected policies output:\n%s", stdout)
+	}
+}
+
+func TestReconciliationPoliciesShowGetWarns(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"reconciliation","version":"1.0.0","health":true}]}`)
+		case "/api/reconciliation/policies/policy_1":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":"policy_1","name":"daily","ledgerName":"default","paymentsPoolID":"pool_1","ledgerQuery":{},"createdAt":"2026-01-01T00:00:00Z"}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "reconciliation", "policies", "get", "policy_1")
+	if err != nil {
+		t.Fatalf("show policy through alias: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Command reconciliation policies get has been deprecated, use reconciliation policies show") {
+		t.Fatalf("expected get deprecation warning, got:\n%s", stderr)
+	}
+	if !strings.Contains(stdout, "ID\tpolicy_1") || !strings.Contains(stdout, "Payments pool ID\tpool_1") {
+		t.Fatalf("unexpected policy output:\n%s", stdout)
+	}
+}
+
 func TestConfigMigrateV3DryRun(t *testing.T) {
 	v3Dir := writeV3CommandFixture(t, true)
 

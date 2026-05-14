@@ -48,6 +48,7 @@ func NewRootCommand(version string) *cobra.Command {
 	root.AddCommand(newWalletsCommand())
 	root.AddCommand(newFlowsCommand(false))
 	root.AddCommand(newFlowsCommand(true))
+	root.AddCommand(newReconciliationCommand())
 
 	return root
 }
