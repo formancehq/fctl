@@ -2610,7 +2610,7 @@ func TestCloudStacksMutations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cloud stacks create: %v stderr=%s", err, stderr)
 	}
-	if stdout != "Cloud stack stack_1 created.\n" {
+	if stdout != "Cloud stack stack_1 created.\nURL https://stack.example/api\n" {
 		t.Fatalf("unexpected create output: %q", stdout)
 	}
 
@@ -2771,7 +2771,7 @@ func TestCloudStacksCreateWaitsUntilReady(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cloud stacks create waits: %v stderr=%s", err, stderr)
 	}
-	if stdout != "Cloud stack stack_1 created.\n" {
+	if stdout != "Cloud stack stack_1 created.\nURL "+stackServer.URL+"\n" {
 		t.Fatalf("unexpected create output: %q", stdout)
 	}
 	if getStackCalls != 1 {
@@ -2833,7 +2833,7 @@ func TestCloudStacksCreateAvailabilityUsesStackVersionsFirst(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cloud stacks create direct availability: %v stderr=%s", err, stderr)
 	}
-	if stdout != "Cloud stack stack_1 created.\n" {
+	if stdout != "Cloud stack stack_1 created.\nURL "+stackServer.URL+"\n" {
 		t.Fatalf("unexpected create output: %q", stdout)
 	}
 	if stackVersionsCalls != 1 {
