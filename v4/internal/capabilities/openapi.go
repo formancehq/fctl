@@ -40,7 +40,13 @@ func ParseOpenAPIManifest(reader io.Reader) (Manifest, error) {
 		sort.Strings(methods)
 
 		for _, method := range methods {
-			operation := pathItem[method]
+			if !isHTTPMethod(method) {
+				continue
+			}
+			var operation openAPIOperation
+			if err := json.Unmarshal(pathItem[method], &operation); err != nil {
+				return Manifest{}, fmt.Errorf("decode operation %s %s: %w", method, path, err)
+			}
 			if operation.OperationID == "" {
 				continue
 			}
@@ -120,8 +126,8 @@ func canonicalFeature(operationID string) string {
 }
 
 type openAPIDocument struct {
-	Info  openAPIInfo                            `json:"info"`
-	Paths map[string]map[string]openAPIOperation `json:"paths"`
+	Info  openAPIInfo                           `json:"info"`
+	Paths map[string]map[string]json.RawMessage `json:"paths"`
 }
 
 type openAPIInfo struct {
@@ -131,4 +137,13 @@ type openAPIInfo struct {
 type openAPIOperation struct {
 	OperationID string   `json:"operationId"`
 	Tags        []string `json:"tags"`
+}
+
+func isHTTPMethod(method string) bool {
+	switch strings.ToLower(method) {
+	case "get", "put", "post", "delete", "options", "head", "patch", "trace":
+		return true
+	default:
+		return false
+	}
 }
