@@ -145,6 +145,7 @@ func newCloudOrganizationsCommand() *cobra.Command {
 	command.AddCommand(newCloudOrganizationsUpdateCommand())
 	command.AddCommand(newCloudOrganizationsDeleteCommand())
 	command.AddCommand(newCloudOrganizationsInvitationsCommand())
+	command.AddCommand(newCloudOrganizationsUsersCommand())
 	return command
 }
 
@@ -191,6 +192,139 @@ func newCloudOrganizationsInvitationsCommand() *cobra.Command {
 	command.AddCommand(newCloudOrganizationsInvitationsListCommand())
 	command.AddCommand(newCloudOrganizationsInvitationsSendCommand())
 	command.AddCommand(newCloudOrganizationsInvitationsDeleteCommand())
+	return command
+}
+
+func newCloudOrganizationsUsersCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "users",
+		Short: "Manage Cloud organization users",
+	}
+	command.AddCommand(newCloudOrganizationsUsersListCommand())
+	command.AddCommand(newCloudOrganizationsUsersShowCommand())
+	command.AddCommand(newCloudOrganizationsUsersLinkCommand())
+	command.AddCommand(newCloudOrganizationsUsersUnlinkCommand())
+	return command
+}
+
+func newCloudOrganizationsUsersListCommand() *cobra.Command {
+	var organizationID string
+
+	command := &cobra.Command{
+		Use:   "list",
+		Short: "List Cloud organization users",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ListOrganizationUsersService{Client: client}.Run(cmd.Context(), resolveCloudOrganizationID(rt, organizationID))
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudOrganizationUsers(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	return command
+}
+
+func newCloudOrganizationsUsersShowCommand() *cobra.Command {
+	var organizationID string
+
+	command := &cobra.Command{
+		Use:   "show <user-id>",
+		Short: "Show a Cloud organization user",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ReadOrganizationUserService{Client: client}.Run(cmd.Context(), cloudcmd.OrganizationUserActionInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				UserID:         args[0],
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudOrganizationUser(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	return command
+}
+
+func newCloudOrganizationsUsersLinkCommand() *cobra.Command {
+	var organizationID string
+	var policyID int64
+
+	command := &cobra.Command{
+		Use:   "link <user-id>",
+		Short: "Link a user to a Cloud organization",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.OrganizationUserActionService{Client: client, Action: "link"}.Run(cmd.Context(), cloudcmd.OrganizationUserActionInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				UserID:         args[0],
+				PolicyID:       policyID,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudOrganizationUserAction(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	command.Flags().Int64Var(&policyID, "policy-id", 0, "Organization policy ID")
+	return command
+}
+
+func newCloudOrganizationsUsersUnlinkCommand() *cobra.Command {
+	var organizationID string
+	var confirm bool
+
+	command := &cobra.Command{
+		Use:   "unlink <user-id>",
+		Short: "Unlink a user from a Cloud organization",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("cloud organizations users unlink requires --confirm")
+			}
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.OrganizationUserActionService{Client: client, Action: "unlink"}.Run(cmd.Context(), cloudcmd.OrganizationUserActionInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				UserID:         args[0],
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudOrganizationUserAction(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm organization user unlink")
 	return command
 }
 
@@ -491,6 +625,33 @@ func renderCloudOrganizations(cmd *cobra.Command, output cloudcmd.ListOrganizati
 		}
 	}
 	return nil
+}
+
+func renderCloudOrganizationUsers(cmd *cobra.Command, output cloudcmd.ListOrganizationUsersOutput) error {
+	if len(output.Users) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No organization users found.")
+		return err
+	}
+	for _, user := range output.Users {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%d\n", user.ID, user.Email, user.PolicyID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func renderCloudOrganizationUser(cmd *cobra.Command, output cloudcmd.OrganizationUserOutput) error {
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\nEmail\t%s\nPolicy\t%d\n", output.User.ID, output.User.Email, output.User.PolicyID)
+	return err
+}
+
+func renderCloudOrganizationUserAction(cmd *cobra.Command, output cloudcmd.OrganizationUserActionOutput) error {
+	done := "linked"
+	if output.Action == "unlink" {
+		done = "unlinked"
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Cloud organization %s user %s %s.\n", output.OrganizationID, output.UserID, done)
+	return err
 }
 
 func renderCloudOrganization(cmd *cobra.Command, output cloudcmd.OrganizationOutput) error {

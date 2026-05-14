@@ -22,6 +22,10 @@ type MembershipClient interface {
 	ListOrganizationInvitations(context.Context, operations.ListOrganizationInvitationsRequest, ...operations.Option) (*operations.ListOrganizationInvitationsResponse, error)
 	CreateInvitation(context.Context, operations.CreateInvitationRequest, ...operations.Option) (*operations.CreateInvitationResponse, error)
 	DeleteInvitation(context.Context, operations.DeleteInvitationRequest, ...operations.Option) (*operations.DeleteInvitationResponse, error)
+	ListUsersOfOrganization(context.Context, operations.ListUsersOfOrganizationRequest, ...operations.Option) (*operations.ListUsersOfOrganizationResponse, error)
+	ReadUserOfOrganization(context.Context, operations.ReadUserOfOrganizationRequest, ...operations.Option) (*operations.ReadUserOfOrganizationResponse, error)
+	UpsertOrganizationUser(context.Context, operations.UpsertOrganizationUserRequest, ...operations.Option) (*operations.UpsertOrganizationUserResponse, error)
+	DeleteUserFromOrganization(context.Context, operations.DeleteUserFromOrganizationRequest, ...operations.Option) (*operations.DeleteUserFromOrganizationResponse, error)
 }
 
 type UserSummary struct {
@@ -128,6 +132,35 @@ type OrganizationInvitationActionOutput struct {
 	OrganizationID string `json:"organizationID" yaml:"organizationID"`
 	InvitationID   string `json:"invitationID" yaml:"invitationID"`
 	Action         string `json:"action" yaml:"action"`
+}
+
+type OrganizationUserSummary struct {
+	ID       string `json:"id" yaml:"id"`
+	Email    string `json:"email" yaml:"email"`
+	PolicyID int64  `json:"policyID" yaml:"policyID"`
+}
+
+type ListOrganizationUsersOutput struct {
+	OrganizationID string                    `json:"organizationID" yaml:"organizationID"`
+	Users          []OrganizationUserSummary `json:"users" yaml:"users"`
+}
+
+type OrganizationUserOutput struct {
+	OrganizationID string                  `json:"organizationID" yaml:"organizationID"`
+	User           OrganizationUserSummary `json:"user" yaml:"user"`
+}
+
+type OrganizationUserActionInput struct {
+	OrganizationID string
+	UserID         string
+	PolicyID       int64
+}
+
+type OrganizationUserActionOutput struct {
+	OrganizationID string `json:"organizationID" yaml:"organizationID"`
+	UserID         string `json:"userID" yaml:"userID"`
+	Action         string `json:"action" yaml:"action"`
+	PolicyID       int64  `json:"policyID,omitempty" yaml:"policyID,omitempty"`
 }
 
 type MeService struct {
@@ -402,6 +435,90 @@ func (s DeleteInvitationService) Run(ctx context.Context, input OrganizationInvi
 		return OrganizationInvitationActionOutput{}, err
 	}
 	return OrganizationInvitationActionOutput{OrganizationID: input.OrganizationID, InvitationID: input.InvitationID, Action: "delete"}, nil
+}
+
+type ListOrganizationUsersService struct {
+	Client MembershipClient
+}
+
+func (s ListOrganizationUsersService) Run(ctx context.Context, organizationID string) (ListOrganizationUsersOutput, error) {
+	if s.Client == nil {
+		return ListOrganizationUsersOutput{}, fmt.Errorf("membership client is required")
+	}
+	if organizationID == "" {
+		return ListOrganizationUsersOutput{}, fmt.Errorf("organization id is required")
+	}
+	response, err := s.Client.ListUsersOfOrganization(ctx, operations.ListUsersOfOrganizationRequest{OrganizationID: organizationID})
+	if err != nil {
+		return ListOrganizationUsersOutput{}, err
+	}
+	data := response.GetListUsersResponse().GetData()
+	users := make([]OrganizationUserSummary, 0, len(data))
+	for _, user := range data {
+		users = append(users, OrganizationUserSummary{
+			ID:       user.ID,
+			Email:    user.Email,
+			PolicyID: user.PolicyID,
+		})
+	}
+	return ListOrganizationUsersOutput{OrganizationID: organizationID, Users: users}, nil
+}
+
+type ReadOrganizationUserService struct {
+	Client MembershipClient
+}
+
+func (s ReadOrganizationUserService) Run(ctx context.Context, input OrganizationUserActionInput) (OrganizationUserOutput, error) {
+	if s.Client == nil {
+		return OrganizationUserOutput{}, fmt.Errorf("membership client is required")
+	}
+	if input.OrganizationID == "" {
+		return OrganizationUserOutput{}, fmt.Errorf("organization id is required")
+	}
+	if input.UserID == "" {
+		return OrganizationUserOutput{}, fmt.Errorf("user id is required")
+	}
+	response, err := s.Client.ReadUserOfOrganization(ctx, operations.ReadUserOfOrganizationRequest{OrganizationID: input.OrganizationID, UserID: input.UserID})
+	if err != nil {
+		return OrganizationUserOutput{}, err
+	}
+	data := response.GetReadOrganizationUserResponse().GetData()
+	if data == nil {
+		return OrganizationUserOutput{}, fmt.Errorf("cloud organizations users show returned no user")
+	}
+	return OrganizationUserOutput{OrganizationID: input.OrganizationID, User: OrganizationUserSummary{ID: data.ID, Email: data.Email, PolicyID: data.PolicyID}}, nil
+}
+
+type OrganizationUserActionService struct {
+	Client MembershipClient
+	Action string
+}
+
+func (s OrganizationUserActionService) Run(ctx context.Context, input OrganizationUserActionInput) (OrganizationUserActionOutput, error) {
+	if s.Client == nil {
+		return OrganizationUserActionOutput{}, fmt.Errorf("membership client is required")
+	}
+	if input.OrganizationID == "" {
+		return OrganizationUserActionOutput{}, fmt.Errorf("organization id is required")
+	}
+	if input.UserID == "" {
+		return OrganizationUserActionOutput{}, fmt.Errorf("user id is required")
+	}
+	output := OrganizationUserActionOutput{OrganizationID: input.OrganizationID, UserID: input.UserID, Action: s.Action, PolicyID: input.PolicyID}
+	switch s.Action {
+	case "link":
+		body := &components.UpdateOrganizationUserRequest{}
+		if input.PolicyID != 0 {
+			body.PolicyID = &input.PolicyID
+		}
+		_, err := s.Client.UpsertOrganizationUser(ctx, operations.UpsertOrganizationUserRequest{OrganizationID: input.OrganizationID, UserID: input.UserID, Body: body})
+		return output, err
+	case "unlink":
+		_, err := s.Client.DeleteUserFromOrganization(ctx, operations.DeleteUserFromOrganizationRequest{OrganizationID: input.OrganizationID, UserID: input.UserID})
+		return output, err
+	default:
+		return OrganizationUserActionOutput{}, fmt.Errorf("unsupported organization user action %q", s.Action)
+	}
 }
 
 func organizationSummary(organization *components.OrganizationExpanded) OrganizationSummary {

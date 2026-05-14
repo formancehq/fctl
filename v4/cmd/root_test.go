@@ -635,6 +635,80 @@ func TestCloudOrganizationInvitations(t *testing.T) {
 	}
 }
 
+func TestCloudOrganizationUsers(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/users":
+			fmt.Fprint(w, `{"data":[{"id":"user_1","email":"user@example.com","policyId":42}]}`)
+		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/users/user_1":
+			fmt.Fprint(w, `{"data":{"id":"user_1","email":"user@example.com","policyId":42}}`)
+		case r.Method == http.MethodPut && r.URL.Path == "/organizations/org_1/users/user_1":
+			body := readRequestBody(t, r)
+			if !strings.Contains(body, `"policyId":42`) {
+				t.Fatalf("expected policy id body, got %s", body)
+			}
+			w.WriteHeader(http.StatusNoContent)
+		case r.Method == http.MethodDelete && r.URL.Path == "/organizations/org_1/users/user_1":
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", server.URL,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "users", "list")
+	if err != nil {
+		t.Fatalf("cloud organizations users list: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "user_1\tuser@example.com\t42") {
+		t.Fatalf("unexpected users list output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "users", "show", "user_1")
+	if err != nil {
+		t.Fatalf("cloud organizations users show: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{"ID\tuser_1", "Email\tuser@example.com", "Policy\t42"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected user output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "users", "link", "user_1", "--policy-id", "42")
+	if err != nil {
+		t.Fatalf("cloud organizations users link: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud organization org_1 user user_1 linked.\n" {
+		t.Fatalf("unexpected link output: %q", stdout)
+	}
+
+	_, _, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "users", "unlink", "user_1")
+	if err == nil {
+		t.Fatal("expected users unlink to require --confirm")
+	}
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "users", "unlink", "user_1", "--confirm")
+	if err != nil {
+		t.Fatalf("cloud organizations users unlink: %v stderr=%s", err, stderr)
+	}
+	if stdout != "Cloud organization org_1 user user_1 unlinked.\n" {
+		t.Fatalf("unexpected unlink output: %q", stdout)
+	}
+}
+
 func TestCloudCommandsRejectStackContext(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Fatalf("cloud command must reject stack contexts before network calls")
