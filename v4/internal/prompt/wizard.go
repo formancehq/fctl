@@ -52,7 +52,7 @@ func (w Wizard) Select(title string, choices []Choice) (string, error) {
 			Title(title).
 			Options(options...).
 			Value(&value).
-			Height(len(options)),
+			Height(len(options) + 1),
 	)
 	if err != nil {
 		return "", err
