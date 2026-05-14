@@ -31,9 +31,10 @@ func newAuthCommand() *cobra.Command {
 
 func newSessionCommand() *cobra.Command {
 	command := &cobra.Command{
-		Use:   "session",
-		Short: "Manage CLI authentication sessions",
-		Args:  cobra.NoArgs,
+		Use:    "session",
+		Short:  "Manage CLI authentication sessions",
+		Hidden: true,
+		Args:   cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return cmd.Help()
 		},

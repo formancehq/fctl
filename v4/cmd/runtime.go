@@ -60,22 +60,22 @@ func runtimeFromCommand(cmd *cobra.Command) (*runtime.Runtime, error) {
 
 func contextNameFromCommand(cmd *cobra.Command) (string, error) {
 	flags := cmd.Root().PersistentFlags()
-	contextName, err := flags.GetString(contextFlag)
+	profileName, err := flags.GetString(profileFlag)
 	if err != nil {
 		return "", err
 	}
-	profileName, err := flags.GetString(profileFlag)
+	contextName, err := flags.GetString(contextFlag)
 	if err != nil {
 		return "", err
 	}
 	if contextName != "" && profileName != "" {
 		return "", fmt.Errorf("--profile and --context are mutually exclusive")
 	}
-	if profileName != "" {
-		fmt.Fprintln(cmd.ErrOrStderr(), "Flag --profile has been deprecated, use --context")
-		return profileName, nil
+	if contextName != "" {
+		fmt.Fprintln(cmd.ErrOrStderr(), "Flag --context has been deprecated, use --profile")
+		return contextName, nil
 	}
-	return contextName, nil
+	return profileName, nil
 }
 
 func credentialStoreFromCommand(cmd *cobra.Command) (credentials.Store, error) {

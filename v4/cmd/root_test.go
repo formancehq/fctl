@@ -57,18 +57,25 @@ func TestRootHelp(t *testing.T) {
 	}
 	for _, expected := range []string{
 		"Formance Control CLI v4",
-		"--context",
+		"--profile",
+		"--organization",
+		"--stack",
 		"--config-dir",
 		"-c, --config-dir",
 		"-d, --debug",
 		"--insecure-tls",
 		"--no-color",
 		"--non-interactive",
-		"session",
+		"profile",
 		"version",
 	} {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected help output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+	for _, hidden := range []string{"--context", "session", " context "} {
+		if strings.Contains(stdout, hidden) {
+			t.Fatalf("expected help output not to contain hidden %q, got:\n%s", hidden, stdout)
 		}
 	}
 }

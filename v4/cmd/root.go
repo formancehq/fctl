@@ -10,6 +10,8 @@ import (
 const (
 	contextFlag        = "context"
 	profileFlag        = "profile"
+	organizationFlag   = "organization"
+	stackFlag          = "stack"
 	configDirFlag      = "config-dir"
 	credentialDirFlag  = "credential-dir"
 	outputFlag         = "output"
@@ -39,8 +41,10 @@ func NewRootCommand(version string) *cobra.Command {
 	}
 
 	root.SetVersionTemplate("fctl v4 {{.Version}}\n")
-	root.PersistentFlags().String(contextFlag, "", "Context to use")
-	root.PersistentFlags().String(profileFlag, "", "Deprecated alias for --context")
+	root.PersistentFlags().String(profileFlag, "", "Profile to use")
+	root.PersistentFlags().String(contextFlag, "", "Deprecated alias for --profile")
+	root.PersistentFlags().String(organizationFlag, "", "Cloud or EE organization to target")
+	root.PersistentFlags().String(stackFlag, "", "Cloud or EE stack to target")
 	root.PersistentFlags().StringP(configDirFlag, "c", "", "Path to the v4 configuration directory")
 	root.PersistentFlags().String(credentialDirFlag, "", "Credential directory (defaults to the v4 config directory credentials subdirectory)")
 	root.PersistentFlags().StringP(outputFlag, "o", "plain", "Output format (plain, json, yaml)")
@@ -48,9 +52,11 @@ func NewRootCommand(version string) *cobra.Command {
 	root.PersistentFlags().Bool(insecureTLSFlag, false, "Skip TLS certificate verification")
 	root.PersistentFlags().BoolP(debugFlag, "d", false, "Enable technical debug logs on stderr")
 	root.PersistentFlags().Bool(noColorFlag, false, "Disable colored output")
-	_ = root.PersistentFlags().MarkDeprecated(profileFlag, "use --context")
+	_ = root.PersistentFlags().MarkDeprecated(contextFlag, "use --profile")
+	_ = root.PersistentFlags().MarkHidden(contextFlag)
 
 	root.AddCommand(newVersionCommand())
+	root.AddCommand(newProfileCommand())
 	root.AddCommand(newContextCommand())
 	root.AddCommand(newProfilesCommand())
 	root.AddCommand(newConfigCommand())
