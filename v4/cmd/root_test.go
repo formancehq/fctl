@@ -619,6 +619,115 @@ func TestLedgerTransactionsShowSelectsV2(t *testing.T) {
 	}
 }
 
+func TestLedgerVolumesListSelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default/volumes":
+			if got := r.URL.Query().Get("startTime"); got != "2026-01-01T00:00:00Z" {
+				t.Fatalf("expected startTime, got %q", got)
+			}
+			if got := r.URL.Query().Get("endTime"); got != "2026-01-02T00:00:00Z" {
+				t.Fatalf("expected endTime, got %q", got)
+			}
+			if got := r.URL.Query().Get("insertionDate"); got != "true" {
+				t.Fatalf("expected insertionDate true, got %q", got)
+			}
+			query := r.URL.Query().Get("query")
+			if !strings.Contains(query, `"account":"users:123"`) {
+				t.Fatalf("expected query to contain account, got %q", query)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"account":"users:123","asset":"USD/2","input":100,"output":40,"balance":60}],"hasMore":false,"pageSize":10}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "volumes", "list",
+		"--account", "users:123",
+		"--start-time", "2026-01-01T00:00:00Z",
+		"--end-time", "2026-01-02T00:00:00Z",
+		"--use-insertion-date",
+	)
+	if err != nil {
+		t.Fatalf("list volumes: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v2",
+		"users:123\tUSD/2\t100\t40\t60",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected volumes output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestLedgerVolumesListDeprecatedAliases(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2/default/volumes":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[],"hasMore":false,"pageSize":10}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+		"--default-ledger", "default",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	_, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "volumes", "list",
+		"--address", "users:123",
+		"--oot", "2026-01-01T00:00:00Z",
+		"--pit", "2026-01-02T00:00:00Z",
+		"--insertion-date",
+	)
+	if err != nil {
+		t.Fatalf("list volumes with deprecated aliases: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"Flag --address has been deprecated, use --account",
+		"Flag --oot has been deprecated, use --start-time",
+		"Flag --pit has been deprecated, use --end-time",
+		"Flag --insertion-date has been deprecated, use --use-insertion-date",
+	} {
+		if !strings.Contains(stderr, expected) {
+			t.Fatalf("expected stderr to contain %q, got:\n%s", expected, stderr)
+		}
+	}
+}
+
 func TestLedgerTransactionsListDeprecatedSourceDestinationAliases(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
