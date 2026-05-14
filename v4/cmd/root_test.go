@@ -8526,6 +8526,27 @@ func TestReconciliationPoliciesReconcileSelectsV1(t *testing.T) {
 	if !strings.Contains(stdout, "API version: v1") || !strings.Contains(stdout, "Reconciliation started with ID: rec_1") {
 		t.Fatalf("unexpected reconcile output:\n%s", stdout)
 	}
+
+	requestBody = ""
+	stdout, stderr, err = executeCommand(t,
+		"--config-dir", configDir,
+		"reconciliation", "policies", "reconcile", "policy_1",
+		"2026-01-01T00:00:00Z",
+		"2026-01-01T00:05:00Z",
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("reconcile policy with deprecated positionals: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Positional reconciliation timestamps have been deprecated, use --ledger-at and --payments-at") {
+		t.Fatalf("expected positional timestamp deprecation warning, got:\n%s", stderr)
+	}
+	if !strings.Contains(requestBody, `"reconciledAtLedger":"2026-01-01T00:00:00Z"`) || !strings.Contains(requestBody, `"reconciledAtPayments":"2026-01-01T00:05:00Z"`) {
+		t.Fatalf("unexpected deprecated reconcile request body: %s", requestBody)
+	}
+	if !strings.Contains(stdout, "API version: v1") || !strings.Contains(stdout, "Reconciliation started with ID: rec_1") {
+		t.Fatalf("unexpected deprecated reconcile output:\n%s", stdout)
+	}
 }
 
 func TestAuthClientsListSelectsV1(t *testing.T) {

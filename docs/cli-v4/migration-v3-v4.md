@@ -40,6 +40,7 @@ the isolated v4 implementation under `v4/`.
 | `payments connectors get-config --connector-id <id>` | `payments connectors config show <connector-id>` | Deprecated alias with a warning. |
 | `payments ... get` | `payments ... show` | `get` remains a deprecated alias when cheap to maintain. |
 | `reconciliation ... get` | `reconciliation ... show` | `get` remains a deprecated alias. |
+| `reconciliation policies reconcile <policy-id> <at-ledger> <at-payments>` | `reconciliation policies reconcile <policy-id> --ledger-at <time> --payments-at <time>` | Deprecated positional timestamp form warns on stderr. |
 | `auth clients get` | `auth clients show` | `get` remains a deprecated alias. |
 | `auth users get` | `auth users show` | `get` remains a deprecated alias. |
 | `auth clients users ...` | `auth users ...` | Deprecated nested alias with a warning. |

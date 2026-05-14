@@ -17,6 +17,7 @@ tests, and explicit about their canonical replacement.
 | `payments transfer-initiation update_status` | `payments transfer-initiation update-status` | Deprecated warning | v4.x |
 | `reconciliation get` | `reconciliation show` | Deprecated warning | v4.x |
 | `reconciliation policies get` | `reconciliation policies show` | Deprecated warning | v4.x |
+| `reconciliation policies reconcile <policy-id> <at-ledger> <at-payments>` | `reconciliation policies reconcile <policy-id> --ledger-at --payments-at` | Deprecated warning | v4.x |
 | `auth clients get` | `auth clients show` | Deprecated warning | v4.x |
 | `auth users get` | `auth users show` | Deprecated warning | v4.x |
 | `auth clients users ...` | `auth users ...` | Deprecated warning | v4.x |

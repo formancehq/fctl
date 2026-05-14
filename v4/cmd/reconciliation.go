@@ -298,12 +298,25 @@ func newReconciliationPoliciesReconcileCommand() *cobra.Command {
 	var apiVersion string
 
 	command := &cobra.Command{
-		Use:   "reconcile <policy-id>",
+		Use:   "reconcile <policy-id> [ledger-at payments-at]",
 		Short: "Run reconciliation for a policy",
-		Args:  cobra.ExactArgs(1),
+		Args: func(_ *cobra.Command, args []string) error {
+			if len(args) == 1 || len(args) == 3 {
+				return nil
+			}
+			return fmt.Errorf("accepts either <policy-id> or deprecated <policy-id> <ledger-at> <payments-at>, received %d", len(args))
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !confirm {
 				return fmt.Errorf("reconciliation policies reconcile requires --confirm")
+			}
+			if len(args) == 3 {
+				if ledgerAt != "" || paymentsAt != "" {
+					return fmt.Errorf("deprecated positional reconciliation timestamps cannot be combined with --ledger-at or --payments-at")
+				}
+				fmt.Fprintln(cmd.ErrOrStderr(), "Positional reconciliation timestamps have been deprecated, use --ledger-at and --payments-at")
+				ledgerAt = args[1]
+				paymentsAt = args[2]
 			}
 			parsedLedgerAt, err := parseOptionalRFC3339(ledgerAt, "ledger-at")
 			if err != nil {
