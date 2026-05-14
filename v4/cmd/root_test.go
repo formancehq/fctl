@@ -2,6 +2,9 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -152,6 +155,73 @@ func TestContextCommandsJSON(t *testing.T) {
 	for _, expected := range []string{`"currentContext": "local"`, `"contexts": [`, `"local"`} {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("expected JSON output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestTargetInspect(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/versions" {
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+		fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL+"/api",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "target", "inspect")
+	if err != nil {
+		t.Fatalf("inspect target: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"Context: local",
+		"Target: " + server.URL + "/api (stack)",
+		"- ledger 2.3.4 healthy api=[v1 v2] policy=latest-compatible",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected inspect output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestTargetInspectJSON(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL+"/api",
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "-o", "json", "target", "inspect")
+	if err != nil {
+		t.Fatalf("inspect target json: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		`"context": "local"`,
+		`"targetKind": "stack"`,
+		`"name": "ledger"`,
+		`"apiVersions": [`,
+		`"v2"`,
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected JSON inspect output to contain %q, got:\n%s", expected, stdout)
 		}
 	}
 }
