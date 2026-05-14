@@ -2,7 +2,10 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 	"time"
 
@@ -37,6 +40,9 @@ func newPaymentsPoolsCommand() *cobra.Command {
 	command.AddCommand(newPaymentsPoolsDeleteCommand())
 	command.AddCommand(newPaymentsPoolsAddAccountCommand())
 	command.AddCommand(newPaymentsPoolsRemoveAccountCommand())
+	command.AddCommand(newPaymentsPoolsUpdateQueryCommand())
+	command.AddCommand(newPaymentsPoolsBalancesCommand())
+	command.AddCommand(newPaymentsPoolsLatestBalancesCommand())
 	return command
 }
 
@@ -967,4 +973,220 @@ func renderPaymentPoolAccountRemoved(cmd *cobra.Command, output paymentscmd.Pool
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Account %s removed from pool %s.\n", output.AccountID, output.PoolID)
 	return err
+}
+
+func newPaymentsPoolsUpdateQueryCommand() *cobra.Command {
+	var file string
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "update-query <pool-id> [file]",
+		Aliases: []string{"uq"},
+		Short:   "Update a payment pool query",
+		Args:    cobra.RangeArgs(1, 2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("payments pools update-query requires --confirm")
+			}
+			if len(args) == 2 {
+				if file != "" {
+					return fmt.Errorf("positional file and --file are mutually exclusive")
+				}
+				file = args[1]
+				fmt.Fprintln(cmd.ErrOrStderr(), "Positional file has been deprecated, use payments pools update-query <pool-id> --file <path>|-")
+			}
+			if file == "" {
+				return fmt.Errorf("payments pools update-query requires --file <path>|-")
+			}
+
+			data, err := readPaymentCommandFile(cmd, file)
+			if err != nil {
+				return err
+			}
+			var request struct {
+				Query map[string]any `json:"query"`
+			}
+			if err := json.Unmarshal(data, &request); err != nil {
+				return err
+			}
+
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.UpdatePoolQueryService{
+				Handlers: paymentscmd.SDKUpdatePoolQueryHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureUpdatePoolQuery,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.UpdatePoolQueryInput{PoolID: args[0], Query: request.Query})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentPoolQueryUpdated(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&file, "file", "", "Read query payload from path or stdin with -")
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm pool query update")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func newPaymentsPoolsBalancesCommand() *cobra.Command {
+	var at string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "balances <pool-id> [at]",
+		Short: "List payment pool balances at a time",
+		Args:  cobra.RangeArgs(1, 2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 2 {
+				if at != "" {
+					return fmt.Errorf("positional at and --at are mutually exclusive")
+				}
+				at = args[1]
+				fmt.Fprintln(cmd.ErrOrStderr(), "Positional <at> has been deprecated, use payments pools balances <pool-id> --at <time>")
+			}
+			if at == "" {
+				return fmt.Errorf("payments pools balances requires --at <time>")
+			}
+			parsedAt, err := time.Parse(time.RFC3339, at)
+			if err != nil {
+				return fmt.Errorf("parse --at as RFC3339: %w", err)
+			}
+
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.GetPoolBalancesService{
+				Handlers: paymentscmd.SDKGetPoolBalancesHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureGetPoolBalances,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.GetPoolBalancesInput{PoolID: args[0], At: parsedAt})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentPoolBalances(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&at, "at", "", "RFC3339 timestamp")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func newPaymentsPoolsLatestBalancesCommand() *cobra.Command {
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:   "latest-balances <pool-id>",
+		Short: "List latest payment pool balances",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.GetPoolBalancesService{
+				Handlers: paymentscmd.SDKGetPoolBalancesHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureGetPoolBalancesLatest,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.GetPoolBalancesInput{PoolID: args[0], Latest: true})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentPoolBalances(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+func readPaymentCommandFile(cmd *cobra.Command, file string) ([]byte, error) {
+	if file == "-" {
+		return io.ReadAll(cmd.InOrStdin())
+	}
+	return os.ReadFile(file)
+}
+
+func renderPaymentPoolQueryUpdated(cmd *cobra.Command, output paymentscmd.UpdatePoolQueryOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Query updated for pool %s.\n", output.PoolID)
+	return err
+}
+
+func renderPaymentPoolBalances(cmd *cobra.Command, output paymentscmd.GetPoolBalancesOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if len(output.Balances) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No pool balances found.")
+		return err
+	}
+	for _, balance := range output.Balances {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\n", balance.Asset, balance.Amount, strings.Join(balance.RelatedAccounts, ",")); err != nil {
+			return err
+		}
+	}
+	return nil
 }

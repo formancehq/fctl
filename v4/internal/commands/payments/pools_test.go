@@ -118,3 +118,31 @@ func TestRemoveAccountFromPoolServiceRequiresAccountID(t *testing.T) {
 		t.Fatal("expected account id validation error")
 	}
 }
+
+func TestUpdatePoolQueryServiceRequiresQuery(t *testing.T) {
+	service := UpdatePoolQueryService{
+		Handlers: []UpdatePoolQueryHandler{{APIVersion: "v3"}},
+		Resolve: func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			t.Fatal("resolver should not run")
+			return "", nil
+		},
+	}
+
+	if _, err := service.Run(context.Background(), UpdatePoolQueryInput{PoolID: "pool_1"}); err == nil {
+		t.Fatal("expected pool query validation error")
+	}
+}
+
+func TestGetPoolBalancesServiceRequiresAtForHistoricalBalances(t *testing.T) {
+	service := GetPoolBalancesService{
+		Handlers: []GetPoolBalancesHandler{{APIVersion: "v3"}},
+		Resolve: func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			t.Fatal("resolver should not run")
+			return "", nil
+		},
+	}
+
+	if _, err := service.Run(context.Background(), GetPoolBalancesInput{PoolID: "pool_1"}); err == nil {
+		t.Fatal("expected at validation error")
+	}
+}

@@ -2495,6 +2495,139 @@ func TestPaymentsPoolsRemoveAccountSelectsV3(t *testing.T) {
 	}
 }
 
+func TestPaymentsPoolsUpdateQuerySelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/pools/pool_1/query":
+			if r.Method != http.MethodPatch {
+				t.Fatalf("expected PATCH, got %s", r.Method)
+			}
+			body := readRequestBody(t, r)
+			if !strings.Contains(body, `"query":{"accountID":"acc_1"}`) {
+				t.Fatalf("expected query body, got %s", body)
+			}
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	queryPath := filepath.Join(t.TempDir(), "query.json")
+	if err := os.WriteFile(queryPath, []byte(`{"query":{"accountID":"acc_1"}}`), 0o600); err != nil {
+		t.Fatalf("write query fixture: %v", err)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "pools", "update-query", "pool_1",
+		"--file", queryPath,
+		"--confirm",
+	)
+	if err != nil {
+		t.Fatalf("update pool query: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v3",
+		"Query updated for pool pool_1.",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected payment pool update-query output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
+func TestPaymentsPoolsBalancesSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/pools/pool_1/balances":
+			if got := r.URL.Query().Get("at"); got == "" {
+				t.Fatal("expected at query parameter")
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":[{"asset":"USD/2","amount":100,"relatedAccounts":["acc_1"]}]}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "pools", "balances", "pool_1",
+		"--at", "2026-01-01T00:00:00Z",
+	)
+	if err != nil {
+		t.Fatalf("list pool balances: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v3") || !strings.Contains(stdout, "USD/2\t100\tacc_1") {
+		t.Fatalf("unexpected pool balances output:\n%s", stdout)
+	}
+}
+
+func TestPaymentsPoolsLatestBalancesSelectsV3(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"payments","version":"3.1.0","health":true}]}`)
+		case "/api/payments/v3/pools/pool_1/balances/latest":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":[{"asset":"USD/2","amount":100,"relatedAccounts":["acc_1"]}]}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"payments", "pools", "latest-balances", "pool_1",
+	)
+	if err != nil {
+		t.Fatalf("list latest pool balances: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v3") || !strings.Contains(stdout, "USD/2\t100\tacc_1") {
+		t.Fatalf("unexpected latest pool balances output:\n%s", stdout)
+	}
+}
+
 func TestConfigMigrateV3DryRun(t *testing.T) {
 	v3Dir := writeV3CommandFixture(t, true)
 

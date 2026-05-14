@@ -16,8 +16,11 @@ const (
 	FeatureAddAccountToPool      capabilities.Feature = "addAccountToPool"
 	FeatureDeletePool            capabilities.Feature = "deletePool"
 	FeatureGetPool               capabilities.Feature = "getPool"
+	FeatureGetPoolBalances       capabilities.Feature = "getPoolBalances"
+	FeatureGetPoolBalancesLatest capabilities.Feature = "getPoolBalancesLatest"
 	FeatureListPools             capabilities.Feature = "listPools"
 	FeatureRemoveAccountFromPool capabilities.Feature = "removeAccountFromPool"
+	FeatureUpdatePoolQuery       capabilities.Feature = "updatePoolQuery"
 )
 
 type PoolSummary struct {
@@ -73,6 +76,34 @@ type PoolAccountOutput struct {
 	AccountID  string                  `json:"accountID" yaml:"accountID"`
 }
 
+type UpdatePoolQueryInput struct {
+	PoolID string
+	Query  map[string]any
+}
+
+type UpdatePoolQueryOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	PoolID     string                  `json:"poolID" yaml:"poolID"`
+}
+
+type PoolBalanceSummary struct {
+	Asset           string   `json:"asset" yaml:"asset"`
+	Amount          string   `json:"amount" yaml:"amount"`
+	RelatedAccounts []string `json:"relatedAccounts,omitempty" yaml:"relatedAccounts,omitempty"`
+}
+
+type GetPoolBalancesInput struct {
+	PoolID string
+	At     time.Time
+	Latest bool
+}
+
+type GetPoolBalancesOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	PoolID     string                  `json:"poolID" yaml:"poolID"`
+	Balances   []PoolBalanceSummary    `json:"balances" yaml:"balances"`
+}
+
 type ListPoolsHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, ListPoolsInput) (ListPoolsOutput, error)
@@ -91,6 +122,16 @@ type DeletePoolHandler struct {
 type PoolAccountHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, PoolAccountInput) (PoolAccountOutput, error)
+}
+
+type UpdatePoolQueryHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, UpdatePoolQueryInput) (UpdatePoolQueryOutput, error)
+}
+
+type GetPoolBalancesHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, GetPoolBalancesInput) (GetPoolBalancesOutput, error)
 }
 
 type ListPoolsService struct {
@@ -115,6 +156,16 @@ type AddAccountToPoolService struct {
 
 type RemoveAccountFromPoolService struct {
 	Handlers []PoolAccountHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type UpdatePoolQueryService struct {
+	Handlers []UpdatePoolQueryHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type GetPoolBalancesService struct {
+	Handlers []GetPoolBalancesHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -199,6 +250,64 @@ func (s AddAccountToPoolService) Run(ctx context.Context, input PoolAccountInput
 
 func (s RemoveAccountFromPoolService) Run(ctx context.Context, input PoolAccountInput) (PoolAccountOutput, error) {
 	return runPoolAccountService(ctx, input, s.Handlers, s.Resolve)
+}
+
+func (s UpdatePoolQueryService) Run(ctx context.Context, input UpdatePoolQueryInput) (UpdatePoolQueryOutput, error) {
+	if input.PoolID == "" {
+		return UpdatePoolQueryOutput{}, fmt.Errorf("pool id is required")
+	}
+	if input.Query == nil {
+		return UpdatePoolQueryOutput{}, fmt.Errorf("pool query is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]UpdatePoolQueryHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return UpdatePoolQueryOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return UpdatePoolQueryOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return UpdatePoolQueryOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func (s GetPoolBalancesService) Run(ctx context.Context, input GetPoolBalancesInput) (GetPoolBalancesOutput, error) {
+	if input.PoolID == "" {
+		return GetPoolBalancesOutput{}, fmt.Errorf("pool id is required")
+	}
+	if !input.Latest && input.At.IsZero() {
+		return GetPoolBalancesOutput{}, fmt.Errorf("pool balances at time is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]GetPoolBalancesHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return GetPoolBalancesOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return GetPoolBalancesOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return GetPoolBalancesOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
 }
 
 func runPoolAccountService(
@@ -387,6 +496,96 @@ func SDKRemoveAccountFromPoolHandlers(sdk *formance.Formance) []PoolAccountHandl
 	}
 }
 
+func SDKUpdatePoolQueryHandlers(sdk *formance.Formance) []UpdatePoolQueryHandler {
+	return []UpdatePoolQueryHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input UpdatePoolQueryInput) (UpdatePoolQueryOutput, error) {
+				if _, err := sdk.Payments.V1.UpdatePoolQuery(ctx, operations.UpdatePoolQueryRequest{
+					PoolID: input.PoolID,
+					UpdatePoolQueryRequest: shared.UpdatePoolQueryRequest{
+						Query: input.Query,
+					},
+				}); err != nil {
+					return UpdatePoolQueryOutput{}, err
+				}
+				return UpdatePoolQueryOutput{PoolID: input.PoolID}, nil
+			},
+		},
+		{
+			APIVersion: "v3",
+			Run: func(ctx context.Context, input UpdatePoolQueryInput) (UpdatePoolQueryOutput, error) {
+				if _, err := sdk.Payments.V3.UpdatePoolQuery(ctx, operations.V3UpdatePoolQueryRequest{
+					PoolID: input.PoolID,
+					V3UpdatePoolQueryRequest: &shared.V3UpdatePoolQueryRequest{
+						Query: input.Query,
+					},
+				}); err != nil {
+					return UpdatePoolQueryOutput{}, err
+				}
+				return UpdatePoolQueryOutput{PoolID: input.PoolID}, nil
+			},
+		},
+	}
+}
+
+func SDKGetPoolBalancesHandlers(sdk *formance.Formance) []GetPoolBalancesHandler {
+	return []GetPoolBalancesHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input GetPoolBalancesInput) (GetPoolBalancesOutput, error) {
+				if input.Latest {
+					response, err := sdk.Payments.V1.GetPoolBalancesLatest(ctx, operations.GetPoolBalancesLatestRequest{PoolID: input.PoolID})
+					if err != nil {
+						return GetPoolBalancesOutput{}, err
+					}
+					if response.PoolBalancesLatestResponse == nil {
+						return GetPoolBalancesOutput{}, fmt.Errorf("payments v1 get latest pool balances returned no data")
+					}
+					return GetPoolBalancesOutput{PoolID: input.PoolID, Balances: fromV1PoolBalances(response.PoolBalancesLatestResponse.Data)}, nil
+				}
+				response, err := sdk.Payments.V1.GetPoolBalances(ctx, operations.GetPoolBalancesRequest{
+					PoolID: input.PoolID,
+					At:     input.At,
+				})
+				if err != nil {
+					return GetPoolBalancesOutput{}, err
+				}
+				if response.PoolBalancesResponse == nil {
+					return GetPoolBalancesOutput{}, fmt.Errorf("payments v1 get pool balances returned no data")
+				}
+				return GetPoolBalancesOutput{PoolID: input.PoolID, Balances: fromV1PoolBalances(response.PoolBalancesResponse.Data.Balances)}, nil
+			},
+		},
+		{
+			APIVersion: "v3",
+			Run: func(ctx context.Context, input GetPoolBalancesInput) (GetPoolBalancesOutput, error) {
+				if input.Latest {
+					response, err := sdk.Payments.V3.GetPoolBalancesLatest(ctx, operations.V3GetPoolBalancesLatestRequest{PoolID: input.PoolID})
+					if err != nil {
+						return GetPoolBalancesOutput{}, err
+					}
+					if response.V3PoolBalancesResponse == nil {
+						return GetPoolBalancesOutput{}, fmt.Errorf("payments v3 get latest pool balances returned no data")
+					}
+					return GetPoolBalancesOutput{PoolID: input.PoolID, Balances: fromV3PoolBalances(response.V3PoolBalancesResponse.Data)}, nil
+				}
+				response, err := sdk.Payments.V3.GetPoolBalances(ctx, operations.V3GetPoolBalancesRequest{
+					PoolID: input.PoolID,
+					At:     &input.At,
+				})
+				if err != nil {
+					return GetPoolBalancesOutput{}, err
+				}
+				if response.V3PoolBalancesResponse == nil {
+					return GetPoolBalancesOutput{}, fmt.Errorf("payments v3 get pool balances returned no data")
+				}
+				return GetPoolBalancesOutput{PoolID: input.PoolID, Balances: fromV3PoolBalances(response.V3PoolBalancesResponse.Data)}, nil
+			},
+		},
+	}
+}
+
 func fromV1PoolsCursor(cursor shared.PoolsCursorCursor) ListPoolsOutput {
 	pools := make([]PoolSummary, 0, len(cursor.Data))
 	for _, pool := range cursor.Data {
@@ -428,4 +627,28 @@ func fromV3Pool(pool shared.V3Pool) PoolSummary {
 		summary.Type = string(*pool.Type)
 	}
 	return summary
+}
+
+func fromV1PoolBalances(balances []shared.PoolBalance) []PoolBalanceSummary {
+	summaries := make([]PoolBalanceSummary, 0, len(balances))
+	for _, balance := range balances {
+		summaries = append(summaries, PoolBalanceSummary{
+			Asset:           balance.Asset,
+			Amount:          bigIntString(balance.Amount),
+			RelatedAccounts: balance.RelatedAccounts,
+		})
+	}
+	return summaries
+}
+
+func fromV3PoolBalances(balances []shared.V3PoolBalance) []PoolBalanceSummary {
+	summaries := make([]PoolBalanceSummary, 0, len(balances))
+	for _, balance := range balances {
+		summaries = append(summaries, PoolBalanceSummary{
+			Asset:           balance.Asset,
+			Amount:          bigIntString(balance.Amount),
+			RelatedAccounts: balance.RelatedAccounts,
+		})
+	}
+	return summaries
 }
