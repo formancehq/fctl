@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/big"
 	"os"
 	"strings"
 	"time"
@@ -51,6 +52,7 @@ func newPaymentsTransferInitiationCommand(use string, aliases []string, deprecat
 	command.AddCommand(newPaymentsTransferInitiationActionCommand("reject", []string{"rj"}, "Reject a payment transfer initiation", paymentscmd.FeatureRejectPaymentInitiation, paymentscmd.SDKRejectPaymentInitiationHandlers, "rejected", true))
 	command.AddCommand(newPaymentsTransferInitiationActionCommand("retry", []string{"r"}, "Retry a payment transfer initiation", paymentscmd.FeatureRetryPaymentInitiation, paymentscmd.SDKRetryPaymentInitiationHandlers, "queued for retry", true))
 	command.AddCommand(newPaymentsTransferInitiationActionCommand("delete", []string{"d"}, "Delete a payment transfer initiation", paymentscmd.FeatureDeletePaymentInitiation, paymentscmd.SDKDeletePaymentInitiationHandlers, "deleted", true))
+	command.AddCommand(newPaymentsTransferInitiationReverseCommand())
 	command.AddCommand(newPaymentsTransferInitiationUpdateStatusCommand("update-status", []string{"u"}, false))
 	command.AddCommand(newPaymentsTransferInitiationUpdateStatusCommand("update_status", nil, true))
 	return command
@@ -1619,5 +1621,158 @@ func renderPaymentTransferInitiationStatusUpdated(cmd *cobra.Command, output pay
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Transfer initiation %s status updated to %s.\n", output.TransferInitiationID, output.Status)
+	return err
+}
+
+func newPaymentsTransferInitiationReverseCommand() *cobra.Command {
+	var confirm bool
+	var file string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "reverse <transfer-initiation-id>",
+		Aliases: []string{"re"},
+		Short:   "Reverse a payment transfer initiation",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 1 {
+				return nil
+			}
+			if len(args) == 2 {
+				return nil
+			}
+			return fmt.Errorf("accepts 1 arg(s), received %d", len(args))
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("payments transfer-initiation reverse requires --confirm")
+			}
+			if len(args) == 2 {
+				if file != "" {
+					return fmt.Errorf("use either --file or positional file, not both")
+				}
+				file = args[1]
+				fmt.Fprintln(cmd.ErrOrStderr(), "Positional file has been deprecated, use payments transfer-initiation reverse <transfer-initiation-id> --file <path>|-")
+			}
+			if file == "" {
+				return fmt.Errorf("payments transfer-initiation reverse requires --file <path>|-")
+			}
+			data, err := readPaymentCommandFile(cmd, file)
+			if err != nil {
+				return err
+			}
+			request, err := parseReverseTransferInitiationRequest(data)
+			if err != nil {
+				return err
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := paymentscmd.ReverseTransferInitiationService{
+				Handlers: paymentscmd.SDKReverseTransferInitiationHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         paymentscmd.ProductPayments,
+						Feature:         paymentscmd.FeatureReversePaymentInitiation,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), paymentscmd.ReverseTransferInitiationInput{
+				TransferInitiationID: args[0],
+				Amount:               request.Amount,
+				Asset:                request.Asset,
+				Description:          request.Description,
+				Metadata:             request.Metadata,
+				Reference:            request.Reference,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderPaymentTransferInitiationReversed(cmd, output)
+		},
+	}
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm transfer initiation reversal")
+	command.Flags().StringVar(&file, "file", "", "JSON reverse request file, or - for stdin")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin payments API version")
+	return command
+}
+
+type reverseTransferInitiationRequestFile struct {
+	Amount      *big.Int          `json:"amount"`
+	Asset       string            `json:"asset"`
+	Description string            `json:"description"`
+	Metadata    map[string]string `json:"metadata"`
+	Reference   string            `json:"reference"`
+}
+
+func parseReverseTransferInitiationRequest(data []byte) (reverseTransferInitiationRequestFile, error) {
+	var raw struct {
+		Amount      json.RawMessage   `json:"amount"`
+		Asset       string            `json:"asset"`
+		Description string            `json:"description"`
+		Metadata    map[string]string `json:"metadata"`
+		Reference   string            `json:"reference"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return reverseTransferInitiationRequestFile{}, err
+	}
+	if len(raw.Amount) == 0 {
+		return reverseTransferInitiationRequestFile{}, fmt.Errorf("reverse transfer initiation amount is required")
+	}
+	amount, err := parseBigIntJSON(raw.Amount)
+	if err != nil {
+		return reverseTransferInitiationRequestFile{}, fmt.Errorf("invalid reverse transfer initiation amount: %w", err)
+	}
+	return reverseTransferInitiationRequestFile{
+		Amount:      amount,
+		Asset:       raw.Asset,
+		Description: raw.Description,
+		Metadata:    raw.Metadata,
+		Reference:   raw.Reference,
+	}, nil
+}
+
+func parseBigIntJSON(data []byte) (*big.Int, error) {
+	value := strings.TrimSpace(string(data))
+	value = strings.Trim(value, `"`)
+	if value == "" {
+		return nil, fmt.Errorf("empty integer")
+	}
+	amount, ok := new(big.Int).SetString(value, 10)
+	if !ok {
+		return nil, fmt.Errorf("expected integer")
+	}
+	return amount, nil
+}
+
+func renderPaymentTransferInitiationReversed(cmd *cobra.Command, output paymentscmd.ReverseTransferInitiationOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if output.TaskID != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Task ID: %s\n", output.TaskID); err != nil {
+			return err
+		}
+	}
+	if output.ReversalID != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Reversal ID: %s\n", output.ReversalID); err != nil {
+			return err
+		}
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Transfer initiation %s reversed.\n", output.TransferInitiationID)
 	return err
 }

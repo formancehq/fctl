@@ -3,6 +3,7 @@ package payments
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"time"
 
 	formance "github.com/formancehq/formance-sdk-go/v3"
@@ -19,6 +20,7 @@ const (
 	FeatureListTransferInitiation         capabilities.Feature = "listTransferInitiations"
 	FeatureRejectPaymentInitiation        capabilities.Feature = "rejectPaymentInitiation"
 	FeatureRetryPaymentInitiation         capabilities.Feature = "retryPaymentInitiation"
+	FeatureReversePaymentInitiation       capabilities.Feature = "reversePaymentInitiation"
 	FeatureUpdateTransferInitiationStatus capabilities.Feature = "updateTransferInitiationStatus"
 )
 
@@ -86,6 +88,22 @@ type UpdateTransferInitiationStatusOutput struct {
 	Status               string                  `json:"status" yaml:"status"`
 }
 
+type ReverseTransferInitiationInput struct {
+	TransferInitiationID string
+	Amount               *big.Int
+	Asset                string
+	Description          string
+	Metadata             map[string]string
+	Reference            string
+}
+
+type ReverseTransferInitiationOutput struct {
+	APIVersion           capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	TransferInitiationID string                  `json:"transferInitiationID" yaml:"transferInitiationID"`
+	TaskID               string                  `json:"taskID,omitempty" yaml:"taskID,omitempty"`
+	ReversalID           string                  `json:"reversalID,omitempty" yaml:"reversalID,omitempty"`
+}
+
 type ListTransferInitiationsHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, ListTransferInitiationsInput) (ListTransferInitiationsOutput, error)
@@ -106,6 +124,11 @@ type UpdateTransferInitiationStatusHandler struct {
 	Run        func(context.Context, UpdateTransferInitiationStatusInput) (UpdateTransferInitiationStatusOutput, error)
 }
 
+type ReverseTransferInitiationHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, ReverseTransferInitiationInput) (ReverseTransferInitiationOutput, error)
+}
+
 type ListTransferInitiationsService struct {
 	Handlers []ListTransferInitiationsHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
@@ -123,6 +146,11 @@ type TransferInitiationActionService struct {
 
 type UpdateTransferInitiationStatusService struct {
 	Handlers []UpdateTransferInitiationStatusHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type ReverseTransferInitiationService struct {
+	Handlers []ReverseTransferInitiationHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -225,6 +253,38 @@ func (s UpdateTransferInitiationStatusService) Run(ctx context.Context, input Up
 	output, err := handler.Run(ctx, input)
 	if err != nil {
 		return UpdateTransferInitiationStatusOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func (s ReverseTransferInitiationService) Run(ctx context.Context, input ReverseTransferInitiationInput) (ReverseTransferInitiationOutput, error) {
+	if input.TransferInitiationID == "" {
+		return ReverseTransferInitiationOutput{}, fmt.Errorf("transfer initiation id is required")
+	}
+	if input.Amount == nil {
+		return ReverseTransferInitiationOutput{}, fmt.Errorf("reverse transfer initiation amount is required")
+	}
+	if input.Asset == "" {
+		return ReverseTransferInitiationOutput{}, fmt.Errorf("reverse transfer initiation asset is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]ReverseTransferInitiationHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return ReverseTransferInitiationOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return ReverseTransferInitiationOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return ReverseTransferInitiationOutput{}, err
 	}
 	output.APIVersion = selected
 	return output, nil
@@ -415,6 +475,56 @@ func SDKUpdateTransferInitiationStatusHandlers(sdk *formance.Formance) []UpdateT
 				return UpdateTransferInitiationStatusOutput{
 					TransferInitiationID: input.TransferInitiationID,
 					Status:               input.Status,
+				}, nil
+			},
+		},
+	}
+}
+
+func SDKReverseTransferInitiationHandlers(sdk *formance.Formance) []ReverseTransferInitiationHandler {
+	return []ReverseTransferInitiationHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input ReverseTransferInitiationInput) (ReverseTransferInitiationOutput, error) {
+				if _, err := sdk.Payments.V1.ReverseTransferInitiation(ctx, operations.ReverseTransferInitiationRequest{
+					TransferID: input.TransferInitiationID,
+					ReverseTransferInitiationRequest: shared.ReverseTransferInitiationRequest{
+						Amount:      input.Amount,
+						Asset:       input.Asset,
+						Description: input.Description,
+						Metadata:    input.Metadata,
+						Reference:   input.Reference,
+					},
+				}); err != nil {
+					return ReverseTransferInitiationOutput{}, err
+				}
+				return ReverseTransferInitiationOutput{TransferInitiationID: input.TransferInitiationID}, nil
+			},
+		},
+		{
+			APIVersion: "v3",
+			Run: func(ctx context.Context, input ReverseTransferInitiationInput) (ReverseTransferInitiationOutput, error) {
+				response, err := sdk.Payments.V3.ReversePaymentInitiation(ctx, operations.V3ReversePaymentInitiationRequest{
+					PaymentInitiationID: input.TransferInitiationID,
+					V3ReversePaymentInitiationRequest: &shared.V3ReversePaymentInitiationRequest{
+						Amount:      input.Amount,
+						Asset:       input.Asset,
+						Description: input.Description,
+						Metadata:    input.Metadata,
+						Reference:   input.Reference,
+					},
+				})
+				if err != nil {
+					return ReverseTransferInitiationOutput{}, err
+				}
+				if response.V3ReversePaymentInitiationResponse == nil {
+					return ReverseTransferInitiationOutput{}, fmt.Errorf("payments v3 reverse payment initiation returned no data")
+				}
+				data := response.V3ReversePaymentInitiationResponse.Data
+				return ReverseTransferInitiationOutput{
+					TransferInitiationID: input.TransferInitiationID,
+					TaskID:               stringValue(data.TaskID),
+					ReversalID:           stringValue(data.PaymentInitiationReversalID),
 				}, nil
 			},
 		},
