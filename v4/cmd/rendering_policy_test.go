@@ -51,7 +51,6 @@ func TestHumanOutputUsesStyledRendering(t *testing.T) {
 		"renderCloudVariables":                                     true,
 		"renderCloudVersion":                                       true,
 		"renderCloudVersions":                                      true,
-		"renderMigrationPlan":                                      true,
 		"renderPaymentConnectorConfig":                             true,
 		"renderSetupGuidance":                                      true,
 		"selectValue":                                              true,

@@ -105,14 +105,16 @@ func renderMigrationPlan(cmd *cobra.Command, plan v4config.MigrationPlan) error 
 	if _, err := fmt.Fprintln(cmd.OutOrStdout(), styledInfoLine(cmd, "Current context", plan.CurrentContext)); err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintln(cmd.OutOrStdout(), "Contexts:"); err != nil {
+	if err := writeStyledSectionTitle(cmd, "Contexts"); err != nil {
 		return err
 	}
+	rows := make([][]string, 0, len(plan.Contexts))
 	for _, name := range contextNames(plan.Contexts) {
 		context := plan.Contexts[name]
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "- %s (%s)\n", name, context.Kind); err != nil {
-			return err
-		}
+		rows = append(rows, []string{name, string(context.Kind)})
+	}
+	if err := writeStyledBulletedPairRows(cmd, []string{"Profile", "Kind"}, rows); err != nil {
+		return err
 	}
 	_, err := fmt.Fprintln(cmd.OutOrStdout(), styledInfoLine(cmd, "Credential moves", fmt.Sprintf("%d", len(plan.CredentialMoves))))
 	return err

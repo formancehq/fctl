@@ -213,6 +213,34 @@ func writeStyledColonKeyValues(cmd *cobra.Command, rows ...styledKeyValue) error
 	return writeStyledKeyValues(cmd, rows...)
 }
 
+func writeStyledSectionTitle(cmd *cobra.Command, title string) error {
+	if !terminalOutputEnabled(cmd) {
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "%s:\n", title)
+		return err
+	}
+	style := lipgloss.NewStyle().Bold(true)
+	if commandColorEnabled(cmd) {
+		style = style.Foreground(v4render.FormancePalette.Muted)
+	}
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), style.Render(title))
+	return err
+}
+
+func writeStyledBulletedPairRows(cmd *cobra.Command, headers []string, rows [][]string) error {
+	if !terminalOutputEnabled(cmd) {
+		for _, row := range rows {
+			if len(row) < 2 {
+				continue
+			}
+			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "- %s (%s)\n", row[0], row[1]); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	return writeStyledRows(cmd, headers, rows)
+}
+
 func writeStyledRows(cmd *cobra.Command, headers []string, rows [][]string) error {
 	if !terminalOutputEnabled(cmd) {
 		for _, row := range rows {
