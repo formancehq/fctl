@@ -17,7 +17,75 @@ func newLedgerCommand() *cobra.Command {
 		Use:   "ledger",
 		Short: "Manage ledgers",
 	}
+	command.AddCommand(newLedgerListCommand())
 	command.AddCommand(newLedgerTransactionsCommand())
+	return command
+}
+
+func newLedgerListCommand() *cobra.Command {
+	var pageSize int64
+	var cursor string
+	var includeDeleted bool
+	var sort string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"ls", "l"},
+		Short:   "List ledgers",
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := ledgercmd.ListLedgersService{
+				Handlers: ledgercmd.SDKListLedgersHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         ledgercmd.ProductLedger,
+						Feature:         ledgercmd.FeatureListLedgers,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), ledgercmd.ListLedgersInput{
+				PageSize:       pageSize,
+				Cursor:         cursor,
+				IncludeDeleted: includeDeleted,
+				Sort:           sort,
+			})
+			if err != nil {
+				return err
+			}
+
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderLedgers(cmd, output)
+		},
+	}
+
+	command.Flags().Int64Var(&pageSize, "page-size", 15, "Page size")
+	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
+	command.Flags().BoolVar(&includeDeleted, "include-deleted", false, "Include deleted ledgers")
+	command.Flags().StringVar(&sort, "sort", "", "Sort expression, formatted as <field>:<asc|desc>")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
+
 	return command
 }
 
@@ -120,6 +188,26 @@ func newLedgerTransactionsListCommand() *cobra.Command {
 	_ = command.Flags().MarkDeprecated("dst", "use --destination")
 
 	return command
+}
+
+func renderLedgers(cmd *cobra.Command, output ledgercmd.ListLedgersOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if len(output.Ledgers) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No ledgers found.")
+		return err
+	}
+	for _, ledger := range output.Ledgers {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\n",
+			ledger.Name,
+			ledger.Bucket,
+			ledger.AddedAt.Format(time.RFC3339),
+		); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func renderLedgerTransactions(cmd *cobra.Command, output ledgercmd.ListTransactionsOutput) error {

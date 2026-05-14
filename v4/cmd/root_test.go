@@ -227,6 +227,56 @@ func TestTargetInspectJSON(t *testing.T) {
 	}
 }
 
+func TestLedgerListSelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+		case "/api/ledger/v2":
+			if got := r.URL.Query().Get("pageSize"); got != "10" {
+				t.Fatalf("expected pageSize 10, got %q", got)
+			}
+			if got := r.URL.Query().Get("includeDeleted"); got != "true" {
+				t.Fatalf("expected includeDeleted true, got %q", got)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"name":"default","bucket":"bucket","addedAt":"2026-01-01T00:00:00Z","metadata":{"env":"dev"}}],"hasMore":false,"pageSize":10}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"ledger", "list",
+		"--page-size", "10",
+		"--include-deleted",
+	)
+	if err != nil {
+		t.Fatalf("list ledgers: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{
+		"API version: v2",
+		"default\tbucket\t2026-01-01T00:00:00Z",
+	} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected ledger list output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
 func TestLedgerTransactionsListSelectsV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
