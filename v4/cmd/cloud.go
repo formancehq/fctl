@@ -643,12 +643,17 @@ func newCloudRegionsCreateCommand() *cobra.Command {
 		Short: "Create a private Cloud region",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			rt, _, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			resolvedOrganizationID := resolveCloudOrganizationID(rt, organizationID)
+			client, err := organizationMembershipClientFromRuntime(cmd, rt, resolvedOrganizationID)
 			if err != nil {
 				return err
 			}
 			output, err := cloudcmd.CreateRegionService{Client: client}.Run(cmd.Context(), cloudcmd.RegionInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID: resolvedOrganizationID,
 				Name:           args[0],
 			})
 			if err != nil {
@@ -673,11 +678,16 @@ func newCloudRegionsListCommand() *cobra.Command {
 		Short:   "List Cloud regions",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			rt, _, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
 			if err != nil {
 				return err
 			}
-			output, err := cloudcmd.ListRegionsService{Client: client}.Run(cmd.Context(), resolveCloudOrganizationID(rt, organizationID))
+			resolvedOrganizationID := resolveCloudOrganizationID(rt, organizationID)
+			client, err := organizationMembershipClientFromRuntime(cmd, rt, resolvedOrganizationID)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ListRegionsService{Client: client}.Run(cmd.Context(), resolvedOrganizationID)
 			if err != nil {
 				return err
 			}
@@ -699,12 +709,17 @@ func newCloudRegionsShowCommand() *cobra.Command {
 		Short: "Show a Cloud region",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			rt, _, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			resolvedOrganizationID := resolveCloudOrganizationID(rt, organizationID)
+			client, err := organizationMembershipClientFromRuntime(cmd, rt, resolvedOrganizationID)
 			if err != nil {
 				return err
 			}
 			output, err := cloudcmd.ReadRegionService{Client: client}.Run(cmd.Context(), cloudcmd.RegionInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID: resolvedOrganizationID,
 				RegionID:       args[0],
 			})
 			if err != nil {
@@ -732,12 +747,17 @@ func newCloudRegionsDeleteCommand() *cobra.Command {
 			if !confirm {
 				return fmt.Errorf("cloud regions delete requires --confirm")
 			}
-			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			rt, _, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			resolvedOrganizationID := resolveCloudOrganizationID(rt, organizationID)
+			client, err := organizationMembershipClientFromRuntime(cmd, rt, resolvedOrganizationID)
 			if err != nil {
 				return err
 			}
 			output, err := cloudcmd.DeleteRegionService{Client: client}.Run(cmd.Context(), cloudcmd.RegionInput{
-				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				OrganizationID: resolvedOrganizationID,
 				RegionID:       args[0],
 			})
 			if err != nil {
