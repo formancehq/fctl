@@ -19,6 +19,7 @@ func newContextCommand() *cobra.Command {
 		newContextShowCommand(),
 		newContextUseCommand(),
 		newContextCreateCommand(),
+		newContextWizardCommand(),
 	)
 
 	return command

@@ -72,6 +72,30 @@ func TestVersionCommand(t *testing.T) {
 	}
 }
 
+func TestSetupAndPromptAlias(t *testing.T) {
+	stdout, stderr, err := executeCommand(t, "setup")
+	if err != nil {
+		t.Fatalf("setup: %v stderr=%s", err, stderr)
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(stdout, "fctl context create stack <name> --stack-url <url>") {
+		t.Fatalf("unexpected setup output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "prompt")
+	if err != nil {
+		t.Fatalf("prompt alias: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Command prompt has been deprecated, use setup or context wizard") {
+		t.Fatalf("expected prompt warning, got:\n%s", stderr)
+	}
+	if !strings.Contains(stdout, "fctl context create stack <name> --stack-url <url>") {
+		t.Fatalf("unexpected prompt output:\n%s", stdout)
+	}
+}
+
 func TestContextCreateListShowUse(t *testing.T) {
 	configDir := t.TempDir()
 
