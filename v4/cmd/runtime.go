@@ -291,13 +291,23 @@ func authOptionsFromCommand(cmd *cobra.Command) (v4auth.Options, error) {
 	if err != nil {
 		return v4auth.Options{}, err
 	}
-	if !insecureTLS {
+	debug, err := cmd.Root().PersistentFlags().GetBool(debugFlag)
+	if err != nil {
+		return v4auth.Options{}, err
+	}
+	if !insecureTLS && !debug {
 		return v4auth.Options{}, nil
 	}
 
 	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec // Explicit user opt-in via --insecure-tls.
+	if insecureTLS {
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec // Explicit user opt-in via --insecure-tls.
+	}
+	var roundTripper http.RoundTripper = transport
+	if debug {
+		roundTripper = debugRoundTripper{base: roundTripper, writer: cmd.ErrOrStderr()}
+	}
 	return v4auth.Options{
-		HTTPClient: &http.Client{Transport: transport},
+		HTTPClient: &http.Client{Transport: roundTripper},
 	}, nil
 }

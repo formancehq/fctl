@@ -106,7 +106,7 @@ func newCloudStacksCreateCommand() *cobra.Command {
 				return err
 			}
 			output, err := withTerminalSpinner(cmd, !noWait, "Creating stack and waiting for availability", "Stack is available", func() (cloudcmd.StackOutput, error) {
-				return cloudcmd.CreateStackService{Client: organizationClient}.Run(cmd.Context(), cloudcmd.CreateStackInput{
+				return cloudcmd.CreateStackService{Client: organizationClient, HTTPClient: baseHTTPClient(rt.AuthOptions)}.Run(cmd.Context(), cloudcmd.CreateStackInput{
 					OrganizationID: organizationID,
 					Name:           stackName,
 					RegionID:       regionID,

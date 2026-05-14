@@ -237,7 +237,8 @@ func (s ReadStackService) Run(ctx context.Context, input StackIDInput) (StackOut
 }
 
 type CreateStackService struct {
-	Client StackClient
+	Client     StackClient
+	HTTPClient *http.Client
 }
 
 func (s CreateStackService) Run(ctx context.Context, input CreateStackInput) (StackOutput, error) {
@@ -273,7 +274,7 @@ func (s CreateStackService) Run(ctx context.Context, input CreateStackInput) (St
 	}
 	output := StackOutput{OrganizationID: input.OrganizationID, Stack: stackSummary(response.GetReadStackResponse().GetData(), defaultConsoleURL)}
 	if input.Wait && output.Stack.Status != string(components.StackStatusReady) {
-		return WaitStackReadyService{Client: s.Client}.Run(ctx, WaitStackReadyInput{
+		return WaitStackReadyService{Client: s.Client, HTTPClient: s.HTTPClient}.Run(ctx, WaitStackReadyInput{
 			OrganizationID: input.OrganizationID,
 			StackID:        output.Stack.ID,
 			StackURL:       output.Stack.URI,

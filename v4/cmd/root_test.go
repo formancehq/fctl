@@ -51,6 +51,12 @@ func readRequestBody(t *testing.T, r *http.Request) string {
 	return string(body)
 }
 
+type roundTripFunc func(req *http.Request) (*http.Response, error)
+
+func (fn roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return fn(req)
+}
+
 func TestRootHelp(t *testing.T) {
 	stdout, stderr, err := executeCommand(t, "--help")
 	if err != nil {
@@ -3074,6 +3080,59 @@ func TestTargetInspect(t *testing.T) {
 	}
 	if !strings.Contains(stderr, "debug: context=local target=stack url="+server.URL+"/api") {
 		t.Fatalf("expected debug stderr, got:\n%s", stderr)
+	}
+	if !strings.Contains(stderr, ">>> GET "+server.URL+"/api/versions") ||
+		!strings.Contains(stderr, "<<< HTTP 200 OK") ||
+		!strings.Contains(stderr, `"name": "ledger"`) {
+		t.Fatalf("expected HTTP debug trace, got:\n%s", stderr)
+	}
+}
+
+func TestDebugHTTPTraceRedactsSensitiveHeaders(t *testing.T) {
+	transport := debugRoundTripper{
+		base: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			if got := req.Header.Get("Authorization"); got != "Bearer secret-token" {
+				t.Fatalf("expected original authorization header to reach base transport, got %q", got)
+			}
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Status:     "200 OK",
+				Header:     http.Header{"Set-Cookie": []string{"session=secret"}},
+				Body:       io.NopCloser(strings.NewReader(`{"ok":true}`)),
+				Request:    req,
+			}, nil
+		}),
+		writer: &bytes.Buffer{},
+	}
+	writer := transport.writer.(*bytes.Buffer)
+	req, err := http.NewRequest(http.MethodPost, "https://api.example.test/resource", strings.NewReader(`{"secret":"value"}`))
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	req.Header.Set("Authorization", "Bearer secret-token")
+	req.Header.Set("Content-Type", "application/json")
+
+	rsp, err := transport.RoundTrip(req)
+	if err != nil {
+		t.Fatalf("round trip: %v", err)
+	}
+	_, _ = io.ReadAll(rsp.Body)
+	trace := writer.String()
+	for _, expected := range []string{
+		">>> POST https://api.example.test/resource",
+		"Authorization: <redacted>",
+		"Content-Type: application/json",
+		`"secret": "value"`,
+		"<<< HTTP 200 OK",
+		"Set-Cookie: <redacted>",
+		`"ok": true`,
+	} {
+		if !strings.Contains(trace, expected) {
+			t.Fatalf("expected debug trace to contain %q, got:\n%s", expected, trace)
+		}
+	}
+	if strings.Contains(trace, "Bearer secret-token") || strings.Contains(trace, "session=secret") {
+		t.Fatalf("debug trace leaked sensitive header:\n%s", trace)
 	}
 }
 
