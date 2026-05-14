@@ -65,7 +65,7 @@ Le runtime v4 choisit l'API comme suit:
 | Commandes avec `_` | kebab-case canonique, alias underscore deprecie | `transfer_initiation` -> `transfer-initiation` |
 | `get` et `describe` melanges | `show` canonique, aliases `get`/`describe` si existants | `payments payments get` -> `payments payments show` |
 | Abreviations peu claires | flag explicite canonique, alias court deprecie | `--ik` -> `--idempotency-key` |
-| Commandes produit historiques avec `_` | kebab-case canonique sauf exception actee | `cloud_stacks` reste canonique pour le lifecycle Cloud des stacks |
+| Commandes produit historiques avec `_` | kebab-case canonique sauf exception actee | `cloud_stacks` reste le vrai nom canonique du lifecycle Cloud des stacks |
 | Flags API-specifiques | flag produit stable | `--account` reste `--account` meme si l'API v2 attend `address` |
 | Flags v3 tres utilises | conserver comme alias cache ou deprecie | `--src` -> `--source`, `--dst` -> `--destination` |
 | Saisie fichier | `--file <path>|-` quand l'objet principal n'est pas naturellement positionnel | `create <file>|-` peut rester alias |
@@ -82,6 +82,7 @@ Regles:
 - alias visibles pour les raccourcis utiles (`list`, `ls`);
 - alias deprecie pour les anciens noms (`get`, `transfer_initiation`, `bank_accounts`, `update_status`);
 - alias cache seulement pour les formes tres anciennes ou incoherentes;
+- chaque alias deprecie conserve doit afficher un warning sur stderr qui indique la commande canonique a utiliser;
 - erreur claire si un ancien flag ne peut pas etre mappe sans ambiguite;
 - documentation generee a partir de cette table pour chaque suppression volontaire.
 
@@ -191,7 +192,7 @@ Les commandes Cloud restent sous `cloud`, mais elles doivent utiliser un context
 ## Mapping Cloud stacks lifecycle
 
 Les commandes `stack` v3 sont Cloud-control-plane. En v4, elles doivent etre clairement distinguees des commandes qui parlent a une stack data-plane.
-Le domaine canonique v4 est `cloud_stacks ...`, qui correspond au nom produit/service `cloud_stacks`.
+Le domaine canonique v4 est `cloud_stacks ...`, qui correspond au nom produit/service `cloud_stacks`; ce n'est pas un alias de transition.
 Les anciens chemins `stacks ...` et `stack ...` restent des aliases deprecies pendant la v4 quand ils sont peu couteux a maintenir, avec warning indiquant la commande `cloud_stacks ...`.
 Ces aliases pourront etre supprimes en v5 ou dans une version mineure ulterieure si on decide de durcir la migration.
 
@@ -344,6 +345,7 @@ Decisions d'implementation:
 - `config update` prend toujours un connector ID;
 - les anciens sous-chemins par type, comme `update-config stripe`, peuvent rester aliases deprecies quand ils aident l'autocompletion, mais ils doivent exiger `--connector-id` et afficher un warning;
 - ne pas ajouter d'alias court qui masque le connector ID cible;
+- ne pas accepter de forme qui laisse croire que le type connecteur est l'identifiant cible; l'objet modifie est toujours le connector ID;
 - eviter de multiplier les sous-commandes generees si une commande generique avec schema OpenAPI suffit;
 - garder les commandes par connecteur comme aliases pour l'autocompletion et la documentation.
 
@@ -453,6 +455,8 @@ Decision:
 | `search ...` et alias `se` | supprimer | Le produit n'existe plus en v4. |
 | `payments ... get` | deprecie vers `show` | Coherence globale. |
 | commandes avec underscores | aliases deprecies avec warning | Coherence shell. |
+
+Les aliases conserves sont une aide de migration v4, pas une promesse de compatibilite long terme. Leur suppression pourra etre planifiee dans une version ulterieure (`v4.1`, `v4.2` ou `v5`) selon le cout de maintenance et l'usage observe.
 
 ## Documentation a produire depuis ce plan
 
