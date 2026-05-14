@@ -199,6 +199,11 @@ Implementation v4 initiale:
 - `cloud apps versions manifest` est le nom canonique, avec `show-manifest` alias deprecie cache.
 - `cloud apps versions archive show` est le nom canonique pour lire l'archive, avec `show-archive` alias deprecie cache.
 
+Points bloques / non applicables avec le SDK actuel:
+
+- `cloud personal-tokens create` n'est pas implemente pour l'instant: la v3 depend de claims Cloud, de `EnsureStackAccess`, puis d'un token exchange contre l'Auth de la stack. Le runtime v4 ne porte pas encore le modele d'acces Cloud stack/cache de token necessaire, et il ne faut pas recreer une dependance Cloud pour les commandes stack locales.
+- `cloud apps versions archive` comme action mutante n'est pas expose par le deployserver SDK actuel; seule la lecture de l'archive est disponible et exposee via `cloud apps versions archive show`.
+
 ## Mapping Cloud stacks lifecycle
 
 Les commandes `stack` v3 sont Cloud-control-plane. En v4, elles doivent etre clairement distinguees des commandes qui parlent a une stack data-plane.
