@@ -5219,6 +5219,94 @@ func TestFlowsWorkflowsRunSelectsV2(t *testing.T) {
 	}
 }
 
+func TestFlowsInstancesListSelectsV2(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"orchestration","version":"2.1.0","health":true}]}`)
+		case "/api/orchestration/v2/instances":
+			if r.Method != http.MethodGet {
+				t.Fatalf("expected GET, got %s", r.Method)
+			}
+			if got := r.URL.Query().Get("workflowID"); got != "workflow_1" {
+				t.Fatalf("expected workflowID workflow_1, got %q", got)
+			}
+			if got := r.URL.Query().Get("running"); got != "true" {
+				t.Fatalf("expected running true, got %q", got)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"cursor":{"data":[{"id":"instance_1","workflowID":"workflow_1","createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-01T00:00:00Z","terminated":false,"status":[]}],"hasMore":false,"pageSize":10}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"flows", "instances", "list",
+		"--workflow-id", "workflow_1",
+		"--running",
+		"--page-size", "10",
+	)
+	if err != nil {
+		t.Fatalf("list flow instances: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "API version: v2") || !strings.Contains(stdout, "instance_1\tworkflow_1\tfalse\t2026-01-01T00:00:00Z") {
+		t.Fatalf("unexpected flow instances output:\n%s", stdout)
+	}
+}
+
+func TestFlowsInstancesShowSelectsV1(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/versions":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"versions":[{"name":"orchestration","version":"1.5.0","health":true}]}`)
+		case "/api/orchestration/instances/instance_1":
+			if r.Method != http.MethodGet {
+				t.Fatalf("expected GET, got %s", r.Method)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"data":{"id":"instance_1","workflowID":"workflow_1","createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-01T00:00:00Z","terminated":false,"status":[]}}`)
+		default:
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "stack", "local",
+		"--stack-url", server.URL,
+	)
+	if err != nil {
+		t.Fatalf("create context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "flows", "instances", "show", "instance_1")
+	if err != nil {
+		t.Fatalf("show flow instance: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{"API version: v1", "ID\tinstance_1", "Workflow ID\tworkflow_1", "Terminated\tfalse"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected instance output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
 func TestOrchestrationAliasWarns(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {

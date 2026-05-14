@@ -16,7 +16,9 @@ const (
 	ProductOrchestration  capabilities.Product = "orchestration"
 	FeatureCreateWorkflow capabilities.Feature = "createWorkflow"
 	FeatureDeleteWorkflow capabilities.Feature = "deleteWorkflow"
+	FeatureGetInstance    capabilities.Feature = "getInstance"
 	FeatureGetWorkflow    capabilities.Feature = "getWorkflow"
+	FeatureListInstances  capabilities.Feature = "listInstances"
 	FeatureListWorkflows  capabilities.Feature = "listWorkflows"
 	FeatureRunWorkflow    capabilities.Feature = "runWorkflow"
 )
@@ -89,6 +91,31 @@ type RunWorkflowOutput struct {
 	Instance   InstanceSummary         `json:"instance" yaml:"instance"`
 }
 
+type ListInstancesInput struct {
+	PageSize   int64
+	Cursor     string
+	WorkflowID string
+	Running    *bool
+}
+
+type ListInstancesOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	Instances  []InstanceSummary       `json:"instances" yaml:"instances"`
+	HasMore    bool                    `json:"hasMore" yaml:"hasMore"`
+	PageSize   int64                   `json:"pageSize" yaml:"pageSize"`
+	Next       *string                 `json:"next,omitempty" yaml:"next,omitempty"`
+	Previous   *string                 `json:"previous,omitempty" yaml:"previous,omitempty"`
+}
+
+type GetInstanceInput struct {
+	InstanceID string
+}
+
+type GetInstanceOutput struct {
+	APIVersion capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	Instance   InstanceSummary         `json:"instance" yaml:"instance"`
+}
+
 type ListWorkflowsHandler struct {
 	APIVersion capabilities.APIVersion
 	Run        func(context.Context, ListWorkflowsInput) (ListWorkflowsOutput, error)
@@ -114,6 +141,16 @@ type RunWorkflowHandler struct {
 	Run        func(context.Context, RunWorkflowInput) (RunWorkflowOutput, error)
 }
 
+type ListInstancesHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, ListInstancesInput) (ListInstancesOutput, error)
+}
+
+type GetInstanceHandler struct {
+	APIVersion capabilities.APIVersion
+	Run        func(context.Context, GetInstanceInput) (GetInstanceOutput, error)
+}
+
 type ListWorkflowsService struct {
 	Handlers []ListWorkflowsHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
@@ -136,6 +173,16 @@ type DeleteWorkflowService struct {
 
 type RunWorkflowService struct {
 	Handlers []RunWorkflowHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type ListInstancesService struct {
+	Handlers []ListInstancesHandler
+	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
+}
+
+type GetInstanceService struct {
+	Handlers []GetInstanceHandler
 	Resolve  func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error)
 }
 
@@ -261,6 +308,55 @@ func (s RunWorkflowService) Run(ctx context.Context, input RunWorkflowInput) (Ru
 	output, err := handler.Run(ctx, input)
 	if err != nil {
 		return RunWorkflowOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func (s ListInstancesService) Run(ctx context.Context, input ListInstancesInput) (ListInstancesOutput, error) {
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]ListInstancesHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return ListInstancesOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return ListInstancesOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return ListInstancesOutput{}, err
+	}
+	output.APIVersion = selected
+	return output, nil
+}
+
+func (s GetInstanceService) Run(ctx context.Context, input GetInstanceInput) (GetInstanceOutput, error) {
+	if input.InstanceID == "" {
+		return GetInstanceOutput{}, fmt.Errorf("instance id is required")
+	}
+	handlerVersions := make([]capabilities.APIVersion, 0, len(s.Handlers))
+	handlers := map[capabilities.APIVersion]GetInstanceHandler{}
+	for _, handler := range s.Handlers {
+		handlerVersions = append(handlerVersions, handler.APIVersion)
+		handlers[handler.APIVersion] = handler
+	}
+	selected, err := s.Resolve(ctx, handlerVersions)
+	if err != nil {
+		return GetInstanceOutput{}, err
+	}
+	handler, ok := handlers[selected]
+	if !ok {
+		return GetInstanceOutput{}, fmt.Errorf("resolved api version %s has no handler", selected)
+	}
+	output, err := handler.Run(ctx, input)
+	if err != nil {
+		return GetInstanceOutput{}, err
 	}
 	output.APIVersion = selected
 	return output, nil
@@ -430,6 +526,76 @@ func SDKRunWorkflowHandlers(sdk *formance.Formance) []RunWorkflowHandler {
 	}
 }
 
+func SDKListInstancesHandlers(sdk *formance.Formance) []ListInstancesHandler {
+	return []ListInstancesHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input ListInstancesInput) (ListInstancesOutput, error) {
+				response, err := sdk.Orchestration.V1.ListInstances(ctx, operations.ListInstancesRequest{
+					WorkflowID: optionalString(input.WorkflowID),
+					Running:    input.Running,
+				})
+				if err != nil {
+					return ListInstancesOutput{}, err
+				}
+				if response.ListRunsResponse == nil {
+					return ListInstancesOutput{}, fmt.Errorf("orchestration v1 list instances returned no data")
+				}
+				return fromV1Instances(response.ListRunsResponse.Data), nil
+			},
+		},
+		{
+			APIVersion: "v2",
+			Run: func(ctx context.Context, input ListInstancesInput) (ListInstancesOutput, error) {
+				response, err := sdk.Orchestration.V2.ListInstances(ctx, operations.V2ListInstancesRequest{
+					PageSize:   optionalInt64(input.PageSize),
+					Cursor:     optionalString(input.Cursor),
+					WorkflowID: optionalString(input.WorkflowID),
+					Running:    input.Running,
+				})
+				if err != nil {
+					return ListInstancesOutput{}, err
+				}
+				if response.V2ListRunsResponse == nil {
+					return ListInstancesOutput{}, fmt.Errorf("orchestration v2 list instances returned no cursor")
+				}
+				return fromV2InstancesCursor(response.V2ListRunsResponse.Cursor), nil
+			},
+		},
+	}
+}
+
+func SDKGetInstanceHandlers(sdk *formance.Formance) []GetInstanceHandler {
+	return []GetInstanceHandler{
+		{
+			APIVersion: "v1",
+			Run: func(ctx context.Context, input GetInstanceInput) (GetInstanceOutput, error) {
+				response, err := sdk.Orchestration.V1.GetInstance(ctx, operations.GetInstanceRequest{InstanceID: input.InstanceID})
+				if err != nil {
+					return GetInstanceOutput{}, err
+				}
+				if response.GetWorkflowInstanceResponse == nil {
+					return GetInstanceOutput{}, fmt.Errorf("orchestration v1 get instance returned no data")
+				}
+				return GetInstanceOutput{Instance: fromV1Instance(response.GetWorkflowInstanceResponse.Data)}, nil
+			},
+		},
+		{
+			APIVersion: "v2",
+			Run: func(ctx context.Context, input GetInstanceInput) (GetInstanceOutput, error) {
+				response, err := sdk.Orchestration.V2.GetInstance(ctx, operations.V2GetInstanceRequest{InstanceID: input.InstanceID})
+				if err != nil {
+					return GetInstanceOutput{}, err
+				}
+				if response.V2GetWorkflowInstanceResponse == nil {
+					return GetInstanceOutput{}, fmt.Errorf("orchestration v2 get instance returned no data")
+				}
+				return GetInstanceOutput{Instance: fromV2Instance(response.V2GetWorkflowInstanceResponse.Data)}, nil
+			},
+		},
+	}
+}
+
 func fromV1Workflows(workflows []shared.Workflow) ListWorkflowsOutput {
 	ret := make([]WorkflowSummary, 0, len(workflows))
 	for _, workflow := range workflows {
@@ -475,6 +641,28 @@ func fromV2Workflow(workflow shared.V2Workflow) WorkflowSummary {
 		Name:      name,
 		CreatedAt: workflow.CreatedAt,
 		UpdatedAt: workflow.UpdatedAt,
+	}
+}
+
+func fromV1Instances(instances []shared.WorkflowInstance) ListInstancesOutput {
+	ret := make([]InstanceSummary, 0, len(instances))
+	for _, instance := range instances {
+		ret = append(ret, fromV1Instance(instance))
+	}
+	return ListInstancesOutput{Instances: ret, PageSize: int64(len(ret))}
+}
+
+func fromV2InstancesCursor(cursor shared.V2ListRunsResponseCursor) ListInstancesOutput {
+	instances := make([]InstanceSummary, 0, len(cursor.Data))
+	for _, instance := range cursor.Data {
+		instances = append(instances, fromV2Instance(instance))
+	}
+	return ListInstancesOutput{
+		Instances: instances,
+		HasMore:   cursor.HasMore,
+		PageSize:  cursor.PageSize,
+		Next:      cursor.Next,
+		Previous:  cursor.Previous,
 	}
 }
 

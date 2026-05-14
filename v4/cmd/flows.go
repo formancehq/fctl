@@ -29,6 +29,136 @@ func newFlowsCommand(deprecatedAlias bool) *cobra.Command {
 		command.Deprecated = "use flows"
 	}
 	command.AddCommand(newFlowsWorkflowsCommand())
+	command.AddCommand(newFlowsInstancesCommand())
+	return command
+}
+
+func newFlowsInstancesCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "instances",
+		Short: "Manage workflow instances",
+	}
+	command.AddCommand(newFlowsInstancesListCommand())
+	command.AddCommand(newFlowsInstancesShowCommand("show", nil, false))
+	command.AddCommand(newFlowsInstancesShowCommand("inspect", nil, false))
+	command.AddCommand(newFlowsInstancesShowCommand("describe", nil, true))
+	return command
+}
+
+func newFlowsInstancesListCommand() *cobra.Command {
+	var pageSize int64 = 15
+	var cursor string
+	var workflowID string
+	var running bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"ls", "l"},
+		Short:   "List workflow instances",
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			var runningPtr *bool
+			if cmd.Flags().Changed("running") {
+				runningPtr = &running
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := flowscmd.ListInstancesService{
+				Handlers: flowscmd.SDKListInstancesHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         flowscmd.ProductOrchestration,
+						Feature:         flowscmd.FeatureListInstances,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), flowscmd.ListInstancesInput{
+				PageSize:   pageSize,
+				Cursor:     cursor,
+				WorkflowID: workflowID,
+				Running:    runningPtr,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderFlowsInstances(cmd, output)
+		},
+	}
+	command.Flags().Int64Var(&pageSize, "page-size", 15, "Page size")
+	command.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
+	command.Flags().StringVar(&workflowID, "workflow-id", "", "Filter by workflow ID")
+	command.Flags().BoolVar(&running, "running", false, "Filter running instances")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
+	return command
+}
+
+func newFlowsInstancesShowCommand(use string, aliases []string, deprecated bool) *cobra.Command {
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     use + " <instance-id>",
+		Aliases: aliases,
+		Short:   "Show a workflow instance",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if deprecated {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Command flows instances describe has been deprecated, use flows instances inspect")
+			}
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(formance.WithServerURL(rt.Target.URL), formance.WithClient(httpClient))
+			service := flowscmd.GetInstanceService{
+				Handlers: flowscmd.SDKGetInstanceHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         flowscmd.ProductOrchestration,
+						Feature:         flowscmd.FeatureGetInstance,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), flowscmd.GetInstanceInput{InstanceID: args[0]})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderFlowsInstance(cmd, output)
+		},
+	}
+	if deprecated {
+		command.Deprecated = "use flows instances inspect"
+	}
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin orchestration API version")
 	return command
 }
 
@@ -385,5 +515,43 @@ func renderFlowsWorkflowRun(cmd *cobra.Command, output flowscmd.RunWorkflowOutpu
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Workflow instance created with ID: %s\n", output.Instance.ID)
+	return err
+}
+
+func renderFlowsInstances(cmd *cobra.Command, output flowscmd.ListInstancesOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	if len(output.Instances) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No workflow instances found.")
+		return err
+	}
+	for _, instance := range output.Instances {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%t\t%s\n", instance.ID, instance.WorkflowID, instance.Terminated, instance.CreatedAt.Format(time.RFC3339)); err != nil {
+			return err
+		}
+	}
+	if output.HasMore && output.Next != nil {
+		_, err := fmt.Fprintf(cmd.OutOrStdout(), "Next: %s\n", *output.Next)
+		return err
+	}
+	return nil
+}
+
+func renderFlowsInstance(cmd *cobra.Command, output flowscmd.GetInstanceOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	instance := output.Instance
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", instance.ID); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Workflow ID\t%s\n", instance.WorkflowID); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Terminated\t%t\n", instance.Terminated); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Created at\t%s\n", instance.CreatedAt.Format(time.RFC3339))
 	return err
 }

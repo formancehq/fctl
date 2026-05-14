@@ -91,6 +91,49 @@ func TestRunWorkflowServiceSelectsResolvedHandler(t *testing.T) {
 	}
 }
 
+func TestListInstancesServiceSelectsResolvedHandler(t *testing.T) {
+	service := ListInstancesService{
+		Handlers: []ListInstancesHandler{
+			{
+				APIVersion: "v2",
+				Run: func(_ context.Context, input ListInstancesInput) (ListInstancesOutput, error) {
+					if input.PageSize != 10 || input.WorkflowID != "workflow_1" || input.Running == nil || !*input.Running {
+						t.Fatalf("unexpected input: %#v", input)
+					}
+					return ListInstancesOutput{PageSize: input.PageSize}, nil
+				},
+			},
+		},
+		Resolve: func(_ context.Context, versions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			assertAPIVersions(t, versions, []capabilities.APIVersion{"v2"})
+			return "v2", nil
+		},
+	}
+
+	running := true
+	output, err := service.Run(context.Background(), ListInstancesInput{PageSize: 10, WorkflowID: "workflow_1", Running: &running})
+	if err != nil {
+		t.Fatalf("run service: %v", err)
+	}
+	if output.APIVersion != "v2" || output.PageSize != 10 {
+		t.Fatalf("unexpected output: %#v", output)
+	}
+}
+
+func TestGetInstanceServiceRequiresInstanceID(t *testing.T) {
+	service := GetInstanceService{
+		Handlers: []GetInstanceHandler{{APIVersion: "v2"}},
+		Resolve: func(context.Context, []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			t.Fatal("resolver should not run")
+			return "", nil
+		},
+	}
+
+	if _, err := service.Run(context.Background(), GetInstanceInput{}); err == nil {
+		t.Fatal("expected instance id validation error")
+	}
+}
+
 func assertAPIVersions(t *testing.T, got []capabilities.APIVersion, want []capabilities.APIVersion) {
 	t.Helper()
 	if len(got) != len(want) {
