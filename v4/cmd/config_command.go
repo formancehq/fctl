@@ -7,7 +7,6 @@ import (
 
 	v4config "github.com/formancehq/fctl/v4/internal/config"
 	"github.com/formancehq/fctl/v4/internal/credentials"
-	"github.com/formancehq/fctl/v4/internal/render"
 )
 
 func newConfigCommand() *cobra.Command {
@@ -42,12 +41,8 @@ func newConfigMigrateV3Command() *cobra.Command {
 				return err
 			}
 
-			output, err := outputFormat(cmd)
-			if err != nil {
-				return err
-			}
 			if dryRun {
-				return renderMigrationPlan(cmd, output, plan)
+				return renderMigrationPlan(cmd, plan)
 			}
 
 			var store credentials.Store
@@ -64,12 +59,12 @@ func newConfigMigrateV3Command() *cobra.Command {
 			if err := v4config.WriteMigration(cmd.Context(), path, plan, store); err != nil {
 				return err
 			}
-			if output == "json" {
-				return render.JSON(cmd.OutOrStdout(), map[string]any{
-					"configPath":      path,
-					"contexts":        len(plan.Contexts),
-					"credentialMoves": len(plan.CredentialMoves),
-				})
+			if handled, err := writeStructuredOutput(cmd, map[string]any{
+				"configPath":      path,
+				"contexts":        len(plan.Contexts),
+				"credentialMoves": len(plan.CredentialMoves),
+			}); handled || err != nil {
+				return err
 			}
 			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Migrated %d context(s) to %s.\n", len(plan.Contexts), path)
 			return err
@@ -83,13 +78,14 @@ func newConfigMigrateV3Command() *cobra.Command {
 	return command
 }
 
-func renderMigrationPlan(cmd *cobra.Command, output string, plan v4config.MigrationPlan) error {
-	if output == "json" {
-		return render.JSON(cmd.OutOrStdout(), migrationPlanOutput{
-			CurrentContext:  plan.CurrentContext,
-			Contexts:        contextNames(plan.Contexts),
-			CredentialMoves: len(plan.CredentialMoves),
-		})
+func renderMigrationPlan(cmd *cobra.Command, plan v4config.MigrationPlan) error {
+	result := migrationPlanOutput{
+		CurrentContext:  plan.CurrentContext,
+		Contexts:        contextNames(plan.Contexts),
+		CredentialMoves: len(plan.CredentialMoves),
+	}
+	if handled, err := writeStructuredOutput(cmd, result); handled || err != nil {
+		return err
 	}
 
 	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Current context: %s\n", plan.CurrentContext); err != nil {

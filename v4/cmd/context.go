@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 
 	v4config "github.com/formancehq/fctl/v4/internal/config"
-	"github.com/formancehq/fctl/v4/internal/render"
 )
 
 func newContextCommand() *cobra.Command {
@@ -36,16 +35,13 @@ func newContextListCommand() *cobra.Command {
 				return err
 			}
 
-			output, err := outputFormat(cmd)
-			if err != nil {
-				return err
-			}
 			names := cfg.ContextNames()
-			if output == "json" {
-				return render.JSON(cmd.OutOrStdout(), contextListOutput{
-					Current:  cfg.CurrentContext,
-					Contexts: names,
-				})
+			result := contextListOutput{
+				Current:  cfg.CurrentContext,
+				Contexts: names,
+			}
+			if handled, err := writeStructuredOutput(cmd, result); handled || err != nil {
+				return err
 			}
 			if len(names) == 0 {
 				_, err := fmt.Fprintln(cmd.OutOrStdout(), "No contexts found.")
@@ -85,13 +81,9 @@ func newContextShowCommand() *cobra.Command {
 				return err
 			}
 
-			output, err := outputFormat(cmd)
-			if err != nil {
-				return err
-			}
 			result := contextShowOutput{Name: name, Current: name == cfg.CurrentContext, Context: context}
-			if output == "json" {
-				return render.JSON(cmd.OutOrStdout(), result)
+			if handled, err := writeStructuredOutput(cmd, result); handled || err != nil {
+				return err
 			}
 			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Name: %s\nKind: %s\n", name, context.Kind)
 			return err
@@ -118,12 +110,8 @@ func newContextUseCommand() *cobra.Command {
 				return err
 			}
 
-			output, err := outputFormat(cmd)
-			if err != nil {
+			if handled, err := writeStructuredOutput(cmd, map[string]string{"currentContext": name}); handled || err != nil {
 				return err
-			}
-			if output == "json" {
-				return render.JSON(cmd.OutOrStdout(), map[string]string{"currentContext": name})
 			}
 			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Current context set to %s.\n", name)
 			return err
@@ -200,16 +188,12 @@ func newContextCreateStackCommand() *cobra.Command {
 				return err
 			}
 
-			output, err := outputFormat(cmd)
-			if err != nil {
+			if handled, err := writeStructuredOutput(cmd, contextShowOutput{
+				Name:    name,
+				Current: name == cfg.CurrentContext,
+				Context: cfg.Contexts[name],
+			}); handled || err != nil {
 				return err
-			}
-			if output == "json" {
-				return render.JSON(cmd.OutOrStdout(), contextShowOutput{
-					Name:    name,
-					Current: name == cfg.CurrentContext,
-					Context: cfg.Contexts[name],
-				})
 			}
 			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Context %s created.\n", name)
 			return err

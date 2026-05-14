@@ -10,7 +10,6 @@ import (
 
 	"github.com/formancehq/fctl/v4/internal/capabilities"
 	ledgercmd "github.com/formancehq/fctl/v4/internal/commands/ledger"
-	"github.com/formancehq/fctl/v4/internal/render"
 )
 
 func newLedgerCommand() *cobra.Command {
@@ -93,12 +92,8 @@ func newLedgerTransactionsListCommand() *cobra.Command {
 				return err
 			}
 
-			format, err := outputFormat(cmd)
-			if err != nil {
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
 				return err
-			}
-			if format == "json" {
-				return render.JSON(cmd.OutOrStdout(), output)
 			}
 			return renderLedgerTransactions(cmd, output)
 		},

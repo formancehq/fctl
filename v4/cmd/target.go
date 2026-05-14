@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/v4/internal/capabilities"
-	"github.com/formancehq/fctl/v4/internal/render"
 )
 
 func newTargetCommand() *cobra.Command {
@@ -51,12 +50,8 @@ func newTargetInspectCommand() *cobra.Command {
 				Components: components,
 			}
 
-			format, err := outputFormat(cmd)
-			if err != nil {
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
 				return err
-			}
-			if format == "json" {
-				return render.JSON(cmd.OutOrStdout(), output)
 			}
 
 			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Context: %s\nTarget: %s (%s)\n", output.Context, output.TargetURL, output.TargetKind); err != nil {
