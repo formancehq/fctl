@@ -27,6 +27,7 @@ type Options struct {
 	ContextOverride config.ContextOverride
 	Credentials     credentials.Store
 	Auth            auth.Options
+	VersionsClient  VersionsClient
 	Manifest        capabilities.Manifest
 	Compatibility   capabilities.ComponentCompatibility
 }
@@ -37,10 +38,11 @@ type Runtime struct {
 	Context     config.Context
 	Target      Target
 
-	Credentials   credentials.Store
-	AuthOptions   auth.Options
-	Manifest      capabilities.Manifest
-	Compatibility capabilities.ComponentCompatibility
+	Credentials    credentials.Store
+	AuthOptions    auth.Options
+	VersionsClient VersionsClient
+	Manifest       capabilities.Manifest
+	Compatibility  capabilities.ComponentCompatibility
 }
 
 type Target struct {
@@ -74,14 +76,15 @@ func New(ctx context.Context, options Options) (*Runtime, error) {
 	}
 
 	return &Runtime{
-		Config:        cfg,
-		ContextName:   contextName,
-		Context:       selectedContext,
-		Target:        target,
-		Credentials:   options.Credentials,
-		AuthOptions:   options.Auth,
-		Manifest:      options.Manifest,
-		Compatibility: options.Compatibility,
+		Config:         cfg,
+		ContextName:    contextName,
+		Context:        selectedContext,
+		Target:         target,
+		Credentials:    options.Credentials,
+		AuthOptions:    options.Auth,
+		VersionsClient: options.VersionsClient,
+		Manifest:       options.Manifest,
+		Compatibility:  options.Compatibility,
 	}, nil
 }
 
@@ -124,4 +127,43 @@ func (r *Runtime) HTTPClient(ctx context.Context) (*http.Client, error) {
 		return nil, errors.New("runtime is nil")
 	}
 	return auth.NewHTTPClient(ctx, r.Context.Auth, r.Credentials, r.AuthOptions)
+}
+
+func (r *Runtime) ComponentVersions(ctx context.Context) ([]capabilities.ComponentVersion, error) {
+	client := r.VersionsClient
+	if client == nil {
+		httpClient, err := r.HTTPClient(ctx)
+		if err != nil {
+			return nil, err
+		}
+		client = HTTPVersionsClient{
+			BaseURL:    r.Target.URL,
+			HTTPClient: httpClient,
+		}
+	}
+	return client.GetVersions(ctx)
+}
+
+func (r *Runtime) ResolveAPIVersion(ctx context.Context, request capabilities.VersionResolutionRequest) (capabilities.APIVersion, error) {
+	if request.Compatibility == nil {
+		request.Compatibility = r.Compatibility
+	}
+	if request.Compatibility == nil {
+		request.Compatibility = capabilities.DefaultComponentCompatibility
+	}
+	if request.Policy == "" {
+		request.Policy = capabilities.VersionPolicy(r.APIPolicyFor(request.Product))
+	}
+	if request.ComponentVersion == "" {
+		versions, err := r.ComponentVersions(ctx)
+		if err != nil {
+			return "", err
+		}
+		componentVersion, ok := componentVersionFor(versions, request.Product)
+		if !ok {
+			return "", fmt.Errorf("component version for %s not found", request.Product)
+		}
+		request.ComponentVersion = componentVersion.Version
+	}
+	return capabilities.ResolveAPIVersion(request)
 }

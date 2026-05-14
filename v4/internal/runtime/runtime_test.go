@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -138,6 +139,70 @@ func TestHTTPClientUsesContextAuth(t *testing.T) {
 	if rsp.StatusCode != http.StatusNoContent {
 		t.Fatalf("expected 204, got %d", rsp.StatusCode)
 	}
+}
+
+func TestHTTPVersionsClientParsesVersions(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/versions" {
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+		fmt.Fprint(w, `{"versions":[{"name":"ledger","version":"2.3.4","health":true}]}`)
+	}))
+	defer server.Close()
+
+	versions, err := HTTPVersionsClient{BaseURL: server.URL + "/api"}.GetVersions(context.Background())
+	if err != nil {
+		t.Fatalf("get versions: %v", err)
+	}
+	if len(versions) != 1 || versions[0].Product != "ledger" || versions[0].Version != "2.3.4" || !versions[0].Health {
+		t.Fatalf("unexpected versions: %#v", versions)
+	}
+}
+
+func TestResolveAPIVersionFetchesComponentVersion(t *testing.T) {
+	configPath := writeRuntimeConfig(t, config.Config{
+		Version:        config.Version,
+		CurrentContext: "local",
+		Contexts: map[string]config.Context{
+			"local": {
+				Kind:     config.ContextKindStack,
+				StackURL: "http://localhost/api",
+				Auth:     config.Auth{Method: config.AuthMethodNone},
+			},
+		},
+	})
+	rt, err := New(context.Background(), Options{
+		ConfigPath: configPath,
+		VersionsClient: staticVersionsClient{versions: []capabilities.ComponentVersion{
+			{Product: "ledger", Version: "2.3.4", Health: true},
+		}},
+		Compatibility: capabilities.ComponentCompatibility{
+			{Product: "ledger", Range: ">=2.0.0 <3.0.0", APIVersions: []capabilities.APIVersion{"v1", "v2"}},
+		},
+	})
+	if err != nil {
+		t.Fatalf("new runtime: %v", err)
+	}
+
+	selected, err := rt.ResolveAPIVersion(context.Background(), capabilities.VersionResolutionRequest{
+		Product:         "ledger",
+		Feature:         "listTransactions",
+		HandlerVersions: []capabilities.APIVersion{"v1", "v2", "v3"},
+	})
+	if err != nil {
+		t.Fatalf("resolve api version: %v", err)
+	}
+	if selected != "v2" {
+		t.Fatalf("expected v2, got %q", selected)
+	}
+}
+
+type staticVersionsClient struct {
+	versions []capabilities.ComponentVersion
+}
+
+func (c staticVersionsClient) GetVersions(context.Context) ([]capabilities.ComponentVersion, error) {
+	return c.versions, nil
 }
 
 func writeRuntimeConfig(t *testing.T, cfg config.Config) string {
