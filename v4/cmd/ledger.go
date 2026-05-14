@@ -386,8 +386,10 @@ func newLedgerTransactionsCommand() *cobra.Command {
 		Short: "Manage ledger transactions",
 	}
 	command.AddCommand(newLedgerTransactionsCountCommand())
+	command.AddCommand(newLedgerTransactionsDeleteMetadataCommand())
 	command.AddCommand(newLedgerTransactionsListCommand())
 	command.AddCommand(newLedgerTransactionsRevertCommand())
+	command.AddCommand(newLedgerTransactionsSetMetadataCommand())
 	command.AddCommand(newLedgerTransactionsShowCommand())
 	return command
 }
@@ -769,6 +771,155 @@ func newLedgerTransactionsCountCommand() *cobra.Command {
 	return command
 }
 
+func newLedgerTransactionsSetMetadataCommand() *cobra.Command {
+	var ledger string
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "set-metadata <transaction-id> <key=value>...",
+		Aliases: []string{"sm", "set-meta"},
+		Short:   "Set metadata on a ledger transaction",
+		Args:    cobra.MinimumNArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("ledger transactions set-metadata requires --confirm")
+			}
+
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			if ledger == "" {
+				ledger = rt.Context.Defaults["ledger"]
+			}
+			if ledger == "" {
+				ledger = "default"
+			}
+
+			metadata, err := parseMetadataFlags(args[1:])
+			if err != nil {
+				return err
+			}
+
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := ledgercmd.AddTransactionMetadataService{
+				Handlers: ledgercmd.SDKAddTransactionMetadataHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         ledgercmd.ProductLedger,
+						Feature:         ledgercmd.FeatureAddTransactionMetadata,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), ledgercmd.AddTransactionMetadataInput{
+				Ledger:        ledger,
+				TransactionID: args[0],
+				Metadata:      metadata,
+			})
+			if err != nil {
+				return err
+			}
+
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderLedgerTransactionMetadataSet(cmd, output)
+		},
+	}
+
+	command.Flags().StringVar(&ledger, "ledger", "", "Ledger name")
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm the metadata update")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
+
+	return command
+}
+
+func newLedgerTransactionsDeleteMetadataCommand() *cobra.Command {
+	var ledger string
+	var confirm bool
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "delete-metadata <transaction-id> <key>",
+		Aliases: []string{"dm", "del-meta"},
+		Short:   "Delete metadata from a ledger transaction",
+		Args:    cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !confirm {
+				return fmt.Errorf("ledger transactions delete-metadata requires --confirm")
+			}
+
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			if ledger == "" {
+				ledger = rt.Context.Defaults["ledger"]
+			}
+			if ledger == "" {
+				ledger = "default"
+			}
+
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := ledgercmd.DeleteTransactionMetadataService{
+				Handlers: ledgercmd.SDKDeleteTransactionMetadataHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         ledgercmd.ProductLedger,
+						Feature:         ledgercmd.FeatureDeleteTransactionMetadata,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), ledgercmd.DeleteTransactionMetadataInput{
+				Ledger:        ledger,
+				TransactionID: args[0],
+				Key:           args[1],
+			})
+			if err != nil {
+				return err
+			}
+
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderLedgerTransactionMetadataDeleted(cmd, output)
+		},
+	}
+
+	command.Flags().StringVar(&ledger, "ledger", "", "Ledger name")
+	command.Flags().BoolVar(&confirm, "confirm", false, "Confirm the metadata deletion")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
+
+	return command
+}
+
 func newLedgerTransactionsRevertCommand() *cobra.Command {
 	var ledger string
 	var atEffectiveDate bool
@@ -952,6 +1103,22 @@ func renderLedgerTransactionsCount(cmd *cobra.Command, output ledgercmd.CountTra
 		return err
 	}
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Count\t%d\n", output.Count)
+	return err
+}
+
+func renderLedgerTransactionMetadataSet(cmd *cobra.Command, output ledgercmd.AddTransactionMetadataOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), "Metadata added.")
+	return err
+}
+
+func renderLedgerTransactionMetadataDeleted(cmd *cobra.Command, output ledgercmd.DeleteTransactionMetadataOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), "Metadata deleted.")
 	return err
 }
 

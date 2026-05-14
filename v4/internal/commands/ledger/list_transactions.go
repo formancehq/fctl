@@ -15,11 +15,13 @@ import (
 )
 
 const (
-	ProductLedger            capabilities.Product = "ledger"
-	FeatureCountTransactions capabilities.Feature = "countTransactions"
-	FeatureListTransactions  capabilities.Feature = "listTransactions"
-	FeatureGetTransaction    capabilities.Feature = "getTransaction"
-	FeatureRevertTransaction capabilities.Feature = "revertTransaction"
+	ProductLedger                    capabilities.Product = "ledger"
+	FeatureAddTransactionMetadata    capabilities.Feature = "addMetadataOnTransaction"
+	FeatureCountTransactions         capabilities.Feature = "countTransactions"
+	FeatureDeleteTransactionMetadata capabilities.Feature = "deleteTransactionMetadata"
+	FeatureListTransactions          capabilities.Feature = "listTransactions"
+	FeatureGetTransaction            capabilities.Feature = "getTransaction"
+	FeatureRevertTransaction         capabilities.Feature = "revertTransaction"
 )
 
 type ListTransactionsInput struct {
