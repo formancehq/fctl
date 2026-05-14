@@ -3,9 +3,12 @@ package ledger
 import (
 	"context"
 	"errors"
+	"math/big"
 	"testing"
+	"time"
 
 	"github.com/formancehq/fctl/v4/internal/capabilities"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
 )
 
 func TestListTransactionsServiceSelectsResolvedHandler(t *testing.T) {
@@ -74,6 +77,66 @@ func TestToV2ListTransactionsRequestMapsCanonicalFilters(t *testing.T) {
 	if request.Query["account"] != "users:123" || request.Query["source"] != "world" ||
 		request.Query["destination"] != "users:123" || request.Query["reference"] != "ref" {
 		t.Fatalf("unexpected query mapping: %#v", request.Query)
+	}
+}
+
+func TestGetTransactionServiceSelectsResolvedHandler(t *testing.T) {
+	service := GetTransactionService{
+		Handlers: []GetTransactionHandler{
+			{
+				APIVersion: "v1",
+				Run: func(context.Context, GetTransactionInput) (GetTransactionOutput, error) {
+					t.Fatal("v1 handler should not run")
+					return GetTransactionOutput{}, nil
+				},
+			},
+			{
+				APIVersion: "v2",
+				Run: func(_ context.Context, input GetTransactionInput) (GetTransactionOutput, error) {
+					if input.Ledger != "default" || input.TransactionID != "42" {
+						t.Fatalf("unexpected input: %#v", input)
+					}
+					return GetTransactionOutput{Transaction: TransactionSummary{ID: input.TransactionID}}, nil
+				},
+			},
+		},
+		Resolve: func(_ context.Context, versions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+			assertAPIVersions(t, versions, []capabilities.APIVersion{"v1", "v2"})
+			return "v2", nil
+		},
+	}
+
+	output, err := service.Run(context.Background(), GetTransactionInput{Ledger: "default", TransactionID: "42"})
+	if err != nil {
+		t.Fatalf("run service: %v", err)
+	}
+	if output.APIVersion != "v2" || output.Transaction.ID != "42" {
+		t.Fatalf("unexpected output: %#v", output)
+	}
+}
+
+func TestTransactionMapping(t *testing.T) {
+	timestamp := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	reference := "ref"
+
+	v1 := fromV1Transaction(shared.Transaction{
+		Txid:      big.NewInt(42),
+		Reference: &reference,
+		Timestamp: timestamp,
+		Metadata:  map[string]any{"foo": "bar"},
+	})
+	if v1.ID != "42" || *v1.Reference != "ref" || !v1.Timestamp.Equal(timestamp) || v1.Metadata["foo"] != "bar" {
+		t.Fatalf("unexpected v1 transaction: %#v", v1)
+	}
+
+	v2 := fromV2Transaction(shared.V2Transaction{
+		ID:        big.NewInt(43),
+		Reference: &reference,
+		Timestamp: timestamp,
+		Metadata:  map[string]string{"foo": "bar"},
+	})
+	if v2.ID != "43" || *v2.Reference != "ref" || !v2.Timestamp.Equal(timestamp) || v2.Metadata["foo"] != "bar" {
+		t.Fatalf("unexpected v2 transaction: %#v", v2)
 	}
 }
 

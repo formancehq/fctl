@@ -385,6 +385,72 @@ func newLedgerTransactionsCommand() *cobra.Command {
 		Short: "Manage ledger transactions",
 	}
 	command.AddCommand(newLedgerTransactionsListCommand())
+	command.AddCommand(newLedgerTransactionsShowCommand())
+	return command
+}
+
+func newLedgerTransactionsShowCommand() *cobra.Command {
+	var ledger string
+	var apiVersion string
+
+	command := &cobra.Command{
+		Use:     "show <transaction-id>",
+		Aliases: []string{"sh"},
+		Short:   "Show a ledger transaction",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, err := runtimeFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			if ledger == "" {
+				ledger = rt.Context.Defaults["ledger"]
+			}
+			if ledger == "" {
+				ledger = "default"
+			}
+
+			httpClient, err := rt.HTTPClient(cmd.Context())
+			if err != nil {
+				return err
+			}
+			sdk := formance.New(
+				formance.WithServerURL(rt.Target.URL),
+				formance.WithClient(httpClient),
+			)
+			service := ledgercmd.GetTransactionService{
+				Handlers: ledgercmd.SDKGetTransactionHandlers(sdk),
+				Resolve: func(ctx context.Context, handlerVersions []capabilities.APIVersion) (capabilities.APIVersion, error) {
+					request := capabilities.VersionResolutionRequest{
+						Product:         ledgercmd.ProductLedger,
+						Feature:         ledgercmd.FeatureGetTransaction,
+						HandlerVersions: handlerVersions,
+					}
+					if apiVersion != "" {
+						request.Policy = capabilities.VersionPolicyPinned
+						request.PinnedVersion = capabilities.APIVersion(apiVersion)
+					}
+					return rt.ResolveAPIVersion(ctx, request)
+				},
+			}
+			output, err := service.Run(cmd.Context(), ledgercmd.GetTransactionInput{
+				Ledger:        ledger,
+				TransactionID: args[0],
+			})
+			if err != nil {
+				return err
+			}
+
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderLedgerTransaction(cmd, output)
+		},
+	}
+
+	command.Flags().StringVar(&ledger, "ledger", "", "Ledger name")
+	command.Flags().StringVar(&apiVersion, "api-version", "", "Pin ledger API version")
+
 	return command
 }
 
@@ -580,6 +646,24 @@ func renderLedgerTransactions(cmd *cobra.Command, output ledgercmd.ListTransacti
 		}
 	}
 	return nil
+}
+
+func renderLedgerTransaction(cmd *cobra.Command, output ledgercmd.GetTransactionOutput) error {
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "API version: %s\n", output.APIVersion); err != nil {
+		return err
+	}
+	reference := ""
+	if output.Transaction.Reference != nil {
+		reference = *output.Transaction.Reference
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\n", output.Transaction.ID); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Reference\t%s\n", reference); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Timestamp\t%s\n", output.Transaction.Timestamp.Format(time.RFC3339))
+	return err
 }
 
 func parseMetadataFlags(values []string) (map[string]string, error) {
