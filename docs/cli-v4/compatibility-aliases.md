@@ -20,6 +20,7 @@ tests, and explicit about their canonical replacement.
 | `webhooks change-secret` | `webhooks secret rotate` | Deprecated warning | v4.x |
 | `cloud me info` | `cloud me show` | Deprecated warning | v4.x |
 | `cloud organizations describe` | `cloud organizations show` | Deprecated warning | v4.x |
+| `cloud organizations authentication-provider configure <type> <name> <client-id> <client-secret>` | `cloud organizations authentication-provider configure --type --name --client-id --client-secret-stdin` | Deprecated warning | v4.x |
 | `cloud_stacks ...` | `cloud stacks ...` | Deprecated warning | v4.1, v4.2, or v5 |
 | `stack ...` | `cloud stacks ...` | Deprecated warning | v4.1, v4.2, or v5 |
 | `stacks ...` | `cloud stacks ...` | Deprecated warning | v4.1, v4.2, or v5 |

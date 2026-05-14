@@ -945,6 +945,54 @@ func TestCloudOrganizationAuthenticationProvider(t *testing.T) {
 	}
 }
 
+func TestCloudOrganizationAuthenticationProviderConfigureDeprecatedPositionalArgs(t *testing.T) {
+	providerBody := `{"data":{"type":"github","name":"GitHub","clientID":"client_1","clientSecret":"secret","config":{},"organizationID":"org_1","createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-02T00:00:00Z"}}`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodPut && r.URL.Path == "/organizations/org_1/authentication-provider":
+			body := readRequestBody(t, r)
+			for _, expected := range []string{`"type":"github"`, `"name":"GitHub"`, `"clientID":"client_1"`, `"clientSecret":"secret"`} {
+				if !strings.Contains(body, expected) {
+					t.Fatalf("expected authentication provider body to contain %s, got %s", expected, body)
+				}
+			}
+			fmt.Fprint(w, providerBody)
+		default:
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", server.URL,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"cloud", "organizations", "authentication-provider", "configure",
+		"github", "GitHub", "client_1", "secret",
+	)
+	if err != nil {
+		t.Fatalf("cloud organizations authentication-provider configure positional: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stderr, "Positional authentication provider arguments have been deprecated") {
+		t.Fatalf("expected positional deprecation warning, got:\n%s", stderr)
+	}
+	if stdout != "Cloud authentication provider GitHub configured.\n" {
+		t.Fatalf("unexpected configure output: %q", stdout)
+	}
+}
+
 func TestCloudOrganizationOAuthClients(t *testing.T) {
 	clientBody := `{"data":{"id":"client_1","name":"Robot","description":"CI client","secret":{"lastDigits":"1234"},"createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-02T00:00:00Z"}}`
 	createdClientBody := `{"data":{"id":"client_1","name":"Robot","description":"CI client","secret":{"lastDigits":"1234","clear":"clear-secret"},"createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-02T00:00:00Z"}}`

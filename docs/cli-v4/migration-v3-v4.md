@@ -43,6 +43,7 @@ the isolated v4 implementation under `v4/`.
 | `webhooks change-secret` | `webhooks secret rotate` | `change-secret` remains a deprecated alias. |
 | `cloud me info` | `cloud me show` | `info` remains a deprecated alias. |
 | `cloud organizations describe` | `cloud organizations show` | `describe` remains a deprecated alias. |
+| `cloud organizations authentication-provider configure <type> <name> <client-id> <client-secret>` | `cloud organizations authentication-provider configure --type <type> --name <name> --client-id <client-id> --client-secret-stdin` | Deprecated positional form warns on stderr. |
 | `cloud_stacks ...` | `cloud stacks ...` | Deprecated alias with warnings for Cloud lifecycle commands. |
 | `stack ...` / `stacks ...` | `cloud stacks ...` | Deprecated aliases with warnings for Cloud lifecycle commands. |
 | `search ...` | none | Removed. |

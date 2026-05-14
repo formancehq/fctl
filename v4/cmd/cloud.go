@@ -452,10 +452,25 @@ func newCloudOrganizationsAuthenticationProviderConfigureCommand() *cobra.Comman
 	var microsoftTenant string
 
 	command := &cobra.Command{
-		Use:   "configure",
+		Use:   "configure [type name client-id client-secret]",
 		Short: "Configure Cloud organization authentication provider",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		Args: func(_ *cobra.Command, args []string) error {
+			if len(args) == 0 || len(args) == 4 {
+				return nil
+			}
+			return fmt.Errorf("accepts either no positional args or the deprecated positional form <type> <name> <client-id> <client-secret>, received %d", len(args))
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 4 {
+				if providerType != "" || name != "" || clientID != "" || clientSecret != "" || clientSecretStdin {
+					return fmt.Errorf("deprecated positional authentication provider arguments cannot be combined with --type, --name, --client-id, --client-secret, or --client-secret-stdin")
+				}
+				fmt.Fprintln(cmd.ErrOrStderr(), "Positional authentication provider arguments have been deprecated, use --type --name --client-id and --client-secret-stdin")
+				providerType = args[0]
+				name = args[1]
+				clientID = args[2]
+				clientSecret = args[3]
+			}
 			if clientSecretStdin {
 				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
