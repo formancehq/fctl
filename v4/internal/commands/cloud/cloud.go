@@ -37,6 +37,8 @@ type MembershipClient interface {
 	GetRegion(context.Context, operations.GetRegionRequest, ...operations.Option) (*operations.GetRegionResponse, error)
 	CreatePrivateRegion(context.Context, operations.CreatePrivateRegionRequest, ...operations.Option) (*operations.CreatePrivateRegionResponse, error)
 	DeleteRegion(context.Context, operations.DeleteRegionRequest, ...operations.Option) (*operations.DeleteRegionResponse, error)
+	ListOrganizationApplications(context.Context, operations.ListOrganizationApplicationsRequest, ...operations.Option) (*operations.ListOrganizationApplicationsResponse, error)
+	GetOrganizationApplication(context.Context, operations.GetOrganizationApplicationRequest, ...operations.Option) (*operations.GetOrganizationApplicationResponse, error)
 }
 
 type UserSummary struct {
@@ -253,6 +255,42 @@ type RegionActionOutput struct {
 	OrganizationID string `json:"organizationID" yaml:"organizationID"`
 	RegionID       string `json:"regionID" yaml:"regionID"`
 	Action         string `json:"action" yaml:"action"`
+}
+
+type ApplicationSummary struct {
+	ID          string         `json:"id" yaml:"id"`
+	Name        string         `json:"name" yaml:"name"`
+	Alias       string         `json:"alias" yaml:"alias"`
+	URL         string         `json:"url" yaml:"url"`
+	Description string         `json:"description,omitempty" yaml:"description,omitempty"`
+	Scopes      []ScopeSummary `json:"scopes,omitempty" yaml:"scopes,omitempty"`
+	CreatedAt   time.Time      `json:"createdAt" yaml:"createdAt"`
+	UpdatedAt   time.Time      `json:"updatedAt" yaml:"updatedAt"`
+}
+
+type ListApplicationsInput struct {
+	OrganizationID string
+	Page           int64
+	PageSize       int64
+}
+
+type ListApplicationsOutput struct {
+	OrganizationID string               `json:"organizationID" yaml:"organizationID"`
+	Applications   []ApplicationSummary `json:"applications" yaml:"applications"`
+	HasMore        bool                 `json:"hasMore" yaml:"hasMore"`
+	PageSize       int64                `json:"pageSize" yaml:"pageSize"`
+	Next           string               `json:"next,omitempty" yaml:"next,omitempty"`
+	Previous       string               `json:"previous,omitempty" yaml:"previous,omitempty"`
+}
+
+type ApplicationInput struct {
+	OrganizationID string
+	ApplicationID  string
+}
+
+type ApplicationOutput struct {
+	OrganizationID string             `json:"organizationID" yaml:"organizationID"`
+	Application    ApplicationSummary `json:"application" yaml:"application"`
 }
 
 type MeService struct {
@@ -838,6 +876,82 @@ func (s DeleteRegionService) Run(ctx context.Context, input RegionInput) (Region
 	return RegionActionOutput{OrganizationID: input.OrganizationID, RegionID: input.RegionID, Action: "delete"}, nil
 }
 
+type ListApplicationsService struct {
+	Client MembershipClient
+}
+
+func (s ListApplicationsService) Run(ctx context.Context, input ListApplicationsInput) (ListApplicationsOutput, error) {
+	if s.Client == nil {
+		return ListApplicationsOutput{}, fmt.Errorf("membership client is required")
+	}
+	if input.OrganizationID == "" {
+		return ListApplicationsOutput{}, fmt.Errorf("organization id is required")
+	}
+	if input.Page < 0 {
+		return ListApplicationsOutput{}, fmt.Errorf("page must be zero or greater")
+	}
+	if input.PageSize <= 0 {
+		return ListApplicationsOutput{}, fmt.Errorf("page-size must be a positive integer")
+	}
+	response, err := s.Client.ListOrganizationApplications(ctx, operations.ListOrganizationApplicationsRequest{
+		OrganizationID: input.OrganizationID,
+		Page:           &input.Page,
+		PageSize:       &input.PageSize,
+	})
+	if err != nil {
+		return ListApplicationsOutput{}, err
+	}
+	if response.GetListApplicationsResponse() == nil || response.GetListApplicationsResponse().GetCursor() == nil {
+		return ListApplicationsOutput{}, fmt.Errorf("cloud organizations applications list returned no applications")
+	}
+	cursor := response.GetListApplicationsResponse().GetCursor()
+	data := cursor.GetData()
+	applications := make([]ApplicationSummary, 0, len(data))
+	for i := range data {
+		applications = append(applications, applicationSummary(&data[i]))
+	}
+	output := ListApplicationsOutput{
+		OrganizationID: input.OrganizationID,
+		Applications:   applications,
+		HasMore:        cursor.GetHasMore(),
+		PageSize:       cursor.GetPageSize(),
+	}
+	if cursor.GetNext() != nil {
+		output.Next = *cursor.GetNext()
+	}
+	if cursor.GetPrevious() != nil {
+		output.Previous = *cursor.GetPrevious()
+	}
+	return output, nil
+}
+
+type ReadApplicationService struct {
+	Client MembershipClient
+}
+
+func (s ReadApplicationService) Run(ctx context.Context, input ApplicationInput) (ApplicationOutput, error) {
+	if s.Client == nil {
+		return ApplicationOutput{}, fmt.Errorf("membership client is required")
+	}
+	if input.OrganizationID == "" {
+		return ApplicationOutput{}, fmt.Errorf("organization id is required")
+	}
+	if input.ApplicationID == "" {
+		return ApplicationOutput{}, fmt.Errorf("application id is required")
+	}
+	response, err := s.Client.GetOrganizationApplication(ctx, operations.GetOrganizationApplicationRequest{
+		OrganizationID: input.OrganizationID,
+		ApplicationID:  input.ApplicationID,
+	})
+	if err != nil {
+		return ApplicationOutput{}, err
+	}
+	if response.GetGetApplicationResponse() == nil || response.GetGetApplicationResponse().GetData() == nil {
+		return ApplicationOutput{}, fmt.Errorf("cloud organizations applications show returned no application")
+	}
+	return ApplicationOutput{OrganizationID: input.OrganizationID, Application: applicationSummaryWithScopes(response.GetGetApplicationResponse().GetData())}, nil
+}
+
 func validateRegionTarget(organizationID string, regionID string) error {
 	if organizationID == "" {
 		return fmt.Errorf("organization id is required")
@@ -957,6 +1071,48 @@ func regionSummaryFromPrivate(region *components.PrivateRegion) RegionSummary {
 	}
 	if region.Version != nil {
 		summary.Version = *region.Version
+	}
+	return summary
+}
+
+func applicationSummary(application *components.Application) ApplicationSummary {
+	if application == nil {
+		return ApplicationSummary{}
+	}
+	summary := ApplicationSummary{
+		ID:        application.ID,
+		Name:      application.Name,
+		Alias:     application.Alias,
+		URL:       application.URL,
+		CreatedAt: application.CreatedAt,
+		UpdatedAt: application.UpdatedAt,
+	}
+	if application.Description != nil {
+		summary.Description = *application.Description
+	}
+	return summary
+}
+
+func applicationSummaryWithScopes(application *components.ApplicationWithScope) ApplicationSummary {
+	if application == nil {
+		return ApplicationSummary{}
+	}
+	summary := ApplicationSummary{
+		ID:        application.ID,
+		Name:      application.Name,
+		Alias:     application.Alias,
+		URL:       application.URL,
+		CreatedAt: application.CreatedAt,
+		UpdatedAt: application.UpdatedAt,
+	}
+	if application.Description != nil {
+		summary.Description = *application.Description
+	}
+	if len(application.Scopes) > 0 {
+		summary.Scopes = make([]ScopeSummary, 0, len(application.Scopes))
+		for i := range application.Scopes {
+			summary.Scopes = append(summary.Scopes, scopeSummary(&application.Scopes[i]))
+		}
 	}
 	return summary
 }

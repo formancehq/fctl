@@ -147,9 +147,84 @@ func newCloudOrganizationsCommand() *cobra.Command {
 	command.AddCommand(newCloudOrganizationsShowCommand("describe", nil, true))
 	command.AddCommand(newCloudOrganizationsUpdateCommand())
 	command.AddCommand(newCloudOrganizationsDeleteCommand())
+	command.AddCommand(newCloudOrganizationsApplicationsCommand())
 	command.AddCommand(newCloudOrganizationsInvitationsCommand())
 	command.AddCommand(newCloudOrganizationsUsersCommand())
 	command.AddCommand(newCloudOrganizationsPoliciesCommand())
+	return command
+}
+
+func newCloudOrganizationsApplicationsCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "applications",
+		Short: "Manage Cloud organization applications",
+	}
+	command.AddCommand(newCloudOrganizationsApplicationsListCommand())
+	command.AddCommand(newCloudOrganizationsApplicationsShowCommand())
+	return command
+}
+
+func newCloudOrganizationsApplicationsListCommand() *cobra.Command {
+	var organizationID string
+	var page int64
+	var pageSize int64
+
+	command := &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"ls", "l"},
+		Short:   "List Cloud organization applications",
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ListApplicationsService{Client: client}.Run(cmd.Context(), cloudcmd.ListApplicationsInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				Page:           page,
+				PageSize:       pageSize,
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudApplications(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
+	command.Flags().Int64Var(&page, "page", 0, "Page number")
+	command.Flags().Int64Var(&pageSize, "page-size", 15, "Page size")
+	return command
+}
+
+func newCloudOrganizationsApplicationsShowCommand() *cobra.Command {
+	var organizationID string
+
+	command := &cobra.Command{
+		Use:   "show <application-id>",
+		Short: "Show a Cloud organization application",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rt, client, err := cloudRuntimeAndMembershipClientFromCommand(cmd)
+			if err != nil {
+				return err
+			}
+			output, err := cloudcmd.ReadApplicationService{Client: client}.Run(cmd.Context(), cloudcmd.ApplicationInput{
+				OrganizationID: resolveCloudOrganizationID(rt, organizationID),
+				ApplicationID:  args[0],
+			})
+			if err != nil {
+				return err
+			}
+			if handled, err := writeStructuredOutput(cmd, output); handled || err != nil {
+				return err
+			}
+			return renderCloudApplication(cmd, output)
+		},
+	}
+	command.Flags().StringVar(&organizationID, "organization", "", "Cloud organization ID")
 	return command
 }
 
@@ -1015,6 +1090,37 @@ func renderCloudOrganizations(cmd *cobra.Command, output cloudcmd.ListOrganizati
 	}
 	for _, organization := range output.Organizations {
 		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\n", organization.ID, organization.Name, organization.OwnerID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func renderCloudApplications(cmd *cobra.Command, output cloudcmd.ListApplicationsOutput) error {
+	if len(output.Applications) == 0 {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), "No applications found.")
+		return err
+	}
+	for _, application := range output.Applications {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\t%s\t%s\n", application.ID, application.Name, application.Alias, application.URL); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func renderCloudApplication(cmd *cobra.Command, output cloudcmd.ApplicationOutput) error {
+	application := output.Application
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "ID\t%s\nName\t%s\nAlias\t%s\nURL\t%s\n", application.ID, application.Name, application.Alias, application.URL); err != nil {
+		return err
+	}
+	if application.Description != "" {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Description\t%s\n", application.Description); err != nil {
+			return err
+		}
+	}
+	for _, scope := range application.Scopes {
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Scope\t%d\t%s\n", scope.ID, scope.Label); err != nil {
 			return err
 		}
 	}

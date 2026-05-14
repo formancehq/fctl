@@ -571,6 +571,58 @@ func TestCloudOrganizationsMutations(t *testing.T) {
 	}
 }
 
+func TestCloudOrganizationApplications(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/applications":
+			if got := r.URL.Query().Get("page"); got != "0" {
+				t.Fatalf("expected page 0, got %q", got)
+			}
+			if got := r.URL.Query().Get("pageSize"); got != "15" {
+				t.Fatalf("expected pageSize 15, got %q", got)
+			}
+			fmt.Fprint(w, `{"cursor":{"pageSize":15,"hasMore":false,"data":[{"id":"app_1","name":"Console","alias":"console","url":"https://console.example","description":"Cloud console","createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-02T00:00:00Z"}]}}`)
+		case r.Method == http.MethodGet && r.URL.Path == "/organizations/org_1/applications/app_1":
+			fmt.Fprint(w, `{"data":{"id":"app_1","name":"Console","alias":"console","url":"https://console.example","description":"Cloud console","createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-02T00:00:00Z","scopes":[{"id":7,"label":"ledger:read","protected":false,"createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-02T00:00:00Z"}]}}`)
+		default:
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+		}
+	}))
+	defer server.Close()
+
+	configDir := t.TempDir()
+	_, stderr, err := executeCommand(t,
+		"--config-dir", configDir,
+		"context", "create", "cloud-stack", "prod",
+		"--cloud-url", server.URL,
+		"--organization", "org_1",
+		"--stack", "stack_1",
+		"--auth-method", "none",
+	)
+	if err != nil {
+		t.Fatalf("create cloud-stack context: %v stderr=%s", err, stderr)
+	}
+
+	stdout, stderr, err := executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "applications", "list")
+	if err != nil {
+		t.Fatalf("cloud organizations applications list: %v stderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "app_1\tConsole\tconsole\thttps://console.example") {
+		t.Fatalf("unexpected applications list output:\n%s", stdout)
+	}
+
+	stdout, stderr, err = executeCommand(t, "--config-dir", configDir, "cloud", "organizations", "applications", "show", "app_1")
+	if err != nil {
+		t.Fatalf("cloud organizations applications show: %v stderr=%s", err, stderr)
+	}
+	for _, expected := range []string{"ID\tapp_1", "Name\tConsole", "Alias\tconsole", "URL\thttps://console.example", "Description\tCloud console", "Scope\t7\tledger:read"} {
+		if !strings.Contains(stdout, expected) {
+			t.Fatalf("expected application output to contain %q, got:\n%s", expected, stdout)
+		}
+	}
+}
+
 func TestCloudOrganizationInvitations(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
