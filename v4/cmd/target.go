@@ -84,18 +84,18 @@ func newTargetInspectCommand() *cobra.Command {
 }
 
 type targetInspectOutput struct {
-	Context    string                   `json:"context"`
-	TargetURL  string                   `json:"targetUrl"`
-	TargetKind string                   `json:"targetKind"`
-	Components []targetInspectComponent `json:"components"`
+	Context    string                   `json:"context" yaml:"context"`
+	TargetURL  string                   `json:"targetUrl" yaml:"targetUrl"`
+	TargetKind string                   `json:"targetKind" yaml:"targetKind"`
+	Components []targetInspectComponent `json:"components" yaml:"components"`
 }
 
 type targetInspectComponent struct {
-	Name        string   `json:"name"`
-	Version     string   `json:"version"`
-	Health      bool     `json:"health"`
-	APIVersions []string `json:"apiVersions"`
-	APIPolicy   string   `json:"apiPolicy"`
+	Name        string   `json:"name" yaml:"name"`
+	Version     string   `json:"version" yaml:"version"`
+	Health      bool     `json:"health" yaml:"health"`
+	APIVersions []string `json:"apiVersions" yaml:"apiVersions"`
+	APIPolicy   string   `json:"apiPolicy" yaml:"apiPolicy"`
 }
 
 func apiVersionsToStrings(versions []capabilities.APIVersion) []string {

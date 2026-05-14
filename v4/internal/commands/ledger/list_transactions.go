@@ -29,19 +29,19 @@ type ListTransactionsInput struct {
 }
 
 type ListTransactionsOutput struct {
-	APIVersion   capabilities.APIVersion `json:"apiVersion"`
-	Transactions []TransactionSummary    `json:"transactions"`
-	HasMore      bool                    `json:"hasMore"`
-	PageSize     int64                   `json:"pageSize"`
-	Next         *string                 `json:"next,omitempty"`
-	Previous     *string                 `json:"previous,omitempty"`
+	APIVersion   capabilities.APIVersion `json:"apiVersion" yaml:"apiVersion"`
+	Transactions []TransactionSummary    `json:"transactions" yaml:"transactions"`
+	HasMore      bool                    `json:"hasMore" yaml:"hasMore"`
+	PageSize     int64                   `json:"pageSize" yaml:"pageSize"`
+	Next         *string                 `json:"next,omitempty" yaml:"next,omitempty"`
+	Previous     *string                 `json:"previous,omitempty" yaml:"previous,omitempty"`
 }
 
 type TransactionSummary struct {
-	ID        string         `json:"id"`
-	Reference *string        `json:"reference,omitempty"`
-	Timestamp time.Time      `json:"timestamp"`
-	Metadata  map[string]any `json:"metadata,omitempty"`
+	ID        string         `json:"id" yaml:"id"`
+	Reference *string        `json:"reference,omitempty" yaml:"reference,omitempty"`
+	Timestamp time.Time      `json:"timestamp" yaml:"timestamp"`
+	Metadata  map[string]any `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 }
 
 type ListTransactionsHandler struct {

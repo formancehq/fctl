@@ -105,9 +105,9 @@ func renderMigrationPlan(cmd *cobra.Command, plan v4config.MigrationPlan) error 
 }
 
 type migrationPlanOutput struct {
-	CurrentContext  string   `json:"currentContext"`
-	Contexts        []string `json:"contexts"`
-	CredentialMoves int      `json:"credentialMoves"`
+	CurrentContext  string   `json:"currentContext" yaml:"currentContext"`
+	Contexts        []string `json:"contexts" yaml:"contexts"`
+	CredentialMoves int      `json:"credentialMoves" yaml:"credentialMoves"`
 }
 
 func contextNames(contexts map[string]v4config.Context) []string {

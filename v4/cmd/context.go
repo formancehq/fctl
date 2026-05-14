@@ -211,12 +211,12 @@ func newContextCreateStackCommand() *cobra.Command {
 }
 
 type contextListOutput struct {
-	Current  string   `json:"currentContext"`
-	Contexts []string `json:"contexts"`
+	Current  string   `json:"currentContext" yaml:"currentContext"`
+	Contexts []string `json:"contexts" yaml:"contexts"`
 }
 
 type contextShowOutput struct {
-	Name    string           `json:"name"`
-	Current bool             `json:"current"`
-	Context v4config.Context `json:"context"`
+	Name    string           `json:"name" yaml:"name"`
+	Current bool             `json:"current" yaml:"current"`
+	Context v4config.Context `json:"context" yaml:"context"`
 }
