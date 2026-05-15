@@ -42,7 +42,7 @@ work.
   during migration review.
 - The user-facing docs under `docs/cli-v4/` describe command reference,
   runtime behavior, migration behavior, compatibility aliases, testing strategy,
-  config migration, and cutover constraints.
+  config migration, versioning ownership, and cutover constraints.
 
 ## Explicitly Deferred Or Blocked
 
@@ -55,6 +55,11 @@ work.
   of the v4 product surface yet.
 - `ledger transactions explain` is hidden until the public stack spec and
   `formance-sdk-go` expose `explainTransaction`.
+- Runtime capabilities are still coarse-grained at product/API-namespace level.
+  Feature-level manifest checks and intra-namespace capability ranges are
+  documented as follow-up work in `docs/cli-v4/versioning-and-ownership.md`.
+- Plugins are not the v4 MVP architecture. They remain a future option once
+  packaging, discovery, installation, and per-product ownership are explicit.
 - A reusable OpenAPI-backed mock server remains future work. Current v4 tests
   use targeted `httptest` handlers that assert method, path, query, body,
   stdout, stderr, errors, and deprecation warnings.

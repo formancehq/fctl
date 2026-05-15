@@ -9,6 +9,8 @@ the isolated v4 implementation under `v4/`.
   self-hosted, Cloud, or Cloud stack profile instead of assuming Formance Cloud.
 - API versions are selected by capability resolution. Commands expose product
   intent and use the latest compatible API by default.
+- The CLI is not a complete OpenAPI projection. It exposes product workflows and
+  business features, not every generated endpoint.
 - Generated SDK namespaces remain an implementation detail. Command names and
   environment-derived internal identifiers include the service name, for example
   `FCTL_LedgerTransactionList`.
@@ -100,6 +102,9 @@ messages.
   output, so v4 does not expose a silent no-op flag.
 - `ledger transactions explain` is hidden until the public stack spec and SDK
   expose the operation.
+- Plugin-based command isolation remains a future architecture option. The v4
+  MVP keeps one binary to reduce installation, packaging, and ownership
+  complexity while the target/auth/rendering model stabilizes.
 
 ## Compatibility Warnings
 

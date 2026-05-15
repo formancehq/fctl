@@ -89,3 +89,24 @@ var ComponentCompatibility = []ComponentRange{
 3. Find command handlers for the requested feature.
 4. Select the highest compatible API namespace unless the user pinned one.
 5. Return a clean error if no handler can run.
+
+## Known Runtime Gap
+
+The generated manifest currently contains operation metadata by product,
+feature, and API namespace, but the runtime resolver still primarily operates at
+the product/API-namespace level. `Feature` is available in
+`VersionResolutionRequest`, but it is not yet used to query the generated
+manifest before selecting a handler.
+
+This is acceptable for the MVP only if the gap stays explicit. The next
+capabilities iteration should:
+
+- verify that the selected API namespace exposes the requested feature in the
+  generated manifest;
+- add feature-level component ranges for behavior introduced inside an existing
+  API namespace;
+- move version-dependent flag checks into declarative compatibility data where
+  possible.
+
+Until this is done, handlers may still need narrow validation for specific flags
+or fields that are only supported by newer component versions.

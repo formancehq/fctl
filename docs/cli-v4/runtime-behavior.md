@@ -73,6 +73,11 @@ The command path stays product-oriented, for example
 `ledger transactions list`; generated SDK namespaces remain implementation
 details.
 
+The current resolver works at API-namespace granularity. It does not yet model
+every feature or parameter difference inside a namespace. See
+`docs/cli-v4/versioning-and-ownership.md` for the known gaps and the planned
+capabilities improvements.
+
 ## Cloud Stack Creation Wait
 
 `cloud stacks create` waits for availability by default. Use `--no-wait` to

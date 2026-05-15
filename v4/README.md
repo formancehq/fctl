@@ -33,6 +33,9 @@ The v4 user and architecture documentation lives in the repository-level
 - `docs/cli-v4/command-reference.md`: current visible command families.
 - `docs/cli-v4/runtime-behavior.md`: operational behavior for login, scopes,
   stack availability waits, styling, debug output, and hidden product surface.
+- `docs/cli-v4/versioning-and-ownership.md`: product-surface policy,
+  monolith-versus-plugin tradeoffs, capabilities gaps, support window, and
+  ownership expectations.
 - `docs/cli-v4/migration-v3-v4.md`: user-facing v3 to v4 command migration.
 - `docs/cli-v4/config-format.md`: v4 config shape and credential handling.
 - `docs/cli-v4/testing-strategy.md`: expected test coverage and local gates.
