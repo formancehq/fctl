@@ -119,18 +119,27 @@ plugins:
 | Backend | URL pattern | Auth | Use case |
 |---|---|---|---|
 | `github-releases` (default) | `https://github.com/{repo}/releases/download/v{version}/fctl-plugin-{name}-{os}-{arch}` | None (public) or GitHub token (private) | Public repos, POC |
-| `private-releases` | Same pattern, but requires a GitHub token with `repo` scope | GitHub PAT or GITHUB_TOKEN | Private product repos |
+| `cdn` | `https://plugins.formance.cloud/{name}/{version}/{os}-{arch}` | Membership token | Recommended for production |
 | `oci` | `oci://{registry}/{name}:{version}` | Registry auth (Docker config) | Air-gapped, enterprise, custom registries |
 | `url` | Explicit URL per version (fallback) | Custom | Anything else |
 
 For the **Ledger v3 POC**, `github-releases` is sufficient — the ledger repo is
-public. But the registry format must support other backends from the start so
-that private or enterprise products don't require a redesign.
+public.
 
-When `distribution` is `private-releases`, fctl uses the same URL convention but
-includes a GitHub token from the user's environment (`GITHUB_TOKEN`) or from the
-credential store. This covers the case where a product repo is private but the
-plugin needs to be distributed to authorized users.
+The **recommended production backend** is `cdn` — a lightweight Formance-hosted
+service that serves plugin binaries. Product CI pipelines upload binaries on
+release, and fctl downloads them using the user's membership token. This has
+several advantages over GitHub releases:
+
+- **Works for private repos.** No GitHub token or special permissions needed.
+  The membership token the user already has is sufficient.
+- **Uniform auth model.** Same token fctl already uses for Cloud — no extra
+  credential to configure.
+- **Simple upload from CI.** A single `curl` or a small CLI step in the product
+  pipeline pushes the binary. No GitHub release dependency.
+- **Cacheable.** A CDN in front makes downloads fast worldwide.
+- **Controllable.** Formance can deprecate, retire, or block versions
+  server-side without waiting for registry YAML updates.
 
 **Checksums** are published alongside the binaries in the GitHub release (standard
 `checksums.txt` artifact), and fctl verifies them after download regardless of
