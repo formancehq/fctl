@@ -18,10 +18,15 @@ the isolated v4 implementation under `v4/`.
   `whoami` for daily use. `session` remains hidden implementation detail, so
   `auth` is not overloaded between CLI authentication state and the stack Auth
   service.
+- Browser/device login is the default interactive Cloud and EE flow. Client
+  credentials remain available for non-interactive automation. Static-token
+  login is not exposed as an interactive product choice.
 - `flows` is the canonical command for the former `orchestration` product.
 - `cloud stacks` is the canonical command for Cloud stack lifecycle operations.
   `cloud_stacks`, `stack`, and `stacks` are deprecated migration aliases with
   warnings.
+- `cloud stacks create` restores the v3-style wizard for missing name, region,
+  and version, then waits for stack availability unless `--no-wait` is passed.
 - `search` is removed from v4 because the product no longer exists.
 
 ## Command Renames
@@ -57,6 +62,7 @@ the isolated v4 implementation under `v4/`.
 | `cloud organizations authentication-provider configure <type> <name> <client-id> <client-secret>` | `cloud organizations authentication-provider configure --type <type> --name <name> --client-id <client-id> --client-secret-stdin` | Deprecated positional form warns on stderr. |
 | `cloud_stacks ...` | `cloud stacks ...` | Deprecated alias with warnings for Cloud lifecycle commands. |
 | `stack ...` / `stacks ...` | `cloud stacks ...` | Deprecated aliases with warnings for Cloud lifecycle commands. |
+| `cloud apps ...` | none visible | Hidden until the Cloud apps product contract is part of the v4 surface. |
 | `search ...` | none | Removed. |
 
 ## Argument Changes
@@ -76,12 +82,24 @@ such as `--secret-stdin` when available. Plain text output must not print clear
 secrets returned by APIs. Structured output can expose explicit response fields
 when the command is intentionally machine-readable.
 
+## Debugging And Output
+
+`-d`/`--debug` is kept for v3 debugging workflows. It writes HTTP diagnostics to
+stderr, including method, URL, status, and headers, while redacting sensitive
+headers such as `Authorization`, `Cookie`, and `Set-Cookie`.
+
+Human output should use the shared styled renderers. JSON and YAML output remain
+plain and scriptable. Prompt cancellation should not leak low-level prompt
+messages.
+
 ## Deferred Items
 
 - `--telemetry` is deferred until opt-in/out behavior and stored state are
   documented.
 - `--quiet` is deferred until each command family defines its primary quiet
   output, so v4 does not expose a silent no-op flag.
+- `ledger transactions explain` is hidden until the public stack spec and SDK
+  expose the operation.
 
 ## Compatibility Warnings
 

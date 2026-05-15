@@ -27,6 +27,9 @@ Use `httptest` servers per command family. Each test should:
 - verify deprecated aliases warn on stderr;
 - verify destructive commands require `--confirm`;
 - verify plain output does not print secrets.
+- verify human output uses the shared styled renderers for success, info,
+  warnings, key/value blocks, and tables.
+- verify hidden commands stay out of visible help and visible command audits.
 
 ## Mock Stack
 
@@ -47,7 +50,30 @@ Run from the repository root unless noted:
 ```bash
 cd v4 && go test ./...
 git diff --check
+nix develop --impure --command just pre-commit
 ```
 
 Only stage the v4 files and documentation for the current logical change. Do not
 stage unrelated v3 changes or pre-existing todo deletions.
+
+## Manual Command Audit
+
+For broad command-surface changes, build the v4 binary and audit visible leaf
+commands from Cobra help/completion. The audit should exclude hidden commands and
+the synthetic `help <command>` subtree.
+
+Each visible leaf command should be covered by one of:
+
+- a real command execution against a safe Cloud or stack target;
+- a local fake Cloud/stack server for mutating or destructive commands;
+- a documented expected error when the selected real target does not expose that
+  component, followed by local fake-server coverage for the command behavior.
+
+The audit output should record:
+
+- visible executable leaf command count;
+- `--help` routing failures;
+- covered OK commands;
+- commands unavailable on the selected real target;
+- commands intentionally hidden until supported;
+- commands not manually executed yet.

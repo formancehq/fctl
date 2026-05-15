@@ -1,7 +1,11 @@
 # fctl v4 Command Reference
 
 This reference lists the current canonical v4 command families implemented under
-`v4/`. It should eventually be generated from Cobra help to avoid drift.
+`v4/`. It tracks visible commands only. Hidden compatibility commands and
+temporarily disabled command families are documented separately below.
+
+The latest manual command audit covered 193 visible executable leaf commands.
+When this file changes, verify it against Cobra help before committing.
 
 ## Global Flags
 
@@ -86,26 +90,10 @@ commands for now. New user flows should use `login`, `logout`, `whoami`, and
 - `fctl cloud regions list --organization <organization-id>`
 - `fctl cloud regions show <region-id> --organization <organization-id>`
 - `fctl cloud regions delete <region-id> --organization <organization-id> --confirm`
-- `fctl cloud apps create --organization <organization-id>`
-- `fctl cloud apps list --organization <organization-id>`
-- `fctl cloud apps show <app-id> --organization <organization-id>`
-- `fctl cloud apps delete <app-id> --organization <organization-id> --confirm`
-- `fctl cloud apps deploy <app-id> --file <manifest.yaml>`
-- `fctl cloud apps runs list <app-id>`
-- `fctl cloud apps runs show <run-id>`
-- `fctl cloud apps runs logs <run-id>`
-- `fctl cloud apps versions list <app-id>`
-- `fctl cloud apps versions show <version-id>`
-- `fctl cloud apps versions manifest <version-id>`
-- `fctl cloud apps versions archive show <version-id>`
-- `fctl cloud apps variables list <app-id>`
-- `fctl cloud apps variables create <app-id> --key <key> --value <value>|--value-stdin`
-- `fctl cloud apps variables delete <app-id> <variable-id> --confirm`
 
 Cloud commands require a `cloud` or `cloud-stack` context. They are not required
-for direct local or self-hosted stack commands. `cloud apps` talks to the Cloud
-apps deploy server; use `--deploy-url <url>` to target a non-production deploy
-server. The root `ui` command is a hidden deprecated alias for `cloud ui`.
+for direct local or self-hosted stack commands. The root `ui` command is a
+hidden deprecated alias for `cloud ui`.
 
 ## Cloud Stacks
 
@@ -131,22 +119,37 @@ context organization. `cloud_stacks`, `stack`, and `stacks` are deprecated
 aliases for `cloud stacks`, except `stack proxy`, which remains a deprecated
 alias for the data-plane `target proxy` command.
 
+`cloud stacks create` prompts for missing name, region, and version in
+interactive terminals. Region versions are sorted in descending semantic-version
+order. Unless `--no-wait` is passed, create waits for stack availability before
+printing the final styled success block.
+
 ## Ledger
 
+- `fctl ledger create [name]`
+- `fctl ledger list`
+- `fctl ledger info`
+- `fctl ledger stats`
+- `fctl ledger import <ledger> --file <path>|-`
+- `fctl ledger export --ledger <ledger>`
+- `fctl ledger set-metadata <ledger> [key=value]... --metadata-file <path>|- --confirm`
+- `fctl ledger delete-metadata <ledger> <key> --confirm`
+- `fctl ledger accounts list`
+- `fctl ledger accounts show <account>`
+- `fctl ledger accounts query <query-id> --schema-version <version>`
+- `fctl ledger accounts set-metadata <account> [key=value]... --metadata-file <path>|- --confirm`
+- `fctl ledger accounts delete-metadata <account> <key> --confirm`
+- `fctl ledger schemas list`
+- `fctl ledger schemas show <version>`
+- `fctl ledger schemas insert <version>`
 - `fctl ledger transactions list`
 - `fctl ledger transactions show <transaction-id>`
 - `fctl ledger transactions send`
 - `fctl ledger transactions run-script --file <path>|-`
 - `fctl ledger transactions revert <transaction-id>`
 - `fctl ledger transactions count`
-- `fctl ledger transactions explain <transaction-id>` (requires ledger API v3+; currently blocked until the public spec/SDK exposes `explainTransaction`)
-- `fctl ledger accounts list`
-- `fctl ledger accounts show <address>`
-- `fctl ledger accounts query <query-id> --schema-version <version>`
-- `fctl ledger set-metadata <ledger> [key=value]... --metadata-file <path>|- --confirm`
-- `fctl ledger schemas list`
-- `fctl ledger schemas show <schema-id>`
-- `fctl ledger schemas insert`
+- `fctl ledger transactions set-metadata <transaction-id> [key=value]... --metadata-file <path>|- --confirm`
+- `fctl ledger transactions delete-metadata <transaction-id> <key> --confirm`
 - `fctl ledger volumes list`
 
 Ledger commands use service-qualified internal names and adapt canonical CLI
@@ -160,6 +163,19 @@ flags to the selected Ledger API version.
 - `fctl payments connectors config show <connector-id>`
 - `fctl payments connectors config update <connector-id> --file <path>|-`
 - `fctl payments connectors uninstall <connector-id> --confirm`
+- `fctl payments accounts create --file <path>|-`
+- `fctl payments accounts list`
+- `fctl payments accounts show <account-id>`
+- `fctl payments accounts balances <account-id>`
+- `fctl payments bank-accounts create --file <path>|-`
+- `fctl payments bank-accounts list`
+- `fctl payments bank-accounts show <bank-account-id>`
+- `fctl payments bank-accounts forward <bank-account-id> <connector-id>`
+- `fctl payments bank-accounts set-metadata <bank-account-id> <key=value>... --confirm`
+- `fctl payments payments create --file <path>|-`
+- `fctl payments payments list`
+- `fctl payments payments show <payment-id>`
+- `fctl payments payments set-metadata <payment-id> <key=value>... --confirm`
 - `fctl payments pools create --file <path>|-`
 - `fctl payments pools list`
 - `fctl payments pools show <pool-id>`
@@ -169,6 +185,16 @@ flags to the selected Ledger API version.
 - `fctl payments pools update-query <pool-id> --file <path>|- --confirm`
 - `fctl payments pools balances <pool-id> --at <time>`
 - `fctl payments pools latest-balances <pool-id>`
+- `fctl payments tasks show <task-id>`
+- `fctl payments transfer-initiation create --file <path>|-`
+- `fctl payments transfer-initiation list`
+- `fctl payments transfer-initiation show <transfer-initiation-id>`
+- `fctl payments transfer-initiation approve <transfer-initiation-id> --confirm`
+- `fctl payments transfer-initiation reject <transfer-initiation-id> --confirm`
+- `fctl payments transfer-initiation retry <transfer-initiation-id> --confirm`
+- `fctl payments transfer-initiation delete <transfer-initiation-id> --confirm`
+- `fctl payments transfer-initiation update-status <transfer-initiation-id> <status> --confirm`
+- `fctl payments transfer-initiation reverse <transfer-initiation-id> --file <path>|- --confirm`
 
 Connector configuration commands always target a connector ID.
 
@@ -264,3 +290,13 @@ profile, defaulting to `default` when `--profile` is not provided.
 - `fctl webhooks secret rotate <config-id> --secret-stdin`
 
 Plain output masks webhook secrets.
+
+## Hidden Or Deferred Commands
+
+- `fctl cloud apps ...` exists in code but is hidden from help because Cloud apps
+  are not part of the product surface exposed in v4 yet.
+- `fctl ledger transactions explain <transaction-id>` is hidden until the public
+  stack spec and `formance-sdk-go` expose `explainTransaction`.
+- `fctl context ...`, `fctl session ...`, and root `fctl ui` are hidden
+  compatibility or implementation commands. New user flows should use
+  `profile`, `login`, `logout`, `whoami`, `target`, and `cloud ui`.

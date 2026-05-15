@@ -40,6 +40,13 @@ tests, and explicit about their canonical replacement.
 | `search ...` | Removed | The product no longer exists. |
 | `se` | Removed | Alias for removed `search`. |
 
+## Hidden Until Product Contract
+
+| Command | Status | Reason |
+| --- | --- | --- |
+| `cloud apps ...` | Hidden | Cloud apps are not part of the visible v4 product surface yet. |
+| `ledger transactions explain` | Hidden | The public stack spec and `formance-sdk-go` do not expose `explainTransaction` yet. |
+
 ## Rules
 
 - Alias warnings go to stderr.

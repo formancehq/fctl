@@ -61,6 +61,11 @@ ledger transactions explain requires Ledger >= 3.0.0.
 Current target runs Ledger 2.3.4.
 ```
 
+If the command requires an API operation that is not exposed by the public stack
+spec or the current SDK, keep it hidden from the visible command surface until
+the contract is explicit. `ledger transactions explain` currently follows this
+rule.
+
 ## Help Text
 
 Help should be stable and product-oriented. For flags or commands requiring newer APIs, include capability notes:

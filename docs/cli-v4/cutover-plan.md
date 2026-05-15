@@ -9,7 +9,10 @@ Do not execute this plan until v4 feature parity and release readiness are expli
 - The current repository root is the v3 implementation.
 - The v4 rewrite lives under `v4/`.
 - v4 is a separate Go module: `github.com/formancehq/fctl/v4`.
-- v4 currently validates the architecture through contexts, runtime resolution, auth providers, capabilities, target inspection, v3 migration, and one versioned Ledger command.
+- v4 currently validates the architecture through profiles/contexts, runtime
+  resolution, auth providers, device login, capabilities, target inspection,
+  v3 migration, Cloud stack lifecycle, and product command families for Ledger,
+  Payments, Wallets, Flows, Reconciliation, Auth service, and Webhooks.
 
 ## Cutover Preconditions
 
@@ -129,7 +132,11 @@ go test ./...
 - Some v3 commands may not have v4 parity at cutover.
 - Release tooling may still assume the root v3 module layout.
 - The generated capabilities manifest may need to be refreshed before release.
-- Cloud auth device flow is not part of the initial skeleton and must be validated before Cloud cutover.
+- Cloud auth device flow is implemented, but it still needs release-readiness
+  validation against Cloud and EE before cutover.
+- Hidden product surfaces such as `cloud apps ...` and `ledger transactions
+  explain` must either be promoted with an explicit contract or remain hidden at
+  cutover.
 
 ## Rollback
 
