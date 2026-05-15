@@ -97,24 +97,46 @@ The `compatibleWith` range exists to express **backward compatibility within a
 plugin version** — a plugin built at v3.2.0 may work with any service from
 v3.0.0 onward if the gRPC API is stable across that range.
 
-**Binary URLs are derived from convention, not declared per-entry:**
+**Registry metadata vs artifact distribution are separate concerns.**
 
+The registry tracks **what exists and what is compatible** (metadata). How and
+where binaries are downloaded from is the **distribution backend** — a separate
+layer that the registry points to but does not define.
+
+```yaml
+plugins:
+  ledger:
+    repo: formancehq/ledger
+    type: stack
+    distribution: github-releases     # distribution backend for this plugin
+    versions:
+      3.2.0:
+        compatibleWith: ">=3.0.0"
 ```
-https://github.com/{repo}/releases/download/v{version}/fctl-plugin-{name}-{os}-{arch}
-```
 
-For `ledger` version `3.2.0` on `darwin/arm64`:
-```
-https://github.com/formancehq/ledger/releases/download/v3.2.0/fctl-plugin-ledger-darwin-arm64
-```
+**Distribution backends:**
 
-The `repo` field at the plugin level is the only thing needed. No per-version
-binary URLs, no per-platform entries, no checksums to maintain in the registry.
+| Backend | URL pattern | Auth | Use case |
+|---|---|---|---|
+| `github-releases` (default) | `https://github.com/{repo}/releases/download/v{version}/fctl-plugin-{name}-{os}-{arch}` | None (public) or GitHub token (private) | Public repos, POC |
+| `private-releases` | Same pattern, but requires a GitHub token with `repo` scope | GitHub PAT or GITHUB_TOKEN | Private product repos |
+| `oci` | `oci://{registry}/{name}:{version}` | Registry auth (Docker config) | Air-gapped, enterprise, custom registries |
+| `url` | Explicit URL per version (fallback) | Custom | Anything else |
 
-Checksums are published alongside the binaries in the GitHub release (standard
-`checksums.txt` artifact), and fctl verifies them after download.
+For the **Ledger v3 POC**, `github-releases` is sufficient — the ledger repo is
+public. But the registry format must support other backends from the start so
+that private or enterprise products don't require a redesign.
 
-The registry stays minimal — just a map of versions to `compatibleWith` ranges.
+When `distribution` is `private-releases`, fctl uses the same URL convention but
+includes a GitHub token from the user's environment (`GITHUB_TOKEN`) or from the
+credential store. This covers the case where a product repo is private but the
+plugin needs to be distributed to authorized users.
+
+**Checksums** are published alongside the binaries in the GitHub release (standard
+`checksums.txt` artifact), and fctl verifies them after download regardless of
+the distribution backend.
+
+The registry stays minimal — metadata only, no binary URLs or checksums inline.
 
 ---
 
@@ -766,3 +788,7 @@ The POC is considered successful if:
 - What is the minimum fctl core version that the plugin protocol targets? This
   determines whether we can ship the plugin infrastructure as a patch on the
   current v3 fctl or if it requires the v4 foundation.
+- The POC uses `github-releases` as the distribution backend (public repo).
+  The `private-releases` and `oci` backends are designed in the registry format
+  but not implemented in the POC. These should be validated before plugins are
+  adopted for products with private repositories.
