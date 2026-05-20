@@ -16,8 +16,9 @@ func NewConnectorsCommand() *cobra.Command {
 			NewUninstallCommand(),
 			NewListCommand(),
 			install.NewInstallCommand(),
-			configs.NewUpdateConfigCommands(),
-			configs.NewLoadConfigCommand(),
+			configs.NewUpdateConfigCommand(),
+			configs.NewGetConfigCommand(),
+			NewConnectorConfigsCommand(),
 		),
 	)
 }

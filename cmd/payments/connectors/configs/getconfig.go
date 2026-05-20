@@ -1,7 +1,11 @@
 package configs
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/pterm/pterm"
@@ -18,10 +22,10 @@ import (
 )
 
 type PaymentsLoadConfigStore struct {
-	ConnectorConfig   *shared.ConnectorConfigResponse      `json:"connectorConfig"`
-	V3ConnectorConfig *shared.V3GetConnectorConfigResponse `json:"v3ConnectorConfig,omitempty"`
-	Provider          string                               `json:"provider"`
-	ConnectorID       string                               `json:"connectorId"`
+	ConnectorConfig *shared.ConnectorConfigResponse `json:"connectorConfig"`
+	V3ConfigData    map[string]interface{}          `json:"v3ConnectorConfig,omitempty"`
+	Provider        string                          `json:"provider"`
+	ConnectorID     string                          `json:"connectorId"`
 }
 
 type PaymentsLoadConfigController struct {
@@ -51,7 +55,7 @@ func NewPaymentsLoadConfigController() *PaymentsLoadConfigController {
 	}
 }
 
-func NewLoadConfigCommand() *cobra.Command {
+func NewGetConfigCommand() *cobra.Command {
 	c := NewPaymentsLoadConfigController()
 	return fctl.NewCommand("get-config",
 		fctl.WithAliases("getconfig", "getconf", "gc", "get", "g"),
@@ -74,11 +78,6 @@ func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (f
 		return nil, err
 	}
 
-	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
-	if err != nil {
-		return nil, err
-	}
-
 	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
 		return nil, err
 	}
@@ -92,24 +91,58 @@ func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (f
 			return nil, fmt.Errorf("connector-id is required for v3")
 		}
 
-		response, err := stackClient.Payments.V3.GetConnectorConfig(cmd.Context(), operations.V3GetConnectorConfigRequest{
-			ConnectorID: connectorID,
-		})
+		// Use raw HTTP to avoid the SDK's discriminated union failing on unknown connectors.
+		clients, err := fctl.NewStackClientsFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
 		if err != nil {
 			return nil, err
 		}
-		if response.StatusCode >= 300 {
-			return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+
+		url := strings.TrimRight(clients.URI, "/") + "/api/payments/v3/connectors/" + connectorID + "/config"
+		req, err := http.NewRequestWithContext(cmd.Context(), http.MethodGet, url, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Accept", "application/json")
+
+		httpResp, err := clients.HTTPClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer httpResp.Body.Close()
+
+		respBody, err := io.ReadAll(httpResp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("reading response: %w", err)
+		}
+		if httpResp.StatusCode >= 300 {
+			return nil, fmt.Errorf("unexpected status code %d: %s", httpResp.StatusCode, string(respBody))
 		}
 
-		if response.V3GetConnectorConfigResponse == nil {
-			return nil, fmt.Errorf("unexpected response: %v", response)
+		var envelope map[string]interface{}
+		if err := json.Unmarshal(respBody, &envelope); err != nil {
+			return nil, fmt.Errorf("parsing response: %w", err)
 		}
 
-		c.store.V3ConnectorConfig = response.V3GetConnectorConfigResponse
+		data, ok := envelope["data"]
+		if !ok {
+			return nil, fmt.Errorf("unexpected response shape: missing 'data' key")
+		}
+		configData, ok := data.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("unexpected response shape: 'data' is not an object")
+		}
+
+		c.store.V3ConfigData = configData
 		c.store.ConnectorID = connectorID
-		c.store.Provider = strings.ToLower(string(response.V3GetConnectorConfigResponse.Data.Type))
+		if p, ok := configData["provider"].(string); ok {
+			c.store.Provider = strings.ToLower(p)
+		}
+
 	case versions.V0:
+		stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+		if err != nil {
+			return nil, err
+		}
 		if provider == "" {
 			return nil, fmt.Errorf("provider is required")
 		}
@@ -129,6 +162,11 @@ func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (f
 		c.store.ConnectorConfig = response.ConnectorConfigResponse
 
 	default:
+		stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+		if err != nil {
+			return nil, err
+		}
+
 		connectorList, err := stackClient.Payments.V1.ListAllConnectors(cmd.Context())
 		if err != nil {
 			return nil, err
@@ -187,10 +225,8 @@ func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (f
 	}
 
 	return c, nil
-
 }
 
-// TODO: This need to use the ui.NewListModel
 func (c *PaymentsLoadConfigController) Render(cmd *cobra.Command, args []string) error {
 	if c.PaymentsVersion.Major == versions.V3 {
 		return c.renderV3(cmd, args)
@@ -199,51 +235,27 @@ func (c *PaymentsLoadConfigController) Render(cmd *cobra.Command, args []string)
 }
 
 func (c *PaymentsLoadConfigController) renderV3(cmd *cobra.Command, args []string) error {
-	var err error
-	provider := c.store.Provider
-	switch provider {
-	case internal.StripeConnector:
-		err = views.DisplayStripeConfigV3(cmd, c.store.V3ConnectorConfig)
-	case internal.ModulrConnector:
-		err = views.DisplayModulrConfigV3(cmd, c.store.V3ConnectorConfig)
-	case internal.BankingCircleConnector:
-		err = views.DisplayBankingCircleConfigV3(cmd, c.store.V3ConnectorConfig)
-	case internal.CurrencyCloudConnector:
-		err = views.DisplayCurrencyCloudConfigV3(cmd, c.store.V3ConnectorConfig)
-	case internal.WiseConnector:
-		err = views.DisplayWiseConfigV3(cmd, c.store.V3ConnectorConfig)
-	case internal.MangoPayConnector:
-		err = views.DisplayMangopayConfigV3(cmd, c.store.V3ConnectorConfig)
-	case internal.MoneycorpConnector:
-		err = views.DisplayMoneycorpConfigV3(cmd, c.store.V3ConnectorConfig)
-	case internal.AtlarConnector:
-		err = views.DisplayAtlarConfigV3(cmd, c.store.V3ConnectorConfig)
-	case internal.AdyenConnector:
-		err = views.DisplayAdyenConfigV3(cmd, c.store.V3ConnectorConfig)
-	case internal.QontoConnector:
-		err = views.DisplayQontoConfigV3(cmd, c.store.V3ConnectorConfig)
-	case internal.ColumnConnector:
-		err = views.DisplayColumnConfigV3(cmd, c.store.V3ConnectorConfig)
-	case internal.FireblocksConnector:
-		err = views.DisplayFireblocksConfigV3(cmd, c.store.V3ConnectorConfig)
-	case internal.CoinbaseprimeConnector:
-		err = views.DisplayCoinbaseprimeConfigV3(cmd, c.store.V3ConnectorConfig)
-	case internal.IncreaseConnector:
-		err = views.DisplayIncreaseConfigV3(cmd, c.store.V3ConnectorConfig)
-	case internal.PowensConnector:
-		err = views.DisplayPowensConfigV3(cmd, c.store.V3ConnectorConfig)
-	case internal.TinkConnector:
-		err = views.DisplayTinkConfigV3(cmd, c.store.V3ConnectorConfig)
-	case internal.PlaidConnector:
-		err = views.DisplayPlaidConfigV3(cmd, c.store.V3ConnectorConfig)
-	default:
-		err = fmt.Errorf("unknown provider: %s", provider)
-		pterm.Error.WithWriter(cmd.OutOrStderr()).Printfln("%s", err.Error())
+	tableData := pterm.TableData{{"Field", "Value"}}
+
+	keys := make([]string, 0, len(c.store.V3ConfigData))
+	for k := range c.store.V3ConfigData {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		val := fmt.Sprintf("%v", c.store.V3ConfigData[k])
+		tableData = append(tableData, []string{pterm.LightCyan(k + ":"), val})
 	}
 
-	return err
+	return pterm.DefaultTable.
+		WithHasHeader().
+		WithWriter(cmd.OutOrStdout()).
+		WithData(tableData).
+		Render()
 }
 
+// TODO: This need to use the ui.NewListModel
 func (c *PaymentsLoadConfigController) renderV1V2(cmd *cobra.Command, args []string) error {
 	if c.store.ConnectorConfig == nil {
 		return fmt.Errorf("no connector config available")
