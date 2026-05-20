@@ -7,6 +7,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
+	formance "github.com/formancehq/formance-sdk-go/v3"
+
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
@@ -70,31 +72,28 @@ func (c *ConnectorConfigsController) Run(cmd *cobra.Command, args []string) (fct
 	}
 
 	if c.PaymentsVersion.Major < versions.V3 {
-		return nil, fmt.Errorf("connector configs discovery requires payments API v3 or later")
+		if err := c.legacyV1Configs(cmd, stackClient); err != nil {
+			return nil, err
+		}
+		return c, nil
 	}
 
 	response, err := stackClient.Payments.V3.ListConnectorConfigs(cmd.Context())
 	if err != nil {
 		return nil, err
 	}
-
 	if response.StatusCode >= 300 {
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
-
 	if response.V3ConnectorConfigsResponse == nil {
 		return nil, fmt.Errorf("unexpected empty response")
 	}
-
 	data := response.V3ConnectorConfigsResponse.Data
-
 	connectorNames := make([]string, 0, len(data))
 	for name := range data {
 		connectorNames = append(connectorNames, name)
 	}
 	sort.Strings(connectorNames)
-
-	var fields []ConnectorConfigField
 	for _, connectorName := range connectorNames {
 		fieldMap := data[connectorName]
 		fieldNames := make([]string, 0, len(fieldMap))
@@ -102,14 +101,13 @@ func (c *ConnectorConfigsController) Run(cmd *cobra.Command, args []string) (fct
 			fieldNames = append(fieldNames, f)
 		}
 		sort.Strings(fieldNames)
-
 		for _, fieldName := range fieldNames {
 			meta := fieldMap[fieldName]
 			def := ""
 			if meta.DefaultValue != nil {
 				def = *meta.DefaultValue
 			}
-			fields = append(fields, ConnectorConfigField{
+			c.store.Fields = append(c.store.Fields, ConnectorConfigField{
 				Connector:    connectorName,
 				Field:        fieldName,
 				DataType:     meta.DataType,
@@ -119,8 +117,49 @@ func (c *ConnectorConfigsController) Run(cmd *cobra.Command, args []string) (fct
 		}
 	}
 
-	c.store.Fields = fields
 	return c, nil
+}
+
+func (c *ConnectorConfigsController) legacyV1Configs(cmd *cobra.Command, stackClient *formance.Formance) error {
+	response, err := stackClient.Payments.V1.ListConfigsAvailableConnectors(cmd.Context())
+	if err != nil {
+		return err
+	}
+	if response.StatusCode >= 300 {
+		return fmt.Errorf("unexpected status code: %d", response.StatusCode)
+	}
+	if response.ConnectorsConfigsResponse == nil {
+		return fmt.Errorf("unexpected empty response")
+	}
+	data := response.ConnectorsConfigsResponse.Data
+	connectorNames := make([]string, 0, len(data))
+	for name := range data {
+		connectorNames = append(connectorNames, name)
+	}
+	sort.Strings(connectorNames)
+	for _, connectorName := range connectorNames {
+		fieldMap := data[connectorName]
+		fieldNames := make([]string, 0, len(fieldMap))
+		for f := range fieldMap {
+			fieldNames = append(fieldNames, f)
+		}
+		sort.Strings(fieldNames)
+		for _, fieldName := range fieldNames {
+			meta := fieldMap[fieldName]
+			def := ""
+			if meta.DefaultValue != nil {
+				def = *meta.DefaultValue
+			}
+			c.store.Fields = append(c.store.Fields, ConnectorConfigField{
+				Connector:    connectorName,
+				Field:        fieldName,
+				DataType:     meta.DataType,
+				Required:     meta.Required,
+				DefaultValue: def,
+			})
+		}
+	}
+	return nil
 }
 
 func (c *ConnectorConfigsController) Render(cmd *cobra.Command, args []string) error {
