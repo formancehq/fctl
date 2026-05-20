@@ -24,6 +24,9 @@ generate-membership-client:
     @cd internal/membershipclient && speakeasy run --skip-versioning --frozen-workflow-lockfile
 
 
+install:
+    go install -v .
+
 tests:
     go test ./...
 
