@@ -42,11 +42,11 @@ func NewConnectorConfigsController() *ConnectorConfigsController {
 	}
 }
 
-func NewConnectorConfigsCommand() *cobra.Command {
+func NewConnectorListAvailableCommand() *cobra.Command {
 	c := NewConnectorConfigsController()
-	return fctl.NewCommand("configs",
-		fctl.WithAliases("cf"),
-		fctl.WithShortDescription("List available connectors and their configuration schemas"),
+	return fctl.NewCommand("list-available",
+		fctl.WithAliases("la"),
+		fctl.WithShortDescription("List connectors available for install (dependent on Connectivity module version) and their configuration schemas"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithController[*ConnectorConfigsStore](c),
 	)

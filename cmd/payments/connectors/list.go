@@ -53,7 +53,7 @@ func NewListCommand() *cobra.Command {
 	c := NewPaymentsConnectorsListController()
 	return fctl.NewCommand("list",
 		fctl.WithAliases("ls", "l"),
-		fctl.WithShortDescription("List all enabled connectors"),
+		fctl.WithShortDescription("List all installed connectors"),
 		fctl.WithIntFlag(c.pageSizeFlag, 10, "Page size"),
 		fctl.WithController[*PaymentsConnectorsListStore](c),
 	)

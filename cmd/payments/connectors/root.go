@@ -18,7 +18,7 @@ func NewConnectorsCommand() *cobra.Command {
 			install.NewInstallCommand(),
 			configs.NewUpdateConfigCommand(),
 			configs.NewGetConfigCommand(),
-			NewConnectorConfigsCommand(),
+			NewConnectorListAvailableCommand(),
 		),
 	)
 }

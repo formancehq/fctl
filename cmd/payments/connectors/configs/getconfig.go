@@ -63,7 +63,7 @@ func NewGetConfigCommand() *cobra.Command {
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithStringFlag("provider", "", "Provider name (only used for v0, v1 or v2)"),
 		fctl.WithStringFlag("connector-id", "", "Connector ID"),
-		fctl.WithShortDescription(fmt.Sprintf("Read a connector config (Connectors available: %v)", internal.AllConnectors)),
+		fctl.WithShortDescription("Read a connector config"),
 		fctl.WithController[*PaymentsLoadConfigStore](c),
 	)
 }
