@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"slices"
 	"strings"
 	"sync"
@@ -484,6 +485,73 @@ func NewStackClientFromFlags(
 	}
 
 	return NewStackClient(cmd, relyingParty, dialog, profileName, profile, organizationID, stackID)
+}
+
+// StackClients holds both a typed SDK client and an authenticated raw HTTP client
+// sharing the same oauth2 token source. Use HTTPClient for operations that need to
+// bypass the SDK's typed discriminated unions (e.g. connector install/update).
+type StackClients struct {
+	SDK        *formance.Formance
+	HTTPClient *http.Client
+	URI        string
+}
+
+func NewStackClientsFromFlags(
+	cmd *cobra.Command,
+	relyingParty client.RelyingParty,
+	dialog Dialog,
+	profileName string,
+	profile Profile,
+) (*StackClients, error) {
+	organizationID, stackID, err := ResolveStackID(cmd, profile)
+	if err != nil {
+		return nil, err
+	}
+
+	stackToken, stackAccess, err := EnsureStackAccess(
+		cmd,
+		relyingParty,
+		dialog,
+		profileName,
+		profile,
+		organizationID,
+		stackID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenSource := NewStackTokenSource(
+		*stackToken,
+		stackAccess,
+		relyingParty,
+		func(newToken AccessToken) error {
+			return WriteStackToken(cmd, profileName, stackID, newToken)
+		},
+		cmd,
+		profileName,
+		organizationID,
+		stackID,
+	)
+
+	baseCtx := context.WithValue(cmd.Context(), oauth2.HTTPClient, relyingParty.HttpClient())
+
+	sdkClient := formance.New(
+		formance.WithServerURL(stackAccess.URI),
+		formance.WithClient(oauth2.NewClient(baseCtx, tokenSource)),
+	)
+
+	rawHTTPClient := oauth2.NewClient(baseCtx, tokenSource)
+	rawHTTPClient.Transport = newInjectHTTPHeadersRoundTripper(
+		http.Header{"User-Agent": []string{fmt.Sprintf("fctl/%s", getVersion(cmd))}},
+		rawHTTPClient.Transport,
+	)
+
+	return &StackClients{
+		SDK:        sdkClient,
+		HTTPClient: rawHTTPClient,
+		URI:        stackAccess.URI,
+	}, nil
 }
 
 func NewAppDeployClient(

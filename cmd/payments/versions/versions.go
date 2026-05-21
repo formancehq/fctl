@@ -51,7 +51,7 @@ func GetPaymentsVersion(cmd *cobra.Command, _ []string, controller VersionContro
 		return fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	version := "v" + *response.PaymentsServerInfo.Version
+	version := "v" + strings.TrimPrefix(*response.PaymentsServerInfo.Version, "v")
 
 	paymentVersion, err := computePaymentVersion(version)
 	if err != nil {
