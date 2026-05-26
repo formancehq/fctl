@@ -625,6 +625,8 @@ type stackTokenSource struct {
 	stackAccess  *StackAccess
 	relyingParty client.RelyingParty
 	onRefresh    func(newToken AccessToken) error
+	apiScopes    []string
+	apiResource  string
 
 	// Cache fields
 	cmd            *cobra.Command
@@ -639,7 +641,7 @@ func (t *stackTokenSource) Token() (*oauth2.Token, error) {
 
 	if t.accessToken == nil || t.accessToken.Expiry.Before(time.Now()) {
 		// Try to load from disk cache
-		if t.cmd != nil {
+		if t.cmd != nil && len(t.apiScopes) == 0 {
 			cached, err := ReadCachedStackAPIToken(t.cmd, t.profileName, t.organizationID, t.stackID)
 			if err == nil && cached != nil && cached.Expiry.After(time.Now().Add(5*time.Second)) {
 				t.accessToken = &oauth2.Token{
@@ -666,7 +668,7 @@ func (t *stackTokenSource) Token() (*oauth2.Token, error) {
 			}
 		}
 
-		token, err := FetchStackToken(context.Background(), t.relyingParty.HttpClient(), t.stackAccess.URI, t.stackToken.Token)
+		token, err := FetchStackTokenWithScopesAndResource(context.Background(), t.relyingParty.HttpClient(), t.stackAccess.URI, t.stackToken.Token, t.apiScopes, t.apiResource)
 		if err != nil {
 			return nil, err
 		}
@@ -674,7 +676,7 @@ func (t *stackTokenSource) Token() (*oauth2.Token, error) {
 		t.accessToken = token
 
 		// Write to disk cache (best-effort)
-		if t.cmd != nil {
+		if t.cmd != nil && len(t.apiScopes) == 0 {
 			_ = WriteCachedStackAPIToken(t.cmd, t.profileName, t.organizationID, t.stackID, CachedStackAPIToken{
 				AccessToken: token.AccessToken,
 				TokenType:   token.TokenType,
@@ -698,11 +700,42 @@ func NewStackTokenSource(
 	organizationID string,
 	stackID string,
 ) oauth2.TokenSource {
+	return NewStackTokenSourceWithAPIScopes(stackToken, stackAccess, relyingParty, onRefresh, cmd, profileName, organizationID, stackID, nil)
+}
+
+func NewStackTokenSourceWithAPIScopes(
+	stackToken AccessToken,
+	stackAccess *StackAccess,
+	relyingParty client.RelyingParty,
+	onRefresh func(newToken AccessToken) error,
+	cmd *cobra.Command,
+	profileName string,
+	organizationID string,
+	stackID string,
+	apiScopes []string,
+) oauth2.TokenSource {
+	return NewStackTokenSourceWithAPIScopesAndResource(stackToken, stackAccess, relyingParty, onRefresh, cmd, profileName, organizationID, stackID, apiScopes, "")
+}
+
+func NewStackTokenSourceWithAPIScopesAndResource(
+	stackToken AccessToken,
+	stackAccess *StackAccess,
+	relyingParty client.RelyingParty,
+	onRefresh func(newToken AccessToken) error,
+	cmd *cobra.Command,
+	profileName string,
+	organizationID string,
+	stackID string,
+	apiScopes []string,
+	apiResource string,
+) oauth2.TokenSource {
 	return &stackTokenSource{
 		stackToken:     stackToken,
 		stackAccess:    stackAccess,
 		relyingParty:   relyingParty,
 		onRefresh:      onRefresh,
+		apiScopes:      apiScopes,
+		apiResource:    apiResource,
 		cmd:            cmd,
 		profileName:    profileName,
 		organizationID: organizationID,

@@ -249,11 +249,24 @@ func Refresh(ctx context.Context, relyingParty client.RelyingParty, token Access
 }
 
 func FetchStackToken(ctx context.Context, httpClient *http.Client, stackURI, token string) (*oauth2.Token, error) {
+	return FetchStackTokenWithScopesAndResource(ctx, httpClient, stackURI, token, nil, "")
+}
 
+func FetchStackTokenWithScopes(ctx context.Context, httpClient *http.Client, stackURI, token string, scopes []string) (*oauth2.Token, error) {
+	return FetchStackTokenWithScopesAndResource(ctx, httpClient, stackURI, token, scopes, "")
+}
+
+func FetchStackTokenWithScopesAndResource(ctx context.Context, httpClient *http.Client, stackURI, token string, scopes []string, resource string) (*oauth2.Token, error) {
+	if len(scopes) == 0 {
+		scopes = []string{oidc.ScopeOpenID, oidc.ScopeEmail}
+	}
 	form := url.Values{
 		"grant_type": []string{"urn:ietf:params:oauth:grant-type:jwt-bearer"},
 		"assertion":  []string{token},
-		"scope":      []string{strings.Join([]string{oidc.ScopeOpenID, oidc.ScopeEmail}, " ")},
+		"scope":      []string{strings.Join(scopes, " ")},
+	}
+	if resource != "" {
+		form.Set("resource", resource)
 	}
 
 	stackDiscoveryConfiguration, err := client.Discover[oidc.DiscoveryConfiguration](ctx, stackURI+"/api/auth", httpClient)
