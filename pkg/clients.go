@@ -641,7 +641,7 @@ func (t *stackTokenSource) Token() (*oauth2.Token, error) {
 
 	if t.accessToken == nil || t.accessToken.Expiry.Before(time.Now()) {
 		// Try to load from disk cache
-		if t.cmd != nil && len(t.apiScopes) == 0 {
+		if t.cmd != nil && len(t.apiScopes) == 0 && t.apiResource == "" {
 			cached, err := ReadCachedStackAPIToken(t.cmd, t.profileName, t.organizationID, t.stackID)
 			if err == nil && cached != nil && cached.Expiry.After(time.Now().Add(5*time.Second)) {
 				t.accessToken = &oauth2.Token{
@@ -676,7 +676,7 @@ func (t *stackTokenSource) Token() (*oauth2.Token, error) {
 		t.accessToken = token
 
 		// Write to disk cache (best-effort)
-		if t.cmd != nil && len(t.apiScopes) == 0 {
+		if t.cmd != nil && len(t.apiScopes) == 0 && t.apiResource == "" {
 			_ = WriteCachedStackAPIToken(t.cmd, t.profileName, t.organizationID, t.stackID, CachedStackAPIToken{
 				AccessToken: token.AccessToken,
 				TokenType:   token.TokenType,

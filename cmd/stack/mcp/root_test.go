@@ -69,6 +69,80 @@ func TestReadMCPMessageContentLength(t *testing.T) {
 	}
 }
 
+func TestReadMCPMessageRejectsNegativeContentLength(t *testing.T) {
+	_, err := readMCPMessage(bufioReader("Content-Length: -1\r\n\r\n"))
+	if err == nil {
+		t.Fatalf("readMCPMessage() expected error")
+	}
+	if !strings.Contains(err.Error(), "must be non-negative") {
+		t.Fatalf("readMCPMessage() error = %v, want non-negative framing error", err)
+	}
+}
+
+func TestStdioServerForwardsCancelledNotification(t *testing.T) {
+	var gotMethod atomic.Value
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var request rpcMessage
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decoding remote request: %v", err)
+		}
+		gotMethod.Store(request.Method)
+		w.WriteHeader(http.StatusAccepted)
+	}))
+	defer upstream.Close()
+
+	input := `{"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":1}}` + "\n"
+	server := &stdioServer{
+		in:         strings.NewReader(input),
+		out:        &bytes.Buffer{},
+		err:        &bytes.Buffer{},
+		httpClient: upstream.Client(),
+		stackURI:   upstream.URL,
+	}
+
+	if err := server.Serve(context.Background()); err != nil {
+		t.Fatalf("Serve() error = %v", err)
+	}
+	if got := gotMethod.Load(); got != "notifications/cancelled" {
+		t.Fatalf("forwarded method = %v, want notifications/cancelled", got)
+	}
+}
+
+func TestStdioServerPreservesForwardedMethodErrors(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "invalid_token", http.StatusUnauthorized)
+	}))
+	defer upstream.Close()
+
+	input := `{"jsonrpc":"2.0","id":1,"method":"resources/list"}` + "\n"
+	var output bytes.Buffer
+	server := &stdioServer{
+		in:         strings.NewReader(input),
+		out:        &output,
+		err:        &bytes.Buffer{},
+		httpClient: upstream.Client(),
+		stackURI:   upstream.URL,
+	}
+
+	if err := server.Serve(context.Background()); err != nil {
+		t.Fatalf("Serve() error = %v", err)
+	}
+
+	var response rpcResponse
+	if err := json.Unmarshal(bytes.TrimSpace(output.Bytes()), &response); err != nil {
+		t.Fatalf("invalid response: %v", err)
+	}
+	if response.Error == nil {
+		t.Fatalf("response error is nil")
+	}
+	if response.Error.Code != -32000 {
+		t.Fatalf("response error code = %d, want -32000", response.Error.Code)
+	}
+	if !strings.Contains(response.Error.Message, "remote MCP HTTP 401") {
+		t.Fatalf("response error message = %q, want remote HTTP error", response.Error.Message)
+	}
+}
+
 func TestRemoteMCPClientKeepsSessionID(t *testing.T) {
 	var count atomic.Int32
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

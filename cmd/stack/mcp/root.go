@@ -186,6 +186,9 @@ func (s *stdioServer) handleNotification(msg rpcMessage) {
 	switch msg.Method {
 	case "notifications/cancelled":
 		_, _ = fmt.Fprintf(s.err, "MCP request cancelled\n")
+		if err := s.remote.Notify(context.Background(), msg); err != nil {
+			_, _ = fmt.Fprintf(s.err, "forwarding MCP notification %q failed: %v\n", msg.Method, err)
+		}
 	case "notifications/initialized":
 		if err := s.remote.Notify(context.Background(), msg); err != nil {
 			_, _ = fmt.Fprintf(s.err, "forwarding MCP notification %q failed: %v\n", msg.Method, err)
@@ -206,7 +209,7 @@ func (s *stdioServer) handleRequest(ctx context.Context, msg rpcMessage) (any, *
 	default:
 		result, err := s.remote.Request(ctx, msg)
 		if err != nil {
-			return nil, &rpcError{Code: -32601, Message: "method not found"}
+			return nil, &rpcError{Code: -32000, Message: err.Error()}
 		}
 		return result, nil
 	}
@@ -367,6 +370,9 @@ func readMCPMessage(reader *bufio.Reader) ([]byte, error) {
 		length, err := strconv.Atoi(lengthValue)
 		if err != nil {
 			return nil, fmt.Errorf("invalid Content-Length header: %w", err)
+		}
+		if length < 0 {
+			return nil, fmt.Errorf("invalid Content-Length header: must be non-negative")
 		}
 		for {
 			line, err := reader.ReadString('\n')
