@@ -5,7 +5,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -76,6 +78,39 @@ func TestReadMCPMessageRejectsNegativeContentLength(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "must be non-negative") {
 		t.Fatalf("readMCPMessage() error = %v, want non-negative framing error", err)
+	}
+}
+
+func TestReadMCPMessageRejectsOversizedContentLength(t *testing.T) {
+	input := fmt.Sprintf("Content-Length: %d\r\n\r\n", maxMCPMessageSize+1)
+
+	_, err := readMCPMessage(bufioReader(input))
+	if err == nil {
+		t.Fatalf("readMCPMessage() expected error")
+	}
+	if !strings.Contains(err.Error(), "exceeds maximum size") {
+		t.Fatalf("readMCPMessage() error = %v, want maximum size framing error", err)
+	}
+}
+
+func TestStdioServerStopsWhenContextIsCancelled(t *testing.T) {
+	reader, writer := io.Pipe()
+	defer reader.Close()
+	defer writer.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	server := &stdioServer{
+		in:         reader,
+		out:        &bytes.Buffer{},
+		err:        &bytes.Buffer{},
+		httpClient: http.DefaultClient,
+		stackURI:   "http://127.0.0.1",
+	}
+
+	if err := server.Serve(ctx); !errors.Is(err, context.Canceled) {
+		t.Fatalf("Serve() error = %v, want context.Canceled", err)
 	}
 }
 
@@ -189,6 +224,19 @@ func TestDecodeSSEResponse(t *testing.T) {
 	result, ok := resp.Result.(map[string]any)
 	if !ok || result["ok"] != true {
 		t.Fatalf("result = %#v, want ok=true", resp.Result)
+	}
+}
+
+func TestDecodeSSEResponseRejectsMultipleEvents(t *testing.T) {
+	payload := []byte("event: message\ndata: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"first\":true}}\n\n" +
+		"event: message\ndata: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"second\":true}}\n\n")
+
+	_, err := decodeRemoteMCPResponse("text/event-stream", payload)
+	if err == nil {
+		t.Fatalf("decodeRemoteMCPResponse() expected error")
+	}
+	if !strings.Contains(err.Error(), "multiple events") {
+		t.Fatalf("decodeRemoteMCPResponse() error = %v, want multiple events error", err)
 	}
 }
 

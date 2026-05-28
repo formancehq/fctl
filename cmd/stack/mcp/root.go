@@ -21,7 +21,10 @@ import (
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
-const transportFlag = "transport"
+const (
+	transportFlag     = "transport"
+	maxMCPMessageSize = 10 * 1024 * 1024
+)
 
 var mcpAPIScopes = []string{
 	"openid",
@@ -142,8 +145,35 @@ type rpcError struct {
 func (s *stdioServer) Serve(ctx context.Context) error {
 	s.remote = newRemoteMCPClient(s.httpClient, s.stackURI)
 	reader := bufio.NewReader(s.in)
+
+	type readResult struct {
+		data []byte
+		err  error
+	}
+	reads := make(chan readResult, 1)
+	go func() {
+		for {
+			data, err := readMCPMessage(reader)
+			select {
+			case reads <- readResult{data: data, err: err}:
+			case <-ctx.Done():
+				return
+			}
+			if err != nil {
+				return
+			}
+		}
+	}()
+
 	for {
-		data, err := readMCPMessage(reader)
+		var read readResult
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case read = <-reads:
+		}
+
+		data, err := read.data, read.err
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return nil
@@ -197,22 +227,14 @@ func (s *stdioServer) handleNotification(msg rpcMessage) {
 }
 
 func (s *stdioServer) handleRequest(ctx context.Context, msg rpcMessage) (any, *rpcError) {
-	switch msg.Method {
-	case "ping":
+	if msg.Method == "ping" {
 		return map[string]any{}, nil
-	case "initialize", "tools/list", "tools/call":
-		result, err := s.remote.Request(ctx, msg)
-		if err != nil {
-			return nil, &rpcError{Code: -32000, Message: err.Error()}
-		}
-		return result, nil
-	default:
-		result, err := s.remote.Request(ctx, msg)
-		if err != nil {
-			return nil, &rpcError{Code: -32000, Message: err.Error()}
-		}
-		return result, nil
 	}
+	result, err := s.remote.Request(ctx, msg)
+	if err != nil {
+		return nil, &rpcError{Code: -32000, Message: err.Error()}
+	}
+	return result, nil
 }
 
 type remoteMCPClient struct {
@@ -325,9 +347,17 @@ func decodeRemoteMCPResponse(contentType string, payload []byte) (*rpcResponse, 
 
 func decodeSSEResponse(payload []byte) (*rpcResponse, error) {
 	scanner := bufio.NewScanner(bytes.NewReader(payload))
+	var events [][]string
 	var dataLines []string
 	for scanner.Scan() {
-		line := scanner.Text()
+		line := strings.TrimRight(scanner.Text(), "\r")
+		if line == "" {
+			if len(dataLines) > 0 {
+				events = append(events, dataLines)
+				dataLines = nil
+			}
+			continue
+		}
 		if strings.HasPrefix(line, "data:") {
 			dataLines = append(dataLines, strings.TrimSpace(strings.TrimPrefix(line, "data:")))
 		}
@@ -335,11 +365,18 @@ func decodeSSEResponse(payload []byte) (*rpcResponse, error) {
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
-	if len(dataLines) == 0 {
+	if len(dataLines) > 0 {
+		events = append(events, dataLines)
+	}
+	if len(events) == 0 {
 		return nil, fmt.Errorf("remote MCP SSE response did not contain data")
 	}
+	if len(events) > 1 {
+		// The stdio bridge writes one JSON-RPC response per request; streaming SSE is not supported yet.
+		return nil, fmt.Errorf("remote MCP SSE response contained multiple events")
+	}
 	var resp rpcResponse
-	if err := json.Unmarshal([]byte(strings.Join(dataLines, "\n")), &resp); err != nil {
+	if err := json.Unmarshal([]byte(strings.Join(events[0], "\n")), &resp); err != nil {
 		return nil, fmt.Errorf("decoding remote MCP SSE response: %w", err)
 	}
 	return &resp, nil
@@ -373,6 +410,9 @@ func readMCPMessage(reader *bufio.Reader) ([]byte, error) {
 		}
 		if length < 0 {
 			return nil, fmt.Errorf("invalid Content-Length header: must be non-negative")
+		}
+		if length > maxMCPMessageSize {
+			return nil, fmt.Errorf("invalid Content-Length header: exceeds maximum size %d", maxMCPMessageSize)
 		}
 		for {
 			line, err := reader.ReadString('\n')
