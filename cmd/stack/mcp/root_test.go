@@ -95,8 +95,8 @@ func TestReadMCPMessageRejectsOversizedContentLength(t *testing.T) {
 
 func TestStdioServerStopsWhenContextIsCancelled(t *testing.T) {
 	reader, writer := io.Pipe()
-	defer reader.Close()
-	defer writer.Close()
+	defer func() { _ = reader.Close() }()
+	defer func() { _ = writer.Close() }()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
