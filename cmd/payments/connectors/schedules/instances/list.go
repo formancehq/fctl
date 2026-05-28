@@ -1,0 +1,158 @@
+package instances
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
+
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+
+	"github.com/formancehq/fctl/v3/cmd/payments/versions"
+	fctl "github.com/formancehq/fctl/v3/pkg"
+)
+
+type ListStore struct {
+	Cursor *shared.V3ConnectorScheduleInstancesCursorResponseCursor `json:"cursor"`
+}
+
+type ListController struct {
+	PaymentsVersion versions.Version
+
+	store *ListStore
+}
+
+func (c *ListController) SetVersion(version versions.Version) {
+	c.PaymentsVersion = version
+}
+
+var _ fctl.Controller[*ListStore] = (*ListController)(nil)
+
+func NewListStore() *ListStore {
+	return &ListStore{
+		Cursor: &shared.V3ConnectorScheduleInstancesCursorResponseCursor{},
+	}
+}
+
+func NewListController() *ListController {
+	return &ListController{
+		store: NewListStore(),
+	}
+}
+
+func NewListCommand() *cobra.Command {
+	c := NewListController()
+	return fctl.NewCommand("list <connectorID> <scheduleID>",
+		fctl.WithAliases("ls", "l"),
+		fctl.WithArgs(cobra.ExactArgs(2)),
+		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
+		fctl.WithShortDescription("List connector schedule instances"),
+		fctl.WithCursorFlag(),
+		fctl.WithPageSizeFlag(),
+		fctl.WithController[*ListStore](c),
+	)
+}
+
+func (c *ListController) GetStore() *ListStore {
+	return c.store
+}
+
+func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := versions.GetPaymentsVersion(cmd, args, c); err != nil {
+		return nil, err
+	}
+
+	if c.PaymentsVersion.Major < versions.V3 {
+		return nil, fmt.Errorf("connector schedules are only supported in >= v3.0.0")
+	}
+
+	connectorID, scheduleID := args[0], args[1]
+	cursor, err := fctl.GetCursor(cmd)
+	if err != nil {
+		return nil, err
+	}
+	pageSize, err := fctl.GetPageSize(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	request := operations.V3ListConnectorScheduleInstancesRequest{
+		ConnectorID: connectorID,
+		ScheduleID:  scheduleID,
+		PageSize:    fctl.Ptr(int64(pageSize)),
+	}
+	if cursor != "" {
+		request.Cursor = &cursor
+	}
+
+	response, err := stackClient.Payments.V3.ListConnectorScheduleInstances(cmd.Context(), request)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode >= 300 {
+		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+	}
+
+	if response.V3ConnectorScheduleInstancesCursorResponse == nil {
+		return nil, fmt.Errorf("unexpected response: %v", response)
+	}
+
+	c.store.Cursor = &response.V3ConnectorScheduleInstancesCursorResponse.Cursor
+
+	return c, nil
+}
+
+func (c *ListController) Render(cmd *cobra.Command, args []string) error {
+	tableData := fctl.Map(c.store.Cursor.Data, func(i shared.V3Instance) []string {
+		errStr := ""
+		if i.Error != nil {
+			errStr = *i.Error
+		}
+		terminatedAt := ""
+		if i.TerminatedAt != nil {
+			terminatedAt = i.TerminatedAt.Format(time.RFC3339)
+		}
+		return []string{
+			i.ID,
+			i.ScheduleID,
+			i.ConnectorID,
+			fmt.Sprintf("%t", i.Terminated),
+			i.CreatedAt.Format(time.RFC3339),
+			i.UpdatedAt.Format(time.RFC3339),
+			terminatedAt,
+			errStr,
+		}
+	})
+	tableData = fctl.Prepend(tableData, []string{
+		"ID", "ScheduleID", "ConnectorID", "Terminated",
+		"CreatedAt", "UpdatedAt", "TerminatedAt", "Error",
+	})
+	if err := pterm.DefaultTable.
+		WithHasHeader().
+		WithWriter(cmd.OutOrStdout()).
+		WithData(tableData).
+		Render(); err != nil {
+		return err
+	}
+
+	return fctl.RenderCursor(cmd.OutOrStdout(), fctl.Cursor{
+		HasMore:  c.store.Cursor.HasMore,
+		PageSize: c.store.Cursor.PageSize,
+		Next:     c.store.Cursor.Next,
+		Previous: c.store.Cursor.Previous,
+	})
+}
