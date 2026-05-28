@@ -26,14 +26,6 @@ const (
 	maxMCPMessageSize = 10 * 1024 * 1024
 )
 
-var mcpAPIScopes = []string{
-	"openid",
-	"email",
-	"ledger:read",
-	"payments:read",
-	"reconciliation:read",
-}
-
 func NewCommand() *cobra.Command {
 	return fctl.NewStackCommand("mcp",
 		fctl.WithShortDescription("Run stack MCP integrations"),
@@ -71,8 +63,7 @@ func runServe(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	mcpResource := stackResourceURL(stackAccess.URI, "/api/mcp")
-	tokenSource := fctl.NewStackTokenSourceWithAPIScopesAndResource(
+	tokenSource := fctl.NewStackTokenSource(
 		*stackToken,
 		stackAccess,
 		relyingParty,
@@ -83,8 +74,6 @@ func runServe(cmd *cobra.Command, _ []string) error {
 		profileName,
 		organizationID,
 		stackID,
-		mcpAPIScopes,
-		mcpResource,
 	)
 	httpClient := oauth2.NewClient(cmd.Context(), tokenSource)
 
@@ -96,14 +85,6 @@ func runServe(cmd *cobra.Command, _ []string) error {
 		stackURI:   stackAccess.URI,
 	}
 	return server.Serve(cmd.Context())
-}
-
-func stackResourceURL(stackURI, path string) string {
-	base, err := url.Parse(stackURI)
-	if err != nil {
-		return strings.TrimRight(stackURI, "/") + path
-	}
-	return base.ResolveReference(&url.URL{Path: path}).String()
 }
 
 type stderrDialog struct {
