@@ -249,7 +249,6 @@ func Refresh(ctx context.Context, relyingParty client.RelyingParty, token Access
 }
 
 func FetchStackToken(ctx context.Context, httpClient *http.Client, stackURI, token string) (*oauth2.Token, error) {
-
 	form := url.Values{
 		"grant_type": []string{"urn:ietf:params:oauth:grant-type:jwt-bearer"},
 		"assertion":  []string{token},
