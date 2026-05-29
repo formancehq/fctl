@@ -1,0 +1,116 @@
+package cmd
+
+import (
+	"errors"
+	"fmt"
+	"os"
+
+	"github.com/spf13/cobra"
+
+	v4prompt "github.com/formancehq/fctl/v4/internal/prompt"
+)
+
+const (
+	contextFlag        = "context"
+	profileFlag        = "profile"
+	organizationFlag   = "organization"
+	stackFlag          = "stack"
+	configDirFlag      = "config-dir"
+	credentialDirFlag  = "credential-dir"
+	outputFlag         = "output"
+	nonInteractiveFlag = "non-interactive"
+	insecureTLSFlag    = "insecure-tls"
+	debugFlag          = "debug"
+	noColorFlag        = "no-color"
+)
+
+// NewRootCommand builds the v4 command tree. Keep this package focused on
+// parsing and dispatch; runtime work belongs under internal packages.
+func NewRootCommand(version string) *cobra.Command {
+	if version == "" {
+		version = "dev"
+	}
+
+	root := &cobra.Command{
+		Use:           "fctl",
+		Short:         "Formance Control CLI v4",
+		Long:          "Formance Control CLI v4 targets Cloud, self-hosted, and local Formance stacks through explicit profiles.",
+		Version:       version,
+		SilenceErrors: true,
+		SilenceUsage:  true,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return cmd.Help()
+		},
+	}
+
+	root.SetVersionTemplate("fctl v4 {{.Version}}\n")
+	root.PersistentFlags().String(profileFlag, "", "Profile to use")
+	root.PersistentFlags().String(contextFlag, "", "Deprecated alias for --profile")
+	root.PersistentFlags().String(organizationFlag, "", "Cloud or EE organization to target")
+	root.PersistentFlags().String(stackFlag, "", "Cloud or EE stack to target")
+	root.PersistentFlags().StringP(configDirFlag, "c", "", "Path to the v4 configuration directory")
+	root.PersistentFlags().String(credentialDirFlag, "", "Credential directory (defaults to the v4 config directory credentials subdirectory)")
+	root.PersistentFlags().StringP(outputFlag, "o", "plain", "Output format (plain, json, yaml)")
+	root.PersistentFlags().Bool(nonInteractiveFlag, false, "Disable interactive prompts")
+	root.PersistentFlags().Bool(insecureTLSFlag, false, "Skip TLS certificate verification")
+	root.PersistentFlags().BoolP(debugFlag, "d", false, "Enable technical debug logs on stderr")
+	root.PersistentFlags().Bool(noColorFlag, false, "Disable colored output")
+	_ = root.PersistentFlags().MarkDeprecated(contextFlag, "use --profile")
+	_ = root.PersistentFlags().MarkHidden(contextFlag)
+
+	root.AddCommand(newVersionCommand())
+	root.AddCommand(newLoginCommand())
+	root.AddCommand(newLogoutCommand())
+	root.AddCommand(newWhoamiCommand())
+	root.AddCommand(newProfileCommand())
+	root.AddCommand(newContextCommand())
+	root.AddCommand(newProfilesCommand())
+	root.AddCommand(newConfigCommand())
+	root.AddCommand(newSetupCommand(false))
+	root.AddCommand(newSetupCommand(true))
+	root.AddCommand(newSessionCommand())
+	root.AddCommand(newUICommand(true))
+	root.AddCommand(newTargetCommand())
+	root.AddCommand(newCloudCommand())
+	root.AddCommand(newCloudStacksCommand("cloud_stacks", "cloud stacks", true))
+	root.AddCommand(newCloudStacksCommand("stack", "cloud stacks", true))
+	root.AddCommand(newCloudStacksCommand("stacks", "cloud stacks", true))
+	root.AddCommand(newLedgerCommand())
+	root.AddCommand(newPaymentsCommand())
+	root.AddCommand(newWalletsCommand())
+	root.AddCommand(newFlowsCommand(false))
+	root.AddCommand(newFlowsCommand(true))
+	root.AddCommand(newReconciliationCommand())
+	root.AddCommand(newAuthCommand())
+	root.AddCommand(newWebhooksCommand())
+
+	return root
+}
+
+func newVersionCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "version",
+		Short: "Print the fctl v4 version",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			_, err := fmt.Fprintln(cmd.OutOrStdout(), styledSuccessLine(cmd, fmt.Sprintf("fctl v4 %s", cmd.Root().Version)))
+			return err
+		},
+	}
+}
+
+// Execute runs the v4 command tree.
+func Execute(version string) {
+	root := NewRootCommand(version)
+	if err := root.Execute(); err != nil {
+		if isSilentExitError(err) {
+			return
+		}
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func isSilentExitError(err error) bool {
+	return errors.Is(err, v4prompt.ErrCancelled)
+}
