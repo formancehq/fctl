@@ -13,7 +13,6 @@ func NewCommand() *cobra.Command {
 	return fctl.NewStackCommand("orchestration",
 		fctl.WithAliases("orch", "or"),
 		fctl.WithShortDescription("Orchestration"),
-		fctl.WithHidden(),
 		fctl.WithChildCommands(
 			instances.NewCommand(),
 			workflows.NewCommand(),
