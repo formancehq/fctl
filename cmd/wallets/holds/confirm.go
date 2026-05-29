@@ -7,8 +7,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/wallets"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
@@ -74,7 +74,7 @@ func (c *ConfirmController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 
 	request := operations.ConfirmHoldRequest{
 		HoldID: args[0],
-		ConfirmHoldRequest: &shared.ConfirmHoldRequest{
+		ConfirmHoldRequest: &wallets.ConfirmHoldRequest{
 			Amount: big.NewInt(amount),
 			Final:  &final,
 		},

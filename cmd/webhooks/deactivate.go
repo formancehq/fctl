@@ -6,7 +6,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
@@ -60,7 +60,7 @@ func (c *DesactivateWebhookController) Run(cmd *cobra.Command, args []string) (f
 		return nil, fmt.Errorf("deactivating config: %w", err)
 	}
 
-	c.store.Success = !response.ConfigResponse.Data.Active
+	c.store.Success = !response.ConfigResponse.WebhooksConfig.Active
 
 	return c, nil
 }

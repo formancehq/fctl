@@ -4,13 +4,13 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
-func DisplayMangopayConfig(cmd *cobra.Command, connectorConfig *shared.ConnectorConfigResponse) error {
-	config := connectorConfig.Data.MangoPayConfig
+func DisplayMangopayConfig(cmd *cobra.Command, connectorConfig *payments.ConnectorConfigResponse) error {
+	config := connectorConfig.ConnectorConfig.MangoPayConfig
 
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})
@@ -33,8 +33,8 @@ func DisplayMangopayConfig(cmd *cobra.Command, connectorConfig *shared.Connector
 	return nil
 }
 
-func DisplayMangopayConfigV3(cmd *cobra.Command, v3Config *shared.V3GetConnectorConfigResponse) error {
-	config := v3Config.Data.V3MangopayConfig
+func DisplayMangopayConfigV3(cmd *cobra.Command, v3Config *payments.V3GetConnectorConfigResponse) error {
+	config := v3Config.V3ConnectorConfig.V3MangopayConfig
 
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})

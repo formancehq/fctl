@@ -8,9 +8,9 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	formance "github.com/formancehq/formance-sdk-go/v3"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	formance "github.com/formancehq/formance-sdk-go/v4"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	walletsmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/wallets"
 
 	"github.com/formancehq/fctl/v3/cmd/wallets/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
@@ -100,7 +100,7 @@ func (c *CreditWalletController) Run(cmd *cobra.Command, args []string) (fctl.Re
 		return nil, err
 	}
 
-	sources := make([]shared.Subject, 0)
+	sources := make([]walletsmodels.Subject, 0)
 	for _, sourceStr := range fctl.GetStringSlice(cmd, c.sourceFlag) {
 		source, err := internal.ParseSubject(sourceStr, cmd, stackClient)
 		if err != nil {
@@ -112,8 +112,8 @@ func (c *CreditWalletController) Run(cmd *cobra.Command, args []string) (fctl.Re
 	request := operations.CreditWalletRequest{
 		IdempotencyKey: fctl.Ptr(fctl.GetString(cmd, c.ikFlag)),
 		ID:             walletID,
-		CreditWalletRequest: &shared.CreditWalletRequest{
-			Amount: shared.Monetary{
+		CreditWalletRequest: &walletsmodels.CreditWalletRequest{
+			Monetary: walletsmodels.Monetary{
 				Asset:  asset,
 				Amount: amount,
 			},

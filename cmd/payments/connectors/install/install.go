@@ -11,8 +11,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/connectors/internal"
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
@@ -160,13 +160,13 @@ func (c *ConnectorInstallController) runV1Typed(
 	name := strings.ToLower(connectorName)
 	switch name {
 	case internal.AdyenConnector:
-		var config shared.AdyenConfig
+		var config payments.AdyenConfig
 		if err := json.Unmarshal([]byte(script), &config); err != nil {
 			return nil, err
 		}
 		resp, err := stackClient.Payments.V1.InstallConnector(cmd.Context(), operations.InstallConnectorRequest{
-			ConnectorConfig: shared.ConnectorConfig{AdyenConfig: &config},
-			Connector:       shared.ConnectorAdyen,
+			ConnectorConfig: payments.ConnectorConfig{AdyenConfig: &config},
+			Connector:       payments.ConnectorAdyen,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("installing connector: %w", err)
@@ -181,13 +181,13 @@ func (c *ConnectorInstallController) runV1Typed(
 		}
 
 	case internal.AtlarConnector:
-		var config shared.AtlarConfig
+		var config payments.AtlarConfig
 		if err := json.Unmarshal([]byte(script), &config); err != nil {
 			return nil, err
 		}
 		resp, err := stackClient.Payments.V1.InstallConnector(cmd.Context(), operations.InstallConnectorRequest{
-			ConnectorConfig: shared.ConnectorConfig{AtlarConfig: &config},
-			Connector:       shared.ConnectorAtlar,
+			ConnectorConfig: payments.ConnectorConfig{AtlarConfig: &config},
+			Connector:       payments.ConnectorAtlar,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("installing connector: %w", err)
@@ -202,13 +202,13 @@ func (c *ConnectorInstallController) runV1Typed(
 		}
 
 	case internal.BankingCircleConnector:
-		var config shared.BankingCircleConfig
+		var config payments.BankingCircleConfig
 		if err := json.Unmarshal([]byte(script), &config); err != nil {
 			return nil, err
 		}
 		resp, err := stackClient.Payments.V1.InstallConnector(cmd.Context(), operations.InstallConnectorRequest{
-			ConnectorConfig: shared.ConnectorConfig{BankingCircleConfig: &config},
-			Connector:       shared.ConnectorBankingCircle,
+			ConnectorConfig: payments.ConnectorConfig{BankingCircleConfig: &config},
+			Connector:       payments.ConnectorBankingCircle,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("installing connector: %w", err)
@@ -223,13 +223,13 @@ func (c *ConnectorInstallController) runV1Typed(
 		}
 
 	case internal.CurrencyCloudConnector:
-		var config shared.CurrencyCloudConfig
+		var config payments.CurrencyCloudConfig
 		if err := json.Unmarshal([]byte(script), &config); err != nil {
 			return nil, err
 		}
 		resp, err := stackClient.Payments.V1.InstallConnector(cmd.Context(), operations.InstallConnectorRequest{
-			ConnectorConfig: shared.ConnectorConfig{CurrencyCloudConfig: &config},
-			Connector:       shared.ConnectorCurrencyCloud,
+			ConnectorConfig: payments.ConnectorConfig{CurrencyCloudConfig: &config},
+			Connector:       payments.ConnectorCurrencyCloud,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("installing connector: %w", err)
@@ -244,13 +244,13 @@ func (c *ConnectorInstallController) runV1Typed(
 		}
 
 	case internal.MangoPayConnector:
-		var config shared.MangoPayConfig
+		var config payments.MangoPayConfig
 		if err := json.Unmarshal([]byte(script), &config); err != nil {
 			return nil, err
 		}
 		resp, err := stackClient.Payments.V1.InstallConnector(cmd.Context(), operations.InstallConnectorRequest{
-			ConnectorConfig: shared.ConnectorConfig{MangoPayConfig: &config},
-			Connector:       shared.ConnectorMangopay,
+			ConnectorConfig: payments.ConnectorConfig{MangoPayConfig: &config},
+			Connector:       payments.ConnectorMangopay,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("installing connector: %w", err)
@@ -265,13 +265,13 @@ func (c *ConnectorInstallController) runV1Typed(
 		}
 
 	case internal.ModulrConnector:
-		var config shared.ModulrConfig
+		var config payments.ModulrConfig
 		if err := json.Unmarshal([]byte(script), &config); err != nil {
 			return nil, err
 		}
 		resp, err := stackClient.Payments.V1.InstallConnector(cmd.Context(), operations.InstallConnectorRequest{
-			ConnectorConfig: shared.ConnectorConfig{ModulrConfig: &config},
-			Connector:       shared.ConnectorModulr,
+			ConnectorConfig: payments.ConnectorConfig{ModulrConfig: &config},
+			Connector:       payments.ConnectorModulr,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("installing connector: %w", err)
@@ -286,13 +286,13 @@ func (c *ConnectorInstallController) runV1Typed(
 		}
 
 	case internal.MoneycorpConnector:
-		var config shared.MoneycorpConfig
+		var config payments.MoneycorpConfig
 		if err := json.Unmarshal([]byte(script), &config); err != nil {
 			return nil, err
 		}
 		resp, err := stackClient.Payments.V1.InstallConnector(cmd.Context(), operations.InstallConnectorRequest{
-			ConnectorConfig: shared.ConnectorConfig{MoneycorpConfig: &config},
-			Connector:       shared.ConnectorMoneycorp,
+			ConnectorConfig: payments.ConnectorConfig{MoneycorpConfig: &config},
+			Connector:       payments.ConnectorMoneycorp,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("installing connector: %w", err)
@@ -307,13 +307,13 @@ func (c *ConnectorInstallController) runV1Typed(
 		}
 
 	case internal.StripeConnector:
-		var config shared.StripeConfig
+		var config payments.StripeConfig
 		if err := json.Unmarshal([]byte(script), &config); err != nil {
 			return nil, err
 		}
 		resp, err := stackClient.Payments.V1.InstallConnector(cmd.Context(), operations.InstallConnectorRequest{
-			ConnectorConfig: shared.ConnectorConfig{StripeConfig: &config},
-			Connector:       shared.ConnectorStripe,
+			ConnectorConfig: payments.ConnectorConfig{StripeConfig: &config},
+			Connector:       payments.ConnectorStripe,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("installing connector: %w", err)
@@ -328,13 +328,13 @@ func (c *ConnectorInstallController) runV1Typed(
 		}
 
 	case internal.WiseConnector:
-		var config shared.WiseConfig
+		var config payments.WiseConfig
 		if err := json.Unmarshal([]byte(script), &config); err != nil {
 			return nil, err
 		}
 		resp, err := stackClient.Payments.V1.InstallConnector(cmd.Context(), operations.InstallConnectorRequest{
-			ConnectorConfig: shared.ConnectorConfig{WiseConfig: &config},
-			Connector:       shared.ConnectorWise,
+			ConnectorConfig: payments.ConnectorConfig{WiseConfig: &config},
+			Connector:       payments.ConnectorWise,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("installing connector: %w", err)
@@ -349,13 +349,13 @@ func (c *ConnectorInstallController) runV1Typed(
 		}
 
 	case internal.GenericConnector:
-		var config shared.GenericConfig
+		var config payments.GenericConfig
 		if err := json.Unmarshal([]byte(script), &config); err != nil {
 			return nil, err
 		}
 		resp, err := stackClient.Payments.V1.InstallConnector(cmd.Context(), operations.InstallConnectorRequest{
-			ConnectorConfig: shared.ConnectorConfig{GenericConfig: &config},
-			Connector:       shared.ConnectorGeneric,
+			ConnectorConfig: payments.ConnectorConfig{GenericConfig: &config},
+			Connector:       payments.ConnectorGeneric,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("installing connector: %w", err)

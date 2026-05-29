@@ -8,15 +8,15 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	formance "github.com/formancehq/formance-sdk-go/v3"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	formance "github.com/formancehq/formance-sdk-go/v4"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/orchestration"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type InstancesDescribeStore struct {
-	WorkflowInstancesHistory []shared.WorkflowInstanceHistory `json:"workflowInstanceHistory"`
+	WorkflowInstancesHistory []orchestration.WorkflowInstanceHistory `json:"workflowInstanceHistory"`
 }
 type InstancesDescribeController struct {
 	store *InstancesDescribeStore
@@ -67,7 +67,7 @@ func (c *InstancesDescribeController) Run(cmd *cobra.Command, args []string) (fc
 		return nil, err
 	}
 
-	c.store.WorkflowInstancesHistory = response.GetWorkflowInstanceHistoryResponse.Data
+	c.store.WorkflowInstancesHistory = response.GetWorkflowInstanceHistoryResponse.WorkflowInstanceHistoryList
 
 	return c, nil
 }
@@ -93,7 +93,7 @@ func (c *InstancesDescribeController) Render(cmd *cobra.Command, args []string) 
 	return nil
 }
 
-func printHistoryBaseInfo(out io.Writer, name string, ind int, history shared.WorkflowInstanceHistory) {
+func printHistoryBaseInfo(out io.Writer, name string, ind int, history orchestration.WorkflowInstanceHistory) {
 	fctl.Section.WithWriter(out).Printf("Stage %d : %s\n", ind, name)
 	fctl.BasicText.WithWriter(out).Printfln("Started at: %s", history.StartedAt.Format(time.RFC3339))
 	if history.Terminated {
@@ -101,33 +101,33 @@ func printHistoryBaseInfo(out io.Writer, name string, ind int, history shared.Wo
 	}
 }
 
-func stageSourceName(src *shared.StageSendSource) string {
+func stageSourceName(src *orchestration.StageSendSource) string {
 	switch {
-	case src.Wallet != nil:
-		return fmt.Sprintf("wallet '%s' (balance: %s)", src.Wallet.ID, *src.Wallet.Balance)
-	case src.Account != nil:
-		return fmt.Sprintf("account '%s' (ledger: %s)", src.Account.ID, *src.Account.Ledger)
-	case src.Payment != nil:
-		return fmt.Sprintf("payment '%s'", src.Payment.ID)
+	case src.StageSendSourceWallet != nil:
+		return fmt.Sprintf("wallet '%s' (balance: %s)", src.StageSendSourceWallet.ID, *src.StageSendSourceWallet.Balance)
+	case src.StageSendSourceAccount != nil:
+		return fmt.Sprintf("account '%s' (ledger: %s)", src.StageSendSourceAccount.ID, *src.StageSendSourceAccount.Ledger)
+	case src.StageSendSourcePayment != nil:
+		return fmt.Sprintf("payment '%s'", src.StageSendSourcePayment.ID)
 	default:
 		return "unknown_source_type"
 	}
 }
 
-func stageDestinationName(dst *shared.StageSendDestination) string {
+func stageDestinationName(dst *orchestration.StageSendDestination) string {
 	switch {
-	case dst.Wallet != nil:
-		return fmt.Sprintf("wallet '%s' (balance: %s)", dst.Wallet.ID, *dst.Wallet.Balance)
-	case dst.Account != nil:
-		return fmt.Sprintf("account '%s' (ledger: %s)", dst.Account.ID, *dst.Account.Ledger)
-	case dst.Payment != nil:
-		return dst.Payment.Psp
+	case dst.StageSendSourceWallet != nil:
+		return fmt.Sprintf("wallet '%s' (balance: %s)", dst.StageSendSourceWallet.ID, *dst.StageSendSourceWallet.Balance)
+	case dst.StageSendSourceAccount != nil:
+		return fmt.Sprintf("account '%s' (ledger: %s)", dst.StageSendSourceAccount.ID, *dst.StageSendSourceAccount.Ledger)
+	case dst.StageSendDestinationPayment != nil:
+		return dst.StageSendDestinationPayment.Psp
 	default:
 		return "unknown_source_type"
 	}
 }
 
-func subjectName(src shared.Subject) string {
+func subjectName(src orchestration.Subject) string {
 	switch {
 	case src.WalletSubject != nil:
 		return fmt.Sprintf("wallet %s (balance: %s)", src.WalletSubject.Identifier, *src.WalletSubject.Balance)
@@ -150,18 +150,18 @@ func printMetadata(metadata map[string]string) []pterm.BulletListItem {
 	return ret
 }
 
-func printStage(cmd *cobra.Command, i int, client *formance.Formance, id string, history shared.WorkflowInstanceHistory) error {
+func printStage(cmd *cobra.Command, i int, client *formance.Formance, id string, history orchestration.WorkflowInstanceHistory) error {
 	cyanWriter := fctl.BasicTextCyan
 	defaultWriter := fctl.BasicText
 
 	listItems := make([]pterm.BulletListItem, 0)
 
-	switch history.Input.Type {
-	case shared.StageTypeStageSend:
+	switch history.Stage.Type {
+	case orchestration.StageTypeStageSend:
 		printHistoryBaseInfo(cmd.OutOrStdout(), "send", i, history)
-		cyanWriter.Printfln("Send %v %s from %s to %s", history.Input.StageSend.Amount.Amount,
-			history.Input.StageSend.Amount.Asset, stageSourceName(history.Input.StageSend.Source),
-			stageDestinationName(history.Input.StageSend.Destination))
+		cyanWriter.Printfln("Send %v %s from %s to %s", history.Stage.StageSend.Monetary.Amount,
+			history.Stage.StageSend.Monetary.Asset, stageSourceName(history.Stage.StageSend.StageSendSource),
+			stageDestinationName(history.Stage.StageSend.StageSendDestination))
 		fctl.Println()
 
 		stageResponse, err := client.Orchestration.V1.GetInstanceStageHistory(cmd.Context(), operations.GetInstanceStageHistoryRequest{
@@ -172,82 +172,82 @@ func printStage(cmd *cobra.Command, i int, client *formance.Formance, id string,
 			return err
 		}
 
-		for _, historyStage := range stageResponse.GetWorkflowInstanceHistoryStageResponse.Data {
+		for _, historyStage := range stageResponse.GetWorkflowInstanceHistoryStageResponse.WorkflowInstanceHistoryStageList {
 			switch {
-			case historyStage.Input.StripeTransfer != nil:
+			case historyStage.WorkflowInstanceHistoryStageInput.StripeTransferRequest != nil:
 				listItems = append(listItems, historyItemTitle("Send %v %s to Stripe connected account: %s",
-					*historyStage.Input.StripeTransfer.Amount,
-					*historyStage.Input.StripeTransfer.Asset,
-					*historyStage.Input.StripeTransfer.Destination,
+					*historyStage.WorkflowInstanceHistoryStageInput.StripeTransferRequest.Amount,
+					*historyStage.WorkflowInstanceHistoryStageInput.StripeTransferRequest.Asset,
+					*historyStage.WorkflowInstanceHistoryStageInput.StripeTransferRequest.Destination,
 				))
-			case historyStage.Input.CreateTransaction != nil:
+			case historyStage.WorkflowInstanceHistoryStageInput.ActivityCreateTransaction != nil:
 				listItems = append(listItems, historyItemTitle("Send %v %s from account %s to account %s (ledger %s)",
-					historyStage.Input.CreateTransaction.Data.Postings[0].Amount,
-					historyStage.Input.CreateTransaction.Data.Postings[0].Asset,
-					historyStage.Input.CreateTransaction.Data.Postings[0].Source,
-					historyStage.Input.CreateTransaction.Data.Postings[0].Destination,
-					*historyStage.Input.CreateTransaction.Ledger,
+					historyStage.WorkflowInstanceHistoryStageInput.ActivityCreateTransaction.PostTransaction.Postings[0].Amount,
+					historyStage.WorkflowInstanceHistoryStageInput.ActivityCreateTransaction.PostTransaction.Postings[0].Asset,
+					historyStage.WorkflowInstanceHistoryStageInput.ActivityCreateTransaction.PostTransaction.Postings[0].Source,
+					historyStage.WorkflowInstanceHistoryStageInput.ActivityCreateTransaction.PostTransaction.Postings[0].Destination,
+					*historyStage.WorkflowInstanceHistoryStageInput.ActivityCreateTransaction.Ledger,
 				))
 				if historyStage.Error == nil && historyStage.LastFailure == nil && historyStage.Terminated {
-					listItems = append(listItems, historyItemDetails("Created transaction: %d", historyStage.Output.CreateTransaction.Data.ID))
-					if historyStage.Input.CreateTransaction.Data.Reference != nil {
-						listItems = append(listItems, historyItemDetails("Reference: %s", *historyStage.Output.CreateTransaction.Data.Reference))
+					listItems = append(listItems, historyItemDetails("Created transaction: %d", historyStage.WorkflowInstanceHistoryStageOutput.CreateTransactionResponse.Transaction.ID))
+					if historyStage.WorkflowInstanceHistoryStageInput.ActivityCreateTransaction.PostTransaction.Reference != nil {
+						listItems = append(listItems, historyItemDetails("Reference: %s", *historyStage.WorkflowInstanceHistoryStageOutput.CreateTransactionResponse.Transaction.Reference))
 					}
-					if len(historyStage.Input.CreateTransaction.Data.Metadata) > 0 {
-						listItems = append(listItems, printMetadata(historyStage.Input.CreateTransaction.Data.Metadata)...)
+					if len(historyStage.WorkflowInstanceHistoryStageInput.ActivityCreateTransaction.PostTransaction.Metadata) > 0 {
+						listItems = append(listItems, printMetadata(historyStage.WorkflowInstanceHistoryStageInput.ActivityCreateTransaction.PostTransaction.Metadata)...)
 					}
 				}
-			case historyStage.Input.ConfirmHold != nil:
-				listItems = append(listItems, historyItemTitle("Confirm debit hold %s", historyStage.Input.ConfirmHold.ID))
-			case historyStage.Input.CreditWallet != nil:
+			case historyStage.WorkflowInstanceHistoryStageInput.ActivityConfirmHold != nil:
+				listItems = append(listItems, historyItemTitle("Confirm debit hold %s", historyStage.WorkflowInstanceHistoryStageInput.ActivityConfirmHold.ID))
+			case historyStage.WorkflowInstanceHistoryStageInput.ActivityCreditWallet != nil:
 				listItems = append(listItems, historyItemTitle("Credit wallet %s (balance: %s) of %v %s from %s",
-					*historyStage.Input.CreditWallet.ID,
-					*historyStage.Input.CreditWallet.Data.Balance,
-					historyStage.Input.CreditWallet.Data.Amount.Amount,
-					historyStage.Input.CreditWallet.Data.Amount.Asset,
-					subjectName(historyStage.Input.CreditWallet.Data.Sources[0]),
+					*historyStage.WorkflowInstanceHistoryStageInput.ActivityCreditWallet.ID,
+					*historyStage.WorkflowInstanceHistoryStageInput.ActivityCreditWallet.CreditWalletRequest.Balance,
+					historyStage.WorkflowInstanceHistoryStageInput.ActivityCreditWallet.CreditWalletRequest.Monetary.Amount,
+					historyStage.WorkflowInstanceHistoryStageInput.ActivityCreditWallet.CreditWalletRequest.Monetary.Asset,
+					subjectName(historyStage.WorkflowInstanceHistoryStageInput.ActivityCreditWallet.CreditWalletRequest.Sources[0]),
 				))
 				if historyStage.Error == nil && historyStage.LastFailure == nil && historyStage.Terminated {
-					if len(historyStage.Input.CreditWallet.Data.Metadata) > 0 {
-						listItems = append(listItems, printMetadata(historyStage.Input.CreditWallet.Data.Metadata)...)
+					if len(historyStage.WorkflowInstanceHistoryStageInput.ActivityCreditWallet.CreditWalletRequest.Metadata) > 0 {
+						listItems = append(listItems, printMetadata(historyStage.WorkflowInstanceHistoryStageInput.ActivityCreditWallet.CreditWalletRequest.Metadata)...)
 					}
 				}
-			case historyStage.Input.DebitWallet != nil:
+			case historyStage.WorkflowInstanceHistoryStageInput.ActivityDebitWallet != nil:
 				destination := "@world"
-				if historyStage.Input.DebitWallet.Data.Destination != nil {
-					destination = subjectName(*historyStage.Input.DebitWallet.Data.Destination)
+				if historyStage.WorkflowInstanceHistoryStageInput.ActivityDebitWallet.DebitWalletRequest.Subject != nil {
+					destination = subjectName(*historyStage.WorkflowInstanceHistoryStageInput.ActivityDebitWallet.DebitWalletRequest.Subject)
 				}
 
 				listItems = append(listItems, historyItemTitle("Debit wallet %s (balance: %s) of %v %s to %s",
-					*historyStage.Input.DebitWallet.ID,
-					historyStage.Input.DebitWallet.Data.Balances[0],
-					historyStage.Input.DebitWallet.Data.Amount.Amount,
-					historyStage.Input.DebitWallet.Data.Amount.Asset,
+					*historyStage.WorkflowInstanceHistoryStageInput.ActivityDebitWallet.ID,
+					historyStage.WorkflowInstanceHistoryStageInput.ActivityDebitWallet.DebitWalletRequest.Balances[0],
+					historyStage.WorkflowInstanceHistoryStageInput.ActivityDebitWallet.DebitWalletRequest.Monetary.Amount,
+					historyStage.WorkflowInstanceHistoryStageInput.ActivityDebitWallet.DebitWalletRequest.Monetary.Asset,
 					destination,
 				))
 				if historyStage.Error == nil && historyStage.LastFailure == nil && historyStage.Terminated {
-					if len(historyStage.Input.DebitWallet.Data.Metadata) > 0 {
-						listItems = append(listItems, printMetadata(historyStage.Input.DebitWallet.Data.Metadata)...)
+					if len(historyStage.WorkflowInstanceHistoryStageInput.ActivityDebitWallet.DebitWalletRequest.Metadata) > 0 {
+						listItems = append(listItems, printMetadata(historyStage.WorkflowInstanceHistoryStageInput.ActivityDebitWallet.DebitWalletRequest.Metadata)...)
 					}
 				}
-			case historyStage.Input.GetAccount != nil:
+			case historyStage.WorkflowInstanceHistoryStageInput.ActivityGetAccount != nil:
 				listItems = append(listItems, historyItemTitle("Read account %s of ledger %s",
-					historyStage.Input.GetAccount.ID,
-					historyStage.Input.GetAccount.Ledger,
+					historyStage.WorkflowInstanceHistoryStageInput.ActivityGetAccount.ID,
+					historyStage.WorkflowInstanceHistoryStageInput.ActivityGetAccount.Ledger,
 				))
-			case historyStage.Input.GetPayment != nil:
+			case historyStage.WorkflowInstanceHistoryStageInput.ActivityGetPayment != nil:
 				listItems = append(listItems, historyItemTitle("Read payment %s",
-					historyStage.Input.GetPayment.ID))
-			case historyStage.Input.GetWallet != nil:
-				listItems = append(listItems, historyItemTitle("Read wallet '%s'", historyStage.Input.GetWallet.ID))
-			case historyStage.Input.RevertTransaction != nil:
-				listItems = append(listItems, historyItemTitle("Revert transaction %s", historyStage.Input.RevertTransaction.ID))
+					historyStage.WorkflowInstanceHistoryStageInput.ActivityGetPayment.ID))
+			case historyStage.WorkflowInstanceHistoryStageInput.ActivityGetWallet != nil:
+				listItems = append(listItems, historyItemTitle("Read wallet '%s'", historyStage.WorkflowInstanceHistoryStageInput.ActivityGetWallet.ID))
+			case historyStage.WorkflowInstanceHistoryStageInput.ActivityRevertTransaction != nil:
+				listItems = append(listItems, historyItemTitle("Revert transaction %s", historyStage.WorkflowInstanceHistoryStageInput.ActivityRevertTransaction.ID))
 				if historyStage.Error == nil {
-					listItems = append(listItems, historyItemTitle("Created transaction: %d", historyStage.Output.RevertTransaction.Data.ID))
+					listItems = append(listItems, historyItemTitle("Created transaction: %d", historyStage.WorkflowInstanceHistoryStageOutput.CreateTransactionResponse1.Transaction.ID))
 				}
-			case historyStage.Input.VoidHold != nil:
-				listItems = append(listItems, historyItemTitle("Cancel debit hold %s", historyStage.Input.VoidHold.ID))
-			case historyStage.Input.ListWallets != nil:
+			case historyStage.WorkflowInstanceHistoryStageInput.ActivityVoidHold != nil:
+				listItems = append(listItems, historyItemTitle("Cancel debit hold %s", historyStage.WorkflowInstanceHistoryStageInput.ActivityVoidHold.ID))
+			case historyStage.WorkflowInstanceHistoryStageInput.ActivityListWallets != nil:
 				listItems = append(listItems, historyItemTitle("List wallets"))
 			}
 			if historyStage.LastFailure != nil {
@@ -261,17 +261,17 @@ func printStage(cmd *cobra.Command, i int, client *formance.Formance, id string,
 				listItems = append(listItems, historyItemError("%s", *historyStage.Error))
 			}
 		}
-	case shared.StageTypeStageDelay:
+	case orchestration.StageTypeStageDelay:
 		printHistoryBaseInfo(cmd.OutOrStdout(), "delay", i, history)
 		switch {
-		case history.Input.StageDelay.Duration != nil:
-			listItems = append(listItems, historyItemTitle("Pause workflow for a delay of %s", *history.Input.StageDelay.Duration))
-		case history.Input.StageDelay.Until != nil:
-			listItems = append(listItems, historyItemTitle("Pause workflow until %s", *history.Input.StageDelay.Until))
+		case history.Stage.StageDelay.Duration != nil:
+			listItems = append(listItems, historyItemTitle("Pause workflow for a delay of %s", *history.Stage.StageDelay.Duration))
+		case history.Stage.StageDelay.Until != nil:
+			listItems = append(listItems, historyItemTitle("Pause workflow until %s", *history.Stage.StageDelay.Until))
 		}
-	case shared.StageTypeStageWaitEvent:
+	case orchestration.StageTypeStageWaitEvent:
 		printHistoryBaseInfo(cmd.OutOrStdout(), "wait_event", i, history)
-		listItems = append(listItems, historyItemTitle("Waiting event '%s'", history.Input.StageWaitEvent.Event))
+		listItems = append(listItems, historyItemTitle("Waiting event '%s'", history.Stage.StageWaitEvent.Event))
 		if history.Error == nil {
 			if history.Terminated {
 				listItems = append(listItems, historyItemDetails("Event received!"))
@@ -279,11 +279,11 @@ func printStage(cmd *cobra.Command, i int, client *formance.Formance, id string,
 				listItems = append(listItems, historyItemDetails("Still waiting event..."))
 			}
 		}
-	case shared.StageTypeUpdate:
+	case orchestration.StageTypeUpdate:
 		printHistoryBaseInfo(cmd.OutOrStdout(), "update", i, history)
 		switch {
-		case history.Input.Update.Account != nil:
-			account := history.Input.Update.Account
+		case history.Stage.Update.UpdateAccount != nil:
+			account := history.Stage.Update.UpdateAccount
 			listItems = append(listItems, historyItemTitle("Update account '%s' of ledger '%s'", account.ID, account.Ledger))
 			listItems = append(listItems, printMetadata(account.Metadata)...)
 		}

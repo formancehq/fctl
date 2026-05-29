@@ -7,8 +7,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/ledger"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
 	"github.com/formancehq/go-libs/v4/collectionutils"
 	"github.com/formancehq/go-libs/v4/pointer"
 
@@ -17,7 +17,7 @@ import (
 )
 
 type ListStore struct {
-	Transaction shared.TransactionsCursorResponseCursor `json:"transactionCursor"`
+	Transaction ledger.TransactionsCursorResponseCursor `json:"transactionCursor"`
 }
 type ListController struct {
 	store           *ListStore
@@ -141,7 +141,7 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	tableData := fctl.Map(c.store.Transaction.Data, func(tx shared.Transaction) []string {
+	tableData := fctl.Map(c.store.Transaction.Data, func(tx ledger.Transaction) []string {
 		return []string{
 			fmt.Sprintf("%d", tx.Txid),
 			func() string {

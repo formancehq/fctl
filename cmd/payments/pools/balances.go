@@ -7,14 +7,14 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type BalancesStore struct {
-	Balances *shared.PoolBalances `json:"balances"`
+	Balances *payments.PoolBalances `json:"balances"`
 }
 
 type BalancesController struct {
@@ -25,7 +25,7 @@ var _ fctl.Controller[*BalancesStore] = (*BalancesController)(nil)
 
 func NewBalancesStore() *BalancesStore {
 	return &BalancesStore{
-		Balances: &shared.PoolBalances{},
+		Balances: &payments.PoolBalances{},
 	}
 }
 
@@ -71,13 +71,13 @@ func (c *BalancesController) Run(cmd *cobra.Command, args []string) (fctl.Render
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Balances = &response.PoolBalancesResponse.Data
+	c.store.Balances = &response.PoolBalancesResponse.PoolBalances
 
 	return c, nil
 }
 
 func (c *BalancesController) Render(cmd *cobra.Command, args []string) error {
-	tableData := fctl.Map(c.store.Balances.Balances, func(balance shared.PoolBalance) []string {
+	tableData := fctl.Map(c.store.Balances.Balances, func(balance payments.PoolBalance) []string {
 		return []string{
 			balance.Asset,
 			balance.Amount.String(),

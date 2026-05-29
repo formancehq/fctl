@@ -7,14 +7,14 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ListStore struct {
-	Cursor *shared.Cursor `json:"cursor"`
+	Cursor *payments.CursorBase `json:"cursor"`
 }
 
 type ListController struct {
@@ -28,7 +28,7 @@ var _ fctl.Controller[*ListStore] = (*ListController)(nil)
 
 func NewListStore() *ListStore {
 	return &ListStore{
-		Cursor: &shared.Cursor{},
+		Cursor: &payments.CursorBase{},
 	}
 }
 
@@ -66,9 +66,9 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		pageSize = fctl.Ptr(int64(ps))
 	}
 
-	response, err := stackClient.Payments.V1.PaymentslistAccounts(
+	response, err := stackClient.Payments.V1.ListAccountsPayments(
 		cmd.Context(),
-		operations.PaymentslistAccountsRequest{
+		operations.ListAccountsPaymentsRequest{
 			Cursor:   cursor,
 			PageSize: pageSize,
 		},
@@ -81,13 +81,13 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Cursor = &response.AccountsCursor.Cursor
+	c.store.Cursor = &response.AccountsCursor.CursorBase
 
 	return c, nil
 }
 
 func (c *ListController) Render(cmd *cobra.Command, args []string) error {
-	tableData := fctl.Map(c.store.Cursor.Data, func(acc shared.PaymentsAccount) []string {
+	tableData := fctl.Map(c.store.Cursor.Data, func(acc payments.Account) []string {
 		return []string{
 			acc.ID,
 			acc.Reference,
@@ -95,7 +95,7 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 			acc.AccountName,
 			acc.DefaultAsset,
 			acc.DefaultCurrency,
-			string(acc.Type),
+			string(acc.AccountType),
 			acc.ConnectorID,
 		}
 	})

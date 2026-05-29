@@ -4,13 +4,13 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
-func DisplayFireblocksConfigV3(cmd *cobra.Command, v3Config *shared.V3GetConnectorConfigResponse) error {
-	config := v3Config.Data.V3FireblocksConfig
+func DisplayFireblocksConfigV3(cmd *cobra.Command, v3Config *payments.V3GetConnectorConfigResponse) error {
+	config := v3Config.V3ConnectorConfig.V3FireblocksConfig
 	if config == nil {
 		return nil
 	}

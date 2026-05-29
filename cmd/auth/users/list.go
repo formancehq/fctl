@@ -6,7 +6,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/auth"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
@@ -70,7 +70,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", listUsersResponse.StatusCode)
 	}
 
-	c.store.Users = fctl.Map(listUsersResponse.ListUsersResponse.Data, func(o shared.User) User {
+	c.store.Users = fctl.Map(listUsersResponse.ListUsersResponse.Data, func(o auth.User) User {
 		return User{
 			ID:      *o.ID,
 			Subject: *o.Subject,

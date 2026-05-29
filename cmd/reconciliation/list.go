@@ -7,14 +7,14 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	reconciliationmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/reconciliation"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ListStore struct {
-	Cursor *shared.ReconciliationsCursorResponseCursor `json:"cursor"`
+	Cursor *reconciliationmodels.ReconciliationsCursorResponseCursor `json:"cursor"`
 }
 
 type ListController struct {
@@ -28,7 +28,7 @@ var _ fctl.Controller[*ListStore] = (*ListController)(nil)
 
 func NewListStore() *ListStore {
 	return &ListStore{
-		Cursor: &shared.ReconciliationsCursorResponseCursor{},
+		Cursor: &reconciliationmodels.ReconciliationsCursorResponseCursor{},
 	}
 }
 
@@ -88,7 +88,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 }
 
 func (c *ListController) Render(cmd *cobra.Command, args []string) error {
-	tableData := fctl.Map(c.store.Cursor.Data, func(p shared.Reconciliation) []string {
+	tableData := fctl.Map(c.store.Cursor.Data, func(p reconciliationmodels.Reconciliation) []string {
 		return []string{
 			p.ID,
 			p.PolicyID,

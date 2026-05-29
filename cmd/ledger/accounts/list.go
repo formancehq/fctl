@@ -4,15 +4,15 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/ledger"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
 
 	"github.com/formancehq/fctl/v3/cmd/ledger/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ListStore struct {
-	Accounts []shared.V2Account `json:"accounts"`
+	Accounts []ledger.V2Account `json:"accounts"`
 }
 type ListController struct {
 	store        *ListStore
@@ -75,7 +75,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 
 	request := operations.V2ListAccountsRequest{
 		Ledger: fctl.GetString(cmd, internal.LedgerFlag),
-		Query: map[string]any{
+		RequestBody: map[string]any{
 			"$and": body,
 		},
 	}
@@ -91,7 +91,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 
 func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 
-	tableData := fctl.Map(c.store.Accounts, func(account shared.V2Account) []string {
+	tableData := fctl.Map(c.store.Accounts, func(account ledger.V2Account) []string {
 		return []string{
 			account.Address,
 			fctl.MetadataAsShortString(account.Metadata),

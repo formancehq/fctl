@@ -6,15 +6,15 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	ledgermodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/ledger"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
 
 	"github.com/formancehq/fctl/v3/cmd/ledger/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type StatsStore struct {
-	Stats shared.Stats `json:"stats"`
+	Stats ledgermodels.Stats `json:"stats"`
 }
 type StatsController struct {
 	store *StatsStore
@@ -66,7 +66,7 @@ func (c *StatsController) Run(cmd *cobra.Command, args []string) (fctl.Renderabl
 		return nil, err
 	}
 
-	c.store.Stats = response.StatsResponse.Data
+	c.store.Stats = response.StatsResponse.Stats
 
 	return c, nil
 }

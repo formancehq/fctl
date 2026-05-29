@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	ledgermodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/ledger"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
 	"github.com/formancehq/go-libs/v4/collectionutils"
 
 	"github.com/formancehq/fctl/v3/cmd/ledger/internal"
@@ -15,7 +15,7 @@ import (
 )
 
 type SendStore struct {
-	Transaction *shared.Transaction `json:"transaction"`
+	Transaction *ledgermodels.Transaction `json:"transaction"`
 }
 type SendController struct {
 	store         *SendStore
@@ -96,9 +96,9 @@ func (c *SendController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	reference := fctl.GetString(cmd, c.referenceFlag)
 
 	response, err := stackClient.Ledger.V1.CreateTransaction(cmd.Context(), operations.CreateTransactionRequest{
-		PostTransaction: shared.PostTransaction{
+		PostTransaction: ledgermodels.PostTransaction{
 			Metadata: collectionutils.ConvertMap(metadata, collectionutils.ToAny[string]),
-			Postings: []shared.Posting{
+			Postings: []ledgermodels.Posting{
 				{
 					Amount:      amount,
 					Asset:       asset,

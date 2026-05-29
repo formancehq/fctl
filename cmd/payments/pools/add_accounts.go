@@ -6,8 +6,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
@@ -77,7 +77,7 @@ func (c *AddAccountController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 
 	response, err := stackClient.Payments.V1.AddAccountToPool(cmd.Context(), operations.AddAccountToPoolRequest{
 		PoolID: args[0],
-		AddAccountToPoolRequest: shared.AddAccountToPoolRequest{
+		AddAccountToPoolRequest: payments.AddAccountToPoolRequest{
 			AccountID: args[1],
 		},
 	})
