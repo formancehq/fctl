@@ -194,14 +194,45 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 	pterm.Debug.WithWriter(cmd.ErrOrStderr()).Printfln("orders.list query=%v cursor=%q pageSize=%d", query, cursor, pageSize)
 	_ = stackClient
 
-	// TODO(EN-622): wire to stackClient.Payments.V3.ListOrders(cmd.Context(), operations.V3ListOrdersRequest{
-	//     PageSize:       fctl.Ptr(int64(pageSize)),
-	//     Cursor:         fctl.Ptr(cursor),
-	//     V3QueryBuilder: query,
-	// }) once formance-sdk-go/v3 exposes payments v3.3 endpoints (see EN-1012).
-	// On success, map the response into c.store.Orders (already aligned with V3Order)
-	// and c.store.Cursor (use fctl.Cursor{HasMore, PageSize, Next, Previous}).
-	return nil, fmt.Errorf("orders.list: not wired yet - awaiting formance-sdk-go release with payments v3.3 (EN-622)")
+	// TODO(EN-1012): wire once fctl migrates to formance-sdk-go/v4. The payments
+	// v3.3 endpoints shipped in v4.0.0 as a breaking major: pkg/models/components
+	// was removed and the models were split into per-domain packages (e.g.
+	// pkg/models/payments). Until that migration lands, this stub stays in place.
+	//
+	// Ready-to-paste wiring (replace this block and the return below):
+	//
+	//   import (
+	//       operations "github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	//       paymentsmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
+	//   )
+	//
+	//   res, err := stackClient.Payments.V3.ListOrders(cmd.Context(), operations.V3ListOrdersRequest{
+	//       RequestBody: query,                    // map[string]any, $and/$match
+	//       Cursor:      fctl.Ptr(cursor),         // *string
+	//       PageSize:    fctl.Ptr(int64(pageSize)),// *int64
+	//   })
+	//   if err != nil {
+	//       return nil, err
+	//   }
+	//   cur := res.V3OrdersCursorResponse.Cursor
+	//   c.store.Orders = fctl.Map(cur.Data, toOrder) // toOrder: paymentsmodels.V3Order -> Order
+	//   c.store.Cursor = fctl.Cursor{
+	//       HasMore:  cur.HasMore,
+	//       PageSize: cur.PageSize, // already int64
+	//       Next:     cur.Next,
+	//       Previous: cur.Previous,
+	//   }
+	//   return c, nil
+	//
+	// Mapping notes (paymentsmodels.V3Order -> local Order):
+	//   - typed-string enums; cast with:
+	//       string(o.V3OrderDirectionEnum), string(o.V3OrderStatusEnum),
+	//       string(o.V3OrderTypeEnum), string(o.V3TimeInForceEnum)
+	//   - metadata field on V3Order is V3Metadata (not Metadata)
+	//   - V3OrderAdjustment.Raw is *paymentsmodels.V3OrderAdjustmentRaw (empty
+	//     struct in v4.0.0); leave OrderAdjustment.Raw nil or drop it from the
+	//     store when wiring
+	return nil, fmt.Errorf("orders.list: blocked until fctl migrates to formance-sdk-go/v4 (payments v3.3 shipped in v4.0.0 as a breaking major; see EN-1012)")
 }
 
 func (c *ListController) Render(cmd *cobra.Command, _ []string) error {

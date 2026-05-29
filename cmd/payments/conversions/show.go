@@ -62,11 +62,31 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	pterm.Debug.WithWriter(cmd.ErrOrStderr()).Printfln("conversions.show conversionID=%q", args[0])
 	_ = stackClient
 
-	// TODO(EN-618): wire to stackClient.Payments.V3.GetConversion(cmd.Context(), operations.V3GetConversionRequest{
-	//     ConversionID: args[0],
-	// }) once formance-sdk-go/v3 exposes payments v3.3 endpoints (see EN-1012).
-	// On success, map the response Data into c.store.Conversion.
-	return nil, fmt.Errorf("conversions.get: not wired yet - awaiting formance-sdk-go release with payments v3.3 (EN-618)")
+	// TODO(EN-1012): wire once fctl migrates to formance-sdk-go/v4. The payments
+	// v3.3 endpoints shipped in v4.0.0 as a breaking major (pkg/models/components
+	// removed, models split into per-domain packages). Until that migration
+	// lands, this stub stays in place.
+	//
+	// Ready-to-paste wiring (replace this block and the return below):
+	//
+	//   import (
+	//       operations "github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	//       paymentsmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
+	//   )
+	//
+	//   res, err := stackClient.Payments.V3.GetConversion(cmd.Context(), operations.V3GetConversionRequest{
+	//       ConversionID: args[0],
+	//   })
+	//   if err != nil {
+	//       return nil, err
+	//   }
+	//   c.store.Conversion = toConversion(res.V3GetConversionResponse.V3Conversion) // .V3Conversion is the data payload
+	//   return c, nil
+	//
+	// Mapping notes (paymentsmodels.V3Conversion -> local Conversion): same
+	// caveats as conversions.list — cast string(cv.V3ConversionStatusEnum) and
+	// read the metadata from V3Metadata (not Metadata).
+	return nil, fmt.Errorf("conversions.get: blocked until fctl migrates to formance-sdk-go/v4 (payments v3.3 shipped in v4.0.0 as a breaking major; see EN-1012)")
 }
 
 func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {

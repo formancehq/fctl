@@ -160,14 +160,40 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 	pterm.Debug.WithWriter(cmd.ErrOrStderr()).Printfln("conversions.list query=%v cursor=%q pageSize=%d", query, cursor, pageSize)
 	_ = stackClient
 
-	// TODO(EN-622): wire to stackClient.Payments.V3.ListConversions(cmd.Context(), operations.V3ListConversionsRequest{
-	//     PageSize:       fctl.Ptr(int64(pageSize)),
-	//     Cursor:         fctl.Ptr(cursor),
-	//     V3QueryBuilder: query,
-	// }) once formance-sdk-go/v3 exposes payments v3.3 endpoints (see EN-1012).
-	// On success, map the response into c.store.Conversions (already aligned with V3Conversion)
-	// and c.store.Cursor (use fctl.Cursor{HasMore, PageSize, Next, Previous}).
-	return nil, fmt.Errorf("conversions.list: not wired yet - awaiting formance-sdk-go release with payments v3.3 (EN-622)")
+	// TODO(EN-1012): wire once fctl migrates to formance-sdk-go/v4. The payments
+	// v3.3 endpoints shipped in v4.0.0 as a breaking major: pkg/models/components
+	// was removed and the models were split into per-domain packages (e.g.
+	// pkg/models/payments). Until that migration lands, this stub stays in place.
+	//
+	// Ready-to-paste wiring (replace this block and the return below):
+	//
+	//   import (
+	//       operations "github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	//       paymentsmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
+	//   )
+	//
+	//   res, err := stackClient.Payments.V3.ListConversions(cmd.Context(), operations.V3ListConversionsRequest{
+	//       RequestBody: query,                    // map[string]any, $and/$match
+	//       Cursor:      fctl.Ptr(cursor),         // *string
+	//       PageSize:    fctl.Ptr(int64(pageSize)),// *int64
+	//   })
+	//   if err != nil {
+	//       return nil, err
+	//   }
+	//   cur := res.V3ConversionsCursorResponse.Cursor
+	//   c.store.Conversions = fctl.Map(cur.Data, toConversion) // toConversion: paymentsmodels.V3Conversion -> Conversion
+	//   c.store.Cursor = fctl.Cursor{
+	//       HasMore:  cur.HasMore,
+	//       PageSize: cur.PageSize, // already int64
+	//       Next:     cur.Next,
+	//       Previous: cur.Previous,
+	//   }
+	//   return c, nil
+	//
+	// Mapping notes (paymentsmodels.V3Conversion -> local Conversion):
+	//   - typed-string status enum; cast with string(cv.V3ConversionStatusEnum)
+	//   - metadata field on V3Conversion is V3Metadata (not Metadata)
+	return nil, fmt.Errorf("conversions.list: blocked until fctl migrates to formance-sdk-go/v4 (payments v3.3 shipped in v4.0.0 as a breaking major; see EN-1012)")
 }
 
 func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
