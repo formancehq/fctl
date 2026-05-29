@@ -6,8 +6,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	walletsmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/wallets"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
@@ -75,7 +75,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 	}
 
 	request := operations.CreateWalletRequest{
-		CreateWalletRequest: &shared.CreateWalletRequest{
+		CreateWalletRequest: &walletsmodels.CreateWalletRequest{
 			Name:     args[0],
 			Metadata: metadata,
 		},
@@ -86,7 +86,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fmt.Errorf("creating wallet: %w", err)
 	}
 
-	c.store.WalletID = response.CreateWalletResponse.Data.ID
+	c.store.WalletID = response.CreateWalletResponse.Wallet.ID
 
 	return c, nil
 }

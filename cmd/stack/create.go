@@ -10,7 +10,7 @@ import (
 
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/gateway"
 	"github.com/formancehq/go-libs/v4/pointer"
 
 	"github.com/formancehq/fctl/v3/cmd/stack/internal"
@@ -25,7 +25,7 @@ const (
 
 type CreateStore struct {
 	Stack    *components.Stack
-	Versions *shared.GetVersionsResponse
+	Versions *gateway.GetVersionsResponse
 }
 
 type CreateController struct {
@@ -37,7 +37,7 @@ var _ fctl.Controller[*CreateStore] = (*CreateController)(nil)
 func NewDefaultStackCreateStore() *CreateStore {
 	return &CreateStore{
 		Stack:    &components.Stack{},
-		Versions: &shared.GetVersionsResponse{},
+		Versions: &gateway.GetVersionsResponse{},
 	}
 }
 func NewStackCreateController() *CreateController {

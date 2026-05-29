@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/apierrors"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/sdkerrors"
+	ledgermodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/ledger"
 	"github.com/formancehq/go-libs/v4/api"
 	"github.com/formancehq/go-libs/v4/logging"
 
@@ -25,7 +25,6 @@ import (
 	"github.com/formancehq/fctl/v3/cmd/payments"
 	"github.com/formancehq/fctl/v3/cmd/profiles"
 	"github.com/formancehq/fctl/v3/cmd/reconciliation"
-	"github.com/formancehq/fctl/v3/cmd/search"
 	"github.com/formancehq/fctl/v3/cmd/stack"
 	"github.com/formancehq/fctl/v3/cmd/ui"
 	"github.com/formancehq/fctl/v3/cmd/version"
@@ -59,7 +58,6 @@ func NewRootCommand() *cobra.Command {
 			stack.NewCommand(),
 			auth.NewCommand(),
 			cloud.NewCommand(),
-			search.NewCommand(),
 			webhooks.NewCommand(),
 			wallets.NewCommand(),
 			orchestration.NewCommand(),
@@ -114,10 +112,10 @@ func Execute() {
 			for unwrapped != nil {
 				//notes(gfyrag): not a clean assertion but following errors does not implements standard Is() helper for errors
 				switch err := unwrapped.(type) {
-				case *sdkerrors.ErrorResponse:
+				case *ledgermodels.ErrorResponseError:
 					printErrorResponse(err)
 					return
-				case *sdkerrors.V2ErrorResponse:
+				case *ledgermodels.V2ErrorResponseError:
 					printV2ErrorResponse(err)
 					return
 				case *apierrors.APIError:
@@ -156,10 +154,10 @@ func printError(code string, message string, details *string) {
 	os.Exit(2)
 }
 
-func printV2ErrorResponse(target *sdkerrors.V2ErrorResponse) {
-	printError(string(target.ErrorCode), target.ErrorMessage, target.Details)
+func printV2ErrorResponse(target *ledgermodels.V2ErrorResponseError) {
+	printError(string(target.V2ErrorsEnum), target.ErrorMessage, target.Details)
 }
 
-func printErrorResponse(target *sdkerrors.ErrorResponse) {
-	printError(string(target.ErrorCode), target.ErrorMessage, target.Details)
+func printErrorResponse(target *ledgermodels.ErrorResponseError) {
+	printError(string(target.ErrorsEnum), target.ErrorMessage, target.Details)
 }

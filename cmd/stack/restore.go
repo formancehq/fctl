@@ -10,15 +10,15 @@ import (
 
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/gateway"
 
 	"github.com/formancehq/fctl/v3/cmd/stack/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type StackRestoreStore struct {
-	Stack    *components.Stack           `json:"stack"`
-	Versions *shared.GetVersionsResponse `json:"versions"`
+	Stack    *components.Stack            `json:"stack"`
+	Versions *gateway.GetVersionsResponse `json:"versions"`
 }
 type StackRestoreController struct {
 	store  *StackRestoreStore
@@ -30,7 +30,7 @@ var _ fctl.Controller[*StackRestoreStore] = (*StackRestoreController)(nil)
 func NewDefaultVersionStore() *StackRestoreStore {
 	return &StackRestoreStore{
 		Stack:    &components.Stack{},
-		Versions: &shared.GetVersionsResponse{},
+		Versions: &gateway.GetVersionsResponse{},
 	}
 }
 

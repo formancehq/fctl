@@ -8,8 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/ledger"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
 	"github.com/formancehq/go-libs/v4/collectionutils"
 
 	"github.com/formancehq/fctl/v3/cmd/ledger/internal"
@@ -17,7 +17,7 @@ import (
 )
 
 type NumStore struct {
-	Transaction *shared.Transaction `json:"transaction"`
+	Transaction *ledger.Transaction `json:"transaction"`
 }
 type NumController struct {
 	store          *NumStore
@@ -145,13 +145,13 @@ func (c *NumController) Run(cmd *cobra.Command, args []string) (fctl.Renderable,
 		return nil, err
 	}
 
-	ledger := fctl.GetString(cmd, internal.LedgerFlag)
+	ledgerName := fctl.GetString(cmd, internal.LedgerFlag)
 
 	response, err := stackClient.Ledger.V1.CreateTransaction(cmd.Context(), operations.CreateTransactionRequest{
-		PostTransaction: shared.PostTransaction{
+		PostTransaction: ledger.PostTransaction{
 			Metadata:  collectionutils.ConvertMap(metadata, collectionutils.ToAny[string]),
 			Reference: &reference,
-			Script: &shared.PostTransactionScript{
+			Script: &ledger.PostTransactionScript{
 				Plain: script,
 				Vars:  vars,
 			},
@@ -162,7 +162,7 @@ func (c *NumController) Run(cmd *cobra.Command, args []string) (fctl.Renderable,
 				return &timestamp
 			}(),
 		},
-		Ledger: ledger,
+		Ledger: ledgerName,
 	})
 	if err != nil {
 		return nil, err

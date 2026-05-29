@@ -9,7 +9,7 @@ import (
 
 	"github.com/pterm/pterm"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/ledger"
 	"github.com/formancehq/go-libs/v4/collectionutils"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
@@ -19,7 +19,7 @@ func printCommonInformation(
 	out io.Writer,
 	txID *big.Int,
 	reference string,
-	postings []shared.Posting,
+	postings []ledger.Posting,
 	timestamp time.Time,
 ) error {
 	fctl.Section.WithWriter(out).Println("Information")
@@ -107,22 +107,22 @@ func PrintExpandedTransaction(out io.Writer, transaction ExpandedTransaction) er
 type Transaction interface {
 	GetReference() *string
 	GetID() *big.Int
-	GetPostings() []shared.Posting
+	GetPostings() []ledger.Posting
 	GetTimestamp() time.Time
 	GetMetadata() map[string]string
 }
 
 type v2Transaction struct {
-	shared.V2Transaction
+	ledger.V2Transaction
 }
 
 func (t v2Transaction) GetID() *big.Int {
 	return t.ID
 }
 
-func (t v2Transaction) GetPostings() []shared.Posting {
-	return collectionutils.Map(t.V2Transaction.GetPostings(), func(from shared.V2Posting) shared.Posting {
-		return shared.Posting{
+func (t v2Transaction) GetPostings() []ledger.Posting {
+	return collectionutils.Map(t.V2Transaction.GetPostings(), func(from ledger.V2Posting) ledger.Posting {
+		return ledger.Posting{
 			Amount:      from.GetAmount(),
 			Asset:       from.GetAsset(),
 			Destination: from.GetDestination(),
@@ -131,16 +131,20 @@ func (t v2Transaction) GetPostings() []shared.Posting {
 	})
 }
 
+func (t v2Transaction) GetMetadata() map[string]string {
+	return t.V2Transaction.GetV2Metadata()
+}
+
 var _ Transaction = (*v2Transaction)(nil)
 
-func WrapV2Transaction(transaction shared.V2Transaction) *v2Transaction {
+func WrapV2Transaction(transaction ledger.V2Transaction) *v2Transaction {
 	return &v2Transaction{
 		V2Transaction: transaction,
 	}
 }
 
 type v1Transaction struct {
-	shared.Transaction
+	ledger.Transaction
 }
 
 func (t v1Transaction) GetID() *big.Int {
@@ -151,9 +155,17 @@ func (t v1Transaction) GetMetadata() map[string]string {
 	return collectionutils.ConvertMap(t.Transaction.Metadata, collectionutils.ToFmtString)
 }
 
+func (t v1Transaction) GetPreCommitVolumes() map[string]map[string]ledger.Volume {
+	return t.Transaction.GetAggregatedVolumes()
+}
+
+func (t v1Transaction) GetPostCommitVolumes() map[string]map[string]ledger.Volume {
+	return t.Transaction.GetAggregatedVolumes1()
+}
+
 var _ Transaction = (*v1Transaction)(nil)
 
-func WrapV1Transaction(transaction shared.Transaction) *v1Transaction {
+func WrapV1Transaction(transaction ledger.Transaction) *v1Transaction {
 	return &v1Transaction{
 		Transaction: transaction,
 	}
@@ -161,8 +173,8 @@ func WrapV1Transaction(transaction shared.Transaction) *v1Transaction {
 
 type ExpandedTransaction interface {
 	Transaction
-	GetPreCommitVolumes() map[string]map[string]shared.Volume
-	GetPostCommitVolumes() map[string]map[string]shared.Volume
+	GetPreCommitVolumes() map[string]map[string]ledger.Volume
+	GetPostCommitVolumes() map[string]map[string]ledger.Volume
 }
 
 func PrintTransaction(out io.Writer, transaction Transaction) error {

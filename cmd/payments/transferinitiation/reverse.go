@@ -7,8 +7,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
@@ -80,7 +80,7 @@ func (c *ReverseController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		return nil, err
 	}
 
-	request := shared.ReverseTransferInitiationRequest{}
+	request := payments.ReverseTransferInitiationRequest{}
 	if err := json.Unmarshal([]byte(script), &request); err != nil {
 		return nil, err
 	}

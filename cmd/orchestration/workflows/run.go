@@ -7,15 +7,15 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/orchestration"
 
 	"github.com/formancehq/fctl/v3/cmd/orchestration/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type WorkflowsRunStore struct {
-	WorkflowInstance shared.WorkflowInstance `json:"workflowInstance"`
+	WorkflowInstance orchestration.WorkflowInstance `json:"workflowInstance"`
 }
 type WorkflowsRunController struct {
 	store        *WorkflowsRunStore
@@ -88,7 +88,7 @@ func (c *WorkflowsRunController) Run(cmd *cobra.Command, args []string) (fctl.Re
 	}
 
 	c.wait = wait
-	c.store.WorkflowInstance = response.RunWorkflowResponse.Data
+	c.store.WorkflowInstance = response.RunWorkflowResponse.WorkflowInstance
 	return c, nil
 }
 
@@ -112,7 +112,7 @@ func (c *WorkflowsRunController) Render(cmd *cobra.Command, args []string) error
 			panic(err)
 		}
 
-		return internal.PrintWorkflowInstance(cmd.OutOrStdout(), w.GetWorkflowResponse.Data, c.store.WorkflowInstance)
+		return internal.PrintWorkflowInstance(cmd.OutOrStdout(), w.GetWorkflowResponse.Workflow, c.store.WorkflowInstance)
 	}
 	return nil
 }

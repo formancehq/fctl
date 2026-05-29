@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	formance "github.com/formancehq/formance-sdk-go/v3"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	formance "github.com/formancehq/formance-sdk-go/v4"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )

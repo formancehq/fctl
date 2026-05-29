@@ -4,7 +4,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )

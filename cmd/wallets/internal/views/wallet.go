@@ -6,12 +6,12 @@ import (
 
 	"github.com/pterm/pterm"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/wallets"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
-func PrintWallet(out io.Writer, wallet shared.WalletWithBalances) error {
+func PrintWallet(out io.Writer, wallet wallets.WalletWithBalances) error {
 	fctl.Section.Println("Information")
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("ID"), fmt.Sprint(wallet.ID)})
@@ -25,13 +25,13 @@ func PrintWallet(out io.Writer, wallet shared.WalletWithBalances) error {
 	}
 
 	fctl.Section.Println("Balances")
-	if len(wallet.Balances.Main.Assets) == 0 {
+	if len(wallet.Balances.AssetHolder.Assets) == 0 {
 		fctl.Println("No balances found.")
 		return nil
 	}
 	tableData = pterm.TableData{}
 	tableData = append(tableData, []string{"Asset", "Amount"})
-	for asset, amount := range wallet.Balances.Main.Assets {
+	for asset, amount := range wallet.Balances.AssetHolder.Assets {
 		tableData = append(tableData, []string{asset, fmt.Sprint(amount)})
 	}
 	if err := pterm.DefaultTable.
@@ -44,7 +44,7 @@ func PrintWallet(out io.Writer, wallet shared.WalletWithBalances) error {
 
 	return nil
 }
-func PrintWalletWithMetadata(out io.Writer, wallet shared.WalletWithBalances) error {
+func PrintWalletWithMetadata(out io.Writer, wallet wallets.WalletWithBalances) error {
 	err := PrintWallet(out, wallet)
 	if err != nil {
 		return err

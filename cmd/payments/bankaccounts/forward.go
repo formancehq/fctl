@@ -7,8 +7,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
@@ -95,7 +95,7 @@ func (c *ForwardController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 	if c.PaymentsVersion.Major < versions.V3 {
 		//nolint:gosimple
 		response, err := stackClient.Payments.V1.ForwardBankAccount(cmd.Context(), operations.ForwardBankAccountRequest{
-			ForwardBankAccountRequest: shared.ForwardBankAccountRequest{
+			ForwardBankAccountRequest: payments.ForwardBankAccountRequest{
 				ConnectorID: connectorID,
 			},
 			BankAccountID: bankAccountID,
@@ -108,14 +108,14 @@ func (c *ForwardController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 			return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 		}
 
-		c.store.BankAccountID = response.BankAccountResponse.Data.ID
-		c.store.ConnectorID = *response.BankAccountResponse.Data.ConnectorID
+		c.store.BankAccountID = response.BankAccountResponse.BankAccount.ID
+		c.store.ConnectorID = *response.BankAccountResponse.BankAccount.ConnectorID
 
 		return c, nil
 	}
 
 	response, err := stackClient.Payments.V3.ForwardBankAccount(cmd.Context(), operations.V3ForwardBankAccountRequest{
-		V3ForwardBankAccountRequest: &shared.V3ForwardBankAccountRequest{
+		V3ForwardBankAccountRequest: &payments.V3ForwardBankAccountRequest{
 			ConnectorID: connectorID,
 		},
 		BankAccountID: bankAccountID,

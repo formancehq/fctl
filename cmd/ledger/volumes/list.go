@@ -6,8 +6,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/ledger"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
 
 	"github.com/formancehq/fctl/v3/cmd/ledger/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
@@ -15,7 +15,7 @@ import (
 )
 
 type ListStore struct {
-	Cursor shared.V2VolumesWithBalanceCursorResponseCursor
+	Cursor ledger.V2VolumesWithBalanceCursorResponseCursor
 }
 
 type ListController struct {
@@ -88,7 +88,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	}
 
 	request := operations.V2GetVolumesWithBalancesRequest{
-		Query: map[string]any{
+		RequestBody: map[string]any{
 			"$and": body,
 		},
 		Ledger:        fctl.GetString(cmd, internal.LedgerFlag),
@@ -114,7 +114,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 
 func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 
-	tableData := fctl.Map(c.store.Cursor.Data, func(volume shared.V2VolumesWithBalance) []string {
+	tableData := fctl.Map(c.store.Cursor.Data, func(volume ledger.V2VolumesWithBalance) []string {
 		return []string{
 			volume.Account,
 			volume.Asset,

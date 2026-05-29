@@ -7,8 +7,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	walletsmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/wallets"
 
 	"github.com/formancehq/fctl/v3/cmd/wallets/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
@@ -111,7 +111,7 @@ func (c *DebitWalletController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 		return nil, fmt.Errorf("unable to parse '%s' as big int", amountStr)
 	}
 
-	var destination *shared.Subject
+	var destination *walletsmodels.Subject
 	if destinationStr := fctl.GetString(cmd, c.destinationFlag); destinationStr != "" {
 		destination, err = internal.ParseSubject(destinationStr, cmd, stackClient)
 		if err != nil {
@@ -120,15 +120,15 @@ func (c *DebitWalletController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 	}
 
 	response, err := stackClient.Wallets.V1.DebitWallet(cmd.Context(), operations.DebitWalletRequest{
-		DebitWalletRequest: &shared.DebitWalletRequest{
-			Amount: shared.Monetary{
+		DebitWalletRequest: &walletsmodels.DebitWalletRequest{
+			Monetary: walletsmodels.Monetary{
 				Asset:  asset,
 				Amount: amount,
 			},
 			Pending:     &pending,
 			Metadata:    metadata,
 			Description: &description,
-			Destination: destination,
+			Subject:     destination,
 			Balances:    fctl.GetStringSlice(cmd, c.balanceFlag),
 		},
 		ID: walletID,
@@ -138,7 +138,7 @@ func (c *DebitWalletController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 	}
 
 	if response.DebitWalletResponse != nil {
-		c.store.HoldID = &response.DebitWalletResponse.Data.ID
+		c.store.HoldID = &response.DebitWalletResponse.Hold.ID
 	}
 
 	c.store.Success = true

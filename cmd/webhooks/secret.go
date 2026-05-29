@@ -6,8 +6,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	webhooksmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/webhooks"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
@@ -59,7 +59,7 @@ func (c *ChangeSecretWebhookController) Run(cmd *cobra.Command, args []string) (
 
 	response, err := stackClient.Webhooks.V1.
 		ChangeConfigSecret(cmd.Context(), operations.ChangeConfigSecretRequest{
-			ConfigChangeSecret: &shared.ConfigChangeSecret{
+			ConfigChangeSecret: &webhooksmodels.ConfigChangeSecret{
 				Secret: secret,
 			},
 			ID: args[0],
@@ -68,8 +68,8 @@ func (c *ChangeSecretWebhookController) Run(cmd *cobra.Command, args []string) (
 		return nil, fmt.Errorf("changing secret: %w", err)
 	}
 
-	c.store.ID = response.ConfigResponse.Data.ID
-	c.store.Secret = response.ConfigResponse.Data.Secret
+	c.store.ID = response.ConfigResponse.WebhooksConfig.ID
+	c.store.Secret = response.ConfigResponse.WebhooksConfig.Secret
 
 	return c, nil
 }

@@ -6,8 +6,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
@@ -85,8 +85,8 @@ func (c *UpdateMetadataController) Run(cmd *cobra.Command, args []string) (fctl.
 	}
 	if c.PaymentsVersion.Major >= versions.V3 {
 		request := operations.V3UpdateBankAccountMetadataRequest{
-			V3UpdateBankAccountMetadataRequest: &shared.V3UpdateBankAccountMetadataRequest{
-				Metadata: metadata,
+			V3UpdateBankAccountMetadataRequest: &payments.V3UpdateBankAccountMetadataRequest{
+				V3Metadata: metadata,
 			},
 			BankAccountID: bankAccountID,
 		}
@@ -105,8 +105,8 @@ func (c *UpdateMetadataController) Run(cmd *cobra.Command, args []string) (fctl.
 	}
 
 	request := operations.UpdateBankAccountMetadataRequest{
-		UpdateBankAccountMetadataRequest: shared.UpdateBankAccountMetadataRequest{
-			Metadata: metadata,
+		UpdateBankAccountMetadataRequest: payments.UpdateBankAccountMetadataRequest{
+			BankAccountMetadata: metadata,
 		},
 		BankAccountID: bankAccountID,
 	}
