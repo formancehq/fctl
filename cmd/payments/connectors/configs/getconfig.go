@@ -11,8 +11,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 	"github.com/formancehq/go-libs/v4/collectionutils"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/connectors/internal"
@@ -22,10 +22,10 @@ import (
 )
 
 type PaymentsLoadConfigStore struct {
-	ConnectorConfig *shared.ConnectorConfigResponse `json:"connectorConfig"`
-	V3ConfigData    map[string]interface{}          `json:"v3ConnectorConfig,omitempty"`
-	Provider        string                          `json:"provider"`
-	ConnectorID     string                          `json:"connectorId"`
+	ConnectorConfig *payments.ConnectorConfigResponse `json:"connectorConfig"`
+	V3ConfigData    map[string]interface{}            `json:"v3ConnectorConfig,omitempty"`
+	Provider        string                            `json:"provider"`
+	ConnectorID     string                            `json:"connectorId"`
 }
 
 type PaymentsLoadConfigController struct {
@@ -148,7 +148,7 @@ func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (f
 		}
 
 		response, err := stackClient.Payments.V1.ReadConnectorConfig(cmd.Context(), operations.ReadConnectorConfigRequest{
-			Connector: shared.Connector(provider),
+			Connector: payments.Connector(provider),
 		})
 		if err != nil {
 			return nil, err
@@ -175,13 +175,13 @@ func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (f
 			return nil, fmt.Errorf("unexpected status code: %d", connectorList.StatusCode)
 		}
 
-		connectorsFiltered := collectionutils.Filter(connectorList.ConnectorsResponse.Data, func(connector shared.ConnectorsResponseData) bool {
+		connectorsFiltered := collectionutils.Filter(connectorList.ConnectorsResponse.Data, func(connector payments.ConnectorsResponseData) bool {
 			if connectorID != "" {
 				return connector.ConnectorID == connectorID
 			}
 
 			if provider != "" {
-				return connector.Provider == shared.Connector(strings.ToUpper(provider))
+				return connector.Connector == payments.Connector(strings.ToUpper(provider))
 			}
 
 			return true
@@ -191,12 +191,12 @@ func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (f
 		case 0:
 			return nil, fmt.Errorf("no connectors found")
 		case 1:
-			provider = string(connectorsFiltered[0].Provider)
+			provider = string(connectorsFiltered[0].Connector)
 			connectorID = connectorsFiltered[0].ConnectorID
 		default:
 			options := make([]string, 0, len(connectorsFiltered))
 			for _, connector := range connectorsFiltered {
-				options = append(options, strings.Join([]string{"id:" + connector.ConnectorID, "provider:" + string(connector.Provider), "name:" + connector.Name, "enabled:" + fctl.BoolPointerToString(connector.Enabled)}, " "))
+				options = append(options, strings.Join([]string{"id:" + connector.ConnectorID, "provider:" + string(connector.Connector), "name:" + connector.Name, "enabled:" + fctl.BoolPointerToString(connector.Enabled)}, " "))
 			}
 			printer := pterm.DefaultInteractiveSelect.WithOptions(options)
 			selectedOption, err := printer.Show("Please select a connector")
@@ -208,7 +208,7 @@ func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (f
 		}
 
 		response, err := stackClient.Payments.V1.ReadConnectorConfigV1(cmd.Context(), operations.ReadConnectorConfigV1Request{
-			Connector:   shared.Connector(provider),
+			Connector:   payments.Connector(provider),
 			ConnectorID: connectorID,
 		})
 		if err != nil {

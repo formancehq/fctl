@@ -7,8 +7,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	ledgermodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/ledger"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
 	"github.com/formancehq/go-libs/v4/pointer"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
@@ -92,10 +92,10 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 	}
 
 	_, err = stackClient.Ledger.V2.CreateLedger(cmd.Context(), operations.V2CreateLedgerRequest{
-		V2CreateLedgerRequest: shared.V2CreateLedgerRequest{
-			Bucket:   pointer.For(fctl.GetString(cmd, bucketNameFlag)),
-			Metadata: metadata,
-			Features: features,
+		V2CreateLedgerRequest: ledgermodels.V2CreateLedgerRequest{
+			Bucket:     pointer.For(fctl.GetString(cmd, bucketNameFlag)),
+			V2Metadata: metadata,
+			Features:   features,
 		},
 		Ledger: args[0],
 	})

@@ -7,7 +7,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	webhooksmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/webhooks"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
@@ -21,14 +21,14 @@ type CreateWebhookController struct {
 }
 
 type CreateWebhookStore struct {
-	Webhook shared.WebhooksConfig `json:"webhook"`
+	Webhook webhooksmodels.WebhooksConfig `json:"webhook"`
 }
 
 var _ fctl.Controller[*CreateWebhookStore] = (*CreateWebhookController)(nil)
 
 func NewDefaultCreateWebhookStore() *CreateWebhookStore {
 	return &CreateWebhookStore{
-		Webhook: shared.WebhooksConfig{},
+		Webhook: webhooksmodels.WebhooksConfig{},
 	}
 }
 
@@ -63,7 +63,7 @@ func (c *CreateWebhookController) Run(cmd *cobra.Command, args []string) (fctl.R
 
 	secret := fctl.GetString(cmd, secretFlag)
 
-	response, err := stackClient.Webhooks.V1.InsertConfig(cmd.Context(), shared.ConfigUser{
+	response, err := stackClient.Webhooks.V1.InsertConfig(cmd.Context(), webhooksmodels.ConfigUser{
 		Endpoint:   args[0],
 		EventTypes: args[1:],
 		Secret:     &secret,
@@ -73,7 +73,7 @@ func (c *CreateWebhookController) Run(cmd *cobra.Command, args []string) (fctl.R
 		return nil, fmt.Errorf("creating config: %w", err)
 	}
 
-	c.store.Webhook = response.ConfigResponse.Data
+	c.store.Webhook = response.ConfigResponse.WebhooksConfig
 
 	return c, nil
 }

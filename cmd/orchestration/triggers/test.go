@@ -7,14 +7,14 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/orchestration"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type TriggersTestStore struct {
-	Trigger shared.V2TriggerTest `json:"trigger"`
+	Trigger orchestration.V2TriggerTest `json:"trigger"`
 }
 type TriggersTestController struct {
 	store *TriggersTestStore
@@ -70,7 +70,7 @@ func (c *TriggersTestController) Run(cmd *cobra.Command, args []string) (fctl.Re
 		return nil, fmt.Errorf("testing trigger: %w", err)
 	}
 
-	c.store.Trigger = res.V2TestTriggerResponse.Data
+	c.store.Trigger = res.V2TestTriggerResponse.V2TriggerTest
 
 	return c, nil
 }

@@ -16,7 +16,7 @@ import (
 	"github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/membershipclient/v3"
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
-	formance "github.com/formancehq/formance-sdk-go/v3"
+	formance "github.com/formancehq/formance-sdk-go/v4"
 	"github.com/formancehq/go-libs/v4/collectionutils"
 	"github.com/formancehq/go-libs/v4/oidc"
 	"github.com/formancehq/go-libs/v4/oidc/client"
@@ -451,23 +451,30 @@ func NewStackClient(
 		return nil, err
 	}
 
+	stackHTTPClient := oauth2.NewClient(
+		context.WithValue(cmd.Context(), oauth2.HTTPClient, relyingParty.HttpClient()),
+		NewStackTokenSource(
+			*stackToken,
+			stackAccess,
+			relyingParty,
+			func(newToken AccessToken) error {
+				return WriteStackToken(cmd, profileName, stackID, newToken)
+			},
+			cmd,
+			profileName,
+			organizationID,
+			stackID,
+		),
+	)
+	stackHTTPTransport, err := newRewriteLocalhostServerURLRoundTripper(stackAccess.URI, stackHTTPClient.Transport)
+	if err != nil {
+		return nil, err
+	}
+	stackHTTPClient.Transport = stackHTTPTransport
+
 	return formance.New(
 		formance.WithServerURL(stackAccess.URI),
-		formance.WithClient(oauth2.NewClient(
-			context.WithValue(cmd.Context(), oauth2.HTTPClient, relyingParty.HttpClient()),
-			NewStackTokenSource(
-				*stackToken,
-				stackAccess,
-				relyingParty,
-				func(newToken AccessToken) error {
-					return WriteStackToken(cmd, profileName, stackID, newToken)
-				},
-				cmd,
-				profileName,
-				organizationID,
-				stackID,
-			),
-		)),
+		formance.WithClient(stackHTTPClient),
 	), nil
 }
 
@@ -536,9 +543,16 @@ func NewStackClientsFromFlags(
 
 	baseCtx := context.WithValue(cmd.Context(), oauth2.HTTPClient, relyingParty.HttpClient())
 
+	sdkHTTPClient := oauth2.NewClient(baseCtx, tokenSource)
+	sdkHTTPTransport, err := newRewriteLocalhostServerURLRoundTripper(stackAccess.URI, sdkHTTPClient.Transport)
+	if err != nil {
+		return nil, err
+	}
+	sdkHTTPClient.Transport = sdkHTTPTransport
+
 	sdkClient := formance.New(
 		formance.WithServerURL(stackAccess.URI),
-		formance.WithClient(oauth2.NewClient(baseCtx, tokenSource)),
+		formance.WithClient(sdkHTTPClient),
 	)
 
 	rawHTTPClient := oauth2.NewClient(baseCtx, tokenSource)

@@ -7,12 +7,12 @@ import (
 
 	"github.com/pterm/pterm"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/orchestration"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
-func PrintWorkflowInstance(out io.Writer, w shared.Workflow, instance shared.WorkflowInstance) error {
+func PrintWorkflowInstance(out io.Writer, w orchestration.Workflow, instance orchestration.WorkflowInstance) error {
 	fctl.Section.WithWriter(out).Println("Stages")
 
 	ind := 0
@@ -22,8 +22,8 @@ func PrintWorkflowInstance(out io.Writer, w shared.Workflow, instance shared.Wor
 		WithData(
 			fctl.Prepend(
 				fctl.Map(instance.Status,
-					func(src shared.StageStatus) []string {
-						stage := w.Config.Stages[ind]
+					func(src orchestration.StageStatus) []string {
+						stage := w.WorkflowConfig.Stages[ind]
 						var name string
 						for name = range stage {
 						}

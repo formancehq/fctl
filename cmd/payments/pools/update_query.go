@@ -7,8 +7,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
@@ -84,7 +84,7 @@ func (c *UpdateQueryController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 		return nil, err
 	}
 
-	var request shared.V3UpdatePoolQueryRequest
+	var request payments.V3UpdatePoolQueryRequest
 	if err := json.Unmarshal([]byte(script), &request); err != nil {
 		return nil, err
 	}

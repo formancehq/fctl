@@ -6,8 +6,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
@@ -82,8 +82,8 @@ func (c *UpdateStatusController) Run(cmd *cobra.Command, args []string) (fctl.Re
 
 	//nolint:gosimple
 	response, err := stackClient.Payments.V1.UpdateTransferInitiationStatus(cmd.Context(), operations.UpdateTransferInitiationStatusRequest{
-		UpdateTransferInitiationStatusRequest: shared.UpdateTransferInitiationStatusRequest{
-			Status: shared.Status(args[1]),
+		UpdateTransferInitiationStatusRequest: payments.UpdateTransferInitiationStatusRequest{
+			Status: payments.Status(args[1]),
 		},
 		TransferID: args[0],
 	})

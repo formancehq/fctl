@@ -11,8 +11,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/connectors/internal"
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
@@ -167,13 +167,13 @@ func (c *ConnectorUpdateConfigController) runV1Typed(
 	name := strings.ToLower(connectorName)
 	switch name {
 	case internal.AdyenConnector:
-		config := &shared.AdyenConfig{}
+		config := &payments.AdyenConfig{}
 		if err := json.Unmarshal([]byte(script), config); err != nil {
 			return nil, err
 		}
 		resp, err := sc.Payments.V1.UpdateConnectorConfigV1(cmd.Context(), operations.UpdateConnectorConfigV1Request{
-			ConnectorConfig: shared.ConnectorConfig{AdyenConfig: config},
-			Connector:       shared.ConnectorAdyen,
+			ConnectorConfig: payments.ConnectorConfig{AdyenConfig: config},
+			Connector:       payments.ConnectorAdyen,
 			ConnectorID:     connectorID,
 		})
 		if err != nil {
@@ -184,13 +184,13 @@ func (c *ConnectorUpdateConfigController) runV1Typed(
 		}
 
 	case internal.AtlarConnector:
-		config := &shared.AtlarConfig{}
+		config := &payments.AtlarConfig{}
 		if err := json.Unmarshal([]byte(script), config); err != nil {
 			return nil, err
 		}
 		resp, err := sc.Payments.V1.UpdateConnectorConfigV1(cmd.Context(), operations.UpdateConnectorConfigV1Request{
-			ConnectorConfig: shared.ConnectorConfig{AtlarConfig: config},
-			Connector:       shared.ConnectorAtlar,
+			ConnectorConfig: payments.ConnectorConfig{AtlarConfig: config},
+			Connector:       payments.ConnectorAtlar,
 			ConnectorID:     connectorID,
 		})
 		if err != nil {
@@ -201,13 +201,13 @@ func (c *ConnectorUpdateConfigController) runV1Typed(
 		}
 
 	case internal.BankingCircleConnector:
-		config := &shared.BankingCircleConfig{}
+		config := &payments.BankingCircleConfig{}
 		if err := json.Unmarshal([]byte(script), config); err != nil {
 			return nil, err
 		}
 		resp, err := sc.Payments.V1.UpdateConnectorConfigV1(cmd.Context(), operations.UpdateConnectorConfigV1Request{
-			ConnectorConfig: shared.ConnectorConfig{BankingCircleConfig: config},
-			Connector:       shared.ConnectorBankingCircle,
+			ConnectorConfig: payments.ConnectorConfig{BankingCircleConfig: config},
+			Connector:       payments.ConnectorBankingCircle,
 			ConnectorID:     connectorID,
 		})
 		if err != nil {
@@ -218,13 +218,13 @@ func (c *ConnectorUpdateConfigController) runV1Typed(
 		}
 
 	case internal.CurrencyCloudConnector:
-		config := &shared.CurrencyCloudConfig{}
+		config := &payments.CurrencyCloudConfig{}
 		if err := json.Unmarshal([]byte(script), config); err != nil {
 			return nil, err
 		}
 		resp, err := sc.Payments.V1.UpdateConnectorConfigV1(cmd.Context(), operations.UpdateConnectorConfigV1Request{
-			ConnectorConfig: shared.ConnectorConfig{CurrencyCloudConfig: config},
-			Connector:       shared.ConnectorCurrencyCloud,
+			ConnectorConfig: payments.ConnectorConfig{CurrencyCloudConfig: config},
+			Connector:       payments.ConnectorCurrencyCloud,
 			ConnectorID:     connectorID,
 		})
 		if err != nil {
@@ -235,13 +235,13 @@ func (c *ConnectorUpdateConfigController) runV1Typed(
 		}
 
 	case internal.MangoPayConnector:
-		config := &shared.MangoPayConfig{}
+		config := &payments.MangoPayConfig{}
 		if err := json.Unmarshal([]byte(script), config); err != nil {
 			return nil, err
 		}
 		resp, err := sc.Payments.V1.UpdateConnectorConfigV1(cmd.Context(), operations.UpdateConnectorConfigV1Request{
-			ConnectorConfig: shared.ConnectorConfig{MangoPayConfig: config},
-			Connector:       shared.ConnectorMangopay,
+			ConnectorConfig: payments.ConnectorConfig{MangoPayConfig: config},
+			Connector:       payments.ConnectorMangopay,
 			ConnectorID:     connectorID,
 		})
 		if err != nil {
@@ -252,13 +252,13 @@ func (c *ConnectorUpdateConfigController) runV1Typed(
 		}
 
 	case internal.ModulrConnector:
-		config := &shared.ModulrConfig{}
+		config := &payments.ModulrConfig{}
 		if err := json.Unmarshal([]byte(script), config); err != nil {
 			return nil, err
 		}
 		resp, err := sc.Payments.V1.UpdateConnectorConfigV1(cmd.Context(), operations.UpdateConnectorConfigV1Request{
-			ConnectorConfig: shared.ConnectorConfig{ModulrConfig: config},
-			Connector:       shared.ConnectorModulr,
+			ConnectorConfig: payments.ConnectorConfig{ModulrConfig: config},
+			Connector:       payments.ConnectorModulr,
 			ConnectorID:     connectorID,
 		})
 		if err != nil {
@@ -269,13 +269,13 @@ func (c *ConnectorUpdateConfigController) runV1Typed(
 		}
 
 	case internal.MoneycorpConnector:
-		config := &shared.MoneycorpConfig{}
+		config := &payments.MoneycorpConfig{}
 		if err := json.Unmarshal([]byte(script), config); err != nil {
 			return nil, err
 		}
 		resp, err := sc.Payments.V1.UpdateConnectorConfigV1(cmd.Context(), operations.UpdateConnectorConfigV1Request{
-			ConnectorConfig: shared.ConnectorConfig{MoneycorpConfig: config},
-			Connector:       shared.ConnectorMoneycorp,
+			ConnectorConfig: payments.ConnectorConfig{MoneycorpConfig: config},
+			Connector:       payments.ConnectorMoneycorp,
 			ConnectorID:     connectorID,
 		})
 		if err != nil {
@@ -286,13 +286,13 @@ func (c *ConnectorUpdateConfigController) runV1Typed(
 		}
 
 	case internal.StripeConnector:
-		config := &shared.StripeConfig{}
+		config := &payments.StripeConfig{}
 		if err := json.Unmarshal([]byte(script), config); err != nil {
 			return nil, err
 		}
 		resp, err := sc.Payments.V1.UpdateConnectorConfigV1(cmd.Context(), operations.UpdateConnectorConfigV1Request{
-			ConnectorConfig: shared.ConnectorConfig{StripeConfig: config},
-			Connector:       shared.ConnectorStripe,
+			ConnectorConfig: payments.ConnectorConfig{StripeConfig: config},
+			Connector:       payments.ConnectorStripe,
 			ConnectorID:     connectorID,
 		})
 		if err != nil {
@@ -303,13 +303,13 @@ func (c *ConnectorUpdateConfigController) runV1Typed(
 		}
 
 	case internal.WiseConnector:
-		config := &shared.WiseConfig{}
+		config := &payments.WiseConfig{}
 		if err := json.Unmarshal([]byte(script), config); err != nil {
 			return nil, err
 		}
 		resp, err := sc.Payments.V1.UpdateConnectorConfigV1(cmd.Context(), operations.UpdateConnectorConfigV1Request{
-			ConnectorConfig: shared.ConnectorConfig{WiseConfig: config},
-			Connector:       shared.ConnectorWise,
+			ConnectorConfig: payments.ConnectorConfig{WiseConfig: config},
+			Connector:       payments.ConnectorWise,
 			ConnectorID:     connectorID,
 		})
 		if err != nil {

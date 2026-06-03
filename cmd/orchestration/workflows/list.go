@@ -7,7 +7,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/orchestration"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
@@ -68,12 +68,12 @@ func (c *WorkflowsListController) Run(cmd *cobra.Command, args []string) (fctl.R
 		return nil, err
 	}
 
-	c.store.Workflows = fctl.Map(response.ListWorkflowsResponse.Data, func(src shared.Workflow) Workflow {
+	c.store.Workflows = fctl.Map(response.ListWorkflowsResponse.Data, func(src orchestration.Workflow) Workflow {
 		return Workflow{
 			ID: src.ID,
 			Name: func() string {
-				if src.Config.Name != nil {
-					return *src.Config.Name
+				if src.WorkflowConfig.Name != nil {
+					return *src.WorkflowConfig.Name
 				}
 				return ""
 			}(),

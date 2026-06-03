@@ -7,7 +7,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
@@ -85,7 +85,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 
 	switch c.PaymentsVersion.Major {
 	case versions.V3:
-		request := shared.V3CreatePoolRequest{}
+		request := payments.V3CreatePoolRequest{}
 		if err := json.Unmarshal([]byte(script), &request); err != nil {
 			return nil, err
 		}
@@ -105,7 +105,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 
 		c.store.PoolID = response.V3CreatePoolResponse.Data
 	default:
-		request := shared.PoolRequest{}
+		request := payments.PoolRequest{}
 		if err := json.Unmarshal([]byte(script), &request); err != nil {
 			return nil, err
 		}
@@ -119,7 +119,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 			return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 		}
 
-		c.store.PoolID = response.PoolResponse.Data.ID
+		c.store.PoolID = response.PoolResponse.Pool.ID
 	}
 
 	return c, nil

@@ -101,8 +101,8 @@ github.com/felixge/httpsnoop v1.0.4 h1:NFTV2Zj1bL4mc9sqWACXbQFVBBg2W3GPvqp8/ESS2
 github.com/felixge/httpsnoop v1.0.4/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
 github.com/formancehq/cobra v1.10.3-0.20260226173701-7f22399f993b h1:8sPsvBsI0CJEzskLvdRMSBSdQKUlYTRGRdTiuL1HTfI=
 github.com/formancehq/cobra v1.10.3-0.20260226173701-7f22399f993b/go.mod h1:7C1pvHqHw5A4vrJfjNwvOdzYu0Gml16OCs2GRiTUUS4=
-github.com/formancehq/formance-sdk-go/v3 v3.8.1 h1:nKWcpZT70vegEUV+/Xl/wekiI1PsCFVe7mvGgwaA9fk=
-github.com/formancehq/formance-sdk-go/v3 v3.8.1/go.mod h1:2Kb2Z4bN8/I4MQQnuSilvThqeaUtuLaTdmMGIb3nMJY=
+github.com/formancehq/formance-sdk-go/v4 v4.0.0 h1:VaDHdPdy2oLU80rhWsG7ll4M5fc5zFgr5KgZlZ7Zy74=
+github.com/formancehq/formance-sdk-go/v4 v4.0.0/go.mod h1:dkPQPeS133IQcePjTkgfKJEeX3IAbBFYMEwcYBf/WYM=
 github.com/formancehq/go-libs/v4 v4.1.1 h1:D4LRPyssaq/2rPyNlmvAfypY5CsjLSQLLX2N4I/PsR4=
 github.com/formancehq/go-libs/v4 v4.1.1/go.mod h1:iVE2pTLa4KNhqXkCpBAGzpGO8TdHTEjdJMAiCkkeb0A=
 github.com/go-chi/chi/v5 v5.2.5 h1:Eg4myHZBjyvJmAFjFvWgrqDTXFyOzjj7YIm3L3mu6Ug=

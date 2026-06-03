@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/orchestration"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
@@ -59,14 +59,14 @@ func (c *WorkflowsCreateController) Run(cmd *cobra.Command, args []string) (fctl
 		return nil, err
 	}
 
-	config := shared.CreateWorkflowRequest{}
+	config := orchestration.WorkflowConfig{}
 	if err := yaml.Unmarshal([]byte(script), &config); err != nil {
 		return nil, err
 	}
 
 	//nolint:gosimple
 	response, err := stackClient.Orchestration.V1.
-		CreateWorkflow(cmd.Context(), &shared.CreateWorkflowRequest{
+		CreateWorkflow(cmd.Context(), &orchestration.WorkflowConfig{
 			Name:   config.Name,
 			Stages: config.Stages,
 		})
@@ -74,7 +74,7 @@ func (c *WorkflowsCreateController) Run(cmd *cobra.Command, args []string) (fctl
 		return nil, err
 	}
 
-	c.store.WorkflowId = response.CreateWorkflowResponse.Data.ID
+	c.store.WorkflowId = response.CreateWorkflowResponse.Workflow.ID
 
 	return c, nil
 }

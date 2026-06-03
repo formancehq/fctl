@@ -6,14 +6,14 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	walletsmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/wallets"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ListStore struct {
-	Wallets []shared.Wallet `json:"wallets"`
+	Wallets []walletsmodels.Wallet `json:"wallets"`
 }
 type ListController struct {
 	store        *ListStore
@@ -94,7 +94,7 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 		WithData(
 			fctl.Prepend(
 				fctl.Map(c.store.Wallets,
-					func(src shared.Wallet) []string {
+					func(src walletsmodels.Wallet) []string {
 						return []string{
 							src.ID,
 							src.Name,
