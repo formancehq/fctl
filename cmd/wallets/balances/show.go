@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/wallets"
 
 	"github.com/formancehq/fctl/v3/cmd/wallets/internal"
 	"github.com/formancehq/fctl/v3/cmd/wallets/internal/views"
@@ -14,7 +14,7 @@ import (
 )
 
 type ShowStore struct {
-	Balance shared.BalanceWithAssets `json:"balance"`
+	Balance wallets.AssetHolder1 `json:"balance"`
 }
 type ShowController struct {
 	store *ShowStore
@@ -74,7 +74,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("getting balance: %w", err)
 	}
 
-	c.store.Balance = response.GetBalanceResponse.Data
+	c.store.Balance = response.GetBalanceResponse.AssetHolder
 
 	return c, nil
 }

@@ -6,12 +6,12 @@ import (
 
 	"github.com/pterm/pterm"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/wallets"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
-func PrintHold(out io.Writer, hold shared.ExpandedDebitHold) error {
+func PrintHold(out io.Writer, hold wallets.Hold1) error {
 	fctl.Section.Println("Information")
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("ID"), fmt.Sprint(hold.ID)})

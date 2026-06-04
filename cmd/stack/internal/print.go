@@ -8,12 +8,12 @@ import (
 	"github.com/pterm/pterm"
 
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/gateway"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
-func PrintStackInformation(out io.Writer, stack *components.Stack, versions *shared.GetVersionsResponse) error {
+func PrintStackInformation(out io.Writer, stack *components.Stack, versions *gateway.GetVersionsResponse) error {
 	err := printInformation(out, stack)
 
 	if err != nil {
@@ -56,7 +56,7 @@ func printInformation(out io.Writer, stack *components.Stack) error {
 		Render()
 }
 
-func printVersion(out io.Writer, url string, versions *shared.GetVersionsResponse) error {
+func printVersion(out io.Writer, url string, versions *gateway.GetVersionsResponse) error {
 	fctl.Println()
 	fctl.Section.WithWriter(out).Println("Versions")
 

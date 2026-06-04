@@ -6,8 +6,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/ledger"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
 	"github.com/formancehq/go-libs/v4/collectionutils"
 
 	internal "github.com/formancehq/fctl/v3/cmd/ledger/internal"
@@ -15,7 +15,7 @@ import (
 )
 
 type ShowStore struct {
-	Account *shared.AccountWithVolumesAndBalances `json:"account"`
+	Account *ledger.AccountWithVolumesAndBalances `json:"account"`
 }
 type ShowController struct {
 	store *ShowStore
@@ -59,7 +59,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	}
 
 	ledger := fctl.GetString(cmd, internal.LedgerFlag)
-	response, err := stackClient.Ledger.V1.GetAccount(cmd.Context(), operations.GetAccountRequest{
+	response, err := stackClient.Ledger.V1.GetAccountLedger(cmd.Context(), operations.GetAccountLedgerRequest{
 		Address: args[0],
 		Ledger:  ledger,
 	})
@@ -67,7 +67,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, err
 	}
 
-	c.store.Account = &response.AccountResponse.Data
+	c.store.Account = &response.AccountResponse.AccountWithVolumesAndBalances
 
 	return c, nil
 }

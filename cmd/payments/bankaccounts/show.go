@@ -7,15 +7,15 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ShowStore struct {
-	BankAccount *shared.V3BankAccount `json:"bankAccount"`
+	BankAccount *payments.V3BankAccount `json:"bankAccount"`
 }
 type ShowController struct {
 	PaymentsVersion versions.Version
@@ -84,7 +84,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		if response.StatusCode >= 300 {
 			return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 		}
-		c.store.BankAccount = &response.V3GetBankAccountResponse.Data
+		c.store.BankAccount = &response.V3GetBankAccountResponse.V3BankAccount
 
 		return c, nil
 	}
@@ -100,26 +100,26 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	bankAccount := ToV3BankAccount(&response.BankAccountResponse.Data)
+	bankAccount := ToV3BankAccount(&response.BankAccountResponse.BankAccount)
 	c.store.BankAccount = &bankAccount
 
 	return c, nil
 }
 
-func ToV3BankAccount(account *shared.BankAccount) shared.V3BankAccount {
-	v3Account := shared.V3BankAccount{
+func ToV3BankAccount(account *payments.BankAccount) payments.V3BankAccount {
+	v3Account := payments.V3BankAccount{
 		AccountNumber:   account.AccountNumber,
 		Country:         &account.Country,
 		CreatedAt:       account.CreatedAt,
 		Iban:            account.Iban,
 		ID:              account.ID,
-		Metadata:        account.Metadata,
+		V3Metadata:      account.BankAccountMetadata,
 		Name:            account.Name,
-		RelatedAccounts: make([]shared.V3BankAccountRelatedAccount, 0, len(account.RelatedAccounts)),
+		RelatedAccounts: make([]payments.V3BankAccountRelatedAccount, 0, len(account.RelatedAccounts)),
 		SwiftBicCode:    account.SwiftBicCode,
 	}
 	for _, acc := range account.RelatedAccounts {
-		v3Account.RelatedAccounts = append(v3Account.RelatedAccounts, shared.V3BankAccountRelatedAccount{
+		v3Account.RelatedAccounts = append(v3Account.RelatedAccounts, payments.V3BankAccountRelatedAccount{
 			AccountID: acc.AccountID,
 			CreatedAt: acc.CreatedAt,
 		})
@@ -154,7 +154,7 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 	}
 
 	fctl.Section.WithWriter(cmd.OutOrStdout()).Println("RelatedAccounts")
-	tableData = fctl.Map(c.store.BankAccount.RelatedAccounts, func(ba shared.V3BankAccountRelatedAccount) []string {
+	tableData = fctl.Map(c.store.BankAccount.RelatedAccounts, func(ba payments.V3BankAccountRelatedAccount) []string {
 		return []string{
 			ba.AccountID,
 			ba.CreatedAt.Format(time.RFC3339),
@@ -169,5 +169,5 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return fctl.PrintMetadata(cmd.OutOrStdout(), c.store.BankAccount.Metadata)
+	return fctl.PrintMetadata(cmd.OutOrStdout(), c.store.BankAccount.V3Metadata)
 }

@@ -6,15 +6,15 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/sdkerrors"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	webhooksmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/webhooks"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type DeleteWebhookStore struct {
-	ErrorResponse *sdkerrors.WebhooksErrorResponse `json:"error"`
-	Success       bool                             `json:"success"`
+	ErrorResponse *webhooksmodels.ErrorResponse `json:"error"`
+	Success       bool                          `json:"success"`
 }
 
 type DeleteWebhookController struct {

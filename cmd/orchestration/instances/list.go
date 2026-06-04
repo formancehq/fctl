@@ -7,8 +7,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/orchestration"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
@@ -81,7 +81,7 @@ func (c *InstancesListController) Run(cmd *cobra.Command, args []string) (fctl.R
 		return nil, err
 	}
 
-	c.store.WorkflowInstance = fctl.Map(response.ListRunsResponse.Data, func(src shared.WorkflowInstance) WorkflowInstance {
+	c.store.WorkflowInstance = fctl.Map(response.ListRunsResponse.Data, func(src orchestration.WorkflowInstance) WorkflowInstance {
 		return WorkflowInstance{
 			InstanceID: src.ID,
 			WorkflowID: src.WorkflowID,

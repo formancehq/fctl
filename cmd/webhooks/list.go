@@ -8,14 +8,14 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	webhooksmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/webhooks"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ListWebhookStore struct {
-	Webhooks []shared.WebhooksConfig `json:"webhooks"`
+	Webhooks []webhooksmodels.WebhooksConfig `json:"webhooks"`
 }
 type ListWebhookController struct {
 	store *ListWebhookStore
@@ -25,7 +25,7 @@ var _ fctl.Controller[*ListWebhookStore] = (*ListWebhookController)(nil)
 
 func NewDefaultListWebhookStore() *ListWebhookStore {
 	return &ListWebhookStore{
-		Webhooks: []shared.WebhooksConfig{},
+		Webhooks: []webhooksmodels.WebhooksConfig{},
 	}
 }
 
@@ -68,7 +68,7 @@ func (c *ListWebhookController) Render(cmd *cobra.Command, args []string) error 
 		WithData(
 			fctl.Prepend(
 				fctl.Map(c.store.Webhooks,
-					func(src shared.WebhooksConfig) []string {
+					func(src webhooksmodels.WebhooksConfig) []string {
 						return []string{
 							src.ID,
 							src.CreatedAt.Format(time.RFC3339),

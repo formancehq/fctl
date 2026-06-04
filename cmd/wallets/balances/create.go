@@ -7,8 +7,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/wallets"
 
 	"github.com/formancehq/fctl/v3/cmd/wallets/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
@@ -86,7 +86,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 
 	request := operations.CreateBalanceRequest{
 		ID: walletID,
-		CreateBalanceRequest: &shared.CreateBalanceRequest{
+		Balance: &wallets.Balance{
 			Name:      args[0],
 			ExpiresAt: expiresAt,
 			Priority:  priority,
@@ -97,7 +97,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fmt.Errorf("creating balance: %w", err)
 	}
 
-	c.store.BalanceName = response.CreateBalanceResponse.Data.Name
+	c.store.BalanceName = response.CreateBalanceResponse.Balance.Name
 	return c, nil
 }
 

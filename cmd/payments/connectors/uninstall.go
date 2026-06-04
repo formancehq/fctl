@@ -6,8 +6,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/connectors/internal"
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
@@ -130,7 +130,7 @@ func (c *PaymentsConnectorsUninstallController) Run(cmd *cobra.Command, args []s
 
 		response, err := stackClient.Payments.V1.UninstallConnectorV1(cmd.Context(), operations.UninstallConnectorV1Request{
 			ConnectorID: connectorID,
-			Connector:   shared.Connector(provider),
+			Connector:   payments.Connector(provider),
 		})
 		if err != nil {
 			return nil, err
@@ -151,7 +151,7 @@ func (c *PaymentsConnectorsUninstallController) Run(cmd *cobra.Command, args []s
 		}
 
 		response, err := stackClient.Payments.V1.UninstallConnector(cmd.Context(), operations.UninstallConnectorRequest{
-			Connector: shared.Connector(provider),
+			Connector: payments.Connector(provider),
 		})
 		if err != nil {
 			return nil, err

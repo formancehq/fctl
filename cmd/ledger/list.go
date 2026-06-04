@@ -6,14 +6,14 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	ledgermodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/ledger"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ListStore struct {
-	Ledgers []shared.V2Ledger `json:"ledgers"`
+	Ledgers []ledgermodels.V2Ledger `json:"ledgers"`
 }
 type ListController struct {
 	store *ListStore
@@ -23,7 +23,7 @@ var _ fctl.Controller[*ListStore] = (*ListController)(nil)
 
 func NewDefaultListStore() *ListStore {
 	return &ListStore{
-		Ledgers: []shared.V2Ledger{},
+		Ledgers: []ledgermodels.V2Ledger{},
 	}
 }
 
@@ -70,9 +70,9 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 }
 
 func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
-	tableData := fctl.Map(c.store.Ledgers, func(ledger shared.V2Ledger) []string {
+	tableData := fctl.Map(c.store.Ledgers, func(ledger ledgermodels.V2Ledger) []string {
 		return []string{
-			ledger.Name, ledger.AddedAt.Format(time.RFC3339Nano), fctl.MetadataAsShortString(ledger.Metadata),
+			ledger.Name, ledger.AddedAt.Format(time.RFC3339Nano), fctl.MetadataAsShortString(ledger.V2Metadata),
 		}
 	})
 	tableData = fctl.Prepend(tableData, []string{"Name", "Created at", "Metadata"})

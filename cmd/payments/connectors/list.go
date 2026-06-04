@@ -6,8 +6,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
@@ -156,7 +156,7 @@ func (c *PaymentsConnectorsListController) Render(cmd *cobra.Command, args []str
 		Render()
 }
 
-func V3toConnectorData(connector shared.V3Connector) ConnectorData {
+func V3toConnectorData(connector payments.V3Connector) ConnectorData {
 	return ConnectorData{
 		ID:       connector.ID,
 		Name:     connector.Name,
@@ -164,10 +164,10 @@ func V3toConnectorData(connector shared.V3Connector) ConnectorData {
 	}
 }
 
-func V1toConnectorData(connector shared.ConnectorsResponseData) ConnectorData {
+func V1toConnectorData(connector payments.ConnectorsResponseData) ConnectorData {
 	return ConnectorData{
 		ID:       connector.ConnectorID,
 		Name:     connector.Name,
-		Provider: string(connector.Provider),
+		Provider: string(connector.Connector),
 	}
 }

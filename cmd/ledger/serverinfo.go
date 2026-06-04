@@ -63,8 +63,8 @@ func (c *ServerInfoController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 		return nil, err
 	}
 
-	c.store.Server = response.ConfigInfoResponse.Data.Server
-	c.store.Version = response.ConfigInfoResponse.Data.Version
+	c.store.Server = response.ConfigInfoResponse.ConfigInfo.Server
+	c.store.Version = response.ConfigInfoResponse.ConfigInfo.Version
 
 	return c, nil
 }

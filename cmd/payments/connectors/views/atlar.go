@@ -4,13 +4,13 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
-func DisplayAtlarConfig(cmd *cobra.Command, connectorConfig *shared.ConnectorConfigResponse) error {
-	config := connectorConfig.Data.AtlarConfig
+func DisplayAtlarConfig(cmd *cobra.Command, connectorConfig *payments.ConnectorConfigResponse) error {
+	config := connectorConfig.ConnectorConfig.AtlarConfig
 
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})
@@ -29,8 +29,8 @@ func DisplayAtlarConfig(cmd *cobra.Command, connectorConfig *shared.ConnectorCon
 	return nil
 }
 
-func DisplayAtlarConfigV3(cmd *cobra.Command, v3Config *shared.V3GetConnectorConfigResponse) error {
-	config := v3Config.Data.V3AtlarConfig
+func DisplayAtlarConfigV3(cmd *cobra.Command, v3Config *payments.V3GetConnectorConfigResponse) error {
+	config := v3Config.V3ConnectorConfig.V3AtlarConfig
 
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})

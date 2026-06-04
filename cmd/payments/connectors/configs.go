@@ -7,7 +7,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	formance "github.com/formancehq/formance-sdk-go/v3"
+	formance "github.com/formancehq/formance-sdk-go/v4"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"

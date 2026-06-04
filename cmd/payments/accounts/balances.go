@@ -7,14 +7,14 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ListBalancesStore struct {
-	Cursor *shared.BalancesCursorCursor `json:"cursor"`
+	Cursor *payments.BalancesCursorCursorBase `json:"cursor"`
 }
 
 type ListBalancesController struct {
@@ -28,7 +28,7 @@ var _ fctl.Controller[*ListBalancesStore] = (*ListBalancesController)(nil)
 
 func NewListBalanceStore() *ListBalancesStore {
 	return &ListBalancesStore{
-		Cursor: &shared.BalancesCursorCursor{},
+		Cursor: &payments.BalancesCursorCursorBase{},
 	}
 }
 
@@ -83,13 +83,13 @@ func (c *ListBalancesController) Run(cmd *cobra.Command, args []string) (fctl.Re
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Cursor = &response.BalancesCursor.Cursor
+	c.store.Cursor = &response.BalancesCursor.CursorBase
 
 	return c, nil
 }
 
 func (c *ListBalancesController) Render(cmd *cobra.Command, args []string) error {
-	tableData := fctl.Map(c.store.Cursor.Data, func(balance shared.AccountBalance) []string {
+	tableData := fctl.Map(c.store.Cursor.Data, func(balance payments.AccountBalance) []string {
 		return []string{
 			balance.AccountID,
 			balance.Asset,

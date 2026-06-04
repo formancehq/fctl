@@ -6,7 +6,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
@@ -68,9 +68,9 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	}
 
 	c.store.User = &User{
-		ID:      *readUserResponse.ReadUserResponse.Data.ID,
-		Subject: *readUserResponse.ReadUserResponse.Data.Subject,
-		Email:   *readUserResponse.ReadUserResponse.Data.Email,
+		ID:      *readUserResponse.ReadUserResponse.User.ID,
+		Subject: *readUserResponse.ReadUserResponse.User.Subject,
+		Email:   *readUserResponse.ReadUserResponse.User.Email,
 	}
 
 	return c, nil

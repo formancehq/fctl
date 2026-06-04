@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
+	"strings"
 
 	"github.com/TylerBrock/colorjson"
 	"github.com/spf13/cobra"
@@ -150,4 +152,55 @@ func newInjectHTTPHeadersRoundTripper(headers http.Header, next http.RoundTrippe
 		headers: headers,
 		next:    next,
 	}
+}
+
+var _ http.RoundTripper = (*rewriteLocalhostServerURLRoundTripper)(nil)
+
+type rewriteLocalhostServerURLRoundTripper struct {
+	base *url.URL
+	next http.RoundTripper
+}
+
+func (rt *rewriteLocalhostServerURLRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	if req.URL.Scheme != "http" || req.URL.Host != "localhost:8080" {
+		return rt.next.RoundTrip(req)
+	}
+
+	rewritten := req.Clone(req.Context())
+	rewritten.URL = cloneURL(req.URL)
+	rewritten.URL.Scheme = rt.base.Scheme
+	rewritten.URL.Host = rt.base.Host
+	rewritten.URL.Path = joinURLPath(rt.base.Path, req.URL.Path)
+	rewritten.URL.RawPath = ""
+	rewritten.Host = rt.base.Host
+
+	return rt.next.RoundTrip(rewritten)
+}
+
+func newRewriteLocalhostServerURLRoundTripper(serverURL string, next http.RoundTripper) (http.RoundTripper, error) {
+	base, err := url.Parse(serverURL)
+	if err != nil {
+		return nil, err
+	}
+	return &rewriteLocalhostServerURLRoundTripper{
+		base: base,
+		next: next,
+	}, nil
+}
+
+func cloneURL(from *url.URL) *url.URL {
+	to := *from
+	return &to
+}
+
+func joinURLPath(basePath, requestPath string) string {
+	basePath = strings.TrimRight(basePath, "/")
+	requestPath = strings.TrimLeft(requestPath, "/")
+	if basePath == "" {
+		return "/" + requestPath
+	}
+	if requestPath == "" {
+		return basePath
+	}
+	return basePath + "/" + requestPath
 }

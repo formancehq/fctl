@@ -7,14 +7,14 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/orchestration"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type OccurrencesListStore struct {
-	WorkflowOccurrence []shared.TriggerOccurrence `json:"occurrences"`
+	WorkflowOccurrence []orchestration.TriggerOccurrence `json:"occurrences"`
 }
 type OccurrencesListController struct {
 	store *OccurrencesListStore
@@ -82,7 +82,7 @@ func (c *OccurrencesListController) Render(cmd *cobra.Command, args []string) er
 		WithData(
 			fctl.Prepend(
 				fctl.Map(c.store.WorkflowOccurrence,
-					func(src shared.TriggerOccurrence) []string {
+					func(src orchestration.TriggerOccurrence) []string {
 						return []string{
 							func() string {
 								if src.WorkflowInstanceID != nil {

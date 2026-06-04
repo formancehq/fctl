@@ -7,16 +7,16 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	formance "github.com/formancehq/formance-sdk-go/v3"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	formance "github.com/formancehq/formance-sdk-go/v4"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ListStore struct {
-	Cursor *shared.V3BankAccountsCursorResponseCursor `json:"cursor"`
+	Cursor *payments.V3BankAccountsCursorResponseCursor `json:"cursor"`
 }
 
 type ListController struct {
@@ -36,7 +36,7 @@ var _ fctl.Controller[*ListStore] = (*ListController)(nil)
 
 func NewListStore() *ListStore {
 	return &ListStore{
-		Cursor: &shared.V3BankAccountsCursorResponseCursor{},
+		Cursor: &payments.V3BankAccountsCursorResponseCursor{},
 	}
 }
 
@@ -102,7 +102,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Cursor = ToV3BankAccountCursor(&response.BankAccountsCursor.Cursor)
+	c.store.Cursor = ToV3BankAccountCursor(&response.BankAccountsCursor.CursorBase)
 
 	return c, nil
 }
@@ -128,9 +128,9 @@ func (c *ListController) v3list(cmd *cobra.Command, stackClient *formance.Forman
 	return c, nil
 }
 
-func ToV3BankAccountCursor(c *shared.BankAccountsCursorCursor) *shared.V3BankAccountsCursorResponseCursor {
-	cursor := &shared.V3BankAccountsCursorResponseCursor{
-		Data:     make([]shared.V3BankAccount, 0, len(c.Data)),
+func ToV3BankAccountCursor(c *payments.BankAccountsCursorCursorBase) *payments.V3BankAccountsCursorResponseCursor {
+	cursor := &payments.V3BankAccountsCursorResponseCursor{
+		Data:     make([]payments.V3BankAccount, 0, len(c.Data)),
 		HasMore:  c.HasMore,
 		Next:     c.Next,
 		Previous: c.Previous,
@@ -143,7 +143,7 @@ func ToV3BankAccountCursor(c *shared.BankAccountsCursorCursor) *shared.V3BankAcc
 }
 
 func (c *ListController) Render(cmd *cobra.Command, args []string) error {
-	tableData := fctl.Map(c.store.Cursor.Data, func(bc shared.V3BankAccount) []string {
+	tableData := fctl.Map(c.store.Cursor.Data, func(bc payments.V3BankAccount) []string {
 		row := []string{
 			bc.ID,
 			bc.Name,

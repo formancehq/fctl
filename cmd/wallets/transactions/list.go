@@ -7,15 +7,15 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/wallets"
 
 	"github.com/formancehq/fctl/v3/cmd/wallets/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ListStore struct {
-	Transactions []shared.WalletsTransaction `json:"transactions"`
+	Transactions []wallets.Transaction `json:"transactions"`
 }
 type ListController struct {
 	store *ListStore
@@ -85,7 +85,7 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	tableData := fctl.Map(c.store.Transactions, func(tx shared.WalletsTransaction) []string {
+	tableData := fctl.Map(c.store.Transactions, func(tx wallets.Transaction) []string {
 		return []string{
 			fmt.Sprintf("%d", tx.ID),
 			tx.Timestamp.Format(time.RFC3339),

@@ -7,15 +7,15 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ListStore struct {
-	Cursor *shared.TransferInitiationsCursorCursor `json:"cursor"`
+	Cursor *payments.TransferInitiationsCursorCursorBase `json:"cursor"`
 }
 
 type ListController struct {
@@ -35,7 +35,7 @@ var _ fctl.Controller[*ListStore] = (*ListController)(nil)
 
 func NewListStore() *ListStore {
 	return &ListStore{
-		Cursor: &shared.TransferInitiationsCursorCursor{},
+		Cursor: &payments.TransferInitiationsCursorCursorBase{},
 	}
 }
 
@@ -96,13 +96,13 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Cursor = &response.TransferInitiationsCursor.Cursor
+	c.store.Cursor = &response.TransferInitiationsCursor.CursorBase
 
 	return c, nil
 }
 
 func (c *ListController) Render(cmd *cobra.Command, args []string) error {
-	tableData := fctl.Map(c.store.Cursor.Data, func(tf shared.TransferInitiation) []string {
+	tableData := fctl.Map(c.store.Cursor.Data, func(tf payments.TransferInitiation) []string {
 		return []string{
 			tf.ID,
 			tf.Reference,
@@ -116,7 +116,7 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 			fmt.Sprint(tf.Amount),
 			fmt.Sprint(tf.InitialAmount),
 			tf.Asset,
-			string(tf.Status),
+			string(tf.TransferInitiationStatus),
 			*tf.Error,
 		}
 	})

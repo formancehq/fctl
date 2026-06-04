@@ -7,7 +7,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
@@ -83,7 +83,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 	}
 
 	if c.PaymentsVersion.Major >= versions.V3 {
-		request := shared.V3CreateBankAccountRequest{}
+		request := payments.V3CreateBankAccountRequest{}
 		if err := json.Unmarshal([]byte(script), &request); err != nil {
 			return nil, err
 		}
@@ -100,7 +100,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return c, nil
 	}
 
-	request := shared.BankAccountRequest{}
+	request := payments.BankAccountRequest{}
 	if err := json.Unmarshal([]byte(script), &request); err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.BankAccountID = response.BankAccountResponse.Data.ID
+	c.store.BankAccountID = response.BankAccountResponse.BankAccount.ID
 
 	return c, nil
 }
