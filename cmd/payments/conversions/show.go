@@ -7,6 +7,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
 	"github.com/formancehq/go-libs/v4/metadata"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
@@ -60,33 +61,18 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	}
 
 	pterm.Debug.WithWriter(cmd.ErrOrStderr()).Printfln("conversions.show conversionID=%q", args[0])
-	_ = stackClient
 
-	// TODO(EN-1012): wire once fctl migrates to formance-sdk-go/v4. The payments
-	// v3.3 endpoints shipped in v4.0.0 as a breaking major (pkg/models/components
-	// removed, models split into per-domain packages). Until that migration
-	// lands, this stub stays in place.
-	//
-	// Ready-to-paste wiring (replace this block and the return below):
-	//
-	//   import (
-	//       operations "github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	//       paymentsmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
-	//   )
-	//
-	//   res, err := stackClient.Payments.V3.GetConversion(cmd.Context(), operations.V3GetConversionRequest{
-	//       ConversionID: args[0],
-	//   })
-	//   if err != nil {
-	//       return nil, err
-	//   }
-	//   c.store.Conversion = toConversion(res.V3GetConversionResponse.V3Conversion) // .V3Conversion is the data payload
-	//   return c, nil
-	//
-	// Mapping notes (paymentsmodels.V3Conversion -> local Conversion): same
-	// caveats as conversions.list — cast string(cv.V3ConversionStatusEnum) and
-	// read the metadata from V3Metadata (not Metadata).
-	return nil, fmt.Errorf("conversions.get: blocked until fctl migrates to formance-sdk-go/v4 (payments v3.3 shipped in v4.0.0 as a breaking major; see EN-1012)")
+	res, err := stackClient.Payments.V3.GetConversion(cmd.Context(), operations.V3GetConversionRequest{ConversionID: args[0]})
+	if err != nil {
+		return nil, err
+	}
+	if res.V3GetConversionResponse == nil {
+		return nil, fmt.Errorf("conversions.get: empty response (status %d)", res.StatusCode)
+	}
+
+	conversion := toConversion(res.V3GetConversionResponse.V3Conversion)
+	c.store.Conversion = &conversion
+	return c, nil
 }
 
 func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {

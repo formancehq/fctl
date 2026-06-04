@@ -7,6 +7,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
 	"github.com/formancehq/go-libs/v4/metadata"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
@@ -60,34 +61,18 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	}
 
 	pterm.Debug.WithWriter(cmd.ErrOrStderr()).Printfln("orders.show orderID=%q", args[0])
-	_ = stackClient
 
-	// TODO(EN-1012): wire once fctl migrates to formance-sdk-go/v4. The payments
-	// v3.3 endpoints shipped in v4.0.0 as a breaking major (pkg/models/components
-	// removed, models split into per-domain packages). Until that migration
-	// lands, this stub stays in place.
-	//
-	// Ready-to-paste wiring (replace this block and the return below):
-	//
-	//   import (
-	//       operations "github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	//       paymentsmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
-	//   )
-	//
-	//   res, err := stackClient.Payments.V3.GetOrder(cmd.Context(), operations.V3GetOrderRequest{
-	//       OrderID: args[0],
-	//   })
-	//   if err != nil {
-	//       return nil, err
-	//   }
-	//   c.store.Order = toOrder(res.V3GetOrderResponse.V3Order) // .V3Order is the data payload
-	//   return c, nil
-	//
-	// Mapping notes (paymentsmodels.V3Order -> local Order): same caveats as
-	// orders.list — cast typed-string enums (V3OrderDirectionEnum, etc.), use
-	// V3Metadata (not Metadata), and V3OrderAdjustment.Raw is an empty struct
-	// in v4.0.0 (leave OrderAdjustment.Raw nil or drop it).
-	return nil, fmt.Errorf("orders.get: blocked until fctl migrates to formance-sdk-go/v4 (payments v3.3 shipped in v4.0.0 as a breaking major; see EN-1012)")
+	res, err := stackClient.Payments.V3.GetOrder(cmd.Context(), operations.V3GetOrderRequest{OrderID: args[0]})
+	if err != nil {
+		return nil, err
+	}
+	if res.V3GetOrderResponse == nil {
+		return nil, fmt.Errorf("orders.get: empty response (status %d)", res.StatusCode)
+	}
+
+	order := toOrder(res.V3GetOrderResponse.V3Order)
+	c.store.Order = &order
+	return c, nil
 }
 
 func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {

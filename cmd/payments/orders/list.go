@@ -8,6 +8,9 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	paymentsmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
+
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
@@ -74,8 +77,6 @@ type ListController struct {
 	typeFlag             string
 	sourceAssetFlag      string
 	destinationAssetFlag string
-	createdAtFromFlag    string
-	createdAtToFlag      string
 }
 
 var _ fctl.Controller[*ListStore] = (*ListController)(nil)
@@ -94,8 +95,6 @@ func NewListController() *ListController {
 		typeFlag:             "type",
 		sourceAssetFlag:      "source-asset",
 		destinationAssetFlag: "destination-asset",
-		createdAtFromFlag:    "created-at-from",
-		createdAtToFlag:      "created-at-to",
 	}
 }
 
@@ -115,18 +114,16 @@ func NewListCommand() *cobra.Command {
 		fctl.WithStringFlag(c.typeFlag, "", "Filter by order type (MARKET|LIMIT|STOP|STOP_LIMIT|TWAP|VWAP|PEG|BLOCK|RFQ|TRAILING_STOP|TRAILING_STOP_LIMIT|TAKE_PROFIT|TAKE_PROFIT_LIMIT|LIMIT_MAKER|UNKNOWN)"),
 		fctl.WithStringFlag(c.sourceAssetFlag, "", "Filter by source asset (e.g. USD/2)"),
 		fctl.WithStringFlag(c.destinationAssetFlag, "", "Filter by destination asset (e.g. BTC/8)"),
-		fctl.WithStringFlag(c.createdAtFromFlag, "", "Include only orders created at or after this RFC3339 instant"),
-		fctl.WithStringFlag(c.createdAtToFlag, "", "Include only orders created at or before this RFC3339 instant"),
 		fctl.WithCursorFlag(),
 		fctl.WithPageSizeFlag(),
 		fctl.WithController[*ListStore](c),
 	)
 }
 
-// buildQuery translates the CLI filter flags into a V3QueryBuilder body
-// (free-form map[string]any) matching the $match / $and pattern that the
-// ledger uses today (see cmd/ledger/accounts/list.go).
-func (c *ListController) buildQuery(cmd *cobra.Command) (map[string]any, error) {
+// buildQuery turns the filter flags into a $match/$and query body. Keys are the
+// payments storage column names (snake_case): the endpoint whitelists them and
+// rejects anything else with a VALIDATION error.
+func (c *ListController) buildQuery(cmd *cobra.Command) map[string]any {
 	matches := make([]map[string]any, 0)
 	addMatch := func(field, val string) {
 		if val == "" {
@@ -134,33 +131,18 @@ func (c *ListController) buildQuery(cmd *cobra.Command) (map[string]any, error) 
 		}
 		matches = append(matches, map[string]any{"$match": map[string]any{field: val}})
 	}
-	addMatch("connectorID", fctl.GetString(cmd, c.connectorIDFlag))
+	addMatch("connector_id", fctl.GetString(cmd, c.connectorIDFlag))
 	addMatch("reference", fctl.GetString(cmd, c.referenceFlag))
 	addMatch("direction", fctl.GetString(cmd, c.directionFlag))
 	addMatch("status", fctl.GetString(cmd, c.statusFlag))
 	addMatch("type", fctl.GetString(cmd, c.typeFlag))
-	addMatch("sourceAsset", fctl.GetString(cmd, c.sourceAssetFlag))
-	addMatch("destinationAsset", fctl.GetString(cmd, c.destinationAssetFlag))
-
-	from, err := fctl.GetDateTime(cmd, c.createdAtFromFlag)
-	if err != nil {
-		return nil, fmt.Errorf("parsing --%s: %w", c.createdAtFromFlag, err)
-	}
-	if from != nil {
-		matches = append(matches, map[string]any{"$gte": map[string]any{"createdAt": from.Format(time.RFC3339Nano)}})
-	}
-	to, err := fctl.GetDateTime(cmd, c.createdAtToFlag)
-	if err != nil {
-		return nil, fmt.Errorf("parsing --%s: %w", c.createdAtToFlag, err)
-	}
-	if to != nil {
-		matches = append(matches, map[string]any{"$lte": map[string]any{"createdAt": to.Format(time.RFC3339Nano)}})
-	}
+	addMatch("source_asset", fctl.GetString(cmd, c.sourceAssetFlag))
+	addMatch("destination_asset", fctl.GetString(cmd, c.destinationAssetFlag))
 
 	if len(matches) == 0 {
-		return nil, nil
+		return nil
 	}
-	return map[string]any{"$and": matches}, nil
+	return map[string]any{"$and": matches}
 }
 
 func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
@@ -179,10 +161,7 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 		return nil, fmt.Errorf("orders require Payments >= v3.%d (stack reports %s)", ordersMinMinor, c.PaymentsVersion.Raw)
 	}
 
-	query, err := c.buildQuery(cmd)
-	if err != nil {
-		return nil, err
-	}
+	query := c.buildQuery(cmd)
 	cursor, err := fctl.GetCursor(cmd)
 	if err != nil {
 		return nil, err
@@ -192,47 +171,79 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 		return nil, err
 	}
 	pterm.Debug.WithWriter(cmd.ErrOrStderr()).Printfln("orders.list query=%v cursor=%q pageSize=%d", query, cursor, pageSize)
-	_ = stackClient
 
-	// TODO(EN-1012): wire once fctl migrates to formance-sdk-go/v4. The payments
-	// v3.3 endpoints shipped in v4.0.0 as a breaking major: pkg/models/components
-	// was removed and the models were split into per-domain packages (e.g.
-	// pkg/models/payments). Until that migration lands, this stub stays in place.
-	//
-	// Ready-to-paste wiring (replace this block and the return below):
-	//
-	//   import (
-	//       operations "github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	//       paymentsmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
-	//   )
-	//
-	//   res, err := stackClient.Payments.V3.ListOrders(cmd.Context(), operations.V3ListOrdersRequest{
-	//       RequestBody: query,                    // map[string]any, $and/$match
-	//       Cursor:      fctl.Ptr(cursor),         // *string
-	//       PageSize:    fctl.Ptr(int64(pageSize)),// *int64
-	//   })
-	//   if err != nil {
-	//       return nil, err
-	//   }
-	//   cur := res.V3OrdersCursorResponse.Cursor
-	//   c.store.Orders = fctl.Map(cur.Data, toOrder) // toOrder: paymentsmodels.V3Order -> Order
-	//   c.store.Cursor = fctl.Cursor{
-	//       HasMore:  cur.HasMore,
-	//       PageSize: cur.PageSize, // already int64
-	//       Next:     cur.Next,
-	//       Previous: cur.Previous,
-	//   }
-	//   return c, nil
-	//
-	// Mapping notes (paymentsmodels.V3Order -> local Order):
-	//   - typed-string enums; cast with:
-	//       string(o.V3OrderDirectionEnum), string(o.V3OrderStatusEnum),
-	//       string(o.V3OrderTypeEnum), string(o.V3TimeInForceEnum)
-	//   - metadata field on V3Order is V3Metadata (not Metadata)
-	//   - V3OrderAdjustment.Raw is *paymentsmodels.V3OrderAdjustmentRaw (empty
-	//     struct in v4.0.0); leave OrderAdjustment.Raw nil or drop it from the
-	//     store when wiring
-	return nil, fmt.Errorf("orders.list: blocked until fctl migrates to formance-sdk-go/v4 (payments v3.3 shipped in v4.0.0 as a breaking major; see EN-1012)")
+	// The V3 query endpoints accept either a query body (first page) or an
+	// opaque cursor (subsequent pages), never both.
+	req := operations.V3ListOrdersRequest{}
+	if cursor != "" {
+		req.Cursor = fctl.Ptr(cursor)
+	} else {
+		req.RequestBody = query
+		req.PageSize = fctl.Ptr(int64(pageSize))
+	}
+
+	res, err := stackClient.Payments.V3.ListOrders(cmd.Context(), req)
+	if err != nil {
+		return nil, err
+	}
+	if res.V3OrdersCursorResponse == nil {
+		return nil, fmt.Errorf("orders.list: empty response (status %d)", res.StatusCode)
+	}
+
+	cur := res.V3OrdersCursorResponse.Cursor
+	pterm.Debug.WithWriter(cmd.ErrOrStderr()).Printfln("orders.list received=%d hasMore=%v", len(cur.Data), cur.HasMore)
+	c.store.Orders = fctl.Map(cur.Data, toOrder)
+	c.store.Cursor = fctl.Cursor{HasMore: cur.HasMore, PageSize: cur.PageSize, Next: cur.Next, Previous: cur.Previous}
+	return c, nil
+}
+
+// toOrder maps an SDK V3Order onto the local store type, casting the typed
+// string enums and reading metadata from the SDK's V3Metadata field.
+func toOrder(o paymentsmodels.V3Order) Order {
+	return Order{
+		ID:                   o.ID,
+		ConnectorID:          o.ConnectorID,
+		Provider:             o.Provider,
+		Reference:            o.Reference,
+		ClientOrderID:        o.ClientOrderID,
+		CreatedAt:            o.CreatedAt,
+		UpdatedAt:            o.UpdatedAt,
+		Direction:            string(o.V3OrderDirectionEnum),
+		SourceAsset:          o.SourceAsset,
+		DestinationAsset:     o.DestinationAsset,
+		Type:                 string(o.V3OrderTypeEnum),
+		Status:               string(o.V3OrderStatusEnum),
+		BaseQuantityOrdered:  o.BaseQuantityOrdered,
+		BaseQuantityFilled:   o.BaseQuantityFilled,
+		LimitPrice:           o.LimitPrice,
+		StopPrice:            o.StopPrice,
+		TimeInForce:          string(o.V3TimeInForceEnum),
+		ExpiresAt:            o.ExpiresAt,
+		Fee:                  o.Fee,
+		FeeAsset:             o.FeeAsset,
+		AverageFillPrice:     o.AverageFillPrice,
+		QuoteAmount:          o.QuoteAmount,
+		QuoteAsset:           o.QuoteAsset,
+		PriceAsset:           o.PriceAsset,
+		SourceAccountID:      o.SourceAccountID,
+		DestinationAccountID: o.DestinationAccountID,
+		Metadata:             o.V3Metadata,
+		Adjustments:          fctl.Map(o.Adjustments, toOrderAdjustment),
+		Error:                o.Error,
+	}
+}
+
+func toOrderAdjustment(a paymentsmodels.V3OrderAdjustment) OrderAdjustment {
+	return OrderAdjustment{
+		ID:                 a.ID,
+		Reference:          a.Reference,
+		CreatedAt:          a.CreatedAt,
+		Status:             string(a.V3OrderStatusEnum),
+		BaseQuantityFilled: a.BaseQuantityFilled,
+		Fee:                a.Fee,
+		FeeAsset:           a.FeeAsset,
+		Metadata:           a.V3Metadata,
+	}
 }
 
 func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
