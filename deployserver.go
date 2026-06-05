@@ -102,6 +102,23 @@ func WithClient(client HTTPClient) SDKOption {
 	}
 }
 
+// WithSecurity configures the SDK to use the provided security details
+func WithSecurity(bearerAuth string) SDKOption {
+	return func(sdk *DeployServer) {
+		security := components.Security{BearerAuth: &bearerAuth}
+		sdk.sdkConfiguration.Security = utils.AsSecuritySource(&security)
+	}
+}
+
+// WithSecuritySource configures the SDK to invoke the Security Source function on each method call to determine authentication
+func WithSecuritySource(security func(context.Context) (components.Security, error)) SDKOption {
+	return func(sdk *DeployServer) {
+		sdk.sdkConfiguration.Security = func(ctx context.Context) (interface{}, error) {
+			return security(ctx)
+		}
+	}
+}
+
 func WithRetryConfig(retryConfig retry.Config) SDKOption {
 	return func(sdk *DeployServer) {
 		sdk.sdkConfiguration.RetryConfig = &retryConfig
@@ -127,6 +144,13 @@ func New(opts ...SDKOption) *DeployServer {
 	}
 	for _, opt := range opts {
 		opt(sdk)
+	}
+
+	if sdk.sdkConfiguration.Security == nil {
+		var envVarSecurity components.Security
+		if utils.PopulateSecurityFromEnv(&envVarSecurity) {
+			sdk.sdkConfiguration.Security = utils.AsSecuritySource(envVarSecurity)
+		}
 	}
 
 	// Use WithClient to override the default client if you would like to customize the timeout
@@ -176,7 +200,7 @@ func (s *DeployServer) ListApps(ctx context.Context, pageSize *int64, cursor *st
 		Context:          ctx,
 		OperationID:      "listApps",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
 	timeout := o.Timeout
@@ -199,6 +223,10 @@ func (s *DeployServer) ListApps(ctx context.Context, pageSize *int64, cursor *st
 
 	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
 		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
 	}
 
 	for k, v := range o.SetHeaders {
@@ -396,7 +424,7 @@ func (s *DeployServer) CreateApp(ctx context.Context, request components.CreateA
 		Context:          ctx,
 		OperationID:      "createApp",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Request", "json", `request:"mediaType=application/json"`)
 	if err != nil {
@@ -422,6 +450,10 @@ func (s *DeployServer) CreateApp(ctx context.Context, request components.CreateA
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 	if reqContentType != "" {
 		req.Header.Set("Content-Type", reqContentType)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
 	}
 
 	for k, v := range o.SetHeaders {
@@ -624,7 +656,7 @@ func (s *DeployServer) UpdateApp(ctx context.Context, id string, updateAppReques
 		Context:          ctx,
 		OperationID:      "updateApp",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "UpdateAppRequest", "json", `request:"mediaType=application/json"`)
 	if err != nil {
@@ -650,6 +682,10 @@ func (s *DeployServer) UpdateApp(ctx context.Context, id string, updateAppReques
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 	if reqContentType != "" {
 		req.Header.Set("Content-Type", reqContentType)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
 	}
 
 	for k, v := range o.SetHeaders {
@@ -833,7 +869,7 @@ func (s *DeployServer) ReadApp(ctx context.Context, id string, include []operati
 		Context:          ctx,
 		OperationID:      "readApp",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
 	timeout := o.Timeout
@@ -856,6 +892,10 @@ func (s *DeployServer) ReadApp(ctx context.Context, id string, include []operati
 
 	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
 		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
 	}
 
 	for k, v := range o.SetHeaders {
@@ -1023,10 +1063,11 @@ func (s *DeployServer) ReadApp(ctx context.Context, id string, include []operati
 
 // DeleteApp - Delete an app
 // Soft-deletes the app immediately and enqueues a destroy deployment to
-// clean up any terraform-managed resources on Formance Cloud. The app
-// becomes invisible to all subsequent reads. The destroy runs through
-// the normal worker pipeline; the app row is hard-deleted by the worker
-// once the destroy reaches a terminal status.
+// clean up the app's resources on Formance Cloud via the openapi
+// reconciler's tear-down path. The app becomes invisible to all
+// subsequent reads. The destroy runs through the normal worker
+// pipeline; once it reaches a successful terminal status the worker
+// hard-deletes the app row.
 //
 // By default this returns 202 Accepted as soon as the destroy is
 // enqueued (or 202 with no body if no destroy was needed). Pass
@@ -1067,7 +1108,7 @@ func (s *DeployServer) DeleteApp(ctx context.Context, id string, wait *bool, opt
 		Context:          ctx,
 		OperationID:      "deleteApp",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
 	timeout := o.Timeout
@@ -1090,6 +1131,10 @@ func (s *DeployServer) DeleteApp(ctx context.Context, id string, wait *bool, opt
 
 	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
 		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
 	}
 
 	for k, v := range o.SetHeaders {
@@ -1296,7 +1341,7 @@ func (s *DeployServer) AttachAppManifest(ctx context.Context, id string, attachM
 		Context:          ctx,
 		OperationID:      "attachAppManifest",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "AttachManifestRequest", "json", `request:"mediaType=application/json"`)
 	if err != nil {
@@ -1322,6 +1367,10 @@ func (s *DeployServer) AttachAppManifest(ctx context.Context, id string, attachM
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 	if reqContentType != "" {
 		req.Header.Set("Content-Type", reqContentType)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
 	}
 
 	for k, v := range o.SetHeaders {
@@ -1528,7 +1577,7 @@ func (s *DeployServer) DetachAppManifest(ctx context.Context, id string, opts ..
 		Context:          ctx,
 		OperationID:      "detachAppManifest",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
 	timeout := o.Timeout
@@ -1548,6 +1597,10 @@ func (s *DeployServer) DetachAppManifest(ctx context.Context, id string, opts ..
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
+	}
 
 	for k, v := range o.SetHeaders {
 		req.Header.Set(k, v)
@@ -1731,7 +1784,7 @@ func (s *DeployServer) ReadAppVariables(ctx context.Context, id string, pageSize
 		Context:          ctx,
 		OperationID:      "readAppVariables",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
 	timeout := o.Timeout
@@ -1754,6 +1807,10 @@ func (s *DeployServer) ReadAppVariables(ctx context.Context, id string, pageSize
 
 	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
 		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
 	}
 
 	for k, v := range o.SetHeaders {
@@ -1956,7 +2013,7 @@ func (s *DeployServer) CreateAppVariable(ctx context.Context, id string, createV
 		Context:          ctx,
 		OperationID:      "createAppVariable",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "CreateVariableRequest", "json", `request:"mediaType=application/json"`)
 	if err != nil {
@@ -1982,6 +2039,10 @@ func (s *DeployServer) CreateAppVariable(ctx context.Context, id string, createV
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 	if reqContentType != "" {
 		req.Header.Set("Content-Type", reqContentType)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
 	}
 
 	for k, v := range o.SetHeaders {
@@ -2184,7 +2245,7 @@ func (s *DeployServer) DeleteAppVariable(ctx context.Context, id string, variabl
 		Context:          ctx,
 		OperationID:      "deleteAppVariable",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
 	timeout := o.Timeout
@@ -2204,6 +2265,10 @@ func (s *DeployServer) DeleteAppVariable(ctx context.Context, id string, variabl
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
+	}
 
 	for k, v := range o.SetHeaders {
 		req.Header.Set(k, v)
@@ -2386,7 +2451,7 @@ func (s *DeployServer) CreateManifestRaw(ctx context.Context, name string, reque
 		Context:          ctx,
 		OperationID:      "createManifest_raw",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "RequestBody", "raw", `request:"mediaType=application/yaml"`)
 	if err != nil {
@@ -2416,6 +2481,10 @@ func (s *DeployServer) CreateManifestRaw(ctx context.Context, name string, reque
 
 	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
 		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
 	}
 
 	for k, v := range o.SetHeaders {
@@ -2618,7 +2687,7 @@ func (s *DeployServer) CreateManifest(ctx context.Context, name string, requestB
 		Context:          ctx,
 		OperationID:      "createManifest",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "RequestBody", "json", `request:"mediaType=application/json"`)
 	if err != nil {
@@ -2648,6 +2717,10 @@ func (s *DeployServer) CreateManifest(ctx context.Context, name string, requestB
 
 	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
 		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
 	}
 
 	for k, v := range o.SetHeaders {
@@ -2850,7 +2923,7 @@ func (s *DeployServer) ListManifests(ctx context.Context, pageSize *int64, curso
 		Context:          ctx,
 		OperationID:      "listManifests",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
 	timeout := o.Timeout
@@ -2873,6 +2946,10 @@ func (s *DeployServer) ListManifests(ctx context.Context, pageSize *int64, curso
 
 	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
 		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
 	}
 
 	for k, v := range o.SetHeaders {
@@ -3049,7 +3126,6 @@ func (s *DeployServer) ReadManifest(ctx context.Context, manifestID string, incl
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
 		operations.SupportedOptionTimeout,
-		operations.SupportedOptionAcceptHeaderOverride,
 	}
 
 	for _, opt := range opts {
@@ -3076,7 +3152,7 @@ func (s *DeployServer) ReadManifest(ctx context.Context, manifestID string, incl
 		Context:          ctx,
 		OperationID:      "readManifest",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
 	timeout := o.Timeout
@@ -3094,16 +3170,15 @@ func (s *DeployServer) ReadManifest(ctx context.Context, manifestID string, incl
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
-	if o.AcceptHeaderOverride != nil {
-		req.Header.Set("Accept", string(*o.AcceptHeaderOverride))
-	} else {
-		req.Header.Set("Accept", "application/json;q=1, application/gzip;q=0")
-	}
-
+	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
 	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
 		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
 	}
 
 	for k, v := range o.SetHeaders {
@@ -3223,10 +3298,6 @@ func (s *DeployServer) ReadManifest(ctx context.Context, manifestID string, incl
 			}
 
 			res.ManifestResponse = &out
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/gzip`):
-			res.ResponseStream = httpRes.Body
-
-			return res, nil
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -3310,7 +3381,7 @@ func (s *DeployServer) UpdateManifest(ctx context.Context, manifestID string, up
 		Context:          ctx,
 		OperationID:      "updateManifest",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "UpdateManifestRequest", "json", `request:"mediaType=application/json"`)
 	if err != nil {
@@ -3336,6 +3407,10 @@ func (s *DeployServer) UpdateManifest(ctx context.Context, manifestID string, up
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 	if reqContentType != "" {
 		req.Header.Set("Content-Type", reqContentType)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
 	}
 
 	for k, v := range o.SetHeaders {
@@ -3537,7 +3612,7 @@ func (s *DeployServer) DeleteManifest(ctx context.Context, manifestID string, op
 		Context:          ctx,
 		OperationID:      "deleteManifest",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
 	timeout := o.Timeout
@@ -3557,6 +3632,10 @@ func (s *DeployServer) DeleteManifest(ctx context.Context, manifestID string, op
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
+	}
 
 	for k, v := range o.SetHeaders {
 		req.Header.Set(k, v)
@@ -3760,7 +3839,7 @@ func (s *DeployServer) PushManifestVersionRaw(ctx context.Context, manifestID st
 		Context:          ctx,
 		OperationID:      "pushManifestVersion_raw",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "RequestBody", "raw", `request:"mediaType=application/yaml"`)
 	if err != nil {
@@ -3786,6 +3865,10 @@ func (s *DeployServer) PushManifestVersionRaw(ctx context.Context, manifestID st
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 	if reqContentType != "" {
 		req.Header.Set("Content-Type", reqContentType)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
 	}
 
 	for k, v := range o.SetHeaders {
@@ -3988,7 +4071,7 @@ func (s *DeployServer) PushManifestVersion(ctx context.Context, manifestID strin
 		Context:          ctx,
 		OperationID:      "pushManifestVersion",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "RequestBody", "json", `request:"mediaType=application/json"`)
 	if err != nil {
@@ -4014,6 +4097,10 @@ func (s *DeployServer) PushManifestVersion(ctx context.Context, manifestID strin
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 	if reqContentType != "" {
 		req.Header.Set("Content-Type", reqContentType)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
 	}
 
 	for k, v := range o.SetHeaders {
@@ -4217,7 +4304,7 @@ func (s *DeployServer) ListManifestVersions(ctx context.Context, manifestID stri
 		Context:          ctx,
 		OperationID:      "listManifestVersions",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
 	timeout := o.Timeout
@@ -4240,6 +4327,10 @@ func (s *DeployServer) ListManifestVersions(ctx context.Context, manifestID stri
 
 	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
 		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
 	}
 
 	for k, v := range o.SetHeaders {
@@ -4443,7 +4534,7 @@ func (s *DeployServer) ReadManifestVersion(ctx context.Context, manifestID strin
 		Context:          ctx,
 		OperationID:      "readManifestVersion",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
 	timeout := o.Timeout
@@ -4468,6 +4559,10 @@ func (s *DeployServer) ReadManifestVersion(ctx context.Context, manifestID strin
 	}
 
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
+	}
 
 	for k, v := range o.SetHeaders {
 		req.Header.Set(k, v)
@@ -4668,7 +4763,7 @@ func (s *DeployServer) CreateDeployment(ctx context.Context, request components.
 		Context:          ctx,
 		OperationID:      "createDeployment",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Request", "json", `request:"mediaType=application/json"`)
 	if err != nil {
@@ -4694,6 +4789,10 @@ func (s *DeployServer) CreateDeployment(ctx context.Context, request components.
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 	if reqContentType != "" {
 		req.Header.Set("Content-Type", reqContentType)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
 	}
 
 	for k, v := range o.SetHeaders {
@@ -4897,7 +4996,7 @@ func (s *DeployServer) ListDeployments(ctx context.Context, appID *string, pageS
 		Context:          ctx,
 		OperationID:      "listDeployments",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
 	timeout := o.Timeout
@@ -4920,6 +5019,10 @@ func (s *DeployServer) ListDeployments(ctx context.Context, appID *string, pageS
 
 	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
 		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
 	}
 
 	for k, v := range o.SetHeaders {
@@ -5123,7 +5226,7 @@ func (s *DeployServer) ReadDeployment(ctx context.Context, deploymentID string, 
 		Context:          ctx,
 		OperationID:      "readDeployment",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
 	timeout := o.Timeout
@@ -5144,13 +5247,17 @@ func (s *DeployServer) ReadDeployment(ctx context.Context, deploymentID string, 
 	if o.AcceptHeaderOverride != nil {
 		req.Header.Set("Accept", string(*o.AcceptHeaderOverride))
 	} else {
-		req.Header.Set("Accept", "application/json;q=1, application/yaml;q=0.7, application/gzip;q=0")
+		req.Header.Set("Accept", "application/json;q=1, application/yaml;q=0")
 	}
 
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
 	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
 		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
 	}
 
 	for k, v := range o.SetHeaders {
@@ -5270,12 +5377,8 @@ func (s *DeployServer) ReadDeployment(ctx context.Context, deploymentID string, 
 			}
 
 			res.DeploymentResponse = &out
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/gzip`):
-			res.TwoHundredApplicationGzipResponseStream = httpRes.Body
-
-			return res, nil
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/yaml`):
-			res.TwoHundredApplicationYamlResponseStream = httpRes.Body
+			res.ResponseStream = httpRes.Body
 
 			return res, nil
 		default:
@@ -5360,7 +5463,7 @@ func (s *DeployServer) ReadDeploymentLogs(ctx context.Context, deploymentID stri
 		Context:          ctx,
 		OperationID:      "readDeploymentLogs",
 		OAuth2Scopes:     nil,
-		SecuritySource:   nil,
+		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
 	timeout := o.Timeout
@@ -5380,6 +5483,10 @@ func (s *DeployServer) ReadDeploymentLogs(ctx context.Context, deploymentID stri
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+		return nil, err
+	}
 
 	for k, v := range o.SetHeaders {
 		req.Header.Set(k, v)

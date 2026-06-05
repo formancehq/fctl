@@ -36,7 +36,9 @@ func (e *ReadDeploymentInclude) UnmarshalJSON(data []byte) error {
 type ReadDeploymentRequest struct {
 	DeploymentID string `pathParam:"style=simple,explode=false,name=deploymentId"`
 	// Comma-separated list of related resources to include.
-	// - `state`: Include the Terraform state produced by this deployment's run.
+	// - `state`: Include the live stack state reported by Formance Cloud
+	//   for this deployment's bound stack. Note: this is the **live**
+	//   projection from Membership, not a frozen per-deployment snapshot.
 	//
 	Include []ReadDeploymentInclude `queryParam:"style=form,explode=true,name=include"`
 }
@@ -61,10 +63,7 @@ type ReadDeploymentResponse struct {
 	DeploymentResponse *components.DeploymentResponse
 	// Deployment retrieved successfully
 	// The Close method must be called on this field, even if it is not used, to prevent resource leaks.
-	TwoHundredApplicationGzipResponseStream io.ReadCloser
-	// Deployment retrieved successfully
-	// The Close method must be called on this field, even if it is not used, to prevent resource leaks.
-	TwoHundredApplicationYamlResponseStream io.ReadCloser
+	ResponseStream io.ReadCloser
 	// Error
 	Error *components.Error
 }
@@ -83,18 +82,11 @@ func (r *ReadDeploymentResponse) GetDeploymentResponse() *components.DeploymentR
 	return r.DeploymentResponse
 }
 
-func (r *ReadDeploymentResponse) GetTwoHundredApplicationGzipResponseStream() io.ReadCloser {
+func (r *ReadDeploymentResponse) GetResponseStream() io.ReadCloser {
 	if r == nil {
 		return nil
 	}
-	return r.TwoHundredApplicationGzipResponseStream
-}
-
-func (r *ReadDeploymentResponse) GetTwoHundredApplicationYamlResponseStream() io.ReadCloser {
-	if r == nil {
-		return nil
-	}
-	return r.TwoHundredApplicationYamlResponseStream
+	return r.ResponseStream
 }
 
 func (r *ReadDeploymentResponse) GetError() *components.Error {

@@ -41,6 +41,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -48,7 +49,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.ListApps(ctx, nil, nil)
     if err != nil {
@@ -91,6 +94,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
@@ -99,7 +103,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.CreateApp(ctx, components.CreateAppRequest{
         Name: "<value>",
@@ -143,6 +149,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
@@ -151,7 +158,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.UpdateApp(ctx, "<id>", components.UpdateAppRequest{
         Name: "<value>",
@@ -196,6 +205,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -203,7 +213,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.ReadApp(ctx, "<id>", nil)
     if err != nil {
@@ -217,12 +229,12 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                                                                        | Type                                                                                                             | Required                                                                                                         | Description                                                                                                      |
-| ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `ctx`                                                                                                            | [context.Context](https://pkg.go.dev/context#Context)                                                            | :heavy_check_mark:                                                                                               | The context to use for the request.                                                                              |
-| `id`                                                                                                             | `string`                                                                                                         | :heavy_check_mark:                                                                                               | N/A                                                                                                              |
-| `include`                                                                                                        | [][operations.ReadAppInclude](../../models/operations/readappinclude.md)                                         | :heavy_minus_sign:                                                                                               | Comma-separated list of related resources to include.<br/>- `state`: Include the current Terraform workspace state.<br/> |
-| `opts`                                                                                                           | [][operations.Option](../../models/operations/option.md)                                                         | :heavy_minus_sign:                                                                                               | The options for this request.                                                                                    |
+| Parameter                                                                                                                                                                                                               | Type                                                                                                                                                                                                                    | Required                                                                                                                                                                                                                | Description                                                                                                                                                                                                             |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                                                                                                                                   | [context.Context](https://pkg.go.dev/context#Context)                                                                                                                                                                   | :heavy_check_mark:                                                                                                                                                                                                      | The context to use for the request.                                                                                                                                                                                     |
+| `id`                                                                                                                                                                                                                    | `string`                                                                                                                                                                                                                | :heavy_check_mark:                                                                                                                                                                                                      | N/A                                                                                                                                                                                                                     |
+| `include`                                                                                                                                                                                                               | [][operations.ReadAppInclude](../../models/operations/readappinclude.md)                                                                                                                                                | :heavy_minus_sign:                                                                                                                                                                                                      | Comma-separated list of related resources to include.<br/>- `state`: Include the live stack state reported by Formance Cloud<br/>  (a projection of the bound stack from Membership, not a snapshot<br/>  persisted by the proxy).<br/> |
+| `opts`                                                                                                                                                                                                                  | [][operations.Option](../../models/operations/option.md)                                                                                                                                                                | :heavy_minus_sign:                                                                                                                                                                                                      | The options for this request.                                                                                                                                                                                           |
 
 ### Response
 
@@ -237,10 +249,11 @@ func main() {
 ## DeleteApp
 
 Soft-deletes the app immediately and enqueues a destroy deployment to
-clean up any terraform-managed resources on Formance Cloud. The app
-becomes invisible to all subsequent reads. The destroy runs through
-the normal worker pipeline; the app row is hard-deleted by the worker
-once the destroy reaches a terminal status.
+clean up the app's resources on Formance Cloud via the openapi
+reconciler's tear-down path. The app becomes invisible to all
+subsequent reads. The destroy runs through the normal worker
+pipeline; once it reaches a successful terminal status the worker
+hard-deletes the app row.
 
 By default this returns 202 Accepted as soon as the destroy is
 enqueued (or 202 with no body if no destroy was needed). Pass
@@ -255,6 +268,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -262,7 +276,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.DeleteApp(ctx, "<id>", deployserverclient.Pointer(false))
     if err != nil {
@@ -307,6 +323,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
@@ -315,7 +332,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.AttachAppManifest(ctx, "<id>", components.AttachManifestRequest{
         ManifestID: "<id>",
@@ -361,6 +380,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -368,7 +388,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.DetachAppManifest(ctx, "<id>")
     if err != nil {
@@ -410,6 +432,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -417,7 +440,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.ReadAppVariables(ctx, "<id>", nil, nil)
     if err != nil {
@@ -461,6 +486,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
@@ -469,7 +495,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.CreateAppVariable(ctx, "<id>", components.CreateVariableRequest{
         Variable: components.VariableData{
@@ -517,6 +545,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -524,7 +553,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.DeleteAppVariable(ctx, "<id>", "<id>")
     if err != nil {
@@ -567,15 +598,17 @@ package main
 
 import(
 	"context"
-	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"os"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     example, fileErr := os.Open("example.file")
     if fileErr != nil {
@@ -623,6 +656,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/operations"
 	"log"
@@ -631,7 +665,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.CreateManifest(ctx, "<value>", operations.CreateManifestRequestBody{})
     if err != nil {
@@ -674,6 +710,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -681,7 +718,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.ListManifests(ctx, nil, nil)
     if err != nil {
@@ -724,6 +763,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -731,7 +771,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.ReadManifest(ctx, "<id>", nil)
     if err != nil {
@@ -774,6 +816,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
@@ -782,7 +825,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.UpdateManifest(ctx, "<id>", components.UpdateManifestRequest{
         Name: "<value>",
@@ -827,6 +872,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -834,7 +880,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.DeleteManifest(ctx, "<id>")
     if err != nil {
@@ -877,15 +925,17 @@ package main
 
 import(
 	"context"
-	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"os"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     example, fileErr := os.Open("example.file")
     if fileErr != nil {
@@ -933,6 +983,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/operations"
 	"log"
@@ -941,7 +992,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.PushManifestVersion(ctx, "<id>", operations.PushManifestVersionRequestBody{})
     if err != nil {
@@ -984,6 +1037,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -991,7 +1045,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.ListManifestVersions(ctx, "<id>", nil, nil)
     if err != nil {
@@ -1035,6 +1091,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -1042,7 +1099,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.ReadManifestVersion(ctx, "<id>", "<value>")
     if err != nil {
@@ -1085,6 +1144,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
@@ -1093,7 +1153,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.CreateDeployment(ctx, components.CreateDeploymentRequest{
         AppID: "<id>",
@@ -1139,6 +1201,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -1146,7 +1209,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.ListDeployments(ctx, nil, nil, nil)
     if err != nil {
@@ -1190,6 +1255,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -1197,7 +1263,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.ReadDeployment(ctx, "<id>", nil)
     if err != nil {
@@ -1211,12 +1279,12 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                                                                                        | Type                                                                                                                             | Required                                                                                                                         | Description                                                                                                                      |
-| -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `ctx`                                                                                                                            | [context.Context](https://pkg.go.dev/context#Context)                                                                            | :heavy_check_mark:                                                                                                               | The context to use for the request.                                                                                              |
-| `deploymentID`                                                                                                                   | `string`                                                                                                                         | :heavy_check_mark:                                                                                                               | N/A                                                                                                                              |
-| `include`                                                                                                                        | [][operations.ReadDeploymentInclude](../../models/operations/readdeploymentinclude.md)                                           | :heavy_minus_sign:                                                                                                               | Comma-separated list of related resources to include.<br/>- `state`: Include the Terraform state produced by this deployment's run.<br/> |
-| `opts`                                                                                                                           | [][operations.Option](../../models/operations/option.md)                                                                         | :heavy_minus_sign:                                                                                                               | The options for this request.                                                                                                    |
+| Parameter                                                                                                                                                                                                                                                     | Type                                                                                                                                                                                                                                                          | Required                                                                                                                                                                                                                                                      | Description                                                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                                                                                                                                                                         | [context.Context](https://pkg.go.dev/context#Context)                                                                                                                                                                                                         | :heavy_check_mark:                                                                                                                                                                                                                                            | The context to use for the request.                                                                                                                                                                                                                           |
+| `deploymentID`                                                                                                                                                                                                                                                | `string`                                                                                                                                                                                                                                                      | :heavy_check_mark:                                                                                                                                                                                                                                            | N/A                                                                                                                                                                                                                                                           |
+| `include`                                                                                                                                                                                                                                                     | [][operations.ReadDeploymentInclude](../../models/operations/readdeploymentinclude.md)                                                                                                                                                                        | :heavy_minus_sign:                                                                                                                                                                                                                                            | Comma-separated list of related resources to include.<br/>- `state`: Include the live stack state reported by Formance Cloud<br/>  for this deployment's bound stack. Note: this is the **live**<br/>  projection from Membership, not a frozen per-deployment snapshot.<br/> |
+| `opts`                                                                                                                                                                                                                                                        | [][operations.Option](../../models/operations/option.md)                                                                                                                                                                                                      | :heavy_minus_sign:                                                                                                                                                                                                                                            | The options for this request.                                                                                                                                                                                                                                 |
 
 ### Response
 
@@ -1240,6 +1308,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -1247,7 +1316,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.ReadDeploymentLogs(ctx, "<id>")
     if err != nil {
