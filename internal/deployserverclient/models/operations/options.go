@@ -23,7 +23,6 @@ type AcceptHeaderEnum string
 
 const (
 	AcceptHeaderEnumApplicationJson  AcceptHeaderEnum = "application/json"
-	AcceptHeaderEnumApplicationGzip  AcceptHeaderEnum = "application/gzip"
 	AcceptHeaderEnumApplicationXYaml AcceptHeaderEnum = "application/x-yaml"
 	AcceptHeaderEnumApplicationYaml  AcceptHeaderEnum = "application/yaml"
 )

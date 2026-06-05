@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: Terraform HCP Proxy API
+  title: Formance Apps API
   contact: {}
   version: 0.1.0
 servers:
@@ -10,6 +10,8 @@ servers:
     description: Staging server
   - url: http://localhost:8080
     description: Local server
+security:
+  - bearerAuth: []
 paths:
   /apps:
     get:
@@ -92,7 +94,9 @@ paths:
           required: false
           description: |
             Comma-separated list of related resources to include.
-            - `state`: Include the current Terraform workspace state.
+            - `state`: Include the live stack state reported by Formance Cloud
+              (a projection of the bound stack from Membership, not a snapshot
+              persisted by the proxy).
           schema:
             type: array
             items:
@@ -116,10 +120,11 @@ paths:
       summary: Delete an app
       description: |
         Soft-deletes the app immediately and enqueues a destroy deployment to
-        clean up any terraform-managed resources on Formance Cloud. The app
-        becomes invisible to all subsequent reads. The destroy runs through
-        the normal worker pipeline; the app row is hard-deleted by the worker
-        once the destroy reaches a terminal status.
+        clean up the app's resources on Formance Cloud via the openapi
+        reconciler's tear-down path. The app becomes invisible to all
+        subsequent reads. The destroy runs through the normal worker
+        pipeline; once it reaches a successful terminal status the worker
+        hard-deletes the app row.
 
         By default this returns 202 Accepted as soon as the destroy is
         enqueued (or 202 with no body if no destroy was needed). Pass
@@ -374,11 +379,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ManifestResponse'
-            application/gzip:
-              schema:
-                type: string
-                format: binary
-                description: Transpiled tar.gz of the latest manifest version
         default:
           description: Error
           content:
@@ -604,20 +604,20 @@ paths:
           description: |
             The desired response format.
             - `application/json`: Returns the deployment metadata in JSON format.
-            - `application/gzip`: Returns the full configuration version as a gzip archive.
             - `application/yaml`: Returns the original application manifest content.
           schema:
             type: string
             enum:
               - application/json
-              - application/gzip
               - application/yaml
         - name: include
           in: query
           required: false
           description: |
             Comma-separated list of related resources to include.
-            - `state`: Include the Terraform state produced by this deployment's run.
+            - `state`: Include the live stack state reported by Formance Cloud
+              for this deployment's bound stack. Note: this is the **live**
+              projection from Membership, not a frozen per-deployment snapshot.
           schema:
             type: array
             items:
@@ -631,11 +631,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeploymentResponse'
-            application/gzip:
-              schema:
-                type: string
-                format: binary
-                description: Configuration version archive
             application/yaml:
               schema:
                 type: string
@@ -671,6 +666,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Formance Cloud bearer token (JWT) issued by Membership. The proxy
+        validates the token and enforces scopes per operation; see the
+        per-operation `security` declarations (when present) for required
+        scopes.
   parameters:
     PageSize:
       name: pageSize
@@ -695,8 +700,6 @@ components:
       schema:
         type: string
   schemas:
-    Application:
-      $ref: '#/components/schemas/application'
     State:
       type: object
       required:
@@ -704,7 +707,10 @@ components:
       properties:
         stack:
           type: object
-          description: The stack details from the Terraform state
+          description: |
+            The live stack details reported by Formance Cloud (a projection of
+            the bound stack from Membership). Shape is a free-form object
+            mirroring the upstream stack resource.
           additionalProperties: true
     DeleteAppResponse:
       type: object
@@ -1171,450 +1177,3 @@ components:
           type: string
       required:
         - errorCode
-    V2ChartAccountMetadata:
-      properties:
-        default:
-          type:
-            - 'null'
-            - string
-      type: object
-    V2ChartAccountRules:
-      type: object
-    DotSelf:
-      type: object
-    V2ChartSegment:
-      additionalProperties: true
-      properties:
-        .metadata:
-          additionalProperties:
-            $ref: '#/components/schemas/V2ChartAccountMetadata'
-          type: object
-        .pattern:
-          type:
-            - 'null'
-            - string
-        .rules:
-          $ref: '#/components/schemas/V2ChartAccountRules'
-        .self:
-          $ref: '#/components/schemas/DotSelf'
-      type: object
-    V2QueryTemplateVar:
-      properties:
-        default: {}
-        type:
-          type: string
-      type: object
-    V2QueryTemplate:
-      properties:
-        body:
-          additionalProperties: {}
-          type: object
-        description:
-          type:
-            - 'null'
-            - string
-        params:
-          additionalProperties: {}
-          type: object
-        resource:
-          type:
-            - 'null'
-            - string
-        vars:
-          additionalProperties:
-            $ref: '#/components/schemas/V2QueryTemplateVar'
-          type: object
-      type: object
-    V2TransactionTemplate:
-      properties:
-        description:
-          type:
-            - 'null'
-            - string
-        runtime:
-          type:
-            - 'null'
-            - string
-        script:
-          type:
-            - 'null'
-            - string
-      type: object
-    V2SchemaData:
-      properties:
-        chart:
-          additionalProperties:
-            $ref: '#/components/schemas/V2ChartSegment'
-          type:
-            - object
-            - 'null'
-        queries:
-          additionalProperties:
-            $ref: '#/components/schemas/V2QueryTemplate'
-          type: object
-        transactions:
-          additionalProperties:
-            $ref: '#/components/schemas/V2TransactionTemplate'
-          type: object
-      type: object
-    Ledger:
-      required:
-        - name
-      properties:
-        name:
-          type: string
-        schema:
-          additionalProperties:
-            $ref: '#/components/schemas/V2SchemaData'
-          type:
-            - object
-            - 'null'
-      type: object
-    Pool:
-      properties:
-        accountIds:
-          items:
-            type: string
-          type: array
-        query:
-          additionalProperties: {}
-          type: object
-      type: object
-    ReconciliationLedger:
-      required:
-        - name
-        - query
-      properties:
-        name:
-          type: string
-        query:
-          additionalProperties: {}
-          type:
-            - object
-            - 'null'
-      type: object
-    ReconciliationPolicy:
-      required:
-        - name
-        - ledger
-        - pool
-      properties:
-        ledger:
-          $ref: '#/components/schemas/ReconciliationLedger'
-        name:
-          type: string
-        pool:
-          type: string
-      type: object
-    RegionSelector:
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-      type: object
-    Webhook:
-      required:
-        - name
-        - endpoint
-      properties:
-        endpoint:
-          type: string
-        events:
-          items:
-            type: string
-          type: array
-        name:
-          type: string
-        secret:
-          type: string
-      type: object
-    Ledgers:
-      items:
-        $ref: '#/components/schemas/Ledger'
-      type:
-        - 'null'
-        - array
-    Payments:
-      properties:
-        connectors:
-          items:
-            required:
-              - name
-              - provider
-            properties:
-              configuration:
-                additionalProperties: {}
-                type: object
-              credentials:
-                additionalProperties:
-                  type: string
-                type: object
-              name:
-                type: string
-              provider:
-                type: string
-            type: object
-          type: array
-        pools:
-          additionalProperties:
-            $ref: '#/components/schemas/Pool'
-          type: object
-      type: object
-    Reconciliation:
-      properties:
-        policies:
-          items:
-            $ref: '#/components/schemas/ReconciliationPolicy'
-          type: array
-      type: object
-    Stack:
-      required:
-        - name
-        - region
-      properties:
-        name:
-          type: string
-        region:
-          $ref: '#/components/schemas/RegionSelector'
-        version:
-          type: string
-      type: object
-    Webhooks:
-      items:
-        $ref: '#/components/schemas/Webhook'
-      type:
-        - 'null'
-        - array
-    application:
-      $schema: http://json-schema.org/draft-04/schema
-      required:
-        - stack
-      definitions:
-        DotSelf:
-          type: object
-        Ledger:
-          required:
-            - name
-          properties:
-            name:
-              type: string
-            schema:
-              additionalProperties:
-                $ref: '#/components/schemas/V2SchemaData'
-              type:
-                - object
-                - 'null'
-          type: object
-        Ledgers:
-          items:
-            $ref: '#/components/schemas/Ledger'
-          type:
-            - 'null'
-            - array
-        Payments:
-          properties:
-            connectors:
-              items:
-                required:
-                  - name
-                  - provider
-                properties:
-                  configuration:
-                    additionalProperties: {}
-                    type: object
-                  credentials:
-                    additionalProperties:
-                      type: string
-                    type: object
-                  name:
-                    type: string
-                  provider:
-                    type: string
-                type: object
-              type: array
-            pools:
-              additionalProperties:
-                $ref: '#/components/schemas/Pool'
-              type: object
-          type: object
-        Pool:
-          properties:
-            accountIds:
-              items:
-                type: string
-              type: array
-            query:
-              additionalProperties: {}
-              type: object
-          type: object
-        Reconciliation:
-          properties:
-            policies:
-              items:
-                $ref: '#/components/schemas/ReconciliationPolicy'
-              type: array
-          type: object
-        ReconciliationLedger:
-          required:
-            - name
-            - query
-          properties:
-            name:
-              type: string
-            query:
-              additionalProperties: {}
-              type:
-                - object
-                - 'null'
-          type: object
-        ReconciliationPolicy:
-          required:
-            - name
-            - ledger
-            - pool
-          properties:
-            ledger:
-              $ref: '#/components/schemas/ReconciliationLedger'
-            name:
-              type: string
-            pool:
-              type: string
-          type: object
-        RegionSelector:
-          properties:
-            id:
-              type: string
-            name:
-              type: string
-          type: object
-        Stack:
-          required:
-            - name
-            - region
-          properties:
-            name:
-              type: string
-            region:
-              $ref: '#/components/schemas/RegionSelector'
-            version:
-              type: string
-          type: object
-        V2ChartAccountMetadata:
-          properties:
-            default:
-              type:
-                - 'null'
-                - string
-          type: object
-        V2ChartAccountRules:
-          type: object
-        V2ChartSegment:
-          additionalProperties: true
-          properties:
-            .metadata:
-              additionalProperties:
-                $ref: '#/components/schemas/V2ChartAccountMetadata'
-              type: object
-            .pattern:
-              type:
-                - 'null'
-                - string
-            .rules:
-              $ref: '#/components/schemas/V2ChartAccountRules'
-            .self:
-              $ref: '#/components/schemas/DotSelf'
-          type: object
-        V2QueryTemplate:
-          properties:
-            body:
-              additionalProperties: {}
-              type: object
-            description:
-              type:
-                - 'null'
-                - string
-            params:
-              additionalProperties: {}
-              type: object
-            resource:
-              type:
-                - 'null'
-                - string
-            vars:
-              additionalProperties:
-                $ref: '#/components/schemas/V2QueryTemplateVar'
-              type: object
-          type: object
-        V2QueryTemplateVar:
-          properties:
-            default: {}
-            type:
-              type: string
-          type: object
-        V2SchemaData:
-          properties:
-            chart:
-              additionalProperties:
-                $ref: '#/components/schemas/V2ChartSegment'
-              type:
-                - object
-                - 'null'
-            queries:
-              additionalProperties:
-                $ref: '#/components/schemas/V2QueryTemplate'
-              type: object
-            transactions:
-              additionalProperties:
-                $ref: '#/components/schemas/V2TransactionTemplate'
-              type: object
-          type: object
-        V2TransactionTemplate:
-          properties:
-            description:
-              type:
-                - 'null'
-                - string
-            runtime:
-              type:
-                - 'null'
-                - string
-            script:
-              type:
-                - 'null'
-                - string
-          type: object
-        Webhook:
-          required:
-            - name
-            - endpoint
-          properties:
-            endpoint:
-              type: string
-            events:
-              items:
-                type: string
-              type: array
-            name:
-              type: string
-            secret:
-              type: string
-          type: object
-        Webhooks:
-          items:
-            $ref: '#/components/schemas/Webhook'
-          type:
-            - 'null'
-            - array
-      properties:
-        ledgers:
-          $ref: '#/components/schemas/Ledgers'
-        payments:
-          $ref: '#/components/schemas/Payments'
-        reconciliation:
-          $ref: '#/components/schemas/Reconciliation'
-        stack:
-          $ref: '#/components/schemas/Stack'
-        webhooks:
-          $ref: '#/components/schemas/Webhooks'
-      type: object

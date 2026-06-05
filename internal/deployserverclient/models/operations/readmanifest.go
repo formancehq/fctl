@@ -5,7 +5,6 @@ package operations
 
 import (
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
-	"io"
 )
 
 type ReadManifestRequest struct {
@@ -32,9 +31,6 @@ type ReadManifestResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
 	// Manifest retrieved successfully
 	ManifestResponse *components.ManifestResponse
-	// Manifest retrieved successfully
-	// The Close method must be called on this field, even if it is not used, to prevent resource leaks.
-	ResponseStream io.ReadCloser
 	// Error
 	Error *components.Error
 }
@@ -51,13 +47,6 @@ func (r *ReadManifestResponse) GetManifestResponse() *components.ManifestRespons
 		return nil
 	}
 	return r.ManifestResponse
-}
-
-func (r *ReadManifestResponse) GetResponseStream() io.ReadCloser {
-	if r == nil {
-		return nil
-	}
-	return r.ResponseStream
 }
 
 func (r *ReadManifestResponse) GetError() *components.Error {

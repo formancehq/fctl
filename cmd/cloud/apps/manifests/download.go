@@ -14,9 +14,10 @@ import (
 
 func NewDownload() *cobra.Command {
 	return fctl.NewCommand("download",
-		fctl.WithShortDescription("Download a manifest's transpiled tar.gz archive of its latest version"),
+		fctl.WithShortDescription("Download a manifest version's raw YAML content"),
 		fctl.WithStringFlag("id", "", "Manifest ID"),
-		fctl.WithStringFlag("out", "", "Output file path (required: gzip is binary)"),
+		fctl.WithStringFlag("version", "latest", "Version number or \"latest\""),
+		fctl.WithStringFlag("out", "", "Output file path (defaults to stdout)"),
 		fctl.WithRunE(runManifestDownload),
 	)
 }
@@ -27,10 +28,12 @@ func runManifestDownload(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("id is required")
 	}
 
-	out := fctl.GetString(cmd, "out")
-	if out == "" {
-		return fmt.Errorf("--out is required (gzip is binary and cannot be written to a TTY)")
+	version := fctl.GetString(cmd, "version")
+	if version == "" {
+		return fmt.Errorf("version is required")
 	}
+
+	out := fctl.GetString(cmd, "out")
 
 	cmd.SilenceUsage = true
 
@@ -50,20 +53,27 @@ func runManifestDownload(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	resp, err := apiClient.ReadManifest(
+	resp, err := apiClient.ReadManifestVersion(
 		cmd.Context(),
 		id,
-		nil,
-		operations.WithAcceptHeaderOverride(operations.AcceptHeaderEnumApplicationGzip),
+		version,
+		operations.WithAcceptHeaderOverride(operations.AcceptHeaderEnumApplicationXYaml),
 	)
 	if err != nil {
 		return err
 	}
 
 	if resp.ResponseStream == nil {
-		return fmt.Errorf("server returned no gzip payload for manifest %s", id)
+		return fmt.Errorf("server returned no YAML payload for manifest %s version %s", id, version)
 	}
 	defer resp.ResponseStream.Close()
+
+	if out == "" {
+		if _, err := io.Copy(cmd.OutOrStdout(), resp.ResponseStream); err != nil {
+			return fmt.Errorf("write manifest payload: %w", err)
+		}
+		return nil
+	}
 
 	f, err := os.Create(out) // #nosec G304 -- user-specified output path on a CLI flag
 	if err != nil {
@@ -72,7 +82,7 @@ func runManifestDownload(cmd *cobra.Command, _ []string) error {
 	defer func() { _ = f.Close() }()
 
 	if _, err := io.Copy(f, resp.ResponseStream); err != nil {
-		return fmt.Errorf("write manifest archive: %w", err)
+		return fmt.Errorf("write manifest payload: %w", err)
 	}
 	return f.Close()
 }

@@ -35,7 +35,9 @@ func (e *ReadAppInclude) UnmarshalJSON(data []byte) error {
 type ReadAppRequest struct {
 	ID string `pathParam:"style=simple,explode=false,name=id"`
 	// Comma-separated list of related resources to include.
-	// - `state`: Include the current Terraform workspace state.
+	// - `state`: Include the live stack state reported by Formance Cloud
+	//   (a projection of the bound stack from Membership, not a snapshot
+	//   persisted by the proxy).
 	//
 	Include []ReadAppInclude `queryParam:"style=form,explode=true,name=include"`
 }

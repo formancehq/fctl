@@ -26,6 +26,7 @@ Developer-friendly & type-safe Go SDK specifically catered to leverage *github.c
 * [github.com/formancehq/fctl/internal/deployserverclient](#githubcomformancehqfctlinternaldeployserverclient)
   * [SDK Installation](#sdk-installation)
   * [SDK Example Usage](#sdk-example-usage)
+  * [Authentication](#authentication)
   * [Available Resources and Operations](#available-resources-and-operations)
   * [Retries](#retries)
   * [Error Handling](#error-handling)
@@ -58,12 +59,15 @@ import (
 	"context"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
+	"os"
 )
 
 func main() {
 	ctx := context.Background()
 
-	s := deployserverclient.New()
+	s := deployserverclient.New(
+		deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+	)
 
 	res, err := s.ListApps(ctx, nil, nil)
 	if err != nil {
@@ -76,6 +80,47 @@ func main() {
 
 ```
 <!-- End SDK Example Usage [usage] -->
+
+<!-- Start Authentication [security] -->
+## Authentication
+
+### Per-Client Security Schemes
+
+This SDK supports the following security scheme globally:
+
+| Name         | Type | Scheme      | Environment Variable       |
+| ------------ | ---- | ----------- | -------------------------- |
+| `BearerAuth` | http | HTTP Bearer | `DEPLOYSERVER_BEARER_AUTH` |
+
+You can configure it using the `WithSecurity` option when initializing the SDK client instance. For example:
+```go
+package main
+
+import (
+	"context"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"log"
+	"os"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := deployserverclient.New(
+		deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+	)
+
+	res, err := s.ListApps(ctx, nil, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if res.ListAppsResponse != nil {
+		// handle response
+	}
+}
+
+```
+<!-- End Authentication [security] -->
 
 <!-- Start Available Resources and Operations [operations] -->
 ## Available Resources and Operations
@@ -128,12 +173,15 @@ import (
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/retry"
 	"log"
 	"models/operations"
+	"os"
 )
 
 func main() {
 	ctx := context.Background()
 
-	s := deployserverclient.New()
+	s := deployserverclient.New(
+		deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+	)
 
 	res, err := s.ListApps(ctx, nil, nil, operations.WithRetries(
 		retry.Config{
@@ -165,6 +213,7 @@ import (
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/retry"
 	"log"
+	"os"
 )
 
 func main() {
@@ -182,6 +231,7 @@ func main() {
 				},
 				RetryConnectionErrors: false,
 			}),
+		deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
 	)
 
 	res, err := s.ListApps(ctx, nil, nil)
@@ -222,12 +272,15 @@ import (
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/apierrors"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
+	"os"
 )
 
 func main() {
 	ctx := context.Background()
 
-	s := deployserverclient.New()
+	s := deployserverclient.New(
+		deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+	)
 
 	res, err := s.AttachAppManifest(ctx, "<id>", components.AttachManifestRequest{
 		ManifestID: "<id>",
@@ -273,6 +326,7 @@ import (
 	"context"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
+	"os"
 )
 
 func main() {
@@ -280,6 +334,7 @@ func main() {
 
 	s := deployserverclient.New(
 		deployserverclient.WithServerIndex(0),
+		deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
 	)
 
 	res, err := s.ListApps(ctx, nil, nil)
@@ -303,6 +358,7 @@ import (
 	"context"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
+	"os"
 )
 
 func main() {
@@ -310,6 +366,7 @@ func main() {
 
 	s := deployserverclient.New(
 		deployserverclient.WithServerURL("http://localhost:8080"),
+		deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
 	)
 
 	res, err := s.ListApps(ctx, nil, nil)

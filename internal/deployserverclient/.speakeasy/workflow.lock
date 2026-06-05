@@ -13,8 +13,6 @@ targets:
         sourceNamespace: terraform-hcp-proxy-api
         sourceRevisionDigest: sha256:d54ede8b0d8f74daea2fc161cf13846dd4a7084f96941f68356d8307bfa92186
         sourceBlobDigest: sha256:8564cde40781c471d4f17f1781a0c92fcf0ddc26ca20fbb3a2cc2a39d0c22f70
-        codeSamplesNamespace: terraform-hcp-proxy-api-go-code-samples
-        codeSamplesRevisionDigest: sha256:2008838684af30cac9f85a2e65e7a8ae14b310789d819f87e6d9c8e2988a40d2
 workflow:
     workflowVersion: 1.0.0
     speakeasyVersion: 1.759.2

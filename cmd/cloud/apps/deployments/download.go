@@ -14,10 +14,9 @@ import (
 
 func NewDownload() *cobra.Command {
 	return fctl.NewCommand("download",
-		fctl.WithShortDescription("Download a deployment's resolved manifest (yaml) or full configuration archive (gzip)"),
+		fctl.WithShortDescription("Download a deployment's resolved manifest as YAML"),
 		fctl.WithStringFlag("id", "", "Deployment ID"),
-		fctl.WithStringFlag("format", "yaml", "Response format: yaml | gzip"),
-		fctl.WithStringFlag("out", "", "Output file path (required for gzip; defaults to stdout for yaml)"),
+		fctl.WithStringFlag("out", "", "Output file path (defaults to stdout)"),
 		fctl.WithRunE(runDeploymentDownload),
 	)
 }
@@ -28,21 +27,7 @@ func runDeploymentDownload(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("id is required")
 	}
 
-	format := fctl.GetString(cmd, "format")
 	out := fctl.GetString(cmd, "out")
-
-	var accept operations.AcceptHeaderEnum
-	switch format {
-	case "yaml":
-		accept = operations.AcceptHeaderEnumApplicationYaml
-	case "gzip":
-		accept = operations.AcceptHeaderEnumApplicationGzip
-		if out == "" {
-			return fmt.Errorf("--out is required when --format=gzip (binary content cannot be written to a TTY)")
-		}
-	default:
-		return fmt.Errorf("invalid --format %q (expected: yaml | gzip)", format)
-	}
 
 	cmd.SilenceUsage = true
 
@@ -66,26 +51,19 @@ func runDeploymentDownload(cmd *cobra.Command, _ []string) error {
 		cmd.Context(),
 		id,
 		nil,
-		operations.WithAcceptHeaderOverride(accept),
+		operations.WithAcceptHeaderOverride(operations.AcceptHeaderEnumApplicationYaml),
 	)
 	if err != nil {
 		return err
 	}
 
-	var stream io.ReadCloser
-	switch accept {
-	case operations.AcceptHeaderEnumApplicationYaml:
-		stream = resp.TwoHundredApplicationYamlResponseStream
-	case operations.AcceptHeaderEnumApplicationGzip:
-		stream = resp.TwoHundredApplicationGzipResponseStream
+	if resp.ResponseStream == nil {
+		return fmt.Errorf("server returned no YAML payload for deployment %s", id)
 	}
-	if stream == nil {
-		return fmt.Errorf("server returned no %s payload for deployment %s", accept, id)
-	}
-	defer stream.Close()
+	defer resp.ResponseStream.Close()
 
 	if out == "" {
-		if _, err := io.Copy(cmd.OutOrStdout(), stream); err != nil {
+		if _, err := io.Copy(cmd.OutOrStdout(), resp.ResponseStream); err != nil {
 			return fmt.Errorf("write deployment payload: %w", err)
 		}
 		return nil
@@ -97,7 +75,7 @@ func runDeploymentDownload(cmd *cobra.Command, _ []string) error {
 	}
 	defer func() { _ = f.Close() }()
 
-	if _, err := io.Copy(f, stream); err != nil {
+	if _, err := io.Copy(f, resp.ResponseStream); err != nil {
 		return fmt.Errorf("write deployment payload: %w", err)
 	}
 	return f.Close()
