@@ -6,14 +6,17 @@ import (
 	"context"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
+	"os"
 )
 
 func main() {
 	ctx := context.Background()
 
-	s := deployserverclient.New()
+	s := deployserverclient.New(
+		deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+	)
 
-	res, err := s.ListApps(ctx, "<id>", nil, nil)
+	res, err := s.ListApps(ctx, nil, nil)
 	if err != nil {
 		log.Fatal(err)
 	}

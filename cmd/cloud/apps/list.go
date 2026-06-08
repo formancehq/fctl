@@ -11,7 +11,7 @@ import (
 )
 
 type List struct {
-	components.ListAppsResponseData
+	components.ListAppsResponseCursor
 }
 
 type ListCtrl struct {
@@ -22,7 +22,7 @@ var _ fctl.Controller[*List] = (*ListCtrl)(nil)
 
 func newDefaultStore() *List {
 	return &List{
-		ListAppsResponseData: components.ListAppsResponseData{},
+		ListAppsResponseCursor: components.ListAppsResponseCursor{},
 	}
 }
 
@@ -35,8 +35,8 @@ func NewListCtrl() *ListCtrl {
 func NewList() *cobra.Command {
 	return fctl.NewCommand("list",
 		fctl.WithAliases("ls"),
-		fctl.WithIntFlag("page", 1, "Page number"),
 		fctl.WithIntFlag("page-size", 100, "Page size"),
+		fctl.WithStringFlag("cursor", "", "Opaque cursor token for the next page"),
 		fctl.WithShortDescription("List apps"),
 		fctl.WithController(NewListCtrl()),
 	)
@@ -53,10 +53,7 @@ func (c *ListCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) 
 		return nil, err
 	}
 
-	pageSize := fctl.GetInt(cmd, "page-size")
-	page := fctl.GetInt(cmd, "page")
-
-	organizationID, apiClient, err := fctl.NewAppDeployClientFromFlags(
+	_, apiClient, err := fctl.NewAppDeployClientFromFlags(
 		cmd,
 		relyingParty,
 		fctl.NewPTermDialog(),
@@ -66,41 +63,40 @@ func (c *ListCtrl) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) 
 	if err != nil {
 		return nil, err
 	}
+
+	var cursor *string
+	if v := fctl.GetString(cmd, "cursor"); v != "" {
+		cursor = &v
+	}
+
 	apps, err := apiClient.ListApps(
 		cmd.Context(),
-		organizationID,
-		pointer.For(int64(page)),
-		pointer.For(int64(pageSize)),
+		pointer.For(int64(fctl.GetInt(cmd, "page-size"))),
+		cursor,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.ListAppsResponseData = apps.ListAppsResponse.Data
+	c.store.ListAppsResponseCursor = apps.ListAppsResponse.Cursor
 
 	return c, nil
 }
 
 func (c *ListCtrl) Render(cmd *cobra.Command, _ []string) error {
 	data := [][]string{
-		{"Name", "ID", "Run Status", "Has Configuration Version"},
+		{"Name", "ID", "Stack ID"},
 	}
 
-	for _, w := range c.store.Items {
+	for _, w := range c.store.Data {
 		data = append(data, []string{
 			w.Name,
 			w.ID,
 			func() string {
-				if w.CurrentRun == nil {
-					return "N/A"
+				if w.StackID != nil {
+					return *w.StackID
 				}
-				return w.CurrentRun.Status
-			}(),
-			func() string {
-				if w.CurrentConfigurationVersion != nil {
-					return "Yes"
-				}
-				return "No"
+				return "N/A"
 			}(),
 		})
 	}

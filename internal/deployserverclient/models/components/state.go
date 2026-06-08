@@ -4,7 +4,10 @@
 package components
 
 type State struct {
-	// The stack details from the Terraform state
+	// The live stack details reported by Formance Cloud (a projection of
+	// the bound stack from Membership). Shape is a free-form object
+	// mirroring the upstream stack resource.
+	//
 	Stack map[string]any `json:"stack"`
 }
 

@@ -9,20 +9,25 @@
 * [UpdateApp](#updateapp) - Update an app
 * [ReadApp](#readapp) - read app details
 * [DeleteApp](#deleteapp) - Delete an app
-* [ReadAppCurrentStateVersion](#readappcurrentstateversion) - Get the current state version of an app
+* [AttachAppManifest](#attachappmanifest) - Bind an app to a manifest
+* [DetachAppManifest](#detachappmanifest) - Unbind an app from its manifest
 * [ReadAppVariables](#readappvariables) - Get all variables of an app
 * [CreateAppVariable](#createappvariable) - Create variable for an app
 * [DeleteAppVariable](#deleteappvariable) - Delete a variable from an app
-* [ReadAppRuns](#readappruns) - Get runs of an app
-* [ReadAppVersions](#readappversions) - Get versions of an app
-* [DeployAppConfigurationRaw](#deployappconfigurationraw) - Deploy a new configuration for an app
-* [DeployAppConfiguration](#deployappconfiguration) - Deploy a new configuration for an app
-* [ReadCurrentRun](#readcurrentrun) - Get the current run of an app
-* [ReadVersion](#readversion) - Get a specific version
-* [ReadRun](#readrun) - Get the run of a version
-* [ReadRunLogs](#readrunlogs) - Get logs of a run by its ID
-* [ReadCurrentRunLogs](#readcurrentrunlogs) - Get logs of the current run of an app
-* [ReadCurrentAppVersion](#readcurrentappversion) - Get the current version of an app
+* [CreateManifestRaw](#createmanifestraw) - Create a new manifest
+* [CreateManifest](#createmanifest) - Create a new manifest
+* [ListManifests](#listmanifests) - List manifests in the organization
+* [ReadManifest](#readmanifest) - Read a manifest
+* [UpdateManifest](#updatemanifest) - Update manifest metadata
+* [DeleteManifest](#deletemanifest) - Delete a manifest and all its versions
+* [PushManifestVersionRaw](#pushmanifestversionraw) - Push a new version of a manifest
+* [PushManifestVersion](#pushmanifestversion) - Push a new version of a manifest
+* [ListManifestVersions](#listmanifestversions) - List versions of a manifest
+* [ReadManifestVersion](#readmanifestversion) - Get a specific manifest version with content
+* [CreateDeployment](#createdeployment) - Create a deployment (triggers a run)
+* [ListDeployments](#listdeployments) - List deployments
+* [ReadDeployment](#readdeployment) - Get a single deployment
+* [ReadDeploymentLogs](#readdeploymentlogs) - Get run logs for a deployment
 
 ## ListApps
 
@@ -36,6 +41,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -43,9 +49,11 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
-    res, err := s.ListApps(ctx, "<id>", nil, nil)
+    res, err := s.ListApps(ctx, nil, nil)
     if err != nil {
         log.Fatal(err)
     }
@@ -57,13 +65,12 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
-| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
-| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `organizationID`                                         | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `pageNumber`                                             | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
-| `pageSize`                                               | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
-| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+| Parameter                                                                                                                                                                                                   | Type                                                                                                                                                                                                        | Required                                                                                                                                                                                                    | Description                                                                                                                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                                                                                                                       | [context.Context](https://pkg.go.dev/context#Context)                                                                                                                                                       | :heavy_check_mark:                                                                                                                                                                                          | The context to use for the request.                                                                                                                                                                         |
+| `pageSize`                                                                                                                                                                                                  | `*int64`                                                                                                                                                                                                    | :heavy_minus_sign:                                                                                                                                                                                          | Maximum number of items to return on the first page. Capped at 100;<br/>ignored when `cursor` is supplied (subsequent pages reuse the page<br/>size baked into the cursor token). Defaults to 100.<br/>     |
+| `cursor`                                                                                                                                                                                                    | `*string`                                                                                                                                                                                                   | :heavy_minus_sign:                                                                                                                                                                                          | Opaque pagination token returned in `cursor.next` / `cursor.previous`<br/>on the previous page. Pass it back unchanged to fetch the adjacent<br/>page. Mutually exclusive with `pageSize` after the first request.<br/> |
+| `opts`                                                                                                                                                                                                      | [][operations.Option](../../models/operations/option.md)                                                                                                                                                    | :heavy_minus_sign:                                                                                                                                                                                          | The options for this request.                                                                                                                                                                               |
 
 ### Response
 
@@ -87,6 +94,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
@@ -95,10 +103,12 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.CreateApp(ctx, components.CreateAppRequest{
-        OrganizationID: "<id>",
+        Name: "<value>",
     })
     if err != nil {
         log.Fatal(err)
@@ -139,6 +149,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
@@ -147,9 +158,13 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
-    res, err := s.UpdateApp(ctx, "<id>", components.UpdateAppRequest{})
+    res, err := s.UpdateApp(ctx, "<id>", components.UpdateAppRequest{
+        Name: "<value>",
+    })
     if err != nil {
         log.Fatal(err)
     }
@@ -190,6 +205,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -197,9 +213,11 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
-    res, err := s.ReadApp(ctx, "<id>")
+    res, err := s.ReadApp(ctx, "<id>", nil)
     if err != nil {
         log.Fatal(err)
     }
@@ -211,11 +229,12 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
-| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
-| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+| Parameter                                                                                                                                                                                                               | Type                                                                                                                                                                                                                    | Required                                                                                                                                                                                                                | Description                                                                                                                                                                                                             |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                                                                                                                                   | [context.Context](https://pkg.go.dev/context#Context)                                                                                                                                                                   | :heavy_check_mark:                                                                                                                                                                                                      | The context to use for the request.                                                                                                                                                                                     |
+| `id`                                                                                                                                                                                                                    | `string`                                                                                                                                                                                                                | :heavy_check_mark:                                                                                                                                                                                                      | N/A                                                                                                                                                                                                                     |
+| `include`                                                                                                                                                                                                               | [][operations.ReadAppInclude](../../models/operations/readappinclude.md)                                                                                                                                                | :heavy_minus_sign:                                                                                                                                                                                                      | Comma-separated list of related resources to include.<br/>- `state`: Include the live stack state reported by Formance Cloud<br/>  (a projection of the bound stack from Membership, not a snapshot<br/>  persisted by the proxy).<br/> |
+| `opts`                                                                                                                                                                                                                  | [][operations.Option](../../models/operations/option.md)                                                                                                                                                                | :heavy_minus_sign:                                                                                                                                                                                                      | The options for this request.                                                                                                                                                                                           |
 
 ### Response
 
@@ -229,7 +248,17 @@ func main() {
 
 ## DeleteApp
 
-Delete an app
+Soft-deletes the app immediately and enqueues a destroy deployment to
+clean up the app's resources on Formance Cloud via the openapi
+reconciler's tear-down path. The app becomes invisible to all
+subsequent reads. The destroy runs through the normal worker
+pipeline; once it reaches a successful terminal status the worker
+hard-deletes the app row.
+
+By default this returns 202 Accepted as soon as the destroy is
+enqueued (or 202 with no body if no destroy was needed). Pass
+`?wait=true` to block until the destroy reaches a terminal status.
+
 
 ### Example Usage
 
@@ -239,6 +268,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -246,9 +276,123 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
-    res, err := s.DeleteApp(ctx, "<id>")
+    res, err := s.DeleteApp(ctx, "<id>", deployserverclient.Pointer(false))
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.DeleteAppResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                                                                     | Type                                                                                                                          | Required                                                                                                                      | Description                                                                                                                   |
+| ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                                         | [context.Context](https://pkg.go.dev/context#Context)                                                                         | :heavy_check_mark:                                                                                                            | The context to use for the request.                                                                                           |
+| `id`                                                                                                                          | `string`                                                                                                                      | :heavy_check_mark:                                                                                                            | N/A                                                                                                                           |
+| `wait`                                                                                                                        | `*bool`                                                                                                                       | :heavy_minus_sign:                                                                                                            | When `true`, the call blocks until the destroy deployment reaches a<br/>terminal status. Default `false` (returns 202 Accepted).<br/> |
+| `opts`                                                                                                                        | [][operations.Option](../../models/operations/option.md)                                                                      | :heavy_minus_sign:                                                                                                            | The options for this request.                                                                                                 |
+
+### Response
+
+**[*operations.DeleteAppResponse](../../models/operations/deleteappresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## AttachAppManifest
+
+Updates the app's `manifest_id` pointer. Idempotent — re-binding to the
+same id is a no-op; rebinding to a different id moves the pointer.
+
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="attachAppManifest" method="put" path="/apps/{id}/manifest" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
+
+    res, err := s.AttachAppManifest(ctx, "<id>", components.AttachManifestRequest{
+        ManifestID: "<id>",
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.Error != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                            | Type                                                                                 | Required                                                                             | Description                                                                          |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `ctx`                                                                                | [context.Context](https://pkg.go.dev/context#Context)                                | :heavy_check_mark:                                                                   | The context to use for the request.                                                  |
+| `id`                                                                                 | `string`                                                                             | :heavy_check_mark:                                                                   | N/A                                                                                  |
+| `attachManifestRequest`                                                              | [components.AttachManifestRequest](../../models/components/attachmanifestrequest.md) | :heavy_check_mark:                                                                   | N/A                                                                                  |
+| `opts`                                                                               | [][operations.Option](../../models/operations/option.md)                             | :heavy_minus_sign:                                                                   | The options for this request.                                                        |
+
+### Response
+
+**[*operations.AttachAppManifestResponse](../../models/operations/attachappmanifestresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.Error    | 400, 404           | application/json   |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## DetachAppManifest
+
+Clears the app's `manifest_id` pointer. Idempotent.
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="detachAppManifest" method="delete" path="/apps/{id}/manifest" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
+
+    res, err := s.DetachAppManifest(ctx, "<id>")
     if err != nil {
         log.Fatal(err)
     }
@@ -268,56 +412,7 @@ func main() {
 
 ### Response
 
-**[*operations.DeleteAppResponse](../../models/operations/deleteappresponse.md), error**
-
-### Errors
-
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
-
-## ReadAppCurrentStateVersion
-
-Get the current state version of an app
-
-### Example Usage
-
-<!-- UsageSnippet language="go" operationID="readAppCurrentStateVersion" method="get" path="/apps/{id}/current-state-version" -->
-```go
-package main
-
-import(
-	"context"
-	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
-	"log"
-)
-
-func main() {
-    ctx := context.Background()
-
-    s := deployserverclient.New()
-
-    res, err := s.ReadAppCurrentStateVersion(ctx, "<id>")
-    if err != nil {
-        log.Fatal(err)
-    }
-    if res.ReadStateResponse != nil {
-        // handle response
-    }
-}
-```
-
-### Parameters
-
-| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
-| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
-| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
-
-### Response
-
-**[*operations.ReadAppCurrentStateVersionResponse](../../models/operations/readappcurrentstateversionresponse.md), error**
+**[*operations.DetachAppManifestResponse](../../models/operations/detachappmanifestresponse.md), error**
 
 ### Errors
 
@@ -337,6 +432,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -344,7 +440,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.ReadAppVariables(ctx, "<id>", nil, nil)
     if err != nil {
@@ -358,13 +456,13 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
-| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
-| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `pageNumber`                                             | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
-| `pageSize`                                               | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
-| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+| Parameter                                                                                                                                                                                                   | Type                                                                                                                                                                                                        | Required                                                                                                                                                                                                    | Description                                                                                                                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                                                                                                                       | [context.Context](https://pkg.go.dev/context#Context)                                                                                                                                                       | :heavy_check_mark:                                                                                                                                                                                          | The context to use for the request.                                                                                                                                                                         |
+| `id`                                                                                                                                                                                                        | `string`                                                                                                                                                                                                    | :heavy_check_mark:                                                                                                                                                                                          | N/A                                                                                                                                                                                                         |
+| `pageSize`                                                                                                                                                                                                  | `*int64`                                                                                                                                                                                                    | :heavy_minus_sign:                                                                                                                                                                                          | Maximum number of items to return on the first page. Capped at 100;<br/>ignored when `cursor` is supplied (subsequent pages reuse the page<br/>size baked into the cursor token). Defaults to 100.<br/>     |
+| `cursor`                                                                                                                                                                                                    | `*string`                                                                                                                                                                                                   | :heavy_minus_sign:                                                                                                                                                                                          | Opaque pagination token returned in `cursor.next` / `cursor.previous`<br/>on the previous page. Pass it back unchanged to fetch the adjacent<br/>page. Mutually exclusive with `pageSize` after the first request.<br/> |
+| `opts`                                                                                                                                                                                                      | [][operations.Option](../../models/operations/option.md)                                                                                                                                                    | :heavy_minus_sign:                                                                                                                                                                                          | The options for this request.                                                                                                                                                                               |
 
 ### Response
 
@@ -388,6 +486,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
@@ -396,13 +495,14 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.CreateAppVariable(ctx, "<id>", components.CreateVariableRequest{
         Variable: components.VariableData{
             Key: "<key>",
             Value: "<value>",
-            Sensitive: false,
         },
     })
     if err != nil {
@@ -445,6 +545,7 @@ package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -452,7 +553,9 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     res, err := s.DeleteAppVariable(ctx, "<id>", "<id>")
     if err != nil {
@@ -483,140 +586,40 @@ func main() {
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
-## ReadAppRuns
+## CreateManifestRaw
 
-Get runs of an app
+Create a new manifest
 
 ### Example Usage
 
-<!-- UsageSnippet language="go" operationID="readAppRuns" method="get" path="/apps/{id}/runs" -->
+<!-- UsageSnippet language="go" operationID="createManifest_raw" method="post" path="/manifests" -->
 ```go
 package main
 
 import(
 	"context"
-	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
-	"log"
-)
-
-func main() {
-    ctx := context.Background()
-
-    s := deployserverclient.New()
-
-    res, err := s.ReadAppRuns(ctx, "<id>", nil, nil)
-    if err != nil {
-        log.Fatal(err)
-    }
-    if res.ListRunsResponse != nil {
-        // handle response
-    }
-}
-```
-
-### Parameters
-
-| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
-| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
-| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `pageNumber`                                             | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
-| `pageSize`                                               | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
-| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
-
-### Response
-
-**[*operations.ReadAppRunsResponse](../../models/operations/readapprunsresponse.md), error**
-
-### Errors
-
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
-
-## ReadAppVersions
-
-Get versions of an app
-
-### Example Usage
-
-<!-- UsageSnippet language="go" operationID="readAppVersions" method="get" path="/apps/{id}/versions" -->
-```go
-package main
-
-import(
-	"context"
-	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
-	"log"
-)
-
-func main() {
-    ctx := context.Background()
-
-    s := deployserverclient.New()
-
-    res, err := s.ReadAppVersions(ctx, "<id>", nil, nil)
-    if err != nil {
-        log.Fatal(err)
-    }
-    if res.ListVersionsResponse != nil {
-        // handle response
-    }
-}
-```
-
-### Parameters
-
-| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
-| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
-| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `pageNumber`                                             | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
-| `pageSize`                                               | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
-| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
-
-### Response
-
-**[*operations.ReadAppVersionsResponse](../../models/operations/readappversionsresponse.md), error**
-
-### Errors
-
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
-
-## DeployAppConfigurationRaw
-
-Deploy a new configuration for an app
-
-### Example Usage
-
-<!-- UsageSnippet language="go" operationID="deployAppConfiguration_raw" method="post" path="/apps/{id}/deploy" -->
-```go
-package main
-
-import(
-	"context"
-	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"os"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
 
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
     example, fileErr := os.Open("example.file")
     if fileErr != nil {
         panic(fileErr)
     }
 
-    res, err := s.DeployAppConfigurationRaw(ctx, "<id>", example)
+    res, err := s.CreateManifestRaw(ctx, "<value>", example)
     if err != nil {
         log.Fatal(err)
     }
-    if res.RunResponse != nil {
+    if res.CreateManifestResponse != nil {
         // handle response
     }
 }
@@ -627,13 +630,13 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `name`                                                   | `string`                                                 | :heavy_check_mark:                                       | Name for the manifest                                    |
 | `requestBody`                                            | `any`                                                    | :heavy_check_mark:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
 
-**[*operations.DeployAppConfigurationRawResponse](../../models/operations/deployappconfigurationrawresponse.md), error**
+**[*operations.CreateManifestRawResponse](../../models/operations/createmanifestrawresponse.md), error**
 
 ### Errors
 
@@ -641,18 +644,179 @@ func main() {
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
-## DeployAppConfiguration
+## CreateManifest
 
-Deploy a new configuration for an app
+Create a new manifest
 
 ### Example Usage
 
-<!-- UsageSnippet language="go" operationID="deployAppConfiguration" method="post" path="/apps/{id}/deploy" -->
+<!-- UsageSnippet language="go" operationID="createManifest" method="post" path="/manifests" -->
 ```go
 package main
 
 import(
 	"context"
+	"os"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/operations"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
+
+    res, err := s.CreateManifest(ctx, "<value>", operations.CreateManifestRequestBody{})
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.CreateManifestResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                                    | Type                                                                                         | Required                                                                                     | Description                                                                                  |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                        | [context.Context](https://pkg.go.dev/context#Context)                                        | :heavy_check_mark:                                                                           | The context to use for the request.                                                          |
+| `name`                                                                                       | `string`                                                                                     | :heavy_check_mark:                                                                           | Name for the manifest                                                                        |
+| `requestBody`                                                                                | [operations.CreateManifestRequestBody](../../models/operations/createmanifestrequestbody.md) | :heavy_check_mark:                                                                           | N/A                                                                                          |
+| `opts`                                                                                       | [][operations.Option](../../models/operations/option.md)                                     | :heavy_minus_sign:                                                                           | The options for this request.                                                                |
+
+### Response
+
+**[*operations.CreateManifestResponse](../../models/operations/createmanifestresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## ListManifests
+
+List manifests in the organization
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="listManifests" method="get" path="/manifests" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
+
+    res, err := s.ListManifests(ctx, nil, nil)
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.ListManifestsResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                                                                                                                                                   | Type                                                                                                                                                                                                        | Required                                                                                                                                                                                                    | Description                                                                                                                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                                                                                                                       | [context.Context](https://pkg.go.dev/context#Context)                                                                                                                                                       | :heavy_check_mark:                                                                                                                                                                                          | The context to use for the request.                                                                                                                                                                         |
+| `pageSize`                                                                                                                                                                                                  | `*int64`                                                                                                                                                                                                    | :heavy_minus_sign:                                                                                                                                                                                          | Maximum number of items to return on the first page. Capped at 100;<br/>ignored when `cursor` is supplied (subsequent pages reuse the page<br/>size baked into the cursor token). Defaults to 100.<br/>     |
+| `cursor`                                                                                                                                                                                                    | `*string`                                                                                                                                                                                                   | :heavy_minus_sign:                                                                                                                                                                                          | Opaque pagination token returned in `cursor.next` / `cursor.previous`<br/>on the previous page. Pass it back unchanged to fetch the adjacent<br/>page. Mutually exclusive with `pageSize` after the first request.<br/> |
+| `opts`                                                                                                                                                                                                      | [][operations.Option](../../models/operations/option.md)                                                                                                                                                    | :heavy_minus_sign:                                                                                                                                                                                          | The options for this request.                                                                                                                                                                               |
+
+### Response
+
+**[*operations.ListManifestsResponse](../../models/operations/listmanifestsresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## ReadManifest
+
+Read a manifest
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="readManifest" method="get" path="/manifests/{manifestId}" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
+
+    res, err := s.ReadManifest(ctx, "<id>", nil)
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.ManifestResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                | Type                                                                     | Required                                                                 | Description                                                              |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------ | ------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| `ctx`                                                                    | [context.Context](https://pkg.go.dev/context#Context)                    | :heavy_check_mark:                                                       | The context to use for the request.                                      |
+| `manifestID`                                                             | `string`                                                                 | :heavy_check_mark:                                                       | N/A                                                                      |
+| `include`                                                                | `*string`                                                                | :heavy_minus_sign:                                                       | Comma-separated includes (e.g. "latest" to embed latest version content) |
+| `opts`                                                                   | [][operations.Option](../../models/operations/option.md)                 | :heavy_minus_sign:                                                       | The options for this request.                                            |
+
+### Response
+
+**[*operations.ReadManifestResponse](../../models/operations/readmanifestresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## UpdateManifest
+
+Update manifest metadata
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="updateManifest" method="patch" path="/manifests/{manifestId}" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
@@ -661,18 +825,17 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
-    res, err := s.DeployAppConfiguration(ctx, "<id>", components.Application{
-        Stack: components.Stack{
-            Name: "<value>",
-            Region: components.RegionSelector{},
-        },
+    res, err := s.UpdateManifest(ctx, "<id>", components.UpdateManifestRequest{
+        Name: "<value>",
     })
     if err != nil {
         log.Fatal(err)
     }
-    if res.RunResponse != nil {
+    if res.ManifestResponse != nil {
         // handle response
     }
 }
@@ -680,16 +843,16 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                        | Type                                                             | Required                                                         | Description                                                      |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `ctx`                                                            | [context.Context](https://pkg.go.dev/context#Context)            | :heavy_check_mark:                                               | The context to use for the request.                              |
-| `id`                                                             | `string`                                                         | :heavy_check_mark:                                               | N/A                                                              |
-| `application`                                                    | [components.Application](../../models/components/application.md) | :heavy_check_mark:                                               | N/A                                                              |
-| `opts`                                                           | [][operations.Option](../../models/operations/option.md)         | :heavy_minus_sign:                                               | The options for this request.                                    |
+| Parameter                                                                            | Type                                                                                 | Required                                                                             | Description                                                                          |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `ctx`                                                                                | [context.Context](https://pkg.go.dev/context#Context)                                | :heavy_check_mark:                                                                   | The context to use for the request.                                                  |
+| `manifestID`                                                                         | `string`                                                                             | :heavy_check_mark:                                                                   | N/A                                                                                  |
+| `updateManifestRequest`                                                              | [components.UpdateManifestRequest](../../models/components/updatemanifestrequest.md) | :heavy_check_mark:                                                                   | N/A                                                                                  |
+| `opts`                                                                               | [][operations.Option](../../models/operations/option.md)                             | :heavy_minus_sign:                                                                   | The options for this request.                                                        |
 
 ### Response
 
-**[*operations.DeployAppConfigurationResponse](../../models/operations/deployappconfigurationresponse.md), error**
+**[*operations.UpdateManifestResponse](../../models/operations/updatemanifestresponse.md), error**
 
 ### Errors
 
@@ -697,18 +860,19 @@ func main() {
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
-## ReadCurrentRun
+## DeleteManifest
 
-Get the current run of an app
+Delete a manifest and all its versions
 
 ### Example Usage
 
-<!-- UsageSnippet language="go" operationID="readCurrentRun" method="get" path="/apps/{id}/run" -->
+<!-- UsageSnippet language="go" operationID="deleteManifest" method="delete" path="/manifests/{manifestId}" -->
 ```go
 package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -716,13 +880,15 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
-    res, err := s.ReadCurrentRun(ctx, "<id>")
+    res, err := s.DeleteManifest(ctx, "<id>")
     if err != nil {
         log.Fatal(err)
     }
-    if res.RunResponse != nil {
+    if res.Error != nil {
         // handle response
     }
 }
@@ -733,31 +899,33 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `manifestID`                                             | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
 
-**[*operations.ReadCurrentRunResponse](../../models/operations/readcurrentrunresponse.md), error**
+**[*operations.DeleteManifestResponse](../../models/operations/deletemanifestresponse.md), error**
 
 ### Errors
 
 | Error Type         | Status Code        | Content Type       |
 | ------------------ | ------------------ | ------------------ |
+| apierrors.Error    | 409                | application/json   |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
-## ReadVersion
+## PushManifestVersionRaw
 
-Get a specific version
+Push a new version of a manifest
 
 ### Example Usage
 
-<!-- UsageSnippet language="go" operationID="readVersion" method="get" path="/versions/{id}" -->
+<!-- UsageSnippet language="go" operationID="pushManifestVersion_raw" method="post" path="/manifests/{manifestId}/versions" -->
 ```go
 package main
 
 import(
 	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -765,13 +933,20 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
-    res, err := s.ReadVersion(ctx, "<id>")
+    example, fileErr := os.Open("example.file")
+    if fileErr != nil {
+        panic(fileErr)
+    }
+
+    res, err := s.PushManifestVersionRaw(ctx, "<id>", example)
     if err != nil {
         log.Fatal(err)
     }
-    if res.AppVersionResponse != nil {
+    if res.ManifestVersionResponse != nil {
         // handle response
     }
 }
@@ -782,12 +957,13 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `manifestID`                                             | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `requestBody`                                            | `any`                                                    | :heavy_check_mark:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
 
-**[*operations.ReadVersionResponse](../../models/operations/readversionresponse.md), error**
+**[*operations.PushManifestVersionRawResponse](../../models/operations/pushmanifestversionrawresponse.md), error**
 
 ### Errors
 
@@ -795,18 +971,73 @@ func main() {
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
-## ReadRun
+## PushManifestVersion
 
-Get the run of a version
+Push a new version of a manifest
 
 ### Example Usage
 
-<!-- UsageSnippet language="go" operationID="readRun" method="get" path="/runs/{id}" -->
+<!-- UsageSnippet language="go" operationID="pushManifestVersion" method="post" path="/manifests/{manifestId}/versions" -->
 ```go
 package main
 
 import(
 	"context"
+	"os"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/operations"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
+
+    res, err := s.PushManifestVersion(ctx, "<id>", operations.PushManifestVersionRequestBody{})
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.ManifestVersionResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                                              | Type                                                                                                   | Required                                                                                               | Description                                                                                            |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `ctx`                                                                                                  | [context.Context](https://pkg.go.dev/context#Context)                                                  | :heavy_check_mark:                                                                                     | The context to use for the request.                                                                    |
+| `manifestID`                                                                                           | `string`                                                                                               | :heavy_check_mark:                                                                                     | N/A                                                                                                    |
+| `requestBody`                                                                                          | [operations.PushManifestVersionRequestBody](../../models/operations/pushmanifestversionrequestbody.md) | :heavy_check_mark:                                                                                     | N/A                                                                                                    |
+| `opts`                                                                                                 | [][operations.Option](../../models/operations/option.md)                                               | :heavy_minus_sign:                                                                                     | The options for this request.                                                                          |
+
+### Response
+
+**[*operations.PushManifestVersionResponse](../../models/operations/pushmanifestversionresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## ListManifestVersions
+
+List versions of a manifest
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="listManifestVersions" method="get" path="/manifests/{manifestId}/versions" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -814,13 +1045,69 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
-    res, err := s.ReadRun(ctx, "<id>")
+    res, err := s.ListManifestVersions(ctx, "<id>", nil, nil)
     if err != nil {
         log.Fatal(err)
     }
-    if res.RunResponse != nil {
+    if res.ListManifestVersionsResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                                                                                                                                                   | Type                                                                                                                                                                                                        | Required                                                                                                                                                                                                    | Description                                                                                                                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                                                                                                                       | [context.Context](https://pkg.go.dev/context#Context)                                                                                                                                                       | :heavy_check_mark:                                                                                                                                                                                          | The context to use for the request.                                                                                                                                                                         |
+| `manifestID`                                                                                                                                                                                                | `string`                                                                                                                                                                                                    | :heavy_check_mark:                                                                                                                                                                                          | N/A                                                                                                                                                                                                         |
+| `pageSize`                                                                                                                                                                                                  | `*int64`                                                                                                                                                                                                    | :heavy_minus_sign:                                                                                                                                                                                          | Maximum number of items to return on the first page. Capped at 100;<br/>ignored when `cursor` is supplied (subsequent pages reuse the page<br/>size baked into the cursor token). Defaults to 100.<br/>     |
+| `cursor`                                                                                                                                                                                                    | `*string`                                                                                                                                                                                                   | :heavy_minus_sign:                                                                                                                                                                                          | Opaque pagination token returned in `cursor.next` / `cursor.previous`<br/>on the previous page. Pass it back unchanged to fetch the adjacent<br/>page. Mutually exclusive with `pageSize` after the first request.<br/> |
+| `opts`                                                                                                                                                                                                      | [][operations.Option](../../models/operations/option.md)                                                                                                                                                    | :heavy_minus_sign:                                                                                                                                                                                          | The options for this request.                                                                                                                                                                               |
+
+### Response
+
+**[*operations.ListManifestVersionsResponse](../../models/operations/listmanifestversionsresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## ReadManifestVersion
+
+Get a specific manifest version with content
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="readManifestVersion" method="get" path="/manifests/{manifestId}/versions/{version}" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
+
+    res, err := s.ReadManifestVersion(ctx, "<id>", "<value>")
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.ManifestVersionResponse != nil {
         // handle response
     }
 }
@@ -831,12 +1118,13 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `manifestID`                                             | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `version`                                                | `string`                                                 | :heavy_check_mark:                                       | Version number or "latest"                               |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
 
-**[*operations.ReadRunResponse](../../models/operations/readrunresponse.md), error**
+**[*operations.ReadManifestVersionResponse](../../models/operations/readmanifestversionresponse.md), error**
 
 ### Errors
 
@@ -844,18 +1132,76 @@ func main() {
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
-## ReadRunLogs
+## CreateDeployment
 
-Get logs of a run by its ID
+Create a deployment (triggers a run)
 
 ### Example Usage
 
-<!-- UsageSnippet language="go" operationID="readRunLogs" method="get" path="/runs/{id}/logs" -->
+<!-- UsageSnippet language="go" operationID="createDeployment" method="post" path="/deployments" -->
 ```go
 package main
 
 import(
 	"context"
+	"os"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
+
+    res, err := s.CreateDeployment(ctx, components.CreateDeploymentRequest{
+        AppID: "<id>",
+        ManifestID: "<id>",
+        ManifestVersion: 5649,
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.DeploymentResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                                | Type                                                                                     | Required                                                                                 | Description                                                                              |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `ctx`                                                                                    | [context.Context](https://pkg.go.dev/context#Context)                                    | :heavy_check_mark:                                                                       | The context to use for the request.                                                      |
+| `request`                                                                                | [components.CreateDeploymentRequest](../../models/components/createdeploymentrequest.md) | :heavy_check_mark:                                                                       | The request object to use for the request.                                               |
+| `opts`                                                                                   | [][operations.Option](../../models/operations/option.md)                                 | :heavy_minus_sign:                                                                       | The options for this request.                                                            |
+
+### Response
+
+**[*operations.CreateDeploymentResponse](../../models/operations/createdeploymentresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## ListDeployments
+
+List deployments
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="listDeployments" method="get" path="/deployments" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
 )
@@ -863,9 +1209,118 @@ import(
 func main() {
     ctx := context.Background()
 
-    s := deployserverclient.New()
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
 
-    res, err := s.ReadRunLogs(ctx, "<id>")
+    res, err := s.ListDeployments(ctx, nil, nil, nil)
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.ListDeploymentsResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                                                                                                                                                   | Type                                                                                                                                                                                                        | Required                                                                                                                                                                                                    | Description                                                                                                                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                                                                                                                       | [context.Context](https://pkg.go.dev/context#Context)                                                                                                                                                       | :heavy_check_mark:                                                                                                                                                                                          | The context to use for the request.                                                                                                                                                                         |
+| `appID`                                                                                                                                                                                                     | `*string`                                                                                                                                                                                                   | :heavy_minus_sign:                                                                                                                                                                                          | N/A                                                                                                                                                                                                         |
+| `pageSize`                                                                                                                                                                                                  | `*int64`                                                                                                                                                                                                    | :heavy_minus_sign:                                                                                                                                                                                          | Maximum number of items to return on the first page. Capped at 100;<br/>ignored when `cursor` is supplied (subsequent pages reuse the page<br/>size baked into the cursor token). Defaults to 100.<br/>     |
+| `cursor`                                                                                                                                                                                                    | `*string`                                                                                                                                                                                                   | :heavy_minus_sign:                                                                                                                                                                                          | Opaque pagination token returned in `cursor.next` / `cursor.previous`<br/>on the previous page. Pass it back unchanged to fetch the adjacent<br/>page. Mutually exclusive with `pageSize` after the first request.<br/> |
+| `opts`                                                                                                                                                                                                      | [][operations.Option](../../models/operations/option.md)                                                                                                                                                    | :heavy_minus_sign:                                                                                                                                                                                          | The options for this request.                                                                                                                                                                               |
+
+### Response
+
+**[*operations.ListDeploymentsResponse](../../models/operations/listdeploymentsresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## ReadDeployment
+
+Get a single deployment
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="readDeployment" method="get" path="/deployments/{deploymentId}" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
+
+    res, err := s.ReadDeployment(ctx, "<id>", nil)
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.DeploymentResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                                                                                                                                                                                                     | Type                                                                                                                                                                                                                                                          | Required                                                                                                                                                                                                                                                      | Description                                                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                                                                                                                                                                         | [context.Context](https://pkg.go.dev/context#Context)                                                                                                                                                                                                         | :heavy_check_mark:                                                                                                                                                                                                                                            | The context to use for the request.                                                                                                                                                                                                                           |
+| `deploymentID`                                                                                                                                                                                                                                                | `string`                                                                                                                                                                                                                                                      | :heavy_check_mark:                                                                                                                                                                                                                                            | N/A                                                                                                                                                                                                                                                           |
+| `include`                                                                                                                                                                                                                                                     | [][operations.ReadDeploymentInclude](../../models/operations/readdeploymentinclude.md)                                                                                                                                                                        | :heavy_minus_sign:                                                                                                                                                                                                                                            | Comma-separated list of related resources to include.<br/>- `state`: Include the live stack state reported by Formance Cloud<br/>  for this deployment's bound stack. Note: this is the **live**<br/>  projection from Membership, not a frozen per-deployment snapshot.<br/> |
+| `opts`                                                                                                                                                                                                                                                        | [][operations.Option](../../models/operations/option.md)                                                                                                                                                                                                      | :heavy_minus_sign:                                                                                                                                                                                                                                            | The options for this request.                                                                                                                                                                                                                                 |
+
+### Response
+
+**[*operations.ReadDeploymentResponse](../../models/operations/readdeploymentresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## ReadDeploymentLogs
+
+Get run logs for a deployment
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="readDeploymentLogs" method="get" path="/deployments/{deploymentId}/logs" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := deployserverclient.New(
+        deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+    )
+
+    res, err := s.ReadDeploymentLogs(ctx, "<id>")
     if err != nil {
         log.Fatal(err)
     }
@@ -880,111 +1335,12 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `deploymentID`                                           | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
 
-**[*operations.ReadRunLogsResponse](../../models/operations/readrunlogsresponse.md), error**
-
-### Errors
-
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
-
-## ReadCurrentRunLogs
-
-Get logs of the current run of an app
-
-### Example Usage
-
-<!-- UsageSnippet language="go" operationID="readCurrentRunLogs" method="get" path="/apps/{id}/run/logs" -->
-```go
-package main
-
-import(
-	"context"
-	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
-	"log"
-)
-
-func main() {
-    ctx := context.Background()
-
-    s := deployserverclient.New()
-
-    res, err := s.ReadCurrentRunLogs(ctx, "<id>")
-    if err != nil {
-        log.Fatal(err)
-    }
-    if res.ReadLogsResponse != nil {
-        // handle response
-    }
-}
-```
-
-### Parameters
-
-| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
-| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
-| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
-
-### Response
-
-**[*operations.ReadCurrentRunLogsResponse](../../models/operations/readcurrentrunlogsresponse.md), error**
-
-### Errors
-
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
-
-## ReadCurrentAppVersion
-
-Get the current version of an app
-
-### Example Usage
-
-<!-- UsageSnippet language="go" operationID="readCurrentAppVersion" method="get" path="/apps/{id}/version" -->
-```go
-package main
-
-import(
-	"context"
-	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
-	"log"
-)
-
-func main() {
-    ctx := context.Background()
-
-    s := deployserverclient.New()
-
-    res, err := s.ReadCurrentAppVersion(ctx, "<id>", nil)
-    if err != nil {
-        log.Fatal(err)
-    }
-    if res.AppVersionResponse != nil {
-        // handle response
-    }
-}
-```
-
-### Parameters
-
-| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
-| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
-| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `id`                                                     | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `from`                                                   | [*operations.From](../../models/operations/from.md)      | :heavy_minus_sign:                                       | N/A                                                      |
-| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
-
-### Response
-
-**[*operations.ReadCurrentAppVersionResponse](../../models/operations/readcurrentappversionresponse.md), error**
+**[*operations.ReadDeploymentLogsResponse](../../models/operations/readdeploymentlogsresponse.md), error**
 
 ### Errors
 

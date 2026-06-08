@@ -5,9 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/v3/cmd/cloud/apps/runs"
+	"github.com/formancehq/fctl/v3/cmd/cloud/apps/deployments"
+	"github.com/formancehq/fctl/v3/cmd/cloud/apps/manifests"
 	"github.com/formancehq/fctl/v3/cmd/cloud/apps/variables"
-	"github.com/formancehq/fctl/v3/cmd/cloud/apps/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
@@ -16,6 +16,7 @@ func NewCommand() *cobra.Command {
 		fctl.WithShortDescription("Manage app manifests"),
 		fctl.WithPersistentBoolFlag("experimental", false, "Enable experimental commands"),
 		fctl.WithPersistentStringFlag(fctl.FrameworkURIFlag, "https://deploy.formance.cloud", "Framework URI"),
+		fctl.WithPersistentStringFlag(fctl.DeployAppAliasFlag, fctl.DefaultDeployAppAlias, "Membership application alias used to authenticate against the deploy server"),
 		fctl.WithPersistentPreRunE(func(cmd *cobra.Command, args []string) error {
 			ok, err := cmd.Flags().GetBool("experimental")
 			if err != nil {
@@ -34,9 +35,10 @@ func NewCommand() *cobra.Command {
 			NewCreate(),
 			NewDelete(),
 			NewShow(),
-			NewDeploy(),
-			runs.NewCommand(),
-			versions.NewCommand(),
+			NewBindManifest(),
+			NewUnbindManifest(),
+			deployments.NewCommand(),
+			manifests.NewCommand(),
 			variables.NewCommand(),
 		),
 	)

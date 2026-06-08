@@ -22,7 +22,10 @@ const (
 	StackFlag            = "stack"
 	OrganizationFlag     = "organization"
 	FrameworkURIFlag     = "framework-uri"
+	DeployAppAliasFlag   = "deploy-app-alias"
 )
+
+const DefaultDeployAppAlias = "deploy"
 
 func GetBool(cmd *cobra.Command, flagName string) bool {
 	v, err := cmd.Flags().GetBool(flagName)

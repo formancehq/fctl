@@ -1,0 +1,10 @@
+# PushManifestVersionRawResponse
+
+
+## Fields
+
+| Field                                                                                     | Type                                                                                      | Required                                                                                  | Description                                                                               |
+| ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                | [components.HTTPMetadata](../../models/components/httpmetadata.md)                        | :heavy_check_mark:                                                                        | N/A                                                                                       |
+| `ManifestVersionResponse`                                                                 | [*components.ManifestVersionResponse](../../models/components/manifestversionresponse.md) | :heavy_minus_sign:                                                                        | Manifest version created successfully                                                     |
+| `Error`                                                                                   | [*components.Error](../../models/components/error.md)                                     | :heavy_minus_sign:                                                                        | Error                                                                                     |

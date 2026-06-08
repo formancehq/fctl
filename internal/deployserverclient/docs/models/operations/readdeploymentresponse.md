@@ -1,0 +1,11 @@
+# ReadDeploymentResponse
+
+
+## Fields
+
+| Field                                                                           | Type                                                                            | Required                                                                        | Description                                                                     |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                      | [components.HTTPMetadata](../../models/components/httpmetadata.md)              | :heavy_check_mark:                                                              | N/A                                                                             |
+| `DeploymentResponse`                                                            | [*components.DeploymentResponse](../../models/components/deploymentresponse.md) | :heavy_minus_sign:                                                              | Deployment retrieved successfully                                               |
+| `ResponseStream`                                                                | `io.ReadCloser`                                                                 | :heavy_minus_sign:                                                              | Deployment retrieved successfully                                               |
+| `Error`                                                                         | [*components.Error](../../models/components/error.md)                           | :heavy_minus_sign:                                                              | Error                                                                           |

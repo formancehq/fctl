@@ -8,23 +8,16 @@ import (
 )
 
 type ListAppsRequest struct {
-	OrganizationID string `queryParam:"style=form,explode=true,name=organizationId"`
-	PageNumber     *int64 `queryParam:"style=form,explode=true,name=pageNumber"`
-	PageSize       *int64 `queryParam:"style=form,explode=true,name=pageSize"`
-}
-
-func (l *ListAppsRequest) GetOrganizationID() string {
-	if l == nil {
-		return ""
-	}
-	return l.OrganizationID
-}
-
-func (l *ListAppsRequest) GetPageNumber() *int64 {
-	if l == nil {
-		return nil
-	}
-	return l.PageNumber
+	// Maximum number of items to return on the first page. Capped at 100;
+	// ignored when `cursor` is supplied (subsequent pages reuse the page
+	// size baked into the cursor token). Defaults to 100.
+	//
+	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
+	// Opaque pagination token returned in `cursor.next` / `cursor.previous`
+	// on the previous page. Pass it back unchanged to fetch the adjacent
+	// page. Mutually exclusive with `pageSize` after the first request.
+	//
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
 }
 
 func (l *ListAppsRequest) GetPageSize() *int64 {
@@ -32,6 +25,13 @@ func (l *ListAppsRequest) GetPageSize() *int64 {
 		return nil
 	}
 	return l.PageSize
+}
+
+func (l *ListAppsRequest) GetCursor() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Cursor
 }
 
 type ListAppsResponse struct {

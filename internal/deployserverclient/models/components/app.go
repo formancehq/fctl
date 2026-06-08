@@ -7,9 +7,17 @@ type App struct {
 	// Unique identifier for the app
 	ID string `json:"id"`
 	// Name of the app
-	Name                        string                `json:"name"`
-	CurrentConfigurationVersion *ConfigurationVersion `json:"currentConfigurationVersion,omitempty"`
-	CurrentRun                  *Run                  `json:"currentRun,omitempty"`
+	Name string `json:"name"`
+	// Optional existing stack ID claimed by this app
+	StackID *string `json:"stackId,omitempty"`
+	// Stack region ID (set when the app's stack lives in a specific region)
+	StackRegionID *string `json:"stackRegionId,omitempty"`
+	State         *State  `json:"state,omitempty"`
+	// The manifest the app is currently bound to (apps.manifest_id), with
+	// catalog metadata and divergence vs the most recent applied deployment.
+	// Populated by GET /apps/{id} when a manifest is bound.
+	//
+	CurrentManifest *AppCurrentManifest `json:"currentManifest,omitempty"`
 }
 
 func (a *App) GetID() string {
@@ -26,16 +34,30 @@ func (a *App) GetName() string {
 	return a.Name
 }
 
-func (a *App) GetCurrentConfigurationVersion() *ConfigurationVersion {
+func (a *App) GetStackID() *string {
 	if a == nil {
 		return nil
 	}
-	return a.CurrentConfigurationVersion
+	return a.StackID
 }
 
-func (a *App) GetCurrentRun() *Run {
+func (a *App) GetStackRegionID() *string {
 	if a == nil {
 		return nil
 	}
-	return a.CurrentRun
+	return a.StackRegionID
+}
+
+func (a *App) GetState() *State {
+	if a == nil {
+		return nil
+	}
+	return a.State
+}
+
+func (a *App) GetCurrentManifest() *AppCurrentManifest {
+	if a == nil {
+		return nil
+	}
+	return a.CurrentManifest
 }

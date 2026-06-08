@@ -4,4 +4,13 @@
 package components
 
 type UpdateAppRequest struct {
+	// Updated name for the app
+	Name string `json:"name"`
+}
+
+func (u *UpdateAppRequest) GetName() string {
+	if u == nil {
+		return ""
+	}
+	return u.Name
 }

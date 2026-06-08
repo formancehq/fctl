@@ -8,9 +8,17 @@ import (
 )
 
 type ReadAppVariablesRequest struct {
-	ID         string `pathParam:"style=simple,explode=false,name=id"`
-	PageNumber *int64 `queryParam:"style=form,explode=true,name=pageNumber"`
-	PageSize   *int64 `queryParam:"style=form,explode=true,name=pageSize"`
+	ID string `pathParam:"style=simple,explode=false,name=id"`
+	// Maximum number of items to return on the first page. Capped at 100;
+	// ignored when `cursor` is supplied (subsequent pages reuse the page
+	// size baked into the cursor token). Defaults to 100.
+	//
+	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
+	// Opaque pagination token returned in `cursor.next` / `cursor.previous`
+	// on the previous page. Pass it back unchanged to fetch the adjacent
+	// page. Mutually exclusive with `pageSize` after the first request.
+	//
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
 }
 
 func (r *ReadAppVariablesRequest) GetID() string {
@@ -20,18 +28,18 @@ func (r *ReadAppVariablesRequest) GetID() string {
 	return r.ID
 }
 
-func (r *ReadAppVariablesRequest) GetPageNumber() *int64 {
-	if r == nil {
-		return nil
-	}
-	return r.PageNumber
-}
-
 func (r *ReadAppVariablesRequest) GetPageSize() *int64 {
 	if r == nil {
 		return nil
 	}
 	return r.PageSize
+}
+
+func (r *ReadAppVariablesRequest) GetCursor() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Cursor
 }
 
 type ReadAppVariablesResponse struct {

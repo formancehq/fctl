@@ -2,8 +2,8 @@ speakeasyVersion: 1.759.2
 sources:
     Terraform HCP Proxy API:
         sourceNamespace: terraform-hcp-proxy-api
-        sourceRevisionDigest: sha256:10ee0ae3168b95a47c78a3128b465abd28a4beb6b99ab2e27735455138465b20
-        sourceBlobDigest: sha256:4e4bf80a183fb2ae17d4ae27d2a6de867db0654fe28483c80ec25e9530e3a967
+        sourceRevisionDigest: sha256:d54ede8b0d8f74daea2fc161cf13846dd4a7084f96941f68356d8307bfa92186
+        sourceBlobDigest: sha256:8564cde40781c471d4f17f1781a0c92fcf0ddc26ca20fbb3a2cc2a39d0c22f70
         tags:
             - latest
             - 0.1.0
@@ -11,8 +11,8 @@ targets:
     deploy-server:
         source: Terraform HCP Proxy API
         sourceNamespace: terraform-hcp-proxy-api
-        sourceRevisionDigest: sha256:10ee0ae3168b95a47c78a3128b465abd28a4beb6b99ab2e27735455138465b20
-        sourceBlobDigest: sha256:4e4bf80a183fb2ae17d4ae27d2a6de867db0654fe28483c80ec25e9530e3a967
+        sourceRevisionDigest: sha256:d54ede8b0d8f74daea2fc161cf13846dd4a7084f96941f68356d8307bfa92186
+        sourceBlobDigest: sha256:8564cde40781c471d4f17f1781a0c92fcf0ddc26ca20fbb3a2cc2a39d0c22f70
 workflow:
     workflowVersion: 1.0.0
     speakeasyVersion: 1.759.2

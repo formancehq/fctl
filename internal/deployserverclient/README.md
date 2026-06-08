@@ -26,6 +26,7 @@ Developer-friendly & type-safe Go SDK specifically catered to leverage *github.c
 * [github.com/formancehq/fctl/internal/deployserverclient](#githubcomformancehqfctlinternaldeployserverclient)
   * [SDK Installation](#sdk-installation)
   * [SDK Example Usage](#sdk-example-usage)
+  * [Authentication](#authentication)
   * [Available Resources and Operations](#available-resources-and-operations)
   * [Retries](#retries)
   * [Error Handling](#error-handling)
@@ -58,14 +59,17 @@ import (
 	"context"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
+	"os"
 )
 
 func main() {
 	ctx := context.Background()
 
-	s := deployserverclient.New()
+	s := deployserverclient.New(
+		deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+	)
 
-	res, err := s.ListApps(ctx, "<id>", nil, nil)
+	res, err := s.ListApps(ctx, nil, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -76,6 +80,47 @@ func main() {
 
 ```
 <!-- End SDK Example Usage [usage] -->
+
+<!-- Start Authentication [security] -->
+## Authentication
+
+### Per-Client Security Schemes
+
+This SDK supports the following security scheme globally:
+
+| Name         | Type | Scheme      | Environment Variable       |
+| ------------ | ---- | ----------- | -------------------------- |
+| `BearerAuth` | http | HTTP Bearer | `DEPLOYSERVER_BEARER_AUTH` |
+
+You can configure it using the `WithSecurity` option when initializing the SDK client instance. For example:
+```go
+package main
+
+import (
+	"context"
+	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
+	"log"
+	"os"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := deployserverclient.New(
+		deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+	)
+
+	res, err := s.ListApps(ctx, nil, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if res.ListAppsResponse != nil {
+		// handle response
+	}
+}
+
+```
+<!-- End Authentication [security] -->
 
 <!-- Start Available Resources and Operations [operations] -->
 ## Available Resources and Operations
@@ -90,20 +135,25 @@ func main() {
 * [UpdateApp](docs/sdks/deployserver/README.md#updateapp) - Update an app
 * [ReadApp](docs/sdks/deployserver/README.md#readapp) - read app details
 * [DeleteApp](docs/sdks/deployserver/README.md#deleteapp) - Delete an app
-* [ReadAppCurrentStateVersion](docs/sdks/deployserver/README.md#readappcurrentstateversion) - Get the current state version of an app
+* [AttachAppManifest](docs/sdks/deployserver/README.md#attachappmanifest) - Bind an app to a manifest
+* [DetachAppManifest](docs/sdks/deployserver/README.md#detachappmanifest) - Unbind an app from its manifest
 * [ReadAppVariables](docs/sdks/deployserver/README.md#readappvariables) - Get all variables of an app
 * [CreateAppVariable](docs/sdks/deployserver/README.md#createappvariable) - Create variable for an app
 * [DeleteAppVariable](docs/sdks/deployserver/README.md#deleteappvariable) - Delete a variable from an app
-* [ReadAppRuns](docs/sdks/deployserver/README.md#readappruns) - Get runs of an app
-* [ReadAppVersions](docs/sdks/deployserver/README.md#readappversions) - Get versions of an app
-* [DeployAppConfigurationRaw](docs/sdks/deployserver/README.md#deployappconfigurationraw) - Deploy a new configuration for an app
-* [DeployAppConfiguration](docs/sdks/deployserver/README.md#deployappconfiguration) - Deploy a new configuration for an app
-* [ReadCurrentRun](docs/sdks/deployserver/README.md#readcurrentrun) - Get the current run of an app
-* [ReadVersion](docs/sdks/deployserver/README.md#readversion) - Get a specific version
-* [ReadRun](docs/sdks/deployserver/README.md#readrun) - Get the run of a version
-* [ReadRunLogs](docs/sdks/deployserver/README.md#readrunlogs) - Get logs of a run by its ID
-* [ReadCurrentRunLogs](docs/sdks/deployserver/README.md#readcurrentrunlogs) - Get logs of the current run of an app
-* [ReadCurrentAppVersion](docs/sdks/deployserver/README.md#readcurrentappversion) - Get the current version of an app
+* [CreateManifestRaw](docs/sdks/deployserver/README.md#createmanifestraw) - Create a new manifest
+* [CreateManifest](docs/sdks/deployserver/README.md#createmanifest) - Create a new manifest
+* [ListManifests](docs/sdks/deployserver/README.md#listmanifests) - List manifests in the organization
+* [ReadManifest](docs/sdks/deployserver/README.md#readmanifest) - Read a manifest
+* [UpdateManifest](docs/sdks/deployserver/README.md#updatemanifest) - Update manifest metadata
+* [DeleteManifest](docs/sdks/deployserver/README.md#deletemanifest) - Delete a manifest and all its versions
+* [PushManifestVersionRaw](docs/sdks/deployserver/README.md#pushmanifestversionraw) - Push a new version of a manifest
+* [PushManifestVersion](docs/sdks/deployserver/README.md#pushmanifestversion) - Push a new version of a manifest
+* [ListManifestVersions](docs/sdks/deployserver/README.md#listmanifestversions) - List versions of a manifest
+* [ReadManifestVersion](docs/sdks/deployserver/README.md#readmanifestversion) - Get a specific manifest version with content
+* [CreateDeployment](docs/sdks/deployserver/README.md#createdeployment) - Create a deployment (triggers a run)
+* [ListDeployments](docs/sdks/deployserver/README.md#listdeployments) - List deployments
+* [ReadDeployment](docs/sdks/deployserver/README.md#readdeployment) - Get a single deployment
+* [ReadDeploymentLogs](docs/sdks/deployserver/README.md#readdeploymentlogs) - Get run logs for a deployment
 
 </details>
 <!-- End Available Resources and Operations [operations] -->
@@ -123,14 +173,17 @@ import (
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/retry"
 	"log"
 	"models/operations"
+	"os"
 )
 
 func main() {
 	ctx := context.Background()
 
-	s := deployserverclient.New()
+	s := deployserverclient.New(
+		deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+	)
 
-	res, err := s.ListApps(ctx, "<id>", nil, nil, operations.WithRetries(
+	res, err := s.ListApps(ctx, nil, nil, operations.WithRetries(
 		retry.Config{
 			Strategy: "backoff",
 			Backoff: &retry.BackoffStrategy{
@@ -160,6 +213,7 @@ import (
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/retry"
 	"log"
+	"os"
 )
 
 func main() {
@@ -177,9 +231,10 @@ func main() {
 				},
 				RetryConnectionErrors: false,
 			}),
+		deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
 	)
 
-	res, err := s.ListApps(ctx, "<id>", nil, nil)
+	res, err := s.ListApps(ctx, nil, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -198,11 +253,12 @@ Handling errors in this SDK should largely match your expectations. All operatio
 
 By Default, an API error will return `apierrors.APIError`. When custom error responses are specified for an operation, the SDK may also return their associated error. You can refer to respective *Errors* tables in SDK docs for more details on possible error types for each operation.
 
-For example, the `ListApps` function may return the following errors:
+For example, the `AttachAppManifest` function may return the following errors:
 
-| Error Type         | Status Code | Content Type |
-| ------------------ | ----------- | ------------ |
-| apierrors.APIError | 4XX, 5XX    | \*/\*        |
+| Error Type         | Status Code | Content Type     |
+| ------------------ | ----------- | ---------------- |
+| apierrors.Error    | 400, 404    | application/json |
+| apierrors.APIError | 4XX, 5XX    | \*/\*            |
 
 ### Example
 
@@ -214,16 +270,28 @@ import (
 	"errors"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/apierrors"
+	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"log"
+	"os"
 )
 
 func main() {
 	ctx := context.Background()
 
-	s := deployserverclient.New()
+	s := deployserverclient.New(
+		deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
+	)
 
-	res, err := s.ListApps(ctx, "<id>", nil, nil)
+	res, err := s.AttachAppManifest(ctx, "<id>", components.AttachManifestRequest{
+		ManifestID: "<id>",
+	})
 	if err != nil {
+
+		var e *apierrors.Error
+		if errors.As(err, &e) {
+			// handle error
+			log.Fatal(e.Error())
+		}
 
 		var e *apierrors.APIError
 		if errors.As(err, &e) {
@@ -258,6 +326,7 @@ import (
 	"context"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
+	"os"
 )
 
 func main() {
@@ -265,9 +334,10 @@ func main() {
 
 	s := deployserverclient.New(
 		deployserverclient.WithServerIndex(0),
+		deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
 	)
 
-	res, err := s.ListApps(ctx, "<id>", nil, nil)
+	res, err := s.ListApps(ctx, nil, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -288,6 +358,7 @@ import (
 	"context"
 	deployserverclient "github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"log"
+	"os"
 )
 
 func main() {
@@ -295,9 +366,10 @@ func main() {
 
 	s := deployserverclient.New(
 		deployserverclient.WithServerURL("http://localhost:8080"),
+		deployserverclient.WithSecurity(os.Getenv("DEPLOYSERVER_BEARER_AUTH")),
 	)
 
-	res, err := s.ListApps(ctx, "<id>", nil, nil)
+	res, err := s.ListApps(ctx, nil, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
