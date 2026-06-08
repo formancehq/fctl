@@ -7,15 +7,15 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ListStore struct {
-	Cursor *shared.V3ConnectorSchedulesCursorResponseCursor `json:"cursor"`
+	Cursor *payments.V3ConnectorSchedulesCursorResponseCursor `json:"cursor"`
 }
 
 type ListController struct {
@@ -32,7 +32,7 @@ var _ fctl.Controller[*ListStore] = (*ListController)(nil)
 
 func NewListStore() *ListStore {
 	return &ListStore{
-		Cursor: &shared.V3ConnectorSchedulesCursorResponseCursor{},
+		Cursor: &payments.V3ConnectorSchedulesCursorResponseCursor{},
 	}
 }
 
@@ -116,14 +116,13 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 }
 
 func (c *ListController) Render(cmd *cobra.Command, args []string) error {
-	tableData := fctl.Map(c.store.Cursor.Data, func(s shared.V3Schedule) []string {
+	tableData := fctl.Map(c.store.Cursor.Data, func(s payments.V3Schedule) []string {
 		return []string{
 			s.ID,
-			s.ConnectorID,
 			s.CreatedAt.Format(time.RFC3339),
 		}
 	})
-	tableData = fctl.Prepend(tableData, []string{"ID", "ConnectorID", "CreatedAt"})
+	tableData = fctl.Prepend(tableData, []string{"ID", "CreatedAt"})
 	if err := pterm.DefaultTable.
 		WithHasHeader().
 		WithWriter(cmd.OutOrStdout()).

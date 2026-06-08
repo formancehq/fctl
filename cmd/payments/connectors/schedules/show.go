@@ -7,15 +7,15 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ShowStore struct {
-	Schedule *shared.V3Schedule `json:"schedule"`
+	Schedule *payments.V3Schedule `json:"schedule"`
 }
 
 type ShowController struct {
@@ -93,7 +93,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected response: %v", response)
 	}
 
-	c.store.Schedule = &response.V3ConnectorScheduleResponse.Data
+	c.store.Schedule = &response.V3ConnectorScheduleResponse.V3Schedule
 
 	return c, nil
 }
@@ -106,6 +106,12 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 		{pterm.LightCyan("ID"), s.ID},
 		{pterm.LightCyan("ConnectorID"), s.ConnectorID},
 		{pterm.LightCyan("CreatedAt"), s.CreatedAt.Format(time.RFC3339)},
+	}
+	if s.PausedAt != nil {
+		tableData = append(tableData, []string{pterm.LightCyan("PausedAt"), s.PausedAt.Format(time.RFC3339)})
+	}
+	if s.PausedReason != nil {
+		tableData = append(tableData, []string{pterm.LightCyan("PausedReason"), *s.PausedReason})
 	}
 
 	return pterm.DefaultTable.

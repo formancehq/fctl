@@ -7,15 +7,15 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v3/pkg/models/shared"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
+	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 type ListStore struct {
-	Cursor *shared.V3ConnectorScheduleInstancesCursorResponseCursor `json:"cursor"`
+	Cursor *payments.V3ConnectorScheduleInstancesCursorResponseCursor `json:"cursor"`
 }
 
 type ListController struct {
@@ -32,7 +32,7 @@ var _ fctl.Controller[*ListStore] = (*ListController)(nil)
 
 func NewListStore() *ListStore {
 	return &ListStore{
-		Cursor: &shared.V3ConnectorScheduleInstancesCursorResponseCursor{},
+		Cursor: &payments.V3ConnectorScheduleInstancesCursorResponseCursor{},
 	}
 }
 
@@ -117,7 +117,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 }
 
 func (c *ListController) Render(cmd *cobra.Command, args []string) error {
-	tableData := fctl.Map(c.store.Cursor.Data, func(i shared.V3Instance) []string {
+	tableData := fctl.Map(c.store.Cursor.Data, func(i payments.V3Instance) []string {
 		errStr := ""
 		if i.Error != nil {
 			errStr = *i.Error
@@ -128,8 +128,6 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 		}
 		return []string{
 			i.ID,
-			i.ScheduleID,
-			i.ConnectorID,
 			fmt.Sprintf("%t", i.Terminated),
 			i.CreatedAt.Format(time.RFC3339),
 			i.UpdatedAt.Format(time.RFC3339),
@@ -138,7 +136,7 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 		}
 	})
 	tableData = fctl.Prepend(tableData, []string{
-		"ID", "ScheduleID", "ConnectorID", "Terminated",
+		"ID", "Terminated",
 		"CreatedAt", "UpdatedAt", "TerminatedAt", "Error",
 	})
 	if err := pterm.DefaultTable.
