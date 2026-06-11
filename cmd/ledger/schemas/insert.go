@@ -1,7 +1,6 @@
 package schemas
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -20,6 +20,8 @@ import (
 	internal "github.com/formancehq/fctl/v3/cmd/ledger/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
+
+const schemaFetchTimeout = 30 * time.Second
 
 type InsertStore struct {
 	Success bool `json:"success"`
@@ -69,7 +71,7 @@ func (c *InsertController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 	ledgerName := fctl.GetString(cmd, internal.LedgerFlag)
 	version := args[0]
 
-	schemaData, err := loadSchemaData(cmd.Context(), args[1])
+	schemaData, err := loadSchemaData(cmd, args[1])
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +89,10 @@ func (c *InsertController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
-	c.store.Success = response.StatusCode == 201
+	c.store.Success = response.StatusCode == 204
+	if !c.store.Success {
+		return nil, fmt.Errorf("unexpected status code %d while inserting schema", response.StatusCode)
+	}
 	return c, nil
 }
 
@@ -96,8 +101,8 @@ func (c *InsertController) Render(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-func loadSchemaData(ctx context.Context, source string) (*ledger.V2SchemaDataInput, error) {
-	raw, err := readSource(ctx, source)
+func loadSchemaData(cmd *cobra.Command, source string) (*ledger.V2SchemaDataInput, error) {
+	raw, err := readSource(cmd, source)
 	if err != nil {
 		return nil, err
 	}
@@ -120,13 +125,15 @@ func loadSchemaData(ctx context.Context, source string) (*ledger.V2SchemaDataInp
 	return schemaData, nil
 }
 
-func readSource(ctx context.Context, source string) ([]byte, error) {
+func readSource(cmd *cobra.Command, source string) ([]byte, error) {
 	if strings.HasPrefix(source, "http://") || strings.HasPrefix(source, "https://") {
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, source, nil)
+		req, err := http.NewRequestWithContext(cmd.Context(), http.MethodGet, source, nil)
 		if err != nil {
 			return nil, err
 		}
-		resp, err := http.DefaultClient.Do(req)
+		client := fctl.GetHttpClient(cmd)
+		client.Timeout = schemaFetchTimeout
+		resp, err := client.Do(req)
 		if err != nil {
 			return nil, err
 		}

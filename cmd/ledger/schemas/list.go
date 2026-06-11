@@ -9,7 +9,6 @@ import (
 
 	"github.com/formancehq/formance-sdk-go/v4/pkg/models/ledger"
 	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	"github.com/formancehq/go-libs/v4/pointer"
 
 	internal "github.com/formancehq/fctl/v3/cmd/ledger/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
@@ -17,10 +16,10 @@ import (
 
 type ListStore struct {
 	Schemas []ledger.V2SchemaData `json:"schemas"`
+	Cursor  fctl.Cursor           `json:"cursor"`
 }
 type ListController struct {
-	store        *ListStore
-	pageSizeFlag string
+	store *ListStore
 }
 
 var _ fctl.Controller[*ListStore] = (*ListController)(nil)
@@ -33,8 +32,7 @@ func NewDefaultListStore() *ListStore {
 
 func NewListController() *ListController {
 	return &ListController{
-		store:        NewDefaultListStore(),
-		pageSizeFlag: "page-size",
+		store: NewDefaultListStore(),
 	}
 }
 
@@ -43,7 +41,8 @@ func NewListCommand() *cobra.Command {
 	return fctl.NewCommand("list",
 		fctl.WithAliases("ls", "l"),
 		fctl.WithShortDescription("List all schemas for a ledger"),
-		fctl.WithIntFlag(c.pageSizeFlag, 15, "Page size"),
+		fctl.WithCursorFlag(),
+		fctl.WithPageSizeFlag(),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithController[*ListStore](c),
@@ -65,24 +64,36 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 		return nil, err
 	}
 
-	response, err := stackClient.Ledger.V2.ListSchemas(cmd.Context(), operations.V2ListSchemasRequest{
-		Ledger:   fctl.GetString(cmd, internal.LedgerFlag),
-		PageSize: pointer.For(int64(fctl.GetInt(cmd, c.pageSizeFlag))),
-	})
+	cursor, err := fctl.GetCursor(cmd)
+	if err != nil {
+		return nil, err
+	}
+	pageSize, err := fctl.GetPageSize(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Schemas = response.V2SchemasCursorResponse.V2SchemasCursor.Data
+	req := operations.V2ListSchemasRequest{
+		Ledger: fctl.GetString(cmd, internal.LedgerFlag),
+	}
+	if cursor != "" {
+		req.Cursor = fctl.Ptr(cursor)
+	} else {
+		req.PageSize = fctl.Ptr(int64(pageSize))
+	}
+
+	response, err := stackClient.Ledger.V2.ListSchemas(cmd.Context(), req)
+	if err != nil {
+		return nil, err
+	}
+
+	cur := response.V2SchemasCursorResponse.V2SchemasCursor
+	c.store.Schemas = cur.Data
+	c.store.Cursor = fctl.Cursor{HasMore: cur.HasMore, PageSize: cur.PageSize, Next: cur.Next, Previous: cur.Previous}
 	return c, nil
 }
 
 func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
-	if len(c.store.Schemas) == 0 {
-		fctl.Println("No schemas found.")
-		return nil
-	}
-
 	tableData := fctl.Map(c.store.Schemas, func(schema ledger.V2SchemaData) []string {
 		return []string{
 			schema.Version,
@@ -94,9 +105,13 @@ func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
 	})
 	tableData = fctl.Prepend(tableData, []string{"Version", "Created at", "Chart", "Queries", "Transactions"})
 
-	return pterm.DefaultTable.
+	if err := pterm.DefaultTable.
 		WithHasHeader().
 		WithWriter(cmd.OutOrStdout()).
 		WithData(tableData).
-		Render()
+		Render(); err != nil {
+		return err
+	}
+
+	return fctl.RenderCursor(cmd.OutOrStdout(), c.store.Cursor)
 }
