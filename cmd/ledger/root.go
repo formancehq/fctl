@@ -5,6 +5,7 @@ import (
 
 	"github.com/formancehq/fctl/v3/cmd/ledger/accounts"
 	"github.com/formancehq/fctl/v3/cmd/ledger/internal"
+	"github.com/formancehq/fctl/v3/cmd/ledger/schemas"
 	"github.com/formancehq/fctl/v3/cmd/ledger/transactions"
 	"github.com/formancehq/fctl/v3/cmd/ledger/volumes"
 	fctl "github.com/formancehq/fctl/v3/pkg"
@@ -25,6 +26,7 @@ func NewCommand() *cobra.Command {
 			NewDeleteMetadataCommand(),
 			NewExportCommand(),
 			NewImportCommand(),
+			schemas.NewLedgerSchemasCommand(),
 			transactions.NewLedgerTransactionsCommand(),
 			accounts.NewLedgerAccountsCommand(),
 			volumes.NewLedgerVolumesCommand(),
