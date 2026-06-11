@@ -70,7 +70,19 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
-	organizationID, apiClient, err := fctl.NewMembershipClientForOrganizationFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	region := fctl.GetString(cmd, regionFlag)
+	requiredScopes := []string{
+		"organization:CreateStack",
+		"organization:ReadRegion",
+	}
+	if region == "" {
+		requiredScopes = append(requiredScopes, "organization:ListRegions")
+	}
+	if !fctl.GetBool(cmd, nowaitFlag) {
+		requiredScopes = append(requiredScopes, "organization:ReadStack")
+	}
+
+	organizationID, apiClient, err := fctl.NewMembershipClientForOrganizationFromFlagsWithScopes(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile, requiredScopes)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +97,6 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		}
 	}
 
-	region := fctl.GetString(cmd, regionFlag)
 	if region == "" {
 		listRegionsRequest := operations.ListRegionsRequest{
 			OrganizationID: organizationID,
@@ -152,7 +163,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 	specifiedVersion := fctl.GetString(cmd, versionFlag)
 	if specifiedVersion == "" {
 		var options []string
-		for _, version := range availableVersionsResponse.GetRegionVersionsResponse.GetData() {
+		for _, version := range sortRegionVersionsByLatest(availableVersionsResponse.GetRegionVersionsResponse.GetData()) {
 			options = append(options, version.GetName())
 		}
 
@@ -219,7 +230,18 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 
 	fctl.BasicTextCyan.WithWriter(cmd.OutOrStdout()).Println("Your portal will be reachable on: " + portal)
 
-	// todo: need a long running client with auto refresh
+	if !profile.RootTokens.ID.Claims.HasStackAccess(organizationID, stackData.GetID()) {
+		fctl.NewPTermDialog().Info("Refreshing profile accesses...")
+		tokens, err := fctl.RefreshRootTokens(cmd.Context(), relyingParty, *profile.RootTokens)
+		if err != nil {
+			return nil, fmt.Errorf("refreshing profile accesses: %w", err)
+		}
+		profile.UpdateRootToken(tokens)
+		if err := fctl.WriteProfile(cmd, profileName, *profile); err != nil {
+			return nil, fmt.Errorf("writing refreshed profile: %w", err)
+		}
+	}
+
 	stackClient, err := fctl.NewStackClient(
 		cmd,
 		relyingParty,

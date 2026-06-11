@@ -114,6 +114,26 @@ func EnsureOrganizationAccess(
 	profile Profile,
 	organizationID string,
 ) (*AccessToken, error) {
+	return EnsureOrganizationAccessWithScopes(
+		cmd,
+		relyingParty,
+		dialog,
+		profileName,
+		profile,
+		organizationID,
+		nil,
+	)
+}
+
+func EnsureOrganizationAccessWithScopes(
+	cmd *cobra.Command,
+	relyingParty client.RelyingParty,
+	dialog Dialog,
+	profileName string,
+	profile Profile,
+	organizationID string,
+	requiredScopes []string,
+) (*AccessToken, error) {
 	if !profile.RootTokens.ID.Claims.HasOrganizationAccess(organizationID) {
 		return nil, fmt.Errorf("no access to organization %s found in your authentication profile, "+
 			"please log in again and/or check you still have access to the organization", organizationID)
@@ -167,6 +187,19 @@ func EnsureOrganizationAccess(
 			organizationToken = &tokens.Access
 		} else {
 			organizationToken = refreshed
+		}
+	}
+
+	if organizationToken != nil && len(requiredScopes) > 0 && !organizationToken.HasScopes(requiredScopes...) {
+		dialog.Info("Organization token is missing required scopes, requesting new authentication...")
+		tokens, err := authenticate()
+		if err != nil {
+			return nil, fmt.Errorf("failed to authenticate for organization: %w", err)
+		}
+
+		organizationToken = &tokens.Access
+		if missingScopes := organizationToken.MissingScopes(requiredScopes...); len(missingScopes) > 0 {
+			return nil, fmt.Errorf("authenticated organization token is missing required scopes: %s", strings.Join(missingScopes, ", "))
 		}
 	}
 
@@ -391,14 +424,35 @@ func NewMembershipClientForOrganization(
 	profile Profile,
 	organizationID string,
 ) (*membershipclient.SDK, error) {
-
-	organizationToken, err := EnsureOrganizationAccess(
+	return NewMembershipClientForOrganizationWithScopes(
 		cmd,
 		relyingParty,
 		dialog,
 		profileName,
 		profile,
 		organizationID,
+		nil,
+	)
+}
+
+func NewMembershipClientForOrganizationWithScopes(
+	cmd *cobra.Command,
+	relyingParty client.RelyingParty,
+	dialog Dialog,
+	profileName string,
+	profile Profile,
+	organizationID string,
+	requiredScopes []string,
+) (*membershipclient.SDK, error) {
+
+	organizationToken, err := EnsureOrganizationAccessWithScopes(
+		cmd,
+		relyingParty,
+		dialog,
+		profileName,
+		profile,
+		organizationID,
+		requiredScopes,
 	)
 	if err != nil {
 		return nil, err
@@ -411,12 +465,13 @@ func NewMembershipClientForOrganization(
 	), nil
 }
 
-func NewMembershipClientForOrganizationFromFlags(
+func NewMembershipClientForOrganizationFromFlagsWithScopes(
 	cmd *cobra.Command,
 	relyingParty client.RelyingParty,
 	dialog Dialog,
 	profileName string,
 	profile Profile,
+	requiredScopes []string,
 ) (string, *membershipclient.SDK, error) {
 
 	organizationID, err := ResolveOrganizationID(cmd, profile)
@@ -424,9 +479,19 @@ func NewMembershipClientForOrganizationFromFlags(
 		return "", nil, err
 	}
 
-	client, err := NewMembershipClientForOrganization(cmd, relyingParty, dialog, profileName, profile, organizationID)
+	client, err := NewMembershipClientForOrganizationWithScopes(cmd, relyingParty, dialog, profileName, profile, organizationID, requiredScopes)
 
 	return organizationID, client, err
+}
+
+func NewMembershipClientForOrganizationFromFlags(
+	cmd *cobra.Command,
+	relyingParty client.RelyingParty,
+	dialog Dialog,
+	profileName string,
+	profile Profile,
+) (string, *membershipclient.SDK, error) {
+	return NewMembershipClientForOrganizationFromFlagsWithScopes(cmd, relyingParty, dialog, profileName, profile, nil)
 }
 
 func NewStackClient(
