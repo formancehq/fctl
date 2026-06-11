@@ -6,7 +6,6 @@ import (
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-	"golang.org/x/mod/semver"
 
 	"github.com/formancehq/fctl/internal/membershipclient/v3"
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
@@ -181,9 +180,9 @@ func retrieveUpgradableVersion(ctx context.Context, organization string, stack c
 		if versionName == *currentVersion {
 			continue
 		}
-		if !semver.IsValid(versionName) || semver.Compare(versionName, *currentVersion) >= 1 {
+		if isVersionNewerThanCurrent(versionName, *currentVersion) {
 			upgradeOptions = append(upgradeOptions, versionName)
 		}
 	}
-	return upgradeOptions, nil
+	return sortVersionNamesByLatest(upgradeOptions), nil
 }
