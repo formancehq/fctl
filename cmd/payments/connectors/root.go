@@ -5,6 +5,7 @@ import (
 
 	"github.com/formancehq/fctl/v3/cmd/payments/connectors/configs"
 	"github.com/formancehq/fctl/v3/cmd/payments/connectors/install"
+	"github.com/formancehq/fctl/v3/cmd/payments/connectors/schedules"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
@@ -19,6 +20,7 @@ func NewConnectorsCommand() *cobra.Command {
 			configs.NewUpdateConfigCommand(),
 			configs.NewGetConfigCommand(),
 			NewConnectorListAvailableCommand(),
+			schedules.NewSchedulesCommand(),
 		),
 	)
 }
