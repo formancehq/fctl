@@ -9,7 +9,6 @@ import (
 	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
 	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 
-	"github.com/formancehq/fctl/v3/cmd/payments/connectors/internal"
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
@@ -62,7 +61,6 @@ func NewUninstallCommand() *cobra.Command {
 		fctl.WithAliases("uninstall", "u", "un"),
 		fctl.WithConfirmFlag(),
 		fctl.WithArgs(cobra.ExactArgs(0)),
-		fctl.WithValidArgs(internal.AllConnectors...),
 		fctl.WithStringFlag(c.providerFlag, "", "Provider name"),
 		fctl.WithStringFlag(c.connectorIDFlag, "", "Connector ID"),
 		fctl.WithShortDescription("Uninstall a connector"),
