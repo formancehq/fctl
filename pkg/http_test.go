@@ -10,6 +10,9 @@ import (
 
 func TestNewHTTPTransportUsesProxyFromEnvironment(t *testing.T) {
 	cmd := &cobra.Command{}
+	cmd.Flags().Bool(DebugFlag, false, "")
+	cmd.Flags().Bool(HTTPCloseOnErrorFlag, false, "")
+	cmd.Flags().Bool(InsecureTlsFlag, false, "")
 
 	roundTripper := NewHTTPTransport(cmd)
 	headerRoundTripper, ok := roundTripper.(*injectHTTPHeadersRoundTripper)
