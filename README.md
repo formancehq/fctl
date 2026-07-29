@@ -14,7 +14,6 @@ Command-line interface for managing and interacting with Formance services.
 - Authentication
 - Stack management
 - Cloud resources
-- Search functionality
 - Webhooks configuration
 
 ## Installation
@@ -83,4 +82,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Links
 
 - [Formance Documentation](https://docs.formance.com)
-- [Formance GitHub](https://github.com/formancehq) 
+- [Formance GitHub](https://github.com/formancehq)
