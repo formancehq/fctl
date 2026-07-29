@@ -27,24 +27,3 @@ func DisplayAdyenConfig(cmd *cobra.Command, connectorConfig *payments.ConnectorC
 	}
 	return nil
 }
-
-func DisplayAdyenConfigV3(cmd *cobra.Command, v3Config *payments.V3GetConnectorConfigResponse) error {
-	config := v3Config.V3ConnectorConfig.V3AdyenConfig
-
-	tableData := pterm.TableData{}
-	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})
-	tableData = append(tableData, []string{pterm.LightCyan("ApiKey:"), config.APIKey})
-	tableData = append(tableData, []string{pterm.LightCyan("CompanyID:"), config.CompanyID})
-	tableData = append(tableData, []string{pterm.LightCyan("LiveEndpointPrefix:"), fctl.StringPointerToString(config.LiveEndpointPrefix)})
-	tableData = append(tableData, []string{pterm.LightCyan("Polling Period:"), fctl.StringPointerToString(config.PollingPeriod)})
-	tableData = append(tableData, []string{pterm.LightCyan("WebhookPassword:"), fctl.StringPointerToString(config.WebhookPassword)})
-	tableData = append(tableData, []string{pterm.LightCyan("WebhookUsername:"), fctl.StringPointerToString(config.WebhookUsername)})
-
-	if err := pterm.DefaultTable.
-		WithWriter(cmd.OutOrStdout()).
-		WithData(tableData).
-		Render(); err != nil {
-		return err
-	}
-	return nil
-}
