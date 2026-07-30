@@ -84,6 +84,7 @@ func debugRoundTripper(rt http.RoundTripper) RoundTripperFn {
 
 func NewHTTPTransport(cmd *cobra.Command) http.RoundTripper {
 	var transport = &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: GetBool(cmd, InsecureTlsFlag),
 		},
