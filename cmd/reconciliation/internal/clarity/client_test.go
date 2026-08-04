@@ -3,6 +3,7 @@ package clarity
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -74,5 +75,29 @@ func TestResourcePathEscapesPathSeparators(t *testing.T) {
 	t.Parallel()
 	if got := ResourcePath("rule/one"); got != "rule%2Fone" {
 		t.Fatalf("ResourcePath() = %q", got)
+	}
+}
+
+func TestClientDoForwardsRawJSONWithoutRounding(t *testing.T) {
+	t.Parallel()
+
+	const body = `{"threshold":9007199254740993}`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		data, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("read body: %v", err)
+		}
+		if string(data) != body {
+			t.Errorf("body = %s, want %s", data, body)
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	cmd := &cobra.Command{}
+	cmd.SetContext(context.Background())
+	client := &Client{HTTPClient: server.Client(), BaseURL: server.URL}
+	if err := client.Do(cmd, http.MethodPost, "/rules", nil, json.RawMessage(body), nil); err != nil {
+		t.Fatal(err)
 	}
 }

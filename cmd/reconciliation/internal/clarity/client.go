@@ -36,9 +36,15 @@ func NewClient(cmd *cobra.Command) (*Client, error) {
 func (c *Client) Do(cmd *cobra.Command, method, requestPath string, query url.Values, body any, response any) error {
 	var reader io.Reader
 	if body != nil {
-		encoded, err := json.Marshal(body)
-		if err != nil {
-			return fmt.Errorf("encoding request: %w", err)
+		var encoded []byte
+		if raw, ok := body.(json.RawMessage); ok {
+			encoded = raw
+		} else {
+			var err error
+			encoded, err = json.Marshal(body)
+			if err != nil {
+				return fmt.Errorf("encoding request: %w", err)
+			}
 		}
 		reader = bytes.NewReader(encoded)
 	}

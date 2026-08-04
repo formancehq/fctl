@@ -1,6 +1,7 @@
 package clarity
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -76,32 +77,29 @@ func PaginationQuery(cmd *cobra.Command) (url.Values, error) {
 	return values, nil
 }
 
-func QueryBody(cmd *cobra.Command, flag string) (map[string]any, error) {
+func QueryBody(cmd *cobra.Command, flag string) (json.RawMessage, error) {
 	raw, err := cmd.Flags().GetString(flag)
 	if err != nil || raw == "" {
 		return nil, err
 	}
-	var query map[string]any
-	if err := json.Unmarshal([]byte(raw), &query); err != nil {
-		return nil, fmt.Errorf("invalid --%s JSON: %w", flag, err)
-	}
-	if query == nil {
-		return nil, fmt.Errorf("invalid --%s JSON: expected an object", flag)
-	}
-	return query, nil
+	return parseJSONObject([]byte(raw), fmt.Sprintf("--%s JSON", flag))
 }
 
-func ReadJSONObject(cmd *cobra.Command, path string) (map[string]any, error) {
+func ReadJSONObject(cmd *cobra.Command, path string) (json.RawMessage, error) {
 	raw, err := fctl.ReadFile(cmd, path)
 	if err != nil {
 		return nil, err
 	}
-	var value map[string]any
-	if err := json.Unmarshal([]byte(raw), &value); err != nil {
-		return nil, fmt.Errorf("invalid JSON in %s: %w", path, err)
+	return parseJSONObject([]byte(raw), "JSON in "+path)
+}
+
+func parseJSONObject(raw []byte, source string) (json.RawMessage, error) {
+	trimmed := bytes.TrimSpace(raw)
+	if !json.Valid(trimmed) {
+		return nil, fmt.Errorf("invalid %s", source)
 	}
-	if value == nil {
-		return nil, fmt.Errorf("invalid JSON in %s: expected an object", path)
+	if len(trimmed) == 0 || trimmed[0] != '{' {
+		return nil, fmt.Errorf("invalid %s: expected an object", source)
 	}
-	return value, nil
+	return json.RawMessage(trimmed), nil
 }
