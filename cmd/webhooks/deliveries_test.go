@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 func TestDeliveriesAPIReadEndpoints(t *testing.T) {
@@ -219,5 +221,30 @@ func TestDeliveryStatusValidation(t *testing.T) {
 	}
 	if status, err := deliveryStatus("succeeded", false); err != nil || status != DeliveryStatusSucceeded {
 		t.Fatalf("list status = %q, err = %v", status, err)
+	}
+}
+
+func TestReplayCommandsResolveRequiredValuesFromEnvironment(t *testing.T) {
+	t.Setenv("IDEMPOTENCY_KEY", "environment-key")
+	t.Setenv("CREATED_AT_FROM", "2026-08-01T10:00:00Z")
+
+	individual := NewReplayDeliveryCommand()
+	key, err := requiredIdempotencyKey(individual)
+	if err != nil || key != "environment-key" {
+		t.Fatalf("idempotency key = %q, err = %v", key, err)
+	}
+
+	bulk := NewReplayDeliveriesCommand()
+	from, err := fctl.GetDateTime(bulk, createdAtFromFlag)
+	if err != nil || from == nil || from.Format(time.RFC3339) != "2026-08-01T10:00:00Z" {
+		t.Fatalf("created-at-from = %v, err = %v", from, err)
+	}
+}
+
+func TestRequiredIdempotencyKeyRejectsMissingValue(t *testing.T) {
+	t.Setenv("IDEMPOTENCY_KEY", "")
+	_, err := requiredIdempotencyKey(NewReplayDeliveryCommand())
+	if err == nil {
+		t.Fatal("requiredIdempotencyKey() expected an error")
 	}
 }

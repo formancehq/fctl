@@ -27,9 +27,6 @@ func NewReplayDeliveriesController() *ReplayDeliveriesController {
 func (c *ReplayDeliveriesController) GetStore() *ReplayDeliveriesStore { return c.store }
 
 func (c *ReplayDeliveriesController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
-	if !fctl.CheckStackApprobation(cmd, "You are about to replay a page of webhook deliveries") {
-		return nil, fctl.ErrMissingApproval
-	}
 	createdAtFrom, err := fctl.GetDateTime(cmd, createdAtFromFlag)
 	if err != nil {
 		return nil, fmt.Errorf("parsing --%s: %w", createdAtFromFlag, err)
@@ -42,6 +39,10 @@ func (c *ReplayDeliveriesController) Run(cmd *cobra.Command, _ []string) (fctl.R
 		return nil, fmt.Errorf("parsing --%s: %w", createdAtToFlag, err)
 	}
 	pageSize, err := deliveryPageSize(cmd)
+	if err != nil {
+		return nil, err
+	}
+	idempotencyKey, err := requiredIdempotencyKey(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -71,11 +72,14 @@ func (c *ReplayDeliveriesController) Run(cmd *cobra.Command, _ []string) (fctl.R
 		request.Cursor = &cursor
 	}
 
+	if !fctl.CheckStackApprobation(cmd, "You are about to replay a page of webhook deliveries") {
+		return nil, fctl.ErrMissingApproval
+	}
 	api, err := authenticatedDeliveriesAPI(cmd)
 	if err != nil {
 		return nil, err
 	}
-	response, err := api.replayMany(cmd.Context(), fctl.GetString(cmd, idempotencyKeyFlag), request)
+	response, err := api.replayMany(cmd.Context(), idempotencyKey, request)
 	if err != nil {
 		return nil, fmt.Errorf("replaying deliveries: %w", err)
 	}
@@ -102,7 +106,7 @@ func (c *ReplayDeliveriesController) Render(cmd *cobra.Command, _ []string) erro
 }
 
 func NewReplayDeliveriesCommand() *cobra.Command {
-	cmd := fctl.NewCommand("replay-bulk",
+	return fctl.NewCommand("replay-bulk",
 		fctl.WithShortDescription("Replay a bounded page of failed or pending webhook deliveries"),
 		fctl.WithArgs(cobra.NoArgs),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
@@ -116,10 +120,4 @@ func NewReplayDeliveriesCommand() *cobra.Command {
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*ReplayDeliveriesStore](NewReplayDeliveriesController()),
 	)
-	for _, flag := range []string{createdAtFromFlag, idempotencyKeyFlag} {
-		if err := cmd.MarkFlagRequired(flag); err != nil {
-			panic(err)
-		}
-	}
-	return cmd
 }

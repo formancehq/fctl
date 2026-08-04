@@ -301,6 +301,14 @@ func deliveryPageSize(cmd *cobra.Command) (int, error) {
 	return int(pageSize), nil
 }
 
+func requiredIdempotencyKey(cmd *cobra.Command) (string, error) {
+	key := fctl.GetString(cmd, idempotencyKeyFlag)
+	if key == "" {
+		return "", fmt.Errorf("--%s is required", idempotencyKeyFlag)
+	}
+	return key, nil
+}
+
 func optionalTime(value *time.Time) string {
 	if value == nil {
 		return ""
