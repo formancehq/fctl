@@ -153,6 +153,9 @@ func newDeleteCommand() *cobra.Command {
 
 func newEvaluateCommand() *cobra.Command {
 	controller := clarity.NewController(func(cmd *cobra.Command, args []string, client *clarity.Client) (clarity.Store, error) {
+		if !fctl.CheckStackApprobation(cmd, "You are about to evaluate rule '%s'", args[0]) {
+			return nil, fctl.ErrMissingApproval
+		}
 		body := map[string]any{}
 		if at := fctl.GetString(cmd, "at"); at != "" {
 			body["at"] = at
@@ -186,6 +189,7 @@ func newEvaluateCommand() *cobra.Command {
 		fctl.WithAliases("run"),
 		fctl.WithShortDescription("Evaluate a rule now"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
+		fctl.WithConfirmFlag(),
 		fctl.WithStringFlag("at", "", "Canonical point in time (RFC3339; defaults to now)"),
 		fctl.WithStringFlag("safety-margin", "", "Safety margin as a Go duration (for example 30s)"),
 		fctl.WithStringArrayFlag("source-pit", nil, "Per-source PIT as key=RFC3339 (repeatable)"),

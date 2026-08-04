@@ -85,6 +85,9 @@ func QueryBody(cmd *cobra.Command, flag string) (map[string]any, error) {
 	if err := json.Unmarshal([]byte(raw), &query); err != nil {
 		return nil, fmt.Errorf("invalid --%s JSON: %w", flag, err)
 	}
+	if query == nil {
+		return nil, fmt.Errorf("invalid --%s JSON: expected an object", flag)
+	}
 	return query, nil
 }
 
@@ -96,6 +99,9 @@ func ReadJSONObject(cmd *cobra.Command, path string) (map[string]any, error) {
 	var value map[string]any
 	if err := json.Unmarshal([]byte(raw), &value); err != nil {
 		return nil, fmt.Errorf("invalid JSON in %s: %w", path, err)
+	}
+	if value == nil {
+		return nil, fmt.Errorf("invalid JSON in %s: expected an object", path)
 	}
 	return value, nil
 }

@@ -35,3 +35,15 @@ func TestLedgerClarityCommandSurface(t *testing.T) {
 		}
 	}
 }
+
+func TestEvaluateCommandRequiresConfirmation(t *testing.T) {
+	t.Parallel()
+
+	command, _, err := NewCommand().Find([]string{"rules", "evaluate"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if command.Flags().Lookup("confirm") == nil {
+		t.Fatal("evaluate command does not expose --confirm")
+	}
+}
