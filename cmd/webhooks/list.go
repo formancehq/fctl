@@ -50,6 +50,12 @@ func (c *ListWebhookController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 		return nil, err
 	}
 	request := operations.GetManyConfigsRequest{}
+	if configID := fctl.GetString(cmd, configIDFlag); configID != "" {
+		request.ID = &configID
+	}
+	if endpoint := fctl.GetString(cmd, endpointFlag); endpoint != "" {
+		request.Endpoint = &endpoint
+	}
 	response, err := stackClient.Webhooks.V1.GetManyConfigs(cmd.Context(), request)
 	if err != nil {
 		return nil, fmt.Errorf("listing all config: %w", err)
@@ -88,10 +94,12 @@ func (c *ListWebhookController) Render(cmd *cobra.Command, args []string) error 
 
 func NewListCommand() *cobra.Command {
 	return fctl.NewCommand("list",
-		fctl.WithShortDescription("List all configs"),
+		fctl.WithShortDescription("List webhook configs"),
 		fctl.WithAliases("ls", "l"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
+		fctl.WithStringFlag(configIDFlag, "", "Filter by config ID"),
+		fctl.WithStringFlag(endpointFlag, "", "Filter by endpoint URL"),
 		fctl.WithController[*ListWebhookStore](NewListWebhookController()),
 	)
 }
