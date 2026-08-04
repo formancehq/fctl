@@ -260,7 +260,7 @@ func authenticatedDeliveriesAPI(cmd *cobra.Command) (*deliveriesAPI, error) {
 
 func NewDeliveriesCommand() *cobra.Command {
 	return fctl.NewCommand("deliveries",
-		fctl.WithAliases("delivery", "del"),
+		fctl.WithAliases("delivery", "dlvs"),
 		fctl.WithShortDescription("Inspect and replay webhook deliveries"),
 		fctl.WithChildCommands(
 			NewListDeliveriesCommand(),

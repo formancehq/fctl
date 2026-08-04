@@ -199,6 +199,20 @@ func TestWebhooksCommandExposesConfigEndpoints(t *testing.T) {
 	}
 }
 
+func TestWebhooksCommandAliasesDoNotConflict(t *testing.T) {
+	cmd := NewCommand()
+
+	deleteCommand, _, err := cmd.Find([]string{"del"})
+	if err != nil || deleteCommand.Name() != "delete" {
+		t.Fatalf("alias del resolved to %q, want delete (err = %v)", deleteCommand.Name(), err)
+	}
+
+	deliveriesCommand, _, err := cmd.Find([]string{"dlvs"})
+	if err != nil || deliveriesCommand.Name() != "deliveries" {
+		t.Fatalf("alias dlvs resolved to %q, want deliveries (err = %v)", deliveriesCommand.Name(), err)
+	}
+}
+
 func TestDeliveryStatusValidation(t *testing.T) {
 	if _, err := deliveryStatus("succeeded", true); err == nil {
 		t.Fatal("bulk replay accepted succeeded status")
