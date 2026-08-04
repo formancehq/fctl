@@ -248,3 +248,26 @@ func TestRequiredIdempotencyKeyRejectsMissingValue(t *testing.T) {
 		t.Fatal("requiredIdempotencyKey() expected an error")
 	}
 }
+
+func TestReplayStatusesUseEnvironmentBeforeDefaults(t *testing.T) {
+	t.Setenv("STATUS", "failed")
+	statuses, err := resolvedReplayStatuses(NewReplayDeliveriesCommand())
+	if err != nil {
+		t.Fatalf("resolvedReplayStatuses() error = %v", err)
+	}
+	if !reflect.DeepEqual(statuses, []DeliveryStatus{DeliveryStatusFailed}) {
+		t.Fatalf("statuses = %v, want [failed]", statuses)
+	}
+}
+
+func TestReplayStatusesDefaultToFailedAndPending(t *testing.T) {
+	t.Setenv("STATUS", "")
+	statuses, err := resolvedReplayStatuses(NewReplayDeliveriesCommand())
+	if err != nil {
+		t.Fatalf("resolvedReplayStatuses() error = %v", err)
+	}
+	want := []DeliveryStatus{DeliveryStatusFailed, DeliveryStatusPending}
+	if !reflect.DeepEqual(statuses, want) {
+		t.Fatalf("statuses = %v, want %v", statuses, want)
+	}
+}

@@ -51,14 +51,9 @@ func (c *ReplayDeliveriesController) Run(cmd *cobra.Command, _ []string) (fctl.R
 		return nil, err
 	}
 
-	statusValues := fctl.GetStringSlice(cmd, deliveryStatusFlag)
-	statuses := make([]DeliveryStatus, 0, len(statusValues))
-	for _, value := range statusValues {
-		status, err := deliveryStatus(strings.ToLower(value), true)
-		if err != nil {
-			return nil, err
-		}
-		statuses = append(statuses, status)
+	statuses, err := resolvedReplayStatuses(cmd)
+	if err != nil {
+		return nil, err
 	}
 
 	request := replayDeliveriesRequest{
@@ -87,6 +82,22 @@ func (c *ReplayDeliveriesController) Run(cmd *cobra.Command, _ []string) (fctl.R
 	return c, nil
 }
 
+func resolvedReplayStatuses(cmd *cobra.Command) ([]DeliveryStatus, error) {
+	values := fctl.GetStringSlice(cmd, deliveryStatusFlag)
+	if len(values) == 0 {
+		values = []string{string(DeliveryStatusFailed), string(DeliveryStatusPending)}
+	}
+	statuses := make([]DeliveryStatus, 0, len(values))
+	for _, value := range values {
+		status, err := deliveryStatus(strings.ToLower(value), true)
+		if err != nil {
+			return nil, err
+		}
+		statuses = append(statuses, status)
+	}
+	return statuses, nil
+}
+
 func (c *ReplayDeliveriesController) Render(cmd *cobra.Command, _ []string) error {
 	result := c.store.Result
 	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Delivery replay page processed")
@@ -112,7 +123,7 @@ func NewReplayDeliveriesCommand() *cobra.Command {
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithStringFlag(createdAtFromFlag, "", "Replay deliveries created at or after this RFC3339 timestamp"),
 		fctl.WithStringFlag(createdAtToFlag, "", "Replay deliveries created at or before this RFC3339 timestamp"),
-		fctl.WithStringSliceFlag(deliveryStatusFlag, []string{string(DeliveryStatusFailed), string(DeliveryStatusPending)}, "Delivery statuses to replay (failed, pending)"),
+		fctl.WithStringSliceFlag(deliveryStatusFlag, []string{}, "Delivery statuses to replay (failed, pending; default: both)"),
 		fctl.WithStringSliceFlag(configIDFlag, []string{}, "Restrict replay to webhook config IDs"),
 		fctl.WithStringFlag(idempotencyKeyFlag, "", "Idempotency key for this replay request"),
 		fctl.WithCursorFlag(),
