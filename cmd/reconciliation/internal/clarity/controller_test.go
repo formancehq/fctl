@@ -1,6 +1,7 @@
 package clarity
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,6 +22,43 @@ func TestQueryBodyRejectsNull(t *testing.T) {
 	_, err := QueryBody(cmd, "query")
 	if err == nil || !strings.Contains(err.Error(), "expected an object") {
 		t.Fatalf("error = %v", err)
+	}
+}
+
+func TestQueryBodyWithoutValueReturnsNilInterface(t *testing.T) {
+	t.Parallel()
+
+	cmd := &cobra.Command{}
+	cmd.Flags().String("query", "", "")
+	body, err := QueryBody(cmd, "query")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if body != nil {
+		t.Fatalf("body = %#v, want nil", body)
+	}
+}
+
+func TestQueryBodyPreservesLargeNumbers(t *testing.T) {
+	t.Parallel()
+
+	const query = `{"$match":{"threshold":9007199254740993}}`
+	cmd := &cobra.Command{}
+	cmd.Flags().String("query", "", "")
+	if err := cmd.Flags().Set("query", query); err != nil {
+		t.Fatal(err)
+	}
+
+	body, err := QueryBody(cmd, "query")
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, ok := body.(json.RawMessage)
+	if !ok {
+		t.Fatalf("body type = %T, want json.RawMessage", body)
+	}
+	if string(raw) != query {
+		t.Fatalf("body = %s, want %s", raw, query)
 	}
 }
 

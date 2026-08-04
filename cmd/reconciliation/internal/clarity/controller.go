@@ -77,7 +77,7 @@ func PaginationQuery(cmd *cobra.Command) (url.Values, error) {
 	return values, nil
 }
 
-func QueryBody(cmd *cobra.Command, flag string) (json.RawMessage, error) {
+func QueryBody(cmd *cobra.Command, flag string) (any, error) {
 	raw, err := cmd.Flags().GetString(flag)
 	if err != nil || raw == "" {
 		return nil, err
