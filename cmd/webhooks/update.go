@@ -43,17 +43,7 @@ func (c *UpdateWebhookController) Run(cmd *cobra.Command, args []string) (fctl.R
 		return nil, fmt.Errorf("invalid endpoint URL: %w", err)
 	}
 
-	secret := fctl.GetString(cmd, secretFlag)
-	request := operations.UpdateConfigRequest{
-		ID: args[0],
-		ConfigUser: webhooksmodels.ConfigUser{
-			Endpoint:   args[1],
-			EventTypes: args[2:],
-		},
-	}
-	if cmd.Flags().Changed(secretFlag) {
-		request.ConfigUser.Secret = &secret
-	}
+	request := newUpdateConfigRequest(cmd, args)
 	response, err := stackClient.Webhooks.V1.UpdateConfig(cmd.Context(), request)
 	if err != nil {
 		return nil, fmt.Errorf("updating config: %w", err)
@@ -63,6 +53,21 @@ func (c *UpdateWebhookController) Run(cmd *cobra.Command, args []string) (fctl.R
 	}
 	c.store.Success = true
 	return c, nil
+}
+
+func newUpdateConfigRequest(cmd *cobra.Command, args []string) operations.UpdateConfigRequest {
+	request := operations.UpdateConfigRequest{
+		ID: args[0],
+		ConfigUser: webhooksmodels.ConfigUser{
+			Endpoint:   args[1],
+			EventTypes: args[2:],
+		},
+	}
+	secret := fctl.GetString(cmd, secretFlag)
+	if cmd.Flags().Changed(secretFlag) || secret != "" {
+		request.ConfigUser.Secret = &secret
+	}
+	return request
 }
 
 func (c *UpdateWebhookController) Render(cmd *cobra.Command, _ []string) error {
