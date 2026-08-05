@@ -13,6 +13,9 @@ func NewCommand() *cobra.Command {
 		fctl.WithChildCommands(
 			NewCreateCommand(),
 			NewListCommand(),
+			NewUpdateCommand(),
+			NewTestCommand(),
+			NewDeliveriesCommand(),
 			NewDeactivateCommand(),
 			NewActivateCommand(),
 			NewDeleteCommand(),
