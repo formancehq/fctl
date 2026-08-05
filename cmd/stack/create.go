@@ -1,12 +1,15 @@
 package stack
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+	"golang.org/x/mod/semver"
 
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
@@ -155,6 +158,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		for _, version := range availableVersionsResponse.GetRegionVersionsResponse.GetData() {
 			options = append(options, version.GetName())
 		}
+		sortVersionsDescending(options)
 
 		selectedOption := ""
 		if len(options) > 0 {
@@ -248,4 +252,13 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 
 func (c *CreateController) Render(cmd *cobra.Command, _ []string) error {
 	return internal.PrintStackInformation(cmd.OutOrStdout(), c.store.Stack, c.store.Versions)
+}
+
+func sortVersionsDescending(versions []string) {
+	slices.SortFunc(versions, func(a, b string) int {
+		if order := semver.Compare(b, a); order != 0 {
+			return order
+		}
+		return cmp.Compare(b, a)
+	})
 }
