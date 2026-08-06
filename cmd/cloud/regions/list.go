@@ -52,7 +52,14 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, err
 	}
 
-	organizationID, apiClient, err := fctl.NewMembershipClientForOrganizationFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	organizationID, apiClient, err := fctl.NewMembershipClientForOrganizationFromFlagsWithScopes(
+		cmd,
+		relyingParty,
+		fctl.NewPTermDialog(),
+		profileName,
+		*profile,
+		[]string{"organization:ListRegions"},
+	)
 	if err != nil {
 		return nil, err
 	}

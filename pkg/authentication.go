@@ -248,6 +248,44 @@ func Refresh(ctx context.Context, relyingParty client.RelyingParty, token Access
 	}, nil
 }
 
+func RefreshRootTokens(ctx context.Context, relyingParty client.RelyingParty, tokens Tokens) (*Tokens, error) {
+	newToken, err := client.RefreshTokens[*IDTokenClaims](ctx, relyingParty, tokens.Access.Refresh, "", "")
+	if err != nil {
+		return nil, newErrInvalidAuthentication(err)
+	}
+
+	accessTokenClaims := AccessTokenClaims{}
+	if _, err := oidc.ParseToken(newToken.AccessToken, &accessTokenClaims); err != nil {
+		return nil, newErrInvalidAuthentication(err)
+	}
+
+	refreshToken := newToken.RefreshToken
+	if refreshToken == "" {
+		refreshToken = tokens.Access.Refresh
+	}
+
+	idToken := tokens.ID.Token
+	idTokenClaims := tokens.ID.Claims
+	if newToken.IDToken != "" && newToken.IDTokenClaims != nil {
+		idToken = newToken.IDToken
+		idTokenClaims = *newToken.IDTokenClaims
+	}
+
+	return &Tokens{
+		Access: AccessToken{
+			TokenWithClaims: TokenWithClaims[AccessTokenClaims]{
+				Token:  newToken.AccessToken,
+				Claims: accessTokenClaims,
+			},
+			Refresh: refreshToken,
+		},
+		ID: IDToken{
+			Token:  idToken,
+			Claims: idTokenClaims,
+		},
+	}, nil
+}
+
 func FetchStackToken(ctx context.Context, httpClient *http.Client, stackURI, token string) (*oauth2.Token, error) {
 	form := url.Values{
 		"grant_type": []string{"urn:ietf:params:oauth:grant-type:jwt-bearer"},
@@ -321,6 +359,26 @@ type AccessTokenClaims struct {
 type AccessToken struct {
 	TokenWithClaims[AccessTokenClaims]
 	Refresh string `json:"refreshToken"`
+}
+
+func (t AccessToken) MissingScopes(scopes ...string) []string {
+	tokenScopes := make(map[string]struct{}, len(t.Claims.Scopes))
+	for _, scope := range t.Claims.Scopes {
+		tokenScopes[scope] = struct{}{}
+	}
+
+	missingScopes := make([]string, 0)
+	for _, scope := range scopes {
+		if _, ok := tokenScopes[scope]; !ok {
+			missingScopes = append(missingScopes, scope)
+		}
+	}
+
+	return missingScopes
+}
+
+func (t AccessToken) HasScopes(scopes ...string) bool {
+	return len(t.MissingScopes(scopes...)) == 0
 }
 
 func (t AccessToken) ToOAuth2() *oauth2.Token {
