@@ -30,7 +30,7 @@ func CompletePluginNames(factory connectivityinternal.ClientFactory) cobra.Compl
 		defer cancel()
 
 		completionCommand := *cmd
-		completionCommand.SetContext(ctx)
+		completionCommand.SetContext(connectivityinternal.WithNonInteractive(ctx))
 		client, err := factory(&completionCommand)
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
