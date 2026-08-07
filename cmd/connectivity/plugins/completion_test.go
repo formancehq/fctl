@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	connectivityclient "github.com/formancehq/fctl/v3/internal/connectivityclient"
 )
 
@@ -27,7 +28,12 @@ func TestCompletePluginNamesUsesBoundedCatalogQueryAndReturnsPrefixMatchesWithDe
 		}}, nil
 	}}
 
-	completion := CompletePluginNames(factoryReturning(client))
+	completion := CompletePluginNames(func(cmd *cobra.Command) (connectivityclient.Client, error) {
+		if !connectivityinternal.IsNonInteractive(cmd.Context()) {
+			t.Fatal("completion factory context is interactive")
+		}
+		return client, nil
+	})
 	candidates, directive := completion(&cobra.Command{}, nil, "al")
 
 	if !reflect.DeepEqual(gotOptions, connectivityclient.ListOptions{Limit: 500}) {
