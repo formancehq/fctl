@@ -51,12 +51,24 @@ func CompleteInstanceNames(factory connectivityinternal.ClientFactory) cobra.Com
 }
 
 func CompleteVersions(factory connectivityinternal.ClientFactory, pluginArg func(*cobra.Command, []string) string) cobra.CompletionFunc {
-	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return completeVersions(factory, func(ctx context.Context, client connectivityclient.Client, cmd *cobra.Command, args []string) (*connectivityclient.Plugin, error) {
 		if pluginArg == nil {
-			return nil, cobra.ShellCompDirectiveNoFileComp
+			return nil, nil
 		}
 		pluginName := pluginArg(cmd, args)
 		if pluginName == "" {
+			return nil, nil
+		}
+		return client.GetPlugin(ctx, pluginName)
+	})
+}
+
+func completeVersions(
+	factory connectivityinternal.ClientFactory,
+	resolvePlugin func(context.Context, connectivityclient.Client, *cobra.Command, []string) (*connectivityclient.Plugin, error),
+) cobra.CompletionFunc {
+	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if resolvePlugin == nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 		client, completionCommand, cancel, ok := completionClient(cmd, factory)
@@ -65,7 +77,7 @@ func CompleteVersions(factory connectivityinternal.ClientFactory, pluginArg func
 		}
 		defer cancel()
 
-		plugin, err := client.GetPlugin(completionCommand.Context(), pluginName)
+		plugin, err := resolvePlugin(completionCommand.Context(), client, completionCommand, args)
 		if err != nil || plugin == nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
@@ -200,7 +212,7 @@ func completionClient(cmd *cobra.Command, factory connectivityinternal.ClientFac
 	completionCommand := *cmd
 	completionCommand.SetContext(connectivityinternal.WithNonInteractive(ctx))
 	client, err := factory(&completionCommand)
-	if err != nil {
+	if err != nil || client == nil {
 		cancel()
 		return nil, nil, func() {}, false
 	}
