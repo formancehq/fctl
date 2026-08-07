@@ -133,6 +133,27 @@ func TestInstallConfirmationRejectionPreventsCreateInstance(t *testing.T) {
 	require.False(t, created)
 }
 
+func TestInstallValidationErrorPreventsCreateInstance(t *testing.T) {
+	created := false
+	client := mutationClientMock{
+		getPlugin: func(context.Context, string) (*connectivityclient.Plugin, error) {
+			return &connectivityclient.Plugin{}, nil
+		},
+		create: func(context.Context, connectivityclient.InstanceCreate) (*connectivityclient.Instance, error) {
+			created = true
+			return nil, errors.New("CreateInstance must not be called")
+		},
+	}
+
+	_, err := executeCommand(
+		NewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)),
+		"stripe", "--ledger=main", "--set=UNKNOWN=value", "--confirm",
+	)
+
+	require.ErrorContains(t, err, "unknown configuration keys: UNKNOWN")
+	require.False(t, created)
+}
+
 func TestInstallPreservesPluginAndCreateAPIErrorsAndRejectsEmptyResponses(t *testing.T) {
 	pluginError := &connectivityclient.APIError{StatusCode: 404, Code: "PLUGIN_NOT_FOUND", Message: "missing"}
 	createError := &connectivityclient.APIError{StatusCode: 409, Code: "INSTANCE_EXISTS", Message: "duplicate"}

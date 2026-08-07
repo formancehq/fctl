@@ -192,6 +192,10 @@ func TestCompleteFunctionsReturnSilentlyOnFactoryAPIResolverPathAndTimeoutErrors
 			completion: CompleteInstanceNames(func(*cobra.Command) (connectivityclient.Client, error) { return nil, errors.New("not authenticated") }),
 			command:    &cobra.Command{},
 		},
+		"instance nil client": {
+			completion: CompleteInstanceNames(func(*cobra.Command) (connectivityclient.Client, error) { return nil, nil }),
+			command:    &cobra.Command{},
+		},
 		"instance API": {completion: CompleteInstanceNames(factoryReturning(apiErrorClient)), command: &cobra.Command{}},
 		"instance timeout": {
 			completion: CompleteInstanceNames(factoryReturning(completionClientMock{listInstances: func(ctx context.Context, _ connectivityclient.ListOptions) (*connectivityclient.InstanceList, error) {
@@ -225,6 +229,29 @@ func TestCompleteFunctionsReturnSilentlyOnFactoryAPIResolverPathAndTimeoutErrors
 				t.Fatalf("directive = %v, want NoFileComp", directive)
 			}
 		})
+	}
+}
+
+func TestCompletionClientCopyDoesNotMutateOriginalCommandContext(t *testing.T) {
+	originalContext := context.WithValue(context.Background(), struct{}{}, "original")
+	command := &cobra.Command{}
+	command.SetContext(originalContext)
+	completion := CompleteInstanceNames(func(cmd *cobra.Command) (connectivityclient.Client, error) {
+		if !connectivityinternal.IsNonInteractive(cmd.Context()) {
+			t.Fatal("copied completion command must be non-interactive")
+		}
+		return completionClientMock{listInstances: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.InstanceList, error) {
+			return &connectivityclient.InstanceList{}, nil
+		}}, nil
+	})
+
+	_, _ = completion(command, nil, "")
+
+	if command.Context() != originalContext {
+		t.Fatal("completion mutated the original command context")
+	}
+	if connectivityinternal.IsNonInteractive(command.Context()) {
+		t.Fatal("original command context became non-interactive")
 	}
 }
 
