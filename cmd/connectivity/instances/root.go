@@ -7,7 +7,7 @@ import (
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
-func NewCommand(factory connectivityinternal.ClientFactory, _ ReadFileFunc, _ PathCompleter) *cobra.Command {
+func NewCommand(factory connectivityinternal.ClientFactory, read ReadFileFunc, paths PathCompleter) *cobra.Command {
 	return fctl.NewCommand(
 		"instances",
 		fctl.WithAliases("instance", "i"),
@@ -15,6 +15,7 @@ func NewCommand(factory connectivityinternal.ClientFactory, _ ReadFileFunc, _ Pa
 		fctl.WithChildCommands(
 			NewListCommand(factory),
 			NewShowCommand(factory),
+			NewInstallCommand(factory, read, paths),
 		),
 	)
 }
