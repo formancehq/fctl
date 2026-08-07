@@ -58,7 +58,7 @@ func TestInstallBuildsInstanceFromPluginSchemaAndOnlySetsChangedScalars(t *testi
 	output, err := executeCommand(
 		NewInstallCommand(factoryReturning(client), read, mockPathCompleter(nil)),
 		"stripe", "--name=stripe-eu", "--ledger=main", "--version=2.0.0",
-		"--start-sequence=0", "--poll-interval=3s", "--config=install.yaml",
+		"--poll-interval=3s", "--config=install.yaml",
 		"--env-file=plugin.env", "--set=TOKEN=@token.txt", "--confirm",
 	)
 
@@ -68,7 +68,6 @@ func TestInstallBuildsInstanceFromPluginSchemaAndOnlySetsChangedScalars(t *testi
 	require.Equal(t, "stripe", gotBody.Spec.Plugin)
 	require.Equal(t, "main", gotBody.Spec.Ledger)
 	require.Equal(t, "2.0.0", *gotBody.Spec.Version)
-	require.Equal(t, int64(0), *gotBody.Spec.StartSequence)
 	require.Equal(t, "3s", *gotBody.Spec.PollInterval)
 	require.Equal(t, "https://config.example", *gotBody.Spec.Config.Env["API_URL"].Value)
 	require.Equal(t, "file-token", *gotBody.Spec.Config.Env["TOKEN"].Value)
@@ -248,6 +247,12 @@ func TestInstallRegistersAliasesAndRootIntegration(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "install", child.Name())
 	require.True(t, reflect.DeepEqual([]string{"create", "in"}, child.Aliases))
+}
+
+func TestInstallDoesNotExposeUnsupportedStartSequence(t *testing.T) {
+	command := NewInstallCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
+
+	require.Nil(t, command.Flags().Lookup("start-sequence"))
 }
 
 func TestInstallWiresPluginVersionSetAndFileCompletions(t *testing.T) {

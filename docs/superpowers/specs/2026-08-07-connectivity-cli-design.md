@@ -80,7 +80,7 @@ calls `POST /instances`. It accepts:
 
 - `--name`, defaulting to the plugin name;
 - required `--ledger`;
-- optional `--version`, `--start-sequence`, and `--poll-interval`;
+- optional `--version` and `--poll-interval`;
 - optional `--config <file>`;
 - repeatable `--env-file <file>`;
 - repeatable `--set KEY=VALUE`;
@@ -90,8 +90,13 @@ calls `POST /instances`. It accepts:
 `GET /plugins/{plugin}` for schema-aware parsing, and finally
 `PATCH /instances/{name}` with `application/merge-patch+json`. It accepts the
 same configuration inputs as install. It also accepts optional `--version`,
-`--ledger`, `--start-sequence`, and `--poll-interval`; only explicitly supplied
-fields are patched. At least one change must be supplied.
+`--ledger`, and `--poll-interval`; only explicitly supplied fields are patched.
+At least one change must be supplied.
+
+Although the API 0.1.0 model includes `startSequence`, the pinned server drops
+the CRD's opaque byte-valued `initialCursor` on reads and has no valid write
+mapping from an integer sequence. The CLI intentionally does not expose a
+`--start-sequence` flag rather than accepting a value that cannot take effect.
 
 `instances uninstall <instance>` calls `DELETE /instances/{name}` after the
 standard `fctl` confirmation flow.
@@ -142,9 +147,12 @@ precedence:
 
 During configure, the instance's current configuration replaces plugin
 defaults as the lowest-precedence base. This preserves every untouched env
-entry and file mount. The command sends the resulting complete `config` object
-inside the merge patch, so changing one file mount cannot accidentally replace
-the other mounts in the API's array-valued `files` field.
+entry and file mount. Controllers keep the API-shaped complete `config` object
+inside the merge patch. Immediately before the HTTP request, the Connectivity
+client adapts it to root CRD `spec.env` and `spec.files`, removing `config`,
+because pinned commit `2ec12564` applies PATCH directly to the CRD and its
+password materializer reads those root fields. Sending the complete `files`
+array ensures changing one mount cannot accidentally replace the other mounts.
 
 The plugin's `configSchema` determines whether a key is an environment entry or
 a file mount. Required keys are validated before the write request. Invalid

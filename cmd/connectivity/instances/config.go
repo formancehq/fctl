@@ -246,11 +246,11 @@ func parseReference(raw, kind string) (*connectivityclient.KeyRef, error) {
 func parseAssignment(raw string) (string, string, error) {
 	parts := strings.SplitN(raw, "=", 2)
 	if len(parts) != 2 {
-		return "", "", fmt.Errorf("invalid --set %q: expected KEY=value", raw)
+		return "", "", fmt.Errorf("invalid --set: expected KEY=value")
 	}
 	key := strings.TrimSpace(parts[0])
 	if key == "" {
-		return "", "", fmt.Errorf("invalid --set %q: empty key", raw)
+		return "", "", fmt.Errorf("invalid --set: empty key")
 	}
 	return key, parts[1], nil
 }

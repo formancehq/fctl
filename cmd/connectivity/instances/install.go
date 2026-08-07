@@ -13,14 +13,13 @@ import (
 )
 
 const (
-	nameFlag          = "name"
-	ledgerFlag        = "ledger"
-	versionFlag       = "version"
-	startSequenceFlag = "start-sequence"
-	pollIntervalFlag  = "poll-interval"
-	configFlag        = "config"
-	envFileFlag       = "env-file"
-	setFlag           = "set"
+	nameFlag         = "name"
+	ledgerFlag       = "ledger"
+	versionFlag      = "version"
+	pollIntervalFlag = "poll-interval"
+	configFlag       = "config"
+	envFileFlag      = "env-file"
+	setFlag          = "set"
 )
 
 type InstallStore struct {
@@ -58,7 +57,6 @@ func NewInstallCommand(factory connectivityinternal.ClientFactory, read ReadFile
 		fctl.WithStringFlag(nameFlag, "", "Instance name (defaults to the plugin name)"),
 		fctl.WithStringFlag(ledgerFlag, "", "Ledger name"),
 		fctl.WithStringFlag(versionFlag, "", "Plugin version"),
-		withInt64Flag(startSequenceFlag, 0, "Starting ledger sequence"),
 		fctl.WithStringFlag(pollIntervalFlag, "", "Polling interval"),
 		fctl.WithStringFlag(configFlag, "", "YAML or JSON configuration file"),
 		fctl.WithStringArrayFlag(envFileFlag, nil, "Dotenv configuration file (repeatable)"),
@@ -76,12 +74,6 @@ func NewInstallCommand(factory connectivityinternal.ClientFactory, read ReadFile
 		panic(err)
 	}
 	return command
-}
-
-func withInt64Flag(name string, defaultValue int64, help string) fctl.CommandOptionFn {
-	return func(cmd *cobra.Command) {
-		cmd.Flags().Int64(name, defaultValue, help)
-	}
 }
 
 func installPluginArgument(_ *cobra.Command, args []string) string {
@@ -155,13 +147,6 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 			return nil, err
 		}
 		spec.Version = fctl.Ptr(value)
-	}
-	if cmd.Flags().Changed(startSequenceFlag) {
-		value, err := cmd.Flags().GetInt64(startSequenceFlag)
-		if err != nil {
-			return nil, err
-		}
-		spec.StartSequence = fctl.Ptr(value)
 	}
 	if cmd.Flags().Changed(pollIntervalFlag) {
 		value, err := cmd.Flags().GetString(pollIntervalFlag)

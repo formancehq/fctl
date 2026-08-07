@@ -51,7 +51,7 @@ func TestShowInstanceRendersMetadataDesiredStateLifecycleProgressAndRedactedConf
 	for _, expected := range []string{
 		"Information", "Name", "stripe-eu", "Namespace", "formance", "UID", "instance-uid", "Resource Version", "42",
 		"Created At", created.Format(time.RFC3339), "Labels", "region=eu", "Annotations", "owner=platform",
-		"Desired Specification", "Plugin", "stripe", "Version", "2.0.0", "Ledger", "main", "Start Sequence", "10", "Poll Interval", "5s",
+		"Desired Specification", "Plugin", "stripe", "Version", "2.0.0", "Ledger", "main", "Poll Interval", "5s",
 		"Lifecycle", "Resolved Image", "registry/plugin:2.0.0", "Plugin Address", "http://stripe.default.svc", "Phase", "Ready", "State", "Running",
 		"Ingestion Progress", "Current Sequence", "42", "Source Tip Sequence", "48", "Last Error", "source temporarily unavailable", "Message", "retrying ingestion",
 		"Configuration", "API_KEY", "environment", "inline", "TOKEN", "secret:plugin-secrets/token",
@@ -77,6 +77,17 @@ func TestShowPlainOutputNeverPrintsInlineConfigValues(t *testing.T) {
 	require.Contains(t, output, "inline")
 	require.NotContains(t, output, "must-not-leak")
 	require.NotContains(t, output, "private config")
+}
+
+func TestShowPlainOutputOmitsUnsupportedStartSequence(t *testing.T) {
+	instance := instanceFixture("stripe-eu")
+	instance.Spec.StartSequence = fctl.Ptr(int64(987654321))
+
+	output, err := executeCommand(NewShowCommand(factoryWithInstance(instance)), "stripe-eu")
+
+	require.NoError(t, err)
+	require.NotContains(t, output, "Start Sequence")
+	require.NotContains(t, output, "987654321")
 }
 
 func TestShowInstanceJSONPreservesCompleteModel(t *testing.T) {

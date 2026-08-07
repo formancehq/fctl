@@ -275,6 +275,27 @@ func TestBuildInstallConfigRejectsMalformedAssignmentsAndReferences(t *testing.T
 	}
 }
 
+func TestBuildInstallConfigMalformedSetErrorDoesNotEchoSecretAssignment(t *testing.T) {
+	const secretSentinel = "SECRET-SENTINEL-MUST-NOT-LEAK"
+	tests := []string{
+		"TOKEN-" + secretSentinel,
+		"=" + secretSentinel,
+	}
+
+	for _, assignment := range tests {
+		_, err := BuildInstallConfig(
+			&cobra.Command{},
+			pluginWithSchemaAndDefaults(),
+			InputOptions{SetValues: []string{assignment}},
+			mapReadFile(nil),
+		)
+
+		require.Error(t, err)
+		require.NotContains(t, err.Error(), assignment)
+		require.NotContains(t, err.Error(), secretSentinel)
+	}
+}
+
 func TestBuildInstallConfigReturnsInputReadAndParseErrors(t *testing.T) {
 	t.Run("unreadable config", func(t *testing.T) {
 		_, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{ConfigFile: "missing.yaml"}, mapReadFile(nil))

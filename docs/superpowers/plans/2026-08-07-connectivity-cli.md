@@ -16,6 +16,11 @@
 - Add no Connectivity profile, token, context, API URL flag, generated client, or new dependency.
 - Never print inline configuration values in plain output; JSON retains the API model.
 - Dynamic completion has a two-second timeout, fails silently, and never prompts.
+- Keep controller/client PATCH inputs API-shaped as `spec.config`; adapt them to
+  pinned commit `2ec12564`'s root CRD `spec.env`/`spec.files` only at the HTTP
+  boundary, preserving scalar fields and the complete files array.
+- Do not expose API 0.1.0's `startSequence` through CLI flags: the pinned CRD
+  uses an opaque byte-valued `initialCursor` and provides no valid mapping.
 - Unit tests use mocks; HTTP integration test names use Given/When/Then.
 - New handwritten packages maintain at least 80% statement coverage.
 - Run all tooling through Nix and Just, including tests and precommit before each commit.
@@ -121,7 +126,7 @@ func New(stackURI string, httpClient *http.Client) Client
 
 - [ ] **Step 4: Implement minimal HTTP wrappers**
 
-Use one JSON request helper. Join `/api/connectivity`, escape names with `url.PathEscape`, use `url.Values`, set `Accept`, set POST content type to `application/json`, PATCH to `application/merge-patch+json`, parse `{code,message,details}` into `APIError`, and reject malformed or empty object responses. Accept 200 for reads and patch, 201 for create, and 204 for delete.
+Use one JSON request helper. Join `/api/connectivity`, escape names with `url.PathEscape`, use `url.Values`, set `Accept`, set POST content type to `application/json`, PATCH to `application/merge-patch+json`, parse `{code,message,details}` into `APIError`, and reject malformed or empty object responses. Accept 200 for reads and patch, 201 for create, and 204 for delete. At the PATCH HTTP boundary, reshape API `spec.config.env/files` to the pinned CRD's root `spec.env/files`, remove `config`, and preserve other spec fields.
 
 - [ ] **Step 5: Verify GREEN, coverage, repository gates, and commit**
 
@@ -394,7 +399,7 @@ Expected: compilation fails because `NewInstallCommand` does not exist.
 
 - [ ] **Step 3: Implement flags, completions, controller, and renderer**
 
-Build `install <plugin>` with aliases `create,in`, exact one argument, `--name`, required `--ledger`, optional `--version`, `--start-sequence`, `--poll-interval`, `--config`, repeatable `--env-file`, repeatable `--set`, and confirmation. Fetch plugin, call `BuildInstallConfig`, approve, POST, store the returned instance, and render:
+Build `install <plugin>` with aliases `create,in`, exact one argument, `--name`, required `--ledger`, optional `--version`, `--poll-interval`, `--config`, repeatable `--env-file`, repeatable `--set`, and confirmation. Fetch plugin, call `BuildInstallConfig`, approve, POST, store the returned instance, and render:
 
 ```text
 Instance "stripe-eu" installed with plugin "stripe" for ledger "main".
@@ -464,7 +469,6 @@ specPatch := map[string]any{}
 if configChanged { specPatch["config"] = mergedConfig }
 if cmd.Flags().Changed("version") { specPatch["version"] = version }
 if cmd.Flags().Changed("ledger") { specPatch["ledger"] = ledger }
-if cmd.Flags().Changed("start-sequence") { specPatch["startSequence"] = startSequence }
 if cmd.Flags().Changed("poll-interval") { specPatch["pollInterval"] = pollInterval }
 patch := connectivityclient.InstancePatch{"spec": specPatch}
 ```

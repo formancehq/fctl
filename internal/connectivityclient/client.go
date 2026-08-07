@@ -64,11 +64,55 @@ func (c *client) GetInstance(ctx context.Context, name string) (*Instance, error
 }
 
 func (c *client) PatchInstance(ctx context.Context, name string, patch InstancePatch) (*Instance, error) {
+	wirePatch, err := adaptInstancePatchForPinnedAPI(patch)
+	if err != nil {
+		return nil, err
+	}
 	result := &Instance{}
-	if err := c.requestJSON(ctx, http.MethodPatch, "instances", name, nil, patch, "application/merge-patch+json", http.StatusOK, result, true); err != nil {
+	if err := c.requestJSON(ctx, http.MethodPatch, "instances", name, nil, wirePatch, "application/merge-patch+json", http.StatusOK, result, true); err != nil {
 		return nil, err
 	}
 	return result, nil
+}
+
+// adaptInstancePatchForPinnedAPI bridges the API 0.1.0 model to Connectivity
+// commit 2ec12564's PATCH handler. That handler applies the patch directly to
+// the Instance CRD and materializes passwords by reading spec.env/spec.files,
+// while read/create mapping exposes those fields as spec.config.
+func adaptInstancePatchForPinnedAPI(patch InstancePatch) (InstancePatch, error) {
+	encoded, err := json.Marshal(patch)
+	if err != nil {
+		return nil, fmt.Errorf("marshal connectivity instance patch: %w", err)
+	}
+	wirePatch := InstancePatch{}
+	if err := json.Unmarshal(encoded, &wirePatch); err != nil {
+		return nil, fmt.Errorf("reshape connectivity instance patch: %w", err)
+	}
+	spec, ok := wirePatch["spec"].(map[string]any)
+	if !ok {
+		return wirePatch, nil
+	}
+	config, exists := spec["config"]
+	if !exists {
+		return wirePatch, nil
+	}
+	delete(spec, "config")
+	if config == nil {
+		spec["env"] = nil
+		spec["files"] = nil
+		return wirePatch, nil
+	}
+	configObject, ok := config.(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("reshape connectivity instance patch: spec.config must be an object")
+	}
+	if env, ok := configObject["env"]; ok {
+		spec["env"] = env
+	}
+	if files, ok := configObject["files"]; ok {
+		spec["files"] = files
+	}
+	return wirePatch, nil
 }
 
 func (c *client) DeleteInstance(ctx context.Context, name string) error {
@@ -170,11 +214,71 @@ func decodeResponse(body io.Reader, destination any, requireObject bool) error {
 	if len(trimmed) == 0 {
 		return fmt.Errorf("decode connectivity response: empty response body")
 	}
-	if requireObject && (bytes.Equal(trimmed, []byte("{}")) || bytes.Equal(trimmed, []byte("null"))) {
-		return fmt.Errorf("decode connectivity response: empty object response")
+	if requireObject {
+		var root any
+		if err := json.Unmarshal(trimmed, &root); err != nil {
+			return fmt.Errorf("decode connectivity response: %w", err)
+		}
+		if _, ok := root.(map[string]any); !ok {
+			return fmt.Errorf("decode connectivity response: root must be an object")
+		}
 	}
 	if err := json.Unmarshal(trimmed, destination); err != nil {
 		return fmt.Errorf("decode connectivity response: %w", err)
+	}
+	if err := validateResponse(destination); err != nil {
+		return fmt.Errorf("decode connectivity response: %w", err)
+	}
+	return nil
+}
+
+func validateResponse(destination any) error {
+	switch value := destination.(type) {
+	case *Plugin:
+		return validatePlugin(value)
+	case *PluginList:
+		if value.Items == nil {
+			return fmt.Errorf("items must be a non-null array")
+		}
+		for i := range value.Items {
+			if err := validatePlugin(&value.Items[i]); err != nil {
+				return fmt.Errorf("items[%d]: %w", i, err)
+			}
+		}
+	case *Instance:
+		return validateInstance(value)
+	case *InstanceList:
+		if value.Items == nil {
+			return fmt.Errorf("items must be a non-null array")
+		}
+		for i := range value.Items {
+			if err := validateInstance(&value.Items[i]); err != nil {
+				return fmt.Errorf("items[%d]: %w", i, err)
+			}
+		}
+	}
+	return nil
+}
+
+func validatePlugin(plugin *Plugin) error {
+	if plugin == nil || plugin.Metadata.Name == nil || strings.TrimSpace(*plugin.Metadata.Name) == "" {
+		return fmt.Errorf("plugin metadata.name is required")
+	}
+	if strings.TrimSpace(plugin.Spec.Image) == "" {
+		return fmt.Errorf("plugin spec.image is required")
+	}
+	return nil
+}
+
+func validateInstance(instance *Instance) error {
+	if instance == nil || instance.Metadata.Name == nil || strings.TrimSpace(*instance.Metadata.Name) == "" {
+		return fmt.Errorf("instance metadata.name is required")
+	}
+	if strings.TrimSpace(instance.Spec.Plugin) == "" {
+		return fmt.Errorf("instance spec.plugin is required")
+	}
+	if strings.TrimSpace(instance.Spec.Ledger) == "" {
+		return fmt.Errorf("instance spec.ledger is required")
 	}
 	return nil
 }
