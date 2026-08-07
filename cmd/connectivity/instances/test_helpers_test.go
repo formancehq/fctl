@@ -1,18 +1,66 @@
 package instances
 
 import (
+	"bytes"
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
 
+	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	connectivityclient "github.com/formancehq/fctl/v3/internal/connectivityclient"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 func stringPtr(value string) *string {
 	return &value
 }
 
-func mapReadFile(files map[string]string) ReadFileFunc {
+func instanceFixture(name string) connectivityclient.Instance {
+	return connectivityclient.Instance{
+		Metadata: connectivityclient.ObjectMeta{Name: stringPtr(name)},
+		Spec: connectivityclient.InstanceSpec{
+			Plugin:        "stripe",
+			Version:       stringPtr("2.0.0"),
+			Ledger:        "main",
+			PollInterval:  stringPtr("5s"),
+			StartSequence: fctl.Ptr(int64(10)),
+		},
+		Status: &connectivityclient.InstanceStatus{
+			Phase:             stringPtr("Ready"),
+			State:             stringPtr("Running"),
+			ResolvedImage:     stringPtr("registry/plugin:2.0.0"),
+			PluginAddress:     stringPtr("http://stripe.default.svc"),
+			CurrentSequence:   fctl.Ptr(int64(42)),
+			SourceTipSequence: fctl.Ptr(int64(48)),
+			LastError:         stringPtr("source temporarily unavailable"),
+			Message:           stringPtr("retrying ingestion"),
+		},
+	}
+}
+
+func instanceWithTwoFiles() *connectivityclient.Instance {
+	instance := instanceFixture("stripe-eu")
+	instance.Spec.Config = &connectivityclient.InstanceConfig{Files: []connectivityclient.FileMount{
+		{Path: "/etc/plugin/config.yaml", Value: stringPtr("private config")},
+		{Path: "/etc/plugin/ca.pem", SecretRef: &connectivityclient.KeyRef{Name: "plugin-secrets", Key: "ca.pem"}},
+	}}
+	return &instance
+}
+
+func factoryReturning(client connectivityclient.Client) connectivityinternal.ClientFactory {
+	return func(*cobra.Command) (connectivityclient.Client, error) {
+		return client, nil
+	}
+}
+
+func factoryWithInstance(instance connectivityclient.Instance) connectivityinternal.ClientFactory {
+	return factoryReturning(showInstanceClientMock{get: func(_ context.Context, _ string) (*connectivityclient.Instance, error) {
+		return &instance, nil
+	}})
+}
+
+func mockReadFile(files map[string]string) ReadFileFunc {
 	return func(_ *cobra.Command, name string) (string, error) {
 		value, ok := files[name]
 		if !ok {
@@ -20,6 +68,25 @@ func mapReadFile(files map[string]string) ReadFileFunc {
 		}
 		return value, nil
 	}
+}
+
+func mapReadFile(files map[string]string) ReadFileFunc {
+	return mockReadFile(files)
+}
+
+func mockPathCompleter(paths []string) PathCompleter {
+	return func(string) ([]string, error) {
+		return paths, nil
+	}
+}
+
+func executeCommand(command *cobra.Command, args ...string) (string, error) {
+	var output bytes.Buffer
+	command.SetOut(&output)
+	command.SetErr(&output)
+	command.SetArgs(args)
+	err := command.Execute()
+	return output.String(), err
 }
 
 func pluginWithFileSchema() *connectivityclient.Plugin {
