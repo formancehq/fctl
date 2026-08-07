@@ -2,6 +2,7 @@ package connectivityclient
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -66,4 +67,54 @@ func TestGivenConnectivityServer_WhenLifecycleMethodsRun_ThenContractIsRespected
 	require.Equal(t, "worker", *created.Metadata.Name)
 	require.Equal(t, "worker", *fetched.Metadata.Name)
 	require.Equal(t, "worker", *patched.Metadata.Name)
+}
+
+func TestGivenPinnedConnectivityPatchHandler_WhenAPIConfigIsPatched_ThenCRDShapeIsSent(t *testing.T) {
+	// Given a server that applies the PATCH body directly to the pinned Instance CRD.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		require.Equal(t, http.MethodPatch, req.Method)
+		require.Equal(t, "application/merge-patch+json", req.Header.Get("Content-Type"))
+
+		var patch map[string]any
+		require.NoError(t, json.NewDecoder(req.Body).Decode(&patch))
+		spec, ok := patch["spec"].(map[string]any)
+		require.True(t, ok)
+		require.NotContains(t, spec, "config")
+		require.Equal(t, "30s", spec["pollInterval"])
+		require.Equal(t, map[string]any{
+			"API_PASSWORD": map[string]any{"value": "env-password"},
+		}, spec["env"])
+		require.Equal(t, []any{
+			map[string]any{"path": "/etc/plugin/key.pem", "value": "file-password"},
+			map[string]any{"path": "/etc/plugin/config.json", "value": "complete-file-array"},
+		}, spec["files"])
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"plugin":"stripe","ledger":"main"}}`)
+	}))
+	defer server.Close()
+
+	client := New(server.URL, server.Client())
+	envPassword := "env-password"
+	filePassword := "file-password"
+	otherFile := "complete-file-array"
+
+	// When an API-shaped config patch contains password-compatible inline values.
+	_, err := client.PatchInstance(context.Background(), "worker", InstancePatch{
+		"spec": map[string]any{
+			"config": &InstanceConfig{
+				Env: map[string]EnvValue{
+					"API_PASSWORD": {Value: &envPassword},
+				},
+				Files: []FileMount{
+					{Path: "/etc/plugin/key.pem", Value: &filePassword},
+					{Path: "/etc/plugin/config.json", Value: &otherFile},
+				},
+			},
+			"pollInterval": "30s",
+		},
+	})
+
+	// Then the client sends root CRD env/files fields for materialisation and preserves the full files array.
+	require.NoError(t, err)
 }

@@ -43,7 +43,6 @@ func NewConfigureCommand(factory connectivityinternal.ClientFactory, read ReadFi
 		fctl.WithValidArgsFunction(CompleteInstanceNames(factory)),
 		fctl.WithStringFlag(ledgerFlag, "", "Ledger name"),
 		fctl.WithStringFlag(versionFlag, "", "Plugin version"),
-		withInt64Flag(startSequenceFlag, 0, "Starting ledger sequence"),
 		fctl.WithStringFlag(pollIntervalFlag, "", "Polling interval"),
 		fctl.WithStringFlag(configFlag, "", "YAML or JSON configuration file"),
 		fctl.WithStringArrayFlag(envFileFlag, nil, "Dotenv configuration file (repeatable)"),
@@ -126,13 +125,6 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 	}
 	if cmd.Flags().Changed(ledgerFlag) {
 		specPatch["ledger"] = fctl.GetString(cmd, ledgerFlag)
-	}
-	if cmd.Flags().Changed(startSequenceFlag) {
-		startSequence, err := cmd.Flags().GetInt64(startSequenceFlag)
-		if err != nil {
-			return nil, err
-		}
-		specPatch["startSequence"] = startSequence
 	}
 	if cmd.Flags().Changed(pollIntervalFlag) {
 		specPatch["pollInterval"] = fctl.GetString(cmd, pollIntervalFlag)

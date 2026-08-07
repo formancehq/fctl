@@ -75,7 +75,7 @@ func TestConfigureBuildsNestedPatchFromCurrentConfigAndChangedScalars(t *testing
 	output, err := executeCommand(
 		NewConfigureCommand(factoryReturning(client), mockReadFile(map[string]string{"new": "changed"}), mockPathCompleter(nil)),
 		"stripe-eu", "--set=/etc/a=@new", "--version=3.0.0", "--ledger=archive",
-		"--start-sequence=0", "--poll-interval=15s", "--confirm",
+		"--poll-interval=15s", "--confirm",
 	)
 
 	require.NoError(t, err)
@@ -84,9 +84,8 @@ func TestConfigureBuildsNestedPatchFromCurrentConfigAndChangedScalars(t *testing
 	require.True(t, ok)
 	require.Equal(t, "3.0.0", spec["version"])
 	require.Equal(t, "archive", spec["ledger"])
-	require.Equal(t, int64(0), spec["startSequence"])
 	require.Equal(t, "15s", spec["pollInterval"])
-	require.Len(t, spec, 5, "the immutable plugin and unchanged fields must not be patched")
+	require.Len(t, spec, 4, "the immutable plugin and unchanged fields must not be patched")
 	config, ok := spec["config"].(*connectivityclient.InstanceConfig)
 	require.True(t, ok)
 	require.Equal(t, "https://current.example", *config.Env["API_URL"].Value, "current config must win over plugin defaults")
@@ -344,4 +343,10 @@ func TestConfigureRegistersAliasesRootAndCompletions(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "configure", child.Name())
 	require.True(t, reflect.DeepEqual([]string{"config", "update", "c"}, child.Aliases))
+}
+
+func TestConfigureDoesNotExposeUnsupportedStartSequence(t *testing.T) {
+	command := NewConfigureCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
+
+	require.Nil(t, command.Flags().Lookup("start-sequence"))
 }

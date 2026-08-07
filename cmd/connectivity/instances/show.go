@@ -86,7 +86,6 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 		{pterm.LightCyan("Version"), stringValue(instance.Spec.Version)},
 		{pterm.LightCyan("Connectivity Reference"), stringValue(instance.Spec.ConnectivityRef)},
 		{pterm.LightCyan("Ledger"), instance.Spec.Ledger},
-		{pterm.LightCyan("Start Sequence"), int64Value(instance.Spec.StartSequence)},
 		{pterm.LightCyan("Poll Interval"), stringValue(instance.Spec.PollInterval)},
 	}); err != nil {
 		return err
