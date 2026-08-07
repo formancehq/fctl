@@ -25,6 +25,7 @@ func printBody(data []byte) {
 	if len(data) == 0 {
 		return
 	}
+	data = redactDebugBody(data)
 	raw := make(map[string]any)
 	if err := json.Unmarshal(data, &raw); err == nil {
 		f := colorjson.NewFormatter()
@@ -36,6 +37,45 @@ func printBody(data []byte) {
 		fmt.Println(string(colorized))
 	} else {
 		fmt.Println(string(data))
+	}
+}
+
+func redactDebugBody(data []byte) []byte {
+	var body any
+	if err := json.Unmarshal(data, &body); err != nil {
+		return append([]byte(nil), data...)
+	}
+	redactInlineConfigValues(body, false)
+	redacted, err := json.Marshal(body)
+	if err != nil {
+		return append([]byte(nil), data...)
+	}
+	return redacted
+}
+
+func redactInlineConfigValues(value any, inConfig bool) {
+	switch value := value.(type) {
+	case map[string]any:
+		for key, child := range value {
+			if inConfig && key == "value" {
+				value[key] = "[REDACTED]"
+				continue
+			}
+			redactInlineConfigValues(child, inConfig || isConfigContainer(key))
+		}
+	case []any:
+		for _, child := range value {
+			redactInlineConfigValues(child, inConfig)
+		}
+	}
+}
+
+func isConfigContainer(key string) bool {
+	switch key {
+	case "config", "defaults", "env", "files":
+		return true
+	default:
+		return false
 	}
 }
 

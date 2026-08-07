@@ -183,6 +183,49 @@ func TestClientReturnsStructuredAPIError(t *testing.T) {
 	require.Equal(t, map[string]any{"field": "plugin"}, apiErr.Details)
 }
 
+func TestPatchInstanceAdaptsAPIConfigToPinnedCRDWireShape(t *testing.T) {
+	var seenBody []byte
+	httpClient := &http.Client{Transport: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		var err error
+		seenBody, err = io.ReadAll(req.Body)
+		require.NoError(t, err)
+		return jsonResponse(http.StatusOK, `{"metadata":{"name":"worker"},"spec":{"plugin":"stripe","ledger":"main"}}`), nil
+	})}
+	password := "env-password"
+	privateKey := "file-password"
+	config := &InstanceConfig{
+		Env: map[string]EnvValue{
+			"API_PASSWORD": {Value: &password},
+		},
+		Files: []FileMount{
+			{Path: "/etc/plugin/key.pem", Value: &privateKey},
+			{Path: "/etc/plugin/config.json", ConfigMapRef: &KeyRef{Name: "plugin-config", Key: "config.json"}},
+		},
+	}
+
+	_, err := New("https://stack.example", httpClient).PatchInstance(context.Background(), "worker", InstancePatch{
+		"spec": map[string]any{
+			"config":       config,
+			"ledger":       "main",
+			"pollInterval": "15s",
+		},
+	})
+
+	require.NoError(t, err)
+	require.JSONEq(t, `{
+		"spec": {
+			"env": {"API_PASSWORD": {"value": "env-password"}},
+			"files": [
+				{"path": "/etc/plugin/key.pem", "value": "file-password"},
+				{"path": "/etc/plugin/config.json", "configMapRef": {"name": "plugin-config", "key": "config.json"}}
+			],
+			"ledger": "main",
+			"pollInterval": "15s"
+		}
+	}`, string(seenBody))
+	require.NotContains(t, string(seenBody), `"config"`)
+}
+
 func TestClientRejectsMalformedAndEmptyObjectResponses(t *testing.T) {
 	tests := []struct {
 		name string
@@ -234,4 +277,130 @@ func TestClientRejectsMalformedAndEmptyObjectResponses(t *testing.T) {
 			require.Error(t, err)
 		})
 	}
+}
+
+func TestClientRejectsStructurallyInvalidSuccessResponses(t *testing.T) {
+	tests := []struct {
+		name   string
+		status int
+		body   string
+		call   func(Client) error
+	}{
+		{
+			name:   "plugin root is not an object",
+			status: http.StatusOK,
+			body:   `[]`,
+			call: func(client Client) error {
+				_, err := client.GetPlugin(context.Background(), "stripe")
+				return err
+			},
+		},
+		{
+			name:   "whitespace-only plugin object",
+			status: http.StatusOK,
+			body:   "{ \n\t }",
+			call: func(client Client) error {
+				_, err := client.GetPlugin(context.Background(), "stripe")
+				return err
+			},
+		},
+		{
+			name:   "plugin list missing items",
+			status: http.StatusOK,
+			body:   `{"continue":"next"}`,
+			call: func(client Client) error {
+				_, err := client.ListPlugins(context.Background(), ListOptions{})
+				return err
+			},
+		},
+		{
+			name:   "instance list has null items",
+			status: http.StatusOK,
+			body:   `{"items":null}`,
+			call: func(client Client) error {
+				_, err := client.ListInstances(context.Background(), ListOptions{})
+				return err
+			},
+		},
+		{
+			name:   "plugin missing metadata name",
+			status: http.StatusOK,
+			body:   `{"metadata":{},"spec":{"image":"image"}}`,
+			call: func(client Client) error {
+				_, err := client.GetPlugin(context.Background(), "stripe")
+				return err
+			},
+		},
+		{
+			name:   "plugin missing image",
+			status: http.StatusOK,
+			body:   `{"metadata":{"name":"stripe"},"spec":{}}`,
+			call: func(client Client) error {
+				_, err := client.GetPlugin(context.Background(), "stripe")
+				return err
+			},
+		},
+		{
+			name:   "plugin list item missing required fields",
+			status: http.StatusOK,
+			body:   `{"items":[{"metadata":{"name":"stripe"},"spec":{}}]}`,
+			call: func(client Client) error {
+				_, err := client.ListPlugins(context.Background(), ListOptions{})
+				return err
+			},
+		},
+		{
+			name:   "instance missing metadata name",
+			status: http.StatusOK,
+			body:   `{"metadata":{},"spec":{"plugin":"stripe","ledger":"main"}}`,
+			call: func(client Client) error {
+				_, err := client.GetInstance(context.Background(), "worker")
+				return err
+			},
+		},
+		{
+			name:   "instance missing plugin",
+			status: http.StatusCreated,
+			body:   `{"metadata":{"name":"worker"},"spec":{"ledger":"main"}}`,
+			call: func(client Client) error {
+				_, err := client.CreateInstance(context.Background(), InstanceCreate{Name: "worker", Spec: InstanceSpec{Plugin: "stripe", Ledger: "main"}})
+				return err
+			},
+		},
+		{
+			name:   "instance list item missing ledger",
+			status: http.StatusOK,
+			body:   `{"items":[{"metadata":{"name":"worker"},"spec":{"plugin":"stripe"}}]}`,
+			call: func(client Client) error {
+				_, err := client.ListInstances(context.Background(), ListOptions{})
+				return err
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			httpClient := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+				return jsonResponse(tt.status, tt.body), nil
+			})}
+
+			err := tt.call(New("https://stack.example", httpClient))
+
+			require.Error(t, err)
+		})
+	}
+}
+
+func TestClientAcceptsValidEmptyLists(t *testing.T) {
+	httpClient := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+		return jsonResponse(http.StatusOK, `{"items":[]}`), nil
+	})}
+	client := New("https://stack.example", httpClient)
+
+	plugins, err := client.ListPlugins(context.Background(), ListOptions{})
+	require.NoError(t, err)
+	require.Empty(t, plugins.Items)
+	instances, err := client.ListInstances(context.Background(), ListOptions{})
+	require.NoError(t, err)
+	require.Empty(t, instances.Items)
 }
