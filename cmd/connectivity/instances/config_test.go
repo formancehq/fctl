@@ -161,6 +161,24 @@ TIMEOUT='  literal # value  '
 	require.Equal(t, "  literal # value  ", *got.Env["TIMEOUT"].Value)
 }
 
+func TestBuildInstallConfigUnquotesDotenvValueBeforeTrailingComment(t *testing.T) {
+	got, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{EnvFiles: []string{"values.env"}}, mapReadFile(map[string]string{
+		"values.env": "TOKEN=\"abc#def\" # trailing comment\n",
+	}))
+
+	require.NoError(t, err)
+	require.Equal(t, "abc#def", *got.Env["TOKEN"].Value)
+}
+
+func TestBuildInstallConfigPreservesHashWithinUnquotedDotenvValue(t *testing.T) {
+	got, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{EnvFiles: []string{"values.env"}}, mapReadFile(map[string]string{
+		"values.env": "TOKEN=abc#def\n",
+	}))
+
+	require.NoError(t, err)
+	require.Equal(t, "abc#def", *got.Env["TOKEN"].Value)
+}
+
 func TestBuildInstallConfigAppliesDocumentedSourcePrecedence(t *testing.T) {
 	got, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{
 		ConfigFile: "config.yaml",
