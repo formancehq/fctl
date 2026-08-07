@@ -132,12 +132,19 @@ comments, and is repeatable. It represents environment entries only.
 values. A structured document may contain `env` and `files` matching the
 Connectivity API's `InstanceConfig` shape.
 
-Values merge in this exact order, from lowest to highest precedence:
+During install, values merge in this exact order, from lowest to highest
+precedence:
 
 1. plugin defaults;
 2. `--config`;
 3. `--env-file` values, with later files winning;
 4. `--set` values, with later occurrences winning.
+
+During configure, the instance's current configuration replaces plugin
+defaults as the lowest-precedence base. This preserves every untouched env
+entry and file mount. The command sends the resulting complete `config` object
+inside the merge patch, so changing one file mount cannot accidentally replace
+the other mounts in the API's array-valued `files` field.
 
 The plugin's `configSchema` determines whether a key is an environment entry or
 a file mount. Required keys are validated before the write request. Invalid
@@ -243,11 +250,13 @@ Verification runs inside the repository's Nix development shell:
 
 ```text
 nix develop -c just tests
+nix develop -c just completions
 nix develop -c just pre-commit
 ```
 
-The second command is the repository's actual precommit recipe and includes
-tidy, generation, linting, and completion generation.
+The last command is the repository's actual precommit recipe and includes tidy,
+generated API clients, and linting. Completion scripts are regenerated
+explicitly because the precommit recipe does not include them.
 
 ## Non-goals
 
