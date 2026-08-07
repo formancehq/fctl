@@ -289,6 +289,9 @@ func applyDotenv(config *connectivityclient.InstanceConfig, fields map[string]Sc
 
 func unquoteEnvValue(value string) string {
 	value = strings.TrimSpace(value)
+	if comment := dotenvCommentIndex(value); comment >= 0 {
+		value = strings.TrimSpace(value[:comment])
+	}
 	if len(value) >= 2 {
 		if value[0] == '"' && value[len(value)-1] == '"' {
 			return applyDoubleQuoteEscapes(value[1 : len(value)-1])
@@ -297,10 +300,32 @@ func unquoteEnvValue(value string) string {
 			return value[1 : len(value)-1]
 		}
 	}
-	if comment := strings.IndexByte(value, '#'); comment >= 0 {
-		value = strings.TrimSpace(value[:comment])
-	}
 	return value
+}
+
+func dotenvCommentIndex(value string) int {
+	var quote byte
+	for index := 0; index < len(value); index++ {
+		character := value[index]
+		if quote != 0 {
+			if quote == '"' && character == '\\' && index+1 < len(value) {
+				index++
+				continue
+			}
+			if character == quote {
+				quote = 0
+			}
+			continue
+		}
+		if character == '"' || character == '\'' {
+			quote = character
+			continue
+		}
+		if character == '#' && (index == 0 || value[index-1] == ' ' || value[index-1] == '\t') {
+			return index
+		}
+	}
+	return -1
 }
 
 func applyDoubleQuoteEscapes(value string) string {
