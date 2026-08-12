@@ -1,4 +1,4 @@
-package instances
+package connectorinstances
 
 import (
 	"context"
@@ -17,29 +17,29 @@ import (
 
 type listInstanceClientMock struct {
 	connectivityclient.Client
-	list func(context.Context, connectivityclient.ListOptions) (*connectivityclient.InstanceList, error)
+	list func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error)
 }
 
-func (m listInstanceClientMock) ListInstances(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.InstanceList, error) {
+func (m listInstanceClientMock) ListConnectorInstances(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
 	return m.list(ctx, options)
 }
 
-func TestListInstancesPassesFiltersAndPaginationAndRendersApprovedColumns(t *testing.T) {
+func TestListConnectorInstancesPassesFiltersAndPaginationAndRendersApprovedColumns(t *testing.T) {
 	var gotOptions connectivityclient.ListOptions
-	client := listInstanceClientMock{list: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.InstanceList, error) {
+	client := listInstanceClientMock{list: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
 		gotOptions = options
-		return &connectivityclient.InstanceList{
-			Items:    []connectivityclient.Instance{instanceFixture("stripe-eu")},
+		return &connectivityclient.ConnectorInstanceList{
+			Items:    []connectivityclient.ConnectorInstance{instanceFixture("stripe-eu")},
 			Continue: "next-page",
 		}, nil
 	}}
 
-	output, err := executeCommand(NewListCommand(factoryReturning(client)), "--plugin", "stripe", "--page-size", "7", "--cursor", "current-page")
+	output, err := executeCommand(NewListCommand(factoryReturning(client)), "--connector", "stripe", "--page-size", "7", "--cursor", "current-page")
 
 	require.NoError(t, err)
-	require.Equal(t, connectivityclient.ListOptions{Plugin: "stripe", Limit: 7, Continue: "current-page"}, gotOptions)
+	require.Equal(t, connectivityclient.ListOptions{Connector: "stripe", Limit: 7, Continue: "current-page"}, gotOptions)
 	for _, expected := range []string{
-		"Name", "Plugin", "Version", "Ledger", "Phase", "State", "Current Sequence", "Source Tip Sequence", "Last Error",
+		"Name", "Connector", "Version", "Ledger", "Phase", "State", "Current Sequence", "Source Tip Sequence", "Last Error",
 		"stripe-eu", "stripe", "2.0.0", "main", "Ready", "Running", "42", "48", "source temporarily unavailable",
 		"HasMore", "true", "PageSize", "7", "Next", "next-page",
 	} {
@@ -47,14 +47,14 @@ func TestListInstancesPassesFiltersAndPaginationAndRendersApprovedColumns(t *tes
 	}
 }
 
-func TestListInstancesJSONPreservesCompleteModelsAndContinuation(t *testing.T) {
+func TestListConnectorInstancesJSONPreservesCompleteModelsAndContinuation(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
 	instance.Metadata.Labels = map[string]string{"region": "eu"}
-	instance.Spec.Config = &connectivityclient.InstanceConfig{Env: map[string]connectivityclient.EnvValue{
+	instance.Spec.Config = &connectivityclient.ConnectorInstanceConfig{Env: map[string]connectivityclient.EnvValue{
 		"API_KEY": {Value: stringPtr("json-keeps-full-model")},
 	}}
-	client := listInstanceClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.InstanceList, error) {
-		return &connectivityclient.InstanceList{Items: []connectivityclient.Instance{instance}, Continue: "next-page"}, nil
+	client := listInstanceClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
+		return &connectivityclient.ConnectorInstanceList{Items: []connectivityclient.ConnectorInstance{instance}, Continue: "next-page"}, nil
 	}}
 	command := NewListCommand(factoryReturning(client))
 	command.Flags().String(fctl.OutputFlag, "plain", "")
@@ -66,18 +66,18 @@ func TestListInstancesJSONPreservesCompleteModelsAndContinuation(t *testing.T) {
 		Data ListStore `json:"data"`
 	}
 	require.NoError(t, json.Unmarshal([]byte(output), &envelope))
-	require.Equal(t, []connectivityclient.Instance{instance}, envelope.Data.Instances)
+	require.Equal(t, []connectivityclient.ConnectorInstance{instance}, envelope.Data.ConnectorInstances)
 	require.True(t, envelope.Data.Cursor.HasMore)
 	require.Equal(t, int64(4), envelope.Data.Cursor.PageSize)
 	require.NotNil(t, envelope.Data.Cursor.Next)
 	require.Equal(t, "next-page", *envelope.Data.Cursor.Next)
 }
 
-func TestInstanceRootRegistersReadCommandsAndAliases(t *testing.T) {
+func TestConnectorInstanceRootRegistersReadCommandsAndAliases(t *testing.T) {
 	command := NewCommand(factoryReturning(listInstanceClientMock{}), mockReadFile(nil), mockPathCompleter(nil))
 
-	require.Equal(t, "instances", command.Use)
-	require.Equal(t, []string{"instance", "i"}, command.Aliases)
+	require.Equal(t, "connectorinstances", command.Use)
+	require.Equal(t, []string{"connectorinstance", "instances", "instance", "ci"}, command.Aliases)
 	wantAliases := map[string][]string{
 		"list": {"ls", "l"},
 		"show": {"get", "g", "sh", "s"},
@@ -90,7 +90,7 @@ func TestInstanceRootRegistersReadCommandsAndAliases(t *testing.T) {
 	}
 }
 
-func TestListInstancesReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
+func TestListConnectorInstancesReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
 	tests := map[string]struct {
 		factory func(*cobra.Command) (connectivityclient.Client, error)
 		want    string
@@ -103,13 +103,13 @@ func TestListInstancesReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
 			want: "authentication failed",
 		},
 		"API": {
-			factory: factoryReturning(listInstanceClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.InstanceList, error) {
-				return nil, errors.New("instances unavailable")
+			factory: factoryReturning(listInstanceClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
+				return nil, errors.New("connector instances unavailable")
 			}}),
-			want: "instances unavailable",
+			want: "connector instances unavailable",
 		},
 		"empty response": {
-			factory: factoryReturning(listInstanceClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.InstanceList, error) {
+			factory: factoryReturning(listInstanceClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
 				return nil, nil
 			}}),
 			want: "empty response",

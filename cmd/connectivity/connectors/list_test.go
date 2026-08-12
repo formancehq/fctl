@@ -1,4 +1,4 @@
-package plugins
+package connectors
 
 import (
 	"context"
@@ -14,12 +14,12 @@ import (
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
-func TestListPluginsPassesPaginationAndRendersApprovedColumnsAndContinuation(t *testing.T) {
+func TestListConnectorsPassesPaginationAndRendersApprovedColumnsAndContinuation(t *testing.T) {
 	var gotOptions connectivityclient.ListOptions
-	client := pluginClientMock{list: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.PluginList, error) {
+	client := connectorClientMock{list: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
 		gotOptions = options
-		return &connectivityclient.PluginList{
-			Items:    []connectivityclient.Plugin{pluginFixture("stripe")},
+		return &connectivityclient.ConnectorList{
+			Items:    []connectivityclient.Connector{connectorFixture("stripe")},
 			Continue: "next-page",
 		}, nil
 	}}
@@ -32,11 +32,11 @@ func TestListPluginsPassesPaginationAndRendersApprovedColumnsAndContinuation(t *
 
 	wantOptions := connectivityclient.ListOptions{Limit: 7, Continue: "current-page"}
 	if !reflect.DeepEqual(gotOptions, wantOptions) {
-		t.Fatalf("ListPlugins options = %#v, want %#v", gotOptions, wantOptions)
+		t.Fatalf("ListConnectors options = %#v, want %#v", gotOptions, wantOptions)
 	}
 	for _, expected := range []string{
-		"Name", "Default Version", "Description", "Capabilities", "Phase",
-		"stripe", "2.0.0", "Plugin description", "payments, webhooks", "Ready",
+		"Name", "Display Name", "Description", "Tags", "Phase",
+		"stripe", "Connector display name", "Connector description", "payments, webhooks", "Ready",
 		"HasMore", "true", "PageSize", "7", "Next", "next-page",
 	} {
 		if !strings.Contains(output, expected) {
@@ -45,12 +45,11 @@ func TestListPluginsPassesPaginationAndRendersApprovedColumnsAndContinuation(t *
 	}
 }
 
-func TestListPluginsJSONPreservesCompleteModelsAndContinuation(t *testing.T) {
-	plugin := pluginFixture("stripe")
-	plugin.Metadata.Labels = map[string]string{"region": "eu"}
-	plugin.Spec.ConfigSchema = map[string]any{"type": "object"}
-	client := pluginClientMock{list: func(_ context.Context, _ connectivityclient.ListOptions) (*connectivityclient.PluginList, error) {
-		return &connectivityclient.PluginList{Items: []connectivityclient.Plugin{plugin}, Continue: "next-page"}, nil
+func TestListConnectorsJSONPreservesCompleteModelsAndContinuation(t *testing.T) {
+	connector := connectorFixture("stripe")
+	connector.Metadata.Labels = map[string]string{"region": "eu"}
+	client := connectorClientMock{list: func(_ context.Context, _ connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
+		return &connectivityclient.ConnectorList{Items: []connectivityclient.Connector{connector}, Continue: "next-page"}, nil
 	}}
 
 	command := NewListCommand(factoryReturning(client))
@@ -66,18 +65,18 @@ func TestListPluginsJSONPreservesCompleteModelsAndContinuation(t *testing.T) {
 	if err := json.Unmarshal([]byte(output), &envelope); err != nil {
 		t.Fatalf("decode JSON output %q: %v", output, err)
 	}
-	if !reflect.DeepEqual(envelope.Data.Plugins, []connectivityclient.Plugin{plugin}) {
-		t.Fatalf("JSON plugins = %#v, want complete model %#v", envelope.Data.Plugins, plugin)
+	if !reflect.DeepEqual(envelope.Data.Connectors, []connectivityclient.Connector{connector}) {
+		t.Fatalf("JSON connectors = %#v, want complete model %#v", envelope.Data.Connectors, connector)
 	}
 	if !envelope.Data.Cursor.HasMore || envelope.Data.Cursor.PageSize != 4 || envelope.Data.Cursor.Next == nil || *envelope.Data.Cursor.Next != "next-page" {
 		t.Fatalf("JSON cursor = %#v, want continuation and requested page size", envelope.Data.Cursor)
 	}
 }
 
-func TestPluginRootRegistersApprovedCommandsAndAliases(t *testing.T) {
-	command := NewCommand(factoryReturning(pluginClientMock{}))
-	if command.Use != "plugins" || !reflect.DeepEqual(command.Aliases, []string{"plugin", "p"}) {
-		t.Fatalf("plugin root = %q aliases %v", command.Use, command.Aliases)
+func TestConnectorRootRegistersApprovedCommandsAndAliases(t *testing.T) {
+	command := NewCommand(factoryReturning(connectorClientMock{}))
+	if command.Use != "connectors" || !reflect.DeepEqual(command.Aliases, []string{"connector", "c"}) {
+		t.Fatalf("connector root = %q aliases %v", command.Use, command.Aliases)
 	}
 
 	wantAliases := map[string][]string{
@@ -95,7 +94,7 @@ func TestPluginRootRegistersApprovedCommandsAndAliases(t *testing.T) {
 	}
 }
 
-func TestListPluginsReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
+func TestListConnectorsReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
 	tests := map[string]struct {
 		factory func(*cobra.Command) (connectivityclient.Client, error)
 		want    string
@@ -107,13 +106,13 @@ func TestListPluginsReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
 			want: "authentication failed",
 		},
 		"API": {
-			factory: factoryReturning(pluginClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.PluginList, error) {
+			factory: factoryReturning(connectorClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
 				return nil, errors.New("catalog unavailable")
 			}}),
 			want: "catalog unavailable",
 		},
 		"empty response": {
-			factory: factoryReturning(pluginClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.PluginList, error) {
+			factory: factoryReturning(connectorClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
 				return nil, nil
 			}}),
 			want: "empty response",

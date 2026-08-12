@@ -1,4 +1,4 @@
-package plugins
+package connectors
 
 import (
 	"github.com/spf13/cobra"
@@ -9,9 +9,9 @@ import (
 
 func NewCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
 	return fctl.NewCommand(
-		"plugins",
-		fctl.WithAliases("plugin", "p"),
-		fctl.WithShortDescription("Browse Connectivity plugins"),
+		"connectors",
+		fctl.WithAliases("connector", "c"),
+		fctl.WithShortDescription("Browse Connectivity connectors"),
 		fctl.WithChildCommands(
 			NewListCommand(factory),
 			NewShowCommand(factory),

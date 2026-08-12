@@ -1,4 +1,4 @@
-package instances
+package connectorinstances
 
 import (
 	"context"
@@ -21,7 +21,14 @@ const (
 
 type PathCompleter func(prefix string) ([]string, error)
 
-func CompleteInstanceNames(factory connectivityinternal.ClientFactory) cobra.CompletionFunc {
+// ConnectorResolver names the Connector a command is operating on.
+type ConnectorResolver func(context.Context, connectivityclient.Client, *cobra.Command, []string) (string, error)
+
+// ConnectorVersionResolver resolves the ConnectorVersion whose configSchema
+// drives value completion for a command.
+type ConnectorVersionResolver func(context.Context, connectivityclient.Client, *cobra.Command, []string) (*connectivityclient.ConnectorVersion, error)
+
+func CompleteConnectorInstanceNames(factory connectivityinternal.ClientFactory) cobra.CompletionFunc {
 	return func(cmd *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		client, completionCommand, cancel, ok := completionClient(cmd, factory)
 		if !ok {
@@ -29,7 +36,7 @@ func CompleteInstanceNames(factory connectivityinternal.ClientFactory) cobra.Com
 		}
 		defer cancel()
 
-		response, err := client.ListInstances(completionCommand.Context(), connectivityclient.ListOptions{Limit: instanceCompletionLimit})
+		response, err := client.ListConnectorInstances(completionCommand.Context(), connectivityclient.ListOptions{Limit: instanceCompletionLimit})
 		if err != nil || response == nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
@@ -39,7 +46,7 @@ func CompleteInstanceNames(factory connectivityinternal.ClientFactory) cobra.Com
 			if name == "" || !strings.HasPrefix(name, toComplete) {
 				continue
 			}
-			description := strings.Join(nonEmptyStrings(instance.Spec.Plugin, instance.Spec.Ledger), " · ")
+			description := strings.Join(nonEmptyStrings(instance.Spec.Connector, instance.Spec.Ledger), " · ")
 			if description != "" {
 				name += "\t" + description
 			}
@@ -50,25 +57,18 @@ func CompleteInstanceNames(factory connectivityinternal.ClientFactory) cobra.Com
 	}
 }
 
-func CompleteVersions(factory connectivityinternal.ClientFactory, pluginArg func(*cobra.Command, []string) string) cobra.CompletionFunc {
-	return completeVersions(factory, func(ctx context.Context, client connectivityclient.Client, cmd *cobra.Command, args []string) (*connectivityclient.Plugin, error) {
-		if pluginArg == nil {
-			return nil, nil
+func CompleteVersions(factory connectivityinternal.ClientFactory, connectorArg func(*cobra.Command, []string) string) cobra.CompletionFunc {
+	return completeVersions(factory, func(_ context.Context, _ connectivityclient.Client, cmd *cobra.Command, args []string) (string, error) {
+		if connectorArg == nil {
+			return "", nil
 		}
-		pluginName := pluginArg(cmd, args)
-		if pluginName == "" {
-			return nil, nil
-		}
-		return client.GetPlugin(ctx, pluginName)
+		return connectorArg(cmd, args), nil
 	})
 }
 
-func completeVersions(
-	factory connectivityinternal.ClientFactory,
-	resolvePlugin func(context.Context, connectivityclient.Client, *cobra.Command, []string) (*connectivityclient.Plugin, error),
-) cobra.CompletionFunc {
+func completeVersions(factory connectivityinternal.ClientFactory, resolveConnector ConnectorResolver) cobra.CompletionFunc {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		if resolvePlugin == nil {
+		if resolveConnector == nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 		client, completionCommand, cancel, ok := completionClient(cmd, factory)
@@ -77,17 +77,21 @@ func completeVersions(
 		}
 		defer cancel()
 
-		plugin, err := resolvePlugin(completionCommand.Context(), client, completionCommand, args)
-		if err != nil || plugin == nil {
+		connector, err := resolveConnector(completionCommand.Context(), client, completionCommand, args)
+		if err != nil || connector == "" {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		candidates := make([]string, 0, len(plugin.Spec.Versions))
-		for _, version := range plugin.Spec.Versions {
+		versions, err := client.ListConnectorVersions(completionCommand.Context(), connector)
+		if err != nil || versions == nil {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		candidates := make([]string, 0, len(versions.Items))
+		for _, version := range versions.Items {
 			if version.Version == "" || !strings.HasPrefix(version.Version, toComplete) {
 				continue
 			}
 			candidate := version.Version
-			description := stringValue(version.Image)
+			description := version.Image
 			if description == "" {
 				description = stringValue(version.Digest)
 			}
@@ -103,7 +107,7 @@ func completeVersions(
 
 func CompleteSetValues(
 	factory connectivityinternal.ClientFactory,
-	resolvePlugin func(context.Context, connectivityclient.Client, *cobra.Command, []string) (*connectivityclient.Plugin, error),
+	resolveVersion ConnectorVersionResolver,
 	paths PathCompleter,
 ) cobra.CompletionFunc {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -127,7 +131,7 @@ func CompleteSetValues(
 			return candidates, cobra.ShellCompDirectiveNoFileComp
 		}
 
-		if resolvePlugin == nil {
+		if resolveVersion == nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 		client, completionCommand, cancel, ok := completionClient(cmd, factory)
@@ -135,11 +139,11 @@ func CompleteSetValues(
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 		defer cancel()
-		plugin, err := resolvePlugin(completionCommand.Context(), client, completionCommand, args)
-		if err != nil || plugin == nil {
+		version, err := resolveVersion(completionCommand.Context(), client, completionCommand, args)
+		if err != nil || version == nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		fields, err := SchemaFields(plugin)
+		fields, err := SchemaFields(version)
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}

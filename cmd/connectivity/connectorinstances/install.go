@@ -1,4 +1,4 @@
-package instances
+package connectorinstances
 
 import (
 	"context"
@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/fctl/v3/cmd/connectivity/connectors"
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
-	"github.com/formancehq/fctl/v3/cmd/connectivity/plugins"
 	connectivityclient "github.com/formancehq/fctl/v3/internal/connectivityclient"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
@@ -23,7 +23,7 @@ const (
 )
 
 type InstallStore struct {
-	Instance connectivityclient.Instance `json:"instance"`
+	ConnectorInstance connectivityclient.ConnectorInstance `json:"connectorInstance"`
 }
 
 type approvalFunc func(*cobra.Command, string, ...any) bool
@@ -49,14 +49,14 @@ func NewInstallController(factory connectivityinternal.ClientFactory, read ReadF
 func NewInstallCommand(factory connectivityinternal.ClientFactory, read ReadFileFunc, paths PathCompleter) *cobra.Command {
 	controller := NewInstallController(factory, read)
 	command := fctl.NewCommand(
-		"install <plugin>",
+		"install <connector>",
 		fctl.WithAliases("create", "in"),
-		fctl.WithShortDescription("Install a Connectivity plugin instance"),
+		fctl.WithShortDescription("Install a Connectivity connector instance"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithValidArgsFunction(plugins.CompletePluginNames(factory)),
-		fctl.WithStringFlag(nameFlag, "", "Instance name (defaults to the plugin name)"),
+		fctl.WithValidArgsFunction(connectors.CompleteConnectorNames(factory)),
+		fctl.WithStringFlag(nameFlag, "", "Connector instance name (defaults to the connector name)"),
 		fctl.WithStringFlag(ledgerFlag, "", "Ledger name"),
-		fctl.WithStringFlag(versionFlag, "", "Plugin version"),
+		fctl.WithStringFlag(versionFlag, "", "Connector version"),
 		fctl.WithStringFlag(pollIntervalFlag, "", "Polling interval"),
 		fctl.WithStringFlag(configFlag, "", "YAML or JSON configuration file"),
 		fctl.WithStringArrayFlag(envFileFlag, nil, "Dotenv configuration file (repeatable)"),
@@ -67,27 +67,27 @@ func NewInstallCommand(factory connectivityinternal.ClientFactory, read ReadFile
 	if err := command.MarkFlagRequired(ledgerFlag); err != nil {
 		panic(err)
 	}
-	if err := command.RegisterFlagCompletionFunc(versionFlag, CompleteVersions(factory, installPluginArgument)); err != nil {
+	if err := command.RegisterFlagCompletionFunc(versionFlag, CompleteVersions(factory, installConnectorArgument)); err != nil {
 		panic(err)
 	}
-	if err := command.RegisterFlagCompletionFunc(setFlag, CompleteSetValues(factory, resolveInstallPlugin, paths)); err != nil {
+	if err := command.RegisterFlagCompletionFunc(setFlag, CompleteSetValues(factory, resolveInstallConnectorVersion, paths)); err != nil {
 		panic(err)
 	}
 	return command
 }
 
-func installPluginArgument(_ *cobra.Command, args []string) string {
+func installConnectorArgument(_ *cobra.Command, args []string) string {
 	if len(args) == 0 {
 		return ""
 	}
 	return args[0]
 }
 
-func resolveInstallPlugin(ctx context.Context, client connectivityclient.Client, _ *cobra.Command, args []string) (*connectivityclient.Plugin, error) {
+func resolveInstallConnectorVersion(ctx context.Context, client connectivityclient.Client, cmd *cobra.Command, args []string) (*connectivityclient.ConnectorVersion, error) {
 	if len(args) == 0 {
 		return nil, nil
 	}
-	return client.GetPlugin(ctx, args[0])
+	return resolveConnectorVersion(ctx, client, args[0], fctl.GetString(cmd, versionFlag))
 }
 
 func (c *InstallController) GetStore() *InstallStore {
@@ -103,13 +103,10 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		return nil, err
 	}
 
-	pluginName := args[0]
-	plugin, err := client.GetPlugin(cmd.Context(), pluginName)
+	connectorName := args[0]
+	version, err := resolveConnectorVersion(cmd.Context(), client, connectorName, fctl.GetString(cmd, versionFlag))
 	if err != nil {
 		return nil, err
-	}
-	if plugin == nil {
-		return nil, fmt.Errorf("install connectivity plugin %q: empty plugin response", pluginName)
 	}
 
 	envFiles, err := cmd.Flags().GetStringArray(envFileFlag)
@@ -120,7 +117,7 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 	if err != nil {
 		return nil, err
 	}
-	config, err := BuildInstallConfig(cmd, plugin, InputOptions{
+	config, err := BuildInstallConfig(cmd, version, InputOptions{
 		ConfigFile: fctl.GetString(cmd, configFlag),
 		EnvFiles:   envFiles,
 		SetValues:  setValues,
@@ -134,12 +131,12 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 
 	name := fctl.GetString(cmd, nameFlag)
 	if name == "" {
-		name = pluginName
+		name = connectorName
 	}
-	spec := connectivityclient.InstanceSpec{
-		Plugin: pluginName,
-		Ledger: fctl.GetString(cmd, ledgerFlag),
-		Config: config,
+	spec := connectivityclient.ConnectorInstanceSpec{
+		Connector: connectorName,
+		Ledger:    fctl.GetString(cmd, ledgerFlag),
+		Config:    config,
 	}
 	if cmd.Flags().Changed(versionFlag) {
 		value, err := cmd.Flags().GetString(versionFlag)
@@ -156,31 +153,31 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		spec.PollInterval = fctl.Ptr(value)
 	}
 
-	if !c.approve(cmd, "You are about to install Connectivity instance %q", name) {
+	if !c.approve(cmd, "You are about to install Connectivity connector instance %q", name) {
 		return nil, fctl.ErrMissingApproval
 	}
-	instance, err := client.CreateInstance(cmd.Context(), connectivityclient.InstanceCreate{Name: name, Spec: spec})
+	instance, err := client.CreateConnectorInstance(cmd.Context(), connectivityclient.ConnectorInstanceCreate{Name: name, Spec: spec})
 	if err != nil {
 		return nil, err
 	}
 	if instance == nil {
-		return nil, fmt.Errorf("install connectivity instance %q: empty instance response", name)
+		return nil, fmt.Errorf("install connectivity connector instance %q: empty response", name)
 	}
-	c.store.Instance = *instance
+	c.store.ConnectorInstance = *instance
 	return c, nil
 }
 
-func configHasData(config *connectivityclient.InstanceConfig) bool {
+func configHasData(config *connectivityclient.ConnectorInstanceConfig) bool {
 	return config != nil && (len(config.Env) > 0 || len(config.Files) > 0)
 }
 
 func (c *InstallController) Render(cmd *cobra.Command, _ []string) error {
-	instance := c.store.Instance
+	instance := c.store.ConnectorInstance
 	_, err := fmt.Fprintf(
 		cmd.OutOrStdout(),
-		"Instance %q installed with plugin %q for ledger %q.\n",
+		"Connector instance %q installed with connector %q for ledger %q.\n",
 		stringValue(instance.Metadata.Name),
-		instance.Spec.Plugin,
+		instance.Spec.Connector,
 		instance.Spec.Ledger,
 	)
 	return err

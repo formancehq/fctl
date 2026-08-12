@@ -1,4 +1,4 @@
-package instances
+package connectorinstances
 
 import (
 	"context"
@@ -17,14 +17,14 @@ import (
 
 type showInstanceClientMock struct {
 	connectivityclient.Client
-	get func(context.Context, string) (*connectivityclient.Instance, error)
+	get func(context.Context, string) (*connectivityclient.ConnectorInstance, error)
 }
 
-func (m showInstanceClientMock) GetInstance(ctx context.Context, name string) (*connectivityclient.Instance, error) {
+func (m showInstanceClientMock) GetConnectorInstance(ctx context.Context, name string) (*connectivityclient.ConnectorInstance, error) {
 	return m.get(ctx, name)
 }
 
-func TestShowInstanceRendersMetadataDesiredStateLifecycleProgressAndRedactedConfigSources(t *testing.T) {
+func TestShowConnectorInstanceRendersMetadataDesiredStateLifecycleProgressAndRedactedConfigSources(t *testing.T) {
 	created := time.Date(2026, time.August, 7, 10, 30, 0, 0, time.UTC)
 	instance := instanceFixture("stripe-eu")
 	instance.Metadata.Namespace = stringPtr("formance")
@@ -34,13 +34,13 @@ func TestShowInstanceRendersMetadataDesiredStateLifecycleProgressAndRedactedConf
 	instance.Metadata.Labels = map[string]string{"region": "eu"}
 	instance.Metadata.Annotations = map[string]string{"owner": "platform"}
 	mode := int32(420)
-	instance.Spec.Config = &connectivityclient.InstanceConfig{
+	instance.Spec.Config = &connectivityclient.ConnectorInstanceConfig{
 		Env: map[string]connectivityclient.EnvValue{
 			"API_KEY": {Value: stringPtr("must-not-leak")},
-			"TOKEN":   {SecretRef: &connectivityclient.KeyRef{Name: "plugin-secrets", Key: "token"}},
+			"TOKEN":   {SecretRef: &connectivityclient.KeyRef{Name: "connector-secrets", Key: "token"}},
 		},
 		Files: []connectivityclient.FileMount{
-			{Path: "/etc/plugin/config.yaml", ConfigMapRef: &connectivityclient.KeyRef{Name: "plugin-config", Key: "config.yaml"}, Mode: &mode},
+			{Path: "/etc/plugin/config.yaml", ConfigMapRef: &connectivityclient.KeyRef{Name: "connector-config", Key: "config.yaml"}, Mode: &mode},
 			{Path: "/etc/plugin/inline.pem", Value: stringPtr("also-must-not-leak")},
 		},
 	}
@@ -51,11 +51,12 @@ func TestShowInstanceRendersMetadataDesiredStateLifecycleProgressAndRedactedConf
 	for _, expected := range []string{
 		"Information", "Name", "stripe-eu", "Namespace", "formance", "UID", "instance-uid", "Resource Version", "42",
 		"Created At", created.Format(time.RFC3339), "Labels", "region=eu", "Annotations", "owner=platform",
-		"Desired Specification", "Plugin", "stripe", "Version", "2.0.0", "Ledger", "main", "Poll Interval", "5s",
-		"Lifecycle", "Resolved Image", "registry/plugin:2.0.0", "Plugin Address", "http://stripe.default.svc", "Phase", "Ready", "State", "Running",
+		"Desired Specification", "Connector", "stripe", "Version", "2.0.0", "Ledger", "main", "Poll Interval", "5s",
+		"Lifecycle", "Resolved Connector", "Resolved Version", "Resolved Image", "registry/connector:2.0.0",
+		"Resolved Digest", "sha256:deadbeef", "Connector Address", "http://stripe.default.svc", "Phase", "Ready", "State", "Running",
 		"Ingestion Progress", "Current Sequence", "42", "Source Tip Sequence", "48", "Last Error", "source temporarily unavailable", "Message", "retrying ingestion",
-		"Configuration", "API_KEY", "environment", "inline", "TOKEN", "secret:plugin-secrets/token",
-		"/etc/plugin/config.yaml", "file", "configmap:plugin-config/config.yaml", "420", "/etc/plugin/inline.pem",
+		"Configuration", "API_KEY", "environment", "inline", "TOKEN", "secret:connector-secrets/token",
+		"/etc/plugin/config.yaml", "file", "configmap:connector-config/config.yaml", "420", "/etc/plugin/inline.pem",
 	} {
 		require.Contains(t, output, expected)
 	}
@@ -90,9 +91,9 @@ func TestShowPlainOutputOmitsUnsupportedStartSequence(t *testing.T) {
 	require.NotContains(t, output, "987654321")
 }
 
-func TestShowInstanceJSONPreservesCompleteModel(t *testing.T) {
+func TestShowConnectorInstanceJSONPreservesCompleteModel(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
-	instance.Spec.Config = &connectivityclient.InstanceConfig{Env: map[string]connectivityclient.EnvValue{
+	instance.Spec.Config = &connectivityclient.ConnectorInstanceConfig{Env: map[string]connectivityclient.EnvValue{
 		"API_KEY": {Value: stringPtr("json-keeps-full-model")},
 	}}
 	command := NewShowCommand(factoryWithInstance(instance))
@@ -105,10 +106,10 @@ func TestShowInstanceJSONPreservesCompleteModel(t *testing.T) {
 		Data ShowStore `json:"data"`
 	}
 	require.NoError(t, json.Unmarshal([]byte(output), &envelope))
-	require.Equal(t, instance, envelope.Data.Instance)
+	require.Equal(t, instance, envelope.Data.ConnectorInstance)
 }
 
-func TestShowInstanceHandlesMissingStatusAndConfig(t *testing.T) {
+func TestShowConnectorInstanceHandlesMissingStatusAndConfig(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
 	instance.Status = nil
 	instance.Spec.Config = nil
@@ -119,7 +120,7 @@ func TestShowInstanceHandlesMissingStatusAndConfig(t *testing.T) {
 	require.Contains(t, output, "No configuration entries.")
 }
 
-func TestShowInstanceReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
+func TestShowConnectorInstanceReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
 	tests := map[string]struct {
 		factory func(*cobra.Command) (connectivityclient.Client, error)
 		want    string
@@ -132,13 +133,13 @@ func TestShowInstanceReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
 			want: "authentication failed",
 		},
 		"API": {
-			factory: factoryReturning(showInstanceClientMock{get: func(context.Context, string) (*connectivityclient.Instance, error) {
-				return nil, errors.New("instance unavailable")
+			factory: factoryReturning(showInstanceClientMock{get: func(context.Context, string) (*connectivityclient.ConnectorInstance, error) {
+				return nil, errors.New("connector instance unavailable")
 			}}),
-			want: "instance unavailable",
+			want: "connector instance unavailable",
 		},
 		"empty response": {
-			factory: factoryReturning(showInstanceClientMock{get: func(context.Context, string) (*connectivityclient.Instance, error) {
+			factory: factoryReturning(showInstanceClientMock{get: func(context.Context, string) (*connectivityclient.ConnectorInstance, error) {
 				return nil, nil
 			}}),
 			want: "empty response",

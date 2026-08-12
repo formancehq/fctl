@@ -1,4 +1,4 @@
-package instances
+package connectorinstances
 
 import (
 	"bufio"
@@ -35,11 +35,11 @@ type InputOptions struct {
 
 type ReadFileFunc func(cmd *cobra.Command, path string) (string, error)
 
-func SchemaFields(plugin *connectivityclient.Plugin) (map[string]SchemaField, error) {
-	if plugin == nil {
-		return nil, fmt.Errorf("plugin is required")
+func SchemaFields(version *connectivityclient.ConnectorVersion) (map[string]SchemaField, error) {
+	if version == nil {
+		return nil, fmt.Errorf("connector version is required")
 	}
-	if len(plugin.Spec.ConfigSchema) == 0 {
+	if len(version.ConfigSchema) == 0 {
 		return map[string]SchemaField{}, nil
 	}
 
@@ -49,12 +49,12 @@ func SchemaFields(plugin *connectivityclient.Plugin) (map[string]SchemaField, er
 		kind ConfigKind
 		raw  any
 	}{
-		{name: "env", kind: ConfigEnv, raw: plugin.Spec.ConfigSchema["env"]},
-		{name: "files", kind: ConfigFile, raw: plugin.Spec.ConfigSchema["files"]},
+		{name: "env", kind: ConfigEnv, raw: version.ConfigSchema["env"]},
+		{name: "files", kind: ConfigFile, raw: version.ConfigSchema["files"]},
 	}
 	if sections[0].raw == nil {
-		if _, hasLegacyProperties := plugin.Spec.ConfigSchema["properties"]; hasLegacyProperties {
-			sections[0].raw = plugin.Spec.ConfigSchema
+		if _, hasLegacyProperties := version.ConfigSchema["properties"]; hasLegacyProperties {
+			sections[0].raw = version.ConfigSchema
 		}
 	}
 
@@ -66,19 +66,19 @@ func SchemaFields(plugin *connectivityclient.Plugin) (map[string]SchemaField, er
 		}
 		sectionSchema, ok := stringMap(rawSection)
 		if !ok {
-			return nil, fmt.Errorf("plugin config schema %s must be an object", section.name)
+			return nil, fmt.Errorf("connector config schema %s must be an object", section.name)
 		}
 		sectionProperties, ok := stringMap(sectionSchema["properties"])
 		if !ok {
 			if sectionSchema["properties"] == nil {
 				sectionProperties = map[string]any{}
 			} else {
-				return nil, fmt.Errorf("plugin config schema %s properties must be an object", section.name)
+				return nil, fmt.Errorf("connector config schema %s properties must be an object", section.name)
 			}
 		}
 		required, err := requiredSet(sectionSchema["required"])
 		if err != nil {
-			return nil, fmt.Errorf("plugin config schema %s: %w", section.name, err)
+			return nil, fmt.Errorf("connector config schema %s: %w", section.name, err)
 		}
 
 		for key, rawDefinition := range sectionProperties {
@@ -87,7 +87,7 @@ func SchemaFields(plugin *connectivityclient.Plugin) (map[string]SchemaField, er
 			}
 			definition, ok := stringMap(rawDefinition)
 			if !ok {
-				return nil, fmt.Errorf("plugin config schema field %q must be an object", key)
+				return nil, fmt.Errorf("connector config schema field %q must be an object", key)
 			}
 			format, _ := definition["format"].(string)
 			legacySecret, _ := definition["x-secret"].(bool)
@@ -105,20 +105,16 @@ func SchemaFields(plugin *connectivityclient.Plugin) (map[string]SchemaField, er
 	return fields, nil
 }
 
-func BuildInstallConfig(cmd *cobra.Command, plugin *connectivityclient.Plugin, inputs InputOptions, read ReadFileFunc) (*connectivityclient.InstanceConfig, error) {
-	var base *connectivityclient.InstanceConfig
-	if plugin != nil {
-		base = plugin.Spec.Defaults
-	}
-	return buildConfig(cmd, plugin, base, inputs, read)
+func BuildInstallConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersion, inputs InputOptions, read ReadFileFunc) (*connectivityclient.ConnectorInstanceConfig, error) {
+	return buildConfig(cmd, version, nil, inputs, read)
 }
 
-func BuildConfigureConfig(cmd *cobra.Command, plugin *connectivityclient.Plugin, current *connectivityclient.InstanceConfig, inputs InputOptions, read ReadFileFunc) (*connectivityclient.InstanceConfig, error) {
-	return buildConfig(cmd, plugin, current, inputs, read)
+func BuildConfigureConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersion, current *connectivityclient.ConnectorInstanceConfig, inputs InputOptions, read ReadFileFunc) (*connectivityclient.ConnectorInstanceConfig, error) {
+	return buildConfig(cmd, version, current, inputs, read)
 }
 
-func buildConfig(cmd *cobra.Command, plugin *connectivityclient.Plugin, base *connectivityclient.InstanceConfig, inputs InputOptions, read ReadFileFunc) (*connectivityclient.InstanceConfig, error) {
-	fields, err := SchemaFields(plugin)
+func buildConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersion, base *connectivityclient.ConnectorInstanceConfig, inputs InputOptions, read ReadFileFunc) (*connectivityclient.ConnectorInstanceConfig, error) {
+	fields, err := SchemaFields(version)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +251,7 @@ func parseAssignment(raw string) (string, string, error) {
 	return key, parts[1], nil
 }
 
-func applyDotenv(config *connectivityclient.InstanceConfig, fields map[string]SchemaField, contents string, unknown map[string]struct{}) error {
+func applyDotenv(config *connectivityclient.ConnectorInstanceConfig, fields map[string]SchemaField, contents string, unknown map[string]struct{}) error {
 	scanner := bufio.NewScanner(strings.NewReader(contents))
 	line := 0
 	for scanner.Scan() {
@@ -355,7 +351,7 @@ func applyDoubleQuoteEscapes(value string) string {
 	return decoded.String()
 }
 
-func applyConfigDocument(config *connectivityclient.InstanceConfig, fields map[string]SchemaField, contents string, unknown map[string]struct{}) error {
+func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, fields map[string]SchemaField, contents string, unknown map[string]struct{}) error {
 	var root map[string]any
 	if err := yaml.Unmarshal([]byte(contents), &root); err != nil {
 		return err
@@ -461,7 +457,7 @@ func validateSources(value *string, secretRef, configMapRef *connectivityclient.
 	return nil
 }
 
-func applyValue(config *connectivityclient.InstanceConfig, field SchemaField, value parsedValue) {
+func applyValue(config *connectivityclient.ConnectorInstanceConfig, field SchemaField, value parsedValue) {
 	if field.Kind == ConfigEnv {
 		config.Env[field.Key] = connectivityclient.EnvValue{
 			Value:        value.value,
@@ -478,7 +474,7 @@ func applyValue(config *connectivityclient.InstanceConfig, field SchemaField, va
 	})
 }
 
-func replaceFile(config *connectivityclient.InstanceConfig, replacement connectivityclient.FileMount) {
+func replaceFile(config *connectivityclient.ConnectorInstanceConfig, replacement connectivityclient.FileMount) {
 	for index := range config.Files {
 		if config.Files[index].Path == replacement.Path {
 			if replacement.Mode == nil {
@@ -491,7 +487,7 @@ func replaceFile(config *connectivityclient.InstanceConfig, replacement connecti
 	config.Files = append(config.Files, replacement)
 }
 
-func hasValue(config *connectivityclient.InstanceConfig, field SchemaField) bool {
+func hasValue(config *connectivityclient.ConnectorInstanceConfig, field SchemaField) bool {
 	if field.Kind == ConfigEnv {
 		value, exists := config.Env[field.Key]
 		return exists && validateSources(value.Value, value.SecretRef, value.ConfigMapRef) == nil
@@ -504,8 +500,8 @@ func hasValue(config *connectivityclient.InstanceConfig, field SchemaField) bool
 	return false
 }
 
-func cloneConfig(source *connectivityclient.InstanceConfig) *connectivityclient.InstanceConfig {
-	clone := &connectivityclient.InstanceConfig{Env: make(map[string]connectivityclient.EnvValue)}
+func cloneConfig(source *connectivityclient.ConnectorInstanceConfig) *connectivityclient.ConnectorInstanceConfig {
+	clone := &connectivityclient.ConnectorInstanceConfig{Env: make(map[string]connectivityclient.EnvValue)}
 	if source == nil {
 		return clone
 	}

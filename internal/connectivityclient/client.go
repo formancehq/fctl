@@ -14,6 +14,12 @@ import (
 
 const connectivityPath = "/api/connectivity"
 
+const (
+	connectorsResource         = "connectors"
+	connectorVersionsResource  = "versions"
+	connectorInstancesResource = "connectorinstances"
+)
+
 type client struct {
 	stackURI   string
 	httpClient *http.Client
@@ -23,100 +29,75 @@ func (e *APIError) Error() string {
 	return fmt.Sprintf("connectivity API error: status %d, code %s: %s", e.StatusCode, e.Code, e.Message)
 }
 
-func (c *client) ListPlugins(ctx context.Context, options ListOptions) (*PluginList, error) {
-	result := &PluginList{}
-	if err := c.requestJSON(ctx, http.MethodGet, "plugins", "", listQuery(options), nil, "", http.StatusOK, result, true); err != nil {
+func (c *client) ListConnectors(ctx context.Context, options ListOptions) (*ConnectorList, error) {
+	result := &ConnectorList{}
+	if err := c.requestJSON(ctx, http.MethodGet, []string{connectorsResource}, listQuery(options), nil, "", http.StatusOK, result, true); err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func (c *client) GetPlugin(ctx context.Context, name string) (*Plugin, error) {
-	result := &Plugin{}
-	if err := c.requestJSON(ctx, http.MethodGet, "plugins", name, nil, nil, "", http.StatusOK, result, true); err != nil {
+func (c *client) GetConnector(ctx context.Context, name string) (*Connector, error) {
+	result := &Connector{}
+	if err := c.requestJSON(ctx, http.MethodGet, []string{connectorsResource, name}, nil, nil, "", http.StatusOK, result, true); err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func (c *client) ListInstances(ctx context.Context, options ListOptions) (*InstanceList, error) {
-	result := &InstanceList{}
-	if err := c.requestJSON(ctx, http.MethodGet, "instances", "", listQuery(options), nil, "", http.StatusOK, result, true); err != nil {
+func (c *client) ListConnectorVersions(ctx context.Context, connector string) (*ConnectorVersionList, error) {
+	result := &ConnectorVersionList{}
+	path := []string{connectorsResource, connector, connectorVersionsResource}
+	if err := c.requestJSON(ctx, http.MethodGet, path, nil, nil, "", http.StatusOK, result, true); err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func (c *client) CreateInstance(ctx context.Context, instance InstanceCreate) (*Instance, error) {
-	result := &Instance{}
-	if err := c.requestJSON(ctx, http.MethodPost, "instances", "", nil, instance, "application/json", http.StatusCreated, result, true); err != nil {
+func (c *client) GetConnectorVersion(ctx context.Context, connector, version string) (*ConnectorVersion, error) {
+	result := &ConnectorVersion{}
+	path := []string{connectorsResource, connector, connectorVersionsResource, version}
+	if err := c.requestJSON(ctx, http.MethodGet, path, nil, nil, "", http.StatusOK, result, true); err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func (c *client) GetInstance(ctx context.Context, name string) (*Instance, error) {
-	result := &Instance{}
-	if err := c.requestJSON(ctx, http.MethodGet, "instances", name, nil, nil, "", http.StatusOK, result, true); err != nil {
+func (c *client) ListConnectorInstances(ctx context.Context, options ListOptions) (*ConnectorInstanceList, error) {
+	result := &ConnectorInstanceList{}
+	if err := c.requestJSON(ctx, http.MethodGet, []string{connectorInstancesResource}, listQuery(options), nil, "", http.StatusOK, result, true); err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func (c *client) PatchInstance(ctx context.Context, name string, patch InstancePatch) (*Instance, error) {
-	wirePatch, err := adaptInstancePatchForPinnedAPI(patch)
-	if err != nil {
-		return nil, err
-	}
-	result := &Instance{}
-	if err := c.requestJSON(ctx, http.MethodPatch, "instances", name, nil, wirePatch, "application/merge-patch+json", http.StatusOK, result, true); err != nil {
+func (c *client) CreateConnectorInstance(ctx context.Context, instance ConnectorInstanceCreate) (*ConnectorInstance, error) {
+	result := &ConnectorInstance{}
+	if err := c.requestJSON(ctx, http.MethodPost, []string{connectorInstancesResource}, nil, instance, "application/json", http.StatusCreated, result, true); err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-// adaptInstancePatchForPinnedAPI bridges the API 0.1.0 model to Connectivity
-// commit 2ec12564's PATCH handler. That handler applies the patch directly to
-// the Instance CRD and materializes passwords by reading spec.env/spec.files,
-// while read/create mapping exposes those fields as spec.config.
-func adaptInstancePatchForPinnedAPI(patch InstancePatch) (InstancePatch, error) {
-	encoded, err := json.Marshal(patch)
-	if err != nil {
-		return nil, fmt.Errorf("marshal connectivity instance patch: %w", err)
+func (c *client) GetConnectorInstance(ctx context.Context, name string) (*ConnectorInstance, error) {
+	result := &ConnectorInstance{}
+	if err := c.requestJSON(ctx, http.MethodGet, []string{connectorInstancesResource, name}, nil, nil, "", http.StatusOK, result, true); err != nil {
+		return nil, err
 	}
-	wirePatch := InstancePatch{}
-	if err := json.Unmarshal(encoded, &wirePatch); err != nil {
-		return nil, fmt.Errorf("reshape connectivity instance patch: %w", err)
-	}
-	spec, ok := wirePatch["spec"].(map[string]any)
-	if !ok {
-		return wirePatch, nil
-	}
-	config, exists := spec["config"]
-	if !exists {
-		return wirePatch, nil
-	}
-	delete(spec, "config")
-	if config == nil {
-		spec["env"] = nil
-		spec["files"] = nil
-		return wirePatch, nil
-	}
-	configObject, ok := config.(map[string]any)
-	if !ok {
-		return nil, fmt.Errorf("reshape connectivity instance patch: spec.config must be an object")
-	}
-	if env, ok := configObject["env"]; ok {
-		spec["env"] = env
-	}
-	if files, ok := configObject["files"]; ok {
-		spec["files"] = files
-	}
-	return wirePatch, nil
+	return result, nil
 }
 
-func (c *client) DeleteInstance(ctx context.Context, name string) error {
-	return c.requestJSON(ctx, http.MethodDelete, "instances", name, nil, nil, "", http.StatusNoContent, nil, false)
+func (c *client) PatchConnectorInstance(ctx context.Context, name string, patch ConnectorInstancePatch) (*ConnectorInstance, error) {
+	result := &ConnectorInstance{}
+	path := []string{connectorInstancesResource, name}
+	if err := c.requestJSON(ctx, http.MethodPatch, path, nil, patch, "application/merge-patch+json", http.StatusOK, result, true); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *client) DeleteConnectorInstance(ctx context.Context, name string) error {
+	return c.requestJSON(ctx, http.MethodDelete, []string{connectorInstancesResource, name}, nil, nil, "", http.StatusNoContent, nil, false)
 }
 
 func listQuery(options ListOptions) url.Values {
@@ -127,14 +108,14 @@ func listQuery(options ListOptions) url.Values {
 	if options.Continue != "" {
 		query.Set("continue", options.Continue)
 	}
-	if options.Plugin != "" {
-		query.Set("plugin", options.Plugin)
+	if options.Connector != "" {
+		query.Set("connector", options.Connector)
 	}
 	return query
 }
 
-func (c *client) requestJSON(ctx context.Context, method, resource, name string, query url.Values, body any, contentType string, expectedStatus int, destination any, requireObject bool) error {
-	endpoint, err := endpointURL(c.stackURI, resource, name)
+func (c *client) requestJSON(ctx context.Context, method string, path []string, query url.Values, body any, contentType string, expectedStatus int, destination any, requireObject bool) error {
+	endpoint, err := endpointURL(c.stackURI, path)
 	if err != nil {
 		return err
 	}
@@ -177,7 +158,7 @@ func (c *client) requestJSON(ctx context.Context, method, resource, name string,
 	return decodeResponse(response.Body, destination, requireObject)
 }
 
-func endpointURL(stackURI, resource, name string) (*url.URL, error) {
+func endpointURL(stackURI string, segments []string) (*url.URL, error) {
 	endpoint, err := url.Parse(stackURI)
 	if err != nil {
 		return nil, fmt.Errorf("parse stack URI: %w", err)
@@ -191,11 +172,14 @@ func endpointURL(stackURI, resource, name string) (*url.URL, error) {
 	if baseRawPath == "" {
 		baseRawPath = basePath
 	}
-	path := connectivityPath + "/" + resource
-	rawPath := path
-	if name != "" {
-		path += "/" + name
-		rawPath += "/" + url.PathEscape(name)
+	path := connectivityPath
+	rawPath := connectivityPath
+	for _, segment := range segments {
+		if segment == "" {
+			continue
+		}
+		path += "/" + segment
+		rawPath += "/" + url.PathEscape(segment)
 	}
 
 	endpoint.Path = basePath + path
@@ -234,25 +218,36 @@ func decodeResponse(body io.Reader, destination any, requireObject bool) error {
 
 func validateResponse(destination any) error {
 	switch value := destination.(type) {
-	case *Plugin:
-		return validatePlugin(value)
-	case *PluginList:
+	case *Connector:
+		return validateConnector(value)
+	case *ConnectorList:
 		if value.Items == nil {
 			return fmt.Errorf("items must be a non-null array")
 		}
 		for i := range value.Items {
-			if err := validatePlugin(&value.Items[i]); err != nil {
+			if err := validateConnector(&value.Items[i]); err != nil {
 				return fmt.Errorf("items[%d]: %w", i, err)
 			}
 		}
-	case *Instance:
-		return validateInstance(value)
-	case *InstanceList:
+	case *ConnectorVersion:
+		return validateConnectorVersion(value.Version, value.Image)
+	case *ConnectorVersionList:
 		if value.Items == nil {
 			return fmt.Errorf("items must be a non-null array")
 		}
 		for i := range value.Items {
-			if err := validateInstance(&value.Items[i]); err != nil {
+			if err := validateConnectorVersion(value.Items[i].Version, value.Items[i].Image); err != nil {
+				return fmt.Errorf("items[%d]: %w", i, err)
+			}
+		}
+	case *ConnectorInstance:
+		return validateConnectorInstance(value)
+	case *ConnectorInstanceList:
+		if value.Items == nil {
+			return fmt.Errorf("items must be a non-null array")
+		}
+		for i := range value.Items {
+			if err := validateConnectorInstance(&value.Items[i]); err != nil {
 				return fmt.Errorf("items[%d]: %w", i, err)
 			}
 		}
@@ -260,25 +255,32 @@ func validateResponse(destination any) error {
 	return nil
 }
 
-func validatePlugin(plugin *Plugin) error {
-	if plugin == nil || plugin.Metadata.Name == nil || strings.TrimSpace(*plugin.Metadata.Name) == "" {
-		return fmt.Errorf("plugin metadata.name is required")
-	}
-	if strings.TrimSpace(plugin.Spec.Image) == "" {
-		return fmt.Errorf("plugin spec.image is required")
+func validateConnector(connector *Connector) error {
+	if connector == nil || connector.Metadata.Name == nil || strings.TrimSpace(*connector.Metadata.Name) == "" {
+		return fmt.Errorf("connector metadata.name is required")
 	}
 	return nil
 }
 
-func validateInstance(instance *Instance) error {
+func validateConnectorVersion(version, image string) error {
+	if strings.TrimSpace(version) == "" {
+		return fmt.Errorf("connector version version is required")
+	}
+	if strings.TrimSpace(image) == "" {
+		return fmt.Errorf("connector version image is required")
+	}
+	return nil
+}
+
+func validateConnectorInstance(instance *ConnectorInstance) error {
 	if instance == nil || instance.Metadata.Name == nil || strings.TrimSpace(*instance.Metadata.Name) == "" {
-		return fmt.Errorf("instance metadata.name is required")
+		return fmt.Errorf("connector instance metadata.name is required")
 	}
-	if strings.TrimSpace(instance.Spec.Plugin) == "" {
-		return fmt.Errorf("instance spec.plugin is required")
+	if strings.TrimSpace(instance.Spec.Connector) == "" {
+		return fmt.Errorf("connector instance spec.connector is required")
 	}
 	if strings.TrimSpace(instance.Spec.Ledger) == "" {
-		return fmt.Errorf("instance spec.ledger is required")
+		return fmt.Errorf("connector instance spec.ledger is required")
 	}
 	return nil
 }

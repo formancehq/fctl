@@ -16,23 +16,27 @@ func TestGivenConnectivityServer_WhenLifecycleMethodsRun_ThenContractIsRespected
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch {
-		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/plugins":
+		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectors":
 			require.Equal(t, "application/json", req.Header.Get("Accept"))
-			_, _ = io.WriteString(w, `{"items":[{"metadata":{"name":"stripe"},"spec":{"image":"image"}}]}`)
-		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/plugins/stripe":
-			_, _ = io.WriteString(w, `{"metadata":{"name":"stripe"},"spec":{"image":"image"}}`)
-		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/instances":
+			_, _ = io.WriteString(w, `{"items":[{"metadata":{"name":"stripe"},"spec":{"displayName":"Stripe"}}]}`)
+		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectors/stripe":
+			_, _ = io.WriteString(w, `{"metadata":{"name":"stripe"},"spec":{"displayName":"Stripe"}}`)
+		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectors/stripe/versions":
+			_, _ = io.WriteString(w, `{"items":[{"version":"v1.0.0","image":"registry/stripe:v1.0.0"}]}`)
+		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectors/stripe/versions/v1.0.0":
+			_, _ = io.WriteString(w, `{"version":"v1.0.0","image":"registry/stripe:v1.0.0","configSchema":{"env":{"properties":{}}}}`)
+		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectorinstances":
 			_, _ = io.WriteString(w, `{"items":[]}`)
-		case req.Method == http.MethodPost && req.URL.Path == "/api/connectivity/instances":
+		case req.Method == http.MethodPost && req.URL.Path == "/api/connectivity/connectorinstances":
 			require.Equal(t, "application/json", req.Header.Get("Content-Type"))
 			w.WriteHeader(http.StatusCreated)
-			_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"plugin":"stripe","ledger":"ledger"}}`)
-		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/instances/worker":
-			_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"plugin":"stripe","ledger":"ledger"}}`)
-		case req.Method == http.MethodPatch && req.URL.Path == "/api/connectivity/instances/worker":
+			_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connector":"stripe","ledger":"ledger"}}`)
+		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectorinstances/worker":
+			_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connector":"stripe","ledger":"ledger"}}`)
+		case req.Method == http.MethodPatch && req.URL.Path == "/api/connectivity/connectorinstances/worker":
 			require.Equal(t, "application/merge-patch+json", req.Header.Get("Content-Type"))
-			_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"plugin":"stripe","ledger":"ledger"}}`)
-		case req.Method == http.MethodDelete && req.URL.Path == "/api/connectivity/instances/worker":
+			_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connector":"stripe","ledger":"ledger"}}`)
+		case req.Method == http.MethodDelete && req.URL.Path == "/api/connectivity/connectorinstances/worker":
 			w.WriteHeader(http.StatusNoContent)
 		default:
 			http.NotFound(w, req)
@@ -44,33 +48,41 @@ func TestGivenConnectivityServer_WhenLifecycleMethodsRun_ThenContractIsRespected
 	ctx := context.Background()
 
 	// When lifecycle methods use the server.
-	plugins, err := client.ListPlugins(ctx, ListOptions{})
+	connectors, err := client.ListConnectors(ctx, ListOptions{})
 	require.NoError(t, err)
-	plugin, err := client.GetPlugin(ctx, "stripe")
+	connector, err := client.GetConnector(ctx, "stripe")
 	require.NoError(t, err)
-	instances, err := client.ListInstances(ctx, ListOptions{})
+	versions, err := client.ListConnectorVersions(ctx, "stripe")
 	require.NoError(t, err)
-	created, err := client.CreateInstance(ctx, InstanceCreate{Name: "worker", Spec: InstanceSpec{Plugin: "stripe", Ledger: "ledger"}})
+	version, err := client.GetConnectorVersion(ctx, "stripe", "v1.0.0")
 	require.NoError(t, err)
-	fetched, err := client.GetInstance(ctx, "worker")
+	instances, err := client.ListConnectorInstances(ctx, ListOptions{})
 	require.NoError(t, err)
-	patched, err := client.PatchInstance(ctx, "worker", InstancePatch{"spec": map[string]any{"pollInterval": "1m"}})
+	created, err := client.CreateConnectorInstance(ctx, ConnectorInstanceCreate{Name: "worker", Spec: ConnectorInstanceSpec{Connector: "stripe", Ledger: "ledger"}})
 	require.NoError(t, err)
-	err = client.DeleteInstance(ctx, "worker")
+	fetched, err := client.GetConnectorInstance(ctx, "worker")
+	require.NoError(t, err)
+	patched, err := client.PatchConnectorInstance(ctx, "worker", ConnectorInstancePatch{"spec": map[string]any{"pollInterval": "1m"}})
+	require.NoError(t, err)
+	err = client.DeleteConnectorInstance(ctx, "worker")
 	require.NoError(t, err)
 
 	// Then each response is decoded from the API contract.
-	require.Len(t, plugins.Items, 1)
-	require.Equal(t, "stripe", *plugins.Items[0].Metadata.Name)
-	require.Equal(t, "stripe", *plugin.Metadata.Name)
+	require.Len(t, connectors.Items, 1)
+	require.Equal(t, "stripe", *connectors.Items[0].Metadata.Name)
+	require.Equal(t, "stripe", *connector.Metadata.Name)
+	require.Len(t, versions.Items, 1)
+	require.Equal(t, "v1.0.0", versions.Items[0].Version)
+	require.Equal(t, "v1.0.0", version.Version)
+	require.NotEmpty(t, version.ConfigSchema)
 	require.Empty(t, instances.Items)
 	require.Equal(t, "worker", *created.Metadata.Name)
 	require.Equal(t, "worker", *fetched.Metadata.Name)
 	require.Equal(t, "worker", *patched.Metadata.Name)
 }
 
-func TestGivenPinnedConnectivityPatchHandler_WhenAPIConfigIsPatched_ThenCRDShapeIsSent(t *testing.T) {
-	// Given a server that applies the PATCH body directly to the pinned Instance CRD.
+func TestGivenConnectivityAPI_WhenConfigIsPatched_ThenAPIShapeIsSent(t *testing.T) {
+	// Given a server asserting the documented ConnectorInstancePatch shape.
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		require.Equal(t, http.MethodPatch, req.Method)
 		require.Equal(t, "application/merge-patch+json", req.Header.Get("Content-Type"))
@@ -79,18 +91,21 @@ func TestGivenPinnedConnectivityPatchHandler_WhenAPIConfigIsPatched_ThenCRDShape
 		require.NoError(t, json.NewDecoder(req.Body).Decode(&patch))
 		spec, ok := patch["spec"].(map[string]any)
 		require.True(t, ok)
-		require.NotContains(t, spec, "config")
+		require.NotContains(t, spec, "env")
+		require.NotContains(t, spec, "files")
 		require.Equal(t, "30s", spec["pollInterval"])
+		config, ok := spec["config"].(map[string]any)
+		require.True(t, ok)
 		require.Equal(t, map[string]any{
 			"API_PASSWORD": map[string]any{"value": "env-password"},
-		}, spec["env"])
+		}, config["env"])
 		require.Equal(t, []any{
 			map[string]any{"path": "/etc/plugin/key.pem", "value": "file-password"},
 			map[string]any{"path": "/etc/plugin/config.json", "value": "complete-file-array"},
-		}, spec["files"])
+		}, config["files"])
 
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"plugin":"stripe","ledger":"main"}}`)
+		_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connector":"stripe","ledger":"main"}}`)
 	}))
 	defer server.Close()
 
@@ -100,9 +115,9 @@ func TestGivenPinnedConnectivityPatchHandler_WhenAPIConfigIsPatched_ThenCRDShape
 	otherFile := "complete-file-array"
 
 	// When an API-shaped config patch contains password-compatible inline values.
-	_, err := client.PatchInstance(context.Background(), "worker", InstancePatch{
+	_, err := client.PatchConnectorInstance(context.Background(), "worker", ConnectorInstancePatch{
 		"spec": map[string]any{
-			"config": &InstanceConfig{
+			"config": &ConnectorInstanceConfig{
 				Env: map[string]EnvValue{
 					"API_PASSWORD": {Value: &envPassword},
 				},
@@ -115,6 +130,6 @@ func TestGivenPinnedConnectivityPatchHandler_WhenAPIConfigIsPatched_ThenCRDShape
 		},
 	})
 
-	// Then the client sends root CRD env/files fields for materialisation and preserves the full files array.
+	// Then the API receives spec.config verbatim and preserves the full files array.
 	require.NoError(t, err)
 }

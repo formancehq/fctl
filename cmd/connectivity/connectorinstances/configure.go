@@ -1,4 +1,4 @@
-package instances
+package connectorinstances
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 )
 
 type ConfigureStore struct {
-	Instance connectivityclient.Instance `json:"instance"`
+	ConnectorInstance connectivityclient.ConnectorInstance `json:"connectorInstance"`
 }
 
 type ConfigureController struct {
@@ -36,13 +36,13 @@ func NewConfigureController(factory connectivityinternal.ClientFactory, read Rea
 func NewConfigureCommand(factory connectivityinternal.ClientFactory, read ReadFileFunc, paths PathCompleter) *cobra.Command {
 	controller := NewConfigureController(factory, read)
 	command := fctl.NewCommand(
-		"configure <instance>",
+		"configure <connectorinstance>",
 		fctl.WithAliases("config", "update", "c"),
-		fctl.WithShortDescription("Configure a Connectivity plugin instance"),
+		fctl.WithShortDescription("Configure a Connectivity connector instance"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithValidArgsFunction(CompleteInstanceNames(factory)),
+		fctl.WithValidArgsFunction(CompleteConnectorInstanceNames(factory)),
 		fctl.WithStringFlag(ledgerFlag, "", "Ledger name"),
-		fctl.WithStringFlag(versionFlag, "", "Plugin version"),
+		fctl.WithStringFlag(versionFlag, "", "Connector version"),
 		fctl.WithStringFlag(pollIntervalFlag, "", "Polling interval"),
 		fctl.WithStringFlag(configFlag, "", "YAML or JSON configuration file"),
 		fctl.WithStringArrayFlag(envFileFlag, nil, "Dotenv configuration file (repeatable)"),
@@ -50,24 +50,39 @@ func NewConfigureCommand(factory connectivityinternal.ClientFactory, read ReadFi
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*ConfigureStore](controller),
 	)
-	if err := command.RegisterFlagCompletionFunc(versionFlag, completeVersions(factory, resolveConfigurePlugin)); err != nil {
+	if err := command.RegisterFlagCompletionFunc(versionFlag, completeVersions(factory, resolveConfigureConnector)); err != nil {
 		panic(err)
 	}
-	if err := command.RegisterFlagCompletionFunc(setFlag, CompleteSetValues(factory, resolveConfigurePlugin, paths)); err != nil {
+	if err := command.RegisterFlagCompletionFunc(setFlag, CompleteSetValues(factory, resolveConfigureConnectorVersion, paths)); err != nil {
 		panic(err)
 	}
 	return command
 }
 
-func resolveConfigurePlugin(ctx context.Context, client connectivityclient.Client, _ *cobra.Command, args []string) (*connectivityclient.Plugin, error) {
+func resolveConfigureConnector(ctx context.Context, client connectivityclient.Client, _ *cobra.Command, args []string) (string, error) {
+	if len(args) == 0 {
+		return "", nil
+	}
+	instance, err := client.GetConnectorInstance(ctx, args[0])
+	if err != nil || instance == nil {
+		return "", err
+	}
+	return instance.Spec.Connector, nil
+}
+
+func resolveConfigureConnectorVersion(ctx context.Context, client connectivityclient.Client, cmd *cobra.Command, args []string) (*connectivityclient.ConnectorVersion, error) {
 	if len(args) == 0 {
 		return nil, nil
 	}
-	instance, err := client.GetInstance(ctx, args[0])
+	instance, err := client.GetConnectorInstance(ctx, args[0])
 	if err != nil || instance == nil {
 		return nil, err
 	}
-	return client.GetPlugin(ctx, instance.Spec.Plugin)
+	pinned := fctl.GetString(cmd, versionFlag)
+	if pinned == "" {
+		pinned = instanceVersionPin(instance)
+	}
+	return resolveConnectorVersion(ctx, client, instance.Spec.Connector, pinned)
 }
 
 func (c *ConfigureController) GetStore() *ConfigureStore {
@@ -84,24 +99,25 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 	}
 
 	name := args[0]
-	instance, err := client.GetInstance(cmd.Context(), name)
+	instance, err := client.GetConnectorInstance(cmd.Context(), name)
 	if err != nil {
 		return nil, err
 	}
 	if instance == nil {
-		return nil, fmt.Errorf("configure connectivity instance %q: empty instance response", name)
-	}
-	plugin, err := client.GetPlugin(cmd.Context(), instance.Spec.Plugin)
-	if err != nil {
-		return nil, err
-	}
-	if plugin == nil {
-		return nil, fmt.Errorf("configure connectivity instance %q: empty plugin response", name)
+		return nil, fmt.Errorf("configure connectivity connector instance %q: empty response", name)
 	}
 
 	specPatch := map[string]any{}
 	configChanged := cmd.Flags().Changed(configFlag) || cmd.Flags().Changed(envFileFlag) || cmd.Flags().Changed(setFlag)
 	if configChanged {
+		pinned := instanceVersionPin(instance)
+		if cmd.Flags().Changed(versionFlag) {
+			pinned = fctl.GetString(cmd, versionFlag)
+		}
+		version, err := resolveConnectorVersion(cmd.Context(), client, instance.Spec.Connector, pinned)
+		if err != nil {
+			return nil, err
+		}
 		envFiles, err := cmd.Flags().GetStringArray(envFileFlag)
 		if err != nil {
 			return nil, err
@@ -110,7 +126,7 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		if err != nil {
 			return nil, err
 		}
-		config, err := BuildConfigureConfig(cmd, plugin, instance.Spec.Config, InputOptions{
+		config, err := BuildConfigureConfig(cmd, version, instance.Spec.Config, InputOptions{
 			ConfigFile: fctl.GetString(cmd, configFlag),
 			EnvFiles:   envFiles,
 			SetValues:  setValues,
@@ -132,22 +148,22 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 	if len(specPatch) == 0 {
 		return nil, fmt.Errorf("no configuration changes requested")
 	}
-	if !c.approve(cmd, "You are about to configure Connectivity instance %q", name) {
+	if !c.approve(cmd, "You are about to configure Connectivity connector instance %q", name) {
 		return nil, fctl.ErrMissingApproval
 	}
 
-	updated, err := client.PatchInstance(cmd.Context(), name, connectivityclient.InstancePatch{"spec": specPatch})
+	updated, err := client.PatchConnectorInstance(cmd.Context(), name, connectivityclient.ConnectorInstancePatch{"spec": specPatch})
 	if err != nil {
 		return nil, err
 	}
 	if updated == nil {
-		return nil, fmt.Errorf("configure connectivity instance %q: empty instance response", name)
+		return nil, fmt.Errorf("configure connectivity connector instance %q: empty response", name)
 	}
-	c.store.Instance = *updated
+	c.store.ConnectorInstance = *updated
 	return c, nil
 }
 
 func (c *ConfigureController) Render(cmd *cobra.Command, _ []string) error {
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Instance %q configured.\n", stringValue(c.store.Instance.Metadata.Name))
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector instance %q configured.\n", stringValue(c.store.ConnectorInstance.Metadata.Name))
 	return err
 }

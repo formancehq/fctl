@@ -1,4 +1,4 @@
-package plugins
+package connectors
 
 import (
 	"fmt"
@@ -15,7 +15,9 @@ import (
 )
 
 type ShowStore struct {
-	Plugin connectivityclient.Plugin `json:"plugin"`
+	Connector connectivityclient.Connector                 `json:"connector"`
+	Versions  []connectivityclient.ConnectorVersionSummary `json:"versions"`
+	Version   *connectivityclient.ConnectorVersion         `json:"version,omitempty"`
 }
 
 type ShowController struct {
@@ -26,17 +28,20 @@ type ShowController struct {
 var _ fctl.Controller[*ShowStore] = (*ShowController)(nil)
 
 func NewShowController(factory connectivityinternal.ClientFactory) *ShowController {
-	return &ShowController{factory: factory, store: &ShowStore{}}
+	return &ShowController{
+		factory: factory,
+		store:   &ShowStore{Versions: []connectivityclient.ConnectorVersionSummary{}},
+	}
 }
 
 func NewShowCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
 	controller := NewShowController(factory)
 	return fctl.NewCommand(
-		"show <plugin>",
+		"show <connector>",
 		fctl.WithAliases("get", "g", "sh", "s"),
-		fctl.WithShortDescription("Show a Connectivity plugin"),
+		fctl.WithShortDescription("Show a Connectivity connector"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithValidArgsFunction(CompletePluginNames(factory)),
+		fctl.WithValidArgsFunction(CompleteConnectorNames(factory)),
 		fctl.WithController[*ShowStore](controller),
 	)
 }
@@ -53,56 +58,85 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	if err != nil {
 		return nil, err
 	}
-	plugin, err := client.GetPlugin(cmd.Context(), args[0])
+	name := args[0]
+	connector, err := client.GetConnector(cmd.Context(), name)
 	if err != nil {
 		return nil, err
 	}
-	if plugin == nil {
-		return nil, fmt.Errorf("show connectivity plugin %q: empty response", args[0])
+	if connector == nil {
+		return nil, fmt.Errorf("show connectivity connector %q: empty response", name)
 	}
-	c.store.Plugin = *plugin
+	c.store.Connector = *connector
+
+	versions, err := client.ListConnectorVersions(cmd.Context(), name)
+	if err != nil {
+		return nil, err
+	}
+	if versions == nil {
+		return nil, fmt.Errorf("show connectivity connector %q: empty version list response", name)
+	}
+	c.store.Versions = versions.Items
+
+	// The catalog serves versions ascending by semantic version, so the
+	// configSchema worth rendering is the newest one's.
+	if len(versions.Items) > 0 {
+		newest := versions.Items[len(versions.Items)-1].Version
+		version, err := client.GetConnectorVersion(cmd.Context(), name, newest)
+		if err != nil {
+			return nil, err
+		}
+		if version == nil {
+			return nil, fmt.Errorf("show connectivity connector %q: empty version %q response", name, newest)
+		}
+		c.store.Version = version
+	}
 	return c, nil
 }
 
 func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
-	plugin := c.store.Plugin
+	connector := c.store.Connector
 	out := cmd.OutOrStdout()
 
 	fctl.Section.WithWriter(out).Println("Information")
 	information := pterm.TableData{
-		{pterm.LightCyan("Name"), stringValue(plugin.Metadata.Name)},
-		{pterm.LightCyan("Namespace"), stringValue(plugin.Metadata.Namespace)},
-		{pterm.LightCyan("UID"), stringValue(plugin.Metadata.UID)},
-		{pterm.LightCyan("Resource Version"), stringValue(plugin.Metadata.ResourceVersion)},
-		{pterm.LightCyan("Created At"), timeValue(plugin.Metadata.CreationTimestamp)},
-		{pterm.LightCyan("Labels"), mapValue(plugin.Metadata.Labels)},
-		{pterm.LightCyan("Annotations"), mapValue(plugin.Metadata.Annotations)},
-		{pterm.LightCyan("Image"), plugin.Spec.Image},
-		{pterm.LightCyan("Version"), stringValue(plugin.Spec.Version)},
-		{pterm.LightCyan("Default Version"), stringValue(plugin.Spec.DefaultVersion)},
-		{pterm.LightCyan("Description"), stringValue(plugin.Spec.Description)},
-		{pterm.LightCyan("Capabilities"), strings.Join(plugin.Spec.Capabilities, ", ")},
-		{pterm.LightCyan("Phase"), pluginPhase(plugin.Status)},
-		{pterm.LightCyan("Status Message"), pluginStatusMessage(plugin.Status)},
-		{pterm.LightCyan("Documentation"), stringValue(plugin.Spec.DocsURL)},
+		{pterm.LightCyan("Name"), stringValue(connector.Metadata.Name)},
+		{pterm.LightCyan("Namespace"), stringValue(connector.Metadata.Namespace)},
+		{pterm.LightCyan("UID"), stringValue(connector.Metadata.UID)},
+		{pterm.LightCyan("Resource Version"), stringValue(connector.Metadata.ResourceVersion)},
+		{pterm.LightCyan("Created At"), timeValue(connector.Metadata.CreationTimestamp)},
+		{pterm.LightCyan("Labels"), mapValue(connector.Metadata.Labels)},
+		{pterm.LightCyan("Annotations"), mapValue(connector.Metadata.Annotations)},
+		{pterm.LightCyan("Display Name"), stringValue(connector.Spec.DisplayName)},
+		{pterm.LightCyan("Description"), stringValue(connector.Spec.Description)},
+		{pterm.LightCyan("Image URL"), stringValue(connector.Spec.ImageURL)},
+		{pterm.LightCyan("Catalog"), stringValue(connector.Spec.Catalog)},
+		{pterm.LightCyan("Tags"), strings.Join(connector.Spec.Tags, ", ")},
+		{pterm.LightCyan("Phase"), connectorPhase(connector.Status)},
+		{pterm.LightCyan("Status Message"), connectorStatusMessage(connector.Status)},
 	}
 	if err := pterm.DefaultTable.WithWriter(out).WithData(information).Render(); err != nil {
 		return err
 	}
 
-	if len(plugin.Spec.Versions) > 0 {
+	if len(c.store.Versions) > 0 {
 		fctl.Section.WithWriter(out).Println("Versions")
-		versions := fctl.Map(plugin.Spec.Versions, func(version connectivityclient.VersionEntry) []string {
-			return []string{version.Version, stringValue(version.Digest), stringValue(version.Image)}
+		versions := fctl.Map(c.store.Versions, func(version connectivityclient.ConnectorVersionSummary) []string {
+			return []string{version.Version, stringValue(version.Digest), version.Image, timeValue(version.ReleaseDate)}
 		})
-		versions = fctl.Prepend(versions, []string{"Version", "Digest", "Image"})
+		versions = fctl.Prepend(versions, []string{"Version", "Digest", "Image", "Released"})
 		if err := pterm.DefaultTable.WithHasHeader().WithWriter(out).WithData(versions).Render(); err != nil {
 			return err
 		}
 	}
 
-	fctl.Section.WithWriter(out).Println("Configuration Schema")
-	schemaRows := summarizeSchema(plugin.Spec.ConfigSchema)
+	if c.store.Version == nil {
+		fctl.Section.WithWriter(out).Println("Configuration Schema")
+		_, err := fmt.Fprintln(out, "No published version.")
+		return err
+	}
+
+	fctl.Section.WithWriter(out).Println("Configuration Schema (" + c.store.Version.Version + ")")
+	schemaRows := summarizeSchema(c.store.Version.ConfigSchema)
 	if len(schemaRows) == 0 {
 		_, err := fmt.Fprintln(out, "No configurable fields.")
 		return err
@@ -219,7 +253,7 @@ func mapValue(value map[string]string) string {
 	return strings.Join(entries, ", ")
 }
 
-func pluginStatusMessage(status *connectivityclient.PluginStatus) string {
+func connectorStatusMessage(status *connectivityclient.ConnectorStatus) string {
 	if status == nil {
 		return ""
 	}

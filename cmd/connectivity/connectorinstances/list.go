@@ -1,4 +1,4 @@
-package instances
+package connectorinstances
 
 import (
 	"fmt"
@@ -12,11 +12,11 @@ import (
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
-const pluginFlag = "plugin"
+const connectorFlag = "connector"
 
 type ListStore struct {
-	Instances []connectivityclient.Instance `json:"instances"`
-	Cursor    fctl.Cursor                   `json:"cursor"`
+	ConnectorInstances []connectivityclient.ConnectorInstance `json:"connectorInstances"`
+	Cursor             fctl.Cursor                            `json:"cursor"`
 }
 
 type ListController struct {
@@ -29,7 +29,7 @@ var _ fctl.Controller[*ListStore] = (*ListController)(nil)
 func NewListController(factory connectivityinternal.ClientFactory) *ListController {
 	return &ListController{
 		factory: factory,
-		store:   &ListStore{Instances: []connectivityclient.Instance{}},
+		store:   &ListStore{ConnectorInstances: []connectivityclient.ConnectorInstance{}},
 	}
 }
 
@@ -38,10 +38,10 @@ func NewListCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
 	return fctl.NewCommand(
 		"list",
 		fctl.WithAliases("ls", "l"),
-		fctl.WithShortDescription("List Connectivity instances"),
+		fctl.WithShortDescription("List Connectivity connector instances"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
-		fctl.WithStringFlag(pluginFlag, "", "Filter instances by plugin"),
+		fctl.WithStringFlag(connectorFlag, "", "Filter connector instances by connector"),
 		fctl.WithPageSizeFlag(),
 		fctl.WithCursorFlag(),
 		fctl.WithController[*ListStore](controller),
@@ -69,19 +69,19 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 		return nil, err
 	}
 
-	response, err := client.ListInstances(cmd.Context(), connectivityclient.ListOptions{
-		Plugin:   fctl.GetString(cmd, pluginFlag),
-		Limit:    pageSize,
-		Continue: cursor,
+	response, err := client.ListConnectorInstances(cmd.Context(), connectivityclient.ListOptions{
+		Connector: fctl.GetString(cmd, connectorFlag),
+		Limit:     pageSize,
+		Continue:  cursor,
 	})
 	if err != nil {
 		return nil, err
 	}
 	if response == nil {
-		return nil, fmt.Errorf("list connectivity instances: empty response")
+		return nil, fmt.Errorf("list connectivity connector instances: empty response")
 	}
 
-	c.store.Instances = response.Items
+	c.store.ConnectorInstances = response.Items
 	c.store.Cursor = fctl.Cursor{PageSize: int64(pageSize)}
 	if response.Continue != "" {
 		c.store.Cursor.HasMore = true
@@ -91,21 +91,21 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 }
 
 func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
-	rows := fctl.Map(c.store.Instances, func(instance connectivityclient.Instance) []string {
+	rows := fctl.Map(c.store.ConnectorInstances, func(instance connectivityclient.ConnectorInstance) []string {
 		return []string{
 			stringValue(instance.Metadata.Name),
-			instance.Spec.Plugin,
+			instance.Spec.Connector,
 			stringValue(instance.Spec.Version),
 			instance.Spec.Ledger,
-			instanceStatusValue(instance.Status, func(status *connectivityclient.InstanceStatus) *string { return status.Phase }),
-			instanceStatusValue(instance.Status, func(status *connectivityclient.InstanceStatus) *string { return status.State }),
-			instanceStatusInt64(instance.Status, func(status *connectivityclient.InstanceStatus) *int64 { return status.CurrentSequence }),
-			instanceStatusInt64(instance.Status, func(status *connectivityclient.InstanceStatus) *int64 { return status.SourceTipSequence }),
-			instanceStatusValue(instance.Status, func(status *connectivityclient.InstanceStatus) *string { return status.LastError }),
+			instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.Phase }),
+			instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.State }),
+			instanceStatusInt64(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *int64 { return status.CurrentSequence }),
+			instanceStatusInt64(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *int64 { return status.SourceTipSequence }),
+			instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.LastError }),
 		}
 	})
 	rows = fctl.Prepend(rows, []string{
-		"Name", "Plugin", "Version", "Ledger", "Phase", "State", "Current Sequence", "Source Tip Sequence", "Last Error",
+		"Name", "Connector", "Version", "Ledger", "Phase", "State", "Current Sequence", "Source Tip Sequence", "Last Error",
 	})
 	if err := pterm.DefaultTable.
 		WithHasHeader().
@@ -131,14 +131,14 @@ func int64Value(value *int64) string {
 	return strconv.FormatInt(*value, 10)
 }
 
-func instanceStatusValue(status *connectivityclient.InstanceStatus, field func(*connectivityclient.InstanceStatus) *string) string {
+func instanceStatusValue(status *connectivityclient.ConnectorInstanceStatus, field func(*connectivityclient.ConnectorInstanceStatus) *string) string {
 	if status == nil {
 		return ""
 	}
 	return stringValue(field(status))
 }
 
-func instanceStatusInt64(status *connectivityclient.InstanceStatus, field func(*connectivityclient.InstanceStatus) *int64) string {
+func instanceStatusInt64(status *connectivityclient.ConnectorInstanceStatus, field func(*connectivityclient.ConnectorInstanceStatus) *int64) string {
 	if status == nil {
 		return ""
 	}
