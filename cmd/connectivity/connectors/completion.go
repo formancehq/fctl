@@ -1,4 +1,4 @@
-package plugins
+package connectors
 
 import (
 	"context"
@@ -13,11 +13,11 @@ import (
 )
 
 const (
-	pluginCompletionLimit   = int32(500)
-	pluginCompletionTimeout = 2 * time.Second
+	connectorCompletionLimit   = int32(500)
+	connectorCompletionTimeout = 2 * time.Second
 )
 
-func CompletePluginNames(factory connectivityinternal.ClientFactory) cobra.CompletionFunc {
+func CompleteConnectorNames(factory connectivityinternal.ClientFactory) cobra.CompletionFunc {
 	return func(cmd *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if factory == nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
@@ -26,7 +26,7 @@ func CompletePluginNames(factory connectivityinternal.ClientFactory) cobra.Compl
 		if parent == nil {
 			parent = context.Background()
 		}
-		ctx, cancel := context.WithTimeout(parent, pluginCompletionTimeout)
+		ctx, cancel := context.WithTimeout(parent, connectorCompletionTimeout)
 		defer cancel()
 
 		completionCommand := *cmd
@@ -35,18 +35,18 @@ func CompletePluginNames(factory connectivityinternal.ClientFactory) cobra.Compl
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		response, err := client.ListPlugins(ctx, connectivityclient.ListOptions{Limit: pluginCompletionLimit})
+		response, err := client.ListConnectors(ctx, connectivityclient.ListOptions{Limit: connectorCompletionLimit})
 		if err != nil || response == nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 
 		candidates := make([]string, 0, len(response.Items))
-		for _, plugin := range response.Items {
-			name := stringValue(plugin.Metadata.Name)
+		for _, connector := range response.Items {
+			name := stringValue(connector.Metadata.Name)
 			if name == "" || !strings.HasPrefix(name, toComplete) {
 				continue
 			}
-			if description := stringValue(plugin.Spec.Description); description != "" {
+			if description := stringValue(connector.Spec.Description); description != "" {
 				name += "\t" + description
 			}
 			candidates = append(candidates, name)

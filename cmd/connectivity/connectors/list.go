@@ -1,4 +1,4 @@
-package plugins
+package connectors
 
 import (
 	"fmt"
@@ -13,8 +13,8 @@ import (
 )
 
 type ListStore struct {
-	Plugins []connectivityclient.Plugin `json:"plugins"`
-	Cursor  fctl.Cursor                 `json:"cursor"`
+	Connectors []connectivityclient.Connector `json:"connectors"`
+	Cursor     fctl.Cursor                    `json:"cursor"`
 }
 
 type ListController struct {
@@ -27,7 +27,7 @@ var _ fctl.Controller[*ListStore] = (*ListController)(nil)
 func NewListController(factory connectivityinternal.ClientFactory) *ListController {
 	return &ListController{
 		factory: factory,
-		store:   &ListStore{Plugins: []connectivityclient.Plugin{}},
+		store:   &ListStore{Connectors: []connectivityclient.Connector{}},
 	}
 }
 
@@ -36,7 +36,7 @@ func NewListCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
 	return fctl.NewCommand(
 		"list",
 		fctl.WithAliases("ls", "l"),
-		fctl.WithShortDescription("List available Connectivity plugins"),
+		fctl.WithShortDescription("List available Connectivity connectors"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithPageSizeFlag(),
@@ -66,7 +66,7 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 		return nil, err
 	}
 
-	response, err := client.ListPlugins(cmd.Context(), connectivityclient.ListOptions{
+	response, err := client.ListConnectors(cmd.Context(), connectivityclient.ListOptions{
 		Limit:    pageSize,
 		Continue: cursor,
 	})
@@ -74,10 +74,10 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 		return nil, err
 	}
 	if response == nil {
-		return nil, fmt.Errorf("list connectivity plugins: empty response")
+		return nil, fmt.Errorf("list connectivity connectors: empty response")
 	}
 
-	c.store.Plugins = response.Items
+	c.store.Connectors = response.Items
 	c.store.Cursor = fctl.Cursor{PageSize: int64(pageSize)}
 	if response.Continue != "" {
 		c.store.Cursor.HasMore = true
@@ -87,16 +87,16 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 }
 
 func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
-	rows := fctl.Map(c.store.Plugins, func(plugin connectivityclient.Plugin) []string {
+	rows := fctl.Map(c.store.Connectors, func(connector connectivityclient.Connector) []string {
 		return []string{
-			stringValue(plugin.Metadata.Name),
-			stringValue(plugin.Spec.DefaultVersion),
-			stringValue(plugin.Spec.Description),
-			strings.Join(plugin.Spec.Capabilities, ", "),
-			pluginPhase(plugin.Status),
+			stringValue(connector.Metadata.Name),
+			stringValue(connector.Spec.DisplayName),
+			stringValue(connector.Spec.Description),
+			strings.Join(connector.Spec.Tags, ", "),
+			connectorPhase(connector.Status),
 		}
 	})
-	rows = fctl.Prepend(rows, []string{"Name", "Default Version", "Description", "Capabilities", "Phase"})
+	rows = fctl.Prepend(rows, []string{"Name", "Display Name", "Description", "Tags", "Phase"})
 	if err := pterm.DefaultTable.
 		WithHasHeader().
 		WithWriter(cmd.OutOrStdout()).
@@ -114,7 +114,7 @@ func stringValue(value *string) string {
 	return *value
 }
 
-func pluginPhase(status *connectivityclient.PluginStatus) string {
+func connectorPhase(status *connectivityclient.ConnectorStatus) string {
 	if status == nil {
 		return ""
 	}

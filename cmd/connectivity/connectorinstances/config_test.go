@@ -1,4 +1,4 @@
-package instances
+package connectorinstances
 
 import (
 	"testing"
@@ -10,7 +10,7 @@ import (
 )
 
 func TestSchemaFieldsExtractsEnvironmentAndFileMetadata(t *testing.T) {
-	fields, err := SchemaFields(pluginWithSchemaAndDefaults())
+	fields, err := SchemaFields(versionWithFullSchema())
 
 	require.NoError(t, err)
 	require.Equal(t, SchemaField{
@@ -24,7 +24,7 @@ func TestSchemaFieldsExtractsEnvironmentAndFileMetadata(t *testing.T) {
 		Key:         "/etc/plugin/config.yaml",
 		Kind:        ConfigFile,
 		Required:    true,
-		Description: "Plugin configuration",
+		Description: "Connector configuration",
 	}, fields["/etc/plugin/config.yaml"])
 	require.False(t, fields["TIMEOUT"].Required)
 	require.True(t, fields["/etc/plugin/ca.pem"].Password)
@@ -53,9 +53,9 @@ func TestSchemaFieldsRejectsAmbiguousAndMalformedSchemas(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			plugin := &connectivityclient.Plugin{Spec: connectivityclient.PluginSpec{ConfigSchema: tt.schema}}
+			version := &connectivityclient.ConnectorVersion{ConfigSchema: tt.schema}
 
-			_, err := SchemaFields(plugin)
+			_, err := SchemaFields(version)
 
 			require.ErrorContains(t, err, tt.want)
 		})
@@ -63,7 +63,7 @@ func TestSchemaFieldsRejectsAmbiguousAndMalformedSchemas(t *testing.T) {
 }
 
 func TestSchemaFieldsSupportsLegacyFlatSchemaAndSecretMarker(t *testing.T) {
-	plugin := &connectivityclient.Plugin{Spec: connectivityclient.PluginSpec{ConfigSchema: map[string]any{
+	version := &connectivityclient.ConnectorVersion{ConfigSchema: map[string]any{
 		"type":     "object",
 		"required": []any{"LEGACY_TOKEN"},
 		"properties": map[string]any{
@@ -73,9 +73,9 @@ func TestSchemaFieldsSupportsLegacyFlatSchemaAndSecretMarker(t *testing.T) {
 				"description": "Legacy token",
 			},
 		},
-	}}}
+	}}
 
-	fields, err := SchemaFields(plugin)
+	fields, err := SchemaFields(version)
 
 	require.NoError(t, err)
 	require.Equal(t, SchemaField{
@@ -87,19 +87,18 @@ func TestSchemaFieldsSupportsLegacyFlatSchemaAndSecretMarker(t *testing.T) {
 	}, fields["LEGACY_TOKEN"])
 }
 
-func TestBuildInstallConfigAllowsPluginWithoutSchema(t *testing.T) {
-	plugin := &connectivityclient.Plugin{Spec: connectivityclient.PluginSpec{Defaults: &connectivityclient.InstanceConfig{
-		Env: map[string]connectivityclient.EnvValue{"SERVER_DEFAULT": {Value: stringPtr("kept")}},
-	}}}
+func TestBuildInstallConfigAllowsConnectorVersionWithoutSchema(t *testing.T) {
+	version := &connectivityclient.ConnectorVersion{Version: "2.0.0", Image: "example/connector:2.0.0"}
 
-	got, err := BuildInstallConfig(&cobra.Command{}, plugin, InputOptions{}, mapReadFile(nil))
+	got, err := BuildInstallConfig(&cobra.Command{}, version, InputOptions{}, mapReadFile(nil))
 
 	require.NoError(t, err)
-	require.Equal(t, "kept", *got.Env["SERVER_DEFAULT"].Value)
+	require.Empty(t, got.Env)
+	require.Empty(t, got.Files)
 }
 
 func TestBuildInstallConfigParsesFlatYAMLAsEnvironmentValues(t *testing.T) {
-	got, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{ConfigFile: "config.yaml"}, mapReadFile(map[string]string{
+	got, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{ConfigFile: "config.yaml"}, mapReadFile(map[string]string{
 		"config.yaml": "API_URL: https://config.example\nTOKEN: config-token\nTIMEOUT: 45s\n",
 	}))
 
@@ -110,18 +109,18 @@ func TestBuildInstallConfigParsesFlatYAMLAsEnvironmentValues(t *testing.T) {
 }
 
 func TestBuildInstallConfigParsesStructuredYAML(t *testing.T) {
-	got, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{ConfigFile: "config.yaml"}, mapReadFile(map[string]string{
+	got, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{ConfigFile: "config.yaml"}, mapReadFile(map[string]string{
 		"config.yaml": `env:
   API_URL:
     value: https://structured.example
   TOKEN:
     secretRef:
-      name: plugin-secrets
+      name: connector-secrets
       key: token
 files:
   - path: /etc/plugin/config.yaml
     configMapRef:
-      name: plugin-config
+      name: connector-config
       key: config.yaml
   - path: /etc/plugin/ca.pem
     value: structured-ca
@@ -130,14 +129,14 @@ files:
 
 	require.NoError(t, err)
 	require.Equal(t, "https://structured.example", *got.Env["API_URL"].Value)
-	require.Equal(t, &connectivityclient.KeyRef{Name: "plugin-secrets", Key: "token"}, got.Env["TOKEN"].SecretRef)
+	require.Equal(t, &connectivityclient.KeyRef{Name: "connector-secrets", Key: "token"}, got.Env["TOKEN"].SecretRef)
 	require.Nil(t, got.Env["TOKEN"].Value)
-	require.Equal(t, &connectivityclient.KeyRef{Name: "plugin-config", Key: "config.yaml"}, got.Files[0].ConfigMapRef)
+	require.Equal(t, &connectivityclient.KeyRef{Name: "connector-config", Key: "config.yaml"}, got.Files[0].ConfigMapRef)
 	require.Equal(t, "structured-ca", *got.Files[1].Value)
 }
 
 func TestBuildInstallConfigParsesDotenvFilesInOrder(t *testing.T) {
-	got, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{EnvFiles: []string{"first.env", "second.env"}}, mapReadFile(map[string]string{
+	got, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{EnvFiles: []string{"first.env", "second.env"}}, mapReadFile(map[string]string{
 		"first.env":  "# comment\n\nAPI_URL=https://first.example\nTOKEN=first=token\n",
 		"second.env": "API_URL=https://second.example\n",
 	}))
@@ -148,7 +147,7 @@ func TestBuildInstallConfigParsesDotenvFilesInOrder(t *testing.T) {
 }
 
 func TestBuildInstallConfigParsesEstablishedDotenvSyntax(t *testing.T) {
-	got, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{EnvFiles: []string{"values.env"}}, mapReadFile(map[string]string{
+	got, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{EnvFiles: []string{"values.env"}}, mapReadFile(map[string]string{
 		"values.env": ` export API_URL = https://env.example # endpoint
 TOKEN="line-one\nline-two\t\"quoted\"\\tail"
 TIMEOUT='  literal # value  '
@@ -162,7 +161,7 @@ TIMEOUT='  literal # value  '
 }
 
 func TestBuildInstallConfigUnquotesDotenvValueBeforeTrailingComment(t *testing.T) {
-	got, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{EnvFiles: []string{"values.env"}}, mapReadFile(map[string]string{
+	got, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{EnvFiles: []string{"values.env"}}, mapReadFile(map[string]string{
 		"values.env": "TOKEN=\"abc#def\" # trailing comment\n",
 	}))
 
@@ -171,7 +170,7 @@ func TestBuildInstallConfigUnquotesDotenvValueBeforeTrailingComment(t *testing.T
 }
 
 func TestBuildInstallConfigPreservesHashWithinUnquotedDotenvValue(t *testing.T) {
-	got, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{EnvFiles: []string{"values.env"}}, mapReadFile(map[string]string{
+	got, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{EnvFiles: []string{"values.env"}}, mapReadFile(map[string]string{
 		"values.env": "TOKEN=abc#def\n",
 	}))
 
@@ -180,7 +179,7 @@ func TestBuildInstallConfigPreservesHashWithinUnquotedDotenvValue(t *testing.T) 
 }
 
 func TestBuildInstallConfigAppliesDocumentedSourcePrecedence(t *testing.T) {
-	got, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{
+	got, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{
 		ConfigFile: "config.yaml",
 		EnvFiles:   []string{"first.env", "second.env"},
 		SetValues:  []string{"API_URL=https://set-one.example", "API_URL=https://set-two.example"},
@@ -192,11 +191,11 @@ func TestBuildInstallConfigAppliesDocumentedSourcePrecedence(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, "https://set-two.example", *got.Env["API_URL"].Value)
-	require.Equal(t, "default-token", *got.Env["TOKEN"].Value)
+	require.NotContains(t, got.Env, "TOKEN", "no source supplied TOKEN")
 }
 
 func TestBuildInstallConfigReadsInlineFileAndStdinSetValues(t *testing.T) {
-	got, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{SetValues: []string{
+	got, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{SetValues: []string{
 		"TIMEOUT=90s",
 		"TOKEN=@token.txt",
 		"/etc/plugin/config.yaml=@-",
@@ -212,40 +211,38 @@ func TestBuildInstallConfigReadsInlineFileAndStdinSetValues(t *testing.T) {
 }
 
 func TestBuildInstallConfigBuildsSecretAndConfigMapReferences(t *testing.T) {
-	got, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{SetValues: []string{
-		"TOKEN=secret://plugin-secrets/token",
-		"/etc/plugin/config.yaml=configmap://plugin-config/config.yaml",
+	got, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{SetValues: []string{
+		"TOKEN=secret://connector-secrets/token",
+		"/etc/plugin/config.yaml=configmap://connector-config/config.yaml",
 	}}, mapReadFile(nil))
 
 	require.NoError(t, err)
-	require.Equal(t, &connectivityclient.KeyRef{Name: "plugin-secrets", Key: "token"}, got.Env["TOKEN"].SecretRef)
+	require.Equal(t, &connectivityclient.KeyRef{Name: "connector-secrets", Key: "token"}, got.Env["TOKEN"].SecretRef)
 	require.Nil(t, got.Env["TOKEN"].Value)
-	require.Equal(t, &connectivityclient.KeyRef{Name: "plugin-config", Key: "config.yaml"}, got.Files[0].ConfigMapRef)
+	require.Equal(t, &connectivityclient.KeyRef{Name: "connector-config", Key: "config.yaml"}, got.Files[0].ConfigMapRef)
 	require.Nil(t, got.Files[0].Value)
 }
 
 func TestBuildInstallConfigRoutesAssignmentsUsingSchema(t *testing.T) {
-	got, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{SetValues: []string{
+	got, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{SetValues: []string{
 		"API_URL=https://routed.example",
 		"/etc/plugin/ca.pem=routed-ca",
 	}}, mapReadFile(nil))
 
 	require.NoError(t, err)
 	require.Equal(t, "https://routed.example", *got.Env["API_URL"].Value)
-	require.Equal(t, "routed-ca", *got.Files[1].Value)
+	require.Equal(t, "/etc/plugin/ca.pem", got.Files[0].Path)
+	require.Equal(t, "routed-ca", *got.Files[0].Value)
 }
 
 func TestBuildInstallConfigReportsSortedMissingRequiredKeys(t *testing.T) {
-	plugin := pluginWithSchemaAndDefaults()
-	plugin.Spec.Defaults = nil
-
-	_, err := BuildInstallConfig(&cobra.Command{}, plugin, InputOptions{}, mapReadFile(nil))
+	_, err := BuildInstallConfig(&cobra.Command{}, versionWithFullSchema(), InputOptions{}, mapReadFile(nil))
 
 	require.EqualError(t, err, "missing required configuration keys: /etc/plugin/config.yaml, API_URL, TOKEN")
 }
 
 func TestBuildInstallConfigReportsSortedUnknownKeys(t *testing.T) {
-	_, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{SetValues: []string{
+	_, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{SetValues: []string{
 		"WRONG=value",
 		"BOGUS=value",
 	}}, mapReadFile(nil))
@@ -268,7 +265,7 @@ func TestBuildInstallConfigRejectsMalformedAssignmentsAndReferences(t *testing.T
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{SetValues: []string{tt.value}}, mapReadFile(nil))
+			_, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{SetValues: []string{tt.value}}, mapReadFile(nil))
 
 			require.ErrorContains(t, err, tt.want)
 		})
@@ -285,7 +282,7 @@ func TestBuildInstallConfigMalformedSetErrorDoesNotEchoSecretAssignment(t *testi
 	for _, assignment := range tests {
 		_, err := BuildInstallConfig(
 			&cobra.Command{},
-			pluginWithSchemaAndDefaults(),
+			versionWithOptionalSchema(),
 			InputOptions{SetValues: []string{assignment}},
 			mapReadFile(nil),
 		)
@@ -298,19 +295,19 @@ func TestBuildInstallConfigMalformedSetErrorDoesNotEchoSecretAssignment(t *testi
 
 func TestBuildInstallConfigReturnsInputReadAndParseErrors(t *testing.T) {
 	t.Run("unreadable config", func(t *testing.T) {
-		_, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{ConfigFile: "missing.yaml"}, mapReadFile(nil))
+		_, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{ConfigFile: "missing.yaml"}, mapReadFile(nil))
 
 		require.ErrorContains(t, err, "missing.yaml")
 	})
 
 	t.Run("malformed config", func(t *testing.T) {
-		_, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{ConfigFile: "config.yaml"}, mapReadFile(map[string]string{"config.yaml": "env: ["}))
+		_, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{ConfigFile: "config.yaml"}, mapReadFile(map[string]string{"config.yaml": "env: ["}))
 
 		require.ErrorContains(t, err, "config.yaml")
 	})
 
 	t.Run("malformed dotenv", func(t *testing.T) {
-		_, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{EnvFiles: []string{"bad.env"}}, mapReadFile(map[string]string{"bad.env": "TOKEN\n"}))
+		_, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{EnvFiles: []string{"bad.env"}}, mapReadFile(map[string]string{"bad.env": "TOKEN\n"}))
 
 		require.ErrorContains(t, err, "bad.env:1")
 	})
@@ -318,11 +315,11 @@ func TestBuildInstallConfigReturnsInputReadAndParseErrors(t *testing.T) {
 
 func TestBuildConfigureConfigPreservesUntouchedFiles(t *testing.T) {
 	mode := int32(0o600)
-	current := &connectivityclient.InstanceConfig{Files: []connectivityclient.FileMount{
+	current := &connectivityclient.ConnectorInstanceConfig{Files: []connectivityclient.FileMount{
 		{Path: "/etc/a", Value: stringPtr("a"), Mode: &mode},
 		{Path: "/etc/b", Value: stringPtr("b")},
 	}}
-	got, err := BuildConfigureConfig(&cobra.Command{}, pluginWithFileSchema(), current,
+	got, err := BuildConfigureConfig(&cobra.Command{}, versionWithFileSchema(), current,
 		InputOptions{SetValues: []string{"/etc/a=@new"}},
 		func(_ *cobra.Command, name string) (string, error) {
 			require.Equal(t, "new", name)
@@ -338,7 +335,7 @@ func TestBuildConfigureConfigPreservesUntouchedFiles(t *testing.T) {
 }
 
 func TestBuildInstallConfigRejectsStructuredFileWithoutPath(t *testing.T) {
-	_, err := BuildInstallConfig(&cobra.Command{}, pluginWithSchemaAndDefaults(), InputOptions{ConfigFile: "config.yaml"}, mapReadFile(map[string]string{
+	_, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{ConfigFile: "config.yaml"}, mapReadFile(map[string]string{
 		"config.yaml": "files:\n  - value: missing-path\n",
 	}))
 
@@ -346,7 +343,7 @@ func TestBuildInstallConfigRejectsStructuredFileWithoutPath(t *testing.T) {
 }
 
 func TestBuildConfigureConfigDeepCopiesCurrentConfiguration(t *testing.T) {
-	current := &connectivityclient.InstanceConfig{
+	current := &connectivityclient.ConnectorInstanceConfig{
 		Env: map[string]connectivityclient.EnvValue{
 			"API_URL": {Value: stringPtr("https://current.example")},
 		},
@@ -355,7 +352,7 @@ func TestBuildConfigureConfigDeepCopiesCurrentConfiguration(t *testing.T) {
 		},
 	}
 
-	got, err := BuildConfigureConfig(&cobra.Command{}, pluginWithFileSchema(), current, InputOptions{
+	got, err := BuildConfigureConfig(&cobra.Command{}, versionWithFileSchema(), current, InputOptions{
 		SetValues: []string{"API_URL=https://changed.example", "/etc/a=changed-a"},
 	}, mapReadFile(nil))
 

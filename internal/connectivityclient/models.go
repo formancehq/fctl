@@ -35,90 +35,104 @@ type FileMount struct {
 	Mode         *int32  `json:"mode,omitempty"`
 }
 
-type InstanceConfig struct {
-	Env   map[string]EnvValue `json:"env,omitempty"`
-	Files []FileMount         `json:"files,omitempty"`
+type ConnectorSpec struct {
+	DisplayName *string  `json:"displayName,omitempty"`
+	Description *string  `json:"description,omitempty"`
+	ImageURL    *string  `json:"imageUrl,omitempty"`
+	Catalog     *string  `json:"catalog,omitempty"`
+	Tags        []string `json:"tags,omitempty"`
 }
 
-type VersionEntry struct {
-	Version string  `json:"version"`
-	Digest  *string `json:"digest,omitempty"`
-	Image   *string `json:"image,omitempty"`
-}
-
-type PluginSpec struct {
-	Image          string          `json:"image"`
-	Version        *string         `json:"version,omitempty"`
-	Description    *string         `json:"description,omitempty"`
-	DocsURL        *string         `json:"docsURL,omitempty"`
-	Capabilities   []string        `json:"capabilities,omitempty"`
-	ConfigSchema   map[string]any  `json:"configSchema,omitempty"`
-	DefaultVersion *string         `json:"defaultVersion,omitempty"`
-	Versions       []VersionEntry  `json:"versions,omitempty"`
-	Defaults       *InstanceConfig `json:"defaults,omitempty"`
-}
-
-type PluginStatus struct {
+type ConnectorStatus struct {
 	Phase   *string `json:"phase,omitempty"`
 	Message *string `json:"message,omitempty"`
 }
 
-type Plugin struct {
-	Metadata ObjectMeta    `json:"metadata"`
-	Spec     PluginSpec    `json:"spec"`
-	Status   *PluginStatus `json:"status,omitempty"`
+type Connector struct {
+	Metadata ObjectMeta       `json:"metadata"`
+	Spec     ConnectorSpec    `json:"spec"`
+	Status   *ConnectorStatus `json:"status,omitempty"`
 }
 
-type PluginList struct {
-	Items    []Plugin `json:"items"`
-	Continue string   `json:"continue,omitempty"`
+type ConnectorList struct {
+	Items    []Connector `json:"items"`
+	Continue string      `json:"continue,omitempty"`
 }
 
-type InstanceSpec struct {
-	Plugin          string          `json:"plugin"`
-	Version         *string         `json:"version,omitempty"`
-	ConnectivityRef *string         `json:"connectivityRef,omitempty"`
-	Ledger          string          `json:"ledger"`
-	StartSequence   *int64          `json:"startSequence,omitempty"`
-	PollInterval    *string         `json:"pollInterval,omitempty"`
-	Config          *InstanceConfig `json:"config,omitempty"`
+type ConnectorVersionSummary struct {
+	Version     string     `json:"version"`
+	Image       string     `json:"image"`
+	Digest      *string    `json:"digest,omitempty"`
+	ReleaseDate *time.Time `json:"releaseDate,omitempty"`
 }
 
-type InstanceStatus struct {
-	Phase             *string `json:"phase,omitempty"`
-	State             *string `json:"state,omitempty"`
-	PluginAddress     *string `json:"pluginAddress,omitempty"`
-	ResolvedImage     *string `json:"resolvedImage,omitempty"`
-	CurrentSequence   *int64  `json:"currentSequence,omitempty"`
-	SourceTipSequence *int64  `json:"sourceTipSequence,omitempty"`
-	LastError         *string `json:"lastError,omitempty"`
-	Message           *string `json:"message,omitempty"`
+type ConnectorVersion struct {
+	Version            string         `json:"version"`
+	Image              string         `json:"image"`
+	Digest             *string        `json:"digest,omitempty"`
+	ReleaseDate        *time.Time     `json:"releaseDate,omitempty"`
+	ConfigSchema       map[string]any `json:"configSchema,omitempty"`
+	AdditionalMetadata map[string]any `json:"additionalMetadata,omitempty"`
 }
 
-type Instance struct {
-	Metadata ObjectMeta      `json:"metadata"`
-	Spec     InstanceSpec    `json:"spec"`
-	Status   *InstanceStatus `json:"status,omitempty"`
+type ConnectorVersionList struct {
+	Items []ConnectorVersionSummary `json:"items"`
 }
 
-type InstanceList struct {
-	Items    []Instance `json:"items"`
-	Continue string     `json:"continue,omitempty"`
+type ConnectorInstanceConfig struct {
+	Env   map[string]EnvValue `json:"env,omitempty"`
+	Files []FileMount         `json:"files,omitempty"`
 }
 
-type InstanceCreate struct {
-	Name        string            `json:"name"`
-	Labels      map[string]string `json:"labels,omitempty"`
-	Annotations map[string]string `json:"annotations,omitempty"`
-	Spec        InstanceSpec      `json:"spec"`
+type ConnectorInstanceSpec struct {
+	Connector       string                   `json:"connector"`
+	Version         *string                  `json:"version,omitempty"`
+	Channel         *string                  `json:"channel,omitempty"`
+	ConnectivityRef *string                  `json:"connectivityRef,omitempty"`
+	Ledger          string                   `json:"ledger"`
+	StartSequence   *int64                   `json:"startSequence,omitempty"`
+	PollInterval    *string                  `json:"pollInterval,omitempty"`
+	Config          *ConnectorInstanceConfig `json:"config,omitempty"`
 }
 
-type InstancePatch map[string]any
+type ConnectorInstanceStatus struct {
+	Phase                *string `json:"phase,omitempty"`
+	State                *string `json:"state,omitempty"`
+	ConnectorAddress     *string `json:"connectorAddress,omitempty"`
+	ResolvedImage        *string `json:"resolvedImage,omitempty"`
+	ResolvedConnectorRef *string `json:"resolvedConnectorRef,omitempty"`
+	ResolvedVersion      *string `json:"resolvedVersion,omitempty"`
+	ResolvedDigest       *string `json:"resolvedDigest,omitempty"`
+	CurrentSequence      *int64  `json:"currentSequence,omitempty"`
+	SourceTipSequence    *int64  `json:"sourceTipSequence,omitempty"`
+	LastError            *string `json:"lastError,omitempty"`
+	Message              *string `json:"message,omitempty"`
+}
+
+type ConnectorInstance struct {
+	Metadata ObjectMeta               `json:"metadata"`
+	Spec     ConnectorInstanceSpec    `json:"spec"`
+	Status   *ConnectorInstanceStatus `json:"status,omitempty"`
+}
+
+type ConnectorInstanceList struct {
+	Items    []ConnectorInstance `json:"items"`
+	Continue string              `json:"continue,omitempty"`
+}
+
+type ConnectorInstanceCreate struct {
+	Name        string                `json:"name"`
+	Labels      map[string]string     `json:"labels,omitempty"`
+	Annotations map[string]string     `json:"annotations,omitempty"`
+	Spec        ConnectorInstanceSpec `json:"spec"`
+}
+
+type ConnectorInstancePatch map[string]any
 
 type ListOptions struct {
-	Limit    int32
-	Continue string
-	Plugin   string
+	Limit     int32
+	Continue  string
+	Connector string
 }
 
 type APIError struct {
@@ -129,13 +143,15 @@ type APIError struct {
 }
 
 type Client interface {
-	ListPlugins(context.Context, ListOptions) (*PluginList, error)
-	GetPlugin(context.Context, string) (*Plugin, error)
-	ListInstances(context.Context, ListOptions) (*InstanceList, error)
-	CreateInstance(context.Context, InstanceCreate) (*Instance, error)
-	GetInstance(context.Context, string) (*Instance, error)
-	PatchInstance(context.Context, string, InstancePatch) (*Instance, error)
-	DeleteInstance(context.Context, string) error
+	ListConnectors(context.Context, ListOptions) (*ConnectorList, error)
+	GetConnector(context.Context, string) (*Connector, error)
+	ListConnectorVersions(context.Context, string) (*ConnectorVersionList, error)
+	GetConnectorVersion(context.Context, string, string) (*ConnectorVersion, error)
+	ListConnectorInstances(context.Context, ListOptions) (*ConnectorInstanceList, error)
+	CreateConnectorInstance(context.Context, ConnectorInstanceCreate) (*ConnectorInstance, error)
+	GetConnectorInstance(context.Context, string) (*ConnectorInstance, error)
+	PatchConnectorInstance(context.Context, string, ConnectorInstancePatch) (*ConnectorInstance, error)
+	DeleteConnectorInstance(context.Context, string) error
 }
 
 func New(stackURI string, httpClient *http.Client) Client {

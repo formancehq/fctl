@@ -1,4 +1,4 @@
-package plugins
+package connectors
 
 import (
 	"context"
@@ -13,22 +13,22 @@ import (
 	connectivityclient "github.com/formancehq/fctl/v3/internal/connectivityclient"
 )
 
-func TestCompletePluginNamesUsesBoundedCatalogQueryAndReturnsPrefixMatchesWithDescriptions(t *testing.T) {
+func TestCompleteConnectorNamesUsesBoundedCatalogQueryAndReturnsPrefixMatchesWithDescriptions(t *testing.T) {
 	var gotOptions connectivityclient.ListOptions
 	var remaining time.Duration
-	client := pluginClientMock{list: func(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.PluginList, error) {
+	client := connectorClientMock{list: func(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
 		gotOptions = options
 		deadline, ok := ctx.Deadline()
 		if !ok {
 			t.Fatal("completion context has no deadline")
 		}
 		remaining = time.Until(deadline)
-		return &connectivityclient.PluginList{Items: []connectivityclient.Plugin{
-			pluginFixture("alpha"), pluginFixture("beta"),
+		return &connectivityclient.ConnectorList{Items: []connectivityclient.Connector{
+			connectorFixture("alpha"), connectorFixture("beta"),
 		}}, nil
 	}}
 
-	completion := CompletePluginNames(func(cmd *cobra.Command) (connectivityclient.Client, error) {
+	completion := CompleteConnectorNames(func(cmd *cobra.Command) (connectivityclient.Client, error) {
 		if !connectivityinternal.IsNonInteractive(cmd.Context()) {
 			t.Fatal("completion factory context is interactive")
 		}
@@ -37,12 +37,12 @@ func TestCompletePluginNamesUsesBoundedCatalogQueryAndReturnsPrefixMatchesWithDe
 	candidates, directive := completion(&cobra.Command{}, nil, "al")
 
 	if !reflect.DeepEqual(gotOptions, connectivityclient.ListOptions{Limit: 500}) {
-		t.Fatalf("ListPlugins options = %#v, want limit 500", gotOptions)
+		t.Fatalf("ListConnectors options = %#v, want limit 500", gotOptions)
 	}
 	if remaining <= 1500*time.Millisecond || remaining > 2*time.Second {
 		t.Fatalf("completion deadline remaining = %s, want approximately 2s", remaining)
 	}
-	if !reflect.DeepEqual(candidates, []string{"alpha\tPlugin description"}) {
+	if !reflect.DeepEqual(candidates, []string{"alpha\tConnector description"}) {
 		t.Fatalf("candidates = %#v, want prefix match with description", candidates)
 	}
 	if directive != cobra.ShellCompDirectiveNoFileComp {
@@ -50,7 +50,7 @@ func TestCompletePluginNamesUsesBoundedCatalogQueryAndReturnsPrefixMatchesWithDe
 	}
 }
 
-func TestCompletePluginNamesReturnsSilentlyOnFactoryAPIAndTimeoutErrors(t *testing.T) {
+func TestCompleteConnectorNamesReturnsSilentlyOnFactoryAPIAndTimeoutErrors(t *testing.T) {
 	tests := map[string]struct {
 		command *cobra.Command
 		factory func(*cobra.Command) (connectivityclient.Client, error)
@@ -63,13 +63,13 @@ func TestCompletePluginNamesReturnsSilentlyOnFactoryAPIAndTimeoutErrors(t *testi
 		},
 		"API": {
 			command: &cobra.Command{},
-			factory: factoryReturning(pluginClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.PluginList, error) {
+			factory: factoryReturning(connectorClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
 				return nil, errors.New("unsupported deployment")
 			}}),
 		},
 		"timeout": {
 			command: commandWithExpiredContext(),
-			factory: factoryReturning(pluginClientMock{list: func(ctx context.Context, _ connectivityclient.ListOptions) (*connectivityclient.PluginList, error) {
+			factory: factoryReturning(connectorClientMock{list: func(ctx context.Context, _ connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
 				<-ctx.Done()
 				return nil, ctx.Err()
 			}}),
@@ -78,7 +78,7 @@ func TestCompletePluginNamesReturnsSilentlyOnFactoryAPIAndTimeoutErrors(t *testi
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			candidates, directive := CompletePluginNames(test.factory)(test.command, nil, "")
+			candidates, directive := CompleteConnectorNames(test.factory)(test.command, nil, "")
 			if len(candidates) != 0 {
 				t.Fatalf("candidates = %#v, want none", candidates)
 			}

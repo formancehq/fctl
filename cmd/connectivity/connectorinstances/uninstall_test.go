@@ -1,4 +1,4 @@
-package instances
+package connectorinstances
 
 import (
 	"context"
@@ -17,19 +17,19 @@ import (
 
 type uninstallClientMock struct {
 	connectivityclient.Client
-	listInstances func(context.Context, connectivityclient.ListOptions) (*connectivityclient.InstanceList, error)
+	listInstances func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error)
 	delete        func(context.Context, string) error
 }
 
-func (m uninstallClientMock) ListInstances(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.InstanceList, error) {
+func (m uninstallClientMock) ListConnectorInstances(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
 	return m.listInstances(ctx, options)
 }
 
-func (m uninstallClientMock) DeleteInstance(ctx context.Context, name string) error {
+func (m uninstallClientMock) DeleteConnectorInstance(ctx context.Context, name string) error {
 	return m.delete(ctx, name)
 }
 
-func TestUninstallDeletesConfirmedInstanceAndRendersSuccess(t *testing.T) {
+func TestUninstallDeletesConfirmedConnectorInstanceAndRendersSuccess(t *testing.T) {
 	var deletedName string
 	client := uninstallClientMock{delete: func(_ context.Context, name string) error {
 		deletedName = name
@@ -40,14 +40,14 @@ func TestUninstallDeletesConfirmedInstanceAndRendersSuccess(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, "stripe-eu", deletedName)
-	require.Equal(t, `Instance "stripe-eu" uninstalled.`, strings.TrimSpace(output))
+	require.Equal(t, `Connector instance "stripe-eu" uninstalled.`, strings.TrimSpace(output))
 }
 
 func TestUninstallConfirmationRejectionPreventsDelete(t *testing.T) {
 	deleted := false
 	client := uninstallClientMock{delete: func(context.Context, string) error {
 		deleted = true
-		return errors.New("DeleteInstance must not be called")
+		return errors.New("DeleteConnectorInstance must not be called")
 	}}
 	controller := NewUninstallController(factoryReturning(client))
 	controller.approve = func(*cobra.Command, string, ...any) bool { return false }
@@ -59,7 +59,7 @@ func TestUninstallConfirmationRejectionPreventsDelete(t *testing.T) {
 }
 
 func TestUninstallPreservesDeleteAPIError(t *testing.T) {
-	apiError := &connectivityclient.APIError{StatusCode: 404, Code: "INSTANCE_NOT_FOUND", Message: "missing"}
+	apiError := &connectivityclient.APIError{StatusCode: 404, Code: "CONNECTORINSTANCE_NOT_FOUND", Message: "missing"}
 	client := uninstallClientMock{delete: func(context.Context, string) error { return apiError }}
 
 	_, err := executeCommand(NewUninstallCommand(factoryReturning(client)), "stripe-eu", "--confirm")
@@ -67,18 +67,18 @@ func TestUninstallPreservesDeleteAPIError(t *testing.T) {
 	require.ErrorIs(t, err, apiError)
 }
 
-func TestUninstallRegistersAliasesRootAndInstanceCompletion(t *testing.T) {
+func TestUninstallRegistersAliasesRootAndConnectorInstanceCompletion(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
 	client := uninstallClientMock{
-		listInstances: func(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.InstanceList, error) {
+		listInstances: func(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
 			require.True(t, connectivityinternal.IsNonInteractive(ctx))
 			require.Equal(t, connectivityclient.ListOptions{Limit: 500}, options)
-			return &connectivityclient.InstanceList{Items: []connectivityclient.Instance{instance}}, nil
+			return &connectivityclient.ConnectorInstanceList{Items: []connectivityclient.ConnectorInstance{instance}}, nil
 		},
 	}
 	command := NewUninstallCommand(factoryReturning(client))
 
-	require.Equal(t, "uninstall <instance>", command.Use)
+	require.Equal(t, "uninstall <connectorinstance>", command.Use)
 	require.Equal(t, []string{"delete", "remove", "rm", "u"}, command.Aliases)
 	require.Error(t, command.Args(command, nil))
 	require.NoError(t, command.Args(command, []string{"stripe-eu"}))

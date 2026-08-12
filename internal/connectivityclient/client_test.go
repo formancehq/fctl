@@ -24,17 +24,17 @@ func jsonResponse(status int, body string) *http.Response {
 	}
 }
 
-func TestListPluginsBuildsStackConnectivityRequest(t *testing.T) {
+func TestListConnectorsBuildsStackConnectivityRequest(t *testing.T) {
 	var seen *http.Request
 	httpClient := &http.Client{Transport: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
 		seen = req.Clone(req.Context())
-		return jsonResponse(200, `{"items":[{"metadata":{"name":"stripe"},"spec":{"image":"img"}}],"continue":"next"}`), nil
+		return jsonResponse(200, `{"items":[{"metadata":{"name":"stripe"},"spec":{"displayName":"Stripe"}}],"continue":"next"}`), nil
 	})}
 
-	got, err := New("https://stack.example/base", httpClient).ListPlugins(context.Background(), ListOptions{Limit: 25, Continue: "cursor"})
+	got, err := New("https://stack.example/base", httpClient).ListConnectors(context.Background(), ListOptions{Limit: 25, Continue: "cursor"})
 
 	require.NoError(t, err)
-	require.Equal(t, "/base/api/connectivity/plugins", seen.URL.Path)
+	require.Equal(t, "/base/api/connectivity/connectors", seen.URL.Path)
 	require.Equal(t, "25", seen.URL.Query().Get("limit"))
 	require.Equal(t, "cursor", seen.URL.Query().Get("continue"))
 	require.Equal(t, "stripe", *got.Items[0].Metadata.Name)
@@ -42,7 +42,7 @@ func TestListPluginsBuildsStackConnectivityRequest(t *testing.T) {
 }
 
 func TestClientMethodsRespectHTTPContracts(t *testing.T) {
-	pluginName := "stripe/primary"
+	connectorName := "stripe/primary"
 	instanceName := "worker/one"
 
 	tests := []struct {
@@ -57,84 +57,106 @@ func TestClientMethodsRespectHTTPContracts(t *testing.T) {
 		call            func(Client) error
 	}{
 		{
-			name:           "lists plugins",
+			name:           "lists connectors",
 			wantMethod:     http.MethodGet,
-			wantPath:       "/base/api/connectivity/plugins",
-			wantQuery:      map[string]string{"plugin": "stripe", "limit": "5", "continue": "after"},
+			wantPath:       "/base/api/connectivity/connectors",
+			wantQuery:      map[string]string{"connector": "stripe", "limit": "5", "continue": "after"},
 			responseStatus: http.StatusOK,
 			responseBody:   `{"items":[]}`,
 			call: func(client Client) error {
-				_, err := client.ListPlugins(context.Background(), ListOptions{Plugin: "stripe", Limit: 5, Continue: "after"})
+				_, err := client.ListConnectors(context.Background(), ListOptions{Connector: "stripe", Limit: 5, Continue: "after"})
 				return err
 			},
 		},
 		{
-			name:           "gets a plugin using an escaped name",
+			name:           "gets a connector using an escaped name",
 			wantMethod:     http.MethodGet,
-			wantPath:       "/base/api/connectivity/plugins/stripe%2Fprimary",
+			wantPath:       "/base/api/connectivity/connectors/stripe%2Fprimary",
 			responseStatus: http.StatusOK,
-			responseBody:   `{"metadata":{"name":"stripe/primary"},"spec":{"image":"image"}}`,
+			responseBody:   `{"metadata":{"name":"stripe/primary"},"spec":{"displayName":"Stripe"}}`,
 			call: func(client Client) error {
-				_, err := client.GetPlugin(context.Background(), pluginName)
+				_, err := client.GetConnector(context.Background(), connectorName)
 				return err
 			},
 		},
 		{
-			name:           "lists instances",
+			name:           "lists connector versions",
 			wantMethod:     http.MethodGet,
-			wantPath:       "/base/api/connectivity/instances",
-			wantQuery:      map[string]string{"plugin": "stripe", "limit": "5", "continue": "after"},
+			wantPath:       "/base/api/connectivity/connectors/stripe%2Fprimary/versions",
+			responseStatus: http.StatusOK,
+			responseBody:   `{"items":[{"version":"v1.0.0","image":"registry/stripe:v1.0.0"}]}`,
+			call: func(client Client) error {
+				_, err := client.ListConnectorVersions(context.Background(), connectorName)
+				return err
+			},
+		},
+		{
+			name:           "gets a connector version using escaped segments",
+			wantMethod:     http.MethodGet,
+			wantPath:       "/base/api/connectivity/connectors/stripe%2Fprimary/versions/v1.0.0-rc.1",
+			responseStatus: http.StatusOK,
+			responseBody:   `{"version":"v1.0.0-rc.1","image":"registry/stripe:v1.0.0"}`,
+			call: func(client Client) error {
+				_, err := client.GetConnectorVersion(context.Background(), connectorName, "v1.0.0-rc.1")
+				return err
+			},
+		},
+		{
+			name:           "lists connector instances",
+			wantMethod:     http.MethodGet,
+			wantPath:       "/base/api/connectivity/connectorinstances",
+			wantQuery:      map[string]string{"connector": "stripe", "limit": "5", "continue": "after"},
 			responseStatus: http.StatusOK,
 			responseBody:   `{"items":[]}`,
 			call: func(client Client) error {
-				_, err := client.ListInstances(context.Background(), ListOptions{Plugin: "stripe", Limit: 5, Continue: "after"})
+				_, err := client.ListConnectorInstances(context.Background(), ListOptions{Connector: "stripe", Limit: 5, Continue: "after"})
 				return err
 			},
 		},
 		{
-			name:            "creates an instance",
+			name:            "creates a connector instance",
 			wantMethod:      http.MethodPost,
-			wantPath:        "/base/api/connectivity/instances",
+			wantPath:        "/base/api/connectivity/connectorinstances",
 			wantContentType: "application/json",
-			wantBody:        `{"name":"worker","spec":{"plugin":"stripe","ledger":"ledger"}}`,
+			wantBody:        `{"name":"worker","spec":{"connector":"stripe","ledger":"ledger"}}`,
 			responseStatus:  http.StatusCreated,
-			responseBody:    `{"metadata":{"name":"worker"},"spec":{"plugin":"stripe","ledger":"ledger"}}`,
+			responseBody:    `{"metadata":{"name":"worker"},"spec":{"connector":"stripe","ledger":"ledger"}}`,
 			call: func(client Client) error {
-				_, err := client.CreateInstance(context.Background(), InstanceCreate{Name: "worker", Spec: InstanceSpec{Plugin: "stripe", Ledger: "ledger"}})
+				_, err := client.CreateConnectorInstance(context.Background(), ConnectorInstanceCreate{Name: "worker", Spec: ConnectorInstanceSpec{Connector: "stripe", Ledger: "ledger"}})
 				return err
 			},
 		},
 		{
-			name:           "gets an instance using an escaped name",
+			name:           "gets a connector instance using an escaped name",
 			wantMethod:     http.MethodGet,
-			wantPath:       "/base/api/connectivity/instances/worker%2Fone",
+			wantPath:       "/base/api/connectivity/connectorinstances/worker%2Fone",
 			responseStatus: http.StatusOK,
-			responseBody:   `{"metadata":{"name":"worker/one"},"spec":{"plugin":"stripe","ledger":"ledger"}}`,
+			responseBody:   `{"metadata":{"name":"worker/one"},"spec":{"connector":"stripe","ledger":"ledger"}}`,
 			call: func(client Client) error {
-				_, err := client.GetInstance(context.Background(), instanceName)
+				_, err := client.GetConnectorInstance(context.Background(), instanceName)
 				return err
 			},
 		},
 		{
-			name:            "patches an instance",
+			name:            "patches a connector instance",
 			wantMethod:      http.MethodPatch,
-			wantPath:        "/base/api/connectivity/instances/worker%2Fone",
+			wantPath:        "/base/api/connectivity/connectorinstances/worker%2Fone",
 			wantContentType: "application/merge-patch+json",
 			wantBody:        `{"spec":{"pollInterval":"1m"}}`,
 			responseStatus:  http.StatusOK,
-			responseBody:    `{"metadata":{"name":"worker/one"},"spec":{"plugin":"stripe","ledger":"ledger"}}`,
+			responseBody:    `{"metadata":{"name":"worker/one"},"spec":{"connector":"stripe","ledger":"ledger"}}`,
 			call: func(client Client) error {
-				_, err := client.PatchInstance(context.Background(), instanceName, InstancePatch{"spec": map[string]any{"pollInterval": "1m"}})
+				_, err := client.PatchConnectorInstance(context.Background(), instanceName, ConnectorInstancePatch{"spec": map[string]any{"pollInterval": "1m"}})
 				return err
 			},
 		},
 		{
-			name:           "deletes an instance",
+			name:           "deletes a connector instance",
 			wantMethod:     http.MethodDelete,
-			wantPath:       "/base/api/connectivity/instances/worker%2Fone",
+			wantPath:       "/base/api/connectivity/connectorinstances/worker%2Fone",
 			responseStatus: http.StatusNoContent,
 			call: func(client Client) error {
-				return client.DeleteInstance(context.Background(), instanceName)
+				return client.DeleteConnectorInstance(context.Background(), instanceName)
 			},
 		},
 	}
@@ -170,40 +192,42 @@ func TestClientMethodsRespectHTTPContracts(t *testing.T) {
 
 func TestClientReturnsStructuredAPIError(t *testing.T) {
 	httpClient := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
-		return jsonResponse(http.StatusBadRequest, `{"code":"invalid","message":"plugin is required","details":{"field":"plugin"}}`), nil
+		return jsonResponse(http.StatusBadRequest, `{"code":"invalid","message":"connector is required","details":{"field":"connector"}}`), nil
 	})}
 
-	_, err := New("https://stack.example", httpClient).GetPlugin(context.Background(), "missing")
+	_, err := New("https://stack.example", httpClient).GetConnector(context.Background(), "missing")
 
 	var apiErr *APIError
 	require.ErrorAs(t, err, &apiErr)
 	require.Equal(t, http.StatusBadRequest, apiErr.StatusCode)
 	require.Equal(t, "invalid", apiErr.Code)
-	require.Equal(t, "plugin is required", apiErr.Message)
-	require.Equal(t, map[string]any{"field": "plugin"}, apiErr.Details)
+	require.Equal(t, "connector is required", apiErr.Message)
+	require.Equal(t, map[string]any{"field": "connector"}, apiErr.Details)
 }
 
-func TestPatchInstanceAdaptsAPIConfigToPinnedCRDWireShape(t *testing.T) {
+// The API owns the CRD reshaping (spec.config -> spec.env/spec.files), so the
+// client must put the patch on the wire in the documented API shape.
+func TestPatchConnectorInstanceSendsAPIShapedConfig(t *testing.T) {
 	var seenBody []byte
 	httpClient := &http.Client{Transport: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
 		var err error
 		seenBody, err = io.ReadAll(req.Body)
 		require.NoError(t, err)
-		return jsonResponse(http.StatusOK, `{"metadata":{"name":"worker"},"spec":{"plugin":"stripe","ledger":"main"}}`), nil
+		return jsonResponse(http.StatusOK, `{"metadata":{"name":"worker"},"spec":{"connector":"stripe","ledger":"main"}}`), nil
 	})}
 	password := "env-password"
 	privateKey := "file-password"
-	config := &InstanceConfig{
+	config := &ConnectorInstanceConfig{
 		Env: map[string]EnvValue{
 			"API_PASSWORD": {Value: &password},
 		},
 		Files: []FileMount{
 			{Path: "/etc/plugin/key.pem", Value: &privateKey},
-			{Path: "/etc/plugin/config.json", ConfigMapRef: &KeyRef{Name: "plugin-config", Key: "config.json"}},
+			{Path: "/etc/plugin/config.json", ConfigMapRef: &KeyRef{Name: "connector-config", Key: "config.json"}},
 		},
 	}
 
-	_, err := New("https://stack.example", httpClient).PatchInstance(context.Background(), "worker", InstancePatch{
+	_, err := New("https://stack.example", httpClient).PatchConnectorInstance(context.Background(), "worker", ConnectorInstancePatch{
 		"spec": map[string]any{
 			"config":       config,
 			"ledger":       "main",
@@ -214,16 +238,17 @@ func TestPatchInstanceAdaptsAPIConfigToPinnedCRDWireShape(t *testing.T) {
 	require.NoError(t, err)
 	require.JSONEq(t, `{
 		"spec": {
-			"env": {"API_PASSWORD": {"value": "env-password"}},
-			"files": [
-				{"path": "/etc/plugin/key.pem", "value": "file-password"},
-				{"path": "/etc/plugin/config.json", "configMapRef": {"name": "plugin-config", "key": "config.json"}}
-			],
+			"config": {
+				"env": {"API_PASSWORD": {"value": "env-password"}},
+				"files": [
+					{"path": "/etc/plugin/key.pem", "value": "file-password"},
+					{"path": "/etc/plugin/config.json", "configMapRef": {"name": "connector-config", "key": "config.json"}}
+				]
+			},
 			"ledger": "main",
 			"pollInterval": "15s"
 		}
 	}`, string(seenBody))
-	require.NotContains(t, string(seenBody), `"config"`)
 }
 
 func TestClientRejectsMalformedAndEmptyObjectResponses(t *testing.T) {
@@ -236,31 +261,39 @@ func TestClientRejectsMalformedAndEmptyObjectResponses(t *testing.T) {
 			name: "malformed JSON",
 			body: `{`,
 			call: func(client Client) error {
-				_, err := client.GetPlugin(context.Background(), "stripe")
+				_, err := client.GetConnector(context.Background(), "stripe")
 				return err
 			},
 		},
 		{
-			name: "empty plugin object",
+			name: "empty connector object",
 			body: `{}`,
 			call: func(client Client) error {
-				_, err := client.GetPlugin(context.Background(), "stripe")
+				_, err := client.GetConnector(context.Background(), "stripe")
 				return err
 			},
 		},
 		{
-			name: "empty plugin list object",
+			name: "empty connector list object",
 			body: `{}`,
 			call: func(client Client) error {
-				_, err := client.ListPlugins(context.Background(), ListOptions{})
+				_, err := client.ListConnectors(context.Background(), ListOptions{})
 				return err
 			},
 		},
 		{
-			name: "empty instance list object",
+			name: "empty connector version list object",
+			body: `{}`,
+			call: func(client Client) error {
+				_, err := client.ListConnectorVersions(context.Background(), "stripe")
+				return err
+			},
+		},
+		{
+			name: "empty connector instance list object",
 			body: "null",
 			call: func(client Client) error {
-				_, err := client.ListInstances(context.Background(), ListOptions{})
+				_, err := client.ListConnectorInstances(context.Background(), ListOptions{})
 				return err
 			},
 		},
@@ -287,92 +320,101 @@ func TestClientRejectsStructurallyInvalidSuccessResponses(t *testing.T) {
 		call   func(Client) error
 	}{
 		{
-			name:   "plugin root is not an object",
+			name:   "connector root is not an object",
 			status: http.StatusOK,
 			body:   `[]`,
 			call: func(client Client) error {
-				_, err := client.GetPlugin(context.Background(), "stripe")
+				_, err := client.GetConnector(context.Background(), "stripe")
 				return err
 			},
 		},
 		{
-			name:   "whitespace-only plugin object",
+			name:   "whitespace-only connector object",
 			status: http.StatusOK,
 			body:   "{ \n\t }",
 			call: func(client Client) error {
-				_, err := client.GetPlugin(context.Background(), "stripe")
+				_, err := client.GetConnector(context.Background(), "stripe")
 				return err
 			},
 		},
 		{
-			name:   "plugin list missing items",
+			name:   "connector list missing items",
 			status: http.StatusOK,
 			body:   `{"continue":"next"}`,
 			call: func(client Client) error {
-				_, err := client.ListPlugins(context.Background(), ListOptions{})
+				_, err := client.ListConnectors(context.Background(), ListOptions{})
 				return err
 			},
 		},
 		{
-			name:   "instance list has null items",
+			name:   "connector instance list has null items",
 			status: http.StatusOK,
 			body:   `{"items":null}`,
 			call: func(client Client) error {
-				_, err := client.ListInstances(context.Background(), ListOptions{})
+				_, err := client.ListConnectorInstances(context.Background(), ListOptions{})
 				return err
 			},
 		},
 		{
-			name:   "plugin missing metadata name",
+			name:   "connector missing metadata name",
 			status: http.StatusOK,
-			body:   `{"metadata":{},"spec":{"image":"image"}}`,
+			body:   `{"metadata":{},"spec":{"displayName":"Stripe"}}`,
 			call: func(client Client) error {
-				_, err := client.GetPlugin(context.Background(), "stripe")
+				_, err := client.GetConnector(context.Background(), "stripe")
 				return err
 			},
 		},
 		{
-			name:   "plugin missing image",
+			name:   "connector list item missing metadata name",
 			status: http.StatusOK,
-			body:   `{"metadata":{"name":"stripe"},"spec":{}}`,
+			body:   `{"items":[{"metadata":{},"spec":{}}]}`,
 			call: func(client Client) error {
-				_, err := client.GetPlugin(context.Background(), "stripe")
+				_, err := client.ListConnectors(context.Background(), ListOptions{})
 				return err
 			},
 		},
 		{
-			name:   "plugin list item missing required fields",
+			name:   "connector version missing image",
 			status: http.StatusOK,
-			body:   `{"items":[{"metadata":{"name":"stripe"},"spec":{}}]}`,
+			body:   `{"version":"v1.0.0"}`,
 			call: func(client Client) error {
-				_, err := client.ListPlugins(context.Background(), ListOptions{})
+				_, err := client.GetConnectorVersion(context.Background(), "stripe", "v1.0.0")
 				return err
 			},
 		},
 		{
-			name:   "instance missing metadata name",
+			name:   "connector version list item missing version",
 			status: http.StatusOK,
-			body:   `{"metadata":{},"spec":{"plugin":"stripe","ledger":"main"}}`,
+			body:   `{"items":[{"image":"registry/stripe:v1.0.0"}]}`,
 			call: func(client Client) error {
-				_, err := client.GetInstance(context.Background(), "worker")
+				_, err := client.ListConnectorVersions(context.Background(), "stripe")
 				return err
 			},
 		},
 		{
-			name:   "instance missing plugin",
+			name:   "connector instance missing metadata name",
+			status: http.StatusOK,
+			body:   `{"metadata":{},"spec":{"connector":"stripe","ledger":"main"}}`,
+			call: func(client Client) error {
+				_, err := client.GetConnectorInstance(context.Background(), "worker")
+				return err
+			},
+		},
+		{
+			name:   "connector instance missing connector",
 			status: http.StatusCreated,
 			body:   `{"metadata":{"name":"worker"},"spec":{"ledger":"main"}}`,
 			call: func(client Client) error {
-				_, err := client.CreateInstance(context.Background(), InstanceCreate{Name: "worker", Spec: InstanceSpec{Plugin: "stripe", Ledger: "main"}})
+				_, err := client.CreateConnectorInstance(context.Background(), ConnectorInstanceCreate{Name: "worker", Spec: ConnectorInstanceSpec{Connector: "stripe", Ledger: "main"}})
 				return err
 			},
 		},
 		{
-			name:   "instance list item missing ledger",
+			name:   "connector instance list item missing ledger",
 			status: http.StatusOK,
-			body:   `{"items":[{"metadata":{"name":"worker"},"spec":{"plugin":"stripe"}}]}`,
+			body:   `{"items":[{"metadata":{"name":"worker"},"spec":{"connector":"stripe"}}]}`,
 			call: func(client Client) error {
-				_, err := client.ListInstances(context.Background(), ListOptions{})
+				_, err := client.ListConnectorInstances(context.Background(), ListOptions{})
 				return err
 			},
 		},
@@ -397,10 +439,13 @@ func TestClientAcceptsValidEmptyLists(t *testing.T) {
 	})}
 	client := New("https://stack.example", httpClient)
 
-	plugins, err := client.ListPlugins(context.Background(), ListOptions{})
+	connectors, err := client.ListConnectors(context.Background(), ListOptions{})
 	require.NoError(t, err)
-	require.Empty(t, plugins.Items)
-	instances, err := client.ListInstances(context.Background(), ListOptions{})
+	require.Empty(t, connectors.Items)
+	versions, err := client.ListConnectorVersions(context.Background(), "stripe")
+	require.NoError(t, err)
+	require.Empty(t, versions.Items)
+	instances, err := client.ListConnectorInstances(context.Background(), ListOptions{})
 	require.NoError(t, err)
 	require.Empty(t, instances.Items)
 }
