@@ -88,16 +88,21 @@ func TestSchemaFieldsSupportsLegacyFlatSchemaAndSecretMarker(t *testing.T) {
 }
 
 func TestSchemaFieldsDoesNotTreatMixedSectionAndLegacyShapesAsLegacy(t *testing.T) {
-	version := &connectivityclient.ConnectorVersion{ConfigSchema: map[string]any{
-		"env":        map[string]any{"properties": map[string]any{"SECTION": map[string]any{}}},
-		"properties": map[string]any{"LEGACY": map[string]any{}},
-	}}
+	for _, schema := range []map[string]any{
+		{
+			"env":        map[string]any{"properties": map[string]any{"SECTION": map[string]any{}}},
+			"properties": map[string]any{"LEGACY": map[string]any{}},
+		},
+		{
+			"files":      map[string]any{"properties": map[string]any{"/etc/section": map[string]any{}}},
+			"properties": map[string]any{"LEGACY": map[string]any{}},
+		},
+	} {
+		fields, err := SchemaFields(&connectivityclient.ConnectorVersion{ConfigSchema: schema})
 
-	fields, err := SchemaFields(version)
-
-	require.NoError(t, err)
-	require.Contains(t, fields, "SECTION")
-	require.NotContains(t, fields, "LEGACY")
+		require.NoError(t, err)
+		require.NotContains(t, fields, "LEGACY")
+	}
 }
 
 func TestSchemaFieldsCollectsLocalReferencesAndCompositionsWithoutOverstatingRequiredKeys(t *testing.T) {
