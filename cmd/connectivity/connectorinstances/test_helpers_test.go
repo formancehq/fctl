@@ -22,15 +22,15 @@ func stringPtr(value string) *string {
 // that does not care about configuration wants.
 type connectorVersions struct {
 	connectivityclient.Client
-	listVersions func(context.Context, string) (*connectivityclient.ConnectorVersionList, error)
+	listVersions func(context.Context, string, connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error)
 	getVersion   func(context.Context, string, string) (*connectivityclient.ConnectorVersion, error)
 }
 
-func (v connectorVersions) ListConnectorVersions(ctx context.Context, connector string) (*connectivityclient.ConnectorVersionList, error) {
+func (v connectorVersions) ListConnectorVersions(ctx context.Context, connector string, options connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
 	if v.listVersions == nil {
 		return versionListFixture(), nil
 	}
-	return v.listVersions(ctx, connector)
+	return v.listVersions(ctx, connector, options)
 }
 
 func (v connectorVersions) GetConnectorVersion(ctx context.Context, connector, version string) (*connectivityclient.ConnectorVersion, error) {

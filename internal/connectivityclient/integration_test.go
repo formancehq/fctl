@@ -18,15 +18,19 @@ func TestGivenConnectivityServer_WhenLifecycleMethodsRun_ThenContractIsRespected
 		switch {
 		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectors":
 			require.Equal(t, "application/json", req.Header.Get("Accept"))
-			_, _ = io.WriteString(w, `{"items":[{"metadata":{"name":"stripe"},"spec":{"displayName":"Stripe"}}]}`)
+			_, _ = io.WriteString(w, `{"cursor":{"pageSize":15,"hasMore":false,"data":[{"metadata":{"name":"stripe"},"spec":{"displayName":"Stripe","latestVersion":"v1.0.0"}}]}}`)
+		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectors/_facets":
+			_, _ = io.WriteString(w, `{"total":1,"facets":{"provider":{"psp":1}}}`)
+		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/_query/capabilities":
+			_, _ = io.WriteString(w, `{"resources":{"connectors":{"name":{"operators":["$match","$in","$like"]}}}}`)
 		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectors/stripe":
 			_, _ = io.WriteString(w, `{"metadata":{"name":"stripe"},"spec":{"displayName":"Stripe"}}`)
 		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectors/stripe/versions":
-			_, _ = io.WriteString(w, `{"items":[{"version":"v1.0.0","image":"registry/stripe:v1.0.0"}]}`)
-		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectors/stripe/versions/v1.0.0":
+			_, _ = io.WriteString(w, `{"cursor":{"pageSize":15,"hasMore":false,"data":[{"version":"v1.0.0","image":"registry/stripe:v1.0.0"}]}}`)
+		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectors/stripe/versions/latest":
 			_, _ = io.WriteString(w, `{"version":"v1.0.0","image":"registry/stripe:v1.0.0","configSchema":{"env":{"properties":{}}}}`)
 		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectorinstances":
-			_, _ = io.WriteString(w, `{"items":[]}`)
+			_, _ = io.WriteString(w, `{"cursor":{"pageSize":15,"hasMore":false,"data":[]}}`)
 		case req.Method == http.MethodPost && req.URL.Path == "/api/connectivity/connectorinstances":
 			require.Equal(t, "application/json", req.Header.Get("Content-Type"))
 			w.WriteHeader(http.StatusCreated)
@@ -50,11 +54,15 @@ func TestGivenConnectivityServer_WhenLifecycleMethodsRun_ThenContractIsRespected
 	// When lifecycle methods use the server.
 	connectors, err := client.ListConnectors(ctx, ListOptions{})
 	require.NoError(t, err)
+	facets, err := client.GetConnectorFacets(ctx, "")
+	require.NoError(t, err)
+	capabilities, err := client.GetQueryCapabilities(ctx)
+	require.NoError(t, err)
 	connector, err := client.GetConnector(ctx, "stripe")
 	require.NoError(t, err)
-	versions, err := client.ListConnectorVersions(ctx, "stripe")
+	versions, err := client.ListConnectorVersions(ctx, "stripe", ListOptions{})
 	require.NoError(t, err)
-	version, err := client.GetConnectorVersion(ctx, "stripe", "v1.0.0")
+	version, err := client.GetConnectorVersion(ctx, "stripe", VersionAliasLatest)
 	require.NoError(t, err)
 	instances, err := client.ListConnectorInstances(ctx, ListOptions{})
 	require.NoError(t, err)
@@ -70,6 +78,10 @@ func TestGivenConnectivityServer_WhenLifecycleMethodsRun_ThenContractIsRespected
 	// Then each response is decoded from the API contract.
 	require.Len(t, connectors.Items, 1)
 	require.Equal(t, "stripe", *connectors.Items[0].Metadata.Name)
+	require.Equal(t, "v1.0.0", *connectors.Items[0].Spec.LatestVersion)
+	require.Equal(t, int64(1), facets.Total)
+	require.Equal(t, int64(1), facets.Facets["provider"]["psp"])
+	require.Equal(t, []string{"$match", "$in", "$like"}, capabilities.Resources[ResourceConnectors]["name"].Operators)
 	require.Equal(t, "stripe", *connector.Metadata.Name)
 	require.Len(t, versions.Items, 1)
 	require.Equal(t, "v1.0.0", versions.Items[0].Version)

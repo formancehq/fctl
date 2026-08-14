@@ -36,8 +36,8 @@ func TestCompleteConnectorNamesUsesBoundedCatalogQueryAndReturnsPrefixMatchesWit
 	})
 	candidates, directive := completion(&cobra.Command{}, nil, "al")
 
-	if !reflect.DeepEqual(gotOptions, connectivityclient.ListOptions{Limit: 500}) {
-		t.Fatalf("ListConnectors options = %#v, want limit 500", gotOptions)
+	if !reflect.DeepEqual(gotOptions, connectivityclient.ListOptions{PageSize: 100}) {
+		t.Fatalf("ListConnectors options = %#v, want page size 100", gotOptions)
 	}
 	if remaining <= 1500*time.Millisecond || remaining > 2*time.Second {
 		t.Fatalf("completion deadline remaining = %s, want approximately 2s", remaining)
@@ -47,6 +47,31 @@ func TestCompleteConnectorNamesUsesBoundedCatalogQueryAndReturnsPrefixMatchesWit
 	}
 	if directive != cobra.ShellCompDirectiveNoFileComp {
 		t.Fatalf("directive = %v, want NoFileComp", directive)
+	}
+}
+
+func TestCompleteConnectorNamesFollowsCursorPagination(t *testing.T) {
+	var gotCursors []string
+	client := connectorClientMock{list: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
+		gotCursors = append(gotCursors, options.Cursor)
+		if options.Cursor == "" {
+			return &connectivityclient.ConnectorList{
+				Items:   []connectivityclient.Connector{connectorFixture("alpha")},
+				HasMore: true,
+				Next:    "page-two",
+			}, nil
+		}
+		return &connectivityclient.ConnectorList{Items: []connectivityclient.Connector{connectorFixture("alpine")}}, nil
+	}}
+
+	candidates, _ := CompleteConnectorNames(factoryReturning(client))(&cobra.Command{}, nil, "al")
+
+	if !reflect.DeepEqual(gotCursors, []string{"", "page-two"}) {
+		t.Fatalf("list cursors = %#v, want the continuation to be followed", gotCursors)
+	}
+	want := []string{"alpha\tConnector description", "alpine\tConnector description"}
+	if !reflect.DeepEqual(candidates, want) {
+		t.Fatalf("candidates = %#v, want both pages merged %#v", candidates, want)
 	}
 }
 

@@ -333,7 +333,7 @@ func TestConfigureRegistersAliasesRootAndCompletions(t *testing.T) {
 	var pathPrefix string
 	client := configureClientMock{
 		listInstances: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
-			require.Equal(t, connectivityclient.ListOptions{Limit: 500}, options)
+			require.Equal(t, connectivityclient.ListOptions{PageSize: 100}, options)
 			return &connectivityclient.ConnectorInstanceList{Items: []connectivityclient.ConnectorInstance{current}}, nil
 		},
 		getInstance: func(ctx context.Context, name string) (*connectivityclient.ConnectorInstance, error) {
@@ -342,7 +342,7 @@ func TestConfigureRegistersAliasesRootAndCompletions(t *testing.T) {
 			return &current, nil
 		},
 		connectorVersions: connectorVersions{
-			listVersions: func(ctx context.Context, name string) (*connectivityclient.ConnectorVersionList, error) {
+			listVersions: func(ctx context.Context, name string, _ connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
 				require.True(t, connectivityinternal.IsNonInteractive(ctx))
 				require.Equal(t, "stripe", name)
 				return versionListFixture(), nil

@@ -18,6 +18,9 @@ const (
 	connectorsResource         = "connectors"
 	connectorVersionsResource  = "versions"
 	connectorInstancesResource = "connectorinstances"
+	facetsSegment              = "_facets"
+	querySegment               = "_query"
+	capabilitiesSegment        = "capabilities"
 )
 
 type client struct {
@@ -29,9 +32,64 @@ func (e *APIError) Error() string {
 	return fmt.Sprintf("connectivity API error: status %d, code %s: %s", e.StatusCode, e.Code, e.Message)
 }
 
+type page[T any] struct {
+	Cursor *struct {
+		PageSize int32  `json:"pageSize"`
+		HasMore  bool   `json:"hasMore"`
+		Next     string `json:"next"`
+		Data     []T    `json:"data"`
+	} `json:"cursor"`
+}
+
+func listPage[T any](ctx context.Context, c *client, path []string, options ListOptions, validate func(*T) error) (*page[T], error) {
+	envelope := &page[T]{}
+	if err := c.requestJSON(ctx, http.MethodGet, path, listQuery(options), nil, "", http.StatusOK, envelope, true); err != nil {
+		return nil, err
+	}
+	if envelope.Cursor == nil {
+		return nil, fmt.Errorf("decode connectivity response: cursor must be a non-null object")
+	}
+	if envelope.Cursor.Data == nil {
+		return nil, fmt.Errorf("decode connectivity response: cursor.data must be a non-null array")
+	}
+	for i := range envelope.Cursor.Data {
+		if err := validate(&envelope.Cursor.Data[i]); err != nil {
+			return nil, fmt.Errorf("decode connectivity response: cursor.data[%d]: %w", i, err)
+		}
+	}
+	return envelope, nil
+}
+
 func (c *client) ListConnectors(ctx context.Context, options ListOptions) (*ConnectorList, error) {
-	result := &ConnectorList{}
-	if err := c.requestJSON(ctx, http.MethodGet, []string{connectorsResource}, listQuery(options), nil, "", http.StatusOK, result, true); err != nil {
+	result, err := listPage(ctx, c, []string{connectorsResource}, options, validateConnector)
+	if err != nil {
+		return nil, err
+	}
+	return &ConnectorList{
+		Items:    result.Cursor.Data,
+		PageSize: result.Cursor.PageSize,
+		HasMore:  result.Cursor.HasMore,
+		Next:     result.Cursor.Next,
+	}, nil
+}
+
+func (c *client) GetConnectorFacets(ctx context.Context, query string) (*FacetDistribution, error) {
+	result := &FacetDistribution{}
+	values := url.Values{}
+	if query != "" {
+		values.Set("query", query)
+	}
+	path := []string{connectorsResource, facetsSegment}
+	if err := c.requestJSON(ctx, http.MethodGet, path, values, nil, "", http.StatusOK, result, true); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *client) GetQueryCapabilities(ctx context.Context) (*QueryCapabilities, error) {
+	result := &QueryCapabilities{}
+	path := []string{querySegment, capabilitiesSegment}
+	if err := c.requestJSON(ctx, http.MethodGet, path, nil, nil, "", http.StatusOK, result, true); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -45,13 +103,18 @@ func (c *client) GetConnector(ctx context.Context, name string) (*Connector, err
 	return result, nil
 }
 
-func (c *client) ListConnectorVersions(ctx context.Context, connector string) (*ConnectorVersionList, error) {
-	result := &ConnectorVersionList{}
+func (c *client) ListConnectorVersions(ctx context.Context, connector string, options ListOptions) (*ConnectorVersionList, error) {
 	path := []string{connectorsResource, connector, connectorVersionsResource}
-	if err := c.requestJSON(ctx, http.MethodGet, path, nil, nil, "", http.StatusOK, result, true); err != nil {
+	result, err := listPage(ctx, c, path, options, validateConnectorVersionSummary)
+	if err != nil {
 		return nil, err
 	}
-	return result, nil
+	return &ConnectorVersionList{
+		Items:    result.Cursor.Data,
+		PageSize: result.Cursor.PageSize,
+		HasMore:  result.Cursor.HasMore,
+		Next:     result.Cursor.Next,
+	}, nil
 }
 
 func (c *client) GetConnectorVersion(ctx context.Context, connector, version string) (*ConnectorVersion, error) {
@@ -64,11 +127,16 @@ func (c *client) GetConnectorVersion(ctx context.Context, connector, version str
 }
 
 func (c *client) ListConnectorInstances(ctx context.Context, options ListOptions) (*ConnectorInstanceList, error) {
-	result := &ConnectorInstanceList{}
-	if err := c.requestJSON(ctx, http.MethodGet, []string{connectorInstancesResource}, listQuery(options), nil, "", http.StatusOK, result, true); err != nil {
+	result, err := listPage(ctx, c, []string{connectorInstancesResource}, options, validateConnectorInstance)
+	if err != nil {
 		return nil, err
 	}
-	return result, nil
+	return &ConnectorInstanceList{
+		Items:    result.Cursor.Data,
+		PageSize: result.Cursor.PageSize,
+		HasMore:  result.Cursor.HasMore,
+		Next:     result.Cursor.Next,
+	}, nil
 }
 
 func (c *client) CreateConnectorInstance(ctx context.Context, instance ConnectorInstanceCreate) (*ConnectorInstance, error) {
@@ -102,14 +170,14 @@ func (c *client) DeleteConnectorInstance(ctx context.Context, name string) error
 
 func listQuery(options ListOptions) url.Values {
 	query := url.Values{}
-	if options.Limit != 0 {
-		query.Set("limit", strconv.FormatInt(int64(options.Limit), 10))
+	if options.PageSize != 0 {
+		query.Set("pageSize", strconv.FormatInt(int64(options.PageSize), 10))
 	}
-	if options.Continue != "" {
-		query.Set("continue", options.Continue)
+	if options.Cursor != "" {
+		query.Set("cursor", options.Cursor)
 	}
-	if options.Connector != "" {
-		query.Set("connector", options.Connector)
+	if options.Query != "" {
+		query.Set("query", options.Query)
 	}
 	return query
 }
@@ -220,36 +288,17 @@ func validateResponse(destination any) error {
 	switch value := destination.(type) {
 	case *Connector:
 		return validateConnector(value)
-	case *ConnectorList:
-		if value.Items == nil {
-			return fmt.Errorf("items must be a non-null array")
-		}
-		for i := range value.Items {
-			if err := validateConnector(&value.Items[i]); err != nil {
-				return fmt.Errorf("items[%d]: %w", i, err)
-			}
-		}
 	case *ConnectorVersion:
 		return validateConnectorVersion(value.Version, value.Image)
-	case *ConnectorVersionList:
-		if value.Items == nil {
-			return fmt.Errorf("items must be a non-null array")
-		}
-		for i := range value.Items {
-			if err := validateConnectorVersion(value.Items[i].Version, value.Items[i].Image); err != nil {
-				return fmt.Errorf("items[%d]: %w", i, err)
-			}
-		}
 	case *ConnectorInstance:
 		return validateConnectorInstance(value)
-	case *ConnectorInstanceList:
-		if value.Items == nil {
-			return fmt.Errorf("items must be a non-null array")
+	case *FacetDistribution:
+		if value.Facets == nil {
+			return fmt.Errorf("facets must be a non-null object")
 		}
-		for i := range value.Items {
-			if err := validateConnectorInstance(&value.Items[i]); err != nil {
-				return fmt.Errorf("items[%d]: %w", i, err)
-			}
+	case *QueryCapabilities:
+		if value.Resources == nil {
+			return fmt.Errorf("resources must be a non-null object")
 		}
 	}
 	return nil
@@ -270,6 +319,10 @@ func validateConnectorVersion(version, image string) error {
 		return fmt.Errorf("connector version image is required")
 	}
 	return nil
+}
+
+func validateConnectorVersionSummary(summary *ConnectorVersionSummary) error {
+	return validateConnectorVersion(summary.Version, summary.Image)
 }
 
 func validateConnectorInstance(instance *ConnectorInstance) error {

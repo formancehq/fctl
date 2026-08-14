@@ -16,6 +16,7 @@ const (
 	nameFlag         = "name"
 	ledgerFlag       = "ledger"
 	versionFlag      = "version"
+	channelFlag      = "channel"
 	pollIntervalFlag = "poll-interval"
 	configFlag       = "config"
 	envFileFlag      = "env-file"
@@ -57,6 +58,7 @@ func NewInstallCommand(factory connectivityinternal.ClientFactory, read ReadFile
 		fctl.WithStringFlag(nameFlag, "", "Connector instance name (defaults to the connector name)"),
 		fctl.WithStringFlag(ledgerFlag, "", "Ledger name"),
 		fctl.WithStringFlag(versionFlag, "", "Connector version"),
+		fctl.WithStringFlag(channelFlag, "", "Maturity channel to track (stable, rc, beta, alpha) when no version is pinned"),
 		fctl.WithStringFlag(pollIntervalFlag, "", "Polling interval"),
 		fctl.WithStringFlag(configFlag, "", "YAML or JSON configuration file"),
 		fctl.WithStringArrayFlag(envFileFlag, nil, "Dotenv configuration file (repeatable)"),
@@ -68,6 +70,9 @@ func NewInstallCommand(factory connectivityinternal.ClientFactory, read ReadFile
 		panic(err)
 	}
 	if err := command.RegisterFlagCompletionFunc(versionFlag, CompleteVersions(factory, installConnectorArgument)); err != nil {
+		panic(err)
+	}
+	if err := command.RegisterFlagCompletionFunc(channelFlag, connectivityinternal.CompleteChannels(factory)); err != nil {
 		panic(err)
 	}
 	if err := command.RegisterFlagCompletionFunc(setFlag, CompleteSetValues(factory, resolveInstallConnectorVersion, paths)); err != nil {
@@ -87,7 +92,17 @@ func resolveInstallConnectorVersion(ctx context.Context, client connectivityclie
 	if len(args) == 0 {
 		return nil, nil
 	}
-	return resolveConnectorVersion(ctx, client, args[0], fctl.GetString(cmd, versionFlag))
+	return resolveConnectorVersion(ctx, client, args[0], installVersionSelector(cmd))
+}
+
+// installVersionSelector picks the {version} slot value governing the config
+// schema: the explicit pin, else the tracked channel alias (resolved with
+// exactly the rules installation uses), else empty for `latest`.
+func installVersionSelector(cmd *cobra.Command) string {
+	if pinned := fctl.GetString(cmd, versionFlag); pinned != "" {
+		return pinned
+	}
+	return fctl.GetString(cmd, channelFlag)
 }
 
 func (c *InstallController) GetStore() *InstallStore {
@@ -104,7 +119,7 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 	}
 
 	connectorName := args[0]
-	version, err := resolveConnectorVersion(cmd.Context(), client, connectorName, fctl.GetString(cmd, versionFlag))
+	version, err := resolveConnectorVersion(cmd.Context(), client, connectorName, installVersionSelector(cmd))
 	if err != nil {
 		return nil, err
 	}
@@ -144,6 +159,13 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 			return nil, err
 		}
 		spec.Version = fctl.Ptr(value)
+	}
+	if cmd.Flags().Changed(channelFlag) {
+		value, err := cmd.Flags().GetString(channelFlag)
+		if err != nil {
+			return nil, err
+		}
+		spec.Channel = fctl.Ptr(value)
 	}
 	if cmd.Flags().Changed(pollIntervalFlag) {
 		value, err := cmd.Flags().GetString(pollIntervalFlag)

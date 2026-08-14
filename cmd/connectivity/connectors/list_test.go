@@ -20,7 +20,9 @@ func TestListConnectorsPassesPaginationAndRendersApprovedColumnsAndContinuation(
 		gotOptions = options
 		return &connectivityclient.ConnectorList{
 			Items:    []connectivityclient.Connector{connectorFixture("stripe")},
-			Continue: "next-page",
+			PageSize: 7,
+			HasMore:  true,
+			Next:     "next-page",
 		}, nil
 	}}
 
@@ -30,7 +32,7 @@ func TestListConnectorsPassesPaginationAndRendersApprovedColumnsAndContinuation(
 		t.Fatalf("execute list command: %v", err)
 	}
 
-	wantOptions := connectivityclient.ListOptions{Limit: 7, Continue: "current-page"}
+	wantOptions := connectivityclient.ListOptions{PageSize: 7, Cursor: "current-page"}
 	if !reflect.DeepEqual(gotOptions, wantOptions) {
 		t.Fatalf("ListConnectors options = %#v, want %#v", gotOptions, wantOptions)
 	}
@@ -45,11 +47,60 @@ func TestListConnectorsPassesPaginationAndRendersApprovedColumnsAndContinuation(
 	}
 }
 
+func TestListConnectorsBuildsQueryFromFilterFlags(t *testing.T) {
+	var gotOptions connectivityclient.ListOptions
+	client := connectorClientMock{list: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
+		gotOptions = options
+		return &connectivityclient.ConnectorList{Items: []connectivityclient.Connector{}}, nil
+	}}
+
+	_, err := executeCommand(NewListCommand(factoryReturning(client)), "--filter", "catalog=ee", "--filter", "phase=Ready")
+	if err != nil {
+		t.Fatalf("execute list command: %v", err)
+	}
+
+	want := `{"$and":[{"$match":{"catalog":"ee"}},{"$match":{"phase":"Ready"}}]}`
+	if gotOptions.Query != want {
+		t.Fatalf("ListConnectors query = %q, want %q", gotOptions.Query, want)
+	}
+}
+
+func TestListConnectorsPassesRawQueryThrough(t *testing.T) {
+	var gotOptions connectivityclient.ListOptions
+	client := connectorClientMock{list: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
+		gotOptions = options
+		return &connectivityclient.ConnectorList{Items: []connectivityclient.Connector{}}, nil
+	}}
+	raw := `{"$exists":{"catalog":false}}`
+
+	_, err := executeCommand(NewListCommand(factoryReturning(client)), "--query", raw)
+	if err != nil {
+		t.Fatalf("execute list command: %v", err)
+	}
+
+	if gotOptions.Query != raw {
+		t.Fatalf("ListConnectors query = %q, want %q", gotOptions.Query, raw)
+	}
+}
+
+func TestListConnectorsRejectsCombinedQueryAndFilter(t *testing.T) {
+	client := connectorClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
+		t.Fatal("ListConnectors must not run with conflicting flags")
+		return nil, nil
+	}}
+
+	_, err := executeCommand(NewListCommand(factoryReturning(client)), "--query", `{"$match":{"catalog":"ee"}}`, "--filter", "phase=Ready")
+
+	if err == nil || !strings.Contains(err.Error(), "--query cannot be combined with --filter") {
+		t.Fatalf("error = %v, want the conflicting flags error", err)
+	}
+}
+
 func TestListConnectorsJSONPreservesCompleteModelsAndContinuation(t *testing.T) {
 	connector := connectorFixture("stripe")
 	connector.Metadata.Labels = map[string]string{"region": "eu"}
 	client := connectorClientMock{list: func(_ context.Context, _ connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
-		return &connectivityclient.ConnectorList{Items: []connectivityclient.Connector{connector}, Continue: "next-page"}, nil
+		return &connectivityclient.ConnectorList{Items: []connectivityclient.Connector{connector}, PageSize: 4, HasMore: true, Next: "next-page"}, nil
 	}}
 
 	command := NewListCommand(factoryReturning(client))
@@ -69,7 +120,7 @@ func TestListConnectorsJSONPreservesCompleteModelsAndContinuation(t *testing.T) 
 		t.Fatalf("JSON connectors = %#v, want complete model %#v", envelope.Data.Connectors, connector)
 	}
 	if !envelope.Data.Cursor.HasMore || envelope.Data.Cursor.PageSize != 4 || envelope.Data.Cursor.Next == nil || *envelope.Data.Cursor.Next != "next-page" {
-		t.Fatalf("JSON cursor = %#v, want continuation and requested page size", envelope.Data.Cursor)
+		t.Fatalf("JSON cursor = %#v, want continuation and served page size", envelope.Data.Cursor)
 	}
 }
 
@@ -80,8 +131,9 @@ func TestConnectorRootRegistersApprovedCommandsAndAliases(t *testing.T) {
 	}
 
 	wantAliases := map[string][]string{
-		"list": {"ls", "l"},
-		"show": {"get", "g", "sh", "s"},
+		"list":   {"ls", "l"},
+		"show":   {"get", "g", "sh", "s"},
+		"facets": {"facet", "f"},
 	}
 	for name, aliases := range wantAliases {
 		child, _, err := command.Find([]string{name})

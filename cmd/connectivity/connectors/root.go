@@ -15,6 +15,7 @@ func NewCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
 		fctl.WithChildCommands(
 			NewListCommand(factory),
 			NewShowCommand(factory),
+			NewFacetsCommand(factory),
 		),
 	)
 }

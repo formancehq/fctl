@@ -30,14 +30,21 @@ func TestListConnectorInstancesPassesFiltersAndPaginationAndRendersApprovedColum
 		gotOptions = options
 		return &connectivityclient.ConnectorInstanceList{
 			Items:    []connectivityclient.ConnectorInstance{instanceFixture("stripe-eu")},
-			Continue: "next-page",
+			PageSize: 7,
+			HasMore:  true,
+			Next:     "next-page",
 		}, nil
 	}}
 
 	output, err := executeCommand(NewListCommand(factoryReturning(client)), "--connector", "stripe", "--page-size", "7", "--cursor", "current-page")
 
 	require.NoError(t, err)
-	require.Equal(t, connectivityclient.ListOptions{Connector: "stripe", Limit: 7, Continue: "current-page"}, gotOptions)
+	wantOptions := connectivityclient.ListOptions{
+		Query:    `{"$match":{"connector":"stripe"}}`,
+		PageSize: 7,
+		Cursor:   "current-page",
+	}
+	require.Equal(t, wantOptions, gotOptions)
 	for _, expected := range []string{
 		"Name", "Connector", "Version", "Ledger", "Phase", "State", "Current Sequence", "Source Tip Sequence", "Last Error",
 		"stripe-eu", "stripe", "2.0.0", "main", "Ready", "Running", "42", "48", "source temporarily unavailable",
@@ -47,6 +54,55 @@ func TestListConnectorInstancesPassesFiltersAndPaginationAndRendersApprovedColum
 	}
 }
 
+func TestListConnectorInstancesConjoinsConnectorAndFilterExpressions(t *testing.T) {
+	var gotOptions connectivityclient.ListOptions
+	client := listInstanceClientMock{list: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
+		gotOptions = options
+		return &connectivityclient.ConnectorInstanceList{Items: []connectivityclient.ConnectorInstance{}}, nil
+	}}
+
+	_, err := executeCommand(NewListCommand(factoryReturning(client)), "--filter", "phase=Running", "--connector", "stripe")
+
+	require.NoError(t, err)
+	want := `{"$and":[{"$match":{"phase":"Running"}},{"$match":{"connector":"stripe"}}]}`
+	require.Equal(t, want, gotOptions.Query)
+}
+
+func TestListConnectorInstancesPassesRawQueryThrough(t *testing.T) {
+	var gotOptions connectivityclient.ListOptions
+	client := listInstanceClientMock{list: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
+		gotOptions = options
+		return &connectivityclient.ConnectorInstanceList{Items: []connectivityclient.ConnectorInstance{}}, nil
+	}}
+	raw := `{"$exists":{"channel":true}}`
+
+	_, err := executeCommand(NewListCommand(factoryReturning(client)), "--query", raw)
+
+	require.NoError(t, err)
+	require.Equal(t, raw, gotOptions.Query)
+}
+
+func TestListConnectorInstancesRejectsRawQueryCombinedWithSugarFlags(t *testing.T) {
+	client := listInstanceClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
+		t.Fatal("ListConnectorInstances must not run with conflicting flags")
+		return nil, nil
+	}}
+
+	_, err := executeCommand(NewListCommand(factoryReturning(client)), "--query", `{"$match":{"phase":"Running"}}`, "--connector", "stripe")
+
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "--query cannot be combined with --filter")
+}
+
+func TestListConnectorInstancesWiresFilterAndConnectorCompletions(t *testing.T) {
+	command := NewListCommand(factoryReturning(listInstanceClientMock{}))
+
+	_, filterRegistered := command.GetFlagCompletionFunc("filter")
+	require.True(t, filterRegistered, "--filter must complete from /_query/capabilities")
+	_, connectorRegistered := command.GetFlagCompletionFunc("connector")
+	require.True(t, connectorRegistered, "--connector must complete from the connector catalogue")
+}
+
 func TestListConnectorInstancesJSONPreservesCompleteModelsAndContinuation(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
 	instance.Metadata.Labels = map[string]string{"region": "eu"}
@@ -54,7 +110,7 @@ func TestListConnectorInstancesJSONPreservesCompleteModelsAndContinuation(t *tes
 		"API_KEY": {Value: stringPtr("json-keeps-full-model")},
 	}}
 	client := listInstanceClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
-		return &connectivityclient.ConnectorInstanceList{Items: []connectivityclient.ConnectorInstance{instance}, Continue: "next-page"}, nil
+		return &connectivityclient.ConnectorInstanceList{Items: []connectivityclient.ConnectorInstance{instance}, PageSize: 4, HasMore: true, Next: "next-page"}, nil
 	}}
 	command := NewListCommand(factoryReturning(client))
 	command.Flags().String(fctl.OutputFlag, "plain", "")

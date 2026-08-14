@@ -7,6 +7,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/fctl/v3/cmd/connectivity/connectors"
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	connectivityclient "github.com/formancehq/fctl/v3/internal/connectivityclient"
 	fctl "github.com/formancehq/fctl/v3/pkg"
@@ -35,17 +36,28 @@ func NewListController(factory connectivityinternal.ClientFactory) *ListControll
 
 func NewListCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
 	controller := NewListController(factory)
-	return fctl.NewCommand(
+	command := fctl.NewCommand(
 		"list",
 		fctl.WithAliases("ls", "l"),
 		fctl.WithShortDescription("List Connectivity connector instances"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithStringFlag(connectorFlag, "", "Filter connector instances by connector"),
+		connectivityinternal.WithListQueryFlags(),
 		fctl.WithPageSizeFlag(),
 		fctl.WithCursorFlag(),
 		fctl.WithController[*ListStore](controller),
 	)
+	if err := command.RegisterFlagCompletionFunc(connectorFlag, connectors.CompleteConnectorNames(factory)); err != nil {
+		panic(err)
+	}
+	if err := command.RegisterFlagCompletionFunc(
+		connectivityinternal.FilterFlag,
+		connectivityinternal.CompleteFilterExpressions(factory, connectivityclient.ResourceConnectorInstances),
+	); err != nil {
+		panic(err)
+	}
+	return command
 }
 
 func (c *ListController) GetStore() *ListStore {
@@ -68,11 +80,24 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 	if err != nil {
 		return nil, err
 	}
+	filters, err := cmd.Flags().GetStringArray(connectivityinternal.FilterFlag)
+	if err != nil {
+		return nil, err
+	}
+	// --connector is sugar for one more filter clause, so it composes with
+	// --filter and conflicts with --query exactly like the other filters.
+	if connector := fctl.GetString(cmd, connectorFlag); connector != "" {
+		filters = append(filters, connectorFlag+"="+connector)
+	}
+	query, err := connectivityinternal.BuildListQuery(fctl.GetString(cmd, connectivityinternal.QueryFlag), filters)
+	if err != nil {
+		return nil, err
+	}
 
 	response, err := client.ListConnectorInstances(cmd.Context(), connectivityclient.ListOptions{
-		Connector: fctl.GetString(cmd, connectorFlag),
-		Limit:     pageSize,
-		Continue:  cursor,
+		Query:    query,
+		PageSize: pageSize,
+		Cursor:   cursor,
 	})
 	if err != nil {
 		return nil, err
@@ -82,10 +107,9 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 	}
 
 	c.store.ConnectorInstances = response.Items
-	c.store.Cursor = fctl.Cursor{PageSize: int64(pageSize)}
-	if response.Continue != "" {
-		c.store.Cursor.HasMore = true
-		c.store.Cursor.Next = fctl.Ptr(response.Continue)
+	c.store.Cursor = fctl.Cursor{PageSize: int64(response.PageSize), HasMore: response.HasMore}
+	if response.Next != "" {
+		c.store.Cursor.Next = fctl.Ptr(response.Next)
 	}
 	return c, nil
 }

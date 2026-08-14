@@ -19,11 +19,16 @@ import (
 type mutationClientMock struct {
 	connectorVersions
 	listConnectors func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error)
+	capabilities   func(context.Context) (*connectivityclient.QueryCapabilities, error)
 	create         func(context.Context, connectivityclient.ConnectorInstanceCreate) (*connectivityclient.ConnectorInstance, error)
 }
 
 func (m mutationClientMock) ListConnectors(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
 	return m.listConnectors(ctx, options)
+}
+
+func (m mutationClientMock) GetQueryCapabilities(ctx context.Context) (*connectivityclient.QueryCapabilities, error) {
+	return m.capabilities(ctx)
 }
 
 func (m mutationClientMock) CreateConnectorInstance(ctx context.Context, body connectivityclient.ConnectorInstanceCreate) (*connectivityclient.ConnectorInstance, error) {
@@ -73,7 +78,7 @@ func TestInstallBuildsConnectorInstanceFromVersionSchemaAndOnlySetsChangedScalar
 	require.Equal(t, `Connector instance "stripe-eu" installed with connector "stripe" for ledger "main".`, strings.TrimSpace(output))
 }
 
-func TestInstallWithoutVersionFlagUsesNewestPublishedVersionForTheSchema(t *testing.T) {
+func TestInstallWithoutVersionFlagUsesServerResolvedLatestForTheSchema(t *testing.T) {
 	var gotVersion string
 	var gotBody connectivityclient.ConnectorInstanceCreate
 	client := mutationClientMock{
@@ -95,14 +100,42 @@ func TestInstallWithoutVersionFlagUsesNewestPublishedVersionForTheSchema(t *test
 	)
 
 	require.NoError(t, err)
-	require.Equal(t, "2.0.0", gotVersion)
+	require.Equal(t, connectivityclient.VersionAliasLatest, gotVersion)
 	require.Nil(t, gotBody.Spec.Version, "an unpinned install must let the server resolve the version")
+}
+
+func TestInstallWithChannelFlagTracksTheChannelAndUsesItsHeadForTheSchema(t *testing.T) {
+	var gotVersion string
+	var gotBody connectivityclient.ConnectorInstanceCreate
+	client := mutationClientMock{
+		connectorVersions: connectorVersions{
+			getVersion: func(_ context.Context, _, version string) (*connectivityclient.ConnectorVersion, error) {
+				gotVersion = version
+				return versionWithOptionalSchema(), nil
+			},
+		},
+		create: func(_ context.Context, body connectivityclient.ConnectorInstanceCreate) (*connectivityclient.ConnectorInstance, error) {
+			gotBody = body
+			return &connectivityclient.ConnectorInstance{Metadata: connectivityclient.ObjectMeta{Name: stringPtr(body.Name)}, Spec: body.Spec}, nil
+		},
+	}
+
+	_, err := executeCommand(
+		NewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)),
+		"stripe", "--ledger=main", "--channel=stable", "--confirm",
+	)
+
+	require.NoError(t, err)
+	require.Equal(t, "stable", gotVersion, "the channel alias resolves the schema exactly as installation will")
+	require.NotNil(t, gotBody.Spec.Channel)
+	require.Equal(t, "stable", *gotBody.Spec.Channel)
+	require.Nil(t, gotBody.Spec.Version)
 }
 
 func TestInstallReportsConnectorsWithoutAPublishedVersion(t *testing.T) {
 	client := mutationClientMock{connectorVersions: connectorVersions{
-		listVersions: func(context.Context, string) (*connectivityclient.ConnectorVersionList, error) {
-			return &connectivityclient.ConnectorVersionList{Items: []connectivityclient.ConnectorVersionSummary{}}, nil
+		getVersion: func(context.Context, string, string) (*connectivityclient.ConnectorVersion, error) {
+			return nil, &connectivityclient.APIError{StatusCode: 404, Code: "not_found", Message: "no Validated version"}
 		},
 	}}
 
@@ -196,7 +229,7 @@ func TestInstallPreservesVersionAndCreateAPIErrorsAndRejectsEmptyResponses(t *te
 	}{
 		"version API": {
 			client: mutationClientMock{connectorVersions: connectorVersions{
-				listVersions: func(context.Context, string) (*connectivityclient.ConnectorVersionList, error) {
+				getVersion: func(context.Context, string, string) (*connectivityclient.ConnectorVersion, error) {
 					return nil, versionError
 				},
 			}},
@@ -279,6 +312,23 @@ func TestInstallRegistersAliasesAndRootIntegration(t *testing.T) {
 	require.True(t, reflect.DeepEqual([]string{"create", "in"}, child.Aliases))
 }
 
+func TestInstallWiresChannelCompletionFromCapabilities(t *testing.T) {
+	client := mutationClientMock{capabilities: func(context.Context) (*connectivityclient.QueryCapabilities, error) {
+		return &connectivityclient.QueryCapabilities{Resources: map[string]map[string]connectivityclient.QueryFieldCapability{
+			connectivityclient.ResourceConnectorInstances: {
+				"channel": {Operators: []string{"$match"}, Enum: []string{"stable", "rc", "beta", "alpha"}},
+			},
+		}}, nil
+	}}
+	command := NewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil))
+
+	channelCompletion, ok := command.GetFlagCompletionFunc("channel")
+	require.True(t, ok)
+	channels, directive := channelCompletion(command, nil, "s")
+	require.Equal(t, []string{"stable"}, channels)
+	require.Equal(t, cobra.ShellCompDirectiveNoFileComp, directive)
+}
+
 func TestInstallDoesNotExposeUnsupportedStartSequence(t *testing.T) {
 	command := NewInstallCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
 
@@ -292,13 +342,14 @@ func TestInstallWiresConnectorVersionSetAndFileCompletions(t *testing.T) {
 	}
 	client := mutationClientMock{
 		listConnectors: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
-			require.Equal(t, connectivityclient.ListOptions{Limit: 500}, options)
+			require.Equal(t, connectivityclient.ListOptions{PageSize: 100}, options)
 			return &connectivityclient.ConnectorList{Items: []connectivityclient.Connector{connector}}, nil
 		},
 		connectorVersions: connectorVersions{
-			listVersions: func(ctx context.Context, name string) (*connectivityclient.ConnectorVersionList, error) {
+			listVersions: func(ctx context.Context, name string, options connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
 				require.True(t, connectivityinternal.IsNonInteractive(ctx))
 				require.Equal(t, "stripe", name)
+				require.Equal(t, int32(100), options.PageSize)
 				return versionListFixture(), nil
 			},
 			getVersion: func(ctx context.Context, name, _ string) (*connectivityclient.ConnectorVersion, error) {

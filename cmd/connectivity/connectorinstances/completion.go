@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -14,10 +13,7 @@ import (
 	connectivityclient "github.com/formancehq/fctl/v3/internal/connectivityclient"
 )
 
-const (
-	instanceCompletionLimit   = int32(500)
-	instanceCompletionTimeout = 2 * time.Second
-)
+const instanceCompletionMaxPages = 5
 
 type PathCompleter func(prefix string) ([]string, error)
 
@@ -30,18 +26,26 @@ type ConnectorVersionResolver func(context.Context, connectivityclient.Client, *
 
 func CompleteConnectorInstanceNames(factory connectivityinternal.ClientFactory) cobra.CompletionFunc {
 	return func(cmd *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		client, completionCommand, cancel, ok := completionClient(cmd, factory)
+		client, completionCommand, cancel, ok := connectivityinternal.CompletionClient(cmd, factory)
 		if !ok {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 		defer cancel()
 
-		response, err := client.ListConnectorInstances(completionCommand.Context(), connectivityclient.ListOptions{Limit: instanceCompletionLimit})
-		if err != nil || response == nil {
+		instances, err := connectivityinternal.CollectPages(connectivityinternal.CompletionPageSize, instanceCompletionMaxPages,
+			func(options connectivityclient.ListOptions) ([]connectivityclient.ConnectorInstance, bool, string, error) {
+				page, err := client.ListConnectorInstances(completionCommand.Context(), options)
+				if err != nil || page == nil {
+					return nil, false, "", err
+				}
+				return page.Items, page.HasMore, page.Next, nil
+			})
+		if err != nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		candidates := make([]string, 0, len(response.Items))
-		for _, instance := range response.Items {
+
+		candidates := make([]string, 0, len(instances))
+		for _, instance := range instances {
 			name := stringValue(instance.Metadata.Name)
 			if name == "" || !strings.HasPrefix(name, toComplete) {
 				continue
@@ -71,7 +75,7 @@ func completeVersions(factory connectivityinternal.ClientFactory, resolveConnect
 		if resolveConnector == nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		client, completionCommand, cancel, ok := completionClient(cmd, factory)
+		client, completionCommand, cancel, ok := connectivityinternal.CompletionClient(cmd, factory)
 		if !ok {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
@@ -81,12 +85,19 @@ func completeVersions(factory connectivityinternal.ClientFactory, resolveConnect
 		if err != nil || connector == "" {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		versions, err := client.ListConnectorVersions(completionCommand.Context(), connector)
-		if err != nil || versions == nil {
+		versions, err := connectivityinternal.CollectPages(connectivityinternal.CompletionPageSize, instanceCompletionMaxPages,
+			func(options connectivityclient.ListOptions) ([]connectivityclient.ConnectorVersionSummary, bool, string, error) {
+				page, err := client.ListConnectorVersions(completionCommand.Context(), connector, options)
+				if err != nil || page == nil {
+					return nil, false, "", err
+				}
+				return page.Items, page.HasMore, page.Next, nil
+			})
+		if err != nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		candidates := make([]string, 0, len(versions.Items))
-		for _, version := range versions.Items {
+		candidates := make([]string, 0, len(versions))
+		for _, version := range versions {
 			if version.Version == "" || !strings.HasPrefix(version.Version, toComplete) {
 				continue
 			}
@@ -134,7 +145,7 @@ func CompleteSetValues(
 		if resolveVersion == nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		client, completionCommand, cancel, ok := completionClient(cmd, factory)
+		client, completionCommand, cancel, ok := connectivityinternal.CompletionClient(cmd, factory)
 		if !ok {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
@@ -202,25 +213,6 @@ func OSPathCompleter(prefix string) ([]string, error) {
 	}
 	sort.Strings(candidates)
 	return candidates, nil
-}
-
-func completionClient(cmd *cobra.Command, factory connectivityinternal.ClientFactory) (connectivityclient.Client, *cobra.Command, context.CancelFunc, bool) {
-	if factory == nil {
-		return nil, nil, func() {}, false
-	}
-	parent := cmd.Context()
-	if parent == nil {
-		parent = context.Background()
-	}
-	ctx, cancel := context.WithTimeout(parent, instanceCompletionTimeout)
-	completionCommand := *cmd
-	completionCommand.SetContext(connectivityinternal.WithNonInteractive(ctx))
-	client, err := factory(&completionCommand)
-	if err != nil || client == nil {
-		cancel()
-		return nil, nil, func() {}, false
-	}
-	return client, &completionCommand, cancel, true
 }
 
 func suppliedSetKeys(cmd *cobra.Command, args []string) map[string]bool {

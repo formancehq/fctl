@@ -2,30 +2,28 @@ package connectorinstances
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 
 	connectivityclient "github.com/formancehq/fctl/v3/internal/connectivityclient"
 )
 
 // resolveConnectorVersion returns the ConnectorVersion whose configSchema governs
-// the configuration being assembled: the requested pin when there is one, the
-// newest published version otherwise. The catalog serves versions ascending by
-// semantic version, so the newest is the last item.
+// the configuration being assembled: the requested pin (or channel alias) when
+// there is one, the server-resolved `latest` alias otherwise.
 func resolveConnectorVersion(ctx context.Context, client connectivityclient.Client, connector, pinned string) (*connectivityclient.ConnectorVersion, error) {
 	if connector == "" {
 		return nil, fmt.Errorf("connector name is required")
 	}
 	if pinned == "" {
-		versions, err := client.ListConnectorVersions(ctx, connector)
-		if err != nil {
-			return nil, err
-		}
-		if versions == nil || len(versions.Items) == 0 {
-			return nil, fmt.Errorf("connectivity connector %q has no published version", connector)
-		}
-		pinned = versions.Items[len(versions.Items)-1].Version
+		pinned = connectivityclient.VersionAliasLatest
 	}
 	version, err := client.GetConnectorVersion(ctx, connector, pinned)
+	var apiErr *connectivityclient.APIError
+	if pinned == connectivityclient.VersionAliasLatest && errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusNotFound {
+		return nil, fmt.Errorf("connectivity connector %q has no published version: %w", connector, err)
+	}
 	if err != nil {
 		return nil, err
 	}

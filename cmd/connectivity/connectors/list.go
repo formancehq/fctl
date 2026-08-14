@@ -33,16 +33,24 @@ func NewListController(factory connectivityinternal.ClientFactory) *ListControll
 
 func NewListCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
 	controller := NewListController(factory)
-	return fctl.NewCommand(
+	command := fctl.NewCommand(
 		"list",
 		fctl.WithAliases("ls", "l"),
 		fctl.WithShortDescription("List available Connectivity connectors"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
+		connectivityinternal.WithListQueryFlags(),
 		fctl.WithPageSizeFlag(),
 		fctl.WithCursorFlag(),
 		fctl.WithController[*ListStore](controller),
 	)
+	if err := command.RegisterFlagCompletionFunc(
+		connectivityinternal.FilterFlag,
+		connectivityinternal.CompleteFilterExpressions(factory, connectivityclient.ResourceConnectors),
+	); err != nil {
+		panic(err)
+	}
+	return command
 }
 
 func (c *ListController) GetStore() *ListStore {
@@ -65,10 +73,15 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 	if err != nil {
 		return nil, err
 	}
+	query, err := connectivityinternal.GetListQuery(cmd)
+	if err != nil {
+		return nil, err
+	}
 
 	response, err := client.ListConnectors(cmd.Context(), connectivityclient.ListOptions{
-		Limit:    pageSize,
-		Continue: cursor,
+		PageSize: pageSize,
+		Cursor:   cursor,
+		Query:    query,
 	})
 	if err != nil {
 		return nil, err
@@ -78,12 +91,16 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 	}
 
 	c.store.Connectors = response.Items
-	c.store.Cursor = fctl.Cursor{PageSize: int64(pageSize)}
-	if response.Continue != "" {
-		c.store.Cursor.HasMore = true
-		c.store.Cursor.Next = fctl.Ptr(response.Continue)
-	}
+	c.store.Cursor = cursorFromList(response.PageSize, response.HasMore, response.Next)
 	return c, nil
+}
+
+func cursorFromList(pageSize int32, hasMore bool, next string) fctl.Cursor {
+	cursor := fctl.Cursor{PageSize: int64(pageSize), HasMore: hasMore}
+	if next != "" {
+		cursor.Next = fctl.Ptr(next)
+	}
+	return cursor
 }
 
 func (c *ListController) Render(cmd *cobra.Command, _ []string) error {

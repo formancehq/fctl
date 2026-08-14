@@ -6,6 +6,19 @@ import (
 	"time"
 )
 
+const (
+	ResourceConnectors         = "connectors"
+	ResourceConnectorVersions  = "connectorversions"
+	ResourceConnectorInstances = "connectorinstances"
+)
+
+// VersionAliasLatest resolves to the newest Validated version across all
+// channels; the channel aliases resolve to that channel's head with exactly
+// the rules installation uses. Reserved by the API: never valid semver.
+const VersionAliasLatest = "latest"
+
+var VersionAliases = []string{VersionAliasLatest, "stable", "rc", "beta", "alpha"}
+
 type ObjectMeta struct {
 	Name              *string           `json:"name,omitempty"`
 	Namespace         *string           `json:"namespace,omitempty"`
@@ -35,12 +48,22 @@ type FileMount struct {
 	Mode         *int32  `json:"mode,omitempty"`
 }
 
+type ConnectorBranding struct {
+	DisplayName *string `json:"displayName,omitempty"`
+	AccentColor *string `json:"accentColor,omitempty"`
+	LogoSvg     *string `json:"logoSvg,omitempty"`
+	LogoSvgDark *string `json:"logoSvgDark,omitempty"`
+}
+
 type ConnectorSpec struct {
-	DisplayName *string  `json:"displayName,omitempty"`
-	Description *string  `json:"description,omitempty"`
-	ImageURL    *string  `json:"imageUrl,omitempty"`
-	Catalog     *string  `json:"catalog,omitempty"`
-	Tags        []string `json:"tags,omitempty"`
+	DisplayName   *string            `json:"displayName,omitempty"`
+	Description   *string            `json:"description,omitempty"`
+	ImageURL      *string            `json:"imageUrl,omitempty"`
+	Catalog       *string            `json:"catalog,omitempty"`
+	Tags          []string           `json:"tags,omitempty"`
+	Tagline       *string            `json:"tagline,omitempty"`
+	Branding      *ConnectorBranding `json:"branding,omitempty"`
+	LatestVersion *string            `json:"latestVersion,omitempty"`
 }
 
 type ConnectorStatus struct {
@@ -56,7 +79,9 @@ type Connector struct {
 
 type ConnectorList struct {
 	Items    []Connector `json:"items"`
-	Continue string      `json:"continue,omitempty"`
+	PageSize int32       `json:"pageSize"`
+	HasMore  bool        `json:"hasMore"`
+	Next     string      `json:"next,omitempty"`
 }
 
 type ConnectorVersionSummary struct {
@@ -76,7 +101,24 @@ type ConnectorVersion struct {
 }
 
 type ConnectorVersionList struct {
-	Items []ConnectorVersionSummary `json:"items"`
+	Items    []ConnectorVersionSummary `json:"items"`
+	PageSize int32                     `json:"pageSize"`
+	HasMore  bool                      `json:"hasMore"`
+	Next     string                    `json:"next,omitempty"`
+}
+
+type FacetDistribution struct {
+	Total  int64                       `json:"total"`
+	Facets map[string]map[string]int64 `json:"facets"`
+}
+
+type QueryFieldCapability struct {
+	Operators []string `json:"operators"`
+	Enum      []string `json:"enum,omitempty"`
+}
+
+type QueryCapabilities struct {
+	Resources map[string]map[string]QueryFieldCapability `json:"resources"`
 }
 
 type ConnectorInstanceConfig struct {
@@ -117,7 +159,9 @@ type ConnectorInstance struct {
 
 type ConnectorInstanceList struct {
 	Items    []ConnectorInstance `json:"items"`
-	Continue string              `json:"continue,omitempty"`
+	PageSize int32               `json:"pageSize"`
+	HasMore  bool                `json:"hasMore"`
+	Next     string              `json:"next,omitempty"`
 }
 
 type ConnectorInstanceCreate struct {
@@ -130,9 +174,9 @@ type ConnectorInstanceCreate struct {
 type ConnectorInstancePatch map[string]any
 
 type ListOptions struct {
-	Limit     int32
-	Continue  string
-	Connector string
+	PageSize int32
+	Cursor   string
+	Query    string
 }
 
 type APIError struct {
@@ -144,8 +188,10 @@ type APIError struct {
 
 type Client interface {
 	ListConnectors(context.Context, ListOptions) (*ConnectorList, error)
+	GetConnectorFacets(context.Context, string) (*FacetDistribution, error)
+	GetQueryCapabilities(context.Context) (*QueryCapabilities, error)
 	GetConnector(context.Context, string) (*Connector, error)
-	ListConnectorVersions(context.Context, string) (*ConnectorVersionList, error)
+	ListConnectorVersions(context.Context, string, ListOptions) (*ConnectorVersionList, error)
 	GetConnectorVersion(context.Context, string, string) (*ConnectorVersion, error)
 	ListConnectorInstances(context.Context, ListOptions) (*ConnectorInstanceList, error)
 	CreateConnectorInstance(context.Context, ConnectorInstanceCreate) (*ConnectorInstance, error)
