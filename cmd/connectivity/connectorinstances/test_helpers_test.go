@@ -132,14 +132,16 @@ func versionWithFileSchema() *connectivityclient.ConnectorVersion {
 		ConfigSchema: map[string]any{
 			"type": "object",
 			"env": map[string]any{
-				"type": "object",
+				"type":                 "object",
+				"additionalProperties": false,
 				"properties": map[string]any{
 					"API_URL": map[string]any{"type": "string", "description": "API endpoint"},
 				},
 				"required": []any{},
 			},
 			"files": map[string]any{
-				"type": "object",
+				"type":                 "object",
+				"additionalProperties": false,
 				"properties": map[string]any{
 					"/etc/a": map[string]any{"type": "string", "description": "Primary config"},
 					"/etc/b": map[string]any{"type": "string", "format": "password"},
@@ -174,7 +176,8 @@ func fullConfigSchema(requiredEnv, requiredFiles []any) map[string]any {
 	return map[string]any{
 		"type": "object",
 		"env": map[string]any{
-			"type": "object",
+			"type":                 "object",
+			"additionalProperties": false,
 			"properties": map[string]any{
 				"API_URL": map[string]any{"type": "string", "description": "API endpoint"},
 				"TOKEN":   map[string]any{"type": "string", "format": "password", "description": "Authentication token"},
@@ -183,7 +186,8 @@ func fullConfigSchema(requiredEnv, requiredFiles []any) map[string]any {
 			"required": requiredEnv,
 		},
 		"files": map[string]any{
-			"type": "object",
+			"type":                 "object",
+			"additionalProperties": false,
 			"properties": map[string]any{
 				"/etc/plugin/config.yaml": map[string]any{"type": "string", "description": "Connector configuration"},
 				"/etc/plugin/ca.pem":      map[string]any{"type": "string", "format": "password"},

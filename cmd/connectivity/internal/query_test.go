@@ -43,6 +43,13 @@ func TestBuildListQueryBuildsLikeLeaf(t *testing.T) {
 	require.JSONEq(t, `{"$like":{"name":"stripe%"}}`, query)
 }
 
+func TestBuildListQueryChoosesTheEarliestOperatorWhenValuesContainDelimiters(t *testing.T) {
+	query, err := BuildListQuery("", []string{"name~stripe=us"})
+
+	require.NoError(t, err)
+	require.JSONEq(t, `{"$like":{"name":"stripe=us"}}`, query)
+}
+
 func TestBuildListQueryPassesRawQueryThrough(t *testing.T) {
 	raw := `{"$or":[{"$match":{"catalog":"ee"}},{"$exists":{"catalog":false}}]}`
 

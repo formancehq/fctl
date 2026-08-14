@@ -32,7 +32,7 @@ func CompleteConnectorInstanceNames(factory connectivityinternal.ClientFactory) 
 		}
 		defer cancel()
 
-		instances, err := connectivityinternal.CollectPages(connectivityinternal.CompletionPageSize, instanceCompletionMaxPages,
+		instances, err := connectivityinternal.CollectPagesBounded(connectivityinternal.CompletionPageSize, instanceCompletionMaxPages,
 			func(options connectivityclient.ListOptions) ([]connectivityclient.ConnectorInstance, bool, string, error) {
 				page, err := client.ListConnectorInstances(completionCommand.Context(), options)
 				if err != nil || page == nil {
@@ -85,7 +85,7 @@ func completeVersions(factory connectivityinternal.ClientFactory, resolveConnect
 		if err != nil || connector == "" {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		versions, err := connectivityinternal.CollectPages(connectivityinternal.CompletionPageSize, instanceCompletionMaxPages,
+		versions, err := connectivityinternal.CollectPagesBounded(connectivityinternal.CompletionPageSize, instanceCompletionMaxPages,
 			func(options connectivityclient.ListOptions) ([]connectivityclient.ConnectorVersionSummary, bool, string, error) {
 				page, err := client.ListConnectorVersions(completionCommand.Context(), connector, options)
 				if err != nil || page == nil {

@@ -36,14 +36,38 @@ type InputOptions struct {
 type ReadFileFunc func(cmd *cobra.Command, path string) (string, error)
 
 func SchemaFields(version *connectivityclient.ConnectorVersion) (map[string]SchemaField, error) {
+	contract, err := schemaContractFor(version)
+	if err != nil {
+		return nil, err
+	}
+	return contract.fields, nil
+}
+
+type schemaContract struct {
+	fields map[string]SchemaField
+	open   map[ConfigKind]bool
+}
+
+type schemaFieldInfo struct {
+	required    bool
+	password    bool
+	description string
+}
+
+type sectionContract struct {
+	fields map[string]schemaFieldInfo
+	open   bool
+}
+
+func schemaContractFor(version *connectivityclient.ConnectorVersion) (schemaContract, error) {
 	if version == nil {
-		return nil, fmt.Errorf("connector version is required")
+		return schemaContract{}, fmt.Errorf("connector version is required")
 	}
 	if len(version.ConfigSchema) == 0 {
-		return map[string]SchemaField{}, nil
+		return schemaContract{fields: map[string]SchemaField{}, open: map[ConfigKind]bool{}}, nil
 	}
 
-	fields := make(map[string]SchemaField)
+	contract := schemaContract{fields: make(map[string]SchemaField), open: make(map[ConfigKind]bool)}
 	sections := []struct {
 		name string
 		kind ConfigKind
@@ -66,43 +90,250 @@ func SchemaFields(version *connectivityclient.ConnectorVersion) (map[string]Sche
 		}
 		sectionSchema, ok := stringMap(rawSection)
 		if !ok {
-			return nil, fmt.Errorf("connector config schema %s must be an object", section.name)
+			return schemaContract{}, fmt.Errorf("connector config schema %s must be an object", section.name)
 		}
-		sectionProperties, ok := stringMap(sectionSchema["properties"])
-		if !ok {
-			if sectionSchema["properties"] == nil {
-				sectionProperties = map[string]any{}
-			} else {
-				return nil, fmt.Errorf("connector config schema %s properties must be an object", section.name)
-			}
-		}
-		required, err := requiredSet(sectionSchema["required"])
+		collected, err := collectSectionSchema(sectionSchema, sectionSchema, 0, map[string]bool{})
 		if err != nil {
-			return nil, fmt.Errorf("connector config schema %s: %w", section.name, err)
+			return schemaContract{}, fmt.Errorf("connector config schema %s: %w", section.name, err)
 		}
-
-		for key, rawDefinition := range sectionProperties {
-			if _, exists := fields[key]; exists {
-				return nil, fmt.Errorf("configuration key %q is declared in both env and files", key)
+		contract.open[section.kind] = collected.open
+		for key, definition := range collected.fields {
+			if _, exists := contract.fields[key]; exists {
+				return schemaContract{}, fmt.Errorf("configuration key %q is declared in both env and files", key)
 			}
-			definition, ok := stringMap(rawDefinition)
-			if !ok {
-				return nil, fmt.Errorf("connector config schema field %q must be an object", key)
-			}
-			format, _ := definition["format"].(string)
-			legacySecret, _ := definition["x-secret"].(bool)
-			description, _ := definition["description"].(string)
-			fields[key] = SchemaField{
+			contract.fields[key] = SchemaField{
 				Key:         key,
 				Kind:        section.kind,
-				Required:    required[key],
-				Password:    format == "password" || legacySecret,
-				Description: description,
+				Required:    definition.required,
+				Password:    definition.password,
+				Description: definition.description,
 			}
 		}
 	}
 
-	return fields, nil
+	return contract, nil
+}
+
+const maxSchemaCollectionDepth = 64
+
+func collectSectionSchema(raw any, root map[string]any, depth int, refs map[string]bool) (sectionContract, error) {
+	if depth > maxSchemaCollectionDepth {
+		return sectionContract{}, fmt.Errorf("schema nesting exceeds %d", maxSchemaCollectionDepth)
+	}
+	node, ok := stringMap(raw)
+	if !ok {
+		return sectionContract{}, fmt.Errorf("schema must be an object")
+	}
+	result := sectionContract{fields: map[string]schemaFieldInfo{}, open: sectionOpen(node)}
+	properties, ok := stringMap(node["properties"])
+	if !ok && node["properties"] != nil {
+		return sectionContract{}, fmt.Errorf("properties must be an object")
+	}
+	required, err := requiredSet(node["required"])
+	if err != nil {
+		return sectionContract{}, err
+	}
+	for key, definition := range properties {
+		metadata, err := collectFieldMetadata(definition, root, depth+1, refs)
+		if err != nil {
+			return sectionContract{}, fmt.Errorf("field %q: %w", key, err)
+		}
+		metadata.required = required[key]
+		result.fields[key] = metadata
+	}
+	for key := range required {
+		if _, found := result.fields[key]; !found {
+			result.fields[key] = schemaFieldInfo{required: true}
+		}
+	}
+	if ref, _ := node["$ref"].(string); ref != "" {
+		target, err := resolveLocalSchemaRef(root, ref)
+		if err != nil {
+			return sectionContract{}, err
+		}
+		if refs[ref] {
+			return sectionContract{}, fmt.Errorf("cyclic local reference %q", ref)
+		}
+		refs[ref] = true
+		referenced, err := collectSectionSchema(target, root, depth+1, refs)
+		delete(refs, ref)
+		if err != nil {
+			return sectionContract{}, err
+		}
+		result = mergeAllSections(result, referenced)
+	}
+	for _, keyword := range []string{"allOf"} {
+		parts, err := schemaArray(node[keyword])
+		if err != nil {
+			return sectionContract{}, fmt.Errorf("%s: %w", keyword, err)
+		}
+		for _, part := range parts {
+			collected, err := collectSectionSchema(part, root, depth+1, refs)
+			if err != nil {
+				return sectionContract{}, err
+			}
+			result = mergeAllSections(result, collected)
+		}
+	}
+	for _, keyword := range []string{"anyOf", "oneOf"} {
+		parts, err := schemaArray(node[keyword])
+		if err != nil {
+			return sectionContract{}, fmt.Errorf("%s: %w", keyword, err)
+		}
+		if len(parts) == 0 {
+			continue
+		}
+		alternatives := make([]sectionContract, 0, len(parts))
+		for _, part := range parts {
+			collected, err := collectSectionSchema(part, root, depth+1, refs)
+			if err != nil {
+				return sectionContract{}, err
+			}
+			alternatives = append(alternatives, collected)
+		}
+		result = mergeAllSections(result, mergeAlternativeSections(alternatives))
+	}
+	return result, nil
+}
+
+func schemaArray(raw any) ([]any, error) {
+	if raw == nil {
+		return nil, nil
+	}
+	values, ok := raw.([]any)
+	if !ok {
+		return nil, fmt.Errorf("must be an array")
+	}
+	return values, nil
+}
+
+func sectionOpen(node map[string]any) bool {
+	additional, present := node["additionalProperties"]
+	open := !present || additional != false
+	if patterns, ok := stringMap(node["patternProperties"]); ok && len(patterns) > 0 {
+		return true
+	}
+	return open
+}
+
+func mergeAllSections(left, right sectionContract) sectionContract {
+	merged := sectionContract{fields: make(map[string]schemaFieldInfo), open: left.open && right.open}
+	for key, value := range left.fields {
+		merged.fields[key] = value
+	}
+	for key, value := range right.fields {
+		current, exists := merged.fields[key]
+		if !exists {
+			merged.fields[key] = value
+			continue
+		}
+		merged.fields[key] = schemaFieldInfo{required: current.required || value.required, password: current.password || value.password, description: firstDescription(current.description, value.description)}
+	}
+	return merged
+}
+
+func mergeAlternativeSections(alternatives []sectionContract) sectionContract {
+	merged := sectionContract{fields: make(map[string]schemaFieldInfo)}
+	for index, alternative := range alternatives {
+		merged.open = merged.open || alternative.open
+		for key, value := range alternative.fields {
+			current, exists := merged.fields[key]
+			if !exists {
+				value.required = index == 0 && value.required
+				merged.fields[key] = value
+				continue
+			}
+			current.required = current.required && value.required
+			current.password = current.password || value.password
+			current.description = firstDescription(current.description, value.description)
+			merged.fields[key] = current
+		}
+		if index > 0 {
+			for key, value := range merged.fields {
+				if _, exists := alternative.fields[key]; !exists {
+					value.required = false
+					merged.fields[key] = value
+				}
+			}
+		}
+	}
+	return merged
+}
+
+func collectFieldMetadata(raw any, root map[string]any, depth int, refs map[string]bool) (schemaFieldInfo, error) {
+	node, ok := stringMap(raw)
+	if !ok {
+		return schemaFieldInfo{}, nil // Boolean schemas are delegated to the API.
+	}
+	result := schemaFieldInfo{}
+	if format, _ := node["format"].(string); format == "password" {
+		result.password = true
+	}
+	if secret, _ := node["x-secret"].(bool); secret {
+		result.password = true
+	}
+	result.description, _ = node["description"].(string)
+	if ref, _ := node["$ref"].(string); ref != "" {
+		target, err := resolveLocalSchemaRef(root, ref)
+		if err != nil {
+			return schemaFieldInfo{}, err
+		}
+		if refs[ref] {
+			return schemaFieldInfo{}, fmt.Errorf("cyclic local reference %q", ref)
+		}
+		refs[ref] = true
+		resolved, err := collectFieldMetadata(target, root, depth+1, refs)
+		delete(refs, ref)
+		if err != nil {
+			return schemaFieldInfo{}, err
+		}
+		result.password = result.password || resolved.password
+		result.description = firstDescription(result.description, resolved.description)
+	}
+	for _, part := range appendSchemaCompositions(node) {
+		metadata, err := collectFieldMetadata(part, root, depth+1, refs)
+		if err != nil {
+			return schemaFieldInfo{}, err
+		}
+		result.password = result.password || metadata.password
+		result.description = firstDescription(result.description, metadata.description)
+	}
+	return result, nil
+}
+
+func appendSchemaCompositions(node map[string]any) []any {
+	parts := make([]any, 0)
+	for _, keyword := range []string{"allOf", "anyOf", "oneOf"} {
+		if values, ok := node[keyword].([]any); ok {
+			parts = append(parts, values...)
+		}
+	}
+	return parts
+}
+
+func resolveLocalSchemaRef(root map[string]any, ref string) (any, error) {
+	if !strings.HasPrefix(ref, "#/") {
+		return nil, fmt.Errorf("external schema reference %q is not supported", ref)
+	}
+	var current any = root
+	for _, token := range strings.Split(strings.TrimPrefix(ref, "#/"), "/") {
+		object, ok := stringMap(current)
+		if !ok {
+			return nil, fmt.Errorf("local reference %q does not resolve to an object", ref)
+		}
+		current, ok = object[strings.ReplaceAll(strings.ReplaceAll(token, "~1", "/"), "~0", "~")]
+		if !ok {
+			return nil, fmt.Errorf("local reference %q was not found", ref)
+		}
+	}
+	return current, nil
+}
+
+func firstDescription(left, right string) string {
+	if left != "" {
+		return left
+	}
+	return right
 }
 
 func BuildInstallConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersion, inputs InputOptions, read ReadFileFunc) (*connectivityclient.ConnectorInstanceConfig, error) {
@@ -114,10 +345,11 @@ func BuildConfigureConfig(cmd *cobra.Command, version *connectivityclient.Connec
 }
 
 func buildConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersion, base *connectivityclient.ConnectorInstanceConfig, inputs InputOptions, read ReadFileFunc) (*connectivityclient.ConnectorInstanceConfig, error) {
-	fields, err := SchemaFields(version)
+	contract, err := schemaContractFor(version)
 	if err != nil {
 		return nil, err
 	}
+	fields := contract.fields
 	config := cloneConfig(base)
 	unknown := make(map[string]struct{})
 
@@ -126,7 +358,7 @@ func buildConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersio
 		if err != nil {
 			return nil, fmt.Errorf("reading config %q: %w", inputs.ConfigFile, err)
 		}
-		if err := applyConfigDocument(config, fields, contents, unknown); err != nil {
+		if err := applyConfigDocument(config, contract, contents, unknown); err != nil {
 			return nil, fmt.Errorf("parsing config %q: %w", inputs.ConfigFile, err)
 		}
 	}
@@ -136,7 +368,7 @@ func buildConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersio
 		if err != nil {
 			return nil, fmt.Errorf("reading env file %q: %w", path, err)
 		}
-		if err := applyDotenv(config, fields, contents, unknown); err != nil {
+		if err := applyDotenv(config, contract, contents, unknown); err != nil {
 			return nil, fmt.Errorf("parsing env file %s:%w", path, err)
 		}
 	}
@@ -146,7 +378,7 @@ func buildConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersio
 		if err != nil {
 			return nil, err
 		}
-		field, exists := fields[key]
+		field, exists := assignmentField(contract, key)
 		if !exists {
 			unknown[key] = struct{}{}
 			continue
@@ -251,7 +483,7 @@ func parseAssignment(raw string) (string, string, error) {
 	return key, parts[1], nil
 }
 
-func applyDotenv(config *connectivityclient.ConnectorInstanceConfig, fields map[string]SchemaField, contents string, unknown map[string]struct{}) error {
+func applyDotenv(config *connectivityclient.ConnectorInstanceConfig, contract schemaContract, contents string, unknown map[string]struct{}) error {
 	scanner := bufio.NewScanner(strings.NewReader(contents))
 	line := 0
 	for scanner.Scan() {
@@ -270,8 +502,8 @@ func applyDotenv(config *connectivityclient.ConnectorInstanceConfig, fields map[
 			return fmt.Errorf("%d: expected KEY=value", line)
 		}
 		value := unquoteEnvValue(raw[equals+1:])
-		field, exists := fields[key]
-		if !exists || field.Kind != ConfigEnv {
+		field, exists := configField(contract, key, ConfigEnv)
+		if !exists {
 			unknown[key] = struct{}{}
 			continue
 		}
@@ -351,7 +583,7 @@ func applyDoubleQuoteEscapes(value string) string {
 	return decoded.String()
 }
 
-func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, fields map[string]SchemaField, contents string, unknown map[string]struct{}) error {
+func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, contract schemaContract, contents string, unknown map[string]struct{}) error {
 	var root map[string]any
 	if err := yaml.Unmarshal([]byte(contents), &root); err != nil {
 		return err
@@ -364,8 +596,8 @@ func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, fie
 	_, hasFiles := root["files"]
 	if !hasEnv && !hasFiles {
 		for key, raw := range root {
-			field, exists := fields[key]
-			if !exists || field.Kind != ConfigEnv {
+			field, exists := configField(contract, key, ConfigEnv)
+			if !exists {
 				unknown[key] = struct{}{}
 				continue
 			}
@@ -388,8 +620,8 @@ func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, fie
 		return err
 	}
 	for key, value := range document.Env {
-		field, exists := fields[key]
-		if !exists || field.Kind != ConfigEnv {
+		_, exists := configField(contract, key, ConfigEnv)
+		if !exists {
 			unknown[key] = struct{}{}
 			continue
 		}
@@ -407,8 +639,8 @@ func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, fie
 		if strings.TrimSpace(file.Path) == "" {
 			return fmt.Errorf("structured configuration file path is required")
 		}
-		field, exists := fields[file.Path]
-		if !exists || field.Kind != ConfigFile {
+		_, exists := configField(contract, file.Path, ConfigFile)
+		if !exists {
 			unknown[file.Path] = struct{}{}
 			continue
 		}
@@ -425,6 +657,27 @@ func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, fie
 		replaceFile(config, converted)
 	}
 	return nil
+}
+
+func configField(contract schemaContract, key string, kind ConfigKind) (SchemaField, bool) {
+	if field, exists := contract.fields[key]; exists {
+		return field, field.Kind == kind
+	}
+	if contract.open[kind] {
+		return SchemaField{Key: key, Kind: kind}, true
+	}
+	return SchemaField{}, false
+}
+
+func assignmentField(contract schemaContract, key string) (SchemaField, bool) {
+	if field, exists := contract.fields[key]; exists {
+		return field, true
+	}
+	kind := ConfigEnv
+	if strings.HasPrefix(key, "/") {
+		kind = ConfigFile
+	}
+	return configField(contract, key, kind)
 }
 
 func (ref *documentRef) clientRef() *connectivityclient.KeyRef {

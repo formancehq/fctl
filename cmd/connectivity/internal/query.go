@@ -3,7 +3,6 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -100,9 +99,14 @@ func filterClause(filter string) (any, error) {
 }
 
 func splitFilter(filter string) (key, value, operator string) {
-	for _, candidate := range []string{"!=", "=", "~"} {
-		if index := strings.Index(filter, candidate); index >= 0 {
-			return filter[:index], filter[index+len(candidate):], candidate
+	for index := 0; index < len(filter); index++ {
+		switch filter[index] {
+		case '~', '=':
+			return filter[:index], filter[index+1:], string(filter[index])
+		case '!':
+			if index+1 < len(filter) && filter[index+1] == '=' {
+				return filter[:index], filter[index+2:], "!="
+			}
 		}
 	}
 	return "", "", ""

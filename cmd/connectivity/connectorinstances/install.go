@@ -97,12 +97,15 @@ func resolveInstallConnectorVersion(ctx context.Context, client connectivityclie
 
 // installVersionSelector picks the {version} slot value governing the config
 // schema: the explicit pin, else the tracked channel alias (resolved with
-// exactly the rules installation uses), else empty for `latest`.
+// exactly the rules installation uses), else `stable` for the API default.
 func installVersionSelector(cmd *cobra.Command) string {
 	if pinned := fctl.GetString(cmd, versionFlag); pinned != "" {
 		return pinned
 	}
-	return fctl.GetString(cmd, channelFlag)
+	if channel := fctl.GetString(cmd, channelFlag); channel != "" {
+		return channel
+	}
+	return "stable"
 }
 
 func (c *InstallController) GetStore() *InstallStore {

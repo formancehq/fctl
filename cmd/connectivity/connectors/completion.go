@@ -20,7 +20,7 @@ func CompleteConnectorNames(factory connectivityinternal.ClientFactory) cobra.Co
 		}
 		defer cancel()
 
-		connectors, err := connectivityinternal.CollectPages(connectivityinternal.CompletionPageSize, connectorCompletionMaxPages,
+		connectors, err := connectivityinternal.CollectPagesBounded(connectivityinternal.CompletionPageSize, connectorCompletionMaxPages,
 			func(options connectivityclient.ListOptions) ([]connectivityclient.Connector, bool, string, error) {
 				page, err := client.ListConnectors(completionCommand.Context(), options)
 				if err != nil || page == nil {
