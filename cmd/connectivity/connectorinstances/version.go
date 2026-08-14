@@ -43,20 +43,18 @@ func resolveConnectorVersion(ctx context.Context, client connectivityclient.Clie
 	return version, nil
 }
 
-// instanceVersionPin reports the version an existing connector instance is
-// configured against: its explicit pin when set, the version the operator
-// actually applied otherwise. An empty result means "resolve the newest".
-func instanceVersionPin(instance *connectivityclient.ConnectorInstance) string {
-	if instance == nil {
+// appliedChannelFloor returns the version currently applied to this exact
+// connector. The API only uses this status value as a channel resolver floor
+// after confirming its resolved connector identity; desired spec.version is
+// deliberately not a floor when switching from a pin to a channel.
+func appliedChannelFloor(instance *connectivityclient.ConnectorInstance) string {
+	if instance == nil || instance.Status == nil || instance.Status.ResolvedVersion == nil || instance.Status.ResolvedConnectorRef == nil {
 		return ""
 	}
-	if instance.Spec.Version != nil && *instance.Spec.Version != "" {
-		return *instance.Spec.Version
+	if *instance.Status.ResolvedConnectorRef != instance.Spec.Connector {
+		return ""
 	}
-	if instance.Status != nil && instance.Status.ResolvedVersion != nil {
-		return *instance.Status.ResolvedVersion
-	}
-	return ""
+	return *instance.Status.ResolvedVersion
 }
 
 // resolveChannelVersion mirrors the operator resolver for the schema selected

@@ -152,6 +152,7 @@ func TestConfigureChannelTracksTheResolvedSameMajorHeadAcrossPages(t *testing.T)
 	current.Spec.Version = stringPtr("v1.0.0")
 	current.Spec.Channel = stringPtr("stable")
 	current.Status.ResolvedVersion = stringPtr("v1.0.0")
+	current.Status.ResolvedConnectorRef = stringPtr("stripe")
 	current.Spec.Config = &connectivityclient.ConnectorInstanceConfig{}
 	var gotVersion string
 	var gotPatch connectivityclient.ConnectorInstancePatch
@@ -197,6 +198,149 @@ func TestConfigureChannelTracksTheResolvedSameMajorHeadAcrossPages(t *testing.T)
 	require.Equal(t, "stable", spec["channel"])
 	require.Contains(t, spec, "version", "switching to a channel removes an existing pin")
 	require.Nil(t, spec["version"])
+}
+
+func TestConfigureChannelUsesAppliedVersionOnlyForTheResolvedConnector(t *testing.T) {
+	for _, tt := range []struct {
+		name        string
+		resolvedRef string
+		wantErr     string
+		wantVersion string
+		wantPatched bool
+	}{
+		{name: "matching resolved connector prevents downgrade", resolvedRef: "stripe", wantErr: "no candidate version satisfies channel", wantPatched: false},
+		{name: "different resolved connector does not constrain channel", resolvedRef: "other", wantVersion: "v1.1.0", wantPatched: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			current := instanceFixture("stripe-eu")
+			current.Spec.Version = stringPtr("v1.0.0")
+			current.Status.ResolvedVersion = stringPtr("v1.2.0")
+			current.Status.ResolvedConnectorRef = stringPtr(tt.resolvedRef)
+			current.Spec.Config = &connectivityclient.ConnectorInstanceConfig{}
+			patched := false
+			var gotVersion string
+			client := configureClientMock{
+				getInstance: func(context.Context, string) (*connectivityclient.ConnectorInstance, error) { return &current, nil },
+				connectorVersions: connectorVersions{
+					listVersions: func(context.Context, string, connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
+						return &connectivityclient.ConnectorVersionList{Items: []connectivityclient.ConnectorVersionSummary{{Version: "v1.1.0"}}}, nil
+					},
+					getVersion: func(_ context.Context, _, version string) (*connectivityclient.ConnectorVersion, error) {
+						gotVersion = version
+						return versionWithFileSchema(), nil
+					},
+				},
+				patch: func(context.Context, string, connectivityclient.ConnectorInstancePatch) (*connectivityclient.ConnectorInstance, error) {
+					patched = true
+					return &current, nil
+				},
+			}
+
+			_, err := executeCommand(NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)),
+				"stripe-eu", "--channel=stable", "--set=/etc/a=kept", "--confirm")
+
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+			require.Equal(t, tt.wantVersion, gotVersion)
+			require.Equal(t, tt.wantPatched, patched)
+		})
+	}
+}
+
+func TestConfigureEmptySelectorsUseTheNormalizedPostPatchSelectorForConfig(t *testing.T) {
+	t.Run("empty channel keeps an existing version pin", func(t *testing.T) {
+		current := instanceFixture("stripe-eu")
+		current.Spec.Version = stringPtr("v1.4.2")
+		current.Spec.Channel = stringPtr("stable")
+		current.Spec.Config = &connectivityclient.ConnectorInstanceConfig{}
+		var gotVersion string
+		var gotPatch connectivityclient.ConnectorInstancePatch
+		client := configureClientMock{
+			getInstance: func(context.Context, string) (*connectivityclient.ConnectorInstance, error) { return &current, nil },
+			connectorVersions: connectorVersions{getVersion: func(_ context.Context, _, version string) (*connectivityclient.ConnectorVersion, error) {
+				gotVersion = version
+				return versionWithFileSchema(), nil
+			}},
+			patch: func(_ context.Context, _ string, patch connectivityclient.ConnectorInstancePatch) (*connectivityclient.ConnectorInstance, error) {
+				gotPatch = patch
+				return &current, nil
+			},
+		}
+
+		_, err := executeCommand(NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)),
+			"stripe-eu", "--channel=", "--set=/etc/a=kept", "--confirm")
+
+		require.NoError(t, err)
+		require.Equal(t, "v1.4.2", gotVersion)
+		spec := gotPatch["spec"].(map[string]any)
+		require.Equal(t, "", spec["channel"])
+		require.NotContains(t, spec, "version")
+	})
+
+	t.Run("empty version retains an existing channel", func(t *testing.T) {
+		current := instanceFixture("stripe-eu")
+		current.Spec.Version = nil
+		current.Spec.Channel = stringPtr("stable")
+		current.Status.ResolvedConnectorRef = stringPtr("stripe")
+		current.Status.ResolvedVersion = stringPtr("v1.0.0")
+		current.Spec.Config = &connectivityclient.ConnectorInstanceConfig{}
+		var gotVersion string
+		var gotPatch connectivityclient.ConnectorInstancePatch
+		client := configureClientMock{
+			getInstance: func(context.Context, string) (*connectivityclient.ConnectorInstance, error) { return &current, nil },
+			connectorVersions: connectorVersions{
+				listVersions: func(context.Context, string, connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
+					return &connectivityclient.ConnectorVersionList{Items: []connectivityclient.ConnectorVersionSummary{{Version: "v1.1.0"}}}, nil
+				},
+				getVersion: func(_ context.Context, _, version string) (*connectivityclient.ConnectorVersion, error) {
+					gotVersion = version
+					return versionWithFileSchema(), nil
+				},
+			},
+			patch: func(_ context.Context, _ string, patch connectivityclient.ConnectorInstancePatch) (*connectivityclient.ConnectorInstance, error) {
+				gotPatch = patch
+				return &current, nil
+			},
+		}
+
+		_, err := executeCommand(NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)),
+			"stripe-eu", "--version=", "--set=/etc/a=kept", "--confirm")
+
+		require.NoError(t, err)
+		require.Equal(t, "v1.1.0", gotVersion)
+		spec := gotPatch["spec"].(map[string]any)
+		require.Equal(t, "", spec["version"])
+		require.NotContains(t, spec, "channel")
+	})
+
+	t.Run("empty channel does not reuse an applied version for another connector", func(t *testing.T) {
+		current := instanceFixture("stripe-eu")
+		current.Spec.Version = nil
+		current.Spec.Channel = stringPtr("stable")
+		current.Status.ResolvedConnectorRef = stringPtr("other")
+		current.Status.ResolvedVersion = stringPtr("v9.0.0")
+		current.Spec.Config = &connectivityclient.ConnectorInstanceConfig{}
+		var gotVersion string
+		client := configureClientMock{
+			getInstance: func(context.Context, string) (*connectivityclient.ConnectorInstance, error) { return &current, nil },
+			connectorVersions: connectorVersions{getVersion: func(_ context.Context, _, version string) (*connectivityclient.ConnectorVersion, error) {
+				gotVersion = version
+				return versionWithFileSchema(), nil
+			}},
+			patch: func(context.Context, string, connectivityclient.ConnectorInstancePatch) (*connectivityclient.ConnectorInstance, error) {
+				return &current, nil
+			},
+		}
+
+		_, err := executeCommand(NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)),
+			"stripe-eu", "--channel=", "--set=/etc/a=kept", "--confirm")
+
+		require.NoError(t, err)
+		require.Equal(t, "stable", gotVersion)
+	})
 }
 
 func TestConfigureOmitsUnchangedScalarsAndStoresCompleteReturnedInstance(t *testing.T) {

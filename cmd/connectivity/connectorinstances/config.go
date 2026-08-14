@@ -3,6 +3,7 @@ package connectorinstances
 import (
 	"bufio"
 	"fmt"
+	"net/url"
 	"sort"
 	"strings"
 
@@ -76,7 +77,7 @@ func schemaContractFor(version *connectivityclient.ConnectorVersion) (schemaCont
 		{name: "env", kind: ConfigEnv, raw: version.ConfigSchema["env"]},
 		{name: "files", kind: ConfigFile, raw: version.ConfigSchema["files"]},
 	}
-	if sections[0].raw == nil {
+	if sections[0].raw == nil && sections[1].raw == nil {
 		if _, hasLegacyProperties := version.ConfigSchema["properties"]; hasLegacyProperties {
 			sections[0].raw = version.ConfigSchema
 		}
@@ -146,21 +147,19 @@ func collectSectionSchema(raw any, root map[string]any, depth int, refs map[stri
 			result.fields[key] = schemaFieldInfo{required: true}
 		}
 	}
-	if ref, _ := node["$ref"].(string); ref != "" {
-		target, err := resolveLocalSchemaRef(root, ref)
-		if err != nil {
-			return sectionContract{}, err
-		}
+	for _, ref := range schemaLocalReferences(node) {
 		if refs[ref] {
-			return sectionContract{}, fmt.Errorf("cyclic local reference %q", ref)
+			continue // The API accepts recursive schemas; metadata is best effort.
 		}
-		refs[ref] = true
-		referenced, err := collectSectionSchema(target, root, depth+1, refs)
-		delete(refs, ref)
-		if err != nil {
-			return sectionContract{}, err
+		if target, resolved := resolveLocalSchemaRef(root, ref); resolved {
+			refs[ref] = true
+			referenced, err := collectSectionSchema(target, root, depth+1, refs)
+			delete(refs, ref)
+			if err != nil {
+				return sectionContract{}, err
+			}
+			result = mergeAllSections(result, referenced)
 		}
-		result = mergeAllSections(result, referenced)
 	}
 	for _, keyword := range []string{"allOf"} {
 		parts, err := schemaArray(node[keyword])
@@ -261,6 +260,9 @@ func mergeAlternativeSections(alternatives []sectionContract) sectionContract {
 }
 
 func collectFieldMetadata(raw any, root map[string]any, depth int, refs map[string]bool) (schemaFieldInfo, error) {
+	if depth > maxSchemaCollectionDepth {
+		return schemaFieldInfo{}, fmt.Errorf("schema nesting exceeds %d", maxSchemaCollectionDepth)
+	}
 	node, ok := stringMap(raw)
 	if !ok {
 		return schemaFieldInfo{}, nil // Boolean schemas are delegated to the API.
@@ -273,22 +275,20 @@ func collectFieldMetadata(raw any, root map[string]any, depth int, refs map[stri
 		result.password = true
 	}
 	result.description, _ = node["description"].(string)
-	if ref, _ := node["$ref"].(string); ref != "" {
-		target, err := resolveLocalSchemaRef(root, ref)
-		if err != nil {
-			return schemaFieldInfo{}, err
-		}
+	for _, ref := range schemaLocalReferences(node) {
 		if refs[ref] {
-			return schemaFieldInfo{}, fmt.Errorf("cyclic local reference %q", ref)
+			continue // Recursive reference: leave the remaining validation to the API.
 		}
-		refs[ref] = true
-		resolved, err := collectFieldMetadata(target, root, depth+1, refs)
-		delete(refs, ref)
-		if err != nil {
-			return schemaFieldInfo{}, err
+		if target, found := resolveLocalSchemaRef(root, ref); found {
+			refs[ref] = true
+			resolved, err := collectFieldMetadata(target, root, depth+1, refs)
+			delete(refs, ref)
+			if err != nil {
+				return schemaFieldInfo{}, err
+			}
+			result.password = result.password || resolved.password
+			result.description = firstDescription(result.description, resolved.description)
 		}
-		result.password = result.password || resolved.password
-		result.description = firstDescription(result.description, resolved.description)
 	}
 	for _, part := range appendSchemaCompositions(node) {
 		metadata, err := collectFieldMetadata(part, root, depth+1, refs)
@@ -311,22 +311,82 @@ func appendSchemaCompositions(node map[string]any) []any {
 	return parts
 }
 
-func resolveLocalSchemaRef(root map[string]any, ref string) (any, error) {
-	if !strings.HasPrefix(ref, "#/") {
-		return nil, fmt.Errorf("external schema reference %q is not supported", ref)
-	}
-	var current any = root
-	for _, token := range strings.Split(strings.TrimPrefix(ref, "#/"), "/") {
-		object, ok := stringMap(current)
-		if !ok {
-			return nil, fmt.Errorf("local reference %q does not resolve to an object", ref)
-		}
-		current, ok = object[strings.ReplaceAll(strings.ReplaceAll(token, "~1", "/"), "~0", "~")]
-		if !ok {
-			return nil, fmt.Errorf("local reference %q was not found", ref)
+func schemaLocalReferences(node map[string]any) []string {
+	refs := make([]string, 0, 3)
+	for _, keyword := range []string{"$ref", "$dynamicRef", "$recursiveRef"} {
+		if ref, ok := node[keyword].(string); ok && strings.HasPrefix(ref, "#") {
+			refs = append(refs, ref)
 		}
 	}
-	return current, nil
+	return refs
+}
+
+// resolveLocalSchemaRef follows JSON Pointer and named local anchors. It has
+// the same deliberately tolerant contract as the API's schema metadata walk:
+// unresolvable or external references are deferred to server-side validation.
+func resolveLocalSchemaRef(root map[string]any, ref string) (any, bool) {
+	if !strings.HasPrefix(ref, "#") {
+		return nil, false
+	}
+	fragment, err := url.PathUnescape(strings.TrimPrefix(ref, "#"))
+	if err != nil {
+		return nil, false
+	}
+	if fragment == "" {
+		return root, true
+	}
+	if strings.HasPrefix(fragment, "/") {
+		var current any = root
+		for _, token := range strings.Split(strings.TrimPrefix(fragment, "/"), "/") {
+			object, ok := stringMap(current)
+			if !ok {
+				return nil, false
+			}
+			current, ok = object[strings.ReplaceAll(strings.ReplaceAll(token, "~1", "/"), "~0", "~")]
+			if !ok {
+				return nil, false
+			}
+		}
+		return current, true
+	}
+	return findSchemaAnchor(root, fragment)
+}
+
+func findSchemaAnchor(root map[string]any, anchor string) (any, bool) {
+	remaining := 100000
+	var find func(any, int) (any, bool)
+	find = func(node any, depth int) (any, bool) {
+		if depth > maxSchemaCollectionDepth || remaining == 0 {
+			return nil, false
+		}
+		remaining--
+		switch node := node.(type) {
+		case map[string]any:
+			for _, keyword := range []string{"$anchor", "$dynamicAnchor"} {
+				if declared, _ := node[keyword].(string); declared == anchor {
+					return node, true
+				}
+			}
+			keys := make([]string, 0, len(node))
+			for key := range node {
+				keys = append(keys, key)
+			}
+			sort.Strings(keys)
+			for _, key := range keys {
+				if target, found := find(node[key], depth+1); found {
+					return target, true
+				}
+			}
+		case []any:
+			for _, child := range node {
+				if target, found := find(child, depth+1); found {
+					return target, true
+				}
+			}
+		}
+		return nil, false
+	}
+	return find(root, 0)
 }
 
 func firstDescription(left, right string) string {
