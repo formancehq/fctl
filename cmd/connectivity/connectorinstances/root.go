@@ -17,6 +17,8 @@ func NewCommand(factory connectivityinternal.ClientFactory, read ReadFileFunc, p
 			NewShowCommand(factory),
 			NewInstallCommand(factory, read, paths),
 			NewConfigureCommand(factory, read, paths),
+			NewSuspendCommand(factory),
+			NewUnsuspendCommand(factory),
 			NewUninstallCommand(factory),
 		),
 	)

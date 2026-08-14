@@ -14,6 +14,8 @@ fctl connectivity connectorinstances list [--connector NAME] [--filter KEY=VALUE
 fctl connectivity connectorinstances show <instance>
 fctl connectivity connectorinstances install <connector> --ledger <ledger>
 fctl connectivity connectorinstances configure <instance>
+fctl connectivity connectorinstances suspend <instance> --confirm
+fctl connectivity connectorinstances unsuspend <instance> --confirm
 fctl connectivity connectorinstances uninstall <instance>
 ```
 
@@ -21,6 +23,24 @@ Short aliases are available for the common list and catalogue commands:
 `connectors ls`, `connectors l`, `connectors facets` (`facet`, `f`), and
 `connectorinstances ls` (`l`). `install` also accepts `create` and `in`;
 `configure` accepts `config`, `update`, and `c`.
+
+## Suspension and resumption
+
+`connectorinstances suspend` and `connectorinstances unsuspend` request the
+desired ingestion state through the Connectivity API. Both commands require
+confirmation, either interactively or with `--confirm`:
+
+```bash
+fctl connectivity connectorinstances suspend stripe-prod --confirm
+fctl connectivity connectorinstances unsuspend stripe-prod --confirm
+```
+
+A successful command means the request was accepted; reconciliation may still
+be in progress. Use `connectorinstances show <instance>` to compare the desired
+`Suspend` and `Replicas` values with the observed phase, state, and
+`Suspended by` provenance. Suspension can also remain effective because the
+desired replica count is zero or a matching Policy contributes a suspension
+source.
 
 ## Filtering and pagination
 

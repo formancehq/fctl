@@ -145,3 +145,41 @@ func TestGivenConnectivityAPI_WhenConfigIsPatched_ThenAPIShapeIsSent(t *testing.
 	// Then the API receives spec.config verbatim and preserves the full files array.
 	require.NoError(t, err)
 }
+
+func TestGivenConnectivityAPI_WhenSuspensionIsPatched_ThenExactBooleanBodyIsSent(t *testing.T) {
+	tests := []struct {
+		name    string
+		suspend bool
+		want    string
+	}{
+		{name: "suspension", suspend: true, want: `{"spec":{"suspend":true}}`},
+		{name: "resumption", suspend: false, want: `{"spec":{"suspend":false}}`},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			// Given a Connectivity server accepting ConnectorInstance merge patches.
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				require.Equal(t, http.MethodPatch, req.Method)
+				require.Equal(t, "/api/connectivity/connectorinstances/worker", req.URL.EscapedPath())
+				require.Equal(t, "application/merge-patch+json", req.Header.Get("Content-Type"))
+				body, err := io.ReadAll(req.Body)
+				require.NoError(t, err)
+				require.Equal(t, test.want, string(body))
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connector":"stripe","ledger":"main"}}`)
+			}))
+			defer server.Close()
+
+			// When the client requests suspension or resumption.
+			_, err := New(server.URL, server.Client()).PatchConnectorInstance(
+				context.Background(),
+				"worker",
+				ConnectorInstancePatch{"spec": map[string]any{"suspend": test.suspend}},
+			)
+
+			// Then the exact boolean, including false, reaches the HTTP route.
+			require.NoError(t, err)
+		})
+	}
+}

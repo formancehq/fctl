@@ -134,21 +134,30 @@ type ConnectorInstanceSpec struct {
 	Ledger          string                   `json:"ledger"`
 	StartSequence   *int64                   `json:"startSequence,omitempty"`
 	PollInterval    *string                  `json:"pollInterval,omitempty"`
+	Suspend         *bool                    `json:"suspend,omitempty"`
+	Replicas        *int32                   `json:"replicas,omitempty"`
 	Config          *ConnectorInstanceConfig `json:"config,omitempty"`
 }
 
+type SuspensionSource struct {
+	Kind  string `json:"kind"`
+	Name  string `json:"name"`
+	Field string `json:"field,omitempty"`
+}
+
 type ConnectorInstanceStatus struct {
-	Phase                *string `json:"phase,omitempty"`
-	State                *string `json:"state,omitempty"`
-	ConnectorAddress     *string `json:"connectorAddress,omitempty"`
-	ResolvedImage        *string `json:"resolvedImage,omitempty"`
-	ResolvedConnectorRef *string `json:"resolvedConnectorRef,omitempty"`
-	ResolvedVersion      *string `json:"resolvedVersion,omitempty"`
-	ResolvedDigest       *string `json:"resolvedDigest,omitempty"`
-	CurrentSequence      *int64  `json:"currentSequence,omitempty"`
-	SourceTipSequence    *int64  `json:"sourceTipSequence,omitempty"`
-	LastError            *string `json:"lastError,omitempty"`
-	Message              *string `json:"message,omitempty"`
+	Phase                *string            `json:"phase,omitempty"`
+	State                *string            `json:"state,omitempty"`
+	ConnectorAddress     *string            `json:"connectorAddress,omitempty"`
+	ResolvedImage        *string            `json:"resolvedImage,omitempty"`
+	ResolvedConnectorRef *string            `json:"resolvedConnectorRef,omitempty"`
+	ResolvedVersion      *string            `json:"resolvedVersion,omitempty"`
+	ResolvedDigest       *string            `json:"resolvedDigest,omitempty"`
+	CurrentSequence      *int64             `json:"currentSequence,omitempty"`
+	SourceTipSequence    *int64             `json:"sourceTipSequence,omitempty"`
+	LastError            *string            `json:"lastError,omitempty"`
+	Message              *string            `json:"message,omitempty"`
+	SuspendedBy          []SuspensionSource `json:"suspendedBy,omitempty"`
 }
 
 type ConnectorInstance struct {
