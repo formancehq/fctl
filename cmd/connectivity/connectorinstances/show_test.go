@@ -120,6 +120,27 @@ func TestShowConnectorInstanceHandlesMissingStatusAndConfig(t *testing.T) {
 	require.Contains(t, output, "No configuration entries.")
 }
 
+func TestShowConnectorInstanceRendersDesiredSuspensionReplicasAndOrderedProvenance(t *testing.T) {
+	instance := instanceFixture("stripe-eu")
+	instance.Spec.Suspend = fctl.Ptr(true)
+	instance.Spec.Replicas = fctl.Ptr(int32(0))
+	instance.Status.SuspendedBy = []connectivityclient.SuspensionSource{
+		{Kind: "ConnectorInstance", Name: "stripe-eu", Field: "spec.suspend"},
+		{Kind: "ConnectorInstance", Name: "stripe-eu", Field: "spec.replicas"},
+		{Kind: "Policy", Name: "maintenance", Field: "spec.mutate.suspend"},
+	}
+
+	output, err := executeCommand(NewShowCommand(factoryWithInstance(instance)), "stripe-eu")
+
+	require.NoError(t, err)
+	require.Contains(t, output, "Suspend")
+	require.Contains(t, output, "true")
+	require.Contains(t, output, "Replicas")
+	require.Contains(t, output, "0")
+	require.Contains(t, output, "Suspended by")
+	require.Contains(t, output, "ConnectorInstance/stripe-eu (spec.suspend), ConnectorInstance/stripe-eu (spec.replicas), Policy/maintenance (spec.mutate.suspend)")
+}
+
 func TestShowConnectorInstanceReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
 	tests := map[string]struct {
 		factory func(*cobra.Command) (connectivityclient.Client, error)

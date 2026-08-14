@@ -88,6 +88,8 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 		{pterm.LightCyan("Connectivity Reference"), stringValue(instance.Spec.ConnectivityRef)},
 		{pterm.LightCyan("Ledger"), instance.Spec.Ledger},
 		{pterm.LightCyan("Poll Interval"), stringValue(instance.Spec.PollInterval)},
+		{pterm.LightCyan("Suspend"), boolValue(instance.Spec.Suspend)},
+		{pterm.LightCyan("Replicas"), int32Value(instance.Spec.Replicas)},
 	}); err != nil {
 		return err
 	}
@@ -99,6 +101,7 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 		{pterm.LightCyan("Connector Address"), instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.ConnectorAddress })},
 		{pterm.LightCyan("Phase"), instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.Phase })},
 		{pterm.LightCyan("State"), instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.State })},
+		{pterm.LightCyan("Suspended by"), instanceSuspensionSources(instance.Status)},
 	}); err != nil {
 		return err
 	}
@@ -181,6 +184,37 @@ func mapValue(value map[string]string) string {
 	entries := make([]string, 0, len(keys))
 	for _, key := range keys {
 		entries = append(entries, key+"="+value[key])
+	}
+	return strings.Join(entries, ", ")
+}
+
+func boolValue(value *bool) string {
+	if value == nil {
+		return ""
+	}
+	return strconv.FormatBool(*value)
+}
+
+func int32Value(value *int32) string {
+	if value == nil {
+		return ""
+	}
+	return strconv.FormatInt(int64(*value), 10)
+}
+
+func instanceSuspensionSources(status *connectivityclient.ConnectorInstanceStatus) string {
+	if status == nil {
+		return ""
+	}
+	// Connectivity orders instance fields first and Policies by priority/name.
+	// Preserve that API order because Policy priority is not part of this model.
+	entries := make([]string, 0, len(status.SuspendedBy))
+	for _, source := range status.SuspendedBy {
+		entry := strings.Join(nonEmptyStrings(source.Kind, source.Name), "/")
+		if source.Field != "" {
+			entry += " (" + source.Field + ")"
+		}
+		entries = append(entries, entry)
 	}
 	return strings.Join(entries, ", ")
 }
