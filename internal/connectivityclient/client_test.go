@@ -28,17 +28,49 @@ func TestListConnectorsBuildsStackConnectivityRequest(t *testing.T) {
 	var seen *http.Request
 	httpClient := &http.Client{Transport: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
 		seen = req.Clone(req.Context())
-		return jsonResponse(200, `{"items":[{"metadata":{"name":"stripe"},"spec":{"displayName":"Stripe"}}],"continue":"next"}`), nil
+		return jsonResponse(200, `{"cursor":{"pageSize":25,"hasMore":true,"next":"next-cursor","data":[{"metadata":{"name":"stripe"},"spec":{"displayName":"Stripe"}}]}}`), nil
 	})}
 
-	got, err := New("https://stack.example/base", httpClient).ListConnectors(context.Background(), ListOptions{Limit: 25, Continue: "cursor"})
+	got, err := New("https://stack.example/base", httpClient).ListConnectors(context.Background(), ListOptions{
+		PageSize: 25,
+		Cursor:   "opaque",
+		Query:    `{"$match":{"catalog":"ee"}}`,
+	})
 
 	require.NoError(t, err)
 	require.Equal(t, "/base/api/connectivity/connectors", seen.URL.Path)
-	require.Equal(t, "25", seen.URL.Query().Get("limit"))
-	require.Equal(t, "cursor", seen.URL.Query().Get("continue"))
+	require.Equal(t, "25", seen.URL.Query().Get("pageSize"))
+	require.Equal(t, "opaque", seen.URL.Query().Get("cursor"))
+	require.Equal(t, `{"$match":{"catalog":"ee"}}`, seen.URL.Query().Get("query"))
 	require.Equal(t, "stripe", *got.Items[0].Metadata.Name)
-	require.Equal(t, "next", got.Continue)
+	require.Equal(t, int32(25), got.PageSize)
+	require.True(t, got.HasMore)
+	require.Equal(t, "next-cursor", got.Next)
+}
+
+func TestListConnectorsDecodesCatalogueIdentity(t *testing.T) {
+	httpClient := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+		return jsonResponse(200, `{"cursor":{"pageSize":15,"hasMore":false,"data":[{
+			"metadata":{"name":"stripe"},
+			"spec":{
+				"displayName":"Stripe",
+				"tagline":"Payments for the internet",
+				"latestVersion":"v2.1.0",
+				"tags":["provider:psp"],
+				"branding":{"displayName":"Stripe, Inc.","accentColor":"#635bff"}
+			}
+		}]}}`), nil
+	})}
+
+	got, err := New("https://stack.example", httpClient).ListConnectors(context.Background(), ListOptions{})
+
+	require.NoError(t, err)
+	spec := got.Items[0].Spec
+	require.Equal(t, "Payments for the internet", *spec.Tagline)
+	require.Equal(t, "v2.1.0", *spec.LatestVersion)
+	require.Equal(t, []string{"provider:psp"}, spec.Tags)
+	require.Equal(t, "Stripe, Inc.", *spec.Branding.DisplayName)
+	require.Equal(t, "#635bff", *spec.Branding.AccentColor)
 }
 
 func TestClientMethodsRespectHTTPContracts(t *testing.T) {
@@ -60,11 +92,34 @@ func TestClientMethodsRespectHTTPContracts(t *testing.T) {
 			name:           "lists connectors",
 			wantMethod:     http.MethodGet,
 			wantPath:       "/base/api/connectivity/connectors",
-			wantQuery:      map[string]string{"connector": "stripe", "limit": "5", "continue": "after"},
+			wantQuery:      map[string]string{"query": `{"$match":{"catalog":"ee"}}`, "pageSize": "5", "cursor": "after"},
 			responseStatus: http.StatusOK,
-			responseBody:   `{"items":[]}`,
+			responseBody:   `{"cursor":{"pageSize":5,"hasMore":false,"data":[]}}`,
 			call: func(client Client) error {
-				_, err := client.ListConnectors(context.Background(), ListOptions{Connector: "stripe", Limit: 5, Continue: "after"})
+				_, err := client.ListConnectors(context.Background(), ListOptions{Query: `{"$match":{"catalog":"ee"}}`, PageSize: 5, Cursor: "after"})
+				return err
+			},
+		},
+		{
+			name:           "gets the connector facet distribution",
+			wantMethod:     http.MethodGet,
+			wantPath:       "/base/api/connectivity/connectors/_facets",
+			wantQuery:      map[string]string{"query": `{"$match":{"catalog":"ee"}}`},
+			responseStatus: http.StatusOK,
+			responseBody:   `{"total":6,"facets":{"provider":{"psp":6}}}`,
+			call: func(client Client) error {
+				_, err := client.GetConnectorFacets(context.Background(), `{"$match":{"catalog":"ee"}}`)
+				return err
+			},
+		},
+		{
+			name:           "gets the query capabilities",
+			wantMethod:     http.MethodGet,
+			wantPath:       "/base/api/connectivity/_query/capabilities",
+			responseStatus: http.StatusOK,
+			responseBody:   `{"resources":{"connectors":{"name":{"operators":["$match"]}}}}`,
+			call: func(client Client) error {
+				_, err := client.GetQueryCapabilities(context.Background())
 				return err
 			},
 		},
@@ -80,13 +135,14 @@ func TestClientMethodsRespectHTTPContracts(t *testing.T) {
 			},
 		},
 		{
-			name:           "lists connector versions",
+			name:           "lists connector versions with pagination",
 			wantMethod:     http.MethodGet,
 			wantPath:       "/base/api/connectivity/connectors/stripe%2Fprimary/versions",
+			wantQuery:      map[string]string{"pageSize": "100", "cursor": "after"},
 			responseStatus: http.StatusOK,
-			responseBody:   `{"items":[{"version":"v1.0.0","image":"registry/stripe:v1.0.0"}]}`,
+			responseBody:   `{"cursor":{"pageSize":100,"hasMore":false,"data":[{"version":"v1.0.0","image":"registry/stripe:v1.0.0"}]}}`,
 			call: func(client Client) error {
-				_, err := client.ListConnectorVersions(context.Background(), connectorName)
+				_, err := client.ListConnectorVersions(context.Background(), connectorName, ListOptions{PageSize: 100, Cursor: "after"})
 				return err
 			},
 		},
@@ -102,14 +158,25 @@ func TestClientMethodsRespectHTTPContracts(t *testing.T) {
 			},
 		},
 		{
+			name:           "resolves a version alias in the version slot",
+			wantMethod:     http.MethodGet,
+			wantPath:       "/base/api/connectivity/connectors/stripe%2Fprimary/versions/latest",
+			responseStatus: http.StatusOK,
+			responseBody:   `{"version":"v2.0.0","image":"registry/stripe:v2.0.0"}`,
+			call: func(client Client) error {
+				_, err := client.GetConnectorVersion(context.Background(), connectorName, VersionAliasLatest)
+				return err
+			},
+		},
+		{
 			name:           "lists connector instances",
 			wantMethod:     http.MethodGet,
 			wantPath:       "/base/api/connectivity/connectorinstances",
-			wantQuery:      map[string]string{"connector": "stripe", "limit": "5", "continue": "after"},
+			wantQuery:      map[string]string{"query": `{"$match":{"connector":"stripe"}}`, "pageSize": "5", "cursor": "after"},
 			responseStatus: http.StatusOK,
-			responseBody:   `{"items":[]}`,
+			responseBody:   `{"cursor":{"pageSize":5,"hasMore":false,"data":[]}}`,
 			call: func(client Client) error {
-				_, err := client.ListConnectorInstances(context.Background(), ListOptions{Connector: "stripe", Limit: 5, Continue: "after"})
+				_, err := client.ListConnectorInstances(context.Background(), ListOptions{Query: `{"$match":{"connector":"stripe"}}`, PageSize: 5, Cursor: "after"})
 				return err
 			},
 		},
@@ -190,9 +257,52 @@ func TestClientMethodsRespectHTTPContracts(t *testing.T) {
 	}
 }
 
+func TestListRequestsOmitUnsetOptions(t *testing.T) {
+	var seen *http.Request
+	httpClient := &http.Client{Transport: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		seen = req.Clone(req.Context())
+		return jsonResponse(200, `{"cursor":{"pageSize":15,"hasMore":false,"data":[]}}`), nil
+	})}
+
+	_, err := New("https://stack.example", httpClient).ListConnectors(context.Background(), ListOptions{})
+
+	require.NoError(t, err)
+	require.Empty(t, seen.URL.RawQuery)
+}
+
+func TestGetConnectorFacetsOmitsEmptyQuery(t *testing.T) {
+	var seen *http.Request
+	httpClient := &http.Client{Transport: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		seen = req.Clone(req.Context())
+		return jsonResponse(200, `{"total":0,"facets":{}}`), nil
+	})}
+
+	got, err := New("https://stack.example", httpClient).GetConnectorFacets(context.Background(), "")
+
+	require.NoError(t, err)
+	require.Empty(t, seen.URL.RawQuery)
+	require.Zero(t, got.Total)
+	require.Empty(t, got.Facets)
+}
+
+func TestGetQueryCapabilitiesDecodesResources(t *testing.T) {
+	httpClient := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+		return jsonResponse(200, `{"resources":{
+			"connectors":{"tags":{"operators":["$match","$in","$exists"]}},
+			"connectorinstances":{"channel":{"operators":["$match","$in","$exists"],"enum":["stable","rc","beta","alpha"]}}
+		}}`), nil
+	})}
+
+	got, err := New("https://stack.example", httpClient).GetQueryCapabilities(context.Background())
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"$match", "$in", "$exists"}, got.Resources[ResourceConnectors]["tags"].Operators)
+	require.Equal(t, []string{"stable", "rc", "beta", "alpha"}, got.Resources[ResourceConnectorInstances]["channel"].Enum)
+}
+
 func TestClientReturnsStructuredAPIError(t *testing.T) {
 	httpClient := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
-		return jsonResponse(http.StatusBadRequest, `{"code":"invalid","message":"connector is required","details":{"field":"connector"}}`), nil
+		return jsonResponse(http.StatusBadRequest, `{"code":"invalid_query","message":"key not allowed","details":{"key":"nope"}}`), nil
 	})}
 
 	_, err := New("https://stack.example", httpClient).GetConnector(context.Background(), "missing")
@@ -200,9 +310,9 @@ func TestClientReturnsStructuredAPIError(t *testing.T) {
 	var apiErr *APIError
 	require.ErrorAs(t, err, &apiErr)
 	require.Equal(t, http.StatusBadRequest, apiErr.StatusCode)
-	require.Equal(t, "invalid", apiErr.Code)
-	require.Equal(t, "connector is required", apiErr.Message)
-	require.Equal(t, map[string]any{"field": "connector"}, apiErr.Details)
+	require.Equal(t, "invalid_query", apiErr.Code)
+	require.Equal(t, "key not allowed", apiErr.Message)
+	require.Equal(t, map[string]any{"key": "nope"}, apiErr.Details)
 }
 
 // The API owns the CRD reshaping (spec.config -> spec.env/spec.files), so the
@@ -285,7 +395,7 @@ func TestClientRejectsMalformedAndEmptyObjectResponses(t *testing.T) {
 			name: "empty connector version list object",
 			body: `{}`,
 			call: func(client Client) error {
-				_, err := client.ListConnectorVersions(context.Background(), "stripe")
+				_, err := client.ListConnectorVersions(context.Background(), "stripe", ListOptions{})
 				return err
 			},
 		},
@@ -294,6 +404,22 @@ func TestClientRejectsMalformedAndEmptyObjectResponses(t *testing.T) {
 			body: "null",
 			call: func(client Client) error {
 				_, err := client.ListConnectorInstances(context.Background(), ListOptions{})
+				return err
+			},
+		},
+		{
+			name: "empty facet distribution object",
+			body: `{}`,
+			call: func(client Client) error {
+				_, err := client.GetConnectorFacets(context.Background(), "")
+				return err
+			},
+		},
+		{
+			name: "empty query capabilities object",
+			body: `{}`,
+			call: func(client Client) error {
+				_, err := client.GetQueryCapabilities(context.Background())
 				return err
 			},
 		},
@@ -338,18 +464,27 @@ func TestClientRejectsStructurallyInvalidSuccessResponses(t *testing.T) {
 			},
 		},
 		{
-			name:   "connector list missing items",
+			name:   "connector list missing cursor",
 			status: http.StatusOK,
-			body:   `{"continue":"next"}`,
+			body:   `{"data":[]}`,
 			call: func(client Client) error {
 				_, err := client.ListConnectors(context.Background(), ListOptions{})
 				return err
 			},
 		},
 		{
-			name:   "connector instance list has null items",
+			name:   "connector list has null data",
 			status: http.StatusOK,
-			body:   `{"items":null}`,
+			body:   `{"cursor":{"pageSize":15,"hasMore":false,"data":null}}`,
+			call: func(client Client) error {
+				_, err := client.ListConnectors(context.Background(), ListOptions{})
+				return err
+			},
+		},
+		{
+			name:   "connector instance list has null data",
+			status: http.StatusOK,
+			body:   `{"cursor":{"pageSize":15,"hasMore":false}}`,
 			call: func(client Client) error {
 				_, err := client.ListConnectorInstances(context.Background(), ListOptions{})
 				return err
@@ -367,7 +502,7 @@ func TestClientRejectsStructurallyInvalidSuccessResponses(t *testing.T) {
 		{
 			name:   "connector list item missing metadata name",
 			status: http.StatusOK,
-			body:   `{"items":[{"metadata":{},"spec":{}}]}`,
+			body:   `{"cursor":{"pageSize":15,"hasMore":false,"data":[{"metadata":{},"spec":{}}]}}`,
 			call: func(client Client) error {
 				_, err := client.ListConnectors(context.Background(), ListOptions{})
 				return err
@@ -385,9 +520,9 @@ func TestClientRejectsStructurallyInvalidSuccessResponses(t *testing.T) {
 		{
 			name:   "connector version list item missing version",
 			status: http.StatusOK,
-			body:   `{"items":[{"image":"registry/stripe:v1.0.0"}]}`,
+			body:   `{"cursor":{"pageSize":15,"hasMore":false,"data":[{"image":"registry/stripe:v1.0.0"}]}}`,
 			call: func(client Client) error {
-				_, err := client.ListConnectorVersions(context.Background(), "stripe")
+				_, err := client.ListConnectorVersions(context.Background(), "stripe", ListOptions{})
 				return err
 			},
 		},
@@ -412,9 +547,27 @@ func TestClientRejectsStructurallyInvalidSuccessResponses(t *testing.T) {
 		{
 			name:   "connector instance list item missing ledger",
 			status: http.StatusOK,
-			body:   `{"items":[{"metadata":{"name":"worker"},"spec":{"connector":"stripe"}}]}`,
+			body:   `{"cursor":{"pageSize":15,"hasMore":false,"data":[{"metadata":{"name":"worker"},"spec":{"connector":"stripe"}}]}}`,
 			call: func(client Client) error {
 				_, err := client.ListConnectorInstances(context.Background(), ListOptions{})
+				return err
+			},
+		},
+		{
+			name:   "facet distribution missing facets",
+			status: http.StatusOK,
+			body:   `{"total":3}`,
+			call: func(client Client) error {
+				_, err := client.GetConnectorFacets(context.Background(), "")
+				return err
+			},
+		},
+		{
+			name:   "query capabilities missing resources",
+			status: http.StatusOK,
+			body:   `{"resources":null}`,
+			call: func(client Client) error {
+				_, err := client.GetQueryCapabilities(context.Background())
 				return err
 			},
 		},
@@ -435,14 +588,16 @@ func TestClientRejectsStructurallyInvalidSuccessResponses(t *testing.T) {
 
 func TestClientAcceptsValidEmptyLists(t *testing.T) {
 	httpClient := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
-		return jsonResponse(http.StatusOK, `{"items":[]}`), nil
+		return jsonResponse(http.StatusOK, `{"cursor":{"pageSize":15,"hasMore":false,"data":[]}}`), nil
 	})}
 	client := New("https://stack.example", httpClient)
 
 	connectors, err := client.ListConnectors(context.Background(), ListOptions{})
 	require.NoError(t, err)
 	require.Empty(t, connectors.Items)
-	versions, err := client.ListConnectorVersions(context.Background(), "stripe")
+	require.False(t, connectors.HasMore)
+	require.Empty(t, connectors.Next)
+	versions, err := client.ListConnectorVersions(context.Background(), "stripe", ListOptions{})
 	require.NoError(t, err)
 	require.Empty(t, versions.Items)
 	instances, err := client.ListConnectorInstances(context.Background(), ListOptions{})

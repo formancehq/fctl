@@ -1,7 +1,9 @@
 package connectors
 
 import (
+	"errors"
 	"fmt"
+	"net/http"
 	"sort"
 	"strings"
 	"time"
@@ -12,6 +14,11 @@ import (
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	connectivityclient "github.com/formancehq/fctl/v3/internal/connectivityclient"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+)
+
+const (
+	showVersionsPageSize = int32(100)
+	showVersionsMaxPages = 20
 )
 
 type ShowStore struct {
@@ -68,27 +75,36 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	}
 	c.store.Connector = *connector
 
-	versions, err := client.ListConnectorVersions(cmd.Context(), name)
+	versions, err := connectivityinternal.CollectPages(showVersionsPageSize, showVersionsMaxPages,
+		func(options connectivityclient.ListOptions) ([]connectivityclient.ConnectorVersionSummary, bool, string, error) {
+			page, err := client.ListConnectorVersions(cmd.Context(), name, options)
+			if err != nil {
+				return nil, false, "", err
+			}
+			if page == nil {
+				return nil, false, "", fmt.Errorf("show connectivity connector %q: empty version list response", name)
+			}
+			return page.Items, page.HasMore, page.Next, nil
+		})
 	if err != nil {
 		return nil, err
 	}
-	if versions == nil {
-		return nil, fmt.Errorf("show connectivity connector %q: empty version list response", name)
-	}
-	c.store.Versions = versions.Items
+	c.store.Versions = versions
 
-	// The catalog serves versions ascending by semantic version, so the
-	// configSchema worth rendering is the newest one's.
-	if len(versions.Items) > 0 {
-		newest := versions.Items[len(versions.Items)-1].Version
-		version, err := client.GetConnectorVersion(cmd.Context(), name, newest)
-		if err != nil {
+	// The server resolves the `latest` alias to the newest Validated version;
+	// published-but-unresolvable catalogues degrade to the no-version notice.
+	if len(versions) > 0 {
+		version, err := client.GetConnectorVersion(cmd.Context(), name, connectivityclient.VersionAliasLatest)
+		var apiErr *connectivityclient.APIError
+		switch {
+		case errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusNotFound:
+		case err != nil:
 			return nil, err
+		case version == nil:
+			return nil, fmt.Errorf("show connectivity connector %q: empty latest version response", name)
+		default:
+			c.store.Version = version
 		}
-		if version == nil {
-			return nil, fmt.Errorf("show connectivity connector %q: empty version %q response", name, newest)
-		}
-		c.store.Version = version
 	}
 	return c, nil
 }
@@ -111,6 +127,8 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 		{pterm.LightCyan("Image URL"), stringValue(connector.Spec.ImageURL)},
 		{pterm.LightCyan("Catalog"), stringValue(connector.Spec.Catalog)},
 		{pterm.LightCyan("Tags"), strings.Join(connector.Spec.Tags, ", ")},
+		{pterm.LightCyan("Tagline"), stringValue(connector.Spec.Tagline)},
+		{pterm.LightCyan("Latest Version"), stringValue(connector.Spec.LatestVersion)},
 		{pterm.LightCyan("Phase"), connectorPhase(connector.Status)},
 		{pterm.LightCyan("Status Message"), connectorStatusMessage(connector.Status)},
 	}

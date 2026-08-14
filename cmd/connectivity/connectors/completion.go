@@ -1,10 +1,8 @@
 package connectors
 
 import (
-	"context"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -12,36 +10,30 @@ import (
 	connectivityclient "github.com/formancehq/fctl/v3/internal/connectivityclient"
 )
 
-const (
-	connectorCompletionLimit   = int32(500)
-	connectorCompletionTimeout = 2 * time.Second
-)
+const connectorCompletionMaxPages = 5
 
 func CompleteConnectorNames(factory connectivityinternal.ClientFactory) cobra.CompletionFunc {
 	return func(cmd *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		if factory == nil {
+		client, completionCommand, cancel, ok := connectivityinternal.CompletionClient(cmd, factory)
+		if !ok {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		parent := cmd.Context()
-		if parent == nil {
-			parent = context.Background()
-		}
-		ctx, cancel := context.WithTimeout(parent, connectorCompletionTimeout)
 		defer cancel()
 
-		completionCommand := *cmd
-		completionCommand.SetContext(connectivityinternal.WithNonInteractive(ctx))
-		client, err := factory(&completionCommand)
+		connectors, err := connectivityinternal.CollectPages(connectivityinternal.CompletionPageSize, connectorCompletionMaxPages,
+			func(options connectivityclient.ListOptions) ([]connectivityclient.Connector, bool, string, error) {
+				page, err := client.ListConnectors(completionCommand.Context(), options)
+				if err != nil || page == nil {
+					return nil, false, "", err
+				}
+				return page.Items, page.HasMore, page.Next, nil
+			})
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		response, err := client.ListConnectors(ctx, connectivityclient.ListOptions{Limit: connectorCompletionLimit})
-		if err != nil || response == nil {
-			return nil, cobra.ShellCompDirectiveNoFileComp
-		}
 
-		candidates := make([]string, 0, len(response.Items))
-		for _, connector := range response.Items {
+		candidates := make([]string, 0, len(connectors))
+		for _, connector := range connectors {
 			name := stringValue(connector.Metadata.Name)
 			if name == "" || !strings.HasPrefix(name, toComplete) {
 				continue

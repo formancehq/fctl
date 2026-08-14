@@ -51,8 +51,8 @@ func TestCompleteConnectorInstanceNamesUsesBoundedNonInteractiveQueryAndReturnsS
 
 	candidates, directive := completion(&cobra.Command{}, nil, "al")
 
-	if !reflect.DeepEqual(gotOptions, connectivityclient.ListOptions{Limit: 500}) {
-		t.Fatalf("ListConnectorInstances options = %#v, want limit 500", gotOptions)
+	if !reflect.DeepEqual(gotOptions, connectivityclient.ListOptions{PageSize: 100}) {
+		t.Fatalf("ListConnectorInstances options = %#v, want page size 100", gotOptions)
 	}
 	if remaining <= 1500*time.Millisecond || remaining > 2*time.Second {
 		t.Fatalf("completion deadline remaining = %s, want approximately 2s", remaining)
@@ -69,9 +69,12 @@ func TestCompleteConnectorInstanceNamesUsesBoundedNonInteractiveQueryAndReturnsS
 func TestCompleteVersionsUsesSelectedConnectorAndReturnsSortedPrefixMatchesWithDescriptions(t *testing.T) {
 	var gotName string
 	client := completionClientMock{connectorVersions: connectorVersions{
-		listVersions: func(ctx context.Context, name string) (*connectivityclient.ConnectorVersionList, error) {
+		listVersions: func(ctx context.Context, name string, options connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
 			if !hasTwoSecondDeadline(ctx) {
 				t.Fatal("version completion context does not have the expected deadline")
+			}
+			if options.PageSize != 100 {
+				t.Fatalf("ListConnectorVersions page size = %d, want 100", options.PageSize)
 			}
 			gotName = name
 			return &connectivityclient.ConnectorVersionList{Items: []connectivityclient.ConnectorVersionSummary{
@@ -174,7 +177,7 @@ func TestCompleteFunctionsReturnSilentlyOnFactoryAPIResolverPathAndTimeoutErrors
 			return nil, errors.New("unsupported deployment")
 		},
 		connectorVersions: connectorVersions{
-			listVersions: func(context.Context, string) (*connectivityclient.ConnectorVersionList, error) {
+			listVersions: func(context.Context, string, connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
 				return nil, errors.New("unsupported deployment")
 			},
 		},
@@ -194,6 +197,15 @@ func TestCompleteFunctionsReturnSilentlyOnFactoryAPIResolverPathAndTimeoutErrors
 			command:    &cobra.Command{},
 		},
 		"instance API": {completion: CompleteConnectorInstanceNames(factoryReturning(apiErrorClient)), command: &cobra.Command{}},
+		"instance pagination": {
+			completion: CompleteConnectorInstanceNames(factoryReturning(completionClientMock{listInstances: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
+				if options.Cursor != "" {
+					return nil, errors.New("second page unavailable")
+				}
+				return &connectivityclient.ConnectorInstanceList{HasMore: true, Next: "page-two"}, nil
+			}})),
+			command: &cobra.Command{},
+		},
 		"instance timeout": {
 			completion: CompleteConnectorInstanceNames(factoryReturning(completionClientMock{listInstances: func(ctx context.Context, _ connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
 				<-ctx.Done()

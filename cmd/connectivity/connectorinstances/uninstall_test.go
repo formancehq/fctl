@@ -72,7 +72,7 @@ func TestUninstallRegistersAliasesRootAndConnectorInstanceCompletion(t *testing.
 	client := uninstallClientMock{
 		listInstances: func(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
 			require.True(t, connectivityinternal.IsNonInteractive(ctx))
-			require.Equal(t, connectivityclient.ListOptions{Limit: 500}, options)
+			require.Equal(t, connectivityclient.ListOptions{PageSize: 100}, options)
 			return &connectivityclient.ConnectorInstanceList{Items: []connectivityclient.ConnectorInstance{instance}}, nil
 		},
 	}
