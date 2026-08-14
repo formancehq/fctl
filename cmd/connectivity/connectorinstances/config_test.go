@@ -87,6 +87,19 @@ func TestSchemaFieldsSupportsLegacyFlatSchemaAndSecretMarker(t *testing.T) {
 	}, fields["LEGACY_TOKEN"])
 }
 
+func TestSchemaFieldsDoesNotTreatMixedSectionAndLegacyShapesAsLegacy(t *testing.T) {
+	version := &connectivityclient.ConnectorVersion{ConfigSchema: map[string]any{
+		"env":        map[string]any{"properties": map[string]any{"SECTION": map[string]any{}}},
+		"properties": map[string]any{"LEGACY": map[string]any{}},
+	}}
+
+	fields, err := SchemaFields(version)
+
+	require.NoError(t, err)
+	require.Contains(t, fields, "SECTION")
+	require.NotContains(t, fields, "LEGACY")
+}
+
 func TestSchemaFieldsCollectsLocalReferencesAndCompositionsWithoutOverstatingRequiredKeys(t *testing.T) {
 	version := &connectivityclient.ConnectorVersion{ConfigSchema: map[string]any{
 		"env": map[string]any{
@@ -111,6 +124,41 @@ func TestSchemaFieldsCollectsLocalReferencesAndCompositionsWithoutOverstatingReq
 	require.Equal(t, "API token", fields["TOKEN"].Description)
 	require.False(t, fields["CLIENT_ID"].Required, "either alternative can satisfy the schema")
 	require.False(t, fields["CLIENT_SECRET"].Required, "either alternative can satisfy the schema")
+}
+
+func TestSchemaFieldsFollowsAnchoredDynamicAndRecursiveReferences(t *testing.T) {
+	version := &connectivityclient.ConnectorVersion{ConfigSchema: map[string]any{
+		"env": map[string]any{
+			"$defs": map[string]any{
+				"secret": map[string]any{"$dynamicAnchor": "secret", "format": "password", "description": "Anchored secret"},
+			},
+			"properties": map[string]any{
+				"TOKEN": map[string]any{"$dynamicRef": "#secret"},
+				"LOOP":  map[string]any{"$recursiveRef": "#"},
+			},
+		},
+	}}
+
+	fields, err := SchemaFields(version)
+
+	require.NoError(t, err)
+	require.True(t, fields["TOKEN"].Password)
+	require.Equal(t, "Anchored secret", fields["TOKEN"].Description)
+	require.Contains(t, fields, "LOOP", "recursive schemas are accepted and delegated to API validation")
+}
+
+func TestSchemaFieldsBoundsMetadataTraversalDepth(t *testing.T) {
+	field := any(map[string]any{"format": "password"})
+	for index := 0; index < maxSchemaCollectionDepth+1; index++ {
+		field = map[string]any{"allOf": []any{field}}
+	}
+	version := &connectivityclient.ConnectorVersion{ConfigSchema: map[string]any{
+		"env": map[string]any{"properties": map[string]any{"TOKEN": field}},
+	}}
+
+	_, err := SchemaFields(version)
+
+	require.ErrorContains(t, err, "schema nesting exceeds")
 }
 
 func TestBuildInstallConfigDefersOpenAndPatternSchemaKeysToTheAPI(t *testing.T) {

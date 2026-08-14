@@ -84,25 +84,38 @@ func resolveConfigureConnectorVersion(ctx context.Context, client connectivitycl
 	}
 	pinned, channel := configureVersionSelector(cmd, instance)
 	if channel != "" {
-		return resolveChannelVersion(ctx, client, instance.Spec.Connector, channel, instanceVersionPin(instance))
+		return resolveChannelVersion(ctx, client, instance.Spec.Connector, channel, appliedChannelFloor(instance))
 	}
 	return resolveConnectorVersion(ctx, client, instance.Spec.Connector, pinned)
 }
 
 func configureVersionSelector(cmd *cobra.Command, instance *connectivityclient.ConnectorInstance) (string, string) {
-	if cmd.Flags().Changed(versionFlag) {
-		return fctl.GetString(cmd, versionFlag), ""
-	}
-	if cmd.Flags().Changed(channelFlag) {
-		return "", fctl.GetString(cmd, channelFlag)
-	}
+	pinned, channel := "", ""
 	if instance != nil && instance.Spec.Version != nil && *instance.Spec.Version != "" {
-		return *instance.Spec.Version, ""
+		pinned = *instance.Spec.Version
 	}
 	if instance != nil && instance.Spec.Channel != nil && *instance.Spec.Channel != "" {
-		return "", *instance.Spec.Channel
+		channel = *instance.Spec.Channel
 	}
-	if applied := instanceVersionPin(instance); applied != "" {
+	// Match the API's post-merge-patch normalization. Empty selector values are
+	// removed, rather than selecting stable. A non-empty channel is the only
+	// channel change that clears an existing pin.
+	if cmd.Flags().Changed(versionFlag) {
+		pinned = fctl.GetString(cmd, versionFlag)
+	}
+	if cmd.Flags().Changed(channelFlag) {
+		channel = fctl.GetString(cmd, channelFlag)
+		if channel != "" && !cmd.Flags().Changed(versionFlag) {
+			pinned = ""
+		}
+	}
+	if pinned != "" {
+		return pinned, ""
+	}
+	if channel != "" {
+		return "", channel
+	}
+	if applied := appliedChannelFloor(instance); applied != "" {
 		return applied, ""
 	}
 	return "stable", ""
@@ -136,7 +149,7 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		pinned, channel := configureVersionSelector(cmd, instance)
 		var version *connectivityclient.ConnectorVersion
 		if channel != "" {
-			version, err = resolveChannelVersion(cmd.Context(), client, instance.Spec.Connector, channel, instanceVersionPin(instance))
+			version, err = resolveChannelVersion(cmd.Context(), client, instance.Spec.Connector, channel, appliedChannelFloor(instance))
 		} else {
 			version, err = resolveConnectorVersion(cmd.Context(), client, instance.Spec.Connector, pinned)
 		}
@@ -165,8 +178,9 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		specPatch["version"] = fctl.GetString(cmd, versionFlag)
 	}
 	if cmd.Flags().Changed(channelFlag) {
-		specPatch["channel"] = fctl.GetString(cmd, channelFlag)
-		if !cmd.Flags().Changed(versionFlag) {
+		channel := fctl.GetString(cmd, channelFlag)
+		specPatch["channel"] = channel
+		if channel != "" && !cmd.Flags().Changed(versionFlag) {
 			// A pre-existing pin would otherwise continue to win over the new
 			// channel. JSON null deletes it under the API's merge-patch contract.
 			specPatch["version"] = nil
