@@ -361,6 +361,70 @@ func TestPatchConnectorInstanceSendsAPIShapedConfig(t *testing.T) {
 	}`, string(seenBody))
 }
 
+func TestPatchConnectorInstanceSendsExactSuspensionBoolean(t *testing.T) {
+	tests := []struct {
+		name    string
+		suspend bool
+		want    string
+	}{
+		{name: "suspend", suspend: true, want: `{"spec":{"suspend":true}}`},
+		{name: "explicit resume", suspend: false, want: `{"spec":{"suspend":false}}`},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var seenMethod, seenPath, seenContentType string
+			var seenBody []byte
+			httpClient := &http.Client{Transport: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+				seenMethod = req.Method
+				seenPath = req.URL.EscapedPath()
+				seenContentType = req.Header.Get("Content-Type")
+				var err error
+				seenBody, err = io.ReadAll(req.Body)
+				require.NoError(t, err)
+				return jsonResponse(http.StatusOK, `{"metadata":{"name":"worker/one"},"spec":{"connector":"stripe","ledger":"main"}}`), nil
+			})}
+
+			_, err := New("https://stack.example/base", httpClient).PatchConnectorInstance(
+				context.Background(),
+				"worker/one",
+				ConnectorInstancePatch{"spec": map[string]any{"suspend": test.suspend}},
+			)
+
+			require.NoError(t, err)
+			require.Equal(t, http.MethodPatch, seenMethod)
+			require.Equal(t, "/base/api/connectivity/connectorinstances/worker%2Fone", seenPath)
+			require.Equal(t, "application/merge-patch+json", seenContentType)
+			require.Equal(t, test.want, string(seenBody))
+		})
+	}
+}
+
+func TestGetConnectorInstanceDecodesDesiredSuspensionAndObservedProvenance(t *testing.T) {
+	httpClient := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+		return jsonResponse(http.StatusOK, `{
+			"metadata":{"name":"worker"},
+			"spec":{"connector":"stripe","ledger":"main","suspend":false,"replicas":0},
+			"status":{"suspendedBy":[
+				{"kind":"ConnectorInstance","name":"worker","field":"spec.replicas"},
+				{"kind":"Policy","name":"maintenance","field":"spec.mutate.suspend"}
+			]}
+		}`), nil
+	})}
+
+	instance, err := New("https://stack.example", httpClient).GetConnectorInstance(context.Background(), "worker")
+
+	require.NoError(t, err)
+	require.NotNil(t, instance.Spec.Suspend)
+	require.False(t, *instance.Spec.Suspend)
+	require.NotNil(t, instance.Spec.Replicas)
+	require.Equal(t, int32(0), *instance.Spec.Replicas)
+	require.Equal(t, []SuspensionSource{
+		{Kind: "ConnectorInstance", Name: "worker", Field: "spec.replicas"},
+		{Kind: "Policy", Name: "maintenance", Field: "spec.mutate.suspend"},
+	}, instance.Status.SuspendedBy)
+}
+
 func TestClientRejectsMalformedAndEmptyObjectResponses(t *testing.T) {
 	tests := []struct {
 		name string
