@@ -87,6 +87,47 @@ func TestSchemaFieldsSupportsLegacyFlatSchemaAndSecretMarker(t *testing.T) {
 	}, fields["LEGACY_TOKEN"])
 }
 
+func TestSchemaFieldsCollectsLocalReferencesAndCompositionsWithoutOverstatingRequiredKeys(t *testing.T) {
+	version := &connectivityclient.ConnectorVersion{ConfigSchema: map[string]any{
+		"env": map[string]any{
+			"$defs": map[string]any{
+				"token": map[string]any{"type": "string", "format": "password", "description": "API token"},
+			},
+			"allOf": []any{
+				map[string]any{"properties": map[string]any{"TOKEN": map[string]any{"$ref": "#/$defs/token"}}, "required": []any{"TOKEN"}},
+				map[string]any{"anyOf": []any{
+					map[string]any{"properties": map[string]any{"CLIENT_ID": map[string]any{"type": "string"}}, "required": []any{"CLIENT_ID"}},
+					map[string]any{"properties": map[string]any{"CLIENT_SECRET": map[string]any{"type": "string"}}, "required": []any{"CLIENT_SECRET"}},
+				}},
+			},
+		},
+	}}
+
+	fields, err := SchemaFields(version)
+
+	require.NoError(t, err)
+	require.True(t, fields["TOKEN"].Required)
+	require.True(t, fields["TOKEN"].Password)
+	require.Equal(t, "API token", fields["TOKEN"].Description)
+	require.False(t, fields["CLIENT_ID"].Required, "either alternative can satisfy the schema")
+	require.False(t, fields["CLIENT_SECRET"].Required, "either alternative can satisfy the schema")
+}
+
+func TestBuildInstallConfigDefersOpenAndPatternSchemaKeysToTheAPI(t *testing.T) {
+	version := &connectivityclient.ConnectorVersion{ConfigSchema: map[string]any{
+		"env": map[string]any{
+			"type":              "object",
+			"properties":        map[string]any{"KNOWN": map[string]any{"type": "string"}},
+			"patternProperties": map[string]any{"^DYNAMIC_": map[string]any{"type": "string"}},
+		},
+	}}
+
+	config, err := BuildInstallConfig(&cobra.Command{}, version, InputOptions{SetValues: []string{"DYNAMIC_TOKEN=value"}}, mapReadFile(nil))
+
+	require.NoError(t, err)
+	require.Equal(t, "value", *config.Env["DYNAMIC_TOKEN"].Value)
+}
+
 func TestBuildInstallConfigAllowsConnectorVersionWithoutSchema(t *testing.T) {
 	version := &connectivityclient.ConnectorVersion{Version: "2.0.0", Image: "example/connector:2.0.0"}
 

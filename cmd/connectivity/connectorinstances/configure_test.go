@@ -147,6 +147,58 @@ func TestConfigureFallsBackToTheAppliedVersionWhenUnpinned(t *testing.T) {
 	require.Equal(t, "1.9.9", gotVersion)
 }
 
+func TestConfigureChannelTracksTheResolvedSameMajorHeadAcrossPages(t *testing.T) {
+	current := instanceFixture("stripe-eu")
+	current.Spec.Version = stringPtr("v1.0.0")
+	current.Spec.Channel = stringPtr("stable")
+	current.Status.ResolvedVersion = stringPtr("v1.0.0")
+	current.Spec.Config = &connectivityclient.ConnectorInstanceConfig{}
+	var gotVersion string
+	var gotPatch connectivityclient.ConnectorInstancePatch
+	client := configureClientMock{
+		getInstance: func(context.Context, string) (*connectivityclient.ConnectorInstance, error) { return &current, nil },
+		connectorVersions: connectorVersions{
+			listVersions: func(_ context.Context, _ string, options connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
+				switch options.Cursor {
+				case "":
+					return &connectivityclient.ConnectorVersionList{Items: []connectivityclient.ConnectorVersionSummary{
+						{Version: "v1.1.0", Image: "example:v1.1.0"},
+						{Version: "v1.2.0-beta.1", Image: "example:v1.2.0-beta.1"},
+					}, HasMore: true, Next: "second"}, nil
+				case "second":
+					return &connectivityclient.ConnectorVersionList{Items: []connectivityclient.ConnectorVersionSummary{
+						{Version: "v1.3.0", Image: "example:v1.3.0"},
+						{Version: "v2.0.0", Image: "example:v2.0.0"},
+					}}, nil
+				default:
+					t.Fatalf("unexpected version cursor %q", options.Cursor)
+					return nil, nil
+				}
+			},
+			getVersion: func(_ context.Context, _, version string) (*connectivityclient.ConnectorVersion, error) {
+				gotVersion = version
+				return versionWithFileSchema(), nil
+			},
+		},
+		patch: func(_ context.Context, _ string, patch connectivityclient.ConnectorInstancePatch) (*connectivityclient.ConnectorInstance, error) {
+			gotPatch = patch
+			return &current, nil
+		},
+	}
+
+	_, err := executeCommand(
+		NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)),
+		"stripe-eu", "--channel=stable", "--set=/etc/a=kept", "--confirm",
+	)
+
+	require.NoError(t, err)
+	require.Equal(t, "v1.3.0", gotVersion, "the server selects the highest stable candidate in the running major")
+	spec := gotPatch["spec"].(map[string]any)
+	require.Equal(t, "stable", spec["channel"])
+	require.Contains(t, spec, "version", "switching to a channel removes an existing pin")
+	require.Nil(t, spec["version"])
+}
+
 func TestConfigureOmitsUnchangedScalarsAndStoresCompleteReturnedInstance(t *testing.T) {
 	current := instanceFixture("stripe-eu")
 	current.Spec.Config = &connectivityclient.ConnectorInstanceConfig{}

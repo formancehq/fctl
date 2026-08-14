@@ -26,10 +26,14 @@ func (m listInstanceClientMock) ListConnectorInstances(ctx context.Context, opti
 
 func TestListConnectorInstancesPassesFiltersAndPaginationAndRendersApprovedColumns(t *testing.T) {
 	var gotOptions connectivityclient.ListOptions
+	channelInstance := instanceFixture("stripe-eu")
+	channelInstance.Spec.Version = nil
+	channelInstance.Spec.Channel = stringPtr("stable")
+	channelInstance.Status.ResolvedVersion = stringPtr("v1.3.0")
 	client := listInstanceClientMock{list: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
 		gotOptions = options
 		return &connectivityclient.ConnectorInstanceList{
-			Items:    []connectivityclient.ConnectorInstance{instanceFixture("stripe-eu")},
+			Items:    []connectivityclient.ConnectorInstance{channelInstance},
 			PageSize: 7,
 			HasMore:  true,
 			Next:     "next-page",
@@ -46,8 +50,8 @@ func TestListConnectorInstancesPassesFiltersAndPaginationAndRendersApprovedColum
 	}
 	require.Equal(t, wantOptions, gotOptions)
 	for _, expected := range []string{
-		"Name", "Connector", "Version", "Ledger", "Phase", "State", "Current Sequence", "Source Tip Sequence", "Last Error",
-		"stripe-eu", "stripe", "2.0.0", "main", "Ready", "Running", "42", "48", "source temporarily unavailable",
+		"Name", "Connector", "Version", "Channel", "Resolved Version", "Ledger", "Phase", "State", "Current Sequence", "Source Tip Sequence", "Last Error",
+		"stripe-eu", "stripe", "stable", "v1.3.0", "main", "Ready", "Running", "42", "48", "source temporarily unavailable",
 		"HasMore", "true", "PageSize", "7", "Next", "next-page",
 	} {
 		require.Contains(t, output, expected)

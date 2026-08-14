@@ -15,6 +15,7 @@ import (
 const (
 	CompletionTimeout  = 2 * time.Second
 	CompletionPageSize = int32(100)
+	CompletionMaxPages = 5
 )
 
 // CompletionClient builds a non-interactive, deadline-bounded client for
@@ -174,12 +175,22 @@ func facetFilterValues(ctx context.Context, client connectivityclient.Client) []
 }
 
 func connectorFilterValues(ctx context.Context, client connectivityclient.Client) []filterValue {
-	connectors, err := client.ListConnectors(ctx, connectivityclient.ListOptions{PageSize: CompletionPageSize})
-	if err != nil || connectors == nil {
+	connectors, err := CollectPagesBounded(CompletionPageSize, CompletionMaxPages,
+		func(options connectivityclient.ListOptions) ([]connectivityclient.Connector, bool, string, error) {
+			page, err := client.ListConnectors(ctx, options)
+			if err != nil {
+				return nil, false, "", err
+			}
+			if page == nil {
+				return nil, false, "", fmt.Errorf("empty connector completion response")
+			}
+			return page.Items, page.HasMore, page.Next, nil
+		})
+	if err != nil {
 		return nil
 	}
-	values := make([]filterValue, 0, len(connectors.Items))
-	for _, connector := range connectors.Items {
+	values := make([]filterValue, 0, len(connectors))
+	for _, connector := range connectors {
 		if connector.Metadata.Name == nil || *connector.Metadata.Name == "" {
 			continue
 		}

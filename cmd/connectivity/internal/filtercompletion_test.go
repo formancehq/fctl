@@ -174,6 +174,32 @@ func TestCompleteFilterExpressionsCompletesConnectorNamesForInstanceConnectorKey
 	}
 }
 
+func TestCompleteFilterExpressionsDrainsBoundedConnectorPages(t *testing.T) {
+	first, second := "adyen", "stripe"
+	client := filterCompletionClientMock{
+		capabilities: func(context.Context) (*connectivityclient.QueryCapabilities, error) {
+			return capabilitiesFixture(), nil
+		},
+		listConnectors: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
+			switch options.Cursor {
+			case "":
+				return &connectivityclient.ConnectorList{Items: []connectivityclient.Connector{{Metadata: connectivityclient.ObjectMeta{Name: &first}}}, HasMore: true, Next: "second"}, nil
+			case "second":
+				return &connectivityclient.ConnectorList{Items: []connectivityclient.Connector{{Metadata: connectivityclient.ObjectMeta{Name: &second}}}}, nil
+			default:
+				t.Fatalf("unexpected connector cursor %q", options.Cursor)
+				return nil, nil
+			}
+		},
+	}
+
+	candidates, _ := CompleteFilterExpressions(filterFactory(t, client), connectivityclient.ResourceConnectorInstances)(&cobra.Command{}, nil, "connector=")
+
+	if want := []string{"connector=adyen", "connector=stripe"}; !reflect.DeepEqual(candidates, want) {
+		t.Fatalf("candidates = %#v, want %#v", candidates, want)
+	}
+}
+
 func TestCompleteChannelsServesTheCapabilityEnum(t *testing.T) {
 	client := filterCompletionClientMock{capabilities: func(context.Context) (*connectivityclient.QueryCapabilities, error) {
 		return capabilitiesFixture(), nil

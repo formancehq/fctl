@@ -120,6 +120,8 @@ func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
 			stringValue(instance.Metadata.Name),
 			instance.Spec.Connector,
 			stringValue(instance.Spec.Version),
+			stringValue(instance.Spec.Channel),
+			instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.ResolvedVersion }),
 			instance.Spec.Ledger,
 			instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.Phase }),
 			instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.State }),
@@ -129,7 +131,7 @@ func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
 		}
 	})
 	rows = fctl.Prepend(rows, []string{
-		"Name", "Connector", "Version", "Ledger", "Phase", "State", "Current Sequence", "Source Tip Sequence", "Last Error",
+		"Name", "Connector", "Version", "Channel", "Resolved Version", "Ledger", "Phase", "State", "Current Sequence", "Source Tip Sequence", "Last Error",
 	})
 	if err := pterm.DefaultTable.
 		WithHasHeader().

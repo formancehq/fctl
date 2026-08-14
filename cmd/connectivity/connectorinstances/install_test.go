@@ -78,7 +78,7 @@ func TestInstallBuildsConnectorInstanceFromVersionSchemaAndOnlySetsChangedScalar
 	require.Equal(t, `Connector instance "stripe-eu" installed with connector "stripe" for ledger "main".`, strings.TrimSpace(output))
 }
 
-func TestInstallWithoutVersionFlagUsesServerResolvedLatestForTheSchema(t *testing.T) {
+func TestInstallWithoutSelectorUsesStableHeadForTheSchema(t *testing.T) {
 	var gotVersion string
 	var gotBody connectivityclient.ConnectorInstanceCreate
 	client := mutationClientMock{
@@ -100,7 +100,9 @@ func TestInstallWithoutVersionFlagUsesServerResolvedLatestForTheSchema(t *testin
 	)
 
 	require.NoError(t, err)
-	require.Equal(t, connectivityclient.VersionAliasLatest, gotVersion)
+	// A newer prerelease must not supply the schema for a selector-less
+	// install: the API persists the stable head in that case.
+	require.Equal(t, "stable", gotVersion)
 	require.Nil(t, gotBody.Spec.Version, "an unpinned install must let the server resolve the version")
 }
 
@@ -132,10 +134,10 @@ func TestInstallWithChannelFlagTracksTheChannelAndUsesItsHeadForTheSchema(t *tes
 	require.Nil(t, gotBody.Spec.Version)
 }
 
-func TestInstallReportsConnectorsWithoutAPublishedVersion(t *testing.T) {
+func TestInstallReportsPrereleaseOnlyCataloguesAsMissingStableVersion(t *testing.T) {
 	client := mutationClientMock{connectorVersions: connectorVersions{
 		getVersion: func(context.Context, string, string) (*connectivityclient.ConnectorVersion, error) {
-			return nil, &connectivityclient.APIError{StatusCode: 404, Code: "not_found", Message: "no Validated version"}
+			return nil, &connectivityclient.APIError{StatusCode: 404, Code: "channel_empty", Message: "only v2.0.0-beta.1 is published"}
 		},
 	}}
 

@@ -43,6 +43,7 @@ func NewConfigureCommand(factory connectivityinternal.ClientFactory, read ReadFi
 		fctl.WithValidArgsFunction(CompleteConnectorInstanceNames(factory)),
 		fctl.WithStringFlag(ledgerFlag, "", "Ledger name"),
 		fctl.WithStringFlag(versionFlag, "", "Connector version"),
+		fctl.WithStringFlag(channelFlag, "", "Maturity channel to track (stable, rc, beta, alpha) when no version is pinned"),
 		fctl.WithStringFlag(pollIntervalFlag, "", "Polling interval"),
 		fctl.WithStringFlag(configFlag, "", "YAML or JSON configuration file"),
 		fctl.WithStringArrayFlag(envFileFlag, nil, "Dotenv configuration file (repeatable)"),
@@ -51,6 +52,9 @@ func NewConfigureCommand(factory connectivityinternal.ClientFactory, read ReadFi
 		fctl.WithController[*ConfigureStore](controller),
 	)
 	if err := command.RegisterFlagCompletionFunc(versionFlag, completeVersions(factory, resolveConfigureConnector)); err != nil {
+		panic(err)
+	}
+	if err := command.RegisterFlagCompletionFunc(channelFlag, connectivityinternal.CompleteChannels(factory)); err != nil {
 		panic(err)
 	}
 	if err := command.RegisterFlagCompletionFunc(setFlag, CompleteSetValues(factory, resolveConfigureConnectorVersion, paths)); err != nil {
@@ -78,11 +82,30 @@ func resolveConfigureConnectorVersion(ctx context.Context, client connectivitycl
 	if err != nil || instance == nil {
 		return nil, err
 	}
-	pinned := fctl.GetString(cmd, versionFlag)
-	if pinned == "" {
-		pinned = instanceVersionPin(instance)
+	pinned, channel := configureVersionSelector(cmd, instance)
+	if channel != "" {
+		return resolveChannelVersion(ctx, client, instance.Spec.Connector, channel, instanceVersionPin(instance))
 	}
 	return resolveConnectorVersion(ctx, client, instance.Spec.Connector, pinned)
+}
+
+func configureVersionSelector(cmd *cobra.Command, instance *connectivityclient.ConnectorInstance) (string, string) {
+	if cmd.Flags().Changed(versionFlag) {
+		return fctl.GetString(cmd, versionFlag), ""
+	}
+	if cmd.Flags().Changed(channelFlag) {
+		return "", fctl.GetString(cmd, channelFlag)
+	}
+	if instance != nil && instance.Spec.Version != nil && *instance.Spec.Version != "" {
+		return *instance.Spec.Version, ""
+	}
+	if instance != nil && instance.Spec.Channel != nil && *instance.Spec.Channel != "" {
+		return "", *instance.Spec.Channel
+	}
+	if applied := instanceVersionPin(instance); applied != "" {
+		return applied, ""
+	}
+	return "stable", ""
 }
 
 func (c *ConfigureController) GetStore() *ConfigureStore {
@@ -110,11 +133,13 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 	specPatch := map[string]any{}
 	configChanged := cmd.Flags().Changed(configFlag) || cmd.Flags().Changed(envFileFlag) || cmd.Flags().Changed(setFlag)
 	if configChanged {
-		pinned := instanceVersionPin(instance)
-		if cmd.Flags().Changed(versionFlag) {
-			pinned = fctl.GetString(cmd, versionFlag)
+		pinned, channel := configureVersionSelector(cmd, instance)
+		var version *connectivityclient.ConnectorVersion
+		if channel != "" {
+			version, err = resolveChannelVersion(cmd.Context(), client, instance.Spec.Connector, channel, instanceVersionPin(instance))
+		} else {
+			version, err = resolveConnectorVersion(cmd.Context(), client, instance.Spec.Connector, pinned)
 		}
-		version, err := resolveConnectorVersion(cmd.Context(), client, instance.Spec.Connector, pinned)
 		if err != nil {
 			return nil, err
 		}
@@ -138,6 +163,14 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 	}
 	if cmd.Flags().Changed(versionFlag) {
 		specPatch["version"] = fctl.GetString(cmd, versionFlag)
+	}
+	if cmd.Flags().Changed(channelFlag) {
+		specPatch["channel"] = fctl.GetString(cmd, channelFlag)
+		if !cmd.Flags().Changed(versionFlag) {
+			// A pre-existing pin would otherwise continue to win over the new
+			// channel. JSON null deletes it under the API's merge-patch contract.
+			specPatch["version"] = nil
+		}
 	}
 	if cmd.Flags().Changed(ledgerFlag) {
 		specPatch["ledger"] = fctl.GetString(cmd, ledgerFlag)
