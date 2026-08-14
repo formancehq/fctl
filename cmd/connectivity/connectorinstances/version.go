@@ -48,10 +48,13 @@ func resolveConnectorVersion(ctx context.Context, client connectivityclient.Clie
 // after confirming its resolved connector identity; desired spec.version is
 // deliberately not a floor when switching from a pin to a channel.
 func appliedChannelFloor(instance *connectivityclient.ConnectorInstance) string {
-	if instance == nil || instance.Status == nil || instance.Status.ResolvedVersion == nil || instance.Status.ResolvedConnectorRef == nil {
+	if instance == nil || instance.Status == nil || instance.Status.ResolvedVersion == nil {
 		return ""
 	}
-	if *instance.Status.ResolvedConnectorRef != instance.Spec.Connector {
+	// Older API responses did not stamp resolvedConnectorRef. The server treats
+	// that empty identity as the instance's previous connector, while a nonempty
+	// different identity must never constrain this connector's channel.
+	if instance.Status.ResolvedConnectorRef != nil && *instance.Status.ResolvedConnectorRef != "" && *instance.Status.ResolvedConnectorRef != instance.Spec.Connector {
 		return ""
 	}
 	return *instance.Status.ResolvedVersion
