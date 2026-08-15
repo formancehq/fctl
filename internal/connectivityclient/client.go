@@ -325,15 +325,20 @@ func validateConnectorVersionSummary(summary *ConnectorVersionSummary) error {
 	return validateConnectorVersion(summary.Version, summary.Image)
 }
 
+// validateConnectorInstance guards decoding, not creation: both call sites are
+// response paths. Only the name is required, because it is what identifies the
+// row and Kubernetes always sets it.
+//
+// spec.connector deliberately is not. An instance may pin spec.image on the CR
+// instead of referencing a Connector -- the two are mutually exclusive -- and
+// the API returns it with an empty connector. Requiring it here rejected such
+// an instance, and since one bad item fails the page, a single image-pinned
+// connector made `connectorinstances list` unusable against a response the
+// server had answered successfully. spec.ledger goes with it: enforcing a
+// write-side invariant while reading is the same mistake.
 func validateConnectorInstance(instance *ConnectorInstance) error {
 	if instance == nil || instance.Metadata.Name == nil || strings.TrimSpace(*instance.Metadata.Name) == "" {
 		return fmt.Errorf("connector instance metadata.name is required")
-	}
-	if strings.TrimSpace(instance.Spec.Connector) == "" {
-		return fmt.Errorf("connector instance spec.connector is required")
-	}
-	if strings.TrimSpace(instance.Spec.Ledger) == "" {
-		return fmt.Errorf("connector instance spec.ledger is required")
 	}
 	return nil
 }
