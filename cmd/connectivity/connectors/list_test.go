@@ -37,12 +37,19 @@ func TestListConnectorsPassesPaginationAndRendersApprovedColumnsAndContinuation(
 		t.Fatalf("ListConnectors options = %#v, want %#v", gotOptions, wantOptions)
 	}
 	for _, expected := range []string{
-		"Name", "Display Name", "Description", "Tags", "Phase",
-		"stripe", "Connector display name", "Connector description", "payments, webhooks", "Ready",
+		"Name", "Display Name", "Tags", "Phase",
+		"stripe", "Connector display name", "payments, webhooks", "Ready",
 		"HasMore", "true", "PageSize", "7", "Next", "next-page",
 	} {
 		if !strings.Contains(output, expected) {
 			t.Errorf("plain output missing %q:\n%s", expected, output)
+		}
+	}
+	// The description is deliberately absent: it is a full sentence, and pterm
+	// widens a column to its content, so carrying it here wrapped every row.
+	for _, absent := range []string{"Description", "Connector description"} {
+		if strings.Contains(output, absent) {
+			t.Errorf("plain output should not carry %q:\n%s", absent, output)
 		}
 	}
 }

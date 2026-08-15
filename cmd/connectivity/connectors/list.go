@@ -108,12 +108,14 @@ func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
 		return []string{
 			stringValue(connector.Metadata.Name),
 			stringValue(connector.Spec.DisplayName),
-			stringValue(connector.Spec.Description),
 			strings.Join(connector.Spec.Tags, ", "),
 			connectorPhase(connector.Status),
 		}
 	})
-	rows = fctl.Prepend(rows, []string{"Name", "Display Name", "Description", "Tags", "Phase"})
+	// No description column: descriptions are full sentences, and pterm sizes
+	// columns to their content, so one connector wrapped every row and the
+	// table stopped lining up. `connectors show` prints the description.
+	rows = fctl.Prepend(rows, []string{"Name", "Display Name", "Tags", "Phase"})
 	if err := pterm.DefaultTable.
 		WithHasHeader().
 		WithWriter(cmd.OutOrStdout()).
