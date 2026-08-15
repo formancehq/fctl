@@ -400,6 +400,28 @@ func TestPatchConnectorInstanceSendsExactSuspensionBoolean(t *testing.T) {
 	}
 }
 
+// An instance pinned to spec.image on the CR references no Connector, so the
+// API returns it with an empty spec.connector. One such row used to fail the
+// decode of the whole page -- `connectorinstances list` reported
+// "cursor.data[N]: connector instance spec.connector is required" on a
+// response the server had answered 200.
+func TestListConnectorInstancesDecodesAnInstanceWithNoConnector(t *testing.T) {
+	httpClient := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+		return jsonResponse(http.StatusOK, `{"cursor":{"pageSize":15,"hasMore":false,"data":[
+			{"metadata":{"name":"with-connector"},"spec":{"connector":"stripe","ledger":"main"}},
+			{"metadata":{"name":"image-pinned"},"spec":{"ledger":"ops"}}
+		]}}`), nil
+	})}
+
+	list, err := New("https://stack.example", httpClient).ListConnectorInstances(context.Background(), ListOptions{})
+
+	require.NoError(t, err)
+	require.Len(t, list.Items, 2)
+	require.Equal(t, "stripe", list.Items[0].Spec.Connector)
+	require.Empty(t, list.Items[1].Spec.Connector)
+	require.Equal(t, "ops", list.Items[1].Spec.Ledger)
+}
+
 func TestGetConnectorInstanceDecodesDesiredSuspensionAndObservedProvenance(t *testing.T) {
 	httpClient := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
 		return jsonResponse(http.StatusOK, `{
@@ -599,24 +621,9 @@ func TestClientRejectsStructurallyInvalidSuccessResponses(t *testing.T) {
 				return err
 			},
 		},
-		{
-			name:   "connector instance missing connector",
-			status: http.StatusCreated,
-			body:   `{"metadata":{"name":"worker"},"spec":{"ledger":"main"}}`,
-			call: func(client Client) error {
-				_, err := client.CreateConnectorInstance(context.Background(), ConnectorInstanceCreate{Name: "worker", Spec: ConnectorInstanceSpec{Connector: "stripe", Ledger: "main"}})
-				return err
-			},
-		},
-		{
-			name:   "connector instance list item missing ledger",
-			status: http.StatusOK,
-			body:   `{"cursor":{"pageSize":15,"hasMore":false,"data":[{"metadata":{"name":"worker"},"spec":{"connector":"stripe"}}]}}`,
-			call: func(client Client) error {
-				_, err := client.ListConnectorInstances(context.Background(), ListOptions{})
-				return err
-			},
-		},
+		// A missing spec.connector or spec.ledger is deliberately absent from
+		// this table: neither is structurally invalid on a response. See
+		// TestListConnectorInstancesDecodesAnInstanceWithNoConnector.
 		{
 			name:   "facet distribution missing facets",
 			status: http.StatusOK,
