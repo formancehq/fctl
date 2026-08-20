@@ -10,6 +10,7 @@ import (
 	"github.com/formancehq/fctl/v3/cmd/payments/orders"
 	paymentsmodels "github.com/formancehq/fctl/v3/cmd/payments/payments"
 	"github.com/formancehq/fctl/v3/cmd/payments/pools"
+	"github.com/formancehq/fctl/v3/cmd/payments/psu"
 	"github.com/formancehq/fctl/v3/cmd/payments/tasks"
 	"github.com/formancehq/fctl/v3/cmd/payments/transferinitiation"
 	fctl "github.com/formancehq/fctl/v3/pkg"
@@ -27,6 +28,7 @@ func NewCommand() *cobra.Command {
 			pools.NewPoolsCommand(),
 			orders.NewOrdersCommand(),
 			conversions.NewConversionsCommand(),
+			psu.NewPSUCommand(),
 			tasks.NewTasksCommand(),
 		),
 	)
