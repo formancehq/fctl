@@ -75,7 +75,7 @@ func (c *CreditWalletController) Run(cmd *cobra.Command, args []string) (fctl.Re
 	if err != nil {
 		return nil, err
 	}
-	if !fctl.CheckStackApprobation(cmd, "You are about to credit a wallets") {
+	if !fctl.CheckStackApprobation(cmd, "You are about to credit a wallet") {
 		return nil, fctl.ErrMissingApproval
 	}
 
