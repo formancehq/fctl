@@ -179,9 +179,9 @@ func Authenticate(
 		}
 
 		dialog.Info("No browser detected")
-		dialog.Info("Please open the following URL in your browser:" + uri.String())
+		dialog.Info("Please open the following URL in your browser: %s", uri.String())
 	} else {
-		dialog.Info("A browser window has been opened on " + uri.String())
+		dialog.Info("A browser window has been opened on %s", uri.String())
 	}
 	dialog.Info("Waiting for authentication...")
 
