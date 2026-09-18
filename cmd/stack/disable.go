@@ -57,6 +57,10 @@ func (c *DisableController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 	const (
 		stackNameFlag = "name"
 	)
+	stackName := fctl.GetString(cmd, stackNameFlag)
+	if (len(args) == 0 && stackName == "") || (len(args) == 1 && (args[0] == "" || stackName != "")) {
+		return nil, errors.New("need either a stack id or a name specified using --name flag")
+	}
 
 	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
@@ -69,10 +73,6 @@ func (c *DisableController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 	}
 	var stack *components.Stack
 	if len(args) == 1 {
-		if fctl.GetString(cmd, stackNameFlag) != "" {
-			return nil, errors.New("need either an id of a name specified using --name flag")
-		}
-
 		getRequest := operations.GetStackRequest{
 			OrganizationID: organizationID,
 			StackID:        args[0],
@@ -86,9 +86,6 @@ func (c *DisableController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		}
 		stack = rsp.ReadStackResponse.GetData()
 	} else {
-		if fctl.GetString(cmd, stackNameFlag) == "" {
-			return nil, errors.New("need either an id of a name specified using --name flag")
-		}
 		listRequest := operations.ListStacksRequest{
 			OrganizationID: organizationID,
 		}
@@ -100,7 +97,7 @@ func (c *DisableController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 			return nil, fmt.Errorf("unexpected response: no data")
 		}
 		for _, s := range stacksResponse.ListStacksResponse.GetData() {
-			if s.GetName() == fctl.GetString(cmd, stackNameFlag) {
+			if s.GetName() == stackName {
 				stackData := s
 				stack = &stackData
 				break
@@ -109,6 +106,9 @@ func (c *DisableController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 	}
 	if stack == nil {
 		return nil, errors.New("Stack not found")
+	}
+	if stack.GetID() == "" {
+		return nil, errors.New("unexpected response: missing stack id")
 	}
 
 	if !fctl.CheckStackApprobation(cmd, "You are about to disable stack '%s'", stack.GetName()) {
