@@ -96,6 +96,7 @@ func Execute() {
 		if e := recover(); e != nil {
 			pterm.Error.WithWriter(os.Stderr).Printfln("%s", e)
 			debug.PrintStack()
+			os.Exit(255)
 		}
 	}()
 	ctx, _ := signal.NotifyContext(context.TODO(), os.Interrupt)
@@ -124,7 +125,7 @@ func Execute() {
 					errResponse := api.ErrorResponse{}
 					if err := json.Unmarshal([]byte(body), &errResponse); err != nil {
 						pterm.Error.WithWriter(os.Stderr).Printf("%s\r\n", body)
-						return
+						os.Exit(2)
 					}
 					printError(errResponse.ErrorCode, errResponse.ErrorMessage, &errResponse.Details)
 					return

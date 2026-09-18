@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/TylerBrock/colorjson"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/spf13/cobra"
@@ -230,25 +229,13 @@ func WithRender[T any](cmd *cobra.Command, args []string, c Controller[T], r Ren
 		}
 
 		// Marshal to JSON then print to stdout
-		out, err := json.Marshal(export)
+		out, err := json.MarshalIndent(export, "", "  ")
 		if err != nil {
 			return err
 		}
 
-		raw := make(map[string]any)
-		if err := json.Unmarshal(out, &raw); err == nil {
-			f := colorjson.NewFormatter()
-			f.Indent = 2
-			colorized, err := f.Marshal(raw)
-			if err != nil {
-				panic(err)
-			}
-			_, err = cmd.OutOrStdout().Write(colorized)
-			return err
-		} else {
-			_, err := cmd.OutOrStdout().Write(out)
-			return err
-		}
+		_, err = cmd.OutOrStdout().Write(out)
+		return err
 	default:
 		return r.Render(cmd, args)
 	}
