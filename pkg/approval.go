@@ -1,6 +1,7 @@
 package fctl
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -24,6 +25,24 @@ const (
 	confirmFlag = "confirm"
 )
 
+type approvalPromptKey struct{}
+
+// WithApprovalPrompt replaces the interactive approval prompt for commands using ctx.
+// The prompt returns the user's answer; --confirm still bypasses it.
+func WithApprovalPrompt(ctx context.Context, prompt func(string) (string, error)) context.Context {
+	return context.WithValue(ctx, approvalPromptKey{}, prompt)
+}
+
+func showApprovalPrompt(cmd *cobra.Command, disclaimer string) (string, error) {
+	text := disclaimer + ".\r\n" + pterm.DefaultInteractiveContinue.DefaultText
+	if ctx := cmd.Context(); ctx != nil {
+		if prompt, ok := ctx.Value(approvalPromptKey{}).(func(string) (string, error)); ok && prompt != nil {
+			return prompt(text)
+		}
+	}
+	return interactiveContinue.WithDefaultText(text).Show()
+}
+
 func NeedConfirm(cmd *cobra.Command) bool {
 	if GetBool(cmd, confirmFlag) {
 		return false
@@ -38,7 +57,7 @@ func CheckStackApprobation(cmd *cobra.Command, disclaimer string, args ...any) b
 
 	disclaimer = fmt.Sprintf(disclaimer, args...)
 
-	result, err := interactiveContinue.WithDefaultText(disclaimer + ".\r\n" + pterm.DefaultInteractiveContinue.DefaultText).Show()
+	result, err := showApprovalPrompt(cmd, disclaimer)
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +69,7 @@ func CheckOrganizationApprobation(cmd *cobra.Command, disclaimer string, args ..
 		return true
 	}
 
-	result, err := interactiveContinue.WithDefaultText(disclaimer + ".\r\n" + pterm.DefaultInteractiveContinue.DefaultText).Show()
+	result, err := showApprovalPrompt(cmd, disclaimer)
 	if err != nil {
 		panic(err)
 	}
