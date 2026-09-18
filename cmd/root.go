@@ -19,6 +19,7 @@ import (
 
 	"github.com/formancehq/fctl/v3/cmd/auth"
 	"github.com/formancehq/fctl/v3/cmd/cloud"
+	"github.com/formancehq/fctl/v3/cmd/connectivity"
 	"github.com/formancehq/fctl/v3/cmd/ledger"
 	"github.com/formancehq/fctl/v3/cmd/login"
 	"github.com/formancehq/fctl/v3/cmd/orchestration"
@@ -61,6 +62,7 @@ func NewRootCommand() *cobra.Command {
 			webhooks.NewCommand(),
 			wallets.NewCommand(),
 			orchestration.NewCommand(),
+			connectivity.NewCommand(),
 		),
 		fctl.WithPersistentStringPFlag(fctl.ProfileFlag, "p", "", "Configuration profile to use"),
 		fctl.WithPersistentStringPFlag(fctl.ConfigDir, "c", fmt.Sprintf("%s/.config/formance/fctl", homedir), "Path to configuration dir"),
