@@ -2,8 +2,11 @@ package deployments
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/pterm/pterm"
@@ -12,7 +15,6 @@ import (
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/components"
 	"github.com/formancehq/fctl/internal/deployserverclient/v3/models/operations"
 
-	"github.com/formancehq/fctl/v3/cmd/cloud/apps/printer"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
@@ -30,11 +32,11 @@ const (
 
 type Create struct {
 	*components.DeploymentResource
-	logs []components.Log
 }
 
 type CreateCtrl struct {
 	store *Create
+	wait  func(context.Context, time.Duration) error
 }
 
 var _ fctl.Controller[*Create] = (*CreateCtrl)(nil)
@@ -46,10 +48,15 @@ func newCreateStore() *Create {
 func NewCreateCtrl() *CreateCtrl {
 	return &CreateCtrl{
 		store: newCreateStore(),
+		wait:  waitForDeploymentPoll,
 	}
 }
 
 func NewCreate() *cobra.Command {
+	return newCreate(NewCreateCtrl())
+}
+
+func newCreate(ctrl *CreateCtrl) *cobra.Command {
 	return fctl.NewCommand("create",
 		fctl.WithShortDescription("Create a deployment (deploy an app)"),
 		fctl.WithStringFlag("app-id", "", "App ID"),
@@ -57,7 +64,7 @@ func NewCreate() *cobra.Command {
 		fctl.WithIntFlag("manifest-version", 0, "Manifest version to deploy (required, >= 1)"),
 		fctl.WithBoolFlag("wait", true, "Wait for the deployment to complete"),
 		fctl.WithStringFlag("wait-timeout", "30m", "Max duration to wait for the deployment when --wait is set"),
-		fctl.WithController(NewCreateCtrl()),
+		fctl.WithController(ctrl),
 	)
 }
 
@@ -111,12 +118,28 @@ func (c *CreateCtrl) Run(cmd *cobra.Command, args []string) (fctl.Renderable, er
 		if err := c.waitDeploymentCompletion(cmd); err != nil {
 			return nil, err
 		}
+	} else if c.store.Status == statusErrored {
+		return nil, fmt.Errorf("deployment failed: %s", c.store.ID)
 	}
 
 	return c, nil
 }
 
-func (c *CreateCtrl) waitDeploymentCompletion(cmd *cobra.Command) error {
+func waitForDeploymentPoll(ctx context.Context, delay time.Duration) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return ctx.Err()
+	}
+}
+
+func (c *CreateCtrl) waitDeploymentCompletion(cmd *cobra.Command) (err error) {
 
 	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
@@ -133,11 +156,17 @@ func (c *CreateCtrl) waitDeploymentCompletion(cmd *cobra.Command) error {
 	if err != nil {
 		return err
 	}
-	spinner := &pterm.DefaultSpinner
+	spinner := pterm.DefaultSpinner.WithWriter(io.Discard)
+	// Do not animate when the command output is captured or redirected.
+	animate := false
+	if file, ok := cmd.ErrOrStderr().(*os.File); ok {
+		info, err := file.Stat()
+		animate = err == nil && info.Mode()&os.ModeCharDevice != 0
+	}
 
-	if s := fctl.GetString(cmd, "output"); s == "plain" {
+	if s := fctl.GetString(cmd, "output"); s == "plain" && animate {
 		var err error
-		spinner, err = spinner.Start("Waiting for deployment to complete...")
+		spinner, err = spinner.WithWriter(cmd.ErrOrStderr()).Start("Waiting for deployment to complete...")
 		if err != nil {
 			return err
 		}
@@ -146,12 +175,7 @@ func (c *CreateCtrl) waitDeploymentCompletion(cmd *cobra.Command) error {
 				pterm.Error.Println(err)
 			}
 		}()
-	} else {
-		spinner.SetWriter(io.Discard)
 	}
-	defer func() {
-		_ = spinner.Stop()
-	}()
 
 	timeout := 30 * time.Minute
 	if v := fctl.GetString(cmd, "wait-timeout"); v != "" {
@@ -163,67 +187,64 @@ func (c *CreateCtrl) waitDeploymentCompletion(cmd *cobra.Command) error {
 	}
 	ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
 	defer cancel()
+	defer func() {
+		if errors.Is(err, context.DeadlineExceeded) {
+			err = fmt.Errorf("timed out after %s waiting for deployment %s (last status: %s): %w",
+				timeout, c.store.ID, c.store.Status, err)
+		}
+	}()
 
 	waitFor := 0 * time.Second
 	for {
-		select {
-		case <-ctx.Done():
-			if ctx.Err() == context.DeadlineExceeded {
-				return fmt.Errorf("timed out after %s waiting for deployment %s (last status: %s)",
-					timeout, c.store.ID, c.store.DeploymentResource.Status)
+		if err := c.wait(ctx, waitFor); err != nil {
+			return err
+		}
+		// Backoff: 2s, 4s, 8s capped at 15s. A long-running terraform
+		// apply doesn't need sub-second polling.
+		if waitFor == 0 {
+			waitFor = 2 * time.Second
+		} else if waitFor < 15*time.Second {
+			waitFor *= 2
+			if waitFor > 15*time.Second {
+				waitFor = 15 * time.Second
 			}
-			return ctx.Err()
-		case <-time.After(waitFor):
-			// Backoff: 2s, 4s, 8s capped at 15s. A long-running terraform
-			// apply doesn't need sub-second polling.
-			if waitFor == 0 {
-				waitFor = 2 * time.Second
-			} else if waitFor < 15*time.Second {
-				waitFor *= 2
-				if waitFor > 15*time.Second {
-					waitFor = 15 * time.Second
-				}
-			}
-			r, err := apiClient.ReadDeployment(ctx, c.store.ID, nil)
+		}
+		r, err := apiClient.ReadDeployment(ctx, c.store.ID, nil)
+		if err != nil {
+			return err
+		}
+		c.store.DeploymentResource = &r.DeploymentResponse.Data
+
+		spinner.UpdateText(fmt.Sprintf("Deployment status: %s", r.DeploymentResponse.Data.Status))
+		switch r.DeploymentResponse.Data.Status {
+		case statusApplied:
+			spinner.UpdateText("Deployment completed successfully")
+			return nil
+		case statusPlannedAndFinished:
+			spinner.UpdateText("Deployment completed successfully, no changes to apply")
+			return nil
+		case statusErrored:
+			l, err := apiClient.ReadDeploymentLogs(ctx, c.store.ID)
 			if err != nil {
-				return err
+				return fmt.Errorf("deployment failed: %s (could not read logs: %w)", c.store.ID, err)
 			}
-			c.store.DeploymentResource = &r.DeploymentResponse.Data
 
-			spinner.UpdateText(fmt.Sprintf("Deployment status: %s", r.DeploymentResponse.Data.Status))
-			switch r.DeploymentResponse.Data.Status {
-			case statusApplied:
-				spinner.UpdateText("Deployment completed successfully")
-				return nil
-			case statusPlannedAndFinished:
-				spinner.UpdateText("Deployment completed successfully, no changes to apply")
-				return nil
-			case statusErrored:
-				l, err := apiClient.ReadDeploymentLogs(ctx, c.store.ID)
-				if err != nil {
-					return err
+			var diagnostics strings.Builder
+			for _, entry := range l.ReadLogsResponse.Data {
+				if entry.Diagnostic != nil {
+					fmt.Fprintf(&diagnostics, "\n%s: %s\n%s", entry.Diagnostic.Severity, entry.Diagnostic.Summary, entry.Diagnostic.Detail)
+				} else if entry.Message != "" {
+					fmt.Fprintf(&diagnostics, "\n%s", entry.Message)
 				}
-
-				c.store.logs = l.ReadLogsResponse.Data
-
-				return nil
-			default:
-				continue
 			}
+			return fmt.Errorf("deployment failed: %s%s", c.store.ID, diagnostics.String())
+		default:
+			continue
 		}
 	}
 }
 
 func (c *CreateCtrl) Render(cmd *cobra.Command, args []string) error {
-	if c.store.DeploymentResource.Status == statusErrored {
-		if len(c.store.logs) > 0 {
-			if err := printer.RenderLogs(cmd.ErrOrStderr(), c.store.logs); err != nil {
-				return err
-			}
-		}
-		return fmt.Errorf("deployment failed: %s", c.store.ID)
-	}
-
 	pterm.Info.Println("App Deployment accepted", c.store.ID)
 	wait := fctl.GetBool(cmd, "wait")
 	if !wait {
