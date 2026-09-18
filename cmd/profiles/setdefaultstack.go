@@ -1,6 +1,7 @@
 package profiles
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/pterm/pterm"
@@ -43,6 +44,10 @@ func (c *SetDefaultStackController) Run(cmd *cobra.Command, args []string) (fctl
 	currentProfile, profileName, err := fctl.LoadCurrentProfile(cmd, *cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if !currentProfile.IsConnected() {
+		return nil, errors.New("You are not connected, please run 'fctl login'")
 	}
 
 	organizationID, err := fctl.ResolveOrganizationID(cmd, *currentProfile)
