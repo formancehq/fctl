@@ -236,16 +236,13 @@ func Refresh(ctx context.Context, relyingParty client.RelyingParty, token Access
 	}
 
 	token.Token = newToken.AccessToken
-	token.Refresh = newToken.RefreshToken
+	// The provider may omit refresh_token when the existing token remains valid.
+	if newToken.RefreshToken != "" {
+		token.Refresh = newToken.RefreshToken
+	}
 	token.Claims = claims
 
-	return &AccessToken{
-		TokenWithClaims: TokenWithClaims[AccessTokenClaims]{
-			Token:  newToken.AccessToken,
-			Claims: claims,
-		},
-		Refresh: newToken.RefreshToken,
-	}, nil
+	return &token, nil
 }
 
 func FetchStackToken(ctx context.Context, httpClient *http.Client, stackURI, token string) (*oauth2.Token, error) {
