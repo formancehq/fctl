@@ -44,6 +44,7 @@ brews:
   - name: fctl
     alternative_names:
       - fctl@{{ .Major }}
+    url_template: https://brew.formance.com/{{ .Tag }}/{{ .ArtifactName }}
     repository:
       owner: formancehq
       name: homebrew-tap
@@ -63,6 +64,24 @@ brews:
       bash_completion.install "completions/fctl.bash" => "fctl"
       zsh_completion.install "completions/fctl.zsh" => "_fctl"
       fish_completion.install "completions/fctl.fish"
+    custom_block: |
+      on_macos do
+        if Hardware::CPU.intel?
+          mirror "https://github.com/formancehq/fctl/releases/download/{{ .Tag }}/fctl_darwin-amd64.tar.gz"
+        end
+        if Hardware::CPU.arm?
+          mirror "https://github.com/formancehq/fctl/releases/download/{{ .Tag }}/fctl_darwin-arm64.tar.gz"
+        end
+      end
+
+      on_linux do
+        if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
+          mirror "https://github.com/formancehq/fctl/releases/download/{{ .Tag }}/fctl_linux-amd64.tar.gz"
+        end
+        if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
+          mirror "https://github.com/formancehq/fctl/releases/download/{{ .Tag }}/fctl_linux-arm64.tar.gz"
+        end
+      end
 
 nfpms:
   - id: packages
