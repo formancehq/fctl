@@ -29,7 +29,7 @@ func ResolveOrganizationID(cmd *cobra.Command, profile Profile) (string, error) 
 		return profile.DefaultOrganization, nil
 	}
 
-	if len(profile.RootTokens.ID.Claims.Organizations) == 0 {
+	if !profile.IsConnected() || len(profile.RootTokens.ID.Claims.Organizations) == 0 {
 		return "", ErrOrganizationNotSpecified
 	}
 	if len(profile.RootTokens.ID.Claims.Organizations) > 1 {
