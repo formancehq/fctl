@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 
@@ -43,7 +44,7 @@ func executeProfileContext(t *testing.T, dir string, args ...string) (string, er
 	defer cancel()
 	err := root.ExecuteContext(ctx)
 	t.Logf("stdout: %s\nstderr: %s", stdout.String(), stderr.String())
-	return stdout.String(), err
+	return pterm.RemoveColorFromString(stdout.String()), err
 }
 
 func TestProfilesOfflineLifecycle(t *testing.T) {
