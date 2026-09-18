@@ -39,9 +39,6 @@ func EnsureMembershipAccess(
 	profileName string,
 	profile Profile,
 ) (*AccessToken, error) {
-	if !profile.IsConnected() {
-		return nil, fmt.Errorf("profile %s is not connected, please log in", profileName)
-	}
 	authenticate := func() (*Tokens, error) {
 		return Authenticate(
 			cmd.Context(),
@@ -59,6 +56,21 @@ func EnsureMembershipAccess(
 			},
 			[]TokenOption{},
 		)
+	}
+
+	return ensureMembershipAccess(cmd, relyingParty, dialog, profileName, profile, authenticate)
+}
+
+func ensureMembershipAccess(
+	cmd *cobra.Command,
+	relyingParty client.RelyingParty,
+	dialog Dialog,
+	profileName string,
+	profile Profile,
+	authenticate func() (*Tokens, error),
+) (*AccessToken, error) {
+	if !profile.IsConnected() {
+		return nil, fmt.Errorf("profile %s is not connected, please log in", profileName)
 	}
 
 	originalToken := &profile.RootTokens.Access
