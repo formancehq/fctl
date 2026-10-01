@@ -109,13 +109,6 @@ func (c *ImportController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 
 	fileSize := fileInfo.Size()
 
-	const blockSize = 100
-
-	var (
-		buffer = new(bytes.Buffer)
-		count  = 0
-	)
-
 	progressBar, err := pterm.DefaultProgressbar.
 		WithTotal(int(fileSize)).
 		WithWriter(cmd.OutOrStdout()).
@@ -127,43 +120,17 @@ func (c *ImportController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		scannerErr := scanner.Err()
-		if scannerErr != nil && !errors.Is(scannerErr, io.EOF) {
-			return nil, fmt.Errorf("error reading file: %w", scannerErr)
-		}
-		bytes := scanner.Bytes()
-		buffer.Write(bytes)
-		buffer.Write([]byte("\n"))
-		count++
-
-		progressBar.Add(len(bytes) + 1) // +1 for the end of line
-
-		if count == blockSize {
-			_, err = stackClient.Ledger.V2.ImportLogs(cmd.Context(), operations.V2ImportLogsRequest{
-				Ledger:              args[0],
-				V2ImportLogsRequest: buffer,
-			})
-			if err != nil {
-				return nil, err
-			}
-			buffer.Reset()
-			count = 0
-		}
-		if errors.Is(scannerErr, io.EOF) {
-			break
-		}
-	}
-
-	if buffer.Len() > 0 {
-		_, err = stackClient.Ledger.V2.ImportLogs(cmd.Context(), operations.V2ImportLogsRequest{
+	err = importLogs(f, importBlockSize, func(n int) {
+		progressBar.Add(n)
+	}, func(buffer *bytes.Buffer) error {
+		_, err := stackClient.Ledger.V2.ImportLogs(cmd.Context(), operations.V2ImportLogsRequest{
 			Ledger:              args[0],
 			V2ImportLogsRequest: buffer,
 		})
-		if err != nil {
-			return nil, err
-		}
+		return err
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return c, nil
@@ -183,22 +150,26 @@ func (c *ImportController) openFileWithOffset(filePath string, id *big.Int) (*os
 		_ = f.Close()
 	}()
 
-	scanner := bufio.NewScanner(f)
+	reader := bufio.NewReader(f)
 
 	type log struct {
 		ID *big.Int `json:"id"`
 	}
 	readBytes := 0
-	for scanner.Scan() {
-		if scanner.Err() != nil {
-			return nil, 0, scanner.Err()
+	for {
+		line, err := readLine(reader)
+		if errors.Is(err, io.EOF) {
+			return nil, 0, fmt.Errorf("log %s not found in %s", id, filePath)
+		}
+		if err != nil {
+			return nil, 0, fmt.Errorf("error reading file: %w", err)
 		}
 		l := &log{}
-		if err := json.Unmarshal(scanner.Bytes(), l); err != nil {
+		if err := json.Unmarshal(line, l); err != nil {
 			return nil, 0, err
 		}
 
-		readBytes += len(scanner.Bytes()) + 1 // +1 for the end of line
+		readBytes += len(line)
 
 		if l.ID.Cmp(id) == 0 {
 			break
@@ -216,4 +187,56 @@ func (c *ImportController) openFileWithOffset(filePath string, id *big.Int) (*os
 	}
 
 	return ret, readBytes, nil
+}
+
+const importBlockSize = 100
+
+// importLogs reads newline-delimited logs from r and passes them to send in
+// blocks of blockSize lines. onRead receives the number of bytes consumed.
+func importLogs(r io.Reader, blockSize int, onRead func(int), send func(*bytes.Buffer) error) error {
+	var (
+		reader = bufio.NewReader(r)
+		buffer = new(bytes.Buffer)
+		count  = 0
+	)
+	for {
+		line, err := readLine(reader)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("error reading file: %w", err)
+		}
+		onRead(len(line))
+
+		buffer.Write(line)
+		if line[len(line)-1] != '\n' {
+			buffer.WriteByte('\n')
+		}
+		count++
+
+		if count == blockSize {
+			if err := send(buffer); err != nil {
+				return err
+			}
+			buffer.Reset()
+			count = 0
+		}
+	}
+
+	if buffer.Len() > 0 {
+		return send(buffer)
+	}
+	return nil
+}
+
+// readLine returns the next line of r with its trailing newline, if any.
+// Unlike bufio.Scanner it has no line length limit. It returns io.EOF only
+// once no bytes are left.
+func readLine(r *bufio.Reader) ([]byte, error) {
+	line, err := r.ReadBytes('\n')
+	if errors.Is(err, io.EOF) && len(line) > 0 {
+		return line, nil
+	}
+	return line, err
 }
