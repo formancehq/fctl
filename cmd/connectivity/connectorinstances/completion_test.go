@@ -1,0 +1,282 @@
+package connectorinstances
+
+import (
+	"context"
+	"errors"
+	"reflect"
+	"testing"
+	"time"
+
+	"github.com/spf13/cobra"
+
+	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
+	connectivityclient "github.com/formancehq/fctl/v3/internal/connectivityclient"
+)
+
+type completionClientMock struct {
+	connectorVersions
+	listInstances func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error)
+}
+
+func (m completionClientMock) ListConnectorInstances(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
+	return m.listInstances(ctx, options)
+}
+
+func TestCompleteConnectorInstanceNamesUsesBoundedNonInteractiveQueryAndReturnsSortedPrefixMatchesWithDescriptions(t *testing.T) {
+	var gotOptions connectivityclient.ListOptions
+	var remaining time.Duration
+	client := completionClientMock{listInstances: func(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
+		gotOptions = options
+		deadline, ok := ctx.Deadline()
+		if !ok {
+			t.Fatal("completion context has no deadline")
+		}
+		remaining = time.Until(deadline)
+		alpha := instanceFixture("alpha")
+		alpha.Spec.Connector = "stripe"
+		alpha.Spec.Ledger = "eu"
+		alpine := instanceFixture("alpine")
+		alpine.Spec.Connector = "wise"
+		alpine.Spec.Ledger = "uk"
+		return &connectivityclient.ConnectorInstanceList{Items: []connectivityclient.ConnectorInstance{
+			instanceFixture("beta"), alpine, alpha,
+		}}, nil
+	}}
+	completion := CompleteConnectorInstanceNames(func(cmd *cobra.Command) (connectivityclient.Client, error) {
+		if !connectivityinternal.IsNonInteractive(cmd.Context()) {
+			t.Fatal("completion factory context is interactive")
+		}
+		return client, nil
+	})
+
+	candidates, directive := completion(&cobra.Command{}, nil, "al")
+
+	if !reflect.DeepEqual(gotOptions, connectivityclient.ListOptions{PageSize: 100}) {
+		t.Fatalf("ListConnectorInstances options = %#v, want page size 100", gotOptions)
+	}
+	if remaining <= 1500*time.Millisecond || remaining > 2*time.Second {
+		t.Fatalf("completion deadline remaining = %s, want approximately 2s", remaining)
+	}
+	want := []string{"alpha\tstripe · eu", "alpine\twise · uk"}
+	if !reflect.DeepEqual(candidates, want) {
+		t.Fatalf("candidates = %#v, want %#v", candidates, want)
+	}
+	if directive != cobra.ShellCompDirectiveNoFileComp {
+		t.Fatalf("directive = %v, want NoFileComp", directive)
+	}
+}
+
+func TestCompleteVersionsUsesSelectedConnectorAndReturnsSortedPrefixMatchesWithDescriptions(t *testing.T) {
+	var gotName string
+	client := completionClientMock{connectorVersions: connectorVersions{
+		listVersions: func(ctx context.Context, name string, options connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
+			if !hasTwoSecondDeadline(ctx) {
+				t.Fatal("version completion context does not have the expected deadline")
+			}
+			if options.PageSize != 100 {
+				t.Fatalf("ListConnectorVersions page size = %d, want 100", options.PageSize)
+			}
+			gotName = name
+			return &connectivityclient.ConnectorVersionList{Items: []connectivityclient.ConnectorVersionSummary{
+				{Version: "2.1.0", Image: "", Digest: stringPtr("sha256:two")},
+				{Version: "1.0.0", Image: "registry/connector:1"},
+				{Version: "2.0.0", Image: "registry/connector:2"},
+			}}, nil
+		},
+	}}
+	completion := CompleteVersions(func(cmd *cobra.Command) (connectivityclient.Client, error) {
+		if !connectivityinternal.IsNonInteractive(cmd.Context()) {
+			t.Fatal("version completion factory context is interactive")
+		}
+		return client, nil
+	}, func(_ *cobra.Command, args []string) string {
+		return args[0]
+	})
+
+	candidates, directive := completion(&cobra.Command{}, []string{"stripe"}, "2")
+
+	if gotName != "stripe" {
+		t.Fatalf("ListConnectorVersions connector = %q, want stripe", gotName)
+	}
+	want := []string{"2.0.0\tregistry/connector:2", "2.1.0\tsha256:two"}
+	if !reflect.DeepEqual(candidates, want) {
+		t.Fatalf("candidates = %#v, want %#v", candidates, want)
+	}
+	if directive != cobra.ShellCompDirectiveNoFileComp {
+		t.Fatalf("directive = %v, want NoFileComp", directive)
+	}
+}
+
+func TestCompleteSetValuesPrioritizesRequiredKeysDescribesAndOmitsSuppliedKeys(t *testing.T) {
+	var resolvedClient connectivityclient.Client
+	client := &completionClientMock{}
+	resolveVersion := func(ctx context.Context, got connectivityclient.Client, _ *cobra.Command, _ []string) (*connectivityclient.ConnectorVersion, error) {
+		if !connectivityinternal.IsNonInteractive(ctx) || !hasTwoSecondDeadline(ctx) {
+			t.Fatal("set completion resolver context must be non-interactive with a two-second deadline")
+		}
+		resolvedClient = got
+		return versionWithFullSchema(), nil
+	}
+	completion := CompleteSetValues(func(cmd *cobra.Command) (connectivityclient.Client, error) {
+		if !connectivityinternal.IsNonInteractive(cmd.Context()) {
+			t.Fatal("set completion factory context is interactive")
+		}
+		return client, nil
+	}, resolveVersion, mockPathCompleter(nil))
+	command := &cobra.Command{}
+	command.Flags().StringArray("set", nil, "")
+	if err := command.Flags().Set("set", "TOKEN=secret://connector/token"); err != nil {
+		t.Fatal(err)
+	}
+
+	candidates, directive := completion(command, nil, "")
+
+	if resolvedClient != client {
+		t.Fatal("resolver did not receive the factory client")
+	}
+	want := []string{
+		"/etc/plugin/config.yaml=\tConnector configuration",
+		"API_URL=\tAPI endpoint",
+		"/etc/plugin/ca.pem=\tfile configuration",
+		"TIMEOUT=\tenvironment configuration",
+	}
+	if !reflect.DeepEqual(candidates, want) {
+		t.Fatalf("candidates = %#v, want required then optional keys %#v", candidates, want)
+	}
+	wantDirective := cobra.ShellCompDirectiveNoFileComp | cobra.ShellCompDirectiveNoSpace
+	if directive != wantDirective {
+		t.Fatalf("directive = %v, want NoFileComp|NoSpace", directive)
+	}
+}
+
+func TestCompleteSetValuesPreservesKeyAtPrefixForInjectedPathCandidates(t *testing.T) {
+	var gotPrefix string
+	paths := func(prefix string) ([]string, error) {
+		gotPrefix = prefix
+		return []string{"fixtures/alpha/", "fixtures/api-key.txt"}, nil
+	}
+	completion := CompleteSetValues(nil, nil, paths)
+
+	candidates, directive := completion(&cobra.Command{}, nil, "API_KEY=@fixtures/a")
+
+	if gotPrefix != "fixtures/a" {
+		t.Fatalf("path prefix = %q, want fixtures/a", gotPrefix)
+	}
+	want := []string{"API_KEY=@fixtures/alpha/", "API_KEY=@fixtures/api-key.txt"}
+	if !reflect.DeepEqual(candidates, want) {
+		t.Fatalf("candidates = %#v, want prefixed paths %#v", candidates, want)
+	}
+	if directive != cobra.ShellCompDirectiveNoFileComp {
+		t.Fatalf("directive = %v, want NoFileComp", directive)
+	}
+}
+
+func TestCompleteFunctionsReturnSilentlyOnFactoryAPIResolverPathAndTimeoutErrors(t *testing.T) {
+	apiErrorClient := completionClientMock{
+		listInstances: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
+			return nil, errors.New("unsupported deployment")
+		},
+		connectorVersions: connectorVersions{
+			listVersions: func(context.Context, string, connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
+				return nil, errors.New("unsupported deployment")
+			},
+		},
+	}
+	tests := map[string]struct {
+		completion cobra.CompletionFunc
+		command    *cobra.Command
+		args       []string
+		prefix     string
+	}{
+		"instance authentication": {
+			completion: CompleteConnectorInstanceNames(func(*cobra.Command) (connectivityclient.Client, error) { return nil, errors.New("not authenticated") }),
+			command:    &cobra.Command{},
+		},
+		"instance nil client": {
+			completion: CompleteConnectorInstanceNames(func(*cobra.Command) (connectivityclient.Client, error) { return nil, nil }),
+			command:    &cobra.Command{},
+		},
+		"instance API": {completion: CompleteConnectorInstanceNames(factoryReturning(apiErrorClient)), command: &cobra.Command{}},
+		"instance pagination": {
+			completion: CompleteConnectorInstanceNames(factoryReturning(completionClientMock{listInstances: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
+				if options.Cursor != "" {
+					return nil, errors.New("second page unavailable")
+				}
+				return &connectivityclient.ConnectorInstanceList{HasMore: true, Next: "page-two"}, nil
+			}})),
+			command: &cobra.Command{},
+		},
+		"instance timeout": {
+			completion: CompleteConnectorInstanceNames(factoryReturning(completionClientMock{listInstances: func(ctx context.Context, _ connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
+				<-ctx.Done()
+				return nil, ctx.Err()
+			}})),
+			command: commandWithExpiredContext(),
+		},
+		"version empty connector": {completion: CompleteVersions(factoryReturning(apiErrorClient), func(*cobra.Command, []string) string { return "" }), command: &cobra.Command{}},
+		"version API":             {completion: CompleteVersions(factoryReturning(apiErrorClient), func(*cobra.Command, []string) string { return "stripe" }), command: &cobra.Command{}},
+		"set resolver": {
+			completion: CompleteSetValues(factoryReturning(completionClientMock{}), func(context.Context, connectivityclient.Client, *cobra.Command, []string) (*connectivityclient.ConnectorVersion, error) {
+				return nil, errors.New("cannot resolve connector version")
+			}, mockPathCompleter(nil)),
+			command: &cobra.Command{},
+		},
+		"path": {
+			completion: CompleteSetValues(nil, nil, func(string) ([]string, error) { return nil, errors.New("cannot read directory") }),
+			command:    &cobra.Command{},
+			prefix:     "API_KEY=@fixtures/a",
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			candidates, directive := test.completion(test.command, test.args, test.prefix)
+			if len(candidates) != 0 {
+				t.Fatalf("candidates = %#v, want none", candidates)
+			}
+			if directive != cobra.ShellCompDirectiveNoFileComp {
+				t.Fatalf("directive = %v, want NoFileComp", directive)
+			}
+		})
+	}
+}
+
+func TestCompletionClientCopyDoesNotMutateOriginalCommandContext(t *testing.T) {
+	originalContext := context.WithValue(context.Background(), struct{}{}, "original")
+	command := &cobra.Command{}
+	command.SetContext(originalContext)
+	completion := CompleteConnectorInstanceNames(func(cmd *cobra.Command) (connectivityclient.Client, error) {
+		if !connectivityinternal.IsNonInteractive(cmd.Context()) {
+			t.Fatal("copied completion command must be non-interactive")
+		}
+		return completionClientMock{listInstances: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
+			return &connectivityclient.ConnectorInstanceList{}, nil
+		}}, nil
+	})
+
+	_, _ = completion(command, nil, "")
+
+	if command.Context() != originalContext {
+		t.Fatal("completion mutated the original command context")
+	}
+	if connectivityinternal.IsNonInteractive(command.Context()) {
+		t.Fatal("original command context became non-interactive")
+	}
+}
+
+func hasTwoSecondDeadline(ctx context.Context) bool {
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		return false
+	}
+	remaining := time.Until(deadline)
+	return remaining > 1500*time.Millisecond && remaining <= 2*time.Second
+}
+
+func commandWithExpiredContext() *cobra.Command {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	command := &cobra.Command{}
+	command.SetContext(ctx)
+	return command
+}
