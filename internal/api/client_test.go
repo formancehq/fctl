@@ -1,0 +1,123 @@
+package api_test
+
+import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"strings"
+	"testing"
+
+	"github.com/formancehq/fctl/v4/internal/api"
+)
+
+func TestRequestPreservesPathQueryAndNumbers(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.EscapedPath() != "/gateway/v3/books/accounts/users%2F001" {
+			t.Errorf("path: %s", r.URL.EscapedPath())
+		}
+		if r.URL.Query().Get("cursor") != "opaque +/= " {
+			t.Errorf("query: %s", r.URL.RawQuery)
+		}
+		if r.Header.Get("Idempotency-Key") != "request-1" {
+			t.Error("missing idempotency key")
+		}
+		_, err := w.Write([]byte(`{"amount":90071992547409930001}`))
+		if err != nil {
+			t.Error(err)
+		}
+	}))
+	t.Cleanup(server.Close)
+	client, err := api.New(server.URL+"/gateway", server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+	response, err := client.Do(t.Context(), http.MethodPost, api.Path("v3", "books", "accounts", "users/001"), url.Values{"cursor": {"opaque +/= "}}, json.RawMessage(`{"amount":90071992547409930001}`), http.Header{"Idempotency-Key": {"request-1"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(response) != `{"amount":90071992547409930001}` {
+		t.Fatalf("numbers changed: %s", response)
+	}
+}
+
+func TestErrorsDoNotRetry(t *testing.T) {
+	t.Parallel()
+	for _, status := range []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusServiceUnavailable} {
+		t.Run(http.StatusText(status), func(t *testing.T) {
+			calls := 0
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				calls++
+				w.WriteHeader(status)
+				_, err := w.Write([]byte(`{"errorCode":"TEST_FAILURE","errorMessage":"rejected"}`))
+				if err != nil {
+					t.Error(err)
+				}
+			}))
+			t.Cleanup(server.Close)
+			client, err := api.New(server.URL, server.Client())
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, err = client.Do(t.Context(), http.MethodPost, "/v3/test", nil, nil, nil)
+			if err == nil || !strings.Contains(err.Error(), "TEST_FAILURE") {
+				t.Fatalf("error: %v", err)
+			}
+			if calls != 1 {
+				t.Fatalf("mutation executed %d times", calls)
+			}
+		})
+	}
+}
+
+func TestValidateURL(t *testing.T) {
+	t.Parallel()
+	for _, value := range []string{"localhost:9000", "file:///tmp/data", "https://user:secret@service", "https://service?token=secret", "https://service#fragment", ""} {
+		if api.ValidateURL(value) == nil {
+			t.Errorf("accepted %q", value)
+		}
+	}
+	if err := api.ValidateURL("http://localhost:9000/prefix"); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestAuthenticatedEndpointsRequireTLS(t *testing.T) {
+	t.Parallel()
+	for _, endpoint := range []string{"http://ledger.example.com", "http://192.0.2.1/token"} {
+		if api.ValidateSecureURL(endpoint) == nil {
+			t.Errorf("accepted insecure endpoint %s", endpoint)
+		}
+	}
+	for _, endpoint := range []string{"https://ledger.example.com", "http://localhost:9000", "http://127.0.0.1:9000", "http://[::1]:9000"} {
+		if err := api.ValidateSecureURL(endpoint); err != nil {
+			t.Errorf("rejected %s: %v", endpoint, err)
+		}
+	}
+}
+
+func TestEmptyAndInvalidResponses(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		body string
+		want string
+		fail bool
+	}{{"", "null", false}, {"<html>proxy failure</html>", "", true}} {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			_, err := w.Write([]byte(tc.body))
+			if err != nil {
+				t.Error(err)
+			}
+		}))
+		client, err := api.New(server.URL, server.Client())
+		if err != nil {
+			t.Fatal(err)
+		}
+		result, err := client.Do(t.Context(), http.MethodGet, "/", nil, nil, nil)
+		server.Close()
+		if (err != nil) != tc.fail || string(result) != tc.want {
+			t.Errorf("result=%s error=%v", result, err)
+		}
+	}
+}
