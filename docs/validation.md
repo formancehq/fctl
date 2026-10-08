@@ -153,8 +153,8 @@ No deployment was created: actual infrastructure creation was outside the
 approved QA scope. Deployment lists were empty before and after the campaign,
 and missing-deployment reads returned the expected HTTP 403 with exit code 1
 and empty stdout. Positive deployment show/logs/download paths remain
-unverified. Deployment creation, polling and deletion with `--wait` were not
-tested. Metadata cleanup does not establish a working deployment lifecycle.
+unverified. Deployment creation and its polling with `--wait` were not tested.
+Metadata cleanup does not establish a working deployment lifecycle.
 
 ## Stack lifecycle
 
