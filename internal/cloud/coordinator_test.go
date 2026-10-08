@@ -25,15 +25,7 @@ type coordinatedStore struct {
 	failSave  bool
 }
 
-func cloneSession(session *Session) *Session {
-	if session == nil {
-		return nil
-	}
-	cloned := *session
-	cloned.MembershipToken = cleanToken(session.MembershipToken)
-	cloned.StackToken = cleanToken(session.StackToken)
-	return &cloned
-}
+func cloneSession(session *Session) *Session { return copyRoot(session) }
 
 func newCoordinatedStore(session *Session) *coordinatedStore {
 	return &coordinatedStore{auth: make(chan struct{}, 1), session: cloneSession(session)}

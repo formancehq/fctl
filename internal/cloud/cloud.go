@@ -6,7 +6,6 @@ package cloud
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"slices"
@@ -21,6 +20,9 @@ import (
 const refreshMargin = 30 * time.Second
 const maxTokenLifetime = 24 * time.Hour
 
+// DefaultIssuer is the Membership issuer used by the public Cloud service.
+const DefaultIssuer = "https://app.formance.cloud/api"
+
 // Options identifies the Membership issuer and the one stack to authorize.
 type Options struct {
 	Issuer       string `json:"issuer"`
@@ -32,11 +34,14 @@ type Options struct {
 // Session is serializable authentication state. Do not log it. StackURL is
 // checked against signed Membership claims when constructing a client.
 type Session struct {
-	Options         Options       `json:"options"`
-	IDToken         string        `json:"id_token"`
-	MembershipToken *oauth2.Token `json:"membership_token"`
-	StackURL        string        `json:"stack_url"`
-	StackToken      *oauth2.Token `json:"stack_token,omitzero"`
+	Options         Options             `json:"options"`
+	IDToken         string              `json:"id_token"`
+	MembershipToken *oauth2.Token       `json:"membership_token"`
+	StackURL        string              `json:"stack_url"`
+	StackToken      *oauth2.Token       `json:"stack_token,omitzero"`
+	Targets         map[string]*Session `json:"targets,omitzero"`
+	// Set only from the verified root on each coordinated reload, never from JSON.
+	allowedScopes []string
 }
 
 // Coordinator serializes authentication for one saved connection. While holding
@@ -74,39 +79,14 @@ func Login(ctx context.Context, httpClient *http.Client, options Options, out io
 	if err != nil {
 		return nil, err
 	}
-	if out == nil {
-		return nil, errors.New("device authorization requires an output writer")
-	}
 	provider, config, err := membership(ctx, httpClient, options)
 	if err != nil {
 		return nil, err
 	}
-	deviceClient := authClient(ctx, httpClient, options.Issuer)
-	deviceClient.Transport = &deviceTransport{base: deviceClient.Transport, endpoint: config.Endpoint.DeviceAuthURL, clientID: options.ClientID}
-	authCtx := context.WithValue(ctx, oauth2.HTTPClient, deviceClient)
-	device, err := config.DeviceAuth(authCtx, oauth2.SetAuthURLParam("organization_id", options.Organization), oauth2.SetAuthURLParam("resource", options.resource()))
+	authorization := []oauth2.AuthCodeOption{oauth2.SetAuthURLParam("organization_id", options.Organization), oauth2.SetAuthURLParam("resource", options.resource())}
+	token, idToken, err := deviceLogin(ctx, httpClient, options, config, out, nil, authorization, []oauth2.AuthCodeOption{oauth2.SetAuthURLParam("resource", options.resource())})
 	if err != nil {
-		return nil, safeError(ctx, "device authorization", err)
-	}
-	if device.DeviceCode == "" || device.UserCode == "" || validateEndpoint(device.VerificationURI) != nil || device.Interval < 0 || device.Interval > 3600 || !device.Expiry.After(time.Now()) || device.Expiry.After(time.Now().Add(time.Hour)) {
-		return nil, errors.New("invalid device authorization response")
-	}
-	if strings.ContainsAny(device.UserCode, "\r\n\x1b") {
-		return nil, errors.New("invalid device user code")
-	}
-	if _, err := fmt.Fprintf(out, "Open %s and enter code %s\n", device.VerificationURI, device.UserCode); err != nil {
-		return nil, errors.New("cannot display device authorization")
-	}
-	token, err := config.DeviceAccessToken(authCtx, device, oauth2.SetAuthURLParam("resource", options.resource()))
-	if err != nil {
-		return nil, safeError(ctx, "device token", err)
-	}
-	if err := boundToken(token, time.Now()); err != nil {
 		return nil, err
-	}
-	idToken, ok := token.Extra("id_token").(string)
-	if !ok || idToken == "" {
-		return nil, errors.New("membership token response is missing an ID token")
 	}
 	stackURL, err := verifiedStack(ctx, provider, options, idToken, false)
 	if err != nil {
@@ -291,21 +271,54 @@ func (s *sessionTransport) refresh(ctx context.Context, next Session) (*Session,
 		return nil, safeError(ctx, "Membership refresh", err)
 	}
 	if err := boundToken(fresh, time.Now()); err != nil {
-		return nil, err
+		return s.rejectRefreshedIdentity(next, fresh, err)
 	}
 	if raw, ok := fresh.Extra("id_token").(string); ok && raw != "" {
-		uri, err := verifiedStack(ctx, s.provider, next.Options, raw, false)
-		if err != nil {
-			return nil, err
-		}
-		if uri != next.StackURL {
-			return nil, errors.New("stack URL changed during refresh; log in again")
+		if err := s.verifyRefreshedIdentity(ctx, next, raw); err != nil {
+			return s.rejectRefreshedIdentity(next, fresh, err)
 		}
 		next.IDToken = raw
 	}
 	next.MembershipToken = cleanToken(fresh)
 	next.StackToken = nil
 	return &next, nil
+}
+
+func (s *sessionTransport) verifyRefreshedIdentity(ctx context.Context, next Session, raw string) error {
+	claims, _, err := verifyIdentity(ctx, s.provider, next.Options, raw, false)
+	if err != nil {
+		return err
+	}
+	uri, err := selectStack(next.Options, claims)
+	if err != nil {
+		return err
+	}
+	if uri != next.StackURL {
+		return errors.New("stack URL changed during refresh; log in again")
+	}
+	if next.allowedScopes != nil {
+		target, err := resolveTarget(next.Options, claims, next.Options)
+		if err != nil {
+			return err
+		}
+		if !slices.Equal(target.Scopes, next.allowedScopes) {
+			return errors.New("refreshed session permissions differ from root identity; log in again")
+		}
+	}
+	return nil
+}
+
+func (s *sessionTransport) rejectRefreshedIdentity(next Session, fresh *oauth2.Token, verificationErr error) (*Session, error) {
+	if next.allowedScopes != nil {
+		// Keep consumed refresh rotation, but prevent every client from using the
+		// old identity proof or an existing stack token after verification fails.
+		next.MembershipToken = cleanToken(fresh)
+		next.IDToken, next.StackToken = "", nil
+		if err := s.persist(next); err != nil {
+			return nil, err
+		}
+	}
+	return nil, verificationErr
 }
 
 func (s *sessionTransport) exchange(ctx context.Context, next Session, refreshed bool) (*Session, error) {
@@ -433,6 +446,7 @@ func validatedSession(ctx context.Context, provider *oidc.Provider, expected Opt
 		return Session{}, errors.New("session stack URL differs from verified claims; log in again")
 	}
 	state := *session
+	state.allowedScopes = slices.Clone(session.allowedScopes)
 	state.Options = options
 	state.MembershipToken = cleanToken(session.MembershipToken)
 	state.StackToken = cleanToken(session.StackToken)

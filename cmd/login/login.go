@@ -1,8 +1,9 @@
-// Package login connects saved Cloud profiles using the Membership device flow.
+// Package login creates or renews Cloud identities using the Membership device flow.
 package login
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/spf13/cobra"
@@ -13,48 +14,39 @@ import (
 )
 
 func NewCommand(s *connection.Settings) *cobra.Command {
-	return &cobra.Command{Use: "login", Short: "Log in to a saved Cloud connection", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+	return &cobra.Command{Use: "login", Short: "Log in to the Cloud (creates a connection automatically)", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
 		return runLogin(s, cmd)
 	}}
 }
 
 func runLogin(s *connection.Settings, cmd *cobra.Command) error {
-	opts, entry, name, dir, err := s.Resolve(cmd)
+	if s.Output != "json" {
+		return fmt.Errorf("unsupported output format: use --output=json")
+	}
+	client, err := loginHTTPClient(s, cmd.ErrOrStderr())
 	if err != nil {
 		return err
 	}
-	if name == "" {
-		return fmt.Errorf("save a Cloud connection with connections add before logging in")
-	}
-	if err := connection.Validate(opts); err != nil {
-		return err
-	}
-	if opts.AuthMode != "cloud" {
-		return fmt.Errorf("login requires auth-mode=cloud")
-	}
-	if opts != entry.Options {
-		return fmt.Errorf("cloud settings changed; replace the connection before logging in")
-	}
-	client, err := loginHTTPClient(s)
+	opts, entry, name, dir, err := s.LoginConnection(cmd.Context(), cmd)
 	if err != nil {
 		return err
 	}
-	session, err := cloud.Login(cmd.Context(), client, cloud.Options{Issuer: opts.Issuer, ClientID: opts.ClientID, Organization: opts.Organization, Stack: opts.Stack}, cmd.ErrOrStderr())
+	session, err := cloud.LoginIdentity(cmd.Context(), client, cloud.Options{Issuer: opts.Issuer, ClientID: opts.ClientID}, cmd.ErrOrStderr(), s.BrowserOpener())
 	if err != nil {
 		return err
 	}
 	expected := entry.Revision
-	if err := connection.SaveSession(cmd.Context(), dir, name, &expected, session); err != nil {
+	if err := connection.SaveLoginSession(cmd.Context(), dir, name, &expected, opts, session); err != nil {
 		return err
 	}
 	return command.WriteJSON(cmd.OutOrStdout(), []byte(`{"loggedIn":true}`))
 }
 
-func loginHTTPClient(s *connection.Settings) (*http.Client, error) {
+func loginHTTPClient(s *connection.Settings, out io.Writer) (*http.Client, error) {
 	if s.Timeout <= 0 {
 		return nil, fmt.Errorf("timeout must be positive")
 	}
-	return &http.Client{Timeout: s.Timeout, CheckRedirect: func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }}, nil
+	return s.HTTPClient(out), nil
 }
 
 func NewLogoutCommand(s *connection.Settings) *cobra.Command {

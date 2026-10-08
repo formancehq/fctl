@@ -233,10 +233,25 @@ func safeError(ctx context.Context, operation string, err error) error {
 	if errors.Is(err, context.DeadlineExceeded) {
 		return fmt.Errorf("%s: %w", operation, context.DeadlineExceeded)
 	}
-	if retrieve, ok := errors.AsType[*oauth2.RetrieveError](err); ok && retrieve.Response != nil {
-		return fmt.Errorf("%s failed (HTTP %d)", operation, retrieve.Response.StatusCode)
+	if retrieve, ok := errors.AsType[*oauth2.RetrieveError](err); ok {
+		suffix := safeOAuthCode(retrieve.ErrorCode)
+		if retrieve.Response != nil {
+			return fmt.Errorf("%s failed (HTTP %d)%s", operation, retrieve.Response.StatusCode, suffix)
+		}
+		return fmt.Errorf("%s failed%s", operation, suffix)
 	}
 	return fmt.Errorf("%s failed", operation)
+}
+
+func safeOAuthCode(code string) string {
+	switch code {
+	case "invalid_grant", "invalid_client", "invalid_scope", "invalid_request",
+		"access_denied", "expired_token", "unauthorized_client", "unsupported_grant_type",
+		"authorization_pending", "slow_down", "server_error", "temporarily_unavailable":
+		return ": " + code
+	default:
+		return ""
+	}
 }
 
 // cancelBody keeps the client lifetime and request cancellation active through

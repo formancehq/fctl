@@ -16,7 +16,7 @@ func executeRoot(t *testing.T, args ...string) (string, string, error) {
 	var stdout, stderr bytes.Buffer
 	root.SetOut(&stdout)
 	root.SetErr(&stderr)
-	root.SetArgs(args)
+	root.SetArgs(append([]string{"--no-browser"}, args...))
 	err := root.ExecuteContext(t.Context())
 	return stdout.String(), stderr.String(), err
 }

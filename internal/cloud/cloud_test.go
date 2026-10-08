@@ -483,6 +483,11 @@ func (f *fixture) serveMembershipToken(t *testing.T, w http.ResponseWriter, r *h
 		f.serveRefresh(t, w, r)
 		return
 	}
+	if r.Form.Has("scope") {
+		w.WriteHeader(http.StatusBadRequest)
+		writeJSON(t, w, map[string]string{"error": "server_error"})
+		return
+	}
 	poll := f.polls.Add(1)
 	if int(poll) <= len(f.pollResults) && f.pollResults[poll-1] != "" {
 		w.Header().Set("Content-Type", "application/json")

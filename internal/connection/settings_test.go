@@ -194,7 +194,7 @@ func TestValidateConfiguration(t *testing.T) {
 		{},
 		{AuthMode: "none", LedgerURL: "http://local", ClientID: "client"},
 		{AuthMode: "client-credentials", LedgerURL: "http://local"},
-		{AuthMode: "cloud", Issuer: "https://issuer", Organization: "org"},
+		{AuthMode: "cloud", Issuer: "http://issuer"},
 		{AuthMode: "cloud", Issuer: "https://issuer", Organization: "org", Stack: "stack", LedgerURL: "https://other"},
 		{AuthMode: "none", LedgerURL: "https://user:secret@host"}, //nolint:gosec // Invalid synthetic URL is a rejection fixture, not a credential.
 	} {

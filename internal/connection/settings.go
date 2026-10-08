@@ -5,6 +5,7 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -15,7 +16,9 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 
 	"github.com/formancehq/fctl/v4/internal/api"
+	"github.com/formancehq/fctl/v4/internal/browser"
 	"github.com/formancehq/fctl/v4/internal/cloud"
+	"github.com/formancehq/fctl/v4/internal/httpdebug"
 )
 
 type Settings struct {
@@ -24,6 +27,8 @@ type Settings struct {
 	Options   Options
 	Timeout   time.Duration
 	Output    string
+	NoBrowser bool
+	Debug     bool
 }
 
 func (s *Settings) Bind(root *cobra.Command) {
@@ -32,6 +37,8 @@ func (s *Settings) Bind(root *cobra.Command) {
 	f.StringVar(&s.Directory, "config-dir", "", "Private v4 configuration directory (FCTL_CONFIG_DIR)")
 	f.DurationVar(&s.Timeout, "timeout", 30*time.Second, "Timeout for each HTTP request")
 	f.StringVarP(&s.Output, "output", "o", "json", "Output format: json")
+	f.BoolVarP(&s.Debug, "debug", "d", false, "Trace HTTP requests and responses on stderr (credentials redacted)")
+	f.BoolVar(&s.NoBrowser, "no-browser", false, "Display login instructions without opening a browser")
 	for _, setting := range s.fields() {
 		f.StringVar(setting.value, setting.name, "", setting.help)
 	}
@@ -132,7 +139,7 @@ func (s *Settings) Client(ctx context.Context, cmd *cobra.Command, service strin
 	if err := Validate(options); err != nil {
 		return nil, err
 	}
-	client := &http.Client{Timeout: s.Timeout, CheckRedirect: func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }}
+	client := s.HTTPClient(cmd.ErrOrStderr())
 	base, err := endpoint(options, service)
 	if err != nil {
 		return nil, err
@@ -142,7 +149,7 @@ func (s *Settings) Client(ctx context.Context, cmd *cobra.Command, service strin
 	case "client-credentials":
 		client, err = credentialClient(ctx, client, options)
 	case "cloud":
-		client, base, err = savedCloudClient(ctx, client, options, entry, name, dir)
+		client, base, err = savedCloudClient(ctx, client, options, entry, name, dir, cmd.ErrOrStderr(), s.BrowserOpener())
 		base = strings.TrimRight(base, "/") + "/api/" + service
 	default:
 		return nil, fmt.Errorf("choose --auth-mode=none, client-credentials or cloud")
@@ -153,9 +160,9 @@ func (s *Settings) Client(ctx context.Context, cmd *cobra.Command, service strin
 	return api.New(base, client)
 }
 
-func savedCloudClient(ctx context.Context, client *http.Client, options Options, entry Entry, name, dir string) (*http.Client, string, error) {
-	if options != entry.Options {
-		return nil, "", fmt.Errorf("cloud connection settings changed; save a connection and log in again")
+func savedCloudClient(ctx context.Context, client *http.Client, options Options, entry Entry, name, dir string, out io.Writer, open func(context.Context, string) error) (*http.Client, string, error) {
+	if cloudIdentity(options) != cloudIdentity(entry.Options) {
+		return nil, "", fmt.Errorf("cloud identity settings changed; log in again with the chosen issuer and client")
 	}
 	if entry.Session == nil {
 		return nil, "", fmt.Errorf("connection is not logged in; run fctl login --connection %s", name)
@@ -184,7 +191,31 @@ func savedCloudClient(ctx context.Context, client *http.Client, options Options,
 		})
 		return token, err
 	}
-	return cloud.Client(ctx, client, entry.Session, nil, coordinator)
+	if entry.Session.Options.Stack != "" {
+		if options != entry.Options {
+			return nil, "", fmt.Errorf("this older session targets a single stack; run fctl login before changing its target")
+		}
+		return cloud.Client(ctx, client, entry.Session, nil, coordinator)
+	}
+	return cloud.ClientForTarget(ctx, client, entry.Session, cloud.Options{Issuer: options.Issuer, ClientID: options.ClientID, Organization: options.Organization, Stack: options.Stack}, out, open, coordinator)
+}
+
+func (s *Settings) BrowserOpener() func(context.Context, string) error {
+	if s.NoBrowser {
+		return nil
+	}
+	return browser.Open
+}
+
+func cloudIdentity(options Options) Options {
+	options.Organization, options.Stack = "", ""
+	if options.Issuer == "" {
+		options.Issuer = cloud.DefaultIssuer
+	}
+	if options.ClientID == "" {
+		options.ClientID = "fctl"
+	}
+	return options
 }
 
 func Validate(o Options) error {
@@ -242,13 +273,11 @@ func validateCredentials(o Options) error {
 }
 
 func validateCloud(o Options) error {
-	if o.Issuer == "" || o.Organization == "" || o.Stack == "" {
-		return fmt.Errorf("cloud requires issuer, organization and stack")
-	}
 	if o.StackURL != "" || o.LedgerURL != "" || o.AuthURL != "" || o.TokenURL != "" || o.Scopes != "" {
 		return fmt.Errorf("cloud service endpoints and scopes are supplied by Membership")
 	}
-	return nil
+	issuer := cmp.Or(o.Issuer, cloud.DefaultIssuer)
+	return api.ValidateSecureURL(issuer)
 }
 
 func endpoint(o Options, service string) (string, error) {
@@ -300,4 +329,13 @@ func (s safeSource) Token() (*oauth2.Token, error) {
 		return nil, fmt.Errorf("OAuth2 authentication failed; check client credentials and token endpoint")
 	}
 	return token, nil
+}
+
+// HTTPClient supplies the shared transport for services and authentication.
+func (s *Settings) HTTPClient(out io.Writer) *http.Client {
+	client := &http.Client{Timeout: s.Timeout, CheckRedirect: func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }}
+	if s.Debug {
+		client.Transport = httpdebug.New(nil, out)
+	}
+	return client
 }

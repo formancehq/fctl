@@ -114,6 +114,28 @@ func SaveSession(ctx context.Context, directory, name string, expected *string, 
 	return err
 }
 
+// SaveLoginSession commits profile settings, identity and active selection only
+// after successful authentication. An empty revision means the name was absent.
+func SaveLoginSession(ctx context.Context, directory, name string, expected *string, options Options, session *cloud.Session) error {
+	var revision string
+	err := Update(ctx, directory, func(store *Store) error {
+		current, exists := store.Connections[name]
+		if (*expected == "" && exists) || (*expected != "" && (!exists || current.Revision != *expected)) {
+			return fmt.Errorf("connection changed during login; retry with its current settings")
+		}
+		entry := NewEntry(options)
+		entry.Session = session
+		revision = entry.Revision
+		store.Connections[name] = entry
+		store.Active = name
+		return nil
+	})
+	if err == nil {
+		*expected = revision
+	}
+	return err
+}
+
 type Store struct {
 	Active      string           `json:"active"`
 	Connections map[string]Entry `json:"connections"`

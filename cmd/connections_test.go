@@ -66,7 +66,7 @@ func TestConnectionErrorsAndLoginBoundaries(t *testing.T) {
 		{"connections", "delete", "missing", "--confirm"},
 		{"connections", "use", "missing"},
 		{"--connection", "missing", "connections", "show"},
-		{"login"},
+		{"login", "--connection", "local"},
 	} {
 		if _, _, err := executeRoot(t, append([]string{"--config-dir", dir}, args...)...); err == nil {
 			t.Fatalf("accepted invalid command %v", args)
