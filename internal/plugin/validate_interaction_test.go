@@ -192,6 +192,13 @@ func TestInteractionRejectsInvalidChoiceSources(t *testing.T) {
 		{"negative argument reference", "outside command bounds", func(s *pluginsdk.ChoiceSource) { s.Args = []string{"$arg-1"} }},
 		{"invalid after field", "after field", func(s *pluginsdk.ChoiceSource) { s.AfterField = "id/name" }},
 		{"blank after field", "after field", func(s *pluginsdk.ChoiceSource) { s.AfterField = " " }},
+		{"empty exclusion field", "valid field name", func(s *pluginsdk.ChoiceSource) { s.ExcludeTrueFields = []string{""} }},
+		{"blank exclusion field", "valid field name", func(s *pluginsdk.ChoiceSource) { s.ExcludeTrueFields = []string{" "} }},
+		{"nested exclusion field", "valid field name", func(s *pluginsdk.ChoiceSource) { s.ExcludeTrueFields = []string{"catalog.deprecated"} }},
+		{"numeric exclusion field prefix", "valid field name", func(s *pluginsdk.ChoiceSource) { s.ExcludeTrueFields = []string{"1deprecated"} }},
+		{"duplicate exclusion field", "duplicate excluded field", func(s *pluginsdk.ChoiceSource) {
+			s.ExcludeTrueFields = []string{"deprecated", "archived", "deprecated"}
+		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -277,6 +284,11 @@ func TestInteractionAllowsSupportedDeclarations(t *testing.T) {
 			input.Kind, input.Source, input.Default = "select", interactionSource(), "not-yet-listed"
 			input.Source.PreferredPrefix, input.Source.AfterField = "v4.", "id"
 			input.Source.Args, input.Source.Flags = []string{"$arg0"}, map[string]string{"filter": "$tenant", "enabled": "true"}
+		}},
+		{"exclusion field names", func(m *pluginsdk.Manifest) {
+			input := &m.Root.Subcommands[0].Inputs[0]
+			input.Kind, input.Source = "select", interactionSource()
+			input.Source.ExcludeTrueFields = []string{"deprecated", "Deprecated", "is_archived", "legacy-status", "_hidden2"}
 		}},
 		{"source mutation guarded at execution", func(m *pluginsdk.Manifest) {
 			input := &m.Root.Subcommands[0].Inputs[0]

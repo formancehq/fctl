@@ -287,10 +287,27 @@ func validateChoiceSourceHeader(command pluginsdk.CommandSpec, flags map[string]
 			return fmt.Errorf("choice source label fields must not be empty")
 		}
 	}
+	if err := validateChoiceExclusions(source.ExcludeTrueFields); err != nil {
+		return err
+	}
 	return validateChoicePagination(flags, source)
 }
 
 var choiceFieldName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_-]*$`)
+
+func validateChoiceExclusions(fields []string) error {
+	seen := make(map[string]bool)
+	for _, field := range fields {
+		if !choiceFieldName.MatchString(field) {
+			return fmt.Errorf("choice source excluded field %q must be a valid field name", field)
+		}
+		if seen[field] {
+			return fmt.Errorf("choice source has duplicate excluded field %q", field)
+		}
+		seen[field] = true
+	}
+	return nil
+}
 
 func validateChoicePagination(flags map[string]pluginsdk.FlagSpec, source pluginsdk.ChoiceSource) error {
 	if source.AfterField == "" {
