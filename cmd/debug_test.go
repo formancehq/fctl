@@ -44,7 +44,7 @@ func TestDebugLedgerKeepsJSONOnStdout(t *testing.T) {
 func debugLedgerHandler(t *testing.T, payload string) http.Handler {
 	t.Helper()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet || r.URL.EscapedPath() != "/prefix/v3/" || r.URL.Query().Get("pageSize") != "100" {
+		if r.Method != http.MethodGet || r.URL.EscapedPath() != "/prefix/v3/" || r.URL.RawQuery != "" {
 			t.Errorf("unexpected ledger request: %s %s", r.Method, r.URL.RequestURI())
 		}
 		if r.Header.Get("Authorization") != "" {

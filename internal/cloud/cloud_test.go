@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"testing/synctest"
@@ -22,6 +23,12 @@ import (
 
 	"golang.org/x/oauth2"
 )
+
+// Provider fixtures can share an immutable signing key. Signature rejection
+// tests still generate a separate key, avoiding RSA key generation per case.
+var fixtureSigningKey = sync.OnceValues(func() (*rsa.PrivateKey, error) {
+	return rsa.GenerateKey(rand.Reader, 2048)
+})
 
 type fixture struct {
 	server                                 *httptest.Server
@@ -45,7 +52,7 @@ type fixture struct {
 
 func newFixture(t *testing.T) *fixture {
 	t.Helper()
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	key, err := fixtureSigningKey()
 	if err != nil {
 		t.Fatal(err)
 	}

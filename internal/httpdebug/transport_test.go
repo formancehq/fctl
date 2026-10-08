@@ -54,6 +54,32 @@ func assertHidden(t *testing.T, trace string, secrets ...string) {
 	}
 }
 
+func TestDeploySecretsAreRedactedWithoutChangingResponse(t *testing.T) {
+	body := `{"name":"visible-variable","variables":[{"key":"credential","value":"secret-variable"}],"terraformState":{"outputs":{"password":"secret-state"}},"tfstate":"secret-raw-state"}`
+	var trace bytes.Buffer
+	req := debugRequest(t, "POST", "https://example.test/variables", body, "application/json")
+	response, err := httpdebug.New(roundTripFunc(func(got *http.Request) (*http.Response, error) {
+		data, readErr := io.ReadAll(got.Body)
+		if readErr != nil || string(data) != body {
+			t.Fatalf("request body changed: %s %v", data, readErr)
+		}
+		if closeErr := got.Body.Close(); closeErr != nil {
+			t.Fatal(closeErr)
+		}
+		return fixtureResponse(body, "application/json"), nil
+	}), &trace).RoundTrip(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := consumeResponse(t, response); got != body {
+		t.Fatal("response body changed")
+	}
+	assertHidden(t, trace.String(), "secret-variable", "secret-state", "secret-raw-state")
+	if !strings.Contains(trace.String(), "visible-variable") {
+		t.Fatal("trace lost non-secret variable name")
+	}
+}
+
 func TestTraceRedactsNestedJSONHeadersAndURLsWithoutMutation(t *testing.T) {
 	requestBody := `{"client_secret":"secret-client","nested":[{"access_token":"secret-access","password":"secret-password","assertion":"secret-assertion"}],"name":"visible","amount":9007199254740993}`
 	responseBody := `{"id_token":"secret-id","refresh_token":"secret-refresh","error_description":"unstructured echoed credential","verification_uri_complete":"https://example.test/verify?user_code=secret-verification&locale=en","data":{"name":"response-visible"}}`

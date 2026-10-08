@@ -31,6 +31,7 @@ type operation struct {
 	body               bodyMode
 	idempotency        bool
 	page, reverse      bool
+	afterID            bool
 	filter, dates      bool
 	inspect, bulk      bool
 	boolQuery          map[string]string
@@ -74,7 +75,16 @@ func queryFlags(op operation) []pluginsdk.FlagSpec {
 		if op.inspect {
 			usage = "Results per index page (1 through 10000)"
 		}
-		flags = append(flags, pluginsdk.FlagSpec{Name: "page-size", Type: "uint32", Default: "100", Usage: usage}, pluginsdk.FlagSpec{Name: "cursor", Type: "string", Usage: "Opaque next or previous token from the server"})
+		flags = append(flags, pluginsdk.FlagSpec{Name: "page-size", Type: "uint32", Default: "100", Usage: usage})
+		if op.inspect {
+			flags = append(flags, pluginsdk.FlagSpec{Name: "cursor", Type: "string", Usage: "Opaque nextCursor token returned by index inspection"})
+		} else {
+			afterUsage := "Continue after this account address (exclusive); keep the same filters and order"
+			if op.afterID {
+				afterUsage = "Continue after this unsigned transaction or log ID (exclusive); keep the same filters and order"
+			}
+			flags = append(flags, pluginsdk.FlagSpec{Name: "after", Type: "string", Usage: afterUsage})
+		}
 	}
 	if op.reverse {
 		flags = append(flags, pluginsdk.FlagSpec{Name: "reverse", Type: "bool", Default: "false", Usage: "Reverse the endpoint's default ordering"})
@@ -134,11 +144,8 @@ func requestHeaders(op operation, flags map[string]string) (http.Header, error) 
 
 func requestQuery(op operation, req pluginsdk.ExecuteRequest) (url.Values, error) {
 	query := make(url.Values)
-	if op.page || op.inspect {
-		query.Set("pageSize", req.Flags["page-size"])
-		if req.Flags["cursor"] != "" {
-			query.Set("cursor", req.Flags["cursor"])
-		}
+	if err := paginationQuery(query, op, req.Flags); err != nil {
+		return nil, err
 	}
 	if op.reverse && req.ChangedFlags["reverse"] {
 		query.Set("reverse", req.Flags["reverse"])
@@ -157,6 +164,24 @@ func requestQuery(op operation, req pluginsdk.ExecuteRequest) (url.Values, error
 	copyOptions(req, query, op.boolQuery)
 	copyOptions(req, query, op.stringQuery)
 	return query, nil
+}
+
+func paginationQuery(query url.Values, op operation, flags map[string]string) error {
+	if op.page || op.inspect {
+		query.Set("pageSize", flags["page-size"])
+		if op.inspect && flags["cursor"] != "" {
+			query.Set("cursor", flags["cursor"])
+		}
+	}
+	if op.page && flags["after"] != "" {
+		if op.afterID {
+			if _, err := strconv.ParseUint(flags["after"], 10, 64); err != nil {
+				return fmt.Errorf("after must be an unsigned 64-bit transaction or log ID: %w", err)
+			}
+		}
+		query.Set("after", flags["after"])
+	}
+	return nil
 }
 
 func dateQuery(query url.Values, flags map[string]string) error {

@@ -163,8 +163,16 @@ func TestQueryAndHeaders(t *testing.T) {
 
 func checkListQuery(t *testing.T, collection string) {
 	t.Helper()
-	args := []string{"--ledger", "books", "--consistency", " STALE ", collection, "list", "--page-size", "0", "--cursor", "next/+=", "--reverse", "--filter", `metadata[score] >= 9007199254740993`}
-	want := map[string]string{"pageSize": "0", "cursor": "next/+=", "reverse": "true", "filter": `metadata[score] >= 9007199254740993`}
+	after := "18446744073709551615"
+	if collection == "accounts" {
+		after = "users:next/+="
+	}
+	args := []string{"--ledger", "books", "--consistency", " STALE ", collection, "list", "--page-size", "0", "--after", after, "--filter", `metadata[score] >= 9007199254740993`}
+	want := map[string]string{"pageSize": "0", "after": after, "filter": `metadata[score] >= 9007199254740993`}
+	if collection != "logs" {
+		args = append(args, "--reverse")
+		want["reverse"] = "true"
+	}
 	if collection != "accounts" {
 		args = append(args, "--start-date", "2026-10-01T00:00:00Z", "--end-date", "2026-10-08T12:00:00+02:00")
 		want["startDate"] = "2026-10-01T00:00:00Z"
@@ -175,6 +183,9 @@ func checkListQuery(t *testing.T, collection string) {
 		t.Fatal(err)
 	}
 	checkQuery(t, reqs[0].query, want)
+	if reqs[0].query.Has("cursor") || (collection == "logs" && reqs[0].query.Has("reverse")) {
+		t.Fatalf("unsupported query keys: %v", reqs[0].query)
+	}
 	if reqs[0].header.Get("X-Consistency") != "stale" {
 		t.Error("missing read consistency")
 	}
@@ -205,6 +216,9 @@ func TestIndexInspectionQuery(t *testing.T) {
 		t.Fatal(err)
 	}
 	checkQuery(t, reqs[0].query, map[string]string{"mode": "facets", "pageSize": "10000", "cursor": "previous/+="})
+	if reqs[0].query.Has("after") {
+		t.Fatalf("index inspection sent entity pagination: %v", reqs[0].query)
+	}
 }
 
 func TestBodiesAndIdempotency(t *testing.T) {
@@ -310,7 +324,7 @@ func TestBulkBusinessFailuresAreNonzero(t *testing.T) {
 
 func TestPageSizeUsesV3ServerSemantics(t *testing.T) {
 	t.Parallel()
-	_, reqs, err := execute(t, []string{"list", "--page-size", "1001", "--reverse=false", "--consistency", "linearizable"}, "", `{"data":[],"hasMore":false}`, 200)
+	_, reqs, err := execute(t, []string{"--ledger", "books", "accounts", "list", "--page-size", "1001", "--reverse=false", "--consistency", "linearizable"}, "", `{"data":[],"hasMore":false}`, 200)
 	if err != nil || reqs[0].query.Get("pageSize") != "1001" || reqs[0].query.Get("reverse") != "false" || reqs[0].header.Get("X-Consistency") != "linearizable" {
 		t.Fatalf("page options = %v, err=%v", reqs, err)
 	}

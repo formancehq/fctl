@@ -175,6 +175,49 @@ func TestNormalizeDoesNotMutateCaller(t *testing.T) {
 	}
 }
 
+func TestNormalizeContextIsTransportNeutralAndIsolated(t *testing.T) {
+	t.Parallel()
+	request := contractRequest()
+	request.Context = map[string]string{"organization": "org-1", "stack": "stack-1", "organizationIDs": `["org-1","org-2"]`}
+	before := jsonClone(t, request)
+	normalized, err := pluginsdk.NormalizeRequest(contractManifest(), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(request, before) || !maps.Equal(normalized.Context, before.Context) {
+		t.Fatal("normalization changed caller state or host metadata")
+	}
+	if restored := jsonClone(t, normalized); !maps.Equal(restored.Context, normalized.Context) {
+		t.Fatal("protocol serialization lost context metadata")
+	}
+	normalized.Context["organization"] = "plugin-change"
+	if request.Context["organization"] != "org-1" {
+		t.Fatal("plugin metadata mutation reached the caller")
+	}
+	request.Context["stack"] = "host-change"
+	if normalized.Context["stack"] != "stack-1" {
+		t.Fatal("caller metadata mutation reached the normalized request")
+	}
+}
+
+func TestNormalizeContextIsOptional(t *testing.T) {
+	t.Parallel()
+	request := contractRequest()
+	normalized, err := pluginsdk.NormalizeRequest(contractManifest(), request)
+	if err != nil || normalized.Context != nil || request.Context != nil {
+		t.Fatalf("nil context changed: normalized=%v request=%v err=%v", normalized.Context, request.Context, err)
+	}
+	request.Context = map[string]string{}
+	normalized, err = pluginsdk.NormalizeRequest(contractManifest(), request)
+	if err != nil || normalized.Context == nil {
+		t.Fatalf("explicit empty context changed: %v, %v", normalized.Context, err)
+	}
+	normalized.Context["region"] = "eu"
+	if len(request.Context) != 0 {
+		t.Fatal("empty context maps share storage")
+	}
+}
+
 func TestNormalizeFailureDoesNotMutateCaller(t *testing.T) {
 	request := contractRequest()
 	request.Flags["enabled"] = "not-a-bool"

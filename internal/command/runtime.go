@@ -14,6 +14,9 @@ import (
 )
 
 func WriteJSON(writer io.Writer, value json.RawMessage) error {
+	if renderer, ok := writer.(interface{ RenderJSON(json.RawMessage) error }); ok {
+		return renderer.RenderJSON(value)
+	}
 	var out bytes.Buffer
 	if err := json.Indent(&out, value, "", "  "); err != nil {
 		return err

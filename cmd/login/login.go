@@ -20,9 +20,6 @@ func NewCommand(s *connection.Settings) *cobra.Command {
 }
 
 func runLogin(s *connection.Settings, cmd *cobra.Command) error {
-	if s.Output != "json" {
-		return fmt.Errorf("unsupported output format: use --output=json")
-	}
 	client, err := loginHTTPClient(s, cmd.ErrOrStderr())
 	if err != nil {
 		return err

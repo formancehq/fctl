@@ -1,5 +1,5 @@
 // Package ledger implements the Ledger v3 plugin without CLI or configuration dependencies.
-// Routes follow release/v3.0 at 71b0feb549a7cbc22bddaca2859ae5d91a24d378.
+// Routes follow release/v3.0 at 0f4656d1efbcac42705839daccb34012e70d783a.
 package ledger
 
 import (
@@ -28,14 +28,14 @@ func (n *node) add(children ...*node) { n.children = append(n.children, children
 func buildLayout() (pluginsdk.Manifest, map[string]operation) {
 	m := layout{}
 	root := group("ledger", "Use the Ledger v3 data-plane API")
-	root.spec.Long = "Use the Ledger v3 data-plane API. Nested commands select a ledger with --ledger.\nList commands return one complete JSON page, including continuation tokens.\nPass the next or previous token to --cursor with the same filters and order."
+	root.spec.Long = "Use the Ledger v3 data-plane API. Nested commands select a ledger with --ledger.\nLedger list returns all ledgers. Accounts, transactions and logs return one page;\ncontinue with --after using the last account address or transaction/log ID,\nkeeping the same filters and order. Only index inspection uses opaque --cursor tokens."
 	root.spec.Example = "fctl ledger create books\nfctl ledger --ledger books transactions create --data @transaction.json --idempotency-key payment-42"
 	root.spec.Flags = []pluginsdk.FlagSpec{
 		{Name: "ledger", Type: "string", Persistent: true, Usage: "Ledger name for nested commands"},
 		{Name: "consistency", Type: "string", Persistent: true, Usage: "Read consistency: linearizable or stale (server default: linearizable)"},
 	}
 	root.add(
-		m.endpoint(operation{use: "list", short: "List ledgers", global: true, path: func([]string) []string { return []string{"v3", ""} }, page: true, reverse: true}),
+		m.endpoint(operation{use: "list", short: "List all ledgers", global: true, path: func([]string) []string { return []string{"v3", ""} }}),
 		m.endpoint(operation{use: "create [name]", short: "Create a ledger", ledgerArg: true, method: http.MethodPost, body: bodyDefault, idempotency: true}),
 		m.endpoint(operation{use: "show [name]", short: "Show a ledger", ledgerArg: true}),
 		m.endpoint(operation{use: "delete [name]", short: "Delete a ledger", ledgerArg: true, method: http.MethodDelete, idempotency: true}),
@@ -46,7 +46,7 @@ func buildLayout() (pluginsdk.Manifest, map[string]operation) {
 		m.accounts(), m.transactions(), m.metadata(nil, false), m.indexes(),
 	)
 	logs := group("logs", "Read ledger logs (requires the LOG index)")
-	logs.add(m.endpoint(operation{use: "list", short: "List one page of ledger logs", path: fixed("logs"), page: true, reverse: true, filter: true, dates: true}))
+	logs.add(m.endpoint(operation{use: "list", short: "List one page of ledger logs", path: fixed("logs"), page: true, afterID: true, filter: true, dates: true}))
 	root.add(logs)
 	bulk := m.endpoint(operation{use: "bulk", short: "Submit v3 bulk operations once", method: http.MethodPost, path: fixed("bulk"), body: bodyRequired, idempotency: true, bulk: true,
 		boolQuery: map[string]string{"atomic": "atomic", "continue-on-failure": "continueOnFailure"}})
@@ -71,7 +71,7 @@ func (m layout) accounts() *node {
 func (m layout) transactions() *node {
 	group := group("transactions", "Read, create and revert transactions")
 	group.add(
-		m.endpoint(operation{use: "list", short: "List transactions (newest first by default)", path: fixed("transactions"), page: true, reverse: true, filter: true, dates: true}),
+		m.endpoint(operation{use: "list", short: "List transactions (newest first by default)", path: fixed("transactions"), page: true, afterID: true, reverse: true, filter: true, dates: true}),
 		m.endpoint(operation{use: "show <id>", short: "Show a transaction", args: 1, transactionID: true, path: resource("transactions")}),
 		m.endpoint(operation{use: "create", short: "Create a transaction from v3 JSON (postings or Numscript)", method: http.MethodPost, path: fixed("transactions"), body: bodyRequired, idempotency: true}),
 		m.endpoint(operation{use: "revert <id>", short: "Revert a transaction", args: 1, transactionID: true, method: http.MethodPost, path: resource("transactions", "revert"), body: bodyOptional, idempotency: true}),

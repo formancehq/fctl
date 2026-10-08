@@ -21,7 +21,7 @@ func sensitive(key string) bool {
 		}
 	}
 	// Error text can echo arbitrary submitted secrets, even on OAuth failures.
-	return strings.HasPrefix(key, "error") || slices.Contains([]string{"clear", "code", "message", "detail", "details"}, key)
+	return strings.HasPrefix(key, "error") || slices.Contains([]string{"clear", "code", "message", "detail", "details", "value", "terraformstate", "tfstate"}, key)
 }
 
 func safeURL(u *url.URL) string {

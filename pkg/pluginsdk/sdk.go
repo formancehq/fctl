@@ -28,6 +28,7 @@ type Manifest struct {
 
 type CommandSpec struct {
 	Use         string        `json:"use"`
+	Service     string        `json:"service,omitzero"`
 	Short       string        `json:"short"`
 	Long        string        `json:"long,omitempty"`
 	Example     string        `json:"example,omitempty"`
@@ -44,14 +45,15 @@ type ArgsSpec struct {
 }
 
 type FlagSpec struct {
-	Name       string `json:"name"`
-	Shorthand  string `json:"shorthand,omitempty"`
-	Type       string `json:"type"`
-	Default    string `json:"default"`
-	Usage      string `json:"usage"`
-	Required   bool   `json:"required,omitempty"`
-	Persistent bool   `json:"persistent,omitempty"`
-	Body       bool   `json:"body,omitempty"`
+	Name        string `json:"name"`
+	Shorthand   string `json:"shorthand,omitempty"`
+	Type        string `json:"type"`
+	Default     string `json:"default"`
+	Usage       string `json:"usage"`
+	Required    bool   `json:"required,omitempty"`
+	Persistent  bool   `json:"persistent,omitempty"`
+	Body        bool   `json:"body,omitempty"`
+	RequireTrue bool   `json:"requireTrue,omitempty"`
 }
 
 // ExecuteRequest is transport-neutral. Endpoint is resolved by the host;
@@ -64,6 +66,9 @@ type ExecuteRequest struct {
 	ChangedFlags map[string]bool   `json:"changedFlags,omitempty"`
 	Body         json.RawMessage   `json:"body,omitempty"`
 	Endpoint     string            `json:"endpoint"`
+	// Context carries non-secret metadata supplied by the host, independently
+	// of transport and flags. It must never contain authentication material.
+	Context map[string]string `json:"context,omitempty"`
 }
 
 // A response can accompany an error, for example to preserve bulk partial results.
@@ -82,6 +87,25 @@ func CommandName(command CommandSpec) string {
 func FindCommand(manifest Manifest, path []string) (CommandSpec, error) {
 	command, _, err := find(manifest, path)
 	return command, err
+}
+
+// CommandService resolves optional per-command service overrides. An override
+// is inherited by descendants and names a host-provided connection boundary.
+func CommandService(manifest Manifest, path []string) (string, error) {
+	if len(path) == 0 {
+		return "", fmt.Errorf("unknown plugin command")
+	}
+	service := manifest.Service
+	for i := range path {
+		command, err := FindCommand(manifest, path[:i+1])
+		if err != nil {
+			return "", err
+		}
+		if command.Service != "" {
+			service = command.Service
+		}
+	}
+	return service, nil
 }
 
 func find(manifest Manifest, path []string) (CommandSpec, []FlagSpec, error) {
@@ -139,6 +163,7 @@ func NormalizeRequest(manifest Manifest, request ExecuteRequest) (ExecuteRequest
 	if request.Body != nil && (!json.Valid(request.Body) || len(request.Body) > 4<<20) {
 		return ExecuteRequest{}, fmt.Errorf("request body must be valid JSON within 4 MiB")
 	}
+	request.Context = maps.Clone(request.Context)
 	return request, nil
 }
 
@@ -183,6 +208,9 @@ func validateKnown[T any](values map[string]T, known map[string]FlagSpec) error 
 }
 
 func validateFlag(flag FlagSpec, value string) error {
+	if flag.RequireTrue && (flag.Type != "bool" || value != "true") {
+		return fmt.Errorf("--%s must be enabled for this command", flag.Name)
+	}
 	if flag.Required && value == "" {
 		return fmt.Errorf("--%s is required", flag.Name)
 	}

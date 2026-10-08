@@ -40,8 +40,14 @@ type Session struct {
 	StackURL        string              `json:"stack_url"`
 	StackToken      *oauth2.Token       `json:"stack_token,omitzero"`
 	Targets         map[string]*Session `json:"targets,omitzero"`
+	Organizations   map[string]*Session `json:"organizations,omitzero"`
+	Applications    map[string]*Session `json:"applications,omitzero"`
+	Application     string              `json:"application,omitzero"`
+	// Historical ID claims must not replace current authorization after renewal.
+	RequireUserInfo bool `json:"require_userinfo,omitzero"`
 	// Set only from the verified root on each coordinated reload, never from JSON.
 	allowedScopes []string
+	rootSubject   string
 }
 
 // Coordinator serializes authentication for one saved connection. While holding
@@ -273,11 +279,21 @@ func (s *sessionTransport) refresh(ctx context.Context, next Session) (*Session,
 	if err := boundToken(fresh, time.Now()); err != nil {
 		return s.rejectRefreshedIdentity(next, fresh, err)
 	}
+	next.MembershipToken = cleanToken(fresh)
 	if raw, ok := fresh.Extra("id_token").(string); ok && raw != "" {
 		if err := s.verifyRefreshedIdentity(ctx, next, raw); err != nil {
 			return s.rejectRefreshedIdentity(next, fresh, err)
 		}
 		next.IDToken = raw
+	} else if next.allowedScopes != nil {
+		target := targetAccess{Options: next.Options, URI: next.StackURL, Scopes: next.allowedScopes, Subject: next.rootSubject}
+		matches, err := verifyTargetSession(ctx, s.provider, target, &next, true, false)
+		if err != nil {
+			return s.rejectRefreshedIdentity(next, fresh, err)
+		}
+		if !matches {
+			return s.rejectRefreshedIdentity(next, fresh, errors.New("refreshed session permissions differ from root identity; log in again"))
+		}
 	}
 	next.MembershipToken = cleanToken(fresh)
 	next.StackToken = nil
@@ -285,25 +301,14 @@ func (s *sessionTransport) refresh(ctx context.Context, next Session) (*Session,
 }
 
 func (s *sessionTransport) verifyRefreshedIdentity(ctx context.Context, next Session, raw string) error {
-	claims, _, err := verifyIdentity(ctx, s.provider, next.Options, raw, false)
+	next.IDToken = raw
+	target := targetAccess{Options: next.Options, URI: next.StackURL, Scopes: next.allowedScopes, Subject: next.rootSubject}
+	matches, err := verifyTargetSession(ctx, s.provider, target, &next, false, false)
 	if err != nil {
 		return err
 	}
-	uri, err := selectStack(next.Options, claims)
-	if err != nil {
-		return err
-	}
-	if uri != next.StackURL {
-		return errors.New("stack URL changed during refresh; log in again")
-	}
-	if next.allowedScopes != nil {
-		target, err := resolveTarget(next.Options, claims, next.Options)
-		if err != nil {
-			return err
-		}
-		if !slices.Equal(target.Scopes, next.allowedScopes) {
-			return errors.New("refreshed session permissions differ from root identity; log in again")
-		}
+	if !matches {
+		return errors.New("refreshed session permissions differ from root identity; log in again")
 	}
 	return nil
 }
@@ -396,8 +401,16 @@ type stackAccess struct {
 	Scopes []string `json:"scopes"`
 }
 type organizationAccess struct {
-	ID     string        `json:"id"`
-	Stacks []stackAccess `json:"stacks"`
+	ID           string              `json:"id"`
+	Scopes       []string            `json:"scopes"`
+	Stacks       []stackAccess       `json:"stacks"`
+	Applications []applicationAccess `json:"applications"`
+}
+type applicationAccess struct {
+	ID     string   `json:"id"`
+	Name   string   `json:"name"`
+	Alias  string   `json:"alias"`
+	Scopes []string `json:"scopes"`
 }
 type identityClaims struct {
 	Organizations []organizationAccess `json:"org"`
@@ -438,12 +451,13 @@ func validatedSession(ctx context.Context, provider *oidc.Provider, expected Opt
 	if options != expected {
 		return Session{}, errors.New("cloud session options changed; recreate the client")
 	}
-	stackURL, err := verifiedStack(ctx, provider, options, session.IDToken, true)
+	target := targetAccess{Options: options, URI: session.StackURL, Scopes: session.allowedScopes, Subject: session.rootSubject}
+	matches, err := verifyTargetSession(ctx, provider, target, session, true, true)
 	if err != nil {
 		return Session{}, err
 	}
-	if session.StackURL != stackURL {
-		return Session{}, errors.New("session stack URL differs from verified claims; log in again")
+	if !matches {
+		return Session{}, errors.New("session permissions differ from root identity; log in again")
 	}
 	state := *session
 	state.allowedScopes = slices.Clone(session.allowedScopes)

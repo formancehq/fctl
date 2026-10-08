@@ -444,7 +444,7 @@ func (f *cliCloudFixture) device(t *testing.T, w http.ResponseWriter, r *http.Re
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		assertCLICloudForm(t, r, map[string]string{"organization_id": target.organization, "id_token_hint": f.idToken, "scope": "openid offline_access"})
+		assertCLICloudForm(t, r, map[string]string{"organization_id": target.organization, "id_token_hint": f.idToken, "scope": "openid offline_access accesses"})
 		code = target.deviceCode
 	} else {
 		assertCLICloudForm(t, r, map[string]string{"scope": "openid offline_access accesses on_behalf", "prompt": "no-org"})

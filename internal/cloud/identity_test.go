@@ -302,10 +302,25 @@ func TestTargetResolution(t *testing.T) {
 			if test.valid && targetKey(target.Options) != test.key {
 				t.Fatal("wrong target selected")
 			}
-			if err != nil && !strings.Contains(err.Error(), "org/first") {
-				t.Fatal("ambiguous/unknown selection omitted available IDs")
+			if err != nil && (!strings.Contains(err.Error(), "--organization") || !strings.Contains(err.Error(), "cloud stack list") || strings.Contains(err.Error(), "org/first")) {
+				t.Fatal("target selection error must give a concise discovery command")
 			}
 		})
+	}
+}
+
+func TestTargetSelectionErrorRemainsBounded(t *testing.T) {
+	f := newIdentityFixture(t)
+	options := f.root(t).Options
+	claims := identityClaims{Organizations: []organizationAccess{{ID: "org"}}}
+	for i := range 1000 {
+		claims.Organizations[0].Stacks = append(claims.Organizations[0].Stacks, stackAccess{
+			ID: "stack-" + strconv.Itoa(i), URI: f.f.server.URL, Scopes: []string{"stack:Read"},
+		})
+	}
+	_, err := resolveTarget(options, claims, Options{})
+	if err == nil || len(err.Error()) > 250 || strings.Count(err.Error(), "\n") > 2 || strings.Contains(err.Error(), "stack-0") {
+		t.Fatalf("target selection must not dump the access catalog: %v", err)
 	}
 }
 
@@ -354,7 +369,7 @@ func assertScopedForms(t *testing.T, forms []url.Values, id, resource string) {
 			t.Fatal("scoped flow requested broad scopes or lost resource")
 		}
 	}
-	if forms[0].Get("scope") != "openid offline_access" || forms[1].Has("scope") {
+	if forms[0].Get("scope") != "openid offline_access accesses" || forms[1].Has("scope") {
 		t.Fatal("scoped authorization scopes missing or repeated during polling")
 	}
 }

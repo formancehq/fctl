@@ -13,10 +13,10 @@ import (
 var identifier = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
 
 var coreFlags = map[string]bool{
-	"help": true, "version": true, "connection": true, "config-dir": true, "timeout": true, "output": true,
+	"help": true, "connection": true, "config-dir": true, "timeout": true, "output": true,
 	"stack-url": true, "ledger-url": true, "auth-url": true, "auth-mode": true, "token-url": true,
 	"client-id": true, "scopes": true, "issuer": true, "organization": true, "stack": true,
-	"no-browser": true, "debug": true,
+	"no-browser": true, "debug": true, "color": true,
 }
 var coreRoots = map[string]bool{"help": true, "completion": true, "version": true, "connections": true, "login": true, "logout": true}
 
@@ -64,6 +64,9 @@ func validateCommand(spec pluginsdk.CommandSpec, inherited validationScope) erro
 }
 
 func validateCommandHeader(spec pluginsdk.CommandSpec) error {
+	if spec.Service != "" && !identifier.MatchString(spec.Service) {
+		return fmt.Errorf("invalid command service %q", spec.Service)
+	}
 	fields := strings.Fields(spec.Use)
 	if len(fields) == 0 || !identifier.MatchString(fields[0]) || fields[0] == "help" {
 		return fmt.Errorf("invalid plugin command use %q", spec.Use)
@@ -118,6 +121,9 @@ func validateFlag(flag pluginsdk.FlagSpec, scope *validationScope) error {
 var shorthandName = regexp.MustCompile(`^[a-zA-Z]$`)
 
 func validateSpecialFlag(flag pluginsdk.FlagSpec, scope *validationScope) error {
+	if flag.RequireTrue && flag.Type != "bool" {
+		return fmt.Errorf("a required enabled flag must be boolean")
+	}
 	if flag.Body {
 		if flag.Type != "string" || scope.body != "" {
 			return fmt.Errorf("body must be a single string flag")

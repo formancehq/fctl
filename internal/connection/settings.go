@@ -19,6 +19,7 @@ import (
 	"github.com/formancehq/fctl/v4/internal/browser"
 	"github.com/formancehq/fctl/v4/internal/cloud"
 	"github.com/formancehq/fctl/v4/internal/httpdebug"
+	"github.com/formancehq/fctl/v4/internal/presentation"
 )
 
 type Settings struct {
@@ -29,6 +30,7 @@ type Settings struct {
 	Output    string
 	NoBrowser bool
 	Debug     bool
+	Color     string
 }
 
 func (s *Settings) Bind(root *cobra.Command) {
@@ -36,7 +38,8 @@ func (s *Settings) Bind(root *cobra.Command) {
 	f.StringVar(&s.Name, "connection", "", "Saved connection name (FCTL_CONNECTION)")
 	f.StringVar(&s.Directory, "config-dir", "", "Private v4 configuration directory (FCTL_CONFIG_DIR)")
 	f.DurationVar(&s.Timeout, "timeout", 30*time.Second, "Timeout for each HTTP request")
-	f.StringVarP(&s.Output, "output", "o", "json", "Output format: json")
+	f.StringVarP(&s.Output, "output", "o", "auto", "Output format: auto, table or json (auto uses tables in a terminal)")
+	f.StringVar(&s.Color, "color", "auto", "Color: auto, always or never (NO_COLOR disables automatic color)")
 	f.BoolVarP(&s.Debug, "debug", "d", false, "Trace HTTP requests and responses on stderr (credentials redacted)")
 	f.BoolVar(&s.NoBrowser, "no-browser", false, "Display login instructions without opening a browser")
 	for _, setting := range s.fields() {
@@ -126,8 +129,8 @@ func (s *Settings) Input(cmd *cobra.Command) Options {
 }
 
 func (s *Settings) Client(ctx context.Context, cmd *cobra.Command, service string) (*api.Client, error) {
-	if s.Output != "json" {
-		return nil, fmt.Errorf("unsupported output format: use --output=json")
+	if err := presentation.ValidateFormat(s.Output); err != nil {
+		return nil, err
 	}
 	if s.Timeout <= 0 {
 		return nil, fmt.Errorf("timeout must be positive")
@@ -140,6 +143,9 @@ func (s *Settings) Client(ctx context.Context, cmd *cobra.Command, service strin
 		return nil, err
 	}
 	client := s.HTTPClient(cmd.ErrOrStderr())
+	if service == "cloud" {
+		return s.membershipClient(ctx, cmd, client, options, entry, name, dir)
+	}
 	base, err := endpoint(options, service)
 	if err != nil {
 		return nil, err
@@ -150,7 +156,9 @@ func (s *Settings) Client(ctx context.Context, cmd *cobra.Command, service strin
 		client, err = credentialClient(ctx, client, options)
 	case "cloud":
 		client, base, err = savedCloudClient(ctx, client, options, entry, name, dir, cmd.ErrOrStderr(), s.BrowserOpener())
-		base = strings.TrimRight(base, "/") + "/api/" + service
+		if service != "stack" {
+			base = strings.TrimRight(base, "/") + "/api/" + service
+		}
 	default:
 		return nil, fmt.Errorf("choose --auth-mode=none, client-credentials or cloud")
 	}
@@ -167,30 +175,7 @@ func savedCloudClient(ctx context.Context, client *http.Client, options Options,
 	if entry.Session == nil {
 		return nil, "", fmt.Errorf("connection is not logged in; run fctl login --connection %s", name)
 	}
-	coordinator := func(ctx context.Context, work func(*cloud.Session, func(*cloud.Session) error) (*oauth2.Token, error)) (*oauth2.Token, error) {
-		var token *oauth2.Token
-		err := withLock(ctx, dir, "auth-"+name+".lock", func() error {
-			store, err := Load(dir)
-			if err != nil {
-				return err
-			}
-			current, exists := store.Connections[name]
-			if !exists || current.Session == nil || current.Options != entry.Options {
-				return fmt.Errorf("cloud connection changed or logged out during authentication")
-			}
-			expected := current.Revision
-			token, err = work(current.Session, func(session *cloud.Session) error {
-				// A rotated refresh token must survive cancellation of the
-				// following HTTP exchange. Keep CAS, but bound disk cleanup
-				// independently of the canceled command.
-				saveCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
-				defer cancel()
-				return SaveSession(saveCtx, dir, name, &expected, session)
-			})
-			return err
-		})
-		return token, err
-	}
+	coordinator := cloudCoordinator(dir, name, entry)
 	if entry.Session.Options.Stack != "" {
 		if options != entry.Options {
 			return nil, "", fmt.Errorf("this older session targets a single stack; run fctl login before changing its target")
@@ -283,6 +268,12 @@ func validateCloud(o Options) error {
 func endpoint(o Options, service string) (string, error) {
 	if o.AuthMode == "cloud" {
 		return "", nil
+	}
+	if service == "stack" {
+		if o.StackURL == "" {
+			return "", fmt.Errorf("configure --stack-url for stack utilities")
+		}
+		return o.StackURL, nil
 	}
 	var direct string
 	switch service {

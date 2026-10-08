@@ -2,6 +2,7 @@ package httpclient_test
 
 import (
 	"encoding/json"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -119,5 +120,61 @@ func TestEmptyAndInvalidResponses(t *testing.T) {
 		if (err != nil) != tc.fail || string(result) != tc.want {
 			t.Errorf("result=%s error=%v", result, err)
 		}
+	}
+}
+
+func TestWithContextClonesClientAndMetadata(t *testing.T) {
+	t.Parallel()
+	transport := &http.Client{}
+	base, err := httpclient.New("https://ledger.example/prefix", transport)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if base.Context() != nil {
+		t.Fatal("new client has metadata by default")
+	}
+	values := map[string]string{"organization": "org-1", "stack": "stack-1", "organizationIDs": `["org-1","org-2"]`}
+	want := maps.Clone(values)
+	client := base.WithContext(values)
+	if client == base || client.Endpoint() != base.Endpoint() || client.HTTPClient() != transport || base.Context() != nil {
+		t.Fatal("WithContext changed the original client or its HTTP transport")
+	}
+	values["organization"] = "host-change"
+	if !maps.Equal(client.Context(), want) {
+		t.Fatal("client metadata shares the caller map")
+	}
+	view := client.Context()
+	view["stack"] = "plugin-change"
+	delete(view, "organizationIDs")
+	if !maps.Equal(client.Context(), want) {
+		t.Fatal("Context exposed the client's metadata map")
+	}
+	replacement := client.WithContext(map[string]string{"organization": "org-2"})
+	if replacement.Context()["organization"] != "org-2" || len(replacement.Context()) != 1 || !maps.Equal(client.Context(), want) {
+		t.Fatal("derived context merged metadata or changed its parent")
+	}
+	if cleared := client.WithContext(nil); cleared.Context() != nil || !maps.Equal(client.Context(), want) {
+		t.Fatal("clearing derived metadata changed its parent")
+	}
+}
+
+func TestContextDoesNotEnterHTTPRequests(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.RequestURI() != "/v3/" || r.Header.Get("Organization") != "" || r.Header.Get("Stack") != "" {
+			t.Error("host metadata was added to the HTTP request")
+		}
+		if _, err := w.Write([]byte(`{"data":[]}`)); err != nil {
+			t.Error(err)
+		}
+	}))
+	t.Cleanup(server.Close)
+	client, err := httpclient.New(server.URL, server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+	client = client.WithContext(map[string]string{"organization": "org-1", "stack": "stack-1"})
+	if _, err := client.Do(t.Context(), http.MethodGet, "/v3/", nil, nil, nil); err != nil {
+		t.Fatal(err)
 	}
 }

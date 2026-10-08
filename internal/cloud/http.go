@@ -27,6 +27,7 @@ type discovery struct {
 	TokenEndpoint  string   `json:"token_endpoint"`
 	DeviceEndpoint string   `json:"device_authorization_endpoint"`
 	JWKS           string   `json:"jwks_uri"`
+	UserInfo       string   `json:"userinfo_endpoint"`
 	Algorithms     []string `json:"id_token_signing_alg_values_supported"`
 }
 
@@ -67,11 +68,16 @@ func membership(ctx context.Context, base *http.Client, options Options) (*oidc.
 			return nil, nil, errors.New("invalid or cross-origin Membership endpoint")
 		}
 	}
+	if metadata.UserInfo != "" {
+		if err := validateEndpoint(metadata.UserInfo); err != nil || !sameOrigin(options.Issuer, metadata.UserInfo) {
+			return nil, nil, errors.New("invalid or cross-origin Membership userinfo endpoint")
+		}
+	}
 	client := authClient(ctx, base, options.Issuer)
 	// Membership's historical device endpoint authenticates the public client
 	// using Basic auth. DeviceAuth otherwise sends client_id in the form.
 	client.Transport = &deviceTransport{base: client.Transport, endpoint: metadata.DeviceEndpoint, clientID: options.ClientID}
-	provider := (&oidc.ProviderConfig{IssuerURL: metadata.Issuer, TokenURL: metadata.TokenEndpoint, DeviceAuthURL: metadata.DeviceEndpoint, JWKSURL: metadata.JWKS, Algorithms: metadata.Algorithms}).NewProvider(oidc.ClientContext(ctx, client))
+	provider := (&oidc.ProviderConfig{IssuerURL: metadata.Issuer, TokenURL: metadata.TokenEndpoint, DeviceAuthURL: metadata.DeviceEndpoint, JWKSURL: metadata.JWKS, UserInfoURL: metadata.UserInfo, Algorithms: metadata.Algorithms}).NewProvider(oidc.ClientContext(ctx, client))
 	config := &oauth2.Config{ClientID: options.ClientID, Scopes: []string{oidc.ScopeOpenID, "offline_access"}, Endpoint: oauth2.Endpoint{TokenURL: metadata.TokenEndpoint, DeviceAuthURL: metadata.DeviceEndpoint, AuthStyle: oauth2.AuthStyleInHeader}}
 	return provider, config, nil
 }
@@ -108,7 +114,7 @@ func exchange(ctx context.Context, base *http.Client, stackURL, assertion string
 	}
 	defer closeResponse(resp.Body)
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("stack token exchange failed (HTTP %d)", resp.StatusCode)
+		return nil, authenticationFailure(fmt.Sprintf("stack token exchange failed (HTTP %d)", resp.StatusCode))
 	}
 	var result struct {
 		AccessToken string `json:"access_token"`
@@ -233,15 +239,26 @@ func safeError(ctx context.Context, operation string, err error) error {
 	if errors.Is(err, context.DeadlineExceeded) {
 		return fmt.Errorf("%s: %w", operation, context.DeadlineExceeded)
 	}
+	if trusted, ok := errors.AsType[*authenticationError](err); ok {
+		return authenticationFailure(operation + ": " + trusted.Error())
+	}
 	if retrieve, ok := errors.AsType[*oauth2.RetrieveError](err); ok {
 		suffix := safeOAuthCode(retrieve.ErrorCode)
 		if retrieve.Response != nil {
-			return fmt.Errorf("%s failed (HTTP %d)%s", operation, retrieve.Response.StatusCode, suffix)
+			return authenticationFailure(fmt.Sprintf("%s failed (HTTP %d)%s", operation, retrieve.Response.StatusCode, suffix))
 		}
-		return fmt.Errorf("%s failed%s", operation, suffix)
+		return authenticationFailure(fmt.Sprintf("%s failed%s", operation, suffix))
 	}
-	return fmt.Errorf("%s failed", operation)
+	return authenticationFailure(operation + " failed")
 }
+
+// Only package-generated labels/status/code enter this type. Never retain the
+// original provider error, whose body or description can contain credentials.
+type authenticationError struct{ message string }
+
+func (e *authenticationError) Error() string { return e.message }
+
+func authenticationFailure(message string) error { return &authenticationError{message: message} }
 
 func safeOAuthCode(code string) string {
 	switch code {

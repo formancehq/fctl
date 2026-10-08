@@ -17,20 +17,28 @@ import (
 // Resolver supplies the selected service endpoint and authenticated HTTP client.
 type Resolver func(context.Context, string) (*api.Client, error)
 
+// RequestResolver can select a named connection using already validated flags.
+type RequestResolver func(context.Context, string, pluginsdk.ExecuteRequest) (*api.Client, error)
+
 // Adapter installs commands from a frozen registry into the host root.
 type Adapter struct {
-	registry *Registry
-	resolve  Resolver
+	registry       *Registry
+	resolve        Resolver
+	resolveRequest RequestResolver
 }
 
 func NewCommand(registry *Registry, resolver Resolver) *Adapter {
 	return &Adapter{registry: registry, resolve: resolver}
 }
 
+func NewCommandWithRequest(registry *Registry, resolver RequestResolver) *Adapter {
+	return &Adapter{registry: registry, resolveRequest: resolver}
+}
+
 // AddTo validates every tree before attaching any command. Help and completion
 // use only manifest metadata; runtime client resolution happens inside RunE.
 func (a *Adapter) AddTo(root *cobra.Command) error {
-	if root == nil || a.registry == nil || a.resolve == nil {
+	if root == nil || a.registry == nil || (a.resolve == nil && a.resolveRequest == nil) {
 		return fmt.Errorf("plugin adapter requires root, registry and resolver")
 	}
 	var commands []*cobra.Command
@@ -135,7 +143,11 @@ func (a *Adapter) run(cmd *cobra.Command, entry registration, path []string, fla
 	if err != nil {
 		return err
 	}
-	client, err := a.resolve(cmd.Context(), entry.manifest.Service)
+	service, err := pluginsdk.CommandService(entry.manifest, path)
+	if err != nil {
+		return err
+	}
+	client, err := a.resolveClient(cmd.Context(), service, normalized)
 	if err != nil {
 		return err
 	}
@@ -143,6 +155,7 @@ func (a *Adapter) run(cmd *cobra.Command, entry registration, path []string, fla
 		return fmt.Errorf("plugin resolver returned no HTTP client")
 	}
 	normalized.Endpoint = client.Endpoint()
+	normalized.Context = client.Context()
 	instance := entry.factory(client.HTTPClient())
 	if instance == nil {
 		return fmt.Errorf("plugin factory returned nil")
@@ -152,6 +165,13 @@ func (a *Adapter) run(cmd *cobra.Command, entry registration, path []string, fla
 		return execErr
 	}
 	return errors.Join(execErr, command.WriteJSON(cmd.OutOrStdout(), response.Data))
+}
+
+func (a *Adapter) resolveClient(ctx context.Context, service string, request pluginsdk.ExecuteRequest) (*api.Client, error) {
+	if a.resolveRequest != nil {
+		return a.resolveRequest(ctx, service, request)
+	}
+	return a.resolve(ctx, service)
 }
 
 func prepareRequest(cmd *cobra.Command, manifest pluginsdk.Manifest, path []string, flags []pluginsdk.FlagSpec, args []string) (pluginsdk.ExecuteRequest, error) {

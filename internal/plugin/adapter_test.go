@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -289,3 +290,54 @@ func assertPartialResult(t *testing.T, err, executionErr, writerErr error, failW
 type errorWriter struct{ err error }
 
 func (w errorWriter) Write([]byte) (int, error) { return 0, w.err }
+
+func TestAdapterPassesIsolatedHostContext(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name     string
+		metadata map[string]string
+	}{
+		{"default nil", nil},
+		{"host metadata", map[string]string{"organization": "org-1", "stack": "stack-1", "organizationIDs": `["org-1","org-2"]`}},
+	} {
+		t.Run(tc.name, func(t *testing.T) { testAdapterContext(t, tc.metadata) })
+	}
+}
+
+func testAdapterContext(t *testing.T, metadata map[string]string) {
+	t.Helper()
+	want := maps.Clone(metadata)
+	httpClient := &http.Client{}
+	base, err := api.New("https://ledger.example/prefix", httpClient)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resolved := base.WithContext(metadata)
+	var received map[string]string
+	root := attach(t, testManifest(), func(context.Context, string) (*api.Client, error) {
+		return resolved, nil
+	}, func(injected *http.Client) pluginsdk.Plugin {
+		if injected != httpClient {
+			t.Error("metadata replaced the injected HTTP client")
+		}
+		return &fakePlugin{execute: func(_ context.Context, req pluginsdk.ExecuteRequest) (pluginsdk.ExecuteResponse, error) {
+			received = req.Context
+			return pluginsdk.ExecuteResponse{Data: json.RawMessage(`{"ok":true}`)}, nil
+		}}
+	})
+	var out bytes.Buffer
+	root.SetOut(&out)
+	root.SetArgs([]string{"ledger", "--tenant", "cli-tenant", "write", "demo", "--confirm"})
+	if err := root.ExecuteContext(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(received, want) || out.String() != "{\n  \"ok\": true\n}\n" {
+		t.Fatal("adapter lost host context or printed it as command output")
+	}
+	if received != nil {
+		received["organization"] = "plugin-change"
+	}
+	if !reflect.DeepEqual(resolved.Context(), want) || !reflect.DeepEqual(metadata, want) {
+		t.Fatal("plugin mutation reached the resolver client or host metadata")
+	}
+}

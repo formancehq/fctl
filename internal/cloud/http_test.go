@@ -51,3 +51,13 @@ func TestSafeOAuthErrorCancellationTakesPrecedence(t *testing.T) {
 		t.Fatalf("OAuth code masked cancellation: %v", err)
 	}
 }
+
+func TestSafeErrorPreservesOnlyTrustedInnerLabels(t *testing.T) {
+	provider := &oauth2.RetrieveError{Response: &http.Response{StatusCode: http.StatusBadRequest}, ErrorCode: "invalid_grant", ErrorDescription: "description-secret", Body: []byte("body-secret")}
+	inner := safeError(t.Context(), "Membership refresh", provider)
+	wrapped := fmt.Errorf("unsafe wrapper-secret: %w", inner)
+	got := safeError(t.Context(), "coordinate cloud authentication", wrapped)
+	if got.Error() != "coordinate cloud authentication: Membership refresh failed (HTTP 400): invalid_grant" {
+		t.Fatalf("trusted error lost its label or leaked provider/wrapper data: %v", got)
+	}
+}

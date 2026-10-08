@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net"
 	"net/http"
 	"net/url"
@@ -16,8 +17,9 @@ import (
 
 // Client targets one service endpoint, including any gateway prefix.
 type Client struct {
-	base string
-	http *http.Client
+	base     string
+	http     *http.Client
+	metadata map[string]string
 }
 
 // Error keeps a structured service failure, including partial bulk results.
@@ -37,6 +39,17 @@ func (e *Error) Error() string {
 
 func (c *Client) Endpoint() string         { return c.base }
 func (c *Client) HTTPClient() *http.Client { return c.http }
+
+// WithContext returns a client copy with non-secret host metadata. Values must
+// never contain authentication material. Metadata is not sent as HTTP headers.
+func (c *Client) WithContext(values map[string]string) *Client {
+	copyClient := *c
+	copyClient.metadata = maps.Clone(values)
+	return &copyClient
+}
+
+// Context returns a defensive copy of the host metadata, or nil when unset.
+func (c *Client) Context() map[string]string { return maps.Clone(c.metadata) }
 
 func New(base string, client *http.Client) (*Client, error) {
 	if err := ValidateURL(base); err != nil {
