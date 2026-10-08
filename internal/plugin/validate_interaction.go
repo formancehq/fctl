@@ -290,6 +290,9 @@ func validateChoiceSourceHeader(command pluginsdk.CommandSpec, flags map[string]
 	if err := validateChoiceExclusions(source.ExcludeTrueFields); err != nil {
 		return err
 	}
+	if err := validateChoiceMatches(source.MatchFields); err != nil {
+		return err
+	}
 	return validateChoicePagination(flags, source)
 }
 
@@ -305,6 +308,18 @@ func validateChoiceExclusions(fields []string) error {
 			return fmt.Errorf("choice source has duplicate excluded field %q", field)
 		}
 		seen[field] = true
+	}
+	return nil
+}
+
+func validateChoiceMatches(fields map[string]string) error {
+	for field, value := range fields {
+		if !choiceFieldName.MatchString(field) {
+			return fmt.Errorf("choice source match field %q must be a valid field name", field)
+		}
+		if value == "" {
+			return fmt.Errorf("choice source match field %q requires a nonempty value", field)
+		}
 	}
 	return nil
 }
