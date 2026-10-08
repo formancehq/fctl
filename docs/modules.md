@@ -1,10 +1,12 @@
 # Auth and Ledger modules
 
-The root embeds Auth and Ledger command constructors. Each constructor receives
-`command.Runtime`, which supplies an authenticated client for a service name.
-Modules own their request contracts and command flags. They do not read profiles
-or implement Cloud authentication. This boundary supports future packaging
-changes; external plugin loading is not implemented. Connectivity is deferred.
+The root registers Auth and Ledger plugin factories. Each plugin implements
+the public `pluginsdk.Plugin` manifest/execution contract. The core builds Cobra
+commands from manifests and supplies an authenticated HTTP client and endpoint.
+Plugins own service routes, payloads and command descriptions. They import no
+Cobra or core internal packages and do not read profiles or implement Cloud
+authentication. See the [plugin contract](plugins.md). External plugin loading
+is not implemented. Connectivity is deferred.
 
 ## Ledger
 

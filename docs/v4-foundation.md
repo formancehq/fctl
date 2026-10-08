@@ -11,8 +11,10 @@ command tree. Errors propagate to the entrypoint, which writes them to stderr
 and exits with status 1. Signal cancellation is propagated through the command
 context.
 
-The root registers `version`, connection management, login/logout, Auth and
-Ledger modules. Cobra provides help, `--version` and shell completion commands.
+The root registers `version`, connection management and login/logout. Auth and
+Ledger register through the embedded plugin registry and public SDK; the core
+builds their Cobra commands from manifests. Cobra provides help, `--version`
+and shell completion commands.
 No profile, authentication or network access is required to inspect help or
 version information.
 

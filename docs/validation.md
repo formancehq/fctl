@@ -33,8 +33,17 @@ this implementation.
 
 ## Reproducible repository checks
 
-The final repository checks passed with zero lint issues. The race-enabled suite
-passed and aggregate statement coverage was 86.2% with fresh test execution.
+The initial implementation checks passed with zero lint issues, a passing
+race-enabled suite and 86.2% aggregate statement coverage. The plugin refactoring
+is validated independently with the same checks below.
+Its final race-enabled suite passed with 88.5% aggregate statement coverage and
+zero lint issues. The six GoReleaser snapshot targets built successfully.
+
+The plugin dependency test inspects the complete production import closure and
+rejects Cobra, pflag and core `internal`/`cmd` dependencies. A separate Go consumer
+with `GOWORK=off` compiled and executed Auth and Ledger manifests and server-info
+operations through the public SDK and an injected HTTP fixture. Its binary
+dependencies exclude Cobra and the core implementation.
 
 ```bash
 nix develop --impure --command just pc

@@ -28,7 +28,9 @@ The v3 command tree and profile store are not migrated automatically. Users of
 v3 scripts must adapt commands and request schemas or retain a v3 binary.
 The v4 profile store is separate and direct service access needs no Cloud login.
 
-Modules register Cobra commands and receive a small runtime interface. This
+Plugins expose manifests and execution through a public SDK. The core adapts
+their manifests to Cobra; Auth and Ledger do not depend on Cobra or core internals.
+See the [plugin contract](docs/plugins.md). This
 CLI has no long-running service lifecycle, so composition does not use Fx;
 review this choice if persistent background services are introduced.
 
