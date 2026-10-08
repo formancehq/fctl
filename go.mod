@@ -1,4 +1,4 @@
-module github.com/formancehq/fctl/v3
+module github.com/formancehq/fctl/v4
 
 go 1.26.0
 
