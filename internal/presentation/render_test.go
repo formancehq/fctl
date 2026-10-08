@@ -21,8 +21,20 @@ func render(t *testing.T, data string, options presentation.Options) string {
 	if err := presentation.Render(&out, json.RawMessage(data), options); err != nil {
 		t.Fatal(err)
 	}
+	if options.Format == "table" {
+		assertNoNotices(t, out.String())
+	}
 	return out.String()
 }
+
+func assertNoNotices(t *testing.T, out string) {
+	t.Helper()
+	if notice := omissionNoticePattern.FindString(out); notice != "" {
+		t.Errorf("table contains an automatic omission notice %q:\n%s", notice, out)
+	}
+}
+
+var omissionNoticePattern = regexp.MustCompile(`Use -o json|\d+ additional fields? omitted|\+\d+ (?:fields?|more)`)
 
 func assertContains(t *testing.T, text string, values ...string) {
 	t.Helper()
@@ -49,7 +61,7 @@ func TestJSONPreservesNumericTokensAndIndentation(t *testing.T) {
 func TestListSelectsScalarFieldsAndPreservesPagination(t *testing.T) {
 	data := `{"cursor":{"data":[{"name":"alpha","id":"a","state":"ready","amount":9007199254740993,"payload":{"postings":[{"amount":1234567890123456789}]}},{"id":"b","region":"eu","extra":"only-second-row"}],"hasMore":true,"next":"cursor-next","previous":null,"pageSize":2},"requestId":"request-id"}`
 	out := render(t, data, presentation.Options{Format: "table", Width: 250})
-	assertContains(t, out, "Results", "ID", "Name", "State", "Region", "alpha", "only-second-row", "9007199254740993", "1 additional field omitted.", "Use -o json for all fields", "Has More", "true", "cursor-next", "Previous", "null", "Page Size", "request-id")
+	assertContains(t, out, "Results", "ID", "Name", "State", "Region", "alpha", "only-second-row", "9007199254740993", "Has More", "true", "cursor-next", "Previous", "null", "Page Size", "request-id")
 	if strings.Contains(out, "\x1b") || strings.Contains(out, "…") {
 		t.Fatal("plain output contains styling or truncated fields")
 	}
@@ -62,7 +74,7 @@ func TestListSelectsScalarFieldsAndPreservesPagination(t *testing.T) {
 func TestDetailsSummarizeNestedPayloadAndMetadata(t *testing.T) {
 	data := `{"data":{"id":"transaction","payload":{"script":"send [USD/2 9007199254740993]"},"metadata":{"nested":[false,null,{"amount":9007199254740995}]}},"status":"ok","custom":{"request":"trace-id"}}`
 	out := render(t, data, presentation.Options{Format: "table", Width: 180})
-	assertContains(t, out, "Details", "transaction", "Payload", "9007199254740993", "nested: 3 items", "Status", "ok", "request: trace-id", "Use -o json for full nested fields")
+	assertContains(t, out, "Details", "transaction", "Payload", "9007199254740993", "nested: 3 items", "Status", "ok", "request: trace-id")
 }
 
 func TestHumanReadableFieldLabels(t *testing.T) {
@@ -81,7 +93,7 @@ func TestLargeClaimsSummarizedOnlyInTables(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := render(t, string(data), presentation.Options{Format: "table", Width: 80})
-	assertContains(t, out, "Claims", "40 items", "Use -o json for full nested fields")
+	assertContains(t, out, "Claims", "40 items")
 	assertLineWidths(t, out, 80)
 	if strings.Count(out, "\n") > 12 {
 		t.Fatalf("claims expanded: %s", out)
@@ -162,10 +174,10 @@ func visibleWidth(text string) int {
 	return width
 }
 
-func TestNarrowRecordsKeepEveryFieldWithoutEllipsis(t *testing.T) {
+func TestNarrowListsWrapSelectedFieldsWithoutEllipsis(t *testing.T) {
 	data := `[{"id":"one","name":"long-name","region":"eu","extra":"payload-value"}]`
 	out := render(t, data, presentation.Options{Format: "table", Width: 19})
-	assertContains(t, out, "ID", "Name", "Use -o json")
+	assertContains(t, out, "ID", "Name", "one", "long-n", "ame")
 	if strings.Contains(out, "...") || strings.Contains(out, "…") {
 		t.Fatal("narrow rendering truncated values")
 	}
@@ -174,7 +186,7 @@ func TestNarrowRecordsKeepEveryFieldWithoutEllipsis(t *testing.T) {
 func TestCloudStackListAtEightyColumnsStaysCompact(t *testing.T) {
 	data := `{"data":[{"id":"stack-a","name":"alpha","status":"ready","regionID":"eu","version":"v3","amount":9007199254740993,"configuration":{"services":{"ledger":{"storage":"nested-only"}}},"metadata":{"team":"ops"},"replicas":3},{"id":"stack-b","name":"beta","status":"pending","regionID":"us","version":"v4","amount":9007199254740995,"configuration":{"services":{}},"metadata":{},"replicas":2}],"hasMore":true,"next":"next-page"}`
 	out := render(t, data, presentation.Options{Format: "table", Width: 80})
-	assertContains(t, out, "stack-a", "stack-b", "alpha", "beta", "ready", "pending", "Region ID", "9007199254740993", "9007199254740995", "3 additional fields omitted.", "Use -o json for all fields", "Has More", "next-page")
+	assertContains(t, out, "stack-a", "stack-b", "alpha", "beta", "ready", "pending", "Region ID", "9007199254740993", "9007199254740995", "Has More", "next-page")
 	assertLineWidths(t, out, 80)
 	if strings.Contains(out, "Record 1") || strings.Contains(out, "nested-only") || strings.Count(out, "\n") > 22 {
 		t.Fatalf("list expanded into full records or nested configuration:\n%s", out)
@@ -208,7 +220,7 @@ func TestCloudStackDetailsSummarizeComplexFieldsAtEightyColumns(t *testing.T) {
 	for _, color := range []bool{false, true} {
 		out := render(t, string(data), presentation.Options{Format: "table", Width: 80, Color: color})
 		plain := ansiPattern.ReplaceAllString(out, "")
-		assertContains(t, plain, "production", "900719925474099312345", "ledger", "auth", "payments", "pending", "eu-primary", "Europe", "20 items", "6 items", "+3 more", "Use -o json for full nested fields")
+		assertContains(t, plain, "production", "900719925474099312345", "ledger", "auth", "payments", "pending", "eu-primary", "Europe", "20 items", "6 items")
 		assertLineWidths(t, plain, 80)
 		if lines := strings.Count(plain, "\n"); lines >= 50 || strings.Contains(plain, "condition-blob") || strings.Contains(plain, `{"`) {
 			t.Fatalf("details expanded raw nested data (%d lines):\n%s", lines, plain)
@@ -232,7 +244,7 @@ func TestDetailScalarsWrapCompletelyWhileNestedStringsAreBounded(t *testing.T) {
 	}
 	out := render(t, string(data), presentation.Options{Format: "table", Width: 80})
 	assertContains(t, detailValues(t, out), text)
-	assertContains(t, out, "...", "Use -o json for full nested fields")
+	assertContains(t, out, "...")
 	assertLineWidths(t, out, 80)
 }
 
@@ -254,28 +266,91 @@ func detailValues(t *testing.T, out string) string {
 func TestNestedSummaryHandlesEmptyDeepAndNumericValues(t *testing.T) {
 	data := `{"emptyObject":{},"emptyArray":[],"numeric":{"amount":900719925474099312345,"negative":-9007199254740993,"enabled":false},"deep":{"info":{"info":{"raw":"not-displayed"}}}}`
 	out := render(t, data, presentation.Options{Format: "table", Width: 80})
-	assertContains(t, out, "No fields", "0 items", "900719925474099312345", "false", "1 field", "Use -o json for full nested fields")
+	assertContains(t, out, "Empty Object", "Empty Array", "—", "900719925474099312345", "false", "1 field")
 	assertLineWidths(t, out, 80)
 	assertContains(t, detailValues(t, out), "amount: 900719925474099312345", "negative: -9007199254740993")
-	if strings.Contains(out, "not-displayed") || strings.Count(out, "Use -o json") != 1 {
-		t.Fatal("deep field expanded or nested footer repeated")
-	}
-	plain := render(t, `{"id":"simple","amount":900719925474099312345}`, presentation.Options{Format: "table"})
-	if strings.Contains(plain, "Use -o json") {
-		t.Fatal("scalar-only details reported summarized fields")
+	if strings.Contains(out, "not-displayed") {
+		t.Fatal("deep field expanded")
 	}
 }
 
-func TestNestedOnlyAndHeterogeneousFieldsReportOmissions(t *testing.T) {
+func TestNestedOnlyAndHeterogeneousListsStayCompact(t *testing.T) {
 	for _, data := range []string{
 		`[{"payload":{"secret":"nested-content"}},{"payload":[]}]`,
 		`[{"id":"one","payload":7},{"id":"two","payload":{"secret":"nested-content"}}]`,
 	} {
 		out := render(t, data, presentation.Options{Format: "table", Width: 80})
-		assertContains(t, out, "1 additional field omitted.", "Use -o json for all fields")
+		assertContains(t, out, "Results")
 		if strings.Contains(out, "nested-content") {
 			t.Fatal("nested payload expanded in list summary")
 		}
+	}
+}
+
+func TestEmptyLedgerConfigurationSnapshot(t *testing.T) {
+	data := `{"data":{"name":"books","status":"ready","amount":0,"enabled":false,"schema":{"transactions":{},"accounts":[],"version":""},"mirrorSource":null,"mirrorSyncProgress":{"error":null,"state":""}}}`
+	want := "Details\n" +
+		"+----------------------+-------+\n" +
+		"| Field                | Value |\n" +
+		"+----------------------+-------+\n" +
+		"| Name                 | books |\n" +
+		"| Status               | ready |\n" +
+		"| Amount               | 0     |\n" +
+		"| Enabled              | false |\n" +
+		"| Mirror Source        | —     |\n" +
+		"| Mirror Sync Progress | —     |\n" +
+		"| Schema               | —     |\n" +
+		"+----------------------+-------+\n"
+	for _, color := range []bool{false, true} {
+		out := render(t, data, presentation.Options{Format: "table", Width: 80, Color: color})
+		if plain := ansiPattern.ReplaceAllString(out, ""); plain != want {
+			t.Fatalf("empty ledger details differ from snapshot:\n%s", plain)
+		}
+	}
+	assertExactJSON(t, data)
+}
+
+func TestLedgerConfigurationPreservesMeaningfulDetails(t *testing.T) {
+	data := `{"data":{"name":"mirror","status":"syncing","amount":900719925474099312345,"schema":{"enabled":false,"version":0},"mirrorSource":{"name":"source","disabled":false},"mirrorSyncProgress":{"state":"SYNCING","cursor":0,"sourceLogCount":900719925474099312345}}}`
+	out := render(t, data, presentation.Options{Format: "table", Width: 100})
+	assertContains(t, detailValues(t, out), "900719925474099312345", "version: 0; enabled: false", "name: source; disabled: false", "state: SYNCING; cursor: 0; sourceLogCount: 900719925474099312345")
+	assertLineWidths(t, out, 100)
+	assertExactJSON(t, data)
+}
+
+func TestEmptyNestedFieldsDoNotHideUsefulSummary(t *testing.T) {
+	data := `{"configuration":{"a":{},"b":null,"c":[],"d":"","enabled":false,"remaining":0},"schema":{"enum":[null]},"diagnostic":{"name":"","message":"source unavailable"},"previous":null,"state":"failed"}`
+	out := render(t, data, presentation.Options{Format: "table", Width: 100})
+	assertContains(t, detailValues(t, out), "enabled: false; remaining: 0", "enum: 1 item", "message: source unavailable", "failed", "null")
+	assertExactJSON(t, data)
+}
+
+func TestCompactListSnapshot(t *testing.T) {
+	data := `[{"id":"a","name":"books","schema":{"version":1},"metadata":{"team":"ops"}}]`
+	want := "Results\n" +
+		"+----+-------+\n" +
+		"| ID | Name  |\n" +
+		"+----+-------+\n" +
+		"| a  | books |\n" +
+		"+----+-------+\n"
+	if out := render(t, data, presentation.Options{Format: "table", Width: 80}); out != want {
+		t.Fatalf("compact list differs from snapshot:\n%s", out)
+	}
+	assertExactJSON(t, data)
+}
+
+func assertExactJSON(t *testing.T, data string) {
+	t.Helper()
+	out := render(t, data, presentation.Options{Format: "json", Color: true})
+	var got, want bytes.Buffer
+	if err := json.Compact(&got, []byte(out)); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Compact(&want, []byte(data)); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got.Bytes(), want.Bytes()) {
+		t.Fatalf("JSON fields or numeric tokens changed:\n%s", out)
 	}
 }
 

@@ -2,10 +2,10 @@ package presentation
 
 import "strings"
 
-func listColumns(items []any, width int) ([]string, int, bool) {
+func listColumns(items []any, width int) ([]string, bool) {
 	fields, objects := listFields(items)
 	if !objects {
-		return nil, 0, false
+		return nil, false
 	}
 	var selected []string
 	used := 1
@@ -20,7 +20,7 @@ func listColumns(items []any, width int) ([]string, int, bool) {
 		selected = append(selected, key)
 		used += cost
 	}
-	return selected, len(fields) - len(selected), true
+	return selected, true
 }
 
 func listColumnWidth(items []any, key string) int {

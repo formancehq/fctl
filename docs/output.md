@@ -29,12 +29,15 @@ indentation. Use it for scripts and complete payload inspection.
 
 Human lists select at most six scalar columns that fit the terminal width,
 favoring IDs, names, state/status, region and version. Nested configuration and
-additional fields are omitted from list cells. A footer reports the omitted
-field count and says `Use -o json for all fields.` Details display every top-level
-field; large nested objects and arrays use bounded summaries with counts and a
-JSON reminder. Top-level scalar values and numeric tokens are preserved and
-wrapped. Empty lists
-have a friendly message; pagination displays cursor and `hasMore` information.
+additional fields are omitted from list cells. Details display top-level fields;
+large nested objects and arrays use bounded summaries, with total item counts
+for arrays. Tables do not add omitted-field counts or JSON reminders. Empty
+nested containers display `—`. Empty `schema`, `mirrorSource` and
+`mirrorSyncProgress` configurations also display `—`, including null values or
+objects containing only empty strings, nulls and empty containers. Booleans and
+numbers, including `false` and `0`, remain meaningful details. Top-level scalar
+values and numeric tokens are preserved and wrapped. Empty lists have a friendly
+message; pagination displays cursor and `hasMore` information.
 
 Plain tables use ASCII borders. Colored tables add a title and status colors.
 Control characters in values are escaped; width calculations account for wide

@@ -10,12 +10,37 @@ const summaryWidth = 120
 
 // Only nested values have a display budget. The original JSON and top-level
 // scalars never pass through this summarizer, including exact numeric tokens.
-func (r *renderer) flatScalarOrSummary(value any) string {
+func (r *renderer) flatScalarOrSummary(key string, value any) string {
+	if slices.Contains([]string{"schema", "mirrorSource", "mirrorSyncProgress"}, key) && !hasDetails(value) {
+		return "—"
+	}
 	if !nested(value) {
 		return r.flat(value)
 	}
-	r.summarized = true
 	return r.summary(value, 0)
+}
+
+// Empty containers, nulls and empty strings carry no configuration details.
+// Numeric values and booleans remain meaningful, including zero and false.
+func hasDetails(value any) bool {
+	switch typed := value.(type) {
+	case nil:
+		return false
+	case string:
+		return typed != ""
+	case map[string]any:
+		for _, child := range typed {
+			if hasDetails(child) {
+				return true
+			}
+		}
+		return false
+	case []any:
+		// A nonempty array retains its size and positions, even for null items.
+		return len(typed) != 0
+	default:
+		return true
+	}
 }
 
 func (r *renderer) summary(value any, depth int) string {
@@ -36,13 +61,14 @@ func (r *renderer) summary(value any, depth int) string {
 }
 
 func (r *renderer) objectSummary(object map[string]any, depth int) string {
-	if len(object) == 0 {
-		return "No fields"
+	keys := summaryKeys(object)
+	keys = slices.DeleteFunc(keys, func(key string) bool { return !hasDetails(object[key]) })
+	if len(keys) == 0 {
+		return "—"
 	}
 	if depth >= 2 {
-		return summaryCount(len(object), "field")
+		return summaryCount(len(keys), "field")
 	}
-	keys := summaryKeys(object)
 	parts := make([]string, 0, 3)
 	for _, key := range keys {
 		if diagnosticText(key, object) {
@@ -58,31 +84,26 @@ func (r *renderer) objectSummary(object map[string]any, depth int) string {
 		}
 	}
 	if len(parts) == 0 {
-		return summaryCount(len(object), "field")
-	}
-	if remaining := len(object) - len(parts); remaining > 0 {
-		parts = append(parts, "+"+summaryCount(remaining, "field"))
+		return summaryCount(len(keys), "field")
 	}
 	return strings.Join(parts, "; ")
 }
 
 func (r *renderer) arraySummary(items []any, depth int) string {
+	if len(items) == 0 {
+		return "—"
+	}
 	count := summaryCount(len(items), "item")
-	if len(items) == 0 || depth >= 1 {
+	if depth >= 1 {
 		return count
 	}
 	parts := []string{count}
-	shown := 0
 	for _, item := range items[:min(3, len(items))] {
 		part := r.summary(item, depth+1)
 		if !summaryFits(parts, part) {
 			break
 		}
 		parts = append(parts, part)
-		shown++
-	}
-	if remaining := len(items) - shown; remaining > 0 {
-		parts = append(parts, fmt.Sprintf("+%d more", remaining))
 	}
 	return strings.Join(parts, "; ")
 }
@@ -93,12 +114,12 @@ func diagnosticText(key string, object map[string]any) bool {
 	}
 	// Named resources and typed conditions already have useful identifiers.
 	// Their verbose diagnostic text is available in the full JSON output.
-	return object["name"] != nil || object["type"] != nil
+	return hasDetails(object["name"]) || hasDetails(object["type"])
 }
 
 func summaryFits(parts []string, part string) bool {
-	// Reserve space for the omitted-field/item count; never cut numeric tokens.
-	return textWidth(strings.Join(append(slices.Clone(parts), part), "; ")) <= summaryWidth-16
+	// Keep numeric tokens intact when selecting parts for the summary.
+	return textWidth(strings.Join(append(slices.Clone(parts), part), "; ")) <= summaryWidth
 }
 
 func summaryKeys(object map[string]any) []string {

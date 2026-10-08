@@ -29,8 +29,8 @@ func ValidateFormat(format string) error {
 }
 
 // Render validates before writing. JSON indentation preserves numeric tokens;
-// details summarize nested fields. Lists select scalar columns and explicitly
-// report omitted fields. Scalar values wrap rather than truncate.
+// details summarize nested fields. Lists select scalar columns that fit the
+// available width. Scalar values wrap rather than truncate.
 func Render(out io.Writer, data json.RawMessage, options Options) error {
 	if err := ValidateFormat(options.Format); err != nil {
 		return err
@@ -59,9 +59,6 @@ func Render(out io.Writer, data json.RawMessage, options Options) error {
 	}
 	r := renderer{options: options}
 	r.value(value)
-	if r.summarized {
-		r.wrapped("Use -o json for full nested fields.")
-	}
 	if r.err != nil {
 		return r.err
 	}
@@ -77,10 +74,9 @@ func writeOutput(out io.Writer, text string) error {
 }
 
 type renderer struct {
-	options    Options
-	output     strings.Builder
-	err        error
-	summarized bool
+	options Options
+	output  strings.Builder
+	err     error
 }
 
 func (r *renderer) line(text string) {
@@ -143,7 +139,7 @@ func (r *renderer) details(object map[string]any) {
 	rows := make([][]string, 0, len(object))
 	for _, key := range orderedKeys(object) {
 		value := object[key]
-		text := r.flatScalarOrSummary(value)
+		text := r.flatScalarOrSummary(key, value)
 		rows = append(rows, []string{fieldLabel(key), text})
 	}
 	r.table([]string{"Field", "Value"}, rows)
@@ -155,14 +151,13 @@ func (r *renderer) list(items []any) {
 		r.wrapped("No results.")
 		return
 	}
-	keys, omitted, objects := listColumns(items, r.options.Width)
+	keys, objects := listColumns(items, r.options.Width)
 	if !objects {
 		r.records(items)
 		return
 	}
 	if len(keys) == 0 {
 		r.recordNumbers(len(items))
-		r.omittedFields(omitted)
 		return
 	}
 	rows := make([][]string, 0, len(items))
@@ -185,7 +180,6 @@ func (r *renderer) list(items []any) {
 		headers[i] = fieldLabel(key)
 	}
 	r.table(headers, rows)
-	r.omittedFields(omitted)
 }
 
 func (r *renderer) recordNumbers(count int) {
@@ -194,18 +188,6 @@ func (r *renderer) recordNumbers(count int) {
 		rows[i] = []string{strconv.Itoa(i + 1)}
 	}
 	r.table([]string{"Record"}, rows)
-}
-
-func (r *renderer) omittedFields(count int) {
-	if count == 0 {
-		return
-	}
-	unit := "fields"
-	if count == 1 {
-		unit = "field"
-	}
-	r.wrapped(fmt.Sprintf("%d additional %s omitted.", count, unit))
-	r.wrapped("Use -o json for all fields.")
 }
 
 func (r *renderer) records(items []any) {
