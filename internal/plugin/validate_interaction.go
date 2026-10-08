@@ -312,13 +312,23 @@ func validateChoiceExclusions(fields []string) error {
 	return nil
 }
 
-func validateChoiceMatches(fields map[string]string) error {
-	for field, value := range fields {
+func validateChoiceMatches(fields map[string][]string) error {
+	for field, values := range fields {
 		if !choiceFieldName.MatchString(field) {
 			return fmt.Errorf("choice source match field %q must be a valid field name", field)
 		}
-		if value == "" {
-			return fmt.Errorf("choice source match field %q requires a nonempty value", field)
+		if len(values) == 0 {
+			return fmt.Errorf("choice source match field %q requires at least one value", field)
+		}
+		seen := make(map[string]bool)
+		for _, value := range values {
+			if value == "" {
+				return fmt.Errorf("choice source match field %q requires nonempty values", field)
+			}
+			if seen[value] {
+				return fmt.Errorf("choice source match field %q has duplicate value %q", field, value)
+			}
+			seen[value] = true
 		}
 	}
 	return nil

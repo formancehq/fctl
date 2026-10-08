@@ -199,11 +199,16 @@ func TestInteractionRejectsInvalidChoiceSources(t *testing.T) {
 		{"duplicate exclusion field", "duplicate excluded field", func(s *pluginsdk.ChoiceSource) {
 			s.ExcludeTrueFields = []string{"deprecated", "archived", "deprecated"}
 		}},
-		{"empty match field", "valid field name", func(s *pluginsdk.ChoiceSource) { s.MatchFields = map[string]string{"": "READY"} }},
-		{"blank match field", "valid field name", func(s *pluginsdk.ChoiceSource) { s.MatchFields = map[string]string{" ": "READY"} }},
-		{"nested match field", "valid field name", func(s *pluginsdk.ChoiceSource) { s.MatchFields = map[string]string{"stack.status": "READY"} }},
-		{"numeric match field prefix", "valid field name", func(s *pluginsdk.ChoiceSource) { s.MatchFields = map[string]string{"1status": "READY"} }},
-		{"empty match value", "nonempty value", func(s *pluginsdk.ChoiceSource) { s.MatchFields = map[string]string{"status": ""} }},
+		{"empty match field", "valid field name", func(s *pluginsdk.ChoiceSource) { s.MatchFields = map[string][]string{"": {"READY"}} }},
+		{"blank match field", "valid field name", func(s *pluginsdk.ChoiceSource) { s.MatchFields = map[string][]string{" ": {"READY"}} }},
+		{"nested match field", "valid field name", func(s *pluginsdk.ChoiceSource) { s.MatchFields = map[string][]string{"stack.status": {"READY"}} }},
+		{"numeric match field prefix", "valid field name", func(s *pluginsdk.ChoiceSource) { s.MatchFields = map[string][]string{"1status": {"READY"}} }},
+		{"empty match value", "nonempty values", func(s *pluginsdk.ChoiceSource) { s.MatchFields = map[string][]string{"status": {"READY", ""}} }},
+		{"nil match values", "at least one value", func(s *pluginsdk.ChoiceSource) { s.MatchFields = map[string][]string{"status": nil} }},
+		{"empty match values", "at least one value", func(s *pluginsdk.ChoiceSource) { s.MatchFields = map[string][]string{"status": {}} }},
+		{"duplicate match value", "duplicate value", func(s *pluginsdk.ChoiceSource) {
+			s.MatchFields = map[string][]string{"state": {"ACTIVE", "DISABLED", "ACTIVE"}}
+		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -299,7 +304,7 @@ func TestInteractionAllowsSupportedDeclarations(t *testing.T) {
 			input := &m.Root.Subcommands[0].Inputs[0]
 			input.Kind, input.Source = "select", interactionSource()
 			input.Source.ExcludeTrueFields = []string{"deprecated"}
-			input.Source.MatchFields = map[string]string{"state": "ACTIVE", "status": "READY", "is_enabled": "true", "legacy-status": "Needs review", "_revision2": "7"}
+			input.Source.MatchFields = map[string][]string{"state": {"ACTIVE", "DISABLED"}, "status": {"READY"}, "lastState": {"READY"}, "is_enabled": {"true"}, "legacy-status": {"Needs review"}, "_revision2": {"7", "8"}}
 		}},
 		{"source mutation guarded at execution", func(m *pluginsdk.Manifest) {
 			input := &m.Root.Subcommands[0].Inputs[0]
