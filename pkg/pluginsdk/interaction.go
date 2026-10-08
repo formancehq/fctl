@@ -44,4 +44,8 @@ type ChoiceSource struct {
 	// AfterField uses the final row's exact value for keyset pagination.
 	// The host requests pages of 100 and follows --after until a shorter page.
 	AfterField string `json:"afterField,omitzero"`
+	// ExcludeTrueFields removes entries whose declared boolean field is true.
+	ExcludeTrueFields []string `json:"excludeTrueFields,omitzero"`
+	// MatchFields requires each field to match one of its exact scalar values.
+	MatchFields map[string][]string `json:"matchFields,omitzero"`
 }

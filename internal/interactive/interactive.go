@@ -174,6 +174,9 @@ func runTerminal(ctx context.Context, cmd *cobra.Command, fields []Field) ([]str
 		if field.Kind == "confirm" {
 			values[i] = strconv.FormatBool(booleans[i])
 		}
+		if err := validate(field, values[i]); err != nil {
+			return nil, err
+		}
 	}
 	return values, nil
 }

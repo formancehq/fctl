@@ -67,11 +67,12 @@ func (a *Adapter) runInteractive(cmd *cobra.Command, entry registration, path []
 	if err != nil {
 		return err
 	}
-	request, err = collectInputs(cmd, choices, spec.Inputs, request)
+	bodyFlag := bodyFlagName(flags)
+	request, err = collectInputs(cmd, choices, spec.Inputs, request, bodyFlag)
 	if err != nil {
 		return err
 	}
-	if err := confirmRequest(cmd, spec, path, &request); err != nil {
+	if err := confirmRequest(cmd, spec, path, &request, bodyFlag); err != nil {
 		return err
 	}
 	request, err = pluginsdk.NormalizeRequest(entry.manifest, request)
@@ -105,14 +106,14 @@ func (a *Adapter) interactiveInstances(cmd *cobra.Command, entry registration, p
 	return instance, choices, nil
 }
 
-func confirmRequest(cmd *cobra.Command, spec pluginsdk.CommandSpec, path []string, request *pluginsdk.ExecuteRequest) error {
+func confirmRequest(cmd *cobra.Command, spec pluginsdk.CommandSpec, path []string, request *pluginsdk.ExecuteRequest, bodyFlag string) error {
 	if !spec.Confirm || request.Flags["confirm"] == "true" {
 		return nil
 	}
 	if request.ChangedFlags["confirm"] {
 		return fmt.Errorf("%s requires --confirm", strings.Join(path, " "))
 	}
-	accepted, err := interactive.Confirm(cmd.Context(), cmd, "Confirm "+confirmationLabel(path, spec.Inputs, *request))
+	accepted, err := interactive.Confirm(cmd.Context(), cmd, "Confirm "+confirmationLabel(path, spec.Inputs, *request, bodyFlag))
 	if err != nil {
 		return err
 	}
@@ -123,18 +124,18 @@ func confirmRequest(cmd *cobra.Command, spec pluginsdk.CommandSpec, path []strin
 	return nil
 }
 
-func confirmationLabel(path []string, inputs []pluginsdk.InputSpec, request pluginsdk.ExecuteRequest) string {
+func confirmationLabel(path []string, inputs []pluginsdk.InputSpec, request pluginsdk.ExecuteRequest, bodyFlag string) string {
 	parts := append([]string{}, path...)
-	values := confirmationValues(inputs, request)
+	values := confirmationValues(inputs, request, bodyFlag)
 	parts = append(parts, values...)
 	return interactive.SafeLabel(strings.Join(parts, " ")) + "?"
 }
 
-func confirmationValues(inputs []pluginsdk.InputSpec, request pluginsdk.ExecuteRequest) []string {
+func confirmationValues(inputs []pluginsdk.InputSpec, request pluginsdk.ExecuteRequest, bodyFlag string) []string {
 	values := append([]string{}, request.Args...)
 	values = redactArguments(inputs, values)
 	for _, input := range inputs {
-		if input.Secret || input.Flag == "data" {
+		if input.Secret || (bodyFlag != "" && input.Flag == bodyFlag) {
 			continue
 		}
 		value := request.Flags[input.Flag]
@@ -148,33 +149,33 @@ func confirmationValues(inputs []pluginsdk.InputSpec, request pluginsdk.ExecuteR
 	return values
 }
 
-func collectInputs(cmd *cobra.Command, instance pluginsdk.Plugin, inputs []pluginsdk.InputSpec, request pluginsdk.ExecuteRequest) (pluginsdk.ExecuteRequest, error) {
+func collectInputs(cmd *cobra.Command, instance pluginsdk.Plugin, inputs []pluginsdk.InputSpec, request pluginsdk.ExecuteRequest, bodyFlag string) (pluginsdk.ExecuteRequest, error) {
 	request.Flags, request.ChangedFlags, request.Context = maps.Clone(request.Flags), maps.Clone(request.ChangedFlags), maps.Clone(request.Context)
 	if request.Context == nil {
 		request.Context = make(map[string]string)
 	}
 	request = seedInputContext(inputs, request)
-	if !needsInputForm(inputs, request) {
+	if !needsInputForm(inputs, request, bodyFlag) {
 		return request, nil
 	}
 	for index := 0; index < len(inputs); {
-		group, next := inputGroup(inputs, index, request)
+		group, next := inputGroup(inputs, index, request, bodyFlag)
 		index = next
 		if len(group) == 0 {
 			continue
 		}
-		if err := collectGroup(cmd, instance, group, &request); err != nil {
+		if err := collectGroup(cmd, instance, group, &request, bodyFlag); err != nil {
 			return request, err
 		}
 	}
 	return request, nil
 }
 
-func needsInputForm(inputs []pluginsdk.InputSpec, request pluginsdk.ExecuteRequest) bool {
+func needsInputForm(inputs []pluginsdk.InputSpec, request pluginsdk.ExecuteRequest, bodyFlag string) bool {
 	required, missing := false, false
 	for _, input := range inputs {
 		required = required || input.Required
-		if !suppliedInput(input, request) {
+		if !suppliedInput(input, request, bodyFlag) {
 			if input.Required {
 				return true
 			}
@@ -184,15 +185,15 @@ func needsInputForm(inputs []pluginsdk.InputSpec, request pluginsdk.ExecuteReque
 	return !required && missing
 }
 
-func inputGroup(inputs []pluginsdk.InputSpec, index int, request pluginsdk.ExecuteRequest) ([]pluginsdk.InputSpec, int) {
-	if suppliedInput(inputs[index], request) {
+func inputGroup(inputs []pluginsdk.InputSpec, index int, request pluginsdk.ExecuteRequest, bodyFlag string) ([]pluginsdk.InputSpec, int) {
+	if suppliedInput(inputs[index], request, bodyFlag) {
 		return nil, index + 1
 	}
 	group := []pluginsdk.InputSpec{inputs[index]}
 	index++
 	// Resolve dependent choice lists after the preceding form is accepted.
 	for index < len(inputs) && inputs[index].Source == nil {
-		if !suppliedInput(inputs[index], request) {
+		if !suppliedInput(inputs[index], request, bodyFlag) {
 			group = append(group, inputs[index])
 		}
 		index++
@@ -200,7 +201,7 @@ func inputGroup(inputs []pluginsdk.InputSpec, index int, request pluginsdk.Execu
 	return group, index
 }
 
-func collectGroup(cmd *cobra.Command, instance pluginsdk.Plugin, inputs []pluginsdk.InputSpec, request *pluginsdk.ExecuteRequest) error {
+func collectGroup(cmd *cobra.Command, instance pluginsdk.Plugin, inputs []pluginsdk.InputSpec, request *pluginsdk.ExecuteRequest, bodyFlag string) error {
 	fields := make([]interactive.Field, 0, len(inputs))
 	for _, input := range inputs {
 		field, err := inputField(cmd.Context(), instance, input, *request)
@@ -217,14 +218,14 @@ func collectGroup(cmd *cobra.Command, instance pluginsdk.Plugin, inputs []plugin
 		if values[i] == "" && !input.Required {
 			continue
 		}
-		if err := bindInput(cmd, input, values[i], request); err != nil {
+		if err := bindInput(input, values[i], request, bodyFlag); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func suppliedInput(input pluginsdk.InputSpec, request pluginsdk.ExecuteRequest) bool {
+func suppliedInput(input pluginsdk.InputSpec, request pluginsdk.ExecuteRequest, bodyFlag string) bool {
 	if input.AlternativeFlag != "" && request.ChangedFlags[input.AlternativeFlag] {
 		return true
 	}
@@ -239,7 +240,7 @@ func suppliedInput(input pluginsdk.InputSpec, request pluginsdk.ExecuteRequest) 
 	case input.Context != "":
 		return request.Context[input.Context] != ""
 	case input.BodyPointer != "":
-		if request.ChangedFlags["data"] {
+		if request.ChangedFlags[bodyFlag] {
 			return true
 		}
 		_, exists := bodyValue(request.Body, input.BodyPointer)
@@ -299,11 +300,11 @@ func inputJSON(kind, value string) (json.RawMessage, error) {
 	return json.Marshal(value)
 }
 
-func bindInput(cmd *cobra.Command, input pluginsdk.InputSpec, value string, request *pluginsdk.ExecuteRequest) error {
+func bindInput(input pluginsdk.InputSpec, value string, request *pluginsdk.ExecuteRequest, bodyFlag string) error {
 	switch {
 	case input.Flag != "":
 		request.Flags[input.Flag], request.ChangedFlags[input.Flag] = value, true
-		if input.Flag == "data" {
+		if input.Flag == bodyFlag {
 			request.Body = json.RawMessage(value)
 		}
 	case input.Argument != nil:
@@ -365,4 +366,13 @@ func redactArguments(inputs []pluginsdk.InputSpec, values []string) []string {
 		}
 	}
 	return values
+}
+
+func bodyFlagName(flags []pluginsdk.FlagSpec) string {
+	for _, flag := range flags {
+		if flag.Body {
+			return flag.Name
+		}
+	}
+	return ""
 }

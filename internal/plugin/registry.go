@@ -106,13 +106,21 @@ func cloneInputs(inputs []pluginsdk.InputSpec) []pluginsdk.InputSpec {
 			input.AlternativeArgument = &value
 		}
 		if input.Source != nil {
-			source := *input.Source
-			source.CommandPath = slices.Clone(source.CommandPath)
-			source.Args = slices.Clone(source.Args)
-			source.LabelFields = slices.Clone(source.LabelFields)
-			source.Flags = maps.Clone(source.Flags)
-			input.Source = &source
+			input.Source = cloneChoiceSource(*input.Source)
 		}
 	}
 	return result
+}
+
+func cloneChoiceSource(source pluginsdk.ChoiceSource) *pluginsdk.ChoiceSource {
+	source.CommandPath = slices.Clone(source.CommandPath)
+	source.Args = slices.Clone(source.Args)
+	source.LabelFields = slices.Clone(source.LabelFields)
+	source.ExcludeTrueFields = slices.Clone(source.ExcludeTrueFields)
+	source.Flags = maps.Clone(source.Flags)
+	source.MatchFields = maps.Clone(source.MatchFields)
+	for field, values := range source.MatchFields {
+		source.MatchFields[field] = slices.Clone(values)
+	}
+	return &source
 }

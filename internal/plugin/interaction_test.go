@@ -911,3 +911,156 @@ func assertConfirmationHidden(t *testing.T, text string, hidden []string) {
 		}
 	}
 }
+
+func TestInteractionChoiceExclusionsRejectOnlyBooleanTrue(t *testing.T) {
+	f := newInteractionFixture(t)
+	f.manifest.Root.Subcommands[0].Inputs[0].Source.ExcludeTrueFields = []string{"deprecated"}
+	f.list = func(*http.Request) string {
+		return `{"data":[{"id":"v4.0.0","deprecated":true},{"id":"v4.0.0-beta.1","deprecated":false},{"id":"v4.1.0"},{"id":"v4.string","deprecated":"true"},{"id":"v4.number","deprecated":1},{"id":"v4.null","deprecated":null},{"deprecated":true}]}`
+	}
+	runner := &interactionRunner{t: t, err: interactive.ErrCanceled, answers: []interactionAnswer{{
+		title: "Bucket", kind: "select", value: "v4.0.0-beta.1", options: []interactive.Option{
+			{Label: "v4.0.0-beta.1", Value: "v4.0.0-beta.1"},
+			{Label: "v4.1.0", Value: "v4.1.0"},
+			{Label: "v4.string", Value: "v4.string"},
+			{Label: "v4.number", Value: "v4.number"},
+			{Label: "v4.null", Value: "v4.null"},
+		},
+	}}}
+	err := f.execRoot(runner, "ledger", "create", "demo", "--data", interactionBody)
+	if !errors.Is(err, interactive.ErrCanceled) {
+		t.Fatalf("filtered choice form error = %v, want canceled", err)
+	}
+	f.assertWrites(0)
+	if len(f.httpCalls()) != 1 || runner.fields != 1 {
+		t.Fatal("filtered choices did not reach exactly one selector after discovery")
+	}
+}
+
+func TestInteractionExcludedFullPageStillUsesRawAfterValue(t *testing.T) {
+	f := newInteractionFixture(t)
+	source := f.manifest.Root.Subcommands[0].Inputs[0].Source
+	source.ExcludeTrueFields, source.AfterField = []string{"deprecated"}, "id"
+	const lastID = "9007199254740993099"
+	firstPage := interactionExcludedKeysetPage(t, lastID)
+	f.list = func(r *http.Request) string {
+		if r.URL.Query().Get("after") == lastID {
+			return `{"data":[{"id":"v4.1.0"}]}`
+		}
+		return firstPage
+	}
+	runner := &interactionRunner{t: t, err: interactive.ErrCanceled, answers: []interactionAnswer{{
+		title: "Bucket", kind: "select", value: "v4.1.0", options: []interactive.Option{{Label: "v4.1.0", Value: "v4.1.0"}},
+	}}}
+	err := f.execRoot(runner, "ledger", "create", "demo", "--data", interactionBody)
+	if !errors.Is(err, interactive.ErrCanceled) {
+		t.Fatalf("choice form after excluded page error = %v, want canceled", err)
+	}
+	f.assertWrites(0)
+	calls := f.httpCalls()
+	if len(calls) != 2 || runner.fields != 1 || calls[0].query.Get("after") != "" || calls[1].query.Get("after") != lastID {
+		t.Fatal("filtering a full page stopped discovery or changed its raw after value")
+	}
+	for _, call := range calls {
+		if call.method != http.MethodGet || call.query.Get("page-size") != "100" || call.query.Has("cursor") {
+			t.Fatal("filtered keyset discovery lost its read-only pagination settings")
+		}
+	}
+}
+
+func interactionExcludedKeysetPage(t *testing.T, lastID string) string {
+	t.Helper()
+	rows := make([]map[string]any, 100)
+	for i := range 100 {
+		rows[i] = map[string]any{"id": fmt.Sprintf("v4.0.%d", i), "deprecated": true}
+	}
+	rows[99]["id"] = json.Number(lastID)
+	page, err := json.Marshal(map[string]any{"data": rows})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(page)
+}
+
+func TestInteractionRegistryClonesChoiceExclusionFields(t *testing.T) {
+	manifest := interactionFixtureManifest()
+	manifest.Root.Subcommands[0].Inputs[0].Source.ExcludeTrueFields = []string{"deprecated", "hidden"}
+	registry := new(plugin.Registry)
+	if err := registry.Register(t.Context(), &fakePlugin{manifest: manifest}, inertFactory); err != nil {
+		t.Fatal(err)
+	}
+	manifest.Root.Subcommands[0].Inputs[0].Source.ExcludeTrueFields[0] = "caller-mutated"
+	first := registry.List()
+	want := []string{"deprecated", "hidden"}
+	if !slices.Equal(first[0].Root.Subcommands[0].Inputs[0].Source.ExcludeTrueFields, want) {
+		t.Fatal("registered choice exclusions alias the metadata provider")
+	}
+	first[0].Root.Subcommands[0].Inputs[0].Source.ExcludeTrueFields[1] = "reader-mutated"
+	registry.Freeze()
+	if !slices.Equal(registry.List()[0].Root.Subcommands[0].Inputs[0].Source.ExcludeTrueFields, want) {
+		t.Fatal("reading registry metadata exposed mutable choice exclusions")
+	}
+}
+
+func TestInteractionMatchFieldsKeepsCursorAdvancingPastIneligiblePage(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		states  []string
+		options []interactive.Option
+	}{
+		{name: "active only", states: []string{"ACTIVE"}, options: []interactive.Option{{Label: "eligible", Value: "eligible"}}},
+		{name: "active or disabled", states: []string{"ACTIVE", "DISABLED"}, options: []interactive.Option{{Label: "disabled", Value: "disabled"}, {Label: "eligible", Value: "eligible"}}},
+	} {
+		t.Run(tc.name, func(t *testing.T) { testInteractionMatchFields(t, tc.states, tc.options) })
+	}
+}
+
+func testInteractionMatchFields(t *testing.T, states []string, options []interactive.Option) {
+	t.Helper()
+	f := newInteractionFixture(t)
+	f.manifest.Root.Subcommands[0].Inputs[0].Source.MatchFields = map[string][]string{"state": states, "status": {"READY"}}
+	f.list = func(r *http.Request) string {
+		if r.URL.Query().Get("cursor") == "eligible-page" {
+			return `{"data":[{"id":"eligible","state":"ACTIVE","status":"READY"},{"id":"unready","state":"ACTIVE","status":"DISABLED"}],"hasMore":false}`
+		}
+		return `{"data":[{"id":"deleted","state":"DELETED","status":"READY"},{"id":"disabled","state":"DISABLED","status":"READY"}],"hasMore":true,"next":"eligible-page"}`
+	}
+	runner := &interactionRunner{t: t, err: interactive.ErrCanceled, answers: []interactionAnswer{{
+		title: "Bucket", kind: "select", value: "eligible", options: options,
+	}}}
+	err := f.execRoot(runner, "ledger", "create", "demo", "--data", interactionBody)
+	if !errors.Is(err, interactive.ErrCanceled) {
+		t.Fatalf("eligible choice form error = %v, want canceled", err)
+	}
+	f.assertWrites(0)
+	calls := f.httpCalls()
+	if len(calls) != 2 || runner.fields != 1 || calls[0].query.Get("cursor") != "" || calls[1].query.Get("cursor") != "eligible-page" {
+		t.Fatal("an ineligible page stopped discovery or lost its next cursor")
+	}
+	for _, call := range calls {
+		if call.method != http.MethodGet || call.query.Get("stack-id") != "stack-1" {
+			t.Fatal("eligibility filtering changed discovery authority or host context")
+		}
+	}
+}
+
+func TestInteractionConfirmationExcludesRenamedPayloadBodyFlag(t *testing.T) {
+	f := newInteractionFixture(t)
+	const secret = "fixture-secret-in-payload-json"
+	const body = `{"token":"fixture-secret-in-payload-json"}`
+	f.manifest.Root.Subcommands = []pluginsdk.CommandSpec{{
+		Use: "delete NAME", Runnable: true, Confirm: true, Args: pluginsdk.ArgsSpec{Min: 1, Max: 1},
+		Flags: []pluginsdk.FlagSpec{
+			{Name: "confirm", Type: "bool", Default: "false"},
+			{Name: "payload", Type: "string", Body: true},
+		},
+		Inputs: []pluginsdk.InputSpec{
+			{Title: "Ledger", Kind: "input", Argument: new(0), Required: true},
+			{Title: "Request JSON", Kind: "text", Flag: "payload", ValueType: "json"},
+			{Title: "Token", Kind: "input", BodyPointer: "/token"},
+		},
+	}}
+	runner := &confirmationProbeRunner{t: t, hidden: []string{secret, body}}
+	err := f.execRoot(runner, "ledger", "delete", "demo", "--payload", body)
+	assertCanceledConfirmation(f, runner, err, []string{"demo"})
+}

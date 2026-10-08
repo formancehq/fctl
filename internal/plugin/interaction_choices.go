@@ -107,6 +107,9 @@ func readChoicePage(ctx context.Context, instance pluginsdk.Plugin, query plugin
 
 func appendChoices(options []interactive.Option, items []any, source pluginsdk.ChoiceSource, seen map[string]bool) ([]interactive.Option, error) {
 	for _, item := range items {
+		if excludedChoice(item, source.ExcludeTrueFields) || !matchingChoice(item, source.MatchFields) {
+			continue
+		}
 		option, err := choiceOption(item, source)
 		if err != nil {
 			return nil, err
@@ -120,6 +123,32 @@ func appendChoices(options []interactive.Option, items []any, source pluginsdk.C
 		return nil, fmt.Errorf("too many choices; specify the resource explicitly")
 	}
 	return options, nil
+}
+
+func excludedChoice(item any, fields []string) bool {
+	object, ok := item.(map[string]any)
+	if !ok {
+		return false
+	}
+	for _, field := range fields {
+		if value, ok := object[field].(bool); ok && value {
+			return true
+		}
+	}
+	return false
+}
+
+func matchingChoice(item any, fields map[string][]string) bool {
+	object, ok := item.(map[string]any)
+	if !ok {
+		return len(fields) == 0
+	}
+	for field, values := range fields {
+		if !slices.Contains(values, choiceText(object[field])) {
+			return false
+		}
+	}
+	return true
 }
 
 func choiceReference(reference string, request pluginsdk.ExecuteRequest) (string, error) {
