@@ -8,6 +8,7 @@
   and command examples.
 - [Cloud management](cloud.md): Membership, stack administration, hosted helpers
   and experimental Deploy Apps.
+- [Interactive input](interaction.md): forms, searchable selections and automation.
 - [Output and diagnostics](output.md): terminal tables, machine JSON, colors
   and redacted HTTP tracing.
 - [Implementation validation](validation.md): local server evidence, test

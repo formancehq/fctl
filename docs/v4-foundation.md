@@ -49,7 +49,8 @@ command tree, so archives do not advertise removed v3 commands.
 
 V4 replaces the v3 command tree and profile format. Cloud management, stack
 administration, proxy, MCP and token helpers are implemented with the v4
-connection boundary. The old interactive prompt is not restored. No v3
+connection boundary. Terminal forms and searchable selections replace missing-input errors for
+interactive callers; scripts can disable them with `--no-input`. No v3
 configuration file is read or migrated.
 
 Move old `fctl stack ...` calls to `fctl cloud stack ...`. Stack-scoped Auth and

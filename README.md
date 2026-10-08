@@ -42,12 +42,17 @@ The v4 profile store is separate and direct service access needs no Cloud login.
 `fctl login` defaults to the public Cloud, opens the browser and saves a Cloud
 connection after successful authentication. Use `--no-browser` for a headless
 session or `--issuer` for another environment. Login does not require a stack;
-service commands resolve their target from flags, saved defaults or unique access.
+service commands resolve their target from flags, saved defaults, unique access or
+interactive selection.
 
 Output defaults to readable tables on a terminal and JSON in pipes or files.
 Use `-o json` for all fields and automation; table lists summarize scalar columns
-and report omitted fields. `--color auto|always|never` controls styles.
+without repeated output reminders. `--color auto|always|never` controls styles.
 See [output and diagnostics](docs/output.md), including `NO_COLOR` and `-d`.
+
+Commands offer forms and searchable selections when required input is missing.
+Supply arguments and flags for direct execution, or use `--no-input` for scripts.
+See [interactive command input](docs/interaction.md).
 
 Plugins expose manifests and execution through a public SDK. The core adapts
 their manifests to Cobra; service plugins do not depend on Cobra or core internals.

@@ -2,7 +2,7 @@
 
 ## Scope and evidence
 
-This record summarizes the sanitized validation reports from October 8, 2026.
+This record summarizes the sanitized validation reports from October 8–9, 2026.
 It records completed checks and remaining gaps separately. Historical failures
 and preparation fields in the reports do not override their final status.
 
@@ -161,7 +161,9 @@ Metadata cleanup does not establish a working deployment lifecycle.
 The lifecycle campaign completed with `VALIDATED_AND_RETAINED_READY`. Stack
 disable/enable, deletion without force and restoration passed. Deletion without
 force retained resources with stack state `DELETED` and status `DISABLED`;
-restoration returned the stack to `ACTIVE`/`READY`. Forced deletion was not tested.
+restoration returned the stack to `ACTIVE`/`READY`. The October 8 campaign did
+not test forced deletion. The later form campaign force-deleted only its own
+new, empty sandbox fixture.
 The temporary organization was deleted and absent from subsequent lists. Ledger
 fixture absence was verified again after restoration.
 
@@ -242,3 +244,61 @@ Snapshot builds do not establish signing, notarization, release publication or
 deployment validation.
 Snapshot version metadata still derives from the existing v3 Git tags; an
 official v4 release requires a v4 tag. Development builds report `v4.0.0-dev`.
+
+
+## Interactive command validation (2026-10-09)
+
+Terminal forms were exercised in a 100-column, 24-line pseudo-terminal, with
+stdin and stderr on the terminal and stdout captured separately. The checks
+covered real keyboard navigation, searchable resource menus, cancellation,
+confirmation defaulting to No, and JSON free of terminal controls with forced
+color profiles. A local HTTP capture verified that the form sends exact JSON
+numbers, including `9007199254740993`.
+
+Live Cloud validation used organization `jdxmvkvwlyiy` and the retained v4 beta
+stack `bwxm`. It covered:
+
+- Ledger creation through all form steps, resource selection for stats,
+  cancellation before creation, declined deletion, and confirmed cleanup.
+- Auth client creation with metadata, client selection, secret creation, and
+  removal of the dedicated client and secret.
+- Stack creation through name, region and catalog selection in `eu-sandbox`;
+  exact `v4.0-beta` was recorded and the temporary stack was verified `DELETED`.
+- `auth info` without organization or stack flags: both menus selected the
+  authorized sandbox and the service read completed.
+- Ledger metadata editing with exact integer `9007199254740993`, Numscript
+  transaction creation, reference readback, and verified fixture deletion.
+
+A further terminal check used stdin, stdout and stderr on the same terminal.
+Selecting the user ledger for `stats` produced the automatic table output;
+`NO_COLOR` suppressed colors, and neither omitted-field counts nor JSON
+reminders appeared.
+
+The final full suite passed with the race detector and `-coverpkg=./...`.
+Aggregate statement coverage in `/tmp/fctl-interactive-final-coverage.out` is
+**88.3%**. `just pc` and the final lint check reported zero issues. An independent
+review found no remaining P1 or P2 defects. A separate SDK consumer compiled and
+executed all three plugin manifests without a core or Cobra dependency.
+
+The local GoReleaser snapshot succeeded with
+`goreleaser release --snapshot --clean --skip=publish,docker`: all six binaries,
+archives, Linux packages and Homebrew cask files were generated. Docker images
+remain unverified because the local daemon was unavailable. Nothing was
+published.
+
+The user ledger `toot` and the retained stack `bwxm` were preserved. No real
+identity provider, invitation or production resource was changed by form QA.
+
+### Ledger beta creation metadata
+
+The sandbox runs Ledger `3.0.0-beta.5` (`36d580949`). Its creation HTTP and
+protobuf models omit `metadata`, so that server ignores metadata in a create
+request. The current `release/v3.0` contract persists it atomically after Ledger
+[PR #2184](https://github.com/formancehq/ledger/pull/2184), included in beta.10.
+The CLI's flat creation body is correct for that contract. HTTP server tests
+and a terminal capture verified the field shape and exact numeric value.
+
+The form explains the beta.10 prerequisite. On the older sandbox, use
+`ledger metadata set` after creation; creation does not claim that the old
+server persisted this field. The other creation options, including enforcement
+mode, initial schema and account type models, exist in both revisions.
