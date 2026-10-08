@@ -4,6 +4,7 @@ package plugin
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net/http"
 	"slices"
 	"sync"
@@ -83,9 +84,35 @@ func cloneManifest(manifest pluginsdk.Manifest) pluginsdk.Manifest {
 }
 func cloneCommand(command pluginsdk.CommandSpec) pluginsdk.CommandSpec {
 	command.Flags = slices.Clone(command.Flags)
+	command.Inputs = cloneInputs(command.Inputs)
 	command.Subcommands = slices.Clone(command.Subcommands)
 	for i := range command.Subcommands {
 		command.Subcommands[i] = cloneCommand(command.Subcommands[i])
 	}
 	return command
+}
+
+func cloneInputs(inputs []pluginsdk.InputSpec) []pluginsdk.InputSpec {
+	result := slices.Clone(inputs)
+	for i := range result {
+		input := &result[i]
+		input.Options = slices.Clone(input.Options)
+		if input.Argument != nil {
+			value := *input.Argument
+			input.Argument = &value
+		}
+		if input.AlternativeArgument != nil {
+			value := *input.AlternativeArgument
+			input.AlternativeArgument = &value
+		}
+		if input.Source != nil {
+			source := *input.Source
+			source.CommandPath = slices.Clone(source.CommandPath)
+			source.Args = slices.Clone(source.Args)
+			source.LabelFields = slices.Clone(source.LabelFields)
+			source.Flags = maps.Clone(source.Flags)
+			input.Source = &source
+		}
+	}
+	return result
 }

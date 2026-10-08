@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -103,16 +102,13 @@ func (s *Settings) ApplicationClient(ctx context.Context, cmd *cobra.Command, al
 	}
 	base := s.HTTPClient(cmd.ErrOrStderr())
 	coordinator := cloudCoordinator(dir, name, entry)
-	_, _, identity, err := cloud.MembershipClient(ctx, base, entry.Session, cmd.ErrOrStderr(), s.BrowserOpener(), coordinator)
+	organizationClient, err := s.cloudOrganizationClient(ctx, cmd, base, options, entry, name, dir)
 	if err != nil {
 		return nil, err
 	}
-	org := options.Organization
-	if org == "" && len(identity.Organizations) == 1 {
-		org = identity.Organizations[0]
-	}
+	org := organizationClient.Context()["organization"]
 	if org == "" {
-		return nil, fmt.Errorf("select an organization with --organization; available IDs: %s", strings.Join(identity.Organizations, ", "))
+		return nil, fmt.Errorf("select an organization with --organization; list choices with fctl cloud organizations list")
 	}
 	if alias == "" {
 		alias = "deploy"

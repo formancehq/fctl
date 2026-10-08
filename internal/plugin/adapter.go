@@ -11,6 +11,7 @@ import (
 
 	"github.com/formancehq/fctl/v4/internal/api"
 	"github.com/formancehq/fctl/v4/internal/command"
+	"github.com/formancehq/fctl/v4/internal/interactive"
 	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
 )
 
@@ -51,7 +52,7 @@ func (a *Adapter) AddTo(root *cobra.Command) error {
 				return fmt.Errorf("plugin root collides with host command %q", existing.Name())
 			}
 		}
-		tree, err := a.build(entry, entry.manifest.Root, nil, nil)
+		tree, err := a.build(entry, entry.manifest.Root, nil, nil, "")
 		if err != nil {
 			return err
 		}
@@ -78,11 +79,18 @@ func checkHostCollisions(root *cobra.Command, spec pluginsdk.CommandSpec) error 
 	return nil
 }
 
-func (a *Adapter) build(entry registration, spec pluginsdk.CommandSpec, parentPath []string, inherited []pluginsdk.FlagSpec) (*cobra.Command, error) {
+func (a *Adapter) build(entry registration, spec pluginsdk.CommandSpec, parentPath []string, inherited []pluginsdk.FlagSpec, target string) (*cobra.Command, error) {
 	path := append(append([]string{}, parentPath...), pluginsdk.CommandName(spec))
 	flags := append(append([]pluginsdk.FlagSpec{}, inherited...), spec.Flags...)
-	cmd := &cobra.Command{Use: spec.Use, Short: spec.Short, Long: spec.Long, Example: spec.Example, Args: cobra.RangeArgs(spec.Args.Min, spec.Args.Max)}
+	if spec.Target != "" {
+		target = spec.Target
+	}
+	cmd := &cobra.Command{Use: spec.Use, Short: spec.Short, Long: spec.Long, Example: spec.Example, Annotations: map[string]string{"fctl.target": target}}
+	cmd.Args = commandArgs(spec)
 	for _, flag := range spec.Flags {
+		if canSupplyFlag(spec.Inputs, flag) {
+			flag.Required = false // The SDK still enforces this after collection.
+		}
 		if err := addFlag(cmd, flag); err != nil {
 			return nil, err
 		}
@@ -97,7 +105,7 @@ func (a *Adapter) build(entry registration, spec pluginsdk.CommandSpec, parentPa
 		}
 	}
 	for _, child := range spec.Subcommands {
-		tree, err := a.build(entry, child, path, next)
+		tree, err := a.build(entry, child, path, next, target)
 		if err != nil {
 			return nil, err
 		}
@@ -139,6 +147,9 @@ func addFlag(cmd *cobra.Command, flag pluginsdk.FlagSpec) error {
 }
 
 func (a *Adapter) run(cmd *cobra.Command, entry registration, path []string, flags []pluginsdk.FlagSpec, args []string) error {
+	if interactive.Enabled(cmd) {
+		return a.runInteractive(cmd, entry, path, flags, args)
+	}
 	normalized, err := prepareRequest(cmd, entry.manifest, path, flags, args)
 	if err != nil {
 		return err
@@ -175,6 +186,18 @@ func (a *Adapter) resolveClient(ctx context.Context, service string, request plu
 }
 
 func prepareRequest(cmd *cobra.Command, manifest pluginsdk.Manifest, path []string, flags []pluginsdk.FlagSpec, args []string) (pluginsdk.ExecuteRequest, error) {
+	request, err := requestFromFlags(cmd, path, flags, args)
+	if err != nil {
+		return pluginsdk.ExecuteRequest{}, err
+	}
+	normalized, err := pluginsdk.NormalizeRequest(manifest, request)
+	if err != nil {
+		return pluginsdk.ExecuteRequest{}, err
+	}
+	return readRequestBody(cmd, normalized, flags)
+}
+
+func requestFromFlags(cmd *cobra.Command, path []string, flags []pluginsdk.FlagSpec, args []string) (pluginsdk.ExecuteRequest, error) {
 	request := pluginsdk.ExecuteRequest{CommandPath: append([]string{}, path...), Args: append([]string{}, args...), Flags: map[string]string{}, ChangedFlags: map[string]bool{}}
 	for _, spec := range flags {
 		flag := lookupFlag(cmd, spec.Name)
@@ -184,10 +207,11 @@ func prepareRequest(cmd *cobra.Command, manifest pluginsdk.Manifest, path []stri
 		request.Flags[spec.Name] = flag.Value.String()
 		request.ChangedFlags[spec.Name] = flag.Changed
 	}
-	normalized, err := pluginsdk.NormalizeRequest(manifest, request)
-	if err != nil {
-		return pluginsdk.ExecuteRequest{}, err
-	}
+	return request, nil
+}
+
+func readRequestBody(cmd *cobra.Command, normalized pluginsdk.ExecuteRequest, flags []pluginsdk.FlagSpec) (pluginsdk.ExecuteRequest, error) {
+	var err error
 	for _, spec := range flags {
 		if spec.Body && (normalized.Flags[spec.Name] != "" || normalized.ChangedFlags[spec.Name]) {
 			normalized.Body, err = command.ReadBody(cmd, normalized.Flags[spec.Name])
@@ -207,4 +231,13 @@ func lookupFlag(cmd *cobra.Command, name string) *pflag.Flag {
 		return flag
 	}
 	return cmd.InheritedFlags().Lookup(name)
+}
+
+func commandArgs(spec pluginsdk.CommandSpec) cobra.PositionalArgs {
+	return func(cmd *cobra.Command, args []string) error {
+		if interactive.Enabled(cmd) && len(spec.Inputs) != 0 {
+			return cobra.MaximumNArgs(spec.Args.Max)(cmd, args)
+		}
+		return cobra.RangeArgs(spec.Args.Min, spec.Args.Max)(cmd, args)
+	}
 }

@@ -32,17 +32,13 @@ func NewRootCommand() *cobra.Command {
 	}
 	settings := &connection.Settings{}
 	settings.Bind(root)
+	root.PersistentFlags().Bool("no-input", false, "Disable interactive forms and selections (FCTL_NO_INPUT, CI)")
 	root.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {
 		return command.ConfigureOutput(cmd, settings.Output, settings.Color)
 	}
 	command.InstallHelp(root, &settings.Color)
 	root.AddGroup(&cobra.Group{ID: "cloud", Title: "Cloud:"}, &cobra.Group{ID: "modules", Title: "Modules:"}, &cobra.Group{ID: "connections", Title: "Connections:"})
-	resolve := func(ctx context.Context, service string, request pluginsdk.ExecuteRequest) (*api.Client, error) {
-		if service == "cloud-apps" {
-			return settings.ApplicationClient(ctx, root, request.Flags["deploy-app-alias"])
-		}
-		return settings.Client(ctx, root, service)
-	}
+	resolve := pluginResolver(root, settings)
 	root.AddCommand(version.NewCommand(), connections.NewCommand(settings), login.NewCommand(settings), login.NewLogoutCommand(settings))
 	registry := &plugin.Registry{}
 	for _, factory := range []plugin.Factory{cloudplugin.New, auth.New, ledger.New} {
@@ -73,4 +69,24 @@ func Execute() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 	return NewRootCommand().ExecuteContext(ctx)
+}
+
+func pluginResolver(root *cobra.Command, settings *connection.Settings) plugin.RequestResolver {
+	return func(ctx context.Context, service string, request pluginsdk.ExecuteRequest) (*api.Client, error) {
+		cmd, _, err := root.Find(request.CommandPath)
+		if err != nil {
+			return nil, err
+		}
+		for _, name := range []string{"organization", "stack"} {
+			if value := request.Context[name]; value != "" {
+				if err := root.PersistentFlags().Set(name, value); err != nil {
+					return nil, err
+				}
+			}
+		}
+		if service == "cloud-apps" {
+			return settings.ApplicationClient(ctx, cmd, request.Flags["deploy-app-alias"])
+		}
+		return settings.Client(ctx, cmd, service)
+	}
 }

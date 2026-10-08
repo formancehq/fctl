@@ -144,6 +144,9 @@ func (s *Settings) Client(ctx context.Context, cmd *cobra.Command, service strin
 	}
 	client := s.HTTPClient(cmd.ErrOrStderr())
 	if service == "cloud" {
+		if cloudCommandTarget(cmd) == "organization" {
+			return s.cloudOrganizationClient(ctx, cmd, client, options, entry, name, dir)
+		}
 		return s.membershipClient(ctx, cmd, client, options, entry, name, dir)
 	}
 	base, err := endpoint(options, service)
@@ -155,6 +158,10 @@ func (s *Settings) Client(ctx context.Context, cmd *cobra.Command, service strin
 	case "client-credentials":
 		client, err = credentialClient(ctx, client, options)
 	case "cloud":
+		options, err = s.selectCloudTarget(ctx, cmd, client, options, entry, name, dir)
+		if err != nil {
+			return nil, err
+		}
 		client, base, err = savedCloudClient(ctx, client, options, entry, name, dir, cmd.ErrOrStderr(), s.BrowserOpener())
 		if service != "stack" {
 			base = strings.TrimRight(base, "/") + "/api/" + service

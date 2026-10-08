@@ -16,7 +16,7 @@ var coreFlags = map[string]bool{
 	"help": true, "connection": true, "config-dir": true, "timeout": true, "output": true,
 	"stack-url": true, "ledger-url": true, "auth-url": true, "auth-mode": true, "token-url": true,
 	"client-id": true, "scopes": true, "issuer": true, "organization": true, "stack": true,
-	"no-browser": true, "debug": true, "color": true,
+	"no-browser": true, "debug": true, "color": true, "no-input": true,
 }
 var coreRoots = map[string]bool{"help": true, "completion": true, "version": true, "connections": true, "login": true, "logout": true}
 
@@ -38,7 +38,10 @@ func validateManifest(m pluginsdk.Manifest) error {
 	if len(fields) == 0 || fields[0] != m.Name || coreRoots[fields[0]] {
 		return fmt.Errorf("invalid or reserved plugin root %q", m.Root.Use)
 	}
-	return validateCommand(m.Root, validationScope{names: map[string]bool{}, shorts: map[string]bool{"h": true, "o": true}})
+	if err := validateCommand(m.Root, validationScope{names: map[string]bool{}, shorts: map[string]bool{"h": true, "o": true}}); err != nil {
+		return err
+	}
+	return validateInteraction(m)
 }
 
 func validateCommand(spec pluginsdk.CommandSpec, inherited validationScope) error {

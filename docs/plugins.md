@@ -3,7 +3,8 @@
 Cloud, Auth and Ledger implement `pkg/pluginsdk.Plugin`. The public SDK has no Cobra,
 profile-store or core authentication dependency. Each plugin exposes two methods:
 
-- `GetManifest` describes its command tree, arguments and typed flags.
+- `GetManifest` describes its command tree, arguments, typed flags and declarative
+  interactive inputs.
 - `Execute` accepts a command path, arguments, resolved flags, changed flags,
   a JSON body, a resolved service endpoint and non-secret host context. It returns
   raw JSON and an error.
@@ -51,6 +52,9 @@ metadata. The Cloud host supplies selected and available organization/stack IDs;
 the application host supplies organization and application alias. Tokens,
 credentials and profile paths do not belong in this map. Authentication stays
 in the injected HTTP transport.
+
+See [interactive input](interaction.md) for terminal fields, choice discovery and
+automation. Input metadata does not relax direct SDK validation.
 
 ## Host ownership
 

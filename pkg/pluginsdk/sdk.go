@@ -28,6 +28,8 @@ type Manifest struct {
 
 type CommandSpec struct {
 	Use         string        `json:"use"`
+	Target      string        `json:"target,omitzero"`
+	Inputs      []InputSpec   `json:"inputs,omitzero"`
 	Service     string        `json:"service,omitzero"`
 	Short       string        `json:"short"`
 	Long        string        `json:"long,omitempty"`
