@@ -28,7 +28,6 @@ linters:
         - fmt.Fprintf
         - fmt.Fprintln
         - (io.Closer).Close
-        - (*github.com/formancehq/go-libs/v3/publish/circuit_breaker.CircuitBreaker).Close
     staticcheck:
       checks:
         - -ST1001 # Use fmt.Errorf for error construction using Sprintf

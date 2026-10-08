@@ -12,23 +12,15 @@ lint:
 tidy:
     go mod tidy
 
-generate: generate-deploy-server-client generate-membership-client
+generate:
     @go generate ./...
 g: generate
-
-[group('generate')]
-generate-deploy-server-client:
-    @cd internal/deployserverclient && speakeasy run --skip-versioning --frozen-workflow-lockfile
-
-generate-membership-client:
-    @cd internal/membershipclient && speakeasy run --skip-versioning --frozen-workflow-lockfile
-
 
 install:
     go install -v .
 
 tests:
-    go test ./...
+    go test -race ./...
 
 release-local:
     @goreleaser release --nightly --skip=publish --clean

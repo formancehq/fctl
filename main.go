@@ -1,9 +1,15 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/formancehq/fctl/v4/cmd"
 )
 
 func main() {
-	cmd.Execute()
+	if err := cmd.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 }
