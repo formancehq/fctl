@@ -4,7 +4,7 @@ project_name: fctl
 
 includes:
   - from_url:
-      url: https://raw.githubusercontent.com/formancehq/earthly/refs/heads/main/.goreleaser.default.yaml
+      url: https://raw.githubusercontent.com/formancehq/earthly/refs/heads/main/.goreleaser.default-v2.yaml
 
 builds:
   - binary: fctl
@@ -30,12 +30,12 @@ builds:
 
 archives:
   - id: "{{.ProjectName}}"
-    builds:
+    ids:
       - fctl
     format_overrides:
       - goos: windows
-        format: zip
-    format: tar.gz
+        formats: [zip]
+    formats: [tar.gz]
     name_template: "{{.ProjectName}}_{{.Os}}-{{.Arch}}"
     files:
     - completions/*
@@ -87,7 +87,7 @@ nfpms:
   - id: packages
     package_name: fctl
     file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    builds:
+    ids:
       - fctl
     homepage: https://formance.com
     maintainer: Maxence Maireaux <maxence@formance.com>
@@ -95,7 +95,7 @@ nfpms:
       - deb
       - rpm
 
-furies:
+gemfury:
   - account: formance
     ids:
       - packages
