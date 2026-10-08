@@ -1,11 +1,15 @@
 # fctl technical documentation
 
 - [V4 foundation](v4-foundation.md): module identity, command behavior,
-  validation and the migration from the removed v3 implementation.
+  command boundaries and migration from v3.
 - [Connections and authentication](connections.md): local services, OAuth2,
   Cloud login and private connection profiles.
 - [Auth and Ledger modules](modules.md): supported operations, API revisions
   and command examples.
+- [Cloud management](cloud.md): Membership, stack administration, hosted helpers
+  and experimental Deploy Apps.
+- [Output and diagnostics](output.md): terminal tables, machine JSON, colors
+  and redacted HTTP tracing.
 - [Implementation validation](validation.md): local server evidence, test
   coverage boundaries and reproducible checks.
 - [Plugin contract](plugins.md): public SDK, embedded registry and host ownership.

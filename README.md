@@ -1,8 +1,8 @@
 # Formance Control CLI (fctl v4)
 
 `fctl` is the Formance command-line interface (repository profile: CLI).
-The v4 implementation embeds Auth and Ledger modules with a shared connection
-boundary for local services, OAuth2 client credentials and Cloud user login.
+The v4 implementation embeds Cloud, Auth and Ledger plugins with a shared
+connection boundary for local services, OAuth2 client credentials and Cloud login.
 The Go module is `github.com/formancehq/fctl/v4`.
 
 ## Current commands
@@ -15,6 +15,8 @@ go run . completion bash
 go run . --auth-mode none --ledger-url http://localhost:9000 ledger list
 go run . connections --help
 go run . login
+go run . cloud organizations list
+go run . cloud stack list --organization ORG_ID
 go run . --organization ORG_ID --stack STACK_ID ledger list
 ```
 
@@ -24,7 +26,14 @@ source change.
 
 The Auth module uses its public Go client. Ledger targets `release/v3.0`,
 with HTTP business routes under `/v3`. See [module commands](docs/modules.md)
-and [connection setup](docs/connections.md). Connectivity is deferred.
+and [connection setup](docs/connections.md). Cloud management lives under
+`cloud`, with stack administration under `cloud stack`. See the
+[Cloud command boundaries](docs/cloud.md) for restored proxy, MCP and token
+helpers, and experimental Deploy Apps. Connectivity is deferred.
+
+`ledger list` returns all ledgers. Account, transaction and log lists continue
+with `--after` using the last address or ID; only Ledger index inspection uses
+opaque `--cursor` tokens. See [Ledger pagination](docs/modules.md#ledger).
 
 The v3 command tree and profile store are not migrated automatically. Users of
 v3 scripts must adapt commands and request schemas or retain a v3 binary.
@@ -35,11 +44,16 @@ connection after successful authentication. Use `--no-browser` for a headless
 session or `--issuer` for another environment. Login does not require a stack;
 service commands resolve their target from flags, saved defaults or unique access.
 
+Output defaults to readable tables on a terminal and JSON in pipes or files.
+Use `-o json` for all fields and automation; table lists summarize scalar columns
+and report omitted fields. `--color auto|always|never` controls styles.
+See [output and diagnostics](docs/output.md), including `NO_COLOR` and `-d`.
+
 Plugins expose manifests and execution through a public SDK. The core adapts
-their manifests to Cobra; Auth and Ledger do not depend on Cobra or core internals.
+their manifests to Cobra; service plugins do not depend on Cobra or core internals.
 See the [plugin contract](docs/plugins.md). This
-CLI has no long-running service lifecycle, so composition does not use Fx;
-review this choice if persistent background services are introduced.
+CLI uses explicit composition without Fx. Proxy and MCP commands run until
+cancellation; they use the host's connection and authentication boundary.
 
 ## Development
 

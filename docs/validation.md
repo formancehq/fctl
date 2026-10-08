@@ -1,87 +1,244 @@
 # V4 implementation validation
 
-## Ledger reference and local server
+## Scope and evidence
 
-The requested Ledger v3 release branch is named `release/v3.0` in the repository.
-The CLI contract and local server validation use commit
-`71b0feb549a7cbc22bddaca2859ae5d91a24d378` from that branch.
+This record summarizes the sanitized validation reports from October 8, 2026.
+It records completed checks and remaining gaps separately. Historical failures
+and preparation fields in the reports do not override their final status.
 
-A server compiled from this revision was started locally without authentication.
-The CLI completed ledger creation/listing, account reads, transaction creation,
-idempotent replay, metadata updates/deletion, transaction reversal, balances,
-statistics and server information. The amount `9007199254740993` remained exact
-through creation, replay and account reads. Replay returned the original
-transaction rather than creating another one; reversal restored a zero balance.
-The local server was stopped after validation.
+The approved live target was stack `bwxm` in `eu-sandbox`, targeting
+`v4.0-beta`. Observed services were Auth `v2.5.1` and Ledger
+`3.0.0-beta.5` (runtime commit `36d580949`). These component versions do not
+establish an exact final v4 runtime release.
 
-## Authentication and CLI integration
+The current Ledger source contract is `release/v3.0` at
+`0f4656d1efbcac42705839daccb34012e70d783a`. The deployed beta has a different wire
+contract; source compatibility and deployed behavior must be assessed separately.
 
-Automated HTTP fixtures exercise anonymous access and OAuth2 client credentials.
-A local Cloud fixture signs RS256 ID tokens and serves OIDC discovery, JWKS,
-Membership device authorization and Auth token exchange. Tests invoke fresh CLI
-instances against the same private connection directory and cover login, Auth
-and Ledger requests, cached tokens, logout and secret redaction.
+| Evidence | Final result |
+|---|---|
+| `/tmp/fctl-ledger-live-report.json` | `VALIDATED_AND_CLEANED_UP`; 31 positive command paths; no current open findings |
+| `/tmp/fctl-auth-live-report.json` | `COMPLETE_WITH_GAPS`; 11 of 12 positive command paths; cleanup complete |
+| `/tmp/fctl-auth-modes-report.json` | Five cases `PASS`, including expected authentication failures |
+| `/tmp/fctl-cloud-read-report.json` | 18 cases `PASS`, one `FAIL` |
+| `/tmp/fctl-cloud-crud-20261008/report.md` | 46 commands, 44 `PASS`, 29 assertions passed; one entitlement refusal and one preservation assertion failure |
+| `/tmp/fctl-stack-tools-report.json` | Five cases `PASS`; MCP initialization `BACKEND_UNAVAILABLE` |
+| `/tmp/fctl-presentation-live-report.json` | Four real PTY cases `PASS`; no backend writes |
+| `/tmp/fctl-cloud-lifecycle-report.json` | `VALIDATED_AND_RETAINED_READY`; temporary organization absent, stack retained `ACTIVE`/`READY` |
+| `/tmp/fctl-apps-live-report.json` | `PASS_WITH_COVERAGE_LIMITS`; 35 successful calls, five expected errors, 15 assertions passed; cleanup verified |
 
-The Cloud login fixtures separate the root Membership identity from stack-scoped
-authorization. They check target selection, independent caches for multiple
-stacks, browser callbacks and headless instructions. Failed or canceled login
-must preserve existing profile settings, tokens and the active connection; new
-profiles are written only after successful authentication. Browser launcher tests
-use injected processes and do not open a real browser.
+These paths identify local evidence artifacts, not files shipped with the
+repository. Later validation results and fixes are recorded below separately
+from the historical report results.
 
-Device polling omits `scope`, matching the former CLI: Membership binds the
-scopes during device authorization and does not split a space-delimited scope
-field at its token endpoint. The fixtures reject polling requests that repeat
-this field. Scoped requests still carry their `resource`.
+## Ledger live validation
 
-HTTP debug tests cover `-d`/`--debug`, stdout/stderr separation, credential
-redaction and unchanged request/response streams. Known OAuth error codes remain
-visible; arbitrary error descriptions are redacted.
+All 31 Ledger command paths were positively validated, including ledger and
+index deletion. The campaign recorded 338 live command cases. Its final
+follow-up has 105 passing assertions, zero failures and zero blocked assertions;
+cleanup adds 48 passing assertions. All dedicated ledger and index fixtures were
+deleted and their absence verified. The stack was not deleted or changed by
+Ledger cleanup.
 
-Regression tests cover concurrent profile updates, stale login/refresh results
-after logout or replacement, refresh-token rotation, cancellation, request
-limits, URL escaping, exact JSON numbers and bulk partial failures. Mutating
-requests are not retried automatically.
+The final checks cover ledger CRUD, accounts, transactions, metadata, balances,
+statistics, indexes, logs and bulk operations. Idempotent replay, conflicting
+keys, bulk stop/continue behavior, reversals, filters and pagination were
+exercised. Earlier pagination findings and the metadata fixture oracle error
+were resolved by subsequent validation; the historical failure counters remain
+in the report for traceability.
 
-These fixtures validate the implemented contracts. No live Cloud organization
-or deployed Auth service was used. External plugins and Connectivity are outside
-this implementation.
+The deployed beta accepts posting amounts as JSON numbers and rejects quoted
+decimal strings. The exact posting value `184467440737095516170` was verified.
+Metadata retained the exact integer `9007199254740993`, the unsigned 64-bit
+maximum and the signed 64-bit minimum. The CLI preserves raw JSON tokens rather
+than converting these amounts through floating point.
 
-A live public Cloud smoke check completed discovery and device initiation, then
-continued polling through `authorization_pending` responses. It was canceled
-without opening a browser or writing a profile. User-approved authentication
-and service requests against a live Cloud stack were not verified.
+Deployed metadata conversion omits null values; the initial null-preserving
+oracle was corrected. Ledger log continuation uses `payload.apply.log.id`, not
+the outer global log sequence. The full paginated log oracle passed after this
+correction. The deployed asset precision range is 1 through 255; a valid mixed
+precision fixture passed after the rejected `EUR/0` case and its changed-body
+idempotency conflict.
 
-## Reproducible repository checks
+Positive `scriptReference` use remains unverified because the campaign did not
+provision a library. High transaction IDs and actual server 5xx responses were
+not safely generated. Passing command-path coverage does not remove these
+variant limitations.
 
-The initial implementation checks passed with zero lint issues, a passing
-race-enabled suite and 86.2% aggregate statement coverage. The plugin refactoring
-is validated independently with the same checks below.
-Its final race-enabled suite passed with 88.5% aggregate statement coverage and
-zero lint issues. The six GoReleaser snapshot targets built successfully.
-The default Cloud login and HTTP debug changes passed a fresh full race-enabled
-suite with 89.0% aggregate statement coverage, zero lint issues and successful
-builds for the same six snapshot targets.
+## Auth and authentication modes
 
-The plugin dependency test inspects the complete production import closure and
-rejects Cobra, pflag and core `internal`/`cmd` dependencies. A separate Go consumer
-with `GOWORK=off` compiled and executed Auth and Ledger manifests and server-info
-operations through the public SDK and an injected HTTP fixture. Its binary
-dependencies exclude Cobra and the core implementation.
+Auth completed 63 recorded cases with no live functional failures. Eleven
+positive command paths passed: service information, discovery, client CRUD,
+secret list/create/delete and users list. Positive `auth users show` remains
+blocked: the service returned no users and no synthetic user or invitation was
+created. The missing-user 404 case passed. The runner's final exit code of 1
+reflects `COMPLETE_WITH_GAPS`, even though cleanup succeeded.
+
+Client updates verified omitted-value preservation and explicit option clearing.
+Confirmation checks and readbacks verified secret revocation and client deletion.
+Both created secrets were revoked, the fixture client was absent, and the private
+credentials file was removed. A harness assertion that initially rejected the
+server's stored secret hash was corrected without replaying completed mutations.
+
+Client and secret readbacks exposed a nonempty stored `hash` field but no clear
+secret. The CLI preserves the raw server JSON. The report classifies this as an
+Auth read-model observation, not a missing CLI command. Local source explains
+the serialization mechanism, but the deployed Auth commit was not verified.
+Secret values are not included in the sanitized report.
+
+All five authentication-mode cases passed: anonymous discovery, rejection of
+anonymous protected Ledger access, client-credentials Auth and Ledger reads,
+and rejection of an invalid client secret. Diagnostics hid credentials in all
+five cases. The initial approved browser login completed, and cached root grants
+were exercised earlier. The latest service reports used the existing connection
+and cached stack grant; they do not establish a new device authorization or
+fresh browser login.
+
+## Cloud reads and CRUD
+
+Cloud reads passed for identity, invitations list, organization list/describe/
+history, users, policies, OAuth clients, applications list, regions and versions,
+and stack list/info/version/history/users/modules. The read report records one
+unsuccessful `organizations authentication-provider show` case as `FAIL`. Initial
+validation confirmed an expected missing-provider 404, but the raw read report
+contains no error reason. The separate isolated CRUD campaign positively
+validated provider configure/show/delete and the expected missing-provider 404
+after deletion.
+
+In the isolated QA organization, policy CRUD and scope add/remove passed. OAuth
+client CRUD passed, with final absence checked from captured cursor data. The
+dummy Google authentication provider was removed. Successfully created nested
+fixtures were deleted. The lifecycle campaign subsequently deleted the temporary
+QA organization and verified its absence.
+
+Private region creation was refused by the paid-feature entitlement check
+(HTTP 400 `VALIDATION`). No private region was created and the region IDs were
+unchanged. This is a blocked positive validation, not a successful region CRUD
+campaign. Users link/unlink were skipped because no own or synthetic user was
+available; no invitations were sent.
+
+The earlier organization name update and restoration passed, but strict preservation of
+`defaultPolicyID: null` failed: Membership updates default it to Guest policy
+ID `4`. The report's source review confirmed explicit API defaulting when the CLI
+sent preserved null in its request. This is not established as semantically neutral:
+the source gives future users different scopes under Guest than under an unset
+policy. Existing member permissions are not recomputed by this update. The
+future-user effect was not tested live. The original organization name and
+domain were preserved or restored; the default policy was not restored to null
+in that campaign.
+
+The CLI protection was subsequently fixed: an organization update with an unset
+or zero default policy is refused before PUT unless an explicit positive policy
+ID is selected. Regression tests cover this refusal and preservation of an
+existing positive policy. The earlier live preservation failure is a historical
+finding addressed by this guard; no subsequent live preservation result is
+recorded here.
+
+Applications list passed with the latest rebuilt CLI, including an empty cursor.
+The scope broker backend audience handling was fixed and passed earlier tests.
+Successful private region operations and user link/unlink remain outside the
+completed evidence.
+
+## Applications
+
+The Apps campaign completed with `PASS_WITH_COVERAGE_LIMITS`: 35 successful
+calls, five expected errors and 15 passing assertions, with no failed assertions
+or code changes. Application creation, variables, manifests, versions,
+pagination, manifest binding/unbinding and downloads were verified. Variable
+redaction, distinct second pages and exact downloaded bytes passed. Cleanup
+verified that the owned application, manifest and variables were absent; no
+owned resources remained.
+
+No deployment was created: actual infrastructure creation was outside the
+approved QA scope. Deployment lists were empty before and after the campaign,
+and missing-deployment reads returned the expected HTTP 403 with exit code 1
+and empty stdout. Positive deployment show/logs/download paths remain
+unverified. Deployment creation, polling and deletion with `--wait` were not
+tested. Metadata cleanup does not establish a working deployment lifecycle.
+
+## Stack lifecycle
+
+The lifecycle campaign completed with `VALIDATED_AND_RETAINED_READY`. Stack
+disable/enable, deletion without force and restoration passed. Deletion without
+force retained resources with stack state `DELETED` and status `DISABLED`;
+restoration returned the stack to `ACTIVE`/`READY`. Forced deletion was not tested.
+The temporary organization was deleted and absent from subsequent lists. Ledger
+fixture absence was verified again after restoration.
+
+Same-version upgrade passed as an idempotent CLI no-op on a ready stack; no
+backend version transition was tested. Two independent reviews found the same
+P2 issue: this path bypassed requested waiting when the stack was `PROGRESSING`.
+The issue is resolved by `waitExistingStackVersion`: default waiting requires
+both `READY` and the requested version, `--no-wait` returns the current stack,
+disabled stacks are rejected, and cancellation is honored. Meaningful regression
+tests cover these cases; the race-enabled `TestStack` checks passed. No new live
+version transition is claimed.
+
+Restoration briefly returned `READY` before the stack became `PROGRESSING` again
+and a Ledger list request returned HTTP 503 `NO_LEADER`. Subsequent read-only
+checks confirmed recovery, with two successful empty Ledger lists and repeated
+stack readiness. No mutation was retried. The final recorded stack is `ACTIVE`,
+`READY`, reachable and synchronised at `v4.0-beta` in `eu-sandbox`.
+
+## Stack tools
+
+Personal token acquisition passed without reporting the credential. The proxy
+returned Ledger information for `3.0.0-beta.5` and replaced incoming credentials.
+Host and origin rejection each returned HTTP 403. Proxy shutdown was classified
+`PASS` by the report with exit code 1.
+
+Before disablement, the MCP module's backend status was `PROGRESSING`, with an explicit
+`DependencyVersionMismatch`: effective Ledger version `v3.0.0-beta.5` must be
+before `v3.0.0-0` to satisfy its dependency requirement. MCP initialization
+could not complete on this backend. The recorded case is `BACKEND_UNAVAILABLE`: the backend returned
+HTTP 404, surfaced as RPC error `-32000` while preserving the request ID.
+The process exited 0, which does not establish a working MCP backend. No
+successful initialization or MCP session is claimed.
+The lifecycle campaign then disabled MCP and verified state `DISABLED` and
+status `DELETED`; the retained stack recovered to `READY`.
+
+## CLI output and errors
+
+All four real PTY cases passed at a terminal width of 100 columns: help used
+automatic ANSI color, `NO_COLOR` suppressed it, automatic region listing rendered
+a colored ASCII table with wrapped fields, and explicit JSON remained valid and
+free of ANSI even with color forced. These checks made no backend writes.
+Explicit JSON output and non-TTY output tests also passed, including exact
+preservation of large integers.
+
+The actual `auth info` error reproduction produced three lines and exit code 1,
+without listing target IDs. The full suite includes the regression check that
+bounds target error output.
+
+## External plugin SDK consumer
+
+A separate consumer at `/tmp/fctl-plugin-consumer-5b2bsq26` compiled with
+`GOWORK=off` and executed the Cloud, Auth and Ledger manifests. It preserved the
+exact integer `9007199254740993`. Its `go list -deps` output contains no Cobra,
+pflag or core `internal`/`cmd` dependencies. The repository's dependency tests
+also passed.
+
+## Repository race checks and coverage
+
+The full race-enabled repository suite associated with
+`/tmp/fctl-cloud-final4-coverage-20261008.out` passed with exit code 0, including
+the bounded target error checks and same-version upgrade readiness regressions.
+The upgrade fix was independently reviewed and the finding was closed.
+Aggregate statement coverage computed from that artifact is **87.7%**.
+
+The final `just pc` check passed with zero lint issues. The final GoReleaser snapshot
+successfully built all six targets: Linux, macOS (`darwin`) and Windows, each on
+amd64 and arm64. No release was published.
+
+To reproduce the suite and compute coverage:
 
 ```bash
-nix develop --impure --command just pc
-nix develop --impure --command go test -race -timeout 60s ./...
-nix develop --impure --command go test -count=1 -race -timeout 60s \
+nix develop --impure --command go test -count=1 -race -timeout 120s \
   -coverpkg=./... -coverprofile=/tmp/fctl-v4-coverage.out ./...
 nix develop --impure --command go tool cover -func=/tmp/fctl-v4-coverage.out
 ```
 
-The GoReleaser snapshot built archives for Linux, macOS and Windows on amd64 and
-arm64. Publication, signing, notarization, system packages and Docker publishing
-were skipped. Snapshot versions still derive from the existing v3 Git tags;
-publishing v4 requires an explicit v4 release tag. This validation did not publish
-a release.
-
-An independent code review was performed. Jev Review was unavailable because its
-API key was not configured.
+Snapshot builds do not establish signing, notarization, release publication or
+deployment validation.
+Snapshot version metadata still derives from the existing v3 Git tags; an
+official v4 release requires a v4 tag. Development builds report `v4.0.0-dev`.

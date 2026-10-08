@@ -11,12 +11,21 @@ command tree. Errors propagate to the entrypoint, which writes them to stderr
 and exits with status 1. Signal cancellation is propagated through the command
 context.
 
-The root registers `version`, connection management and login/logout. Auth and
-Ledger register through the embedded plugin registry and public SDK; the core
+The root registers `version`, connection management and login/logout. Cloud,
+Auth and Ledger register through the embedded plugin registry and public SDK; the core
 builds their Cobra commands from manifests. Cobra provides help, `--version`
 and shell completion commands.
 No profile, authentication or network access is required to inspect help or
 version information.
+
+Cloud control-plane operations live under `cloud`; stack administration lives
+under `cloud stack`. Host utilities add the authenticated proxy, stdio MCP
+bridge and stack token helper. Experimental Apps resolve their own Deploy
+audience. See [Cloud management](cloud.md).
+
+The host selects table output on terminals and JSON elsewhere. Presentation is
+separate from plugin execution; [output options](output.md) also cover colors
+and HTTP diagnostics.
 
 The `version` command prints the CLI version, commit and build date.
 The root `--version` flag prints the CLI version. Development defaults are
@@ -38,10 +47,15 @@ command tree, so archives do not advertise removed v3 commands.
 
 ## Migration
 
-The v3 command surface has been removed, including its service commands,
-Cloud and Stack administration, profile format, proxy, MCP and interactive
-prompt. V4 introduces its own connection store, login, Auth and Ledger commands.
-No v3 configuration file is read or migrated.
+V4 replaces the v3 command tree and profile format. Cloud management, stack
+administration, proxy, MCP and token helpers are implemented with the v4
+connection boundary. The old interactive prompt is not restored. No v3
+configuration file is read or migrated.
+
+Move old `fctl stack ...` calls to `fctl cloud stack ...`. Stack-scoped Auth and
+Ledger commands remain under `auth` and `ledger`; select their Cloud target with
+`--organization` and `--stack`. Use `cloud stack --help` to check changed arguments,
+confirmation flags and request bodies. See [migration examples](cloud.md#migration-from-v3).
 
 Existing automation must adapt to the [v4 module commands](modules.md) and
 [connection settings](connections.md), or keep using a compatible v3 binary.

@@ -1,6 +1,8 @@
 # Auth and Ledger modules
 
-The root registers Auth and Ledger plugin factories. Each plugin implements
+The root registers Cloud, Auth and Ledger plugin factories. This page describes
+the service modules; [Cloud management](cloud.md) describes control-plane commands.
+Each plugin implements
 the public `pluginsdk.Plugin` manifest/execution contract. The core builds Cobra
 commands from manifests and supplies an authenticated HTTP client and endpoint.
 Plugins own service routes, payloads and command descriptions. They import no
@@ -11,7 +13,7 @@ is not implemented. Connectivity is deferred.
 ## Ledger
 
 The HTTP contract is taken from `formancehq/ledger`, branch `release/v3.0`,
-commit `71b0feb549a7cbc22bddaca2859ae5d91a24d378`. Business requests use `/v3`;
+commit `0f4656d1efbcac42705839daccb34012e70d783a`. Business requests use `/v3`;
 server information uses `/_info`. This revision does not contain a public
 `pkg/client` module. The CLI therefore uses a small HTTP adapter with route and
 payload tests rather than importing server packages or the legacy v2 SDK.
@@ -19,13 +21,16 @@ Replace this adapter with the published module client when it becomes available.
 
 ```bash
 fctl ledger create books
-fctl ledger list --page-size 20
+fctl ledger list
 fctl ledger show books
-fctl ledger --ledger books accounts list
+fctl ledger --ledger books accounts list --page-size 20
+fctl ledger --ledger books accounts list --page-size 20 --after users:001
 fctl ledger --ledger books accounts show users:001
 fctl ledger --ledger books transactions create \
   --data @transaction.json --idempotency-key payment-42
 fctl ledger --ledger books transactions list
+fctl ledger --ledger books transactions list --after 42
+fctl ledger --ledger books logs list --after 42
 fctl ledger --ledger books transactions revert 1 --idempotency-key revert-42
 ```
 
@@ -37,9 +42,21 @@ integers; no floating-point conversion is performed. For example:
 {"postings":[{"source":"world","destination":"users:001","asset":"USD/2","amount":1000}]}
 ```
 
-Lists return one complete server envelope. To continue, pass the server's opaque
-cursor to `--cursor` with the same filters and order. Use `--filter` for the v3
-filter syntax and `--consistency linearizable|stale` for supported reads.
+JSON output preserves the complete server envelope; terminal tables summarize
+lists and display their pagination fields. Use `-o json` for complete payloads.
+`ledger list` returns all ledgers and has no pagination or reverse flags.
+Accounts, transactions and logs return one page. Continue with `--after` using
+the last returned account address or unsigned transaction/log ID; it is an
+exclusive boundary sent as the backend's `after` parameter. Keep the same filters
+and order. Accounts and transactions support `--reverse`; logs do not.
+
+Only `ledger indexes inspect` uses opaque `--cursor` tokens, taken from its
+`nextCursor` response. Regular pages use `--page-size` (default 100; 0 means 100,
+with a server cap of 1000). Index inspection accepts page sizes from 1 to 10000.
+Use `--filter` for the v3 filter syntax and
+`--consistency linearizable|stale` for supported reads. Continuation examples
+above illustrate the boundary value; use the last address or ID from your own
+previous response.
 
 Other commands cover ledger/account/transaction metadata, balances, stats,
 logs, indexes and bulk operations. Use `--help` on each group for its exact

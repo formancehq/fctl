@@ -48,6 +48,8 @@ require HTTPS; plaintext HTTP is allowed only on loopback for local development.
 
 ```bash
 fctl login
+fctl cloud organizations list
+fctl cloud stack list --organization ORGANIZATION_ID
 fctl ledger list --organization ORGANIZATION_ID --stack STACK_ID
 fctl auth clients list --organization ORGANIZATION_ID --stack STACK_ID
 fctl logout
@@ -62,16 +64,31 @@ A failed or canceled login leaves saved settings, tokens and selection unchanged
 Login opens the default browser and also prints a verification URL and code on
 stderr. Use `--no-browser` to display instructions without opening a browser.
 If the browser cannot be opened, the printed instructions remain usable.
-JSON results stay on stdout. Login verifies the signed Membership identity and
+Results stay on stdout; their format follows [output settings](output.md).
+Login verifies the signed Membership identity and
 saves its available accesses without requiring an organization or stack.
 
+Membership refresh responses may omit an ID token. When the saved ID token has
+expired, its verified signature still binds the historical login subject. A
+current verified access JWT and authenticated UserInfo from the same issuer
+establish current permissions; all three subjects must match. UserInfo claims
+are fetched again rather than persisted as unsigned identity claims.
+
 Service commands resolve a target from explicit flags, saved connection defaults,
-then a unique available match in the verified Membership claims. Ambiguous or
-missing targets produce an error listing the available organization/stack IDs;
+then a unique available match in signed Membership claims or current trusted
+UserInfo. Ambiguous or missing targets produce a short error with the selection
+flags and commands for listing organizations and stacks;
 the CLI does not choose an arbitrary target. The first use of a stack may open
 the browser again for stack-scoped authorization. Only that scoped Membership
 token is exchanged with the stack's Auth service. Per-target tokens are cached
 and renewed independently; the root identity token is never sent to the stack.
+
+Current stack grants can contain an ordinary ID token without organization
+access claims. The CLI verifies the resource-bound access JWT's signature,
+audience (`STACK_URL/api/auth`), organization, stack and subject, and requires
+valid granted read/write scopes. The scoped subject must match the root identity.
+Historical providers with signed organization/stack access claims remain
+supported; their target URL and permissions must match the selected target.
 
 To save target defaults while logging in, use:
 
@@ -85,7 +102,13 @@ Target flags on service commands override defaults for that command and do not
 change saved settings. `--issuer` and `--client-id` select an identity at login;
 changing them for a service command requires logging in again. Direct endpoint
 flags cannot override Cloud routes. `logout` removes the root identity and all
-cached target tokens locally; it does not revoke sessions at the provider.
+cached stack, organization and application tokens locally; it does not revoke
+sessions at the provider.
+
+Cloud administration uses Membership and organization grants. Ledger/Auth and
+hosted stack helpers use a stack-scoped grant and the gateway. Experimental
+`cloud apps` obtains a separate application grant and signed backend audience;
+it does not reuse the stack Auth token. See [Cloud management](cloud.md).
 
 ## Profiles and overrides
 
@@ -118,10 +141,12 @@ the CLI allows up to five seconds to save the renewed credentials locally.
 
 HTTP requests use a 30-second timeout, configurable with `--timeout`. Redirects
 are refused. The CLI does not automatically retry service writes. A canceled
-command cancels its HTTP and authentication work. Output is JSON on stdout;
-errors and login instructions use stderr. Failures return a nonzero exit code.
+command cancels its HTTP and authentication work. Results use stdout; errors
+and login instructions use stderr. Output defaults to tables on terminals and
+JSON elsewhere. Failures return a nonzero exit code.
 
 Use `-d` or `--debug` to trace HTTP requests and responses on stderr. JSON and
 form bodies are bounded and credentials are redacted, including authorization
-headers, tokens and device codes. Other body formats are summarized. Service
-JSON results remain on stdout.
+headers, tokens and device codes. Other body formats are summarized.
+Results remain on stdout. See [diagnostic redaction](output.md#http-diagnostics)
+for the preview limit and retained OAuth error codes.
