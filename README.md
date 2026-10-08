@@ -14,6 +14,8 @@ go run . --version
 go run . completion bash
 go run . --auth-mode none --ledger-url http://localhost:9000 ledger list
 go run . connections --help
+go run . login
+go run . --organization ORG_ID --stack STACK_ID ledger list
 ```
 
 Development builds report `v4.0.0-dev`. Release builds receive their version,
@@ -27,6 +29,11 @@ and [connection setup](docs/connections.md). Connectivity is deferred.
 The v3 command tree and profile store are not migrated automatically. Users of
 v3 scripts must adapt commands and request schemas or retain a v3 binary.
 The v4 profile store is separate and direct service access needs no Cloud login.
+
+`fctl login` defaults to the public Cloud, opens the browser and saves a Cloud
+connection after successful authentication. Use `--no-browser` for a headless
+session or `--issuer` for another environment. Login does not require a stack;
+service commands resolve their target from flags, saved defaults or unique access.
 
 Plugins expose manifests and execution through a public SDK. The core adapts
 their manifests to Cobra; Auth and Ledger do not depend on Cobra or core internals.
