@@ -40,11 +40,18 @@ archives:
     files:
     - completions/*
 
-brews:
+homebrew_casks:
   - name: fctl
     alternative_names:
       - fctl@{{ .Major }}
-    url_template: https://brew.formance.com/{{ .Tag }}/{{ .ArtifactName }}
+    binaries:
+      - fctl
+    completions:
+      bash: completions/fctl.bash
+      zsh: completions/fctl.zsh
+      fish: completions/fctl.fish
+    url:
+      template: https://brew.formance.com/{{ .Tag }}/{{ .ArtifactName }}
     repository:
       owner: formancehq
       name: homebrew-tap
@@ -54,34 +61,16 @@ brews:
           owner: formancehq
           name: homebrew-tap
           branch: main
-    directory: Formula
+    directory: Casks
     homepage: https://formance.com
+    description: Formance Control CLI
     skip_upload: 'false'
-    test: |
-      system "#{bin}/fctl version"
-    install: |
-      bin.install "fctl"
-      bash_completion.install "completions/fctl.bash" => "fctl"
-      zsh_completion.install "completions/fctl.zsh" => "_fctl"
-      fish_completion.install "completions/fctl.fish"
-    custom_block: |
-      on_macos do
-        if Hardware::CPU.intel?
-          mirror "https://github.com/formancehq/fctl/releases/download/{{ .Tag }}/fctl_darwin-amd64.tar.gz"
-        end
-        if Hardware::CPU.arm?
-          mirror "https://github.com/formancehq/fctl/releases/download/{{ .Tag }}/fctl_darwin-arm64.tar.gz"
-        end
-      end
-
-      on_linux do
-        if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-          mirror "https://github.com/formancehq/fctl/releases/download/{{ .Tag }}/fctl_linux-amd64.tar.gz"
-        end
-        if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-          mirror "https://github.com/formancehq/fctl/releases/download/{{ .Tag }}/fctl_linux-arm64.tar.gz"
-        end
-      end
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/fctl"]
+          end
 
 nfpms:
   - id: packages

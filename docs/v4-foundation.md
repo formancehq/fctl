@@ -40,3 +40,22 @@ prompt. No configuration file is read or migrated by this foundation.
 Existing automation must continue to use a compatible v3 binary until its
 required commands are implemented in v4. Ledger, Auth, Connectivity, direct
 connections and Cloud authentication remain subsequent implementation work.
+
+## Homebrew release migration
+
+GoReleaser generates `Casks/fctl.rb` and `Casks/fctl@<major>.rb` in
+`formancehq/homebrew-tap`. Both casks include macOS and Linux archives for
+amd64 and arm64, and the Bash, Zsh and Fish completions. Downloads use
+`brew.formance.com`; the previous formula-specific GitHub mirrors are removed.
+The macOS post-install hook removes quarantine from the unsigned CLI binary.
+
+Before publishing the first v4 cask, coordinate the tap change with its release
+PR: remove `Formula/fctl.rb` and add `"fctl": "fctl"` to the tap's root
+`tap_migrations.json`, preserving any existing entries. This lets Homebrew
+migrate existing formula installations to the cask. Retain the versioned v3
+formula for users who still need v3 commands. New installations can explicitly
+select `brew install --cask formancehq/tap/fctl` or
+`brew install --cask formancehq/tap/fctl@4`.
+
+The tap migration is a separate release step; this repository does not modify
+or publish the tap.
