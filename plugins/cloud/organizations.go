@@ -340,15 +340,17 @@ func providerArguments(r pluginsdk.ExecuteRequest) (pluginsdk.ExecuteRequest, er
 	if len(r.Args) == 0 {
 		return r, nil
 	}
-	if len(r.Args) != 4 {
-		return r, fmt.Errorf("configure expects either JSON/flags or TYPE NAME CLIENT_ID CLIENT_SECRET")
+	if len(r.Args) > 4 {
+		return r, fmt.Errorf("configure accepts at most TYPE NAME CLIENT_ID CLIENT_SECRET; supply remaining values with flags or JSON")
 	}
 	r.Flags = cloneFlags(r.Flags)
-	for i, name := range []string{"type", "name", "provider-client-id", "provider-client-secret"} {
-		if r.Flags[name] != "" {
+	names := []string{"type", "name", "provider-client-id", "provider-client-secret"}
+	for i, argument := range r.Args {
+		name := names[i]
+		if r.ChangedFlags[name] || r.Flags[name] != "" {
 			return r, fmt.Errorf("argument conflicts with --%s", name)
 		}
-		r.Flags[name] = r.Args[i]
+		r.Flags[name] = argument
 	}
 	return r, nil
 }

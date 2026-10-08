@@ -3,9 +3,9 @@ package auth
 import "github.com/formancehq/fctl/v4/pkg/pluginsdk"
 
 func manifest() pluginsdk.Manifest {
-	return pluginsdk.Manifest{
+	m := pluginsdk.Manifest{
 		Name: "auth", Version: "0.1.0", Service: "auth", ProtocolVersion: pluginsdk.ProtocolVersion,
-		Root: pluginsdk.CommandSpec{Use: "auth", Short: "Manage Auth clients, secrets and users", Subcommands: []pluginsdk.CommandSpec{
+		Root: pluginsdk.CommandSpec{Use: "auth", Target: "stack", Short: "Manage Auth clients, secrets and users", Subcommands: []pluginsdk.CommandSpec{
 			leaf("info", "Show Auth server information", 0, false),
 			leaf("discovery", "Show OpenID Connect discovery configuration", 0, false),
 			{Use: "clients", Short: "Manage OAuth2 clients", Subcommands: []pluginsdk.CommandSpec{
@@ -25,6 +25,8 @@ func manifest() pluginsdk.Manifest {
 			}},
 		}},
 	}
+	addInputs(&m.Root, nil)
+	return m
 }
 func leaf(use, short string, args int, confirm bool) pluginsdk.CommandSpec {
 	spec := pluginsdk.CommandSpec{Use: use, Short: short, Args: pluginsdk.ArgsSpec{Min: args, Max: args}, Runnable: true, Confirm: confirm}

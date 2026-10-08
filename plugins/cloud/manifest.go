@@ -3,9 +3,11 @@ package cloud
 import "github.com/formancehq/fctl/v4/pkg/pluginsdk"
 
 func manifest() pluginsdk.Manifest {
-	return pluginsdk.Manifest{Name: "cloud", Version: "0.1.0", Service: "cloud", ProtocolVersion: pluginsdk.ProtocolVersion, Root: pluginsdk.CommandSpec{
+	m := pluginsdk.Manifest{Name: "cloud", Version: "0.1.0", Service: "cloud", ProtocolVersion: pluginsdk.ProtocolVersion, Root: pluginsdk.CommandSpec{
 		Use: "cloud", Short: "Manage Formance Cloud", Subcommands: []pluginsdk.CommandSpec{meManifest(), organizationsManifest(), regionsManifest(), stackManifest(), appsManifest()},
 	}}
+	addCloudInteraction(&m.Root, nil, cloudInteractionInputs())
+	return m
 }
 func leaf(use, short string, args int, confirm bool) pluginsdk.CommandSpec {
 	s := pluginsdk.CommandSpec{Use: use, Short: short, Args: pluginsdk.ArgsSpec{Min: args, Max: args}, Runnable: true, Confirm: confirm}

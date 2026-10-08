@@ -47,6 +47,9 @@ func (layout) endpoint(op operation) *node {
 		spec.Args = pluginsdk.ArgsSpec{Min: 0, Max: 1}
 	}
 	spec.Flags = append(bodyFlags(op), queryFlags(op)...)
+	if !op.global {
+		spec.Inputs = []pluginsdk.InputSpec{ledgerInput(op)}
+	}
 	return &node{spec: spec, op: &op}
 }
 

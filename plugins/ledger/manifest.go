@@ -28,6 +28,7 @@ func (n *node) add(children ...*node) { n.children = append(n.children, children
 func buildLayout() (pluginsdk.Manifest, map[string]operation) {
 	m := layout{}
 	root := group("ledger", "Use the Ledger v3 data-plane API")
+	root.spec.Target = "stack"
 	root.spec.Long = "Use the Ledger v3 data-plane API. Nested commands select a ledger with --ledger.\nLedger list returns all ledgers. Accounts, transactions and logs return one page;\ncontinue with --after using the last account address or transaction/log ID,\nkeeping the same filters and order. Only index inspection uses opaque --cursor tokens."
 	root.spec.Example = "fctl ledger create books\nfctl ledger --ledger books transactions create --data @transaction.json --idempotency-key payment-42"
 	root.spec.Flags = []pluginsdk.FlagSpec{
@@ -156,6 +157,7 @@ func publish(n *node, parent []string, operations map[string]operation) pluginsd
 	spec := n.spec
 	if n.op != nil {
 		operations[strings.Join(path, "/")] = *n.op
+		spec.Inputs = append(spec.Inputs, operationInputs(path, *n.op)...)
 	}
 	for _, child := range n.children {
 		spec.Subcommands = append(spec.Subcommands, publish(child, path, operations))
