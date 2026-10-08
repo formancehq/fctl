@@ -8,31 +8,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
 	"os"
 
 	"github.com/spf13/cobra"
-
-	"github.com/formancehq/fctl/v4/internal/api"
 )
-
-// Runtime supplies service connections without exposing Cloud machinery.
-type Runtime struct {
-	Client func(context.Context, string) (*api.Client, error)
-}
-
-func (r Runtime) Run(cmd *cobra.Command, service, method, path string, query url.Values, body json.RawMessage, headers http.Header) error {
-	client, err := r.Client(cmd.Context(), service)
-	if err != nil {
-		return err
-	}
-	result, err := client.Do(cmd.Context(), method, path, query, body, headers)
-	if err != nil {
-		return err
-	}
-	return WriteJSON(cmd.OutOrStdout(), result)
-}
 
 func WriteJSON(writer io.Writer, value json.RawMessage) error {
 	var out bytes.Buffer

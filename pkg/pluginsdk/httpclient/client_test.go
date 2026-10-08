@@ -1,4 +1,4 @@
-package api_test
+package httpclient_test
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/formancehq/fctl/v4/internal/api"
+	"github.com/formancehq/fctl/v4/pkg/pluginsdk/httpclient"
 )
 
 func TestRequestPreservesPathQueryAndNumbers(t *testing.T) {
@@ -29,11 +29,11 @@ func TestRequestPreservesPathQueryAndNumbers(t *testing.T) {
 		}
 	}))
 	t.Cleanup(server.Close)
-	client, err := api.New(server.URL+"/gateway", server.Client())
+	client, err := httpclient.New(server.URL+"/gateway", server.Client())
 	if err != nil {
 		t.Fatal(err)
 	}
-	response, err := client.Do(t.Context(), http.MethodPost, api.Path("v3", "books", "accounts", "users/001"), url.Values{"cursor": {"opaque +/= "}}, json.RawMessage(`{"amount":90071992547409930001}`), http.Header{"Idempotency-Key": {"request-1"}})
+	response, err := client.Do(t.Context(), http.MethodPost, httpclient.Path("v3", "books", "accounts", "users/001"), url.Values{"cursor": {"opaque +/= "}}, json.RawMessage(`{"amount":90071992547409930001}`), http.Header{"Idempotency-Key": {"request-1"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +56,7 @@ func TestErrorsDoNotRetry(t *testing.T) {
 				}
 			}))
 			t.Cleanup(server.Close)
-			client, err := api.New(server.URL, server.Client())
+			client, err := httpclient.New(server.URL, server.Client())
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -74,11 +74,11 @@ func TestErrorsDoNotRetry(t *testing.T) {
 func TestValidateURL(t *testing.T) {
 	t.Parallel()
 	for _, value := range []string{"localhost:9000", "file:///tmp/data", "https://user:secret@service", "https://service?token=secret", "https://service#fragment", ""} {
-		if api.ValidateURL(value) == nil {
+		if httpclient.ValidateURL(value) == nil {
 			t.Errorf("accepted %q", value)
 		}
 	}
-	if err := api.ValidateURL("http://localhost:9000/prefix"); err != nil {
+	if err := httpclient.ValidateURL("http://localhost:9000/prefix"); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -86,12 +86,12 @@ func TestValidateURL(t *testing.T) {
 func TestAuthenticatedEndpointsRequireTLS(t *testing.T) {
 	t.Parallel()
 	for _, endpoint := range []string{"http://ledger.example.com", "http://192.0.2.1/token"} {
-		if api.ValidateSecureURL(endpoint) == nil {
+		if httpclient.ValidateSecureURL(endpoint) == nil {
 			t.Errorf("accepted insecure endpoint %s", endpoint)
 		}
 	}
 	for _, endpoint := range []string{"https://ledger.example.com", "http://localhost:9000", "http://127.0.0.1:9000", "http://[::1]:9000"} {
-		if err := api.ValidateSecureURL(endpoint); err != nil {
+		if err := httpclient.ValidateSecureURL(endpoint); err != nil {
 			t.Errorf("rejected %s: %v", endpoint, err)
 		}
 	}
@@ -110,7 +110,7 @@ func TestEmptyAndInvalidResponses(t *testing.T) {
 				t.Error(err)
 			}
 		}))
-		client, err := api.New(server.URL, server.Client())
+		client, err := httpclient.New(server.URL, server.Client())
 		if err != nil {
 			t.Fatal(err)
 		}

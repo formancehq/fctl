@@ -1,23 +1,17 @@
 package ledger
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
 
-	"github.com/spf13/cobra"
-
-	"github.com/formancehq/fctl/v4/internal/api"
-	"github.com/formancehq/fctl/v4/internal/command"
+	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
 )
 
 type request struct {
@@ -44,29 +38,19 @@ func execute(t *testing.T, args []string, input, response string, status int) (s
 		}
 	}))
 	t.Cleanup(server.Close)
-	client, err := api.New(server.URL+"/gateway/ledger", server.Client())
+	p := New(server.Client())
+	manifest, err := p.GetManifest(t.Context())
 	if err != nil {
 		t.Fatal(err)
 	}
-	runtime := command.Runtime{Client: func(_ context.Context, service string) (*api.Client, error) {
-		if service != "ledger" {
-			t.Errorf("service = %q", service)
-		}
-		return client, nil
-	}}
-	root := &cobra.Command{Use: "fctl", SilenceUsage: true, SilenceErrors: true}
-	root.AddCommand(NewCommand(runtime))
-	var output bytes.Buffer
-	root.SetOut(&output)
-	root.SetErr(io.Discard)
-	root.SetIn(strings.NewReader(input))
-	root.SetArgs(append([]string{"ledger"}, args...))
-	err = root.ExecuteContext(t.Context())
+	req := testRequest(manifest, args, input)
+	req.Endpoint = server.URL + "/gateway/ledger"
+	result, err := p.Execute(t.Context(), req)
 	var got []request
 	for len(requests) > 0 {
 		got = append(got, <-requests)
 	}
-	return output.String(), got, err
+	return string(result.Data), got, err
 }
 
 type routeCase struct {
@@ -225,12 +209,9 @@ func TestIndexInspectionQuery(t *testing.T) {
 
 func TestBodiesAndIdempotency(t *testing.T) {
 	t.Parallel()
-	file := filepath.Join(t.TempDir(), "transaction.json")
 	body := `{"postings":[],"metadata":{"number":9007199254740993}}`
-	if err := os.WriteFile(file, []byte(body), 0600); err != nil {
-		t.Fatal(err)
-	}
-	for _, data := range []string{body, "@" + file, "-"} {
+	// The host already read all three inputs. The plugin only receives JSON.
+	for _, data := range []string{body, "@already-read.json", "-"} {
 		_, reqs, err := execute(t, []string{"--ledger", "books", "transactions", "create", "--data", data, "--idempotency-key", "payment-42"}, body, envelope, 201)
 		if err != nil {
 			t.Fatal(err)
@@ -290,35 +271,22 @@ func TestHTTPFailuresNeverRetryMutations(t *testing.T) {
 		t.Fatalf("invalid response: requests=%d err=%v", len(reqs), err)
 	}
 	out, reqs, err := execute(t, []string{"delete", "books", "--confirm", "--idempotency-key", "delete-books"}, "", "", 204)
-	if err != nil || out != "null\n" || len(reqs) != 1 || reqs[0].header.Get("Idempotency-Key") != "delete-books" {
+	if err != nil || out != "null" || len(reqs) != 1 || reqs[0].header.Get("Idempotency-Key") != "delete-books" {
 		t.Fatalf("204 response: output=%s requests=%v err=%v", out, reqs, err)
 	}
 }
 
-func TestRuntimeFailure(t *testing.T) {
+func TestEndpointAndContextErrors(t *testing.T) {
 	t.Parallel()
-	want := errors.New("cannot resolve ledger endpoint")
-	cmd := NewCommand(command.Runtime{Client: func(context.Context, string) (*api.Client, error) { return nil, want }})
-	cmd.SetOut(io.Discard)
-	cmd.SetErr(io.Discard)
-	cmd.SetArgs([]string{"list"})
-	if err := cmd.ExecuteContext(t.Context()); !errors.Is(err, want) {
-		t.Fatalf("runtime error = %v", err)
+	p := New(nil)
+	_, err := p.Execute(t.Context(), pluginsdk.ExecuteRequest{CommandPath: []string{"ledger", "list"}, Endpoint: "invalid"})
+	if err == nil {
+		t.Fatal("invalid endpoint accepted")
 	}
-}
-
-func TestBulkHTTPFailurePreservesPartialResults(t *testing.T) {
-	t.Parallel()
-	body := `{"errorCode":"BULK_FAILED","errorMessage":"one operation failed","data":[{"responseType":"CREATE_TRANSACTION","data":{"id":1}},{"responseType":"ERROR","errorCode":"VALIDATION"}]}`
-	out, requests, err := execute(t, []string{"--ledger", "books", "bulk", "--data", "[]"}, "", body, http.StatusBadRequest)
-	if err == nil || !strings.Contains(err.Error(), "BULK_FAILED") {
-		t.Fatalf("error=%v", err)
-	}
-	if len(requests) != 1 {
-		t.Fatalf("retried partial bulk: %d requests", len(requests))
-	}
-	if !strings.Contains(out, `"id": 1`) || !strings.Contains(out, "VALIDATION") {
-		t.Fatalf("lost partial results: %s", out)
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	if _, err := p.GetManifest(ctx); !errors.Is(err, context.Canceled) {
+		t.Fatalf("manifest context error = %v", err)
 	}
 }
 

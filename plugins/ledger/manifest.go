@@ -1,29 +1,40 @@
-// Package ledger exposes the Ledger v3 data-plane HTTP API.
+// Package ledger implements the Ledger v3 plugin without CLI or configuration dependencies.
 // Routes follow release/v3.0 at 71b0feb549a7cbc22bddaca2859ae5d91a24d378.
 package ledger
 
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
-	"github.com/spf13/cobra"
-
-	"github.com/formancehq/fctl/v4/internal/api"
-	"github.com/formancehq/fctl/v4/internal/command"
+	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
+	httpclient "github.com/formancehq/fctl/v4/pkg/pluginsdk/httpclient"
 )
 
-// NewCommand builds an independently embeddable Ledger module. The runtime
-// resolves the Ledger endpoint and authentication; this module owns v3 routes.
-func NewCommand(r command.Runtime) *cobra.Command {
-	m := module{runtime: r}
-	root := &cobra.Command{
-		Use: "ledger", Short: "Use the Ledger v3 data-plane API",
-		Long:    "Use the Ledger v3 data-plane API. Nested commands select a ledger with --ledger.\nList commands return one complete JSON page, including continuation tokens.\nPass the next or previous token to --cursor with the same filters and order.",
-		Example: "  fctl ledger create books\n  fctl ledger --ledger books accounts list --filter 'address ^= \"users:\"'\n  fctl ledger --ledger books transactions create --data @transaction.json --idempotency-key payment-42",
+type layout struct{}
+
+type node struct {
+	spec     pluginsdk.CommandSpec
+	op       *operation
+	children []*node
+}
+
+func group(use, short string) *node {
+	return &node{spec: pluginsdk.CommandSpec{Use: use, Short: short}}
+}
+
+func (n *node) add(children ...*node) { n.children = append(n.children, children...) }
+
+func buildLayout() (pluginsdk.Manifest, map[string]operation) {
+	m := layout{}
+	root := group("ledger", "Use the Ledger v3 data-plane API")
+	root.spec.Long = "Use the Ledger v3 data-plane API. Nested commands select a ledger with --ledger.\nList commands return one complete JSON page, including continuation tokens.\nPass the next or previous token to --cursor with the same filters and order."
+	root.spec.Example = "fctl ledger create books\nfctl ledger --ledger books transactions create --data @transaction.json --idempotency-key payment-42"
+	root.spec.Flags = []pluginsdk.FlagSpec{
+		{Name: "ledger", Type: "string", Persistent: true, Usage: "Ledger name for nested commands"},
+		{Name: "consistency", Type: "string", Persistent: true, Usage: "Read consistency: linearizable or stale (server default: linearizable)"},
 	}
-	root.PersistentFlags().StringVar(&m.ledger, "ledger", "", "Ledger name for nested commands")
-	root.PersistentFlags().StringVar(&m.consistency, "consistency", "", "Read consistency: linearizable or stale (server default: linearizable)")
-	root.AddCommand(
+	root.add(
 		m.endpoint(operation{use: "list", short: "List ledgers", global: true, path: func([]string) []string { return []string{"v3", ""} }, page: true, reverse: true}),
 		m.endpoint(operation{use: "create [name]", short: "Create a ledger", ledgerArg: true, method: http.MethodPost, body: bodyDefault, idempotency: true}),
 		m.endpoint(operation{use: "show [name]", short: "Show a ledger", ledgerArg: true}),
@@ -34,19 +45,21 @@ func NewCommand(r command.Runtime) *cobra.Command {
 		m.endpoint(operation{use: "info", short: "Show Ledger server version information", global: true, path: func([]string) []string { return []string{"_info"} }}),
 		m.accounts(), m.transactions(), m.metadata(nil, false), m.indexes(),
 	)
-	logs := &cobra.Command{Use: "logs", Short: "Read ledger logs (requires the LOG index)"}
-	logs.AddCommand(m.endpoint(operation{use: "list", short: "List one page of ledger logs", path: fixed("logs"), page: true, reverse: true, filter: true, dates: true}))
-	root.AddCommand(logs)
+	logs := group("logs", "Read ledger logs (requires the LOG index)")
+	logs.add(m.endpoint(operation{use: "list", short: "List one page of ledger logs", path: fixed("logs"), page: true, reverse: true, filter: true, dates: true}))
+	root.add(logs)
 	bulk := m.endpoint(operation{use: "bulk", short: "Submit v3 bulk operations once", method: http.MethodPost, path: fixed("bulk"), body: bodyRequired, idempotency: true, bulk: true,
 		boolQuery: map[string]string{"atomic": "atomic", "continue-on-failure": "continueOnFailure"}})
-	bulk.Long = "Submit a JSON array of v3 bulk operations once. With --atomic, --idempotency-key identifies the whole batch. Otherwise each element's ik identifies its operation and the header is ignored. Inspect every returned element for business failures, including when --continue-on-failure is enabled. This is not a log import or backup restore."
-	root.AddCommand(bulk)
-	return root
+	bulk.spec.Long = "Submit a JSON array of v3 bulk operations once. With --atomic, --idempotency-key identifies the whole batch. Otherwise each element's ik identifies its operation and the header is ignored. Inspect every returned element for business failures, including when --continue-on-failure is enabled. This is not a log import or backup restore."
+	root.add(bulk)
+	operations := make(map[string]operation)
+	spec := publish(root, nil, operations)
+	return pluginsdk.Manifest{Name: "ledger", Version: "3.0.0", Service: "ledger", ProtocolVersion: 1, Root: spec}, operations
 }
 
-func (m *module) accounts() *cobra.Command {
-	group := &cobra.Command{Use: "accounts", Short: "Read accounts and balances, update metadata"}
-	group.AddCommand(
+func (m layout) accounts() *node {
+	group := group("accounts", "Read accounts and balances, update metadata")
+	group.add(
 		m.endpoint(operation{use: "list", short: "List accounts", path: fixed("accounts"), page: true, reverse: true, filter: true}),
 		m.endpoint(operation{use: "show <address>", short: "Show an account including volumes and metadata", args: 1, path: resource("accounts"), boolQuery: map[string]string{"collapse-colors": "collapseColors"}}),
 		m.endpoint(operation{use: "balances <address>", short: "Show account balances in the full account envelope", args: 1, path: resource("accounts"), boolQuery: map[string]string{"collapse-colors": "collapseColors"}}),
@@ -55,9 +68,9 @@ func (m *module) accounts() *cobra.Command {
 	return group
 }
 
-func (m *module) transactions() *cobra.Command {
-	group := &cobra.Command{Use: "transactions", Short: "Read, create and revert transactions"}
-	group.AddCommand(
+func (m layout) transactions() *node {
+	group := group("transactions", "Read, create and revert transactions")
+	group.add(
 		m.endpoint(operation{use: "list", short: "List transactions (newest first by default)", path: fixed("transactions"), page: true, reverse: true, filter: true, dates: true}),
 		m.endpoint(operation{use: "show <id>", short: "Show a transaction", args: 1, transactionID: true, path: resource("transactions")}),
 		m.endpoint(operation{use: "create", short: "Create a transaction from v3 JSON (postings or Numscript)", method: http.MethodPost, path: fixed("transactions"), body: bodyRequired, idempotency: true}),
@@ -68,8 +81,8 @@ func (m *module) transactions() *cobra.Command {
 }
 
 // Metadata reads use the owning resource's GET route: v3 has no GET /metadata.
-func (m *module) metadata(parent []string, transactionID bool) *cobra.Command {
-	group := &cobra.Command{Use: "metadata", Short: "Read metadata in the resource envelope, set or delete keys"}
+func (m layout) metadata(parent []string, transactionID bool) *node {
+	group := group("metadata", "Read metadata in the resource envelope, set or delete keys")
 	args := 0
 	argLabel := ""
 	if len(parent) > 0 {
@@ -86,7 +99,7 @@ func (m *module) metadata(parent []string, transactionID bool) *cobra.Command {
 		}
 		return segments
 	}
-	group.AddCommand(
+	group.add(
 		m.endpoint(operation{use: "show" + argLabel, short: "Show the resource including metadata", args: args, transactionID: transactionID, path: base}),
 		m.endpoint(operation{use: "set" + argLabel, short: "Merge a JSON metadata object", args: args, transactionID: transactionID, method: http.MethodPost, body: bodyRequired, idempotency: true, path: func(a []string) []string { return append(base(a), "metadata") }}),
 		m.endpoint(operation{use: "delete" + argLabel + " <key>", short: "Delete one raw metadata key", args: args + 1, transactionID: transactionID, method: http.MethodDelete, idempotency: true, path: func(a []string) []string { return append(base(a), "metadata", a[args]) }}),
@@ -94,9 +107,9 @@ func (m *module) metadata(parent []string, transactionID bool) *cobra.Command {
 	return group
 }
 
-func (m *module) indexes() *cobra.Command {
-	group := &cobra.Command{Use: "indexes", Short: "Manage and inspect ledger indexes"}
-	group.AddCommand(
+func (m layout) indexes() *node {
+	group := group("indexes", "Manage and inspect ledger indexes")
+	group.add(
 		m.endpoint(operation{use: "list", short: "List ledger indexes", path: fixed("indexes")}),
 		m.endpoint(operation{use: "show <canonical-id>", short: "Show an index", args: 1, path: resource("indexes")}),
 		m.endpoint(operation{use: "status <canonical-id>", short: "Show index build status", args: 1, path: resource("indexes", "status")}),
@@ -104,7 +117,7 @@ func (m *module) indexes() *cobra.Command {
 		m.endpoint(operation{use: "delete <canonical-id>", short: "Drop an index", args: 1, method: http.MethodDelete, path: resource("indexes"), idempotency: true}),
 	)
 	inspect := m.endpoint(operation{use: "inspect <canonical-id>", short: "Inspect a metadata index", args: 1, path: resource("indexes", "inspect"), inspect: true})
-	group.AddCommand(inspect)
+	group.add(inspect)
 	return group
 }
 
@@ -116,11 +129,11 @@ func resource(collection string, suffix ...string) func([]string) []string {
 	return func(args []string) []string { return append([]string{collection, args[0]}, suffix...) }
 }
 
-func (m *module) path(op operation, args []string) (string, error) {
+func requestPath(op operation, args []string, selected string) (string, error) {
 	if op.global {
-		return api.Path(op.path(args)...), nil
+		return httpclient.Path(op.path(args)...), nil
 	}
-	name := m.ledger
+	name := selected
 	if op.ledgerArg && len(args) > 0 {
 		if name != "" && name != args[0] {
 			return "", fmt.Errorf("positional ledger name conflicts with --ledger")
@@ -134,5 +147,18 @@ func (m *module) path(op operation, args []string) (string, error) {
 	if op.path != nil {
 		segments = append(segments, op.path(args)...)
 	}
-	return api.Path(segments...), nil
+	return httpclient.Path(segments...), nil
+}
+
+func publish(n *node, parent []string, operations map[string]operation) pluginsdk.CommandSpec {
+	name := strings.Fields(n.spec.Use)[0]
+	path := append(append([]string{}, parent...), name)
+	spec := n.spec
+	if n.op != nil {
+		operations[strings.Join(path, "/")] = *n.op
+	}
+	for _, child := range n.children {
+		spec.Subcommands = append(spec.Subcommands, publish(child, path, operations))
+	}
+	return spec
 }
