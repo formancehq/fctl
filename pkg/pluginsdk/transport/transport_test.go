@@ -19,8 +19,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk/httpclient"
+	"github.com/formancehq/fctl/pkg/pluginsdk"
+	"github.com/formancehq/fctl/pkg/pluginsdk/httpclient"
 )
 
 // The test binary is a real go-plugin executable when launched by Open. It

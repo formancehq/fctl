@@ -12,7 +12,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
+	"github.com/formancehq/fctl/pkg/pluginsdk"
 )
 
 func validateInteraction(manifest pluginsdk.Manifest) error {

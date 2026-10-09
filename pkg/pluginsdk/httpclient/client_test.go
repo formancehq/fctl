@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk/httpclient"
+	"github.com/formancehq/fctl/pkg/pluginsdk/httpclient"
 )
 
 func TestRequestPreservesPathQueryAndNumbers(t *testing.T) {

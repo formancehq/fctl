@@ -5,9 +5,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/formancehq/fctl/pkg/pluginsdk"
+
 	"github.com/formancehq/fctl/v4/cmd"
 	"github.com/formancehq/fctl/v4/internal/plugin"
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
 	"github.com/formancehq/fctl/v4/plugins/auth"
 	cloudplugin "github.com/formancehq/fctl/v4/plugins/cloud"
 	"github.com/formancehq/fctl/v4/plugins/connectivity"

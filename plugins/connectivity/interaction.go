@@ -1,6 +1,6 @@
 package connectivity
 
-import "github.com/formancehq/fctl/v4/pkg/pluginsdk"
+import "github.com/formancehq/fctl/pkg/pluginsdk"
 
 func connectorInput() pluginsdk.InputSpec {
 	return pluginsdk.InputSpec{Title: "Connector", Kind: "select", Argument: new(0), ValueType: "string", Required: true,

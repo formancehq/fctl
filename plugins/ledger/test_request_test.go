@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
+	"github.com/formancehq/fctl/pkg/pluginsdk"
 )
 
 // testRequest expresses the previous command fixtures as SDK requests. It only

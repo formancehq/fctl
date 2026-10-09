@@ -3,7 +3,7 @@ package auth
 import (
 	"strings"
 
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
+	"github.com/formancehq/fctl/pkg/pluginsdk"
 )
 
 // Inputs belong to leaves. The host resolves stack context and runs these

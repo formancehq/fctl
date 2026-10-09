@@ -1,6 +1,6 @@
 package cloud
 
-import "github.com/formancehq/fctl/v4/pkg/pluginsdk"
+import "github.com/formancehq/fctl/pkg/pluginsdk"
 
 // appsManifest targets the Deploy audience selected by the host, not Membership.
 func appsManifest() pluginsdk.CommandSpec {

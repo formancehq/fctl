@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
+	"github.com/formancehq/fctl/pkg/pluginsdk"
 )
 
 var dnsLabel = regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`)

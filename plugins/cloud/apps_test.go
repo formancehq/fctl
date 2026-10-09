@@ -19,8 +19,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk/httpclient"
+	"github.com/formancehq/fctl/pkg/pluginsdk"
+	"github.com/formancehq/fctl/pkg/pluginsdk/httpclient"
 )
 
 const appsEnvelope = `{"cursor":{"pageSize":100,"hasMore":false},"data":[{"id":"app","name":"Books","stackId":"stack","version":9007199254740993}]}`
@@ -456,7 +456,7 @@ func TestAppsImportsArePublic(t *testing.T) {
 		}
 		for _, imp := range file.Imports {
 			path := strings.Trim(imp.Path.Value, `"`)
-			if strings.Contains(path, "github.com/") && !strings.HasPrefix(path, "github.com/formancehq/fctl/v4/pkg/pluginsdk") {
+			if strings.Contains(path, "github.com/") && !strings.HasPrefix(path, "github.com/formancehq/fctl/pkg/pluginsdk") {
 				t.Fatalf("private or third-party dependency %s", path)
 			}
 		}

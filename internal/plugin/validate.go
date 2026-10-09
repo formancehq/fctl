@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
+	"github.com/formancehq/fctl/pkg/pluginsdk"
 )
 
 var identifier = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)

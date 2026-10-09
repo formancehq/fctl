@@ -1,6 +1,6 @@
 package cloud
 
-import "github.com/formancehq/fctl/v4/pkg/pluginsdk"
+import "github.com/formancehq/fctl/pkg/pluginsdk"
 
 func stackManifest() pluginsdk.CommandSpec {
 	create := stackCommand("create [NAME]", "Create a stack", 0, 1, false)

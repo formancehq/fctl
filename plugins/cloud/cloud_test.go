@@ -14,7 +14,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
+	"github.com/formancehq/fctl/pkg/pluginsdk"
 )
 
 const cloudEnvelope = ` {"data":{"id":"result","amount":123456789012345678901234567890},"cursor":{"next":"opaque"}} `
@@ -238,7 +238,7 @@ func TestCloudImportClosure(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !pkg.Standard && pkg.ImportPath != "github.com/formancehq/fctl/v4/plugins/cloud" && !strings.HasPrefix(pkg.ImportPath, "github.com/formancehq/fctl/v4/pkg/pluginsdk") {
+		if !pkg.Standard && pkg.ImportPath != "github.com/formancehq/fctl/v4/plugins/cloud" && !strings.HasPrefix(pkg.ImportPath, "github.com/formancehq/fctl/pkg/pluginsdk") {
 			t.Errorf("plugin has non-public or non-stdlib dependency: %s", pkg.ImportPath)
 		}
 	}

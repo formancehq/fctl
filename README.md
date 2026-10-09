@@ -1,7 +1,7 @@
 # Formance Control CLI (fctl v4)
 
 `fctl` is the Formance command-line interface (repository profile: CLI).
-The v4 implementation embeds Cloud, Auth, Ledger and Connectivity plugins with a shared
+The v4 implementation includes Cloud, Auth, Ledger and Connectivity plugins with a shared
 connection boundary for local services, OAuth2 client credentials and Cloud login.
 The Go module is `github.com/formancehq/fctl/v4`.
 
@@ -57,7 +57,7 @@ See [interactive command input](docs/interaction.md).
 
 Plugins expose manifests and execution through a public SDK. The core adapts
 their manifests to Cobra; service plugins do not depend on Cobra or core internals.
-See the [plugin contract](docs/plugins.md). This
+See the [plugin contract](docs/plugins.md) and [external Ledger pilot](docs/plugin-distribution.md). This
 CLI uses explicit composition without Fx. Proxy and MCP commands run until
 cancellation; they use the host's connection and authentication boundary.
 

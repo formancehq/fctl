@@ -9,7 +9,7 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
+	"github.com/formancehq/fctl/pkg/pluginsdk"
 )
 
 // Factory injects the host's authenticated HTTP client into a plugin instance.

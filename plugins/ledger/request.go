@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
+	"github.com/formancehq/fctl/pkg/pluginsdk"
 )
 
 type bodyMode uint8

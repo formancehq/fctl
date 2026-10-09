@@ -51,7 +51,7 @@ require (
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/ericlagergren/decimal v0.0.0-20221120152707-495c53812d05 // indirect
-	github.com/formancehq/fctl/v4/pkg/pluginsdk v0.0.0
+	github.com/formancehq/fctl/pkg/pluginsdk v0.0.0
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
 	github.com/mattn/go-runewidth v0.0.20 // indirect
@@ -62,4 +62,4 @@ require (
 	golang.org/x/sync v0.22.0 // indirect
 )
 
-replace github.com/formancehq/fctl/v4/pkg/pluginsdk => ./pkg/pluginsdk
+replace github.com/formancehq/fctl/pkg/pluginsdk => ./pkg/pluginsdk

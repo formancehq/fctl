@@ -11,8 +11,7 @@ import (
 	"testing"
 
 	"github.com/formancehq/auth/pkg/client/models/components"
-
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
+	"github.com/formancehq/fctl/pkg/pluginsdk"
 )
 
 type roundTrip func(*http.Request) (*http.Response, error)

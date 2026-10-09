@@ -1,4 +1,4 @@
-module github.com/formancehq/fctl/v4/pkg/pluginsdk
+module github.com/formancehq/fctl/pkg/pluginsdk
 
 go 1.26.0
 

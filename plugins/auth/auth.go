@@ -12,9 +12,8 @@ import (
 	sdk "github.com/formancehq/auth/pkg/client"
 	"github.com/formancehq/auth/pkg/client/models/components"
 	"github.com/formancehq/auth/pkg/client/models/operations"
-
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
-	httpadapter "github.com/formancehq/fctl/v4/pkg/pluginsdk/httpclient"
+	"github.com/formancehq/fctl/pkg/pluginsdk"
+	httpadapter "github.com/formancehq/fctl/pkg/pluginsdk/httpclient"
 )
 
 type plugin struct{ client *http.Client }

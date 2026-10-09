@@ -1,6 +1,6 @@
 package auth
 
-import "github.com/formancehq/fctl/v4/pkg/pluginsdk"
+import "github.com/formancehq/fctl/pkg/pluginsdk"
 
 func manifest() pluginsdk.Manifest {
 	m := pluginsdk.Manifest{

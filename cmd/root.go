@@ -7,6 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/fctl/pkg/pluginsdk"
+
 	"github.com/formancehq/fctl/v4/cmd/cloudtools"
 	"github.com/formancehq/fctl/v4/cmd/login"
 	"github.com/formancehq/fctl/v4/cmd/profiles"
@@ -15,7 +17,6 @@ import (
 	"github.com/formancehq/fctl/v4/internal/command"
 	"github.com/formancehq/fctl/v4/internal/connection"
 	"github.com/formancehq/fctl/v4/internal/plugin"
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
 	"github.com/formancehq/fctl/v4/plugins/auth"
 	cloudplugin "github.com/formancehq/fctl/v4/plugins/cloud"
 	"github.com/formancehq/fctl/v4/plugins/connectivity"
@@ -23,6 +24,19 @@ import (
 )
 
 func NewRootCommand() *cobra.Command {
+	return newRootCommand(context.Background(), nil)
+}
+
+// NewRootCommandWithArgs selects installed plugin metadata before Cobra parses
+// service flags. Help and completion read cached metadata without starting a
+// plugin process. Library callers can keep using NewRootCommand for embedded
+// plugins only.
+func NewRootCommandWithArgs(ctx context.Context, args []string) *cobra.Command {
+	return newRootCommand(ctx, args)
+}
+
+//nolint:contextcheck // Command construction attaches callbacks; execution uses Cobra's context.
+func newRootCommand(ctx context.Context, args []string) *cobra.Command {
 	root := &cobra.Command{
 		Use:           "fctl",
 		Short:         "Formance Control CLI",
@@ -31,19 +45,28 @@ func NewRootCommand() *cobra.Command {
 		SilenceUsage:  true,
 		Example:       "  fctl login\n  fctl cloud stack list --organization ORGANIZATION_ID\n  fctl ledger list --organization ORGANIZATION_ID --stack STACK_ID\n  fctl ledger list -o json",
 	}
+	root.SetContext(ctx)
 	settings := &connection.Settings{}
 	settings.Bind(root)
 	root.PersistentFlags().Bool("no-input", false, "Disable interactive forms and selections (FCTL_NO_INPUT, CI)")
+	ledgerFactory, preparationErr := prepareLedgerPlugin(ctx, root, settings, args)
 	root.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {
+		if preparationErr != nil && serviceCommand(cmd) == "ledger" {
+			return preparationErr
+		}
 		return command.ConfigureOutput(cmd, settings.Output, settings.Color)
 	}
 	command.InstallHelp(root, &settings.Color)
-	root.AddGroup(&cobra.Group{ID: "cloud", Title: "Cloud:"}, &cobra.Group{ID: "modules", Title: "Modules:"}, &cobra.Group{ID: "profiles", Title: "Profiles:"})
+	root.AddGroup(&cobra.Group{ID: "cloud", Title: "Cloud:"}, &cobra.Group{ID: "modules", Title: "Modules:"}, &cobra.Group{ID: "profiles", Title: "Profiles:"}, &cobra.Group{ID: "plugins", Title: "Plugins:"})
 	resolve := pluginResolver(root, settings)
 	root.AddCommand(version.NewCommand(), profiles.NewCommand(settings), login.NewCommand(settings), login.NewLogoutCommand(settings))
+	root.AddCommand(newPluginsCommand(settings))
 	registry := &plugin.Registry{}
-	for _, factory := range []plugin.Factory{cloudplugin.New, auth.New, ledger.New, connectivity.New} {
-		if err := registry.Register(context.Background(), factory(nil), factory); err != nil {
+	if ledgerFactory == nil {
+		ledgerFactory = ledger.New
+	}
+	for _, factory := range []plugin.Factory{cloudplugin.New, auth.New, ledgerFactory, connectivity.New} {
+		if err := registry.Register(ctx, factory(nil), factory); err != nil {
 			panic(err) // Embedded metadata is a build-time invariant, never user input.
 		}
 	}
@@ -61,6 +84,8 @@ func NewRootCommand() *cobra.Command {
 			cmd.GroupID = "modules"
 		case "profiles", "login", "logout":
 			cmd.GroupID = "profiles"
+		case "plugins":
+			cmd.GroupID = "plugins"
 		}
 	}
 	return root
@@ -69,7 +94,7 @@ func NewRootCommand() *cobra.Command {
 func Execute() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
-	return NewRootCommand().ExecuteContext(ctx)
+	return NewRootCommandWithArgs(ctx, os.Args[1:]).ExecuteContext(ctx)
 }
 
 func pluginResolver(root *cobra.Command, settings *connection.Settings) plugin.RequestResolver {

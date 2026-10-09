@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk/httpclient"
+	"github.com/formancehq/fctl/pkg/pluginsdk"
+	"github.com/formancehq/fctl/pkg/pluginsdk/httpclient"
 )
 
 func meManifest() pluginsdk.CommandSpec {

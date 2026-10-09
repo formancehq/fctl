@@ -12,9 +12,10 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/fctl/pkg/pluginsdk"
+
 	"github.com/formancehq/fctl/v4/internal/command"
 	"github.com/formancehq/fctl/v4/internal/interactive"
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
 )
 
 func canSupplyFlag(inputs []pluginsdk.InputSpec, flag pluginsdk.FlagSpec) bool {

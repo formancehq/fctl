@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
+	"github.com/formancehq/fctl/pkg/pluginsdk"
 )
 
 func interactionCommand(t *testing.T, path string) pluginsdk.CommandSpec {

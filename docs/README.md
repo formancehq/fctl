@@ -16,5 +16,6 @@
 - [Implementation validation](validation.md): local server evidence, test
   coverage boundaries and reproducible checks.
 - [Plugin contract](plugins.md): public SDK, embedded registry and host ownership.
+- [Plugin distribution](plugin-distribution.md): external Ledger binaries, public OCI packages, exact versions and target locks.
 - [Agent skills](agent-skills.md): versioned plugin development guidance,
   release distribution and local installation.

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
+	"github.com/formancehq/fctl/pkg/pluginsdk"
 )
 
 func ledgerInput(op operation) pluginsdk.InputSpec {

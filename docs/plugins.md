@@ -1,6 +1,6 @@
-# Embedded plugin contract
+# Plugin contract
 
-Cloud, Auth and Ledger implement `pkg/pluginsdk.Plugin`. The public SDK has no Cobra,
+Cloud, Auth and Ledger implement `pkg/pluginsdk.Plugin`. The public SDK is a separate Go module, `github.com/formancehq/fctl/pkg/pluginsdk`. It has no Cobra,
 profile-store or core authentication dependency. Each plugin exposes two methods:
 
 - `GetManifest` describes its command tree, arguments, typed flags and declarative
@@ -78,8 +78,25 @@ and `--out` effects; they are not connection configuration. The shared public
 HTTP client performs requests without automatic mutation retries and preserves
 JSON numbers.
 
-Cloud, Auth, Ledger and Connectivity remain compiled into the executable. There is no installation,
-registry download, external process launcher or gRPC transport in this change.
-An external adapter must implement transport negotiation and authenticated HTTP
-context delivery using this public contract. That adapter will not require the
-service implementations to import Cobra or core configuration.
+Cloud, Auth, Ledger and Connectivity remain available as embedded defaults. The
+Ledger pilot can replace its embedded command tree with a cached external
+manifest. Both providers use the same two-method SDK contract, forms, body
+validation, authentication and output renderer. Exactly one provider owns the
+Ledger command root.
+
+External executables use the SDK's `transport.Serve` and the host's
+`transport.Open`. The gRPC broker supplies a scoped HTTP callback; the host
+retains authentication credentials and follows requests through its own HTTP
+client. Plugin requests and redirects must stay within the resolved endpoint's
+origin and path prefix. The child inherits no host environment or credential
+arguments. A separate process is not an operating-system sandbox: only trusted
+executables should be installed.
+
+The host checks the binary checksum and compares its runtime manifest with the
+installed manifest before execution. It also checks the exact Ledger service
+version before service operations. Canceling an RPC closes the plugin process.
+Help and completion use cached metadata, without spawning a plugin or calling
+the service.
+
+See [plugin distribution](plugin-distribution.md) for the Ledger pilot, exact
+version selection, public OCI packages, target locks and local testing.

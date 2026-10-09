@@ -4,7 +4,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk/httpclient"
+	"github.com/formancehq/fctl/pkg/pluginsdk/httpclient"
 )
 
 type Client = httpclient.Client

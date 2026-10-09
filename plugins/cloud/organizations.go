@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk/httpclient"
+	"github.com/formancehq/fctl/pkg/pluginsdk"
+	"github.com/formancehq/fctl/pkg/pluginsdk/httpclient"
 )
 
 func organizationsManifest() pluginsdk.CommandSpec {

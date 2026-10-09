@@ -14,10 +14,11 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/fctl/pkg/pluginsdk"
+	"github.com/formancehq/fctl/pkg/pluginsdk/httpclient"
+
 	"github.com/formancehq/fctl/v4/internal/api"
 	"github.com/formancehq/fctl/v4/internal/plugin"
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk/httpclient"
 )
 
 func multiServiceManifest() pluginsdk.Manifest {

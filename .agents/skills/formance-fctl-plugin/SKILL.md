@@ -1,14 +1,15 @@
 ---
 name: formance-fctl-plugin
-description: "Create or extend embedded Go service plugins in fctl v4: manifests, declarative forms, API operations and contract tests. Use for plugin development rather than operating the CLI or designing an external plugin runtime."
+description: "Create or extend embedded or external Go service plugins in fctl v4: manifests, declarative forms, API operations and contract tests. Use for plugin development rather than operating the CLI."
 ---
 
 # fctl plugin development
 
 Build service commands that work through both the CLI and a standalone SDK
 caller. Keep service behavior in the plugin and terminal/authentication behavior
-in the host. Embedded plugins are the current delivery model; their public
-contract also permits a future external adapter.
+in the host. Embedded and external plugins use the same public contract. The Ledger pilot
+owns its implementation in the Ledger repository's `fctl-plugin` module; fctl
+embeds that package or selects an installed executable.
 
 ## Establish the contract
 
@@ -30,7 +31,10 @@ capability absent in the deployed service.
 
 ## Implement the plugin
 
-Create or extend `plugins/<service>`. Expose `New(*http.Client) pluginsdk.Plugin`,
+For an embedded service, create or extend `plugins/<service>`. For an external
+service, create a separate module in the product repository and depend on
+`github.com/formancehq/fctl/pkg/pluginsdk`; do not depend on the fctl core module.
+Expose `New(*http.Client) pluginsdk.Plugin`,
 `GetManifest(context.Context)` and `Execute(context.Context, ExecuteRequest)`.
 Metadata must be available with a nil client and without network access.
 
@@ -71,6 +75,20 @@ endpoint, scope and connection configuration support: inspect the current
 resolver rather than assuming a new manifest service is automatically usable.
 Keep these changes at the connection boundary; routes and payloads remain in
 the plugin. Existing service extensions usually need no core changes.
+
+## External executable and distribution
+
+Read `docs/plugin-distribution.md` and the SDK `README.md`. The executable calls
+`transport.Serve(factory)`. Supply the exact service version in its manifest;
+keep plugin revision separate. Use Ledger's executable and publisher as the
+example. Build with the product release, publish public OCI artifacts before
+advertising catalogue entries, and generate manifests from the actual binary.
+The host owns credentials, HTTP callbacks, checksums, target locks and cached
+help. Do not pass tokens in arguments, environment or request context.
+
+Test an actual subprocess through `fctl plugins install` and test a registry
+download through `plugins sync`. Cover version drift before mutations, offline
+help/completion, both explicit flags and forms, and exact JSON responses.
 
 ## Verify and deliver
 

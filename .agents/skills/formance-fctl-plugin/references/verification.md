@@ -20,7 +20,8 @@ the checkout's test conventions and `justfile`; use its pinned Go/Nix toolchain.
 
 Use the public API, not implementation-mirroring assertions. A standalone
 consumer can use a temporary module with a local `replace` for
-`github.com/formancehq/fctl/v4`, then import the plugin and call `New`,
+the public SDK and product plugin modules (or `github.com/formancehq/fctl/v4`
+for an embedded service), then import the plugin and call `New`,
 `GetManifest` and `Execute`. Use `GOWORK=off` so workspace settings do not hide
 dependencies. Inspect its dependency closure for Cobra, pflag, UI and fctl core
 packages; none belongs to the plugin's public execution path. Do not treat the
@@ -56,7 +57,7 @@ for example:
 
 ```bash
 nix develop --impure --command just pc
-nix develop --impure --command go test -race ./...
+nix develop --impure --command just tests
 ```
 
 Inspect changes from formatter/generator recipes before committing. An isolated

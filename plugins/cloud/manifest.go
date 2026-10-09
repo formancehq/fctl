@@ -1,6 +1,6 @@
 package cloud
 
-import "github.com/formancehq/fctl/v4/pkg/pluginsdk"
+import "github.com/formancehq/fctl/pkg/pluginsdk"
 
 func manifest() pluginsdk.Manifest {
 	m := pluginsdk.Manifest{Name: "cloud", Version: "0.1.0", Service: "cloud", ProtocolVersion: pluginsdk.ProtocolVersion, Root: pluginsdk.CommandSpec{

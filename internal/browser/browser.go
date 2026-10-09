@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"time"
 
-	httpclient "github.com/formancehq/fctl/v4/pkg/pluginsdk/httpclient"
+	httpclient "github.com/formancehq/fctl/pkg/pluginsdk/httpclient"
 )
 
 const openTimeout = 5 * time.Second

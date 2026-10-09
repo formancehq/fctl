@@ -3,7 +3,7 @@ package plugin
 import (
 	"testing"
 
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
+	"github.com/formancehq/fctl/pkg/pluginsdk"
 )
 
 func TestNestedChoiceFieldsAndLiteralPrecedence(t *testing.T) {

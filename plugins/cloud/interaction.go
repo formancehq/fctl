@@ -4,7 +4,7 @@ import (
 	"maps"
 	"strings"
 
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
+	"github.com/formancehq/fctl/pkg/pluginsdk"
 )
 
 // Only targets are inherited. Inputs belong to runnable leaves so the host can

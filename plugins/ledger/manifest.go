@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
-	httpclient "github.com/formancehq/fctl/v4/pkg/pluginsdk/httpclient"
+	"github.com/formancehq/fctl/pkg/pluginsdk"
+	httpclient "github.com/formancehq/fctl/pkg/pluginsdk/httpclient"
 )
 
 type layout struct{}

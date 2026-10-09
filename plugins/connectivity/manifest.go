@@ -1,6 +1,6 @@
 package connectivity
 
-import "github.com/formancehq/fctl/v4/pkg/pluginsdk"
+import "github.com/formancehq/fctl/pkg/pluginsdk"
 
 func manifest() pluginsdk.Manifest {
 	return pluginsdk.Manifest{Name: "connectivity", Version: "0.1.0", Service: "connectivity", ProtocolVersion: pluginsdk.ProtocolVersion,
