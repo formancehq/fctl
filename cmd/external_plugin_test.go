@@ -157,7 +157,7 @@ func testExternalLedgerRead(t *testing.T, args []string) {
 }
 func testExternalLedgerBulk(t *testing.T, args []string, mutations *atomic.Int32, version *atomic.Value) {
 	t.Helper()
-	bulk := append(append([]string{}, args...), "ledger", "--ledger", "books", "bulk", "--data", `[{"action":"CREATE_TRANSACTION"}]`)
+	bulk := append(append([]string{}, args...), "ledger", "--ledger", "books", "bulk", "--data", `[{"action":"CREATE_TRANSACTION","data":{"postings":[{"source":"world","destination":"bank","amount":9007199254740993,"asset":"USD/2"}]}}]`)
 	out, _, err := executeExternalCLI(t, bulk)
 	if err == nil || !strings.Contains(out, "90071992547409930001") || mutations.Load() != 1 || !json.Valid([]byte(out)) {
 		t.Fatalf("partial results/exact integer/no retry: %s %v mutations=%d", out, err, mutations.Load())

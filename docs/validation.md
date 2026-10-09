@@ -345,3 +345,19 @@ No production release tag, production OCI publication or official default
 catalogue was created. Snapshot versions still derive from existing v3 tags.
 The optional Jev review was unavailable because `JEV_API_KEY` was unset;
 independent review and repository checks completed instead.
+
+
+## Product-owned Ledger plugin layout (2026-10-09)
+
+The embedded Ledger adapter now imports
+`github.com/formancehq/ledger/misc/fctl-plugin` at
+`v0.0.0-20261009143954-060fabc5af8d` from the Ledger branch
+`feat/fctl-shared-commands`. This is a public module pin, without a local
+Ledger replacement. The plugin remains independent of fctl core, terminal UI,
+profiles, credentials, and Ledger server internals.
+
+The same command manifest runs through HTTP in fctl and through the native
+gRPC adapter in ledgerctl. A local single-node Ledger was used to check fctl
+listing and `after` pagination over HTTP, alongside ledgerctl's 38-case matrix
+covering all 31 shared operations. The isolated node advertised
+`3.0.0-beta.10`; these checks do not establish a deployed service release.
