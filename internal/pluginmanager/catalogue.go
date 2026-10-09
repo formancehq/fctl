@@ -2,7 +2,6 @@ package pluginmanager
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -12,6 +11,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"sigs.k8s.io/yaml"
 
 	"github.com/formancehq/fctl/pkg/pluginsdk"
 )
@@ -23,36 +24,68 @@ var (
 	repositoryPattern = regexp.MustCompile(`^[a-z0-9]+((\.|_|__|-+)[a-z0-9]+)*(/[a-z0-9]+((\.|_|__|-+)[a-z0-9]+)*)*$`)
 )
 
+// DefaultCatalogue is the official public plugin catalogue.
+const DefaultCatalogue = "https://raw.githubusercontent.com/formancehq/fctl-plugin-registry/main/registry.yaml"
+
 func (m *Manager) resolve(ctx context.Context, source, service, version string, revision int) (Release, error) {
 	if !servicePattern.MatchString(service) || !validVersion(version) || revision < 0 {
 		return Release{}, fmt.Errorf("invalid plugin service, service version or revision")
 	}
-	data, err := m.catalogueBytes(ctx, source)
+	catalogue, err := m.Discover(ctx, source)
 	if err != nil {
 		return Release{}, err
 	}
-	var catalogue Catalogue
-	if err := json.Unmarshal(data, &catalogue); err != nil {
-		return Release{}, fmt.Errorf("decode plugin catalogue: %w", err)
-	}
-	if catalogue.SchemaVersion != SchemaVersion {
-		return Release{}, fmt.Errorf("unsupported catalogue schema %d", catalogue.SchemaVersion)
-	}
-	return selectRelease(catalogue, m.platform, service, version, revision)
+	return catalogue.Resolve(m.platform, service, version, revision)
 }
 
-func selectRelease(catalogue Catalogue, platform Platform, service, version string, revision int) (Release, error) {
-	var selected Release
+// Discover reads a YAML or JSON catalogue without downloading or starting plugins.
+func (m *Manager) Discover(ctx context.Context, source string) (Catalogue, error) {
+	data, err := m.catalogueBytes(ctx, source)
+	if err != nil {
+		return Catalogue{}, err
+	}
+	var catalogue Catalogue
+	if err := yaml.UnmarshalStrict(data, &catalogue); err != nil {
+		return Catalogue{}, fmt.Errorf("decode plugin catalogue: %w", err)
+	}
+	if err := validateCatalogue(catalogue); err != nil {
+		return Catalogue{}, err
+	}
+	return catalogue, nil
+}
+
+// Resolve selects an exact service version and platform from an inspected catalogue.
+func (c Catalogue) Resolve(platform Platform, service, version string, revision int) (Release, error) {
+	if !servicePattern.MatchString(service) || !validVersion(version) || revision < 0 {
+		return Release{}, fmt.Errorf("invalid plugin service, service version or revision")
+	}
+	return selectRelease(c, platform, service, version, revision)
+}
+
+func validateCatalogue(catalogue Catalogue) error {
+	if catalogue.SchemaVersion != SchemaVersion {
+		return fmt.Errorf("unsupported catalogue schema %d", catalogue.SchemaVersion)
+	}
 	seen := make(map[string]bool)
 	for _, release := range catalogue.Releases {
 		if err := validateRelease(release, false); err != nil {
-			return Release{}, fmt.Errorf("invalid catalogue release: %w", err)
+			return fmt.Errorf("invalid catalogue release: %w", err)
 		}
 		key := fmt.Sprintf("%s/%s/%d/%s", release.Service, release.ServiceVersion, release.Revision, release.Platform)
 		if seen[key] {
-			return Release{}, fmt.Errorf("duplicate catalogue release %s", key)
+			return fmt.Errorf("duplicate catalogue release %s", key)
 		}
 		seen[key] = true
+	}
+	return nil
+}
+
+func selectRelease(catalogue Catalogue, platform Platform, service, version string, revision int) (Release, error) {
+	if err := validateCatalogue(catalogue); err != nil {
+		return Release{}, err
+	}
+	var selected Release
+	for _, release := range catalogue.Releases {
 		if release.Service == service && release.ServiceVersion == version && release.Platform == platform &&
 			(revision == 0 || release.Revision == revision) && release.Revision > selected.Revision {
 			selected = release
@@ -86,11 +119,11 @@ func (m *Manager) catalogueBytes(ctx context.Context, source string) (_ []byte, 
 		}
 		response, err := m.client.Do(request)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%w: %w", ErrCatalogueUnavailable, err)
 		}
 		defer func() { err = joinClose(err, response.Body) }()
 		if response.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("plugin catalogue returned HTTP %d", response.StatusCode)
+			return nil, fmt.Errorf("%w: HTTP %d", ErrCatalogueUnavailable, response.StatusCode)
 		}
 		return readBounded(response.Body, maxCatalogueBytes)
 	}
@@ -151,6 +184,9 @@ func validateRelease(release Release, local bool) error {
 	}
 	if err := validateManifest(release.Manifest, release.Service); err != nil {
 		return err
+	}
+	if release.Manifest.Version != release.ServiceVersion {
+		return fmt.Errorf("manifest version %q does not match exact service version %q", release.Manifest.Version, release.ServiceVersion)
 	}
 	if local {
 		return nil

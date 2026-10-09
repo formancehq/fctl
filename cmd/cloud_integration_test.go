@@ -23,6 +23,7 @@ import (
 	"github.com/formancehq/fctl/v4/cmd"
 	"github.com/formancehq/fctl/v4/internal/cloud"
 	"github.com/formancehq/fctl/v4/internal/connection"
+	"github.com/formancehq/fctl/v4/internal/pluginmanager"
 )
 
 const (
@@ -38,6 +39,7 @@ func TestCloudCLILifecycle(t *testing.T) {
 	t.Parallel()
 	f := newCLICloudFixture(t)
 	dir := t.TempDir()
+	cacheDistributionAuth(t, dir, pluginmanager.Target{Profile: "cloud", Organization: "org", Stack: "stack", Endpoint: f.issuer()})
 	f.run(t, dir, "profiles", "add", "cloud", "--auth-mode", "cloud", "--issuer", f.issuer(), "--organization", "org", "--stack", "stack")
 	f.assertConnectionViews(t, dir, false)
 	out, stderr := f.run(t, dir, "login")
@@ -422,6 +424,14 @@ func (f *cliCloudFixture) registerTarget(t *testing.T, mux *http.ServeMux, targe
 	mux.HandleFunc("POST /"+target.stack+"/api/auth/token", func(w http.ResponseWriter, r *http.Request) { f.exchange(t, w, r, target) })
 	mux.HandleFunc("GET /"+target.stack+"/api/ledger/v3/{$}", func(w http.ResponseWriter, r *http.Request) { f.service(t, w, r, target, &f.ledgers) })
 	mux.HandleFunc("GET /"+target.stack+"/api/auth/clients", func(w http.ResponseWriter, r *http.Request) { f.service(t, w, r, target, &f.clients) })
+	mux.HandleFunc("GET /"+target.stack+"/api/auth/_info", func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer "+target.stackToken {
+			t.Error("Auth version request used another target or root token")
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		writeCLICloudJSON(t, w, map[string]string{"version": "1.0.0"})
+	})
 }
 
 func (f *cliCloudFixture) device(t *testing.T, w http.ResponseWriter, r *http.Request) {

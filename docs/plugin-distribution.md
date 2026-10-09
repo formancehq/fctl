@@ -1,11 +1,22 @@
-# External Ledger plugin pilot
+# External service plugin distribution
 
-The Ledger plugin can run as an independent native executable. Its source and
-release configuration live in the Ledger repository's `fctl-plugin` Go module.
+Auth runs only as an external native executable. Ledger can use an external
+executable and retains its embedded fallback. Their product modules own their
+commands and executable entry points:
+
+| Service | Product module | Executable |
+| --- | --- | --- |
+| Ledger | `github.com/formancehq/ledger/misc/fctl-plugin` | `fctl-plugin-ledger` |
+| Auth | `github.com/formancehq/auth/misc/fctl-plugin` | `fctl-plugin-auth` |
+
+Auth product sources remain in the Auth repository. Public executable distribution
+is a separate publication step and does not require publishing private sources.
 The public SDK is a separate module at
 `github.com/formancehq/fctl/pkg/pluginsdk`. Service plugins depend on this SDK;
 they do not depend on fctl's commands, profiles, forms or authentication code.
-The embedded Ledger provider imports the same product package.
+Ledger embedded and external providers use the same product commands. Auth
+commands are never compiled into fctl: there is no `plugins/auth` adapter or
+host compile-time dependency on the Auth product module.
 
 ## Try a local executable
 
@@ -35,9 +46,85 @@ debug traces still belong to fctl. Local endpoints support `none` and
 Terminal forms and tables work with both providers. No plugin-specific flags
 are added to ordinary Ledger commands.
 
+## Auth installation
+
+Build the Auth executable from its independent product module with Go 1.26 or
+the product's Nix environment. You need access to an Auth checkout containing
+the merged plugin changes. Use the exact deployed Auth version from `/_info`,
+without its leading `v`, and a positive plugin revision. The version below is
+an example: replace it with your target's version. From the Auth checkout root:
+
+```sh
+export AUTH_SERVICE_VERSION=2.5.0-beta.1
+export PLUGIN_REVISION=1
+cd misc/fctl-plugin
+GOWORK=off go build \
+  -ldflags "-X main.serviceVersion=$AUTH_SERVICE_VERSION -X main.revision=$PLUGIN_REVISION" \
+  -o /tmp/fctl-plugin-auth ./cmd/fctl-plugin-auth
+/tmp/fctl-plugin-auth --manifest
+/tmp/fctl-plugin-auth --version
+```
+
+Alternatively, from the Auth checkout root:
+
+```sh
+nix develop --impure --command just build-fctl-plugin 2.5.0-beta.1 1
+./build/fctl-plugin-auth --manifest
+./build/fctl-plugin-auth --version
+```
+
+Install the module-built executable for a local Auth target. This example
+assumes Auth is running at `http://localhost:8080` and permits anonymous access:
+
+```sh
+fctl plugins install --service auth --binary /tmp/fctl-plugin-auth \
+  --auth-mode none --auth-url http://localhost:8080
+fctl auth clients list --auth-mode none --auth-url http://localhost:8080
+fctl plugins show --service auth \
+  --auth-mode none --auth-url http://localhost:8080
+fctl auth --help --auth-mode none --auth-url http://localhost:8080
+fctl completion zsh --auth-mode none --auth-url http://localhost:8080
+```
+
+For the Nix build, use `--binary ./build/fctl-plugin-auth` instead. Installation
+reads the binary's manifest and discovers the deployed version; it rejects a
+mismatch. To prepare without contacting Auth, add
+`--service-version "$AUTH_SERVICE_VERSION"` to the install command. The supplied
+version must match the binary; execution still verifies the deployed version.
+The last two commands use the installed target's complete cached metadata and
+remain usable with Auth offline. Without that cache, `fctl auth --help` shows
+only a placeholder guiding `plugins sync --service auth` or
+`plugins install --service auth`; it never contacts a catalogue or Auth.
+
+Once an exact-version release is published and promoted in the official
+catalogue, sync it explicitly. These commands force the official catalogue,
+even if an environment override or saved custom catalogue exists:
+
+```sh
+fctl plugins sync --service auth \
+  --catalogue https://raw.githubusercontent.com/formancehq/fctl-plugin-registry/main/registry.yaml \
+  --auth-mode none --auth-url http://localhost:8080
+fctl plugins sync --service auth \
+  --catalogue https://raw.githubusercontent.com/formancehq/fctl-plugin-registry/main/registry.yaml \
+  --organization ORGANIZATION_ID --stack STACK_ID
+```
+
+These are future official-availability examples, not evidence of a currently
+published Auth release. Local installation works independently of publication.
+For a custom test catalogue, pass `--catalogue ./registry.yaml` with the same
+Auth target flags.
+
+`plugins install`, `plugins sync` and `plugins show` accept `--service ledger`
+or `--service auth`; the default remains `ledger`. Unknown services are rejected
+before installation. The selected service must match the manifest service, name
+and command root. The manifest version must equal the exact service version.
+Without `--service-version`, installation and sync discover that version through
+the selected service's `/_info`. An explicit version supports preparation without
+contacting the service; execution still verifies the deployed version.
+
 ## Public OCI distribution
 
-For each Ledger service version, build six executables for Linux, macOS and
+For each product service version, build six executables for Linux, macOS and
 Windows on amd64 and arm64. Publish them as public OCI artifacts. No container
 engine is required on the user's machine. Keeping service sources private does
 not require keeping their CLI binaries private; package visibility must be
@@ -50,28 +137,49 @@ before advertising its mapping. The catalogue has `schemaVersion: 1` and a
 
 | Field | Meaning |
 | --- | --- |
-| `service` | `ledger` |
-| `serviceVersion` | Exact version reported by the Ledger service |
+| `service` | `ledger` or `auth` |
+| `serviceVersion` | Exact version reported by the selected service; identical to `manifest.version` |
 | `revision` | Positive plugin revision for that service version |
 | `platform` | Operating system and architecture |
 | `artifact` | Registry origin, repository and immutable `sha256:` manifest digest |
 | `sha256` | SHA-256 of the raw executable layer |
 | `manifest` | Complete SDK command and form manifest, including protocol version |
 
-The pilot accepts a trusted catalogue file or HTTPS URL. HTTP is allowed only
-for loopback test registries and catalogues. An official public catalogue is
-not enabled by default during this pilot.
+The pilot accepts a trusted YAML or JSON catalogue file or HTTPS URL. HTTP is
+allowed only for loopback test registries and catalogues. The default catalogue
+is the public `registry.yaml` in `formancehq/fctl-plugin-registry`:
+
+```text
+https://raw.githubusercontent.com/formancehq/fctl-plugin-registry/main/registry.yaml
+```
 
 ```sh
-fctl plugins sync --catalogue ./catalogue.json --profile local
+fctl plugins sync --profile local
+fctl plugins sync --catalogue ./registry.yaml --profile local
 fctl ledger list --profile local
 ```
 
-Set `FCTL_PLUGIN_CATALOGUE` to enable automatic preparation for new targets.
+Before Auth execution on a fresh target, fctl discovers the official catalogue,
+resolves the target's exact service version and platform, and installs the
+matching executable. An unavailable official catalogue, an empty catalogue or
+no exact matching Auth release fails explicitly before command execution. Auth
+never falls back to an embedded provider. A prepared target uses its installed
+executable and cached metadata; ordinary execution still checks its version.
+
+Ledger retains its embedded provider for an unprepared target when the official
+catalogue is temporarily unavailable or has no matching release. Invalid
+metadata remains an error. An empty catalogue does not query the Ledger version
+or trigger Ledger target selection.
+
+Set `FCTL_PLUGIN_CATALOGUE` to override the catalogue used for automatic
+preparation. Explicit `plugins sync` prefers `--catalogue`, then the environment
+variable, then the selected service's saved catalogue, then the official URL.
 The core reads `/_info`, selects the exact version and current platform, checks
 protocol compatibility, downloads the digest-addressed artifact and verifies
 the manifest, config and executable checksums. A missing exact release fails
-with an actionable error. The stack supplies its service version; it never
+for all Auth execution requiring discovery, explicit sync, custom catalogues
+and already prepared external targets.
+The stack supplies its service version; it never
 supplies an executable URL.
 
 Checksums verify bytes against the trusted catalogue. They do not independently
@@ -80,9 +188,10 @@ access. Only explicitly trusted local binaries should be installed.
 
 ## Locks and updates
 
-Each target has a lock identified by profile, organization, stack and stable
-connection endpoint. Two stacks in the same profile can use different Ledger
-versions. Executables are cached by digest and platform under the private v4
+Locks are identified by service plus profile, organization, stack and stable
+connection endpoint. Auth and Ledger keep independent locks for the same target.
+Two stacks in the same profile can use different service versions. Executables
+are cached by digest and platform under the private v4
 configuration directory's `plugins` folder.
 
 Normal commands retain the locked plugin revision. A changed service version
@@ -92,27 +201,62 @@ reports the mismatch and must be replaced. Version checks run before writes.
 
 An explicit `plugins sync` selects the highest plugin revision for the exact
 service version. A CLI-only fix increments that revision without requiring a
-new Ledger server release. CI can pin both values:
+new product server release. CI can pin both values:
 
 ```sh
 fctl plugins sync --catalogue ./catalogue.json --profile local \
   --service-version 3.0.0 --revision 1 --no-input
 ```
 
-Help and completion read the target's cached manifest without network access
-or a running plugin process. Prepared commands can use cached executables
-without downloading from the registry again. Service operations still need
-access to the Ledger service and its version endpoint.
+Help and completion read the selected target's cached manifest, including its
+full command tree and declarative forms, without network access or a running
+plugin process. A fresh Auth target exposes only sync/install guidance; help
+and completion do not trigger automatic discovery. Prepared commands can use
+cached executables without downloading from the registry again. Service operations still need
+access to the selected service and its version endpoint.
 
 ## Validation
 
 `just pc` checks the core and SDK modules. `just tests` runs both race suites.
-The CLI tests publish actual plugin executables to an HTTP OCI test registry,
+The CLI tests publish actual Ledger executables and public-SDK Auth fixture
+executables to HTTP OCI test registries on localhost,
 download and execute two service versions, retain and upgrade plugin revisions,
-and check offline help and completion. Additional tests cover host OAuth2 and
+and check offline help and completion. Auth tests also reject mismatched catalogue
+identity and exact versions before downloads or lock writes, and verify independent
+Auth and Ledger locks. Product integration must separately validate the Auth executable
+built from its product module. Additional tests cover host OAuth2 and
 debug redaction, exact large JSON integers, partial bulk errors, cancellation,
 endpoint restrictions, corrupt downloads and concurrent cache installation.
 
 The SDK and product module can also be built and tested independently. Production
-OCI publication and enabling the default official catalogue are separate
-release steps; snapshot packaging does not perform either action.
+OCI publication and updating the official catalogue are separate release
+steps; snapshot packaging does not perform either action.
+
+## Auth release availability
+
+Auth PR #162 is merged and the `v2.5.2` tagged release has published all six
+Auth executables at revision 1. Anonymous GHCR downloads and executable
+checksums have been verified. The generated entries were merged through
+[registry PR #2](https://github.com/formancehq/fctl-plugin-registry/pull/2),
+so the default catalogue now advertises Auth `2.5.2`, revision `1`.
+
+For future releases, the tag must include the plugin module and release tooling
+on the tagged branch.
+
+Official availability requires separate release steps:
+
+1. The Auth tagged-release workflow builds the six executables and publishes
+   digest-addressed OCI artifacts to `ghcr.io/formancehq/fctl-plugin-auth`.
+2. The package administrator enables public access, and maintainers verify
+   anonymous downloads and executable checksums. A successful upload or a
+   GitHub release asset alone does not prove public download availability.
+3. Maintainers promote the generated catalogue entries into
+   `formancehq/fctl-plugin-registry/registry.yaml`. Auth's release workflow does
+   not update that official catalogue.
+
+Snapshot packaging performs neither GHCR publication nor official catalogue
+promotion. Auth `2.5.2` revision `1` has passed anonymous download checks
+for all six platforms and fresh-cache discovery through the official catalogue.
+The execution check used the published binary with a local API fixture; it did
+not upgrade or mutate a deployed Auth service. Targets running other exact
+versions need a matching release or a trusted local executable.

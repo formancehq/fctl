@@ -1,6 +1,8 @@
 # Plugin contract
 
-Cloud, Auth and Ledger implement `pkg/pluginsdk.Plugin`. The public SDK is a separate Go module, `github.com/formancehq/fctl/pkg/pluginsdk`. It has no Cobra,
+Cloud, Auth and Ledger implement `pkg/pluginsdk.Plugin`. Auth is loaded only as
+an external executable; Cloud and Ledger have embedded providers. The public SDK
+is a separate Go module, `github.com/formancehq/fctl/pkg/pluginsdk`. It has no Cobra,
 profile-store or core authentication dependency. Each plugin exposes two methods:
 
 - `GetManifest` describes its command tree, arguments, typed flags and declarative
@@ -78,11 +80,13 @@ and `--out` effects; they are not connection configuration. The shared public
 HTTP client performs requests without automatic mutation retries and preserves
 JSON numbers.
 
-Cloud, Auth, Ledger and Connectivity remain available as embedded defaults. The
-Ledger pilot can replace its embedded command tree with a cached external
-manifest. Both providers use the same two-method SDK contract, forms, body
-validation, authentication and output renderer. Exactly one provider owns the
-Ledger command root.
+Cloud, Ledger and Connectivity remain available as embedded defaults. Ledger
+can replace its embedded command tree with a cached external manifest. Auth is
+external-only: the host loads its cached manifest and executable, or discovers
+and installs an exact-version release before execution. There is no embedded
+Auth fallback. Both external providers use the same two-method SDK contract,
+forms, body validation, authentication and output renderer. Exactly one provider
+owns each service command root.
 
 External executables use the SDK's `transport.Serve` and the host's
 `transport.Open`. The gRPC broker supplies a scoped HTTP callback; the host
@@ -93,10 +97,29 @@ arguments. A separate process is not an operating-system sandbox: only trusted
 executables should be installed.
 
 The host checks the binary checksum and compares its runtime manifest with the
-installed manifest before execution. It also checks the exact Ledger service
+installed manifest before execution. It also checks the exact selected service
 version before service operations. Canceling an RPC closes the plugin process.
 Help and completion use cached metadata, without spawning a plugin or calling
-the service.
+the service or catalogue. On a fresh target, `fctl auth --help` shows only a
+placeholder directing the caller to `plugins sync --service auth` or
+`plugins install --service auth`. Full Auth help and completion become available
+offline after preparation of that target.
 
-See [plugin distribution](plugin-distribution.md) for the Ledger pilot, exact
+See [plugin distribution](plugin-distribution.md) for Auth and Ledger, exact
 version selection, public OCI packages, target locks and local testing.
+
+## Product-owned Auth plugin
+
+The independent module `github.com/formancehq/auth/misc/fctl-plugin` owns Auth
+commands, API validation and declarative forms in the Auth repository. fctl has
+no `plugins/auth` adapter and no compile-time dependency on the Auth product
+module (`github.com/formancehq/auth/misc/fctl-plugin`).
+The product module exposes `New` for direct SDK callers and `NewVersion` for
+exact-version native executables. It depends on the public plugin SDK and
+generated Auth client, without fctl core, Cobra, profile storage or terminal
+libraries. Host authentication remains in fctl and does not require embedding
+Auth commands.
+
+Auth and Ledger external providers use the same generic host loader. The host
+accepts only the selected service's command root and connection boundary,
+including descendant service overrides. Locks are keyed by target and service.

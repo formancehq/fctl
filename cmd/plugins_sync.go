@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -11,42 +10,50 @@ import (
 )
 
 func newPluginsSyncCommand(settings *connection.Settings) *cobra.Command {
-	var catalogue, serviceVersion string
+	var catalogue, serviceVersion, service string
 	var revision int
 	sync := &cobra.Command{
-		Use: "sync", Short: "Download the Ledger plugin for the exact deployed service version", Args: cobra.NoArgs,
+		Use: "sync", Short: "Download the service plugin for the exact deployed service version", Args: cobra.NoArgs,
 		Annotations: map[string]string{"fctl.target": "stack"},
-		Example:     "  fctl plugins sync --catalogue catalogue.json --organization ORG --stack STACK\n  fctl plugins sync --catalogue https://example.com/plugins.json --service-version 3.0.0 --profile local",
+		Example:     "  fctl plugins sync --organization ORG --stack STACK\n  fctl plugins sync --catalogue registry.yaml --service-version 3.0.0 --profile local",
 	}
-	sync.Flags().StringVar(&catalogue, "catalogue", "", "Trusted plugin catalogue file or HTTPS URL (FCTL_PLUGIN_CATALOGUE)")
-	sync.Flags().StringVar(&serviceVersion, "service-version", "", "Exact service version; defaults to Ledger /_info discovery")
+	sync.Flags().StringVar(&service, "service", "ledger", "Service plugin: ledger or auth")
+	sync.Flags().StringVar(&catalogue, "catalogue", "", "YAML or JSON catalogue file or HTTPS URL; defaults to the official registry (FCTL_PLUGIN_CATALOGUE)")
+	sync.Flags().StringVar(&serviceVersion, "service-version", "", "Exact service version; defaults to selected service /_info discovery")
 	sync.Flags().IntVar(&revision, "revision", 0, "Plugin revision; defaults to the highest for this exact service version")
 	sync.RunE = func(cmd *cobra.Command, _ []string) error {
-		return syncLedgerPlugin(cmd, settings, catalogue, serviceVersion, revision)
+		return syncServicePlugin(cmd, settings, service, catalogue, serviceVersion, revision)
 	}
 
 	return sync
 }
 
 func syncLedgerPlugin(cmd *cobra.Command, settings *connection.Settings, catalogue, serviceVersion string, revision int) error {
+	return syncServicePlugin(cmd, settings, "ledger", catalogue, serviceVersion, revision)
+}
+
+func syncServicePlugin(cmd *cobra.Command, settings *connection.Settings, service, catalogue, serviceVersion string, revision int) error {
+	if err := distributionService(service); err != nil {
+		return err
+	}
 	manager, err := pluginManager(settings, cmd)
 	if err != nil {
 		return err
 	}
-	catalogue, err = pluginCatalogue(cmd, settings, manager, catalogue)
+	catalogue, err = servicePluginCatalogue(cmd, settings, manager, service, catalogue)
 	if err != nil {
 		return err
 	}
 
-	target, version, err := pluginSyncTarget(cmd.Context(), settings, cmd, serviceVersion)
+	target, version, err := pluginServiceSyncTarget(cmd.Context(), settings, cmd, service, serviceVersion)
 	if err != nil {
 		return err
 	}
-	release, err := manager.Resolve(cmd.Context(), catalogue, "ledger", version, revision)
+	release, err := manager.Resolve(cmd.Context(), catalogue, service, version, revision)
 	if err != nil {
 		return err
 	}
-	if err := validateLedgerManifest(cmd.Context(), cmd.Root(), release.Manifest); err != nil {
+	if err := validateServiceManifest(cmd.Context(), cmd.Root(), service, release.Manifest); err != nil {
 		return err
 	}
 	lock, err := manager.InstallResolved(cmd.Context(), catalogue, target, release)
@@ -58,15 +65,24 @@ func syncLedgerPlugin(cmd *cobra.Command, settings *connection.Settings, catalog
 }
 
 func pluginCatalogue(cmd *cobra.Command, settings *connection.Settings, manager *pluginmanager.Manager, catalogue string) (string, error) {
+	return servicePluginCatalogue(cmd, settings, manager, "ledger", catalogue)
+}
+
+func servicePluginCatalogue(cmd *cobra.Command, settings *connection.Settings, manager *pluginmanager.Manager, service, catalogue string) (string, error) {
 	if catalogue != "" {
 		return catalogue, nil
 	}
 	if value := os.Getenv("FCTL_PLUGIN_CATALOGUE"); value != "" {
 		return value, nil
 	}
-	lock, err := cachedLedgerLock(settings, cmd, manager)
+	lock, err := cachedServiceLock(settings, cmd, manager, service)
 	if err == nil && lock.Catalogue != "" {
 		return lock.Catalogue, nil
 	}
-	return "", fmt.Errorf("choose a trusted --catalogue file or URL, or set FCTL_PLUGIN_CATALOGUE")
+	return pluginmanager.DefaultCatalogue, nil
+}
+
+func distributionService(service string) error {
+	_, err := supportedPluginService(service)
+	return err
 }

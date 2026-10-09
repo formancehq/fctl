@@ -1,7 +1,6 @@
 package cmd_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,10 +12,36 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"sigs.k8s.io/yaml"
+
 	"github.com/formancehq/fctl/pkg/pluginsdk/transport"
 
 	"github.com/formancehq/fctl/v4/internal/pluginmanager"
 )
+
+// Route only the official catalogue URL to a test-owned YAML file. All OCI and
+// service traffic still uses real HTTP; no production registry is contacted.
+type officialCatalogueTransport struct {
+	base  http.RoundTripper
+	path  string
+	reads atomic.Int32
+	t     *testing.T
+}
+
+func (f *officialCatalogueTransport) RoundTrip(request *http.Request) (*http.Response, error) {
+	if request.URL.String() != pluginmanager.DefaultCatalogue {
+		return f.base.RoundTrip(request)
+	}
+	f.reads.Add(1)
+	if request.Header.Get("Authorization") != "" {
+		f.t.Error("public catalogue received service credentials")
+	}
+	data, err := os.ReadFile(f.path) //nolint:gosec // The fixture reads its test-owned catalogue file, never a request path.
+	if err != nil {
+		return nil, err
+	}
+	return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(string(data)))}, nil
+}
 
 // This serves the OCI upload/download protocol over real HTTP. Published layers
 // are actual Go executables, which fctl downloads and starts after resolving the
@@ -95,10 +120,10 @@ func TestExternalLedgerDistributionCLI(t *testing.T) {
 	}
 	v300 := publishExternalLedger(t, publisher, registry.URL, "3.0.0")
 	v301 := publishExternalLedger(t, publisher, registry.URL, "3.0.1")
-	catalogue := filepath.Join(t.TempDir(), "catalogue.json")
+	catalogue := filepath.Join(t.TempDir(), "registry.yaml")
 	writeCatalogue := func(releases ...pluginmanager.Release) {
 		t.Helper()
-		data, err := json.Marshal(pluginmanager.Catalogue{SchemaVersion: 1, Releases: releases})
+		data, err := yaml.Marshal(pluginmanager.Catalogue{SchemaVersion: 1, Releases: releases})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -107,7 +132,10 @@ func TestExternalLedgerDistributionCLI(t *testing.T) {
 		}
 	}
 	writeCatalogue(v300, v301)
-	t.Setenv("FCTL_PLUGIN_CATALOGUE", catalogue)
+	t.Setenv("FCTL_PLUGIN_CATALOGUE", "")
+	transport := &officialCatalogueTransport{base: http.DefaultTransport, path: catalogue, t: t}
+	http.DefaultTransport = transport
+	t.Cleanup(func() { http.DefaultTransport = transport.base })
 	var version atomic.Value
 	version.Store("3.0.0")
 	ledger := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -136,6 +164,9 @@ func TestExternalLedgerDistributionCLI(t *testing.T) {
 		}
 	}
 	assertList()
+	if transport.reads.Load() != 1 {
+		t.Fatalf("default discovery must fetch the YAML catalogue once: %d", transport.reads.Load())
+	}
 	initialReads := reads.Load()
 	if initialReads != 3 {
 		t.Fatalf("expected OCI manifest/config/executable, got %d reads", initialReads)
@@ -161,14 +192,21 @@ func TestExternalLedgerDistributionCLI(t *testing.T) {
 	registry.Close()
 	assertList() // Prepared commands need no catalogue/registry downloads.
 	version.Store("3.0.2")
+	// A new target whose service has no native release keeps the embedded provider.
+	unprepared := append([]string{}, list...)
+	unprepared[1] = t.TempDir()
+	if out, trace, err := executeExternalCLI(t, unprepared); err != nil || !strings.Contains(out, "books") || trace != "" {
+		t.Fatalf("unpublished service version must keep embedded Ledger: %s %s %v", out, trace, err)
+	}
 	out, _, err = executeExternalCLI(t, list)
 	if err == nil || !strings.Contains(err.Error(), "exact service version") || out != "" {
 		t.Fatalf("missing exact release must fail: %s %v", out, err)
 	}
 	ledger.Close()
+	catalogueReads := transport.reads.Load()
 	args = append(args, "ledger", "--help")
 	out, trace, err := executeExternalCLI(t, args)
-	if err != nil || trace != "" || !strings.Contains(out, "External Ledger pilot") {
+	if err != nil || trace != "" || !strings.Contains(out, "External Ledger pilot") || transport.reads.Load() != catalogueReads {
 		t.Fatalf("offline downloaded manifest help: %s %s %v", out, trace, err)
 	}
 }

@@ -12,11 +12,13 @@ and exits with status 1. Signal cancellation is propagated through the command
 context.
 
 The root registers `version`, `profiles` management and login/logout. Cloud,
-Auth, Ledger and Connectivity register through the embedded plugin registry and public SDK; the core
-builds their Cobra commands from manifests. Cobra provides help, `--version`
-and shell completion commands.
-No profile, authentication or network access is required to inspect help or
-version information.
+Ledger and Connectivity have embedded providers. Auth uses only an external
+plugin; Ledger can also use one. The core builds their Cobra commands from
+public SDK manifests. Cobra provides help, `--version` and shell completion
+commands. Help and completion perform no network access. A fresh Auth target
+has only a placeholder with sync/install guidance; a prepared target supplies
+full offline metadata. Select the same target to inspect its cached commands.
+See [plugin distribution](plugin-distribution.md).
 
 Cloud control-plane operations live under `cloud`; stack administration lives
 under `cloud stack`. Host utilities add the authenticated proxy, stdio MCP
@@ -37,9 +39,11 @@ these variables under `github.com/formancehq/fctl/v4/cmd/version`.
 The command layer uses upstream Cobra. The previous Formance Cobra fork is
 not required by this foundation. The aggregate SDK, go-libs, terminal UI,
 Membership and deployment clients have been removed from the dependency graph.
-Auth imports its public service client; Ledger uses its release/v3.0 HTTP
-contract pending a public client package. The connection layer handles OAuth2
-and verifies Cloud identities with the coreos OIDC library.
+The Auth executable owns its commands and uses the generated service client.
+The Auth product plugin module is not a compile-time dependency of fctl, and
+no `plugins/auth` adapter is registered. Ledger retains an embedded fallback for its release/v3.0 HTTP
+contract. The connection layer handles OAuth2 and verifies Cloud identities
+with the coreos OIDC library.
 
 `just pre-commit` runs module tidy, Go generation and lint. `just tests` runs
 the race-enabled test suite. Shell completions are generated from the current
@@ -57,6 +61,12 @@ Move old `fctl stack ...` calls to `fctl cloud stack ...`. Stack-scoped Auth and
 Ledger commands remain under `auth` and `ledger`; select their Cloud target with
 `--organization` and `--stack`. Use `cloud stack --help` to check changed arguments,
 confirmation flags and request bodies. See [migration examples](cloud.md#migration-from-v3).
+
+Prepare an exact-version Auth plugin with `plugins sync --service auth` or
+`plugins install --service auth --binary PATH` before relying on its full help
+or completion. Automatic discovery before execution requires a matching
+official release; an unavailable catalogue or missing release is an error.
+Local installation remains available before official publication.
 
 Existing automation must adapt to the [v4 module commands](modules.md) and
 [profile settings](profiles.md), or keep using a compatible v3 binary.

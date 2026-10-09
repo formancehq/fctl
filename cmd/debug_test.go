@@ -10,6 +10,8 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+
+	"github.com/formancehq/fctl/v4/internal/pluginmanager"
 )
 
 func TestDebugLedgerKeepsJSONOnStdout(t *testing.T) {
@@ -115,6 +117,7 @@ func TestDebugCloudAuthenticationAndServices(t *testing.T) {
 	t.Parallel()
 	f := newCLICloudFixture(t)
 	dir := t.TempDir()
+	cacheDistributionAuth(t, dir, pluginmanager.Target{Profile: "cloud", Organization: "org", Stack: "stack", Endpoint: f.issuer()})
 	out, trace := f.run(t, dir, "--debug", "login", "--issuer", f.issuer())
 	assertCLICloudJSON(t, out, `{"loggedIn":true}`)
 	assertDebugTraceContains(t, trace, "/membership/.well-known/openid-configuration", "/membership/device", "/membership/token", "response 200", "device_code", "access_token", "[REDACTED]")
@@ -150,7 +153,34 @@ func TestDebugAuthSecretCreationRedactsOnlyTrace(t *testing.T) {
 	const clearValue = "auth-created-private-value"
 	const payload = `{"data":{"id":"s1","name":"debug-secret","clear":"auth-created-private-value"}}`
 	var calls atomic.Int32
+	server := debugAuthSecretServer(t, payload, &calls)
+	dir := t.TempDir()
+	cacheDistributionAuth(t, dir, pluginmanager.Target{Endpoint: server.URL + "/prefix"})
+	out, trace, err := executeRoot(t, "-d", "--config-dir", dir, "--auth-mode", "none", "--auth-url", server.URL+"/prefix", "auth", "clients", "secrets", "create", "c1", "--data", `{"name":"debug-secret"}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var formatted bytes.Buffer
+	if err := json.Indent(&formatted, []byte(payload), "", "  "); err != nil {
+		t.Fatal(err)
+	}
+	if out != formatted.String()+"\n" || !strings.Contains(out, clearValue) {
+		t.Fatal("stdout did not preserve the requested one-time clear secret")
+	}
+	assertDebugTraceContains(t, trace, `request "POST"`, "/prefix/clients/c1/secrets", "response 200", `"clear":"[REDACTED]"`)
+	assertDebugTraceHides(t, trace, clearValue)
+	if calls.Load() != 1 {
+		t.Fatalf("debug repeated secret creation: %d calls", calls.Load())
+	}
+}
+
+func debugAuthSecretServer(t *testing.T, payload string, calls *atomic.Int32) *httptest.Server {
+	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet && r.URL.Path == "/prefix/_info" {
+			writeCLICloudJSON(t, w, map[string]string{"version": "1.0.0"})
+			return
+		}
 		calls.Add(1)
 		if r.Method != http.MethodPost || r.URL.EscapedPath() != "/prefix/clients/c1/secrets" {
 			t.Errorf("unexpected Auth request: %s %s", r.Method, r.URL.RequestURI())
@@ -168,22 +198,7 @@ func TestDebugAuthSecretCreationRedactsOnlyTrace(t *testing.T) {
 		}
 	}))
 	t.Cleanup(server.Close)
-	out, trace, err := executeRoot(t, "-d", "--config-dir", t.TempDir(), "--auth-mode", "none", "--auth-url", server.URL+"/prefix", "auth", "clients", "secrets", "create", "c1", "--data", `{"name":"debug-secret"}`)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var formatted bytes.Buffer
-	if err := json.Indent(&formatted, []byte(payload), "", "  "); err != nil {
-		t.Fatal(err)
-	}
-	if out != formatted.String()+"\n" || !strings.Contains(out, clearValue) {
-		t.Fatal("stdout did not preserve the requested one-time clear secret")
-	}
-	assertDebugTraceContains(t, trace, `request "POST"`, "/prefix/clients/c1/secrets", "response 200", `"clear":"[REDACTED]"`)
-	assertDebugTraceHides(t, trace, clearValue)
-	if calls.Load() != 1 {
-		t.Fatalf("debug repeated secret creation: %d calls", calls.Load())
-	}
+	return server
 }
 
 func assertDebugTraceContains(t *testing.T, trace string, values ...string) {

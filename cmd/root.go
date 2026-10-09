@@ -17,7 +17,6 @@ import (
 	"github.com/formancehq/fctl/v4/internal/command"
 	"github.com/formancehq/fctl/v4/internal/connection"
 	"github.com/formancehq/fctl/v4/internal/plugin"
-	"github.com/formancehq/fctl/v4/plugins/auth"
 	cloudplugin "github.com/formancehq/fctl/v4/plugins/cloud"
 	"github.com/formancehq/fctl/v4/plugins/connectivity"
 	"github.com/formancehq/fctl/v4/plugins/ledger"
@@ -29,8 +28,8 @@ func NewRootCommand() *cobra.Command {
 
 // NewRootCommandWithArgs selects installed plugin metadata before Cobra parses
 // service flags. Help and completion read cached metadata without starting a
-// plugin process. Library callers can keep using NewRootCommand for embedded
-// plugins only.
+// plugin process. Auth is external-only; an unprepared target exposes an
+// installation guide instead of an embedded implementation.
 func NewRootCommandWithArgs(ctx context.Context, args []string) *cobra.Command {
 	return newRootCommand(ctx, args)
 }
@@ -49,10 +48,12 @@ func newRootCommand(ctx context.Context, args []string) *cobra.Command {
 	settings := &connection.Settings{}
 	settings.Bind(root)
 	root.PersistentFlags().Bool("no-input", false, "Disable interactive forms and selections (FCTL_NO_INPUT, CI)")
-	ledgerFactory, preparationErr := prepareLedgerPlugin(ctx, root, settings, args)
+	authFactory, authPreparationErr := prepareServicePlugin(ctx, root, settings, args, "auth")
+	ledgerFactory, ledgerPreparationErr := prepareServicePlugin(ctx, root, settings, args, "ledger")
+	preparationErrors := map[string]error{"auth": authPreparationErr, "ledger": ledgerPreparationErr}
 	root.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {
-		if preparationErr != nil && serviceCommand(cmd) == "ledger" {
-			return preparationErr
+		if err := preparationErrors[serviceCommand(cmd)]; err != nil {
+			return err
 		}
 		return command.ConfigureOutput(cmd, settings.Output, settings.Color)
 	}
@@ -65,7 +66,13 @@ func newRootCommand(ctx context.Context, args []string) *cobra.Command {
 	if ledgerFactory == nil {
 		ledgerFactory = ledger.New
 	}
-	for _, factory := range []plugin.Factory{cloudplugin.New, auth.New, ledgerFactory, connectivity.New} {
+	factories := []plugin.Factory{cloudplugin.New, ledgerFactory, connectivity.New}
+	if authFactory != nil {
+		factories = append(factories, authFactory)
+	} else {
+		root.AddCommand(unpreparedAuthCommand(authPreparationErr))
+	}
+	for _, factory := range factories {
 		if err := registry.Register(context.WithoutCancel(ctx), factory(nil), factory); err != nil {
 			panic(err) // Embedded metadata is a build-time invariant, never user input.
 		}

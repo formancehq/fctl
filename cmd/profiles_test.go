@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/formancehq/fctl/v4/internal/connection"
+	"github.com/formancehq/fctl/v4/internal/pluginmanager"
 )
 
 func TestProfilesPreserveExistingStoreAndSelectionPrecedence(t *testing.T) {
@@ -166,25 +167,14 @@ func TestProfileErrorsAndLoginBoundaries(t *testing.T) {
 	}
 }
 
-func TestEmbeddedServicesUseProfile(t *testing.T) {
+func TestEmbeddedLedgerAndExternalAuthUseProfile(t *testing.T) {
 	t.Parallel()
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		if r.Header.Get("Authorization") != "" {
-			t.Error("anonymous connection sent credentials")
-		}
-		if r.URL.Path != "/prefix/api/ledger/v3/" && r.URL.Path != "/prefix/api/auth/clients" {
-			t.Errorf("unexpected route: %s", r.URL.Path)
-		}
-		if _, err := w.Write([]byte(`{"data":[]}`)); err != nil {
-			t.Error(err)
-		}
-	}))
-	t.Cleanup(server.Close)
+	server := profileServicesServer(t)
 	dir := t.TempDir()
 	if _, _, err := executeRoot(t, "--config-dir", dir, "profiles", "add", "local", "--stack-url", server.URL+"/prefix", "--auth-mode", "none"); err != nil {
 		t.Fatal(err)
 	}
+	cacheDistributionAuth(t, dir, pluginmanager.Target{Profile: "local", Endpoint: server.URL + "/prefix/api/auth"})
 	for _, args := range [][]string{{"ledger", "list"}, {"auth", "clients", "list"}} {
 		out, _, err := executeRoot(t, append([]string{"--config-dir", dir}, args...)...)
 		if err != nil {
@@ -194,4 +184,26 @@ func TestEmbeddedServicesUseProfile(t *testing.T) {
 			t.Fatal(out)
 		}
 	}
+}
+
+func profileServicesServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Header.Get("Authorization") != "" {
+			t.Error("anonymous connection sent credentials")
+		}
+		if r.Method == http.MethodGet && r.URL.Path == "/prefix/api/auth/_info" {
+			writeCLICloudJSON(t, w, map[string]string{"version": "1.0.0"})
+			return
+		}
+		if r.URL.Path != "/prefix/api/ledger/v3/" && r.URL.Path != "/prefix/api/auth/clients" {
+			t.Errorf("unexpected route: %s", r.URL.Path)
+		}
+		if _, err := w.Write([]byte(`{"data":[]}`)); err != nil {
+			t.Error(err)
+		}
+	}))
+	t.Cleanup(server.Close)
+	return server
 }

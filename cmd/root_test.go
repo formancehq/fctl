@@ -13,6 +13,10 @@ import (
 func executeRoot(t *testing.T, args ...string) (string, string, error) {
 	t.Helper()
 	root := cmd.NewRootCommand()
+	// Auth metadata comes from the selected target's external plugin cache.
+	if slices.Contains(args, "auth") {
+		root = cmd.NewRootCommandWithArgs(t.Context(), args)
+	}
 	var stdout, stderr bytes.Buffer
 	root.SetOut(&stdout)
 	root.SetErr(&stderr)

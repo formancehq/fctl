@@ -1,14 +1,16 @@
 # Auth and Ledger modules
 
-The root registers Cloud, Auth, Ledger and Connectivity plugin factories. This page describes
-the service modules; [Cloud management](cloud.md) describes control-plane commands.
-Each plugin implements
-the public `pluginsdk.Plugin` manifest/execution contract. The core builds Cobra
+The root registers embedded Cloud, Ledger and Connectivity providers and loads
+Auth commands from an external plugin. Ledger also supports external plugins.
+This page describes the service modules; [Cloud management](cloud.md) describes
+control-plane commands. Each plugin implements the public `pluginsdk.Plugin` manifest/execution contract. The core builds Cobra
 commands from manifests and supplies an authenticated HTTP client and endpoint.
 Plugins own service routes, payloads and command descriptions. They import no
 Cobra or core internal packages and do not read profiles or implement Cloud
-authentication. See the [plugin contract](plugins.md). External plugin loading
-is not implemented. See [Connectivity](connectivity.md) for its API and commands.
+authentication. See the [plugin contract](plugins.md) and
+[plugin distribution](plugin-distribution.md) for discovery, installation and
+exact-version selection. See [Connectivity](connectivity.md) for its API and
+commands.
 
 ## Ledger
 
@@ -71,9 +73,25 @@ operation; inspect server errors before rerunning a mutation.
 
 ## Auth
 
-Auth imports `github.com/formancehq/auth/pkg/client` at
-`v0.0.0-20251106135031-5373fa4eaeba`. The generated client receives the same
-authenticated HTTP client as Ledger; its built-in credential hook is not used.
+Auth commands belong to the independent
+`github.com/formancehq/auth/misc/fctl-plugin` product module. That module imports
+`github.com/formancehq/auth/pkg/client` at
+`v0.0.0-20251106135031-5373fa4eaeba`. The Auth product plugin module is
+not a compile-time dependency of fctl. The external executable uses the host HTTP broker for
+authentication; its generated client does not obtain credentials itself.
+
+Auth has no embedded provider. Before executing an Auth command, fctl uses an
+installed exact-version executable or discovers and installs a matching release
+from the official catalogue. An unavailable official catalogue or missing exact
+release produces an explicit error; it does not enable an embedded fallback.
+A trusted local build can be installed instead. See the
+[local build and official sync examples](plugin-distribution.md#auth-installation).
+
+On a fresh target, `fctl auth --help` performs no network access and displays a
+placeholder with sync/install guidance. Once that target is prepared, its full
+Auth help and completion use cached command and form metadata offline. The
+following commands assume a matching plugin has been installed or is available
+for automatic discovery:
 
 ```bash
 fctl auth info
