@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 
@@ -19,7 +20,6 @@ import (
 	"github.com/formancehq/fctl/v4/internal/plugin"
 	"github.com/formancehq/fctl/v4/plugins/auth"
 	cloudplugin "github.com/formancehq/fctl/v4/plugins/cloud"
-	"github.com/formancehq/fctl/v4/plugins/connectivity"
 	"github.com/formancehq/fctl/v4/plugins/ledger"
 )
 
@@ -51,7 +51,8 @@ func newRootCommand(ctx context.Context, args []string) *cobra.Command {
 	root.PersistentFlags().Bool("no-input", false, "Disable interactive forms and selections (FCTL_NO_INPUT, CI)")
 	authFactory, authPreparationErr := prepareServicePlugin(ctx, root, settings, args, "auth")
 	ledgerFactory, ledgerPreparationErr := prepareServicePlugin(ctx, root, settings, args, "ledger")
-	preparationErrors := map[string]error{"auth": authPreparationErr, "ledger": ledgerPreparationErr}
+	connectivityFactory, connectivityPreparationErr := prepareServicePlugin(ctx, root, settings, args, "connectivity")
+	preparationErrors := map[string]error{"auth": authPreparationErr, "ledger": ledgerPreparationErr, "connectivity": connectivityPreparationErr}
 	root.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {
 		if err := preparationErrors[serviceCommand(cmd)]; err != nil {
 			return err
@@ -70,13 +71,21 @@ func newRootCommand(ctx context.Context, args []string) *cobra.Command {
 	if ledgerFactory == nil {
 		ledgerFactory = ledger.New
 	}
-	for _, factory := range []plugin.Factory{cloudplugin.New, authFactory, ledgerFactory, connectivity.New} {
+	for _, factory := range []plugin.Factory{cloudplugin.New, authFactory, ledgerFactory, connectivityFactory} {
+		if factory == nil {
+			continue
+		}
 		if err := registry.Register(context.WithoutCancel(ctx), factory(nil), factory); err != nil {
 			panic(err) // Embedded metadata is a build-time invariant, never user input.
 		}
 	}
 	if err := plugin.NewCommandWithRequest(registry, resolve).AddTo(root); err != nil {
 		panic(err)
+	}
+	if connectivityFactory == nil {
+		root.AddCommand(&cobra.Command{Use: "connectivity", Short: "Manage Connectivity with an installed product plugin", RunE: func(*cobra.Command, []string) error {
+			return fmt.Errorf("install the Connectivity plugin with fctl plugins install --service connectivity --binary PATH, or configure FCTL_PLUGIN_CATALOGUE")
+		}})
 	}
 	if err := cloudtools.AddTo(root, settings); err != nil {
 		panic(err)

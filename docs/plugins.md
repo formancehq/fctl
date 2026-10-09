@@ -78,7 +78,7 @@ and `--out` effects; they are not connection configuration. The shared public
 HTTP client performs requests without automatic mutation retries and preserves
 JSON numbers.
 
-Cloud, Auth, Ledger and Connectivity remain available as embedded defaults. Auth and Ledger providers can replace their embedded command trees with cached
+Cloud, Auth and Ledger remain available as embedded defaults. Auth, Ledger and Connectivity providers can replace their embedded command trees with cached
 external manifests. Both providers use the same two-method SDK contract, forms,
 body validation, authentication and output renderer. Exactly one provider owns
 each service command root.
@@ -109,6 +109,6 @@ commands, API validation and declarative forms in the Auth repository. fctl's
 depends on the public plugin SDK and generated Auth client, without fctl core,
 Cobra, profile storage or terminal libraries.
 
-Auth and Ledger external providers use the same generic host loader. The host
+Auth, Ledger and Connectivity external providers use the same generic host loader. The host
 accepts only the selected service's command root and connection boundary,
 including descendant service overrides. Locks are keyed by target and service.

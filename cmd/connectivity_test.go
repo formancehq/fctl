@@ -14,7 +14,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/v4/cmd"
 	"github.com/formancehq/fctl/v4/internal/interactive"
 )
 
@@ -30,6 +29,10 @@ func TestConnectivityCreationFormPaginatesChoices(t *testing.T) {
 	t.Setenv("FCTL_NO_INPUT", "")
 	pages, writes := 0, 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/_info" {
+			writeConnectivityResponse(t, w, `{"version":"1.2.3"}`)
+			return
+		}
 		if r.Method == http.MethodGet && r.URL.Path == "/connectors" {
 			pages++
 			response := `{"cursor":{"pageSize":15,"hasMore":true,"next":"opaque +/=","data":[{"metadata":{"name":"adyen"},"spec":{"displayName":"Adyen"}}]}}`
@@ -81,8 +84,9 @@ func TestConnectivityCreationFormPaginatesChoices(t *testing.T) {
 		}
 		return values, nil
 	})
-	root := cmd.NewRootCommand()
-	root.SetArgs([]string{"--config-dir", t.TempDir(), "--auth-mode", "none", "--connectivity-url", server.URL, "connectivity", "instances", "create"})
+	args := []string{"--config-dir", t.TempDir(), "--auth-mode", "none", "--connectivity-url", server.URL, "connectivity", "instances", "create"}
+	root := connectivityRoot(t, args)
+	root.SetArgs(args)
 	var output bytes.Buffer
 	root.SetOut(&output)
 	root.SetErr(io.Discard)
@@ -97,8 +101,12 @@ func TestConnectivityCreationFormPaginatesChoices(t *testing.T) {
 func TestConnectivityExplicitBodiesBypassForms(t *testing.T) {
 	body := `{"suspend":false,"version":null,"startSequence":9007199254740993}`
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/_info" {
+			writeConnectivityResponse(t, w, `{"version":"1.2.3"}`)
+			return
+		}
 		data, err := io.ReadAll(r.Body)
-		if err != nil || string(data) != body || r.Method != http.MethodPatch || r.Header.Get("Content-Type") != "application/merge-patch+json" {
+		if err != nil || string(data) != `{"spec":`+body+`}` || r.Method != http.MethodPatch || r.Header.Get("Content-Type") != "application/merge-patch+json" {
 			t.Errorf("method=%s type=%s body=%s err=%v", r.Method, r.Header.Get("Content-Type"), data, err)
 		}
 		writeConnectivityResponse(t, w, `{"metadata":{"name":"ingestion"}}`)
@@ -110,8 +118,9 @@ func TestConnectivityExplicitBodiesBypassForms(t *testing.T) {
 	}
 	for _, input := range []string{body, "@" + file, "-"} {
 		t.Run(input[:1], func(t *testing.T) {
-			root := cmd.NewRootCommand()
-			root.SetArgs([]string{"--config-dir", t.TempDir(), "--no-input", "--auth-mode", "none", "--connectivity-url", server.URL, "connectivity", "instances", "patch", "ingestion", "--data", input})
+			args := []string{"--config-dir", t.TempDir(), "--no-input", "--auth-mode", "none", "--connectivity-url", server.URL, "connectivity", "instances", "patch", "ingestion", "--data", input}
+			root := connectivityRoot(t, args)
+			root.SetArgs(args)
 			root.SetIn(strings.NewReader(body))
 			root.SetOut(io.Discard)
 			root.SetErr(io.Discard)
@@ -129,13 +138,17 @@ func TestConnectivityPatchFormAndInstanceSelection(t *testing.T) {
 	patch := `{"suspend":true,"version":null}`
 	writes := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/_info" {
+			writeConnectivityResponse(t, w, `{"version":"1.2.3"}`)
+			return
+		}
 		if r.Method == http.MethodGet && r.URL.Path == "/connectorinstances" {
 			writeConnectivityResponse(t, w, `{"cursor":{"hasMore":false,"data":[{"metadata":{"name":"ingestion"},"spec":{"connector":"stripe","ledger":"books"},"status":{"phase":"Running"}}]}}`)
 			return
 		}
 		writes++
 		data, err := io.ReadAll(r.Body)
-		if err != nil || r.Method != http.MethodPatch || r.URL.Path != "/connectorinstances/ingestion" || string(data) != patch {
+		if err != nil || r.Method != http.MethodPatch || r.URL.Path != "/connectorinstances/ingestion" || string(data) != `{"spec":`+patch+`}` {
 			t.Errorf("patch body=%s err=%v", data, err)
 		}
 		writeConnectivityResponse(t, w, `{}`)
@@ -155,8 +168,9 @@ func TestConnectivityPatchFormAndInstanceSelection(t *testing.T) {
 		}
 		return values, nil
 	})
-	root := cmd.NewRootCommand()
-	root.SetArgs([]string{"--config-dir", t.TempDir(), "--auth-mode", "none", "--connectivity-url", server.URL, "connectivity", "instances", "patch"})
+	args := []string{"--config-dir", t.TempDir(), "--auth-mode", "none", "--connectivity-url", server.URL, "connectivity", "instances", "patch"}
+	root := connectivityRoot(t, args)
+	root.SetArgs(args)
 	root.SetOut(io.Discard)
 	root.SetErr(io.Discard)
 	if err := root.ExecuteContext(interactive.WithRunner(t.Context(), runner)); err != nil {

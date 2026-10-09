@@ -1,14 +1,11 @@
 # Connectivity plugin
 
-The embedded `plugins/connectivity` module implements all 14 operations in
-[connectivity-api/openapi.yaml](https://github.com/formancehq/connectivity/blob/ce2324887f5b5ec4e3c2ec934ac874656d4c5348/misc/connectivity-api/openapi.yaml),
-API version `0.1.0`, pinned to commit `ce2324887f5b5ec4e3c2ec934ac874656d4c5348`.
-The repository also provides a generated client under `pkg/client/http`.
-This plugin uses the public `pluginsdk/httpclient` adapter to preserve raw
-request/response JSON, including merge-patch nulls, unknown fields and exact
-numbers, without introducing typed-model defaults such as `replicas`.
-It imports no server, Cobra, UI or core packages.
-The host owns authentication, endpoints, storage, forms and presentation.
+The external product-owned module
+[`github.com/formancehq/connectivity/misc/fctl-plugin`](https://github.com/formancehq/connectivity/tree/main/misc/fctl-plugin)
+implements all 14 Connectivity API operations. It is installed through the
+shared loader; fctl has no Go dependency on the product module and no embedded
+Connectivity fallback. The product owns forms, payload validation and HTTP
+mapping; fctl owns credentials, terminal interaction and cached manifests.
 
 ## Profiles
 
@@ -102,9 +99,24 @@ Deletion maps the empty 204 response to JSON null.
 
 Local fixtures cover all routes/methods, media types, errors, cursor encoding,
 int64 precision, size limits, forms, selection and authentication boundaries.
-The pinned operation snapshot is `plugins/connectivity/testdata/operations.json`.
+The operation snapshot and current API contract tests live in the product module.
 An independent consumer verifies the public SDK boundary without core or UI
 dependencies. A real PTY check covers creation, resource selection, default-No
 deletion confirmation, styled forms and plain tables. Creation produces one
 write and exact JSON on stdout even with forced terminal colors.
 Deployment availability and ingestion require separate live runtime checks.
+
+## Install the exact product executable
+
+```sh
+fctl plugins install --service connectivity --binary ./fctl-plugin-connectivity --profile connectivity-local
+fctl plugins sync --service connectivity --profile connectivity-local
+fctl plugins show --service connectivity --profile connectivity-local
+```
+
+Without an installed matching executable, Connectivity commands require plugin
+installation. Help/completion use cached metadata without launching a process or
+contacting the service. Each execution checks `/_info` again and rejects version
+drift before starting the plugin. Patch input remains a spec-only JSON object;
+the product wraps it as `{"spec":...}` for the API. Read-only replicas and
+connectivityRef are rejected locally; use suspend.

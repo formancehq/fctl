@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
-	"sync"
 
 	"github.com/formancehq/fctl/pkg/pluginsdk"
 	"github.com/formancehq/fctl/pkg/pluginsdk/httpclient"
@@ -36,8 +35,6 @@ type external struct {
 	verify   func(context.Context) (string, error)
 	manifest pluginsdk.Manifest
 	http     *http.Client
-	mu       sync.Mutex
-	checked  string
 }
 
 func (p *external) GetManifest(ctx context.Context) (pluginsdk.Manifest, error) {
@@ -71,11 +68,6 @@ func (p *external) Execute(ctx context.Context, request pluginsdk.ExecuteRequest
 }
 
 func (p *external) checkVersion(ctx context.Context, endpoint string) error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	if p.checked != "" && p.checked == endpoint {
-		return nil
-	}
 	client, err := httpclient.New(endpoint, p.http)
 	if err != nil {
 		return err
@@ -94,6 +86,5 @@ func (p *external) checkVersion(ctx context.Context, endpoint string) error {
 	if version != p.manifest.Version {
 		return fmt.Errorf("installed plugin targets %s %s, service reports %s; run fctl plugins sync or install the matching binary", p.manifest.Service, p.manifest.Version, version)
 	}
-	p.checked = endpoint
 	return nil
 }

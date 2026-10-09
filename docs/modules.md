@@ -1,6 +1,6 @@
 # Auth and Ledger modules
 
-The root registers Cloud, Auth, Ledger and Connectivity plugin factories. This page describes
+The root registers Cloud, Auth and Ledger defaults plus installed external service plugins, including Connectivity. This page describes
 the service modules; [Cloud management](cloud.md) describes control-plane commands.
 Each plugin implements
 the public `pluginsdk.Plugin` manifest/execution contract. The core builds Cobra

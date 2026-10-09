@@ -20,8 +20,18 @@ func TestAuthCatalogueExactVersionAndIndependentLocks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	catalogue := catalogueFile(t, ledger, auth)
-	for service, version := range map[string]string{"ledger": "3.0.0", "auth": "1.0.0"} {
+	connectivity, err := m.Publish(t.Context(), registry.server.URL+"/formance/ledger", Release{Service: "connectivity", ServiceVersion: "2.0.0", Revision: 1, Platform: CurrentPlatform(), Manifest: func() pluginsdk.Manifest {
+		m := authManifest("2.0.0")
+		m.Name = "connectivity"
+		m.Service = "connectivity"
+		m.Root.Use = "connectivity"
+		return m
+	}()}, localBinary(t, []byte("connectivity fixture")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	catalogue := catalogueFile(t, ledger, auth, connectivity)
+	for service, version := range map[string]string{"ledger": "3.0.0", "auth": "1.0.0", "connectivity": "2.0.0"} {
 		release, err := m.Resolve(t.Context(), catalogue, service, version, 0)
 		if err != nil {
 			t.Fatal(err)
@@ -35,14 +45,14 @@ func TestAuthCatalogueExactVersionAndIndependentLocks(t *testing.T) {
 		t.Fatalf("Auth version fallback: %v", err)
 	}
 	registry.server.Close()
-	for _, service := range []string{"ledger", "auth"} {
+	for _, service := range []string{"ledger", "auth", "connectivity"} {
 		lock, err := m.Load(target("shared"), service)
 		if err != nil || lock.Service != service || lock.Manifest.Service != service {
 			t.Fatalf("independent offline lock %s: %+v %v", service, lock, err)
 		}
 	}
 	locks, err := m.List()
-	if err != nil || len(locks) != 2 {
+	if err != nil || len(locks) != 3 {
 		t.Fatalf("multi-service locks: %+v %v", locks, err)
 	}
 }
