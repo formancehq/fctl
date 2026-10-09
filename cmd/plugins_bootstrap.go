@@ -41,11 +41,9 @@ func prepareLedgerPlugin(ctx context.Context, root *cobra.Command, settings *con
 	if err := validateLedgerManifest(ctx, root, lock.Manifest); err != nil {
 		return nil, err
 	}
-	binary, err := manager.BinaryContext(ctx, lock)
-	if err != nil {
-		return nil, fmt.Errorf("verify Ledger plugin: %w", err)
-	}
-	return plugin.ExternalFactory(binary, lock.Manifest), nil
+	return plugin.ExternalFactoryWithVerifier(lock.Manifest, func(ctx context.Context) (string, error) {
+		return manager.BinaryContext(ctx, lock)
+	}), nil
 }
 
 type pluginBootstrap struct {
@@ -83,11 +81,7 @@ func (p ledgerPreparation) resolve(ctx context.Context, plan pluginBootstrap) (p
 	return lock, loadErr
 }
 func (p ledgerPreparation) cached() (pluginmanager.Lock, error) {
-	target, err := ledgerTarget(p.settings, p.root)
-	if err != nil {
-		return pluginmanager.Lock{}, pluginmanager.ErrNotInstalled
-	}
-	return p.manager.Load(target, "ledger")
+	return cachedLedgerLock(p.settings, p.root, p.manager)
 }
 func (p ledgerPreparation) matchVersion(ctx context.Context, catalogue string) (pluginmanager.Lock, error) {
 	target, version, err := pluginSyncTarget(ctx, p.settings, p.root, "")

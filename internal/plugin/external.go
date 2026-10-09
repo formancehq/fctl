@@ -20,13 +20,20 @@ import (
 // Authentication is injected through the same host HTTP boundary as embedded
 // plugins; credentials are never passed in the executable's arguments.
 func ExternalFactory(binary string, manifest pluginsdk.Manifest) Factory {
+	return ExternalFactoryWithVerifier(manifest, func(context.Context) (string, error) { return binary, nil })
+}
+
+// ExternalFactoryWithVerifier keeps metadata independent of executable
+// availability. The verifier runs before every execution, including choice
+// requests, and may verify integrity or locate a cached binary.
+func ExternalFactoryWithVerifier(manifest pluginsdk.Manifest, verify func(context.Context) (string, error)) Factory {
 	return func(client *http.Client) pluginsdk.Plugin {
-		return &external{binary: binary, manifest: cloneManifest(manifest), http: client}
+		return &external{verify: verify, manifest: cloneManifest(manifest), http: client}
 	}
 }
 
 type external struct {
-	binary   string
+	verify   func(context.Context) (string, error)
 	manifest pluginsdk.Manifest
 	http     *http.Client
 	mu       sync.Mutex
@@ -41,10 +48,14 @@ func (p *external) GetManifest(ctx context.Context) (pluginsdk.Manifest, error) 
 }
 
 func (p *external) Execute(ctx context.Context, request pluginsdk.ExecuteRequest) (response pluginsdk.ExecuteResponse, err error) {
+	binary, err := p.verify(ctx)
+	if err != nil {
+		return response, fmt.Errorf("verify plugin executable: %w", err)
+	}
 	if err := p.checkVersion(ctx, request.Endpoint); err != nil {
 		return response, err
 	}
-	client, err := transport.Open(ctx, p.binary, p.http, request.Endpoint)
+	client, err := transport.Open(ctx, binary, p.http, request.Endpoint)
 	if err != nil {
 		return response, err
 	}

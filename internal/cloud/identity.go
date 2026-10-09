@@ -258,16 +258,23 @@ func targetKey(options Options) string { return options.Organization + "/" + opt
 // lock across both root and scoped refreshes. nil is for a single in-memory
 // caller; shared persisted sessions require the parent's coordinator.
 func ClientForTarget(ctx context.Context, httpClient *http.Client, rootSession *Session, desired Options, out io.Writer, open func(context.Context, string) error, coordinator Coordinator) (*http.Client, string, error) {
+	client, endpoint, _, err := ClientForResolvedTarget(ctx, httpClient, rootSession, desired, out, open, coordinator)
+	return client, endpoint, err
+}
+
+// ClientForResolvedTarget also returns the verified target identity. Callers
+// must retain this identity when automatic resolution selected a sole grant.
+func ClientForResolvedTarget(ctx context.Context, httpClient *http.Client, rootSession *Session, desired Options, out io.Writer, open func(context.Context, string) error, coordinator Coordinator) (*http.Client, string, Options, error) {
 	if rootSession == nil || rootSession.MembershipToken == nil {
-		return nil, "", errors.New("missing cloud identity; log in again")
+		return nil, "", Options{}, errors.New("missing cloud identity; log in again")
 	}
 	options, err := identityOptions(rootSession.Options)
 	if err != nil {
-		return nil, "", err
+		return nil, "", Options{}, err
 	}
 	provider, config, err := membership(ctx, httpClient, options)
 	if err != nil {
-		return nil, "", err
+		return nil, "", Options{}, err
 	}
 	config.Scopes = identityScopes()
 	manager := &targetManager{root: rootSession, options: options, desired: desired, base: httpClient, provider: provider, config: config, out: out, open: open, coordinator: coordinator}
@@ -282,9 +289,16 @@ func ClientForTarget(ctx context.Context, httpClient *http.Client, rootSession *
 		manager.child = child
 		return cleanToken(child.MembershipToken), nil
 	}); err != nil {
-		return nil, "", err
+		return nil, "", Options{}, err
 	}
-	return Client(ctx, httpClient, manager.child, nil, manager.coordinateChild)
+	client, endpoint, err := Client(ctx, httpClient, manager.child, nil, manager.coordinateChild)
+	if err != nil {
+		return nil, "", Options{}, err
+	}
+	if manager.selected == nil {
+		return nil, "", Options{}, errors.New("cloud stack resolution did not return a target")
+	}
+	return client, endpoint, manager.selected.Options, nil
 }
 
 type targetManager struct {

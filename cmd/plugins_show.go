@@ -13,11 +13,7 @@ func newPluginsShowCommand(settings *connection.Settings) *cobra.Command {
 		if err != nil {
 			return err
 		}
-		target, err := ledgerTarget(settings, cmd)
-		if err != nil {
-			return err
-		}
-		lock, err := manager.Load(target, "ledger")
+		lock, err := cachedLedgerLock(settings, cmd, manager)
 		if err != nil {
 			return err
 		}

@@ -150,6 +150,9 @@ func (s *Settings) Client(ctx context.Context, cmd *cobra.Command, service strin
 		}
 		return s.membershipClient(ctx, cmd, client, options, entry, name, dir)
 	}
+	if options.AuthMode == "cloud" {
+		return s.cloudServiceClient(ctx, cmd, service, client, options, entry, name, dir)
+	}
 	base, err := endpoint(options, service)
 	if err != nil {
 		return nil, err
@@ -158,15 +161,6 @@ func (s *Settings) Client(ctx context.Context, cmd *cobra.Command, service strin
 	case "none":
 	case "client-credentials":
 		client, err = credentialClient(ctx, client, options)
-	case "cloud":
-		options, err = s.selectCloudTarget(ctx, cmd, client, options, entry, name, dir)
-		if err != nil {
-			return nil, err
-		}
-		client, base, err = savedCloudClient(ctx, client, options, entry, name, dir, cmd.ErrOrStderr(), s.BrowserOpener())
-		if service != "stack" {
-			base = strings.TrimRight(base, "/") + "/api/" + service
-		}
 	default:
 		return nil, fmt.Errorf("choose --auth-mode=none, client-credentials or cloud")
 	}
@@ -176,21 +170,45 @@ func (s *Settings) Client(ctx context.Context, cmd *cobra.Command, service strin
 	return api.New(base, client)
 }
 
-func savedCloudClient(ctx context.Context, client *http.Client, options Options, entry Entry, name, dir string, out io.Writer, open func(context.Context, string) error) (*http.Client, string, error) {
+func (s *Settings) cloudServiceClient(ctx context.Context, cmd *cobra.Command, service string, client *http.Client, options Options, entry Entry, name, dir string) (*api.Client, error) {
+	options, err := s.selectCloudTarget(ctx, cmd, client, options, entry, name, dir)
+	if err != nil {
+		return nil, err
+	}
+	authenticated, base, target, err := savedCloudClient(ctx, client, options, entry, name, dir, cmd.ErrOrStderr(), s.BrowserOpener())
+	if err != nil {
+		return nil, err
+	}
+	options, err = applyCloudTarget(cmd, options, target.Organization, target.Stack)
+	if err != nil {
+		return nil, err
+	}
+	if service != "stack" {
+		base = strings.TrimRight(base, "/") + "/api/" + service
+	}
+	resolved, err := api.New(base, authenticated)
+	if err != nil {
+		return nil, err
+	}
+	return resolved.WithContext(map[string]string{"organization": options.Organization, "stack": options.Stack}), nil
+}
+
+func savedCloudClient(ctx context.Context, client *http.Client, options Options, entry Entry, name, dir string, out io.Writer, open func(context.Context, string) error) (*http.Client, string, cloud.Options, error) {
 	if cloudIdentity(options) != cloudIdentity(entry.Options) {
-		return nil, "", fmt.Errorf("cloud identity settings changed; log in again with the chosen issuer and client")
+		return nil, "", cloud.Options{}, fmt.Errorf("cloud identity settings changed; log in again with the chosen issuer and client")
 	}
 	if entry.Session == nil {
-		return nil, "", fmt.Errorf("profile is not logged in; run fctl login --profile %s", name)
+		return nil, "", cloud.Options{}, fmt.Errorf("profile is not logged in; run fctl login --profile %s", name)
 	}
 	coordinator := cloudCoordinator(dir, name, entry)
 	if entry.Session.Options.Stack != "" {
 		if options != entry.Options {
-			return nil, "", fmt.Errorf("this older session targets a single stack; run fctl login before changing its target")
+			return nil, "", cloud.Options{}, fmt.Errorf("this older session targets a single stack; run fctl login before changing its target")
 		}
-		return cloud.Client(ctx, client, entry.Session, nil, coordinator)
+		authenticated, endpoint, err := cloud.Client(ctx, client, entry.Session, nil, coordinator)
+		return authenticated, endpoint, entry.Session.Options, err
 	}
-	return cloud.ClientForTarget(ctx, client, entry.Session, cloud.Options{Issuer: options.Issuer, ClientID: options.ClientID, Organization: options.Organization, Stack: options.Stack}, out, open, coordinator)
+	return cloud.ClientForResolvedTarget(ctx, client, entry.Session, cloud.Options{Issuer: options.Issuer, ClientID: options.ClientID, Organization: options.Organization, Stack: options.Stack}, out, open, coordinator)
 }
 
 func (s *Settings) BrowserOpener() func(context.Context, string) error {

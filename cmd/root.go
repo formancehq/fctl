@@ -66,7 +66,7 @@ func newRootCommand(ctx context.Context, args []string) *cobra.Command {
 		ledgerFactory = ledger.New
 	}
 	for _, factory := range []plugin.Factory{cloudplugin.New, auth.New, ledgerFactory, connectivity.New} {
-		if err := registry.Register(ctx, factory(nil), factory); err != nil {
+		if err := registry.Register(context.WithoutCancel(ctx), factory(nil), factory); err != nil {
 			panic(err) // Embedded metadata is a build-time invariant, never user input.
 		}
 	}

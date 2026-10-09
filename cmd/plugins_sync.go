@@ -64,12 +64,9 @@ func pluginCatalogue(cmd *cobra.Command, settings *connection.Settings, manager 
 	if value := os.Getenv("FCTL_PLUGIN_CATALOGUE"); value != "" {
 		return value, nil
 	}
-	target, err := ledgerTarget(settings, cmd)
-	if err == nil {
-		lock, err := manager.Load(target, "ledger")
-		if err == nil && lock.Catalogue != "" {
-			return lock.Catalogue, nil
-		}
+	lock, err := cachedLedgerLock(settings, cmd, manager)
+	if err == nil && lock.Catalogue != "" {
+		return lock.Catalogue, nil
 	}
 	return "", fmt.Errorf("choose a trusted --catalogue file or URL, or set FCTL_PLUGIN_CATALOGUE")
 }
