@@ -51,7 +51,8 @@ require (
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/ericlagergren/decimal v0.0.0-20221120152707-495c53812d05 // indirect
-	github.com/formancehq/fctl/pkg/pluginsdk v0.0.0
+	github.com/formancehq/fctl/pkg/pluginsdk v0.0.0-20261009101655-a5cfb893d64d
+	github.com/formancehq/ledger/fctl-plugin v0.0.0-20261009103441-885e135ef98a
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
 	github.com/mattn/go-runewidth v0.0.20 // indirect

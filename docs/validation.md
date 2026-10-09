@@ -302,3 +302,46 @@ The form explains the beta.10 prerequisite. On the older sandbox, use
 `ledger metadata set` after creation; creation does not claim that the old
 server persisted this field. The other creation options, including enforcement
 mode, initial schema and account type models, exist in both revisions.
+
+## External Ledger plugin pilot (2026-10-09)
+
+The Ledger implementation and its contract tests now live in the public Go
+module `github.com/formancehq/ledger/fctl-plugin`, on branch
+`feat/fctl-ledger-plugin` at `885e135ef98a232aa9e4c05a5cb2895ce11c4238`.
+The branch starts from `release/v3.0`. fctl retains an embedded factory shim and
+can also execute the separately built plugin over the isolated SDK protocol.
+
+A standalone Go consumer downloaded both public modules without a local
+replacement and ran the Ledger manifest successfully. Its dependencies contain
+neither the fctl core nor Cobra. The host retains authentication, HTTP diagnostics,
+profiles, forms and rendering; the plugin owns Ledger commands and payloads.
+
+The following checks passed:
+
+- The complete host and SDK suites with the race detector, plus lint checks.
+- Ledger's `agent-check`, plugin race tests and lint checks.
+- Six-platform plugin packaging, both Ledger GoReleaser configurations and the
+  fctl snapshot, including archives and Linux packages.
+- Exact-version OCI resolution, executable integrity, cached metadata and
+  offline help through actual plugin processes.
+- Publisher rejection of stale manifests, mixed service versions and wrong
+  revisions before publication.
+- Four independent review regressions: implicit Cloud target preservation,
+  cancellation without panic, publisher validation and help without a binary.
+
+Fresh live reads observed Ledger `3.0.0-beta.10` (`b7c2ec613`, protocol 20) and
+Auth `v2.5.1` on organization `jdxmvkvwlyiy`, stack `bwxm`. This supersedes the
+historical beta.5 runtime observations above. A real terminal exercised the
+five-step Ledger creation form and the Ledger selector for statistics. Creation
+metadata persisted. A transaction and balance readback retained the exact
+integer `9007199254740993`; JSON output remained parseable.
+
+The dedicated ledger `fctlplugin20261009` was deleted, and a subsequent list
+confirmed its absence. The stack and installed plugin remain available for
+manual testing. This campaign did not create Auth fixtures or modify other
+stacks.
+
+No production release tag, production OCI publication or official default
+catalogue was created. Snapshot versions still derive from existing v3 tags.
+The optional Jev review was unavailable because `JEV_API_KEY` was unset;
+independent review and repository checks completed instead.
