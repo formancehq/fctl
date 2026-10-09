@@ -1,12 +1,13 @@
 # External service plugin distribution
 
-Ledger and Auth plugins can run as independent native executables. Their product
+Ledger, Auth and Connectivity plugins can run as independent native executables. Their product
 modules own their commands and executable entry points:
 
 | Service | Product module | Executable |
 | --- | --- | --- |
 | Ledger | `github.com/formancehq/ledger/misc/fctl-plugin` | `fctl-plugin-ledger` |
 | Auth | `github.com/formancehq/auth/misc/fctl-plugin` | `fctl-plugin-auth` |
+| Connectivity | `github.com/formancehq/connectivity/misc/fctl-plugin` | `fctl-plugin-connectivity` |
 
 Auth product sources remain in the Auth repository. Public executable distribution
 is a separate publication step and does not require publishing private sources.
@@ -68,7 +69,7 @@ fctl plugins sync --service auth --catalogue ./registry.yaml --profile local
 ```
 
 `plugins install`, `plugins sync` and `plugins show` accept `--service ledger`
-or `--service auth`; the default remains `ledger`. Unknown services are rejected
+or `--service auth` or `--service connectivity`; the default remains `ledger`. Unknown services are rejected
 before installation. The selected service must match the manifest service, name
 and command root. The manifest version must equal the exact service version.
 Without `--service-version`, installation and sync discover that version through
@@ -135,7 +136,7 @@ access. Only explicitly trusted local binaries should be installed.
 ## Locks and updates
 
 Locks are identified by service plus profile, organization, stack and stable
-connection endpoint. Auth and Ledger keep independent locks for the same target.
+connection endpoint. Auth, Ledger and Connectivity keep independent locks for the same target.
 Two stacks in the same profile can use different service versions. Executables
 are cached by digest and platform under the private v4
 configuration directory's `plugins` folder.
@@ -175,3 +176,5 @@ endpoint restrictions, corrupt downloads and concurrent cache installation.
 The SDK and product module can also be built and tested independently. Production
 OCI publication and updating the official catalogue are separate release
 steps; snapshot packaging does not perform either action.
+
+Connectivity has no embedded provider or product Go dependency. Use the exact API version, independent of Core and connector versions. Cached help/completion remain available offline. Version checks now run on every execution, including interactive discovery; there is an extra info request per operation.

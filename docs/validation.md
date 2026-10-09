@@ -361,3 +361,22 @@ gRPC adapter in ledgerctl. A local single-node Ledger was used to check fctl
 listing and `after` pagination over HTTP, alongside ledgerctl's 38-case matrix
 covering all 31 shared operations. The isolated node advertised
 `3.0.0-beta.10`; these checks do not establish a deployed service release.
+
+## Independent Connectivity executable qualification
+
+The host does not import or build the Connectivity Go module. Cross-repository
+form tests run with a separately built `FCTL_CONNECTIVITY_TEST_BINARY`, version
+1.2.3 revision 1:
+
+```sh
+# In Connectivity, build the fixture from the product source.
+nix develop --command just --justfile misc/fctl-plugin/justfile --working-directory misc/fctl-plugin build 1.2.3 1
+# In fctl, supply the absolute output path.
+FCTL_CONNECTIVITY_TEST_BINARY=/path/to/connectivity/build/fctl-plugin-connectivity nix develop --command just pre-commit tests
+```
+
+Without the variable, product form tests explicitly skip; generic Connectivity
+loader, identity, offline cache, exact discovery and lock tests always run.
+This keeps the host's dependency closure independent of the product source.
+The baseline is GitHub #193 at c07b2b5531564baad541d851a14f88787185d536;
+the user-specified local aff263ec0 was unavailable on GitHub and this machine.

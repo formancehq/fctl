@@ -12,7 +12,7 @@ and exits with status 1. Signal cancellation is propagated through the command
 context.
 
 The root registers `version`, `profiles` management and login/logout. Cloud,
-Auth, Ledger and Connectivity register through the embedded plugin registry and public SDK; the core
+Auth and Ledger register through the embedded plugin registry; Connectivity uses the external loader and public SDK; the core
 builds their Cobra commands from manifests. Cobra provides help, `--version`
 and shell completion commands.
 No profile, authentication or network access is required to inspect help or
@@ -60,7 +60,7 @@ confirmation flags and request bodies. See [migration examples](cloud.md#migrati
 
 Existing automation must adapt to the [v4 module commands](modules.md) and
 [profile settings](profiles.md), or keep using a compatible v3 binary.
-Connectivity is embedded; its API contract and commands are documented in [Connectivity](connectivity.md).
+Connectivity is loaded from its installed product executable; its API contract and commands are documented in [Connectivity](connectivity.md).
 
 ## Homebrew release migration
 
