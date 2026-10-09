@@ -183,14 +183,21 @@ func (r *renderer) list(items []any) {
 	r.table(headers, rows)
 }
 
-// Resources with Kubernetes-style metadata otherwise have no scalar columns.
-// Project identity and phase for table output only; JSON retains the raw envelope.
+// Project plugin and Kubernetes resource identities for table output only;
+// JSON retains the raw envelope.
 func resourceRows(items []any) []any {
 	rows := make([]any, len(items))
 	for i, item := range items {
 		object, ok := item.(map[string]any)
 		if !ok {
 			return items
+		}
+		if service, ok := object["service"].(string); ok && object["platform"] != nil && object["revision"] != nil && object["sha256"] != nil {
+			row := maps.Clone(object)
+			row["module"] = service
+			delete(row, "service")
+			rows[i] = row
+			continue
 		}
 		if object["name"] != nil || object["id"] != nil {
 			return items
@@ -271,7 +278,7 @@ func nested(value any) bool {
 
 func orderedKeys(object map[string]any) []string {
 	keys := slices.Sorted(maps.Keys(object))
-	preferred := []string{"id", "name", "state", "status", "region", "regionid", "version", "createdat", "asset", "account", "amount", "balance"}
+	preferred := []string{"module", "id", "name", "state", "status", "region", "regionid", "version", "createdat", "asset", "account", "amount", "balance"}
 	slices.SortStableFunc(keys, func(a, b string) int {
 		return fieldRank(a, object[a], preferred) - fieldRank(b, object[b], preferred)
 	})

@@ -41,6 +41,9 @@ numbers, including `false` and `0`, remain meaningful details. Top-level scalar
 values and numeric tokens are preserved and wrapped. Empty lists have a friendly
 message; pagination displays cursor and `hasMore` information.
 
+Plugin lists display the service identity as the first `Module` column. JSON
+output keeps the original `service` field and the complete plugin summary.
+
 Plain tables use ASCII borders. Colored tables add a title and status colors.
 Control characters in values are escaped; width calculations account for wide
 characters and generated ANSI styling. The renderer is a presentation layer,

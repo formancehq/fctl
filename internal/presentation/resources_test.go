@@ -32,3 +32,25 @@ func TestResourceIdentityTablesPreserveJSON(t *testing.T) {
 		t.Fatal("table projection changed raw JSON")
 	}
 }
+
+func TestPluginListShowsModuleBeforeOtherColumns(t *testing.T) {
+	t.Parallel()
+	body := `[{"profile":"cloud","organization":"jdxmvkvwlyiy","stack":"bwxm","endpoint":"https://app.formance.cloud/api","service":"ledger","version":"3.0.0-beta.10","revision":1,"platform":"darwin/arm64","source":"local","sha256":"abc123"}]`
+	for _, width := range []int{40, 80, 160, 320} {
+		out := render(t, body, presentation.Options{Format: "table", Width: width})
+		assertContains(t, out, "Module", "ledger")
+		header := strings.Split(out, "\n")[2]
+		if !strings.HasPrefix(header, "| Module") {
+			t.Fatalf("module is not the first column at width %d: %s", width, header)
+		}
+		assertLineWidths(t, out, width)
+	}
+	out := render(t, body, presentation.Options{Format: "json"})
+	var compact bytes.Buffer
+	if err := json.Compact(&compact, []byte(out)); err != nil {
+		t.Fatal(err)
+	}
+	if compact.String() != body {
+		t.Fatal("plugin table projection changed JSON output")
+	}
+}
