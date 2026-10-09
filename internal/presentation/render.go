@@ -146,6 +146,7 @@ func (r *renderer) details(object map[string]any) {
 }
 
 func (r *renderer) list(items []any) {
+	items = resourceRows(items)
 	r.title("Results")
 	if len(items) == 0 {
 		r.wrapped("No results.")
@@ -180,6 +181,48 @@ func (r *renderer) list(items []any) {
 		headers[i] = fieldLabel(key)
 	}
 	r.table(headers, rows)
+}
+
+// Resources with Kubernetes-style metadata otherwise have no scalar columns.
+// Project identity and phase for table output only; JSON retains the raw envelope.
+func resourceRows(items []any) []any {
+	rows := make([]any, len(items))
+	for i, item := range items {
+		object, ok := item.(map[string]any)
+		if !ok {
+			return items
+		}
+		if object["name"] != nil || object["id"] != nil {
+			return items
+		}
+		metadata, ok := object["metadata"].(map[string]any)
+		if !ok {
+			return items
+		}
+		if name, ok := metadata["name"].(string); !ok || name == "" {
+			return items
+		}
+		rows[i] = resourceRow(object, metadata)
+	}
+	return rows
+}
+
+func resourceRow(object, metadata map[string]any) map[string]any {
+	row := maps.Clone(object)
+	for _, key := range []string{"name", "namespace"} {
+		defaultColumn(row, key, metadata[key])
+	}
+	defaultColumn(row, "createdAt", metadata["creationTimestamp"])
+	if status, ok := object["status"].(map[string]any); ok {
+		defaultColumn(row, "phase", status["phase"])
+	}
+	return row
+}
+
+func defaultColumn(row map[string]any, key string, value any) {
+	if _, exists := row[key]; !exists && value != nil {
+		row[key] = value
+	}
 }
 
 func (r *renderer) recordNumbers(count int) {

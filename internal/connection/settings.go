@@ -58,6 +58,7 @@ func (s *Settings) fields() []field {
 		{"stack-url", &s.Options.StackURL, "Gateway base URL"},
 		{"ledger-url", &s.Options.LedgerURL, "Standalone Ledger endpoint"},
 		{"auth-url", &s.Options.AuthURL, "Standalone Auth endpoint"},
+		{"connectivity-url", &s.Options.ConnectivityURL, "Standalone Connectivity endpoint"},
 		{"auth-mode", &s.Options.AuthMode, "Authentication: none, client-credentials, cloud"},
 		{"token-url", &s.Options.TokenURL, "OAuth2 token endpoint"},
 		{"client-id", &s.Options.ClientID, "OAuth2 client ID; defaults to fctl for Cloud"},
@@ -211,7 +212,7 @@ func cloudIdentity(options Options) Options {
 }
 
 func Validate(o Options) error {
-	for _, value := range []string{o.StackURL, o.LedgerURL, o.AuthURL, o.TokenURL, o.Issuer} {
+	for _, value := range []string{o.StackURL, o.LedgerURL, o.AuthURL, o.ConnectivityURL, o.TokenURL, o.Issuer} {
 		if value == "" {
 			continue
 		}
@@ -233,8 +234,8 @@ func Validate(o Options) error {
 	default:
 		return fmt.Errorf("choose auth-mode none, client-credentials or cloud")
 	}
-	if o.AuthMode != "cloud" && o.StackURL == "" && o.LedgerURL == "" && o.AuthURL == "" {
-		return fmt.Errorf("configure stack-url, ledger-url or auth-url")
+	if o.AuthMode != "cloud" && o.StackURL == "" && o.LedgerURL == "" && o.AuthURL == "" && o.ConnectivityURL == "" {
+		return fmt.Errorf("configure stack-url, ledger-url, auth-url or connectivity-url")
 	}
 	return nil
 }
@@ -253,7 +254,7 @@ func validateCredentials(o Options) error {
 	if o.Organization != "" || o.Stack != "" || o.Issuer != "" {
 		return fmt.Errorf("client-credentials cannot include Cloud settings")
 	}
-	for _, endpoint := range []string{o.TokenURL, o.StackURL, o.LedgerURL, o.AuthURL} {
+	for _, endpoint := range []string{o.TokenURL, o.StackURL, o.LedgerURL, o.AuthURL, o.ConnectivityURL} {
 		if endpoint == "" {
 			continue
 		}
@@ -265,7 +266,7 @@ func validateCredentials(o Options) error {
 }
 
 func validateCloud(o Options) error {
-	if o.StackURL != "" || o.LedgerURL != "" || o.AuthURL != "" || o.TokenURL != "" || o.Scopes != "" {
+	if o.StackURL != "" || o.LedgerURL != "" || o.AuthURL != "" || o.ConnectivityURL != "" || o.TokenURL != "" || o.Scopes != "" {
 		return fmt.Errorf("cloud service endpoints and scopes are supplied by Membership")
 	}
 	issuer := cmp.Or(o.Issuer, cloud.DefaultIssuer)
@@ -288,6 +289,8 @@ func endpoint(o Options, service string) (string, error) {
 		direct = o.LedgerURL
 	case "auth":
 		direct = o.AuthURL
+	case "connectivity":
+		direct = o.ConnectivityURL
 	default:
 		return "", fmt.Errorf("unsupported service %q", service)
 	}

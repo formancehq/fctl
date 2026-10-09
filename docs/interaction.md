@@ -50,6 +50,10 @@ Duplicate IDs are removed. Invalid or repeated continuation values
 fail with guidance to supply an explicit ID. Enumeration is bounded to 1,000
 pages and 10,000 unique choices; it never silently truncates the menu.
 
+Choice fields accept dot paths such as `metadata.name` and `status.phase`.
+An exact field name takes precedence when the response has a literal dotted key.
+Connectivity uses this for resource names and follows its opaque cursor pages.
+
 A preferred version prefix orders suggestions; it does not select a fallback
 version without user input. V4 versions appear first in the stack create menu.
 The exact selected version is validated again by the Cloud plugin before create.

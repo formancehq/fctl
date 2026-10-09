@@ -1,7 +1,7 @@
 # Formance Control CLI (fctl v4)
 
 `fctl` is the Formance command-line interface (repository profile: CLI).
-The v4 implementation embeds Cloud, Auth and Ledger plugins with a shared
+The v4 implementation embeds Cloud, Auth, Ledger and Connectivity plugins with a shared
 connection boundary for local services, OAuth2 client credentials and Cloud login.
 The Go module is `github.com/formancehq/fctl/v4`.
 
@@ -29,7 +29,8 @@ with HTTP business routes under `/v3`. See [module commands](docs/modules.md)
 and [connection setup](docs/connections.md). Cloud management lives under
 `cloud`, with stack administration under `cloud stack`. See the
 [Cloud command boundaries](docs/cloud.md) for restored proxy, MCP and token
-helpers, and experimental Deploy Apps. Connectivity is deferred.
+helpers, and experimental Deploy Apps. Connectivity covers the connector catalogue,
+versions and instance lifecycle; see [Connectivity](docs/connectivity.md).
 
 `ledger list` returns all ledgers. Account, transaction and log lists continue
 with `--after` using the last address or ID; only Ledger index inspection uses

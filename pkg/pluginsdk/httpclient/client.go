@@ -110,7 +110,7 @@ func (c *Client) Do(ctx context.Context, method, path string, query url.Values, 
 		req.Header = make(http.Header)
 	}
 	req.Header.Set("Accept", "application/json")
-	if body != nil {
+	if body != nil && req.Header.Get("Content-Type") == "" {
 		req.Header.Set("Content-Type", "application/json")
 	}
 	resp, err := c.http.Do(req)

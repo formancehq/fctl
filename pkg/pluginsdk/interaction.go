@@ -30,7 +30,8 @@ type InputOption struct {
 // ChoiceSource invokes a read operation through the same plugin and client.
 // A $name argument/flag refers to an already resolved request flag; $stack and
 // $organization can also refer to host context. Labels and values are field
-// names from each resource object. The host owns rendering and pagination.
+// names from each resource object, or dot paths such as metadata.name. Exact
+// field names take precedence over paths. The host owns rendering and pagination.
 type ChoiceSource struct {
 	CommandPath  []string          `json:"commandPath"`
 	Args         []string          `json:"args,omitzero"`

@@ -6,6 +6,8 @@
   Cloud login and private connection profiles.
 - [Auth and Ledger modules](modules.md): supported operations, API revisions
   and command examples.
+- [Connectivity](connectivity.md): catalogue, versions, instance lifecycle,
+  request semantics and pinned OpenAPI contract.
 - [Cloud management](cloud.md): Membership, stack administration, hosted helpers
   and experimental Deploy Apps.
 - [Interactive input](interaction.md): forms, searchable selections and automation.

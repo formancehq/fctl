@@ -131,7 +131,7 @@ func excludedChoice(item any, fields []string) bool {
 		return false
 	}
 	for _, field := range fields {
-		if value, ok := object[field].(bool); ok && value {
+		if value, ok := choiceField(object, field).(bool); ok && value {
 			return true
 		}
 	}
@@ -144,7 +144,7 @@ func matchingChoice(item any, fields map[string][]string) bool {
 		return len(fields) == 0
 	}
 	for field, values := range fields {
-		if !slices.Contains(values, choiceText(object[field])) {
+		if !slices.Contains(values, choiceText(choiceField(object, field))) {
 			return false
 		}
 	}
@@ -202,13 +202,13 @@ func choiceOption(item any, source pluginsdk.ChoiceSource) (interactive.Option, 
 	if !ok {
 		return interactive.Option{}, fmt.Errorf("resource choice is not an object")
 	}
-	value := choiceText(object[source.ValueField])
+	value := choiceText(choiceField(object, source.ValueField))
 	if value == "" {
 		return interactive.Option{}, fmt.Errorf("resource choice lacks %s", source.ValueField)
 	}
 	var labels []string
 	for _, field := range source.LabelFields {
-		if label := choiceText(object[field]); label != "" && label != value {
+		if label := choiceText(choiceField(object, field)); label != "" && label != value {
 			labels = append(labels, label)
 		}
 	}
@@ -217,6 +217,21 @@ func choiceOption(item any, source pluginsdk.ChoiceSource) (interactive.Option, 
 		label = strings.Join(labels, " · ") + " (" + value + ")"
 	}
 	return interactive.Option{Label: label, Value: value}, nil
+}
+
+func choiceField(object map[string]any, field string) any {
+	if value, exists := object[field]; exists {
+		return value
+	}
+	var value any = object
+	for part := range strings.SplitSeq(field, ".") {
+		current, ok := value.(map[string]any)
+		if !ok {
+			return nil
+		}
+		value = current[part]
+	}
+	return value
 }
 
 func choiceText(value any) string {
@@ -238,7 +253,7 @@ func keysetChoicePage(items []any, field string) ([]any, bool, string, error) {
 	if !ok {
 		return nil, false, "", fmt.Errorf("resource choice is not an object")
 	}
-	value := choiceText(last[field])
+	value := choiceText(choiceField(last, field))
 	if value == "" {
 		return nil, false, "", fmt.Errorf("resource choice lacks pagination field %s", field)
 	}

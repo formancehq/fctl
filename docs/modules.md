@@ -1,6 +1,6 @@
 # Auth and Ledger modules
 
-The root registers Cloud, Auth and Ledger plugin factories. This page describes
+The root registers Cloud, Auth, Ledger and Connectivity plugin factories. This page describes
 the service modules; [Cloud management](cloud.md) describes control-plane commands.
 Each plugin implements
 the public `pluginsdk.Plugin` manifest/execution contract. The core builds Cobra
@@ -8,7 +8,7 @@ commands from manifests and supplies an authenticated HTTP client and endpoint.
 Plugins own service routes, payloads and command descriptions. They import no
 Cobra or core internal packages and do not read profiles or implement Cloud
 authentication. See the [plugin contract](plugins.md). External plugin loading
-is not implemented. Connectivity is deferred.
+is not implemented. See [Connectivity](connectivity.md) for its API and commands.
 
 ## Ledger
 
