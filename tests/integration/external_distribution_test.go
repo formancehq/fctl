@@ -1,4 +1,4 @@
-package cmd_test
+package integration_test
 
 import (
 	"fmt"

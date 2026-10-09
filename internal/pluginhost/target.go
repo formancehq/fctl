@@ -1,4 +1,4 @@
-package cmd
+package pluginhost
 
 import (
 	"cmp"
@@ -32,10 +32,6 @@ func supportedPluginService(service string) (serviceDescriptor, error) {
 	}
 }
 
-func ledgerTarget(settings *connection.Settings, cmd *cobra.Command) (pluginmanager.Target, error) {
-	return pluginServiceTarget(settings, cmd, "ledger")
-}
-
 func pluginServiceTarget(settings *connection.Settings, cmd *cobra.Command, service string) (pluginmanager.Target, error) {
 	descriptor, err := supportedPluginService(service)
 	if err != nil {
@@ -63,10 +59,6 @@ func pluginServiceTarget(settings *connection.Settings, cmd *cobra.Command, serv
 // A sole prepared Cloud target supplies offline metadata when profile options
 // omit organization or stack. It does not select the execution target: the
 // authenticated connection still resolves that from verified Cloud claims.
-func cachedLedgerLock(settings *connection.Settings, cmd *cobra.Command, manager *pluginmanager.Manager) (pluginmanager.Lock, error) {
-	return cachedServiceLock(settings, cmd, manager, "ledger")
-}
-
 func cachedServiceLock(settings *connection.Settings, cmd *cobra.Command, manager *pluginmanager.Manager, service string) (pluginmanager.Lock, error) {
 	if _, err := supportedPluginService(service); err != nil {
 		return pluginmanager.Lock{}, err
@@ -84,10 +76,6 @@ func cachedServiceLock(settings *connection.Settings, cmd *cobra.Command, manage
 		return pluginmanager.Lock{}, pluginmanager.ErrNotInstalled
 	}
 	return soleServiceLock(manager, target, service)
-}
-
-func soleLedgerLock(manager *pluginmanager.Manager, target pluginmanager.Target) (pluginmanager.Lock, error) {
-	return soleServiceLock(manager, target, "ledger")
 }
 
 func soleServiceLock(manager *pluginmanager.Manager, target pluginmanager.Target, service string) (pluginmanager.Lock, error) {
@@ -114,10 +102,6 @@ func soleServiceLock(manager *pluginmanager.Manager, target pluginmanager.Target
 	return selected, nil
 }
 
-func ledgerServiceVersion(ctx context.Context, client *api.Client) (string, error) {
-	return pluginServiceVersion(ctx, client, "ledger")
-}
-
 func pluginServiceVersion(ctx context.Context, client *api.Client, service string) (string, error) {
 	descriptor, err := supportedPluginService(service)
 	if err != nil {
@@ -140,7 +124,8 @@ func pluginServiceVersion(ctx context.Context, client *api.Client, service strin
 	return version, nil
 }
 
-func serviceCommand(cmd *cobra.Command) string {
+// ServiceCommand identifies the top-level service of a Cobra command.
+func ServiceCommand(cmd *cobra.Command) string {
 	for cmd.Parent() != nil && cmd.Parent().Parent() != nil {
 		cmd = cmd.Parent()
 	}

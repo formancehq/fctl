@@ -1,4 +1,4 @@
-package cmd
+package pluginhost
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"github.com/formancehq/fctl/v4/internal/pluginmanager"
 )
 
-func discoveryPreparation(t *testing.T, transport http.RoundTripper) ledgerPreparation {
+func discoveryPreparation(t *testing.T, transport http.RoundTripper) servicePreparation {
 	t.Helper()
 	root := &cobra.Command{Use: "fctl"}
 	settings := &connection.Settings{}
@@ -26,7 +26,7 @@ func discoveryPreparation(t *testing.T, transport http.RoundTripper) ledgerPrepa
 	if err != nil {
 		t.Fatal(err)
 	}
-	return ledgerPreparation{root: root, settings: settings, manager: manager}
+	return servicePreparation{service: serviceDescriptor{name: "ledger", title: "Ledger"}, root: root, settings: settings, manager: manager}
 }
 
 func TestOfficialDiscoveryRequiresPublishedLedgerPlugin(t *testing.T) {
@@ -87,7 +87,7 @@ func TestPluginCatalogueUsesOfficialDefaultAndExplicitOverrides(t *testing.T) {
 		{"explicit.yaml", "https://example.com/environment.yaml", "explicit.yaml"},
 	} {
 		t.Setenv("FCTL_PLUGIN_CATALOGUE", test.environment)
-		got, err := pluginCatalogue(prep.root, prep.settings, prep.manager, test.explicit)
+		got, err := servicePluginCatalogue(prep.root, prep.settings, prep.manager, "ledger", test.explicit)
 		if err != nil || got != test.want {
 			t.Fatalf("catalogue: %q, %v", got, err)
 		}

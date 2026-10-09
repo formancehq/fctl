@@ -1,4 +1,4 @@
-package cmd
+package pluginhost
 
 import (
 	"fmt"
@@ -6,7 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func unpreparedServiceCommand(service, title string, preparationErr error) *cobra.Command {
+// UnpreparedServiceCommand explains how to prepare a missing service provider.
+func UnpreparedServiceCommand(service, title string, preparationErr error) *cobra.Command {
 	command := &cobra.Command{
 		Use: service, Short: "Manage " + title + " through an installed plugin",
 		Long: fmt.Sprintf("%s commands are discovered from the plugin catalogue and cached locally.\nPrepare your target with fctl plugins sync --service %s, or install a local\nexecutable with fctl plugins install --service %s --binary PATH.", title, service, service),

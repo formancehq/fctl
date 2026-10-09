@@ -1,4 +1,4 @@
-package cmd_test
+package integration_test
 
 import (
 	"encoding/json"
@@ -20,6 +20,10 @@ func buildAuthProduct(t *testing.T) string {
 	binary := os.Getenv("FCTL_TEST_AUTH_PLUGIN_BINARY")
 	if binary == "" {
 		t.Skip("set FCTL_TEST_AUTH_PLUGIN_BINARY to test the independently built or published Auth executable")
+	}
+	if !filepath.IsAbs(binary) {
+		// Preserve paths relative to cmd, where these tests ran before extraction.
+		binary = filepath.Join("..", "..", "cmd", binary)
 	}
 	binary, err := filepath.Abs(binary)
 	if err != nil {

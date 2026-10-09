@@ -1,19 +1,16 @@
-package cmd
+package plugins
 
 import (
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/v4/internal/connection"
+	"github.com/formancehq/fctl/v4/internal/pluginhost"
 )
 
-func newPluginsListCommand(settings *connection.Settings) *cobra.Command {
+func newListCommand(settings *connection.Settings) *cobra.Command {
 	list := &cobra.Command{Use: "list", Short: "List plugins prepared for your profiles and targets", Args: cobra.NoArgs}
 	list.RunE = func(cmd *cobra.Command, _ []string) error {
-		manager, err := pluginManager(settings, cmd)
-		if err != nil {
-			return err
-		}
-		locks, err := manager.List()
+		locks, err := pluginhost.List(settings, cmd)
 		if err != nil {
 			return err
 		}

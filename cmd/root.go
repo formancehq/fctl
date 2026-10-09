@@ -7,16 +7,15 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/pkg/pluginsdk"
-
 	"github.com/formancehq/fctl/v4/cmd/cloudtools"
 	"github.com/formancehq/fctl/v4/cmd/login"
+	"github.com/formancehq/fctl/v4/cmd/plugins"
 	"github.com/formancehq/fctl/v4/cmd/profiles"
 	"github.com/formancehq/fctl/v4/cmd/version"
-	"github.com/formancehq/fctl/v4/internal/api"
 	"github.com/formancehq/fctl/v4/internal/command"
 	"github.com/formancehq/fctl/v4/internal/connection"
 	"github.com/formancehq/fctl/v4/internal/plugin"
+	"github.com/formancehq/fctl/v4/internal/pluginhost"
 	cloudplugin "github.com/formancehq/fctl/v4/plugins/cloud"
 )
 
@@ -46,31 +45,31 @@ func newRootCommand(ctx context.Context, args []string) *cobra.Command {
 	settings := &connection.Settings{}
 	settings.Bind(root)
 	root.PersistentFlags().Bool("no-input", false, "Disable interactive forms and selections (FCTL_NO_INPUT, CI)")
-	authFactory, authPreparationErr := prepareServicePlugin(ctx, root, settings, args, "auth")
-	ledgerFactory, ledgerPreparationErr := prepareServicePlugin(ctx, root, settings, args, "ledger")
+	authFactory, authPreparationErr := pluginhost.PrepareService(ctx, root, settings, args, "auth")
+	ledgerFactory, ledgerPreparationErr := pluginhost.PrepareService(ctx, root, settings, args, "ledger")
 	preparationErrors := map[string]error{"auth": authPreparationErr, "ledger": ledgerPreparationErr}
 	root.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {
-		if err := preparationErrors[serviceCommand(cmd)]; err != nil {
+		if err := preparationErrors[pluginhost.ServiceCommand(cmd)]; err != nil {
 			return err
 		}
 		return command.ConfigureOutput(cmd, settings.Output, settings.Color)
 	}
 	command.InstallHelp(root, &settings.Color)
 	root.AddGroup(&cobra.Group{ID: "cloud", Title: "Cloud:"}, &cobra.Group{ID: "modules", Title: "Modules:"}, &cobra.Group{ID: "profiles", Title: "Profiles:"}, &cobra.Group{ID: "plugins", Title: "Plugins:"})
-	resolve := pluginResolver(root, settings)
+	resolve := pluginhost.RequestResolver(root, settings)
 	root.AddCommand(version.NewCommand(), profiles.NewCommand(settings), login.NewCommand(settings), login.NewLogoutCommand(settings))
-	root.AddCommand(newPluginsCommand(settings))
+	root.AddCommand(plugins.NewCommand(settings))
 	registry := &plugin.Registry{}
 	factories := []plugin.Factory{cloudplugin.New}
 	if ledgerFactory != nil {
 		factories = append(factories, ledgerFactory)
 	} else {
-		root.AddCommand(unpreparedServiceCommand("ledger", "Ledger", ledgerPreparationErr))
+		root.AddCommand(pluginhost.UnpreparedServiceCommand("ledger", "Ledger", ledgerPreparationErr))
 	}
 	if authFactory != nil {
 		factories = append(factories, authFactory)
 	} else {
-		root.AddCommand(unpreparedServiceCommand("auth", "Auth", authPreparationErr))
+		root.AddCommand(pluginhost.UnpreparedServiceCommand("auth", "Auth", authPreparationErr))
 	}
 	for _, factory := range factories {
 		if err := registry.Register(context.WithoutCancel(ctx), factory(nil), factory); err != nil {
@@ -102,24 +101,4 @@ func Execute() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 	return NewRootCommandWithArgs(ctx, os.Args[1:]).ExecuteContext(ctx)
-}
-
-func pluginResolver(root *cobra.Command, settings *connection.Settings) plugin.RequestResolver {
-	return func(ctx context.Context, service string, request pluginsdk.ExecuteRequest) (*api.Client, error) {
-		cmd, _, err := root.Find(request.CommandPath)
-		if err != nil {
-			return nil, err
-		}
-		for _, name := range []string{"organization", "stack"} {
-			if value := request.Context[name]; value != "" {
-				if err := root.PersistentFlags().Set(name, value); err != nil {
-					return nil, err
-				}
-			}
-		}
-		if service == "cloud-apps" {
-			return settings.ApplicationClient(ctx, cmd, request.Flags["deploy-app-alias"])
-		}
-		return settings.Client(ctx, cmd, service)
-	}
 }

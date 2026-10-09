@@ -11,6 +11,13 @@ command tree. Errors propagate to the entrypoint, which writes them to stderr
 and exits with status 1. Signal cancellation is propagated through the command
 context.
 
+`cmd/root.go` assembles the command tree. Each command group lives in its own
+directory under `cmd`, including `cmd/plugins` for plugin management. Shared
+service preparation, target selection and manifest validation live in
+`internal/pluginhost`; `internal/pluginmanager` owns the catalogue, downloads
+and local cache. CLI integration tests live in `tests/integration` and run in
+the default test suite.
+
 The root registers `version`, `profiles` management, login/logout and plugin
 management. Cloud remains embedded. Auth and Ledger use external plugins with
 no embedded fallback. Connectivity commands are absent until independently

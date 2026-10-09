@@ -1,4 +1,4 @@
-package cmd
+package pluginhost
 
 import (
 	"context"
@@ -10,19 +10,13 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/formancehq/fctl/pkg/pluginsdk"
-
-	"github.com/formancehq/fctl/v4/internal/api"
 	"github.com/formancehq/fctl/v4/internal/connection"
 	"github.com/formancehq/fctl/v4/internal/plugin"
 	"github.com/formancehq/fctl/v4/internal/pluginmanager"
 )
 
-func prepareLedgerPlugin(ctx context.Context, root *cobra.Command, settings *connection.Settings, args []string) (plugin.Factory, error) {
-	return prepareServicePlugin(ctx, root, settings, args, "ledger")
-}
-
-func prepareServicePlugin(ctx context.Context, root *cobra.Command, settings *connection.Settings, args []string, service string) (plugin.Factory, error) {
+// PrepareService selects an external provider without starting it for cached help.
+func PrepareService(ctx context.Context, root *cobra.Command, settings *connection.Settings, args []string, service string) (plugin.Factory, error) {
 	descriptor, err := supportedPluginService(service)
 	if err != nil {
 		return nil, err
@@ -68,21 +62,11 @@ func parsePluginBootstrap(root *cobra.Command, args []string) (pluginBootstrap, 
 	return plan, err
 }
 
-// The zero service descriptor retains the Ledger pilot helpers' behavior.
-type ledgerPreparation = servicePreparation
-
 type servicePreparation struct {
 	service  serviceDescriptor
 	root     *cobra.Command
 	settings *connection.Settings
 	manager  *pluginmanager.Manager
-}
-
-func (p servicePreparation) descriptor() serviceDescriptor {
-	if p.service.name == "" {
-		return serviceDescriptor{name: "ledger", title: "Ledger"}
-	}
-	return p.service
 }
 
 func (p servicePreparation) resolve(ctx context.Context, plan pluginBootstrap) (pluginmanager.Lock, error) {
@@ -91,14 +75,14 @@ func (p servicePreparation) resolve(ctx context.Context, plan pluginBootstrap) (
 	if catalogue == "" && loadErr == nil {
 		catalogue = lock.Catalogue
 	}
-	if len(plan.commands) == 1 && plan.commands[0] == p.descriptor().name {
+	if len(plan.commands) == 1 && plan.commands[0] == p.service.name {
 		return lock, loadErr
 	}
-	if catalogue != "" && !plan.help && len(plan.commands) > 0 && plan.commands[0] == p.descriptor().name {
+	if catalogue != "" && !plan.help && len(plan.commands) > 0 && plan.commands[0] == p.service.name {
 		return p.matchVersion(ctx, catalogue, nil)
 	}
 	if catalogue == "" && errors.Is(loadErr, pluginmanager.ErrNotInstalled) && !plan.help &&
-		len(plan.commands) > 0 && plan.commands[0] == p.descriptor().name {
+		len(plan.commands) > 0 && plan.commands[0] == p.service.name {
 		return p.discover(ctx)
 	}
 	return lock, loadErr
@@ -110,22 +94,23 @@ func (p servicePreparation) discover(ctx context.Context) (pluginmanager.Lock, e
 		return pluginmanager.Lock{}, err
 	}
 	for _, release := range catalogue.Releases {
-		if release.Service == p.descriptor().name && release.Platform == pluginmanager.CurrentPlatform() {
+		if release.Service == p.service.name && release.Platform == pluginmanager.CurrentPlatform() {
 			return p.matchVersion(ctx, pluginmanager.DefaultCatalogue, &catalogue)
 		}
 	}
-	return pluginmanager.Lock{}, fmt.Errorf("%w: %s has no published plugin for %s; prepare it with fctl plugins sync --service %s or plugins install --service %s --binary PATH", pluginmanager.ErrNoRelease, p.descriptor().title, pluginmanager.CurrentPlatform(), p.descriptor().name, p.descriptor().name)
+	return pluginmanager.Lock{}, fmt.Errorf("%w: %s has no published plugin for %s; prepare it with fctl plugins sync --service %s or plugins install --service %s --binary PATH", pluginmanager.ErrNoRelease, p.service.title, pluginmanager.CurrentPlatform(), p.service.name, p.service.name)
 }
 
 func (p servicePreparation) cached() (pluginmanager.Lock, error) {
-	return cachedServiceLock(p.settings, p.root, p.manager, p.descriptor().name)
+	return cachedServiceLock(p.settings, p.root, p.manager, p.service.name)
 }
+
 func (p servicePreparation) matchVersion(ctx context.Context, catalogue string, discovered *pluginmanager.Catalogue) (pluginmanager.Lock, error) {
-	target, version, err := pluginServiceSyncTarget(ctx, p.settings, p.root, p.descriptor().name, "")
+	target, version, err := pluginServiceSyncTarget(ctx, p.settings, p.root, p.service.name, "")
 	if err != nil {
 		return pluginmanager.Lock{}, err
 	}
-	lock, err := p.manager.Load(target, p.descriptor().name)
+	lock, err := p.manager.Load(target, p.service.name)
 	if err == nil && lock.ServiceVersion == version {
 		return lock, nil
 	}
@@ -134,41 +119,20 @@ func (p servicePreparation) matchVersion(ctx context.Context, catalogue string, 
 	}
 	var release pluginmanager.Release
 	if discovered != nil {
-		release, err = discovered.Resolve(pluginmanager.CurrentPlatform(), p.descriptor().name, version, 0)
+		release, err = discovered.Resolve(pluginmanager.CurrentPlatform(), p.service.name, version, 0)
 	} else {
-		release, err = p.manager.Resolve(ctx, catalogue, p.descriptor().name, version, 0)
+		release, err = p.manager.Resolve(ctx, catalogue, p.service.name, version, 0)
 	}
 	if err != nil {
 		return pluginmanager.Lock{}, err
 	}
-	if err := validateServiceManifest(ctx, p.root, p.descriptor().name, release.Manifest); err != nil {
+	if err := validateServiceManifest(ctx, p.root, p.service.name, release.Manifest); err != nil {
 		return pluginmanager.Lock{}, err
 	}
 	lock, err = p.manager.InstallResolved(ctx, catalogue, target, release)
 	if err != nil {
 		return lock, err
 	}
-	_, err = fmt.Fprintf(p.root.ErrOrStderr(), "Prepared %s plugin %s (revision %d).\n", p.descriptor().title, lock.ServiceVersion, lock.Revision)
+	_, err = fmt.Fprintf(p.root.ErrOrStderr(), "Prepared %s plugin %s (revision %d).\n", p.service.title, lock.ServiceVersion, lock.Revision)
 	return lock, err
-}
-
-func validateLedgerManifest(ctx context.Context, root *cobra.Command, manifest pluginsdk.Manifest) error {
-	return validateServiceManifest(ctx, root, "ledger", manifest)
-}
-
-//nolint:contextcheck // Validation builds callbacks without executing them.
-func validateServiceManifest(ctx context.Context, root *cobra.Command, service string, manifest pluginsdk.Manifest) error {
-	if err := serviceManifestIdentity(service, manifest); err != nil {
-		return err
-	}
-	registry := &plugin.Registry{}
-	factory := plugin.ExternalFactory("", manifest)
-	if err := registry.Register(ctx, factory(nil), factory); err != nil {
-		return fmt.Errorf("invalid %s plugin manifest: %w", service, err)
-	}
-	check := &cobra.Command{Use: "fctl"}
-	check.PersistentFlags().AddFlagSet(root.PersistentFlags())
-	return plugin.NewCommand(registry, func(context.Context, string) (*api.Client, error) {
-		return nil, fmt.Errorf("manifest validation does not execute commands")
-	}).AddTo(check)
 }
