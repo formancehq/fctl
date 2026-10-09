@@ -18,6 +18,7 @@ import (
 	"github.com/formancehq/fctl/v4/pkg/pluginsdk"
 	"github.com/formancehq/fctl/v4/plugins/auth"
 	cloudplugin "github.com/formancehq/fctl/v4/plugins/cloud"
+	"github.com/formancehq/fctl/v4/plugins/connectivity"
 	"github.com/formancehq/fctl/v4/plugins/ledger"
 )
 
@@ -41,7 +42,7 @@ func NewRootCommand() *cobra.Command {
 	resolve := pluginResolver(root, settings)
 	root.AddCommand(version.NewCommand(), connections.NewCommand(settings), login.NewCommand(settings), login.NewLogoutCommand(settings))
 	registry := &plugin.Registry{}
-	for _, factory := range []plugin.Factory{cloudplugin.New, auth.New, ledger.New} {
+	for _, factory := range []plugin.Factory{cloudplugin.New, auth.New, ledger.New, connectivity.New} {
 		if err := registry.Register(context.Background(), factory(nil), factory); err != nil {
 			panic(err) // Embedded metadata is a build-time invariant, never user input.
 		}
@@ -56,7 +57,7 @@ func NewRootCommand() *cobra.Command {
 		switch cmd.Name() {
 		case "cloud":
 			cmd.GroupID = "cloud"
-		case "auth", "ledger":
+		case "auth", "ledger", "connectivity":
 			cmd.GroupID = "modules"
 		case "connections", "login", "logout":
 			cmd.GroupID = "connections"

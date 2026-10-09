@@ -78,7 +78,7 @@ and `--out` effects; they are not connection configuration. The shared public
 HTTP client performs requests without automatic mutation retries and preserves
 JSON numbers.
 
-Cloud, Auth and Ledger remain compiled into the executable. There is no installation,
+Cloud, Auth, Ledger and Connectivity remain compiled into the executable. There is no installation,
 registry download, external process launcher or gRPC transport in this change.
 An external adapter must implement transport negotiation and authenticated HTTP
 context delivery using this public contract. That adapter will not require the

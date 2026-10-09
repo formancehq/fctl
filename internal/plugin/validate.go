@@ -14,7 +14,7 @@ var identifier = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
 
 var coreFlags = map[string]bool{
 	"help": true, "connection": true, "config-dir": true, "timeout": true, "output": true,
-	"stack-url": true, "ledger-url": true, "auth-url": true, "auth-mode": true, "token-url": true,
+	"stack-url": true, "ledger-url": true, "auth-url": true, "connectivity-url": true, "auth-mode": true, "token-url": true,
 	"client-id": true, "scopes": true, "issuer": true, "organization": true, "stack": true,
 	"no-browser": true, "debug": true, "color": true, "no-input": true,
 }

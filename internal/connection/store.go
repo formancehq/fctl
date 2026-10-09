@@ -18,16 +18,17 @@ import (
 
 // Options is persisted configuration. Client secrets are read only from the environment.
 type Options struct {
-	StackURL     string `json:"stackURL,omitzero"`
-	LedgerURL    string `json:"ledgerURL,omitzero"`
-	AuthURL      string `json:"authURL,omitzero"`
-	AuthMode     string `json:"authMode,omitzero"`
-	TokenURL     string `json:"tokenURL,omitzero"`
-	ClientID     string `json:"clientID,omitzero"`
-	Scopes       string `json:"scopes,omitzero"`
-	Issuer       string `json:"issuer,omitzero"`
-	Organization string `json:"organization,omitzero"`
-	Stack        string `json:"stack,omitzero"`
+	StackURL        string `json:"stackURL,omitzero"`
+	LedgerURL       string `json:"ledgerURL,omitzero"`
+	AuthURL         string `json:"authURL,omitzero"`
+	ConnectivityURL string `json:"connectivityURL,omitzero"`
+	AuthMode        string `json:"authMode,omitzero"`
+	TokenURL        string `json:"tokenURL,omitzero"`
+	ClientID        string `json:"clientID,omitzero"`
+	Scopes          string `json:"scopes,omitzero"`
+	Issuer          string `json:"issuer,omitzero"`
+	Organization    string `json:"organization,omitzero"`
+	Stack           string `json:"stack,omitzero"`
 }
 
 type Entry struct {

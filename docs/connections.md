@@ -15,7 +15,7 @@ fctl auth info
 ```
 
 To use a gateway, replace the individual URLs with `--stack-url URL`.
-The CLI appends `/api/ledger` or `/api/auth`. For direct URLs, include any
+The CLI appends `/api/ledger`, `/api/auth` or `/api/connectivity`. For direct URLs, include any
 deployment prefix but not the service's API version: Ledger appends `/v3`.
 A configured service URL takes precedence over the gateway URL for that service.
 
@@ -105,7 +105,7 @@ flags cannot override Cloud routes. `logout` removes the root identity and all
 cached stack, organization and application tokens locally; it does not revoke
 sessions at the provider.
 
-Cloud administration uses Membership and organization grants. Ledger/Auth and
+Cloud administration uses Membership and organization grants. Ledger/Auth/Connectivity and
 hosted stack helpers use a stack-scoped grant and the gateway. Experimental
 `cloud apps` obtains a separate application grant and signed backend audience;
 it does not reuse the stack Auth token. See [Cloud management](cloud.md).
@@ -117,7 +117,7 @@ clears any Cloud login. `connections list` and `connections show` expose setting
 without tokens. Deletion requires `connections delete NAME --confirm`.
 
 Settings use this precedence: explicit flag, `FCTL_*` environment variable,
-saved connection. Examples include `FCTL_LEDGER_URL`, `FCTL_AUTH_URL`,
+saved connection. Examples include `FCTL_LEDGER_URL`, `FCTL_AUTH_URL`, `FCTL_CONNECTIVITY_URL`,
 `FCTL_STACK_URL`, `FCTL_AUTH_MODE`, `FCTL_TOKEN_URL` and `FCTL_CLIENT_ID`.
 Use `--connection` or `FCTL_CONNECTION` to select a saved connection without
 changing the default.
