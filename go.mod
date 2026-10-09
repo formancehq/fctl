@@ -10,7 +10,7 @@ require (
 	github.com/charmbracelet/colorprofile v0.4.2
 	github.com/charmbracelet/x/term v0.2.2
 	github.com/coreos/go-oidc/v3 v3.17.0
-	github.com/formancehq/auth/pkg/client v0.0.0-20251106135031-5373fa4eaeba
+	github.com/formancehq/auth/misc/fctl-plugin v0.0.0-20261009151254-70cef9efe2e2
 	github.com/formancehq/ledger/misc/fctl-plugin v0.0.0-20261009143954-060fabc5af8d
 	github.com/go-jose/go-jose/v4 v4.1.4
 	github.com/gofrs/flock v0.12.1
@@ -23,6 +23,7 @@ require (
 
 require (
 	github.com/fatih/color v1.13.0 // indirect
+	github.com/formancehq/auth/pkg/client v0.0.0-20251106135031-5373fa4eaeba // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/go-plugin v1.8.0 // indirect
