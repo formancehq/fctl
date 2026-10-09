@@ -78,8 +78,8 @@ the removed Membership and deployment SDKs are no longer generated.
 
 The repository includes the `formance-fctl-plugin` agent skill for developing
 service plugins through the public SDK. Its sources are versioned under
-`skills/` and included in release archives. See
-[agent skill installation](docs/agent-skills.md).
+`.agents/skills/`, where Codex discovers them for this repository, and included
+in release archives. See [agent skill usage and installation](docs/agent-skills.md).
 
 ## Documentation
 

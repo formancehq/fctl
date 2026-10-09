@@ -39,7 +39,7 @@ archives:
     name_template: "{{.ProjectName}}_{{.Os}}-{{.Arch}}"
     files:
       - completions/*
-      - skills/**/*
+      - .agents/skills/**/*
       - docs/agent-skills.md
       - LICENSE
 
