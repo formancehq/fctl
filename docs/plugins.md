@@ -78,11 +78,10 @@ and `--out` effects; they are not connection configuration. The shared public
 HTTP client performs requests without automatic mutation retries and preserves
 JSON numbers.
 
-Cloud, Auth, Ledger and Connectivity remain available as embedded defaults. The
-Ledger pilot can replace its embedded command tree with a cached external
-manifest. Both providers use the same two-method SDK contract, forms, body
-validation, authentication and output renderer. Exactly one provider owns the
-Ledger command root.
+Cloud, Auth, Ledger and Connectivity remain available as embedded defaults. Auth and Ledger providers can replace their embedded command trees with cached
+external manifests. Both providers use the same two-method SDK contract, forms,
+body validation, authentication and output renderer. Exactly one provider owns
+each service command root.
 
 External executables use the SDK's `transport.Serve` and the host's
 `transport.Open`. The gRPC broker supplies a scoped HTTP callback; the host
@@ -93,10 +92,23 @@ arguments. A separate process is not an operating-system sandbox: only trusted
 executables should be installed.
 
 The host checks the binary checksum and compares its runtime manifest with the
-installed manifest before execution. It also checks the exact Ledger service
+installed manifest before execution. It also checks the exact selected service
 version before service operations. Canceling an RPC closes the plugin process.
 Help and completion use cached metadata, without spawning a plugin or calling
 the service.
 
-See [plugin distribution](plugin-distribution.md) for the Ledger pilot, exact
+See [plugin distribution](plugin-distribution.md) for Auth and Ledger, exact
 version selection, public OCI packages, target locks and local testing.
+
+## Product-owned Auth plugin
+
+The independent module `github.com/formancehq/auth/misc/fctl-plugin` owns Auth
+commands, API validation and declarative forms in the Auth repository. fctl's
+`plugins/auth` package only registers its factory. The product module exposes
+`New` for embedding and `NewVersion` for exact-version native executables. It
+depends on the public plugin SDK and generated Auth client, without fctl core,
+Cobra, profile storage or terminal libraries.
+
+Auth and Ledger external providers use the same generic host loader. The host
+accepts only the selected service's command root and connection boundary,
+including descendant service overrides. Locks are keyed by target and service.

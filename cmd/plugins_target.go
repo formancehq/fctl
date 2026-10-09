@@ -16,19 +16,46 @@ import (
 	"github.com/formancehq/fctl/v4/internal/pluginmanager"
 )
 
+type serviceDescriptor struct {
+	name  string
+	title string
+}
+
+func supportedPluginService(service string) (serviceDescriptor, error) {
+	switch service {
+	case "auth":
+		return serviceDescriptor{name: "auth", title: "Auth"}, nil
+	case "ledger":
+		return serviceDescriptor{name: "ledger", title: "Ledger"}, nil
+	default:
+		return serviceDescriptor{}, fmt.Errorf("unsupported external plugin service %q", service)
+	}
+}
+
 func ledgerTarget(settings *connection.Settings, cmd *cobra.Command) (pluginmanager.Target, error) {
+	return pluginServiceTarget(settings, cmd, "ledger")
+}
+
+func pluginServiceTarget(settings *connection.Settings, cmd *cobra.Command, service string) (pluginmanager.Target, error) {
+	descriptor, err := supportedPluginService(service)
+	if err != nil {
+		return pluginmanager.Target{}, err
+	}
 	options, _, name, _, err := settings.Resolve(cmd)
 	if err != nil {
 		return pluginmanager.Target{}, err
 	}
 	endpoint := options.LedgerURL
+	if descriptor.name == "auth" {
+		endpoint = options.AuthURL
+	}
 	if options.AuthMode == "cloud" {
 		endpoint = cmp.Or(options.Issuer, cloud.DefaultIssuer)
 	} else if endpoint == "" && options.StackURL != "" {
-		endpoint = strings.TrimRight(options.StackURL, "/") + "/api/ledger"
+		endpoint = strings.TrimRight(options.StackURL, "/") + "/api/" + descriptor.name
 	}
 	if endpoint == "" {
-		return pluginmanager.Target{}, fmt.Errorf("select a profile or configure --ledger-url or --stack-url")
+		return pluginmanager.Target{}, fmt.Errorf("select a profile or configure --%s-url or --stack-url", descriptor.name)
 	}
 	return pluginmanager.Target{Profile: name, Organization: options.Organization, Stack: options.Stack, Endpoint: endpoint}, nil
 }
@@ -37,11 +64,18 @@ func ledgerTarget(settings *connection.Settings, cmd *cobra.Command) (pluginmana
 // omit organization or stack. It does not select the execution target: the
 // authenticated connection still resolves that from verified Cloud claims.
 func cachedLedgerLock(settings *connection.Settings, cmd *cobra.Command, manager *pluginmanager.Manager) (pluginmanager.Lock, error) {
-	target, err := ledgerTarget(settings, cmd)
+	return cachedServiceLock(settings, cmd, manager, "ledger")
+}
+
+func cachedServiceLock(settings *connection.Settings, cmd *cobra.Command, manager *pluginmanager.Manager, service string) (pluginmanager.Lock, error) {
+	if _, err := supportedPluginService(service); err != nil {
+		return pluginmanager.Lock{}, err
+	}
+	target, err := pluginServiceTarget(settings, cmd, service)
 	if err != nil {
 		return pluginmanager.Lock{}, pluginmanager.ErrNotInstalled
 	}
-	lock, err := manager.Load(target, "ledger")
+	lock, err := manager.Load(target, service)
 	if !errors.Is(err, pluginmanager.ErrNotInstalled) || (target.Organization != "" && target.Stack != "") {
 		return lock, err
 	}
@@ -49,17 +83,21 @@ func cachedLedgerLock(settings *connection.Settings, cmd *cobra.Command, manager
 	if err != nil || options.AuthMode != "cloud" {
 		return pluginmanager.Lock{}, pluginmanager.ErrNotInstalled
 	}
-	return soleLedgerLock(manager, target)
+	return soleServiceLock(manager, target, service)
 }
 
 func soleLedgerLock(manager *pluginmanager.Manager, target pluginmanager.Target) (pluginmanager.Lock, error) {
+	return soleServiceLock(manager, target, "ledger")
+}
+
+func soleServiceLock(manager *pluginmanager.Manager, target pluginmanager.Target, service string) (pluginmanager.Lock, error) {
 	locks, err := manager.List()
 	if err != nil {
 		return pluginmanager.Lock{}, err
 	}
 	var selected pluginmanager.Lock
 	for _, lock := range locks {
-		if lock.Service != "ledger" || lock.Target.Profile != target.Profile || lock.Target.Endpoint != target.Endpoint {
+		if lock.Service != service || lock.Target.Profile != target.Profile || lock.Target.Endpoint != target.Endpoint {
 			continue
 		}
 		if (target.Organization != "" && lock.Target.Organization != target.Organization) || (target.Stack != "" && lock.Target.Stack != target.Stack) {
@@ -77,19 +115,27 @@ func soleLedgerLock(manager *pluginmanager.Manager, target pluginmanager.Target)
 }
 
 func ledgerServiceVersion(ctx context.Context, client *api.Client) (string, error) {
+	return pluginServiceVersion(ctx, client, "ledger")
+}
+
+func pluginServiceVersion(ctx context.Context, client *api.Client, service string) (string, error) {
+	descriptor, err := supportedPluginService(service)
+	if err != nil {
+		return "", err
+	}
 	data, err := client.Do(ctx, "GET", "/_info", nil, nil, nil)
 	if err != nil {
-		return "", fmt.Errorf("discover Ledger version: %w", err)
+		return "", fmt.Errorf("discover %s version: %w", descriptor.title, err)
 	}
 	var info struct {
 		Version string `json:"version"`
 	}
 	if err := json.Unmarshal(data, &info); err != nil {
-		return "", fmt.Errorf("decode Ledger version: %w", err)
+		return "", fmt.Errorf("decode %s version: %w", descriptor.title, err)
 	}
 	version := strings.TrimPrefix(info.Version, "v")
 	if version == "" {
-		return "", fmt.Errorf("ledger /_info did not report a version")
+		return "", fmt.Errorf("%s /_info did not report a version", descriptor.name)
 	}
 	return version, nil
 }

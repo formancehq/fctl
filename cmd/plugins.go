@@ -41,17 +41,24 @@ func writePluginResult(cmd *cobra.Command, result any) error {
 }
 
 func pluginSyncTarget(ctx context.Context, settings *connection.Settings, cmd *cobra.Command, version string) (pluginmanager.Target, string, error) {
+	return pluginServiceSyncTarget(ctx, settings, cmd, "ledger", version)
+}
+
+func pluginServiceSyncTarget(ctx context.Context, settings *connection.Settings, cmd *cobra.Command, service, version string) (pluginmanager.Target, string, error) {
+	if _, err := supportedPluginService(service); err != nil {
+		return pluginmanager.Target{}, "", err
+	}
 	if version == "" {
-		client, err := settings.Client(ctx, cmd, "ledger")
+		client, err := settings.Client(ctx, cmd, service)
 		if err != nil {
 			return pluginmanager.Target{}, "", err
 		}
-		version, err = ledgerServiceVersion(ctx, client)
+		version, err = pluginServiceVersion(ctx, client, service)
 		if err != nil {
 			return pluginmanager.Target{}, "", err
 		}
 	}
-	target, err := ledgerTarget(settings, cmd)
+	target, err := pluginServiceTarget(settings, cmd, service)
 	if err != nil {
 		return target, "", err
 	}
@@ -91,10 +98,30 @@ func summarizePlugin(lock pluginmanager.Lock) pluginSummary {
 		Platform: lock.Platform.String(), Source: source, SHA256: lock.SHA256}
 }
 
-// Keep plugin identities explicit during the Ledger-only pilot.
+// External providers may replace only the root and connection boundary of their service.
 func ledgerManifestIdentity(manifest pluginsdk.Manifest) error {
-	if manifest.Name != "ledger" || manifest.Service != "ledger" || pluginsdk.CommandName(manifest.Root) != "ledger" {
-		return fmt.Errorf("this pilot accepts Ledger plugins with the ledger command root")
+	return serviceManifestIdentity("ledger", manifest)
+}
+
+func serviceManifestIdentity(service string, manifest pluginsdk.Manifest) error {
+	descriptor, err := supportedPluginService(service)
+	if err != nil {
+		return err
+	}
+	if manifest.Name != descriptor.name || manifest.Service != descriptor.name || pluginsdk.CommandName(manifest.Root) != descriptor.name {
+		return fmt.Errorf("%s plugins must use the %s service and command root", descriptor.title, descriptor.name)
+	}
+	return validateServiceOverrides(service, manifest.Root)
+}
+
+func validateServiceOverrides(service string, command pluginsdk.CommandSpec) error {
+	if command.Service != "" && command.Service != service {
+		return fmt.Errorf("%s plugin command %q cannot override service with %q", service, command.Use, command.Service)
+	}
+	for _, child := range command.Subcommands {
+		if err := validateServiceOverrides(service, child); err != nil {
+			return err
+		}
 	}
 	return nil
 }

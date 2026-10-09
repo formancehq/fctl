@@ -73,7 +73,7 @@ func (p *external) Execute(ctx context.Context, request pluginsdk.ExecuteRequest
 func (p *external) checkVersion(ctx context.Context, endpoint string) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if p.checked == endpoint {
+	if p.checked != "" && p.checked == endpoint {
 		return nil
 	}
 	client, err := httpclient.New(endpoint, p.http)
@@ -82,17 +82,17 @@ func (p *external) checkVersion(ctx context.Context, endpoint string) error {
 	}
 	data, err := client.Do(ctx, http.MethodGet, "/_info", nil, nil, nil)
 	if err != nil {
-		return fmt.Errorf("check Ledger plugin version: %w", err)
+		return fmt.Errorf("check %s plugin version: %w", p.manifest.Service, err)
 	}
 	var info struct {
 		Version string `json:"version"`
 	}
 	if err := json.Unmarshal(data, &info); err != nil {
-		return fmt.Errorf("decode Ledger version: %w", err)
+		return fmt.Errorf("decode %s version: %w", p.manifest.Service, err)
 	}
 	version := strings.TrimPrefix(info.Version, "v")
 	if version != p.manifest.Version {
-		return fmt.Errorf("installed plugin targets Ledger %s, service reports %s; run fctl plugins sync or install the matching binary", p.manifest.Version, version)
+		return fmt.Errorf("installed plugin targets %s %s, service reports %s; run fctl plugins sync or install the matching binary", p.manifest.Service, p.manifest.Version, version)
 	}
 	p.checked = endpoint
 	return nil

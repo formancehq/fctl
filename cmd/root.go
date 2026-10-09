@@ -49,10 +49,12 @@ func newRootCommand(ctx context.Context, args []string) *cobra.Command {
 	settings := &connection.Settings{}
 	settings.Bind(root)
 	root.PersistentFlags().Bool("no-input", false, "Disable interactive forms and selections (FCTL_NO_INPUT, CI)")
-	ledgerFactory, preparationErr := prepareLedgerPlugin(ctx, root, settings, args)
+	authFactory, authPreparationErr := prepareServicePlugin(ctx, root, settings, args, "auth")
+	ledgerFactory, ledgerPreparationErr := prepareServicePlugin(ctx, root, settings, args, "ledger")
+	preparationErrors := map[string]error{"auth": authPreparationErr, "ledger": ledgerPreparationErr}
 	root.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {
-		if preparationErr != nil && serviceCommand(cmd) == "ledger" {
-			return preparationErr
+		if err := preparationErrors[serviceCommand(cmd)]; err != nil {
+			return err
 		}
 		return command.ConfigureOutput(cmd, settings.Output, settings.Color)
 	}
@@ -62,10 +64,13 @@ func newRootCommand(ctx context.Context, args []string) *cobra.Command {
 	root.AddCommand(version.NewCommand(), profiles.NewCommand(settings), login.NewCommand(settings), login.NewLogoutCommand(settings))
 	root.AddCommand(newPluginsCommand(settings))
 	registry := &plugin.Registry{}
+	if authFactory == nil {
+		authFactory = auth.New
+	}
 	if ledgerFactory == nil {
 		ledgerFactory = ledger.New
 	}
-	for _, factory := range []plugin.Factory{cloudplugin.New, auth.New, ledgerFactory, connectivity.New} {
+	for _, factory := range []plugin.Factory{cloudplugin.New, authFactory, ledgerFactory, connectivity.New} {
 		if err := registry.Register(context.WithoutCancel(ctx), factory(nil), factory); err != nil {
 			panic(err) // Embedded metadata is a build-time invariant, never user input.
 		}
