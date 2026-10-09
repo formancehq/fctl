@@ -40,8 +40,9 @@ const (
 )
 
 var (
-	ErrNotInstalled = errors.New("plugin is not installed for this target")
-	ErrNoRelease    = errors.New("no plugin release for the exact service version and platform")
+	ErrNotInstalled         = errors.New("plugin is not installed for this target")
+	ErrNoRelease            = errors.New("no plugin release for the exact service version and platform")
+	ErrCatalogueUnavailable = errors.New("plugin catalogue is unavailable")
 )
 
 type Platform struct {

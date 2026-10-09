@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -16,9 +15,9 @@ func newPluginsSyncCommand(settings *connection.Settings) *cobra.Command {
 	sync := &cobra.Command{
 		Use: "sync", Short: "Download the Ledger plugin for the exact deployed service version", Args: cobra.NoArgs,
 		Annotations: map[string]string{"fctl.target": "stack"},
-		Example:     "  fctl plugins sync --catalogue catalogue.json --organization ORG --stack STACK\n  fctl plugins sync --catalogue https://example.com/plugins.json --service-version 3.0.0 --profile local",
+		Example:     "  fctl plugins sync --organization ORG --stack STACK\n  fctl plugins sync --catalogue registry.yaml --service-version 3.0.0 --profile local",
 	}
-	sync.Flags().StringVar(&catalogue, "catalogue", "", "Trusted plugin catalogue file or HTTPS URL (FCTL_PLUGIN_CATALOGUE)")
+	sync.Flags().StringVar(&catalogue, "catalogue", "", "YAML or JSON catalogue file or HTTPS URL; defaults to the official registry (FCTL_PLUGIN_CATALOGUE)")
 	sync.Flags().StringVar(&serviceVersion, "service-version", "", "Exact service version; defaults to Ledger /_info discovery")
 	sync.Flags().IntVar(&revision, "revision", 0, "Plugin revision; defaults to the highest for this exact service version")
 	sync.RunE = func(cmd *cobra.Command, _ []string) error {
@@ -68,5 +67,5 @@ func pluginCatalogue(cmd *cobra.Command, settings *connection.Settings, manager 
 	if err == nil && lock.Catalogue != "" {
 		return lock.Catalogue, nil
 	}
-	return "", fmt.Errorf("choose a trusted --catalogue file or URL, or set FCTL_PLUGIN_CATALOGUE")
+	return pluginmanager.DefaultCatalogue, nil
 }

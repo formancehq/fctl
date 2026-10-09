@@ -58,20 +58,34 @@ before advertising its mapping. The catalogue has `schemaVersion: 1` and a
 | `sha256` | SHA-256 of the raw executable layer |
 | `manifest` | Complete SDK command and form manifest, including protocol version |
 
-The pilot accepts a trusted catalogue file or HTTPS URL. HTTP is allowed only
-for loopback test registries and catalogues. An official public catalogue is
-not enabled by default during this pilot.
+The pilot accepts a trusted YAML or JSON catalogue file or HTTPS URL. HTTP is
+allowed only for loopback test registries and catalogues. The default catalogue
+is the public `registry.yaml` in `formancehq/fctl-plugin-registry`:
+
+```text
+https://raw.githubusercontent.com/formancehq/fctl-plugin-registry/main/registry.yaml
+```
 
 ```sh
-fctl plugins sync --catalogue ./catalogue.json --profile local
+fctl plugins sync --profile local
+fctl plugins sync --catalogue ./registry.yaml --profile local
 fctl ledger list --profile local
 ```
 
-Set `FCTL_PLUGIN_CATALOGUE` to enable automatic preparation for new targets.
+New Ledger targets discover native releases from the official catalogue. If
+it has no matching release, they retain the embedded provider. A temporary
+catalogue transport failure also retains the embedded provider for unprepared
+targets; invalid metadata remains an error. An empty catalogue does not query
+the service version or trigger target selection.
+
+Set `FCTL_PLUGIN_CATALOGUE` to override the catalogue used for automatic
+preparation. Explicit `plugins sync` prefers `--catalogue`, then the environment
+variable, then the target's saved catalogue, then the official URL.
 The core reads `/_info`, selects the exact version and current platform, checks
 protocol compatibility, downloads the digest-addressed artifact and verifies
 the manifest, config and executable checksums. A missing exact release fails
-with an actionable error. The stack supplies its service version; it never
+for explicit sync, custom catalogues and already prepared external targets.
+The stack supplies its service version; it never
 supplies an executable URL.
 
 Checksums verify bytes against the trusted catalogue. They do not independently
@@ -114,5 +128,5 @@ debug redaction, exact large JSON integers, partial bulk errors, cancellation,
 endpoint restrictions, corrupt downloads and concurrent cache installation.
 
 The SDK and product module can also be built and tested independently. Production
-OCI publication and enabling the default official catalogue are separate
-release steps; snapshot packaging does not perform either action.
+OCI publication and updating the official catalogue are separate release
+steps; snapshot packaging does not perform either action.
