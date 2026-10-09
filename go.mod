@@ -10,7 +10,7 @@ require (
 	github.com/charmbracelet/colorprofile v0.4.2
 	github.com/charmbracelet/x/term v0.2.2
 	github.com/coreos/go-oidc/v3 v3.17.0
-	github.com/formancehq/auth/misc/fctl-plugin v0.0.0-20261009152040-94f7c95801ca
+	github.com/formancehq/auth/misc/fctl-plugin v0.0.0-20261009153732-add6bd4c5dd7
 	github.com/formancehq/ledger/misc/fctl-plugin v0.0.0-20261009143954-060fabc5af8d
 	github.com/go-jose/go-jose/v4 v4.1.4
 	github.com/gofrs/flock v0.12.1
