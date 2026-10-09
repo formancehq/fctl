@@ -15,24 +15,32 @@ import (
 )
 
 func newPluginsInstallCommand(settings *connection.Settings) *cobra.Command {
-	var binary, localVersion string
+	var binary, localVersion, service string
 	install := &cobra.Command{
-		Use: "install", Short: "Install a Ledger plugin executable built locally", Args: cobra.NoArgs,
+		Use: "install", Short: "Install a service plugin executable built locally", Args: cobra.NoArgs,
 		Annotations: map[string]string{"fctl.target": "stack"},
 		Example:     "  fctl plugins install --binary ./build/fctl-plugin-ledger --profile local",
 	}
+	install.Flags().StringVar(&service, "service", "ledger", "Service plugin: ledger or auth")
 	install.Flags().StringVar(&binary, "binary", "", "Explicit path to the trusted executable")
-	install.Flags().StringVar(&localVersion, "service-version", "", "Exact service version; defaults to Ledger /_info discovery")
+	install.Flags().StringVar(&localVersion, "service-version", "", "Exact service version; defaults to selected service /_info discovery")
 	install.RunE = func(cmd *cobra.Command, _ []string) error {
-		return installLedgerPlugin(cmd, settings, binary, localVersion)
+		return installServicePlugin(cmd, settings, service, binary, localVersion)
 	}
 
 	return install
 }
 
 func installLedgerPlugin(cmd *cobra.Command, settings *connection.Settings, binary, localVersion string) error {
+	return installServicePlugin(cmd, settings, "ledger", binary, localVersion)
+}
+
+func installServicePlugin(cmd *cobra.Command, settings *connection.Settings, service, binary, localVersion string) error {
+	if err := distributionService(service); err != nil {
+		return err
+	}
 	if binary == "" {
-		return fmt.Errorf("provide --binary PATH to the Ledger plugin executable")
+		return fmt.Errorf("provide --binary PATH to the %s plugin executable", service)
 	}
 	path, err := filepath.Abs(binary)
 	if err != nil {
@@ -43,15 +51,15 @@ func installLedgerPlugin(cmd *cobra.Command, settings *connection.Settings, bina
 		return err
 	}
 
-	if err := validateLedgerManifest(cmd.Context(), cmd.Root(), manifest); err != nil {
+	if err := validateServiceManifest(cmd.Context(), cmd.Root(), service, manifest); err != nil {
 		return err
 	}
-	target, version, err := pluginSyncTarget(cmd.Context(), settings, cmd, localVersion)
+	target, version, err := pluginServiceSyncTarget(cmd.Context(), settings, cmd, service, localVersion)
 	if err != nil {
 		return err
 	}
 	if manifest.Version != version {
-		return fmt.Errorf("plugin targets Ledger %s, selected service is %s; build the matching plugin", manifest.Version, version)
+		return fmt.Errorf("plugin targets %s %s, selected service is %s; build the matching plugin", service, manifest.Version, version)
 	}
 	manager, err := pluginManager(settings, cmd)
 	if err != nil {

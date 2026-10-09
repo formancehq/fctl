@@ -7,13 +7,18 @@ import (
 )
 
 func newPluginsShowCommand(settings *connection.Settings) *cobra.Command {
-	show := &cobra.Command{Use: "show", Short: "Show the Ledger plugin locked for the selected target", Args: cobra.NoArgs}
+	var service string
+	show := &cobra.Command{Use: "show", Short: "Show the service plugin locked for the selected target", Args: cobra.NoArgs}
+	show.Flags().StringVar(&service, "service", "ledger", "Service plugin: ledger or auth")
 	show.RunE = func(cmd *cobra.Command, _ []string) error {
+		if err := distributionService(service); err != nil {
+			return err
+		}
 		manager, err := pluginManager(settings, cmd)
 		if err != nil {
 			return err
 		}
-		lock, err := cachedLedgerLock(settings, cmd, manager)
+		lock, err := cachedServiceLock(settings, cmd, manager, service)
 		if err != nil {
 			return err
 		}

@@ -36,7 +36,7 @@ func (f *officialCatalogueTransport) RoundTrip(request *http.Request) (*http.Res
 	if request.Header.Get("Authorization") != "" {
 		f.t.Error("public catalogue received service credentials")
 	}
-	data, err := os.ReadFile(f.path)
+	data, err := os.ReadFile(f.path) //nolint:gosec // The fixture reads its test-owned catalogue file, never a request path.
 	if err != nil {
 		return nil, err
 	}

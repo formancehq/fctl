@@ -185,6 +185,9 @@ func validateRelease(release Release, local bool) error {
 	if err := validateManifest(release.Manifest, release.Service); err != nil {
 		return err
 	}
+	if release.Manifest.Version != release.ServiceVersion {
+		return fmt.Errorf("manifest version %q does not match exact service version %q", release.Manifest.Version, release.ServiceVersion)
+	}
 	if local {
 		return nil
 	}
