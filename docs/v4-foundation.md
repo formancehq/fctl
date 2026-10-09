@@ -12,7 +12,8 @@ and exits with status 1. Signal cancellation is propagated through the command
 context.
 
 `cmd/root.go` assembles the command tree. Each command group lives in its own
-directory under `cmd`, including `cmd/plugins` for plugin management. Shared
+directory under `cmd`, including `cmd/plugins` for plugin management.
+`cmd/factory` prepares and registers the root's service providers. Shared
 service preparation, target selection and manifest validation live in
 `internal/pluginhost`; `internal/pluginmanager` owns the catalogue, downloads
 and local cache. CLI integration tests live in `tests/integration` and run in

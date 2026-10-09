@@ -8,15 +8,13 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/v4/cmd/cloudtools"
+	"github.com/formancehq/fctl/v4/cmd/factory"
 	"github.com/formancehq/fctl/v4/cmd/login"
 	"github.com/formancehq/fctl/v4/cmd/plugins"
 	"github.com/formancehq/fctl/v4/cmd/profiles"
 	"github.com/formancehq/fctl/v4/cmd/version"
 	"github.com/formancehq/fctl/v4/internal/command"
 	"github.com/formancehq/fctl/v4/internal/connection"
-	"github.com/formancehq/fctl/v4/internal/plugin"
-	"github.com/formancehq/fctl/v4/internal/pluginhost"
-	cloudplugin "github.com/formancehq/fctl/v4/plugins/cloud"
 )
 
 func NewRootCommand() *cobra.Command {
@@ -45,38 +43,18 @@ func newRootCommand(ctx context.Context, args []string) *cobra.Command {
 	settings := &connection.Settings{}
 	settings.Bind(root)
 	root.PersistentFlags().Bool("no-input", false, "Disable interactive forms and selections (FCTL_NO_INPUT, CI)")
-	authFactory, authPreparationErr := pluginhost.PrepareService(ctx, root, settings, args, "auth")
-	ledgerFactory, ledgerPreparationErr := pluginhost.PrepareService(ctx, root, settings, args, "ledger")
-	preparationErrors := map[string]error{"auth": authPreparationErr, "ledger": ledgerPreparationErr}
+	services := factory.Prepare(ctx, root, settings, args)
 	root.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {
-		if err := preparationErrors[pluginhost.ServiceCommand(cmd)]; err != nil {
+		if err := services.PreparationError(cmd); err != nil {
 			return err
 		}
 		return command.ConfigureOutput(cmd, settings.Output, settings.Color)
 	}
 	command.InstallHelp(root, &settings.Color)
 	root.AddGroup(&cobra.Group{ID: "cloud", Title: "Cloud:"}, &cobra.Group{ID: "modules", Title: "Modules:"}, &cobra.Group{ID: "profiles", Title: "Profiles:"}, &cobra.Group{ID: "plugins", Title: "Plugins:"})
-	resolve := pluginhost.RequestResolver(root, settings)
 	root.AddCommand(version.NewCommand(), profiles.NewCommand(settings), login.NewCommand(settings), login.NewLogoutCommand(settings))
 	root.AddCommand(plugins.NewCommand(settings))
-	registry := &plugin.Registry{}
-	factories := []plugin.Factory{cloudplugin.New}
-	if ledgerFactory != nil {
-		factories = append(factories, ledgerFactory)
-	} else {
-		root.AddCommand(pluginhost.UnpreparedServiceCommand("ledger", "Ledger", ledgerPreparationErr))
-	}
-	if authFactory != nil {
-		factories = append(factories, authFactory)
-	} else {
-		root.AddCommand(pluginhost.UnpreparedServiceCommand("auth", "Auth", authPreparationErr))
-	}
-	for _, factory := range factories {
-		if err := registry.Register(context.WithoutCancel(ctx), factory(nil), factory); err != nil {
-			panic(err) // Embedded metadata is a build-time invariant, never user input.
-		}
-	}
-	if err := plugin.NewCommandWithRequest(registry, resolve).AddTo(root); err != nil {
+	if err := services.AddTo(root, settings); err != nil {
 		panic(err)
 	}
 	if err := cloudtools.AddTo(root, settings); err != nil {
