@@ -11,6 +11,7 @@ require (
 	github.com/charmbracelet/x/term v0.2.2
 	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/formancehq/auth/pkg/client v0.0.0-20251106135031-5373fa4eaeba
+	github.com/formancehq/ledger/misc/fctl-plugin v0.0.0-20261009143954-060fabc5af8d
 	github.com/go-jose/go-jose/v4 v4.1.4
 	github.com/gofrs/flock v0.12.1
 	github.com/spf13/cobra v1.10.2
@@ -52,7 +53,6 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/ericlagergren/decimal v0.0.0-20221120152707-495c53812d05 // indirect
 	github.com/formancehq/fctl/pkg/pluginsdk v0.0.0-20261009101655-a5cfb893d64d
-	github.com/formancehq/ledger/fctl-plugin v0.0.0-20261009103441-885e135ef98a
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
 	github.com/mattn/go-runewidth v0.0.20 // indirect
