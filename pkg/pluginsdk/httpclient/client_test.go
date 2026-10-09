@@ -43,6 +43,36 @@ func TestRequestPreservesPathQueryAndNumbers(t *testing.T) {
 	}
 }
 
+//nolint:gocognit // Both explicit merge-patch and default JSON paths must preserve caller headers.
+func TestExplicitJSONMediaType(t *testing.T) {
+	t.Parallel()
+	for _, contentType := range []string{"application/merge-patch+json", "application/json"} {
+		t.Run(contentType, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Header.Get("Content-Type") != contentType || r.Header.Get("Accept") != "application/json" {
+					t.Errorf("headers=%v", r.Header)
+				}
+				w.WriteHeader(http.StatusNoContent)
+			}))
+			t.Cleanup(server.Close)
+			client, err := httpclient.New(server.URL, server.Client())
+			if err != nil {
+				t.Fatal(err)
+			}
+			headers := http.Header{}
+			if contentType != "application/json" {
+				headers.Set("Content-Type", contentType)
+			}
+			if _, err := client.Do(t.Context(), http.MethodPatch, "/resource", nil, json.RawMessage(`{"value":null}`), headers); err != nil {
+				t.Fatal(err)
+			}
+			if contentType == "application/json" && headers.Get("Content-Type") != "" {
+				t.Fatal("request mutated caller headers")
+			}
+		})
+	}
+}
+
 func TestErrorsDoNotRetry(t *testing.T) {
 	t.Parallel()
 	for _, status := range []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusServiceUnavailable} {
