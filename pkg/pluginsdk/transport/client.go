@@ -21,6 +21,8 @@ import (
 	"github.com/hashicorp/go-hclog"
 	goplugin "github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/formancehq/fctl/pkg/pluginsdk"
 	"github.com/formancehq/fctl/pkg/pluginsdk/httpclient"
@@ -222,6 +224,16 @@ func (c *Client) rpcError(ctx context.Context, err error) error {
 	}
 	if c.lifetime.Err() != nil {
 		return ErrClosed
+	}
+	// The peer can report cancellation before the local context timer fires.
+	// Both transport cancellation statuses must terminate and reap the plugin.
+	code := status.Code(err)
+	if code == codes.DeadlineExceeded || code == codes.Canceled {
+		c.close()
+		if code == codes.DeadlineExceeded {
+			return context.DeadlineExceeded
+		}
+		return context.Canceled
 	}
 	return err
 }
