@@ -1,6 +1,8 @@
 # Interactive command input
 
-On a terminal, commands ask for missing required values. `fctl ledger create`
+On a terminal, commands ask for missing required values. Ledger examples
+require an installed matching external plugin; Ledger is not bundled with fctl.
+`fctl ledger create`
 opens a form; `fctl ledger stats` lists available ledgers; `fctl cloud stack create`
 selects an organization, asks for a name, then lists regions and their exact
 catalog versions. Searchable menus show resource names and IDs. Forms use one
@@ -52,7 +54,9 @@ pages and 10,000 unique choices; it never silently truncates the menu.
 
 Choice fields accept dot paths such as `metadata.name` and `status.phase`.
 An exact field name takes precedence when the response has a literal dotted key.
-Connectivity uses this for resource names and follows its opaque cursor pages.
+The former Connectivity adapter used this for resource names and opaque cursor
+pages. Connectivity commands are currently absent pending independent plugin
+distribution and later integration.
 
 A preferred version prefix orders suggestions; it does not select a fallback
 version without user input. V4 versions appear first in the stack create menu.

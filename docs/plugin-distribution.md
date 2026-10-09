@@ -1,8 +1,18 @@
 # External service plugin distribution
 
-Auth runs only as an external native executable. Ledger can use an external
-executable and retains its embedded fallback. Their product modules own their
-commands and executable entry points:
+Auth and Ledger run only as external native executables. Their generic host
+loader and plugin management already exist; the local Ledger embedded fallback
+has been removed. Auth official discovery is available. No official Ledger
+release is currently advertised in the catalogue: a future Ledger product
+release must publish executables and promote their entries. Trusted local
+Ledger builds can be installed in the meantime.
+
+Connectivity commands are absent after removal of the local adapter. An
+independently distributed Connectivity plugin must be integrated later;
+`plugins install/sync/show` currently support only Auth and Ledger. Host
+connection settings are preserved. These changes do not complete the migration.
+
+The Auth and Ledger product modules own their commands and executable entry points:
 
 | Service | Product module | Executable |
 | --- | --- | --- |
@@ -14,9 +24,9 @@ is a separate publication step and does not require publishing private sources.
 The public SDK is a separate module at
 `github.com/formancehq/fctl/pkg/pluginsdk`. Service plugins depend on this SDK;
 they do not depend on fctl's commands, profiles, forms or authentication code.
-Ledger embedded and external providers use the same product commands. Auth
-commands are never compiled into fctl: there is no `plugins/auth` adapter or
-host compile-time dependency on the Auth product module.
+Auth and Ledger commands are not compiled into fctl through local service
+adapters. Their command manifests come from separately installed executables;
+Cloud remains embedded.
 
 ## Try a local executable
 
@@ -43,7 +53,8 @@ Installation discovers the version through the selected Ledger's `/_info` and
 rejects a binary whose manifest targets another version. Authentication and
 debug traces still belong to fctl. Local endpoints support `none` and
 `client-credentials`, and Cloud stacks use the existing Cloud profile.
-Terminal forms and tables work with both providers. No plugin-specific flags
+Terminal forms and tables use the external plugin manifest. No plugin-specific
+flags
 are added to ordinary Ledger commands.
 
 ## Auth installation
@@ -96,8 +107,10 @@ remain usable with Auth offline. Without that cache, `fctl auth --help` shows
 only a placeholder guiding `plugins sync --service auth` or
 `plugins install --service auth`; it never contacts a catalogue or Auth.
 
-Once an exact-version release is published and promoted in the official
-catalogue, sync it explicitly. These commands force the official catalogue,
+Auth official discovery and explicit sync are available for matching published
+versions; the catalogue advertises Auth `2.5.2`, revision `1`. Sync it explicitly
+for a target running that exact version. These commands force the official
+catalogue,
 even if an environment override or saved custom catalogue exists:
 
 ```sh
@@ -109,8 +122,9 @@ fctl plugins sync --service auth \
   --organization ORGANIZATION_ID --stack STACK_ID
 ```
 
-These are future official-availability examples, not evidence of a currently
-published Auth release. Local installation works independently of publication.
+These examples require a matching published Auth version on the target.
+See [Auth release availability](#auth-release-availability) for the recorded
+publication evidence. Local installation works independently of publication.
 For a custom test catalogue, pass `--catalogue ./registry.yaml` with the same
 Auth target flags.
 
@@ -153,6 +167,10 @@ is the public `registry.yaml` in `formancehq/fctl-plugin-registry`:
 https://raw.githubusercontent.com/formancehq/fctl-plugin-registry/main/registry.yaml
 ```
 
+The default Ledger sync below requires a future official Ledger release.
+Today, use a trusted matching custom catalogue or the local installation
+procedure above; a missing official entry cannot prepare commands.
+
 ```sh
 fctl plugins sync --profile local
 fctl plugins sync --catalogue ./registry.yaml --profile local
@@ -166,19 +184,21 @@ no exact matching Auth release fails explicitly before command execution. Auth
 never falls back to an embedded provider. A prepared target uses its installed
 executable and cached metadata; ordinary execution still checks its version.
 
-Ledger retains its embedded provider for an unprepared target when the official
-catalogue is temporarily unavailable or has no matching release. Invalid
-metadata remains an error. An empty catalogue does not query the Ledger version
-or trigger Ledger target selection.
+Ledger has no embedded provider. The existing external loader and management
+commands can use a trusted installed executable or a matching custom catalogue.
+The official catalogue currently has no Ledger release, so official sync cannot
+prepare Ledger commands. Install a trusted exact-version binary until the Ledger
+product publishes and promotes a release. Missing releases or unavailable
+metadata do not restore an embedded command tree.
 
 Set `FCTL_PLUGIN_CATALOGUE` to override the catalogue used for automatic
 preparation. Explicit `plugins sync` prefers `--catalogue`, then the environment
 variable, then the selected service's saved catalogue, then the official URL.
 The core reads `/_info`, selects the exact version and current platform, checks
 protocol compatibility, downloads the digest-addressed artifact and verifies
-the manifest, config and executable checksums. A missing exact release fails
-for all Auth execution requiring discovery, explicit sync, custom catalogues
-and already prepared external targets.
+the manifest, config and executable checksums. An exact matching release is
+required for discovery or sync. A trusted local
+installation must also match the target version; there is no embedded fallback.
 The stack supplies its service version; it never
 supplies an executable URL.
 
@@ -210,7 +230,7 @@ fctl plugins sync --catalogue ./catalogue.json --profile local \
 
 Help and completion read the selected target's cached manifest, including its
 full command tree and declarative forms, without network access or a running
-plugin process. A fresh Auth target exposes only sync/install guidance; help
+plugin process. A fresh Auth or Ledger target exposes only sync/install guidance; help
 and completion do not trigger automatic discovery. Prepared commands can use
 cached executables without downloading from the registry again. Service operations still need
 access to the selected service and its version endpoint.
@@ -218,13 +238,15 @@ access to the selected service and its version endpoint.
 ## Validation
 
 `just pc` checks the core and SDK modules. `just tests` runs both race suites.
-The CLI tests publish actual Ledger executables and public-SDK Auth fixture
-executables to HTTP OCI test registries on localhost,
+The CLI tests publish synthetic public-SDK Ledger and Auth fixture executables
+to HTTP OCI test registries on localhost,
 download and execute two service versions, retain and upgrade plugin revisions,
 and check offline help and completion. Auth tests also reject mismatched catalogue
 identity and exact versions before downloads or lock writes, and verify independent
-Auth and Ledger locks. Product integration must separately validate the Auth executable
-built from its product module. Additional tests cover host OAuth2 and
+Auth and Ledger locks. These fixtures validate the host transport and rendering,
+including explicit partial-result errors; they do not validate Ledger business
+behavior. Opt-in product tests separately exercise the independently published
+Auth executable. Additional tests cover host OAuth2 and
 debug redaction, exact large JSON integers, partial bulk errors, cancellation,
 endpoint restrictions, corrupt downloads and concurrent cache installation.
 

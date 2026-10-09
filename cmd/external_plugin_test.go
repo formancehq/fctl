@@ -3,7 +3,9 @@ package cmd_test
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -14,29 +16,46 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/formancehq/fctl/pkg/pluginsdk/transport"
+
 	"github.com/formancehq/fctl/v4/cmd"
+	"github.com/formancehq/fctl/v4/internal/pluginmanager"
 )
 
 func buildExternalLedger(t *testing.T, version string) string {
 	t.Helper()
 	dir := t.TempDir()
+	// A synthetic public-SDK plugin exercises host transport and rendering without
+	// importing the Ledger product implementation.
 	source := fmt.Sprintf(`package main
 import (
  "context"
+ "fmt"
  "net/http"
+ "net/url"
  "github.com/formancehq/fctl/pkg/pluginsdk"
+ "github.com/formancehq/fctl/pkg/pluginsdk/httpclient"
  "github.com/formancehq/fctl/pkg/pluginsdk/transport"
- "github.com/formancehq/fctl/v4/plugins/ledger"
 )
-type versioned struct { pluginsdk.Plugin }
-func (p versioned) GetManifest(ctx context.Context) (pluginsdk.Manifest,error) {
- m,err:=p.Plugin.GetManifest(ctx)
- m.Version=%q
- m.Root.Short="External Ledger pilot"
- m.Root.Long="External Ledger pilot.\n"+m.Root.Long
- return m,err
+type plugin struct { client *http.Client }
+func (p *plugin) GetManifest(context.Context) (pluginsdk.Manifest,error) {
+ return pluginsdk.Manifest{Name:"ledger",Service:"ledger",Version:%q,ProtocolVersion:pluginsdk.ProtocolVersion,
+ Root:pluginsdk.CommandSpec{Use:"ledger",Target:"stack",Short:"External Ledger pilot",Flags:[]pluginsdk.FlagSpec{{Name:"ledger",Type:"string",Persistent:true}},Subcommands:[]pluginsdk.CommandSpec{
+ {Use:"list",Runnable:true},
+ {Use:"bulk",Runnable:true,Flags:[]pluginsdk.FlagSpec{{Name:"data",Type:"string",Body:true}}},
+ }}},nil
 }
-func main() { transport.Serve(func(c *http.Client) pluginsdk.Plugin { return versioned{ledger.New(c)} }) }
+func (p *plugin) Execute(ctx context.Context, req pluginsdk.ExecuteRequest) (pluginsdk.ExecuteResponse,error) {
+ client,err:=httpclient.New(req.Endpoint,p.client)
+ if err!=nil { return pluginsdk.ExecuteResponse{},err }
+ method,path,query:=http.MethodGet,"/v3/",url.Values{"pageSize":{"100"}}
+ if req.CommandPath[len(req.CommandPath)-1]=="bulk" { method=http.MethodPost;path=httpclient.Path("v3",req.Flags["ledger"],"bulk");query=nil }
+ data,err:=client.Do(ctx,method,path,query,req.Body,nil)
+ // Return an explicit fixture error alongside a result to exercise host partial output.
+ if method==http.MethodPost && err==nil { err=fmt.Errorf("synthetic partial failure") }
+ return pluginsdk.ExecuteResponse{Data:data},err
+}
+func main() { transport.Serve(func(client *http.Client) pluginsdk.Plugin { return &plugin{client:client} }) }
 `, version)
 	path := filepath.Join(dir, "main.go")
 	if err := os.WriteFile(path, []byte(source), 0o600); err != nil {
@@ -111,6 +130,13 @@ func externalLedgerAPI(t *testing.T, mode string, mutations *atomic.Int32, versi
 		case "/gateway/ledger/v3/":
 			externalFixtureResponse(t, w, `{"data":[{"name":"books","createdAt":"2026-10-09T00:00:00Z"}]}`)
 		case "/gateway/ledger/v3/books/bulk":
+			if r.Method != http.MethodPost {
+				t.Errorf("mutation method = %s", r.Method)
+			}
+			body, err := io.ReadAll(r.Body)
+			if err != nil || !bytes.Equal(body, []byte(externalBulkBody)) {
+				t.Errorf("host changed request JSON: %s %v", body, err)
+			}
 			mutations.Add(1)
 			externalFixtureResponse(t, w, `{"data":[{"responseType":"ERROR","errorCode":"TEST","id":90071992547409930001}]}`)
 		default:
@@ -155,9 +181,12 @@ func testExternalLedgerRead(t *testing.T, args []string) {
 		t.Fatal("debug trace disclosed host credentials")
 	}
 }
+
+const externalBulkBody = `[{"action":"CREATE_TRANSACTION","data":{"postings":[{"source":"world","destination":"bank","amount":9007199254740993,"asset":"USD/2"}]}}]`
+
 func testExternalLedgerBulk(t *testing.T, args []string, mutations *atomic.Int32, version *atomic.Value) {
 	t.Helper()
-	bulk := append(append([]string{}, args...), "ledger", "--ledger", "books", "bulk", "--data", `[{"action":"CREATE_TRANSACTION","data":{"postings":[{"source":"world","destination":"bank","amount":9007199254740993,"asset":"USD/2"}]}}]`)
+	bulk := append(append([]string{}, args...), "ledger", "--ledger", "books", "bulk", "--data", externalBulkBody)
 	out, _, err := executeExternalCLI(t, bulk)
 	if err == nil || !strings.Contains(out, "90071992547409930001") || mutations.Load() != 1 || !json.Valid([]byte(out)) {
 		t.Fatalf("partial results/exact integer/no retry: %s %v mutations=%d", out, err, mutations.Load())
@@ -177,7 +206,35 @@ func testExternalOfflineMetadata(t *testing.T, args []string) {
 	}
 	completion := append(append([]string{}, args...), "__complete", "ledger", "")
 	out, trace, err = executeExternalCLI(t, completion)
-	if err != nil || !strings.Contains(out, "transactions") {
+	if err != nil || !strings.Contains(out, "bulk") {
 		t.Fatalf("offline cached completion: %s %s %v", out, trace, err)
+	}
+}
+
+// Prepare executable metadata without contacting the service or consuming host
+// authentication counters. The service itself still verifies the version at runtime.
+func cacheDistributionLedger(t *testing.T, dir string, target pluginmanager.Target) {
+	t.Helper()
+	manager, err := pluginmanager.New(filepath.Join(dir, "plugins"), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := manager.Load(target, "ledger"); err == nil {
+		return
+	} else if !errors.Is(err, pluginmanager.ErrNotInstalled) {
+		t.Fatal(err)
+	}
+	binary := buildExternalLedger(t, "3.0.0")
+	instance, err := transport.Open(t.Context(), binary, nil, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifest, err := instance.GetManifest(t.Context())
+	closeErr := instance.Close()
+	if err != nil || closeErr != nil {
+		t.Fatalf("inspect Ledger fixture: %v %v", err, closeErr)
+	}
+	if _, err := manager.InstallLocal(t.Context(), binary, target, manifest); err != nil {
+		t.Fatal(err)
 	}
 }

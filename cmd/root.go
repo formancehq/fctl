@@ -18,8 +18,6 @@ import (
 	"github.com/formancehq/fctl/v4/internal/connection"
 	"github.com/formancehq/fctl/v4/internal/plugin"
 	cloudplugin "github.com/formancehq/fctl/v4/plugins/cloud"
-	"github.com/formancehq/fctl/v4/plugins/connectivity"
-	"github.com/formancehq/fctl/v4/plugins/ledger"
 )
 
 func NewRootCommand() *cobra.Command {
@@ -28,7 +26,7 @@ func NewRootCommand() *cobra.Command {
 
 // NewRootCommandWithArgs selects installed plugin metadata before Cobra parses
 // service flags. Help and completion read cached metadata without starting a
-// plugin process. Auth is external-only; an unprepared target exposes an
+// plugin process. Auth and Ledger are external-only; an unprepared target exposes an
 // installation guide instead of an embedded implementation.
 func NewRootCommandWithArgs(ctx context.Context, args []string) *cobra.Command {
 	return newRootCommand(ctx, args)
@@ -42,7 +40,7 @@ func newRootCommand(ctx context.Context, args []string) *cobra.Command {
 		Version:       version.Version,
 		SilenceErrors: true,
 		SilenceUsage:  true,
-		Example:       "  fctl login\n  fctl cloud stack list --organization ORGANIZATION_ID\n  fctl ledger list --organization ORGANIZATION_ID --stack STACK_ID\n  fctl ledger list -o json",
+		Example:       "  fctl login\n  fctl cloud stack list --organization ORGANIZATION_ID\n  fctl auth clients list --organization ORGANIZATION_ID --stack STACK_ID",
 	}
 	root.SetContext(ctx)
 	settings := &connection.Settings{}
@@ -63,14 +61,16 @@ func newRootCommand(ctx context.Context, args []string) *cobra.Command {
 	root.AddCommand(version.NewCommand(), profiles.NewCommand(settings), login.NewCommand(settings), login.NewLogoutCommand(settings))
 	root.AddCommand(newPluginsCommand(settings))
 	registry := &plugin.Registry{}
-	if ledgerFactory == nil {
-		ledgerFactory = ledger.New
+	factories := []plugin.Factory{cloudplugin.New}
+	if ledgerFactory != nil {
+		factories = append(factories, ledgerFactory)
+	} else {
+		root.AddCommand(unpreparedServiceCommand("ledger", "Ledger", ledgerPreparationErr))
 	}
-	factories := []plugin.Factory{cloudplugin.New, ledgerFactory, connectivity.New}
 	if authFactory != nil {
 		factories = append(factories, authFactory)
 	} else {
-		root.AddCommand(unpreparedAuthCommand(authPreparationErr))
+		root.AddCommand(unpreparedServiceCommand("auth", "Auth", authPreparationErr))
 	}
 	for _, factory := range factories {
 		if err := registry.Register(context.WithoutCancel(ctx), factory(nil), factory); err != nil {
@@ -87,7 +87,7 @@ func newRootCommand(ctx context.Context, args []string) *cobra.Command {
 		switch cmd.Name() {
 		case "cloud":
 			cmd.GroupID = "cloud"
-		case "auth", "ledger", "connectivity":
+		case "auth", "ledger":
 			cmd.GroupID = "modules"
 		case "profiles", "login", "logout":
 			cmd.GroupID = "profiles"

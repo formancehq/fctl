@@ -1,8 +1,10 @@
 # Formance Control CLI (fctl v4)
 
 `fctl` is the Formance command-line interface (repository profile: CLI).
-The v4 implementation includes Cloud, Auth, Ledger and Connectivity plugins with a shared
-connection boundary for local services, OAuth2 client credentials and Cloud login.
+The v4 implementation embeds Cloud and loads Auth and Ledger as external
+plugins, with a shared connection boundary for local services, OAuth2 client
+credentials and Cloud login. Connectivity commands are absent while their
+independent plugin is prepared.
 The Go module is `github.com/formancehq/fctl/v4`.
 
 ## Current commands
@@ -12,29 +14,30 @@ go run . --help
 go run . version
 go run . --version
 go run . completion bash
-go run . --auth-mode none --ledger-url http://localhost:9000 ledger list
 go run . profiles --help
 go run . login
 go run . cloud organizations list
 go run . cloud stack list --organization ORG_ID
-go run . --organization ORG_ID --stack STACK_ID ledger list
+go run . --organization ORG_ID --stack STACK_ID plugins sync --service auth
+go run . --organization ORG_ID --stack STACK_ID auth clients list
 ```
 
 Development builds report `v4.0.0-dev`. Release builds receive their version,
 commit and build date through GoReleaser. No v4 release is published by this
 source change.
 
-The Auth module uses its public Go client. Ledger targets `release/v3.0`,
-with HTTP business routes under `/v3`. See [module commands](docs/modules.md)
-and [profiles and authentication](docs/profiles.md). Cloud management lives under
-`cloud`, with stack administration under `cloud stack`. See the
-[Cloud command boundaries](docs/cloud.md) for restored proxy, MCP and token
-helpers, and experimental Deploy Apps. Connectivity covers the connector catalogue,
-versions and instance lifecycle; see [Connectivity](docs/connectivity.md).
+The independently published Auth plugin owns its API client and command contract.
+Auth 2.5.2 revision 1 is available through the official catalogue. Targets must
+run that exact service version. Ledger retains its external loader, but has no
+embedded provider or advertised official release yet; install a trusted
+product-built executable matching the deployed version before using its commands.
+See [module commands](docs/modules.md), [native plugin distribution](docs/plugin-distribution.md)
+and [profiles and authentication](docs/profiles.md).
 
-`ledger list` returns all ledgers. Account, transaction and log lists continue
-with `--after` using the last address or ID; only Ledger index inspection uses
-opaque `--cursor` tokens. See [Ledger pagination](docs/modules.md#ledger).
+Cloud management lives under `cloud`, with stack administration under
+`cloud stack`. See [Cloud command boundaries](docs/cloud.md) for proxy, MCP,
+token helpers and experimental Deploy Apps. See [Connectivity](docs/connectivity.md)
+for the deferred plugin migration and preserved connection settings.
 
 The v3 command tree and profile store are not migrated automatically. Users of
 v3 scripts must adapt commands and request schemas or retain a v3 binary.
@@ -57,7 +60,7 @@ See [interactive command input](docs/interaction.md).
 
 Plugins expose manifests and execution through a public SDK. The core adapts
 their manifests to Cobra; service plugins do not depend on Cobra or core internals.
-See the [plugin contract](docs/plugins.md) and [external Ledger pilot](docs/plugin-distribution.md). This
+See the [plugin contract](docs/plugins.md) and [native plugin distribution](docs/plugin-distribution.md). This
 CLI uses explicit composition without Fx. Proxy and MCP commands run until
 cancellation; they use the host's connection and authentication boundary.
 

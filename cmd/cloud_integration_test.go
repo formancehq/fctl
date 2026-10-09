@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -184,11 +185,13 @@ func TestCloudCLIRefreshSavedAfterCancellation(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 	defer cancel()
 	f.cancelExchange.Store(&cancel)
-	root := cmd.NewRootCommand()
+	f.cacheLedger(t, dir)
+	args := []string{"--no-browser", "--config-dir", dir, "--profile", "cloud", "ledger", "list"}
+	root := cmd.NewRootCommandWithArgs(ctx, args)
 	var stdout, stderr bytes.Buffer
 	root.SetOut(&stdout)
 	root.SetErr(&stderr)
-	root.SetArgs([]string{"--no-browser", "--config-dir", dir, "--profile", "cloud", "ledger", "list"})
+	root.SetArgs(args)
 	err := root.ExecuteContext(ctx)
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("command error = %v, want cancellation during Stack exchange", err)
@@ -422,6 +425,12 @@ func (f *cliCloudFixture) registerTarget(t *testing.T, mux *http.ServeMux, targe
 		writeCLICloudJSON(t, w, map[string]any{"issuer": issuer, "token_endpoint": issuer + "/token"})
 	})
 	mux.HandleFunc("POST /"+target.stack+"/api/auth/token", func(w http.ResponseWriter, r *http.Request) { f.exchange(t, w, r, target) })
+	mux.HandleFunc("GET /"+target.stack+"/api/ledger/_info", func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer "+target.stackToken {
+			t.Error("Ledger discovery used another target token")
+		}
+		writeCLICloudJSON(t, w, map[string]string{"version": "3.0.0"})
+	})
 	mux.HandleFunc("GET /"+target.stack+"/api/ledger/v3/{$}", func(w http.ResponseWriter, r *http.Request) { f.service(t, w, r, target, &f.ledgers) })
 	mux.HandleFunc("GET /"+target.stack+"/api/auth/clients", func(w http.ResponseWriter, r *http.Request) { f.service(t, w, r, target, &f.clients) })
 	mux.HandleFunc("GET /"+target.stack+"/api/auth/_info", func(w http.ResponseWriter, r *http.Request) {
@@ -604,6 +613,9 @@ func writeCLICloudJSON(t *testing.T, w http.ResponseWriter, value any) {
 
 func (f *cliCloudFixture) run(t *testing.T, dir string, args ...string) (string, string) {
 	t.Helper()
+	if slices.Contains(args, "ledger") {
+		f.cacheLedger(t, dir)
+	}
 	out, stderr, err := executeRoot(t, append([]string{"--no-browser", "--config-dir", dir}, args...)...)
 	f.assertNoSecrets(t, out+stderr)
 	if err != nil {
@@ -735,6 +747,7 @@ func (f *cliCloudFixture) assertDeviceInstructions(t *testing.T, out, stderr str
 
 func (f *cliCloudFixture) assertTargetRefused(t *testing.T, dir string, flags []string) {
 	t.Helper()
+	f.cacheLedger(t, dir)
 	before := [3]int32{f.devices.Load(), f.exchanges.Load(), f.ledgers.Load()}
 	args := append([]string{"--no-browser", "--config-dir", dir}, flags...)
 	out, stderr, err := executeRoot(t, append(args, "ledger", "list")...)
@@ -784,6 +797,7 @@ func (f *cliCloudFixture) assertCounts(t *testing.T, devices, polls, exchanges, 
 
 func (f *cliCloudFixture) assertLoggedOut(t *testing.T, dir string) {
 	t.Helper()
+	f.cacheLedger(t, dir)
 	before := f.requests.Load()
 	for _, args := range [][]string{{"ledger", "list"}, {"auth", "clients", "list"}} {
 		out, stderr, err := executeRoot(t, append([]string{"--no-browser", "--config-dir", dir}, args...)...)
@@ -816,4 +830,11 @@ func readCLICloudData(t *testing.T, dir string) []byte {
 		t.Fatal(err)
 	}
 	return data
+}
+
+func (f *cliCloudFixture) cacheLedger(t *testing.T, dir string) {
+	t.Helper()
+	for _, target := range f.targets {
+		cacheDistributionLedger(t, dir, pluginmanager.Target{Profile: "cloud", Organization: target.organization, Stack: target.stack, Endpoint: f.issuer()})
+	}
 }

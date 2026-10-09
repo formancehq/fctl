@@ -10,8 +10,6 @@ import (
 	"github.com/formancehq/fctl/v4/cmd"
 	"github.com/formancehq/fctl/v4/internal/plugin"
 	cloudplugin "github.com/formancehq/fctl/v4/plugins/cloud"
-	"github.com/formancehq/fctl/v4/plugins/connectivity"
-	"github.com/formancehq/fctl/v4/plugins/ledger"
 )
 
 func validationInteractionManifest() pluginsdk.Manifest {
@@ -340,19 +338,22 @@ func sharedAlternativeInputs(manifest *pluginsdk.Manifest) {
 func TestInteractionAllEmbeddedManifestsRegisterAndRootStarts(t *testing.T) {
 	t.Parallel()
 	registry := &plugin.Registry{}
-	for _, factory := range []plugin.Factory{cloudplugin.New, ledger.New, connectivity.New} {
+	for _, factory := range []plugin.Factory{cloudplugin.New} {
 		if err := registry.Register(t.Context(), factory(nil), factory); err != nil {
 			t.Fatalf("embedded manifest registration failed: %v", err)
 		}
 	}
-	if len(registry.List()) != 3 {
+	if len(registry.List()) != 1 {
 		t.Fatal("an embedded manifest was not registered")
 	}
 	root := cmd.NewRootCommand()
-	for _, name := range []string{"auth", "cloud", "ledger", "connectivity"} {
+	for _, name := range []string{"auth", "cloud", "ledger"} {
 		leaf, _, err := root.Find([]string{name})
 		if err != nil || leaf == root {
 			t.Fatalf("root command did not attach %s: %v", name, err)
 		}
+	}
+	if leaf, _, err := root.Find([]string{"connectivity"}); err == nil && leaf != root {
+		t.Fatal("removed Connectivity root is still attached")
 	}
 }

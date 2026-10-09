@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/formancehq/fctl/v4/cmd"
+	"github.com/formancehq/fctl/v4/internal/pluginmanager"
 )
 
 const presentationPayload = `{"data":[{"id":"ledger-1","name":"books","amount":90071992547409930001}],"hasMore":false,"next":"opaque-next"}`
@@ -22,6 +23,10 @@ const presentationPayload = `{"data":[{"id":"ledger-1","name":"books","amount":9
 func presentationLedgerServer(t *testing.T) *httptest.Server {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/prefix/_info" {
+			writeCLICloudJSON(t, w, map[string]string{"version": "3.0.0"})
+			return
+		}
 		if r.Method != http.MethodGet || r.URL.EscapedPath() != "/prefix/v3/" {
 			t.Errorf("unexpected presentation request: %s %s", r.Method, r.URL.RequestURI())
 		}
@@ -53,7 +58,9 @@ func TestPresentationCLINonTerminalJSONContract(t *testing.T) {
 		{"auto buffer is JSON", []string{"-o", "auto", "--color", "always"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			args := append([]string{"--config-dir", t.TempDir(), "--auth-mode", "none", "--ledger-url", server.URL + "/prefix"}, tc.flags...)
+			dir := t.TempDir()
+			cacheDistributionLedger(t, dir, pluginmanager.Target{Endpoint: server.URL + "/prefix"})
+			args := append([]string{"--config-dir", dir, "--auth-mode", "none", "--ledger-url", server.URL + "/prefix"}, tc.flags...)
 			out, stderr, err := executeRoot(t, append(args, "ledger", "list")...)
 			if err != nil || stderr != "" || out != want.String()+"\n" || strings.Contains(out, "\x1b") {
 				t.Fatalf("machine JSON changed: stdout=%q stderr=%q err=%v", out, stderr, err)
@@ -65,7 +72,9 @@ func TestPresentationCLINonTerminalJSONContract(t *testing.T) {
 func TestPresentationCLITableColorIsExplicit(t *testing.T) {
 	t.Parallel()
 	server := presentationLedgerServer(t)
-	args := []string{"--config-dir", t.TempDir(), "--auth-mode", "none", "--ledger-url", server.URL + "/prefix", "-otable"}
+	dir := t.TempDir()
+	cacheDistributionLedger(t, dir, pluginmanager.Target{Endpoint: server.URL + "/prefix"})
+	args := []string{"--config-dir", dir, "--auth-mode", "none", "--ledger-url", server.URL + "/prefix", "-otable"}
 	plain, stderr, err := executeRoot(t, append(args, "--color", "never", "ledger", "list")...)
 	if err != nil || stderr != "" || strings.Contains(plain, "\x1b") || json.Valid([]byte(plain)) {
 		t.Fatalf("plain table: stdout=%q stderr=%q err=%v", plain, stderr, err)
@@ -93,8 +102,10 @@ func TestPresentationCLIRejectsOptionsBeforeMutation(t *testing.T) {
 	t.Cleanup(server.Close)
 	for _, flags := range [][]string{{"-o", "yaml"}, {"--output", ""}, {"--color", "invalid"}, {"--color", ""}} {
 		t.Run(strings.Join(flags, " "), func(t *testing.T) {
-			args := append([]string{"--config-dir", t.TempDir(), "--auth-mode", "none", "--ledger-url", server.URL}, flags...)
-			args = append(args, "ledger", "--ledger", "books", "transactions", "create", "--data", `{"postings":[{"source":"world","destination":"users:1","asset":"USD/2","amount":1}]}`)
+			dir := t.TempDir()
+			cacheDistributionLedger(t, dir, pluginmanager.Target{Endpoint: server.URL})
+			args := append([]string{"--config-dir", dir, "--auth-mode", "none", "--ledger-url", server.URL}, flags...)
+			args = append(args, "ledger", "--ledger", "books", "bulk", "--data", `{"postings":[{"source":"world","destination":"users:1","asset":"USD/2","amount":1}]}`)
 			out, stderr, err := executeRoot(t, args...)
 			if err == nil || out != "" || stderr != "" || requests.Load() != 0 {
 				t.Fatalf("invalid presentation reached service: requests=%d stdout=%q stderr=%q err=%v", requests.Load(), out, stderr, err)

@@ -326,8 +326,8 @@ func TestLedgerLoaderCompatibility(t *testing.T) {
 	if err := validateLedgerManifest(t.Context(), root, loaderManifest("ledger")); err != nil {
 		t.Fatal(err)
 	}
-	if factory, err := prepareLedgerPlugin(t.Context(), root, settings, nil); err != nil || factory != nil {
-		t.Fatalf("embedded-only legacy root: %v", err)
+	if factory, err := prepareLedgerPlugin(t.Context(), root, settings, nil); err != nil || factory == nil {
+		t.Fatalf("cached external Ledger root: %v", err)
 	}
 	client, err := api.New("https://ledger.example", &http.Client{Transport: discoveryTransport(func(*http.Request) (*http.Response, error) {
 		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(`{"version":"v1.0.0"}`))}, nil
@@ -337,5 +337,48 @@ func TestLedgerLoaderCompatibility(t *testing.T) {
 	}
 	if version, err := ledgerServiceVersion(t.Context(), client); err != nil || version != "1.0.0" {
 		t.Fatalf("legacy version: %s %v", version, err)
+	}
+}
+
+func TestLedgerLoaderNilArgsUsesCachedMetadataOrPlaceholder(t *testing.T) {
+	root, settings := loaderSettings(t)
+	loaderFlag(t, root, "ledger-url", "https://ledger.example")
+	t.Setenv("FCTL_CONFIG_DIR", settings.Directory)
+	t.Setenv("FCTL_AUTH_MODE", "none")
+	t.Setenv("FCTL_LEDGER_URL", "https://ledger.example")
+	t.Setenv("FCTL_PLUGIN_CATALOGUE", "https://invalid.example/catalogue")
+	base := http.DefaultTransport
+	http.DefaultTransport = discoveryTransport(func(request *http.Request) (*http.Response, error) {
+		t.Fatalf("nil-args Ledger metadata accessed network: %s", request.URL)
+		return nil, context.Canceled
+	})
+	t.Cleanup(func() { http.DefaultTransport = base })
+
+	command := NewRootCommand()
+	ledger, _, err := command.Find([]string{"ledger"})
+	if err != nil || ledger == command || ledger.HasSubCommands() {
+		t.Fatalf("uncached Ledger must expose only a placeholder: %v", err)
+	}
+	var output bytes.Buffer
+	command.SetOut(&output)
+	command.SetArgs([]string{"ledger", "--help"})
+	if err := command.ExecuteContext(t.Context()); err != nil || !strings.Contains(output.String(), "plugins sync --service ledger") {
+		t.Fatalf("placeholder help: %s %v", output.String(), err)
+	}
+
+	manager, err := pluginManager(settings, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	installLoaderFixture(t, manager, pluginmanager.Target{Endpoint: "https://ledger.example"}, "ledger")
+	for _, args := range [][]string{{"ledger", "--help"}, {"__complete", "ledger", ""}} {
+		command = NewRootCommand()
+		output.Reset()
+		command.SetOut(&output)
+		command.SetErr(&output)
+		command.SetArgs(args)
+		if err := command.ExecuteContext(t.Context()); err != nil || !strings.Contains(output.String(), "probe") {
+			t.Fatalf("nil-args cached Ledger %v: %s %v", args, output.String(), err)
+		}
 	}
 }

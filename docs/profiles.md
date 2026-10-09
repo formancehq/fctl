@@ -2,7 +2,12 @@
 
 The CLI supports standalone service endpoints and Stack gateway endpoints.
 All service commands use the same connection boundary. They do not require a
-Cloud profile when accessing a local service.
+Cloud profile when accessing a local service. Auth and Ledger examples require
+a matching external plugin. Official discovery exists for Auth; Ledger currently
+requires a trusted local executable or custom catalogue because its official
+product release is still pending. Connection settings alone do not install
+commands. Connectivity endpoint settings remain available while its service
+commands are absent pending independent distribution and later integration.
 
 ## Local services without authentication
 
@@ -18,7 +23,8 @@ To use a gateway, replace the individual URLs with `--stack-url URL`.
 The CLI appends `/api/ledger`, `/api/auth` or `/api/connectivity`. For direct URLs, include any
 deployment prefix but not the service's API version: Ledger appends `/v3`.
 A configured service URL takes precedence over the gateway URL for that service.
-See [Connectivity](connectivity.md) for its standalone setup and service commands.
+See [Connectivity](connectivity.md) for preserved standalone settings and the
+historical command contract.
 
 One-off commands can pass endpoint and authentication flags directly:
 

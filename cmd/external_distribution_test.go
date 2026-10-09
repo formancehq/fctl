@@ -192,11 +192,11 @@ func TestExternalLedgerDistributionCLI(t *testing.T) {
 	registry.Close()
 	assertList() // Prepared commands need no catalogue/registry downloads.
 	version.Store("3.0.2")
-	// A new target whose service has no native release keeps the embedded provider.
+	// A new target without an exact release must fail before a service command.
 	unprepared := append([]string{}, list...)
 	unprepared[1] = t.TempDir()
-	if out, trace, err := executeExternalCLI(t, unprepared); err != nil || !strings.Contains(out, "books") || trace != "" {
-		t.Fatalf("unpublished service version must keep embedded Ledger: %s %s %v", out, trace, err)
+	if out, trace, err := executeExternalCLI(t, unprepared); err == nil || out != "" || trace != "" {
+		t.Fatalf("unpublished service version must fail without embedded Ledger: %s %s %v", out, trace, err)
 	}
 	out, _, err = executeExternalCLI(t, list)
 	if err == nil || !strings.Contains(err.Error(), "exact service version") || out != "" {

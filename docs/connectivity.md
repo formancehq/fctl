@@ -1,22 +1,30 @@
 # Connectivity plugin
 
-The embedded `plugins/connectivity` module implements all 14 operations in
+The local `plugins/connectivity` adapter has been removed. Connectivity service
+commands are absent from the current host. Independent plugin distribution and
+later host integration are still required; the Auth/Ledger plugin management
+commands do not install Connectivity today. Host connection settings remain
+available. This removal does not establish a completed migration.
+
+## Historical adapter contract
+
+The following command examples and behavior describe the former embedded
+adapter, not currently available commands. That adapter implemented all 14
+operations in
 [connectivity-api/openapi.yaml](https://github.com/formancehq/connectivity/blob/ce2324887f5b5ec4e3c2ec934ac874656d4c5348/misc/connectivity-api/openapi.yaml),
 API version `0.1.0`, pinned to commit `ce2324887f5b5ec4e3c2ec934ac874656d4c5348`.
 The repository also provides a generated client under `pkg/client/http`.
-This plugin uses the public `pluginsdk/httpclient` adapter to preserve raw
+The former plugin used the public `pluginsdk/httpclient` adapter to preserve raw
 request/response JSON, including merge-patch nulls, unknown fields and exact
 numbers, without introducing typed-model defaults such as `replicas`.
-It imports no server, Cobra, UI or core packages.
+It imported no server, Cobra, UI or core packages.
 The host owns authentication, endpoints, storage, forms and presentation.
 
-## Profiles
+## Preserved host connection settings
 
 ```bash
 fctl profiles add connectivity-local --auth-mode none \
   --connectivity-url http://localhost:8080
-fctl -p connectivity-local connectivity info
-fctl --organization ORG --stack STACK connectivity connectors list
 ```
 
 `--connectivity-url` / `FCTL_CONNECTIVITY_URL` select a standalone API base URL,
@@ -33,7 +41,14 @@ accepts `connectivity:read` or `connectivity:write` for reads and requires
 `connectivity:write` for writes. Health and info probes are public; query
 capabilities use the read authorization boundary.
 
-## Catalogue and diagnostics
+## Historical catalogue and diagnostics
+
+The former adapter accepted standalone and Cloud targets:
+
+```bash
+fctl -p connectivity-local connectivity info
+fctl --organization ORG --stack STACK connectivity connectors list
+```
 
 ```bash
 fctl connectivity info
@@ -57,7 +72,7 @@ Responses retain the cursor envelope. Continue with `cursor.next` while
 all pages. Versions retain the server's ascending order. JSON retains complete
 metadata/spec/status and exact numbers. Tables show names and reconciliation phase.
 
-## Instances
+## Historical instance commands
 
 ```bash
 fctl connectivity instances create
@@ -98,13 +113,17 @@ The CLI invents no idempotency keys and never retries writes. Read back mutation
 and inspect status; write acceptance does not prove healthy ingestion.
 Deletion maps the empty 204 response to JSON null.
 
-## Verification
+## Historical verification
 
-Local fixtures cover all routes/methods, media types, errors, cursor encoding,
+These checks describe the adapter before removal. They do not validate a
+distributed replacement. The paths below are historical references and are no
+longer present in this checkout.
+
+Local fixtures covered all routes/methods, media types, errors, cursor encoding,
 int64 precision, size limits, forms, selection and authentication boundaries.
-The pinned operation snapshot is `plugins/connectivity/testdata/operations.json`.
-An independent consumer verifies the public SDK boundary without core or UI
-dependencies. A real PTY check covers creation, resource selection, default-No
-deletion confirmation, styled forms and plain tables. Creation produces one
+The pinned operation snapshot was `plugins/connectivity/testdata/operations.json`.
+An independent consumer verified the public SDK boundary without core or UI
+dependencies. A real PTY check covered creation, resource selection, default-No
+deletion confirmation, styled forms and plain tables. Creation produced one
 write and exact JSON on stdout even with forced terminal colors.
 Deployment availability and ingestion require separate live runtime checks.

@@ -1,7 +1,8 @@
 # Plugin contract
 
-Cloud, Auth and Ledger implement `pkg/pluginsdk.Plugin`. Auth is loaded only as
-an external executable; Cloud and Ledger have embedded providers. The public SDK
+Cloud and external service plugins implement `pkg/pluginsdk.Plugin`. Cloud has
+an embedded provider; Auth and Ledger use external executables. The local
+`plugins/ledger` and `plugins/connectivity` adapters have been removed. The public SDK
 is a separate Go module, `github.com/formancehq/fctl/pkg/pluginsdk`. It has no Cobra,
 profile-store or core authentication dependency. Each plugin exposes two methods:
 
@@ -17,7 +18,9 @@ preserved. Protocol version 1 identifies this contract; it is inspired by the
 manifest/execution split in Geoffrey's [proposal](https://github.com/formancehq/fctl/pull/126).
 It is not wire-compatible with that draft's protobuf messages.
 
-An independent Go caller can use the same plugin without constructing a CLI:
+An independent Go caller can use the product-owned Ledger module
+`github.com/formancehq/ledger/misc/fctl-plugin` without constructing a CLI.
+This example requires that separate module, not a local `plugins/ledger` adapter:
 
 ```go
 p := ledger.New(authenticatedHTTPClient)
@@ -80,11 +83,16 @@ and `--out` effects; they are not connection configuration. The shared public
 HTTP client performs requests without automatic mutation retries and preserves
 JSON numbers.
 
-Cloud, Ledger and Connectivity remain available as embedded defaults. Ledger
-can replace its embedded command tree with a cached external manifest. Auth is
-external-only: the host loads its cached manifest and executable, or discovers
-and installs an exact-version release before execution. There is no embedded
-Auth fallback. Both external providers use the same two-method SDK contract,
+Cloud remains embedded. Auth and Ledger are external-only: the host loads
+cached manifests and executables through its generic loader. Auth supports
+official exact-version discovery before execution. Ledger loader and management
+support already exist, but no official Ledger release is currently in the
+catalogue; use a trusted matching local executable until a future product
+release publishes and promotes it. Neither service has an embedded fallback.
+Connectivity commands are absent until an independently distributed plugin is
+integrated later; host connection settings remain available. This removal does
+not complete the service-plugin migration. Both external providers use the
+same two-method SDK contract,
 forms, body validation, authentication and output renderer. Exactly one provider
 owns each service command root.
 

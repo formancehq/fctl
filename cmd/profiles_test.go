@@ -167,7 +167,7 @@ func TestProfileErrorsAndLoginBoundaries(t *testing.T) {
 	}
 }
 
-func TestEmbeddedLedgerAndExternalAuthUseProfile(t *testing.T) {
+func TestExternalServicesUseProfile(t *testing.T) {
 	t.Parallel()
 	server := profileServicesServer(t)
 	dir := t.TempDir()
@@ -175,6 +175,7 @@ func TestEmbeddedLedgerAndExternalAuthUseProfile(t *testing.T) {
 		t.Fatal(err)
 	}
 	cacheDistributionAuth(t, dir, pluginmanager.Target{Profile: "local", Endpoint: server.URL + "/prefix/api/auth"})
+	cacheDistributionLedger(t, dir, pluginmanager.Target{Profile: "local", Endpoint: server.URL + "/prefix/api/ledger"})
 	for _, args := range [][]string{{"ledger", "list"}, {"auth", "clients", "list"}} {
 		out, _, err := executeRoot(t, append([]string{"--config-dir", dir}, args...)...)
 		if err != nil {
@@ -195,6 +196,10 @@ func profileServicesServer(t *testing.T) *httptest.Server {
 		}
 		if r.Method == http.MethodGet && r.URL.Path == "/prefix/api/auth/_info" {
 			writeCLICloudJSON(t, w, map[string]string{"version": "1.0.0"})
+			return
+		}
+		if r.URL.Path == "/prefix/api/ledger/_info" {
+			writeCLICloudJSON(t, w, map[string]string{"version": "3.0.0"})
 			return
 		}
 		if r.URL.Path != "/prefix/api/ledger/v3/" && r.URL.Path != "/prefix/api/auth/clients" {

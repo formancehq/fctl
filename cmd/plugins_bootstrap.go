@@ -27,9 +27,6 @@ func prepareServicePlugin(ctx context.Context, root *cobra.Command, settings *co
 	if err != nil {
 		return nil, err
 	}
-	if args == nil && service == "ledger" {
-		return nil, nil
-	}
 	plan, err := parsePluginBootstrap(root, args)
 	if err != nil {
 		return nil, err
@@ -109,9 +106,6 @@ func (p servicePreparation) resolve(ctx context.Context, plan pluginBootstrap) (
 
 func (p servicePreparation) discover(ctx context.Context) (pluginmanager.Lock, error) {
 	catalogue, err := p.manager.Discover(ctx, pluginmanager.DefaultCatalogue)
-	if errors.Is(err, pluginmanager.ErrCatalogueUnavailable) && ctx.Err() == nil && p.descriptor().name == "ledger" {
-		return pluginmanager.Lock{}, pluginmanager.ErrNotInstalled
-	}
 	if err != nil {
 		return pluginmanager.Lock{}, err
 	}
@@ -120,11 +114,7 @@ func (p servicePreparation) discover(ctx context.Context) (pluginmanager.Lock, e
 			return p.matchVersion(ctx, pluginmanager.DefaultCatalogue, &catalogue)
 		}
 	}
-	if p.descriptor().name == "auth" {
-		return pluginmanager.Lock{}, fmt.Errorf("%w: Auth has no published plugin for %s; prepare it with fctl plugins sync --service auth or plugins install --service auth --binary PATH", pluginmanager.ErrNoRelease, pluginmanager.CurrentPlatform())
-	}
-	// Ledger retains its embedded provider until a native release exists.
-	return pluginmanager.Lock{}, pluginmanager.ErrNotInstalled
+	return pluginmanager.Lock{}, fmt.Errorf("%w: %s has no published plugin for %s; prepare it with fctl plugins sync --service %s or plugins install --service %s --binary PATH", pluginmanager.ErrNoRelease, p.descriptor().title, pluginmanager.CurrentPlatform(), p.descriptor().name, p.descriptor().name)
 }
 
 func (p servicePreparation) cached() (pluginmanager.Lock, error) {
@@ -136,7 +126,6 @@ func (p servicePreparation) matchVersion(ctx context.Context, catalogue string, 
 		return pluginmanager.Lock{}, err
 	}
 	lock, err := p.manager.Load(target, p.descriptor().name)
-	notInstalled := errors.Is(err, pluginmanager.ErrNotInstalled)
 	if err == nil && lock.ServiceVersion == version {
 		return lock, nil
 	}
@@ -148,9 +137,6 @@ func (p servicePreparation) matchVersion(ctx context.Context, catalogue string, 
 		release, err = discovered.Resolve(pluginmanager.CurrentPlatform(), p.descriptor().name, version, 0)
 	} else {
 		release, err = p.manager.Resolve(ctx, catalogue, p.descriptor().name, version, 0)
-	}
-	if errors.Is(err, pluginmanager.ErrNoRelease) && discovered != nil && notInstalled && p.descriptor().name == "ledger" {
-		return pluginmanager.Lock{}, pluginmanager.ErrNotInstalled
 	}
 	if err != nil {
 		return pluginmanager.Lock{}, err

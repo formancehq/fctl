@@ -29,16 +29,16 @@ func discoveryPreparation(t *testing.T, transport http.RoundTripper) ledgerPrepa
 	return ledgerPreparation{root: root, settings: settings, manager: manager}
 }
 
-func TestOfficialDiscoveryKeepsEmbeddedUntilPublished(t *testing.T) {
+func TestOfficialDiscoveryRequiresPublishedLedgerPlugin(t *testing.T) {
 	t.Setenv("FCTL_PLUGIN_CATALOGUE", "")
 	for _, test := range []struct {
 		name, data string
 		status     int
-		embedded   bool
+		want       error
 	}{
-		{"empty", "schemaVersion: 1\nreleases: []\n", http.StatusOK, true},
-		{"unavailable", "", http.StatusServiceUnavailable, true},
-		{"invalid", "schemaVersion: 1\nreleases: invalid\n", http.StatusOK, false},
+		{"empty", "schemaVersion: 1\nreleases: []\n", http.StatusOK, pluginmanager.ErrNoRelease},
+		{"unavailable", "", http.StatusServiceUnavailable, pluginmanager.ErrCatalogueUnavailable},
+		{"invalid", "schemaVersion: 1\nreleases: invalid\n", http.StatusOK, nil},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			requests := 0
@@ -50,8 +50,8 @@ func TestOfficialDiscoveryKeepsEmbeddedUntilPublished(t *testing.T) {
 				return &http.Response{StatusCode: test.status, Body: io.NopCloser(strings.NewReader(test.data)), Header: make(http.Header)}, nil
 			}))
 			_, err := prep.resolve(t.Context(), pluginBootstrap{commands: []string{"ledger", "list"}})
-			if errors.Is(err, pluginmanager.ErrNotInstalled) != test.embedded || err == nil || requests != 1 {
-				t.Fatalf("embedded=%v, requests=%d, error=%v", test.embedded, requests, err)
+			if err == nil || errors.Is(err, pluginmanager.ErrNotInstalled) || (test.want != nil && !errors.Is(err, test.want)) || requests != 1 {
+				t.Fatalf("want=%v, requests=%d, error=%v", test.want, requests, err)
 			}
 		})
 	}

@@ -13,8 +13,8 @@ import (
 func executeRoot(t *testing.T, args ...string) (string, string, error) {
 	t.Helper()
 	root := cmd.NewRootCommand()
-	// Auth metadata comes from the selected target's external plugin cache.
-	if slices.Contains(args, "auth") {
+	// Service metadata comes from the selected target's external plugin cache.
+	if slices.Contains(args, "auth") || slices.Contains(args, "ledger") {
 		root = cmd.NewRootCommandWithArgs(t.Context(), args)
 	}
 	var stdout, stderr bytes.Buffer
@@ -106,7 +106,7 @@ func TestRootCompletionOnlyOffersCurrentCommands(t *testing.T) {
 		names = append(names, name)
 	}
 	slices.Sort(names)
-	if want := []string{"auth", "cloud", "completion", "connectivity", "help", "ledger", "login", "logout", "plugins", "profiles", "version"}; !slices.Equal(names, want) {
+	if want := []string{"auth", "cloud", "completion", "help", "ledger", "login", "logout", "plugins", "profiles", "version"}; !slices.Equal(names, want) {
 		t.Errorf("completed commands = %v, want %v", names, want)
 	}
 }

@@ -5,9 +5,9 @@
 - [Profiles and authentication](profiles.md): local services, OAuth2,
   Cloud login and private saved profiles.
 - [Auth and Ledger modules](modules.md): supported operations, API revisions
-  and command examples.
-- [Connectivity](connectivity.md): catalogue, versions, instance lifecycle,
-  request semantics and pinned OpenAPI contract.
+  and external-plugin requirements.
+- [Connectivity](connectivity.md): preserved host settings, pending independent
+  distribution and historical command/API contract.
 - [Cloud management](cloud.md): Membership, stack administration, hosted helpers
   and experimental Deploy Apps.
 - [Interactive input](interaction.md): forms, searchable selections and automation.
@@ -17,8 +17,8 @@
   coverage boundaries and reproducible checks.
 - [Plugin contract](plugins.md): public SDK, embedded and external providers,
   and host ownership.
-- [Plugin distribution](plugin-distribution.md): external-only Auth, Ledger
-  fallback, local builds,
-  official OCI releases, offline metadata and exact-version target locks.
+- [Plugin distribution](plugin-distribution.md): external-only Auth and Ledger,
+  official Auth discovery, pending Ledger product publication, local builds,
+  offline metadata and exact-version target locks.
 - [Agent skills](agent-skills.md): versioned plugin development guidance,
   release distribution and local installation.

@@ -1,7 +1,11 @@
 # Auth and Ledger modules
 
-The root registers embedded Cloud, Ledger and Connectivity providers and loads
-Auth commands from an external plugin. Ledger also supports external plugins.
+The root registers embedded Cloud and loads Auth and Ledger commands from
+external plugins. The local Ledger and Connectivity adapters have been removed.
+Auth has official discovery; Ledger has loader and management support but no
+official release in the catalogue. Connectivity commands are absent pending
+independent distribution and later integration. Host connection settings remain
+available; the migration is not complete.
 This page describes the service modules; [Cloud management](cloud.md) describes
 control-plane commands. Each plugin implements the public `pluginsdk.Plugin` manifest/execution contract. The core builds Cobra
 commands from manifests and supplies an authenticated HTTP client and endpoint.
@@ -14,12 +18,23 @@ commands.
 
 ## Ledger
 
-The HTTP contract is taken from `formancehq/ledger`, branch `release/v3.0`,
+Ledger commands require a trusted exact-version external executable installed
+for the selected target. A future Ledger product release must publish the
+executable and promote its catalogue entries before official sync is available.
+The examples below describe the previously validated HTTP command contract;
+they do not advertise commands bundled with fctl. Consult the installed product
+manifest for its current command tree.
+
+### Historical HTTP contract
+
+The former embedded adapter's HTTP contract was taken from `formancehq/ledger`,
+branch `release/v3.0`,
 commit `0f4656d1efbcac42705839daccb34012e70d783a`. Business requests use `/v3`;
 server information uses `/_info`. This revision does not contain a public
-`pkg/client` module. The CLI therefore uses a small HTTP adapter with route and
-payload tests rather than importing server packages or the legacy v2 SDK.
-Replace this adapter with the published module client when it becomes available.
+`pkg/client` module. The former adapter used a small HTTP client with route and
+payload tests
+rather than importing server packages or the legacy v2 SDK. That local adapter
+is removed; external command implementations belong to the Ledger product.
 
 ```bash
 fctl ledger create books

@@ -3,7 +3,11 @@
 ## Scope and evidence
 
 This record summarizes the sanitized validation reports from October 8–9, 2026.
-It records completed checks and remaining gaps separately. Historical failures
+It records completed checks and remaining gaps separately. These campaigns
+are historical evidence from before removal of the local Ledger and Connectivity
+adapters. They do not validate the current external-only service loading or establish
+completion of the migration. Current availability and preparation requirements
+are documented in [plugin distribution](plugin-distribution.md). Historical failures
 and preparation fields in the reports do not override their final status.
 
 The approved live target was stack `bwxm` in `eu-sandbox`, targeting
@@ -11,7 +15,7 @@ The approved live target was stack `bwxm` in `eu-sandbox`, targeting
 `3.0.0-beta.5` (runtime commit `36d580949`). These component versions do not
 establish an exact final v4 runtime release.
 
-The current Ledger source contract is `release/v3.0` at
+The Ledger source contract used for that campaign was `release/v3.0` at
 `0f4656d1efbcac42705839daccb34012e70d783a`. The deployed beta has a different wire
 contract; source compatibility and deployed behavior must be assessed separately.
 
@@ -305,11 +309,13 @@ mode, initial schema and account type models, exist in both revisions.
 
 ## External Ledger plugin pilot (2026-10-09)
 
-The Ledger implementation and its contract tests now live in the public Go
+At the time of this pilot, the Ledger implementation and its contract tests
+lived in the public Go
 module `github.com/formancehq/ledger/fctl-plugin`, on branch
 `feat/fctl-ledger-plugin` at `885e135ef98a232aa9e4c05a5cb2895ce11c4238`.
-The branch starts from `release/v3.0`. fctl retains an embedded factory shim and
-can also execute the separately built plugin over the isolated SDK protocol.
+The branch started from `release/v3.0`. fctl then retained an embedded factory
+shim and could also execute the separately built plugin over the isolated SDK
+protocol. That shim has since been removed; this is historical validation.
 
 A standalone Go consumer downloaded both public modules without a local
 replacement and ran the Ledger manifest successfully. Its dependencies contain
@@ -349,11 +355,12 @@ independent review and repository checks completed instead.
 
 ## Product-owned Ledger plugin layout (2026-10-09)
 
-The embedded Ledger adapter now imports
+At the time of this check, the embedded Ledger adapter imported
 `github.com/formancehq/ledger/misc/fctl-plugin` at
 `v0.0.0-20261009143954-060fabc5af8d` from the Ledger branch
 `feat/fctl-shared-commands`. This is a public module pin, without a local
-Ledger replacement. The plugin remains independent of fctl core, terminal UI,
+Ledger replacement. That embedded adapter has since been removed. The plugin
+remains independent of fctl core, terminal UI,
 profiles, credentials, and Ledger server internals.
 
 The same command manifest runs through HTTP in fctl and through the native

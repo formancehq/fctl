@@ -11,9 +11,11 @@ command tree. Errors propagate to the entrypoint, which writes them to stderr
 and exits with status 1. Signal cancellation is propagated through the command
 context.
 
-The root registers `version`, `profiles` management and login/logout. Cloud,
-Ledger and Connectivity have embedded providers. Auth uses only an external
-plugin; Ledger can also use one. The core builds their Cobra commands from
+The root registers `version`, `profiles` management, login/logout and plugin
+management. Cloud remains embedded. Auth and Ledger use external plugins with
+no embedded fallback. Connectivity commands are absent until independently
+distributed plugin integration; host connection settings remain available.
+The core builds available plugin commands from
 public SDK manifests. Cobra provides help, `--version` and shell completion
 commands. Help and completion perform no network access. A fresh Auth target
 has only a placeholder with sync/install guidance; a prepared target supplies
@@ -41,8 +43,10 @@ not required by this foundation. The aggregate SDK, go-libs, terminal UI,
 Membership and deployment clients have been removed from the dependency graph.
 The Auth executable owns its commands and uses the generated service client.
 The Auth product plugin module is not a compile-time dependency of fctl, and
-no `plugins/auth` adapter is registered. Ledger retains an embedded fallback for its release/v3.0 HTTP
-contract. The connection layer handles OAuth2 and verifies Cloud identities
+no `plugins/auth` adapter is registered. The local `plugins/ledger` and
+`plugins/connectivity` adapters are removed; service commands belong to
+independently distributed product plugins. The connection layer handles OAuth2
+and verifies Cloud identities
 with the coreos OIDC library.
 
 `just pre-commit` runs module tidy, Go generation and lint. `just tests` runs
@@ -58,7 +62,8 @@ interactive callers; scripts can disable them with `--no-input`. No v3
 configuration file is read or migrated.
 
 Move old `fctl stack ...` calls to `fctl cloud stack ...`. Stack-scoped Auth and
-Ledger commands remain under `auth` and `ledger`; select their Cloud target with
+Ledger commands use `auth` and `ledger` once their exact-version external
+plugins are prepared; select their Cloud target with
 `--organization` and `--stack`. Use `cloud stack --help` to check changed arguments,
 confirmation flags and request bodies. See [migration examples](cloud.md#migration-from-v3).
 
@@ -66,11 +71,16 @@ Prepare an exact-version Auth plugin with `plugins sync --service auth` or
 `plugins install --service auth --binary PATH` before relying on its full help
 or completion. Automatic discovery before execution requires a matching
 official release; an unavailable catalogue or missing release is an error.
-Local installation remains available before official publication.
+Auth `2.5.2` revision `1` is available through official discovery. Ledger loader
+and management support exist, but there is no official Ledger release in the
+catalogue. Install a trusted matching local Ledger executable; a future product
+release must publish and promote it. The service-plugin migration is incomplete.
 
 Existing automation must adapt to the [v4 module commands](modules.md) and
 [profile settings](profiles.md), or keep using a compatible v3 binary.
-Connectivity is embedded; its API contract and commands are documented in [Connectivity](connectivity.md).
+Connectivity commands require a future independently distributed plugin and
+later integration. [Connectivity](connectivity.md) preserves host settings and
+the historical adapter contract; it does not advertise an available replacement.
 
 ## Homebrew release migration
 

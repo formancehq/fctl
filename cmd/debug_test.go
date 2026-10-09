@@ -19,7 +19,9 @@ func TestDebugLedgerKeepsJSONOnStdout(t *testing.T) {
 	const payload = `{"data":[{"name":"books","amount":123456789012345678901234567890,"metadata":{"password":"debug-metadata-private"}}],"hasMore":false}`
 	server := httptest.NewServer(debugLedgerHandler(t, payload))
 	t.Cleanup(server.Close)
-	args := []string{"--config-dir", t.TempDir(), "--auth-mode", "none", "--ledger-url", server.URL + "/prefix", "ledger", "list"}
+	dir := t.TempDir()
+	cacheDistributionLedger(t, dir, pluginmanager.Target{Endpoint: server.URL + "/prefix"})
+	args := []string{"--config-dir", dir, "--auth-mode", "none", "--ledger-url", server.URL + "/prefix", "ledger", "list"}
 	baseline, stderr, err := executeRoot(t, args...)
 	if err != nil || stderr != "" {
 		t.Fatalf("without debug: stderr=%q err=%v", stderr, err)
@@ -46,6 +48,10 @@ func TestDebugLedgerKeepsJSONOnStdout(t *testing.T) {
 func debugLedgerHandler(t *testing.T, payload string) http.Handler {
 	t.Helper()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/prefix/_info" {
+			writeCLICloudJSON(t, w, map[string]string{"version": "3.0.0"})
+			return
+		}
 		if r.Method != http.MethodGet || r.URL.EscapedPath() != "/prefix/v3/" || r.URL.RawQuery != "pageSize=100" {
 			t.Errorf("unexpected ledger request: %s %s", r.Method, r.URL.RequestURI())
 		}
@@ -69,6 +75,8 @@ func TestDebugClientCredentialsRedactsAuthentication(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
+		case "/_info":
+			writeCLICloudJSON(t, w, map[string]string{"version": "3.0.0"})
 		case "/token":
 			tokenCalls.Add(1)
 			assertDebugClientCredentials(t, r, clientID, clientSecret)
@@ -85,7 +93,9 @@ func TestDebugClientCredentialsRedactsAuthentication(t *testing.T) {
 		}
 	}))
 	t.Cleanup(server.Close)
-	out, trace, err := executeRoot(t, "-d", "--config-dir", t.TempDir(), "--auth-mode", "client-credentials", "--client-id", clientID, "--token-url", server.URL+"/token", "--ledger-url", server.URL, "ledger", "list")
+	dir := t.TempDir()
+	cacheDistributionLedger(t, dir, pluginmanager.Target{Endpoint: server.URL})
+	out, trace, err := executeRoot(t, "-d", "--config-dir", dir, "--auth-mode", "client-credentials", "--client-id", clientID, "--token-url", server.URL+"/token", "--ledger-url", server.URL, "ledger", "list")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,13 +144,19 @@ func TestDebugCloudAuthenticationAndServices(t *testing.T) {
 
 func TestDebugServiceErrorKeepsStdoutEmpty(t *testing.T) {
 	t.Parallel()
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/_info" {
+			writeCLICloudJSON(t, w, map[string]string{"version": "3.0.0"})
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusServiceUnavailable)
 		writeCLICloudJSON(t, w, map[string]string{"errorCode": "UNAVAILABLE", "errorMessage": "debug-error-private"})
 	}))
 	t.Cleanup(server.Close)
-	out, trace, err := executeRoot(t, "--debug", "--config-dir", t.TempDir(), "--auth-mode", "none", "--ledger-url", server.URL, "ledger", "list")
+	dir := t.TempDir()
+	cacheDistributionLedger(t, dir, pluginmanager.Target{Endpoint: server.URL})
+	out, trace, err := executeRoot(t, "--debug", "--config-dir", dir, "--auth-mode", "none", "--ledger-url", server.URL, "ledger", "list")
 	if err == nil || out != "" || !strings.Contains(err.Error(), "UNAVAILABLE") {
 		t.Fatalf("debug error changed CLI result: stdout=%q err=%v", out, err)
 	}
