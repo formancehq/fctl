@@ -21,7 +21,7 @@ func newPluginsInstallCommand(settings *connection.Settings) *cobra.Command {
 		Annotations: map[string]string{"fctl.target": "stack"},
 		Example:     "  fctl plugins install --binary ./build/fctl-plugin-ledger --profile local",
 	}
-	install.Flags().StringVar(&service, "service", "ledger", "Service plugin: ledger or auth")
+	install.Flags().StringVar(&service, "service", "ledger", "Service plugin: ledger, auth or connectivity")
 	install.Flags().StringVar(&binary, "binary", "", "Explicit path to the trusted executable")
 	install.Flags().StringVar(&localVersion, "service-version", "", "Exact service version; defaults to selected service /_info discovery")
 	install.RunE = func(cmd *cobra.Command, _ []string) error {

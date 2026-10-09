@@ -44,7 +44,7 @@ func loaderFlag(t *testing.T, root *cobra.Command, name, value string) {
 }
 
 func TestServiceLoaderTargets(t *testing.T) {
-	for _, service := range []string{"auth", "ledger"} {
+	for _, service := range []string{"auth", "ledger", "connectivity"} {
 		t.Run(service, func(t *testing.T) { testServiceLoaderTarget(t, service) })
 	}
 	root, settings := loaderSettings(t)
@@ -72,6 +72,7 @@ func testServiceLoaderTarget(t *testing.T, service string) {
 	}
 	loaderFlag(t, root, "auth-url", "https://auth.example")
 	loaderFlag(t, root, "ledger-url", "https://ledger.example")
+	loaderFlag(t, root, "connectivity-url", "https://connectivity.example")
 	target, err = pluginServiceTarget(settings, root, service)
 	if err != nil || target.Endpoint != "https://"+service+".example" {
 		t.Fatalf("direct target: %+v %v", target, err)
@@ -90,7 +91,7 @@ func testServiceLoaderTarget(t *testing.T, service string) {
 
 func TestServiceLoaderManifestBoundary(t *testing.T) {
 	root, _ := loaderSettings(t)
-	for _, service := range []string{"auth", "ledger"} {
+	for _, service := range []string{"auth", "ledger", "connectivity"} {
 		manifest := loaderManifest(service)
 		if err := validateServiceManifest(t.Context(), root, service, manifest); err != nil {
 			t.Fatal(err)
@@ -138,10 +139,10 @@ func TestServiceLoaderOfflineRootsAndCacheIsolation(t *testing.T) {
 		t.Fatal(err)
 	}
 	target := pluginmanager.Target{Profile: "", Organization: "org", Stack: "stack", Endpoint: settings.Options.Issuer}
-	for _, service := range []string{"auth", "ledger"} {
+	for _, service := range []string{"auth", "ledger", "connectivity"} {
 		installLoaderFixture(t, manager, target, service)
 	}
-	for _, service := range []string{"auth", "ledger"} {
+	for _, service := range []string{"auth", "ledger", "connectivity"} {
 		lock, err := cachedServiceLock(settings, root, manager, service)
 		if err != nil || lock.Service != service {
 			t.Fatalf("cached %s: %+v %v", service, lock, err)
@@ -259,6 +260,7 @@ func TestAuthLoaderExactVersionAndStrictTargets(t *testing.T) {
 func TestLedgerLoaderCompatibility(t *testing.T) {
 	root, settings := loaderSettings(t)
 	loaderFlag(t, root, "ledger-url", "https://ledger.example")
+	loaderFlag(t, root, "connectivity-url", "https://connectivity.example")
 	target, err := ledgerTarget(settings, root)
 	if err != nil {
 		t.Fatal(err)
@@ -294,5 +296,43 @@ func TestLedgerLoaderCompatibility(t *testing.T) {
 	}
 	if version, err := ledgerServiceVersion(t.Context(), client); err != nil || version != "1.0.0" {
 		t.Fatalf("legacy version: %s %v", version, err)
+	}
+}
+
+func TestConnectivityLoaderExactVersionAndStrictTargets(t *testing.T) {
+	t.Setenv("FCTL_PLUGIN_CATALOGUE", "")
+	base := http.DefaultTransport
+	http.DefaultTransport = discoveryTransport(func(request *http.Request) (*http.Response, error) {
+		if request.URL.String() != "http://127.0.0.1:1/_info" {
+			t.Fatalf("wrong Connectivity version endpoint: %s", request.URL)
+		}
+		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(`{"version":"v1.0.1"}`))}, nil
+	})
+	t.Cleanup(func() { http.DefaultTransport = base })
+	prep := discoveryPreparation(t, discoveryTransport(func(*http.Request) (*http.Response, error) {
+		return &http.Response{StatusCode: http.StatusServiceUnavailable, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(""))}, nil
+	}))
+	prep.service = serviceDescriptor{name: "connectivity", title: "Connectivity"}
+	loaderFlag(t, prep.root, "auth-mode", "none")
+	loaderFlag(t, prep.root, "connectivity-url", "http://127.0.0.1:1")
+	target, version, err := pluginServiceSyncTarget(t.Context(), prep.settings, prep.root, "connectivity", "")
+	if err != nil || version != "1.0.1" {
+		t.Fatalf("exact Connectivity discovery: %+v %s %v", target, version, err)
+	}
+	empty := &pluginmanager.Catalogue{SchemaVersion: pluginmanager.SchemaVersion}
+	if _, err := prep.matchVersion(t.Context(), pluginmanager.DefaultCatalogue, empty); !errors.Is(err, pluginmanager.ErrNotInstalled) {
+		t.Fatalf("official unprepared missing release: %v", err)
+	}
+	t.Setenv("FCTL_PLUGIN_CATALOGUE", "https://custom.example/catalogue")
+	if _, err := prep.resolve(t.Context(), pluginBootstrap{commands: []string{"connectivity", "probe"}}); !errors.Is(err, pluginmanager.ErrCatalogueUnavailable) {
+		t.Fatalf("custom unavailable target fell back: %v", err)
+	}
+	t.Setenv("FCTL_PLUGIN_CATALOGUE", "")
+	installLoaderFixture(t, prep.manager, target, "connectivity")
+	if _, err := prep.matchVersion(t.Context(), pluginmanager.DefaultCatalogue, empty); !errors.Is(err, pluginmanager.ErrNoRelease) {
+		t.Fatalf("prepared target accepted missing exact release: %v", err)
+	}
+	if _, err := prep.matchVersion(t.Context(), pluginmanager.DefaultCatalogue, nil); !errors.Is(err, pluginmanager.ErrCatalogueUnavailable) {
+		t.Fatalf("prepared unavailable target fell back: %v", err)
 	}
 }

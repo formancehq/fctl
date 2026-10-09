@@ -15,9 +15,9 @@ type loaderTransport func(*http.Request) (*http.Response, error)
 
 func (f loaderTransport) RoundTrip(request *http.Request) (*http.Response, error) { return f(request) }
 
-//nolint:gocognit // The same version-cache and exact-mismatch lifecycle applies to both services.
+//nolint:gocognit // The same per-call version-check and exact-mismatch lifecycle applies to both services.
 func TestExternalServiceVersionBeforeProcess(t *testing.T) {
-	for _, service := range []string{"auth", "ledger"} {
+	for _, service := range []string{"auth", "ledger", "connectivity"} {
 		t.Run(service, func(t *testing.T) {
 			var requests atomic.Int32
 			p := &external{manifest: pluginsdk.Manifest{Service: service, Version: "1.2.3"}, http: &http.Client{Transport: loaderTransport(func(request *http.Request) (*http.Response, error) {
@@ -33,11 +33,10 @@ func TestExternalServiceVersionBeforeProcess(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			if requests.Load() != 1 {
+			if requests.Load() != 2 {
 				t.Fatalf("version checks: %d", requests.Load())
 			}
 			p.manifest.Version = "1.2.4"
-			p.checked = ""
 			err := p.checkVersion(t.Context(), endpoint)
 			if err == nil || !strings.Contains(err.Error(), service+" 1.2.4") {
 				t.Fatalf("service mismatch: %v", err)
@@ -53,5 +52,19 @@ func TestExternalAuthVersionFailureDoesNotStartExecutable(t *testing.T) {
 	_, err := p.Execute(t.Context(), pluginsdk.ExecuteRequest{Endpoint: "https://auth.example"})
 	if err == nil || !strings.Contains(err.Error(), "targets auth 1.2.3") {
 		t.Fatalf("version check did not precede startup: %v", err)
+	}
+}
+
+func TestExternalRejectsVersionDriftAfterSuccessfulCheck(t *testing.T) {
+	version := "1.2.3"
+	p := &external{manifest: pluginsdk.Manifest{Service: "connectivity", Version: version}, http: &http.Client{Transport: loaderTransport(func(*http.Request) (*http.Response, error) {
+		return &http.Response{StatusCode: 200, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(`{"version":"` + version + `"}`))}, nil
+	})}}
+	if err := p.checkVersion(t.Context(), "https://connectivity.example"); err != nil {
+		t.Fatal(err)
+	}
+	version = "1.2.4"
+	if err := p.checkVersion(t.Context(), "https://connectivity.example"); err == nil {
+		t.Fatal("cached version allowed drift")
 	}
 }

@@ -25,6 +25,8 @@ func supportedPluginService(service string) (serviceDescriptor, error) {
 	switch service {
 	case "auth":
 		return serviceDescriptor{name: "auth", title: "Auth"}, nil
+	case "connectivity":
+		return serviceDescriptor{name: "connectivity", title: "Connectivity"}, nil
 	case "ledger":
 		return serviceDescriptor{name: "ledger", title: "Ledger"}, nil
 	default:
@@ -48,6 +50,9 @@ func pluginServiceTarget(settings *connection.Settings, cmd *cobra.Command, serv
 	endpoint := options.LedgerURL
 	if descriptor.name == "auth" {
 		endpoint = options.AuthURL
+	}
+	if descriptor.name == "connectivity" {
+		endpoint = options.ConnectivityURL
 	}
 	if options.AuthMode == "cloud" {
 		endpoint = cmp.Or(options.Issuer, cloud.DefaultIssuer)

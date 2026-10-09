@@ -10,7 +10,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/fctl/v4/cmd"
 	"github.com/formancehq/fctl/v4/internal/interactive"
 )
 
@@ -32,11 +31,11 @@ func TestConnectivityCancelAndDeclineNeverWrite(t *testing.T) {
 				}
 				return []string{"false"}, nil
 			})
-			root := cmd.NewRootCommand()
 			args := []string{"--config-dir", t.TempDir(), "--auth-mode", "none", "--connectivity-url", server.URL, "connectivity", "instances", action}
 			if action == "delete" {
 				args = append(args, "ingestion")
 			}
+			root := connectivityRoot(t, args)
 			root.SetArgs(args)
 			root.SetOut(io.Discard)
 			root.SetErr(io.Discard)

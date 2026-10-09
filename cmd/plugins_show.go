@@ -9,7 +9,7 @@ import (
 func newPluginsShowCommand(settings *connection.Settings) *cobra.Command {
 	var service string
 	show := &cobra.Command{Use: "show", Short: "Show the service plugin locked for the selected target", Args: cobra.NoArgs}
-	show.Flags().StringVar(&service, "service", "ledger", "Service plugin: ledger or auth")
+	show.Flags().StringVar(&service, "service", "ledger", "Service plugin: ledger, auth or connectivity")
 	show.RunE = func(cmd *cobra.Command, _ []string) error {
 		if err := distributionService(service); err != nil {
 			return err
