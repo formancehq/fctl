@@ -38,7 +38,10 @@ archives:
     formats: [tar.gz]
     name_template: "{{.ProjectName}}_{{.Os}}-{{.Arch}}"
     files:
-    - completions/*
+      - completions/*
+      - skills/**/*
+      - docs/agent-skills.md
+      - LICENSE
 
 homebrew_casks:
   - name: fctl

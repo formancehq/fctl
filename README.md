@@ -76,6 +76,11 @@ go build ./...
 the removed Membership and deployment SDKs are no longer generated.
 `just completions` updates the shell scripts shipped in release archives.
 
+The repository includes the `formance-fctl-plugin` agent skill for developing
+service plugins through the public SDK. Its sources are versioned under
+`skills/` and included in release archives. See
+[agent skill installation](docs/agent-skills.md).
+
 ## Documentation
 
 - [Technical documentation](docs/README.md)
