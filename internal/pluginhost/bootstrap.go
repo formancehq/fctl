@@ -93,10 +93,8 @@ func (p servicePreparation) discover(ctx context.Context) (pluginmanager.Lock, e
 	if err != nil {
 		return pluginmanager.Lock{}, err
 	}
-	for _, release := range catalogue.Releases {
-		if release.Service == p.service.name && release.Platform == pluginmanager.CurrentPlatform() {
-			return p.matchVersion(ctx, pluginmanager.DefaultCatalogue, &catalogue)
-		}
+	if catalogue.HasService(p.service.name, pluginmanager.CurrentPlatform()) {
+		return p.matchVersion(ctx, pluginmanager.DefaultCatalogue, &catalogue)
 	}
 	return pluginmanager.Lock{}, fmt.Errorf("%w: %s has no published plugin for %s; prepare it with fctl plugins sync --service %s or plugins install --service %s --binary PATH", pluginmanager.ErrNoRelease, p.service.title, pluginmanager.CurrentPlatform(), p.service.name, p.service.name)
 }
@@ -119,7 +117,7 @@ func (p servicePreparation) matchVersion(ctx context.Context, catalogue string, 
 	}
 	var release pluginmanager.Release
 	if discovered != nil {
-		release, err = discovered.Resolve(pluginmanager.CurrentPlatform(), p.service.name, version, 0)
+		release, err = p.manager.ResolveCatalogue(ctx, *discovered, p.service.name, version, 0)
 	} else {
 		release, err = p.manager.Resolve(ctx, catalogue, p.service.name, version, 0)
 	}

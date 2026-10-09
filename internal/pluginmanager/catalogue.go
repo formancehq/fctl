@@ -35,7 +35,7 @@ func (m *Manager) resolve(ctx context.Context, source, service, version string, 
 	if err != nil {
 		return Release{}, err
 	}
-	return catalogue.Resolve(m.platform, service, version, revision)
+	return m.ResolveCatalogue(ctx, catalogue, service, version, revision)
 }
 
 // Discover reads a YAML or JSON catalogue without downloading or starting plugins.
@@ -63,8 +63,14 @@ func (c Catalogue) Resolve(platform Platform, service, version string, revision 
 }
 
 func validateCatalogue(catalogue Catalogue) error {
+	if catalogue.SchemaVersion == RegistrySchemaVersion {
+		return validateReferences(catalogue)
+	}
 	if catalogue.SchemaVersion != SchemaVersion {
 		return fmt.Errorf("unsupported catalogue schema %d", catalogue.SchemaVersion)
+	}
+	if catalogue.Plugins != nil {
+		return fmt.Errorf("release catalogue must not contain plugin references")
 	}
 	seen := make(map[string]bool)
 	for _, release := range catalogue.Releases {

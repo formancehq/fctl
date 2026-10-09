@@ -2,7 +2,10 @@
 // catalogue and installs native executables from digest-addressed OCI artifacts.
 // It does not start plugins or access the host's service authentication.
 //
-// A catalogue has schemaVersion 1 and a releases array. Each release identifies
+// A product catalogue has schemaVersion 1 and a releases array. A schema-2
+// registry maps services and exact versions to checksum-pinned product catalogues.
+// Only the selected product catalogue is fetched; references cannot be nested.
+// Each product release identifies
 // service, serviceVersion, revision, platform {os, arch}, artifact {registry,
 // repository, digest}, sha256, and the complete pluginsdk manifest. The registry
 // is an HTTPS origin (HTTP is allowed for loopback development registries).
@@ -30,6 +33,7 @@ import (
 
 const (
 	SchemaVersion                = 1
+	RegistrySchemaVersion        = 2
 	ArtifactMediaType            = "application/vnd.formance.fctl.plugin.v1"
 	ExecutableMediaType          = "application/vnd.formance.fctl.plugin.executable.v1"
 	ImageManifestMediaType       = "application/vnd.oci.image.manifest.v1+json"
@@ -71,8 +75,21 @@ type Release struct {
 }
 
 type Catalogue struct {
-	SchemaVersion int       `json:"schemaVersion"`
-	Releases      []Release `json:"releases"`
+	SchemaVersion int                          `json:"schemaVersion"`
+	Releases      []Release                    `json:"releases,omitzero"`
+	Plugins       map[string]ProductCatalogues `json:"plugins,omitzero"`
+}
+
+// ProductCatalogues references product-owned release catalogues, not executables.
+type ProductCatalogues struct {
+	Releases []CatalogueReference `json:"releases"`
+}
+
+// CatalogueReference pins the raw bytes of one exact product version's catalogue.
+type CatalogueReference struct {
+	ServiceVersion string `json:"serviceVersion"`
+	Catalogue      string `json:"catalogue"`
+	SHA256         string `json:"sha256"`
 }
 
 // Target is a stable connection identity, not a transient API gateway URL.

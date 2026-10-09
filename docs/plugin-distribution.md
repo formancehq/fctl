@@ -167,6 +167,35 @@ is the public `registry.yaml` in `formancehq/fctl-plugin-registry`:
 https://raw.githubusercontent.com/formancehq/fctl-plugin-registry/main/registry.yaml
 ```
 
+The central registry can use `schemaVersion: 2` to reference product release
+catalogues instead of copying their command manifests:
+
+```yaml
+schemaVersion: 2
+plugins:
+  auth:
+    releases:
+      - serviceVersion: "2.5.2"
+        catalogue: https://github.com/formancehq/auth/releases/download/v2.5.2/fctl-plugin-catalogue.json
+        sha256: "<SHA-256 of the raw catalogue file>"
+```
+
+Each product publishes its existing schema-1 catalogue with its release. fctl
+fetches only the catalogue matching the selected service and exact version,
+checks its raw-byte SHA-256 before decoding it, and selects the platform and
+plugin revision using the existing rules. All entries in that catalogue must
+belong to the indexed service and version. Nested catalogue references are
+rejected. An index contains one reference per service version; a catalogue may
+contain multiple plugin revisions for that same version.
+
+Direct schema-1 YAML/JSON catalogues remain supported. OCI artifacts, plugin
+protocols and target-lock schema stay unchanged. The target lock retains the
+central index URL and complete selected manifest, so later service-version
+changes resolve through the same index and cached help remains offline. The
+product publisher must publish and verify artifacts before submitting a central
+registry update containing the catalogue URL and checksum. Release the compatible
+fctl loader before migrating a central registry from schema 1 to schema 2.
+
 The default Ledger sync below requires a future official Ledger release.
 Today, use a trusted matching custom catalogue or the local installation
 procedure above; a missing official entry cannot prepare commands.
