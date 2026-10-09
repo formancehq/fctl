@@ -28,6 +28,7 @@ func TestRegistryRejectsInvalidManifests(t *testing.T) {
 		{"empty service", func(m *pluginsdk.Manifest) { m.Service = "" }},
 		{"mismatched root", func(m *pluginsdk.Manifest) { m.Root.Use = "auth" }},
 		{"reserved root", func(m *pluginsdk.Manifest) { m.Name = "login"; m.Root.Use = "login" }},
+		{"profiles root", func(m *pluginsdk.Manifest) { m.Name = "profiles"; m.Root.Use = "profiles" }},
 		{"leading command whitespace", func(m *pluginsdk.Manifest) { m.Root.Subcommands[0].Use = " write" }},
 		{"command tab", func(m *pluginsdk.Manifest) { m.Root.Subcommands[0].Use = "write\tNAME" }},
 		{"empty command", func(m *pluginsdk.Manifest) { m.Root.Subcommands[0].Use = "" }},
@@ -42,12 +43,13 @@ func TestRegistryRejectsInvalidManifests(t *testing.T) {
 		{"inherited flag collision", func(m *pluginsdk.Manifest) {
 			m.Root.Subcommands[0].Flags = append(m.Root.Subcommands[0].Flags, m.Root.Flags[0])
 		}},
-		{"reserved flag", func(m *pluginsdk.Manifest) { m.Root.Flags[0].Name = "connection" }},
+		{"reserved flag", func(m *pluginsdk.Manifest) { m.Root.Flags[0].Name = "profile" }},
 		{"unsupported type", func(m *pluginsdk.Manifest) { m.Root.Flags[0].Type = "duration" }},
 		{"bool default", func(m *pluginsdk.Manifest) { m.Root.Flags[1].Default = "1" }},
 		{"uint32 default", func(m *pluginsdk.Manifest) { m.Root.Subcommands[0].Flags[2].Default = "4294967296" }},
 		{"negative uint32", func(m *pluginsdk.Manifest) { m.Root.Subcommands[0].Flags[2].Default = "-1" }},
 		{"reserved shorthand", func(m *pluginsdk.Manifest) { m.Root.Flags[0].Shorthand = "o" }},
+		{"profile shorthand", func(m *pluginsdk.Manifest) { m.Root.Flags[0].Shorthand = "p" }},
 		{"long shorthand", func(m *pluginsdk.Manifest) { m.Root.Flags[0].Shorthand = "ab" }},
 		{"invalid shorthand", func(m *pluginsdk.Manifest) { m.Root.Flags[0].Shorthand = "-" }},
 		{"duplicate shorthand", func(m *pluginsdk.Manifest) { m.Root.Flags[0].Shorthand = "x"; m.Root.Flags[1].Shorthand = "x" }},

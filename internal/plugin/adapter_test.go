@@ -49,7 +49,7 @@ func attach(t *testing.T, m pluginsdk.Manifest, resolve plugin.Resolver, factory
 		t.Fatal(err)
 	}
 	root := &cobra.Command{Use: "fctl", SilenceErrors: true, SilenceUsage: true}
-	root.PersistentFlags().String("connection", "", "host setting")
+	root.PersistentFlags().String("profile", "", "host setting")
 	if err := plugin.NewCommand(registry, resolve).AddTo(root); err != nil {
 		t.Fatal(err)
 	}
@@ -143,7 +143,7 @@ func testBodyCase(t *testing.T, kind string) {
 	root.SetIn(strings.NewReader(body))
 	var out bytes.Buffer
 	root.SetOut(&out)
-	root.SetArgs([]string{"--connection", "host", "ledger", "--tenant", "org", "write", "demo", "--confirm", "--enabled=false", "--limit", "42", "--data", value})
+	root.SetArgs([]string{"--profile", "host", "ledger", "--tenant", "org", "write", "demo", "--confirm", "--enabled=false", "--limit", "42", "--data", value})
 	if err := root.ExecuteContext(t.Context()); err != nil {
 		t.Fatal(err)
 	}

@@ -109,7 +109,7 @@ func TestPresentationCLIRejectsOptionsBeforeConnectionWrite(t *testing.T) {
 		t.Run(strings.Join(flags, " "), func(t *testing.T) {
 			dir := t.TempDir()
 			args := append([]string{"--config-dir", dir}, flags...)
-			args = append(args, "connections", "add", "local", "--auth-mode", "none", "--ledger-url", "http://localhost:9000")
+			args = append(args, "profiles", "add", "local", "--auth-mode", "none", "--ledger-url", "http://localhost:9000")
 			out, stderr, err := executeRoot(t, args...)
 			if err == nil || out != "" || stderr != "" {
 				t.Fatalf("invalid presentation allowed a local write: stdout=%q stderr=%q err=%v", out, stderr, err)
@@ -127,10 +127,10 @@ func TestPresentationCLIStyledHelpGroupsAndNestedPaths(t *testing.T) {
 	if err != nil || stderr != "" {
 		t.Fatalf("styled help: stderr=%q err=%v", stderr, err)
 	}
-	for _, group := range []string{"Cloud:", "Modules:", "Connections:"} {
+	for _, group := range []string{"Cloud:", "Modules:", "Profiles:"} {
 		assertPresentationFields(t, out, "\x1b[1;36m"+group+"\x1b[0m")
 	}
-	assertPresentationFields(t, stripPresentationANSI(out), "cloud", "ledger", "auth", "connections", "login", "logout")
+	assertPresentationFields(t, stripPresentationANSI(out), "cloud", "ledger", "auth", "profiles", "login", "logout")
 	for _, path := range [][]string{{"cloud", "stack"}, {"cloud", "stack", "modules"}, {"cloud", "stack", "create"}} {
 		args := append([]string{"--color", "never"}, path...)
 		out, stderr, err := executeRoot(t, append(args, "--help")...)

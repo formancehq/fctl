@@ -39,7 +39,7 @@ func attachRequest(t *testing.T, manifest pluginsdk.Manifest, resolver plugin.Re
 		t.Fatal(err)
 	}
 	root := &cobra.Command{Use: "fctl", SilenceErrors: true, SilenceUsage: true}
-	root.PersistentFlags().String("connection", "", "host setting")
+	root.PersistentFlags().String("profile", "", "host setting")
 	if err := plugin.NewCommandWithRequest(registry, resolver).AddTo(root); err != nil {
 		t.Fatal(err)
 	}
@@ -233,7 +233,7 @@ func checkResolvedBody(t *testing.T, kind string) {
 	var output bytes.Buffer
 	root.SetOut(&output)
 	root.SetIn(strings.NewReader(body))
-	root.SetArgs([]string{"--connection=private-host", "ledger", "write", "fixture", "--tenant=tenant-1", "--confirm", "--data=" + bodyInput(t, kind, body)})
+	root.SetArgs([]string{"--profile=private-host", "ledger", "write", "fixture", "--tenant=tenant-1", "--confirm", "--data=" + bodyInput(t, kind, body)})
 	if err := root.ExecuteContext(t.Context()); err != nil {
 		t.Fatal(err)
 	}
@@ -267,7 +267,7 @@ func checkResolvedFlags(t *testing.T, req pluginsdk.ExecuteRequest, body string)
 	if !req.ChangedFlags["data"] || !req.ChangedFlags["confirm"] || req.ChangedFlags["limit"] {
 		t.Error("changed flag provenance lost")
 	}
-	if _, found := req.Flags["connection"]; found {
+	if _, found := req.Flags["profile"]; found {
 		t.Error("host flags entered plugin request")
 	}
 	if !reflect.DeepEqual(req.Args, []string{"fixture"}) || !reflect.DeepEqual(req.CommandPath, []string{"ledger", "write"}) {

@@ -1,5 +1,5 @@
-// Package connections manages named v4 connection profiles.
-package connections
+// Package profiles manages named v4 service profiles.
+package profiles
 
 import (
 	"encoding/json"
@@ -14,14 +14,14 @@ import (
 )
 
 func NewCommand(settings *connection.Settings) *cobra.Command {
-	root := &cobra.Command{Use: "connections", Short: "Manage named service connections"}
+	root := &cobra.Command{Use: "profiles", Short: "Manage named service profiles"}
 	root.AddCommand(add(settings), use(settings), show(settings), list(settings), deleteCommand(settings))
 	return root
 }
 
 func add(s *connection.Settings) *cobra.Command {
 	var replace bool
-	cmd := &cobra.Command{Use: "add NAME", Short: "Save connection settings (client secrets stay in FCTL_CLIENT_SECRET)", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
+	cmd := &cobra.Command{Use: "add NAME", Short: "Save profile settings (client secrets stay in FCTL_CLIENT_SECRET)", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
 		if err := connection.ValidateName(args[0]); err != nil {
 			return err
 		}
@@ -35,7 +35,7 @@ func add(s *connection.Settings) *cobra.Command {
 		}
 		if err := connection.Update(cmd.Context(), dir, func(store *connection.Store) error {
 			if _, exists := store.Connections[args[0]]; exists && !replace {
-				return fmt.Errorf("connection exists; use --replace to replace settings and clear its login")
+				return fmt.Errorf("profile exists; use --replace to replace settings and clear its login")
 			}
 			store.Connections[args[0]] = connection.NewEntry(opts)
 			if store.Active == "" {
@@ -52,14 +52,14 @@ func add(s *connection.Settings) *cobra.Command {
 }
 
 func use(s *connection.Settings) *cobra.Command {
-	return &cobra.Command{Use: "use NAME", Short: "Select the default connection", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
+	return &cobra.Command{Use: "use NAME", Short: "Select the default profile", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
 		dir, err := s.DirectoryPath()
 		if err != nil {
 			return err
 		}
 		if err := connection.Update(cmd.Context(), dir, func(store *connection.Store) error {
 			if _, exists := store.Connections[args[0]]; !exists {
-				return fmt.Errorf("connection %q does not exist", args[0])
+				return fmt.Errorf("profile %q does not exist", args[0])
 			}
 			store.Active = args[0]
 			return nil
@@ -81,7 +81,7 @@ func show(s *connection.Settings) *cobra.Command {
 }
 
 func list(s *connection.Settings) *cobra.Command {
-	return &cobra.Command{Use: "list", Short: "List saved connections without credentials", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+	return &cobra.Command{Use: "list", Short: "List saved profiles without credentials", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
 		dir, err := s.DirectoryPath()
 		if err != nil {
 			return err
@@ -107,9 +107,9 @@ func list(s *connection.Settings) *cobra.Command {
 
 func deleteCommand(s *connection.Settings) *cobra.Command {
 	var confirm bool
-	cmd := &cobra.Command{Use: "delete NAME", Short: "Delete a connection and its local login", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
+	cmd := &cobra.Command{Use: "delete NAME", Short: "Delete a profile and its local login", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
 		if !confirm {
-			return fmt.Errorf("connection deletion requires --confirm")
+			return fmt.Errorf("profile deletion requires --confirm")
 		}
 		dir, err := s.DirectoryPath()
 		if err != nil {
@@ -117,7 +117,7 @@ func deleteCommand(s *connection.Settings) *cobra.Command {
 		}
 		if err := connection.Update(cmd.Context(), dir, func(store *connection.Store) error {
 			if _, exists := store.Connections[args[0]]; !exists {
-				return fmt.Errorf("connection %q does not exist", args[0])
+				return fmt.Errorf("profile %q does not exist", args[0])
 			}
 			delete(store.Connections, args[0])
 			if store.Active == args[0] {

@@ -74,7 +74,7 @@ func withLock(ctx context.Context, directory, name string, work func() error) (e
 		return err
 	}
 	if !locked {
-		return fmt.Errorf("connection store lock unavailable")
+		return fmt.Errorf("profile store lock unavailable")
 	}
 	defer func() { err = errors.Join(err, lock.Close()) }()
 	return work()
@@ -101,7 +101,7 @@ func SaveSession(ctx context.Context, directory, name string, expected *string, 
 	err := Update(ctx, directory, func(store *Store) error {
 		entry, exists := store.Connections[name]
 		if !exists || entry.Revision != *expected {
-			return fmt.Errorf("connection changed during authentication; retry with its current settings")
+			return fmt.Errorf("profile changed during authentication; retry with its current settings")
 		}
 		entry.Session = session
 		entry.Revision = rand.Text()
@@ -122,7 +122,7 @@ func SaveLoginSession(ctx context.Context, directory, name string, expected *str
 	err := Update(ctx, directory, func(store *Store) error {
 		current, exists := store.Connections[name]
 		if (*expected == "" && exists) || (*expected != "" && (!exists || current.Revision != *expected)) {
-			return fmt.Errorf("connection changed during login; retry with its current settings")
+			return fmt.Errorf("profile changed during login; retry with its current settings")
 		}
 		entry := NewEntry(options)
 		entry.Session = session
@@ -152,7 +152,7 @@ func DefaultDirectory() (string, error) {
 
 func ValidateName(name string) error {
 	if !regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`).MatchString(name) {
-		return fmt.Errorf("connection name must contain 1-64 letters, digits, underscores or hyphens")
+		return fmt.Errorf("profile name must contain 1-64 letters, digits, underscores or hyphens")
 	}
 	return nil
 }
@@ -164,7 +164,7 @@ func Load(directory string) (result Store, err error) {
 		return store, nil
 	}
 	if err != nil {
-		return store, fmt.Errorf("open connection directory: %w", err)
+		return store, fmt.Errorf("open profile directory: %w", err)
 	}
 	defer func() { err = errors.Join(err, root.Close()) }()
 	data, err := root.ReadFile("connections.json")
@@ -172,10 +172,10 @@ func Load(directory string) (result Store, err error) {
 		return store, nil
 	}
 	if err != nil {
-		return store, fmt.Errorf("read connections: %w", err)
+		return store, fmt.Errorf("read profiles: %w", err)
 	}
 	if err := json.Unmarshal(data, &store); err != nil {
-		return store, fmt.Errorf("decode connections: %w", err)
+		return store, fmt.Errorf("decode profiles: %w", err)
 	}
 	if store.Connections == nil {
 		store.Connections = make(map[string]Entry)

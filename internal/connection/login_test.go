@@ -68,19 +68,20 @@ func loginStoreBytes(t *testing.T, dir string) []byte {
 	return data
 }
 
-func TestLoginConnectionPreparesCloudWithoutCreatingProfile(t *testing.T) {
+func TestLoginProfilePreparesCloudWithoutCreatingProfile(t *testing.T) {
 	for _, tc := range []struct {
 		name string
 		args []string
 	}{
 		{"cloud", nil},
-		{"new-cloud", []string{"--connection", "new-cloud"}},
+		{"new-cloud", []string{"--profile", "new-cloud"}},
+		{"short-cloud", []string{"-p", "short-cloud"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			isolateLoginEnvironment(t)
 			dir := t.TempDir()
 			s, root := loginSettings(t, dir, tc.args...)
-			options, entry, gotName, gotDir, err := s.LoginConnection(t.Context(), root)
+			options, entry, gotName, gotDir, err := s.LoginProfile(t.Context(), root)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -112,7 +113,7 @@ func assertLoginDirectoryEmpty(t *testing.T, dir string) {
 	}
 }
 
-func TestLoginConnectionReusesActiveCloud(t *testing.T) {
+func TestLoginProfileReusesActiveCloud(t *testing.T) {
 	isolateLoginEnvironment(t)
 	dir := t.TempDir()
 	entry := connection.NewEntry(connection.Options{AuthMode: "cloud", Issuer: "https://saved.example", ClientID: "saved-client", Organization: "org", Stack: "stack"})
@@ -120,7 +121,7 @@ func TestLoginConnectionReusesActiveCloud(t *testing.T) {
 	before := connection.Store{Active: "work", Connections: map[string]connection.Entry{"work": entry}}
 	saveLoginStore(t, dir, before)
 	s, root := loginSettings(t, dir)
-	options, prepared, name, _, err := s.LoginConnection(t.Context(), root)
+	options, prepared, name, _, err := s.LoginProfile(t.Context(), root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,13 +133,13 @@ func TestLoginConnectionReusesActiveCloud(t *testing.T) {
 	}
 }
 
-func TestLoginConnectionImplicitLocalFallsBackUntilSessionSaved(t *testing.T) {
+func TestLoginProfileImplicitLocalFallsBackUntilSessionSaved(t *testing.T) {
 	isolateLoginEnvironment(t)
 	dir := t.TempDir()
 	local := connection.NewEntry(connection.Options{AuthMode: "none", LedgerURL: "http://localhost:9000"})
 	saveLoginStore(t, dir, connection.Store{Active: "local", Connections: map[string]connection.Entry{"local": local}})
 	s, root := loginSettings(t, dir)
-	options, entry, name, _, err := s.LoginConnection(t.Context(), root)
+	options, entry, name, _, err := s.LoginProfile(t.Context(), root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -164,26 +165,26 @@ func TestLoginConnectionImplicitLocalFallsBackUntilSessionSaved(t *testing.T) {
 	assertStaleLoginPreservesStore(t, dir, name, entry.Revision, options)
 }
 
-func TestLoginConnectionRejectsLocalAndNonCloudModesWithoutMutation(t *testing.T) {
+func TestLoginProfileRejectsLocalAndNonCloudModesWithoutMutation(t *testing.T) {
 	for _, tc := range []struct {
 		name string
 		args []string
 		env  string
 	}{
-		{"explicit local", []string{"--connection", "local"}, ""},
+		{"explicit local", []string{"--profile", "local"}, ""},
 		{"environment local", nil, "local"},
-		{"none", []string{"--connection", "new", "--auth-mode", "none"}, ""},
-		{"client credentials", []string{"--connection", "new", "--auth-mode", "client-credentials"}, ""},
+		{"none", []string{"--profile", "new", "--auth-mode", "none"}, ""},
+		{"client credentials", []string{"--profile", "new", "--auth-mode", "client-credentials"}, ""},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			isolateLoginEnvironment(t)
-			t.Setenv("FCTL_CONNECTION", tc.env)
+			t.Setenv("FCTL_PROFILE", tc.env)
 			dir := t.TempDir()
 			local := connection.NewEntry(connection.Options{AuthMode: "none", LedgerURL: "http://localhost:9000"})
 			saveLoginStore(t, dir, connection.Store{Active: "local", Connections: map[string]connection.Entry{"local": local}})
 			before := string(loginStoreBytes(t, dir))
 			s, root := loginSettings(t, dir, tc.args...)
-			if _, _, _, _, err := s.LoginConnection(t.Context(), root); err == nil {
+			if _, _, _, _, err := s.LoginProfile(t.Context(), root); err == nil {
 				t.Fatal("accepted non-Cloud login")
 			}
 			if string(loginStoreBytes(t, dir)) != before {
@@ -193,7 +194,7 @@ func TestLoginConnectionRejectsLocalAndNonCloudModesWithoutMutation(t *testing.T
 	}
 }
 
-func TestLoginConnectionIdentityOverridePreservesTarget(t *testing.T) {
+func TestLoginProfileIdentityOverridePreservesTarget(t *testing.T) {
 	for _, tc := range []struct {
 		flag, value, issuer, client string
 	}{
@@ -210,7 +211,7 @@ func TestLoginConnectionIdentityOverridePreservesTarget(t *testing.T) {
 			want := entry.Options
 			want.Issuer, want.ClientID = tc.issuer, tc.client
 			s, root := loginSettings(t, dir, tc.flag, tc.value)
-			options, prepared, _, _, err := s.LoginConnection(t.Context(), root)
+			options, prepared, _, _, err := s.LoginProfile(t.Context(), root)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -225,11 +226,11 @@ func TestLoginConnectionIdentityOverridePreservesTarget(t *testing.T) {
 	}
 }
 
-func TestLoginConnectionFlagsOverrideEnvironment(t *testing.T) {
+func TestLoginProfileFlagsOverrideEnvironment(t *testing.T) {
 	for _, flags := range []bool{false, true} {
 		t.Run(map[bool]string{false: "environment", true: "flags"}[flags], func(t *testing.T) {
 			isolateLoginEnvironment(t)
-			t.Setenv("FCTL_CONNECTION", "environment")
+			t.Setenv("FCTL_PROFILE", "environment")
 			t.Setenv("FCTL_ISSUER", "https://environment.example")
 			t.Setenv("FCTL_CLIENT_ID", "environment-client")
 			t.Setenv("FCTL_AUTH_MODE", "cloud")
@@ -237,11 +238,11 @@ func TestLoginConnectionFlagsOverrideEnvironment(t *testing.T) {
 			var args []string
 			if flags {
 				t.Setenv("FCTL_AUTH_MODE", "none")
-				args = []string{"--connection", "flag", "--issuer", "https://flag.example", "--client-id", "flag-client", "--auth-mode", "cloud"}
+				args = []string{"--profile", "flag", "--issuer", "https://flag.example", "--client-id", "flag-client", "--auth-mode", "cloud"}
 				wantName, wantIssuer, wantClient = "flag", "https://flag.example", "flag-client"
 			}
 			s, root := loginSettings(t, t.TempDir(), args...)
-			options, _, name, _, err := s.LoginConnection(t.Context(), root)
+			options, _, name, _, err := s.LoginProfile(t.Context(), root)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -252,7 +253,7 @@ func TestLoginConnectionFlagsOverrideEnvironment(t *testing.T) {
 	}
 }
 
-func TestLoginConnectionPreservesIdentityWhenTargetOrDefaultsChange(t *testing.T) {
+func TestLoginProfilePreservesIdentityWhenTargetOrDefaultsChange(t *testing.T) {
 	for _, tc := range []struct {
 		name  string
 		saved connection.Options
@@ -279,7 +280,7 @@ func TestLoginConnectionPreservesIdentityWhenTargetOrDefaultsChange(t *testing.T
 			saveLoginStore(t, dir, connection.Store{Active: "work", Connections: map[string]connection.Entry{"work": entry}})
 			before := string(loginStoreBytes(t, dir))
 			s, root := loginSettings(t, dir, tc.args...)
-			options, prepared, name, _, err := s.LoginConnection(t.Context(), root)
+			options, prepared, name, _, err := s.LoginProfile(t.Context(), root)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -334,7 +335,7 @@ func TestSaveLoginSessionRejectsLogoutDeleteAndReplacement(t *testing.T) {
 			cloudEntry.Session = &cloud.Session{IDToken: "existing-identity"}
 			saveLoginStore(t, dir, connection.Store{Active: "local", Connections: map[string]connection.Entry{"local": local, "cloud": cloudEntry}})
 			s, root := loginSettings(t, dir)
-			options, entry, name, _, err := s.LoginConnection(t.Context(), root)
+			options, entry, name, _, err := s.LoginProfile(t.Context(), root)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -375,8 +376,8 @@ func invalidateLoginEntry(t *testing.T, dir, name string, entry connection.Entry
 func TestSaveLoginSessionRejectsConcurrentCreationOfAbsentProfile(t *testing.T) {
 	isolateLoginEnvironment(t)
 	dir := t.TempDir()
-	s, root := loginSettings(t, dir, "--connection", "new-cloud")
-	options, entry, name, _, err := s.LoginConnection(t.Context(), root)
+	s, root := loginSettings(t, dir, "--profile", "new-cloud")
+	options, entry, name, _, err := s.LoginProfile(t.Context(), root)
 	if err != nil {
 		t.Fatal(err)
 	}

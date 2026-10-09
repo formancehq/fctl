@@ -12,15 +12,15 @@ import (
 	"github.com/formancehq/fctl/v4/internal/cloud"
 )
 
-// LoginConnection resolves Cloud settings without writing the store or requiring
+// LoginProfile resolves Cloud settings without writing the store or requiring
 // a target. Explicit
 // local profiles are rejected; an implicit active local profile remains intact.
-func (s *Settings) LoginConnection(ctx context.Context, cmd *cobra.Command) (Options, Entry, string, string, error) {
+func (s *Settings) LoginProfile(ctx context.Context, cmd *cobra.Command) (Options, Entry, string, string, error) {
 	dir, err := s.DirectoryPath()
 	if err != nil {
 		return Options{}, Entry{}, "", "", err
 	}
-	requested := cmp.Or(s.Name, os.Getenv("FCTL_CONNECTION"))
+	requested := cmp.Or(s.Name, os.Getenv("FCTL_PROFILE"))
 	store, err := Load(dir)
 	if err != nil {
 		return Options{}, Entry{}, "", "", err
@@ -31,7 +31,7 @@ func (s *Settings) LoginConnection(ctx context.Context, cmd *cobra.Command) (Opt
 	}
 	entry, exists := store.Connections[name]
 	if exists && entry.Options.AuthMode != "cloud" {
-		return Options{}, Entry{}, "", "", fmt.Errorf("login requires a Cloud connection; %q uses %s", name, entry.Options.AuthMode)
+		return Options{}, Entry{}, "", "", fmt.Errorf("login requires a Cloud profile; %q uses %s", name, entry.Options.AuthMode)
 	}
 	options := s.loginOptions(cmd, entry.Options)
 	if options.AuthMode != "cloud" {

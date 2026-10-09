@@ -69,7 +69,7 @@ and `--flag=false`.
 
 Plugins receive an HTTP client through their constructor. This is the embedded
 adapter's dependency injection point; plugin code does not obtain credentials
-or read connection profiles. The adapter validates and reads the body, resolves
+or read saved profiles. The adapter validates and reads the body, resolves
 the declared service once, copies endpoint/context, executes the plugin and
 renders any returned data, including partial results accompanied by an error.
 Service command trees and schemas remain in plugins rather than in the host.

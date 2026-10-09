@@ -13,7 +13,7 @@ go run . version
 go run . --version
 go run . completion bash
 go run . --auth-mode none --ledger-url http://localhost:9000 ledger list
-go run . connections --help
+go run . profiles --help
 go run . login
 go run . cloud organizations list
 go run . cloud stack list --organization ORG_ID
@@ -26,7 +26,7 @@ source change.
 
 The Auth module uses its public Go client. Ledger targets `release/v3.0`,
 with HTTP business routes under `/v3`. See [module commands](docs/modules.md)
-and [connection setup](docs/connections.md). Cloud management lives under
+and [profiles and authentication](docs/profiles.md). Cloud management lives under
 `cloud`, with stack administration under `cloud stack`. See the
 [Cloud command boundaries](docs/cloud.md) for restored proxy, MCP and token
 helpers, and experimental Deploy Apps. Connectivity covers the connector catalogue,
@@ -41,7 +41,7 @@ v3 scripts must adapt commands and request schemas or retain a v3 binary.
 The v4 profile store is separate and direct service access needs no Cloud login.
 
 `fctl login` defaults to the public Cloud, opens the browser and saves a Cloud
-connection after successful authentication. Use `--no-browser` for a headless
+profile after successful authentication. Use `--no-browser` for a headless
 session or `--issuer` for another environment. Login does not require a stack;
 service commands resolve their target from flags, saved defaults, unique access or
 interactive selection.

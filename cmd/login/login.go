@@ -14,7 +14,7 @@ import (
 )
 
 func NewCommand(s *connection.Settings) *cobra.Command {
-	return &cobra.Command{Use: "login", Short: "Log in to the Cloud (creates a connection automatically)", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+	return &cobra.Command{Use: "login", Short: "Log in to the Cloud (creates a profile automatically)", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
 		return runLogin(s, cmd)
 	}}
 }
@@ -24,7 +24,7 @@ func runLogin(s *connection.Settings, cmd *cobra.Command) error {
 	if err != nil {
 		return err
 	}
-	opts, entry, name, dir, err := s.LoginConnection(cmd.Context(), cmd)
+	opts, entry, name, dir, err := s.LoginProfile(cmd.Context(), cmd)
 	if err != nil {
 		return err
 	}
@@ -47,18 +47,18 @@ func loginHTTPClient(s *connection.Settings, out io.Writer) (*http.Client, error
 }
 
 func NewLogoutCommand(s *connection.Settings) *cobra.Command {
-	return &cobra.Command{Use: "logout", Short: "Remove the selected connection's local Cloud tokens", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+	return &cobra.Command{Use: "logout", Short: "Remove the selected profile's local Cloud tokens", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
 		_, _, name, dir, err := s.Resolve(cmd)
 		if err != nil {
 			return err
 		}
 		if name == "" {
-			return fmt.Errorf("select a saved connection")
+			return fmt.Errorf("select a saved profile")
 		}
 		if err := connection.Update(cmd.Context(), dir, func(store *connection.Store) error {
 			entry, exists := store.Connections[name]
 			if !exists {
-				return fmt.Errorf("connection no longer exists")
+				return fmt.Errorf("profile no longer exists")
 			}
 			store.Connections[name] = connection.NewEntry(entry.Options)
 			return nil

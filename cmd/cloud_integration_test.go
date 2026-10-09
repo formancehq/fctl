@@ -38,7 +38,7 @@ func TestCloudCLILifecycle(t *testing.T) {
 	t.Parallel()
 	f := newCLICloudFixture(t)
 	dir := t.TempDir()
-	f.run(t, dir, "connections", "add", "cloud", "--auth-mode", "cloud", "--issuer", f.issuer(), "--organization", "org", "--stack", "stack")
+	f.run(t, dir, "profiles", "add", "cloud", "--auth-mode", "cloud", "--issuer", f.issuer(), "--organization", "org", "--stack", "stack")
 	f.assertConnectionViews(t, dir, false)
 	out, stderr := f.run(t, dir, "login")
 	assertCLICloudJSON(t, out, `{"loggedIn":true}`)
@@ -121,7 +121,7 @@ func TestCloudCLISavedTargetDefaults(t *testing.T) {
 	t.Parallel()
 	f := newCLICloudFixture(t, true)
 	dir := t.TempDir()
-	f.run(t, dir, "connections", "add", "cloud", "--auth-mode", "cloud", "--issuer", f.issuer(), "--organization", "org", "--stack", "stack")
+	f.run(t, dir, "profiles", "add", "cloud", "--auth-mode", "cloud", "--issuer", f.issuer(), "--organization", "org", "--stack", "stack")
 	f.run(t, dir, "login")
 	f.run(t, dir, "ledger", "list")
 	f.assertTargetSaved(t, dir, "org", "stack")
@@ -186,7 +186,7 @@ func TestCloudCLIRefreshSavedAfterCancellation(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	root.SetOut(&stdout)
 	root.SetErr(&stderr)
-	root.SetArgs([]string{"--no-browser", "--config-dir", dir, "--connection", "cloud", "ledger", "list"})
+	root.SetArgs([]string{"--no-browser", "--config-dir", dir, "--profile", "cloud", "ledger", "list"})
 	err := root.ExecuteContext(ctx)
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("command error = %v, want cancellation during Stack exchange", err)
@@ -267,14 +267,14 @@ func prepareCLICloudFailedLogin(t *testing.T, profile string) (*cliCloudFixture,
 		return f, f, dir, args
 	}
 	if profile == "fresh explicit" {
-		return f, f, dir, append(args, "--connection", "new-cloud")
+		return f, f, dir, append(args, "--profile", "new-cloud")
 	}
 	f.run(t, dir, "login", "--issuer", f.issuer(), "--organization", "org", "--stack", "stack")
 	f.run(t, dir, "ledger", "list")
 	f.assertTargetSaved(t, dir, "org", "stack")
-	f.run(t, dir, "connections", "add", "local", "--auth-mode", "none", "--ledger-url", f.server.URL+"/unused")
-	f.run(t, dir, "connections", "use", "local")
-	args = []string{"login", "--connection", "cloud"}
+	f.run(t, dir, "profiles", "add", "local", "--auth-mode", "none", "--ledger-url", f.server.URL+"/unused")
+	f.run(t, dir, "profiles", "use", "local")
+	args = []string{"login", "--profile", "cloud"}
 	if profile == "existing issuer override" {
 		other := newCLICloudFixture(t, true)
 		return f, other, dir, append(args, "--issuer", other.issuer())
@@ -740,7 +740,7 @@ func (f *cliCloudFixture) assertTargetRefused(t *testing.T, dir string, flags []
 
 func (f *cliCloudFixture) assertConnectionViews(t *testing.T, dir string, loggedIn bool) {
 	t.Helper()
-	out, _ := f.run(t, dir, "connections", "show")
+	out, _ := f.run(t, dir, "profiles", "show")
 	var options connection.Options
 	if err := json.Unmarshal([]byte(out), &options); err != nil {
 		t.Fatal(err)
@@ -749,7 +749,7 @@ func (f *cliCloudFixture) assertConnectionViews(t *testing.T, dir string, logged
 	if options.AuthMode != "cloud" || options.Issuer != f.server.URL+"/membership" || options.Organization != saved.Organization || options.Stack != saved.Stack {
 		t.Fatal("connection show lost saved Cloud settings")
 	}
-	out, _ = f.run(t, dir, "connections", "list")
+	out, _ = f.run(t, dir, "profiles", "list")
 	var rows []struct {
 		Name     string
 		Active   bool

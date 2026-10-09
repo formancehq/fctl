@@ -18,7 +18,7 @@ import (
 // Resolver supplies the selected service endpoint and authenticated HTTP client.
 type Resolver func(context.Context, string) (*api.Client, error)
 
-// RequestResolver can select a named connection using already validated flags.
+// RequestResolver can select a named profile using already validated flags.
 type RequestResolver func(context.Context, string, pluginsdk.ExecuteRequest) (*api.Client, error)
 
 // Adapter installs commands from a frozen registry into the host root.

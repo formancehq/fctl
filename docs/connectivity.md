@@ -10,12 +10,12 @@ numbers, without introducing typed-model defaults such as `replicas`.
 It imports no server, Cobra, UI or core packages.
 The host owns authentication, endpoints, storage, forms and presentation.
 
-## Connections
+## Profiles
 
 ```bash
-fctl connections add connectivity-local --auth-mode none \
+fctl profiles add connectivity-local --auth-mode none \
   --connectivity-url http://localhost:8080
-fctl --connection connectivity-local connectivity info
+fctl -p connectivity-local connectivity info
 fctl --organization ORG --stack STACK connectivity connectors list
 ```
 
@@ -24,6 +24,8 @@ including any deployment prefix. Profiles persist `connectivityURL`. This URL
 takes precedence over `--stack-url`, which appends `/api/connectivity`.
 Cloud uses the existing scoped Stack client; its gateway must expose Connectivity.
 Direct endpoint flags cannot override Cloud routes.
+See [profiles and authentication](profiles.md) for profile management, overrides
+and session storage.
 
 For OAuth2 credentials, configure `--auth-mode client-credentials`, `--token-url`,
 `--client-id`, `FCTL_CLIENT_SECRET` and `--scopes`. With OIDC enabled, the API

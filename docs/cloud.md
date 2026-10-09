@@ -13,13 +13,13 @@ validation evidence belongs in [validation.md](validation.md).
 | `cloud stack` | Stack lifecycle, modules, users and history | Membership organization grant |
 | `cloud apps` | Experimental apps, manifests, deployments and variables | Separate Deploy application grant |
 
-Cloud metadata commands require a logged-in Cloud connection. Organization and
+Cloud metadata commands require a logged-in Cloud profile. Organization and
 stack selection use explicit flags, saved defaults, or a unique available ID.
 They do not need a stack gateway connection to read Membership metadata.
-See [connections.md](connections.md) for authentication and defaults.
+See [profiles and authentication](profiles.md) for authentication and defaults.
 
 ```sh
-fctl login --connection cloud
+fctl login --profile cloud
 fctl cloud me info
 fctl cloud organizations list
 fctl cloud regions list --organization ORGANIZATION_ID
@@ -108,7 +108,7 @@ deployment has been verified.
 | `fctl stack proxy` | `fctl cloud stack proxy` |
 | `fctl stack mcp serve` | `fctl cloud stack mcp serve` |
 
-V3 profiles are not migrated automatically. Create a v4 connection and log in;
+V3 profiles are not migrated automatically. Create a v4 profile and log in;
 use explicit organization/stack flags or saved defaults. Auth and Ledger still
 use their own module roots. For automation, select `-o json` explicitly; see
 [output.md](output.md) for terminal defaults and diagnostics.

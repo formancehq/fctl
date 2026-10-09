@@ -6,7 +6,7 @@ selects an organization, asks for a name, then lists regions and their exact
 catalog versions. Searchable menus show resource names and IDs. Forms use one
 field per step, retain values while moving back, and show keyboard help.
 
-Explicit arguments, flags, saved connection defaults and environment settings
+Explicit arguments, flags, saved profile defaults and environment settings
 remain authoritative. A complete invocation executes directly. An explicit
 `--data` body bypasses payload forms, including `@file` and stdin bodies. Partial
 forms ask only for omitted values; blank optional fields remain omitted.

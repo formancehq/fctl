@@ -8,8 +8,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/v4/cmd/cloudtools"
-	"github.com/formancehq/fctl/v4/cmd/connections"
 	"github.com/formancehq/fctl/v4/cmd/login"
+	"github.com/formancehq/fctl/v4/cmd/profiles"
 	"github.com/formancehq/fctl/v4/cmd/version"
 	"github.com/formancehq/fctl/v4/internal/api"
 	"github.com/formancehq/fctl/v4/internal/command"
@@ -38,9 +38,9 @@ func NewRootCommand() *cobra.Command {
 		return command.ConfigureOutput(cmd, settings.Output, settings.Color)
 	}
 	command.InstallHelp(root, &settings.Color)
-	root.AddGroup(&cobra.Group{ID: "cloud", Title: "Cloud:"}, &cobra.Group{ID: "modules", Title: "Modules:"}, &cobra.Group{ID: "connections", Title: "Connections:"})
+	root.AddGroup(&cobra.Group{ID: "cloud", Title: "Cloud:"}, &cobra.Group{ID: "modules", Title: "Modules:"}, &cobra.Group{ID: "profiles", Title: "Profiles:"})
 	resolve := pluginResolver(root, settings)
-	root.AddCommand(version.NewCommand(), connections.NewCommand(settings), login.NewCommand(settings), login.NewLogoutCommand(settings))
+	root.AddCommand(version.NewCommand(), profiles.NewCommand(settings), login.NewCommand(settings), login.NewLogoutCommand(settings))
 	registry := &plugin.Registry{}
 	for _, factory := range []plugin.Factory{cloudplugin.New, auth.New, ledger.New, connectivity.New} {
 		if err := registry.Register(context.Background(), factory(nil), factory); err != nil {
@@ -59,8 +59,8 @@ func NewRootCommand() *cobra.Command {
 			cmd.GroupID = "cloud"
 		case "auth", "ledger", "connectivity":
 			cmd.GroupID = "modules"
-		case "connections", "login", "logout":
-			cmd.GroupID = "connections"
+		case "profiles", "login", "logout":
+			cmd.GroupID = "profiles"
 		}
 	}
 	return root

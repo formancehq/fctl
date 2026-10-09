@@ -11,7 +11,7 @@ command tree. Errors propagate to the entrypoint, which writes them to stderr
 and exits with status 1. Signal cancellation is propagated through the command
 context.
 
-The root registers `version`, connection management and login/logout. Cloud,
+The root registers `version`, `profiles` management and login/logout. Cloud,
 Auth, Ledger and Connectivity register through the embedded plugin registry and public SDK; the core
 builds their Cobra commands from manifests. Cobra provides help, `--version`
 and shell completion commands.
@@ -59,7 +59,7 @@ Ledger commands remain under `auth` and `ledger`; select their Cloud target with
 confirmation flags and request bodies. See [migration examples](cloud.md#migration-from-v3).
 
 Existing automation must adapt to the [v4 module commands](modules.md) and
-[connection settings](connections.md), or keep using a compatible v3 binary.
+[profile settings](profiles.md), or keep using a compatible v3 binary.
 Connectivity is embedded; its API contract and commands are documented in [Connectivity](connectivity.md).
 
 ## Homebrew release migration

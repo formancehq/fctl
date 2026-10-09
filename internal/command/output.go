@@ -61,7 +61,7 @@ func InstallHelp(root *cobra.Command, color *string) {
 		defaultHelp(cmd, args)
 		cmd.SetOut(out)
 		text := help.String()
-		for _, label := range []string{"Usage:", "Examples:", "Available Commands:", "Flags:", "Global Flags:", "Cloud:", "Modules:", "Connections:"} {
+		for _, label := range []string{"Usage:", "Examples:", "Available Commands:", "Flags:", "Global Flags:", "Cloud:", "Modules:", "Profiles:"} {
 			text = strings.ReplaceAll(text, label, "\x1b[1;36m"+label+"\x1b[0m")
 		}
 		if _, err := io.WriteString(out, text); err != nil {

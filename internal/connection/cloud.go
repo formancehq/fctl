@@ -25,7 +25,7 @@ func cloudCoordinator(dir, name string, entry Entry) cloud.Coordinator {
 			}
 			current, exists := store.Connections[name]
 			if !exists || current.Session == nil || current.Options != entry.Options {
-				return fmt.Errorf("cloud connection changed or logged out during authentication")
+				return fmt.Errorf("cloud profile changed or logged out during authentication")
 			}
 			expected := current.Revision
 			token, err = work(current.Session, func(session *cloud.Session) error {
@@ -41,13 +41,13 @@ func cloudCoordinator(dir, name string, entry Entry) cloud.Coordinator {
 
 func (s *Settings) membershipClient(ctx context.Context, cmd *cobra.Command, client *http.Client, options Options, entry Entry, name, dir string) (*api.Client, error) {
 	if options.AuthMode != "cloud" {
-		return nil, fmt.Errorf("cloud commands require a Cloud connection; run fctl login")
+		return nil, fmt.Errorf("cloud commands require a Cloud profile; run fctl login")
 	}
 	if cloudIdentity(options) != cloudIdentity(entry.Options) {
 		return nil, fmt.Errorf("cloud identity settings changed; log in again with the chosen issuer and client")
 	}
 	if entry.Session == nil {
-		return nil, fmt.Errorf("connection is not logged in; run fctl login")
+		return nil, fmt.Errorf("profile is not logged in; run fctl login")
 	}
 	if entry.Session.Options.Stack != "" {
 		return nil, fmt.Errorf("this older session targets a single stack; run fctl login to use Cloud management")
@@ -95,7 +95,7 @@ func (s *Settings) ApplicationClient(ctx context.Context, cmd *cobra.Command, al
 		return nil, err
 	}
 	if options.AuthMode != "cloud" || entry.Session == nil {
-		return nil, fmt.Errorf("cloud apps require a logged-in Cloud connection; run fctl login")
+		return nil, fmt.Errorf("cloud apps require a logged-in Cloud profile; run fctl login")
 	}
 	if cloudIdentity(options) != cloudIdentity(entry.Options) || entry.Session.Options.Stack != "" {
 		return nil, fmt.Errorf("cloud identity settings changed or use an older session; run fctl login")

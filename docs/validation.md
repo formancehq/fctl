@@ -90,7 +90,7 @@ All five authentication-mode cases passed: anonymous discovery, rejection of
 anonymous protected Ledger access, client-credentials Auth and Ledger reads,
 and rejection of an invalid client secret. Diagnostics hid credentials in all
 five cases. The initial approved browser login completed, and cached root grants
-were exercised earlier. The latest service reports used the existing connection
+were exercised earlier. The latest service reports used the existing profile
 and cached stack grant; they do not establish a new device authorization or
 fresh browser login.
 

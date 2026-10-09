@@ -35,7 +35,7 @@ type Settings struct {
 
 func (s *Settings) Bind(root *cobra.Command) {
 	f := root.PersistentFlags()
-	f.StringVar(&s.Name, "connection", "", "Saved connection name (FCTL_CONNECTION)")
+	f.StringVarP(&s.Name, "profile", "p", "", "Saved profile name (FCTL_PROFILE)")
 	f.StringVar(&s.Directory, "config-dir", "", "Private v4 configuration directory (FCTL_CONFIG_DIR)")
 	f.DurationVar(&s.Timeout, "timeout", 30*time.Second, "Timeout for each HTTP request")
 	f.StringVarP(&s.Output, "output", "o", "auto", "Output format: auto, table or json (auto uses tables in a terminal)")
@@ -85,14 +85,14 @@ func (s *Settings) Resolve(cmd *cobra.Command) (Options, Entry, string, string, 
 	if err != nil {
 		return Options{}, Entry{}, "", "", err
 	}
-	name := cmp.Or(s.Name, os.Getenv("FCTL_CONNECTION"), store.Active)
+	name := cmp.Or(s.Name, os.Getenv("FCTL_PROFILE"), store.Active)
 	entry := store.Connections[name]
 	if name != "" {
 		if err := ValidateName(name); err != nil {
 			return Options{}, Entry{}, "", "", err
 		}
 		if _, ok := store.Connections[name]; !ok {
-			return Options{}, Entry{}, "", "", fmt.Errorf("connection %q does not exist", name)
+			return Options{}, Entry{}, "", "", fmt.Errorf("profile %q does not exist", name)
 		}
 	}
 	resolved := Settings{Options: entry.Options}
@@ -181,7 +181,7 @@ func savedCloudClient(ctx context.Context, client *http.Client, options Options,
 		return nil, "", fmt.Errorf("cloud identity settings changed; log in again with the chosen issuer and client")
 	}
 	if entry.Session == nil {
-		return nil, "", fmt.Errorf("connection is not logged in; run fctl login --connection %s", name)
+		return nil, "", fmt.Errorf("profile is not logged in; run fctl login --profile %s", name)
 	}
 	coordinator := cloudCoordinator(dir, name, entry)
 	if entry.Session.Options.Stack != "" {

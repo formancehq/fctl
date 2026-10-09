@@ -13,12 +13,12 @@ import (
 var identifier = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
 
 var coreFlags = map[string]bool{
-	"help": true, "connection": true, "config-dir": true, "timeout": true, "output": true,
+	"help": true, "profile": true, "config-dir": true, "timeout": true, "output": true,
 	"stack-url": true, "ledger-url": true, "auth-url": true, "connectivity-url": true, "auth-mode": true, "token-url": true,
 	"client-id": true, "scopes": true, "issuer": true, "organization": true, "stack": true,
 	"no-browser": true, "debug": true, "color": true, "no-input": true,
 }
-var coreRoots = map[string]bool{"help": true, "completion": true, "version": true, "connections": true, "login": true, "logout": true}
+var coreRoots = map[string]bool{"help": true, "completion": true, "version": true, "profiles": true, "login": true, "logout": true}
 
 type validationScope struct {
 	names   map[string]bool
@@ -38,7 +38,7 @@ func validateManifest(m pluginsdk.Manifest) error {
 	if len(fields) == 0 || fields[0] != m.Name || coreRoots[fields[0]] {
 		return fmt.Errorf("invalid or reserved plugin root %q", m.Root.Use)
 	}
-	if err := validateCommand(m.Root, validationScope{names: map[string]bool{}, shorts: map[string]bool{"h": true, "o": true}}); err != nil {
+	if err := validateCommand(m.Root, validationScope{names: map[string]bool{}, shorts: map[string]bool{"h": true, "o": true, "p": true}}); err != nil {
 		return err
 	}
 	return validateInteraction(m)

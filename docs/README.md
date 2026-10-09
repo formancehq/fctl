@@ -2,8 +2,8 @@
 
 - [V4 foundation](v4-foundation.md): module identity, command behavior,
   command boundaries and migration from v3.
-- [Connections and authentication](connections.md): local services, OAuth2,
-  Cloud login and private connection profiles.
+- [Profiles and authentication](profiles.md): local services, OAuth2,
+  Cloud login and private saved profiles.
 - [Auth and Ledger modules](modules.md): supported operations, API revisions
   and command examples.
 - [Connectivity](connectivity.md): catalogue, versions, instance lifecycle,
