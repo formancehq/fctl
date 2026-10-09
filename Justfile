@@ -8,11 +8,14 @@ pc: pre-commit completions
 
 lint:
     golangci-lint run --fix --timeout 5m
+    cd pkg/pluginsdk && golangci-lint run --config ../../.golangci.yml --fix --timeout 5m
 
 tidy:
+    cd pkg/pluginsdk && go mod tidy
     go mod tidy
 
 generate:
+    @cd pkg/pluginsdk && go generate ./...
     @go generate ./...
 g: generate
 
@@ -20,6 +23,7 @@ install:
     go install -v .
 
 tests:
+    cd pkg/pluginsdk && go test -race ./...
     go test -race ./...
 
 release-local:
