@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -60,11 +61,17 @@ func InstallHelp(root *cobra.Command, color *string) {
 		cmd.SetOut(&help)
 		defaultHelp(cmd, args)
 		cmd.SetOut(out)
-		text := help.String()
-		for _, label := range []string{"Usage:", "Examples:", "Available Commands:", "Flags:", "Global Flags:", "Cloud:", "Modules:", "Profiles:"} {
-			text = strings.ReplaceAll(text, label, "\x1b[1;36m"+label+"\x1b[0m")
+		labels := []string{"Usage:", "Examples:", "Available Commands:", "Additional Commands:", "Flags:", "Global Flags:"}
+		for _, group := range cmd.Groups() {
+			labels = append(labels, group.Title)
 		}
-		if _, err := io.WriteString(out, text); err != nil {
+		lines := strings.Split(help.String(), "\n")
+		for i, line := range lines {
+			if line != "" && slices.Contains(labels, line) {
+				lines[i] = "\x1b[1;36m" + line + "\x1b[0m"
+			}
+		}
+		if _, err := io.WriteString(out, strings.Join(lines, "\n")); err != nil {
 			return
 		}
 	})

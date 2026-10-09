@@ -13,7 +13,9 @@ raw JSON; terminal styling does not change service requests or plugin schemas.
 
 `--color always` overrides automatic color suppression. JSON output never adds
 ANSI styling, even when color is forced. Full Cobra help remains available;
-color emphasizes its section labels and command groups.
+color emphasizes its standard section labels, including Additional Commands,
+and every declared Cobra command group, including Plugins. Only complete
+heading lines are styled; descriptions and examples retain their original text.
 
 ```sh
 fctl cloud stack list
