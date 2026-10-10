@@ -1,7 +1,9 @@
 # Plugin contract
 
 Cloud and external service plugins implement `pkg/pluginsdk.Plugin`. Cloud has
-an embedded provider; Auth and Ledger use external executables. The local
+an embedded provider. Modern Auth and Ledger use external executables.
+Historical stacks use the SDK facades from the independent
+[`misc/fctl-plugin` legacy module](legacy-plugin.md). The local
 `plugins/ledger` and `plugins/connectivity` adapters have been removed. The public SDK
 is a separate Go module, `github.com/formancehq/fctl/pkg/pluginsdk`. It has no Cobra,
 profile-store or core authentication dependency. Each plugin exposes two methods:
@@ -57,6 +59,14 @@ metadata. The Cloud host supplies selected and available organization/stack IDs;
 the application host supplies organization and application alias. Tokens,
 credentials and profile paths do not belong in this map. Authentication stays
 in the injected HTTP transport.
+
+`CommandSpec.Aliases` preserves command aliases. The SDK resolves them to
+canonical command paths; the host checks aliases for command collisions.
+
+`CommandSpec.Files` declares optional host file effects. The host reads local
+files, stdin or explicit HTTPS sources into `Body`, then returns JSON, YAML or
+NDJSON to stdout or an atomic private file. It enforces confirmation before
+file access. Plugins never read a path or access the terminal themselves.
 
 See [interactive input](interaction.md) for terminal fields, choice discovery and
 automation. Input metadata does not relax direct SDK validation.

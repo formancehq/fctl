@@ -22,3 +22,5 @@
   offline metadata and exact-version target locks.
 - [Agent skills](agent-skills.md): versioned plugin development guidance,
   release distribution and local installation.
+
+- [Historical service plugin](legacy-plugin.md): compatibility, routing and builds.

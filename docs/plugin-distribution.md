@@ -311,3 +311,12 @@ for all six platforms and fresh-cache discovery through the official catalogue.
 The execution check used the published binary with a local API fixture; it did
 not upgrade or mutate a deployed Auth service. Targets running other exact
 versions need a matching release or a trusted local executable.
+
+## Historical stacks
+
+[The legacy module](legacy-plugin.md) preserves historical service commands in
+one independently versioned bundle. Its first integration embeds SDK facades
+in fctl and builds a separate release archive. The core selects it explicitly
+for compatible historical targets; it is never a fallback for a failed modern
+plugin download. Modern exact-version catalogue entries and OCI locks keep
+this document's existing resolution rules.

@@ -28,6 +28,24 @@ builds:
       - amd64
       - arm64
 
+  - binary: fctl-plugin-legacy
+    id: fctl-plugin-legacy
+    dir: misc/fctl-plugin
+    main: ./cmd/fctl-plugin-legacy
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
 archives:
   - id: "{{.ProjectName}}"
     ids:
@@ -43,8 +61,22 @@ archives:
       - docs/agent-skills.md
       - LICENSE
 
+  - id: fctl-plugin-legacy
+    ids:
+      - fctl-plugin-legacy
+    name_template: "fctl-plugin-legacy_{{.Os}}-{{.Arch}}"
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE
+      - misc/fctl-plugin/README.md
+
 homebrew_casks:
   - name: fctl
+    ids:
+      - fctl
     alternative_names:
       - fctl@{{ .Major }}
     binaries:
