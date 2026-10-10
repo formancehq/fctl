@@ -1,0 +1,23 @@
+# fctl legacy service plugin
+
+This library and plugin executable adapt the historical fctl service commands
+from main commit `e00243b3e2e56aae6a09d7010b0c17890134388c` to the public fctl SDK.
+The repository profile is library/CLI plugin: the fctl host owns authentication,
+configuration, terminal interaction and presentation. The plugin has no service
+lifecycle, Fx container or independent authentication layer.
+
+`New(*http.Client)` returns the complete `legacy` bundle. `NewService(service,
+*http.Client)` returns a service facade using the same SDK contract. Metadata
+works with a nil client and no network. `Compatibilities` declares the supported
+API families; execution rejects unknown or modern target versions.
+
+```sh
+go test -race ./...
+go build ./cmd/fctl-plugin-legacy
+```
+
+The root fctl Justfile and GoReleaser include this module. The executable calls
+`transport.Serve(New)` and obtains HTTP through the host callback; it receives
+no tokens in arguments or environment. Its own version is independent of any
+historical service release. See the repository's `docs/legacy-plugin.md` for
+selection, cache, supported API families and validation.
