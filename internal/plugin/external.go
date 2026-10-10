@@ -2,12 +2,10 @@ package plugin
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"reflect"
-	"strings"
 	"sync"
 
 	"github.com/formancehq/fctl/pkg/pluginsdk"
@@ -84,13 +82,10 @@ func (p *external) checkVersion(ctx context.Context, endpoint string) error {
 	if err != nil {
 		return fmt.Errorf("check %s plugin version: %w", p.manifest.Service, err)
 	}
-	var info struct {
-		Version string `json:"version"`
-	}
-	if err := json.Unmarshal(data, &info); err != nil {
+	version, err := pluginsdk.ServiceVersion(data)
+	if err != nil {
 		return fmt.Errorf("decode %s version: %w", p.manifest.Service, err)
 	}
-	version := strings.TrimPrefix(info.Version, "v")
 	if version != p.manifest.Version {
 		return fmt.Errorf("installed plugin targets %s %s, service reports %s; run fctl plugins sync or install the matching binary", p.manifest.Service, p.manifest.Version, version)
 	}

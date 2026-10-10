@@ -3,11 +3,11 @@ package pluginhost
 import (
 	"cmp"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/formancehq/fctl/pkg/pluginsdk"
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/v4/internal/api"
@@ -111,15 +111,9 @@ func pluginServiceVersion(ctx context.Context, client *api.Client, service strin
 	if err != nil {
 		return "", fmt.Errorf("discover %s version: %w", descriptor.title, err)
 	}
-	var info struct {
-		Version string `json:"version"`
-	}
-	if err := json.Unmarshal(data, &info); err != nil {
+	version, err := pluginsdk.ServiceVersion(data)
+	if err != nil {
 		return "", fmt.Errorf("decode %s version: %w", descriptor.title, err)
-	}
-	version := strings.TrimPrefix(info.Version, "v")
-	if version == "" {
-		return "", fmt.Errorf("%s /_info did not report a version", descriptor.name)
 	}
 	return version, nil
 }
