@@ -45,6 +45,7 @@ assertion boundary.
 | `fctl-legacy-workflow-reconciliation-report.json` | 18 HTTP/CLI PASS | Workflow YAML create/show/run, instance show/history, trigger create/show/test/occurrences/delete and workflow delete; Reconciliation pool/policy create/read/reconcile/result read/delete and pool cleanup. Initial `--wait` completion semantics needed the follow-up below. |
 | `fctl-legacy-workflow-assertions-report.json` | 3 PASS | Additional workflow create/run/delete checks. These do not replace the terminal-state assertion. |
 | `fctl-legacy-workflow-wait-report.json` | 5 PASS | Final direct Cloud workflow create, run with `--wait`, terminal-state assertion (`terminated=true`), instance show readback and workflow delete. |
+| `fctl-legacy-https-schema-report.json` | 2 PASS | Schema insertion from the published HTTPS fixture, then an exact version and chart readback. An empty creation response is valid. |
 | `fctl-legacy-extra-report.json` | 9 PASS, 1 FAIL | Wallet create/show/update, balance create, credit/read/debit/transactions; bank-account create. The initial Payments pool payload failed validation because `query` was required. The later pool run passed. |
 | `fctl-legacy-wallet-holds-report.json` | 7 PASS, 1 FAIL | Pending hold create/show/void, a second pending hold and confirm, and balance reads. An initial drain failed with insufficient funds; a subsequent balance read alone was not proof of zero. |
 | `fctl-legacy-wallet-drain-report.json` | 6 PASS | Final reads, drain operations and explicit zero-balance checks for both tested wallet balances (`main` and the QA balance). |
@@ -95,6 +96,13 @@ the core, SDK and legacy modules), `just tests` with the race detector, and
 macOS and Windows amd64/arm64 targets. The rebuilt native macOS executable
 then repeated a real Ledger read through the SDK transport. These build checks
 do not establish runtime validation on the other platforms.
+
+After the branch was pushed, a fresh independent Go consumer downloaded
+`github.com/formancehq/fctl/misc/fctl-plugin` at
+`v0.0.0-20261010100529-b96046bc717b`, without a local `replace` or workspace.
+It resolved the public SDK dependency and read the seven-service manifest.
+This verifies that consumers can import the published module independently
+of the fctl checkout; it is separate from binary release publication.
 
 ## Reproduce selected checks
 
