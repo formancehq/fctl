@@ -309,6 +309,7 @@ func endpoint(o Options, service string) (string, error) {
 		direct = o.AuthURL
 	case "connectivity":
 		direct = o.ConnectivityURL
+	case "payments", "orchestration", "reconciliation", "wallets", "webhooks":
 	default:
 		return "", fmt.Errorf("unsupported service %q", service)
 	}

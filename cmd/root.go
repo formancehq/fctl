@@ -23,8 +23,8 @@ func NewRootCommand() *cobra.Command {
 
 // NewRootCommandWithArgs selects installed plugin metadata before Cobra parses
 // service flags. Help and completion read cached metadata without starting a
-// plugin process. Auth and Ledger are external-only; an unprepared target exposes an
-// installation guide instead of an embedded implementation.
+// plugin process. Historical targets select SDK legacy facades; modern targets
+// prepare exact-version external service plugins.
 func NewRootCommandWithArgs(ctx context.Context, args []string) *cobra.Command {
 	return newRootCommand(ctx, args)
 }
@@ -64,7 +64,7 @@ func newRootCommand(ctx context.Context, args []string) *cobra.Command {
 		switch cmd.Name() {
 		case "cloud":
 			cmd.GroupID = "cloud"
-		case "auth", "ledger":
+		case "auth", "ledger", "legacy", "payments", "orchestration", "reconciliation", "wallets", "webhooks":
 			cmd.GroupID = "modules"
 		case "profiles", "login", "logout":
 			cmd.GroupID = "profiles"

@@ -47,13 +47,13 @@ func TestCloudCLILifecycle(t *testing.T) {
 	assertCLICloudJSON(t, out, `{"loggedIn":true}`)
 	f.assertDeviceInstructions(t, out, stderr)
 	f.assertRootSession(t, dir)
-	f.assertCounts(t, 1, 1, 0, 0, 0)
+	f.assertCounts(t, 1, 1, 0, 0, 0, 0)
 	f.assertConnectionViews(t, dir, true)
 	out, stderr = f.run(t, dir, "ledger", "list")
 	assertCLICloudJSON(t, out, `{"data":[]}`)
 	f.assertDeviceInstructions(t, out, stderr)
 	f.assertTargetSaved(t, dir, "org", "stack")
-	f.assertCounts(t, 2, 2, 1, 1, 0)
+	f.assertCounts(t, 3, 3, 1, 1, 0, 1)
 	out, stderr = f.run(t, dir, "auth", "clients", "list")
 	assertCLICloudJSON(t, out, `{"data":[]}`)
 	if stderr != "" {
@@ -64,7 +64,7 @@ func TestCloudCLILifecycle(t *testing.T) {
 	if stderr != "" {
 		t.Fatal("cached target requested authorization again")
 	}
-	f.assertCounts(t, 2, 2, 1, 2, 1)
+	f.assertCounts(t, 3, 3, 1, 2, 1, 3)
 	f.assertConnectionViews(t, dir, true)
 	out, _ = f.run(t, dir, "logout")
 	assertCLICloudJSON(t, out, `{"loggedIn":false}`)
@@ -93,7 +93,7 @@ func TestCloudCLILoginWithoutProfile(t *testing.T) {
 	out, _ = f.run(t, dir, "ledger", "list")
 	assertCLICloudJSON(t, out, `{"data":[]}`)
 	f.assertTargetSaved(t, dir, "org", "stack")
-	f.assertCounts(t, 2, 2, 1, 1, 0)
+	f.assertCounts(t, 3, 3, 1, 1, 0, 1)
 }
 
 func TestCloudCLITargetSelectionAndCache(t *testing.T) {
@@ -104,13 +104,13 @@ func TestCloudCLITargetSelectionAndCache(t *testing.T) {
 	for _, flags := range [][]string{nil, {"--organization", "org"}, {"--organization", "missing", "--stack", "stack"}, {"--organization", "other", "--stack", "stack"}} {
 		f.assertTargetRefused(t, dir, flags)
 	}
-	f.assertCounts(t, 1, 1, 0, 0, 0)
+	f.assertCounts(t, 1, 1, 0, 0, 0, 0)
 	for _, target := range [][2]string{{"other", "otherstack"}, {"org", "second"}, {"other", "otherstack"}} {
 		out, _ := f.run(t, dir, "--organization", target[0], "--stack", target[1], "ledger", "list")
 		assertCLICloudJSON(t, out, `{"data":[]}`)
 		f.assertTargetSaved(t, dir, target[0], target[1])
 	}
-	f.assertCounts(t, 3, 3, 2, 3, 0)
+	f.assertCounts(t, 5, 5, 2, 3, 0, 3)
 	f.assertRootSession(t, dir)
 	entry := readCLICloudStore(t, dir).Connections["cloud"]
 	if len(entry.Session.Targets) != 2 || entry.Options.Organization != "" || entry.Options.Stack != "" {
@@ -130,7 +130,7 @@ func TestCloudCLISavedTargetDefaults(t *testing.T) {
 	f.assertTargetSaved(t, dir, "org", "stack")
 	f.run(t, dir, "--organization", "other", "--stack", "otherstack", "ledger", "list")
 	f.run(t, dir, "ledger", "list")
-	f.assertCounts(t, 3, 3, 2, 3, 0)
+	f.assertCounts(t, 5, 5, 2, 3, 0, 3)
 	f.assertConnectionViews(t, dir, true)
 	entry := readCLICloudStore(t, dir).Connections["cloud"]
 	if entry.Options.Organization != "org" || entry.Options.Stack != "stack" {
@@ -160,7 +160,7 @@ func TestCloudCLITargetRefreshPreservesOtherTargets(t *testing.T) {
 	f.assertTargetSaved(t, dir, "org", "stack")
 	f.run(t, dir, "--organization", "other", "--stack", "otherstack", "ledger", "list")
 	f.assertTargetSaved(t, dir, "other", "otherstack")
-	f.assertCounts(t, 3, 3, 3, 4, 0)
+	f.assertCounts(t, 5, 5, 3, 4, 0, 4)
 	if f.targets[0].refreshes.Load() != 1 || f.targets[2].refreshes.Load() != 0 {
 		t.Fatal("refresh affected the wrong target")
 	}
@@ -200,7 +200,7 @@ func TestCloudCLIRefreshSavedAfterCancellation(t *testing.T) {
 	if stdout.Len() != 0 || stderr.Len() != 0 {
 		t.Error("canceled command produced output")
 	}
-	f.assertCounts(t, 2, 2, 2, 1, 0)
+	f.assertCounts(t, 3, 3, 2, 1, 0, 1)
 	target := f.targets[0]
 	if target.refreshes.Load() != 1 {
 		t.Fatal("target Membership was not refreshed exactly once")
@@ -347,7 +347,9 @@ type cliCloudFixture struct {
 	server                                                *httptest.Server
 	idToken                                               string
 	targets                                               []*cliCloudTarget
+	organizations                                         map[string]*cliCloudOrganization
 	devices, polls, exchanges, ledgers, clients, requests atomic.Int32
+	stackVersions                                         atomic.Int32
 	cancelExchange                                        atomic.Pointer[context.CancelFunc]
 	failDevice                                            atomic.Bool
 	cancelPoll                                            atomic.Pointer[context.CancelFunc]
@@ -374,6 +376,7 @@ func newCLICloudFixture(t *testing.T, multiple ...bool) *cliCloudFixture {
 	for _, target := range f.targets {
 		target.idToken = f.signIdentity(t, signer, []*cliCloudTarget{target}, target.organization+"/"+target.stack)
 	}
+	f.prepareOrganizations(t, signer)
 	f.registerDiscovery(t, mux, &key.PublicKey)
 	mux.HandleFunc("POST /membership/device", func(w http.ResponseWriter, r *http.Request) { f.device(t, w, r) })
 	mux.HandleFunc("POST /membership/token", func(w http.ResponseWriter, r *http.Request) { f.membershipToken(t, w, r) })
@@ -401,7 +404,7 @@ func (f *cliCloudFixture) signIdentity(t *testing.T, signer jose.Signer, targets
 	}
 	var orgs []any
 	for org, stacks := range organizations {
-		orgs = append(orgs, map[string]any{"id": org, "stacks": stacks})
+		orgs = append(orgs, map[string]any{"id": org, "scopes": []string{"organization:ReadStack"}, "stacks": stacks})
 	}
 	raw, err := jwt.Signed(signer).Claims(map[string]any{"iss": f.issuer(), "aud": "fctl", "sub": "cli-user", "jti": identity, "iat": time.Now().Unix(), "exp": time.Now().Add(time.Hour).Unix(), "org": orgs}).Serialize()
 	if err != nil {
@@ -420,6 +423,9 @@ func (f *cliCloudFixture) registerDiscovery(t *testing.T, mux *http.ServeMux, ke
 }
 
 func (f *cliCloudFixture) registerTarget(t *testing.T, mux *http.ServeMux, target *cliCloudTarget) {
+	mux.HandleFunc("GET /membership/organizations/"+target.organization+"/stacks/"+target.stack, func(w http.ResponseWriter, r *http.Request) {
+		f.organizationStack(t, w, r, target)
+	})
 	issuer := f.server.URL + "/" + target.stack + "/api/auth"
 	mux.HandleFunc("GET /"+target.stack+"/api/auth/.well-known/openid-configuration", func(w http.ResponseWriter, _ *http.Request) {
 		writeCLICloudJSON(t, w, map[string]any{"issuer": issuer, "token_endpoint": issuer + "/token"})
@@ -428,8 +434,10 @@ func (f *cliCloudFixture) registerTarget(t *testing.T, mux *http.ServeMux, targe
 	mux.HandleFunc("GET /"+target.stack+"/api/ledger/_info", func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") != "Bearer "+target.stackToken {
 			t.Error("Ledger discovery used another target token")
+			w.WriteHeader(http.StatusUnauthorized)
+			return
 		}
-		writeCLICloudJSON(t, w, map[string]string{"version": "3.0.0"})
+		writeCLIServiceInfo(t, w, "3.0.0")
 	})
 	mux.HandleFunc("GET /"+target.stack+"/api/ledger/v3/{$}", func(w http.ResponseWriter, r *http.Request) { f.service(t, w, r, target, &f.ledgers) })
 	mux.HandleFunc("GET /"+target.stack+"/api/auth/clients", func(w http.ResponseWriter, r *http.Request) { f.service(t, w, r, target, &f.clients) })
@@ -439,7 +447,7 @@ func (f *cliCloudFixture) registerTarget(t *testing.T, mux *http.ServeMux, targe
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		writeCLICloudJSON(t, w, map[string]string{"version": "1.0.0"})
+		writeCLIServiceInfo(t, w, "1.0.0")
 	})
 }
 
@@ -464,7 +472,14 @@ func (f *cliCloudFixture) device(t *testing.T, w http.ResponseWriter, r *http.Re
 			return
 		}
 		assertCLICloudForm(t, r, map[string]string{"organization_id": target.organization, "id_token_hint": f.idToken, "scope": "openid offline_access accesses"})
+		assertCLICloudAbsentForm(t, r, "prompt")
 		code = target.deviceCode
+	} else if org := r.PostForm.Get("organization_id"); org != "" {
+		var ok bool
+		code, ok = f.organizationDevice(t, w, r, org)
+		if !ok {
+			return
+		}
 	} else {
 		assertCLICloudForm(t, r, map[string]string{"scope": "openid offline_access accesses on_behalf", "prompt": "no-org"})
 		for _, name := range []string{"organization_id", "resource", "id_token_hint"} {
@@ -501,9 +516,13 @@ func (f *cliCloudFixture) membershipToken(t *testing.T, w http.ResponseWriter, r
 	if rejectCLICloudPollScope(t, w, r) {
 		return
 	}
+	assertCLICloudAbsentForm(t, r, "organization_id", "id_token_hint", "prompt")
 	if cancel := f.cancelPoll.Load(); cancel != nil {
 		(*cancel)()
 		<-r.Context().Done()
+		return
+	}
+	if f.organizationPoll(t, w, r) {
 		return
 	}
 	membership, refresh, id := cliMembershipToken, cliRefreshToken, f.idToken
@@ -613,14 +632,18 @@ func writeCLICloudJSON(t *testing.T, w http.ResponseWriter, value any) {
 
 func (f *cliCloudFixture) run(t *testing.T, dir string, args ...string) (string, string) {
 	t.Helper()
+	execute := executeRoot
 	if slices.Contains(args, "ledger") {
 		f.cacheLedger(t, dir)
 	}
-	out, stderr, err := executeRoot(t, append([]string{"--no-browser", "--config-dir", dir}, args...)...)
+	if slices.Contains(args, "ledger") || slices.Contains(args, "auth") {
+		execute = executeCLICloudProcess
+	}
+	out, stderr, err := execute(t, append([]string{"--no-browser", "--config-dir", dir}, args...)...)
 	f.assertNoSecrets(t, out+stderr)
 	if err != nil {
 		f.assertNoSecrets(t, err.Error())
-		t.Fatalf("%v failed: %v", args, err)
+		t.Fatalf("%v failed: %v\n%s", args, err, stderr)
 	}
 
 	if !json.Valid([]byte(out)) {
@@ -631,6 +654,13 @@ func (f *cliCloudFixture) run(t *testing.T, dir string, args ...string) (string,
 
 func (f *cliCloudFixture) assertNoSecrets(t *testing.T, output string) {
 	t.Helper()
+	for _, org := range f.organizations {
+		for _, secret := range []string{org.membership, org.refreshToken, org.deviceCode, org.idToken} {
+			if strings.Contains(output, secret) {
+				t.Error("CLI output exposed organization credentials")
+			}
+		}
+	}
 	for _, target := range f.targets {
 		for _, secret := range []string{target.membership, target.refreshToken, target.stackToken, target.deviceCode, target.idToken} {
 			if strings.Contains(output, secret) {
@@ -718,6 +748,7 @@ func findCLICloudTarget(t *testing.T, entry connection.Entry, organization, stac
 
 func (f *cliCloudFixture) assertTargetSaved(t *testing.T, dir, org, stack string) {
 	t.Helper()
+	f.assertOrganizationSaved(t, dir, org)
 	saved := findCLICloudTarget(t, readCLICloudStore(t, dir).Connections["cloud"], org, stack)
 	target := f.targetForResource(t, "stack://"+org+"/"+stack+"|stack:Read stack:Write")
 	expectedMembership, expectedRefresh := target.membership, target.refreshToken
@@ -786,12 +817,12 @@ func (f *cliCloudFixture) assertConnectionViews(t *testing.T, dir string, logged
 	}
 }
 
-func (f *cliCloudFixture) assertCounts(t *testing.T, devices, polls, exchanges, ledgers, clients int32) {
+func (f *cliCloudFixture) assertCounts(t *testing.T, devices, polls, exchanges, ledgers, clients, stackVersions int32) {
 	t.Helper()
-	got := [5]int32{f.devices.Load(), f.polls.Load(), f.exchanges.Load(), f.ledgers.Load(), f.clients.Load()}
-	want := [5]int32{devices, polls, exchanges, ledgers, clients}
+	got := [6]int32{f.devices.Load(), f.polls.Load(), f.exchanges.Load(), f.ledgers.Load(), f.clients.Load(), f.stackVersions.Load()}
+	want := [6]int32{devices, polls, exchanges, ledgers, clients, stackVersions}
 	if got != want {
-		t.Fatalf("device/poll/exchange/ledger/auth requests = %v, want %v", got, want)
+		t.Fatalf("device/poll/exchange/ledger/auth/stack-version requests = %v, want %v", got, want)
 	}
 }
 

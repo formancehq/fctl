@@ -51,24 +51,35 @@ func TestPluginCloudImplicitTargetInstallsAndUsesCache(t *testing.T) {
 		t.Fatalf("implicit target help did not use cached external metadata: %q %q %v", out, trace, err)
 	}
 	list := append(append([]string{}, args...), "ledger", "list")
-	for range 2 {
-		out, trace, err = executeExternalCLI(t, list)
-		if err != nil || trace != "" {
-			t.Fatalf("execute the cached plugin with the implicit Cloud target: %q %v", trace, err)
-		}
-		assertCLICloudJSON(t, out, `{"data":[]}`)
+	for invocation := range 2 {
+		assertPluginCloudList(t, f, list, invocation == 0)
 	}
-	// Embedded Ledger does not issue /_info for list. These checks prove that
-	// fresh roots actually execute the cached external plugin on both invocations.
-	if infoRequests.Load() != 3 {
+	// Each Cloud execution inspects the service and then lets the external plugin
+	// verify its full API version. Installation performs one additional read.
+	if infoRequests.Load() != 5 {
 		t.Fatalf("commands silently fell back to embedded Ledger: info requests=%d", infoRequests.Load())
 	}
-	f.assertCounts(t, 2, 2, 1, 2, 0)
+	f.assertCounts(t, 3, 3, 1, 2, 0, 2)
 	f.assertTargetSaved(t, dir, "org", "stack")
 	entry := readCLICloudStore(t, dir).Connections["cloud"]
 	if entry.Options.Organization != "" || entry.Options.Stack != "" {
 		t.Fatal("implicit plugin selection changed the saved profile defaults")
 	}
+}
+
+func assertPluginCloudList(t *testing.T, f *cliCloudFixture, args []string, authorizeOrganization bool) {
+	t.Helper()
+	out, trace, err := executeCLICloudProcess(t, args...)
+	if err != nil {
+		t.Fatalf("execute the cached plugin with the implicit Cloud target: %q %v", trace, err)
+	}
+	if authorizeOrganization {
+		f.assertDeviceInstructions(t, out, trace)
+	} else if trace != "" {
+		t.Fatal("cached organization grant requested authorization again")
+	}
+	f.assertNoSecrets(t, out+trace)
+	assertCLICloudJSON(t, out, `{"data":[]}`)
 }
 
 func addPluginCloudInfoRoute(t *testing.T, f *cliCloudFixture, requests *atomic.Int32) {
@@ -86,7 +97,7 @@ func addPluginCloudInfoRoute(t *testing.T, f *cliCloudFixture, requests *atomic.
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		writeCLICloudJSON(t, w, map[string]string{"version": "3.0.0"})
+		writeCLIServiceInfo(t, w, "3.0.0")
 	})
 }
 

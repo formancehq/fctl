@@ -106,7 +106,7 @@ func TestRootCompletionOnlyOffersCurrentCommands(t *testing.T) {
 		names = append(names, name)
 	}
 	slices.Sort(names)
-	if want := []string{"auth", "cloud", "completion", "help", "ledger", "login", "logout", "plugins", "profiles", "version"}; !slices.Equal(names, want) {
+	if want := []string{"auth", "cloud", "completion", "help", "ledger", "legacy", "login", "logout", "plugins", "profiles", "version"}; !slices.Equal(names, want) {
 		t.Errorf("completed commands = %v, want %v", names, want)
 	}
 }

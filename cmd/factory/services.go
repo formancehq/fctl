@@ -14,31 +14,23 @@ import (
 
 // Services holds providers and preparation failures for a single command tree.
 type Services struct {
-	factories []plugin.Factory
-	missing   []*cobra.Command
-	errors    map[string]error
+	factories   []plugin.Factory
+	missing     []*cobra.Command
+	errors      map[string]error
+	legacyRoots map[string]bool
 }
 
 // Prepare selects service providers from the requested target and cached metadata.
 func Prepare(ctx context.Context, root *cobra.Command, settings *connection.Settings, args []string) *Services {
-	authFactory, authErr := pluginhost.PrepareService(ctx, root, settings, args, "auth")
-	ledgerFactory, ledgerErr := pluginhost.PrepareService(ctx, root, settings, args, "ledger")
-	services := &Services{
-		factories: []plugin.Factory{cloudplugin.New},
-		errors:    map[string]error{"auth": authErr, "ledger": ledgerErr},
-	}
-	for _, provider := range []struct {
-		name, title string
-		factory     plugin.Factory
-		err         error
-	}{
-		{"ledger", "Ledger", ledgerFactory, ledgerErr},
-		{"auth", "Auth", authFactory, authErr},
-	} {
-		if provider.factory != nil {
-			services.factories = append(services.factories, provider.factory)
-		} else {
-			services.missing = append(services.missing, pluginhost.UnpreparedServiceCommand(provider.name, provider.title, provider.err))
+	services := &Services{factories: []plugin.Factory{cloudplugin.New, LegacyBundle()}, errors: map[string]error{}, legacyRoots: map[string]bool{"legacy": true}}
+	for _, service := range []string{"ledger", "auth", "payments", "orchestration", "reconciliation", "wallets", "webhooks"} {
+		provider, historical, err := prepareProvider(ctx, root, settings, args, service)
+		services.errors[service] = err
+		if provider != nil {
+			services.legacyRoots[service] = historical
+			services.factories = append(services.factories, provider)
+		} else if service == "ledger" || service == "auth" || err != nil {
+			services.missing = append(services.missing, pluginhost.UnpreparedServiceCommand(service, service, err))
 		}
 	}
 	return services
@@ -59,5 +51,5 @@ func (s *Services) AddTo(root *cobra.Command, settings *connection.Settings) err
 			return err
 		}
 	}
-	return plugin.NewCommandWithRequest(registry, pluginhost.RequestResolver(root, settings)).AddTo(root)
+	return plugin.NewCommandWithRequest(registry, serviceRequestResolver(root, settings, s.legacyRoots)).AddTo(root)
 }

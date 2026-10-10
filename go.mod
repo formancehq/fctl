@@ -52,15 +52,19 @@ require (
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/formancehq/fctl/pkg/pluginsdk v0.0.0-20261009101655-a5cfb893d64d
+	github.com/formancehq/fctl/pkg/pluginsdk v0.0.0-20261010092854-d24cbcd1b9dd
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
 	github.com/mattn/go-runewidth v0.0.20 // indirect
 	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
-	github.com/muesli/cancelreader v0.2.2 // indirect
+	github.com/muesli/cancelreader v0.2.2
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	golang.org/x/sync v0.22.0 // indirect
 )
 
 replace github.com/formancehq/fctl/pkg/pluginsdk => ./pkg/pluginsdk
+
+require github.com/formancehq/fctl/misc/fctl-plugin v0.0.0-20261010100529-b96046bc717b
+
+replace github.com/formancehq/fctl/misc/fctl-plugin => ./misc/fctl-plugin

@@ -24,11 +24,8 @@ func (w *outputWriter) RenderJSON(value json.RawMessage) error {
 
 // ConfigureOutput is called after flags are parsed, before any command work.
 func ConfigureOutput(cmd *cobra.Command, format, color string) error {
-	if err := presentation.ValidateFormat(format); err != nil {
+	if err := ValidateOutputOptions(format, color); err != nil {
 		return err
-	}
-	if color != "auto" && color != "always" && color != "never" {
-		return fmt.Errorf("color must be auto, always or never")
 	}
 	out := cmd.OutOrStdout()
 	if wrapped, ok := out.(*outputWriter); ok {
@@ -83,4 +80,15 @@ func terminalInfo(out io.Writer) (bool, int) {
 		return false, 80
 	}
 	return consoleInfo(file.Fd())
+}
+
+// ValidateOutputOptions runs before preparation can perform any network or file work.
+func ValidateOutputOptions(format, color string) error {
+	if err := presentation.ValidateFormat(format); err != nil {
+		return err
+	}
+	if color != "auto" && color != "always" && color != "never" {
+		return fmt.Errorf("color must be auto, always or never")
+	}
+	return nil
 }
