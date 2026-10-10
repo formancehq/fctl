@@ -68,6 +68,33 @@ given separate per-case counts in the reports above:
   transport completed a real service read. This checks the independent process
   and host HTTP callback, in addition to the embedded service facades.
 
+## Package layout verification
+
+The service package refactor was checked against fctl commit `477182a2`.
+All seven service manifests and the complete bundle manifest remained
+byte-for-byte identical, including command ordering, aliases, forms and file
+metadata. The 112 named historical contract cases were accounted for after
+moving tests into their service packages.
+
+| Follow-up report | Result | Assertion boundary |
+| --- | --- | --- |
+| `fctl-legacy-refactor-smoke-report.json` | 20 PASS | Stack v3.2 readback and reads across all seven services, including Payments underscore aliases and Wallet selection by name. |
+| `fctl-legacy-refactor-mutations-report.json` | 18 PASS | Ledger metadata write/read/delete; Auth client create/update/read/delete with omitted fields preserved; workflow YAML creation, terminal-state wait and readback; modern Auth/Ledger reads and explicit legacy rejection; cleanup readback. |
+
+These follow-ups used the same v3.2 sandbox and v4.0-beta comparison target.
+Synthetic clients, workflows and metadata were removed and read back after
+cleanup. Existing ledger, wallet and transaction fixtures were retained.
+
+The final refactor passed `just pre-commit`, `just tests` with `-race`, and
+`goreleaser check`. Aggregate legacy-module statement coverage was **91.7%**
+with `go test -coverpkg=./...`. GoReleaser built all six supported plugin targets;
+the native macOS executable performed another real Ledger read through the
+public SDK transport and the host's loopback stack proxy.
+
+The core pins the reorganized module at `v0.0.0-20261010170918-e99d7416fd49`.
+The public module root retains the bundle and service factory API; service
+implementations are internal packages.
+
 ## Workflow wait correction
 
 Orchestration v2.7.0 initially returned an active instance from the run request

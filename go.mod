@@ -65,6 +65,6 @@ require (
 
 replace github.com/formancehq/fctl/pkg/pluginsdk => ./pkg/pluginsdk
 
-require github.com/formancehq/fctl/misc/fctl-plugin v0.0.0-20261010100529-b96046bc717b
+require github.com/formancehq/fctl/misc/fctl-plugin v0.0.0-20261010170918-e99d7416fd49
 
 replace github.com/formancehq/fctl/misc/fctl-plugin => ./misc/fctl-plugin
