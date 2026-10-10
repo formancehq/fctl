@@ -25,6 +25,7 @@ func newOrchestration(client *http.Client) pluginsdk.Plugin {
 	run := leaf("workflows run", "run <workflow-id>", http.MethodPost, "workflows/$0/instances", 1, 1, str("variable", "Variables as JSON object or CSV key=value"), boolean("wait", "Wait for completion"), dataFlag())
 	run.query = map[string]string{"wait": "wait"}
 	run.body = workflowRunBody
+	run.run = runWorkflow
 	trigger := leaf("triggers create", "create <event> <workflow-id>", http.MethodPost, "triggers", 2, 2,
 		str("name", "Trigger name"), str("filter", "Event filter expression"), str("vars", "Variables as JSON object or CSV key=value"))
 	trigger.body = triggerCreateBody
