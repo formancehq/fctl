@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -11,6 +12,7 @@ import (
 )
 
 var identifier = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
+var aliasIdentifier = regexp.MustCompile(`^[a-z][a-z0-9_-]*$`)
 
 var coreFlags = map[string]bool{
 	"help": true, "profile": true, "config-dir": true, "timeout": true, "output": true,
@@ -38,10 +40,72 @@ func validateManifest(m pluginsdk.Manifest) error {
 	if len(fields) == 0 || fields[0] != m.Name || coreRoots[fields[0]] {
 		return fmt.Errorf("invalid or reserved plugin root %q", m.Root.Use)
 	}
+	for _, alias := range m.Root.Aliases {
+		if coreRoots[alias] {
+			return fmt.Errorf("reserved plugin root alias %q", alias)
+		}
+	}
 	if err := validateCommand(m.Root, validationScope{names: map[string]bool{}, shorts: map[string]bool{"h": true, "o": true, "p": true}}); err != nil {
 		return err
 	}
+	if err := validateFiles(m.Root, nil); err != nil {
+		return err
+	}
 	return validateInteraction(m)
+}
+
+func validateFiles(spec pluginsdk.CommandSpec, inherited map[string]pluginsdk.FlagSpec) error {
+	flags := interactionFlags(spec, inherited, false)
+	if spec.Files != nil {
+		if err := validateFileSpec(spec, flags); err != nil {
+			return fmt.Errorf("command %q files: %w", spec.Use, err)
+		}
+	}
+	next := interactionFlags(spec, inherited, true)
+	for _, child := range spec.Subcommands {
+		if err := validateFiles(child, next); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateFileSpec(spec pluginsdk.CommandSpec, flags map[string]pluginsdk.FlagSpec) error {
+	f := spec.Files
+	if !spec.Runnable || len(spec.Subcommands) != 0 {
+		return fmt.Errorf("files require a runnable leaf")
+	}
+	if f.ReadArgument != nil && (*f.ReadArgument < 0 || *f.ReadArgument >= spec.Args.Max) {
+		return fmt.Errorf("read argument is outside command bounds")
+	}
+	if !slices.Contains([]string{"", "string", "json", "yaml"}, f.ReadFormat) ||
+		!slices.Contains([]string{"", "json", "ndjson", "yaml"}, f.WriteFormat) {
+		return fmt.Errorf("unsupported file format")
+	}
+	if f.ReadArgument == nil && f.ReadFlag == "" && f.ReadFormat != "" {
+		return fmt.Errorf("read format requires an input source")
+	}
+	return validateFileFlags(f, flags)
+}
+
+func validateFileFlags(f *pluginsdk.FileSpec, flags map[string]pluginsdk.FlagSpec) error {
+	for _, name := range []string{f.ReadFlag, f.WriteFlag, f.FormatFlag} {
+		if name == "" {
+			continue
+		}
+		flag, exists := flags[name]
+		if !exists || flag.Type != "string" || flag.Body {
+			return fmt.Errorf("file flag %q must bind a declared non-body string flag", name)
+		}
+	}
+	if (f.ReadFlag != "" && (f.ReadFlag == f.WriteFlag || f.ReadFlag == f.FormatFlag)) ||
+		(f.WriteFlag != "" && f.WriteFlag == f.FormatFlag) {
+		return fmt.Errorf("file flag bindings must be distinct")
+	}
+	if f.FormatFlag != "" && !slices.Contains([]string{"", "json", "ndjson", "yaml", "yml"}, flags[f.FormatFlag].Default) {
+		return fmt.Errorf("format flag has an unsupported default")
+	}
+	return nil
 }
 
 func validateCommand(spec pluginsdk.CommandSpec, inherited validationScope) error {
@@ -83,7 +147,7 @@ func validateCommandHeader(spec pluginsdk.CommandSpec) error {
 	if !spec.Runnable && (spec.Confirm || spec.Args.Min != 0 || spec.Args.Max != 0) {
 		return fmt.Errorf("non-runnable command %q has execution constraints", spec.Use)
 	}
-	return nil
+	return validateAliases(spec)
 }
 
 func validateChildren(spec pluginsdk.CommandSpec, next validationScope) error {
@@ -92,11 +156,27 @@ func validateChildren(spec pluginsdk.CommandSpec, next validationScope) error {
 		if err := validateCommand(child, next); err != nil {
 			return err
 		}
-		name := pluginsdk.CommandName(child)
-		if names[name] {
-			return fmt.Errorf("duplicate command %q under %q", name, spec.Use)
+		for _, name := range commandNames(child) {
+			if names[name] {
+				return fmt.Errorf("duplicate command or alias %q under %q", name, spec.Use)
+			}
+			names[name] = true
 		}
-		names[name] = true
+	}
+	return nil
+}
+
+func commandNames(spec pluginsdk.CommandSpec) []string {
+	return append([]string{pluginsdk.CommandName(spec)}, spec.Aliases...)
+}
+
+func validateAliases(spec pluginsdk.CommandSpec) error {
+	names := map[string]bool{pluginsdk.CommandName(spec): true}
+	for _, alias := range spec.Aliases {
+		if !aliasIdentifier.MatchString(alias) || alias == "help" || names[alias] {
+			return fmt.Errorf("command %q has invalid, reserved or duplicate alias %q", spec.Use, alias)
+		}
+		names[alias] = true
 	}
 	return nil
 }

@@ -2,7 +2,6 @@ package plugin
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -86,10 +85,10 @@ func (a *Adapter) build(entry registration, spec pluginsdk.CommandSpec, parentPa
 	if spec.Target != "" {
 		target = spec.Target
 	}
-	cmd := &cobra.Command{Use: spec.Use, Short: spec.Short, Long: spec.Long, Example: spec.Example, Annotations: map[string]string{"fctl.target": target}}
+	cmd := &cobra.Command{Use: spec.Use, Aliases: spec.Aliases, Short: spec.Short, Long: spec.Long, Example: spec.Example, Annotations: map[string]string{"fctl.target": target}}
 	cmd.Args = commandArgs(spec)
 	for _, flag := range spec.Flags {
-		if canSupplyFlag(spec.Inputs, flag) {
+		if canSupplyFlag(spec.Inputs, flag) || canSupplyFileBody(spec.Files, flag) {
 			flag.Required = false // The SDK still enforces this after collection.
 		}
 		if err := addFlag(cmd, flag); err != nil {
@@ -173,10 +172,11 @@ func (a *Adapter) run(cmd *cobra.Command, entry registration, path []string, fla
 		return fmt.Errorf("plugin factory returned nil")
 	}
 	response, execErr := instance.Execute(cmd.Context(), normalized)
-	if len(response.Data) == 0 {
-		return execErr
+	spec, err := pluginsdk.FindCommand(entry.manifest, path)
+	if err != nil {
+		return err
 	}
-	return errors.Join(execErr, command.WriteJSON(cmd.OutOrStdout(), response.Data))
+	return renderPluginOutput(cmd, spec.Files, normalized, response, execErr)
 }
 
 func (a *Adapter) resolveClient(ctx context.Context, service string, request pluginsdk.ExecuteRequest) (*api.Client, error) {
@@ -187,15 +187,87 @@ func (a *Adapter) resolveClient(ctx context.Context, service string, request plu
 }
 
 func prepareRequest(cmd *cobra.Command, manifest pluginsdk.Manifest, path []string, flags []pluginsdk.FlagSpec, args []string) (pluginsdk.ExecuteRequest, error) {
+	normalized, err := normalizeRequest(cmd, manifest, path, flags, args)
+	if err != nil {
+		return pluginsdk.ExecuteRequest{}, err
+	}
+	spec, err := pluginsdk.FindCommand(manifest, path)
+	if err != nil {
+		return pluginsdk.ExecuteRequest{}, err
+	}
+	return readPluginRequest(cmd, manifest, spec.Files, normalized, flags)
+}
+
+// Normalize the request before opening a body or plugin input file. A declared
+// file source can satisfy a required body flag once the host has read it.
+func normalizeRequest(cmd *cobra.Command, manifest pluginsdk.Manifest, path []string, flags []pluginsdk.FlagSpec, args []string) (pluginsdk.ExecuteRequest, error) {
 	request, err := requestFromFlags(cmd, path, flags, args)
 	if err != nil {
 		return pluginsdk.ExecuteRequest{}, err
+	}
+	spec, err := pluginsdk.FindCommand(manifest, path)
+	if err != nil {
+		return pluginsdk.ExecuteRequest{}, err
+	}
+	source, err := pluginInputSource(spec.Files, request)
+	if err != nil {
+		return pluginsdk.ExecuteRequest{}, err
+	}
+	if source != "" {
+		manifest = fileInputManifest(manifest)
 	}
 	normalized, err := pluginsdk.NormalizeRequest(manifest, request)
 	if err != nil {
 		return pluginsdk.ExecuteRequest{}, err
 	}
-	return readRequestBody(cmd, normalized, flags)
+	if err := checkPluginInput(spec.Files, normalized, flags); err != nil {
+		return pluginsdk.ExecuteRequest{}, err
+	}
+	if _, err := pluginOutputFormat(spec.Files, normalized); err != nil {
+		return pluginsdk.ExecuteRequest{}, err
+	}
+	if _, err := pluginOutputDestination(spec.Files, normalized); err != nil {
+		return pluginsdk.ExecuteRequest{}, err
+	}
+	return normalized, nil
+}
+
+func fileInputManifest(manifest pluginsdk.Manifest) pluginsdk.Manifest {
+	manifest = cloneManifest(manifest)
+	var relax func(*pluginsdk.CommandSpec)
+	relax = func(spec *pluginsdk.CommandSpec) {
+		for i := range spec.Flags {
+			if spec.Flags[i].Body {
+				spec.Flags[i].Required = false
+			}
+		}
+		for i := range spec.Subcommands {
+			relax(&spec.Subcommands[i])
+		}
+	}
+	relax(&manifest.Root)
+	return manifest
+}
+
+func readPluginRequest(cmd *cobra.Command, manifest pluginsdk.Manifest, files *pluginsdk.FileSpec, request pluginsdk.ExecuteRequest, flags []pluginsdk.FlagSpec) (pluginsdk.ExecuteRequest, error) {
+	if err := checkPluginInput(files, request, flags); err != nil {
+		return pluginsdk.ExecuteRequest{}, err
+	}
+	if _, err := pluginOutputFormat(files, request); err != nil {
+		return pluginsdk.ExecuteRequest{}, err
+	}
+	if _, err := pluginOutputDestination(files, request); err != nil {
+		return pluginsdk.ExecuteRequest{}, err
+	}
+	request, err := readRequestBody(cmd, request, flags)
+	if err != nil {
+		return pluginsdk.ExecuteRequest{}, err
+	}
+	request, err = ReadPluginInput(cmd, files, request)
+	if err != nil {
+		return pluginsdk.ExecuteRequest{}, err
+	}
+	return pluginsdk.NormalizeRequest(manifest, request)
 }
 
 func requestFromFlags(cmd *cobra.Command, path []string, flags []pluginsdk.FlagSpec, args []string) (pluginsdk.ExecuteRequest, error) {

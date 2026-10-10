@@ -14,7 +14,6 @@ import (
 
 	"github.com/formancehq/fctl/pkg/pluginsdk"
 
-	"github.com/formancehq/fctl/v4/internal/command"
 	"github.com/formancehq/fctl/v4/internal/interactive"
 )
 
@@ -53,13 +52,7 @@ func (a *Adapter) runInteractive(cmd *cobra.Command, entry registration, path []
 	if err != nil {
 		return err
 	}
-	if spec.Confirm {
-		flag := lookupFlag(cmd, "confirm")
-		if flag != nil && flag.Changed && flag.Value.String() != "true" {
-			return fmt.Errorf("%s requires --confirm", strings.Join(path, " "))
-		}
-	}
-	request, err := prepareRequest(cmd, relaxedManifest(entry.manifest, path), path, flags, args)
+	request, err := prepareInteractiveRequest(cmd, entry.manifest, spec, path, flags, args)
 	if err != nil {
 		return err // Gates and explicit body errors precede auth and discovery.
 	}
@@ -69,22 +62,56 @@ func (a *Adapter) runInteractive(cmd *cobra.Command, entry registration, path []
 		return err
 	}
 	bodyFlag := bodyFlagName(flags)
-	request, err = collectInputs(cmd, choices, spec.Inputs, request, bodyFlag)
+	inputs, err := pluginFileInputs(spec, request, bodyFlag)
+	if err != nil {
+		return err
+	}
+	request, err = collectInputs(cmd, choices, inputs, request, bodyFlag)
 	if err != nil {
 		return err
 	}
 	if err := confirmRequest(cmd, spec, path, &request, bodyFlag); err != nil {
 		return err
 	}
-	request, err = pluginsdk.NormalizeRequest(entry.manifest, request)
+	request, err = finishInteractiveRequest(cmd, entry.manifest, spec.Files, request, flags)
 	if err != nil {
 		return err
 	}
 	response, execErr := instance.Execute(cmd.Context(), request)
-	if len(response.Data) == 0 {
-		return execErr
+	return renderPluginOutput(cmd, spec.Files, request, response, execErr)
+}
+
+func prepareInteractiveRequest(cmd *cobra.Command, manifest pluginsdk.Manifest, spec pluginsdk.CommandSpec, path []string, flags []pluginsdk.FlagSpec, args []string) (pluginsdk.ExecuteRequest, error) {
+	if spec.Confirm {
+		flag := lookupFlag(cmd, "confirm")
+		if flag != nil && flag.Changed && flag.Value.String() != "true" {
+			return pluginsdk.ExecuteRequest{}, fmt.Errorf("%s requires --confirm", strings.Join(path, " "))
+		}
 	}
-	return errors.Join(execErr, command.WriteJSON(cmd.OutOrStdout(), response.Data))
+	if spec.Files != nil {
+		// File reads wait until the interactive confirmation is accepted.
+		return normalizeRequest(cmd, relaxedManifest(manifest, path), path, flags, args)
+	}
+	return prepareRequest(cmd, relaxedManifest(manifest, path), path, flags, args)
+}
+
+func finishInteractiveRequest(cmd *cobra.Command, manifest pluginsdk.Manifest, files *pluginsdk.FileSpec, request pluginsdk.ExecuteRequest, flags []pluginsdk.FlagSpec) (pluginsdk.ExecuteRequest, error) {
+	validation := manifest
+	source, err := pluginInputSource(files, request)
+	if err != nil {
+		return pluginsdk.ExecuteRequest{}, err
+	}
+	if source != "" {
+		validation = fileInputManifest(validation)
+	}
+	request, err = pluginsdk.NormalizeRequest(validation, request)
+	if err != nil {
+		return pluginsdk.ExecuteRequest{}, err
+	}
+	if files != nil {
+		return readPluginRequest(cmd, manifest, files, request, flags)
+	}
+	return request, nil
 }
 
 func (a *Adapter) interactiveInstances(cmd *cobra.Command, entry registration, path []string, request *pluginsdk.ExecuteRequest) (pluginsdk.Plugin, pluginsdk.Plugin, error) {

@@ -46,11 +46,21 @@ func (r *Registry) Register(ctx context.Context, metadata pluginsdk.Plugin, fact
 		return fmt.Errorf("plugin registry is frozen")
 	}
 	for _, entry := range r.entries {
-		if entry.manifest.Name == manifest.Name || pluginsdk.CommandName(entry.manifest.Root) == pluginsdk.CommandName(manifest.Root) {
-			return fmt.Errorf("duplicate plugin root %q", manifest.Root.Use)
+		if err := validateRootNames(manifest.Root, entry.manifest.Root); err != nil {
+			return err
 		}
 	}
 	r.entries = append(r.entries, registration{cloneManifest(manifest), factory})
+	return nil
+}
+
+func validateRootNames(root, existing pluginsdk.CommandSpec) error {
+	known := commandNames(existing)
+	for _, name := range commandNames(root) {
+		if slices.Contains(known, name) {
+			return fmt.Errorf("duplicate plugin root or alias %q", name)
+		}
+	}
 	return nil
 }
 
@@ -83,13 +93,26 @@ func cloneManifest(manifest pluginsdk.Manifest) pluginsdk.Manifest {
 	return manifest
 }
 func cloneCommand(command pluginsdk.CommandSpec) pluginsdk.CommandSpec {
+	command.Aliases = slices.Clone(command.Aliases)
 	command.Flags = slices.Clone(command.Flags)
 	command.Inputs = cloneInputs(command.Inputs)
+	command.Files = cloneFiles(command.Files)
 	command.Subcommands = slices.Clone(command.Subcommands)
 	for i := range command.Subcommands {
 		command.Subcommands[i] = cloneCommand(command.Subcommands[i])
 	}
 	return command
+}
+
+func cloneFiles(files *pluginsdk.FileSpec) *pluginsdk.FileSpec {
+	if files == nil {
+		return nil
+	}
+	result := *files
+	if result.ReadArgument != nil {
+		result.ReadArgument = new(*result.ReadArgument)
+	}
+	return &result
 }
 
 func cloneInputs(inputs []pluginsdk.InputSpec) []pluginsdk.InputSpec {

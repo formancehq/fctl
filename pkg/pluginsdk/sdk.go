@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -28,8 +29,10 @@ type Manifest struct {
 
 type CommandSpec struct {
 	Use         string        `json:"use"`
+	Aliases     []string      `json:"aliases,omitempty"`
 	Target      string        `json:"target,omitzero"`
 	Inputs      []InputSpec   `json:"inputs,omitzero"`
+	Files       *FileSpec     `json:"files,omitzero"`
 	Service     string        `json:"service,omitzero"`
 	Short       string        `json:"short"`
 	Long        string        `json:"long,omitempty"`
@@ -87,7 +90,7 @@ func CommandName(command CommandSpec) string {
 }
 
 func FindCommand(manifest Manifest, path []string) (CommandSpec, error) {
-	command, _, err := find(manifest, path)
+	command, _, _, err := find(manifest, path)
 	return command, err
 }
 
@@ -110,11 +113,13 @@ func CommandService(manifest Manifest, path []string) (string, error) {
 	return service, nil
 }
 
-func find(manifest Manifest, path []string) (CommandSpec, []FlagSpec, error) {
-	if len(path) == 0 || len(strings.Fields(manifest.Root.Use)) == 0 || path[0] != CommandName(manifest.Root) {
-		return CommandSpec{}, nil, fmt.Errorf("unknown plugin command")
+func find(manifest Manifest, path []string) (CommandSpec, []FlagSpec, []string, error) {
+	if len(path) == 0 || !commandMatches(manifest.Root, path[0]) {
+		return CommandSpec{}, nil, nil, fmt.Errorf("unknown plugin command")
 	}
 	command := manifest.Root
+	canonical := make([]string, 0, len(path))
+	canonical = append(canonical, CommandName(command))
 	var inherited []FlagSpec
 	for _, name := range path[1:] {
 		for _, flag := range command.Flags {
@@ -124,16 +129,22 @@ func find(manifest Manifest, path []string) (CommandSpec, []FlagSpec, error) {
 		}
 		child, found := findChild(command, name)
 		if !found {
-			return CommandSpec{}, nil, fmt.Errorf("unknown plugin command %q", strings.Join(path, " "))
+			return CommandSpec{}, nil, nil, fmt.Errorf("unknown plugin command %q", strings.Join(path, " "))
 		}
 		command = child
+		canonical = append(canonical, CommandName(command))
 	}
-	return command, append(inherited, command.Flags...), nil
+	return command, append(inherited, command.Flags...), canonical, nil
+}
+
+func commandMatches(command CommandSpec, name string) bool {
+	canonical := CommandName(command)
+	return canonical != "" && (canonical == name || slices.Contains(command.Aliases, name))
 }
 
 func findChild(command CommandSpec, name string) (CommandSpec, bool) {
 	for _, child := range command.Subcommands {
-		if CommandName(child) == name {
+		if commandMatches(child, name) {
 			return child, true
 		}
 	}
@@ -141,14 +152,16 @@ func findChild(command CommandSpec, name string) (CommandSpec, bool) {
 }
 
 // NormalizeRequest also protects direct SDK callers, independently of the CLI adapter.
+// CommandPath accepts aliases and is returned with canonical command names.
 func NormalizeRequest(manifest Manifest, request ExecuteRequest) (ExecuteRequest, error) {
 	if manifest.ProtocolVersion != ProtocolVersion {
 		return ExecuteRequest{}, fmt.Errorf("unsupported plugin protocol version %d", manifest.ProtocolVersion)
 	}
-	command, flags, err := find(manifest, request.CommandPath)
+	command, flags, canonical, err := find(manifest, request.CommandPath)
 	if err != nil {
 		return ExecuteRequest{}, err
 	}
+	request.CommandPath = canonical
 	if !command.Runnable {
 		return ExecuteRequest{}, fmt.Errorf("command is not executable")
 	}
@@ -166,6 +179,7 @@ func NormalizeRequest(manifest Manifest, request ExecuteRequest) (ExecuteRequest
 		return ExecuteRequest{}, fmt.Errorf("request body must be valid JSON within 4 MiB")
 	}
 	request.Context = maps.Clone(request.Context)
+	request.ChangedFlags = maps.Clone(request.ChangedFlags)
 	return request, nil
 }
 

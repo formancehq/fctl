@@ -65,3 +65,17 @@ helper arguments or inherited environment, and separately exercises gRPC
 servers in-process for coverage. It checks HTTP ownership, credential
 isolation, endpoint boundaries, redirects, exact JSON, errors and partial
 results, limits, concurrent callbacks, process crashes, and cancellation.
+
+### Optional aliases and file effects
+
+`CommandSpec.Aliases` gives alternative command names. `FindCommand` accepts
+them and `NormalizeRequest` returns a canonical command path. Hosts validate
+alias collisions when registering a manifest.
+
+`CommandSpec.Files` declares input argument/flag and output flag effects.
+The host reads a local file, stdin (`-`) or an explicit HTTPS source into Body;
+plugins do not open these sources. `ReadFormat` selects JSON, YAML-to-JSON or
+raw text encoded as a JSON string. Inputs are bounded to 4 MiB. `WriteFormat`
+selects JSON, NDJSON or YAML. `FormatFlag` can override it; `yml` means YAML.
+File writes are atomic and private, and execution errors do not create exports.
+Direct SDK callers supply already-read Body and consume Data as before.
