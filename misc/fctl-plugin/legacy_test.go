@@ -44,6 +44,31 @@ func TestBundleMetadataAndServiceBoundaries(t *testing.T) {
 	}
 }
 
+func TestServiceMetadataIsOfflineAndIndependent(t *testing.T) {
+	t.Parallel()
+	for name, factory := range Factories() {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			p := factory(nil)
+			manifest, err := p.GetManifest(t.Context())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if manifest.Version != Version || manifest.Service != name || manifest.Root.Target != "stack" {
+				t.Fatalf("invalid manifest: %+v", manifest)
+			}
+			manifest.Root.Subcommands[0].Use = "modified"
+			again, err := p.GetManifest(t.Context())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if again.Root.Subcommands[0].Use == "modified" {
+				t.Fatal("manifest metadata aliases internal state")
+			}
+		})
+	}
+}
+
 func TestStandaloneBundleHTTPAndVersionGuard(t *testing.T) {
 	binary, err := os.Executable()
 	if err != nil {

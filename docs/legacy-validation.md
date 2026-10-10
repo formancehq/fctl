@@ -6,7 +6,7 @@ file handling, authentication and provider selection. They establish the results
 listed below; they do not establish complete coverage of every historical command.
 
 See [legacy plugin architecture](legacy-plugin.md) for provider selection and
-compatibility. The [synthetic fixture guide](../misc/fctl-plugin/modules/LIVE_FIXTURES.md)
+compatibility. The [synthetic fixture guide](../misc/fctl-plugin/docs/live-fixtures.md)
 describes candidate commands and prerequisites. Its prepared examples are not,
 by themselves, evidence that an operation ran successfully.
 

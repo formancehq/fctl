@@ -6,10 +6,12 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/formancehq/fctl/misc/fctl-plugin/internal/metadata"
 )
 
-const Version = "1.0.0"
-const SourceCommit = "e00243b3e2e56aae6a09d7010b0c17890134388c"
+const Version = metadata.Version
+const SourceCommit = metadata.SourceCommit
 
 // Compatibility is an explicit supported API family, independent of the plugin revision.
 // A prerelease of the next major belongs to that next family.

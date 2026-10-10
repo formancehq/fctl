@@ -6,6 +6,15 @@ The legacy plugin preserves service commands from fctl v3 in the independent
 The command implementations are adapted to the public SDK; they do not import
 Cobra, core packages, profiles, token storage or terminal libraries.
 
+## Source organization
+
+The module root assembles the public bundle and applies compatibility guards.
+Each historical service has its own package under `misc/fctl-plugin/internal`;
+its domain files own command metadata, payloads, aliases and contract tests.
+Shared command helpers and HTTP test fixtures contain no service dispatch.
+See [the module layout](../misc/fctl-plugin/README.md) for package ownership and
+how to extend an operation.
+
 ## Provider selection
 
 The first implementation embeds the SDK service facades in fctl and also builds
