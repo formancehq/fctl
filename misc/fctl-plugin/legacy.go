@@ -64,18 +64,36 @@ func prefixSources(command *pluginsdk.CommandSpec) {
 }
 
 func (p *bundle) Execute(ctx context.Context, request pluginsdk.ExecuteRequest) (pluginsdk.ExecuteResponse, error) {
-	manifest, err := p.GetManifest(ctx)
+	request, err := p.serviceRequest(ctx, request)
 	if err != nil {
 		return pluginsdk.ExecuteResponse{}, err
+	}
+	return NewService(request.CommandPath[0], p.http).Execute(ctx, request)
+}
+
+var _ pluginsdk.StreamingPlugin = (*bundle)(nil)
+
+func (p *bundle) ExecuteStream(ctx context.Context, request pluginsdk.ExecuteRequest, streams pluginsdk.ExecutionStreams) (pluginsdk.ExecuteResponse, error) {
+	request, err := p.serviceRequest(ctx, request)
+	if err != nil {
+		return pluginsdk.ExecuteResponse{}, err
+	}
+	return newService(request.CommandPath[0], p.http).ExecuteStream(ctx, request, streams)
+}
+
+func (p *bundle) serviceRequest(ctx context.Context, request pluginsdk.ExecuteRequest) (pluginsdk.ExecuteRequest, error) {
+	manifest, err := p.GetManifest(ctx)
+	if err != nil {
+		return pluginsdk.ExecuteRequest{}, err
 	}
 	normalized, err := pluginsdk.NormalizeRequest(manifest, request)
 	if err != nil {
-		return pluginsdk.ExecuteResponse{}, err
+		return pluginsdk.ExecuteRequest{}, err
 	}
 	request.CommandPath = normalized.CommandPath
 	if len(request.CommandPath) < 2 {
-		return pluginsdk.ExecuteResponse{}, fmt.Errorf("select a legacy service")
+		return pluginsdk.ExecuteRequest{}, fmt.Errorf("select a legacy service")
 	}
 	request.CommandPath = slices.Clone(request.CommandPath[1:])
-	return NewService(request.CommandPath[0], p.http).Execute(ctx, request)
+	return request, nil
 }

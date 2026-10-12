@@ -11,6 +11,19 @@ lifecycle, Fx container or independent authentication layer.
 works with a nil client and no network. `Compatibilities` declares the supported
 API families; execution rejects unknown or modern target versions.
 
+Both public constructors also implement the optional `pluginsdk.StreamingPlugin`.
+Ledger `import` declares `Streams.Input`; `export` declares `Streams.Output`.
+The host should use `ExecuteStream` for these commands. The service and bundle
+wrappers verify the same compatibility guards before reading input, writing
+output or sending a mutation. Other commands keep their unary behavior.
+
+Streaming import uses NDJSON batches capped at 100 logs and 4 MiB including
+newlines. Streaming export writes the backend's exact NDJSON bytes and returns
+only a separate summary. Neither operation buffers the complete stream. A
+record is limited to 4 MiB. The host owns file access and commits an export
+destination only when execution succeeds. See [streaming logs](docs/streaming-logs.md)
+for progress, resume, failure and direct SDK compatibility details.
+
 ## Source layout
 
 ```text

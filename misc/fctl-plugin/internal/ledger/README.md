@@ -17,7 +17,8 @@ public `legacy` API; this internal package is owned by the bundle.
 owns ledger operations, command dispatch, metadata routes and pagination.
 `accounts.go` owns account operations and volume filters. `transactions.go`
 owns transaction lookup, writes and Numscript payloads. `schemas.go` owns schema
-operations and validation. `logs.go` owns log import/export and NDJSON readers.
+operations and validation. `logs.go` owns bounded unary log import/export;
+`stream.go` owns incremental NDJSON import/export.
 `manifest.go` contains the command tree, selector and file metadata.
 
 `ExecuteRequest.Endpoint` must already be the Ledger service base, including
@@ -97,14 +98,14 @@ operations. The host owns interaction, confirmation and file access.
 
 The plugin never opens a file, reads stdin, writes a terminal, fetches a schema
 source URL, or reads environment variables. The manifest declares file
-metadata; the parent host fills `ExecuteRequest.Body`:
+metadata; the parent host supplies `ExecuteRequest.Body` or raw streams:
 
 | Command | Historical host source/output | SDK Body/result |
 | --- | --- | --- |
 | `transactions num` | Filename or `-` argument 0 | Body: JSON string of Numscript, `{ "plain": "...", "vars": {} }`, or `{ "script": { "plain": "...", "vars": {} }, "metadata": {}, "reference": "...", "timestamp": "..." }` |
-| `import` | Filename argument 1 or `--file`, or stdin | Body: JSON array of raw log objects or JSON string containing NDJSON |
+| `import` | Filename argument 1 or `--file`, or stdin | `ExecutionStreams.Input`: raw NDJSON; unary Body remains a JSON array or JSON string of NDJSON |
 | `schemas insert` | JSON/YAML file or URL argument 1 | Body: JSON schema object; the host converts YAML |
-| `export` | `--file` or stdout | Result: JSON array of raw logs; host renders NDJSON |
+| `export` | `--file` or stdout | `ExecutionStreams.Output`: exact backend NDJSON; separate result summary; unary result remains a JSON array |
 | `schemas get` | `--format json/yaml/yml` | Result: raw HTTP JSON; host unwraps/presents schema as needed |
 
 `--data` is the declared body flag for direct JSON input. Source arguments are
@@ -114,13 +115,16 @@ HTTP JSON responses retain their original envelope, unknown fields and exact
 integers, including nested or direct server-info responses. A 204 returns JSON
 `null`. Structured service-error bodies accompany the returned error.
 
-Import sends octet-stream NDJSON batches of 100 logs. All logs are validated
-before a request. `--resume-from-last-log` looks up the latest log through
-`GET /v2/NAME/logs?pageSize=1` and skips through that exact ID in Body. A missing
-checkpoint fails before import writes. Import results report `imported`,
-`skipped`, and `batches`; on failure these count only acknowledged successful
-batches and include the raw service-error body. Export accepts arbitrary NDJSON
-line lengths within its total bound and preserves a final line without newline.
+Streaming import validates each record and sends octet-stream NDJSON batches
+of at most 100 logs and 4 MiB including added newlines. `read/bytes` measures
+source bytes with optional `InputSize`; `import/logs` measures acknowledged
+writes without a total. `--resume-from-last-log` looks up the latest log through
+`GET /v2/NAME/logs?pageSize=1` and scans through that exact ID before any write.
+A missing checkpoint fails without import writes. Results report `imported`,
+`skipped`, and `batches`; failed batches are not counted or retried. Export
+validates each bounded record before writing its exact bytes, including unknown
+fields, huge integers and a final line without newline. Its response contains
+only `exported` and `bytes`. See [streaming logs](../../docs/streaming-logs.md).
 
 ## Compatibility limits and verification
 
@@ -128,9 +132,12 @@ line lengths within its total bound and preserves a final line without newline.
   to canonical paths.
 - Environment-derived dates, terminal tables/colors/progress, filesystem
   reads/writes, YAML rendering and source URL fetching belong to the host.
-- SDK Body is limited to 4 MiB; export is buffered up to the public HTTP
-  boundary's 32 MiB response limit. Very large exports need host/transport
-  streaming support. Import may span multiple host invocations with resume.
+- `ExecuteStream` has no total input/output bound. Individual NDJSON records
+  are limited to 4 MiB; compacted import records plus the added newline must
+  also fit the 4 MiB batch limit. The host stages file output until success.
+- Direct unary `Execute` remains compatible: SDK Body is limited to 4 MiB,
+  import validates the complete Body before mutation, and export is buffered
+  up to 32 MiB before returning a JSON array.
 - Validation rejects empty/dot path identifiers, malformed pairs, negative
   amounts/IDs/lastN offsets and invalid dates before HTTP. This intentionally
   avoids historical cases that could fail later at the backend or panic.

@@ -26,10 +26,10 @@ func manifest() pluginsdk.Manifest {
 				command("list", "List ledgers (Ledger v2 or later)", 0, 0, false, pagination("0")),
 				command("set-metadata <ledger-name> <key>=<value>...", "Set metadata on a ledger", 2, unlimitedArgs, true, nil, ledgerArgument(0), argument("Metadata key=value", 1)),
 				command("delete-metadata <ledger-name> <key>", "Delete metadata from a ledger", 2, unlimitedArgs, true, nil, ledgerArgument(0), argument("Metadata key", 1)),
-				withLedger(command("export", "Export ledger logs as JSON; file output belongs to the host", 0, 0, false,
-					[]pluginsdk.FlagSpec{stringFlag("file", "Output file handled by the host; plugin always returns JSON")})),
-				command("import <ledger-name> [<file-path>]", "Import logs supplied by the host in --data or SDK Body", 1, 2, false,
-					[]pluginsdk.FlagSpec{bodyFlag("JSON array of logs or JSON string containing NDJSON; @file/- is read by the host"), stringFlag("file", "Historical source hint; the host must read it into Body"), boolFlag("resume-from-last-log", "Resume after the last imported log")},
+				withLedger(command("export", "Stream ledger logs as NDJSON; file output belongs to the host", 0, 0, false,
+					[]pluginsdk.FlagSpec{stringFlag("file", "NDJSON output file handled by the host")})),
+				command("import <ledger-name> [<file-path>]", "Stream NDJSON logs supplied by the host", 1, 2, false,
+					[]pluginsdk.FlagSpec{bodyFlag("NDJSON source; @file/- is streamed by the host; direct unary SDK callers may supply JSON Body"), stringFlag("file", "NDJSON source file handled by the host"), boolFlag("resume-from-last-log", "Resume after the last imported log")},
 					ledgerArgument(0), bodyInput("Logs", "JSON array of logs or JSON string containing NDJSON")),
 				{Use: "accounts", Short: "Manage accounts", Subcommands: []pluginsdk.CommandSpec{
 					withLedger(command("list", "List accounts", 0, 0, false, append([]pluginsdk.FlagSpec{pairsFlag("metadata", "Filter account metadata")}, pagination("0")...))),
@@ -161,8 +161,10 @@ func attachFiles(command *pluginsdk.CommandSpec, parent []string) {
 	switch strings.Join(path, " ") {
 	case "ledger export":
 		command.Files = &pluginsdk.FileSpec{WriteFlag: "file", WriteFormat: "ndjson"}
+		command.Streams = &pluginsdk.StreamSpec{Output: true}
 	case "ledger import":
 		command.Files = &pluginsdk.FileSpec{ReadArgument: new(1), ReadFlag: "file", ReadFormat: "string"}
+		command.Streams = &pluginsdk.StreamSpec{Input: true}
 	case "ledger transactions num":
 		command.Files = &pluginsdk.FileSpec{ReadArgument: new(0), ReadFormat: "string"}
 	case "ledger schemas insert":

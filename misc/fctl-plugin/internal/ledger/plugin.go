@@ -22,6 +22,44 @@ func New(client *http.Client) pluginsdk.Plugin { return &plugin{http: client} }
 
 func (*plugin) GetManifest(context.Context) (pluginsdk.Manifest, error) { return manifest(), nil }
 
+var _ pluginsdk.StreamingPlugin = (*plugin)(nil)
+
+func (p *plugin) ExecuteStream(ctx context.Context, request pluginsdk.ExecuteRequest, streams pluginsdk.ExecutionStreams) (pluginsdk.ExecuteResponse, error) {
+	request, err := pluginsdk.NormalizeRequest(manifest(), request)
+	if err != nil {
+		return pluginsdk.ExecuteResponse{}, err
+	}
+	name := strings.Join(request.CommandPath[1:], " ")
+	if name != "import" && name != "export" {
+		if streams.Input != nil || streams.Output != nil {
+			return pluginsdk.ExecuteResponse{}, fmt.Errorf("%s does not accept streams", name)
+		}
+		return p.Execute(ctx, request)
+	}
+	if request.Body != nil {
+		// Preserve bounded --data/direct SDK imports while files and stdin use
+		// the streaming path. Inline JSON is never combined with a raw source.
+		if name == "import" && streams.Input == nil && streams.Output == nil {
+			return p.Execute(ctx, request)
+		}
+		return pluginsdk.ExecuteResponse{}, fmt.Errorf("%s streaming does not accept Body; use ExecutionStreams", name)
+	}
+	if p.http == nil {
+		return pluginsdk.ExecuteResponse{}, fmt.Errorf("ledger execution requires an injected HTTP client")
+	}
+	client, err := httpclient.New(request.Endpoint, p.http)
+	if err != nil {
+		return pluginsdk.ExecuteResponse{}, err
+	}
+	if name == "import" {
+		return importLogsStream(ctx, client, request, streams)
+	}
+	if err := validateSegment(request.Flags["ledger"], "ledger"); err != nil {
+		return pluginsdk.ExecuteResponse{}, err
+	}
+	return exportLogsStream(ctx, client, request.Flags["ledger"], streams)
+}
+
 func (p *plugin) Execute(ctx context.Context, request pluginsdk.ExecuteRequest) (pluginsdk.ExecuteResponse, error) {
 	request, err := pluginsdk.NormalizeRequest(manifest(), request)
 	if err != nil {

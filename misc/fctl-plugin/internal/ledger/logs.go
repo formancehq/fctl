@@ -36,7 +36,7 @@ func importLogs(ctx context.Context, client *httpclient.Client, r pluginsdk.Exec
 			return response(nil, err)
 		}
 	}
-	progress := importProgress{Skipped: skipped}
+	progress := importProgress{Skipped: int64(skipped)}
 	for start := skipped; start < len(logs); start += importBlockSize {
 		end := min(start+importBlockSize, len(logs))
 		block, err := encodeNDJSON(logs[start:end])
@@ -50,16 +50,16 @@ func importLogs(ctx context.Context, client *httpclient.Client, r pluginsdk.Exec
 			}
 			return progress.response(), err
 		}
-		progress.Imported += end - start
+		progress.Imported += int64(end - start)
 		progress.Batches++
 	}
 	return progress.response(), nil
 }
 
 type importProgress struct {
-	Imported int             `json:"imported"`
-	Skipped  int             `json:"skipped"`
-	Batches  int             `json:"batches"`
+	Imported int64           `json:"imported"`
+	Skipped  int64           `json:"skipped"`
+	Batches  int64           `json:"batches"`
 	Error    json.RawMessage `json:"error,omitempty"`
 }
 
@@ -87,23 +87,8 @@ func encodeNDJSON(logs []json.RawMessage) ([]byte, error) {
 }
 
 func resumeOffset(ctx context.Context, client *httpclient.Client, ledgerName string, logs []json.RawMessage) (int, error) {
-	data, err := client.Do(ctx, http.MethodGet, httpclient.Path("v2", ledgerName, "logs"), url.Values{"pageSize": {"1"}}, json.RawMessage("null"), nil)
-	if err != nil {
-		return 0, err
-	}
-	var result struct {
-		Cursor struct {
-			Data []json.RawMessage `json:"data"`
-		} `json:"cursor"`
-	}
-	if err := json.Unmarshal(data, &result); err != nil {
-		return 0, fmt.Errorf("decode last log: %w", err)
-	}
-	if len(result.Cursor.Data) == 0 {
-		return 0, nil
-	}
-	id, err := logID(result.Cursor.Data[0])
-	if err != nil {
+	id, err := latestLogID(ctx, client, ledgerName)
+	if err != nil || id == "" {
 		return 0, err
 	}
 	for index, log := range logs {
@@ -118,7 +103,30 @@ func resumeOffset(ctx context.Context, client *httpclient.Client, ledgerName str
 	return 0, fmt.Errorf("log %s not found in import Body", id)
 }
 
+func latestLogID(ctx context.Context, client *httpclient.Client, ledgerName string) (string, error) {
+	data, err := client.Do(ctx, http.MethodGet, httpclient.Path("v2", ledgerName, "logs"), url.Values{"pageSize": {"1"}}, json.RawMessage("null"), nil)
+	if err != nil {
+		return "", err
+	}
+	var result struct {
+		Cursor struct {
+			Data []json.RawMessage `json:"data"`
+		} `json:"cursor"`
+	}
+	if err := json.Unmarshal(data, &result); err != nil {
+		return "", fmt.Errorf("decode last log: %w", err)
+	}
+	if result.Cursor.Data == nil {
+		return "", fmt.Errorf("decode last log: missing cursor data")
+	}
+	if len(result.Cursor.Data) == 0 {
+		return "", nil
+	}
+	return logID(result.Cursor.Data[0])
+}
+
 func decodeLogs(raw json.RawMessage) ([]json.RawMessage, error) {
+	raw = bytes.TrimSpace(raw)
 	if len(raw) == 0 {
 		return nil, fmt.Errorf("import Body is required; the host must read file/stdin logs")
 	}
