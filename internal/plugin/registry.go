@@ -97,6 +97,9 @@ func cloneCommand(command pluginsdk.CommandSpec) pluginsdk.CommandSpec {
 	command.Flags = slices.Clone(command.Flags)
 	command.Inputs = cloneInputs(command.Inputs)
 	command.Files = cloneFiles(command.Files)
+	if command.Streams != nil {
+		command.Streams = new(*command.Streams)
+	}
 	command.Subcommands = slices.Clone(command.Subcommands)
 	for i := range command.Subcommands {
 		command.Subcommands[i] = cloneCommand(command.Subcommands[i])

@@ -77,8 +77,7 @@ func (a *Adapter) runInteractive(cmd *cobra.Command, entry registration, path []
 	if err != nil {
 		return err
 	}
-	response, execErr := instance.Execute(cmd.Context(), request)
-	return renderPluginOutput(cmd, spec.Files, request, response, execErr)
+	return executePluginCommand(cmd, instance, spec, request)
 }
 
 func prepareInteractiveRequest(cmd *cobra.Command, manifest pluginsdk.Manifest, spec pluginsdk.CommandSpec, path []string, flags []pluginsdk.FlagSpec, args []string) (pluginsdk.ExecuteRequest, error) {

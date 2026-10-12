@@ -56,6 +56,9 @@ func validateManifest(m pluginsdk.Manifest) error {
 
 func validateFiles(spec pluginsdk.CommandSpec, inherited map[string]pluginsdk.FlagSpec) error {
 	flags := interactionFlags(spec, inherited, false)
+	if err := validateStreamSpec(spec, flags); err != nil {
+		return fmt.Errorf("command %q streams: %w", spec.Use, err)
+	}
 	if spec.Files != nil {
 		if err := validateFileSpec(spec, flags); err != nil {
 			return fmt.Errorf("command %q files: %w", spec.Use, err)
@@ -78,7 +81,7 @@ func validateFileSpec(spec pluginsdk.CommandSpec, flags map[string]pluginsdk.Fla
 	if f.ReadArgument != nil && (*f.ReadArgument < 0 || *f.ReadArgument >= spec.Args.Max) {
 		return fmt.Errorf("read argument is outside command bounds")
 	}
-	if !slices.Contains([]string{"", "string", "json", "yaml"}, f.ReadFormat) ||
+	if !validPluginReadFormat(spec) ||
 		!slices.Contains([]string{"", "json", "ndjson", "yaml"}, f.WriteFormat) {
 		return fmt.Errorf("unsupported file format")
 	}

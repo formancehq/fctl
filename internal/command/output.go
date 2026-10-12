@@ -22,6 +22,16 @@ func (w *outputWriter) RenderJSON(value json.RawMessage) error {
 	return presentation.Render(w.Writer, value, w.options)
 }
 
+// RawOutput exposes the underlying destination for byte streams. It preserves
+// io.Closer and bypasses presentation while ordinary results keep their renderer.
+func RawOutput(cmd *cobra.Command) io.Writer {
+	out := cmd.OutOrStdout()
+	if wrapped, ok := out.(*outputWriter); ok {
+		return wrapped.Writer
+	}
+	return out
+}
+
 // ConfigureOutput is called after flags are parsed, before any command work.
 func ConfigureOutput(cmd *cobra.Command, format, color string) error {
 	if err := ValidateOutputOptions(format, color); err != nil {

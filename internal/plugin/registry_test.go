@@ -120,6 +120,22 @@ func TestRegistryMetadataFailures(t *testing.T) {
 	}
 }
 
+func TestRegistryStreamMetadataIsIndependent(t *testing.T) {
+	t.Parallel()
+	manifest := streamManifest(true, true)
+	var registry plugin.Registry
+	if err := registry.Register(t.Context(), &fakePlugin{manifest: manifest}, inertFactory); err != nil {
+		t.Fatal(err)
+	}
+	manifest.Root.Subcommands[0].Streams.Input = false
+	first := registry.List()
+	first[0].Root.Subcommands[0].Streams.Output = false
+	got := registry.List()[0].Root.Subcommands[0].Streams
+	if !got.Input || !got.Output {
+		t.Fatal("stream declarations alias caller-owned metadata")
+	}
+}
+
 func TestAdapterHostCollisionsAndAtomicAttachment(t *testing.T) {
 	t.Parallel()
 	for _, kind := range []string{"command", "alias", "flag", "shorthand"} {

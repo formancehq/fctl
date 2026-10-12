@@ -46,6 +46,14 @@ func (p *external) GetManifest(ctx context.Context) (pluginsdk.Manifest, error) 
 }
 
 func (p *external) Execute(ctx context.Context, request pluginsdk.ExecuteRequest) (response pluginsdk.ExecuteResponse, err error) {
+	return p.execute(ctx, request, nil)
+}
+
+func (p *external) ExecuteStream(ctx context.Context, request pluginsdk.ExecuteRequest, streams pluginsdk.ExecutionStreams) (pluginsdk.ExecuteResponse, error) {
+	return p.execute(ctx, request, &streams)
+}
+
+func (p *external) execute(ctx context.Context, request pluginsdk.ExecuteRequest, streams *pluginsdk.ExecutionStreams) (response pluginsdk.ExecuteResponse, err error) {
 	binary, err := p.verify(ctx)
 	if err != nil {
 		return response, fmt.Errorf("verify plugin executable: %w", err)
@@ -64,6 +72,9 @@ func (p *external) Execute(ctx context.Context, request pluginsdk.ExecuteRequest
 	}
 	if !reflect.DeepEqual(manifest, p.manifest) {
 		return response, fmt.Errorf("plugin manifest differs from its installed catalogue; run fctl plugins sync")
+	}
+	if streams != nil {
+		return client.ExecuteStream(ctx, request, *streams)
 	}
 	return client.Execute(ctx, request)
 }

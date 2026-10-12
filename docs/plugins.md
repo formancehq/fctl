@@ -1,5 +1,8 @@
 # Plugin contract
 
+The optional [streaming and progress extension](plugin-streaming.md) adds raw
+byte streams and structured progress without changing ordinary unary plugins.
+
 Cloud and external service plugins implement `pkg/pluginsdk.Plugin`. Cloud has
 an embedded provider. Modern Auth and Ledger use external executables.
 Historical stacks use the SDK facades from the independent

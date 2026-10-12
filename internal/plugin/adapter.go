@@ -171,12 +171,11 @@ func (a *Adapter) run(cmd *cobra.Command, entry registration, path []string, fla
 	if instance == nil {
 		return fmt.Errorf("plugin factory returned nil")
 	}
-	response, execErr := instance.Execute(cmd.Context(), normalized)
 	spec, err := pluginsdk.FindCommand(entry.manifest, path)
 	if err != nil {
 		return err
 	}
-	return renderPluginOutput(cmd, spec.Files, normalized, response, execErr)
+	return executePluginCommand(cmd, instance, spec, normalized)
 }
 
 func (a *Adapter) resolveClient(ctx context.Context, service string, request pluginsdk.ExecuteRequest) (*api.Client, error) {
@@ -229,6 +228,9 @@ func normalizeRequest(cmd *cobra.Command, manifest pluginsdk.Manifest, path []st
 	if _, err := pluginOutputDestination(spec.Files, normalized); err != nil {
 		return pluginsdk.ExecuteRequest{}, err
 	}
+	if err := checkPluginStreamFormat(spec, normalized); err != nil {
+		return pluginsdk.ExecuteRequest{}, err
+	}
 	return normalized, nil
 }
 
@@ -250,6 +252,13 @@ func fileInputManifest(manifest pluginsdk.Manifest) pluginsdk.Manifest {
 }
 
 func readPluginRequest(cmd *cobra.Command, manifest pluginsdk.Manifest, files *pluginsdk.FileSpec, request pluginsdk.ExecuteRequest, flags []pluginsdk.FlagSpec) (pluginsdk.ExecuteRequest, error) {
+	spec, err := pluginsdk.FindCommand(manifest, request.CommandPath)
+	if err != nil {
+		return pluginsdk.ExecuteRequest{}, err
+	}
+	if err := checkPluginStreamFormat(spec, request); err != nil {
+		return pluginsdk.ExecuteRequest{}, err
+	}
 	if err := checkPluginInput(files, request, flags); err != nil {
 		return pluginsdk.ExecuteRequest{}, err
 	}
@@ -259,9 +268,19 @@ func readPluginRequest(cmd *cobra.Command, manifest pluginsdk.Manifest, files *p
 	if _, err := pluginOutputDestination(files, request); err != nil {
 		return pluginsdk.ExecuteRequest{}, err
 	}
-	request, err := readRequestBody(cmd, request, flags)
+	request, err = readRequestBody(cmd, request, flags)
 	if err != nil {
 		return pluginsdk.ExecuteRequest{}, err
+	}
+	if streamInput(spec) {
+		source, err := pluginInputSource(files, request)
+		if err != nil {
+			return pluginsdk.ExecuteRequest{}, err
+		}
+		if source != "" {
+			manifest = fileInputManifest(manifest)
+		}
+		return pluginsdk.NormalizeRequest(manifest, request)
 	}
 	request, err = ReadPluginInput(cmd, files, request)
 	if err != nil {

@@ -44,7 +44,7 @@ require (
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/catppuccin/go v0.2.0 // indirect
 	github.com/charmbracelet/ultraviolet v0.0.0-20260205113103-524a6607adb8 // indirect
-	github.com/charmbracelet/x/ansi v0.11.6 // indirect
+	github.com/charmbracelet/x/ansi v0.11.6
 	github.com/charmbracelet/x/exp/ordered v0.1.0 // indirect
 	github.com/charmbracelet/x/exp/strings v0.0.0-20240722160745-212f7b056ed0 // indirect
 	github.com/charmbracelet/x/termios v0.1.1 // indirect
@@ -52,7 +52,7 @@ require (
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/formancehq/fctl/pkg/pluginsdk v0.0.0-20261010092854-d24cbcd1b9dd
+	github.com/formancehq/fctl/pkg/pluginsdk v0.0.0-20261012095244-0f003a93e374
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
 	github.com/mattn/go-runewidth v0.0.20 // indirect
@@ -65,6 +65,6 @@ require (
 
 replace github.com/formancehq/fctl/pkg/pluginsdk => ./pkg/pluginsdk
 
-require github.com/formancehq/fctl/misc/fctl-plugin v0.0.0-20261010170918-e99d7416fd49
+require github.com/formancehq/fctl/misc/fctl-plugin v0.0.0-20261012095245-3945adb8388b
 
 replace github.com/formancehq/fctl/misc/fctl-plugin => ./misc/fctl-plugin
