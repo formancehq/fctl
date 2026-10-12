@@ -1,109 +1,70 @@
+// Package login creates or renews Cloud identities using the Membership device flow.
 package login
 
 import (
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
-	"github.com/zitadel/oidc/v2/pkg/oidc"
+	"fmt"
+	"io"
+	"net/http"
 
-	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/spf13/cobra"
+
+	"github.com/formancehq/fctl/v4/internal/cloud"
+	"github.com/formancehq/fctl/v4/internal/command"
+	"github.com/formancehq/fctl/v4/internal/connection"
 )
 
-type Store struct {
-	profile *fctl.Profile
-}
-type Controller struct {
-	store *Store
-}
-
-func NewDefaultStore() *Store {
-	return &Store{
-		profile: nil,
-	}
-}
-func (c *Controller) GetStore() *Store {
-	return c.store
+func NewCommand(s *connection.Settings) *cobra.Command {
+	return &cobra.Command{Use: "login", Short: "Log in to the Cloud (creates a profile automatically)", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+		return runLogin(s, cmd)
+	}}
 }
 
-func NewLoginController() *Controller {
-	return &Controller{
-		store: NewDefaultStore(),
-	}
-}
-
-func (c *Controller) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
-
-	cfg, err := fctl.LoadConfig(cmd)
+func runLogin(s *connection.Settings, cmd *cobra.Command) error {
+	client, err := loginHTTPClient(s, cmd.ErrOrStderr())
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	profile, profileName, err := fctl.LoadCurrentProfile(cmd, *cfg)
+	opts, entry, name, dir, err := s.LoginProfile(cmd.Context(), cmd)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	membershipUri, err := cmd.Flags().GetString(fctl.MembershipURIFlag)
+	session, err := cloud.LoginIdentity(cmd.Context(), client, cloud.Options{Issuer: opts.Issuer, ClientID: opts.ClientID}, cmd.ErrOrStderr(), s.BrowserOpener())
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if membershipUri == "" {
-		membershipUri = profile.GetMembershipURI()
-	} else {
-		profile.MembershipURI = membershipUri
+	expected := entry.Revision
+	if err := connection.SaveLoginSession(cmd.Context(), dir, name, &expected, opts, session); err != nil {
+		return err
 	}
-
-	relyingParty, err := fctl.GetAuthRelyingParty(cmd.Context(), fctl.GetHttpClient(cmd), membershipUri)
-	if err != nil {
-		return nil, err
-	}
-
-	c.store.profile = profile
-
-	ret, err := fctl.Authenticate(
-		cmd.Context(),
-		relyingParty,
-		fctl.NewPTermDialog(),
-		[]fctl.AuthenticationOption{
-			fctl.AuthenticateWithScopes(
-				oidc.ScopeOpenID,
-				oidc.ScopeOfflineAccess,
-				"accesses",
-				"on_behalf",
-			),
-			fctl.AuthenticateWithPrompt("no-org"),
-		},
-		[]fctl.TokenOption{},
-	)
-	if err != nil {
-		return nil, err
-	}
-	profile.UpdateRootToken(ret)
-
-	currentProfileName := profileName
-
-	cfg.CurrentProfile = currentProfileName
-	if err := fctl.WriteConfig(cmd, *cfg); err != nil {
-		return nil, err
-	}
-
-	if err := fctl.WriteProfile(cmd, currentProfileName, *profile); err != nil {
-		return nil, err
-	}
-
-	return c, nil
+	return command.WriteJSON(cmd.OutOrStdout(), []byte(`{"loggedIn":true}`))
 }
 
-func (c *Controller) Render(cmd *cobra.Command, args []string) error {
-	pterm.Success.WithWriter(cmd.OutOrStdout()).Printfln("Logged in.")
-	return nil
+func loginHTTPClient(s *connection.Settings, out io.Writer) (*http.Client, error) {
+	if s.Timeout <= 0 {
+		return nil, fmt.Errorf("timeout must be positive")
+	}
+	return s.HTTPClient(out), nil
 }
 
-func NewCommand() *cobra.Command {
-	return fctl.NewCommand("login",
-		fctl.WithStringFlag(fctl.MembershipURIFlag, "", "service url"),
-		fctl.WithShortDescription("Login"),
-		fctl.WithArgs(cobra.ExactArgs(0)),
-		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
-		fctl.WithController[*Store](NewLoginController()),
-	)
+func NewLogoutCommand(s *connection.Settings) *cobra.Command {
+	return &cobra.Command{Use: "logout", Short: "Remove the selected profile's local Cloud tokens", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+		_, _, name, dir, err := s.Resolve(cmd)
+		if err != nil {
+			return err
+		}
+		if name == "" {
+			return fmt.Errorf("select a saved profile")
+		}
+		if err := connection.Update(cmd.Context(), dir, func(store *connection.Store) error {
+			entry, exists := store.Connections[name]
+			if !exists {
+				return fmt.Errorf("profile no longer exists")
+			}
+			store.Connections[name] = connection.NewEntry(entry.Options)
+			return nil
+		}); err != nil {
+			return err
+		}
+		return command.WriteJSON(cmd.OutOrStdout(), []byte(`{"loggedIn":false}`))
+	}}
 }

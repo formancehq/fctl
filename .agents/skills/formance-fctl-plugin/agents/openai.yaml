@@ -1,0 +1,4 @@
+interface:
+  display_name: "fctl Plugin Development"
+  short_description: "Create decoupled fctl plugins with forms and tests"
+  default_prompt: "Use $formance-fctl-plugin to add a service plugin to fctl v4 with declarative forms and contract tests."

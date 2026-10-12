@@ -1,68 +1,26 @@
 package version
 
 import (
-	"github.com/pterm/pterm"
-	"github.com/spf13/cobra"
+	"fmt"
 
-	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/spf13/cobra"
 )
 
+// Release builds inject these values through GoReleaser ldflags.
 var (
-	Version   = "develop"
+	Version   = "v4.0.0-dev"
 	Commit    = "-"
 	BuildDate = "-"
 )
 
-type Store struct {
-	Version   string `json:"version"`
-	BuildDate string `json:"buildDate"`
-	Commit    string `json:"commit"`
-}
-type Controller struct {
-	store *Store
-}
-
-var _ fctl.Controller[*Store] = (*Controller)(nil)
-
-func NewDefaultVersionStore() *Store {
-	return &Store{
-		Version:   Version,
-		BuildDate: BuildDate,
-		Commit:    Commit,
-	}
-}
-
-func NewVersionController() *Controller {
-	return &Controller{
-		store: NewDefaultVersionStore(),
-	}
-}
-
 func NewCommand() *cobra.Command {
-	return fctl.NewCommand("version",
-		fctl.WithShortDescription("Get version"),
-		fctl.WithArgs(cobra.ExactArgs(0)),
-		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
-		fctl.WithController[*Store](NewVersionController()),
-	)
-}
-
-func (c *Controller) GetStore() *Store {
-	return c.store
-}
-
-func (c *Controller) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	return c, nil
-}
-
-// TODO: This need to use the ui.NewListModel
-func (c *Controller) Render(cmd *cobra.Command, args []string) error {
-	tableData := pterm.TableData{}
-	tableData = append(tableData, []string{pterm.LightCyan("Version"), c.store.Version})
-	tableData = append(tableData, []string{pterm.LightCyan("Date"), c.store.BuildDate})
-	tableData = append(tableData, []string{pterm.LightCyan("Commit"), c.store.Commit})
-	return pterm.DefaultTable.
-		WithWriter(cmd.OutOrStdout()).
-		WithData(tableData).
-		Render()
+	return &cobra.Command{
+		Use:   "version",
+		Short: "Print fctl version and build information",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			_, err := fmt.Fprintf(cmd.OutOrStdout(), "fctl %s (commit: %s, built: %s)\n", Version, Commit, BuildDate)
+			return err
+		},
+	}
 }

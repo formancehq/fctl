@@ -23,8 +23,6 @@ jobs:
 
   Dirty:
     uses: formancehq/ci/.github/workflows/go-dirty.yml@v1
-    secrets:
-      SPEAKEASY_API_KEY: ${{ secrets.SPEAKEASY_API_KEY }}
 
   Tests:
     uses: formancehq/ci/.github/workflows/go-test.yml@v1
@@ -40,6 +38,5 @@ jobs:
       build-target: release-local
     secrets:
       NUMARY_GITHUB_TOKEN: ${{ secrets.NUMARY_GITHUB_TOKEN }}
-      SPEAKEASY_API_KEY: ${{ secrets.SPEAKEASY_API_KEY }}
       FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
       GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}

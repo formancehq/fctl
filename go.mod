@@ -1,100 +1,70 @@
-module github.com/formancehq/fctl/v3
+module github.com/formancehq/fctl/v4
 
 go 1.26.0
 
 toolchain go1.26.1
 
 require (
-	github.com/TylerBrock/colorjson v0.0.0-20200706003622-8a50f05110d2
-	github.com/c-bata/go-prompt v0.2.6
-	github.com/formancehq/fctl/internal/deployserverclient/v3 v3.1.1
-	github.com/formancehq/fctl/internal/membershipclient/v3 v3.1.1
-	github.com/formancehq/formance-sdk-go/v4 v4.0.0
-	github.com/formancehq/go-libs/v4 v4.1.1
+	charm.land/bubbletea/v2 v2.0.2
+	charm.land/huh/v2 v2.0.3
+	github.com/charmbracelet/colorprofile v0.4.2
+	github.com/charmbracelet/x/term v0.2.2
+	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/go-jose/go-jose/v4 v4.1.4
-	github.com/iancoleman/strcase v0.3.0
-	github.com/mattn/go-shellwords v1.0.12
-	github.com/pkg/errors v0.9.1
-	github.com/pterm/pterm v0.12.83
-	github.com/segmentio/ksuid v1.0.4
+	github.com/gofrs/flock v0.12.1
 	github.com/spf13/cobra v1.10.2
-	github.com/stretchr/testify v1.12.1
-	github.com/zitadel/oidc/v2 v2.12.2
-	golang.org/x/mod v0.40.0
+	github.com/spf13/pflag v1.0.9
 	golang.org/x/oauth2 v0.36.0
-	gopkg.in/yaml.v3 v3.0.1
-)
-
-replace (
-	github.com/formancehq/fctl/internal/deployserverclient/v3 => ./internal/deployserverclient
-	github.com/formancehq/fctl/internal/membershipclient/v3 => ./internal/membershipclient
-	github.com/spf13/cobra => github.com/formancehq/cobra v1.10.3-0.20260226173701-7f22399f993b
-	github.com/zitadel/oidc/v2 v2.6.1 => github.com/formancehq/oidc/v2 v2.6.2-0.20230526075055-93dc5ecb0149
-	gopkg.in/go-jose/go-jose.v4 => github.com/go-jose/go-jose/v4 v4.1.4
+	golang.org/x/sys v0.47.0
+	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
-	atomicgo.dev/cursor v0.2.0 // indirect
-	atomicgo.dev/keyboard v0.2.9 // indirect
-	atomicgo.dev/schedule v0.1.0 // indirect
-	dario.cat/mergo v1.0.2 // indirect
-	github.com/ThreeDotsLabs/watermill v1.5.1 // indirect
-	github.com/bahlo/generic-list-go v0.2.0 // indirect
-	github.com/buger/jsonparser v1.1.2 // indirect
-	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
-	github.com/containerd/console v1.0.5 // indirect
-	github.com/fatih/color v1.18.0 // indirect
-	github.com/go-chi/chi/v5 v5.3.0 // indirect
-	github.com/go-logr/logr v1.4.3 // indirect
-	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/google/uuid v1.6.0 // indirect
-	github.com/gookit/color v1.6.0 // indirect
-	github.com/gorilla/schema v1.4.1 // indirect
-	github.com/gorilla/securecookie v1.1.2 // indirect
+	github.com/fatih/color v1.13.0 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
-	github.com/hokaccha/go-prettyjson v0.0.0-20211117102719-0474bc63780f // indirect
-	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/invopop/jsonschema v0.13.0 // indirect
-	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/lithammer/fuzzysearch v1.1.8 // indirect
-	github.com/lithammer/shortuuid/v3 v3.0.7 // indirect
-	github.com/mailru/easyjson v0.9.2 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-runewidth v0.0.21 // indirect
-	github.com/mattn/go-tty v0.0.7 // indirect
-	github.com/muhlemmer/gu v0.3.1 // indirect
-	github.com/oklog/ulid v1.3.1 // indirect
-	github.com/pkg/term v1.2.0-beta.2 // indirect
-	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
-	github.com/sergi/go-diff v1.4.0 // indirect
-	github.com/sirupsen/logrus v1.9.4 // indirect
-	github.com/spf13/pflag v1.0.10 // indirect
-	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
-	github.com/uptrace/bun v1.2.18 // indirect
-	github.com/uptrace/opentelemetry-go-extra/otellogrus v0.3.2 // indirect
-	github.com/uptrace/opentelemetry-go-extra/otelutil v0.3.2 // indirect
-	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
-	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
-	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
-	github.com/zitadel/oidc/v3 v3.45.5 // indirect
-	github.com/zitadel/schema v1.3.2 // indirect
-	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/otel v1.42.0 // indirect
-	go.opentelemetry.io/otel/log v0.18.0 // indirect
-	go.opentelemetry.io/otel/metric v1.42.0 // indirect
-	go.opentelemetry.io/otel/trace v1.42.0 // indirect
-	go.uber.org/mock v0.5.2 // indirect
-	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.27.1 // indirect
-	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/crypto v0.56.0 // indirect
-	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
-	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/term v0.45.0 // indirect
-	golang.org/x/text v0.41.0 // indirect
-	gopkg.in/go-jose/go-jose.v2 v2.6.3 // indirect
+	github.com/hashicorp/go-plugin v1.8.0 // indirect
+	github.com/hashicorp/yamux v0.1.2 // indirect
+	github.com/kr/text v0.2.0 // indirect
+	github.com/mattn/go-colorable v0.1.12 // indirect
+	github.com/mattn/go-isatty v0.0.17 // indirect
+	github.com/oklog/run v1.1.0 // indirect
+	github.com/rogpeppe/go-internal v1.16.0 // indirect
+	go.yaml.in/yaml/v2 v2.4.2 // indirect
+	golang.org/x/net v0.57.0 // indirect
+	golang.org/x/text v0.40.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260706201446-f0a921348800 // indirect
+	google.golang.org/grpc v1.84.0 // indirect
+	google.golang.org/protobuf v1.36.12 // indirect
 )
+
+require (
+	charm.land/bubbles/v2 v2.0.0 // indirect
+	charm.land/lipgloss/v2 v2.0.1 // indirect
+	github.com/atotto/clipboard v0.1.4 // indirect
+	github.com/catppuccin/go v0.2.0 // indirect
+	github.com/charmbracelet/ultraviolet v0.0.0-20260205113103-524a6607adb8 // indirect
+	github.com/charmbracelet/x/ansi v0.11.6
+	github.com/charmbracelet/x/exp/ordered v0.1.0 // indirect
+	github.com/charmbracelet/x/exp/strings v0.0.0-20240722160745-212f7b056ed0 // indirect
+	github.com/charmbracelet/x/termios v0.1.1 // indirect
+	github.com/charmbracelet/x/windows v0.2.2 // indirect
+	github.com/clipperhouse/displaywidth v0.11.0 // indirect
+	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/formancehq/fctl/pkg/pluginsdk v0.0.0-20261012095244-0f003a93e374
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
+	github.com/mattn/go-runewidth v0.0.20 // indirect
+	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
+	github.com/muesli/cancelreader v0.2.2
+	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
+	golang.org/x/sync v0.22.0 // indirect
+)
+
+replace github.com/formancehq/fctl/pkg/pluginsdk => ./pkg/pluginsdk
+
+require github.com/formancehq/fctl/misc/fctl-plugin v0.0.0-20261012095245-3945adb8388b
+
+replace github.com/formancehq/fctl/misc/fctl-plugin => ./misc/fctl-plugin
