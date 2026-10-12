@@ -520,3 +520,24 @@ func TestNormalizeRequiredBody(t *testing.T) {
 		})
 	}
 }
+
+func TestNormalizeStreamedInputDoesNotRequireInlineBody(t *testing.T) {
+	t.Parallel()
+	manifest := contractManifest()
+	leaf := &manifest.Root.Subcommands[0].Subcommands[0]
+	leaf.Flags[4].Required = true
+	leaf.Streams = &pluginsdk.StreamSpec{Input: true}
+	before := jsonClone(t, manifest)
+	request := contractRequest()
+	request.Body = nil
+	if _, err := pluginsdk.NormalizeRequest(manifest, request); err != nil {
+		t.Fatalf("stream input also required an inline body: %v", err)
+	}
+	if !reflect.DeepEqual(manifest, before) {
+		t.Fatal("stream normalization mutated the manifest")
+	}
+	leaf.Streams.Input = false
+	if _, err := pluginsdk.NormalizeRequest(manifest, request); err == nil {
+		t.Fatal("an output-only stream bypassed the required body")
+	}
+}

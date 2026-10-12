@@ -169,7 +169,7 @@ func NormalizeRequest(manifest Manifest, request ExecuteRequest) (ExecuteRequest
 	if len(request.Args) < command.Args.Min || len(request.Args) > command.Args.Max {
 		return ExecuteRequest{}, fmt.Errorf("command expects %d through %d arguments", command.Args.Min, command.Args.Max)
 	}
-	request.Flags, err = normalizeFlags(flags, request)
+	request.Flags, err = normalizeFlags(flags, request, command.Streams != nil && command.Streams.Input)
 	if err != nil {
 		return ExecuteRequest{}, err
 	}
@@ -184,7 +184,7 @@ func NormalizeRequest(manifest Manifest, request ExecuteRequest) (ExecuteRequest
 	return request, nil
 }
 
-func normalizeFlags(flags []FlagSpec, request ExecuteRequest) (map[string]string, error) {
+func normalizeFlags(flags []FlagSpec, request ExecuteRequest, streamedInput bool) (map[string]string, error) {
 	request.Flags = maps.Clone(request.Flags)
 	if request.Flags == nil {
 		request.Flags = make(map[string]string)
@@ -198,7 +198,9 @@ func normalizeFlags(flags []FlagSpec, request ExecuteRequest) (map[string]string
 		if _, exists := request.Flags[flag.Name]; !exists {
 			request.Flags[flag.Name] = flag.Default
 		}
-		if flag.Body && request.Body != nil {
+		// Streamed input lives outside ExecuteRequest.Body. Its plugin validates
+		// the actual reader; normalization must not require a second inline body.
+		if flag.Body && (request.Body != nil || streamedInput) {
 			flag.Required = false
 		}
 		if err := validateFlag(flag, request.Flags[flag.Name]); err != nil {
