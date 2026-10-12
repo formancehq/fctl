@@ -4,7 +4,7 @@ go 1.26.0
 
 toolchain go1.26.1
 
-require github.com/formancehq/fctl/pkg/pluginsdk v0.0.0-20261012093139-33912617b53d
+require github.com/formancehq/fctl/pkg/pluginsdk v0.0.0-20261012095244-0f003a93e374
 
 require (
 	github.com/fatih/color v1.13.0 // indirect
