@@ -25,6 +25,8 @@ type StreamSpec struct {
 // ExecutionStreams live only for this invocation. The host owns and closes the
 // input/output. Plugins must propagate read, write and Report errors and must not
 // retain streams or reporters after returning. Total input size is optional.
+// A blocking stream must also implement io.Closer and unblock IO on Close.
+// The native transport can close such host streams on cancellation.
 type ExecutionStreams struct {
 	Input     io.Reader
 	InputSize *int64

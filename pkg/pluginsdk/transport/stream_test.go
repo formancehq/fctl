@@ -12,6 +12,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/formancehq/fctl/pkg/pluginsdk"
 )
@@ -172,6 +173,48 @@ func TestStreamCancellationReapsExecutable(t *testing.T) {
 	}
 }
 
+type blockingStreamOutput struct {
+	*io.PipeWriter
+	started chan struct{}
+}
+
+func (w *blockingStreamOutput) Write(data []byte) (int, error) {
+	close(w.started)
+	return w.PipeWriter.Write(data)
+}
+
+func TestStreamCancellationInterruptsBlockedOutput(t *testing.T) {
+	client := openHelper(t, http.DefaultClient, "https://unused.example")
+	reader, writer := io.Pipe()
+	t.Cleanup(func() {
+		if err := errors.Join(reader.Close(), writer.Close()); err != nil {
+			t.Error(err)
+		}
+	})
+	output := &blockingStreamOutput{PipeWriter: writer, started: make(chan struct{})}
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	done := make(chan error, 1)
+	go func() {
+		_, err := client.ExecuteStream(ctx, helperRequest("copy"), pluginsdk.ExecutionStreams{Input: strings.NewReader("payload"), Output: output})
+		done <- err
+	}()
+	select {
+	case <-output.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("output was not reached")
+	}
+	cancel()
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) || !client.process.Exited() {
+			t.Fatalf("blocked output cancellation err=%v exited=%v", err, client.process.Exited())
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("output Write did not unblock on cancellation")
+	}
+}
+
 type failedStreamReader struct{ sent bool }
 
 func (r *failedStreamReader) Read(data []byte) (int, error) {
@@ -189,6 +232,43 @@ func TestStreamReadFailurePreservesPartialResult(t *testing.T) {
 	})
 	if !errors.Is(err, io.ErrUnexpectedEOF) || string(result.Data) != `{"bytes":7}` {
 		t.Fatalf("source failure result=%s err=%v", result.Data, err)
+	}
+}
+
+type terminalFrameReceiver struct {
+	frame *wrapperspb.BytesValue
+	err   error
+}
+
+func (r terminalFrameReceiver) RecvMsg(value any) error {
+	if r.err != nil {
+		return r.err
+	}
+	message, ok := value.(*wrapperspb.BytesValue)
+	if !ok {
+		return fmt.Errorf("invalid test frame receiver")
+	}
+	message.Value = r.frame.Value
+	return nil
+}
+
+func TestResultFrameRequiresSuccessfulTerminalStatus(t *testing.T) {
+	result := resultWire{Data: []byte(`{"exported":100}`)}
+	trailing, err := pack(streamFrame{Progress: &pluginsdk.ProgressEvent{Phase: "late", Unit: "logs"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, receiver := range []terminalFrameReceiver{
+		{err: status.Error(codes.DataLoss, "failed after result")},
+		{frame: trailing},
+	} {
+		partial, err := completeExecutionResult(receiver, result, nil)
+		if err == nil || string(partial.Data) != string(result.Data) {
+			t.Fatalf("terminal failure accepted: data=%s err=%v", partial.Data, err)
+		}
+	}
+	if _, err := completeExecutionResult(terminalFrameReceiver{err: io.EOF}, result, nil); err != nil {
+		t.Fatalf("successful terminal status rejected: %v", err)
 	}
 }
 

@@ -148,8 +148,11 @@ func (c *callbackTransport) roundTripStream(request *http.Request) (*http.Respon
 func (c *callbackTransport) openHTTPStream(ctx context.Context, request *http.Request, cancel context.CancelCauseFunc, closeInput, finish func()) (*http.Response, error) {
 	metadata := httpStreamRequestWire{Method: request.Method, URL: request.URL.String(), Header: request.Header,
 		ContentLength: request.ContentLength, HasBody: request.Body != nil && request.Body != http.NoBody}
-	if metadata.ContentLength < -1 || (!metadata.HasBody && metadata.ContentLength > 0) || headerSize(metadata.Header) > maxHeadBytes {
+	if metadata.ContentLength < -1 || (!metadata.HasBody && metadata.ContentLength > 0) {
 		return nil, status.Error(codes.InvalidArgument, "invalid HTTP stream request metadata")
+	}
+	if headerSize(metadata.Header) > maxHeadBytes {
+		return nil, status.Error(codes.ResourceExhausted, "HTTP stream request headers exceed transport limit")
 	}
 	message, err := httpStreamMetadata(httpStreamRequest, metadata)
 	if err != nil {
@@ -209,7 +212,7 @@ func copyHTTPStreamChunks(sender httpStreamSender, body io.Reader) httpStreamCop
 		if n > 0 {
 			// gRPC may retain a message for tracing after SendMsg returns.
 			if sendErr := sender.SendMsg(wrapperspb.Bytes(bytes.Clone(buffer[:n+1]))); sendErr != nil {
-				return httpStreamCopyResult{sendErr: sendErr}
+				return httpStreamCopyResult{readErr: err, sendErr: sendErr}
 			}
 		}
 		if err != nil {
@@ -338,10 +341,18 @@ func (h *hostHTTP) receiveHTTPStreamRequest(ctx context.Context, stream grpc.Ser
 	}
 	request.ContentLength = wire.ContentLength
 	request.GetBody = nil // Streaming input is never replayable, including redirects.
+	if !wire.HasBody {
+		if err := receiveHTTPStreamInput(stream, io.Discard, wire); err != nil {
+			return nil, wire, err
+		}
+	}
 	return request, wire, nil
 }
 
 func pipeHTTPStreamInput(ctx context.Context, stream grpc.ServerStream, request *http.Request, wire httpStreamRequestWire, cancel context.CancelCauseFunc) func() {
+	if !wire.HasBody {
+		return func() {}
+	}
 	reader, writer := io.Pipe()
 	closePipe := sync.OnceFunc(func() {
 		if err := reader.CloseWithError(context.Canceled); err != nil {
@@ -396,7 +407,7 @@ func receiveHTTPStreamInput(stream grpc.ServerStream, writer io.Writer, wire htt
 			if wire.HasBody && wire.ContentLength > 0 && received != wire.ContentLength {
 				return status.Error(codes.InvalidArgument, "HTTP stream input length mismatch")
 			}
-			return nil
+			return completeHTTPStreamInput(stream)
 		}
 		if !wire.HasBody || (wire.ContentLength > 0 && int64(len(frame)-1) > wire.ContentLength-received) {
 			return status.Error(codes.InvalidArgument, "unexpected HTTP stream input data")
@@ -406,6 +417,18 @@ func receiveHTTPStreamInput(stream grpc.ServerStream, writer io.Writer, wire htt
 		}
 		received += int64(len(frame) - 1)
 	}
+}
+
+func completeHTTPStreamInput(stream grpc.ServerStream) error {
+	var extra wrapperspb.BytesValue
+	err := stream.RecvMsg(&extra)
+	if err == nil {
+		return status.Error(codes.InvalidArgument, "HTTP stream input frame after EOF")
+	}
+	if !errors.Is(err, io.EOF) {
+		return err
+	}
+	return nil
 }
 
 func sendHTTPStreamResponse(ctx context.Context, stream grpc.ServerStream, response *http.Response) (err error) {

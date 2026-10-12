@@ -97,15 +97,10 @@ func (c *Client) ExecuteStream(ctx context.Context, request pluginsdk.ExecuteReq
 	defer stop()
 	callCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	// A caller-owned interruptible reader is closed only on cancellation. A
-	// successful call leaves it to its owner, just like an ordinary io.Reader.
-	if input, ok := streams.Input.(io.ReadCloser); ok {
-		interrupt := context.AfterFunc(callCtx, func() {
-			//nolint:errcheck // Cancellation already propagates via the RPC; Close only interrupts a blocked Read.
-			_ = input.Close()
-		})
-		defer interrupt()
-	}
+	// Interruptible streams are closed only on cancellation. A successful
+	// call leaves both streams to their owner.
+	defer interruptStreamOnCancel(callCtx, streams.Input)()
+	defer interruptStreamOnCancel(callCtx, streams.Output)()
 	callback := c.serveHTTP()
 	defer callback.stop()
 	stream, err := c.remote.conn.NewStream(callCtx, &executeStreamDescriptor, "/"+pluginService+"/ExecuteStream",
@@ -131,6 +126,24 @@ func (c *Client) ExecuteStream(ctx context.Context, request pluginsdk.ExecuteReq
 		return pluginsdk.ExecuteResponse{Data: result.Data}, errors.Join(result.Error.err(), c.rpcError(ctx, err))
 	}
 	return pluginsdk.ExecuteResponse{Data: result.Data}, result.Error.err()
+}
+
+func interruptStreamOnCancel(ctx context.Context, stream any) func() {
+	closer, ok := stream.(io.Closer)
+	if !ok {
+		return func() {}
+	}
+	done := make(chan struct{})
+	stop := context.AfterFunc(ctx, func() {
+		//nolint:errcheck // Cancellation propagates via the RPC; Close interrupts blocked IO.
+		_ = closer.Close()
+		close(done)
+	})
+	return func() {
+		if !stop() {
+			<-done
+		}
+	}
 }
 
 func (c *Client) streamRequest(ctx context.Context, request pluginsdk.ExecuteRequest, streams pluginsdk.ExecutionStreams) (pluginsdk.ExecuteRequest, error) {
@@ -172,12 +185,24 @@ func consumeExecution(stream grpc.ClientStream, streams pluginsdk.ExecutionStrea
 			return resultWire{}, err
 		}
 		if frame.Result != nil {
-			if input.err != nil && !errors.Is(input.err, io.EOF) {
-				return *frame.Result, input.err
-			}
-			return *frame.Result, nil
+			return completeExecutionResult(stream, *frame.Result, input.err)
 		}
 	}
+}
+
+// A result frame alone cannot authorize publication: the RPC's terminal status
+// must also succeed. A peer can fail while closing resources after sending it.
+func completeExecutionResult(stream frameReceiver, result resultWire, inputErr error) (resultWire, error) {
+	_, terminalErr := receiveFrame(stream)
+	if errors.Is(terminalErr, io.EOF) {
+		terminalErr = nil
+	} else if terminalErr == nil {
+		terminalErr = fmt.Errorf("plugin sent a frame after its final result")
+	}
+	if errors.Is(inputErr, io.EOF) {
+		inputErr = nil
+	}
+	return result, errors.Join(terminalErr, inputErr)
 }
 
 func consumeFrame(stream grpc.ClientStream, frame streamFrame, streams pluginsdk.ExecutionStreams, input *inputSender) error {

@@ -27,7 +27,7 @@ import (
 
 const httpStreamTestURL = "https://stream.example/api/ledger"
 
-func newHTTPStreamCallback(t *testing.T, host httpRPC, execution context.Context) *callbackTransport {
+func newHTTPStreamCallback(execution context.Context, t *testing.T, host httpRPC) *callbackTransport {
 	t.Helper()
 	listener := bufconn.Listen(128 << 10)
 	server := grpc.NewServer(grpc.MaxRecvMsgSize(httpStreamWireBytes), grpc.MaxSendMsgSize(httpStreamWireBytes))
@@ -64,7 +64,7 @@ func httpStreamTestHost(t *testing.T, client *http.Client, endpoint string) *hos
 	return &hostHTTP{client: client, endpoint: mustURL(t, endpoint)}
 }
 
-func httpStreamTestRequest(t *testing.T, ctx context.Context, method, target string, body io.Reader) *http.Request {
+func httpStreamTestRequest(ctx context.Context, t *testing.T, method, target string, body io.Reader) *http.Request {
 	t.Helper()
 	request, err := http.NewRequestWithContext(ctx, method, target, body)
 	if err != nil {
@@ -80,6 +80,21 @@ func waitHTTPStreamSignal(t *testing.T, signal <-chan struct{}) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("HTTP stream operation did not finish")
 	}
+}
+
+func httpStreamTestFailure(t *testing.T, callback *callbackTransport, request *http.Request) error {
+	t.Helper()
+	response, err := callback.roundTripStream(request)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if closeErr := response.Body.Close(); closeErr != nil {
+			t.Error(closeErr)
+		}
+	}()
+	_, err = io.Copy(io.Discard, response.Body)
+	return err
 }
 
 // The source is generated one Read at a time. After the prefix, a gate prevents
@@ -140,8 +155,8 @@ func TestHTTPStreamLargeLazyResponse(t *testing.T) {
 			"Authorization": {"secret"}, "Set-Cookie": {"secret"}, "X-Request-Id": {"visible"},
 		}}, nil
 	})}
-	callback := newHTTPStreamCallback(t, httpStreamTestHost(t, client, httpStreamTestURL), t.Context())
-	response, err := callback.roundTripStream(httpStreamTestRequest(t, t.Context(), "GET", httpStreamTestURL+"/dump", nil))
+	callback := newHTTPStreamCallback(t.Context(), t, httpStreamTestHost(t, client, httpStreamTestURL))
+	response, err := callback.roundTripStream(httpStreamTestRequest(t.Context(), t, "GET", httpStreamTestURL+"/dump", nil))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -186,47 +201,15 @@ func testHTTPStreamDuplex(t *testing.T, known bool) {
 	gate := make(chan struct{})
 	input := newHTTPStreamLazyBody(prefix, size, gate)
 	finished := make(chan struct{})
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer close(finished)
-		wantLength := int64(-1)
-		if known {
-			wantLength = size + int64(len(prefix))
-		}
-		if r.ContentLength != wantLength || r.Header.Get("Content-Type") != "application/x-ndjson" {
-			t.Errorf("request metadata = %d, %v", r.ContentLength, r.Header)
-		}
-		controller := http.NewResponseController(w)
-		if err := controller.EnableFullDuplex(); err != nil {
-			t.Error(err)
-			return
-		}
-		first := make([]byte, len(prefix))
-		if _, err := io.ReadFull(r.Body, first); err != nil || string(first) != prefix {
-			t.Errorf("request prefix = %q, %v", first, err)
-			return
-		}
-		if _, err := io.WriteString(w, "accepted\n"); err != nil {
-			t.Error(err)
-			return
-		}
-		if err := controller.Flush(); err != nil {
-			t.Error(err)
-			return
-		}
-		if n, err := io.Copy(io.Discard, r.Body); err != nil || n != size {
-			t.Errorf("request remainder = %d, %v", n, err)
-		}
-		if _, err := io.WriteString(w, "done\n"); err != nil {
-			t.Error(err)
-		}
-	}))
-	t.Cleanup(server.Close)
-	callback := newHTTPStreamCallback(t, httpStreamTestHost(t, server.Client(), server.URL), t.Context())
-	request := httpStreamTestRequest(t, t.Context(), "POST", server.URL+"/bulk", input)
-	request.ContentLength = -1
+	wantLength := int64(-1)
 	if known {
-		request.ContentLength = size + int64(len(prefix))
+		wantLength = size + int64(len(prefix))
 	}
+	server := httptest.NewServer(httpStreamDuplexHandler(t, prefix, size, wantLength, finished))
+	t.Cleanup(server.Close)
+	callback := newHTTPStreamCallback(t.Context(), t, httpStreamTestHost(t, server.Client(), server.URL))
+	request := httpStreamTestRequest(t.Context(), t, "POST", server.URL+"/bulk", input)
+	request.ContentLength = wantLength
 	request.Header.Set("Content-Type", "application/x-ndjson")
 	response, err := callback.roundTripStream(request)
 	if err != nil {
@@ -251,6 +234,43 @@ func testHTTPStreamDuplex(t *testing.T, known bool) {
 	}
 	waitHTTPStreamSignal(t, finished)
 	waitHTTPStreamSignal(t, input.closed)
+}
+
+func httpStreamDuplexHandler(t *testing.T, prefix string, size, wantLength int64, finished chan<- struct{}) http.HandlerFunc {
+	t.Helper()
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer close(finished)
+		if r.ContentLength != wantLength || r.Header.Get("Content-Type") != "application/x-ndjson" {
+			t.Errorf("request metadata = %d, %v", r.ContentLength, r.Header)
+		}
+		controller := http.NewResponseController(w)
+		if err := controller.EnableFullDuplex(); err != nil {
+			t.Error(err)
+			return
+		}
+		first := make([]byte, len(prefix))
+		if _, err := io.ReadFull(r.Body, first); err != nil || string(first) != prefix {
+			t.Errorf("request prefix = %q, %v", first, err)
+			return
+		}
+		if err := writeHTTPStreamAccepted(w); err != nil {
+			t.Error(err)
+			return
+		}
+		if n, err := io.Copy(io.Discard, r.Body); err != nil || n != size {
+			t.Errorf("request remainder = %d, %v", n, err)
+		}
+		if _, err := io.WriteString(w, "done\n"); err != nil {
+			t.Error(err)
+		}
+	}
+}
+
+func writeHTTPStreamAccepted(w http.ResponseWriter) error {
+	if _, err := io.WriteString(w, "accepted\n"); err != nil {
+		return err
+	}
+	return http.NewResponseController(w).Flush()
 }
 
 type httpStreamBlockingBody struct {
@@ -283,47 +303,52 @@ func TestHTTPStreamCancellationAndCloseUnblockBodies(t *testing.T) {
 	for _, cause := range []string{"request", "execution", "close"} {
 		t.Run(cause, func(t *testing.T) {
 			t.Parallel()
-			requestCtx, cancelRequest := context.WithCancel(t.Context())
-			defer cancelRequest()
-			executionCtx, cancelExecution := context.WithCancel(t.Context())
-			defer cancelExecution()
-			input, output := newHTTPStreamBlockingBody(), newHTTPStreamBlockingBody()
-			client := &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
-				return &http.Response{StatusCode: 200, Body: output, ContentLength: -1}, nil
-			})}
-			callback := newHTTPStreamCallback(t, httpStreamTestHost(t, client, httpStreamTestURL), executionCtx)
-			response, err := callback.roundTripStream(httpStreamTestRequest(t, requestCtx, "POST", httpStreamTestURL, input))
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer func() {
-				if err := response.Body.Close(); err != nil {
-					t.Error(err)
-				}
-			}()
-			read := make(chan error, 1)
-			go func() { _, err := io.Copy(io.Discard, response.Body); read <- err }()
-			waitHTTPStreamSignal(t, input.started)
-			waitHTTPStreamSignal(t, output.started)
-			if cause == "request" {
-				cancelRequest()
-			} else if cause == "execution" {
-				cancelExecution()
-			} else if err := response.Body.Close(); err != nil {
-				t.Fatal(err)
-			}
-			select {
-			case err := <-read:
-				if !errors.Is(err, context.Canceled) {
-					t.Fatalf("body cancellation = %v", err)
-				}
-			case <-time.After(5 * time.Second):
-				t.Fatal("response read did not stop")
-			}
-			waitHTTPStreamSignal(t, input.returned)
-			waitHTTPStreamSignal(t, output.returned)
+			testHTTPStreamCancellationAndClose(t, cause)
 		})
 	}
+}
+
+func testHTTPStreamCancellationAndClose(t *testing.T, cause string) {
+	t.Helper()
+	requestCtx, cancelRequest := context.WithCancel(t.Context())
+	defer cancelRequest()
+	executionCtx, cancelExecution := context.WithCancel(t.Context())
+	defer cancelExecution()
+	input, output := newHTTPStreamBlockingBody(), newHTTPStreamBlockingBody()
+	client := &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+		return &http.Response{StatusCode: 200, Body: output, ContentLength: -1}, nil
+	})}
+	callback := newHTTPStreamCallback(executionCtx, t, httpStreamTestHost(t, client, httpStreamTestURL))
+	response, err := callback.roundTripStream(httpStreamTestRequest(requestCtx, t, "POST", httpStreamTestURL, input))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			t.Error(err)
+		}
+	}()
+	read := make(chan error, 1)
+	go func() { _, err := io.Copy(io.Discard, response.Body); read <- err }()
+	waitHTTPStreamSignal(t, input.started)
+	waitHTTPStreamSignal(t, output.started)
+	if cause == "request" {
+		cancelRequest()
+	} else if cause == "execution" {
+		cancelExecution()
+	} else if err := response.Body.Close(); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case err := <-read:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("body cancellation = %v", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("response read did not stop")
+	}
+	waitHTTPStreamSignal(t, input.returned)
+	waitHTTPStreamSignal(t, output.returned)
 }
 
 func TestHTTPStreamEarlyResponseStopsUpload(t *testing.T) {
@@ -332,8 +357,8 @@ func TestHTTPStreamEarlyResponseStopsUpload(t *testing.T) {
 	client := &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
 		return &http.Response{StatusCode: http.StatusRequestEntityTooLarge, Body: io.NopCloser(strings.NewReader("rejected")), ContentLength: 8}, nil
 	})}
-	callback := newHTTPStreamCallback(t, httpStreamTestHost(t, client, httpStreamTestURL), t.Context())
-	response, err := callback.roundTripStream(httpStreamTestRequest(t, t.Context(), "POST", httpStreamTestURL, input))
+	callback := newHTTPStreamCallback(t.Context(), t, httpStreamTestHost(t, client, httpStreamTestURL))
+	response, err := callback.roundTripStream(httpStreamTestRequest(t.Context(), t, "POST", httpStreamTestURL, input))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -355,6 +380,27 @@ type httpStreamFailureBody struct {
 	closed   atomic.Bool
 }
 
+type simultaneousHTTPStreamFailure struct{ grpc.ClientStream }
+
+func (simultaneousHTTPStreamFailure) SendMsg(any) error { return io.EOF }
+
+type partialHTTPStreamFailure struct{}
+
+func (partialHTTPStreamFailure) Read(data []byte) (int, error) {
+	data[0] = 'x'
+	return 1, io.ErrUnexpectedEOF
+}
+
+func TestHTTPStreamPreservesReadErrorWhenSendAlsoFails(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancelCause(t.Context())
+	defer cancel(nil)
+	sendHTTPStreamBody(simultaneousHTTPStreamFailure{}, partialHTTPStreamFailure{}, cancel)
+	if !errors.Is(context.Cause(ctx), io.ErrUnexpectedEOF) {
+		t.Fatalf("source failure was replaced by send EOF: %v", context.Cause(ctx))
+	}
+}
+
 func (b *httpStreamFailureBody) Read([]byte) (int, error) { return 0, b.readErr }
 func (b *httpStreamFailureBody) Close() error {
 	b.closed.Store(true)
@@ -366,36 +412,36 @@ func TestHTTPStreamFailuresAreRedactedAndNotRetried(t *testing.T) {
 	for _, failure := range []string{"transport", "read", "close"} {
 		t.Run(failure, func(t *testing.T) {
 			t.Parallel()
-			var calls atomic.Int32
-			secret := errors.New("Bearer secret /private/host/credentials")
-			body := &httpStreamFailureBody{readErr: io.EOF}
-			if failure == "read" {
-				body.readErr = secret
-			} else if failure == "close" {
-				body.closeErr = secret
-			}
-			client := &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
-				calls.Add(1)
-				if failure == "transport" {
-					return nil, secret
-				}
-				return &http.Response{StatusCode: 200, Body: body, ContentLength: -1}, nil
-			})}
-			callback := newHTTPStreamCallback(t, httpStreamTestHost(t, client, httpStreamTestURL), t.Context())
-			response, err := callback.roundTripStream(httpStreamTestRequest(t, t.Context(), "GET", httpStreamTestURL, nil))
-			if err == nil {
-				_, err = io.Copy(io.Discard, response.Body)
-				if closeErr := response.Body.Close(); closeErr != nil {
-					t.Error(closeErr)
-				}
-			}
-			if err == nil || strings.Contains(err.Error(), "secret") || strings.Contains(err.Error(), "/private") || calls.Load() != 1 {
-				t.Fatalf("failure = %v, attempts = %d", err, calls.Load())
-			}
-			if failure != "transport" && !body.closed.Load() {
-				t.Fatal("failed response body was not closed")
-			}
+			testHTTPStreamFailure(t, failure)
 		})
+	}
+}
+
+func testHTTPStreamFailure(t *testing.T, failure string) {
+	t.Helper()
+	var calls atomic.Int32
+	secret := errors.New("Bearer secret /private/host/credentials")
+	body := &httpStreamFailureBody{readErr: io.EOF}
+	switch failure {
+	case "read":
+		body.readErr = secret
+	case "close":
+		body.closeErr = secret
+	}
+	client := &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+		calls.Add(1)
+		if failure == "transport" {
+			return nil, secret
+		}
+		return &http.Response{StatusCode: 200, Body: body, ContentLength: -1}, nil
+	})}
+	callback := newHTTPStreamCallback(t.Context(), t, httpStreamTestHost(t, client, httpStreamTestURL))
+	err := httpStreamTestFailure(t, callback, httpStreamTestRequest(t.Context(), t, "GET", httpStreamTestURL, nil))
+	if err == nil || strings.Contains(err.Error(), "secret") || strings.Contains(err.Error(), "/private") || calls.Load() != 1 {
+		t.Fatalf("failure = %v, attempts = %d", err, calls.Load())
+	}
+	if failure != "transport" && !body.closed.Load() {
+		t.Fatal("failed response body was not closed")
 	}
 }
 
@@ -407,8 +453,8 @@ func TestHTTPStreamSourceReadErrorIsPreserved(t *testing.T) {
 		_, err := io.Copy(io.Discard, request.Body)
 		return nil, err
 	})}
-	callback := newHTTPStreamCallback(t, httpStreamTestHost(t, client, httpStreamTestURL), t.Context())
-	_, err := callback.roundTripStream(httpStreamTestRequest(t, t.Context(), "POST", httpStreamTestURL, input))
+	callback := newHTTPStreamCallback(t.Context(), t, httpStreamTestHost(t, client, httpStreamTestURL))
+	err := httpStreamTestFailure(t, callback, httpStreamTestRequest(t.Context(), t, "POST", httpStreamTestURL, input))
 	if !errors.Is(err, original) || !input.closed.Load() {
 		t.Fatalf("source error = %v, closed = %v", err, input.closed.Load())
 	}
@@ -436,27 +482,21 @@ func TestHTTPStreamEndpointHeadersAndRedirects(t *testing.T) {
 		}
 	}))
 	t.Cleanup(server.Close)
-	callback := newHTTPStreamCallback(t, httpStreamTestHost(t, server.Client(), server.URL+"/api/ledger"), t.Context())
+	callback := newHTTPStreamCallback(t.Context(), t, httpStreamTestHost(t, server.Client(), server.URL+"/api/ledger"))
 	for _, path := range []string{"/api/auth/secret", "/api/ledger-other", "/api/ledger/../auth", "/api/ledger/%252e%252e/auth", "/api/ledger/%5c..%5cauth", "/api/ledger/origin", "/api/ledger/sibling"} {
-		request := httpStreamTestRequest(t, t.Context(), "GET", server.URL+path, nil)
-		if response, err := callback.roundTripStream(request); err == nil {
-			if closeErr := response.Body.Close(); closeErr != nil {
-				t.Error(closeErr)
-			}
+		request := httpStreamTestRequest(t.Context(), t, "GET", server.URL+path, nil)
+		if err := httpStreamTestFailure(t, callback, request); err == nil {
 			t.Fatalf("endpoint escape accepted: %s", path)
 		}
 	}
 	for _, name := range []string{"Authorization", "Cookie", "Proxy-Authorization", "X-Api-Key", "Host"} {
-		request := httpStreamTestRequest(t, t.Context(), "GET", server.URL+"/api/ledger/ok", nil)
+		request := httpStreamTestRequest(t.Context(), t, "GET", server.URL+"/api/ledger/ok", nil)
 		request.Header.Set(name, "secret")
-		if response, err := callback.roundTripStream(request); err == nil {
-			if closeErr := response.Body.Close(); closeErr != nil {
-				t.Error(closeErr)
-			}
+		if err := httpStreamTestFailure(t, callback, request); err == nil {
 			t.Fatalf("credential header accepted: %s", name)
 		}
 	}
-	response, err := callback.roundTripStream(httpStreamTestRequest(t, t.Context(), "GET", server.URL+"/api/ledger/inside", nil))
+	response, err := callback.roundTripStream(httpStreamTestRequest(t.Context(), t, "GET", server.URL+"/api/ledger/inside", nil))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -481,35 +521,32 @@ func TestHTTPStreamRejectsTruncatedAndInvalidResponseFrames(t *testing.T) {
 	for _, failure := range []string{"missing EOF", "oversized chunk", "empty chunk", "after EOF", "missing header"} {
 		t.Run(failure, func(t *testing.T) {
 			t.Parallel()
-			peer := &httpStreamTestPeer{hostHTTP: &hostHTTP{}, exchange: func(stream grpc.ServerStream) error {
-				var initial wrapperspb.BytesValue
-				if err := stream.RecvMsg(&initial); err != nil {
-					return err
-				}
-				if failure == "missing header" {
-					return stream.SendMsg(wrapperspb.Bytes([]byte{httpStreamData, 'x'}))
-				}
-				header, err := httpStreamMetadata(httpStreamResponse, httpStreamResponseWire{StatusCode: 200, ContentLength: -1})
-				if err != nil {
-					return err
-				}
-				if err := stream.SendMsg(header); err != nil {
-					return err
-				}
-				return sendInvalidHTTPStreamFrame(stream, failure)
-			}}
-			callback := newHTTPStreamCallback(t, peer, t.Context())
-			response, err := callback.roundTripStream(httpStreamTestRequest(t, t.Context(), "GET", httpStreamTestURL, nil))
-			if err == nil {
-				_, err = io.Copy(io.Discard, response.Body)
-				if closeErr := response.Body.Close(); closeErr != nil {
-					t.Error(closeErr)
-				}
-			}
-			if err == nil {
+			peer := &httpStreamTestPeer{hostHTTP: &hostHTTP{}, exchange: httpStreamInvalidResponse(failure)}
+			callback := newHTTPStreamCallback(t.Context(), t, peer)
+			if err := httpStreamTestFailure(t, callback, httpStreamTestRequest(t.Context(), t, "GET", httpStreamTestURL, nil)); err == nil {
 				t.Fatal("invalid response stream accepted")
 			}
 		})
+	}
+}
+
+func httpStreamInvalidResponse(failure string) func(grpc.ServerStream) error {
+	return func(stream grpc.ServerStream) error {
+		var initial wrapperspb.BytesValue
+		if err := stream.RecvMsg(&initial); err != nil {
+			return err
+		}
+		if failure == "missing header" {
+			return stream.SendMsg(wrapperspb.Bytes([]byte{httpStreamData, 'x'}))
+		}
+		header, err := httpStreamMetadata(httpStreamResponse, httpStreamResponseWire{StatusCode: 200, ContentLength: -1})
+		if err != nil {
+			return err
+		}
+		if err := stream.SendMsg(header); err != nil {
+			return err
+		}
+		return sendInvalidHTTPStreamFrame(stream, failure)
 	}
 }
 
@@ -589,19 +626,91 @@ func TestHTTPStreamMetadataLimits(t *testing.T) {
 	client := &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
 		return &http.Response{StatusCode: 200, Body: body, Header: http.Header{"X-Large": {strings.Repeat("x", maxHeadBytes)}}, ContentLength: -1}, nil
 	})}
-	callback := newHTTPStreamCallback(t, httpStreamTestHost(t, client, httpStreamTestURL), t.Context())
-	_, err := callback.roundTripStream(httpStreamTestRequest(t, t.Context(), "GET", httpStreamTestURL, nil))
+	callback := newHTTPStreamCallback(t.Context(), t, httpStreamTestHost(t, client, httpStreamTestURL))
+	err := httpStreamTestFailure(t, callback, httpStreamTestRequest(t.Context(), t, "GET", httpStreamTestURL, nil))
 	if status.Code(err) != codes.ResourceExhausted || !body.closed.Load() {
 		t.Fatalf("oversized response headers = %v, closed = %v", err, body.closed.Load())
 	}
-	request := httpStreamTestRequest(t, t.Context(), "GET", httpStreamTestURL, nil)
+	request := httpStreamTestRequest(t.Context(), t, "GET", httpStreamTestURL, nil)
 	request.Header.Set("X-Large", strings.Repeat("x", maxHeadBytes))
-	if _, err := callback.roundTripStream(request); err == nil {
+	if err := httpStreamTestFailure(t, callback, request); err == nil {
 		t.Fatal("oversized request headers accepted")
 	}
 	if err := httpExchangeHandler(struct{}{}, nil); status.Code(err) != codes.Internal {
 		t.Fatalf("invalid service implementation = %v", err)
 	}
+}
+
+func TestHTTPStreamRejectsInvalidRequestFrames(t *testing.T) {
+	t.Parallel()
+	for _, test := range []struct {
+		name   string
+		body   bool
+		length int64
+		frames [][]byte
+		code   codes.Code
+	}{
+		{name: "oversized chunk", body: true, length: -1, frames: [][]byte{append([]byte{httpStreamData}, make([]byte, httpStreamChunkBytes+1)...)}, code: codes.ResourceExhausted},
+		{name: "empty chunk", body: true, length: -1, frames: [][]byte{{httpStreamData}}, code: codes.InvalidArgument},
+		{name: "missing EOF", body: true, length: -1, frames: [][]byte{{httpStreamData, 'x'}}, code: codes.Unknown},
+		{name: "short input", body: true, length: 2, frames: [][]byte{{httpStreamData, 'x'}, {httpStreamEOF}}, code: codes.InvalidArgument},
+		{name: "excess input", body: true, length: 1, frames: [][]byte{{httpStreamData, 'x', 'y'}}, code: codes.InvalidArgument},
+		{name: "absent body", frames: [][]byte{{httpStreamData, 'x'}}, code: codes.InvalidArgument},
+		{name: "after EOF", frames: [][]byte{{httpStreamEOF}, {httpStreamData, 'x'}}, code: codes.InvalidArgument},
+		{name: "invalid length", length: -2, code: codes.InvalidArgument},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			client := &http.Client{Transport: roundTripFunc(drainHTTPStreamRequest)}
+			callback := newHTTPStreamCallback(t.Context(), t, httpStreamTestHost(t, client, httpStreamTestURL))
+			initial, err := httpStreamMetadata(httpStreamRequest, httpStreamRequestWire{
+				Method: "POST", URL: httpStreamTestURL, HasBody: test.body, ContentLength: test.length,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := invalidHTTPStreamRequest(t, callback, initial, test.frames); status.Code(err) != test.code {
+				t.Fatalf("invalid request = %v, want %s", err, test.code)
+			}
+		})
+	}
+}
+
+func drainHTTPStreamRequest(request *http.Request) (*http.Response, error) {
+	if request.Body != nil {
+		if _, err := io.Copy(io.Discard, request.Body); err != nil {
+			return nil, err
+		}
+	}
+	return &http.Response{StatusCode: 200, Body: http.NoBody, ContentLength: 0}, nil
+}
+
+func invalidHTTPStreamRequest(t *testing.T, callback *callbackTransport, initial *wrapperspb.BytesValue, frames [][]byte) error {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	descriptor := httpStreamDescriptor()
+	stream, err := callback.conn.NewStream(ctx, &descriptor, "/"+httpService+"/Exchange")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := stream.SendMsg(initial); err != nil {
+		t.Fatal(err)
+	}
+	for _, frame := range frames {
+		if err := stream.SendMsg(wrapperspb.Bytes(frame)); err != nil {
+			break // RecvMsg contains the authoritative gRPC failure.
+		}
+	}
+	if err := stream.CloseSend(); err != nil {
+		t.Error(err)
+	}
+	var reply wrapperspb.BytesValue
+	err = stream.RecvMsg(&reply)
+	if err == nil {
+		t.Fatalf("invalid request returned response metadata: %q", reply.Value)
+	}
+	return err
 }
 
 func TestHTTPStreamHostPreservesRedirectPolicyAndCannotReplayInput(t *testing.T) {
@@ -619,8 +728,8 @@ func TestHTTPStreamHostPreservesRedirectPolicyAndCannotReplayInput(t *testing.T)
 			return &http.Response{StatusCode: http.StatusTemporaryRedirect, Header: http.Header{"Location": {httpStreamTestURL + "/next"}},
 				Body: io.NopCloser(bytes.NewReader(nil)), ContentLength: 0}, nil
 		})}
-	callback := newHTTPStreamCallback(t, httpStreamTestHost(t, client, httpStreamTestURL), t.Context())
-	response, err := callback.roundTripStream(httpStreamTestRequest(t, t.Context(), "POST", httpStreamTestURL, strings.NewReader("abc")))
+	callback := newHTTPStreamCallback(t.Context(), t, httpStreamTestHost(t, client, httpStreamTestURL))
+	response, err := callback.roundTripStream(httpStreamTestRequest(t.Context(), t, "POST", httpStreamTestURL, strings.NewReader("abc")))
 	if err != nil {
 		t.Fatal(err)
 	}
