@@ -34,6 +34,7 @@ type CommandSpec struct {
 	Inputs      []InputSpec   `json:"inputs,omitzero"`
 	Files       *FileSpec     `json:"files,omitzero"`
 	Service     string        `json:"service,omitzero"`
+	Streams     *StreamSpec   `json:"streams,omitzero"`
 	Short       string        `json:"short"`
 	Long        string        `json:"long,omitempty"`
 	Example     string        `json:"example,omitempty"`

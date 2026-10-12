@@ -38,6 +38,7 @@ type helperPlugin struct{ http *http.Client }
 func helperManifest() pluginsdk.Manifest {
 	return pluginsdk.Manifest{Name: "test", Version: "3.0.0", Service: "ledger", ProtocolVersion: pluginsdk.ProtocolVersion,
 		Root: pluginsdk.CommandSpec{Use: "test", Runnable: true, Args: pluginsdk.ArgsSpec{Max: 1},
+			Streams: &pluginsdk.StreamSpec{Input: true, Output: true},
 			Flags: []pluginsdk.FlagSpec{
 				{Name: "action", Type: "string", Default: "echo"}, {Name: "path", Type: "string", Default: "/v3/books"},
 				{Name: "method", Type: "string", Default: "GET"}, {Name: "url", Type: "string"},

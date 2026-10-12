@@ -34,9 +34,13 @@ type httpResponseWire struct {
 type callbackTransport struct {
 	conn      *grpc.ClientConn
 	execution context.Context
+	streaming bool
 }
 
 func (c *callbackTransport) RoundTrip(request *http.Request) (*http.Response, error) {
+	if c.streaming {
+		return c.roundTripStream(request)
+	}
 	ctx, cancel := context.WithCancel(request.Context())
 	//nolint:contextcheck // Merge the request context with its parent Execute RPC.
 	stop := context.AfterFunc(c.execution, cancel)

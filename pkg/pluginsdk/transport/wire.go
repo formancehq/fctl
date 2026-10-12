@@ -149,12 +149,14 @@ var pluginDescriptor = grpc.ServiceDesc{
 		{MethodName: "GetManifest", Handler: manifestHandler},
 		{MethodName: "Execute", Handler: executeHandler},
 	},
+	Streams: []grpc.StreamDesc{executeStreamDescriptor},
 }
 
 var httpDescriptor = grpc.ServiceDesc{
 	ServiceName: httpService,
 	HandlerType: (*httpRPC)(nil),
 	Methods:     []grpc.MethodDesc{{MethodName: "Do", Handler: httpHandler}},
+	Streams:     []grpc.StreamDesc{httpStreamDescriptor()},
 }
 
 //nolint:revive // gRPC's MethodHandler requires server before context.

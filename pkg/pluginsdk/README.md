@@ -79,3 +79,18 @@ raw text encoded as a JSON string. Inputs are bounded to 4 MiB. `WriteFormat`
 selects JSON, NDJSON or YAML. `FormatFlag` can override it; `yml` means YAML.
 File writes are atomic and private, and execution errors do not create exports.
 Direct SDK callers supply already-read Body and consume Data as before.
+
+### Optional streams and progress
+
+Implement `StreamingPlugin.ExecuteStream` for a command with
+`CommandSpec.Streams`. `ExecutionStreams` provides host-owned raw input/output,
+optional input size and a reporter for `ProgressEvent{Phase, Completed, Total,
+Unit}`. The final JSON result remains separate. Propagate all read, write and
+report errors and never retain invocation resources.
+
+The native runtime transfers bounded chunks with backpressure, pulls input only
+when the plugin reads, and preserves host-owned streaming HTTP. Ordinary
+`Execute` calls and protocol version 1 remain available. A peer without the
+streaming extension returns an explicit unsupported-method error.
+See [streaming contract](../../docs/plugin-streaming.md) for lifecycle,
+progress rendering, file atomicity and migration details.
