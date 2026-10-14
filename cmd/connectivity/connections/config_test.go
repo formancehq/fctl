@@ -1,10 +1,12 @@
 package connections
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 
 	connectivityclient "github.com/formancehq/fctl/v3/internal/connectivityclient"
 )
@@ -397,7 +399,11 @@ func TestBuildConfigDecodeErrorsDoNotEchoSecrets(t *testing.T) {
 			for _, err := range []error{installErr, configureErr} {
 				require.Error(t, err)
 				require.ErrorContains(t, err, "config.yaml")
-				require.NotContains(t, err.Error(), secretSentinel)
+				for cause := err; cause != nil; cause = errors.Unwrap(cause) {
+					require.NotContains(t, cause.Error(), secretSentinel)
+				}
+				var typeErr *yaml.TypeError
+				require.False(t, errors.As(err, &typeErr), "raw decoder errors must not remain recoverable")
 				require.ErrorContains(t, err, "expected env mapping and files list")
 			}
 		})
