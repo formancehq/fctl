@@ -76,6 +76,20 @@ Configuration is stored in `~/.formance/fctl.config` by default. You can specify
 - `--insecure-tls`: Allow insecure TLS connections
 - `--telemetry`: Enable telemetry
 
+## Development
+
+Use the pinned development tools to run tests and the CI validation gate:
+
+```bash
+nix develop --impure --command just tests
+nix develop --impure --command just pre-commit
+```
+
+`just pre-commit` regenerates both SDKs, tidies the root module after their
+dependencies are updated, and runs the linter. Commit the generated SDK files
+and module manifests together; CI's `Dirty` job requires validation to leave
+the checkout unchanged.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
