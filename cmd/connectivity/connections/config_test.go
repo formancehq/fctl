@@ -1,10 +1,12 @@
-package connectorinstances
+package connections
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 
 	connectivityclient "github.com/formancehq/fctl/v3/internal/connectivityclient"
 )
@@ -62,46 +64,13 @@ func TestSchemaFieldsRejectsAmbiguousAndMalformedSchemas(t *testing.T) {
 	}
 }
 
-func TestSchemaFieldsSupportsLegacyFlatSchemaAndSecretMarker(t *testing.T) {
-	version := &connectivityclient.ConnectorVersion{ConfigSchema: map[string]any{
-		"type":     "object",
-		"required": []any{"LEGACY_TOKEN"},
-		"properties": map[string]any{
-			"LEGACY_TOKEN": map[string]any{
-				"type":        "string",
-				"x-secret":    true,
-				"description": "Legacy token",
-			},
-		},
-	}}
-
-	fields, err := SchemaFields(version)
-
-	require.NoError(t, err)
-	require.Equal(t, SchemaField{
-		Key:         "LEGACY_TOKEN",
-		Kind:        ConfigEnv,
-		Required:    true,
-		Password:    true,
-		Description: "Legacy token",
-	}, fields["LEGACY_TOKEN"])
-}
-
-func TestSchemaFieldsDoesNotTreatMixedSectionAndLegacyShapesAsLegacy(t *testing.T) {
+func TestSchemaFieldsRejectsFlatSchemas(t *testing.T) {
 	for _, schema := range []map[string]any{
-		{
-			"env":        map[string]any{"properties": map[string]any{"SECTION": map[string]any{}}},
-			"properties": map[string]any{"LEGACY": map[string]any{}},
-		},
-		{
-			"files":      map[string]any{"properties": map[string]any{"/etc/section": map[string]any{}}},
-			"properties": map[string]any{"LEGACY": map[string]any{}},
-		},
+		{"properties": map[string]any{"TOKEN": map[string]any{}}},
+		{"env": map[string]any{"properties": map[string]any{"TOKEN": map[string]any{}}}, "properties": map[string]any{"OLD": map[string]any{}}},
 	} {
-		fields, err := SchemaFields(&connectivityclient.ConnectorVersion{ConfigSchema: schema})
-
-		require.NoError(t, err)
-		require.NotContains(t, fields, "LEGACY")
+		_, err := SchemaFields(&connectivityclient.ConnectorVersion{ConfigSchema: schema})
+		require.ErrorContains(t, err, "flat schemas are unsupported")
 	}
 }
 
@@ -191,15 +160,9 @@ func TestBuildInstallConfigAllowsConnectorVersionWithoutSchema(t *testing.T) {
 	require.Empty(t, got.Files)
 }
 
-func TestBuildInstallConfigParsesFlatYAMLAsEnvironmentValues(t *testing.T) {
-	got, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{ConfigFile: "config.yaml"}, mapReadFile(map[string]string{
-		"config.yaml": "API_URL: https://config.example\nTOKEN: config-token\nTIMEOUT: 45s\n",
-	}))
-
-	require.NoError(t, err)
-	require.Equal(t, "https://config.example", *got.Env["API_URL"].Value)
-	require.Equal(t, "config-token", *got.Env["TOKEN"].Value)
-	require.Equal(t, "45s", *got.Env["TIMEOUT"].Value)
+func TestBuildInstallConfigRejectsFlatYAML(t *testing.T) {
+	_, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{ConfigFile: "config.yaml"}, mapReadFile(map[string]string{"config.yaml": "API_URL: https://config.example\n"}))
+	require.ErrorContains(t, err, "flat configuration is unsupported")
 }
 
 func TestBuildInstallConfigParsesStructuredYAML(t *testing.T) {
@@ -278,7 +241,7 @@ func TestBuildInstallConfigAppliesDocumentedSourcePrecedence(t *testing.T) {
 		EnvFiles:   []string{"first.env", "second.env"},
 		SetValues:  []string{"API_URL=https://set-one.example", "API_URL=https://set-two.example"},
 	}, mapReadFile(map[string]string{
-		"config.yaml": "API_URL: https://config.example\n",
+		"config.yaml": "env:\n  API_URL:\n    value: https://config.example\n",
 		"first.env":   "API_URL=https://env-one.example\n",
 		"second.env":  "API_URL=https://env-two.example\n",
 	}))
@@ -405,6 +368,55 @@ func TestBuildInstallConfigReturnsInputReadAndParseErrors(t *testing.T) {
 
 		require.ErrorContains(t, err, "bad.env:1")
 	})
+}
+
+func TestBuildConfigDecodeErrorsDoNotEchoSecrets(t *testing.T) {
+	const secretSentinel = "s3cr3t"
+	tests := []struct {
+		name     string
+		contents string
+	}{
+		{name: "root scalar", contents: secretSentinel},
+		{name: "environment scalar", contents: "env:\n  TOKEN: " + secretSentinel},
+		{name: "environment value sequence", contents: "env:\n  TOKEN:\n    value: [" + secretSentinel + "]"},
+		{name: "secret reference scalar", contents: "env:\n  TOKEN:\n    secretRef: " + secretSentinel},
+		{name: "configmap reference scalar", contents: "env:\n  TOKEN:\n    configMapRef: " + secretSentinel},
+		{name: "file scalar", contents: "files:\n  - " + secretSentinel},
+		{name: "file reference scalar", contents: "files:\n  - path: /etc/plugin/config.yaml\n    secretRef: " + secretSentinel},
+		{name: "file mode scalar", contents: "files:\n  - path: /etc/plugin/config.yaml\n    value: content\n    mode: " + secretSentinel},
+		{name: "duplicate key", contents: secretSentinel + ": first\n" + secretSentinel + ": second"},
+		{name: "unknown alias", contents: "env: *" + secretSentinel},
+		{name: "invalid tag", contents: "env: !!int " + secretSentinel},
+		{name: "JSON environment scalar", contents: `{"env":{"TOKEN":"` + secretSentinel + `"}}`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			inputs := InputOptions{ConfigFile: "config.yaml"}
+			read := mapReadFile(map[string]string{"config.yaml": tt.contents})
+			_, installErr := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), inputs, read)
+			_, configureErr := BuildConfigureConfig(&cobra.Command{}, versionWithOptionalSchema(), nil, inputs, read)
+			for _, err := range []error{installErr, configureErr} {
+				require.Error(t, err)
+				require.ErrorContains(t, err, "config.yaml")
+				for cause := err; cause != nil; cause = errors.Unwrap(cause) {
+					require.NotContains(t, cause.Error(), secretSentinel)
+				}
+				var typeErr *yaml.TypeError
+				require.False(t, errors.As(err, &typeErr), "raw decoder errors must not remain recoverable")
+				require.ErrorContains(t, err, "expected env mapping and files list")
+			}
+		})
+	}
+}
+
+func TestBuildConfigDecodeErrorsRetainLineNumbers(t *testing.T) {
+	_, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{ConfigFile: "config.yaml"}, mapReadFile(map[string]string{
+		"config.yaml": "env:\n  TOKEN: s3cr3t\nfiles:\n  - s3cr3t\n",
+	}))
+
+	require.ErrorContains(t, err, "lines 2, 4")
+	require.NotContains(t, err.Error(), "s3cr3t")
 }
 
 func TestBuildConfigureConfigPreservesUntouchedFiles(t *testing.T) {

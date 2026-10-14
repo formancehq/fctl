@@ -3,7 +3,7 @@ set dotenv-load
 default:
   @just --list
 
-pre-commit: tidy generate lint
+pre-commit: generate lint
 pc: pre-commit completions
 
 lint:
@@ -12,7 +12,7 @@ lint:
 tidy:
     go mod tidy
 
-generate: generate-deploy-server-client generate-membership-client
+generate: generate-deploy-server-client generate-membership-client tidy
     @go generate ./...
 g: generate
 

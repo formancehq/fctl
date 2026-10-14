@@ -1,4 +1,4 @@
-package connectorinstances
+package connections
 
 import (
 	"context"
@@ -51,10 +51,7 @@ func appliedChannelFloor(instance *connectivityclient.ConnectorInstance) string 
 	if instance == nil || instance.Status == nil || instance.Status.ResolvedVersion == nil {
 		return ""
 	}
-	// Older API responses did not stamp resolvedConnectorRef. The server treats
-	// that empty identity as the instance's previous connector, while a nonempty
-	// different identity must never constrain this connector's channel.
-	if instance.Status.ResolvedConnectorRef != nil && *instance.Status.ResolvedConnectorRef != "" && *instance.Status.ResolvedConnectorRef != instance.Spec.Connector {
+	if instance.Status.ResolvedConnectorRef == nil || *instance.Status.ResolvedConnectorRef != instance.Spec.ConnectorName() {
 		return ""
 	}
 	return *instance.Status.ResolvedVersion
@@ -95,12 +92,24 @@ func selectChannelVersion(versions []string, channel, running string) (string, e
 		return "", fmt.Errorf("unsupported channel %q", channel)
 	}
 	if running != "" && !isStrictSemver(running) {
-		return "", fmt.Errorf("parsing running version %q: invalid semantic version", running)
+		running = ""
+	}
+	seen := make(map[string]struct{})
+	// The API rejects duplicate exact SemVer strings before channel filtering.
+	// Distinct spellings with equal precedence use the server's lexical tie-break.
+	for _, version := range versions {
+		if !isStrictSemver(version) {
+			continue
+		}
+		if _, exists := seen[version]; exists {
+			return "", fmt.Errorf("multiple ConnectorVersions found for version %q", version)
+		}
+		seen[version] = struct{}{}
 	}
 	chosen := ""
 	for _, version := range versions {
 		if !isStrictSemver(version) {
-			return "", fmt.Errorf("parsing candidate version %q: invalid semantic version", version)
+			continue
 		}
 		if !channelAdmits(version, allowed) || (running != "" && (xmodsemver.Major(normalizeSemver(version)) != xmodsemver.Major(normalizeSemver(running)) || compareSemver(version, running) < 0)) {
 			continue

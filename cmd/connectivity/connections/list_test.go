@@ -1,4 +1,4 @@
-package connectorinstances
+package connections
 
 import (
 	"context"
@@ -110,9 +110,9 @@ func TestListConnectorInstancesWiresFilterAndConnectorCompletions(t *testing.T) 
 func TestListConnectorInstancesJSONPreservesCompleteModelsAndContinuation(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
 	instance.Metadata.Labels = map[string]string{"region": "eu"}
-	instance.Spec.Config = &connectivityclient.ConnectorInstanceConfig{Env: map[string]connectivityclient.EnvValue{
+	setInstanceConfig(&instance, &connectivityclient.ConnectorInstanceConfig{Env: map[string]connectivityclient.EnvValue{
 		"API_KEY": {Value: stringPtr("json-keeps-full-model")},
-	}}
+	}})
 	client := listInstanceClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
 		return &connectivityclient.ConnectorInstanceList{Items: []connectivityclient.ConnectorInstance{instance}, PageSize: 4, HasMore: true, Next: "next-page"}, nil
 	}}
@@ -136,8 +136,8 @@ func TestListConnectorInstancesJSONPreservesCompleteModelsAndContinuation(t *tes
 func TestConnectorInstanceRootRegistersReadCommandsAndAliases(t *testing.T) {
 	command := NewCommand(factoryReturning(listInstanceClientMock{}), mockReadFile(nil), mockPathCompleter(nil))
 
-	require.Equal(t, "connectorinstances", command.Use)
-	require.Equal(t, []string{"connectorinstance", "instances", "instance", "ci"}, command.Aliases)
+	require.Equal(t, "connections", command.Use)
+	require.Equal(t, []string{"connection"}, command.Aliases)
 	wantAliases := map[string][]string{
 		"list": {"ls", "l"},
 		"show": {"get", "g", "sh", "s"},

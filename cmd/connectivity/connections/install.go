@@ -1,8 +1,9 @@
-package connectorinstances
+package connections
 
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -52,13 +53,14 @@ func NewInstallCommand(factory connectivityinternal.ClientFactory, read ReadFile
 	command := fctl.NewCommand(
 		"install <connector>",
 		fctl.WithAliases("create", "in"),
-		fctl.WithShortDescription("Install a Connectivity connector instance"),
+		fctl.WithShortDescription("Install a Connectivity connection"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(connectors.CompleteConnectorNames(factory)),
-		fctl.WithStringFlag(nameFlag, "", "Connector instance name (defaults to the connector name)"),
+		fctl.WithStringFlag(nameFlag, "", "Connection name (defaults to the connector name)"),
 		fctl.WithStringFlag(ledgerFlag, "", "Ledger name"),
 		fctl.WithStringFlag(versionFlag, "", "Connector version"),
-		fctl.WithStringFlag(channelFlag, "", "Maturity channel to track (stable, rc, beta, alpha) when no version is pinned"),
+		fctl.WithStringFlag(channelFlag, "", "Maturity channel to track (stable, rc, beta, alpha; defaults to stable when no version is pinned)"),
+		fctl.WithStringFlag(initialCursorFlag, "", "Initial ingestion cursor as base64 (opaque; does not reset a running cursor)"),
 		fctl.WithStringFlag(pollIntervalFlag, "", "Polling interval"),
 		fctl.WithStringFlag(configFlag, "", "YAML or JSON configuration file"),
 		fctl.WithStringArrayFlag(envFileFlag, nil, "Dotenv configuration file (repeatable)"),
@@ -89,6 +91,9 @@ func installConnectorArgument(_ *cobra.Command, args []string) string {
 }
 
 func resolveInstallConnectorVersion(ctx context.Context, client connectivityclient.Client, cmd *cobra.Command, args []string) (*connectivityclient.ConnectorVersion, error) {
+	if err := validateSelectors(cmd); err != nil {
+		return nil, err
+	}
 	if len(args) == 0 {
 		return nil, nil
 	}
@@ -97,7 +102,7 @@ func resolveInstallConnectorVersion(ctx context.Context, client connectivityclie
 
 // installVersionSelector picks the {version} slot value governing the config
 // schema: the explicit pin, else the tracked channel alias (resolved with
-// exactly the rules installation uses), else `stable` for the API default.
+// exactly the rules installation uses), else the CLI's explicit stable channel.
 func installVersionSelector(cmd *cobra.Command) string {
 	if pinned := fctl.GetString(cmd, versionFlag); pinned != "" {
 		return pinned
@@ -113,6 +118,16 @@ func (c *InstallController) GetStore() *InstallStore {
 }
 
 func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+	if err := validateSelectors(cmd); err != nil {
+		return nil, err
+	}
+	cursor, err := initialCursor(cmd)
+	if err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(fctl.GetString(cmd, ledgerFlag)) == "" {
+		return nil, fmt.Errorf("--ledger cannot be empty")
+	}
 	if c.factory == nil {
 		return nil, fmt.Errorf("connectivity client factory is required")
 	}
@@ -152,9 +167,12 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		name = connectorName
 	}
 	spec := connectivityclient.ConnectorInstanceSpec{
-		Connector: connectorName,
-		Ledger:    fctl.GetString(cmd, ledgerFlag),
-		Config:    config,
+		ConnectorRef:  &connectivityclient.ObjectRef{Name: connectorName},
+		Ledger:        fctl.GetString(cmd, ledgerFlag),
+		InitialCursor: cursor,
+	}
+	if config != nil {
+		spec.Env, spec.Files = config.Env, config.Files
 	}
 	if cmd.Flags().Changed(versionFlag) {
 		value, err := cmd.Flags().GetString(versionFlag)
@@ -163,12 +181,8 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		}
 		spec.Version = fctl.Ptr(value)
 	}
-	if cmd.Flags().Changed(channelFlag) {
-		value, err := cmd.Flags().GetString(channelFlag)
-		if err != nil {
-			return nil, err
-		}
-		spec.Channel = fctl.Ptr(value)
+	if spec.Version == nil {
+		spec.Channel = fctl.Ptr(installVersionSelector(cmd))
 	}
 	if cmd.Flags().Changed(pollIntervalFlag) {
 		value, err := cmd.Flags().GetString(pollIntervalFlag)
@@ -178,7 +192,7 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		spec.PollInterval = fctl.Ptr(value)
 	}
 
-	if !c.approve(cmd, "You are about to install Connectivity connector instance %q", name) {
+	if !c.approve(cmd, "You are about to install Connectivity connection %q", name) {
 		return nil, fctl.ErrMissingApproval
 	}
 	instance, err := client.CreateConnectorInstance(cmd.Context(), connectivityclient.ConnectorInstanceCreate{Name: name, Spec: spec})
@@ -186,7 +200,7 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		return nil, err
 	}
 	if instance == nil {
-		return nil, fmt.Errorf("install connectivity connector instance %q: empty response", name)
+		return nil, fmt.Errorf("install connectivity connection %q: empty response", name)
 	}
 	c.store.ConnectorInstance = *instance
 	return c, nil
@@ -200,9 +214,9 @@ func (c *InstallController) Render(cmd *cobra.Command, _ []string) error {
 	instance := c.store.ConnectorInstance
 	_, err := fmt.Fprintf(
 		cmd.OutOrStdout(),
-		"Connector instance %q installed with connector %q for ledger %q.\n",
+		"Connection %q installed with connector %q for ledger %q.\n",
 		stringValue(instance.Metadata.Name),
-		instance.Spec.Connector,
+		instance.Spec.ConnectorName(),
 		instance.Spec.Ledger,
 	)
 	return err

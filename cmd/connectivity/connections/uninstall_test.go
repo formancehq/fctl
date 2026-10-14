@@ -1,4 +1,4 @@
-package connectorinstances
+package connections
 
 import (
 	"context"
@@ -40,7 +40,7 @@ func TestUninstallDeletesConfirmedConnectorInstanceAndRendersSuccess(t *testing.
 
 	require.NoError(t, err)
 	require.Equal(t, "stripe-eu", deletedName)
-	require.Equal(t, `Connector instance "stripe-eu" uninstalled.`, strings.TrimSpace(output))
+	require.Equal(t, `Connection "stripe-eu" uninstalled.`, strings.TrimSpace(output))
 }
 
 func TestUninstallConfirmationRejectionPreventsDelete(t *testing.T) {
@@ -78,7 +78,7 @@ func TestUninstallRegistersAliasesRootAndConnectorInstanceCompletion(t *testing.
 	}
 	command := NewUninstallCommand(factoryReturning(client))
 
-	require.Equal(t, "uninstall <connectorinstance>", command.Use)
+	require.Equal(t, "uninstall <connection>", command.Use)
 	require.Equal(t, []string{"delete", "remove", "rm", "u"}, command.Aliases)
 	require.Error(t, command.Args(command, nil))
 	require.NoError(t, command.Args(command, []string{"stripe-eu"}))

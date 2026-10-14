@@ -1,4 +1,4 @@
-package connectorinstances
+package connections
 
 import (
 	"fmt"
@@ -32,9 +32,9 @@ func NewUninstallController(factory connectivityinternal.ClientFactory) *Uninsta
 func NewUninstallCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
 	controller := NewUninstallController(factory)
 	return fctl.NewCommand(
-		"uninstall <connectorinstance>",
+		"uninstall <connection>",
 		fctl.WithAliases("delete", "remove", "rm", "u"),
-		fctl.WithShortDescription("Uninstall a Connectivity connector instance"),
+		fctl.WithShortDescription("Uninstall a Connectivity connection"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(CompleteConnectorInstanceNames(factory)),
 		fctl.WithConfirmFlag(),
@@ -55,7 +55,7 @@ func (c *UninstallController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		return nil, err
 	}
 	name := args[0]
-	if !c.approve(cmd, "You are about to uninstall Connectivity connector instance %q", name) {
+	if !c.approve(cmd, "You are about to uninstall Connectivity connection %q", name) {
 		return nil, fctl.ErrMissingApproval
 	}
 	if err := client.DeleteConnectorInstance(cmd.Context(), name); err != nil {
@@ -66,6 +66,6 @@ func (c *UninstallController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 }
 
 func (c *UninstallController) Render(cmd *cobra.Command, _ []string) error {
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector instance %q uninstalled.\n", c.store.Name)
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connection %q uninstalled.\n", c.store.Name)
 	return err
 }

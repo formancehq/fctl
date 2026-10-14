@@ -13,16 +13,21 @@ func TestCommandTreeMatchesConnectivityUX(t *testing.T) {
 	for _, path := range [][]string{
 		{"connectors", "list"},
 		{"connectors", "show"},
-		{"connectorinstances", "list"},
-		{"connectorinstances", "show"},
-		{"connectorinstances", "install"},
-		{"connectorinstances", "configure"},
-		{"connectorinstances", "uninstall"},
+		{"connections", "list"},
+		{"connections", "show"},
+		{"connections", "install"},
+		{"connections", "configure"},
+		{"connections", "uninstall"},
+		{"connections", "suspend"},
+		{"connections", "unsuspend"},
 	} {
 		found, _, err := cmd.Find(path)
 		require.NoError(t, err)
 		require.Equal(t, path[len(path)-1], found.Name())
 	}
+
+	old, _, _ := cmd.Find([]string{"connectorinstances"})
+	require.NotEqual(t, "connectorinstances", old.Name())
 
 	require.NotNil(t, cmd.PersistentFlags().Lookup("stack"))
 	require.NotNil(t, cmd.PersistentFlags().Lookup("organization"))

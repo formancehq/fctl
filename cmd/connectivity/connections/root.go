@@ -1,4 +1,4 @@
-package connectorinstances
+package connections
 
 import (
 	"github.com/spf13/cobra"
@@ -9,9 +9,9 @@ import (
 
 func NewCommand(factory connectivityinternal.ClientFactory, read ReadFileFunc, paths PathCompleter) *cobra.Command {
 	return fctl.NewCommand(
-		"connectorinstances",
-		fctl.WithAliases("connectorinstance", "instances", "instance", "ci"),
-		fctl.WithShortDescription("Manage Connectivity connector instances"),
+		"connections",
+		fctl.WithAliases("connection"),
+		fctl.WithShortDescription("Manage Connectivity connections"),
 		fctl.WithChildCommands(
 			NewListCommand(factory),
 			NewShowCommand(factory),

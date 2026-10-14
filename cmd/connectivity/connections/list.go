@@ -1,4 +1,4 @@
-package connectorinstances
+package connections
 
 import (
 	"fmt"
@@ -39,10 +39,10 @@ func NewListCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
 	command := fctl.NewCommand(
 		"list",
 		fctl.WithAliases("ls", "l"),
-		fctl.WithShortDescription("List Connectivity connector instances"),
+		fctl.WithShortDescription("List Connectivity connections"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
-		fctl.WithStringFlag(connectorFlag, "", "Filter connector instances by connector"),
+		fctl.WithStringFlag(connectorFlag, "", "Filter connections by connector"),
 		connectivityinternal.WithListQueryFlags(),
 		fctl.WithPageSizeFlag(),
 		fctl.WithCursorFlag(),
@@ -103,7 +103,7 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 		return nil, err
 	}
 	if response == nil {
-		return nil, fmt.Errorf("list connectivity connector instances: empty response")
+		return nil, fmt.Errorf("list connectivity connections: empty response")
 	}
 
 	c.store.ConnectorInstances = response.Items
@@ -118,7 +118,7 @@ func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
 	rows := fctl.Map(c.store.ConnectorInstances, func(instance connectivityclient.ConnectorInstance) []string {
 		return []string{
 			stringValue(instance.Metadata.Name),
-			instance.Spec.Connector,
+			instance.Spec.ConnectorName(),
 			stringValue(instance.Spec.Version),
 			stringValue(instance.Spec.Channel),
 			instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.ResolvedVersion }),
