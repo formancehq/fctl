@@ -69,6 +69,9 @@ func schemaContractFor(version *connectivityclient.ConnectorVersion) (schemaCont
 		return schemaContract{fields: map[string]SchemaField{}, open: map[ConfigKind]bool{}}, nil
 	}
 
+	if _, flat := version.ConfigSchema["properties"]; flat {
+		return schemaContract{}, fmt.Errorf("connector config schema must use env/files sections; flat schemas are unsupported")
+	}
 	contract := schemaContract{fields: make(map[string]SchemaField), open: make(map[ConfigKind]bool)}
 	sections := []struct {
 		name string
@@ -77,11 +80,6 @@ func schemaContractFor(version *connectivityclient.ConnectorVersion) (schemaCont
 	}{
 		{name: "env", kind: ConfigEnv, raw: version.ConfigSchema["env"]},
 		{name: "files", kind: ConfigFile, raw: version.ConfigSchema["files"]},
-	}
-	if sections[0].raw == nil && sections[1].raw == nil {
-		if _, hasLegacyProperties := version.ConfigSchema["properties"]; hasLegacyProperties {
-			sections[0].raw = version.ConfigSchema
-		}
 	}
 
 	for _, section := range sections {
@@ -270,9 +268,6 @@ func collectFieldMetadata(raw any, root map[string]any, depth int, refs map[stri
 	}
 	result := schemaFieldInfo{}
 	if format, _ := node["format"].(string); format == "password" {
-		result.password = true
-	}
-	if secret, _ := node["x-secret"].(bool); secret {
 		result.password = true
 	}
 	result.description, _ = node["description"].(string)
@@ -655,24 +650,8 @@ func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, con
 
 	_, hasEnv := root["env"]
 	_, hasFiles := root["files"]
-	if !hasEnv && !hasFiles {
-		for key, raw := range root {
-			field, exists := configField(contract, key, ConfigEnv)
-			if !exists {
-				unknown[key] = struct{}{}
-				continue
-			}
-			if raw == nil {
-				delete(config.Env, key)
-				continue
-			}
-			value, err := scalarString(raw)
-			if err != nil {
-				return fmt.Errorf("configuration key %q: %w", key, err)
-			}
-			applyValue(config, field, parsedValue{value: stringPointer(value)})
-		}
-		return nil
+	if !hasEnv && !hasFiles && len(root) > 0 {
+		return fmt.Errorf("configuration file must use env/files sections; flat configuration is unsupported")
 	}
 
 	for key := range root {
@@ -967,19 +946,6 @@ func requiredSet(raw any) (map[string]bool, error) {
 func stringMap(raw any) (map[string]any, bool) {
 	value, ok := raw.(map[string]any)
 	return value, ok
-}
-
-func scalarString(raw any) (string, error) {
-	switch value := raw.(type) {
-	case string:
-		return value, nil
-	case nil:
-		return "", nil
-	case bool, int, int64, uint64, float64:
-		return fmt.Sprint(value), nil
-	default:
-		return "", fmt.Errorf("flat configuration values must be scalars")
-	}
 }
 
 func stringPointer(value string) *string {

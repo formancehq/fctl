@@ -86,14 +86,17 @@ func resolveConfigureConnectorVersion(ctx context.Context, client connectivitycl
 	if err != nil || instance == nil {
 		return nil, err
 	}
-	pinned, channel := configureVersionSelector(cmd, instance)
+	pinned, channel, err := configureVersionSelector(cmd, instance)
+	if err != nil {
+		return nil, err
+	}
 	if channel != "" {
 		return resolveChannelVersion(ctx, client, instance.Spec.ConnectorName(), channel, appliedChannelFloor(instance))
 	}
 	return resolveConnectorVersion(ctx, client, instance.Spec.ConnectorName(), pinned)
 }
 
-func configureVersionSelector(cmd *cobra.Command, instance *connectivityclient.ConnectorInstance) (string, string) {
+func configureVersionSelector(cmd *cobra.Command, instance *connectivityclient.ConnectorInstance) (string, string, error) {
 	pinned, channel := "", ""
 	if instance != nil && instance.Spec.Version != nil && *instance.Spec.Version != "" {
 		pinned = *instance.Spec.Version
@@ -102,21 +105,21 @@ func configureVersionSelector(cmd *cobra.Command, instance *connectivityclient.C
 		channel = *instance.Spec.Channel
 	}
 	if cmd.Flags().Changed(versionFlag) {
-		return fctl.GetString(cmd, versionFlag), ""
+		return fctl.GetString(cmd, versionFlag), "", nil
 	}
 	if cmd.Flags().Changed(channelFlag) {
-		return "", fctl.GetString(cmd, channelFlag)
+		return "", fctl.GetString(cmd, channelFlag), nil
+	}
+	if pinned != "" && channel != "" {
+		return "", "", fmt.Errorf("connection has conflicting version/channel selectors; specify --version or --channel")
 	}
 	if pinned != "" {
-		return pinned, ""
+		return pinned, "", nil
 	}
 	if channel != "" {
-		return "", channel
+		return "", channel, nil
 	}
-	if applied := appliedChannelFloor(instance); applied != "" {
-		return applied, ""
-	}
-	return "stable", ""
+	return "", "", fmt.Errorf("connection has no version/channel selector; specify --version or --channel")
 }
 
 func (c *ConfigureController) GetStore() *ConfigureStore {
@@ -154,7 +157,10 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 	specPatch := map[string]any{}
 	configChanged := cmd.Flags().Changed(configFlag) || cmd.Flags().Changed(envFileFlag) || cmd.Flags().Changed(setFlag)
 	if configChanged {
-		pinned, channel := configureVersionSelector(cmd, instance)
+		pinned, channel, err := configureVersionSelector(cmd, instance)
+		if err != nil {
+			return nil, err
+		}
 		var version *connectivityclient.ConnectorVersion
 		if channel != "" {
 			version, err = resolveChannelVersion(cmd.Context(), client, instance.Spec.ConnectorName(), channel, appliedChannelFloor(instance))

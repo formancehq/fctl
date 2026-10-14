@@ -421,25 +421,103 @@ func TestPatchConnectorInstanceSendsExactSuspensionBoolean(t *testing.T) {
 	}
 }
 
-// A stored legacy instance without connectorRef must not fail the whole page.
-func TestListConnectorInstancesDecodesAnInstanceWithNoConnector(t *testing.T) {
-	httpClient := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
-		return jsonResponse(http.StatusOK, `{"cursor":{"pageSize":15,"hasMore":false,"data":[
-			{"metadata":{"name":"with-connector"},"spec":{"connectorRef":{"name":"stripe"},"ledger":"main"}},
-			{"metadata":{"name":"legacy"},"spec":{"ledger":"ops"}},
-			{"metadata":{"name":"null-ref"},"spec":{"connectorRef":null,"ledger":"ops"}}
-		]}}`), nil
-	})}
+func TestConnectorInstanceResponsesRejectMissingBinding(t *testing.T) {
+	for _, spec := range []struct {
+		name string
+		body string
+	}{
+		{name: "missing reference", body: `{}`},
+		{name: "null reference", body: `{"connectorRef":null}`},
+		{name: "missing name", body: `{"connectorRef":{}}`},
+		{name: "null name", body: `{"connectorRef":{"name":null}}`},
+		{name: "empty name", body: `{"connectorRef":{"name":""}}`},
+		{name: "blank name", body: `{"connectorRef":{"name":"  "}}`},
+	} {
+		t.Run(spec.name, func(t *testing.T) {
+			assertInvalidConnectorInstanceResponse(t,
+				`{"metadata":{"name":"worker"},"spec":`+spec.body+`}`,
+				"connector instance spec.connectorRef.name is required")
+		})
+	}
+}
 
-	list, err := New("https://stack.example", httpClient).ListConnectorInstances(t.Context(), ListOptions{})
+func TestConnectorInstanceResponsesRejectResolvedVersionWithoutIdentity(t *testing.T) {
+	for _, version := range []string{"v1.0.0", "main"} {
+		for _, status := range []struct {
+			name string
+			ref  string
+		}{
+			{name: "missing identity"},
+			{name: "null identity", ref: `,"resolvedConnectorRef":null`},
+			{name: "empty identity", ref: `,"resolvedConnectorRef":""`},
+			{name: "blank identity", ref: `,"resolvedConnectorRef":"  "`},
+		} {
+			t.Run(version+"/"+status.name, func(t *testing.T) {
+				assertInvalidConnectorInstanceResponse(t,
+					`{"metadata":{"name":"worker"},"spec":{"connectorRef":{"name":"stripe"}},"status":{"resolvedVersion":"`+version+`"`+status.ref+`}}`,
+					"connector instance status.resolvedConnectorRef is required when status.resolvedVersion is set")
+			})
+		}
+	}
+}
 
-	require.NoError(t, err)
-	require.Len(t, list.Items, 3)
-	require.Equal(t, "stripe", list.Items[0].Spec.ConnectorName())
-	require.Empty(t, list.Items[1].Spec.ConnectorName())
-	require.Equal(t, "ops", list.Items[1].Spec.Ledger)
-	require.Empty(t, list.Items[2].Spec.ConnectorName())
-	require.Nil(t, list.Items[2].Spec.ConnectorRef)
+func assertInvalidConnectorInstanceResponse(t *testing.T, body, wantError string) {
+	t.Helper()
+	for _, list := range []bool{false, true} {
+		name := "get"
+		response := body
+		if list {
+			name = "list"
+			response = `{"cursor":{"pageSize":15,"hasMore":false,"data":[{"metadata":{"name":"valid"},"spec":{"connectorRef":{"name":"stripe"}}},` + body + `]}}`
+		}
+		t.Run(name, func(t *testing.T) {
+			httpClient := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+				return jsonResponse(http.StatusOK, response), nil
+			})}
+			client := New("https://stack.example", httpClient)
+			if list {
+				result, err := client.ListConnectorInstances(t.Context(), ListOptions{})
+				require.Nil(t, result)
+				require.ErrorContains(t, err, "cursor.data[1]: "+wantError)
+			} else {
+				result, err := client.GetConnectorInstance(t.Context(), "worker")
+				require.Nil(t, result)
+				require.ErrorContains(t, err, wantError)
+			}
+		})
+	}
+}
+
+func TestConnectorInstanceResponsesAcceptPendingAndResolvedStatus(t *testing.T) {
+	for _, status := range []string{
+		``, `,"status":null`, `,"status":{}`, `,"status":{"resolvedVersion":null}`,
+		`,"status":{"resolvedVersion":""}`, `,"status":{"resolvedConnectorRef":"stripe"}`,
+		`,"status":{"resolvedVersion":"v1.0.0","resolvedConnectorRef":"stripe"}`,
+		`,"status":{"resolvedVersion":"main","resolvedConnectorRef":"stripe"}`,
+	} {
+		t.Run(status, func(t *testing.T) {
+			body := `{"metadata":{"name":"worker"},"spec":{"connectorRef":{"name":"stripe"}}` + status + `}`
+			for _, list := range []bool{false, true} {
+				response := body
+				if list {
+					response = `{"cursor":{"pageSize":15,"hasMore":false,"data":[` + body + `]}}`
+				}
+				httpClient := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+					return jsonResponse(http.StatusOK, response), nil
+				})}
+				client := New("https://stack.example", httpClient)
+				if list {
+					result, err := client.ListConnectorInstances(t.Context(), ListOptions{})
+					require.NoError(t, err)
+					require.Len(t, result.Items, 1)
+				} else {
+					result, err := client.GetConnectorInstance(t.Context(), "worker")
+					require.NoError(t, err)
+					require.Equal(t, "stripe", result.Spec.ConnectorName())
+				}
+			}
+		})
+	}
 }
 
 func TestGetConnectorInstanceDecodesDesiredSuspensionAndObservedProvenance(t *testing.T) {
@@ -639,9 +717,6 @@ func TestClientRejectsStructurallyInvalidSuccessResponses(t *testing.T) {
 				return err
 			},
 		},
-		// A missing spec.connectorRef or spec.ledger is deliberately absent from
-		// this table: neither is structurally invalid on a response. See
-		// TestListConnectorInstancesDecodesAnInstanceWithNoConnector.
 		{
 			name:   "facet distribution missing facets",
 			status: http.StatusOK,

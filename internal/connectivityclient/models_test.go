@@ -33,6 +33,6 @@ func TestConnectorInstanceSpecOmitsUnsetFields(t *testing.T) {
 
 func TestDecodeConnectorInstanceRejectsInvalidInitialCursor(t *testing.T) {
 	var instance ConnectorInstance
-	err := decodeResponse(strings.NewReader(`{"metadata":{"name":"worker"},"spec":{"ledger":"main","initialCursor":"not-base64!"}}`), &instance, true)
+	err := decodeResponse(strings.NewReader(`{"metadata":{"name":"worker"},"spec":{"connectorRef":{"name":"stripe"},"ledger":"main","initialCursor":"not-base64!"}}`), &instance, true)
 	require.ErrorContains(t, err, "decode connectivity response")
 }

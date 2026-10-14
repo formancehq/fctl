@@ -11,8 +11,11 @@ The facade keeps a stable CLI-facing `Client`, models, and `APIError` surface:
 - Success responses must have an object root. Lists require a non-null
   `cursor` object and `cursor.data` array; individual resources require their
   identifying fields. Valid empty lists remain readable.
-- Stored legacy instances without `spec.connectorRef` remain readable.
-  Binding, ledger, and version/channel write validation belongs to the server.
+- Instance responses require a non-blank `spec.connectorRef.name`. A non-empty
+  `status.resolvedVersion` also requires a non-blank `status.resolvedConnectorRef`
+  identifying the applied connector. Pending instances may omit resolved status.
+  A malformed instance rejects the whole list response; no partial page is returned.
+  Ledger and version/channel write validation remains owned by the server.
 - Structured API errors retain status, code, message, and details. An empty
   error body, including HTTP 401, retains HTTP status and status text.
 - Typed create fields omit unset optional values and preserve explicit boolean
@@ -33,11 +36,12 @@ server compatibility range.
 and `files`. Both references are objects with a `name`. `initialCursor` is
 opaque `[]byte`, encoded as base64 by JSON. `ConnectorInstanceConfig` is an
 assembly helper; callers place its `Env` and `Files` directly in the spec or
-merge patch. `ConnectorName()` tolerates a missing reference, and
-`Configuration()` returns an Env/Files helper sharing those values.
+merge patch. `ConnectorName()` returns the reference name, and `Configuration()`
+returns an Env/Files helper sharing those values.
 
 `connector`, `config`, `startSequence`, and `replicas` are retired wire fields.
-No client-side rewriting or installable-artifact fallback restores them.
+Instance decoding enforces the current binding and resolved-identity requirements;
+responses without those fields are rejected. No client-side rewriting or installable-artifact fallback restores retired fields.
 
 ## Generated client adoption gap
 
@@ -73,5 +77,7 @@ nix develop --command go test ./internal/connectivityclient
 Unit tests use a fake HTTP transport. Given/When/Then integration tests use an
 isolated HTTP server to check POST/PATCH wire bodies, reference shapes, cursor
 base64, version/channel selectors, configuration values, deletion markers,
-empty file arrays, and decoded metadata/status projections. These tests do
-not qualify a deployed Connectivity server or the complete CLI integration.
+empty file arrays, and decoded metadata/status projections. GET and list tests
+reject missing, null, empty, or blank bindings and reject resolved versions without
+an identity; pending responses remain valid. These tests do not qualify a deployed
+Connectivity server or the complete CLI integration.

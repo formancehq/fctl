@@ -325,17 +325,19 @@ func validateConnectorVersionSummary(summary *ConnectorVersionSummary) error {
 	return validateConnectorVersion(summary.Version, summary.Image)
 }
 
-// validateConnectorInstance guards decoding, not creation: both call sites are
-// response paths. Only the name is required, because it is what identifies the
-// row and Kubernetes always sets it.
-//
-// Stored legacy instances may lack spec.connectorRef. The API allows reading
-// these instances even though writes require a binding. Requiring it here
-// would reject the entire page. Write-side ledger and version/channel
-// invariants likewise belong to the server, not response decoding.
+// Response validation requires the connector identity used by connection
+// commands. Pending instances may have no resolved status yet.
 func validateConnectorInstance(instance *ConnectorInstance) error {
 	if instance == nil || instance.Metadata.Name == nil || strings.TrimSpace(*instance.Metadata.Name) == "" {
 		return fmt.Errorf("connector instance metadata.name is required")
+	}
+	if instance.Spec.ConnectorRef == nil || strings.TrimSpace(instance.Spec.ConnectorRef.Name) == "" {
+		return fmt.Errorf("connector instance spec.connectorRef.name is required")
+	}
+	if status := instance.Status; status != nil && status.ResolvedVersion != nil && *status.ResolvedVersion != "" {
+		if status.ResolvedConnectorRef == nil || strings.TrimSpace(*status.ResolvedConnectorRef) == "" {
+			return fmt.Errorf("connector instance status.resolvedConnectorRef is required when status.resolvedVersion is set")
+		}
 	}
 	return nil
 }

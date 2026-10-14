@@ -8,6 +8,8 @@ This CLI uses the tenant API contract with `connectorRef: {name}`, optional
 `connectivityRef: {name}`, and top-level `env`/`files`. Upgrade the stack's
 Connectivity API alongside this CLI; the previous `connector`/`config` wire
 format is incompatible. The HTTP routes remain `/connectorinstances`.
+Responses must contain a valid `connectorRef`; resolved versions must identify
+their resolved connector. Older unbound instance responses are rejected.
 
 ## Command tree
 
@@ -54,7 +56,9 @@ version's schema. Channel configuration resolves every catalogue page,
 ignores opaque or shortened version candidates, and retains the current
 SemVer major and no-downgrade floor. An applied opaque version supplies no
 SemVer floor. The server remains authoritative for final validation and
-selection during reconciliation.
+selection during reconciliation. Configuration requires a stored version/channel
+selector or an explicit `--version`/`--channel`; it does not infer a selector
+from status.
 
 A connection's Ledger destination is immutable. To ingest into another
 Ledger, create a separate connection with an explicit name and destination.
@@ -71,8 +75,9 @@ The pagination `--cursor` is a separate API-issued token.
 `install` and `configure` accept three configuration forms, in precedence
 order: `--config` (YAML or JSON), repeatable `--env-file`, then repeatable
 `--set KEY=VALUE`. Values may be inline, `@path`/`@-`,
-`secret://name/key`, or `configmap://name/key`. Structured config supports
-separate `env` and `files` sections. The CLI sends those sections directly as
+`secret://name/key`, or `configmap://name/key`. Configuration files must use
+separate `env` and `files` sections; flat configuration and flat schemas are
+unsupported. The CLI sends those sections directly as
 `spec.env` and `spec.files`; the file supplied to `--config` is a configuration
 input, not the full HTTP request.
 

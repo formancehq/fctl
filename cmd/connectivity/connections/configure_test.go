@@ -122,60 +122,30 @@ func TestConfigureWithoutVersionFlagUsesTheInstancePin(t *testing.T) {
 	require.Equal(t, "1.4.2", gotVersion)
 }
 
-func TestConfigureFallsBackToTheAppliedVersionWhenUnpinned(t *testing.T) {
+func TestConfigureRequiresStoredOrExplicitSelector(t *testing.T) {
 	current := instanceFixture("stripe-eu")
 	current.Spec.Version = nil
+	current.Spec.Channel = nil
 	current.Status.ResolvedVersion = stringPtr("1.9.9")
-	setInstanceConfig(&current, &connectivityclient.ConnectorInstanceConfig{})
-	var gotVersion string
 	client := configureClientMock{
 		getInstance: func(context.Context, string) (*connectivityclient.ConnectorInstance, error) { return &current, nil },
-		connectorVersions: connectorVersions{
-			getVersion: func(_ context.Context, _, version string) (*connectivityclient.ConnectorVersion, error) {
-				gotVersion = version
-				return versionWithFileSchema(), nil
-			},
-		},
 		patch: func(context.Context, string, connectivityclient.ConnectorInstancePatch) (*connectivityclient.ConnectorInstance, error) {
-			return &current, nil
+			t.Fatal("missing selector must not patch")
+			return nil, nil
 		},
 	}
-
-	_, err := executeCommand(
-		NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)),
-		"stripe-eu", "--set=/etc/a=kept", "--confirm",
-	)
-
-	require.NoError(t, err)
-	require.Equal(t, "1.9.9", gotVersion)
+	_, err := executeCommand(NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "stripe-eu", "--set=/etc/a=kept", "--confirm")
+	require.ErrorContains(t, err, "no version/channel selector")
 }
 
-func TestConfigureFallsBackToLegacyAppliedVersionWhenNoSelectorRemains(t *testing.T) {
-	for _, resolvedRef := range []*string{nil, stringPtr("")} {
-		current := instanceFixture("stripe-eu")
-		current.Spec.Version = nil
-		current.Spec.Channel = nil
-		current.Status.ResolvedConnectorRef = resolvedRef
-		current.Status.ResolvedVersion = stringPtr("1.9.9")
-		setInstanceConfig(&current, &connectivityclient.ConnectorInstanceConfig{})
-		var gotVersion string
-		client := configureClientMock{
-			getInstance: func(context.Context, string) (*connectivityclient.ConnectorInstance, error) { return &current, nil },
-			connectorVersions: connectorVersions{getVersion: func(_ context.Context, _, version string) (*connectivityclient.ConnectorVersion, error) {
-				gotVersion = version
-				return versionWithFileSchema(), nil
-			}},
-			patch: func(context.Context, string, connectivityclient.ConnectorInstancePatch) (*connectivityclient.ConnectorInstance, error) {
-				return &current, nil
-			},
-		}
-
-		_, err := executeCommand(NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)),
-			"stripe-eu", "--set=/etc/a=kept", "--confirm")
-
-		require.NoError(t, err)
-		require.Equal(t, "1.9.9", gotVersion)
+func TestConfigureRequiresUnambiguousStoredSelector(t *testing.T) {
+	current := instanceFixture("stripe-eu")
+	current.Spec.Channel = stringPtr("stable")
+	client := configureClientMock{
+		getInstance: func(context.Context, string) (*connectivityclient.ConnectorInstance, error) { return &current, nil },
 	}
+	_, err := executeCommand(NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "stripe-eu", "--set=/etc/a=kept", "--confirm")
+	require.ErrorContains(t, err, "conflicting version/channel selectors")
 }
 
 func TestConfigureChannelTracksTheResolvedSameMajorHeadAcrossPages(t *testing.T) {
@@ -240,8 +210,8 @@ func TestConfigureChannelUsesAppliedVersionOnlyForTheResolvedConnector(t *testin
 		wantPatched bool
 	}{
 		{name: "matching resolved connector prevents downgrade", resolvedRef: stringPtr("stripe"), wantErr: "no candidate version satisfies channel", wantPatched: false},
-		{name: "empty resolved connector retains legacy floor", resolvedRef: stringPtr(""), wantErr: "no candidate version satisfies channel", wantPatched: false},
-		{name: "absent resolved connector retains legacy floor", resolvedRef: nil, wantErr: "no candidate version satisfies channel", wantPatched: false},
+		{name: "empty resolved connector supplies no floor", resolvedRef: stringPtr(""), wantVersion: "v1.1.0", wantPatched: true},
+		{name: "absent resolved connector supplies no floor", resolvedRef: nil, wantVersion: "v1.1.0", wantPatched: true},
 		{name: "different resolved connector does not constrain channel", resolvedRef: stringPtr("other"), wantVersion: "v1.1.0", wantPatched: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {

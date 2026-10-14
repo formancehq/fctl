@@ -198,26 +198,6 @@ func summarizeSchema(schema map[string]any) [][]string {
 		}
 	}
 
-	if len(fields) == 0 {
-		properties, ok := objectValue(schema["properties"])
-		if ok {
-			required := requiredKeys(schema["required"])
-			for key, rawDefinition := range properties {
-				definition, _ := objectValue(rawDefinition)
-				format, _ := definition["format"].(string)
-				if format == "" {
-					format, _ = definition["type"].(string)
-				}
-				description, _ := definition["description"].(string)
-				requirement := "optional"
-				if required[key] {
-					requirement = "required"
-				}
-				fields = append(fields, field{key, "environment", requirement, format, description})
-			}
-		}
-	}
-
 	sort.Slice(fields, func(i, j int) bool {
 		if fields[i].source == fields[j].source {
 			return fields[i].key < fields[j].key

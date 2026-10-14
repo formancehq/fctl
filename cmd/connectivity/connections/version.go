@@ -51,10 +51,7 @@ func appliedChannelFloor(instance *connectivityclient.ConnectorInstance) string 
 	if instance == nil || instance.Status == nil || instance.Status.ResolvedVersion == nil {
 		return ""
 	}
-	// Older API responses did not stamp resolvedConnectorRef. The server treats
-	// that empty identity as the instance's previous connector, while a nonempty
-	// different identity must never constrain this connector's channel.
-	if instance.Status.ResolvedConnectorRef != nil && *instance.Status.ResolvedConnectorRef != "" && *instance.Status.ResolvedConnectorRef != instance.Spec.ConnectorName() {
+	if instance.Status.ResolvedConnectorRef == nil || *instance.Status.ResolvedConnectorRef != instance.Spec.ConnectorName() {
 		return ""
 	}
 	return *instance.Status.ResolvedVersion
