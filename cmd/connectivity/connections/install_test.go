@@ -1,4 +1,4 @@
-package connectorinstances
+package connections
 
 import (
 	"context"
@@ -67,15 +67,15 @@ func TestInstallBuildsConnectorInstanceFromVersionSchemaAndOnlySetsChangedScalar
 	require.Equal(t, "stripe", gotConnector)
 	require.Equal(t, "2.0.0", gotVersion, "the pinned version supplies the config schema")
 	require.Equal(t, "stripe-eu", gotBody.Name)
-	require.Equal(t, "stripe", gotBody.Spec.Connector)
+	require.Equal(t, "stripe", gotBody.Spec.ConnectorName())
 	require.Equal(t, "main", gotBody.Spec.Ledger)
 	require.Equal(t, "2.0.0", *gotBody.Spec.Version)
 	require.Equal(t, "3s", *gotBody.Spec.PollInterval)
-	require.Equal(t, "https://config.example", *gotBody.Spec.Config.Env["API_URL"].Value)
-	require.Equal(t, "file-token", *gotBody.Spec.Config.Env["TOKEN"].Value)
-	require.Equal(t, "45s", *gotBody.Spec.Config.Env["TIMEOUT"].Value)
-	require.Empty(t, gotBody.Spec.Config.Files)
-	require.Equal(t, `Connector instance "stripe-eu" installed with connector "stripe" for ledger "main".`, strings.TrimSpace(output))
+	require.Equal(t, "https://config.example", *gotBody.Spec.Env["API_URL"].Value)
+	require.Equal(t, "file-token", *gotBody.Spec.Env["TOKEN"].Value)
+	require.Equal(t, "45s", *gotBody.Spec.Env["TIMEOUT"].Value)
+	require.Empty(t, gotBody.Spec.Files)
+	require.Equal(t, `Connection "stripe-eu" installed with connector "stripe" for ledger "main".`, strings.TrimSpace(output))
 }
 
 func TestInstallWithoutSelectorUsesStableHeadForTheSchema(t *testing.T) {
@@ -100,10 +100,10 @@ func TestInstallWithoutSelectorUsesStableHeadForTheSchema(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	// A newer prerelease must not supply the schema for a selector-less
-	// install: the API persists the stable head in that case.
+	// The default stable schema and the explicit wire selector must agree.
 	require.Equal(t, "stable", gotVersion)
-	require.Nil(t, gotBody.Spec.Version, "an unpinned install must let the server resolve the version")
+	require.Nil(t, gotBody.Spec.Version)
+	require.Equal(t, "stable", *gotBody.Spec.Channel, "the CLI sends its default explicitly")
 }
 
 func TestInstallWithChannelFlagTracksTheChannelAndUsesItsHeadForTheSchema(t *testing.T) {
@@ -160,10 +160,11 @@ func TestInstallDefaultsNameToConnectorAndOmitsUnsetOptionalData(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "wise", gotBody.Name)
 	require.Nil(t, gotBody.Spec.Version)
-	require.Nil(t, gotBody.Spec.Channel)
-	require.Nil(t, gotBody.Spec.StartSequence)
+	require.Equal(t, "stable", *gotBody.Spec.Channel)
+	require.Nil(t, gotBody.Spec.InitialCursor)
 	require.Nil(t, gotBody.Spec.PollInterval)
-	require.Nil(t, gotBody.Spec.Config)
+	require.Empty(t, gotBody.Spec.Env)
+	require.Empty(t, gotBody.Spec.Files)
 }
 
 func TestInstallRequiresLedgerBeforeUsingClient(t *testing.T) {
@@ -278,9 +279,9 @@ func TestInstallPreservesVersionAndCreateAPIErrorsAndRejectsEmptyResponses(t *te
 func TestInstallJSONStoresCompleteReturnedConnectorInstance(t *testing.T) {
 	returned := instanceFixture("stripe-eu")
 	returned.Metadata.Labels = map[string]string{"region": "eu"}
-	returned.Spec.Config = &connectivityclient.ConnectorInstanceConfig{Env: map[string]connectivityclient.EnvValue{
+	setInstanceConfig(&returned, &connectivityclient.ConnectorInstanceConfig{Env: map[string]connectivityclient.EnvValue{
 		"TOKEN": {Value: stringPtr("preserved-in-json")},
-	}}
+	}})
 	client := mutationClientMock{
 		create: func(context.Context, connectivityclient.ConnectorInstanceCreate) (*connectivityclient.ConnectorInstance, error) {
 			return &returned, nil

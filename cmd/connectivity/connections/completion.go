@@ -1,4 +1,4 @@
-package connectorinstances
+package connections
 
 import (
 	"context"
@@ -50,7 +50,7 @@ func CompleteConnectorInstanceNames(factory connectivityinternal.ClientFactory) 
 			if name == "" || !strings.HasPrefix(name, toComplete) {
 				continue
 			}
-			description := strings.Join(nonEmptyStrings(instance.Spec.Connector, instance.Spec.Ledger), " · ")
+			description := strings.Join(nonEmptyStrings(instance.Spec.ConnectorName(), instance.Spec.Ledger), " · ")
 			if description != "" {
 				name += "\t" + description
 			}

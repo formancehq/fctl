@@ -286,38 +286,9 @@ func TestShowConnectorReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
 	}
 }
 
-func TestShowConnectorSummarizesLegacyFlatSchema(t *testing.T) {
-	connector := connectorFixture("legacy")
-	connector.Status = nil
-	client := connectorClientMock{
-		get: func(context.Context, string) (*connectivityclient.Connector, error) {
-			return &connector, nil
-		},
-		listVersions: func(context.Context, string, connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
-			return versionsFixture(), nil
-		},
-		getVersion: func(context.Context, string, string) (*connectivityclient.ConnectorVersion, error) {
-			return &connectivityclient.ConnectorVersion{
-				Version: "2.0.0",
-				Image:   "registry/connector:2",
-				ConfigSchema: map[string]any{
-					"type":     "object",
-					"required": []string{"ENDPOINT"},
-					"properties": map[string]any{
-						"ENDPOINT": map[string]any{"type": "string", "description": "Service endpoint"},
-					},
-				},
-			}, nil
-		},
-	}
-
-	output, err := executeCommand(NewShowCommand(factoryReturning(client)), "legacy")
-	if err != nil {
-		t.Fatalf("execute show command: %v", err)
-	}
-	for _, expected := range []string{"ENDPOINT", "environment", "required", "string", "Service endpoint"} {
-		if !strings.Contains(output, expected) {
-			t.Errorf("legacy schema output missing %q:\n%s", expected, output)
-		}
+func TestConnectorSummaryDoesNotAdaptFlatSchema(t *testing.T) {
+	rows := summarizeSchema(map[string]any{"properties": map[string]any{"OLD_TOKEN": map[string]any{"type": "string"}}})
+	if len(rows) != 0 {
+		t.Fatalf("flat schema must not become an environment section: %v", rows)
 	}
 }

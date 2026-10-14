@@ -1,9 +1,11 @@
-package connectorinstances
+package connections
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"net/url"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -68,6 +70,9 @@ func schemaContractFor(version *connectivityclient.ConnectorVersion) (schemaCont
 		return schemaContract{fields: map[string]SchemaField{}, open: map[ConfigKind]bool{}}, nil
 	}
 
+	if _, flat := version.ConfigSchema["properties"]; flat {
+		return schemaContract{}, fmt.Errorf("connector config schema must use env/files sections; flat schemas are unsupported")
+	}
 	contract := schemaContract{fields: make(map[string]SchemaField), open: make(map[ConfigKind]bool)}
 	sections := []struct {
 		name string
@@ -76,11 +81,6 @@ func schemaContractFor(version *connectivityclient.ConnectorVersion) (schemaCont
 	}{
 		{name: "env", kind: ConfigEnv, raw: version.ConfigSchema["env"]},
 		{name: "files", kind: ConfigFile, raw: version.ConfigSchema["files"]},
-	}
-	if sections[0].raw == nil && sections[1].raw == nil {
-		if _, hasLegacyProperties := version.ConfigSchema["properties"]; hasLegacyProperties {
-			sections[0].raw = version.ConfigSchema
-		}
 	}
 
 	for _, section := range sections {
@@ -269,9 +269,6 @@ func collectFieldMetadata(raw any, root map[string]any, depth int, refs map[stri
 	}
 	result := schemaFieldInfo{}
 	if format, _ := node["format"].(string); format == "password" {
-		result.password = true
-	}
-	if secret, _ := node["x-secret"].(bool); secret {
 		result.password = true
 	}
 	result.description, _ = node["description"].(string)
@@ -474,8 +471,8 @@ type parsedValue struct {
 }
 
 type configDocument struct {
-	Env   map[string]documentValue `yaml:"env"`
-	Files []documentFile           `yaml:"files"`
+	Env   map[string]*documentValue `yaml:"env"`
+	Files []documentFile            `yaml:"files"`
 }
 
 type documentValue struct {
@@ -646,7 +643,7 @@ func applyDoubleQuoteEscapes(value string) string {
 func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, contract schemaContract, contents string, unknown map[string]struct{}) error {
 	var root map[string]any
 	if err := yaml.Unmarshal([]byte(contents), &root); err != nil {
-		return err
+		return configDecodeError(err)
 	}
 	if root == nil {
 		return nil
@@ -654,20 +651,8 @@ func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, con
 
 	_, hasEnv := root["env"]
 	_, hasFiles := root["files"]
-	if !hasEnv && !hasFiles {
-		for key, raw := range root {
-			field, exists := configField(contract, key, ConfigEnv)
-			if !exists {
-				unknown[key] = struct{}{}
-				continue
-			}
-			value, err := scalarString(raw)
-			if err != nil {
-				return fmt.Errorf("configuration key %q: %w", key, err)
-			}
-			applyValue(config, field, parsedValue{value: stringPointer(value)})
-		}
-		return nil
+	if !hasEnv && !hasFiles && len(root) > 0 {
+		return fmt.Errorf("configuration file must use env/files sections; flat configuration is unsupported")
 	}
 
 	for key := range root {
@@ -677,12 +662,19 @@ func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, con
 	}
 	var document configDocument
 	if err := yaml.Unmarshal([]byte(contents), &document); err != nil {
-		return err
+		return configDecodeError(err)
+	}
+	if hasEnv && root["env"] == nil {
+		config.Env = nil
 	}
 	for key, value := range document.Env {
 		_, exists := configField(contract, key, ConfigEnv)
 		if !exists {
 			unknown[key] = struct{}{}
+			continue
+		}
+		if value == nil {
+			delete(config.Env, key)
 			continue
 		}
 		converted := connectivityclient.EnvValue{
@@ -693,7 +685,18 @@ func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, con
 		if err := validateSources(converted.Value, converted.SecretRef, converted.ConfigMapRef); err != nil {
 			return fmt.Errorf("configuration key %q: %w", key, err)
 		}
+		if config.Env == nil {
+			config.Env = make(map[string]connectivityclient.EnvValue)
+		}
 		config.Env[key] = converted
+	}
+	// A structured files section replaces the whole array under merge patch.
+	// Individual --set assignments still update a mount and retain other files.
+	if hasFiles {
+		config.Files = nil
+		if root["files"] != nil {
+			config.Files = []connectivityclient.FileMount{}
+		}
 	}
 	for _, file := range document.Files {
 		if strings.TrimSpace(file.Path) == "" {
@@ -717,6 +720,37 @@ func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, con
 		replaceFile(config, converted)
 	}
 	return nil
+}
+
+func configDecodeError(err error) error {
+	// Decoder messages can contain scalar values, keys, tags, and aliases from
+	// the input. Only retain numeric locations; do not wrap the original error.
+	messages := []string{strings.TrimPrefix(err.Error(), "yaml: ")}
+	var typeErr *yaml.TypeError
+	if errors.As(err, &typeErr) {
+		messages = typeErr.Errors
+	}
+	lineSet := make(map[int]struct{})
+	for _, message := range messages {
+		var line int
+		if _, scanErr := fmt.Sscanf(message, "line %d:", &line); scanErr == nil && line > 0 {
+			lineSet[line] = struct{}{}
+		}
+	}
+	lines := make([]int, 0, len(lineSet))
+	for line := range lineSet {
+		lines = append(lines, line)
+	}
+	sort.Ints(lines)
+	locations := make([]string, 0, len(lines))
+	for _, line := range lines {
+		locations = append(locations, fmt.Sprint(line))
+	}
+	location := ""
+	if len(locations) > 0 {
+		location = " at lines " + strings.Join(locations, ", ")
+	}
+	return fmt.Errorf("invalid YAML/JSON configuration%s: expected env mapping and files list with structured value, secretRef, or configMapRef entries", location)
 }
 
 func configField(contract schemaContract, key string, kind ConfigKind) (SchemaField, bool) {
@@ -772,6 +806,9 @@ func validateSources(value *string, secretRef, configMapRef *connectivityclient.
 
 func applyValue(config *connectivityclient.ConnectorInstanceConfig, field SchemaField, value parsedValue) {
 	if field.Kind == ConfigEnv {
+		if config.Env == nil {
+			config.Env = make(map[string]connectivityclient.EnvValue)
+		}
 		config.Env[field.Key] = connectivityclient.EnvValue{
 			Value:        value.value,
 			SecretRef:    value.secretRef,
@@ -821,11 +858,49 @@ func cloneConfig(source *connectivityclient.ConnectorInstanceConfig) *connectivi
 	for key, value := range source.Env {
 		clone.Env[key] = cloneEnvValue(value)
 	}
-	clone.Files = make([]connectivityclient.FileMount, len(source.Files))
+	if source.Files != nil {
+		clone.Files = make([]connectivityclient.FileMount, len(source.Files))
+	}
 	for index, file := range source.Files {
 		clone.Files[index] = cloneFileMount(file)
 	}
 	return clone
+}
+
+func configurationPatch(current, desired *connectivityclient.ConnectorInstanceConfig) map[string]any {
+	patch := make(map[string]any)
+	if desired.Env == nil && len(current.Env) > 0 {
+		patch["env"] = nil
+	} else {
+		env := make(map[string]any)
+		for key := range current.Env {
+			if _, exists := desired.Env[key]; !exists {
+				env[key] = nil
+			}
+		}
+		for key, value := range desired.Env {
+			old, exists := current.Env[key]
+			if exists && reflect.DeepEqual(old, value) {
+				continue
+			}
+			// Omitting an old source would retain it under JSON merge patch and
+			// produce an invalid entry with two sources. Delete opposite sources.
+			env[key] = map[string]any{
+				"value": value.Value, "secretRef": value.SecretRef, "configMapRef": value.ConfigMapRef,
+			}
+		}
+		if len(env) > 0 {
+			patch["env"] = env
+		}
+	}
+	if !reflect.DeepEqual(current.Files, desired.Files) {
+		if desired.Files == nil {
+			patch["files"] = nil
+		} else {
+			patch["files"] = desired.Files
+		}
+	}
+	return patch
 }
 
 func cloneEnvValue(value connectivityclient.EnvValue) connectivityclient.EnvValue {
@@ -903,19 +978,6 @@ func requiredSet(raw any) (map[string]bool, error) {
 func stringMap(raw any) (map[string]any, bool) {
 	value, ok := raw.(map[string]any)
 	return value, ok
-}
-
-func scalarString(raw any) (string, error) {
-	switch value := raw.(type) {
-	case string:
-		return value, nil
-	case nil:
-		return "", nil
-	case bool, int, int64, uint64, float64:
-		return fmt.Sprint(value), nil
-	default:
-		return "", fmt.Errorf("flat configuration values must be scalars")
-	}
 }
 
 func stringPointer(value string) *string {

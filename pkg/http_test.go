@@ -41,31 +41,27 @@ func TestRedactDebugBodyRemovesInlineConfigurationValues(t *testing.T) {
 		leaks []string
 	}{
 		{
-			name: "API-shaped request config",
+			name: "tenant API-shaped request",
 			body: `{
 				"name":"worker",
 				"spec":{
 					"value":"public-spec-value",
-					"config":{
-						"env":{"PASSWORD":{"value":"request-env-secret"}},
-						"files":[{"path":"/secret","value":"request-file-secret"}]
-					}
+					"env":{"PASSWORD":{"value":"request-env-secret"}},
+					"files":[{"path":"/secret","value":"request-file-secret"}]
 				}
 			}`,
 			want: `{
 				"name":"worker",
 				"spec":{
 					"value":"public-spec-value",
-					"config":{
-						"env":{"PASSWORD":{"value":"[REDACTED]"}},
-						"files":[{"path":"/secret","value":"[REDACTED]"}]
-					}
+					"env":{"PASSWORD":{"value":"[REDACTED]"}},
+					"files":[{"path":"/secret","value":"[REDACTED]"}]
 				}
 			}`,
 			leaks: []string{"request-env-secret", "request-file-secret"},
 		},
 		{
-			name: "pinned CRD-shaped patch",
+			name: "tenant API-shaped patch",
 			body: `{
 				"spec":{
 					"env":{"PASSWORD":{"value":"patch-env-secret"}},
@@ -83,16 +79,16 @@ func TestRedactDebugBodyRemovesInlineConfigurationValues(t *testing.T) {
 			leaks: []string{"patch-env-secret", "patch-file-secret"},
 		},
 		{
-			name: "response config and plugin defaults",
+			name: "response configuration and plugin defaults",
 			body: `{
 				"items":[
-					{"spec":{"config":{"env":{"TOKEN":{"value":"response-secret"}}}}},
+					{"spec":{"env":{"TOKEN":{"value":"response-secret"}}}},
 					{"spec":{"defaults":{"files":[{"path":"/key","value":"default-secret"}]}}}
 				]
 			}`,
 			want: `{
 				"items":[
-					{"spec":{"config":{"env":{"TOKEN":{"value":"[REDACTED]"}}}}},
+					{"spec":{"env":{"TOKEN":{"value":"[REDACTED]"}}}},
 					{"spec":{"defaults":{"files":[{"path":"/key","value":"[REDACTED]"}]}}}
 				]
 			}`,

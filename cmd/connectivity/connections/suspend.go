@@ -1,4 +1,4 @@
-package connectorinstances
+package connections
 
 import (
 	"fmt"
@@ -34,17 +34,17 @@ func NewSuspensionController(factory connectivityinternal.ClientFactory, suspend
 }
 
 func NewSuspendCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
-	return newSuspensionCommand(factory, "suspend", "Suspend a Connectivity connector instance", true)
+	return newSuspensionCommand(factory, "suspend", "Suspend a Connectivity connection", true)
 }
 
 func NewUnsuspendCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
-	return newSuspensionCommand(factory, "unsuspend", "Resume a Connectivity connector instance", false)
+	return newSuspensionCommand(factory, "unsuspend", "Resume a Connectivity connection", false)
 }
 
 func newSuspensionCommand(factory connectivityinternal.ClientFactory, name, description string, suspend bool) *cobra.Command {
 	controller := NewSuspensionController(factory, suspend)
 	return fctl.NewCommand(
-		name+" <connectorinstance>",
+		name+" <connection>",
 		fctl.WithShortDescription(description),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(CompleteConnectorInstanceNames(factory)),
@@ -70,7 +70,7 @@ func (c *SuspensionController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 	if !c.suspend {
 		action = "resume"
 	}
-	if !c.approve(cmd, "You are about to %s Connectivity connector instance %q", action, name) {
+	if !c.approve(cmd, "You are about to %s Connectivity connection %q", action, name) {
 		return nil, fctl.ErrMissingApproval
 	}
 	_, err = client.PatchConnectorInstance(cmd.Context(), name, connectivityclient.ConnectorInstancePatch{
@@ -89,6 +89,6 @@ func (c *SuspensionController) Render(cmd *cobra.Command, _ []string) error {
 	if !c.store.Suspend {
 		request = "resumption"
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector instance %q %s requested.\n", c.store.Name, request)
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connection %q %s requested.\n", c.store.Name, request)
 	return err
 }

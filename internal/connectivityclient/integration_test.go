@@ -1,7 +1,6 @@
 package connectivityclient
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -34,12 +33,12 @@ func TestGivenConnectivityServer_WhenLifecycleMethodsRun_ThenContractIsRespected
 		case req.Method == http.MethodPost && req.URL.Path == "/api/connectivity/connectorinstances":
 			require.Equal(t, "application/json", req.Header.Get("Content-Type"))
 			w.WriteHeader(http.StatusCreated)
-			_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connector":"stripe","ledger":"ledger"}}`)
+			_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connectorRef":{"name":"stripe"},"ledger":"ledger"}}`)
 		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectorinstances/worker":
-			_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connector":"stripe","ledger":"ledger"}}`)
+			_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connectorRef":{"name":"stripe"},"ledger":"ledger"}}`)
 		case req.Method == http.MethodPatch && req.URL.Path == "/api/connectivity/connectorinstances/worker":
 			require.Equal(t, "application/merge-patch+json", req.Header.Get("Content-Type"))
-			_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connector":"stripe","ledger":"ledger"}}`)
+			_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connectorRef":{"name":"stripe"},"ledger":"ledger"}}`)
 		case req.Method == http.MethodDelete && req.URL.Path == "/api/connectivity/connectorinstances/worker":
 			w.WriteHeader(http.StatusNoContent)
 		default:
@@ -49,7 +48,8 @@ func TestGivenConnectivityServer_WhenLifecycleMethodsRun_ThenContractIsRespected
 	defer server.Close()
 
 	client := New(server.URL, server.Client())
-	ctx := context.Background()
+	ctx := t.Context()
+	requestedVersion := "v1.0.0"
 
 	// When lifecycle methods use the server.
 	connectors, err := client.ListConnectors(ctx, ListOptions{})
@@ -66,7 +66,7 @@ func TestGivenConnectivityServer_WhenLifecycleMethodsRun_ThenContractIsRespected
 	require.NoError(t, err)
 	instances, err := client.ListConnectorInstances(ctx, ListOptions{})
 	require.NoError(t, err)
-	created, err := client.CreateConnectorInstance(ctx, ConnectorInstanceCreate{Name: "worker", Spec: ConnectorInstanceSpec{Connector: "stripe", Ledger: "ledger"}})
+	created, err := client.CreateConnectorInstance(ctx, ConnectorInstanceCreate{Name: "worker", Spec: ConnectorInstanceSpec{ConnectorRef: &ObjectRef{Name: "stripe"}, Version: &requestedVersion, Ledger: "ledger"}})
 	require.NoError(t, err)
 	fetched, err := client.GetConnectorInstance(ctx, "worker")
 	require.NoError(t, err)
@@ -103,21 +103,18 @@ func TestGivenConnectivityAPI_WhenConfigIsPatched_ThenAPIShapeIsSent(t *testing.
 		require.NoError(t, json.NewDecoder(req.Body).Decode(&patch))
 		spec, ok := patch["spec"].(map[string]any)
 		require.True(t, ok)
-		require.NotContains(t, spec, "env")
-		require.NotContains(t, spec, "files")
+		require.NotContains(t, spec, "config")
 		require.Equal(t, "30s", spec["pollInterval"])
-		config, ok := spec["config"].(map[string]any)
-		require.True(t, ok)
 		require.Equal(t, map[string]any{
 			"API_PASSWORD": map[string]any{"value": "env-password"},
-		}, config["env"])
+		}, spec["env"])
 		require.Equal(t, []any{
 			map[string]any{"path": "/etc/plugin/key.pem", "value": "file-password"},
 			map[string]any{"path": "/etc/plugin/config.json", "value": "complete-file-array"},
-		}, config["files"])
+		}, spec["files"])
 
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connector":"stripe","ledger":"main"}}`)
+		_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connectorRef":{"name":"stripe"},"ledger":"main"}}`)
 	}))
 	defer server.Close()
 
@@ -126,23 +123,22 @@ func TestGivenConnectivityAPI_WhenConfigIsPatched_ThenAPIShapeIsSent(t *testing.
 	filePassword := "file-password"
 	otherFile := "complete-file-array"
 
-	// When an API-shaped config patch contains password-compatible inline values.
-	_, err := client.PatchConnectorInstance(context.Background(), "worker", ConnectorInstancePatch{
+	config := &ConnectorInstanceConfig{
+		Env: map[string]EnvValue{"API_PASSWORD": {Value: &envPassword}},
+		Files: []FileMount{
+			{Path: "/etc/plugin/key.pem", Value: &filePassword},
+			{Path: "/etc/plugin/config.json", Value: &otherFile},
+		},
+	}
+
+	// When configuration assembly is flattened into the tenant patch.
+	_, err := client.PatchConnectorInstance(t.Context(), "worker", ConnectorInstancePatch{
 		"spec": map[string]any{
-			"config": &ConnectorInstanceConfig{
-				Env: map[string]EnvValue{
-					"API_PASSWORD": {Value: &envPassword},
-				},
-				Files: []FileMount{
-					{Path: "/etc/plugin/key.pem", Value: &filePassword},
-					{Path: "/etc/plugin/config.json", Value: &otherFile},
-				},
-			},
-			"pollInterval": "30s",
+			"env": config.Env, "files": config.Files, "pollInterval": "30s",
 		},
 	})
 
-	// Then the API receives spec.config verbatim and preserves the full files array.
+	// Then the API receives spec.env/spec.files and preserves the full files array.
 	require.NoError(t, err)
 }
 
@@ -167,13 +163,13 @@ func TestGivenConnectivityAPI_WhenSuspensionIsPatched_ThenExactBooleanBodyIsSent
 				require.NoError(t, err)
 				require.Equal(t, test.want, string(body))
 				w.Header().Set("Content-Type", "application/json")
-				_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connector":"stripe","ledger":"main"}}`)
+				_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connectorRef":{"name":"stripe"},"ledger":"main"}}`)
 			}))
 			defer server.Close()
 
 			// When the client requests suspension or resumption.
 			_, err := New(server.URL, server.Client()).PatchConnectorInstance(
-				context.Background(),
+				t.Context(),
 				"worker",
 				ConnectorInstancePatch{"spec": map[string]any{"suspend": test.suspend}},
 			)

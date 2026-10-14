@@ -1,4 +1,4 @@
-package connectorinstances
+package connections
 
 import (
 	"context"
@@ -34,7 +34,7 @@ func TestShowConnectorInstanceRendersMetadataDesiredStateLifecycleProgressAndRed
 	instance.Metadata.Labels = map[string]string{"region": "eu"}
 	instance.Metadata.Annotations = map[string]string{"owner": "platform"}
 	mode := int32(420)
-	instance.Spec.Config = &connectivityclient.ConnectorInstanceConfig{
+	setInstanceConfig(&instance, &connectivityclient.ConnectorInstanceConfig{
 		Env: map[string]connectivityclient.EnvValue{
 			"API_KEY": {Value: stringPtr("must-not-leak")},
 			"TOKEN":   {SecretRef: &connectivityclient.KeyRef{Name: "connector-secrets", Key: "token"}},
@@ -43,7 +43,7 @@ func TestShowConnectorInstanceRendersMetadataDesiredStateLifecycleProgressAndRed
 			{Path: "/etc/plugin/config.yaml", ConfigMapRef: &connectivityclient.KeyRef{Name: "connector-config", Key: "config.yaml"}, Mode: &mode},
 			{Path: "/etc/plugin/inline.pem", Value: stringPtr("also-must-not-leak")},
 		},
-	}
+	})
 
 	output, err := executeCommand(NewShowCommand(factoryWithInstance(instance)), "stripe-eu")
 
@@ -66,7 +66,7 @@ func TestShowConnectorInstanceRendersMetadataDesiredStateLifecycleProgressAndRed
 
 func TestShowPlainOutputNeverPrintsInlineConfigValues(t *testing.T) {
 	instance := instanceWithTwoFiles()
-	instance.Spec.Config.Env = map[string]connectivityclient.EnvValue{
+	instance.Spec.Env = map[string]connectivityclient.EnvValue{
 		"API_KEY": {Value: stringPtr("must-not-leak")},
 	}
 	command := NewShowCommand(factoryWithInstance(*instance))
@@ -82,7 +82,7 @@ func TestShowPlainOutputNeverPrintsInlineConfigValues(t *testing.T) {
 
 func TestShowPlainOutputOmitsUnsupportedStartSequence(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
-	instance.Spec.StartSequence = fctl.Ptr(int64(987654321))
+	instance.Spec.InitialCursor = []byte("opaque-initial-cursor")
 
 	output, err := executeCommand(NewShowCommand(factoryWithInstance(instance)), "stripe-eu")
 
@@ -93,9 +93,9 @@ func TestShowPlainOutputOmitsUnsupportedStartSequence(t *testing.T) {
 
 func TestShowConnectorInstanceJSONPreservesCompleteModel(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
-	instance.Spec.Config = &connectivityclient.ConnectorInstanceConfig{Env: map[string]connectivityclient.EnvValue{
+	setInstanceConfig(&instance, &connectivityclient.ConnectorInstanceConfig{Env: map[string]connectivityclient.EnvValue{
 		"API_KEY": {Value: stringPtr("json-keeps-full-model")},
-	}}
+	}})
 	command := NewShowCommand(factoryWithInstance(instance))
 	command.Flags().String(fctl.OutputFlag, "plain", "")
 
@@ -112,7 +112,7 @@ func TestShowConnectorInstanceJSONPreservesCompleteModel(t *testing.T) {
 func TestShowConnectorInstanceHandlesMissingStatusAndConfig(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
 	instance.Status = nil
-	instance.Spec.Config = nil
+	setInstanceConfig(&instance, nil)
 
 	output, err := executeCommand(NewShowCommand(factoryWithInstance(instance)), "stripe-eu")
 
@@ -120,13 +120,11 @@ func TestShowConnectorInstanceHandlesMissingStatusAndConfig(t *testing.T) {
 	require.Contains(t, output, "No configuration entries.")
 }
 
-func TestShowConnectorInstanceRendersDesiredSuspensionReplicasAndOrderedProvenance(t *testing.T) {
+func TestShowConnectionRendersSuspensionAndOrderedProvenance(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
 	instance.Spec.Suspend = fctl.Ptr(true)
-	instance.Spec.Replicas = fctl.Ptr(int32(0))
 	instance.Status.SuspendedBy = []connectivityclient.SuspensionSource{
 		{Kind: "ConnectorInstance", Name: "stripe-eu", Field: "spec.suspend"},
-		{Kind: "ConnectorInstance", Name: "stripe-eu", Field: "spec.replicas"},
 		{Kind: "Policy", Name: "maintenance", Field: "spec.mutate.suspend"},
 	}
 
@@ -135,10 +133,9 @@ func TestShowConnectorInstanceRendersDesiredSuspensionReplicasAndOrderedProvenan
 	require.NoError(t, err)
 	require.Contains(t, output, "Suspend")
 	require.Contains(t, output, "true")
-	require.Contains(t, output, "Replicas")
-	require.Contains(t, output, "0")
+	require.NotContains(t, output, "Replicas")
 	require.Contains(t, output, "Suspended by")
-	require.Contains(t, output, "ConnectorInstance/stripe-eu (spec.suspend), ConnectorInstance/stripe-eu (spec.replicas), Policy/maintenance (spec.mutate.suspend)")
+	require.Contains(t, output, "ConnectorInstance/stripe-eu (spec.suspend), Policy/maintenance (spec.mutate.suspend)")
 }
 
 func TestShowConnectorInstanceReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {

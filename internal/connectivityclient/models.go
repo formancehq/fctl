@@ -34,6 +34,10 @@ type KeyRef struct {
 	Key  string `json:"key"`
 }
 
+type ObjectRef struct {
+	Name string `json:"name"`
+}
+
 type EnvValue struct {
 	Value        *string `json:"value,omitempty"`
 	SecretRef    *KeyRef `json:"secretRef,omitempty"`
@@ -121,22 +125,35 @@ type QueryCapabilities struct {
 	Resources map[string]map[string]QueryFieldCapability `json:"resources"`
 }
 
+// ConnectorInstanceConfig groups inputs for configuration assembly. The wire
+// spec carries Env and Files directly, without a config wrapper.
 type ConnectorInstanceConfig struct {
 	Env   map[string]EnvValue `json:"env,omitempty"`
 	Files []FileMount         `json:"files,omitempty"`
 }
 
 type ConnectorInstanceSpec struct {
-	Connector       string                   `json:"connector"`
-	Version         *string                  `json:"version,omitempty"`
-	Channel         *string                  `json:"channel,omitempty"`
-	ConnectivityRef *string                  `json:"connectivityRef,omitempty"`
-	Ledger          string                   `json:"ledger"`
-	StartSequence   *int64                   `json:"startSequence,omitempty"`
-	PollInterval    *string                  `json:"pollInterval,omitempty"`
-	Suspend         *bool                    `json:"suspend,omitempty"`
-	Replicas        *int32                   `json:"replicas,omitempty"`
-	Config          *ConnectorInstanceConfig `json:"config,omitempty"`
+	ConnectorRef    *ObjectRef          `json:"connectorRef,omitempty"`
+	Version         *string             `json:"version,omitempty"`
+	Channel         *string             `json:"channel,omitempty"`
+	ConnectivityRef *ObjectRef          `json:"connectivityRef,omitempty"`
+	Ledger          string              `json:"ledger"`
+	InitialCursor   []byte              `json:"initialCursor,omitempty"`
+	PollInterval    *string             `json:"pollInterval,omitempty"`
+	Suspend         *bool               `json:"suspend,omitempty"`
+	Env             map[string]EnvValue `json:"env,omitempty"`
+	Files           []FileMount         `json:"files,omitempty"`
+}
+
+func (s ConnectorInstanceSpec) ConnectorName() string {
+	if s.ConnectorRef == nil {
+		return ""
+	}
+	return s.ConnectorRef.Name
+}
+
+func (s ConnectorInstanceSpec) Configuration() *ConnectorInstanceConfig {
+	return &ConnectorInstanceConfig{Env: s.Env, Files: s.Files}
 }
 
 type SuspensionSource struct {

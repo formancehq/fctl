@@ -1,4 +1,4 @@
-package connectorinstances
+package connections
 
 import (
 	"context"
@@ -33,10 +33,10 @@ func TestCompleteConnectorInstanceNamesUsesBoundedNonInteractiveQueryAndReturnsS
 		}
 		remaining = time.Until(deadline)
 		alpha := instanceFixture("alpha")
-		alpha.Spec.Connector = "stripe"
+		alpha.Spec.ConnectorRef = &connectivityclient.ObjectRef{Name: "stripe"}
 		alpha.Spec.Ledger = "eu"
 		alpine := instanceFixture("alpine")
-		alpine.Spec.Connector = "wise"
+		alpine.Spec.ConnectorRef = &connectivityclient.ObjectRef{Name: "wise"}
 		alpine.Spec.Ledger = "uk"
 		return &connectivityclient.ConnectorInstanceList{Items: []connectivityclient.ConnectorInstance{
 			instanceFixture("beta"), alpine, alpha,
