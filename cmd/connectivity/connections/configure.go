@@ -1,4 +1,4 @@
-package connectorinstances
+package connections
 
 import (
 	"context"
@@ -36,14 +36,15 @@ func NewConfigureController(factory connectivityinternal.ClientFactory, read Rea
 func NewConfigureCommand(factory connectivityinternal.ClientFactory, read ReadFileFunc, paths PathCompleter) *cobra.Command {
 	controller := NewConfigureController(factory, read)
 	command := fctl.NewCommand(
-		"configure <connectorinstance>",
+		"configure <connection>",
 		fctl.WithAliases("config", "update", "c"),
-		fctl.WithShortDescription("Configure a Connectivity connector instance"),
+		fctl.WithShortDescription("Configure a Connectivity connection"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(CompleteConnectorInstanceNames(factory)),
-		fctl.WithStringFlag(ledgerFlag, "", "Ledger name"),
+		fctl.WithStringFlag(ledgerFlag, "", "Existing Ledger name (immutable; cannot be changed)"),
 		fctl.WithStringFlag(versionFlag, "", "Connector version"),
 		fctl.WithStringFlag(channelFlag, "", "Maturity channel to track (stable, rc, beta, alpha) when no version is pinned"),
+		fctl.WithStringFlag(initialCursorFlag, "", "Initial ingestion cursor as base64 (opaque; does not reset a running cursor)"),
 		fctl.WithStringFlag(pollIntervalFlag, "", "Polling interval"),
 		fctl.WithStringFlag(configFlag, "", "YAML or JSON configuration file"),
 		fctl.WithStringArrayFlag(envFileFlag, nil, "Dotenv configuration file (repeatable)"),
@@ -71,10 +72,13 @@ func resolveConfigureConnector(ctx context.Context, client connectivityclient.Cl
 	if err != nil || instance == nil {
 		return "", err
 	}
-	return instance.Spec.Connector, nil
+	return instance.Spec.ConnectorName(), nil
 }
 
 func resolveConfigureConnectorVersion(ctx context.Context, client connectivityclient.Client, cmd *cobra.Command, args []string) (*connectivityclient.ConnectorVersion, error) {
+	if err := validateSelectors(cmd); err != nil {
+		return nil, err
+	}
 	if len(args) == 0 {
 		return nil, nil
 	}
@@ -84,9 +88,9 @@ func resolveConfigureConnectorVersion(ctx context.Context, client connectivitycl
 	}
 	pinned, channel := configureVersionSelector(cmd, instance)
 	if channel != "" {
-		return resolveChannelVersion(ctx, client, instance.Spec.Connector, channel, appliedChannelFloor(instance))
+		return resolveChannelVersion(ctx, client, instance.Spec.ConnectorName(), channel, appliedChannelFloor(instance))
 	}
-	return resolveConnectorVersion(ctx, client, instance.Spec.Connector, pinned)
+	return resolveConnectorVersion(ctx, client, instance.Spec.ConnectorName(), pinned)
 }
 
 func configureVersionSelector(cmd *cobra.Command, instance *connectivityclient.ConnectorInstance) (string, string) {
@@ -97,17 +101,11 @@ func configureVersionSelector(cmd *cobra.Command, instance *connectivityclient.C
 	if instance != nil && instance.Spec.Channel != nil && *instance.Spec.Channel != "" {
 		channel = *instance.Spec.Channel
 	}
-	// Match the API's post-merge-patch normalization. Empty selector values are
-	// removed, rather than selecting stable. A non-empty channel is the only
-	// channel change that clears an existing pin.
 	if cmd.Flags().Changed(versionFlag) {
-		pinned = fctl.GetString(cmd, versionFlag)
+		return fctl.GetString(cmd, versionFlag), ""
 	}
 	if cmd.Flags().Changed(channelFlag) {
-		channel = fctl.GetString(cmd, channelFlag)
-		if channel != "" && !cmd.Flags().Changed(versionFlag) {
-			pinned = ""
-		}
+		return "", fctl.GetString(cmd, channelFlag)
 	}
 	if pinned != "" {
 		return pinned, ""
@@ -126,6 +124,13 @@ func (c *ConfigureController) GetStore() *ConfigureStore {
 }
 
 func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+	if err := validateSelectors(cmd); err != nil {
+		return nil, err
+	}
+	cursor, err := initialCursor(cmd)
+	if err != nil {
+		return nil, err
+	}
 	if c.factory == nil {
 		return nil, fmt.Errorf("connectivity client factory is required")
 	}
@@ -140,18 +145,21 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		return nil, err
 	}
 	if instance == nil {
-		return nil, fmt.Errorf("configure connectivity connector instance %q: empty response", name)
+		return nil, fmt.Errorf("configure connectivity connection %q: empty response", name)
 	}
 
+	if cmd.Flags().Changed(ledgerFlag) && fctl.GetString(cmd, ledgerFlag) != instance.Spec.Ledger {
+		return nil, fmt.Errorf("ledger is immutable: connection %q uses ledger %q; create a new connection to use another ledger", name, instance.Spec.Ledger)
+	}
 	specPatch := map[string]any{}
 	configChanged := cmd.Flags().Changed(configFlag) || cmd.Flags().Changed(envFileFlag) || cmd.Flags().Changed(setFlag)
 	if configChanged {
 		pinned, channel := configureVersionSelector(cmd, instance)
 		var version *connectivityclient.ConnectorVersion
 		if channel != "" {
-			version, err = resolveChannelVersion(cmd.Context(), client, instance.Spec.Connector, channel, appliedChannelFloor(instance))
+			version, err = resolveChannelVersion(cmd.Context(), client, instance.Spec.ConnectorName(), channel, appliedChannelFloor(instance))
 		} else {
-			version, err = resolveConnectorVersion(cmd.Context(), client, instance.Spec.Connector, pinned)
+			version, err = resolveConnectorVersion(cmd.Context(), client, instance.Spec.ConnectorName(), pinned)
 		}
 		if err != nil {
 			return nil, err
@@ -164,7 +172,7 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		if err != nil {
 			return nil, err
 		}
-		config, err := BuildConfigureConfig(cmd, version, instance.Spec.Config, InputOptions{
+		config, err := BuildConfigureConfig(cmd, version, instance.Spec.Configuration(), InputOptions{
 			ConfigFile: fctl.GetString(cmd, configFlag),
 			EnvFiles:   envFiles,
 			SetValues:  setValues,
@@ -172,19 +180,18 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		if err != nil {
 			return nil, err
 		}
-		specPatch["config"] = config
+		for key, value := range configurationPatch(instance.Spec.Configuration(), config) {
+			specPatch[key] = value
+		}
 	}
 	if cmd.Flags().Changed(versionFlag) {
 		specPatch["version"] = fctl.GetString(cmd, versionFlag)
+		specPatch["channel"] = nil
 	}
 	if cmd.Flags().Changed(channelFlag) {
 		channel := fctl.GetString(cmd, channelFlag)
 		specPatch["channel"] = channel
-		if channel != "" && !cmd.Flags().Changed(versionFlag) {
-			// A pre-existing pin would otherwise continue to win over the new
-			// channel. JSON null deletes it under the API's merge-patch contract.
-			specPatch["version"] = nil
-		}
+		specPatch["version"] = nil
 	}
 	if cmd.Flags().Changed(ledgerFlag) {
 		specPatch["ledger"] = fctl.GetString(cmd, ledgerFlag)
@@ -192,10 +199,13 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 	if cmd.Flags().Changed(pollIntervalFlag) {
 		specPatch["pollInterval"] = fctl.GetString(cmd, pollIntervalFlag)
 	}
+	if cmd.Flags().Changed(initialCursorFlag) {
+		specPatch["initialCursor"] = cursor
+	}
 	if len(specPatch) == 0 {
 		return nil, fmt.Errorf("no configuration changes requested")
 	}
-	if !c.approve(cmd, "You are about to configure Connectivity connector instance %q", name) {
+	if !c.approve(cmd, "You are about to configure Connectivity connection %q", name) {
 		return nil, fctl.ErrMissingApproval
 	}
 
@@ -204,13 +214,13 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		return nil, err
 	}
 	if updated == nil {
-		return nil, fmt.Errorf("configure connectivity connector instance %q: empty response", name)
+		return nil, fmt.Errorf("configure connectivity connection %q: empty response", name)
 	}
 	c.store.ConnectorInstance = *updated
 	return c, nil
 }
 
 func (c *ConfigureController) Render(cmd *cobra.Command, _ []string) error {
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connector instance %q configured.\n", stringValue(c.store.ConnectorInstance.Metadata.Name))
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connection %q configured.\n", stringValue(c.store.ConnectorInstance.Metadata.Name))
 	return err
 }

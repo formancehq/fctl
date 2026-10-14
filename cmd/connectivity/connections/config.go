@@ -1,9 +1,10 @@
-package connectorinstances
+package connections
 
 import (
 	"bufio"
 	"fmt"
 	"net/url"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -474,8 +475,8 @@ type parsedValue struct {
 }
 
 type configDocument struct {
-	Env   map[string]documentValue `yaml:"env"`
-	Files []documentFile           `yaml:"files"`
+	Env   map[string]*documentValue `yaml:"env"`
+	Files []documentFile            `yaml:"files"`
 }
 
 type documentValue struct {
@@ -661,6 +662,10 @@ func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, con
 				unknown[key] = struct{}{}
 				continue
 			}
+			if raw == nil {
+				delete(config.Env, key)
+				continue
+			}
 			value, err := scalarString(raw)
 			if err != nil {
 				return fmt.Errorf("configuration key %q: %w", key, err)
@@ -679,10 +684,17 @@ func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, con
 	if err := yaml.Unmarshal([]byte(contents), &document); err != nil {
 		return err
 	}
+	if hasEnv && root["env"] == nil {
+		config.Env = nil
+	}
 	for key, value := range document.Env {
 		_, exists := configField(contract, key, ConfigEnv)
 		if !exists {
 			unknown[key] = struct{}{}
+			continue
+		}
+		if value == nil {
+			delete(config.Env, key)
 			continue
 		}
 		converted := connectivityclient.EnvValue{
@@ -693,7 +705,18 @@ func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, con
 		if err := validateSources(converted.Value, converted.SecretRef, converted.ConfigMapRef); err != nil {
 			return fmt.Errorf("configuration key %q: %w", key, err)
 		}
+		if config.Env == nil {
+			config.Env = make(map[string]connectivityclient.EnvValue)
+		}
 		config.Env[key] = converted
+	}
+	// A structured files section replaces the whole array under merge patch.
+	// Individual --set assignments still update a mount and retain other files.
+	if hasFiles {
+		config.Files = nil
+		if root["files"] != nil {
+			config.Files = []connectivityclient.FileMount{}
+		}
 	}
 	for _, file := range document.Files {
 		if strings.TrimSpace(file.Path) == "" {
@@ -772,6 +795,9 @@ func validateSources(value *string, secretRef, configMapRef *connectivityclient.
 
 func applyValue(config *connectivityclient.ConnectorInstanceConfig, field SchemaField, value parsedValue) {
 	if field.Kind == ConfigEnv {
+		if config.Env == nil {
+			config.Env = make(map[string]connectivityclient.EnvValue)
+		}
 		config.Env[field.Key] = connectivityclient.EnvValue{
 			Value:        value.value,
 			SecretRef:    value.secretRef,
@@ -821,11 +847,49 @@ func cloneConfig(source *connectivityclient.ConnectorInstanceConfig) *connectivi
 	for key, value := range source.Env {
 		clone.Env[key] = cloneEnvValue(value)
 	}
-	clone.Files = make([]connectivityclient.FileMount, len(source.Files))
+	if source.Files != nil {
+		clone.Files = make([]connectivityclient.FileMount, len(source.Files))
+	}
 	for index, file := range source.Files {
 		clone.Files[index] = cloneFileMount(file)
 	}
 	return clone
+}
+
+func configurationPatch(current, desired *connectivityclient.ConnectorInstanceConfig) map[string]any {
+	patch := make(map[string]any)
+	if desired.Env == nil && len(current.Env) > 0 {
+		patch["env"] = nil
+	} else {
+		env := make(map[string]any)
+		for key := range current.Env {
+			if _, exists := desired.Env[key]; !exists {
+				env[key] = nil
+			}
+		}
+		for key, value := range desired.Env {
+			old, exists := current.Env[key]
+			if exists && reflect.DeepEqual(old, value) {
+				continue
+			}
+			// Omitting an old source would retain it under JSON merge patch and
+			// produce an invalid entry with two sources. Delete opposite sources.
+			env[key] = map[string]any{
+				"value": value.Value, "secretRef": value.SecretRef, "configMapRef": value.ConfigMapRef,
+			}
+		}
+		if len(env) > 0 {
+			patch["env"] = env
+		}
+	}
+	if !reflect.DeepEqual(current.Files, desired.Files) {
+		if desired.Files == nil {
+			patch["files"] = nil
+		} else {
+			patch["files"] = desired.Files
+		}
+	}
+	return patch
 }
 
 func cloneEnvValue(value connectivityclient.EnvValue) connectivityclient.EnvValue {

@@ -1,4 +1,4 @@
-package connectorinstances
+package connections
 
 import (
 	"bytes"
@@ -51,11 +51,11 @@ func instanceFixture(name string) connectivityclient.ConnectorInstance {
 	return connectivityclient.ConnectorInstance{
 		Metadata: connectivityclient.ObjectMeta{Name: stringPtr(name)},
 		Spec: connectivityclient.ConnectorInstanceSpec{
-			Connector:     "stripe",
+			ConnectorRef:  &connectivityclient.ObjectRef{Name: "stripe"},
 			Version:       stringPtr("2.0.0"),
 			Ledger:        "main",
 			PollInterval:  stringPtr("5s"),
-			StartSequence: fctl.Ptr(int64(10)),
+			InitialCursor: []byte{0, 255, 97},
 		},
 		Status: &connectivityclient.ConnectorInstanceStatus{
 			Phase:                stringPtr("Ready"),
@@ -75,10 +75,10 @@ func instanceFixture(name string) connectivityclient.ConnectorInstance {
 
 func instanceWithTwoFiles() *connectivityclient.ConnectorInstance {
 	instance := instanceFixture("stripe-eu")
-	instance.Spec.Config = &connectivityclient.ConnectorInstanceConfig{Files: []connectivityclient.FileMount{
+	setInstanceConfig(&instance, &connectivityclient.ConnectorInstanceConfig{Files: []connectivityclient.FileMount{
 		{Path: "/etc/plugin/config.yaml", Value: stringPtr("private config")},
 		{Path: "/etc/plugin/ca.pem", SecretRef: &connectivityclient.KeyRef{Name: "connector-secrets", Key: "ca.pem"}},
-	}}
+	}})
 	return &instance
 }
 
@@ -195,4 +195,12 @@ func fullConfigSchema(requiredEnv, requiredFiles []any) map[string]any {
 			"required": requiredFiles,
 		},
 	}
+}
+
+func setInstanceConfig(instance *connectivityclient.ConnectorInstance, config *connectivityclient.ConnectorInstanceConfig) {
+	if config == nil {
+		instance.Spec.Env, instance.Spec.Files = nil, nil
+		return
+	}
+	instance.Spec.Env, instance.Spec.Files = config.Env, config.Files
 }

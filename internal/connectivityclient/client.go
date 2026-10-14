@@ -329,13 +329,10 @@ func validateConnectorVersionSummary(summary *ConnectorVersionSummary) error {
 // response paths. Only the name is required, because it is what identifies the
 // row and Kubernetes always sets it.
 //
-// spec.connector deliberately is not. An instance may pin spec.image on the CR
-// instead of referencing a Connector -- the two are mutually exclusive -- and
-// the API returns it with an empty connector. Requiring it here rejected such
-// an instance, and since one bad item fails the page, a single image-pinned
-// connector made `connectorinstances list` unusable against a response the
-// server had answered successfully. spec.ledger goes with it: enforcing a
-// write-side invariant while reading is the same mistake.
+// Stored legacy instances may lack spec.connectorRef. The API allows reading
+// these instances even though writes require a binding. Requiring it here
+// would reject the entire page. Write-side ledger and version/channel
+// invariants likewise belong to the server, not response decoding.
 func validateConnectorInstance(instance *ConnectorInstance) error {
 	if instance == nil || instance.Metadata.Name == nil || strings.TrimSpace(*instance.Metadata.Name) == "" {
 		return fmt.Errorf("connector instance metadata.name is required")

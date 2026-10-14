@@ -1,4 +1,4 @@
-package connectorinstances
+package connections
 
 import (
 	"fmt"
@@ -34,9 +34,9 @@ func NewShowController(factory connectivityinternal.ClientFactory) *ShowControll
 func NewShowCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
 	controller := NewShowController(factory)
 	return fctl.NewCommand(
-		"show <connectorinstance>",
+		"show <connection>",
 		fctl.WithAliases("get", "g", "sh", "s"),
-		fctl.WithShortDescription("Show a Connectivity connector instance"),
+		fctl.WithShortDescription("Show a Connectivity connection"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(CompleteConnectorInstanceNames(factory)),
 		fctl.WithController[*ShowStore](controller),
@@ -60,7 +60,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, err
 	}
 	if instance == nil {
-		return nil, fmt.Errorf("show connectivity connector instance %q: empty response", args[0])
+		return nil, fmt.Errorf("show connectivity connection %q: empty response", args[0])
 	}
 	c.store.ConnectorInstance = *instance
 	return c, nil
@@ -82,14 +82,13 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 	if err := renderInstanceSection(out, "Desired Specification", pterm.TableData{
-		{pterm.LightCyan("Connector"), instance.Spec.Connector},
+		{pterm.LightCyan("Connector"), instance.Spec.ConnectorName()},
 		{pterm.LightCyan("Version"), stringValue(instance.Spec.Version)},
 		{pterm.LightCyan("Channel"), stringValue(instance.Spec.Channel)},
-		{pterm.LightCyan("Connectivity Reference"), stringValue(instance.Spec.ConnectivityRef)},
+		{pterm.LightCyan("Connectivity Reference"), objectRefName(instance.Spec.ConnectivityRef)},
 		{pterm.LightCyan("Ledger"), instance.Spec.Ledger},
 		{pterm.LightCyan("Poll Interval"), stringValue(instance.Spec.PollInterval)},
 		{pterm.LightCyan("Suspend"), boolValue(instance.Spec.Suspend)},
-		{pterm.LightCyan("Replicas"), int32Value(instance.Spec.Replicas)},
 	}); err != nil {
 		return err
 	}
@@ -115,7 +114,7 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 	}
 
 	fctl.Section.WithWriter(out).Println("Configuration")
-	rows := configRows(instance.Spec.Config)
+	rows := configRows(instance.Spec.Configuration())
 	if len(rows) == 0 {
 		_, err := fmt.Fprintln(out, "No configuration entries.")
 		return err
@@ -195,11 +194,11 @@ func boolValue(value *bool) string {
 	return strconv.FormatBool(*value)
 }
 
-func int32Value(value *int32) string {
+func objectRefName(value *connectivityclient.ObjectRef) string {
 	if value == nil {
 		return ""
 	}
-	return strconv.FormatInt(int64(*value), 10)
+	return value.Name
 }
 
 func instanceSuspensionSources(status *connectivityclient.ConnectorInstanceStatus) string {

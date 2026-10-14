@@ -6,6 +6,7 @@ Command-line interface for managing and interacting with Formance services.
 
 `fctl` is the official CLI tool for Formance, providing a comprehensive set of commands to interact with Formance services, including:
 
+- Connectivity catalogue and connection lifecycle ([command guide](docs/connectivity.md))
 - Ledger management
 - Payments processing
 - Wallets

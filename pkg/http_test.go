@@ -41,7 +41,7 @@ func TestRedactDebugBodyRemovesInlineConfigurationValues(t *testing.T) {
 		leaks []string
 	}{
 		{
-			name: "API-shaped request config",
+			name: "legacy API-shaped request config",
 			body: `{
 				"name":"worker",
 				"spec":{
@@ -65,7 +65,7 @@ func TestRedactDebugBodyRemovesInlineConfigurationValues(t *testing.T) {
 			leaks: []string{"request-env-secret", "request-file-secret"},
 		},
 		{
-			name: "pinned CRD-shaped patch",
+			name: "tenant API-shaped patch",
 			body: `{
 				"spec":{
 					"env":{"PASSWORD":{"value":"patch-env-secret"}},

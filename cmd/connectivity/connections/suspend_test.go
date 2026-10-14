@@ -1,4 +1,4 @@
-package connectorinstances
+package connections
 
 import (
 	"context"
@@ -35,8 +35,8 @@ func TestSuspensionCommandsPatchOnlyDesiredBooleanAndTreatAlreadyConvergedRespon
 		suspend    bool
 		wantOutput string
 	}{
-		{name: "suspend", command: NewSuspendCommand, suspend: true, wantOutput: `Connector instance "stripe-eu" suspension requested.`},
-		{name: "unsuspend", command: NewUnsuspendCommand, suspend: false, wantOutput: `Connector instance "stripe-eu" resumption requested.`},
+		{name: "suspend", command: NewSuspendCommand, suspend: true, wantOutput: `Connection "stripe-eu" suspension requested.`},
+		{name: "unsuspend", command: NewUnsuspendCommand, suspend: false, wantOutput: `Connection "stripe-eu" resumption requested.`},
 	}
 
 	for _, test := range tests {
@@ -117,7 +117,7 @@ func TestSuspensionCommandsRegisterConfirmationCompletionAndRootChildren(t *test
 		{name: "unsuspend", command: NewUnsuspendCommand},
 	} {
 		command := test.command(factoryReturning(client))
-		require.Equal(t, test.name+" <connectorinstance>", command.Use)
+		require.Equal(t, test.name+" <connection>", command.Use)
 		require.NotNil(t, command.Flags().Lookup("confirm"))
 		require.Error(t, command.Args(command, nil))
 		require.NoError(t, command.Args(command, []string{"stripe-eu"}))

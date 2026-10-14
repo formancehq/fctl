@@ -1,4 +1,4 @@
-package connectorinstances
+package connections
 
 import (
 	"testing"
