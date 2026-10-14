@@ -368,6 +368,51 @@ func TestBuildInstallConfigReturnsInputReadAndParseErrors(t *testing.T) {
 	})
 }
 
+func TestBuildConfigDecodeErrorsDoNotEchoSecrets(t *testing.T) {
+	const secretSentinel = "s3cr3t"
+	tests := []struct {
+		name     string
+		contents string
+	}{
+		{name: "root scalar", contents: secretSentinel},
+		{name: "environment scalar", contents: "env:\n  TOKEN: " + secretSentinel},
+		{name: "environment value sequence", contents: "env:\n  TOKEN:\n    value: [" + secretSentinel + "]"},
+		{name: "secret reference scalar", contents: "env:\n  TOKEN:\n    secretRef: " + secretSentinel},
+		{name: "configmap reference scalar", contents: "env:\n  TOKEN:\n    configMapRef: " + secretSentinel},
+		{name: "file scalar", contents: "files:\n  - " + secretSentinel},
+		{name: "file reference scalar", contents: "files:\n  - path: /etc/plugin/config.yaml\n    secretRef: " + secretSentinel},
+		{name: "file mode scalar", contents: "files:\n  - path: /etc/plugin/config.yaml\n    value: content\n    mode: " + secretSentinel},
+		{name: "duplicate key", contents: secretSentinel + ": first\n" + secretSentinel + ": second"},
+		{name: "unknown alias", contents: "env: *" + secretSentinel},
+		{name: "invalid tag", contents: "env: !!int " + secretSentinel},
+		{name: "JSON environment scalar", contents: `{"env":{"TOKEN":"` + secretSentinel + `"}}`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			inputs := InputOptions{ConfigFile: "config.yaml"}
+			read := mapReadFile(map[string]string{"config.yaml": tt.contents})
+			_, installErr := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), inputs, read)
+			_, configureErr := BuildConfigureConfig(&cobra.Command{}, versionWithOptionalSchema(), nil, inputs, read)
+			for _, err := range []error{installErr, configureErr} {
+				require.Error(t, err)
+				require.ErrorContains(t, err, "config.yaml")
+				require.NotContains(t, err.Error(), secretSentinel)
+				require.ErrorContains(t, err, "expected env mapping and files list")
+			}
+		})
+	}
+}
+
+func TestBuildConfigDecodeErrorsRetainLineNumbers(t *testing.T) {
+	_, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{ConfigFile: "config.yaml"}, mapReadFile(map[string]string{
+		"config.yaml": "env:\n  TOKEN: s3cr3t\nfiles:\n  - s3cr3t\n",
+	}))
+
+	require.ErrorContains(t, err, "lines 2, 4")
+	require.NotContains(t, err.Error(), "s3cr3t")
+}
+
 func TestBuildConfigureConfigPreservesUntouchedFiles(t *testing.T) {
 	mode := int32(0o600)
 	current := &connectivityclient.ConnectorInstanceConfig{Files: []connectivityclient.FileMount{

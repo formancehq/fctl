@@ -81,6 +81,11 @@ unsupported. The CLI sends those sections directly as
 `spec.env` and `spec.files`; the file supplied to `--config` is a configuration
 input, not the full HTTP request.
 
+Malformed YAML/JSON diagnostics identify the input file, report line numbers
+when available, and describe the expected structure without echoing input
+values. Use an `env` mapping and a `files` list with structured `value`,
+`secretRef`, or `configMapRef` entries.
+
 The CLI derives known keys and definitely-required fields from the Connector
 Version JSON Schema, including bounded local `$ref`, `allOf`, `anyOf`, and
 `oneOf` composition. Open or pattern-based keys, and constraints that cannot

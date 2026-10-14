@@ -2,6 +2,7 @@ package connections
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"net/url"
 	"reflect"
@@ -642,7 +643,7 @@ func applyDoubleQuoteEscapes(value string) string {
 func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, contract schemaContract, contents string, unknown map[string]struct{}) error {
 	var root map[string]any
 	if err := yaml.Unmarshal([]byte(contents), &root); err != nil {
-		return err
+		return configDecodeError(err)
 	}
 	if root == nil {
 		return nil
@@ -661,7 +662,7 @@ func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, con
 	}
 	var document configDocument
 	if err := yaml.Unmarshal([]byte(contents), &document); err != nil {
-		return err
+		return configDecodeError(err)
 	}
 	if hasEnv && root["env"] == nil {
 		config.Env = nil
@@ -719,6 +720,37 @@ func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, con
 		replaceFile(config, converted)
 	}
 	return nil
+}
+
+func configDecodeError(err error) error {
+	// Decoder messages can contain scalar values, keys, tags, and aliases from
+	// the input. Only retain numeric locations; do not wrap the original error.
+	messages := []string{strings.TrimPrefix(err.Error(), "yaml: ")}
+	var typeErr *yaml.TypeError
+	if errors.As(err, &typeErr) {
+		messages = typeErr.Errors
+	}
+	lineSet := make(map[int]struct{})
+	for _, message := range messages {
+		var line int
+		if _, scanErr := fmt.Sscanf(message, "line %d:", &line); scanErr == nil && line > 0 {
+			lineSet[line] = struct{}{}
+		}
+	}
+	lines := make([]int, 0, len(lineSet))
+	for line := range lineSet {
+		lines = append(lines, line)
+	}
+	sort.Ints(lines)
+	locations := make([]string, 0, len(lines))
+	for _, line := range lines {
+		locations = append(locations, fmt.Sprint(line))
+	}
+	location := ""
+	if len(locations) > 0 {
+		location = " at lines " + strings.Join(locations, ", ")
+	}
+	return fmt.Errorf("invalid YAML/JSON configuration%s: expected env mapping and files list with structured value, secretRef, or configMapRef entries", location)
 }
 
 func configField(contract schemaContract, key string, kind ConfigKind) (SchemaField, bool) {
