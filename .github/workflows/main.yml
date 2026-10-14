@@ -55,6 +55,8 @@ jobs:
       - run: >
           nix develop --impure --command just pre-commit
         env:
+          # Avoid HTTP/2 stream resets during Go proxy downloads.
+          GODEBUG: http2client=0
           SPEAKEASY_API_KEY: ${{ secrets.SPEAKEASY_API_KEY }}
       - name: Get changed files
         id: changed-files

@@ -90,6 +90,10 @@ dependencies are updated, and runs the linter. Commit the generated SDK files
 and module manifests together; CI's `Dirty` job requires validation to leave
 the checkout unchanged.
 
+The `Dirty` pre-commit step uses `GODEBUG=http2client=0` to avoid HTTP/2 stream
+resets during Go proxy downloads. To reproduce its transport setting locally,
+prefix the pre-commit command with `GODEBUG=http2client=0`.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
