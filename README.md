@@ -1,85 +1,95 @@
-# Formance Control CLI (fctl)
+# Formance Control CLI (fctl v4)
 
-Command-line interface for managing and interacting with Formance services.
+`fctl` is the Formance command-line interface (repository profile: CLI).
+The v4 implementation embeds Cloud and loads Auth and Ledger as external
+plugins, with a shared connection boundary for local services, OAuth2 client
+credentials and Cloud login. Connectivity commands are absent while their
+independent plugin is prepared.
+The Go module is `github.com/formancehq/fctl/v4`.
 
-## Overview
-
-`fctl` is the official CLI tool for Formance, providing a comprehensive set of commands to interact with Formance services, including:
-
-- Ledger management
-- Payments processing
-- Wallets
-- Reconciliation
-- Orchestration
-- Authentication
-- Stack management
-- Cloud resources
-- Webhooks configuration
-
-## Installation
-
-### Using Homebrew (macOS/Linux)
+## Current commands
 
 ```bash
-brew install formancehq/tap/fctl
+go run . --help
+go run . version
+go run . --version
+go run . completion bash
+go run . profiles --help
+go run . login
+go run . cloud organizations list
+go run . cloud stack list --organization ORG_ID
+go run . --organization ORG_ID --stack STACK_ID plugins sync --service auth
+go run . --organization ORG_ID --stack STACK_ID auth clients list
 ```
 
-### Manual Installation
+Development builds report `v4.0.0-dev`. Release builds receive their version,
+commit and build date through GoReleaser. No v4 release is published by this
+source change.
 
-Download the latest binary for your platform from the [Releases page](https://github.com/formancehq/fctl/releases).
+The independently published Auth plugin owns its API client and command contract.
+Auth 2.5.2 revision 1 is available through the official catalogue. Targets must
+run that exact service version. Ledger retains its external loader, but has no
+embedded provider or advertised official release yet; install a trusted
+product-built executable matching the deployed version before using its commands.
+See [module commands](docs/modules.md), [native plugin distribution](docs/plugin-distribution.md)
+and [profiles and authentication](docs/profiles.md).
 
-## Getting Started
+Cloud management lives under `cloud`, with stack administration under
+`cloud stack`. See [Cloud command boundaries](docs/cloud.md) for proxy, MCP,
+token helpers and experimental Deploy Apps. See [Connectivity](docs/connectivity.md)
+for the deferred plugin migration and preserved connection settings.
 
-### Authentication
+The v3 command tree and profile store are not migrated automatically. Users of
+v3 scripts must adapt commands and request schemas or retain a v3 binary.
+The v4 profile store is separate and direct service access needs no Cloud login.
+
+`fctl login` defaults to the public Cloud, opens the browser and saves a Cloud
+profile after successful authentication. Use `--no-browser` for a headless
+session or `--issuer` for another environment. Login does not require a stack;
+service commands resolve their target from flags, saved defaults, unique access or
+interactive selection.
+
+Output defaults to readable tables on a terminal and JSON in pipes or files.
+Use `-o json` for all fields and automation; table lists summarize scalar columns
+without repeated output reminders. `--color auto|always|never` controls styles.
+See [output and diagnostics](docs/output.md), including `NO_COLOR` and `-d`.
+
+Commands offer forms and searchable selections when required input is missing.
+Supply arguments and flags for direct execution, or use `--no-input` for scripts.
+See [interactive command input](docs/interaction.md).
+
+Plugins expose manifests and execution through a public SDK. The core adapts
+their manifests to Cobra; service plugins do not depend on Cobra or core internals.
+See the [plugin contract](docs/plugins.md) and [native plugin distribution](docs/plugin-distribution.md). This
+CLI uses explicit composition without Fx. Proxy and MCP commands run until
+cancellation; they use the host's connection and authentication boundary.
+
+## Development
+
+Use the Go version and toolchain declared in `go.mod`, or the repository's Nix
+development shell:
 
 ```bash
-# Login to Formance
-fctl login
-
-# Configure profiles
-fctl profiles list
-fctl profiles create <name> --endpoint <endpoint>
+nix develop --impure
+just pre-commit
+just tests
+go build ./...
 ```
 
-### Basic Usage
+`just tests` runs with the race detector. `just generate` runs Go generators;
+the removed Membership and deployment SDKs are no longer generated.
+`just completions` updates the shell scripts shipped in release archives.
 
-```bash
-# Get version information
-fctl version
+The repository includes the `formance-fctl-plugin` agent skill for developing
+service plugins through the public SDK. Its sources are versioned under
+`.agents/skills/`, where Codex discovers them for this repository, and included
+in release archives. See [agent skill usage and installation](docs/agent-skills.md).
 
-# Get help for any command
-fctl --help
-fctl <command> --help
+## Documentation
 
-# Use the interactive mode
-fctl prompt
-```
-
-## Features
-
-- **Multiple Output Formats**: Support for plain text and JSON output
-- **Profile Management**: Create and switch between different configuration profiles
-- **Interactive Mode**: Use the prompt mode for interactive command execution
-- **Comprehensive API Coverage**: Access to all Formance services and features
-
-## Configuration
-
-Configuration is stored in `~/.formance/fctl.config` by default. You can specify a different configuration file using the `-c` flag.
-
-## Options
-
-- `--profile, -p`: Configuration profile to use
-- `--config, -c`: Path to configuration file
-- `--debug, -d`: Enable debug mode
-- `--output, -o`: Output format (plain, json)
-- `--insecure-tls`: Allow insecure TLS connections
-- `--telemetry`: Enable telemetry
+- [Technical documentation](docs/README.md)
+- [Formance documentation](https://docs.formance.com)
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Links
-
-- [Formance Documentation](https://docs.formance.com)
-- [Formance GitHub](https://github.com/formancehq)
+MIT License. See [LICENSE](LICENSE).

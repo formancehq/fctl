@@ -2,9 +2,5 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "github>formancehq/shared-config//renovate/presets/golang"
-  ],
-  "ignoreDeps": [
-    "github.com/formancehq/fctl/internal/membershipclient"
-  ],
-  "ignorePaths": ["**/membershipclient/**"]
+  ]
 }
