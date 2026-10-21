@@ -1,4 +1,4 @@
-FROM ghcr.io/formancehq/base:22.04
+FROM ghcr.io/formancehq/base:26.04
 ARG TARGETPLATFORM
 COPY $TARGETPLATFORM/fctl /usr/bin/fctl
 ENV OTEL_SERVICE_NAME fctl
