@@ -1,9 +1,14 @@
 {
-  description = "A Nix-flake-based Go 1.26 development environment";
+  description = "A Nix-flake-based Go 1.27.3 development environment";
 
   inputs = {
     nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.2511";
     nixpkgs-unstable.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
+
+    go-tooling = {
+      url = "github:NixOS/nixpkgs/8cec5ef1131078ea76689e84c362b0ed6a1fb6a1";
+      flake = false;
+    };
 
     goreleaser = {
       url = "github:goreleaser/nur/52282e9a2d7c6882e9e0e8675d593b928c89e323";
@@ -11,7 +16,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, goreleaser }:
+  outputs = { self, nixpkgs, nixpkgs-unstable, go-tooling, goreleaser }:
     let
       supportedSystems = [
         "x86_64-linux"
@@ -87,9 +92,17 @@
 
       devShells = forEachSupportedSystem ({ pkgs, pkgs-unstable, system }:
         let
+          # Reuse the existing package set to retain x86_64-darwin support.
+          go = lintGo;
+          lintGo = pkgs.callPackage "${go-tooling}/pkgs/development/compilers/go/1.27.nix" {
+            buildGo127Module = buildLintModule;
+          };
+          buildLintModule = pkgs.buildGoModule.override { go = lintGo; };
+          golangci-lint = pkgs.callPackage "${go-tooling}/pkgs/by-name/go/golangci-lint/package.nix" {
+            buildGo127Module = buildLintModule;
+          };
           stablePackages = with pkgs; [
             ginkgo
-            go_1_26
             go-tools
             goperf
             gotools
@@ -98,10 +111,11 @@
             yq-go
           ];
           unstablePackages = with pkgs-unstable; [
-            golangci-lint
             openapi-generator-cli
           ];
           otherPackages = [
+            go
+            golangci-lint
             (pkgs.callPackage "${goreleaser}/pkgs/goreleaser-pro" { })
             self.packages.${system}.speakeasy
           ];
@@ -109,6 +123,8 @@
         {
           default = pkgs.mkShell {
             packages = stablePackages ++ unstablePackages ++ otherPackages;
+            GOROOT = "${go}/share/go";
+            GOTOOLCHAIN = "local";
           };
         }
       );
