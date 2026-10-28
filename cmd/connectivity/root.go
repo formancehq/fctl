@@ -14,6 +14,7 @@ func NewCommand() *cobra.Command {
 	return fctl.NewStackCommand("connectivity",
 		fctl.WithShortDescription("Manage Connectivity connectors and connections"),
 		fctl.WithChildCommands(
+			NewStatusCommand(factory),
 			connectors.NewCommand(factory),
 			connections.NewCommand(factory, fctl.ReadFile, connections.OSPathCompleter),
 		),

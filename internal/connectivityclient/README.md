@@ -16,6 +16,11 @@ its HTTP package is `github.com/formancehq/connectivity/pkg/client/http`.
 This source pin does not establish a server compatibility range or qualify a
 deployed service.
 
+- `GetInfo` delegates to `SDK.Health.Info` for `/_info` and returns local
+  `ServiceInfo` with `version`, `commit` and `buildDate`. Presence and string types
+  are checked on the raw response; empty strings are valid. Additional fields,
+  including debug when present in older replies, are ignored. This operation
+  reports build metadata only and calls no health probe.
 - Connectors expose flat public fields, starting with `name`. Versions have
   `version`, optional digest, release date and published schema/metadata; they
   do not expose an image reference.
@@ -55,8 +60,9 @@ message and details; empty or non-JSON errors retain status text, including 401.
 
 ## Generated SDK boundary
 
-The facade in `client.go` delegates all catalogue, version, capability and
-Connection HTTP operations to the official SDK. It preserves fctl's `Client`,
+The facade in `client.go` delegates service build information, catalogue, version,
+capability and Connection HTTP operations to the official SDK. It preserves
+fctl's `Client`,
 list wrappers, byte cursor representation and `APIError` conventions.
 `cmd/connectivity/internal/client.go` supplies the selected stack URI and
 authenticated `StackClients.HTTPClient`.

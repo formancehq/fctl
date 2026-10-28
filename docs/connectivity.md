@@ -1,8 +1,8 @@
 # Connectivity commands
 
 `fctl connectivity` manages the published Connector catalogue and the
-connections installed in the selected stack. The public API exposes `Connection`
-resources.
+connections installed in the selected stack. It also reports the Connectivity
+API build information. The public API exposes `Connection` resources.
 
 This CLI uses the public Connectivity contract: a connection has a `name`,
 `configuration`, and optional `status`. The HTTP routes use
@@ -15,6 +15,8 @@ installing a connection requires both a connector and a selector.
 ## Command tree
 
 ```text
+fctl connectivity status
+
 fctl connectivity connectors list [--filter KEY=VALUE] [--query JSON]
 fctl connectivity connectors show <connector>
 fctl connectivity connectors facets [--filter KEY=VALUE] [--query JSON]
@@ -31,8 +33,33 @@ fctl connectivity connections uninstall <connection>
 `connection` is the singular alias of `connections`. `connectors ls`, `connectors l`,
 `connectors facets` (`facet`, `f`), and `connections ls` (`l`) remain available.
 `install` also accepts `create` and `in`; `configure` accepts `config`,
-`update`, and `c`. JSON output uses the `connection` and
-`connections` envelope keys and uses the current HTTP field names.
+`update`, and `c`. Connection commands use the `connection` and `connections`
+JSON envelope keys and the current HTTP field names.
+
+## Service build information
+
+`fctl connectivity status` reads only `GET /api/connectivity/_info` for the selected
+stack, using the existing authenticated stack client. It prints Version, Commit
+and Build Date. Build Date is the source commit timestamp supplied by the API;
+the command does not interpret it as a deployment time or observation freshness.
+This reports build metadata, not service health or readiness.
+
+```bash
+fctl connectivity status
+fctl connectivity status --output json
+```
+
+JSON output is a flat build-information object inside the usual data envelope:
+
+```json
+{"data":{"version":"v1.2.3","commit":"abc123","buildDate":"2026-10-28T22:29:14Z"}}
+```
+
+The three fields must be present strings; empty strings remain valid for builds
+without populated metadata. The response may contain additional fields, which
+are ignored. The command accepts no positional arguments and returns an error
+for unavailable or malformed build information. It does not call a health probe
+or use one as a fallback.
 
 ## Versions and channels
 

@@ -21,6 +21,29 @@ const VersionAliasLatest = "latest"
 
 var VersionAliases = []string{VersionAliasLatest, "stable", "rc", "beta", "alpha"}
 
+// ServiceInfo identifies the API build; it does not describe service health.
+type ServiceInfo struct {
+	Version   string `json:"version"`
+	Commit    string `json:"commit"`
+	BuildDate string `json:"buildDate"`
+}
+
+func (s *ServiceInfo) UnmarshalJSON(data []byte) error {
+	var value struct {
+		Version   *string `json:"version"`
+		Commit    *string `json:"commit"`
+		BuildDate *string `json:"buildDate"`
+	}
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	if value.Version == nil || value.Commit == nil || value.BuildDate == nil {
+		return fmt.Errorf("service info version, commit and buildDate are required")
+	}
+	*s = ServiceInfo{Version: *value.Version, Commit: *value.Commit, BuildDate: *value.BuildDate}
+	return nil
+}
+
 type ConnectorBranding struct {
 	DisplayName *string `json:"displayName,omitempty"`
 	AccentColor *string `json:"accentColor,omitempty"`
@@ -219,6 +242,7 @@ type APIError struct {
 }
 
 type Client interface {
+	GetInfo(context.Context) (*ServiceInfo, error)
 	ListConnectors(context.Context, ListOptions) (*ConnectorList, error)
 	GetConnectorFacets(context.Context, string) (*FacetDistribution, error)
 	GetQueryCapabilities(context.Context) (*QueryCapabilities, error)

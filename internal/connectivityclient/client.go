@@ -57,6 +57,17 @@ func listPage[T any](ctx context.Context, c *client, options ListOptions, operat
 	return envelope, nil
 }
 
+func (c *client) GetInfo(ctx context.Context) (*ServiceInfo, error) {
+	result := &ServiceInfo{}
+	if err := c.invoke(ctx, http.StatusOK, result, false, func(ctx context.Context, s *sdk.SDK) error {
+		_, err := s.Health.Info(ctx)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 func (c *client) ListConnectors(ctx context.Context, options ListOptions) (*ConnectorList, error) {
 	query, size, cursor := sdkListOptions(options)
 	result, err := listPage(ctx, c, options, func(ctx context.Context, s *sdk.SDK) error {
