@@ -85,6 +85,12 @@ HTTP behavior with the actual SDK dependency, not a live Connectivity backend.
 
 ## Verification
 
+Source builds require read access to the private Connectivity repository at the
+pinned revision. Configure Git authentication through your existing credential
+setup and set `GOPRIVATE=github.com/formancehq/connectivity` so Go resolves this
+module without the public proxy/checksum service. CI uses the shared workflows'
+private-repository token input; successful access still needs CI verification.
+
 From the repository root, use the pinned toolchain:
 
 ```sh
