@@ -1,7 +1,6 @@
 package connectivityclient
 
 import (
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -10,172 +9,217 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGivenConnectivityServer_WhenLifecycleMethodsRun_ThenContractIsRespected(t *testing.T) {
-	// Given a connectivity server with the public lifecycle routes.
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		switch {
-		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectors":
-			require.Equal(t, "application/json", req.Header.Get("Accept"))
-			_, _ = io.WriteString(w, `{"cursor":{"pageSize":15,"hasMore":false,"data":[{"metadata":{"name":"stripe"},"spec":{"displayName":"Stripe","latestVersion":"v1.0.0"}}]}}`)
-		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectors/_facets":
-			_, _ = io.WriteString(w, `{"total":1,"facets":{"provider":{"psp":1}}}`)
-		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/_query/capabilities":
-			_, _ = io.WriteString(w, `{"resources":{"connectors":{"name":{"operators":["$match","$in","$like"]}}}}`)
-		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectors/stripe":
-			_, _ = io.WriteString(w, `{"metadata":{"name":"stripe"},"spec":{"displayName":"Stripe"}}`)
-		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectors/stripe/versions":
-			_, _ = io.WriteString(w, `{"cursor":{"pageSize":15,"hasMore":false,"data":[{"version":"v1.0.0","image":"registry/stripe:v1.0.0"}]}}`)
-		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectors/stripe/versions/latest":
-			_, _ = io.WriteString(w, `{"version":"v1.0.0","image":"registry/stripe:v1.0.0","configSchema":{"env":{"properties":{}}}}`)
-		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectorinstances":
-			_, _ = io.WriteString(w, `{"cursor":{"pageSize":15,"hasMore":false,"data":[]}}`)
-		case req.Method == http.MethodPost && req.URL.Path == "/api/connectivity/connectorinstances":
-			require.Equal(t, "application/json", req.Header.Get("Content-Type"))
-			w.WriteHeader(http.StatusCreated)
-			_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connectorRef":{"name":"stripe"},"ledger":"ledger"}}`)
-		case req.Method == http.MethodGet && req.URL.Path == "/api/connectivity/connectorinstances/worker":
-			_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connectorRef":{"name":"stripe"},"ledger":"ledger"}}`)
-		case req.Method == http.MethodPatch && req.URL.Path == "/api/connectivity/connectorinstances/worker":
-			require.Equal(t, "application/merge-patch+json", req.Header.Get("Content-Type"))
-			_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connectorRef":{"name":"stripe"},"ledger":"ledger"}}`)
-		case req.Method == http.MethodDelete && req.URL.Path == "/api/connectivity/connectorinstances/worker":
-			w.WriteHeader(http.StatusNoContent)
-		default:
-			http.NotFound(w, req)
+func responseClient(status int, body string) *http.Client {
+	return &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) { return jsonResponse(status, body), nil })}
+}
+
+func TestGivenPublicContract_WhenStatusRead_ThenRecordedProgressAndErrorsDecode(t *testing.T) {
+	server, requests := contractServer(t, 200, `{"name":"worker","configuration":{"ledger":"main"},"status":{"appliedVersion":"v1.2.0","lifecycle":"failed","ingestion":{"state":"error","progress":{"current":9007199254740993},"lastError":"historical error"},"error":{"code":"service_error","message":"Service operation failed"},"suspendedBy":[{"source":"policy","name":"maintenance"}]}}`)
+	instance, err := New(server.URL, server.Client()).GetConnectorInstance(t.Context(), "worker")
+	require.NoError(t, err)
+	request := <-requests
+	require.NoError(t, request.err)
+	require.Equal(t, http.MethodGet, request.method)
+	require.Equal(t, "/api/connectivity/connector-instances/worker", request.path)
+	require.Equal(t, int64(9007199254740993), instance.Status.Ingestion.Progress.Current)
+	require.Equal(t, "error", *instance.Status.Ingestion.State)
+	require.Equal(t, "failed", instance.Status.Lifecycle)
+	require.Equal(t, "service_error", instance.Status.Error.Code)
+	require.Equal(t, "policy", instance.Status.SuspendedBy[0].Source)
+}
+
+func TestGivenPublicContract_WhenSuspensionPatched_ThenExplicitBooleanReachesHTTP(t *testing.T) {
+	for _, suspend := range []bool{false, true} {
+		name := "resume"
+		literal := "false"
+		if suspend {
+			name = "suspend"
+			literal = "true"
 		}
-	}))
-	defer server.Close()
-
-	client := New(server.URL, server.Client())
-	ctx := t.Context()
-	requestedVersion := "v1.0.0"
-
-	// When lifecycle methods use the server.
-	connectors, err := client.ListConnectors(ctx, ListOptions{})
-	require.NoError(t, err)
-	facets, err := client.GetConnectorFacets(ctx, "")
-	require.NoError(t, err)
-	capabilities, err := client.GetQueryCapabilities(ctx)
-	require.NoError(t, err)
-	connector, err := client.GetConnector(ctx, "stripe")
-	require.NoError(t, err)
-	versions, err := client.ListConnectorVersions(ctx, "stripe", ListOptions{})
-	require.NoError(t, err)
-	version, err := client.GetConnectorVersion(ctx, "stripe", VersionAliasLatest)
-	require.NoError(t, err)
-	instances, err := client.ListConnectorInstances(ctx, ListOptions{})
-	require.NoError(t, err)
-	created, err := client.CreateConnectorInstance(ctx, ConnectorInstanceCreate{Name: "worker", Spec: ConnectorInstanceSpec{ConnectorRef: &ObjectRef{Name: "stripe"}, Version: &requestedVersion, Ledger: "ledger"}})
-	require.NoError(t, err)
-	fetched, err := client.GetConnectorInstance(ctx, "worker")
-	require.NoError(t, err)
-	patched, err := client.PatchConnectorInstance(ctx, "worker", ConnectorInstancePatch{"spec": map[string]any{"pollInterval": "1m"}})
-	require.NoError(t, err)
-	err = client.DeleteConnectorInstance(ctx, "worker")
-	require.NoError(t, err)
-
-	// Then each response is decoded from the API contract.
-	require.Len(t, connectors.Items, 1)
-	require.Equal(t, "stripe", *connectors.Items[0].Metadata.Name)
-	require.Equal(t, "v1.0.0", *connectors.Items[0].Spec.LatestVersion)
-	require.Equal(t, int64(1), facets.Total)
-	require.Equal(t, int64(1), facets.Facets["provider"]["psp"])
-	require.Equal(t, []string{"$match", "$in", "$like"}, capabilities.Resources[ResourceConnectors]["name"].Operators)
-	require.Equal(t, "stripe", *connector.Metadata.Name)
-	require.Len(t, versions.Items, 1)
-	require.Equal(t, "v1.0.0", versions.Items[0].Version)
-	require.Equal(t, "v1.0.0", version.Version)
-	require.NotEmpty(t, version.ConfigSchema)
-	require.Empty(t, instances.Items)
-	require.Equal(t, "worker", *created.Metadata.Name)
-	require.Equal(t, "worker", *fetched.Metadata.Name)
-	require.Equal(t, "worker", *patched.Metadata.Name)
-}
-
-func TestGivenConnectivityAPI_WhenConfigIsPatched_ThenAPIShapeIsSent(t *testing.T) {
-	// Given a server asserting the documented ConnectorInstancePatch shape.
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		require.Equal(t, http.MethodPatch, req.Method)
-		require.Equal(t, "application/merge-patch+json", req.Header.Get("Content-Type"))
-
-		var patch map[string]any
-		require.NoError(t, json.NewDecoder(req.Body).Decode(&patch))
-		spec, ok := patch["spec"].(map[string]any)
-		require.True(t, ok)
-		require.NotContains(t, spec, "config")
-		require.Equal(t, "30s", spec["pollInterval"])
-		require.Equal(t, map[string]any{
-			"API_PASSWORD": map[string]any{"value": "env-password"},
-		}, spec["env"])
-		require.Equal(t, []any{
-			map[string]any{"path": "/etc/plugin/key.pem", "value": "file-password"},
-			map[string]any{"path": "/etc/plugin/config.json", "value": "complete-file-array"},
-		}, spec["files"])
-
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connectorRef":{"name":"stripe"},"ledger":"main"}}`)
-	}))
-	defer server.Close()
-
-	client := New(server.URL, server.Client())
-	envPassword := "env-password"
-	filePassword := "file-password"
-	otherFile := "complete-file-array"
-
-	config := &ConnectorInstanceConfig{
-		Env: map[string]EnvValue{"API_PASSWORD": {Value: &envPassword}},
-		Files: []FileMount{
-			{Path: "/etc/plugin/key.pem", Value: &filePassword},
-			{Path: "/etc/plugin/config.json", Value: &otherFile},
-		},
-	}
-
-	// When configuration assembly is flattened into the tenant patch.
-	_, err := client.PatchConnectorInstance(t.Context(), "worker", ConnectorInstancePatch{
-		"spec": map[string]any{
-			"env": config.Env, "files": config.Files, "pollInterval": "30s",
-		},
-	})
-
-	// Then the API receives spec.env/spec.files and preserves the full files array.
-	require.NoError(t, err)
-}
-
-func TestGivenConnectivityAPI_WhenSuspensionIsPatched_ThenExactBooleanBodyIsSent(t *testing.T) {
-	tests := []struct {
-		name    string
-		suspend bool
-		want    string
-	}{
-		{name: "suspension", suspend: true, want: `{"spec":{"suspend":true}}`},
-		{name: "resumption", suspend: false, want: `{"spec":{"suspend":false}}`},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			// Given a Connectivity server accepting ConnectorInstance merge patches.
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-				require.Equal(t, http.MethodPatch, req.Method)
-				require.Equal(t, "/api/connectivity/connectorinstances/worker", req.URL.EscapedPath())
-				require.Equal(t, "application/merge-patch+json", req.Header.Get("Content-Type"))
-				body, err := io.ReadAll(req.Body)
-				require.NoError(t, err)
-				require.Equal(t, test.want, string(body))
-				w.Header().Set("Content-Type", "application/json")
-				_, _ = io.WriteString(w, `{"metadata":{"name":"worker"},"spec":{"connectorRef":{"name":"stripe"},"ledger":"main"}}`)
-			}))
-			defer server.Close()
-
-			// When the client requests suspension or resumption.
-			_, err := New(server.URL, server.Client()).PatchConnectorInstance(
-				t.Context(),
-				"worker",
-				ConnectorInstancePatch{"spec": map[string]any{"suspend": test.suspend}},
-			)
-
-			// Then the exact boolean, including false, reaches the HTTP route.
+		t.Run(name, func(t *testing.T) {
+			server, requests := contractServer(t, 200, instanceResponse)
+			_, err := New(server.URL, server.Client()).PatchConnectorInstance(t.Context(), "worker", ConnectorInstancePatch{"configuration": map[string]any{"suspend": suspend}})
 			require.NoError(t, err)
+			request := <-requests
+			require.NoError(t, request.err)
+			require.JSONEq(t, `{"configuration":{"suspend":`+literal+`}}`, string(request.body))
 		})
 	}
+}
+
+func TestGivenPublicContract_WhenRequestFails_ThenHTTPStatusAndDiagnosticSurvive(t *testing.T) {
+	for _, tt := range []struct {
+		name, body, code string
+		status           int
+	}{
+		{"unauthorized", "", "", 401},
+		{"unknown field", `{"code":"unsupported_field","message":"Unsupported tenant field","details":{"field":"metadata"}}`, "unsupported_field", 400},
+		{"immutable ledger", `{"code":"ledger_immutable","message":"Ledger cannot change"}`, "ledger_immutable", 422},
+		{"unavailable", `{"code":"unavailable","message":"Service unavailable"}`, "unavailable", 503},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			server, requests := contractServer(t, tt.status, tt.body)
+			result, err := New(server.URL, server.Client()).GetConnectorInstance(t.Context(), "worker")
+			require.Nil(t, result)
+			require.NoError(t, (<-requests).err)
+			var apiErr *APIError
+			require.ErrorAs(t, err, &apiErr)
+			require.Equal(t, tt.status, apiErr.StatusCode)
+			require.Equal(t, tt.code, apiErr.Code)
+			require.NotEmpty(t, apiErr.Message)
+		})
+	}
+}
+
+func TestWriteValidationPreventsInvalidConfigurationRequests(t *testing.T) {
+	valid := ConnectorInstanceConfiguration{Connector: "stripe", Ledger: "main", Version: pointer("v1.0.0")}
+	cases := map[string]ConnectorInstanceConfiguration{}
+	config := valid
+	config.Connector = ""
+	cases["missing connector"] = config
+	config = valid
+	config.Ledger = ""
+	cases["missing ledger"] = config
+	config = valid
+	config.Version = nil
+	cases["missing selector"] = config
+	config = valid
+	config.Channel = pointer("stable")
+	cases["two selectors"] = config
+	config = valid
+	config.Version = pointer("")
+	cases["empty version"] = config
+	config = valid
+	config.Version = nil
+	config.Channel = pointer("latest")
+	cases["invalid channel"] = config
+	for name, config := range cases {
+		t.Run(name, func(t *testing.T) {
+			c := New("https://stack.example", &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+				t.Error("invalid request reached transport")
+				return jsonResponse(500, ""), nil
+			})})
+			created, err := c.CreateConnectorInstance(t.Context(), ConnectorInstanceCreate{Name: "worker", Configuration: config})
+			require.Error(t, err)
+			require.Nil(t, created)
+			replaced, err := c.ReplaceConnectorInstance(t.Context(), "worker", ConnectorInstanceUpdate{Configuration: config})
+			require.Error(t, err)
+			require.Nil(t, replaced)
+		})
+	}
+	_, err := New("https://stack.example", nil).CreateConnectorInstance(t.Context(), ConnectorInstanceCreate{Configuration: valid})
+	require.ErrorContains(t, err, "name is required")
+}
+
+func TestPatchRejectsAdministrativeAndNonliteralInputsBeforeHTTP(t *testing.T) {
+	for _, patch := range []ConnectorInstancePatch{
+		nil, {"spec": map[string]any{"suspend": true}}, {"metadata": map[string]any{"name": "worker"}},
+		{"configuration": nil}, {"configuration": []string{}},
+		{"configuration": map[string]any{"connectorRef": map[string]any{"name": "stripe"}}},
+		{"configuration": map[string]any{"env": map[string]any{"TOKEN": map[string]any{"secretRef": map[string]any{"name": "secret", "key": "token"}}}}},
+		{"configuration": map[string]any{"files": []any{map[string]any{"path": "/etc/key", "value": "contents"}}}},
+		{"configuration": map[string]any{"channel": "latest"}},
+		{"configuration": map[string]any{"initialCursor": "not-base64!"}},
+		{"configuration": map[string]any{"env": map[string]any{"TOKEN": true}}},
+		{"configuration": func() {}},
+	} {
+		c := New("https://stack.example", &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+			t.Error("invalid patch reached transport")
+			return jsonResponse(500, ""), nil
+		})})
+		got, err := c.PatchConnectorInstance(t.Context(), "worker", patch)
+		require.Error(t, err)
+		require.Nil(t, got)
+	}
+}
+
+func TestListResponsesPreserveValidEmptyPages(t *testing.T) {
+	c := New("https://stack.example", responseClient(200, emptyPage))
+	connectors, err := c.ListConnectors(t.Context(), ListOptions{})
+	require.NoError(t, err)
+	require.Empty(t, connectors.Items)
+	require.False(t, connectors.HasMore)
+	versions, err := c.ListConnectorVersions(t.Context(), "stripe", ListOptions{})
+	require.NoError(t, err)
+	require.Empty(t, versions.Items)
+	instances, err := c.ListConnectorInstances(t.Context(), ListOptions{})
+	require.NoError(t, err)
+	require.Empty(t, instances.Items)
+}
+
+func TestGivenPublicServer_WhenLifecycleMethodsRun_ThenEveryRouteUsesHTTP(t *testing.T) {
+	routes := map[string]struct {
+		status int
+		body   string
+	}{
+		"GET /api/connectivity/connectors":                        {200, `{"cursor":{"pageSize":15,"hasMore":false,"data":[{"name":"stripe","latestVersion":"v1.0.0"}]}}`},
+		"GET /api/connectivity/connectors/_facets":                {200, `{"total":1,"facets":{"provider":{"psp":1}}}`},
+		"GET /api/connectivity/_query/capabilities":               {200, `{"resources":{"connectors":{"name":{"operators":["$match"]}}}}`},
+		"GET /api/connectivity/connectors/stripe":                 {200, `{"name":"stripe"}`},
+		"GET /api/connectivity/connectors/stripe/versions":        {200, `{"cursor":{"pageSize":15,"hasMore":false,"data":[{"version":"v1.0.0"}]}}`},
+		"GET /api/connectivity/connectors/stripe/versions/latest": {200, `{"version":"v1.0.0","configSchema":{"type":"object"}}`},
+		"GET /api/connectivity/connector-instances":               {200, emptyPage},
+		"POST /api/connectivity/connector-instances":              {201, instanceResponse},
+		"GET /api/connectivity/connector-instances/worker":        {200, instanceResponse},
+		"PUT /api/connectivity/connector-instances/worker":        {200, instanceResponse},
+		"PATCH /api/connectivity/connector-instances/worker":      {200, instanceResponse},
+		"DELETE /api/connectivity/connector-instances/worker":     {204, ""},
+	}
+	seen := make(chan string, len(routes))
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		key := req.Method + " " + req.URL.EscapedPath()
+		route, ok := routes[key]
+		if !ok {
+			http.NotFound(w, req)
+			return
+		}
+		seen <- key
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(route.status)
+		_, _ = io.WriteString(w, route.body)
+	}))
+	t.Cleanup(server.Close)
+	c := New(server.URL, server.Client())
+	connectors, err := c.ListConnectors(t.Context(), ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "stripe", connectors.Items[0].Name)
+	require.Equal(t, "v1.0.0", *connectors.Items[0].LatestVersion)
+	facets, err := c.GetConnectorFacets(t.Context(), "")
+	require.NoError(t, err)
+	require.Equal(t, int64(1), facets.Facets["provider"]["psp"])
+	capabilities, err := c.GetQueryCapabilities(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, []string{"$match"}, capabilities.Resources[ResourceConnectors]["name"].Operators)
+	connector, err := c.GetConnector(t.Context(), "stripe")
+	require.NoError(t, err)
+	require.Equal(t, "stripe", connector.Name)
+	versions, err := c.ListConnectorVersions(t.Context(), "stripe", ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "v1.0.0", versions.Items[0].Version)
+	version, err := c.GetConnectorVersion(t.Context(), "stripe", VersionAliasLatest)
+	require.NoError(t, err)
+	require.Equal(t, "v1.0.0", version.Version)
+	require.Equal(t, "object", version.ConfigSchema["type"])
+	instances, err := c.ListConnectorInstances(t.Context(), ListOptions{})
+	require.NoError(t, err)
+	require.Empty(t, instances.Items)
+	configuration := ConnectorInstanceConfiguration{Connector: "stripe", Ledger: "main", Version: pointer("v1.0.0")}
+	created, err := c.CreateConnectorInstance(t.Context(), ConnectorInstanceCreate{Name: "worker", Configuration: configuration})
+	require.NoError(t, err)
+	require.Equal(t, "worker", created.Name)
+	fetched, err := c.GetConnectorInstance(t.Context(), "worker")
+	require.NoError(t, err)
+	require.Equal(t, "worker", fetched.Name)
+	replaced, err := c.ReplaceConnectorInstance(t.Context(), "worker", ConnectorInstanceUpdate{Configuration: configuration})
+	require.NoError(t, err)
+	require.Equal(t, "worker", replaced.Name)
+	patched, err := c.PatchConnectorInstance(t.Context(), "worker", ConnectorInstancePatch{"configuration": map[string]any{"pollInterval": "1m"}})
+	require.NoError(t, err)
+	require.Equal(t, "worker", patched.Name)
+	require.NoError(t, c.DeleteConnectorInstance(t.Context(), "worker"))
+	require.Len(t, seen, len(routes))
+	for range len(routes) {
+		delete(routes, <-seen)
+	}
+	require.Empty(t, routes)
 }

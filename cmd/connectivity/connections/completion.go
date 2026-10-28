@@ -46,11 +46,11 @@ func CompleteConnectorInstanceNames(factory connectivityinternal.ClientFactory) 
 
 		candidates := make([]string, 0, len(instances))
 		for _, instance := range instances {
-			name := stringValue(instance.Metadata.Name)
+			name := instance.Name
 			if name == "" || !strings.HasPrefix(name, toComplete) {
 				continue
 			}
-			description := strings.Join(nonEmptyStrings(instance.Spec.ConnectorName(), instance.Spec.Ledger), " · ")
+			description := strings.Join(nonEmptyStrings(instance.Configuration.ConnectorName(), instance.Configuration.Ledger), " · ")
 			if description != "" {
 				name += "\t" + description
 			}
@@ -102,10 +102,7 @@ func completeVersions(factory connectivityinternal.ClientFactory, resolveConnect
 				continue
 			}
 			candidate := version.Version
-			description := version.Image
-			if description == "" {
-				description = stringValue(version.Digest)
-			}
+			description := stringValue(version.Digest)
 			if description != "" {
 				candidate += "\t" + description
 			}

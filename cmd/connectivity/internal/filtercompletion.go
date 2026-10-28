@@ -191,12 +191,12 @@ func connectorFilterValues(ctx context.Context, client connectivityclient.Client
 	}
 	values := make([]filterValue, 0, len(connectors))
 	for _, connector := range connectors {
-		if connector.Metadata.Name == nil || *connector.Metadata.Name == "" {
+		if connector.Name == "" {
 			continue
 		}
-		value := filterValue{value: *connector.Metadata.Name}
-		if connector.Spec.DisplayName != nil {
-			value.description = *connector.Spec.DisplayName
+		value := filterValue{value: connector.Name}
+		if connector.DisplayName != nil {
+			value.description = *connector.DisplayName
 		}
 		values = append(values, value)
 	}

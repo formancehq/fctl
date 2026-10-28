@@ -27,9 +27,9 @@ func (m listInstanceClientMock) ListConnectorInstances(ctx context.Context, opti
 func TestListConnectorInstancesPassesFiltersAndPaginationAndRendersApprovedColumns(t *testing.T) {
 	var gotOptions connectivityclient.ListOptions
 	channelInstance := instanceFixture("stripe-eu")
-	channelInstance.Spec.Version = nil
-	channelInstance.Spec.Channel = stringPtr("stable")
-	channelInstance.Status.ResolvedVersion = stringPtr("v1.3.0")
+	channelInstance.Configuration.Version = nil
+	channelInstance.Configuration.Channel = stringPtr("stable")
+	channelInstance.Status.AppliedVersion = stringPtr("v1.3.0")
 	client := listInstanceClientMock{list: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
 		gotOptions = options
 		return &connectivityclient.ConnectorInstanceList{
@@ -50,8 +50,8 @@ func TestListConnectorInstancesPassesFiltersAndPaginationAndRendersApprovedColum
 	}
 	require.Equal(t, wantOptions, gotOptions)
 	for _, expected := range []string{
-		"Name", "Connector", "Version", "Channel", "Resolved Version", "Ledger", "Phase", "State", "Current Sequence", "Source Tip Sequence", "Last Error",
-		"stripe-eu", "stripe", "stable", "v1.3.0", "main", "Ready", "Running", "42", "48", "source temporarily unavailable",
+		"Name", "Connector", "Version", "Channel", "Applied Version", "Ledger", "Lifecycle", "Ingestion State", "Progress Current", "Last Error (may be historical)",
+		"stripe-eu", "stripe", "stable", "v1.3.0", "main", "active", "running", "42", "source temporarily unavailable",
 		"HasMore", "true", "PageSize", "7", "Next", "next-page",
 	} {
 		require.Contains(t, output, expected)
@@ -65,10 +65,10 @@ func TestListConnectorInstancesConjoinsConnectorAndFilterExpressions(t *testing.
 		return &connectivityclient.ConnectorInstanceList{Items: []connectivityclient.ConnectorInstance{}}, nil
 	}}
 
-	_, err := executeCommand(NewListCommand(factoryReturning(client)), "--filter", "phase=Running", "--connector", "stripe")
+	_, err := executeCommand(NewListCommand(factoryReturning(client)), "--filter", "lifecycle=active", "--connector", "stripe")
 
 	require.NoError(t, err)
-	want := `{"$and":[{"$match":{"phase":"Running"}},{"$match":{"connector":"stripe"}}]}`
+	want := `{"$and":[{"$match":{"lifecycle":"active"}},{"$match":{"connector":"stripe"}}]}`
 	require.Equal(t, want, gotOptions.Query)
 }
 
@@ -92,7 +92,7 @@ func TestListConnectorInstancesRejectsRawQueryCombinedWithSugarFlags(t *testing.
 		return nil, nil
 	}}
 
-	_, err := executeCommand(NewListCommand(factoryReturning(client)), "--query", `{"$match":{"phase":"Running"}}`, "--connector", "stripe")
+	_, err := executeCommand(NewListCommand(factoryReturning(client)), "--query", `{"$match":{"lifecycle":"active"}}`, "--connector", "stripe")
 
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "--query cannot be combined with --filter")
@@ -109,9 +109,8 @@ func TestListConnectorInstancesWiresFilterAndConnectorCompletions(t *testing.T) 
 
 func TestListConnectorInstancesJSONPreservesCompleteModelsAndContinuation(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
-	instance.Metadata.Labels = map[string]string{"region": "eu"}
-	setInstanceConfig(&instance, &connectivityclient.ConnectorInstanceConfig{Env: map[string]connectivityclient.EnvValue{
-		"API_KEY": {Value: stringPtr("json-keeps-full-model")},
+	setInstanceConfig(&instance, &connectivityclient.ConnectorInstanceConfig{Env: map[string]string{
+		"API_KEY": "json-keeps-full-model",
 	}})
 	client := listInstanceClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
 		return &connectivityclient.ConnectorInstanceList{Items: []connectivityclient.ConnectorInstance{instance}, PageSize: 4, HasMore: true, Next: "next-page"}, nil

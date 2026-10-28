@@ -1,83 +1,75 @@
 # Connectivity stack gateway facade
 
-This package adapts Connectivity HTTP operations for fctl's existing stack
-client. It appends `/api/connectivity` to the stack URI and uses the supplied
-HTTP client, including its authentication and transport configuration. The
-public CLI calls these resources connections; API routes and query capability
-resource IDs remain `connectorinstances`.
+This package adapts Connectivity HTTP operations to fctl's existing authenticated
+stack client. It appends `/api/connectivity` to the stack URI and uses the supplied
+HTTP client and context. Instance routes and the query-capability resource ID are
+`connector-instances`; version capabilities use `connectorversions`.
 
-The facade keeps a stable CLI-facing `Client`, models, and `APIError` surface:
+## Public contract
 
-- Success responses must have an object root. Lists require a non-null
-  `cursor` object and `cursor.data` array; individual resources require their
-  identifying fields. Valid empty lists remain readable.
-- Instance responses require a non-blank `spec.connectorRef.name`. A non-empty
-  `status.resolvedVersion` also requires a non-blank `status.resolvedConnectorRef`
-  identifying the applied connector. Pending instances may omit resolved status.
-  A malformed instance rejects the whole list response; no partial page is returned.
-  Ledger and version/channel write validation remains owned by the server.
-- Structured API errors retain status, code, message, and details. An empty
-  error body, including HTTP 401, retains HTTP status and status text.
-- Typed create fields omit unset optional values and preserve explicit boolean
-  false and empty inline strings. Merge patches use a map to preserve the
-  distinction between omission, explicit `null`, and empty arrays or objects.
+The contract pin is Connectivity
+`761313ebf3b456cc47aa2ef16d3502ab121f1522`:
+[OpenAPI](https://github.com/formancehq/connectivity/blob/761313ebf3b456cc47aa2ef16d3502ab121f1522/misc/connectivity-api/openapi.yaml)
+and [generated SDK models](https://github.com/formancehq/connectivity/tree/761313ebf3b456cc47aa2ef16d3502ab121f1522/pkg/client/http/models/components).
+This pin identifies the inspected contract, not a broader server compatibility
+range or a deployed-server qualification.
 
-## Instance wire contract
+- Connectors expose flat public fields, starting with `name`. Versions have
+  `version`, optional digest, release date and published schema/metadata; they
+  do not expose an image reference.
+- Instances expose `name`, `configuration` and optional `status`.
+  `ConnectorInstanceConfiguration` contains `connector`, `ledger`, `version` or
+  `channel`, `initialCursor`, `pollInterval`, `suspend`, and literal `env`/`files`
+  string maps. `initialCursor` is opaque bytes encoded as base64 on the wire.
+  Kubernetes metadata, binding references, storage references and file modes
+  are outside this tenant contract.
+- POST sends `ConnectorInstanceCreate` with `name` and `configuration`. PUT
+  sends `ConnectorInstanceUpdate` with a complete `configuration`. Both require
+  a connector, ledger and exactly one version/channel selector. Changing the
+  connector or ledger remains a server-validated error.
+- PATCH sends a `configuration` merge patch. Omitted values are preserved;
+  `null` deletes a field or individual map entry. Literal empty strings and
+  explicit `suspend: false` survive encoding. The client rejects administrative
+  fields, reference objects and non-string values. The service validates the
+  merged selector and immutable fields.
+- Read responses omit confidential password values and reference-backed
+  entries. Do not infer an omitted value is empty. PUT must provide complete
+  configuration, including required secrets; use PATCH to preserve omissions.
+  Stored instances without a connector binding are readable, as allowed by the
+  contract, but cannot be submitted through POST or PUT without a connector.
+- Optional status reports recorded `appliedVersion`, `lifecycle`, ingestion
+  state/progress/lastError, sanitized error and request/policy suspension sources.
+  Progress is a plugin-defined integer, not a universal sequence or percentage.
+  Absent progress differs from a recorded zero. These fields do not prove live
+  worker health, observation freshness or an active error.
 
-The audited server contract is Connectivity revision
-`4084c5667ca17ce1ff3e0a5d6364ce5f3072e77f`, specifically
-[`openapi.yaml`](https://github.com/formancehq/connectivity/blob/4084c5667ca17ce1ff3e0a5d6364ce5f3072e77f/misc/connectivity-api/openapi.yaml)
-and [`mapping.go`](https://github.com/formancehq/connectivity/blob/4084c5667ca17ce1ff3e0a5d6364ce5f3072e77f/misc/connectivity-api/internal/server/mapping.go).
-This audit pin identifies the tested contract; it does not establish a broader
-server compatibility range.
+Success responses require an object root. Lists require non-null `cursor` and
+`cursor.data`; malformed resources reject the whole page. Resource identities,
+instance ledger, populated status, and progress are validated. Empty lists and
+absent status remain valid. Structured API errors retain HTTP status, code,
+message and details; empty or non-JSON errors retain status text, including 401.
 
-`ConnectorInstanceSpec` contains only `connectorRef`, `version`, `channel`,
-`connectivityRef`, `ledger`, `initialCursor`, `pollInterval`, `suspend`, `env`,
-and `files`. Both references are objects with a `name`. `initialCursor` is
-opaque `[]byte`, encoded as base64 by JSON. `ConnectorInstanceConfig` is an
-assembly helper; callers place its `Env` and `Files` directly in the spec or
-merge patch. `ConnectorName()` returns the reference name, and `Configuration()`
-returns an Env/Files helper sharing those values.
+## Generated SDK boundary
 
-`connector`, `config`, `startSequence`, and `replicas` are retired wire fields.
-Instance decoding enforces the current binding and resolved-identity requirements;
-responses without those fields are rejected. No client-side rewriting or installable-artifact fallback restores retired fields.
-
-## Generated client adoption gap
-
-Accepted [RFC-0012](https://github.com/formancehq/internal-rfcs/blob/391d9359c65edf2a4f196ad5689ddb8b0206b5aa/rfcs/0012-module-api-transport-and-client-distribution.md)
-makes the official generated Go package the default and requires a documented
-requirement for a custom client. The stack routing, strict response envelopes,
-stable CLI-facing models/error handling, and omission/null controls above are
-this existing facade's requirements. They do not prove that the generated SDK
-cannot support those requirements behind an adapter.
-
-The official module `github.com/formancehq/connectivity/pkg/client` exists at
-the audited server revision, declares Go 1.22, and exposes HTTP types under
-`http/models/components`. Its generated spec exposes the same tenant fields;
-its `InitialCursor` is `*string` containing base64, while this facade exposes
-bytes. fctl currently does not depend on that module, and these tests do not
-import its types or execute its operations.
-
-This bounded adaptation does not decide to replace the SDK, establish an
-approved RFC exception, or claim generated-client conformance. The fctl
-integration owner must assess using an immutable normal Go dependency behind
-the facade, verify cursor conversion and omission/null behavior, and add
-executable contract parity checks before claiming adoption. No generated
-source or contract is copied into this package.
+The handwritten facade in `client.go` preserves fctl's `Client`, list wrappers
+and `APIError` conventions. `cmd/connectivity/internal/client.go` constructs it
+with the selected stack URI and authenticated `StackClients.HTTPClient`. The pinned official SDK lives at
+`github.com/formancehq/connectivity/pkg/client` and represents `initialCursor`
+as a base64 string; this facade exposes bytes. Tests inspect the public shape
+without importing the server or the generated SDK.
 
 ## Verification
 
-From the repository root:
+From the repository root, use the pinned toolchain:
 
 ```sh
-nix develop --command go test ./internal/connectivityclient
+go test ./internal/connectivityclient
+go test -race ./internal/connectivityclient
 ```
 
-Unit tests use a fake HTTP transport. Given/When/Then integration tests use an
-isolated HTTP server to check POST/PATCH wire bodies, reference shapes, cursor
-base64, version/channel selectors, configuration values, deletion markers,
-empty file arrays, and decoded metadata/status projections. GET and list tests
-reject missing, null, empty, or blank bindings and reject resolved versions without
-an identity; pending responses remain valid. These tests do not qualify a deployed
-Connectivity server or the complete CLI integration.
+Transport tests cover escaped paths, query options, response validation and
+errors. Portable Given/When/Then fixtures use `httptest` to exercise actual
+POST/PUT/PATCH/GET requests, literal maps, cursor base64, selector switching,
+confidential-value omission, status decoding and null deletion markers. These
+fixtures are bounded consumer tests, not executable proof against a running
+Connectivity server or the full CLI.

@@ -74,7 +74,7 @@ func (c *SuspensionController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 		return nil, fctl.ErrMissingApproval
 	}
 	_, err = client.PatchConnectorInstance(cmd.Context(), name, connectivityclient.ConnectorInstancePatch{
-		"spec": map[string]any{"suspend": c.suspend},
+		"configuration": map[string]any{"suspend": c.suspend},
 	})
 	if err != nil {
 		return nil, err

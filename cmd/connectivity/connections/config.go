@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"reflect"
 	"sort"
 	"strings"
 
@@ -34,6 +33,7 @@ type InputOptions struct {
 	ConfigFile string
 	EnvFiles   []string
 	SetValues  []string
+	patch      map[string]any
 }
 
 type ReadFileFunc func(cmd *cobra.Command, path string) (string, error)
@@ -394,14 +394,14 @@ func firstDescription(left, right string) string {
 }
 
 func BuildInstallConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersion, inputs InputOptions, read ReadFileFunc) (*connectivityclient.ConnectorInstanceConfig, error) {
-	return buildConfig(cmd, version, nil, inputs, read)
+	return buildConfig(cmd, version, nil, inputs, read, true)
 }
 
 func BuildConfigureConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersion, current *connectivityclient.ConnectorInstanceConfig, inputs InputOptions, read ReadFileFunc) (*connectivityclient.ConnectorInstanceConfig, error) {
-	return buildConfig(cmd, version, current, inputs, read)
+	return buildConfig(cmd, version, current, inputs, read, false)
 }
 
-func buildConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersion, base *connectivityclient.ConnectorInstanceConfig, inputs InputOptions, read ReadFileFunc) (*connectivityclient.ConnectorInstanceConfig, error) {
+func buildConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersion, base *connectivityclient.ConnectorInstanceConfig, inputs InputOptions, read ReadFileFunc, install bool) (*connectivityclient.ConnectorInstanceConfig, error) {
 	contract, err := schemaContractFor(version)
 	if err != nil {
 		return nil, err
@@ -413,9 +413,9 @@ func buildConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersio
 	if inputs.ConfigFile != "" {
 		contents, err := readInput(cmd, read, inputs.ConfigFile)
 		if err != nil {
-			return nil, fmt.Errorf("reading config %q: %w", inputs.ConfigFile, err)
+			return nil, fmt.Errorf("cannot read config %q", inputs.ConfigFile)
 		}
-		if err := applyConfigDocument(config, contract, contents, unknown); err != nil {
+		if err := applyConfigDocument(config, contract, contents, unknown, inputs.patch); err != nil {
 			return nil, fmt.Errorf("parsing config %q: %w", inputs.ConfigFile, err)
 		}
 	}
@@ -423,9 +423,9 @@ func buildConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersio
 	for _, path := range inputs.EnvFiles {
 		contents, err := readInput(cmd, read, path)
 		if err != nil {
-			return nil, fmt.Errorf("reading env file %q: %w", path, err)
+			return nil, fmt.Errorf("cannot read env file %q", path)
 		}
-		if err := applyDotenv(config, contract, contents, unknown); err != nil {
+		if err := applyDotenv(config, contract, contents, unknown, inputs.patch); err != nil {
 			return nil, fmt.Errorf("parsing env file %s:%w", path, err)
 		}
 	}
@@ -445,6 +445,9 @@ func buildConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersio
 			return nil, fmt.Errorf("configuration key %q: %w", key, err)
 		}
 		applyValue(config, field, parsed)
+		if err := recordValue(inputs.patch, field, *parsed.value); err != nil {
+			return nil, err
+		}
 	}
 
 	if len(unknown) > 0 {
@@ -453,7 +456,7 @@ func buildConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersio
 
 	missing := make(map[string]struct{})
 	for key, field := range fields {
-		if field.Required && !hasValue(config, field) {
+		if install && field.Required && !hasValue(config, field) {
 			missing[key] = struct{}{}
 		}
 	}
@@ -464,45 +467,16 @@ func buildConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersio
 	return config, nil
 }
 
-type parsedValue struct {
-	value        *string
-	secretRef    *connectivityclient.KeyRef
-	configMapRef *connectivityclient.KeyRef
-}
+type parsedValue struct{ value *string }
 
-type configDocument struct {
-	Env   map[string]*documentValue `yaml:"env"`
-	Files []documentFile            `yaml:"files"`
-}
-
-type documentValue struct {
-	Value        *string      `yaml:"value"`
-	SecretRef    *documentRef `yaml:"secretRef"`
-	ConfigMapRef *documentRef `yaml:"configMapRef"`
-}
-
-type documentRef struct {
-	Name string `yaml:"name"`
-	Key  string `yaml:"key"`
-}
-
-type documentFile struct {
-	Path         string       `yaml:"path"`
-	Value        *string      `yaml:"value"`
-	SecretRef    *documentRef `yaml:"secretRef"`
-	ConfigMapRef *documentRef `yaml:"configMapRef"`
-	Mode         *int32       `yaml:"mode"`
+func literalValue(raw string) (parsedValue, error) {
+	if strings.HasPrefix(raw, "secret://") || strings.HasPrefix(raw, "configmap://") {
+		return parsedValue{}, fmt.Errorf("Kubernetes references are unsupported; supply a literal value or use @file / @- with --set")
+	}
+	return parsedValue{value: stringPointer(raw)}, nil
 }
 
 func parseSetValue(cmd *cobra.Command, read ReadFileFunc, raw string) (parsedValue, error) {
-	if strings.HasPrefix(raw, "secret://") {
-		ref, err := parseReference(strings.TrimPrefix(raw, "secret://"), "secret")
-		return parsedValue{secretRef: ref}, err
-	}
-	if strings.HasPrefix(raw, "configmap://") {
-		ref, err := parseReference(strings.TrimPrefix(raw, "configmap://"), "configmap")
-		return parsedValue{configMapRef: ref}, err
-	}
 	if strings.HasPrefix(raw, "@") {
 		path := strings.TrimPrefix(raw, "@")
 		if path == "" {
@@ -510,22 +484,33 @@ func parseSetValue(cmd *cobra.Command, read ReadFileFunc, raw string) (parsedVal
 		}
 		contents, err := readInput(cmd, read, path)
 		if err != nil {
-			return parsedValue{}, fmt.Errorf("reading value from %q: %w", path, err)
+			return parsedValue{}, fmt.Errorf("cannot read configuration value from file")
 		}
 		return parsedValue{value: stringPointer(contents)}, nil
 	}
-	return parsedValue{value: stringPointer(raw)}, nil
+	return literalValue(raw)
 }
 
-func parseReference(raw, kind string) (*connectivityclient.KeyRef, error) {
-	if strings.Count(raw, "/") != 1 {
-		return nil, fmt.Errorf("malformed %s reference: expected %s://name/key", kind, kind)
+// Intent is recorded independently of GET: confidential fields may be omitted
+// from reads, so a diff against readback would lose an explicit null deletion.
+func recordValue(patch map[string]any, field SchemaField, value any) error {
+	if patch == nil {
+		return nil
 	}
-	parts := strings.SplitN(raw, "/", 2)
-	if parts[0] == "" || parts[1] == "" {
-		return nil, fmt.Errorf("malformed %s reference: expected %s://name/key", kind, kind)
+	section := "env"
+	if field.Kind == ConfigFile {
+		section = "files"
 	}
-	return &connectivityclient.KeyRef{Name: parts[0], Key: parts[1]}, nil
+	if existing, present := patch[section]; present && existing == nil {
+		return fmt.Errorf("cannot combine clearing %s with setting its entries; use separate configure requests", section)
+	}
+	entries, ok := patch[section].(map[string]any)
+	if !ok {
+		entries = map[string]any{}
+		patch[section] = entries
+	}
+	entries[field.Key] = value
+	return nil
 }
 
 func parseAssignment(raw string) (string, string, error) {
@@ -540,7 +525,7 @@ func parseAssignment(raw string) (string, string, error) {
 	return key, parts[1], nil
 }
 
-func applyDotenv(config *connectivityclient.ConnectorInstanceConfig, contract schemaContract, contents string, unknown map[string]struct{}) error {
+func applyDotenv(config *connectivityclient.ConnectorInstanceConfig, contract schemaContract, contents string, unknown map[string]struct{}, patch map[string]any) error {
 	scanner := bufio.NewScanner(strings.NewReader(contents))
 	line := 0
 	for scanner.Scan() {
@@ -564,7 +549,14 @@ func applyDotenv(config *connectivityclient.ConnectorInstanceConfig, contract sc
 			unknown[key] = struct{}{}
 			continue
 		}
-		applyValue(config, field, parsedValue{value: stringPointer(value)})
+		parsed, err := literalValue(value)
+		if err != nil {
+			return fmt.Errorf("configuration key %q: %w", key, err)
+		}
+		applyValue(config, field, parsed)
+		if err := recordValue(patch, field, value); err != nil {
+			return err
+		}
 	}
 	if err := scanner.Err(); err != nil {
 		return err
@@ -640,84 +632,66 @@ func applyDoubleQuoteEscapes(value string) string {
 	return decoded.String()
 }
 
-func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, contract schemaContract, contents string, unknown map[string]struct{}) error {
+func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, contract schemaContract, contents string, unknown map[string]struct{}, patch map[string]any) error {
 	var root map[string]any
 	if err := yaml.Unmarshal([]byte(contents), &root); err != nil {
 		return configDecodeError(err)
 	}
-	if root == nil {
-		return nil
-	}
-
-	_, hasEnv := root["env"]
-	_, hasFiles := root["files"]
-	if !hasEnv && !hasFiles && len(root) > 0 {
-		return fmt.Errorf("configuration file must use env/files sections; flat configuration is unsupported")
-	}
-
-	for key := range root {
-		if key != "env" && key != "files" {
-			unknown[key] = struct{}{}
-		}
-	}
-	var document configDocument
-	if err := yaml.Unmarshal([]byte(contents), &document); err != nil {
-		return configDecodeError(err)
-	}
-	if hasEnv && root["env"] == nil {
-		config.Env = nil
-	}
-	for key, value := range document.Env {
-		_, exists := configField(contract, key, ConfigEnv)
-		if !exists {
-			unknown[key] = struct{}{}
+	for section, raw := range root {
+		kind := ConfigEnv
+		switch section {
+		case "env":
+		case "files":
+			kind = ConfigFile
+		default:
+			unknown[section] = struct{}{}
 			continue
 		}
-		if value == nil {
-			delete(config.Env, key)
+		if raw == nil {
+			if kind == ConfigEnv {
+				config.Env = nil
+			} else {
+				config.Files = nil
+			}
+			if patch != nil {
+				patch[section] = nil
+			}
 			continue
 		}
-		converted := connectivityclient.EnvValue{
-			Value:        cloneString(value.Value),
-			SecretRef:    value.SecretRef.clientRef(),
-			ConfigMapRef: value.ConfigMapRef.clientRef(),
+		values, ok := raw.(map[string]any)
+		if !ok {
+			return fmt.Errorf("invalid YAML/JSON configuration: env and files must be mappings of literal strings or null")
 		}
-		if err := validateSources(converted.Value, converted.SecretRef, converted.ConfigMapRef); err != nil {
-			return fmt.Errorf("configuration key %q: %w", key, err)
+		for key, rawValue := range values {
+			field, exists := configField(contract, key, kind)
+			if !exists {
+				unknown[key] = struct{}{}
+				continue
+			}
+			if rawValue == nil {
+				if kind == ConfigEnv {
+					delete(config.Env, key)
+				} else {
+					delete(config.Files, key)
+				}
+				if err := recordValue(patch, field, nil); err != nil {
+					return err
+				}
+				continue
+			}
+			value, ok := rawValue.(string)
+			if !ok {
+				return fmt.Errorf("configuration key %q: expected a literal string or null; Kubernetes reference objects are unsupported", key)
+			}
+			parsed, err := literalValue(value)
+			if err != nil {
+				return fmt.Errorf("configuration key %q: %w", key, err)
+			}
+			applyValue(config, field, parsed)
+			if err := recordValue(patch, field, value); err != nil {
+				return err
+			}
 		}
-		if config.Env == nil {
-			config.Env = make(map[string]connectivityclient.EnvValue)
-		}
-		config.Env[key] = converted
-	}
-	// A structured files section replaces the whole array under merge patch.
-	// Individual --set assignments still update a mount and retain other files.
-	if hasFiles {
-		config.Files = nil
-		if root["files"] != nil {
-			config.Files = []connectivityclient.FileMount{}
-		}
-	}
-	for _, file := range document.Files {
-		if strings.TrimSpace(file.Path) == "" {
-			return fmt.Errorf("structured configuration file path is required")
-		}
-		_, exists := configField(contract, file.Path, ConfigFile)
-		if !exists {
-			unknown[file.Path] = struct{}{}
-			continue
-		}
-		converted := connectivityclient.FileMount{
-			Path:         file.Path,
-			Value:        cloneString(file.Value),
-			SecretRef:    file.SecretRef.clientRef(),
-			ConfigMapRef: file.ConfigMapRef.clientRef(),
-			Mode:         cloneMode(file.Mode),
-		}
-		if err := validateSources(converted.Value, converted.SecretRef, converted.ConfigMapRef); err != nil {
-			return fmt.Errorf("configuration key %q: %w", file.Path, err)
-		}
-		replaceFile(config, converted)
 	}
 	return nil
 }
@@ -750,7 +724,7 @@ func configDecodeError(err error) error {
 	if len(locations) > 0 {
 		location = " at lines " + strings.Join(locations, ", ")
 	}
-	return fmt.Errorf("invalid YAML/JSON configuration%s: expected env mapping and files list with structured value, secretRef, or configMapRef entries", location)
+	return fmt.Errorf("invalid YAML/JSON configuration%s: expected env and files mappings of literal strings or null", location)
 }
 
 func configField(contract schemaContract, key string, kind ConfigKind) (SchemaField, bool) {
@@ -774,174 +748,40 @@ func assignmentField(contract schemaContract, key string) (SchemaField, bool) {
 	return configField(contract, key, kind)
 }
 
-func (ref *documentRef) clientRef() *connectivityclient.KeyRef {
-	if ref == nil {
-		return nil
-	}
-	return &connectivityclient.KeyRef{Name: ref.Name, Key: ref.Key}
-}
-
-func validateSources(value *string, secretRef, configMapRef *connectivityclient.KeyRef) error {
-	count := 0
-	if value != nil {
-		count++
-	}
-	if secretRef != nil {
-		count++
-		if secretRef.Name == "" || secretRef.Key == "" {
-			return fmt.Errorf("secret reference requires name and key")
-		}
-	}
-	if configMapRef != nil {
-		count++
-		if configMapRef.Name == "" || configMapRef.Key == "" {
-			return fmt.Errorf("configmap reference requires name and key")
-		}
-	}
-	if count != 1 {
-		return fmt.Errorf("exactly one of value, secretRef, or configMapRef is required")
-	}
-	return nil
-}
-
 func applyValue(config *connectivityclient.ConnectorInstanceConfig, field SchemaField, value parsedValue) {
 	if field.Kind == ConfigEnv {
 		if config.Env == nil {
-			config.Env = make(map[string]connectivityclient.EnvValue)
+			config.Env = map[string]string{}
 		}
-		config.Env[field.Key] = connectivityclient.EnvValue{
-			Value:        value.value,
-			SecretRef:    value.secretRef,
-			ConfigMapRef: value.configMapRef,
+		config.Env[field.Key] = *value.value
+	} else {
+		if config.Files == nil {
+			config.Files = map[string]string{}
 		}
-		return
+		config.Files[field.Key] = *value.value
 	}
-	replaceFile(config, connectivityclient.FileMount{
-		Path:         field.Key,
-		Value:        value.value,
-		SecretRef:    value.secretRef,
-		ConfigMapRef: value.configMapRef,
-	})
-}
-
-func replaceFile(config *connectivityclient.ConnectorInstanceConfig, replacement connectivityclient.FileMount) {
-	for index := range config.Files {
-		if config.Files[index].Path == replacement.Path {
-			if replacement.Mode == nil {
-				replacement.Mode = cloneMode(config.Files[index].Mode)
-			}
-			config.Files[index] = replacement
-			return
-		}
-	}
-	config.Files = append(config.Files, replacement)
 }
 
 func hasValue(config *connectivityclient.ConnectorInstanceConfig, field SchemaField) bool {
 	if field.Kind == ConfigEnv {
-		value, exists := config.Env[field.Key]
-		return exists && validateSources(value.Value, value.SecretRef, value.ConfigMapRef) == nil
+		_, exists := config.Env[field.Key]
+		return exists
 	}
-	for _, file := range config.Files {
-		if file.Path == field.Key {
-			return validateSources(file.Value, file.SecretRef, file.ConfigMapRef) == nil
-		}
-	}
-	return false
+	_, exists := config.Files[field.Key]
+	return exists
 }
 
 func cloneConfig(source *connectivityclient.ConnectorInstanceConfig) *connectivityclient.ConnectorInstanceConfig {
-	clone := &connectivityclient.ConnectorInstanceConfig{Env: make(map[string]connectivityclient.EnvValue)}
-	if source == nil {
-		return clone
-	}
-	for key, value := range source.Env {
-		clone.Env[key] = cloneEnvValue(value)
-	}
-	if source.Files != nil {
-		clone.Files = make([]connectivityclient.FileMount, len(source.Files))
-	}
-	for index, file := range source.Files {
-		clone.Files[index] = cloneFileMount(file)
+	clone := &connectivityclient.ConnectorInstanceConfig{Env: map[string]string{}, Files: map[string]string{}}
+	if source != nil {
+		for key, value := range source.Env {
+			clone.Env[key] = value
+		}
+		for key, value := range source.Files {
+			clone.Files[key] = value
+		}
 	}
 	return clone
-}
-
-func configurationPatch(current, desired *connectivityclient.ConnectorInstanceConfig) map[string]any {
-	patch := make(map[string]any)
-	if desired.Env == nil && len(current.Env) > 0 {
-		patch["env"] = nil
-	} else {
-		env := make(map[string]any)
-		for key := range current.Env {
-			if _, exists := desired.Env[key]; !exists {
-				env[key] = nil
-			}
-		}
-		for key, value := range desired.Env {
-			old, exists := current.Env[key]
-			if exists && reflect.DeepEqual(old, value) {
-				continue
-			}
-			// Omitting an old source would retain it under JSON merge patch and
-			// produce an invalid entry with two sources. Delete opposite sources.
-			env[key] = map[string]any{
-				"value": value.Value, "secretRef": value.SecretRef, "configMapRef": value.ConfigMapRef,
-			}
-		}
-		if len(env) > 0 {
-			patch["env"] = env
-		}
-	}
-	if !reflect.DeepEqual(current.Files, desired.Files) {
-		if desired.Files == nil {
-			patch["files"] = nil
-		} else {
-			patch["files"] = desired.Files
-		}
-	}
-	return patch
-}
-
-func cloneEnvValue(value connectivityclient.EnvValue) connectivityclient.EnvValue {
-	return connectivityclient.EnvValue{
-		Value:        cloneString(value.Value),
-		SecretRef:    cloneRef(value.SecretRef),
-		ConfigMapRef: cloneRef(value.ConfigMapRef),
-	}
-}
-
-func cloneFileMount(file connectivityclient.FileMount) connectivityclient.FileMount {
-	clone := connectivityclient.FileMount{
-		Path:         file.Path,
-		Value:        cloneString(file.Value),
-		SecretRef:    cloneRef(file.SecretRef),
-		ConfigMapRef: cloneRef(file.ConfigMapRef),
-	}
-	clone.Mode = cloneMode(file.Mode)
-	return clone
-}
-
-func cloneMode(value *int32) *int32 {
-	if value == nil {
-		return nil
-	}
-	clone := *value
-	return &clone
-}
-
-func cloneString(value *string) *string {
-	if value == nil {
-		return nil
-	}
-	return stringPointer(*value)
-}
-
-func cloneRef(ref *connectivityclient.KeyRef) *connectivityclient.KeyRef {
-	if ref == nil {
-		return nil
-	}
-	return &connectivityclient.KeyRef{Name: ref.Name, Key: ref.Key}
 }
 
 func readInput(cmd *cobra.Command, read ReadFileFunc, path string) (string, error) {

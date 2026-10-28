@@ -166,8 +166,8 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 	if name == "" {
 		name = connectorName
 	}
-	spec := connectivityclient.ConnectorInstanceSpec{
-		ConnectorRef:  &connectivityclient.ObjectRef{Name: connectorName},
+	spec := connectivityclient.ConnectorInstanceConfiguration{
+		Connector:     connectorName,
 		Ledger:        fctl.GetString(cmd, ledgerFlag),
 		InitialCursor: cursor,
 	}
@@ -195,7 +195,7 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 	if !c.approve(cmd, "You are about to install Connectivity connection %q", name) {
 		return nil, fctl.ErrMissingApproval
 	}
-	instance, err := client.CreateConnectorInstance(cmd.Context(), connectivityclient.ConnectorInstanceCreate{Name: name, Spec: spec})
+	instance, err := client.CreateConnectorInstance(cmd.Context(), connectivityclient.ConnectorInstanceCreate{Name: name, Configuration: spec})
 	if err != nil {
 		return nil, err
 	}
@@ -215,9 +215,9 @@ func (c *InstallController) Render(cmd *cobra.Command, _ []string) error {
 	_, err := fmt.Fprintf(
 		cmd.OutOrStdout(),
 		"Connection %q installed with connector %q for ledger %q.\n",
-		stringValue(instance.Metadata.Name),
-		instance.Spec.ConnectorName(),
-		instance.Spec.Ledger,
+		instance.Name,
+		instance.Configuration.ConnectorName(),
+		instance.Configuration.Ledger,
 	)
 	return err
 }

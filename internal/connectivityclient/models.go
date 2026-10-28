@@ -2,6 +2,8 @@ package connectivityclient
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -9,7 +11,7 @@ import (
 const (
 	ResourceConnectors         = "connectors"
 	ResourceConnectorVersions  = "connectorversions"
-	ResourceConnectorInstances = "connectorinstances"
+	ResourceConnectorInstances = "connector-instances"
 )
 
 // VersionAliasLatest resolves to the newest Validated version across all
@@ -19,39 +21,6 @@ const VersionAliasLatest = "latest"
 
 var VersionAliases = []string{VersionAliasLatest, "stable", "rc", "beta", "alpha"}
 
-type ObjectMeta struct {
-	Name              *string           `json:"name,omitempty"`
-	Namespace         *string           `json:"namespace,omitempty"`
-	ResourceVersion   *string           `json:"resourceVersion,omitempty"`
-	UID               *string           `json:"uid,omitempty"`
-	CreationTimestamp *time.Time        `json:"creationTimestamp,omitempty"`
-	Labels            map[string]string `json:"labels,omitempty"`
-	Annotations       map[string]string `json:"annotations,omitempty"`
-}
-
-type KeyRef struct {
-	Name string `json:"name"`
-	Key  string `json:"key"`
-}
-
-type ObjectRef struct {
-	Name string `json:"name"`
-}
-
-type EnvValue struct {
-	Value        *string `json:"value,omitempty"`
-	SecretRef    *KeyRef `json:"secretRef,omitempty"`
-	ConfigMapRef *KeyRef `json:"configMapRef,omitempty"`
-}
-
-type FileMount struct {
-	Path         string  `json:"path"`
-	Value        *string `json:"value,omitempty"`
-	SecretRef    *KeyRef `json:"secretRef,omitempty"`
-	ConfigMapRef *KeyRef `json:"configMapRef,omitempty"`
-	Mode         *int32  `json:"mode,omitempty"`
-}
-
 type ConnectorBranding struct {
 	DisplayName *string `json:"displayName,omitempty"`
 	AccentColor *string `json:"accentColor,omitempty"`
@@ -59,26 +28,16 @@ type ConnectorBranding struct {
 	LogoSvgDark *string `json:"logoSvgDark,omitempty"`
 }
 
-type ConnectorSpec struct {
+type Connector struct {
+	Name          string             `json:"name"`
+	CreatedAt     *time.Time         `json:"createdAt,omitempty"`
 	DisplayName   *string            `json:"displayName,omitempty"`
 	Description   *string            `json:"description,omitempty"`
-	ImageURL      *string            `json:"imageUrl,omitempty"`
 	Catalog       *string            `json:"catalog,omitempty"`
 	Tags          []string           `json:"tags,omitempty"`
 	Tagline       *string            `json:"tagline,omitempty"`
 	Branding      *ConnectorBranding `json:"branding,omitempty"`
 	LatestVersion *string            `json:"latestVersion,omitempty"`
-}
-
-type ConnectorStatus struct {
-	Phase   *string `json:"phase,omitempty"`
-	Message *string `json:"message,omitempty"`
-}
-
-type Connector struct {
-	Metadata ObjectMeta       `json:"metadata"`
-	Spec     ConnectorSpec    `json:"spec"`
-	Status   *ConnectorStatus `json:"status,omitempty"`
 }
 
 type ConnectorList struct {
@@ -90,14 +49,12 @@ type ConnectorList struct {
 
 type ConnectorVersionSummary struct {
 	Version     string     `json:"version"`
-	Image       string     `json:"image"`
 	Digest      *string    `json:"digest,omitempty"`
 	ReleaseDate *time.Time `json:"releaseDate,omitempty"`
 }
 
 type ConnectorVersion struct {
 	Version            string         `json:"version"`
-	Image              string         `json:"image"`
 	Digest             *string        `json:"digest,omitempty"`
 	ReleaseDate        *time.Time     `json:"releaseDate,omitempty"`
 	ConfigSchema       map[string]any `json:"configSchema,omitempty"`
@@ -125,62 +82,109 @@ type QueryCapabilities struct {
 	Resources map[string]map[string]QueryFieldCapability `json:"resources"`
 }
 
-// ConnectorInstanceConfig groups inputs for configuration assembly. The wire
-// spec carries Env and Files directly, without a config wrapper.
+// ConnectorInstanceConfig groups literal inputs for configuration assembly.
 type ConnectorInstanceConfig struct {
-	Env   map[string]EnvValue `json:"env,omitempty"`
-	Files []FileMount         `json:"files,omitempty"`
+	Env   map[string]string `json:"env,omitempty"`
+	Files map[string]string `json:"files,omitempty"`
 }
 
-type ConnectorInstanceSpec struct {
-	ConnectorRef    *ObjectRef          `json:"connectorRef,omitempty"`
-	Version         *string             `json:"version,omitempty"`
-	Channel         *string             `json:"channel,omitempty"`
-	ConnectivityRef *ObjectRef          `json:"connectivityRef,omitempty"`
-	Ledger          string              `json:"ledger"`
-	InitialCursor   []byte              `json:"initialCursor,omitempty"`
-	PollInterval    *string             `json:"pollInterval,omitempty"`
-	Suspend         *bool               `json:"suspend,omitempty"`
-	Env             map[string]EnvValue `json:"env,omitempty"`
-	Files           []FileMount         `json:"files,omitempty"`
+// ConnectorInstanceConfiguration contains only tenant-owned public fields.
+// Connector may be absent on reads of an unbound stored instance. Writes require
+// connector, ledger and exactly one of version or channel.
+type ConnectorInstanceConfiguration struct {
+	Connector     string            `json:"connector,omitempty"`
+	Version       *string           `json:"version,omitempty"`
+	Channel       *string           `json:"channel,omitempty"`
+	Ledger        string            `json:"ledger"`
+	InitialCursor []byte            `json:"initialCursor,omitempty"`
+	PollInterval  *string           `json:"pollInterval,omitempty"`
+	Suspend       *bool             `json:"suspend,omitempty"`
+	Env           map[string]string `json:"env,omitempty"`
+	Files         map[string]string `json:"files,omitempty"`
 }
 
-func (s ConnectorInstanceSpec) ConnectorName() string {
-	if s.ConnectorRef == nil {
-		return ""
-	}
-	return s.ConnectorRef.Name
-}
-
-func (s ConnectorInstanceSpec) Configuration() *ConnectorInstanceConfig {
+func (s ConnectorInstanceConfiguration) ConnectorName() string { return s.Connector }
+func (s ConnectorInstanceConfiguration) Configuration() *ConnectorInstanceConfig {
 	return &ConnectorInstanceConfig{Env: s.Env, Files: s.Files}
 }
 
 type SuspensionSource struct {
-	Kind  string `json:"kind"`
-	Name  string `json:"name"`
-	Field string `json:"field,omitempty"`
+	Source string `json:"source"`
+	Name   string `json:"name"`
 }
 
+func (s *SuspensionSource) UnmarshalJSON(data []byte) error {
+	var value struct {
+		Source *string `json:"source"`
+		Name   *string `json:"name"`
+	}
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	if value.Source == nil || value.Name == nil {
+		return fmt.Errorf("suspension source and name are required")
+	}
+	s.Source, s.Name = *value.Source, *value.Name
+	return nil
+}
+
+type IngestionProgress struct {
+	Current int64 `json:"current"`
+}
+
+// UnmarshalJSON distinguishes a missing required progress value from zero.
+func (p *IngestionProgress) UnmarshalJSON(data []byte) error {
+	var value struct {
+		Current *int64 `json:"current"`
+	}
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	if value.Current == nil {
+		return fmt.Errorf("ingestion progress.current is required")
+	}
+	p.Current = *value.Current
+	return nil
+}
+
+type IngestionStatus struct {
+	State     *string            `json:"state,omitempty"`
+	Progress  *IngestionProgress `json:"progress,omitempty"`
+	LastError *string            `json:"lastError,omitempty"`
+}
+type StatusError struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+func (s *StatusError) UnmarshalJSON(data []byte) error {
+	var value struct {
+		Code    *string `json:"code"`
+		Message *string `json:"message"`
+	}
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	if value.Code == nil || value.Message == nil {
+		return fmt.Errorf("status error code and message are required")
+	}
+	s.Code, s.Message = *value.Code, *value.Message
+	return nil
+}
+
+// ConnectorInstanceStatus reports recorded outcomes, not live worker health.
 type ConnectorInstanceStatus struct {
-	Phase                *string            `json:"phase,omitempty"`
-	State                *string            `json:"state,omitempty"`
-	ConnectorAddress     *string            `json:"connectorAddress,omitempty"`
-	ResolvedImage        *string            `json:"resolvedImage,omitempty"`
-	ResolvedConnectorRef *string            `json:"resolvedConnectorRef,omitempty"`
-	ResolvedVersion      *string            `json:"resolvedVersion,omitempty"`
-	ResolvedDigest       *string            `json:"resolvedDigest,omitempty"`
-	CurrentSequence      *int64             `json:"currentSequence,omitempty"`
-	SourceTipSequence    *int64             `json:"sourceTipSequence,omitempty"`
-	LastError            *string            `json:"lastError,omitempty"`
-	Message              *string            `json:"message,omitempty"`
-	SuspendedBy          []SuspensionSource `json:"suspendedBy,omitempty"`
+	AppliedVersion *string            `json:"appliedVersion,omitempty"`
+	Lifecycle      string             `json:"lifecycle"`
+	Ingestion      *IngestionStatus   `json:"ingestion,omitempty"`
+	Error          *StatusError       `json:"error,omitempty"`
+	SuspendedBy    []SuspensionSource `json:"suspendedBy"`
 }
 
 type ConnectorInstance struct {
-	Metadata ObjectMeta               `json:"metadata"`
-	Spec     ConnectorInstanceSpec    `json:"spec"`
-	Status   *ConnectorInstanceStatus `json:"status,omitempty"`
+	Name          string                         `json:"name"`
+	Configuration ConnectorInstanceConfiguration `json:"configuration"`
+	Status        *ConnectorInstanceStatus       `json:"status,omitempty"`
 }
 
 type ConnectorInstanceList struct {
@@ -191,10 +195,12 @@ type ConnectorInstanceList struct {
 }
 
 type ConnectorInstanceCreate struct {
-	Name        string                `json:"name"`
-	Labels      map[string]string     `json:"labels,omitempty"`
-	Annotations map[string]string     `json:"annotations,omitempty"`
-	Spec        ConnectorInstanceSpec `json:"spec"`
+	Name          string                         `json:"name"`
+	Configuration ConnectorInstanceConfiguration `json:"configuration"`
+}
+
+type ConnectorInstanceUpdate struct {
+	Configuration ConnectorInstanceConfiguration `json:"configuration"`
 }
 
 type ConnectorInstancePatch map[string]any
@@ -222,6 +228,7 @@ type Client interface {
 	ListConnectorInstances(context.Context, ListOptions) (*ConnectorInstanceList, error)
 	CreateConnectorInstance(context.Context, ConnectorInstanceCreate) (*ConnectorInstance, error)
 	GetConnectorInstance(context.Context, string) (*ConnectorInstance, error)
+	ReplaceConnectorInstance(context.Context, string, ConnectorInstanceUpdate) (*ConnectorInstance, error)
 	PatchConnectorInstance(context.Context, string, ConnectorInstancePatch) (*ConnectorInstance, error)
 	DeleteConnectorInstance(context.Context, string) error
 }

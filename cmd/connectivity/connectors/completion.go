@@ -34,11 +34,11 @@ func CompleteConnectorNames(factory connectivityinternal.ClientFactory) cobra.Co
 
 		candidates := make([]string, 0, len(connectors))
 		for _, connector := range connectors {
-			name := stringValue(connector.Metadata.Name)
+			name := connector.Name
 			if name == "" || !strings.HasPrefix(name, toComplete) {
 				continue
 			}
-			if description := stringValue(connector.Spec.Description); description != "" {
+			if description := stringValue(connector.Description); description != "" {
 				name += "\t" + description
 			}
 			candidates = append(candidates, name)

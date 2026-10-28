@@ -33,11 +33,11 @@ func TestCompleteConnectorInstanceNamesUsesBoundedNonInteractiveQueryAndReturnsS
 		}
 		remaining = time.Until(deadline)
 		alpha := instanceFixture("alpha")
-		alpha.Spec.ConnectorRef = &connectivityclient.ObjectRef{Name: "stripe"}
-		alpha.Spec.Ledger = "eu"
+		alpha.Configuration.Connector = "stripe"
+		alpha.Configuration.Ledger = "eu"
 		alpine := instanceFixture("alpine")
-		alpine.Spec.ConnectorRef = &connectivityclient.ObjectRef{Name: "wise"}
-		alpine.Spec.Ledger = "uk"
+		alpine.Configuration.Connector = "wise"
+		alpine.Configuration.Ledger = "uk"
 		return &connectivityclient.ConnectorInstanceList{Items: []connectivityclient.ConnectorInstance{
 			instanceFixture("beta"), alpine, alpha,
 		}}, nil
@@ -78,9 +78,9 @@ func TestCompleteVersionsUsesSelectedConnectorAndReturnsSortedPrefixMatchesWithD
 			}
 			gotName = name
 			return &connectivityclient.ConnectorVersionList{Items: []connectivityclient.ConnectorVersionSummary{
-				{Version: "2.1.0", Image: "", Digest: stringPtr("sha256:two")},
-				{Version: "1.0.0", Image: "registry/connector:1"},
-				{Version: "2.0.0", Image: "registry/connector:2"},
+				{Version: "2.1.0", Digest: stringPtr("sha256:two")},
+				{Version: "1.0.0"},
+				{Version: "2.0.0"},
 			}}, nil
 		},
 	}}
@@ -98,7 +98,7 @@ func TestCompleteVersionsUsesSelectedConnectorAndReturnsSortedPrefixMatchesWithD
 	if gotName != "stripe" {
 		t.Fatalf("ListConnectorVersions connector = %q, want stripe", gotName)
 	}
-	want := []string{"2.0.0\tregistry/connector:2", "2.1.0\tsha256:two"}
+	want := []string{"2.0.0", "2.1.0\tsha256:two"}
 	if !reflect.DeepEqual(candidates, want) {
 		t.Fatalf("candidates = %#v, want %#v", candidates, want)
 	}

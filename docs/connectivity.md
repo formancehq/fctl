@@ -4,12 +4,13 @@
 connections installed in the selected stack. A connection is a
 ConnectorInstance in the Connectivity API.
 
-This CLI uses the tenant API contract with `connectorRef: {name}`, optional
-`connectivityRef: {name}`, and top-level `env`/`files`. Upgrade the stack's
-Connectivity API alongside this CLI; the previous `connector`/`config` wire
-format is incompatible. The HTTP routes remain `/connectorinstances`.
-Responses must contain a valid `connectorRef`; resolved versions must identify
-their resolved connector. Older unbound instance responses are rejected.
+This CLI uses the public Connectivity contract: an instance has a `name`,
+`configuration`, and optional `status`. The HTTP routes use
+`/connector-instances`. Configuration contains a `connector` name, a `ledger`,
+a version or channel selector, and literal `env`/`files` maps. This CLI requires
+a Connectivity API exposing that contract.
+Read responses may omit a connector or selector for an unbound instance;
+installing a connection requires both a connector and a selector.
 
 ## Command tree
 
@@ -27,8 +28,7 @@ fctl connectivity connections unsuspend <connection> --confirm
 fctl connectivity connections uninstall <connection>
 ```
 
-Use `connections` instead of the previous `connectorinstances` command group.
-`connection` is its singular alias. `connectors ls`, `connectors l`,
+`connection` is the singular alias of `connections`. `connectors ls`, `connectors l`,
 `connectors facets` (`facet`, `f`), and `connections ls` (`l`) remain available.
 `install` also accepts `create` and `in`; `configure` accepts `config`,
 `update`, and `c`. JSON output keeps the `connectorInstance` and
@@ -74,23 +74,47 @@ The pagination `--cursor` is a separate API-issued token.
 
 `install` and `configure` accept three configuration forms, in precedence
 order: `--config` (YAML or JSON), repeatable `--env-file`, then repeatable
-`--set KEY=VALUE`. Values may be inline, `@path`/`@-`,
-`secret://name/key`, or `configmap://name/key`. Configuration files must use
-separate `env` and `files` sections; flat configuration and flat schemas are
-unsupported. The CLI sends those sections directly as
-`spec.env` and `spec.files`; the file supplied to `--config` is a configuration
-input, not the full HTTP request.
+`--set KEY=VALUE`. Values may be inline or read locally with `@path`/`@-`.
+Configuration files use separate `env` and `files` maps of string values;
+flat configuration and flat schemas are unsupported. The CLI sends those maps
+as `configuration.env` and `configuration.files`; the file supplied to
+`--config` is a configuration input, not the full HTTP request.
+
+```yaml
+env:
+  API_KEY: example-key
+files:
+  /etc/plugin/config.yaml: |
+    account: example
+```
+
+Configuration values are literals. Kubernetes Secret/ConfigMap references,
+structured `{value: ...}` entries, file lists and file modes are unsupported.
+Supply contents through a local configuration file, dotenv file or
+`--set KEY=@path`.
+Plain connection output lists configuration keys without values. Debug output
+masks literal environment and file contents. Avoid putting confidential literals
+directly in shell history.
 
 Malformed YAML/JSON diagnostics identify the input file, report line numbers
 when available, and describe the expected structure without echoing input
-values. Use an `env` mapping and a `files` list with structured `value`,
-`secretRef`, or `configMapRef` entries.
+values.
 
 The CLI derives known keys and definitely-required fields from the Connector
 Version JSON Schema, including bounded local `$ref`, `allOf`, `anyOf`, and
 `oneOf` composition. Open or pattern-based keys, and constraints that cannot
 be proven from CLI input, are sent to Connectivity for authoritative
-validation. Secret and ConfigMap references remain namespace-local.
+validation.
+
+`configure` uses JSON merge PATCH. Omitted values, including confidential
+fields hidden by GET, are preserved. A `null` entry in `--config` requests
+removal of that key; a `null` section requests removal of that section.
+Clearing a whole section and then setting entries requires separate configure
+requests: a single merge patch cannot express both operations on that section.
+Fields marked `format: password` are write-only in API responses. An edit
+must not require resupplying an omitted password solely because GET hides it.
+The API validates the resulting configuration. Full HTTP PUT replacement is
+different: callers must resupply every required value, including secrets.
 
 ## Suspension, resumption and deletion
 
@@ -105,7 +129,7 @@ fctl connectivity connections unsuspend stripe-prod --confirm
 
 A successful command means the request was accepted; reconciliation may still
 be in progress. Use `connections show <connection>` to compare desired
-`Suspend` with observed phase, state and `Suspended by` provenance. A Policy
+`Suspend` with observed lifecycle, ingestion state and `Suspended by` provenance. A Policy
 can keep ingestion suspended after the tenant requests resumption. Workload
 resources, placement and other administrator settings belong to Policies;
 replica count is not a tenant setting.
@@ -128,14 +152,28 @@ and `KEY~PATTERN` uses SQL `%` and `_` wildcards. Use `--query '<JSON>'` for
 the full API query dialect; it cannot be combined with `--filter`. The CLI
 also accepts `--page-size` and the opaque `--cursor` from a previous response.
 Shell completion obtains supported keys, values and channels from the API.
-The logical filter key `connector` is unchanged by the `connectorRef` field.
+Use `lifecycle` and `appliedVersion` for status filters.
+Raw `--query` JSON passes through to the
+API, including supported `$match`, `$in`, `$exists` and range operators.
 
-The Connector response keeps branding, tagline, tags and `latestVersion`
+The flat Connector response keeps its name, branding, tagline, tags and `latestVersion`
 projected by the API for catalogue display. These describe the version
 selected for the catalogue card, not necessarily the version installed by a
 connection. Full `additionalMetadata` remains available in version detail;
 version lists contain summaries. Repository credentials and administrator
 configuration are not part of the tenant response.
+
+## Reading status
+
+`configuration.version` or `configuration.channel` is the requested selector;
+`status.appliedVersion` identifies the version applied by the control plane.
+Lifecycle is the last recorded verdict (`pending`, `active`, `suspended`,
+`completed`, `failed`, or `unknown`), not a live health probe.
+`status.ingestion.progress.current` is the recorded ingestion progress.
+`status.ingestion.lastError` is historical and may remain after recovery;
+`connections show` does not fail merely because it is populated. A current
+status error has a controlled `code` and `message`. Suspension sources identify
+a tenant request or a Policy by name.
 
 Authentication failures, including insufficient scope, may return `401`
 without a JSON body. Check the selected profile and its permissions instead

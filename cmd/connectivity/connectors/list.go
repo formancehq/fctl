@@ -106,16 +106,15 @@ func cursorFromList(pageSize int32, hasMore bool, next string) fctl.Cursor {
 func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
 	rows := fctl.Map(c.store.Connectors, func(connector connectivityclient.Connector) []string {
 		return []string{
-			stringValue(connector.Metadata.Name),
-			stringValue(connector.Spec.DisplayName),
-			strings.Join(connector.Spec.Tags, ", "),
-			connectorPhase(connector.Status),
+			connector.Name,
+			stringValue(connector.DisplayName),
+			strings.Join(connector.Tags, ", "),
 		}
 	})
 	// No description column: descriptions are full sentences, and pterm sizes
 	// columns to their content, so one connector wrapped every row and the
 	// table stopped lining up. `connectors show` prints the description.
-	rows = fctl.Prepend(rows, []string{"Name", "Display Name", "Tags", "Phase"})
+	rows = fctl.Prepend(rows, []string{"Name", "Display Name", "Tags"})
 	if err := pterm.DefaultTable.
 		WithHasHeader().
 		WithWriter(cmd.OutOrStdout()).
@@ -131,11 +130,4 @@ func stringValue(value *string) string {
 		return ""
 	}
 	return *value
-}
-
-func connectorPhase(status *connectivityclient.ConnectorStatus) string {
-	if status == nil {
-		return ""
-	}
-	return stringValue(status.Phase)
 }

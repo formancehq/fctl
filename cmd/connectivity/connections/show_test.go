@@ -6,7 +6,6 @@ import (
 	"errors"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
@@ -24,50 +23,24 @@ func (m showInstanceClientMock) GetConnectorInstance(ctx context.Context, name s
 	return m.get(ctx, name)
 }
 
-func TestShowConnectorInstanceRendersMetadataDesiredStateLifecycleProgressAndRedactedConfigSources(t *testing.T) {
-	created := time.Date(2026, time.August, 7, 10, 30, 0, 0, time.UTC)
+func TestShowRendersPortableStatusAndHidesConfigurationValues(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
-	instance.Metadata.Namespace = stringPtr("formance")
-	instance.Metadata.ResourceVersion = stringPtr("42")
-	instance.Metadata.UID = stringPtr("instance-uid")
-	instance.Metadata.CreationTimestamp = &created
-	instance.Metadata.Labels = map[string]string{"region": "eu"}
-	instance.Metadata.Annotations = map[string]string{"owner": "platform"}
-	mode := int32(420)
-	setInstanceConfig(&instance, &connectivityclient.ConnectorInstanceConfig{
-		Env: map[string]connectivityclient.EnvValue{
-			"API_KEY": {Value: stringPtr("must-not-leak")},
-			"TOKEN":   {SecretRef: &connectivityclient.KeyRef{Name: "connector-secrets", Key: "token"}},
-		},
-		Files: []connectivityclient.FileMount{
-			{Path: "/etc/plugin/config.yaml", ConfigMapRef: &connectivityclient.KeyRef{Name: "connector-config", Key: "config.yaml"}, Mode: &mode},
-			{Path: "/etc/plugin/inline.pem", Value: stringPtr("also-must-not-leak")},
-		},
-	})
-
+	instance.Configuration.Env = map[string]string{"TOKEN": "must-not-leak"}
+	instance.Configuration.Files = map[string]string{"/etc/plugin/config.yaml": "also-must-not-leak"}
 	output, err := executeCommand(NewShowCommand(factoryWithInstance(instance)), "stripe-eu")
-
 	require.NoError(t, err)
-	for _, expected := range []string{
-		"Information", "Name", "stripe-eu", "Namespace", "formance", "UID", "instance-uid", "Resource Version", "42",
-		"Created At", created.Format(time.RFC3339), "Labels", "region=eu", "Annotations", "owner=platform",
-		"Desired Specification", "Connector", "stripe", "Version", "2.0.0", "Ledger", "main", "Poll Interval", "5s",
-		"Lifecycle", "Resolved Connector", "Resolved Version", "Resolved Image", "registry/connector:2.0.0",
-		"Resolved Digest", "sha256:deadbeef", "Connector Address", "http://stripe.default.svc", "Phase", "Ready", "State", "Running",
-		"Ingestion Progress", "Current Sequence", "42", "Source Tip Sequence", "48", "Last Error", "source temporarily unavailable", "Message", "retrying ingestion",
-		"Configuration", "API_KEY", "environment", "inline", "TOKEN", "secret:connector-secrets/token",
-		"/etc/plugin/config.yaml", "file", "configmap:connector-config/config.yaml", "420", "/etc/plugin/inline.pem",
-	} {
-		require.Contains(t, output, expected)
+	for _, value := range []string{"stripe-eu", "stripe", "main", "Desired Configuration", "Applied Version", "2.0.0", "active", "running", "42", "Last Error (may be historical)", "source temporarily unavailable", "TOKEN", "/etc/plugin/config.yaml", "literal"} {
+		require.Contains(t, output, value)
 	}
-	require.NotContains(t, output, "must-not-leak")
-	require.NotContains(t, output, "also-must-not-leak")
+	for _, value := range []string{"must-not-leak", "also-must-not-leak", "Namespace", "UID", "Resource Version", "Conditions", "Resolved Image", "Source Tip Sequence"} {
+		require.NotContains(t, output, value)
+	}
 }
 
 func TestShowPlainOutputNeverPrintsInlineConfigValues(t *testing.T) {
 	instance := instanceWithTwoFiles()
-	instance.Spec.Env = map[string]connectivityclient.EnvValue{
-		"API_KEY": {Value: stringPtr("must-not-leak")},
+	instance.Configuration.Env = map[string]string{
+		"API_KEY": "must-not-leak",
 	}
 	command := NewShowCommand(factoryWithInstance(*instance))
 
@@ -75,14 +48,14 @@ func TestShowPlainOutputNeverPrintsInlineConfigValues(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Contains(t, output, "API_KEY")
-	require.Contains(t, output, "inline")
+	require.Contains(t, output, "literal")
 	require.NotContains(t, output, "must-not-leak")
 	require.NotContains(t, output, "private config")
 }
 
 func TestShowPlainOutputOmitsUnsupportedStartSequence(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
-	instance.Spec.InitialCursor = []byte("opaque-initial-cursor")
+	instance.Configuration.InitialCursor = []byte("opaque-initial-cursor")
 
 	output, err := executeCommand(NewShowCommand(factoryWithInstance(instance)), "stripe-eu")
 
@@ -93,8 +66,8 @@ func TestShowPlainOutputOmitsUnsupportedStartSequence(t *testing.T) {
 
 func TestShowConnectorInstanceJSONPreservesCompleteModel(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
-	setInstanceConfig(&instance, &connectivityclient.ConnectorInstanceConfig{Env: map[string]connectivityclient.EnvValue{
-		"API_KEY": {Value: stringPtr("json-keeps-full-model")},
+	setInstanceConfig(&instance, &connectivityclient.ConnectorInstanceConfig{Env: map[string]string{
+		"API_KEY": "json-keeps-full-model",
 	}})
 	command := NewShowCommand(factoryWithInstance(instance))
 	command.Flags().String(fctl.OutputFlag, "plain", "")
@@ -122,10 +95,10 @@ func TestShowConnectorInstanceHandlesMissingStatusAndConfig(t *testing.T) {
 
 func TestShowConnectionRendersSuspensionAndOrderedProvenance(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
-	instance.Spec.Suspend = fctl.Ptr(true)
+	instance.Configuration.Suspend = fctl.Ptr(true)
 	instance.Status.SuspendedBy = []connectivityclient.SuspensionSource{
-		{Kind: "ConnectorInstance", Name: "stripe-eu", Field: "spec.suspend"},
-		{Kind: "Policy", Name: "maintenance", Field: "spec.mutate.suspend"},
+		{Source: "request", Name: "stripe-eu"},
+		{Source: "policy", Name: "maintenance"},
 	}
 
 	output, err := executeCommand(NewShowCommand(factoryWithInstance(instance)), "stripe-eu")
@@ -135,7 +108,7 @@ func TestShowConnectionRendersSuspensionAndOrderedProvenance(t *testing.T) {
 	require.Contains(t, output, "true")
 	require.NotContains(t, output, "Replicas")
 	require.Contains(t, output, "Suspended by")
-	require.Contains(t, output, "ConnectorInstance/stripe-eu (spec.suspend), Policy/maintenance (spec.mutate.suspend)")
+	require.Contains(t, output, "request/stripe-eu, policy/maintenance")
 }
 
 func TestShowConnectorInstanceReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
@@ -170,5 +143,22 @@ func TestShowConnectorInstanceReturnsFactoryAPIAndEmptyResponseErrors(t *testing
 			require.Error(t, err)
 			require.True(t, strings.Contains(err.Error(), test.want), "error = %v", err)
 		})
+	}
+}
+
+func TestShowRecordedErrorsDoNotTurnSuccessfulReadIntoFailure(t *testing.T) {
+	for _, state := range []string{"running", "error", "failed", "finished", "unknown"} {
+		instance := instanceFixture("stripe-eu")
+		instance.Status.Ingestion.State = stringPtr(state)
+		instance.Status.Ingestion.Progress = &connectivityclient.IngestionProgress{Current: 0}
+		instance.Status.Error = &connectivityclient.StatusError{Code: "failure_unknown", Message: "Failure provenance unavailable"}
+		output, err := executeCommand(NewShowCommand(factoryWithInstance(instance)), "stripe-eu")
+		require.NoError(t, err)
+		require.Contains(t, output, "Last Error (may be historical)")
+		require.Contains(t, output, "source temporarily unavailable")
+		require.Contains(t, output, "failure_unknown")
+		require.Equal(t, "0", ingestionProgress(instance.Status))
+		instance.Status.Ingestion.Progress = nil
+		require.Empty(t, ingestionProgress(instance.Status))
 	}
 }

@@ -9,7 +9,6 @@ import (
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	connectivityclient "github.com/formancehq/fctl/v3/internal/connectivityclient"
-	fctl "github.com/formancehq/fctl/v3/pkg"
 )
 
 func stringPtr(value string) *string {
@@ -35,50 +34,27 @@ func (v connectorVersions) ListConnectorVersions(ctx context.Context, connector 
 
 func (v connectorVersions) GetConnectorVersion(ctx context.Context, connector, version string) (*connectivityclient.ConnectorVersion, error) {
 	if v.getVersion == nil {
-		return &connectivityclient.ConnectorVersion{Version: version, Image: "example/connector:" + version}, nil
+		return &connectivityclient.ConnectorVersion{Version: version}, nil
 	}
 	return v.getVersion(ctx, connector, version)
 }
 
 func versionListFixture() *connectivityclient.ConnectorVersionList {
 	return &connectivityclient.ConnectorVersionList{Items: []connectivityclient.ConnectorVersionSummary{
-		{Version: "1.0.0", Image: "example/connector:1.0.0"},
-		{Version: "2.0.0", Image: "example/connector:2.0.0"},
+		{Version: "1.0.0"},
+		{Version: "2.0.0"},
 	}}
 }
 
 func instanceFixture(name string) connectivityclient.ConnectorInstance {
-	return connectivityclient.ConnectorInstance{
-		Metadata: connectivityclient.ObjectMeta{Name: stringPtr(name)},
-		Spec: connectivityclient.ConnectorInstanceSpec{
-			ConnectorRef:  &connectivityclient.ObjectRef{Name: "stripe"},
-			Version:       stringPtr("2.0.0"),
-			Ledger:        "main",
-			PollInterval:  stringPtr("5s"),
-			InitialCursor: []byte{0, 255, 97},
-		},
-		Status: &connectivityclient.ConnectorInstanceStatus{
-			Phase:                stringPtr("Ready"),
-			State:                stringPtr("Running"),
-			ResolvedImage:        stringPtr("registry/connector:2.0.0"),
-			ResolvedConnectorRef: stringPtr("stripe"),
-			ResolvedVersion:      stringPtr("2.0.0"),
-			ResolvedDigest:       stringPtr("sha256:deadbeef"),
-			ConnectorAddress:     stringPtr("http://stripe.default.svc"),
-			CurrentSequence:      fctl.Ptr(int64(42)),
-			SourceTipSequence:    fctl.Ptr(int64(48)),
-			LastError:            stringPtr("source temporarily unavailable"),
-			Message:              stringPtr("retrying ingestion"),
-		},
+	return connectivityclient.ConnectorInstance{Name: name,
+		Configuration: connectivityclient.ConnectorInstanceConfiguration{Connector: "stripe", Version: stringPtr("2.0.0"), Ledger: "main", PollInterval: stringPtr("5s"), InitialCursor: []byte{0, 255, 97}},
+		Status:        &connectivityclient.ConnectorInstanceStatus{Lifecycle: "active", AppliedVersion: stringPtr("2.0.0"), Ingestion: &connectivityclient.IngestionStatus{State: stringPtr("running"), Progress: &connectivityclient.IngestionProgress{Current: 42}, LastError: stringPtr("source temporarily unavailable")}},
 	}
 }
-
 func instanceWithTwoFiles() *connectivityclient.ConnectorInstance {
 	instance := instanceFixture("stripe-eu")
-	setInstanceConfig(&instance, &connectivityclient.ConnectorInstanceConfig{Files: []connectivityclient.FileMount{
-		{Path: "/etc/plugin/config.yaml", Value: stringPtr("private config")},
-		{Path: "/etc/plugin/ca.pem", SecretRef: &connectivityclient.KeyRef{Name: "connector-secrets", Key: "ca.pem"}},
-	}})
+	instance.Configuration.Files = map[string]string{"/etc/plugin/config.yaml": "private config", "/etc/plugin/ca.pem": "private ca"}
 	return &instance
 }
 
@@ -128,7 +104,7 @@ func executeCommand(command *cobra.Command, args ...string) (string, error) {
 func versionWithFileSchema() *connectivityclient.ConnectorVersion {
 	return &connectivityclient.ConnectorVersion{
 		Version: "2.0.0",
-		Image:   "example/connector:2.0.0",
+
 		ConfigSchema: map[string]any{
 			"type": "object",
 			"env": map[string]any{
@@ -156,8 +132,8 @@ func versionWithFileSchema() *connectivityclient.ConnectorVersion {
 // one optional, one required file and one optional password file.
 func versionWithFullSchema() *connectivityclient.ConnectorVersion {
 	return &connectivityclient.ConnectorVersion{
-		Version:      "2.0.0",
-		Image:        "example/connector:2.0.0",
+		Version: "2.0.0",
+
 		ConfigSchema: fullConfigSchema([]any{"API_URL", "TOKEN"}, []any{"/etc/plugin/config.yaml"}),
 	}
 }
@@ -166,8 +142,8 @@ func versionWithFullSchema() *connectivityclient.ConnectorVersion {
 // nothing required, so input-parsing tests need not satisfy every key.
 func versionWithOptionalSchema() *connectivityclient.ConnectorVersion {
 	return &connectivityclient.ConnectorVersion{
-		Version:      "2.0.0",
-		Image:        "example/connector:2.0.0",
+		Version: "2.0.0",
+
 		ConfigSchema: fullConfigSchema([]any{}, []any{}),
 	}
 }
@@ -199,8 +175,8 @@ func fullConfigSchema(requiredEnv, requiredFiles []any) map[string]any {
 
 func setInstanceConfig(instance *connectivityclient.ConnectorInstance, config *connectivityclient.ConnectorInstanceConfig) {
 	if config == nil {
-		instance.Spec.Env, instance.Spec.Files = nil, nil
+		instance.Configuration.Env, instance.Configuration.Files = nil, nil
 		return
 	}
-	instance.Spec.Env, instance.Spec.Files = config.Env, config.Files
+	instance.Configuration.Env, instance.Configuration.Files = config.Env, config.Files
 }

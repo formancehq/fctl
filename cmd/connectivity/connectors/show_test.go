@@ -18,21 +18,15 @@ import (
 
 func versionsFixture() *connectivityclient.ConnectorVersionList {
 	return &connectivityclient.ConnectorVersionList{Items: []connectivityclient.ConnectorVersionSummary{
-		{Version: "1.0.0", Image: "registry/connector:1", Digest: fctl.Ptr("sha256:one")},
-		{Version: "2.0.0", Image: "registry/connector:2"},
+		{Version: "1.0.0", Digest: fctl.Ptr("sha256:one")},
+		{Version: "2.0.0"},
 	}}
 }
 
-func TestShowConnectorRendersMetadataVersionsTagsStatusAndLatestVersionSchema(t *testing.T) {
+func TestShowConnectorRendersPublicFieldsVersionsAndLatestVersionSchema(t *testing.T) {
 	created := time.Date(2026, time.August, 7, 10, 30, 0, 0, time.UTC)
 	connector := connectorFixture("stripe")
-	connector.Metadata.Namespace = fctl.Ptr("formance")
-	connector.Metadata.ResourceVersion = fctl.Ptr("42")
-	connector.Metadata.UID = fctl.Ptr("connector-uid")
-	connector.Metadata.CreationTimestamp = &created
-	connector.Metadata.Labels = map[string]string{"region": "eu"}
-	connector.Metadata.Annotations = map[string]string{"owner": "platform"}
-	connector.Status.Message = fctl.Ptr("Catalog entry is healthy")
+	connector.CreatedAt = &created
 
 	var gotVersion string
 	client := connectorClientMock{
@@ -55,7 +49,6 @@ func TestShowConnectorRendersMetadataVersionsTagsStatusAndLatestVersionSchema(t 
 			gotVersion = version
 			return &connectivityclient.ConnectorVersion{
 				Version: "2.0.0",
-				Image:   "registry/connector:2",
 				ConfigSchema: map[string]any{
 					"type": "object",
 					"env": map[string]any{
@@ -81,9 +74,9 @@ func TestShowConnectorRendersMetadataVersionsTagsStatusAndLatestVersionSchema(t 
 		t.Fatalf("GetConnectorVersion version = %q, want the server-resolved latest alias", gotVersion)
 	}
 	for _, expected := range []string{
-		"stripe", "formance", "42", "connector-uid", created.Format(time.RFC3339), "region=eu", "owner=platform",
-		"Connector display name", "Connector description", "registry/connector", "public",
-		"payments, webhooks", "Payments infrastructure", "Ready", "Catalog entry is healthy",
+		"stripe", created.Format(time.RFC3339),
+		"Connector display name", "Connector description", "public",
+		"payments, webhooks", "Payments infrastructure",
 		"Latest Version", "2.0.0",
 		"1.0.0", "sha256:one",
 		"Configuration Schema (2.0.0)", "API_KEY", "environment", "required", "password", "API credential",
@@ -91,6 +84,11 @@ func TestShowConnectorRendersMetadataVersionsTagsStatusAndLatestVersionSchema(t 
 	} {
 		if !strings.Contains(output, expected) {
 			t.Errorf("plain output missing %q:\n%s", expected, output)
+		}
+	}
+	for _, absent := range []string{"Namespace", "Resource Version", "UID", "Labels", "Annotations", "Image", "Phase", "Status Message"} {
+		if strings.Contains(output, absent) {
+			t.Errorf("public output must not include %q:\n%s", absent, output)
 		}
 	}
 }
@@ -106,13 +104,13 @@ func TestShowConnectorFollowsVersionPagination(t *testing.T) {
 			gotCursors = append(gotCursors, options.Cursor)
 			if options.Cursor == "" {
 				return &connectivityclient.ConnectorVersionList{
-					Items:   []connectivityclient.ConnectorVersionSummary{{Version: "1.0.0", Image: "registry/connector:1"}},
+					Items:   []connectivityclient.ConnectorVersionSummary{{Version: "1.0.0"}},
 					HasMore: true,
 					Next:    "page-two",
 				}, nil
 			}
 			return &connectivityclient.ConnectorVersionList{
-				Items: []connectivityclient.ConnectorVersionSummary{{Version: "2.0.0", Image: "registry/connector:2"}},
+				Items: []connectivityclient.ConnectorVersionSummary{{Version: "2.0.0"}},
 			}, nil
 		},
 	}
@@ -185,7 +183,6 @@ func TestShowConnectorJSONPreservesCompleteModel(t *testing.T) {
 	connector := connectorFixture("stripe")
 	version := &connectivityclient.ConnectorVersion{
 		Version:      "2.0.0",
-		Image:        "registry/connector:2",
 		ConfigSchema: map[string]any{"type": "object"},
 	}
 	client := connectorClientMock{

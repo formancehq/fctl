@@ -38,8 +38,10 @@ func capabilitiesFixture() *connectivityclient.QueryCapabilities {
 			"tags":    {Operators: []string{"$match", "$in", "$exists"}},
 		},
 		connectivityclient.ResourceConnectorInstances: {
-			"channel":   {Operators: []string{"$match", "$in", "$exists"}, Enum: []string{"stable", "rc", "beta", "alpha"}},
-			"connector": {Operators: []string{"$match", "$in"}},
+			"channel":        {Operators: []string{"$match", "$in", "$exists"}, Enum: []string{"stable", "rc", "beta", "alpha"}},
+			"connector":      {Operators: []string{"$match", "$in"}},
+			"lifecycle":      {Operators: []string{"$match", "$in", "$exists"}, Enum: []string{"pending", "active", "suspended", "completed", "failed", "unknown"}},
+			"appliedVersion": {Operators: []string{"$match", "$in", "$exists", "$gt", "$gte", "$lt", "$lte"}},
 		},
 	}}
 }
@@ -159,8 +161,8 @@ func TestCompleteFilterExpressionsCompletesConnectorNamesForInstanceConnectorKey
 				t.Fatalf("ListConnectors page size = %d, want 100", options.PageSize)
 			}
 			return &connectivityclient.ConnectorList{Items: []connectivityclient.Connector{
-				{Metadata: connectivityclient.ObjectMeta{Name: &wise}},
-				{Metadata: connectivityclient.ObjectMeta{Name: &stripe}, Spec: connectivityclient.ConnectorSpec{DisplayName: &displayName}},
+				{Name: wise},
+				{Name: stripe, DisplayName: &displayName},
 			}}, nil
 		},
 	}
@@ -183,9 +185,9 @@ func TestCompleteFilterExpressionsDrainsBoundedConnectorPages(t *testing.T) {
 		listConnectors: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
 			switch options.Cursor {
 			case "":
-				return &connectivityclient.ConnectorList{Items: []connectivityclient.Connector{{Metadata: connectivityclient.ObjectMeta{Name: &first}}}, HasMore: true, Next: "second"}, nil
+				return &connectivityclient.ConnectorList{Items: []connectivityclient.Connector{{Name: first}}, HasMore: true, Next: "second"}, nil
 			case "second":
-				return &connectivityclient.ConnectorList{Items: []connectivityclient.Connector{{Metadata: connectivityclient.ObjectMeta{Name: &second}}}}, nil
+				return &connectivityclient.ConnectorList{Items: []connectivityclient.Connector{{Name: second}}}, nil
 			default:
 				t.Fatalf("unexpected connector cursor %q", options.Cursor)
 				return nil, nil
@@ -304,5 +306,32 @@ func TestCompleteFilterExpressionsReturnsSilentlyWhenLookupsFail(t *testing.T) {
 				t.Fatalf("directive = %v, want NoFileComp", directive)
 			}
 		})
+	}
+}
+
+func TestCompleteInstanceFiltersUsePublicCapabilityNamesWithoutAliases(t *testing.T) {
+	client := filterCompletionClientMock{capabilities: func(context.Context) (*connectivityclient.QueryCapabilities, error) {
+		return capabilitiesFixture(), nil
+	}}
+	completion := CompleteFilterExpressions(filterFactory(t, client), connectivityclient.ResourceConnectorInstances)
+	keys, _ := completion(&cobra.Command{}, nil, "")
+	want := []string{
+		"appliedVersion=\toperators: $match, $in, $exists, $gt, $gte, $lt, $lte",
+		"channel=\toperators: $match, $in, $exists",
+		"connector=\toperators: $match, $in",
+		"lifecycle=\toperators: $match, $in, $exists",
+	}
+	if !reflect.DeepEqual(keys, want) {
+		t.Fatalf("instance filter keys = %#v, want public keys %#v", keys, want)
+	}
+	active, _ := completion(&cobra.Command{}, nil, "lifecycle=a")
+	if !reflect.DeepEqual(active, []string{"lifecycle=active"}) {
+		t.Fatalf("lifecycle candidates = %#v", active)
+	}
+	for _, alias := range []string{"phase", "phase=", "resolvedVersion", "resolvedVersion="} {
+		candidates, _ := completion(&cobra.Command{}, nil, alias)
+		if len(candidates) != 0 {
+			t.Errorf("obsolete alias %q offered candidates %#v", alias, candidates)
+		}
 	}
 }

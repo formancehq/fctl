@@ -37,8 +37,8 @@ func TestListConnectorsPassesPaginationAndRendersApprovedColumnsAndContinuation(
 		t.Fatalf("ListConnectors options = %#v, want %#v", gotOptions, wantOptions)
 	}
 	for _, expected := range []string{
-		"Name", "Display Name", "Tags", "Phase",
-		"stripe", "Connector display name", "payments, webhooks", "Ready",
+		"Name", "Display Name", "Tags",
+		"stripe", "Connector display name", "payments, webhooks",
 		"HasMore", "true", "PageSize", "7", "Next", "next-page",
 	} {
 		if !strings.Contains(output, expected) {
@@ -47,7 +47,7 @@ func TestListConnectorsPassesPaginationAndRendersApprovedColumnsAndContinuation(
 	}
 	// The description is deliberately absent: it is a full sentence, and pterm
 	// widens a column to its content, so carrying it here wrapped every row.
-	for _, absent := range []string{"Description", "Connector description"} {
+	for _, absent := range []string{"Description", "Connector description", "Phase", "Status", "Image", "Namespace", "Resource Version"} {
 		if strings.Contains(output, absent) {
 			t.Errorf("plain output should not carry %q:\n%s", absent, output)
 		}
@@ -61,12 +61,12 @@ func TestListConnectorsBuildsQueryFromFilterFlags(t *testing.T) {
 		return &connectivityclient.ConnectorList{Items: []connectivityclient.Connector{}}, nil
 	}}
 
-	_, err := executeCommand(NewListCommand(factoryReturning(client)), "--filter", "catalog=ee", "--filter", "phase=Ready")
+	_, err := executeCommand(NewListCommand(factoryReturning(client)), "--filter", "catalog=ee", "--filter", "name=stripe")
 	if err != nil {
 		t.Fatalf("execute list command: %v", err)
 	}
 
-	want := `{"$and":[{"$match":{"catalog":"ee"}},{"$match":{"phase":"Ready"}}]}`
+	want := `{"$and":[{"$match":{"catalog":"ee"}},{"$match":{"name":"stripe"}}]}`
 	if gotOptions.Query != want {
 		t.Fatalf("ListConnectors query = %q, want %q", gotOptions.Query, want)
 	}
@@ -96,7 +96,7 @@ func TestListConnectorsRejectsCombinedQueryAndFilter(t *testing.T) {
 		return nil, nil
 	}}
 
-	_, err := executeCommand(NewListCommand(factoryReturning(client)), "--query", `{"$match":{"catalog":"ee"}}`, "--filter", "phase=Ready")
+	_, err := executeCommand(NewListCommand(factoryReturning(client)), "--query", `{"$match":{"catalog":"ee"}}`, "--filter", "name=stripe")
 
 	if err == nil || !strings.Contains(err.Error(), "--query cannot be combined with --filter") {
 		t.Fatalf("error = %v, want the conflicting flags error", err)
@@ -105,7 +105,7 @@ func TestListConnectorsRejectsCombinedQueryAndFilter(t *testing.T) {
 
 func TestListConnectorsJSONPreservesCompleteModelsAndContinuation(t *testing.T) {
 	connector := connectorFixture("stripe")
-	connector.Metadata.Labels = map[string]string{"region": "eu"}
+	connector.Branding.AccentColor = fctl.Ptr("#123456")
 	client := connectorClientMock{list: func(_ context.Context, _ connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
 		return &connectivityclient.ConnectorList{Items: []connectivityclient.Connector{connector}, PageSize: 4, HasMore: true, Next: "next-page"}, nil
 	}}

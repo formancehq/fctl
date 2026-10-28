@@ -17,7 +17,7 @@ const connectivityPath = "/api/connectivity"
 const (
 	connectorsResource         = "connectors"
 	connectorVersionsResource  = "versions"
-	connectorInstancesResource = "connectorinstances"
+	connectorInstancesResource = "connector-instances"
 	facetsSegment              = "_facets"
 	querySegment               = "_query"
 	capabilitiesSegment        = "capabilities"
@@ -140,6 +140,12 @@ func (c *client) ListConnectorInstances(ctx context.Context, options ListOptions
 }
 
 func (c *client) CreateConnectorInstance(ctx context.Context, instance ConnectorInstanceCreate) (*ConnectorInstance, error) {
+	if strings.TrimSpace(instance.Name) == "" {
+		return nil, fmt.Errorf("connector instance name is required")
+	}
+	if err := validateConfigurationWrite(instance.Configuration); err != nil {
+		return nil, err
+	}
 	result := &ConnectorInstance{}
 	if err := c.requestJSON(ctx, http.MethodPost, []string{connectorInstancesResource}, nil, instance, "application/json", http.StatusCreated, result, true); err != nil {
 		return nil, err
@@ -155,7 +161,21 @@ func (c *client) GetConnectorInstance(ctx context.Context, name string) (*Connec
 	return result, nil
 }
 
+func (c *client) ReplaceConnectorInstance(ctx context.Context, name string, update ConnectorInstanceUpdate) (*ConnectorInstance, error) {
+	if err := validateConfigurationWrite(update.Configuration); err != nil {
+		return nil, err
+	}
+	result := &ConnectorInstance{}
+	if err := c.requestJSON(ctx, http.MethodPut, []string{connectorInstancesResource, name}, nil, update, "application/json", http.StatusOK, result, true); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 func (c *client) PatchConnectorInstance(ctx context.Context, name string, patch ConnectorInstancePatch) (*ConnectorInstance, error) {
+	if err := validatePatch(patch); err != nil {
+		return nil, err
+	}
 	result := &ConnectorInstance{}
 	path := []string{connectorInstancesResource, name}
 	if err := c.requestJSON(ctx, http.MethodPatch, path, nil, patch, "application/merge-patch+json", http.StatusOK, result, true); err != nil {
@@ -289,7 +309,7 @@ func validateResponse(destination any) error {
 	case *Connector:
 		return validateConnector(value)
 	case *ConnectorVersion:
-		return validateConnectorVersion(value.Version, value.Image)
+		return validateConnectorVersion(value.Version)
 	case *ConnectorInstance:
 		return validateConnectorInstance(value)
 	case *FacetDistribution:
@@ -305,39 +325,124 @@ func validateResponse(destination any) error {
 }
 
 func validateConnector(connector *Connector) error {
-	if connector == nil || connector.Metadata.Name == nil || strings.TrimSpace(*connector.Metadata.Name) == "" {
-		return fmt.Errorf("connector metadata.name is required")
+	if connector == nil || strings.TrimSpace(connector.Name) == "" {
+		return fmt.Errorf("connector name is required")
 	}
 	return nil
 }
 
-func validateConnectorVersion(version, image string) error {
+func validateConnectorVersion(version string) error {
 	if strings.TrimSpace(version) == "" {
 		return fmt.Errorf("connector version version is required")
-	}
-	if strings.TrimSpace(image) == "" {
-		return fmt.Errorf("connector version image is required")
 	}
 	return nil
 }
 
 func validateConnectorVersionSummary(summary *ConnectorVersionSummary) error {
-	return validateConnectorVersion(summary.Version, summary.Image)
+	return validateConnectorVersion(summary.Version)
 }
 
-// Response validation requires the connector identity used by connection
-// commands. Pending instances may have no resolved status yet.
 func validateConnectorInstance(instance *ConnectorInstance) error {
-	if instance == nil || instance.Metadata.Name == nil || strings.TrimSpace(*instance.Metadata.Name) == "" {
-		return fmt.Errorf("connector instance metadata.name is required")
+	if instance == nil || strings.TrimSpace(instance.Name) == "" {
+		return fmt.Errorf("connector instance name is required")
 	}
-	if instance.Spec.ConnectorRef == nil || strings.TrimSpace(instance.Spec.ConnectorRef.Name) == "" {
-		return fmt.Errorf("connector instance spec.connectorRef.name is required")
+	if strings.TrimSpace(instance.Configuration.Ledger) == "" {
+		return fmt.Errorf("connector instance configuration.ledger is required")
 	}
-	if status := instance.Status; status != nil && status.ResolvedVersion != nil && *status.ResolvedVersion != "" {
-		if status.ResolvedConnectorRef == nil || strings.TrimSpace(*status.ResolvedConnectorRef) == "" {
-			return fmt.Errorf("connector instance status.resolvedConnectorRef is required when status.resolvedVersion is set")
+	if status := instance.Status; status != nil {
+		if !oneOf(status.Lifecycle, "pending", "active", "suspended", "completed", "failed", "unknown") {
+			return fmt.Errorf("connector instance status.lifecycle is invalid")
 		}
+		if status.SuspendedBy == nil {
+			return fmt.Errorf("connector instance status.suspendedBy must be a non-null array")
+		}
+		for _, source := range status.SuspendedBy {
+			if !oneOf(source.Source, "request", "policy") {
+				return fmt.Errorf("connector instance status.suspendedBy entry is invalid")
+			}
+		}
+		if ingestion := status.Ingestion; ingestion != nil && ingestion.State != nil && !oneOf(*ingestion.State, "running", "error", "failed", "stopped", "paused", "finished", "unknown") {
+			return fmt.Errorf("connector instance status.ingestion.state is invalid")
+		}
+		if failure := status.Error; failure != nil {
+			if !oneOf(failure.Code, "configuration_invalid", "execution_failed", "service_error", "failure_unknown") {
+				return fmt.Errorf("connector instance status.error is invalid")
+			}
+		}
+	}
+	return nil
+}
+
+func oneOf(value string, values ...string) bool {
+	for _, candidate := range values {
+		if value == candidate {
+			return true
+		}
+	}
+	return false
+}
+
+func validateConfigurationWrite(configuration ConnectorInstanceConfiguration) error {
+	if strings.TrimSpace(configuration.Connector) == "" {
+		return fmt.Errorf("configuration.connector is required on writes")
+	}
+	if strings.TrimSpace(configuration.Ledger) == "" {
+		return fmt.Errorf("configuration.ledger is required on writes")
+	}
+	if (configuration.Version == nil) == (configuration.Channel == nil) {
+		return fmt.Errorf("configuration requires exactly one of version and channel")
+	}
+	if configuration.Version != nil && strings.TrimSpace(*configuration.Version) == "" {
+		return fmt.Errorf("configuration.version must not be empty")
+	}
+	if configuration.Channel != nil && !oneOf(*configuration.Channel, "stable", "rc", "beta", "alpha") {
+		return fmt.Errorf("configuration.channel is invalid")
+	}
+	return nil
+}
+
+// A patch may be partial, so selector and immutable-field validation belongs to
+// the service after merging. Validate the public shape without losing nulls.
+func validatePatch(patch ConnectorInstancePatch) error {
+	data, err := json.Marshal(patch)
+	if err != nil {
+		return fmt.Errorf("marshal connectivity request: %w", err)
+	}
+	if patch == nil {
+		return fmt.Errorf("configuration patch must be an object")
+	}
+	var fields struct {
+		Configuration json.RawMessage `json:"configuration"`
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&fields); err != nil {
+		return fmt.Errorf("invalid connectivity patch: %w", err)
+	}
+	if len(fields.Configuration) == 0 {
+		return nil
+	}
+	if bytes.Equal(bytes.TrimSpace(fields.Configuration), []byte("null")) {
+		return fmt.Errorf("configuration patch must be an object")
+	}
+	var configuration struct {
+		Connector     *string            `json:"connector"`
+		Version       *string            `json:"version"`
+		Channel       *string            `json:"channel"`
+		Ledger        *string            `json:"ledger"`
+		Suspend       *bool              `json:"suspend"`
+		InitialCursor *[]byte            `json:"initialCursor"`
+		PollInterval  *string            `json:"pollInterval"`
+		Env           map[string]*string `json:"env"`
+		Files         map[string]*string `json:"files"`
+	}
+	decoder = json.NewDecoder(bytes.NewReader(fields.Configuration))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&configuration); err != nil {
+		return fmt.Errorf("invalid connectivity patch configuration: %w", err)
+	}
+	if configuration.Channel != nil && !oneOf(*configuration.Channel, "stable", "rc", "beta", "alpha") {
+		return fmt.Errorf("configuration.channel is invalid")
 	}
 	return nil
 }

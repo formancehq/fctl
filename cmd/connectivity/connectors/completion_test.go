@@ -121,3 +121,18 @@ func commandWithExpiredContext() *cobra.Command {
 	command.SetContext(ctx)
 	return command
 }
+
+func TestCompleteConnectorNamesUsesFlatNameAndOptionalDescription(t *testing.T) {
+	client := connectorClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
+		return &connectivityclient.ConnectorList{Items: []connectivityclient.Connector{
+			{Name: "stripe"}, {Name: ""}, {Name: "wise"},
+		}}, nil
+	}}
+	candidates, directive := CompleteConnectorNames(factoryReturning(client))(&cobra.Command{}, nil, "")
+	if !reflect.DeepEqual(candidates, []string{"stripe", "wise"}) {
+		t.Fatalf("flat connector candidates = %#v", candidates)
+	}
+	if directive != cobra.ShellCompDirectiveNoFileComp {
+		t.Fatalf("directive = %v, want NoFileComp", directive)
+	}
+}

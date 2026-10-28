@@ -57,9 +57,18 @@ func redactInlineConfigValues(value any, inConfig bool) {
 	switch value := value.(type) {
 	case map[string]any:
 		for key, child := range value {
-			if inConfig && key == "value" {
+			if inConfig && key == "value" && child != nil {
 				value[key] = "[REDACTED]"
 				continue
+			}
+			if key == "env" || key == "files" {
+				if entries, ok := child.(map[string]any); ok {
+					for name, entry := range entries {
+						if _, literal := entry.(string); literal {
+							entries[name] = "[REDACTED]"
+						}
+					}
+				}
 			}
 			redactInlineConfigValues(child, inConfig || isConfigContainer(key))
 		}

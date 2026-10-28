@@ -45,9 +45,9 @@ func TestSuspensionCommandsPatchOnlyDesiredBooleanAndTreatAlreadyConvergedRespon
 			client := suspensionClientMock{patch: func(_ context.Context, name string, patch connectivityclient.ConnectorInstancePatch) (*connectivityclient.ConnectorInstance, error) {
 				calls++
 				require.Equal(t, "stripe-eu", name)
-				require.Equal(t, connectivityclient.ConnectorInstancePatch{"spec": map[string]any{"suspend": test.suspend}}, patch)
+				require.Equal(t, connectivityclient.ConnectorInstancePatch{"configuration": map[string]any{"suspend": test.suspend}}, patch)
 				instance := instanceFixture(name)
-				instance.Spec.Suspend = fctl.Ptr(test.suspend)
+				instance.Configuration.Suspend = fctl.Ptr(test.suspend)
 				return &instance, nil
 			}}
 
