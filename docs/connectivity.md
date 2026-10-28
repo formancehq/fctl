@@ -1,15 +1,15 @@
 # Connectivity commands
 
 `fctl connectivity` manages the published Connector catalogue and the
-connections installed in the selected stack. A connection is a
-ConnectorInstance in the Connectivity API.
+connections installed in the selected stack. The public API exposes `Connection`
+resources.
 
-This CLI uses the public Connectivity contract: an instance has a `name`,
+This CLI uses the public Connectivity contract: a connection has a `name`,
 `configuration`, and optional `status`. The HTTP routes use
-`/connector-instances`. Configuration contains a `connector` name, a `ledger`,
+`/connections`. Configuration contains a `connector` name, a `ledger`,
 a version or channel selector, and literal `env`/`files` maps. This CLI requires
 a Connectivity API exposing that contract.
-Read responses may omit a connector or selector for an unbound instance;
+Read responses may omit a connector or selector for an unbound connection;
 installing a connection requires both a connector and a selector.
 
 ## Command tree
@@ -31,8 +31,8 @@ fctl connectivity connections uninstall <connection>
 `connection` is the singular alias of `connections`. `connectors ls`, `connectors l`,
 `connectors facets` (`facet`, `f`), and `connections ls` (`l`) remain available.
 `install` also accepts `create` and `in`; `configure` accepts `config`,
-`update`, and `c`. JSON output keeps the `connectorInstance` and
-`connectorInstances` envelope keys and uses the current HTTP field names.
+`update`, and `c`. JSON output uses the `connection` and
+`connections` envelope keys and uses the current HTTP field names.
 
 ## Versions and channels
 
@@ -170,10 +170,10 @@ configuration are not part of the tenant response.
 Lifecycle is the last recorded verdict (`pending`, `active`, `suspended`,
 `completed`, `failed`, or `unknown`), not a live health probe.
 `status.ingestion.progress.current` is the recorded ingestion progress.
-`status.ingestion.lastError` is historical and may remain after recovery;
-`connections show` does not fail merely because it is populated. A current
-status error has a controlled `code` and `message`. Suspension sources identify
-a tenant request or a Policy by name.
+`status.ingestion.lastError` is the last recorded ingestion error and may be
+historical after recovery; `connections show` does not fail merely because it
+is populated. A recorded service error has a controlled `code` and `message`.
+Suspension sources identify a tenant request or a Policy by name.
 
 Authentication failures, including insufficient scope, may return `401`
 without a JSON body. Check the selected profile and its permissions instead

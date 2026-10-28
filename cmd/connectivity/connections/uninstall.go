@@ -36,7 +36,7 @@ func NewUninstallCommand(factory connectivityinternal.ClientFactory) *cobra.Comm
 		fctl.WithAliases("delete", "remove", "rm", "u"),
 		fctl.WithShortDescription("Uninstall a Connectivity connection"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithValidArgsFunction(CompleteConnectorInstanceNames(factory)),
+		fctl.WithValidArgsFunction(CompleteConnectionNames(factory)),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*UninstallStore](controller),
 	)
@@ -58,7 +58,7 @@ func (c *UninstallController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 	if !c.approve(cmd, "You are about to uninstall Connectivity connection %q", name) {
 		return nil, fctl.ErrMissingApproval
 	}
-	if err := client.DeleteConnectorInstance(cmd.Context(), name); err != nil {
+	if err := client.DeleteConnection(cmd.Context(), name); err != nil {
 		return nil, err
 	}
 	c.store.Name = name

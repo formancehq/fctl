@@ -25,7 +25,7 @@ const (
 )
 
 type InstallStore struct {
-	ConnectorInstance connectivityclient.ConnectorInstance `json:"connectorInstance"`
+	Connection connectivityclient.Connection `json:"connection"`
 }
 
 type approvalFunc func(*cobra.Command, string, ...any) bool
@@ -166,7 +166,7 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 	if name == "" {
 		name = connectorName
 	}
-	spec := connectivityclient.ConnectorInstanceConfiguration{
+	spec := connectivityclient.ConnectionConfiguration{
 		Connector:     connectorName,
 		Ledger:        fctl.GetString(cmd, ledgerFlag),
 		InitialCursor: cursor,
@@ -195,23 +195,23 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 	if !c.approve(cmd, "You are about to install Connectivity connection %q", name) {
 		return nil, fctl.ErrMissingApproval
 	}
-	instance, err := client.CreateConnectorInstance(cmd.Context(), connectivityclient.ConnectorInstanceCreate{Name: name, Configuration: spec})
+	instance, err := client.CreateConnection(cmd.Context(), connectivityclient.ConnectionCreate{Name: name, Configuration: spec})
 	if err != nil {
 		return nil, err
 	}
 	if instance == nil {
 		return nil, fmt.Errorf("install connectivity connection %q: empty response", name)
 	}
-	c.store.ConnectorInstance = *instance
+	c.store.Connection = *instance
 	return c, nil
 }
 
-func configHasData(config *connectivityclient.ConnectorInstanceConfig) bool {
+func configHasData(config *connectivityclient.ConnectionConfig) bool {
 	return config != nil && (len(config.Env) > 0 || len(config.Files) > 0)
 }
 
 func (c *InstallController) Render(cmd *cobra.Command, _ []string) error {
-	instance := c.store.ConnectorInstance
+	instance := c.store.Connection
 	_, err := fmt.Fprintf(
 		cmd.OutOrStdout(),
 		"Connection %q installed with connector %q for ledger %q.\n",

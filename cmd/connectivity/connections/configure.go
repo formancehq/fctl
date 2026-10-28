@@ -12,7 +12,7 @@ import (
 )
 
 type ConfigureStore struct {
-	ConnectorInstance connectivityclient.ConnectorInstance `json:"connectorInstance"`
+	Connection connectivityclient.Connection `json:"connection"`
 }
 
 type ConfigureController struct {
@@ -40,7 +40,7 @@ func NewConfigureCommand(factory connectivityinternal.ClientFactory, read ReadFi
 		fctl.WithAliases("config", "update", "c"),
 		fctl.WithShortDescription("Configure a Connectivity connection"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithValidArgsFunction(CompleteConnectorInstanceNames(factory)),
+		fctl.WithValidArgsFunction(CompleteConnectionNames(factory)),
 		fctl.WithStringFlag(ledgerFlag, "", "Existing Ledger name (immutable; cannot be changed)"),
 		fctl.WithStringFlag(versionFlag, "", "Connector version"),
 		fctl.WithStringFlag(channelFlag, "", "Maturity channel to track (stable, rc, beta, alpha) when no version is pinned"),
@@ -68,7 +68,7 @@ func resolveConfigureConnector(ctx context.Context, client connectivityclient.Cl
 	if len(args) == 0 {
 		return "", nil
 	}
-	instance, err := client.GetConnectorInstance(ctx, args[0])
+	instance, err := client.GetConnection(ctx, args[0])
 	if err != nil || instance == nil {
 		return "", err
 	}
@@ -82,7 +82,7 @@ func resolveConfigureConnectorVersion(ctx context.Context, client connectivitycl
 	if len(args) == 0 {
 		return nil, nil
 	}
-	instance, err := client.GetConnectorInstance(ctx, args[0])
+	instance, err := client.GetConnection(ctx, args[0])
 	if err != nil || instance == nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func resolveConfigureConnectorVersion(ctx context.Context, client connectivitycl
 	return resolveConnectorVersion(ctx, client, instance.Configuration.ConnectorName(), pinned)
 }
 
-func configureVersionSelector(cmd *cobra.Command, instance *connectivityclient.ConnectorInstance) (string, string, error) {
+func configureVersionSelector(cmd *cobra.Command, instance *connectivityclient.Connection) (string, string, error) {
 	pinned, channel := "", ""
 	if instance != nil && instance.Configuration.Version != nil && *instance.Configuration.Version != "" {
 		pinned = *instance.Configuration.Version
@@ -143,7 +143,7 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 	}
 
 	name := args[0]
-	instance, err := client.GetConnectorInstance(cmd.Context(), name)
+	instance, err := client.GetConnection(cmd.Context(), name)
 	if err != nil {
 		return nil, err
 	}
@@ -217,18 +217,18 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		return nil, fctl.ErrMissingApproval
 	}
 
-	updated, err := client.PatchConnectorInstance(cmd.Context(), name, connectivityclient.ConnectorInstancePatch{"configuration": specPatch})
+	updated, err := client.PatchConnection(cmd.Context(), name, connectivityclient.ConnectionPatch{"configuration": specPatch})
 	if err != nil {
 		return nil, err
 	}
 	if updated == nil {
 		return nil, fmt.Errorf("configure connectivity connection %q: empty response", name)
 	}
-	c.store.ConnectorInstance = *updated
+	c.store.Connection = *updated
 	return c, nil
 }
 
 func (c *ConfigureController) Render(cmd *cobra.Command, _ []string) error {
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connection %q configured.\n", c.store.ConnectorInstance.Name)
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connection %q configured.\n", c.store.Connection.Name)
 	return err
 }

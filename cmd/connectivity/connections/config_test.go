@@ -394,7 +394,7 @@ func TestBuildConfigDecodeErrorsRetainLineNumbers(t *testing.T) {
 }
 
 func TestBuildConfigureConfigPreservesUntouchedFiles(t *testing.T) {
-	current := &connectivityclient.ConnectorInstanceConfig{Files: map[string]string{"/etc/a": "a", "/etc/b": "b"}}
+	current := &connectivityclient.ConnectionConfig{Files: map[string]string{"/etc/a": "a", "/etc/b": "b"}}
 	got, err := BuildConfigureConfig(&cobra.Command{}, versionWithFileSchema(), current, InputOptions{SetValues: []string{"/etc/a=@new"}}, mapReadFile(map[string]string{"new": "changed"}))
 	require.NoError(t, err)
 	require.Equal(t, map[string]string{"/etc/a": "changed", "/etc/b": "b"}, got.Files)
@@ -410,7 +410,7 @@ func TestBuildInstallConfigRejectsStructuredFileWithoutPath(t *testing.T) {
 }
 
 func TestBuildConfigureConfigDeepCopiesCurrentConfiguration(t *testing.T) {
-	current := &connectivityclient.ConnectorInstanceConfig{
+	current := &connectivityclient.ConnectionConfig{
 		Env: map[string]string{
 			"API_URL": "https://current.example",
 		},
@@ -445,7 +445,7 @@ func TestConfigurationReadErrorsDoNotEchoSecretContents(t *testing.T) {
 }
 
 func TestConfigureEmptyMapsPreserveReadbackAndSendNoDeletions(t *testing.T) {
-	current := &connectivityclient.ConnectorInstanceConfig{Env: map[string]string{"API_URL": "kept"}, Files: map[string]string{"/etc/plugin/config.yaml": "kept-file"}}
+	current := &connectivityclient.ConnectionConfig{Env: map[string]string{"API_URL": "kept"}, Files: map[string]string{"/etc/plugin/config.yaml": "kept-file"}}
 	patch := map[string]any{}
 	got, err := BuildConfigureConfig(&cobra.Command{}, versionWithOptionalSchema(), current, InputOptions{ConfigFile: "patch", patch: patch}, mapReadFile(map[string]string{"patch": "env: {}\nfiles: {}\n"}))
 	require.NoError(t, err)

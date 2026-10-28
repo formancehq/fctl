@@ -9,15 +9,15 @@ import (
 )
 
 func TestConfigurationUsesLiteralPublicFields(t *testing.T) {
-	c := ConnectorInstanceConfiguration{Connector: "stripe", Ledger: "main", Version: pointer("v1.0.0"), Suspend: pointer(false), InitialCursor: []byte{0, 0, 0, 0, 0, 0, 3, 232}, Env: map[string]string{"EMPTY": "", "SETTING": "value"}, Files: map[string]string{"/etc/plugin/key": "contents"}}
+	c := ConnectionConfiguration{Connector: "stripe", Ledger: "main", Version: pointer("v1.0.0"), Suspend: pointer(false), InitialCursor: []byte{0, 0, 0, 0, 0, 0, 3, 232}, Env: map[string]string{"EMPTY": "", "SETTING": "value"}, Files: map[string]string{"/etc/plugin/key": "contents"}}
 	body, err := json.Marshal(c)
 	require.NoError(t, err)
 	require.JSONEq(t, `{"connector":"stripe","ledger":"main","version":"v1.0.0","suspend":false,"initialCursor":"AAAAAAAAA+g=","env":{"EMPTY":"","SETTING":"value"},"files":{"/etc/plugin/key":"contents"}}`, string(body))
 	require.Equal(t, "stripe", c.ConnectorName())
-	require.Equal(t, &ConnectorInstanceConfig{Env: c.Env, Files: c.Files}, c.Configuration())
-	require.Empty(t, (ConnectorInstanceConfiguration{}).ConnectorName())
+	require.Equal(t, &ConnectionConfig{Env: c.Env, Files: c.Files}, c.Configuration())
+	require.Empty(t, (ConnectionConfiguration{}).ConnectorName())
 	for _, cursor := range [][]byte{nil, {}} {
-		body, err = json.Marshal(ConnectorInstanceConfiguration{Ledger: "main", InitialCursor: cursor})
+		body, err = json.Marshal(ConnectionConfiguration{Ledger: "main", InitialCursor: cursor})
 		require.NoError(t, err)
 		require.JSONEq(t, `{"ledger":"main"}`, string(body))
 	}
@@ -50,14 +50,14 @@ func TestDecodeFlatConnectorAndVersion(t *testing.T) {
 
 func TestInstanceResponseAllowsAbsentStatusAndStoredUnboundConfiguration(t *testing.T) {
 	for _, status := range []string{"", `,"status":null`, `,"status":{"lifecycle":"pending","suspendedBy":[]}`} {
-		var instance ConnectorInstance
+		var instance Connection
 		require.NoError(t, decodeResponse(strings.NewReader(`{"name":"unbound","configuration":{"ledger":"main"}`+status+`}`), &instance, true))
 		require.Empty(t, instance.Configuration.Connector)
 	}
 }
 
 func TestInstanceStatusDecodesRecordedOutcomes(t *testing.T) {
-	var instance ConnectorInstance
+	var instance Connection
 	err := decodeResponse(strings.NewReader(`{"name":"worker","configuration":{"connector":"stripe","ledger":"main","channel":"stable","suspend":false},"status":{"appliedVersion":"v1.0.0","lifecycle":"suspended","ingestion":{"state":"paused","progress":{"current":0},"lastError":"historical retry"},"error":{"code":"failure_unknown","message":"Recorded failure"},"suspendedBy":[{"source":"request","name":"worker"},{"source":"policy","name":"maintenance"}]}}`), &instance, true)
 	require.NoError(t, err)
 	require.False(t, *instance.Configuration.Suspend)
@@ -89,10 +89,10 @@ func TestInvalidInstanceResponsesRejectEntirePage(t *testing.T) {
 		`{"name":"worker","configuration":{"ledger":"main"},"status":{"lifecycle":"active","suspendedBy":[{"source":"Policy","name":"maintenance"}]}}`,
 	} {
 		t.Run(body, func(t *testing.T) {
-			var instance ConnectorInstance
+			var instance Connection
 			require.Error(t, decodeResponse(strings.NewReader(body), &instance, true))
 			c := New("https://stack.example", responseClient(200, `{"cursor":{"data":[`+instanceResponse+`,`+body+`]}}`))
-			page, err := c.ListConnectorInstances(t.Context(), ListOptions{})
+			page, err := c.ListConnections(t.Context(), ListOptions{})
 			require.Error(t, err)
 			require.Nil(t, page)
 		})
@@ -100,7 +100,7 @@ func TestInvalidInstanceResponsesRejectEntirePage(t *testing.T) {
 }
 
 func TestPublicInstanceResponseDecodesOpaqueCursorBytes(t *testing.T) {
-	var instance ConnectorInstance
+	var instance Connection
 	err := decodeResponse(strings.NewReader(`{"name":"worker","configuration":{"connector":"stripe","ledger":"main","version":"v1.0.0","initialCursor":"AAAAAAAAA+g="}}`), &instance, true)
 	require.NoError(t, err)
 	require.Equal(t, []byte{0, 0, 0, 0, 0, 0, 3, 232}, instance.Configuration.InitialCursor)

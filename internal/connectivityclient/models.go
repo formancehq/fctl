@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	ResourceConnectors         = "connectors"
-	ResourceConnectorVersions  = "connectorversions"
-	ResourceConnectorInstances = "connector-instances"
+	ResourceConnectors        = "connectors"
+	ResourceConnectorVersions = "connectorversions"
+	ResourceConnections       = "connections"
 )
 
 // VersionAliasLatest resolves to the newest Validated version across all
@@ -82,16 +82,16 @@ type QueryCapabilities struct {
 	Resources map[string]map[string]QueryFieldCapability `json:"resources"`
 }
 
-// ConnectorInstanceConfig groups literal inputs for configuration assembly.
-type ConnectorInstanceConfig struct {
+// ConnectionConfig groups literal inputs for configuration assembly.
+type ConnectionConfig struct {
 	Env   map[string]string `json:"env,omitempty"`
 	Files map[string]string `json:"files,omitempty"`
 }
 
-// ConnectorInstanceConfiguration contains only tenant-owned public fields.
+// ConnectionConfiguration contains only tenant-owned public fields.
 // Connector may be absent on reads of an unbound stored instance. Writes require
 // connector, ledger and exactly one of version or channel.
-type ConnectorInstanceConfiguration struct {
+type ConnectionConfiguration struct {
 	Connector     string            `json:"connector,omitempty"`
 	Version       *string           `json:"version,omitempty"`
 	Channel       *string           `json:"channel,omitempty"`
@@ -103,9 +103,9 @@ type ConnectorInstanceConfiguration struct {
 	Files         map[string]string `json:"files,omitempty"`
 }
 
-func (s ConnectorInstanceConfiguration) ConnectorName() string { return s.Connector }
-func (s ConnectorInstanceConfiguration) Configuration() *ConnectorInstanceConfig {
-	return &ConnectorInstanceConfig{Env: s.Env, Files: s.Files}
+func (s ConnectionConfiguration) ConnectorName() string { return s.Connector }
+func (s ConnectionConfiguration) Configuration() *ConnectionConfig {
+	return &ConnectionConfig{Env: s.Env, Files: s.Files}
 }
 
 type SuspensionSource struct {
@@ -172,8 +172,8 @@ func (s *StatusError) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// ConnectorInstanceStatus reports recorded outcomes, not live worker health.
-type ConnectorInstanceStatus struct {
+// ConnectionStatus reports recorded outcomes, not live worker health.
+type ConnectionStatus struct {
 	AppliedVersion *string            `json:"appliedVersion,omitempty"`
 	Lifecycle      string             `json:"lifecycle"`
 	Ingestion      *IngestionStatus   `json:"ingestion,omitempty"`
@@ -181,29 +181,29 @@ type ConnectorInstanceStatus struct {
 	SuspendedBy    []SuspensionSource `json:"suspendedBy"`
 }
 
-type ConnectorInstance struct {
-	Name          string                         `json:"name"`
-	Configuration ConnectorInstanceConfiguration `json:"configuration"`
-	Status        *ConnectorInstanceStatus       `json:"status,omitempty"`
+type Connection struct {
+	Name          string                  `json:"name"`
+	Configuration ConnectionConfiguration `json:"configuration"`
+	Status        *ConnectionStatus       `json:"status,omitempty"`
 }
 
-type ConnectorInstanceList struct {
-	Items    []ConnectorInstance `json:"items"`
-	PageSize int32               `json:"pageSize"`
-	HasMore  bool                `json:"hasMore"`
-	Next     string              `json:"next,omitempty"`
+type ConnectionList struct {
+	Items    []Connection `json:"items"`
+	PageSize int32        `json:"pageSize"`
+	HasMore  bool         `json:"hasMore"`
+	Next     string       `json:"next,omitempty"`
 }
 
-type ConnectorInstanceCreate struct {
-	Name          string                         `json:"name"`
-	Configuration ConnectorInstanceConfiguration `json:"configuration"`
+type ConnectionCreate struct {
+	Name          string                  `json:"name"`
+	Configuration ConnectionConfiguration `json:"configuration"`
 }
 
-type ConnectorInstanceUpdate struct {
-	Configuration ConnectorInstanceConfiguration `json:"configuration"`
+type ConnectionUpdate struct {
+	Configuration ConnectionConfiguration `json:"configuration"`
 }
 
-type ConnectorInstancePatch map[string]any
+type ConnectionPatch map[string]any
 
 type ListOptions struct {
 	PageSize int32
@@ -225,12 +225,12 @@ type Client interface {
 	GetConnector(context.Context, string) (*Connector, error)
 	ListConnectorVersions(context.Context, string, ListOptions) (*ConnectorVersionList, error)
 	GetConnectorVersion(context.Context, string, string) (*ConnectorVersion, error)
-	ListConnectorInstances(context.Context, ListOptions) (*ConnectorInstanceList, error)
-	CreateConnectorInstance(context.Context, ConnectorInstanceCreate) (*ConnectorInstance, error)
-	GetConnectorInstance(context.Context, string) (*ConnectorInstance, error)
-	ReplaceConnectorInstance(context.Context, string, ConnectorInstanceUpdate) (*ConnectorInstance, error)
-	PatchConnectorInstance(context.Context, string, ConnectorInstancePatch) (*ConnectorInstance, error)
-	DeleteConnectorInstance(context.Context, string) error
+	ListConnections(context.Context, ListOptions) (*ConnectionList, error)
+	CreateConnection(context.Context, ConnectionCreate) (*Connection, error)
+	GetConnection(context.Context, string) (*Connection, error)
+	ReplaceConnection(context.Context, string, ConnectionUpdate) (*Connection, error)
+	PatchConnection(context.Context, string, ConnectionPatch) (*Connection, error)
+	DeleteConnection(context.Context, string) error
 }
 
 func New(stackURI string, httpClient *http.Client) Client {

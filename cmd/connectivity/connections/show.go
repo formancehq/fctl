@@ -16,7 +16,7 @@ import (
 )
 
 type ShowStore struct {
-	ConnectorInstance connectivityclient.ConnectorInstance `json:"connectorInstance"`
+	Connection connectivityclient.Connection `json:"connection"`
 }
 
 type ShowController struct {
@@ -37,7 +37,7 @@ func NewShowCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
 		fctl.WithAliases("get", "g", "sh", "s"),
 		fctl.WithShortDescription("Show a Connectivity connection"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithValidArgsFunction(CompleteConnectorInstanceNames(factory)),
+		fctl.WithValidArgsFunction(CompleteConnectionNames(factory)),
 		fctl.WithController[*ShowStore](controller),
 	)
 }
@@ -54,19 +54,19 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	if err != nil {
 		return nil, err
 	}
-	instance, err := client.GetConnectorInstance(cmd.Context(), args[0])
+	instance, err := client.GetConnection(cmd.Context(), args[0])
 	if err != nil {
 		return nil, err
 	}
 	if instance == nil {
 		return nil, fmt.Errorf("show connectivity connection %q: empty response", args[0])
 	}
-	c.store.ConnectorInstance = *instance
+	c.store.Connection = *instance
 	return c, nil
 }
 
 func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
-	instance := c.store.ConnectorInstance
+	instance := c.store.Connection
 	out := cmd.OutOrStdout()
 	if err := renderInstanceSection(out, "Information", pterm.TableData{{"Name", instance.Name}}); err != nil {
 		return err
@@ -101,7 +101,7 @@ func renderInstanceSection(out io.Writer, title string, data pterm.TableData) er
 	return pterm.DefaultTable.WithWriter(out).WithData(data).Render()
 }
 
-func configRows(config *connectivityclient.ConnectorInstanceConfig) [][]string {
+func configRows(config *connectivityclient.ConnectionConfig) [][]string {
 	if config == nil {
 		return nil
 	}
@@ -122,7 +122,7 @@ func boolValue(value *bool) string {
 	}
 	return strconv.FormatBool(*value)
 }
-func instanceSuspensionSources(status *connectivityclient.ConnectorInstanceStatus) string {
+func instanceSuspensionSources(status *connectivityclient.ConnectionStatus) string {
 	if status == nil {
 		return ""
 	}
@@ -132,31 +132,31 @@ func instanceSuspensionSources(status *connectivityclient.ConnectorInstanceStatu
 	}
 	return strings.Join(entries, ", ")
 }
-func lifecycleValue(status *connectivityclient.ConnectorInstanceStatus) string {
+func lifecycleValue(status *connectivityclient.ConnectionStatus) string {
 	if status == nil {
 		return ""
 	}
 	return status.Lifecycle
 }
-func ingestionState(status *connectivityclient.ConnectorInstanceStatus) string {
+func ingestionState(status *connectivityclient.ConnectionStatus) string {
 	if status == nil || status.Ingestion == nil {
 		return ""
 	}
 	return stringValue(status.Ingestion.State)
 }
-func ingestionProgress(status *connectivityclient.ConnectorInstanceStatus) string {
+func ingestionProgress(status *connectivityclient.ConnectionStatus) string {
 	if status == nil || status.Ingestion == nil || status.Ingestion.Progress == nil {
 		return ""
 	}
 	return strconv.FormatInt(status.Ingestion.Progress.Current, 10)
 }
-func ingestionLastError(status *connectivityclient.ConnectorInstanceStatus) string {
+func ingestionLastError(status *connectivityclient.ConnectionStatus) string {
 	if status == nil || status.Ingestion == nil {
 		return ""
 	}
 	return stringValue(status.Ingestion.LastError)
 }
-func serviceError(status *connectivityclient.ConnectorInstanceStatus) string {
+func serviceError(status *connectivityclient.ConnectionStatus) string {
 	if status == nil || status.Error == nil {
 		return ""
 	}

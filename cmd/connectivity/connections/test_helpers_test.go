@@ -46,13 +46,13 @@ func versionListFixture() *connectivityclient.ConnectorVersionList {
 	}}
 }
 
-func instanceFixture(name string) connectivityclient.ConnectorInstance {
-	return connectivityclient.ConnectorInstance{Name: name,
-		Configuration: connectivityclient.ConnectorInstanceConfiguration{Connector: "stripe", Version: stringPtr("2.0.0"), Ledger: "main", PollInterval: stringPtr("5s"), InitialCursor: []byte{0, 255, 97}},
-		Status:        &connectivityclient.ConnectorInstanceStatus{Lifecycle: "active", AppliedVersion: stringPtr("2.0.0"), Ingestion: &connectivityclient.IngestionStatus{State: stringPtr("running"), Progress: &connectivityclient.IngestionProgress{Current: 42}, LastError: stringPtr("source temporarily unavailable")}},
+func instanceFixture(name string) connectivityclient.Connection {
+	return connectivityclient.Connection{Name: name,
+		Configuration: connectivityclient.ConnectionConfiguration{Connector: "stripe", Version: stringPtr("2.0.0"), Ledger: "main", PollInterval: stringPtr("5s"), InitialCursor: []byte{0, 255, 97}},
+		Status:        &connectivityclient.ConnectionStatus{Lifecycle: "active", AppliedVersion: stringPtr("2.0.0"), Ingestion: &connectivityclient.IngestionStatus{State: stringPtr("running"), Progress: &connectivityclient.IngestionProgress{Current: 42}, LastError: stringPtr("source temporarily unavailable")}},
 	}
 }
-func instanceWithTwoFiles() *connectivityclient.ConnectorInstance {
+func instanceWithTwoFiles() *connectivityclient.Connection {
 	instance := instanceFixture("stripe-eu")
 	instance.Configuration.Files = map[string]string{"/etc/plugin/config.yaml": "private config", "/etc/plugin/ca.pem": "private ca"}
 	return &instance
@@ -64,8 +64,8 @@ func factoryReturning(client connectivityclient.Client) connectivityinternal.Cli
 	}
 }
 
-func factoryWithInstance(instance connectivityclient.ConnectorInstance) connectivityinternal.ClientFactory {
-	return factoryReturning(showInstanceClientMock{get: func(_ context.Context, _ string) (*connectivityclient.ConnectorInstance, error) {
+func factoryWithInstance(instance connectivityclient.Connection) connectivityinternal.ClientFactory {
+	return factoryReturning(showInstanceClientMock{get: func(_ context.Context, _ string) (*connectivityclient.Connection, error) {
 		return &instance, nil
 	}})
 }
@@ -173,7 +173,7 @@ func fullConfigSchema(requiredEnv, requiredFiles []any) map[string]any {
 	}
 }
 
-func setInstanceConfig(instance *connectivityclient.ConnectorInstance, config *connectivityclient.ConnectorInstanceConfig) {
+func setInstanceConfig(instance *connectivityclient.Connection, config *connectivityclient.ConnectionConfig) {
 	if config == nil {
 		instance.Configuration.Env, instance.Configuration.Files = nil, nil
 		return

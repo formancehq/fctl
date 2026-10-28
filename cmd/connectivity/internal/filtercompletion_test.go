@@ -37,7 +37,7 @@ func capabilitiesFixture() *connectivityclient.QueryCapabilities {
 			"name":    {Operators: []string{"$match", "$in", "$like"}},
 			"tags":    {Operators: []string{"$match", "$in", "$exists"}},
 		},
-		connectivityclient.ResourceConnectorInstances: {
+		connectivityclient.ResourceConnections: {
 			"channel":        {Operators: []string{"$match", "$in", "$exists"}, Enum: []string{"stable", "rc", "beta", "alpha"}},
 			"connector":      {Operators: []string{"$match", "$in"}},
 			"lifecycle":      {Operators: []string{"$match", "$in", "$exists"}, Enum: []string{"pending", "active", "suspended", "completed", "failed", "unknown"}},
@@ -98,7 +98,7 @@ func TestCompleteFilterExpressionsCompletesEnumValuesForTypedOperator(t *testing
 	client := filterCompletionClientMock{capabilities: func(context.Context) (*connectivityclient.QueryCapabilities, error) {
 		return capabilitiesFixture(), nil
 	}}
-	completion := CompleteFilterExpressions(filterFactory(t, client), connectivityclient.ResourceConnectorInstances)
+	completion := CompleteFilterExpressions(filterFactory(t, client), connectivityclient.ResourceConnections)
 
 	equals, directive := completion(&cobra.Command{}, nil, "channel=st")
 	negated, _ := completion(&cobra.Command{}, nil, "channel!=r")
@@ -166,7 +166,7 @@ func TestCompleteFilterExpressionsCompletesConnectorNamesForInstanceConnectorKey
 			}}, nil
 		},
 	}
-	completion := CompleteFilterExpressions(filterFactory(t, client), connectivityclient.ResourceConnectorInstances)
+	completion := CompleteFilterExpressions(filterFactory(t, client), connectivityclient.ResourceConnections)
 
 	candidates, _ := completion(&cobra.Command{}, nil, "connector=")
 
@@ -195,7 +195,7 @@ func TestCompleteFilterExpressionsDrainsBoundedConnectorPages(t *testing.T) {
 		},
 	}
 
-	candidates, _ := CompleteFilterExpressions(filterFactory(t, client), connectivityclient.ResourceConnectorInstances)(&cobra.Command{}, nil, "connector=")
+	candidates, _ := CompleteFilterExpressions(filterFactory(t, client), connectivityclient.ResourceConnections)(&cobra.Command{}, nil, "connector=")
 
 	if want := []string{"connector=adyen", "connector=stripe"}; !reflect.DeepEqual(candidates, want) {
 		t.Fatalf("candidates = %#v, want %#v", candidates, want)
@@ -313,7 +313,7 @@ func TestCompleteInstanceFiltersUsePublicCapabilityNamesWithoutAliases(t *testin
 	client := filterCompletionClientMock{capabilities: func(context.Context) (*connectivityclient.QueryCapabilities, error) {
 		return capabilitiesFixture(), nil
 	}}
-	completion := CompleteFilterExpressions(filterFactory(t, client), connectivityclient.ResourceConnectorInstances)
+	completion := CompleteFilterExpressions(filterFactory(t, client), connectivityclient.ResourceConnections)
 	keys, _ := completion(&cobra.Command{}, nil, "")
 	want := []string{
 		"appliedVersion=\toperators: $match, $in, $exists, $gt, $gte, $lt, $lte",

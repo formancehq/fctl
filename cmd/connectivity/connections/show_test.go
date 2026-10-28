@@ -16,10 +16,10 @@ import (
 
 type showInstanceClientMock struct {
 	connectivityclient.Client
-	get func(context.Context, string) (*connectivityclient.ConnectorInstance, error)
+	get func(context.Context, string) (*connectivityclient.Connection, error)
 }
 
-func (m showInstanceClientMock) GetConnectorInstance(ctx context.Context, name string) (*connectivityclient.ConnectorInstance, error) {
+func (m showInstanceClientMock) GetConnection(ctx context.Context, name string) (*connectivityclient.Connection, error) {
 	return m.get(ctx, name)
 }
 
@@ -64,9 +64,9 @@ func TestShowPlainOutputOmitsUnsupportedStartSequence(t *testing.T) {
 	require.NotContains(t, output, "987654321")
 }
 
-func TestShowConnectorInstanceJSONPreservesCompleteModel(t *testing.T) {
+func TestShowConnectionJSONPreservesCompleteModel(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
-	setInstanceConfig(&instance, &connectivityclient.ConnectorInstanceConfig{Env: map[string]string{
+	setInstanceConfig(&instance, &connectivityclient.ConnectionConfig{Env: map[string]string{
 		"API_KEY": "json-keeps-full-model",
 	}})
 	command := NewShowCommand(factoryWithInstance(instance))
@@ -79,10 +79,10 @@ func TestShowConnectorInstanceJSONPreservesCompleteModel(t *testing.T) {
 		Data ShowStore `json:"data"`
 	}
 	require.NoError(t, json.Unmarshal([]byte(output), &envelope))
-	require.Equal(t, instance, envelope.Data.ConnectorInstance)
+	require.Equal(t, instance, envelope.Data.Connection)
 }
 
-func TestShowConnectorInstanceHandlesMissingStatusAndConfig(t *testing.T) {
+func TestShowConnectionHandlesMissingStatusAndConfig(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
 	instance.Status = nil
 	setInstanceConfig(&instance, nil)
@@ -111,7 +111,7 @@ func TestShowConnectionRendersSuspensionAndOrderedProvenance(t *testing.T) {
 	require.Contains(t, output, "request/stripe-eu, policy/maintenance")
 }
 
-func TestShowConnectorInstanceReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
+func TestShowConnectionReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
 	tests := map[string]struct {
 		factory func(*cobra.Command) (connectivityclient.Client, error)
 		want    string
@@ -124,13 +124,13 @@ func TestShowConnectorInstanceReturnsFactoryAPIAndEmptyResponseErrors(t *testing
 			want: "authentication failed",
 		},
 		"API": {
-			factory: factoryReturning(showInstanceClientMock{get: func(context.Context, string) (*connectivityclient.ConnectorInstance, error) {
-				return nil, errors.New("connector instance unavailable")
+			factory: factoryReturning(showInstanceClientMock{get: func(context.Context, string) (*connectivityclient.Connection, error) {
+				return nil, errors.New("connection unavailable")
 			}}),
-			want: "connector instance unavailable",
+			want: "connection unavailable",
 		},
 		"empty response": {
-			factory: factoryReturning(showInstanceClientMock{get: func(context.Context, string) (*connectivityclient.ConnectorInstance, error) {
+			factory: factoryReturning(showInstanceClientMock{get: func(context.Context, string) (*connectivityclient.Connection, error) {
 				return nil, nil
 			}}),
 			want: "empty response",

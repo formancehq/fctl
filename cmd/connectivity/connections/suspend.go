@@ -47,7 +47,7 @@ func newSuspensionCommand(factory connectivityinternal.ClientFactory, name, desc
 		name+" <connection>",
 		fctl.WithShortDescription(description),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithValidArgsFunction(CompleteConnectorInstanceNames(factory)),
+		fctl.WithValidArgsFunction(CompleteConnectionNames(factory)),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*SuspensionStore](controller),
 	)
@@ -73,7 +73,7 @@ func (c *SuspensionController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 	if !c.approve(cmd, "You are about to %s Connectivity connection %q", action, name) {
 		return nil, fctl.ErrMissingApproval
 	}
-	_, err = client.PatchConnectorInstance(cmd.Context(), name, connectivityclient.ConnectorInstancePatch{
+	_, err = client.PatchConnection(cmd.Context(), name, connectivityclient.ConnectionPatch{
 		"configuration": map[string]any{"suspend": c.suspend},
 	})
 	if err != nil {

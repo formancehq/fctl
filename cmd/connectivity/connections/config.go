@@ -393,15 +393,15 @@ func firstDescription(left, right string) string {
 	return right
 }
 
-func BuildInstallConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersion, inputs InputOptions, read ReadFileFunc) (*connectivityclient.ConnectorInstanceConfig, error) {
+func BuildInstallConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersion, inputs InputOptions, read ReadFileFunc) (*connectivityclient.ConnectionConfig, error) {
 	return buildConfig(cmd, version, nil, inputs, read, true)
 }
 
-func BuildConfigureConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersion, current *connectivityclient.ConnectorInstanceConfig, inputs InputOptions, read ReadFileFunc) (*connectivityclient.ConnectorInstanceConfig, error) {
+func BuildConfigureConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersion, current *connectivityclient.ConnectionConfig, inputs InputOptions, read ReadFileFunc) (*connectivityclient.ConnectionConfig, error) {
 	return buildConfig(cmd, version, current, inputs, read, false)
 }
 
-func buildConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersion, base *connectivityclient.ConnectorInstanceConfig, inputs InputOptions, read ReadFileFunc, install bool) (*connectivityclient.ConnectorInstanceConfig, error) {
+func buildConfig(cmd *cobra.Command, version *connectivityclient.ConnectorVersion, base *connectivityclient.ConnectionConfig, inputs InputOptions, read ReadFileFunc, install bool) (*connectivityclient.ConnectionConfig, error) {
 	contract, err := schemaContractFor(version)
 	if err != nil {
 		return nil, err
@@ -525,7 +525,7 @@ func parseAssignment(raw string) (string, string, error) {
 	return key, parts[1], nil
 }
 
-func applyDotenv(config *connectivityclient.ConnectorInstanceConfig, contract schemaContract, contents string, unknown map[string]struct{}, patch map[string]any) error {
+func applyDotenv(config *connectivityclient.ConnectionConfig, contract schemaContract, contents string, unknown map[string]struct{}, patch map[string]any) error {
 	scanner := bufio.NewScanner(strings.NewReader(contents))
 	line := 0
 	for scanner.Scan() {
@@ -632,7 +632,7 @@ func applyDoubleQuoteEscapes(value string) string {
 	return decoded.String()
 }
 
-func applyConfigDocument(config *connectivityclient.ConnectorInstanceConfig, contract schemaContract, contents string, unknown map[string]struct{}, patch map[string]any) error {
+func applyConfigDocument(config *connectivityclient.ConnectionConfig, contract schemaContract, contents string, unknown map[string]struct{}, patch map[string]any) error {
 	var root map[string]any
 	if err := yaml.Unmarshal([]byte(contents), &root); err != nil {
 		return configDecodeError(err)
@@ -748,7 +748,7 @@ func assignmentField(contract schemaContract, key string) (SchemaField, bool) {
 	return configField(contract, key, kind)
 }
 
-func applyValue(config *connectivityclient.ConnectorInstanceConfig, field SchemaField, value parsedValue) {
+func applyValue(config *connectivityclient.ConnectionConfig, field SchemaField, value parsedValue) {
 	if field.Kind == ConfigEnv {
 		if config.Env == nil {
 			config.Env = map[string]string{}
@@ -762,7 +762,7 @@ func applyValue(config *connectivityclient.ConnectorInstanceConfig, field Schema
 	}
 }
 
-func hasValue(config *connectivityclient.ConnectorInstanceConfig, field SchemaField) bool {
+func hasValue(config *connectivityclient.ConnectionConfig, field SchemaField) bool {
 	if field.Kind == ConfigEnv {
 		_, exists := config.Env[field.Key]
 		return exists
@@ -771,8 +771,8 @@ func hasValue(config *connectivityclient.ConnectorInstanceConfig, field SchemaFi
 	return exists
 }
 
-func cloneConfig(source *connectivityclient.ConnectorInstanceConfig) *connectivityclient.ConnectorInstanceConfig {
-	clone := &connectivityclient.ConnectorInstanceConfig{Env: map[string]string{}, Files: map[string]string{}}
+func cloneConfig(source *connectivityclient.ConnectionConfig) *connectivityclient.ConnectionConfig {
+	clone := &connectivityclient.ConnectionConfig{Env: map[string]string{}, Files: map[string]string{}}
 	if source != nil {
 		for key, value := range source.Env {
 			clone.Env[key] = value

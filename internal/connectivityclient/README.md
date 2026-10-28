@@ -2,29 +2,31 @@
 
 This package adapts Connectivity HTTP operations to fctl's existing authenticated
 stack client. It appends `/api/connectivity` to the stack URI and uses the supplied
-HTTP client and context. Instance routes and the query-capability resource ID are
-`connector-instances`; version capabilities use `connectorversions`.
+HTTP client and context. Connection routes and the query-capability resource ID are
+`connections`; version capabilities use `connectorversions`.
 
 ## Public contract
 
-The contract pin is Connectivity
-`761313ebf3b456cc47aa2ef16d3502ab121f1522`:
-[OpenAPI](https://github.com/formancehq/connectivity/blob/761313ebf3b456cc47aa2ef16d3502ab121f1522/misc/connectivity-api/openapi.yaml)
-and [generated SDK models](https://github.com/formancehq/connectivity/tree/761313ebf3b456cc47aa2ef16d3502ab121f1522/pkg/client/http/models/components).
-This pin identifies the inspected contract, not a broader server compatibility
-range or a deployed-server qualification.
+The contract and official SDK come from Connectivity commit
+`1d0e16394f80863b1cb451819c76f5d37d3ccded`. Its OpenAPI has SHA-256
+`f5468cd103ff1800effc7c431778a6d66b2f6c1fe054591e861efa8e6119148d`
+(`misc/connectivity-api/openapi.yaml` and its identical embedded copy).
+The importable Go module is `github.com/formancehq/connectivity/pkg/client`;
+its HTTP package is `github.com/formancehq/connectivity/pkg/client/http`.
+This source pin does not establish a server compatibility range or qualify a
+deployed service.
 
 - Connectors expose flat public fields, starting with `name`. Versions have
   `version`, optional digest, release date and published schema/metadata; they
   do not expose an image reference.
-- Instances expose `name`, `configuration` and optional `status`.
-  `ConnectorInstanceConfiguration` contains `connector`, `ledger`, `version` or
+- Connections expose `name`, `configuration` and optional `status`.
+  `ConnectionConfiguration` contains `connector`, `ledger`, `version` or
   `channel`, `initialCursor`, `pollInterval`, `suspend`, and literal `env`/`files`
   string maps. `initialCursor` is opaque bytes encoded as base64 on the wire.
   Kubernetes metadata, binding references, storage references and file modes
   are outside this tenant contract.
-- POST sends `ConnectorInstanceCreate` with `name` and `configuration`. PUT
-  sends `ConnectorInstanceUpdate` with a complete `configuration`. Both require
+- POST sends `ConnectionCreate` with `name` and `configuration`. PUT
+  sends `ConnectionUpdate` with a complete `configuration`. Both require
   a connector, ledger and exactly one version/channel selector. Changing the
   connector or ledger remains a server-validated error.
 - PATCH sends a `configuration` merge patch. Omitted values are preserved;
@@ -35,28 +37,51 @@ range or a deployed-server qualification.
 - Read responses omit confidential password values and reference-backed
   entries. Do not infer an omitted value is empty. PUT must provide complete
   configuration, including required secrets; use PATCH to preserve omissions.
-  Stored instances without a connector binding are readable, as allowed by the
+  Stored connections without a connector binding are readable, as allowed by the
   contract, but cannot be submitted through POST or PUT without a connector.
 - Optional status reports recorded `appliedVersion`, `lifecycle`, ingestion
-  state/progress/lastError, sanitized error and request/policy suspension sources.
+  state/progress/lastError, service error and request/policy suspension sources.
+  The service error is a sanitized projection; ingestion `lastError` is the raw
+  last recorded ingestion diagnostic and can remain after recovery.
   Progress is a plugin-defined integer, not a universal sequence or percentage.
   Absent progress differs from a recorded zero. These fields do not prove live
   worker health, observation freshness or an active error.
 
 Success responses require an object root. Lists require non-null `cursor` and
 `cursor.data`; malformed resources reject the whole page. Resource identities,
-instance ledger, populated status, and progress are validated. Empty lists and
+connection ledger, populated status, and progress are validated. Empty lists and
 absent status remain valid. Structured API errors retain HTTP status, code,
 message and details; empty or non-JSON errors retain status text, including 401.
 
 ## Generated SDK boundary
 
-The handwritten facade in `client.go` preserves fctl's `Client`, list wrappers
-and `APIError` conventions. `cmd/connectivity/internal/client.go` constructs it
-with the selected stack URI and authenticated `StackClients.HTTPClient`. The pinned official SDK lives at
-`github.com/formancehq/connectivity/pkg/client` and represents `initialCursor`
-as a base64 string; this facade exposes bytes. Tests inspect the public shape
-without importing the server or the generated SDK.
+The facade in `client.go` delegates all catalogue, version, capability and
+Connection HTTP operations to the official SDK. It preserves fctl's `Client`,
+list wrappers, byte cursor representation and `APIError` conventions.
+`cmd/connectivity/internal/client.go` supplies the selected stack URI and
+authenticated `StackClients.HTTPClient`.
+
+Each invocation constructs an SDK client around the supplied HTTP client and
+caller context, without adding authentication, timeout or retry policy. The SDK
+owns routes and request serialization. This SDK revision substitutes path
+parameters verbatim, so the facade escapes each name/version argument before
+calling an operation. Validated facade write DTOs convert to
+SDK models; the SDK's nullable PATCH model preserves omitted fields, explicit
+nulls, false and empty string values without a GET/merge step. A request decorator
+removes the SDK's injected `pageSize=15` only when no size was requested.
+
+The invocation captures the original response bytes and closes the network body
+before the SDK reads its replay. Strict facade validation runs on those original
+bytes, because generated models can erase missing required values into zero.
+HTTP errors normalize from the original status/body even if SDK decoding fails;
+empty or malformed errors retain status text. Stream read failures propagate
+without returning a partially decoded result. A successful DELETE closes its
+body without reading it. Response capture is invocation-local, so concurrent
+calls share no mutable response state. As before, JSON success decoding does
+not depend on the response Content-Type header.
+
+Tests import no Connectivity server implementation. Consumer fixtures verify
+HTTP behavior with the actual SDK dependency, not a live Connectivity backend.
 
 ## Verification
 

@@ -44,7 +44,7 @@ func resolveConnectorVersion(ctx context.Context, client connectivityclient.Clie
 }
 
 // The connector is immutable; the last applied version is the channel floor.
-func appliedChannelFloor(instance *connectivityclient.ConnectorInstance) string {
+func appliedChannelFloor(instance *connectivityclient.Connection) string {
 	if instance == nil || instance.Status == nil {
 		return ""
 	}

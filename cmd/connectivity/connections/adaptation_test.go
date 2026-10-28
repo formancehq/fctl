@@ -23,16 +23,16 @@ func TestConnectionInstallWireContract(t *testing.T) {
 		{name: "opaque pin", args: []string{"--version=build-main"}, key: "version", value: "build-main"},
 	} {
 		t.Run(selector.name, func(t *testing.T) {
-			var body connectivityclient.ConnectorInstanceCreate
+			var body connectivityclient.ConnectionCreate
 			client := mutationClientMock{
 				connectorVersions: connectorVersions{getVersion: func(_ context.Context, connector, version string) (*connectivityclient.ConnectorVersion, error) {
 					require.Equal(t, "stripe", connector)
 					require.Equal(t, selector.value, version)
 					return versionWithOptionalSchema(), nil
 				}},
-				create: func(_ context.Context, input connectivityclient.ConnectorInstanceCreate) (*connectivityclient.ConnectorInstance, error) {
+				create: func(_ context.Context, input connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
 					body = input
-					return &connectivityclient.ConnectorInstance{Configuration: input.Configuration}, nil
+					return &connectivityclient.Connection{Configuration: input.Configuration}, nil
 				},
 			}
 			args := append([]string{"stripe", "--ledger=main", "--set=TOKEN=private", "--set=/etc/plugin/ca.pem=private-file", "--confirm"}, selector.args...)
@@ -91,8 +91,8 @@ func TestConnectionConfigureLedgerIsImmutable(t *testing.T) {
 		t.Run(ledger, func(t *testing.T) {
 			current := instanceFixture("stripe-eu")
 			client := configureClientMock{
-				getInstance: func(context.Context, string) (*connectivityclient.ConnectorInstance, error) { return &current, nil },
-				patch: func(context.Context, string, connectivityclient.ConnectorInstancePatch) (*connectivityclient.ConnectorInstance, error) {
+				getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
+				patch: func(context.Context, string, connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
 					t.Fatal("immutable ledger must not patch")
 					return nil, nil
 				},
@@ -121,8 +121,8 @@ func TestConnectionConfigureSelectorSwitchClearsOppositeKey(t *testing.T) {
 				current.Configuration.Channel = stringPtr("beta")
 			}
 			client := configureClientMock{
-				getInstance: func(context.Context, string) (*connectivityclient.ConnectorInstance, error) { return &current, nil },
-				patch: func(_ context.Context, _ string, patch connectivityclient.ConnectorInstancePatch) (*connectivityclient.ConnectorInstance, error) {
+				getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
+				patch: func(_ context.Context, _ string, patch connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
 					require.Equal(t, map[string]any{tt.key: tt.value, tt.clear: nil}, patch["configuration"])
 					return &current, nil
 				},
@@ -185,19 +185,19 @@ func TestConnectionInitialCursorValidatedBeforeClient(t *testing.T) {
 }
 
 func TestConnectionInitialCursorWireIsOpaque(t *testing.T) {
-	client := mutationClientMock{create: func(_ context.Context, body connectivityclient.ConnectorInstanceCreate) (*connectivityclient.ConnectorInstance, error) {
+	client := mutationClientMock{create: func(_ context.Context, body connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
 		wire, err := json.Marshal(body)
 		require.NoError(t, err)
 		require.Contains(t, string(wire), `"initialCursor":"AP9h"`)
 		require.NotContains(t, string(wire), "startSequence")
-		return &connectivityclient.ConnectorInstance{Configuration: body.Configuration}, nil
+		return &connectivityclient.Connection{Configuration: body.Configuration}, nil
 	}}
 	_, err := executeCommand(NewInstallCommand(factoryReturning(client), nil, nil), "stripe", "--ledger=main", "--initial-cursor=AP9h", "--confirm")
 	require.NoError(t, err)
 	current := instanceFixture("stripe-eu")
 	configure := configureClientMock{
-		getInstance: func(context.Context, string) (*connectivityclient.ConnectorInstance, error) { return &current, nil },
-		patch: func(_ context.Context, _ string, patch connectivityclient.ConnectorInstancePatch) (*connectivityclient.ConnectorInstance, error) {
+		getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
+		patch: func(_ context.Context, _ string, patch connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
 			wire, err := json.Marshal(patch)
 			require.NoError(t, err)
 			require.JSONEq(t, `{"configuration":{"initialCursor":"AP9h"}}`, string(wire))
@@ -220,10 +220,10 @@ func TestConnectionConfigPatchCarriesIntentForRedactedValues(t *testing.T) {
 			// TOKEN and the password file are intentionally absent from the readback.
 			current.Configuration.Env = map[string]string{"API_URL": "old-url", "TIMEOUT": "kept"}
 			current.Configuration.Files = map[string]string{"/etc/plugin/config.yaml": "kept-file"}
-			var got connectivityclient.ConnectorInstancePatch
-			client := configureClientMock{getInstance: func(context.Context, string) (*connectivityclient.ConnectorInstance, error) { return &current, nil }, connectorVersions: connectorVersions{getVersion: func(context.Context, string, string) (*connectivityclient.ConnectorVersion, error) {
+			var got connectivityclient.ConnectionPatch
+			client := configureClientMock{getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil }, connectorVersions: connectorVersions{getVersion: func(context.Context, string, string) (*connectivityclient.ConnectorVersion, error) {
 				return versionWithFullSchema(), nil
-			}}, patch: func(_ context.Context, _ string, patch connectivityclient.ConnectorInstancePatch) (*connectivityclient.ConnectorInstance, error) {
+			}}, patch: func(_ context.Context, _ string, patch connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
 				got = patch
 				return &current, nil
 			}}
@@ -244,16 +244,16 @@ func TestConnectionConfigurePreservesOmittedRequiredPasswords(t *testing.T) {
 	current := instanceFixture("stripe-eu")
 	current.Configuration.Env = map[string]string{"API_URL": "old-url"}
 	current.Configuration.Files = map[string]string{"/etc/plugin/config.yaml": "kept-file"}
-	var got connectivityclient.ConnectorInstancePatch
-	client := configureClientMock{getInstance: func(context.Context, string) (*connectivityclient.ConnectorInstance, error) { return &current, nil }, connectorVersions: connectorVersions{getVersion: func(context.Context, string, string) (*connectivityclient.ConnectorVersion, error) {
+	var got connectivityclient.ConnectionPatch
+	client := configureClientMock{getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil }, connectorVersions: connectorVersions{getVersion: func(context.Context, string, string) (*connectivityclient.ConnectorVersion, error) {
 		return versionWithFullSchema(), nil
-	}}, patch: func(_ context.Context, _ string, patch connectivityclient.ConnectorInstancePatch) (*connectivityclient.ConnectorInstance, error) {
+	}}, patch: func(_ context.Context, _ string, patch connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
 		got = patch
 		return &current, nil
 	}}
 	_, err := executeCommand(NewConfigureCommand(factoryReturning(client), nil, nil), "stripe-eu", "--set=API_URL=new-url", "--confirm")
 	require.NoError(t, err)
-	require.Equal(t, connectivityclient.ConnectorInstancePatch{"configuration": map[string]any{"env": map[string]any{"API_URL": "new-url"}}}, got)
+	require.Equal(t, connectivityclient.ConnectionPatch{"configuration": map[string]any{"env": map[string]any{"API_URL": "new-url"}}}, got)
 }
 
 func TestConnectionConfigureCompletionUsesNewPinInsteadOfExistingChannel(t *testing.T) {
@@ -261,7 +261,7 @@ func TestConnectionConfigureCompletionUsesNewPinInsteadOfExistingChannel(t *test
 	current.Configuration.Version = nil
 	current.Configuration.Channel = stringPtr("beta")
 	client := configureClientMock{
-		getInstance: func(context.Context, string) (*connectivityclient.ConnectorInstance, error) { return &current, nil },
+		getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
 		connectorVersions: connectorVersions{
 			getVersion: func(_ context.Context, connector, version string) (*connectivityclient.ConnectorVersion, error) {
 				require.Equal(t, "stripe", connector)
@@ -290,7 +290,7 @@ func TestConnectionShowAllowsUnboundPublicConfiguration(t *testing.T) {
 }
 
 func TestConnectionConfigNullEntriesHonorSetPrecedence(t *testing.T) {
-	current := &connectivityclient.ConnectorInstanceConfig{Env: map[string]string{"TOKEN": "old-token"}, Files: map[string]string{"/etc/plugin/ca.pem": "old-ca"}}
+	current := &connectivityclient.ConnectionConfig{Env: map[string]string{"TOKEN": "old-token"}, Files: map[string]string{"/etc/plugin/ca.pem": "old-ca"}}
 	patch := map[string]any{}
 	desired, err := BuildConfigureConfig(&cobra.Command{}, versionWithFullSchema(), current, InputOptions{patch: patch, ConfigFile: "patch", SetValues: []string{"TOKEN=new-token"}}, mockReadFile(map[string]string{"patch": "env:\n  TOKEN: null\nfiles:\n  /etc/plugin/ca.pem: null\n"}))
 	require.NoError(t, err)

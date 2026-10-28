@@ -15,17 +15,17 @@ import (
 
 type completionClientMock struct {
 	connectorVersions
-	listInstances func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error)
+	listInstances func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectionList, error)
 }
 
-func (m completionClientMock) ListConnectorInstances(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
+func (m completionClientMock) ListConnections(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectionList, error) {
 	return m.listInstances(ctx, options)
 }
 
-func TestCompleteConnectorInstanceNamesUsesBoundedNonInteractiveQueryAndReturnsSortedPrefixMatchesWithDescriptions(t *testing.T) {
+func TestCompleteConnectionNamesUsesBoundedNonInteractiveQueryAndReturnsSortedPrefixMatchesWithDescriptions(t *testing.T) {
 	var gotOptions connectivityclient.ListOptions
 	var remaining time.Duration
-	client := completionClientMock{listInstances: func(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
+	client := completionClientMock{listInstances: func(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectionList, error) {
 		gotOptions = options
 		deadline, ok := ctx.Deadline()
 		if !ok {
@@ -38,11 +38,11 @@ func TestCompleteConnectorInstanceNamesUsesBoundedNonInteractiveQueryAndReturnsS
 		alpine := instanceFixture("alpine")
 		alpine.Configuration.Connector = "wise"
 		alpine.Configuration.Ledger = "uk"
-		return &connectivityclient.ConnectorInstanceList{Items: []connectivityclient.ConnectorInstance{
+		return &connectivityclient.ConnectionList{Items: []connectivityclient.Connection{
 			instanceFixture("beta"), alpine, alpha,
 		}}, nil
 	}}
-	completion := CompleteConnectorInstanceNames(func(cmd *cobra.Command) (connectivityclient.Client, error) {
+	completion := CompleteConnectionNames(func(cmd *cobra.Command) (connectivityclient.Client, error) {
 		if !connectivityinternal.IsNonInteractive(cmd.Context()) {
 			t.Fatal("completion factory context is interactive")
 		}
@@ -52,7 +52,7 @@ func TestCompleteConnectorInstanceNamesUsesBoundedNonInteractiveQueryAndReturnsS
 	candidates, directive := completion(&cobra.Command{}, nil, "al")
 
 	if !reflect.DeepEqual(gotOptions, connectivityclient.ListOptions{PageSize: 100}) {
-		t.Fatalf("ListConnectorInstances options = %#v, want page size 100", gotOptions)
+		t.Fatalf("ListConnections options = %#v, want page size 100", gotOptions)
 	}
 	if remaining <= 1500*time.Millisecond || remaining > 2*time.Second {
 		t.Fatalf("completion deadline remaining = %s, want approximately 2s", remaining)
@@ -173,7 +173,7 @@ func TestCompleteSetValuesPreservesKeyAtPrefixForInjectedPathCandidates(t *testi
 
 func TestCompleteFunctionsReturnSilentlyOnFactoryAPIResolverPathAndTimeoutErrors(t *testing.T) {
 	apiErrorClient := completionClientMock{
-		listInstances: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
+		listInstances: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectionList, error) {
 			return nil, errors.New("unsupported deployment")
 		},
 		connectorVersions: connectorVersions{
@@ -189,25 +189,25 @@ func TestCompleteFunctionsReturnSilentlyOnFactoryAPIResolverPathAndTimeoutErrors
 		prefix     string
 	}{
 		"instance authentication": {
-			completion: CompleteConnectorInstanceNames(func(*cobra.Command) (connectivityclient.Client, error) { return nil, errors.New("not authenticated") }),
+			completion: CompleteConnectionNames(func(*cobra.Command) (connectivityclient.Client, error) { return nil, errors.New("not authenticated") }),
 			command:    &cobra.Command{},
 		},
 		"instance nil client": {
-			completion: CompleteConnectorInstanceNames(func(*cobra.Command) (connectivityclient.Client, error) { return nil, nil }),
+			completion: CompleteConnectionNames(func(*cobra.Command) (connectivityclient.Client, error) { return nil, nil }),
 			command:    &cobra.Command{},
 		},
-		"instance API": {completion: CompleteConnectorInstanceNames(factoryReturning(apiErrorClient)), command: &cobra.Command{}},
+		"instance API": {completion: CompleteConnectionNames(factoryReturning(apiErrorClient)), command: &cobra.Command{}},
 		"instance pagination": {
-			completion: CompleteConnectorInstanceNames(factoryReturning(completionClientMock{listInstances: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
+			completion: CompleteConnectionNames(factoryReturning(completionClientMock{listInstances: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectionList, error) {
 				if options.Cursor != "" {
 					return nil, errors.New("second page unavailable")
 				}
-				return &connectivityclient.ConnectorInstanceList{HasMore: true, Next: "page-two"}, nil
+				return &connectivityclient.ConnectionList{HasMore: true, Next: "page-two"}, nil
 			}})),
 			command: &cobra.Command{},
 		},
 		"instance timeout": {
-			completion: CompleteConnectorInstanceNames(factoryReturning(completionClientMock{listInstances: func(ctx context.Context, _ connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
+			completion: CompleteConnectionNames(factoryReturning(completionClientMock{listInstances: func(ctx context.Context, _ connectivityclient.ListOptions) (*connectivityclient.ConnectionList, error) {
 				<-ctx.Done()
 				return nil, ctx.Err()
 			}})),
@@ -245,12 +245,12 @@ func TestCompletionClientCopyDoesNotMutateOriginalCommandContext(t *testing.T) {
 	originalContext := context.WithValue(context.Background(), struct{}{}, "original")
 	command := &cobra.Command{}
 	command.SetContext(originalContext)
-	completion := CompleteConnectorInstanceNames(func(cmd *cobra.Command) (connectivityclient.Client, error) {
+	completion := CompleteConnectionNames(func(cmd *cobra.Command) (connectivityclient.Client, error) {
 		if !connectivityinternal.IsNonInteractive(cmd.Context()) {
 			t.Fatal("copied completion command must be non-interactive")
 		}
-		return completionClientMock{listInstances: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorInstanceList, error) {
-			return &connectivityclient.ConnectorInstanceList{}, nil
+		return completionClientMock{listInstances: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectionList, error) {
+			return &connectivityclient.ConnectionList{}, nil
 		}}, nil
 	})
 

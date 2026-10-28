@@ -24,7 +24,7 @@ type ConnectorResolver func(context.Context, connectivityclient.Client, *cobra.C
 // drives value completion for a command.
 type ConnectorVersionResolver func(context.Context, connectivityclient.Client, *cobra.Command, []string) (*connectivityclient.ConnectorVersion, error)
 
-func CompleteConnectorInstanceNames(factory connectivityinternal.ClientFactory) cobra.CompletionFunc {
+func CompleteConnectionNames(factory connectivityinternal.ClientFactory) cobra.CompletionFunc {
 	return func(cmd *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		client, completionCommand, cancel, ok := connectivityinternal.CompletionClient(cmd, factory)
 		if !ok {
@@ -33,8 +33,8 @@ func CompleteConnectorInstanceNames(factory connectivityinternal.ClientFactory) 
 		defer cancel()
 
 		instances, err := connectivityinternal.CollectPagesBounded(connectivityinternal.CompletionPageSize, instanceCompletionMaxPages,
-			func(options connectivityclient.ListOptions) ([]connectivityclient.ConnectorInstance, bool, string, error) {
-				page, err := client.ListConnectorInstances(completionCommand.Context(), options)
+			func(options connectivityclient.ListOptions) ([]connectivityclient.Connection, bool, string, error) {
+				page, err := client.ListConnections(completionCommand.Context(), options)
 				if err != nil || page == nil {
 					return nil, false, "", err
 				}

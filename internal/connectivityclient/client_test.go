@@ -23,7 +23,7 @@ const instanceResponse = `{"name":"worker","configuration":{"connector":"stripe"
 const emptyPage = `{"cursor":{"pageSize":15,"hasMore":false,"data":[]}}`
 
 func TestClientMethodsRespectHTTPContracts(t *testing.T) {
-	configuration := ConnectorInstanceConfiguration{Connector: "stripe", Version: pointer("v1.0.0"), Ledger: "main"}
+	configuration := ConnectionConfiguration{Connector: "stripe", Version: pointer("v1.0.0"), Ledger: "main"}
 	tests := []struct {
 		name, method, path, body, contentType, response string
 		status                                          int
@@ -41,21 +41,21 @@ func TestClientMethodsRespectHTTPContracts(t *testing.T) {
 			_, err := c.GetConnectorVersion(t.Context(), "stripe", VersionAliasLatest)
 			return err
 		}},
-		{name: "instances", method: http.MethodGet, path: "connector-instances", response: emptyPage, status: 200, call: func(c Client) error { _, err := c.ListConnectorInstances(t.Context(), ListOptions{}); return err }},
-		{name: "get", method: http.MethodGet, path: "connector-instances/worker%2Fone", response: instanceResponse, status: 200, call: func(c Client) error { _, err := c.GetConnectorInstance(t.Context(), "worker/one"); return err }},
-		{name: "create", method: http.MethodPost, path: "connector-instances", body: `{"name":"worker","configuration":{"connector":"stripe","version":"v1.0.0","ledger":"main"}}`, contentType: "application/json", response: instanceResponse, status: 201, call: func(c Client) error {
-			_, err := c.CreateConnectorInstance(t.Context(), ConnectorInstanceCreate{Name: "worker", Configuration: configuration})
+		{name: "instances", method: http.MethodGet, path: "connections", response: emptyPage, status: 200, call: func(c Client) error { _, err := c.ListConnections(t.Context(), ListOptions{}); return err }},
+		{name: "get", method: http.MethodGet, path: "connections/worker%2Fone", response: instanceResponse, status: 200, call: func(c Client) error { _, err := c.GetConnection(t.Context(), "worker/one"); return err }},
+		{name: "create", method: http.MethodPost, path: "connections", body: `{"name":"worker","configuration":{"connector":"stripe","version":"v1.0.0","ledger":"main"}}`, contentType: "application/json", response: instanceResponse, status: 201, call: func(c Client) error {
+			_, err := c.CreateConnection(t.Context(), ConnectionCreate{Name: "worker", Configuration: configuration})
 			return err
 		}},
-		{name: "replace", method: http.MethodPut, path: "connector-instances/worker%2Fone", body: `{"configuration":{"connector":"stripe","version":"v1.0.0","ledger":"main"}}`, contentType: "application/json", response: instanceResponse, status: 200, call: func(c Client) error {
-			_, err := c.ReplaceConnectorInstance(t.Context(), "worker/one", ConnectorInstanceUpdate{Configuration: configuration})
+		{name: "replace", method: http.MethodPut, path: "connections/worker%2Fone", body: `{"configuration":{"connector":"stripe","version":"v1.0.0","ledger":"main"}}`, contentType: "application/json", response: instanceResponse, status: 200, call: func(c Client) error {
+			_, err := c.ReplaceConnection(t.Context(), "worker/one", ConnectionUpdate{Configuration: configuration})
 			return err
 		}},
-		{name: "patch", method: http.MethodPatch, path: "connector-instances/worker%2Fone", body: `{"configuration":{"suspend":false}}`, contentType: "application/merge-patch+json", response: instanceResponse, status: 200, call: func(c Client) error {
-			_, err := c.PatchConnectorInstance(t.Context(), "worker/one", ConnectorInstancePatch{"configuration": map[string]any{"suspend": false}})
+		{name: "patch", method: http.MethodPatch, path: "connections/worker%2Fone", body: `{"configuration":{"suspend":false}}`, contentType: "application/merge-patch+json", response: instanceResponse, status: 200, call: func(c Client) error {
+			_, err := c.PatchConnection(t.Context(), "worker/one", ConnectionPatch{"configuration": map[string]any{"suspend": false}})
 			return err
 		}},
-		{name: "delete", method: http.MethodDelete, path: "connector-instances/worker%2Fone", status: 204, call: func(c Client) error { return c.DeleteConnectorInstance(t.Context(), "worker/one") }},
+		{name: "delete", method: http.MethodDelete, path: "connections/worker%2Fone", status: 204, call: func(c Client) error { return c.DeleteConnection(t.Context(), "worker/one") }},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -72,6 +72,7 @@ func TestClientMethodsRespectHTTPContracts(t *testing.T) {
 			})
 			require.NoError(t, tt.call(New("https://stack.example/base/?discard=true#fragment", &http.Client{Transport: transport})))
 			require.Equal(t, tt.method, seen.Method)
+			require.Contains(t, seen.Header.Get("User-Agent"), "speakeasy-sdk/go")
 			require.Equal(t, "/base/api/connectivity/"+tt.path, seen.URL.EscapedPath())
 			require.Empty(t, seen.URL.RawQuery)
 			require.Empty(t, seen.URL.Fragment)
@@ -108,7 +109,7 @@ func TestFacetQueryAndResourceCapabilities(t *testing.T) {
 			require.Equal(t, `{"$match":{"tags":"provider:psp"}}`, req.URL.Query().Get("query"))
 			return jsonResponse(200, `{"total":1,"facets":{"provider":{"psp":1}}}`), nil
 		}
-		return jsonResponse(200, `{"resources":{"connector-instances":{"channel":{"operators":["$match","$in"],"enum":["stable","rc","beta","alpha"]}},"connectorversions":{"version":{"operators":["$match"]}}}}`), nil
+		return jsonResponse(200, `{"resources":{"connections":{"channel":{"operators":["$match","$in"],"enum":["stable","rc","beta","alpha"]}},"connectorversions":{"version":{"operators":["$match"]}}}}`), nil
 	})
 	c := New("https://stack.example", &http.Client{Transport: transport})
 	facets, err := c.GetConnectorFacets(t.Context(), `{"$match":{"tags":"provider:psp"}}`)
@@ -117,7 +118,7 @@ func TestFacetQueryAndResourceCapabilities(t *testing.T) {
 	require.Equal(t, int64(1), facets.Facets["provider"]["psp"])
 	caps, err := c.GetQueryCapabilities(t.Context())
 	require.NoError(t, err)
-	require.Equal(t, []string{"stable", "rc", "beta", "alpha"}, caps.Resources[ResourceConnectorInstances]["channel"].Enum)
+	require.Equal(t, []string{"stable", "rc", "beta", "alpha"}, caps.Resources[ResourceConnections]["channel"].Enum)
 	require.Contains(t, caps.Resources, ResourceConnectorVersions)
 }
 
@@ -131,7 +132,7 @@ func TestClientReturnsAPIError(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			c := New("https://stack.example", &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) { return jsonResponse(tt.status, tt.body), nil })})
-			got, err := c.GetConnectorInstance(t.Context(), "worker")
+			got, err := c.GetConnection(t.Context(), "worker")
 			require.Nil(t, got)
 			var apiErr *APIError
 			require.ErrorAs(t, err, &apiErr)
@@ -177,7 +178,7 @@ func TestClientRejectsInvalidPublicResponses(t *testing.T) {
 		{"old connector", `{"metadata":{"name":"stripe"},"spec":{}}`, func(c Client) error { _, e := c.GetConnector(t.Context(), "stripe"); return e }},
 		{"missing cursor", `{}`, func(c Client) error { _, e := c.ListConnectors(t.Context(), ListOptions{}); return e }},
 		{"null cursor", `{"cursor":null}`, func(c Client) error { _, e := c.ListConnectorVersions(t.Context(), "stripe", ListOptions{}); return e }},
-		{"null data", `{"cursor":{"data":null}}`, func(c Client) error { _, e := c.ListConnectorInstances(t.Context(), ListOptions{}); return e }},
+		{"null data", `{"cursor":{"data":null}}`, func(c Client) error { _, e := c.ListConnections(t.Context(), ListOptions{}); return e }},
 		{"bad list connector", `{"cursor":{"data":[{"name":"stripe"},{}]}}`, func(c Client) error { _, e := c.ListConnectors(t.Context(), ListOptions{}); return e }},
 		{"missing version", `{}`, func(c Client) error { _, e := c.GetConnectorVersion(t.Context(), "stripe", "latest"); return e }},
 		{"bad list version", `{"cursor":{"data":[{}]}}`, func(c Client) error { _, e := c.ListConnectorVersions(t.Context(), "stripe", ListOptions{}); return e }},
@@ -221,8 +222,8 @@ func TestEveryListMethodPreservesFiltersPaginationAndEscapedConnector(t *testing
 			}
 			return page.PageSize, page.HasMore, page.Next, len(page.Items), nil
 		}},
-		{"instances", "connector-instances", instanceResponse, func(c Client) (int32, bool, string, int, error) {
-			page, err := c.ListConnectorInstances(t.Context(), options)
+		{"instances", "connections", instanceResponse, func(c Client) (int32, bool, string, int, error) {
+			page, err := c.ListConnections(t.Context(), options)
 			if err != nil {
 				return 0, false, "", 0, err
 			}
@@ -269,7 +270,7 @@ func TestEmptyFacetsAndCapabilityOperatorsArePreserved(t *testing.T) {
 			seenQuery = req.URL.RawQuery
 			return jsonResponse(200, `{"total":0,"facets":{}}`), nil
 		}
-		return jsonResponse(200, `{"resources":{"connectors":{"tags":{"operators":["$match","$in","$exists"]}},"connector-instances":{"channel":{"operators":["$match","$in","$exists"],"enum":["stable","rc","beta","alpha"]}}}}`), nil
+		return jsonResponse(200, `{"resources":{"connectors":{"tags":{"operators":["$match","$in","$exists"]}},"connections":{"channel":{"operators":["$match","$in","$exists"],"enum":["stable","rc","beta","alpha"]}}}}`), nil
 	})
 	c := New("https://stack.example", &http.Client{Transport: transport})
 	facets, err := c.GetConnectorFacets(t.Context(), "")
@@ -281,8 +282,8 @@ func TestEmptyFacetsAndCapabilityOperatorsArePreserved(t *testing.T) {
 	caps, err := c.GetQueryCapabilities(t.Context())
 	require.NoError(t, err)
 	require.Equal(t, []string{"$match", "$in", "$exists"}, caps.Resources[ResourceConnectors]["tags"].Operators)
-	require.Equal(t, []string{"$match", "$in", "$exists"}, caps.Resources[ResourceConnectorInstances]["channel"].Operators)
-	require.Equal(t, []string{"stable", "rc", "beta", "alpha"}, caps.Resources[ResourceConnectorInstances]["channel"].Enum)
+	require.Equal(t, []string{"$match", "$in", "$exists"}, caps.Resources[ResourceConnections]["channel"].Operators)
+	require.Equal(t, []string{"stable", "rc", "beta", "alpha"}, caps.Resources[ResourceConnections]["channel"].Enum)
 }
 
 func TestListConnectorsDecodesPublishedCatalogueFields(t *testing.T) {
@@ -314,7 +315,7 @@ func TestAllListsRejectMalformedEnvelopes(t *testing.T) {
 			_, err := c.ListConnectorVersions(t.Context(), "stripe", ListOptions{})
 			return err
 		}},
-		{"instances", func(c Client) error { _, err := c.ListConnectorInstances(t.Context(), ListOptions{}); return err }},
+		{"instances", func(c Client) error { _, err := c.ListConnections(t.Context(), ListOptions{}); return err }},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -329,13 +330,13 @@ func TestInvalidInstanceNameReportsListItemIndex(t *testing.T) {
 	for _, name := range []string{"", `"name":null,`, `"name":"",`, `"name":"  ",`} {
 		body := `{` + name + `"configuration":{"ledger":"main"}}`
 		c := New("https://stack.example", responseClient(200, body))
-		got, err := c.GetConnectorInstance(t.Context(), "worker")
+		got, err := c.GetConnection(t.Context(), "worker")
 		require.Nil(t, got)
-		require.ErrorContains(t, err, "connector instance name is required")
+		require.ErrorContains(t, err, "connection name is required")
 		c = New("https://stack.example", responseClient(200, `{"cursor":{"data":[`+instanceResponse+`,`+body+`]}}`))
-		page, err := c.ListConnectorInstances(t.Context(), ListOptions{})
+		page, err := c.ListConnections(t.Context(), ListOptions{})
 		require.Nil(t, page)
-		require.ErrorContains(t, err, "cursor.data[1]: connector instance name is required")
+		require.ErrorContains(t, err, "cursor.data[1]: connection name is required")
 	}
 }
 
@@ -343,11 +344,11 @@ func TestInstanceGETAndListAcceptCurrentOptionalStatusContract(t *testing.T) {
 	for _, status := range []string{"", `,"status":null`, `,"status":{"lifecycle":"pending","suspendedBy":[]}`, `,"status":{"appliedVersion":"v1.2.0","lifecycle":"active","suspendedBy":[]}`} {
 		body := `{"name":"worker","configuration":{"ledger":"main"}` + status + `}`
 		c := New("https://stack.example", responseClient(200, body))
-		got, err := c.GetConnectorInstance(t.Context(), "worker")
+		got, err := c.GetConnection(t.Context(), "worker")
 		require.NoError(t, err)
 		require.Equal(t, "worker", got.Name)
 		c = New("https://stack.example", responseClient(200, `{"cursor":{"data":[`+body+`]}}`))
-		page, err := c.ListConnectorInstances(t.Context(), ListOptions{})
+		page, err := c.ListConnections(t.Context(), ListOptions{})
 		require.NoError(t, err)
 		require.Len(t, page.Items, 1)
 	}
@@ -359,7 +360,7 @@ func TestClientReturnsAPIErrorForEmptyUnauthorizedResponse(t *testing.T) {
 		response.Status = "401 Unauthorized"
 		return response, nil
 	})
-	_, err := New("https://stack.example", &http.Client{Transport: transport}).ListConnectorInstances(t.Context(), ListOptions{})
+	_, err := New("https://stack.example", &http.Client{Transport: transport}).ListConnections(t.Context(), ListOptions{})
 	var apiErr *APIError
 	require.ErrorAs(t, err, &apiErr)
 	require.Equal(t, http.StatusUnauthorized, apiErr.StatusCode)
