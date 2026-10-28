@@ -6,6 +6,7 @@ Command-line interface for managing and interacting with Formance services.
 
 `fctl` is the official CLI tool for Formance, providing a comprehensive set of commands to interact with Formance services, including:
 
+- Connectivity catalogue and connection lifecycle ([command guide](docs/connectivity.md))
 - Ledger management
 - Payments processing
 - Wallets
@@ -74,6 +75,23 @@ Configuration is stored in `~/.formance/fctl.config` by default. You can specify
 - `--output, -o`: Output format (plain, json)
 - `--insecure-tls`: Allow insecure TLS connections
 - `--telemetry`: Enable telemetry
+
+## Development
+
+Use the pinned development tools to run tests and the CI validation gate:
+
+```bash
+nix develop --impure --command just tests
+nix develop --impure --command just pre-commit
+```
+
+`just pre-commit` regenerates both SDKs, tidies the root module after their
+dependencies are updated, and runs the linter. Commit the generated SDK files
+and module manifests together; CI's `Dirty` job requires validation to leave
+the checkout unchanged.
+
+CI runs `Dirty` through the shared `formancehq/ci` workflow configured in
+`.github/workflows/main.yml`.
 
 ## License
 

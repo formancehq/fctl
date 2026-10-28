@@ -1,0 +1,142 @@
+# Connectivity commands
+
+`fctl connectivity` manages the published Connector catalogue and the
+connections installed in the selected stack. A connection is a
+ConnectorInstance in the Connectivity API.
+
+This CLI uses the tenant API contract with `connectorRef: {name}`, optional
+`connectivityRef: {name}`, and top-level `env`/`files`. Upgrade the stack's
+Connectivity API alongside this CLI; the previous `connector`/`config` wire
+format is incompatible. The HTTP routes remain `/connectorinstances`.
+Responses must contain a valid `connectorRef`; resolved versions must identify
+their resolved connector. Older unbound instance responses are rejected.
+
+## Command tree
+
+```text
+fctl connectivity connectors list [--filter KEY=VALUE] [--query JSON]
+fctl connectivity connectors show <connector>
+fctl connectivity connectors facets [--filter KEY=VALUE] [--query JSON]
+
+fctl connectivity connections list [--connector NAME] [--filter KEY=VALUE]
+fctl connectivity connections show <connection>
+fctl connectivity connections install <connector> --ledger <ledger>
+fctl connectivity connections configure <connection>
+fctl connectivity connections suspend <connection> --confirm
+fctl connectivity connections unsuspend <connection> --confirm
+fctl connectivity connections uninstall <connection>
+```
+
+Use `connections` instead of the previous `connectorinstances` command group.
+`connection` is its singular alias. `connectors ls`, `connectors l`,
+`connectors facets` (`facet`, `f`), and `connections ls` (`l`) remain available.
+`install` also accepts `create` and `in`; `configure` accepts `config`,
+`update`, and `c`. JSON output keeps the `connectorInstance` and
+`connectorInstances` envelope keys and uses the current HTTP field names.
+
+## Versions and channels
+
+An install without `--version` or `--channel` explicitly sends `channel:
+stable`. `--version` selects a ConnectorVersion by its exact name, including
+an administrator-created opaque OCI tag; it does not select a maturity
+channel. An opaque tag can follow newly verified artifacts under the operator’s
+version rules; selecting its name does not pin its content digest.
+`--channel stable|rc|beta|alpha` tracks that channel. Passing both
+flags, or an empty selector, is an error.
+
+```bash
+fctl connectivity connections install stripe --name stripe-prod --ledger main --channel stable
+fctl connectivity connections configure stripe-prod --version v1.0.0
+fctl connectivity connections configure stripe-prod --channel beta
+```
+
+Changing to `--version` clears the stored channel; changing to `--channel`
+clears the stored version. The CLI checks configuration against the selected
+version's schema. Channel configuration resolves every catalogue page,
+ignores opaque or shortened version candidates, and retains the current
+SemVer major and no-downgrade floor. An applied opaque version supplies no
+SemVer floor. The server remains authoritative for final validation and
+selection during reconciliation. Configuration requires a stored version/channel
+selector or an explicit `--version`/`--channel`; it does not infer a selector
+from status.
+
+A connection's Ledger destination is immutable. To ingest into another
+Ledger, create a separate connection with an explicit name and destination.
+No existing history or cursor is copied by that operation.
+
+`--initial-cursor` accepts the connector's opaque cursor encoded as base64.
+It is a starting cursor read during registration, not an integer sequence or
+a command to rewind a running connection. Changing it on an existing
+connection does not prove that ingestion has restarted from that cursor.
+The pagination `--cursor` is a separate API-issued token.
+
+## Configuration inputs
+
+`install` and `configure` accept three configuration forms, in precedence
+order: `--config` (YAML or JSON), repeatable `--env-file`, then repeatable
+`--set KEY=VALUE`. Values may be inline, `@path`/`@-`,
+`secret://name/key`, or `configmap://name/key`. Configuration files must use
+separate `env` and `files` sections; flat configuration and flat schemas are
+unsupported. The CLI sends those sections directly as
+`spec.env` and `spec.files`; the file supplied to `--config` is a configuration
+input, not the full HTTP request.
+
+Malformed YAML/JSON diagnostics identify the input file, report line numbers
+when available, and describe the expected structure without echoing input
+values. Use an `env` mapping and a `files` list with structured `value`,
+`secretRef`, or `configMapRef` entries.
+
+The CLI derives known keys and definitely-required fields from the Connector
+Version JSON Schema, including bounded local `$ref`, `allOf`, `anyOf`, and
+`oneOf` composition. Open or pattern-based keys, and constraints that cannot
+be proven from CLI input, are sent to Connectivity for authoritative
+validation. Secret and ConfigMap references remain namespace-local.
+
+## Suspension, resumption and deletion
+
+`connections suspend` and `connections unsuspend` request the desired
+ingestion state through the Connectivity API. Both commands require
+confirmation, either interactively or with `--confirm`:
+
+```bash
+fctl connectivity connections suspend stripe-prod --confirm
+fctl connectivity connections unsuspend stripe-prod --confirm
+```
+
+A successful command means the request was accepted; reconciliation may still
+be in progress. Use `connections show <connection>` to compare desired
+`Suspend` with observed phase, state and `Suspended by` provenance. A Policy
+can keep ingestion suspended after the tenant requests resumption. Workload
+resources, placement and other administrator settings belong to Policies;
+replica count is not a tenant setting.
+
+`uninstall` requests deletion. Kubernetes finalizers may keep the connection
+until operator cleanup completes; command success does not prove that the
+source has disappeared from Core.
+
+## Filtering, pagination and catalogue metadata
+
+List and facets commands accept repeatable `--filter` expressions:
+
+```bash
+fctl connectivity connectors list --filter catalog=ee --filter tags~provider:%
+fctl connectivity connections list --filter channel=beta
+```
+
+`KEY=VALUE` is an exact match, `KEY!=VALUE` excludes a present matching key,
+and `KEY~PATTERN` uses SQL `%` and `_` wildcards. Use `--query '<JSON>'` for
+the full API query dialect; it cannot be combined with `--filter`. The CLI
+also accepts `--page-size` and the opaque `--cursor` from a previous response.
+Shell completion obtains supported keys, values and channels from the API.
+The logical filter key `connector` is unchanged by the `connectorRef` field.
+
+The Connector response keeps branding, tagline, tags and `latestVersion`
+projected by the API for catalogue display. These describe the version
+selected for the catalogue card, not necessarily the version installed by a
+connection. Full `additionalMetadata` remains available in version detail;
+version lists contain summaries. Repository credentials and administrator
+configuration are not part of the tenant response.
+
+Authentication failures, including insufficient scope, may return `401`
+without a JSON body. Check the selected profile and its permissions instead
+of assuming every `401` means an expired session.
