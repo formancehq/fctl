@@ -84,7 +84,7 @@ func TestStackTokenSourceDeadlineBoundsStackAPITokenFetch(t *testing.T) {
 		close(releaseToken)
 	case <-time.After(300 * time.Millisecond):
 		close(releaseToken)
-		<-result
+		_ = <-result
 		t.Fatal("stack API token acquisition outlived the command deadline")
 	}
 }
@@ -144,7 +144,7 @@ func TestStackTokenSourceCancellationBoundsStackTokenRefresh(t *testing.T) {
 		close(releaseToken)
 	case <-time.After(300 * time.Millisecond):
 		close(releaseToken)
-		<-result
+		_ = <-result
 		t.Fatal("stack token refresh outlived command cancellation")
 	}
 }
