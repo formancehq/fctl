@@ -128,7 +128,7 @@ func TestClientReturnsAPIError(t *testing.T) {
 		status     int
 	}{
 		{"structured", `{"code":"ledger_immutable","message":"ledger cannot change","details":{"field":"ledger"}}`, 422},
-		{"empty unauthorized", "", 401}, {"malformed", "not JSON", 503},
+		{"empty unauthorized", "", 401}, {"non-JSON unauthorized", "private upstream diagnostic", 401}, {"malformed", "not JSON", 503},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			c := New("https://stack.example", &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) { return jsonResponse(tt.status, tt.body), nil })})

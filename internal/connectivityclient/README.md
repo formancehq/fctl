@@ -8,8 +8,8 @@ HTTP client and context. Connection routes and the query-capability resource ID 
 ## Public contract
 
 The contract and official SDK come from Connectivity commit
-`1de487ac92200c8f00bbdbbbf264a7e2b155fea4`. Its OpenAPI has SHA-256
-`a5f026cb4313f3f13a7e443b00dd11be82280e735a62e306238d0ca789f562b0`
+`ce71fabda15ff635b210774451406984c3c04e38`. Its OpenAPI has SHA-256
+`c0c80f950009f61656b91aa42c74a97f2efd8b23e2bc0bde066ffbf60b1a6bec`
 (`misc/connectivity-api/openapi.yaml` and its identical embedded copy).
 The importable Go module is `github.com/formancehq/connectivity/pkg/client`;
 its HTTP package is `github.com/formancehq/connectivity/pkg/client/http`.
@@ -83,8 +83,11 @@ removes the SDK's injected `pageSize=15` only when no size was requested.
 The invocation captures the original response bytes and closes the network body
 before the SDK reads its replay. Strict facade validation runs on those original
 bytes, because generated models can erase missing required values into zero.
-HTTP errors normalize from the original status/body even if SDK decoding fails;
-empty or malformed errors retain status text. Stream read failures propagate
+The SDK models JSON HTTP errors across 4XX/5XX with one generic Error; the
+facade retains HTTP status, code, message and details, including 429 and 599.
+Normalization uses the original status/body even if SDK decoding fails;
+empty or malformed errors retain status text. Successful response StatusError
+records remain separate from HTTP errors. Stream read failures propagate
 without returning a partially decoded result. A successful DELETE closes its
 body without reading it. Response capture is invocation-local, so concurrent
 calls share no mutable response state. As before, JSON success decoding does

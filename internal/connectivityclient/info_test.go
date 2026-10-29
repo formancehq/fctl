@@ -74,7 +74,7 @@ func TestGetInfoNormalizesHTTPErrorsWithoutHealthFallback(t *testing.T) {
 		name, body string
 		status     int
 	}{
-		{"empty unauthorized", "", 401}, {"non JSON unavailable", "service unavailable", 503},
+		{"empty unauthorized", "", 401}, {"non JSON unauthorized", "private upstream diagnostic", 401}, {"non JSON unavailable", "service unavailable", 503},
 		{"structured", `{"code":"forbidden","message":"not allowed","details":{"resource":"info"}}`, 403},
 	} {
 		t.Run(tt.name, func(t *testing.T) {

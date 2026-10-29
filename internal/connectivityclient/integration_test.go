@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -68,6 +69,31 @@ func TestGivenPublicContract_WhenRequestFails_ThenHTTPStatusAndDiagnosticSurvive
 			require.Equal(t, tt.code, apiErr.Code)
 			require.NotEmpty(t, apiErr.Message)
 		})
+	}
+}
+
+func TestGenericHTTPErrorClassesPreserveDiagnostics(t *testing.T) {
+	for _, status := range []int{429, 599} {
+		for _, operation := range []struct {
+			name string
+			call func(Client) (any, error)
+		}{
+			{"info", func(c Client) (any, error) { return c.GetInfo(t.Context()) }},
+			{"connection", func(c Client) (any, error) { return c.GetConnection(t.Context(), "worker") }},
+		} {
+			t.Run(operation.name+"/"+strconv.Itoa(status), func(t *testing.T) {
+				server, requests := contractServer(t, status, `{"code":"upstream_failure","message":"Request could not complete","details":{"source":"upstream","retryable":true}}`)
+				result, err := operation.call(New(server.URL, server.Client()))
+				require.Nil(t, result)
+				require.NoError(t, (<-requests).err)
+				var apiErr *APIError
+				require.ErrorAs(t, err, &apiErr)
+				require.Equal(t, status, apiErr.StatusCode)
+				require.Equal(t, "upstream_failure", apiErr.Code)
+				require.Equal(t, "Request could not complete", apiErr.Message)
+				require.Equal(t, map[string]any{"source": "upstream", "retryable": true}, apiErr.Details)
+			})
+		}
 	}
 }
 

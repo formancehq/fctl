@@ -10,8 +10,8 @@ import (
 )
 
 // These portable HTTP fixtures follow Connectivity's public contract at
-// OpenAPI SHA-256 a5f026cb4313f3f13a7e443b00dd11be82280e735a62e306238d0ca789f562b0.
-// Source and official SDK: Connectivity 1de487ac92200c8f00bbdbbbf264a7e2b155fea4.
+// OpenAPI SHA-256 c0c80f950009f61656b91aa42c74a97f2efd8b23e2bc0bde066ffbf60b1a6bec.
+// Source and official SDK: Connectivity ce71fabda15ff635b210774451406984c3c04e38.
 // They exercise the SDK-backed facade, not a running Connectivity implementation.
 type wireRequest struct {
 	method, path, contentType string
