@@ -10,8 +10,8 @@ import (
 )
 
 // These portable HTTP fixtures follow Connectivity's public contract at
-// OpenAPI SHA-256 f5468cd103ff1800effc7c431778a6d66b2f6c1fe054591e861efa8e6119148d.
-// Source and official SDK: Connectivity 1d0e16394f80863b1cb451819c76f5d37d3ccded.
+// OpenAPI SHA-256 a5f026cb4313f3f13a7e443b00dd11be82280e735a62e306238d0ca789f562b0.
+// Source and official SDK: Connectivity 1de487ac92200c8f00bbdbbbf264a7e2b155fea4.
 // They exercise the SDK-backed facade, not a running Connectivity implementation.
 type wireRequest struct {
 	method, path, contentType string
@@ -40,7 +40,7 @@ func TestGivenPublicContract_WhenInstanceCreated_ThenLiteralConfigurationReaches
 			response := `{"name":"worker","configuration":{"connector":"stripe","ledger":"main","` + selector + `":"` + map[string]string{"version": "v1.0.0", "channel": "stable"}[selector] + `","env":{"EMPTY":""}}}`
 			server, requests := contractServer(t, http.StatusCreated, response)
 			configuration := ConnectionConfiguration{
-				Connector: "stripe", Ledger: "main", InitialCursor: []byte{0, 0, 0, 0, 0, 0, 3, 232}, PollInterval: pointer("30s"), Suspend: pointer(false),
+				Connector: "stripe", Ledger: pointer("main"), InitialCursor: []byte{0, 0, 0, 0, 0, 0, 3, 232}, PollInterval: pointer("30s"), Suspend: pointer(false),
 				Env: map[string]string{"API_PASSWORD": "synthetic-password", "EMPTY": ""}, Files: map[string]string{"/etc/plugin/key": "synthetic-key"},
 			}
 			if selector == "version" {
@@ -107,7 +107,7 @@ func TestGivenPublicContract_WhenOptionalConfigurationCleared_ThenNullsReachHTTP
 func TestGivenPublicContract_WhenConfigurationReplaced_ThenPUTUsesUpdateEnvelope(t *testing.T) {
 	server, requests := contractServer(t, 200, instanceResponse)
 	_, err := New(server.URL, server.Client()).ReplaceConnection(t.Context(), "worker", ConnectionUpdate{
-		Configuration: ConnectionConfiguration{Connector: "stripe", Ledger: "main", Version: pointer("v1.0.0"), Env: map[string]string{"TOKEN": "complete-secret"}},
+		Configuration: ConnectionConfiguration{Connector: "stripe", Ledger: pointer("main"), Version: pointer("v1.0.0"), Env: map[string]string{"TOKEN": "complete-secret"}},
 	})
 	require.NoError(t, err)
 	request := <-requests

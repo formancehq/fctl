@@ -166,9 +166,10 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 	if name == "" {
 		name = connectorName
 	}
+	ledger := fctl.GetString(cmd, ledgerFlag)
 	spec := connectivityclient.ConnectionConfiguration{
 		Connector:     connectorName,
-		Ledger:        fctl.GetString(cmd, ledgerFlag),
+		Ledger:        &ledger,
 		InitialCursor: cursor,
 	}
 	if config != nil {
@@ -217,7 +218,7 @@ func (c *InstallController) Render(cmd *cobra.Command, _ []string) error {
 		"Connection %q installed with connector %q for ledger %q.\n",
 		instance.Name,
 		instance.Configuration.ConnectorName(),
-		instance.Configuration.Ledger,
+		stringValue(instance.Configuration.Ledger),
 	)
 	return err
 }

@@ -48,7 +48,7 @@ func versionListFixture() *connectivityclient.ConnectorVersionList {
 
 func instanceFixture(name string) connectivityclient.Connection {
 	return connectivityclient.Connection{Name: name,
-		Configuration: connectivityclient.ConnectionConfiguration{Connector: "stripe", Version: stringPtr("2.0.0"), Ledger: "main", PollInterval: stringPtr("5s"), InitialCursor: []byte{0, 255, 97}},
+		Configuration: connectivityclient.ConnectionConfiguration{Connector: "stripe", Version: stringPtr("2.0.0"), Ledger: stringPtr("main"), PollInterval: stringPtr("5s"), InitialCursor: []byte{0, 255, 97}},
 		Status:        &connectivityclient.ConnectionStatus{Lifecycle: "active", AppliedVersion: stringPtr("2.0.0"), Ingestion: &connectivityclient.IngestionStatus{State: stringPtr("running"), Progress: &connectivityclient.IngestionProgress{Current: 42}, LastError: stringPtr("source temporarily unavailable")}},
 	}
 }

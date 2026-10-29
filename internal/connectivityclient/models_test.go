@@ -9,7 +9,7 @@ import (
 )
 
 func TestConfigurationUsesLiteralPublicFields(t *testing.T) {
-	c := ConnectionConfiguration{Connector: "stripe", Ledger: "main", Version: pointer("v1.0.0"), Suspend: pointer(false), InitialCursor: []byte{0, 0, 0, 0, 0, 0, 3, 232}, Env: map[string]string{"EMPTY": "", "SETTING": "value"}, Files: map[string]string{"/etc/plugin/key": "contents"}}
+	c := ConnectionConfiguration{Connector: "stripe", Ledger: pointer("main"), Version: pointer("v1.0.0"), Suspend: pointer(false), InitialCursor: []byte{0, 0, 0, 0, 0, 0, 3, 232}, Env: map[string]string{"EMPTY": "", "SETTING": "value"}, Files: map[string]string{"/etc/plugin/key": "contents"}}
 	body, err := json.Marshal(c)
 	require.NoError(t, err)
 	require.JSONEq(t, `{"connector":"stripe","ledger":"main","version":"v1.0.0","suspend":false,"initialCursor":"AAAAAAAAA+g=","env":{"EMPTY":"","SETTING":"value"},"files":{"/etc/plugin/key":"contents"}}`, string(body))
@@ -17,7 +17,7 @@ func TestConfigurationUsesLiteralPublicFields(t *testing.T) {
 	require.Equal(t, &ConnectionConfig{Env: c.Env, Files: c.Files}, c.Configuration())
 	require.Empty(t, (ConnectionConfiguration{}).ConnectorName())
 	for _, cursor := range [][]byte{nil, {}} {
-		body, err = json.Marshal(ConnectionConfiguration{Ledger: "main", InitialCursor: cursor})
+		body, err = json.Marshal(ConnectionConfiguration{Ledger: pointer("main"), InitialCursor: cursor})
 		require.NoError(t, err)
 		require.JSONEq(t, `{"ledger":"main"}`, string(body))
 	}
@@ -73,7 +73,7 @@ func TestInstanceStatusDecodesRecordedOutcomes(t *testing.T) {
 
 func TestInvalidInstanceResponsesRejectEntirePage(t *testing.T) {
 	for _, body := range []string{
-		`{}`, `{"name":"worker"}`, `{"name":"worker","configuration":null}`, `{"name":"worker","configuration":{}}`,
+		`{}`, `{"name":"worker"}`, `{"name":"worker","configuration":null}`,
 		`{"metadata":{"name":"worker"},"spec":{"ledger":"main"}}`,
 		`{"name":"worker","configuration":{"ledger":"main","initialCursor":"not-base64!"}}`,
 		`{"name":"worker","configuration":{"ledger":"main","env":{"TOKEN":{"value":"secret"}}}}`,

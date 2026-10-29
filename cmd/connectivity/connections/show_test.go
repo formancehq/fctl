@@ -162,3 +162,15 @@ func TestShowRecordedErrorsDoNotTurnSuccessfulReadIntoFailure(t *testing.T) {
 		require.Empty(t, ingestionProgress(instance.Status))
 	}
 }
+
+func TestShowImportedConnectionJSONPreservesAbsentIdentities(t *testing.T) {
+	instance := connectivityclient.Connection{Name: "imported"}
+	command := NewShowCommand(factoryWithInstance(instance))
+	command.Flags().String(fctl.OutputFlag, "plain", "")
+	output, err := executeCommand(command, "imported", "--output=json")
+	require.NoError(t, err)
+	require.JSONEq(t, `{"data":{"connection":{"name":"imported","configuration":{}}}}`, output)
+	output, err = executeCommand(NewShowCommand(factoryWithInstance(instance)), "imported")
+	require.NoError(t, err)
+	require.NotContains(t, output, "%!", "absent identity must be safe to render")
+}

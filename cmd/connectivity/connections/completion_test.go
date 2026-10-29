@@ -34,10 +34,10 @@ func TestCompleteConnectionNamesUsesBoundedNonInteractiveQueryAndReturnsSortedPr
 		remaining = time.Until(deadline)
 		alpha := instanceFixture("alpha")
 		alpha.Configuration.Connector = "stripe"
-		alpha.Configuration.Ledger = "eu"
+		alpha.Configuration.Ledger = stringPtr("eu")
 		alpine := instanceFixture("alpine")
 		alpine.Configuration.Connector = "wise"
-		alpine.Configuration.Ledger = "uk"
+		alpine.Configuration.Ledger = stringPtr("uk")
 		return &connectivityclient.ConnectionList{Items: []connectivityclient.Connection{
 			instanceFixture("beta"), alpine, alpha,
 		}}, nil

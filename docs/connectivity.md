@@ -9,8 +9,8 @@ This CLI uses the public Connectivity contract: a connection has a `name`,
 `/connections`. Configuration contains a `connector` name, a `ledger`,
 a version or channel selector, and literal `env`/`files` maps. This CLI requires
 a Connectivity API exposing that contract.
-Read responses may omit a connector or selector for an unbound connection;
-installing a connection requires both a connector and a selector.
+Read responses may omit connector, ledger or selector for an imported connection;
+installing a connection requires a connector, ledger and selector.
 
 ## Command tree
 
@@ -87,7 +87,15 @@ selection during reconciliation. Configuration requires a stored version/channel
 selector or an explicit `--version`/`--channel`; it does not infer a selector
 from status.
 
-A connection's Ledger destination is immutable. To ingest into another
+A connection's connector and Ledger destination are immutable once assigned.
+`configure --ledger <ledger>` can assign a missing Ledger on an imported
+connection or repeat its current value. The API validates the complete resulting
+configuration against a published release.
+`configure --connector <connector>` can likewise assign a missing connector or
+repeat its current value. When configuration inputs are supplied, the requested
+connector selects the schema using the stored or explicitly requested version or
+channel. Omitted identity flags preserve the stored values; no binding is inferred.
+To ingest into another
 Ledger, create a separate connection with an explicit name and destination.
 No existing history or cursor is copied by that operation.
 
@@ -141,7 +149,9 @@ requests: a single merge patch cannot express both operations on that section.
 Fields marked `format: password` are write-only in API responses. An edit
 must not require resupplying an omitted password solely because GET hides it.
 The API validates the resulting configuration. Full HTTP PUT replacement is
-different: callers must resupply every required value, including secrets.
+different: it preserves omitted connector and ledger identities, but clears
+omitted mutable fields. Callers must resupply the complete mutable configuration,
+including required secrets and a version/channel selector.
 
 ## Suspension, resumption and deletion
 

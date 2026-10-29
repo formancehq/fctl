@@ -23,7 +23,7 @@ const instanceResponse = `{"name":"worker","configuration":{"connector":"stripe"
 const emptyPage = `{"cursor":{"pageSize":15,"hasMore":false,"data":[]}}`
 
 func TestClientMethodsRespectHTTPContracts(t *testing.T) {
-	configuration := ConnectionConfiguration{Connector: "stripe", Version: pointer("v1.0.0"), Ledger: "main"}
+	configuration := ConnectionConfiguration{Connector: "stripe", Version: pointer("v1.0.0"), Ledger: pointer("main")}
 	tests := []struct {
 		name, method, path, body, contentType, response string
 		status                                          int

@@ -116,7 +116,7 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
 	rows := fctl.Map(c.store.Connections, func(instance connectivityclient.Connection) []string {
 		return []string{instance.Name, instance.Configuration.Connector, stringValue(instance.Configuration.Version),
-			stringValue(instance.Configuration.Channel), appliedChannelFloor(&instance), instance.Configuration.Ledger,
+			stringValue(instance.Configuration.Channel), appliedChannelFloor(&instance), stringValue(instance.Configuration.Ledger),
 			lifecycleValue(instance.Status), ingestionState(instance.Status), ingestionProgress(instance.Status),
 			ingestionLastError(instance.Status), serviceError(instance.Status)}
 	})

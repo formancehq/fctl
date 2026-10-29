@@ -167,7 +167,7 @@ func (c *client) CreateConnection(ctx context.Context, instance ConnectionCreate
 	if strings.TrimSpace(instance.Name) == "" {
 		return nil, fmt.Errorf("connection name is required")
 	}
-	if err := validateConfigurationWrite(instance.Configuration); err != nil {
+	if err := validateConfigurationWrite(instance.Configuration, true); err != nil {
 		return nil, err
 	}
 	var request components.ConnectionCreate
@@ -196,7 +196,7 @@ func (c *client) GetConnection(ctx context.Context, name string) (*Connection, e
 }
 
 func (c *client) ReplaceConnection(ctx context.Context, name string, update ConnectionUpdate) (*Connection, error) {
-	if err := validateConfigurationWrite(update.Configuration); err != nil {
+	if err := validateConfigurationWrite(update.Configuration, false); err != nil {
 		return nil, err
 	}
 	var request components.ConnectionUpdate
@@ -419,8 +419,8 @@ func validateConnection(instance *Connection) error {
 	if instance == nil || strings.TrimSpace(instance.Name) == "" {
 		return fmt.Errorf("connection name is required")
 	}
-	if strings.TrimSpace(instance.Configuration.Ledger) == "" {
-		return fmt.Errorf("connection configuration.ledger is required")
+	if instance.Configuration.Ledger != nil && strings.TrimSpace(*instance.Configuration.Ledger) == "" {
+		return fmt.Errorf("connection configuration.ledger must not be empty")
 	}
 	if status := instance.Status; status != nil {
 		if !oneOf(status.Lifecycle, "pending", "active", "suspended", "completed", "failed", "unknown") {
@@ -455,11 +455,11 @@ func oneOf(value string, values ...string) bool {
 	return false
 }
 
-func validateConfigurationWrite(configuration ConnectionConfiguration) error {
-	if strings.TrimSpace(configuration.Connector) == "" {
+func validateConfigurationWrite(configuration ConnectionConfiguration, create bool) error {
+	if create && strings.TrimSpace(configuration.Connector) == "" {
 		return fmt.Errorf("configuration.connector is required on writes")
 	}
-	if strings.TrimSpace(configuration.Ledger) == "" {
+	if (create && configuration.Ledger == nil) || (configuration.Ledger != nil && strings.TrimSpace(*configuration.Ledger) == "") {
 		return fmt.Errorf("configuration.ledger is required on writes")
 	}
 	if (configuration.Version == nil) == (configuration.Channel == nil) {

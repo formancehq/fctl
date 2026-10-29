@@ -72,14 +72,17 @@ func TestGivenPublicContract_WhenRequestFails_ThenHTTPStatusAndDiagnosticSurvive
 }
 
 func TestWriteValidationPreventsInvalidConfigurationRequests(t *testing.T) {
-	valid := ConnectionConfiguration{Connector: "stripe", Ledger: "main", Version: pointer("v1.0.0")}
+	valid := ConnectionConfiguration{Connector: "stripe", Ledger: pointer("main"), Version: pointer("v1.0.0")}
 	cases := map[string]ConnectionConfiguration{}
 	config := valid
 	config.Connector = ""
 	cases["missing connector"] = config
 	config = valid
-	config.Ledger = ""
+	config.Ledger = nil
 	cases["missing ledger"] = config
+	config = valid
+	config.Ledger = pointer("")
+	cases["empty ledger"] = config
 	config = valid
 	config.Version = nil
 	cases["missing selector"] = config
@@ -102,6 +105,9 @@ func TestWriteValidationPreventsInvalidConfigurationRequests(t *testing.T) {
 			created, err := c.CreateConnection(t.Context(), ConnectionCreate{Name: "worker", Configuration: config})
 			require.Error(t, err)
 			require.Nil(t, created)
+			if name == "missing connector" || name == "missing ledger" {
+				return
+			}
 			replaced, err := c.ReplaceConnection(t.Context(), "worker", ConnectionUpdate{Configuration: config})
 			require.Error(t, err)
 			require.Nil(t, replaced)
@@ -203,7 +209,7 @@ func TestGivenPublicServer_WhenLifecycleMethodsRun_ThenEveryRouteUsesHTTP(t *tes
 	instances, err := c.ListConnections(t.Context(), ListOptions{})
 	require.NoError(t, err)
 	require.Empty(t, instances.Items)
-	configuration := ConnectionConfiguration{Connector: "stripe", Ledger: "main", Version: pointer("v1.0.0")}
+	configuration := ConnectionConfiguration{Connector: "stripe", Ledger: pointer("main"), Version: pointer("v1.0.0")}
 	created, err := c.CreateConnection(t.Context(), ConnectionCreate{Name: "worker", Configuration: configuration})
 	require.NoError(t, err)
 	require.Equal(t, "worker", created.Name)

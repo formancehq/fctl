@@ -50,7 +50,7 @@ func CompleteConnectionNames(factory connectivityinternal.ClientFactory) cobra.C
 			if name == "" || !strings.HasPrefix(name, toComplete) {
 				continue
 			}
-			description := strings.Join(nonEmptyStrings(instance.Configuration.ConnectorName(), instance.Configuration.Ledger), " · ")
+			description := strings.Join(nonEmptyStrings(instance.Configuration.ConnectorName(), stringValue(instance.Configuration.Ledger)), " · ")
 			if description != "" {
 				name += "\t" + description
 			}

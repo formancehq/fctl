@@ -112,13 +112,13 @@ type ConnectionConfig struct {
 }
 
 // ConnectionConfiguration contains only tenant-owned public fields.
-// Connector may be absent on reads of an unbound stored instance. Writes require
-// connector, ledger and exactly one of version or channel.
+// Connector and Ledger may be absent on imported reads. Create requires both;
+// updates preserve omitted identities and the service validates first assignment.
 type ConnectionConfiguration struct {
 	Connector     string            `json:"connector,omitempty"`
 	Version       *string           `json:"version,omitempty"`
 	Channel       *string           `json:"channel,omitempty"`
-	Ledger        string            `json:"ledger"`
+	Ledger        *string           `json:"ledger,omitempty"`
 	InitialCursor []byte            `json:"initialCursor,omitempty"`
 	PollInterval  *string           `json:"pollInterval,omitempty"`
 	Suspend       *bool             `json:"suspend,omitempty"`
@@ -208,6 +208,28 @@ type Connection struct {
 	Name          string                  `json:"name"`
 	Configuration ConnectionConfiguration `json:"configuration"`
 	Status        *ConnectionStatus       `json:"status,omitempty"`
+}
+
+// UnmarshalJSON keeps a missing configuration distinct from an imported empty one.
+func (c *Connection) UnmarshalJSON(data []byte) error {
+	type wire Connection
+	var value struct {
+		*wire
+		Configuration json.RawMessage `json:"configuration"`
+	}
+	var decoded Connection
+	value.wire = (*wire)(&decoded)
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	if len(value.Configuration) == 0 || string(value.Configuration) == "null" {
+		return fmt.Errorf("connection configuration must be an object")
+	}
+	if err := json.Unmarshal(value.Configuration, &decoded.Configuration); err != nil {
+		return err
+	}
+	*c = decoded
+	return nil
 }
 
 type ConnectionList struct {

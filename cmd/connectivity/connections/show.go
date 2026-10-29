@@ -73,7 +73,7 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 	}
 	if err := renderInstanceSection(out, "Desired Configuration", pterm.TableData{
 		{"Connector", instance.Configuration.Connector}, {"Version", stringValue(instance.Configuration.Version)},
-		{"Channel", stringValue(instance.Configuration.Channel)}, {"Ledger", instance.Configuration.Ledger},
+		{"Channel", stringValue(instance.Configuration.Channel)}, {"Ledger", stringValue(instance.Configuration.Ledger)},
 		{"Poll Interval", stringValue(instance.Configuration.PollInterval)}, {"Suspend", boolValue(instance.Configuration.Suspend)},
 	}); err != nil {
 		return err

@@ -68,7 +68,7 @@ func TestInstallBuildsConnectionFromVersionSchemaAndOnlySetsChangedScalars(t *te
 	require.Equal(t, "2.0.0", gotVersion, "the pinned version supplies the config schema")
 	require.Equal(t, "stripe-eu", gotBody.Name)
 	require.Equal(t, "stripe", gotBody.Configuration.ConnectorName())
-	require.Equal(t, "main", gotBody.Configuration.Ledger)
+	require.Equal(t, stringPtr("main"), gotBody.Configuration.Ledger)
 	require.Equal(t, "2.0.0", *gotBody.Configuration.Version)
 	require.Equal(t, "3s", *gotBody.Configuration.PollInterval)
 	require.Equal(t, "https://config.example", gotBody.Configuration.Env["API_URL"])

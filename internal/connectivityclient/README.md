@@ -8,8 +8,8 @@ HTTP client and context. Connection routes and the query-capability resource ID 
 ## Public contract
 
 The contract and official SDK come from Connectivity commit
-`1d0e16394f80863b1cb451819c76f5d37d3ccded`. Its OpenAPI has SHA-256
-`f5468cd103ff1800effc7c431778a6d66b2f6c1fe054591e861efa8e6119148d`
+`1de487ac92200c8f00bbdbbbf264a7e2b155fea4`. Its OpenAPI has SHA-256
+`a5f026cb4313f3f13a7e443b00dd11be82280e735a62e306238d0ca789f562b0`
 (`misc/connectivity-api/openapi.yaml` and its identical embedded copy).
 The importable Go module is `github.com/formancehq/connectivity/pkg/client`;
 its HTTP package is `github.com/formancehq/connectivity/pkg/client/http`.
@@ -31,19 +31,23 @@ deployed service.
   Kubernetes metadata, binding references, storage references and file modes
   are outside this tenant contract.
 - POST sends `ConnectionCreate` with `name` and `configuration`. PUT
-  sends `ConnectionUpdate` with a complete `configuration`. Both require
-  a connector, ledger and exactly one version/channel selector. Changing the
-  connector or ledger remains a server-validated error.
+  sends `ConnectionUpdate` with a complete `configuration`. Create requires
+  a connector, ledger and exactly one version/channel selector. PUT requires a
+  version/channel selector and complete mutable configuration; omitted connector
+  and ledger are preserved. Imported connections may assign missing identities
+  after complete server validation. Once set, identities may be repeated but
+  cannot be changed or cleared.
 - PATCH sends a `configuration` merge patch. Omitted values are preserved;
-  `null` deletes a field or individual map entry. Literal empty strings and
+  `null` deletes a mutable field or individual map entry; it cannot clear an
+  assigned connector or ledger. Literal empty strings and
   explicit `suspend: false` survive encoding. The client rejects administrative
   fields, reference objects and non-string values. The service validates the
   merged selector and immutable fields.
 - Read responses omit confidential password values and reference-backed
   entries. Do not infer an omitted value is empty. PUT must provide complete
   configuration, including required secrets; use PATCH to preserve omissions.
-  Stored connections without a connector binding are readable, as allowed by the
-  contract, but cannot be submitted through POST or PUT without a connector.
+  Imported connections without connector or ledger bindings are readable; absent
+  identities remain absent in JSON. Create still requires both identities.
 - Optional status reports recorded `appliedVersion`, `lifecycle`, ingestion
   state/progress/lastError, service error and request/policy suspension sources.
   The service error is a sanitized projection; ingestion `lastError` is the raw
@@ -54,7 +58,7 @@ deployed service.
 
 Success responses require an object root. Lists require non-null `cursor` and
 `cursor.data`; malformed resources reject the whole page. Resource identities,
-connection ledger, populated status, and progress are validated. Empty lists and
+populated connection ledger, status, and progress are validated. Empty lists and
 absent status remain valid. Structured API errors retain HTTP status, code,
 message and details; empty or non-JSON errors retain status text, including 401.
 

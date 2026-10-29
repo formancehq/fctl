@@ -101,8 +101,8 @@ github.com/felixge/httpsnoop v1.0.4 h1:NFTV2Zj1bL4mc9sqWACXbQFVBBg2W3GPvqp8/ESS2
 github.com/felixge/httpsnoop v1.0.4/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
 github.com/formancehq/cobra v1.10.3-0.20260226173701-7f22399f993b h1:8sPsvBsI0CJEzskLvdRMSBSdQKUlYTRGRdTiuL1HTfI=
 github.com/formancehq/cobra v1.10.3-0.20260226173701-7f22399f993b/go.mod h1:7C1pvHqHw5A4vrJfjNwvOdzYu0Gml16OCs2GRiTUUS4=
-github.com/formancehq/connectivity/pkg/client v0.0.0-20261028222914-1d0e16394f80 h1:AG944tGEgnz0AHTC3scS3H1eeJQE+WYdu0uEul/UCHk=
-github.com/formancehq/connectivity/pkg/client v0.0.0-20261028222914-1d0e16394f80/go.mod h1:U792FDywtwEEs3ICxNP2yJFxiKdMlEIWSNpLISlyqcI=
+github.com/formancehq/connectivity/pkg/client v0.0.0-20261029002653-1de487ac9220 h1:tubN2t0TYUMRZFoHFo7i2gtRMjJkZFR55mCizf/KEe4=
+github.com/formancehq/connectivity/pkg/client v0.0.0-20261029002653-1de487ac9220/go.mod h1:U792FDywtwEEs3ICxNP2yJFxiKdMlEIWSNpLISlyqcI=
 github.com/formancehq/formance-sdk-go/v4 v4.0.0 h1:VaDHdPdy2oLU80rhWsG7ll4M5fc5zFgr5KgZlZ7Zy74=
 github.com/formancehq/formance-sdk-go/v4 v4.0.0/go.mod h1:dkPQPeS133IQcePjTkgfKJEeX3IAbBFYMEwcYBf/WYM=
 github.com/formancehq/go-libs/v4 v4.1.1 h1:D4LRPyssaq/2rPyNlmvAfypY5CsjLSQLLX2N4I/PsR4=
