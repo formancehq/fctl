@@ -113,7 +113,7 @@ type ConnectionConfig struct {
 
 // ConnectionConfiguration contains only tenant-owned public fields.
 // Connector and Ledger may be absent on imported reads. Create requires both;
-// updates preserve omitted identities and the service validates first assignment.
+// PUT preserves omitted identities; PATCH excludes identity fields.
 type ConnectionConfiguration struct {
 	Connector     string            `json:"connector,omitempty"`
 	Version       *string           `json:"version,omitempty"`

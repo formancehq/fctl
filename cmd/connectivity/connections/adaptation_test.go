@@ -86,30 +86,6 @@ func TestConnectionRejectsInvalidSelectorsBeforeClient(t *testing.T) {
 	}
 }
 
-func TestConnectionConfigureLedgerIsImmutable(t *testing.T) {
-	for _, ledger := range []string{"archive", ""} {
-		t.Run(ledger, func(t *testing.T) {
-			current := instanceFixture("stripe-eu")
-			client := configureClientMock{
-				getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
-				patch: func(context.Context, string, connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
-					t.Fatal("immutable ledger must not patch")
-					return nil, nil
-				},
-			}
-			controller := NewConfigureController(factoryReturning(client), nil)
-			controller.approve = func(*cobra.Command, string, ...any) bool {
-				t.Fatal("immutable ledger must not ask for approval")
-				return true
-			}
-			command := NewConfigureCommand(factoryReturning(client), nil, nil)
-			require.NoError(t, command.ParseFlags([]string{"--ledger=" + ledger}))
-			_, err := controller.Run(command, []string{"stripe-eu"})
-			require.ErrorContains(t, err, "ledger is immutable")
-		})
-	}
-}
-
 func TestConnectionConfigureSelectorSwitchClearsOppositeKey(t *testing.T) {
 	for _, tt := range []struct{ key, value, clear string }{
 		{"version", "build-main", "channel"}, {"channel", "stable", "version"},

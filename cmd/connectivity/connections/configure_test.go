@@ -64,7 +64,7 @@ func TestConfigureBuildsNestedPatchFromCurrentConfigAndChangedScalars(t *testing
 
 	output, err := executeCommand(
 		NewConfigureCommand(factoryReturning(client), mockReadFile(map[string]string{"new": "changed"}), mockPathCompleter(nil)),
-		"stripe-eu", "--set=/etc/a=@new", "--version=3.0.0", "--ledger=main",
+		"stripe-eu", "--set=/etc/a=@new", "--version=3.0.0",
 		"--poll-interval=15s", "--confirm",
 	)
 
@@ -74,9 +74,10 @@ func TestConfigureBuildsNestedPatchFromCurrentConfigAndChangedScalars(t *testing
 	spec, ok := gotPatch["configuration"].(map[string]any)
 	require.True(t, ok)
 	require.Equal(t, "3.0.0", spec["version"])
-	require.Equal(t, "main", spec["ledger"])
+	require.NotContains(t, spec, "connector")
+	require.NotContains(t, spec, "ledger")
 	require.Equal(t, "15s", spec["pollInterval"])
-	require.Len(t, spec, 5, "the immutable connector and unchanged fields must not be patched")
+	require.Len(t, spec, 4, "bindings and unchanged fields must not be patched")
 	require.NotContains(t, spec, "config")
 	require.NotContains(t, spec, "env", "untouched environment entries must not be patched")
 	require.Contains(t, spec, "channel")
@@ -231,10 +232,10 @@ func TestConfigureOmitsUnchangedScalarsAndStoresCompleteReturnedInstance(t *test
 	command := NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil))
 	command.Flags().String(fctl.OutputFlag, "plain", "")
 
-	output, err := executeCommand(command, "stripe-eu", "--ledger=main", "--confirm", "--output=json")
+	output, err := executeCommand(command, "stripe-eu", "--poll-interval=30s", "--confirm", "--output=json")
 
 	require.NoError(t, err)
-	require.Equal(t, connectivityclient.ConnectionPatch{"configuration": map[string]any{"ledger": "main"}}, gotPatch)
+	require.Equal(t, connectivityclient.ConnectionPatch{"configuration": map[string]any{"pollInterval": "30s"}}, gotPatch)
 	var envelope struct {
 		Data ConfigureStore `json:"data"`
 	}
@@ -272,7 +273,7 @@ func TestConfigureConfirmationRejectionPreventsPatch(t *testing.T) {
 	controller := NewConfigureController(factoryReturning(client), mockReadFile(nil))
 	controller.approve = func(*cobra.Command, string, ...any) bool { return false }
 	command := NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil))
-	require.NoError(t, command.ParseFlags([]string{"--ledger=main"}))
+	require.NoError(t, command.ParseFlags([]string{"--poll-interval=30s"}))
 
 	_, err := controller.Run(command, []string{"stripe-eu"})
 
@@ -311,7 +312,7 @@ func TestConfigureValidationAndArgumentsPreventPatch(t *testing.T) {
 		}
 		command := NewConfigureCommand(factory, mockReadFile(nil), mockPathCompleter(nil))
 
-		_, err := executeCommand(command, "stripe-eu", "extra", "--ledger=main", "--confirm")
+		_, err := executeCommand(command, "stripe-eu", "extra", "--poll-interval=30s", "--confirm")
 
 		require.Error(t, err)
 		require.False(t, usedFactory)
@@ -383,7 +384,7 @@ func TestConfigurePreservesGetAndPatchAPIErrorsAndRejectsEmptyResponses(t *testi
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			args := append([]string{"stripe-eu", "--ledger=main", "--confirm"}, test.args...)
+			args := append([]string{"stripe-eu", "--poll-interval=30s", "--confirm"}, test.args...)
 			_, err := executeCommand(NewConfigureCommand(factoryReturning(test.client), mockReadFile(nil), mockPathCompleter(nil)), args...)
 			require.Error(t, err)
 			if test.want != nil {
@@ -475,99 +476,19 @@ func TestConfigureDoesNotExposeUnsupportedStartSequence(t *testing.T) {
 	require.Nil(t, command.Flags().Lookup("start-sequence"))
 }
 
-func TestConfigureAssignsMissingLedgerAndRejectsEmpty(t *testing.T) {
-	for _, value := range []string{"main", ""} {
-		t.Run(value, func(t *testing.T) {
-			current := instanceFixture("imported")
-			current.Configuration.Ledger = nil
-			called := false
-			client := configureClientMock{
-				getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
-				patch: func(_ context.Context, _ string, patch connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
-					called = true
-					require.Equal(t, connectivityclient.ConnectionPatch{"configuration": map[string]any{"ledger": "main"}}, patch)
-					return &current, nil
-				},
+func TestConfigureRejectsBindingFlagsBeforeClientUse(t *testing.T) {
+	for _, flag := range []string{"connector", "ledger"} {
+		t.Run(flag, func(t *testing.T) {
+			usedFactory := false
+			factory := func(*cobra.Command) (connectivityclient.Client, error) {
+				usedFactory = true
+				return nil, errors.New("client must not be used")
 			}
-			_, err := executeCommand(NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "imported", "--ledger="+value, "--confirm")
-			if value == "" {
-				require.ErrorContains(t, err, "ledger must not be empty")
-				require.False(t, called)
-			} else {
-				require.NoError(t, err)
-				require.True(t, called)
-			}
-		})
-	}
-}
-
-func TestConfigureConnectorFirstAssignmentSelectsRequestedSchema(t *testing.T) {
-	for _, selector := range []string{"--version=v2.0.0", "--channel=stable"} {
-		t.Run(selector, func(t *testing.T) {
-			current := instanceFixture("imported")
-			current.Configuration.Connector = ""
-			current.Configuration.Ledger = nil
-			current.Status = nil
-			var selected string
-			client := configureClientMock{
-				getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
-				connectorVersions: connectorVersions{
-					listVersions: func(_ context.Context, name string, _ connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
-						require.Equal(t, "stripe", name)
-						return &connectivityclient.ConnectorVersionList{Items: []connectivityclient.ConnectorVersionSummary{{Version: "v2.0.0"}}}, nil
-					},
-					getVersion: func(_ context.Context, name, version string) (*connectivityclient.ConnectorVersion, error) {
-						require.Equal(t, "stripe", name)
-						selected = version
-						return versionWithFileSchema(), nil
-					},
-				},
-				patch: func(_ context.Context, _ string, patch connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
-					spec := patch["configuration"].(map[string]any)
-					require.Equal(t, "stripe", spec["connector"])
-					require.Equal(t, "main", spec["ledger"])
-					require.Equal(t, map[string]any{"/etc/a": "new"}, spec["files"])
-					return &current, nil
-				},
-			}
-			_, err := executeCommand(NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "imported", "--connector=stripe", "--ledger=main", selector, "--set=/etc/a=new", "--confirm")
-			require.NoError(t, err)
-			require.Equal(t, "v2.0.0", selected)
-			command := NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil))
-			require.NoError(t, command.ParseFlags([]string{"--connector=stripe", selector}))
-			connector, err := resolveConfigureConnector(t.Context(), client, command, []string{"imported"})
-			require.NoError(t, err)
-			require.Equal(t, "stripe", connector)
-			version, err := resolveConfigureConnectorVersion(t.Context(), client, command, []string{"imported"})
-			require.NoError(t, err)
-			require.NotNil(t, version)
-			_, ok := command.GetFlagCompletionFunc(connectorFlag)
-			require.True(t, ok)
-		})
-	}
-}
-
-func TestConfigureConnectorBoundIdentityGuard(t *testing.T) {
-	for _, requested := range []string{"stripe", "different", ""} {
-		t.Run(requested, func(t *testing.T) {
-			current := instanceFixture("bound")
-			called := false
-			client := configureClientMock{
-				getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
-				patch: func(_ context.Context, _ string, patch connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
-					called = true
-					require.Equal(t, connectivityclient.ConnectionPatch{"configuration": map[string]any{"connector": "stripe"}}, patch)
-					return &current, nil
-				},
-			}
-			_, err := executeCommand(NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "bound", "--connector="+requested, "--confirm")
-			if requested == "stripe" {
-				require.NoError(t, err)
-				require.True(t, called)
-			} else {
-				require.Error(t, err)
-				require.False(t, called)
-			}
+			command := NewConfigureCommand(factory, mockReadFile(nil), mockPathCompleter(nil))
+			require.Nil(t, command.Flags().Lookup(flag))
+			_, err := executeCommand(command, "stripe-eu", "--"+flag+"=main", "--confirm")
+			require.ErrorContains(t, err, "unknown flag: --"+flag)
+			require.False(t, usedFactory)
 		})
 	}
 }

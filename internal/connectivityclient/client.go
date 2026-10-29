@@ -474,8 +474,8 @@ func validateConfigurationWrite(configuration ConnectionConfiguration, create bo
 	return nil
 }
 
-// A patch may be partial, so selector and immutable-field validation belongs to
-// the service after merging. Validate the public shape without losing nulls.
+// A patch may be partial, so selector validation belongs to the service after
+// merging. Binding fields are not PATCH inputs. Preserve mutable-field nulls.
 func validatePatch(patch ConnectionPatch) error {
 	data, err := json.Marshal(patch)
 	if err != nil {
@@ -499,10 +499,8 @@ func validatePatch(patch ConnectionPatch) error {
 		return fmt.Errorf("configuration patch must be an object")
 	}
 	var configuration struct {
-		Connector     *string            `json:"connector"`
 		Version       *string            `json:"version"`
 		Channel       *string            `json:"channel"`
-		Ledger        *string            `json:"ledger"`
 		Suspend       *bool              `json:"suspend"`
 		InitialCursor *[]byte            `json:"initialCursor"`
 		PollInterval  *string            `json:"pollInterval"`

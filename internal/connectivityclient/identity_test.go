@@ -44,49 +44,48 @@ func TestPUTPreservesOmittedIdentitiesOnWire(t *testing.T) {
 	}
 }
 
-// These are consumer receipts for request presence and normalized server replies;
-// identity enforcement itself belongs to the service at the pinned revision.
-func TestPATCHIdentityPresenceAndTypedRejections(t *testing.T) {
+func TestPATCHRejectsAnyBindingFieldBeforeSending(t *testing.T) {
 	for _, field := range []string{"connector", "ledger"} {
 		for _, tc := range []struct {
-			name    string
-			present bool
-			value   any
-			status  int
+			name  string
+			value any
 		}{
-			{"omitted", false, nil, 200},
-			{"first assignment", true, "initial", 200},
-			{"same assignment", true, "initial", 200},
-			{"different assignment", true, "different", 422},
-			{"clear assigned", true, nil, 422},
+			{"same or initial value", "initial"},
+			{"different value", "different"},
+			{"empty", ""},
+			{"null", nil},
 		} {
 			t.Run(field+"/"+tc.name, func(t *testing.T) {
-				response := instanceResponse
-				if tc.status == 422 {
-					response = `{"code":"` + field + `_immutable","message":"cannot change identity","details":{"field":"` + field + `"}}`
-				}
-				server, requests := contractServer(t, tc.status, response)
-				configuration := map[string]any{"suspend": false, "env": map[string]any{"EMPTY": "", "OLD": nil}}
-				if tc.present {
-					configuration[field] = tc.value
-				}
-				patch := ConnectionPatch{"configuration": configuration}
-				result, err := New(server.URL, server.Client()).PatchConnection(t.Context(), "worker", patch)
-				if tc.status == 422 {
-					var apiErr *APIError
-					require.ErrorAs(t, err, &apiErr)
-					require.Equal(t, 422, apiErr.StatusCode)
-					require.Equal(t, field+"_immutable", apiErr.Code)
-					require.Equal(t, field, apiErr.Details["field"])
-					require.Nil(t, result)
-				} else {
-					require.NoError(t, err)
-				}
-				request := <-requests
-				expected, err := json.Marshal(patch)
-				require.NoError(t, err)
-				require.JSONEq(t, string(expected), string(request.body))
+				calls := 0
+				httpClient := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+					calls++
+					return jsonResponse(200, instanceResponse), nil
+				})}
+				result, err := New("https://stack.example", httpClient).PatchConnection(t.Context(), "worker", ConnectionPatch{
+					"configuration": map[string]any{field: tc.value, "suspend": false},
+				})
+				require.Nil(t, result)
+				require.ErrorContains(t, err, "invalid connectivity patch configuration")
+				require.ErrorContains(t, err, `unknown field "`+field+`"`)
+				require.Zero(t, calls, "forbidden fields must be rejected, not silently discarded by SDK conversion")
 			})
 		}
 	}
+}
+
+func TestPATCHNormalizesServerUnsupportedFieldError(t *testing.T) {
+	server, requests := contractServer(t, 400, `{"code":"unsupported_field","message":"Unsupported tenant field","details":{"field":"configuration"}}`)
+	result, err := New(server.URL, server.Client()).PatchConnection(t.Context(), "worker", ConnectionPatch{
+		"configuration": map[string]any{"suspend": false},
+	})
+	require.Nil(t, result)
+	var apiErr *APIError
+	require.ErrorAs(t, err, &apiErr)
+	require.Equal(t, 400, apiErr.StatusCode)
+	require.Equal(t, "unsupported_field", apiErr.Code)
+	require.Equal(t, "Unsupported tenant field", apiErr.Message)
+	require.Equal(t, map[string]any{"field": "configuration"}, apiErr.Details)
+	request := <-requests
+	require.Equal(t, http.MethodPatch, request.method)
+	require.JSONEq(t, `{"configuration":{"suspend":false}}`, string(request.body))
 }

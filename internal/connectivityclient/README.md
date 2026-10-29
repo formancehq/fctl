@@ -8,8 +8,8 @@ HTTP client and context. Connection routes and the query-capability resource ID 
 ## Public contract
 
 The contract and official SDK come from Connectivity commit
-`275545bc44c5e29c9f61edb4ce978898ef2b3455`. Its OpenAPI has SHA-256
-`9203f5c4ff1fb1e8225d72a76399c6c7b71330ece6ea3c9e48aa7a0a199f9fd2`
+`98001eee76f1336eb780ca853beb17d4d2dcd684`. Its OpenAPI has SHA-256
+`3fff9f3ce997c48f8ae15f936f3256f020a31d91336919967b3ee770a28ffc74`
 (`misc/connectivity-api/openapi.yaml` and its identical embedded copy).
 The importable Go module is `github.com/formancehq/connectivity/pkg/client`;
 its HTTP package is `github.com/formancehq/connectivity/pkg/client/http`.
@@ -34,15 +34,15 @@ deployed service.
   sends `ConnectionUpdate` with a complete `configuration`. Create requires
   a connector, ledger and exactly one version/channel selector. PUT requires a
   version/channel selector and complete mutable configuration; omitted connector
-  and ledger are preserved. Imported connections may assign missing identities
-  after complete server validation. Once set, identities may be repeated but
-  cannot be changed or cleared.
+  and ledger are preserved. Once assigned, bindings cannot be changed or cleared.
 - PATCH sends a `configuration` merge patch. Omitted values are preserved;
-  `null` deletes a mutable field or individual map entry; it cannot clear an
-  assigned connector or ledger. Literal empty strings and
-  explicit `suspend: false` survive encoding. The client rejects administrative
-  fields, reference objects and non-string values. The service validates the
-  merged selector and immutable fields.
+  `null` deletes a mutable field or individual map entry. Connector and ledger
+  are not PATCH inputs: the facade rejects any occurrence locally, including
+  the same value or `null`, before SDK conversion. The API rejects such fields
+  with `400 unsupported_field`. Literal empty strings and explicit
+  `suspend: false` survive encoding. The client rejects administrative fields,
+  reference objects and non-string values. The service validates the merged
+  mutable configuration and selector.
 - Read responses omit confidential password values and reference-backed
   entries. Do not infer an omitted value is empty. PUT must provide complete
   configuration, including required secrets; use PATCH to preserve omissions.

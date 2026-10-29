@@ -87,16 +87,12 @@ selection during reconciliation. Configuration requires a stored version/channel
 selector or an explicit `--version`/`--channel`; it does not infer a selector
 from status.
 
-A connection's connector and Ledger destination are immutable once assigned.
-`configure --ledger <ledger>` can assign a missing Ledger on an imported
-connection or repeat its current value. The API validates the complete resulting
-configuration against a published release.
-`configure --connector <connector>` can likewise assign a missing connector or
-repeat its current value. When configuration inputs are supplied, the requested
-connector selects the schema using the stored or explicitly requested version or
-channel. Omitted identity flags preserve the stored values; no binding is inferred.
-To ingest into another
-Ledger, create a separate connection with an explicit name and destination.
+A connection's connector and Ledger destination are set at installation and
+are immutable once assigned. `configure` accepts neither `--connector` nor
+`--ledger`: it sends only mutable fields in a merge PATCH. The API rejects any
+connector or ledger field in PATCH with `400 unsupported_field`, even when the
+value matches the stored binding or is `null`. To use another connector or
+Ledger, install a separate connection with an explicit name and destination.
 No existing history or cursor is copied by that operation.
 
 `--initial-cursor` accepts the connector's opaque cursor encoded as base64.
