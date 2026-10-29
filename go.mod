@@ -7,7 +7,7 @@ toolchain go1.27.3
 require (
 	github.com/TylerBrock/colorjson v0.0.0-20200706003622-8a50f05110d2
 	github.com/c-bata/go-prompt v0.2.6
-	github.com/formancehq/connectivity/pkg/client v0.0.0-20261029103348-ce71fabda15f
+	github.com/formancehq/connectivity/pkg/client v0.0.0-20261029111438-275545bc44c5
 	github.com/formancehq/fctl/internal/deployserverclient/v3 v3.1.1
 	github.com/formancehq/fctl/internal/membershipclient/v3 v3.1.1
 	github.com/formancehq/formance-sdk-go/v4 v4.0.0
