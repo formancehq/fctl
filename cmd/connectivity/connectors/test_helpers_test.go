@@ -41,24 +41,21 @@ func (m connectorClientMock) ListConnectorVersions(ctx context.Context, connecto
 
 func (m connectorClientMock) GetConnectorVersion(ctx context.Context, connector, version string) (*connectivityclient.ConnectorVersion, error) {
 	if m.getVersion == nil {
-		return &connectivityclient.ConnectorVersion{Version: version, Image: "registry/connector:" + version}, nil
+		return &connectivityclient.ConnectorVersion{Version: version}, nil
 	}
 	return m.getVersion(ctx, connector, version)
 }
 
 func connectorFixture(name string) connectivityclient.Connector {
 	return connectivityclient.Connector{
-		Metadata: connectivityclient.ObjectMeta{Name: fctl.Ptr(name)},
-		Spec: connectivityclient.ConnectorSpec{
-			DisplayName:   fctl.Ptr("Connector display name"),
-			Description:   fctl.Ptr("Connector description"),
-			ImageURL:      fctl.Ptr("registry/connector"),
-			Catalog:       fctl.Ptr("public"),
-			Tags:          []string{"payments", "webhooks"},
-			Tagline:       fctl.Ptr("Payments infrastructure"),
-			LatestVersion: fctl.Ptr("2.0.0"),
-		},
-		Status: &connectivityclient.ConnectorStatus{Phase: fctl.Ptr("Ready")},
+		Name:          name,
+		DisplayName:   fctl.Ptr("Connector display name"),
+		Description:   fctl.Ptr("Connector description"),
+		Catalog:       fctl.Ptr("public"),
+		Tags:          []string{"payments", "webhooks"},
+		Tagline:       fctl.Ptr("Payments infrastructure"),
+		LatestVersion: fctl.Ptr("2.0.0"),
+		Branding:      &connectivityclient.ConnectorBranding{DisplayName: fctl.Ptr("Brand display name")},
 	}
 }
 

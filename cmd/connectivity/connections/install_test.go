@@ -20,7 +20,7 @@ type mutationClientMock struct {
 	connectorVersions
 	listConnectors func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error)
 	capabilities   func(context.Context) (*connectivityclient.QueryCapabilities, error)
-	create         func(context.Context, connectivityclient.ConnectorInstanceCreate) (*connectivityclient.ConnectorInstance, error)
+	create         func(context.Context, connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error)
 }
 
 func (m mutationClientMock) ListConnectors(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
@@ -31,13 +31,13 @@ func (m mutationClientMock) GetQueryCapabilities(ctx context.Context) (*connecti
 	return m.capabilities(ctx)
 }
 
-func (m mutationClientMock) CreateConnectorInstance(ctx context.Context, body connectivityclient.ConnectorInstanceCreate) (*connectivityclient.ConnectorInstance, error) {
+func (m mutationClientMock) CreateConnection(ctx context.Context, body connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
 	return m.create(ctx, body)
 }
 
-func TestInstallBuildsConnectorInstanceFromVersionSchemaAndOnlySetsChangedScalars(t *testing.T) {
+func TestInstallBuildsConnectionFromVersionSchemaAndOnlySetsChangedScalars(t *testing.T) {
 	var gotConnector, gotVersion string
-	var gotBody connectivityclient.ConnectorInstanceCreate
+	var gotBody connectivityclient.ConnectionCreate
 	client := mutationClientMock{
 		connectorVersions: connectorVersions{
 			getVersion: func(_ context.Context, connector, version string) (*connectivityclient.ConnectorVersion, error) {
@@ -45,13 +45,13 @@ func TestInstallBuildsConnectorInstanceFromVersionSchemaAndOnlySetsChangedScalar
 				return versionWithOptionalSchema(), nil
 			},
 		},
-		create: func(_ context.Context, body connectivityclient.ConnectorInstanceCreate) (*connectivityclient.ConnectorInstance, error) {
+		create: func(_ context.Context, body connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
 			gotBody = body
-			return &connectivityclient.ConnectorInstance{Metadata: connectivityclient.ObjectMeta{Name: stringPtr(body.Name)}, Spec: body.Spec}, nil
+			return &connectivityclient.Connection{Name: body.Name, Configuration: body.Configuration}, nil
 		},
 	}
 	read := mockReadFile(map[string]string{
-		"install.yaml":  "env:\n  API_URL:\n    value: https://config.example\n",
+		"install.yaml":  "env:\n  API_URL: https://config.example\n",
 		"connector.env": "TIMEOUT=45s\n",
 		"token.txt":     "file-token",
 	})
@@ -67,20 +67,20 @@ func TestInstallBuildsConnectorInstanceFromVersionSchemaAndOnlySetsChangedScalar
 	require.Equal(t, "stripe", gotConnector)
 	require.Equal(t, "2.0.0", gotVersion, "the pinned version supplies the config schema")
 	require.Equal(t, "stripe-eu", gotBody.Name)
-	require.Equal(t, "stripe", gotBody.Spec.ConnectorName())
-	require.Equal(t, "main", gotBody.Spec.Ledger)
-	require.Equal(t, "2.0.0", *gotBody.Spec.Version)
-	require.Equal(t, "3s", *gotBody.Spec.PollInterval)
-	require.Equal(t, "https://config.example", *gotBody.Spec.Env["API_URL"].Value)
-	require.Equal(t, "file-token", *gotBody.Spec.Env["TOKEN"].Value)
-	require.Equal(t, "45s", *gotBody.Spec.Env["TIMEOUT"].Value)
-	require.Empty(t, gotBody.Spec.Files)
+	require.Equal(t, "stripe", gotBody.Configuration.ConnectorName())
+	require.Equal(t, stringPtr("main"), gotBody.Configuration.Ledger)
+	require.Equal(t, "2.0.0", *gotBody.Configuration.Version)
+	require.Equal(t, "3s", *gotBody.Configuration.PollInterval)
+	require.Equal(t, "https://config.example", gotBody.Configuration.Env["API_URL"])
+	require.Equal(t, "file-token", gotBody.Configuration.Env["TOKEN"])
+	require.Equal(t, "45s", gotBody.Configuration.Env["TIMEOUT"])
+	require.Empty(t, gotBody.Configuration.Files)
 	require.Equal(t, `Connection "stripe-eu" installed with connector "stripe" for ledger "main".`, strings.TrimSpace(output))
 }
 
 func TestInstallWithoutSelectorUsesStableHeadForTheSchema(t *testing.T) {
 	var gotVersion string
-	var gotBody connectivityclient.ConnectorInstanceCreate
+	var gotBody connectivityclient.ConnectionCreate
 	client := mutationClientMock{
 		connectorVersions: connectorVersions{
 			getVersion: func(_ context.Context, _, version string) (*connectivityclient.ConnectorVersion, error) {
@@ -88,9 +88,9 @@ func TestInstallWithoutSelectorUsesStableHeadForTheSchema(t *testing.T) {
 				return versionWithOptionalSchema(), nil
 			},
 		},
-		create: func(_ context.Context, body connectivityclient.ConnectorInstanceCreate) (*connectivityclient.ConnectorInstance, error) {
+		create: func(_ context.Context, body connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
 			gotBody = body
-			return &connectivityclient.ConnectorInstance{Metadata: connectivityclient.ObjectMeta{Name: stringPtr(body.Name)}, Spec: body.Spec}, nil
+			return &connectivityclient.Connection{Name: body.Name, Configuration: body.Configuration}, nil
 		},
 	}
 
@@ -102,13 +102,13 @@ func TestInstallWithoutSelectorUsesStableHeadForTheSchema(t *testing.T) {
 	require.NoError(t, err)
 	// The default stable schema and the explicit wire selector must agree.
 	require.Equal(t, "stable", gotVersion)
-	require.Nil(t, gotBody.Spec.Version)
-	require.Equal(t, "stable", *gotBody.Spec.Channel, "the CLI sends its default explicitly")
+	require.Nil(t, gotBody.Configuration.Version)
+	require.Equal(t, "stable", *gotBody.Configuration.Channel, "the CLI sends its default explicitly")
 }
 
 func TestInstallWithChannelFlagTracksTheChannelAndUsesItsHeadForTheSchema(t *testing.T) {
 	var gotVersion string
-	var gotBody connectivityclient.ConnectorInstanceCreate
+	var gotBody connectivityclient.ConnectionCreate
 	client := mutationClientMock{
 		connectorVersions: connectorVersions{
 			getVersion: func(_ context.Context, _, version string) (*connectivityclient.ConnectorVersion, error) {
@@ -116,9 +116,9 @@ func TestInstallWithChannelFlagTracksTheChannelAndUsesItsHeadForTheSchema(t *tes
 				return versionWithOptionalSchema(), nil
 			},
 		},
-		create: func(_ context.Context, body connectivityclient.ConnectorInstanceCreate) (*connectivityclient.ConnectorInstance, error) {
+		create: func(_ context.Context, body connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
 			gotBody = body
-			return &connectivityclient.ConnectorInstance{Metadata: connectivityclient.ObjectMeta{Name: stringPtr(body.Name)}, Spec: body.Spec}, nil
+			return &connectivityclient.Connection{Name: body.Name, Configuration: body.Configuration}, nil
 		},
 	}
 
@@ -129,9 +129,9 @@ func TestInstallWithChannelFlagTracksTheChannelAndUsesItsHeadForTheSchema(t *tes
 
 	require.NoError(t, err)
 	require.Equal(t, "stable", gotVersion, "the channel alias resolves the schema exactly as installation will")
-	require.NotNil(t, gotBody.Spec.Channel)
-	require.Equal(t, "stable", *gotBody.Spec.Channel)
-	require.Nil(t, gotBody.Spec.Version)
+	require.NotNil(t, gotBody.Configuration.Channel)
+	require.Equal(t, "stable", *gotBody.Configuration.Channel)
+	require.Nil(t, gotBody.Configuration.Version)
 }
 
 func TestInstallReportsPrereleaseOnlyCataloguesAsMissingStableVersion(t *testing.T) {
@@ -147,11 +147,11 @@ func TestInstallReportsPrereleaseOnlyCataloguesAsMissingStableVersion(t *testing
 }
 
 func TestInstallDefaultsNameToConnectorAndOmitsUnsetOptionalData(t *testing.T) {
-	var gotBody connectivityclient.ConnectorInstanceCreate
+	var gotBody connectivityclient.ConnectionCreate
 	client := mutationClientMock{
-		create: func(_ context.Context, body connectivityclient.ConnectorInstanceCreate) (*connectivityclient.ConnectorInstance, error) {
+		create: func(_ context.Context, body connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
 			gotBody = body
-			return &connectivityclient.ConnectorInstance{Metadata: connectivityclient.ObjectMeta{Name: stringPtr(body.Name)}, Spec: body.Spec}, nil
+			return &connectivityclient.Connection{Name: body.Name, Configuration: body.Configuration}, nil
 		},
 	}
 
@@ -159,12 +159,12 @@ func TestInstallDefaultsNameToConnectorAndOmitsUnsetOptionalData(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, "wise", gotBody.Name)
-	require.Nil(t, gotBody.Spec.Version)
-	require.Equal(t, "stable", *gotBody.Spec.Channel)
-	require.Nil(t, gotBody.Spec.InitialCursor)
-	require.Nil(t, gotBody.Spec.PollInterval)
-	require.Empty(t, gotBody.Spec.Env)
-	require.Empty(t, gotBody.Spec.Files)
+	require.Nil(t, gotBody.Configuration.Version)
+	require.Equal(t, "stable", *gotBody.Configuration.Channel)
+	require.Nil(t, gotBody.Configuration.InitialCursor)
+	require.Nil(t, gotBody.Configuration.PollInterval)
+	require.Empty(t, gotBody.Configuration.Env)
+	require.Empty(t, gotBody.Configuration.Files)
 }
 
 func TestInstallRequiresLedgerBeforeUsingClient(t *testing.T) {
@@ -183,9 +183,9 @@ func TestInstallRequiresLedgerBeforeUsingClient(t *testing.T) {
 func TestInstallConfirmationRejectionPreventsCreate(t *testing.T) {
 	created := false
 	client := mutationClientMock{
-		create: func(context.Context, connectivityclient.ConnectorInstanceCreate) (*connectivityclient.ConnectorInstance, error) {
+		create: func(context.Context, connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
 			created = true
-			return nil, errors.New("CreateConnectorInstance must not be called")
+			return nil, errors.New("CreateConnection must not be called")
 		},
 	}
 	controller := NewInstallController(factoryReturning(client), mockReadFile(nil))
@@ -207,9 +207,9 @@ func TestInstallValidationErrorPreventsCreate(t *testing.T) {
 				return versionWithOptionalSchema(), nil
 			},
 		},
-		create: func(context.Context, connectivityclient.ConnectorInstanceCreate) (*connectivityclient.ConnectorInstance, error) {
+		create: func(context.Context, connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
 			created = true
-			return nil, errors.New("CreateConnectorInstance must not be called")
+			return nil, errors.New("CreateConnection must not be called")
 		},
 	}
 
@@ -246,7 +246,7 @@ func TestInstallPreservesVersionAndCreateAPIErrorsAndRejectsEmptyResponses(t *te
 		},
 		"create API": {
 			client: mutationClientMock{
-				create: func(context.Context, connectivityclient.ConnectorInstanceCreate) (*connectivityclient.ConnectorInstance, error) {
+				create: func(context.Context, connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
 					return nil, createError
 				},
 			},
@@ -254,7 +254,7 @@ func TestInstallPreservesVersionAndCreateAPIErrorsAndRejectsEmptyResponses(t *te
 		},
 		"empty create": {
 			client: mutationClientMock{
-				create: func(context.Context, connectivityclient.ConnectorInstanceCreate) (*connectivityclient.ConnectorInstance, error) {
+				create: func(context.Context, connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
 					return nil, nil
 				},
 			},
@@ -276,14 +276,13 @@ func TestInstallPreservesVersionAndCreateAPIErrorsAndRejectsEmptyResponses(t *te
 	}
 }
 
-func TestInstallJSONStoresCompleteReturnedConnectorInstance(t *testing.T) {
+func TestInstallJSONStoresCompleteReturnedConnection(t *testing.T) {
 	returned := instanceFixture("stripe-eu")
-	returned.Metadata.Labels = map[string]string{"region": "eu"}
-	setInstanceConfig(&returned, &connectivityclient.ConnectorInstanceConfig{Env: map[string]connectivityclient.EnvValue{
-		"TOKEN": {Value: stringPtr("preserved-in-json")},
+	setInstanceConfig(&returned, &connectivityclient.ConnectionConfig{Env: map[string]string{
+		"TOKEN": "preserved-in-json",
 	}})
 	client := mutationClientMock{
-		create: func(context.Context, connectivityclient.ConnectorInstanceCreate) (*connectivityclient.ConnectorInstance, error) {
+		create: func(context.Context, connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
 			return &returned, nil
 		},
 	}
@@ -297,7 +296,7 @@ func TestInstallJSONStoresCompleteReturnedConnectorInstance(t *testing.T) {
 		Data InstallStore `json:"data"`
 	}
 	require.NoError(t, json.Unmarshal([]byte(output), &envelope))
-	require.Equal(t, returned, envelope.Data.ConnectorInstance)
+	require.Equal(t, returned, envelope.Data.Connection)
 }
 
 func TestInstallRegistersAliasesAndRootIntegration(t *testing.T) {
@@ -318,7 +317,7 @@ func TestInstallRegistersAliasesAndRootIntegration(t *testing.T) {
 func TestInstallWiresChannelCompletionFromCapabilities(t *testing.T) {
 	client := mutationClientMock{capabilities: func(context.Context) (*connectivityclient.QueryCapabilities, error) {
 		return &connectivityclient.QueryCapabilities{Resources: map[string]map[string]connectivityclient.QueryFieldCapability{
-			connectivityclient.ResourceConnectorInstances: {
+			connectivityclient.ResourceConnections: {
 				"channel": {Operators: []string{"$match"}, Enum: []string{"stable", "rc", "beta", "alpha"}},
 			},
 		}}, nil
@@ -340,8 +339,8 @@ func TestInstallDoesNotExposeUnsupportedStartSequence(t *testing.T) {
 
 func TestInstallWiresConnectorVersionSetAndFileCompletions(t *testing.T) {
 	connector := connectivityclient.Connector{
-		Metadata: connectivityclient.ObjectMeta{Name: stringPtr("stripe")},
-		Spec:     connectivityclient.ConnectorSpec{Description: stringPtr("Stripe ingestion")},
+		Name:        "stripe",
+		Description: stringPtr("Stripe ingestion"),
 	}
 	client := mutationClientMock{
 		listConnectors: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
@@ -380,7 +379,7 @@ func TestInstallWiresConnectorVersionSetAndFileCompletions(t *testing.T) {
 	versionCompletion, ok := command.GetFlagCompletionFunc("version")
 	require.True(t, ok)
 	versions, directive := versionCompletion(command, []string{"stripe"}, "2")
-	require.Equal(t, []string{"2.0.0\texample/connector:2.0.0"}, versions)
+	require.Equal(t, []string{"2.0.0"}, versions)
 	require.Equal(t, cobra.ShellCompDirectiveNoFileComp, directive)
 
 	setCompletion, ok := command.GetFlagCompletionFunc("set")

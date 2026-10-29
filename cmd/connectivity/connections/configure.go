@@ -12,7 +12,7 @@ import (
 )
 
 type ConfigureStore struct {
-	ConnectorInstance connectivityclient.ConnectorInstance `json:"connectorInstance"`
+	Connection connectivityclient.Connection `json:"connection"`
 }
 
 type ConfigureController struct {
@@ -40,8 +40,7 @@ func NewConfigureCommand(factory connectivityinternal.ClientFactory, read ReadFi
 		fctl.WithAliases("config", "update", "c"),
 		fctl.WithShortDescription("Configure a Connectivity connection"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithValidArgsFunction(CompleteConnectorInstanceNames(factory)),
-		fctl.WithStringFlag(ledgerFlag, "", "Existing Ledger name (immutable; cannot be changed)"),
+		fctl.WithValidArgsFunction(CompleteConnectionNames(factory)),
 		fctl.WithStringFlag(versionFlag, "", "Connector version"),
 		fctl.WithStringFlag(channelFlag, "", "Maturity channel to track (stable, rc, beta, alpha) when no version is pinned"),
 		fctl.WithStringFlag(initialCursorFlag, "", "Initial ingestion cursor as base64 (opaque; does not reset a running cursor)"),
@@ -68,11 +67,11 @@ func resolveConfigureConnector(ctx context.Context, client connectivityclient.Cl
 	if len(args) == 0 {
 		return "", nil
 	}
-	instance, err := client.GetConnectorInstance(ctx, args[0])
+	instance, err := client.GetConnection(ctx, args[0])
 	if err != nil || instance == nil {
 		return "", err
 	}
-	return instance.Spec.ConnectorName(), nil
+	return instance.Configuration.ConnectorName(), nil
 }
 
 func resolveConfigureConnectorVersion(ctx context.Context, client connectivityclient.Client, cmd *cobra.Command, args []string) (*connectivityclient.ConnectorVersion, error) {
@@ -82,27 +81,28 @@ func resolveConfigureConnectorVersion(ctx context.Context, client connectivitycl
 	if len(args) == 0 {
 		return nil, nil
 	}
-	instance, err := client.GetConnectorInstance(ctx, args[0])
+	instance, err := client.GetConnection(ctx, args[0])
 	if err != nil || instance == nil {
 		return nil, err
 	}
+	connector := instance.Configuration.ConnectorName()
 	pinned, channel, err := configureVersionSelector(cmd, instance)
 	if err != nil {
 		return nil, err
 	}
 	if channel != "" {
-		return resolveChannelVersion(ctx, client, instance.Spec.ConnectorName(), channel, appliedChannelFloor(instance))
+		return resolveChannelVersion(ctx, client, connector, channel, appliedChannelFloor(instance))
 	}
-	return resolveConnectorVersion(ctx, client, instance.Spec.ConnectorName(), pinned)
+	return resolveConnectorVersion(ctx, client, connector, pinned)
 }
 
-func configureVersionSelector(cmd *cobra.Command, instance *connectivityclient.ConnectorInstance) (string, string, error) {
+func configureVersionSelector(cmd *cobra.Command, instance *connectivityclient.Connection) (string, string, error) {
 	pinned, channel := "", ""
-	if instance != nil && instance.Spec.Version != nil && *instance.Spec.Version != "" {
-		pinned = *instance.Spec.Version
+	if instance != nil && instance.Configuration.Version != nil && *instance.Configuration.Version != "" {
+		pinned = *instance.Configuration.Version
 	}
-	if instance != nil && instance.Spec.Channel != nil && *instance.Spec.Channel != "" {
-		channel = *instance.Spec.Channel
+	if instance != nil && instance.Configuration.Channel != nil && *instance.Configuration.Channel != "" {
+		channel = *instance.Configuration.Channel
 	}
 	if cmd.Flags().Changed(versionFlag) {
 		return fctl.GetString(cmd, versionFlag), "", nil
@@ -143,7 +143,7 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 	}
 
 	name := args[0]
-	instance, err := client.GetConnectorInstance(cmd.Context(), name)
+	instance, err := client.GetConnection(cmd.Context(), name)
 	if err != nil {
 		return nil, err
 	}
@@ -151,9 +151,7 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		return nil, fmt.Errorf("configure connectivity connection %q: empty response", name)
 	}
 
-	if cmd.Flags().Changed(ledgerFlag) && fctl.GetString(cmd, ledgerFlag) != instance.Spec.Ledger {
-		return nil, fmt.Errorf("ledger is immutable: connection %q uses ledger %q; create a new connection to use another ledger", name, instance.Spec.Ledger)
-	}
+	connector := instance.Configuration.ConnectorName()
 	specPatch := map[string]any{}
 	configChanged := cmd.Flags().Changed(configFlag) || cmd.Flags().Changed(envFileFlag) || cmd.Flags().Changed(setFlag)
 	if configChanged {
@@ -163,9 +161,9 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		}
 		var version *connectivityclient.ConnectorVersion
 		if channel != "" {
-			version, err = resolveChannelVersion(cmd.Context(), client, instance.Spec.ConnectorName(), channel, appliedChannelFloor(instance))
+			version, err = resolveChannelVersion(cmd.Context(), client, connector, channel, appliedChannelFloor(instance))
 		} else {
-			version, err = resolveConnectorVersion(cmd.Context(), client, instance.Spec.ConnectorName(), pinned)
+			version, err = resolveConnectorVersion(cmd.Context(), client, connector, pinned)
 		}
 		if err != nil {
 			return nil, err
@@ -178,7 +176,9 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		if err != nil {
 			return nil, err
 		}
-		config, err := BuildConfigureConfig(cmd, version, instance.Spec.Configuration(), InputOptions{
+		intent := map[string]any{}
+		_, err = BuildConfigureConfig(cmd, version, instance.Configuration.Configuration(), InputOptions{
+			patch:      intent,
 			ConfigFile: fctl.GetString(cmd, configFlag),
 			EnvFiles:   envFiles,
 			SetValues:  setValues,
@@ -186,7 +186,7 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		if err != nil {
 			return nil, err
 		}
-		for key, value := range configurationPatch(instance.Spec.Configuration(), config) {
+		for key, value := range intent {
 			specPatch[key] = value
 		}
 	}
@@ -198,9 +198,6 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		channel := fctl.GetString(cmd, channelFlag)
 		specPatch["channel"] = channel
 		specPatch["version"] = nil
-	}
-	if cmd.Flags().Changed(ledgerFlag) {
-		specPatch["ledger"] = fctl.GetString(cmd, ledgerFlag)
 	}
 	if cmd.Flags().Changed(pollIntervalFlag) {
 		specPatch["pollInterval"] = fctl.GetString(cmd, pollIntervalFlag)
@@ -215,18 +212,18 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		return nil, fctl.ErrMissingApproval
 	}
 
-	updated, err := client.PatchConnectorInstance(cmd.Context(), name, connectivityclient.ConnectorInstancePatch{"spec": specPatch})
+	updated, err := client.PatchConnection(cmd.Context(), name, connectivityclient.ConnectionPatch{"configuration": specPatch})
 	if err != nil {
 		return nil, err
 	}
 	if updated == nil {
 		return nil, fmt.Errorf("configure connectivity connection %q: empty response", name)
 	}
-	c.store.ConnectorInstance = *updated
+	c.store.Connection = *updated
 	return c, nil
 }
 
 func (c *ConfigureController) Render(cmd *cobra.Command, _ []string) error {
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connection %q configured.\n", stringValue(c.store.ConnectorInstance.Metadata.Name))
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connection %q configured.\n", c.store.Connection.Name)
 	return err
 }

@@ -103,7 +103,7 @@ func CompleteChannels(factory ClientFactory) cobra.CompletionFunc {
 		if err != nil || capabilities == nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		channels := capabilities.Resources[connectivityclient.ResourceConnectorInstances]["channel"].Enum
+		channels := capabilities.Resources[connectivityclient.ResourceConnections]["channel"].Enum
 		candidates := make([]string, 0, len(channels))
 		for _, channel := range channels {
 			if strings.HasPrefix(channel, toComplete) {
@@ -147,7 +147,7 @@ func filterValueCandidates(ctx context.Context, client connectivityclient.Client
 	switch {
 	case resource == connectivityclient.ResourceConnectors && key == "tags":
 		return facetFilterValues(ctx, client)
-	case resource == connectivityclient.ResourceConnectorInstances && key == "connector":
+	case resource == connectivityclient.ResourceConnections && key == "connector":
 		return connectorFilterValues(ctx, client)
 	}
 	return nil
@@ -191,12 +191,12 @@ func connectorFilterValues(ctx context.Context, client connectivityclient.Client
 	}
 	values := make([]filterValue, 0, len(connectors))
 	for _, connector := range connectors {
-		if connector.Metadata.Name == nil || *connector.Metadata.Name == "" {
+		if connector.Name == "" {
 			continue
 		}
-		value := filterValue{value: *connector.Metadata.Name}
-		if connector.Spec.DisplayName != nil {
-			value.description = *connector.Spec.DisplayName
+		value := filterValue{value: connector.Name}
+		if connector.DisplayName != nil {
+			value.description = *connector.DisplayName
 		}
 		values = append(values, value)
 	}

@@ -9,6 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// These portable HTTP fixtures follow Connectivity's public contract at
+// OpenAPI SHA-256 9203f5c4ff1fb1e8225d72a76399c6c7b71330ece6ea3c9e48aa7a0a199f9fd2.
+// Source and official SDK: Connectivity 275545bc44c5e29c9f61edb4ce978898ef2b3455.
+// They exercise the SDK-backed facade, not a running Connectivity implementation.
 type wireRequest struct {
 	method, path, contentType string
 	body                      []byte
@@ -29,118 +33,98 @@ func contractServer(t *testing.T, status int, response string) (*httptest.Server
 	return server, requests
 }
 
-func TestGivenTenantContract_WhenInstanceIsCreated_ThenSpecRoundTrips(t *testing.T) {
+func TestGivenPublicContract_WhenInstanceCreated_ThenLiteralConfigurationReachesHTTP(t *testing.T) {
 	for _, selector := range []string{"version", "channel"} {
 		t.Run(selector, func(t *testing.T) {
-			// Given the tenant contract pinned to server revision 4084c566.
-			value, empty, interval := "inline", "", "30s"
-			mode, suspend := int32(384), false
-			spec := ConnectorInstanceSpec{
-				ConnectorRef: &ObjectRef{Name: "stripe"}, ConnectivityRef: &ObjectRef{Name: "stack"},
-				Ledger: "main", InitialCursor: []byte{0, 0, 0, 0, 0, 0, 3, 232},
-				PollInterval: &interval, Suspend: &suspend,
-				Env: map[string]EnvValue{
-					"INLINE": {Value: &value}, "EMPTY": {Value: &empty},
-					"SECRET": {SecretRef: &KeyRef{Name: "credentials", Key: "api-key"}},
-					"CONFIG": {ConfigMapRef: &KeyRef{Name: "settings", Key: "region"}},
-				},
-				Files: []FileMount{
-					{Path: "/etc/plugin/inline", Value: &value, Mode: &mode},
-					{Path: "/etc/plugin/secret", SecretRef: &KeyRef{Name: "credentials", Key: "key.pem"}},
-					{Path: "/etc/plugin/config", ConfigMapRef: &KeyRef{Name: "settings", Key: "config.json"}},
-				},
-			}
-			selected, wantSelector := "v1.0.0", `"version":"v1.0.0"`
-			if selector == "channel" {
-				selected, wantSelector = "stable", `"channel":"stable"`
-				spec.Channel = &selected
-			} else {
-				spec.Version = &selected
-			}
-			wantSpec := `{"connectorRef":{"name":"stripe"},"connectivityRef":{"name":"stack"},` + wantSelector + `,
-				"ledger":"main","initialCursor":"AAAAAAAAA+g=","pollInterval":"30s","suspend":false,
-				"env":{"INLINE":{"value":"inline"},"EMPTY":{"value":""},"SECRET":{"secretRef":{"name":"credentials","key":"api-key"}},"CONFIG":{"configMapRef":{"name":"settings","key":"region"}}},
-				"files":[{"path":"/etc/plugin/inline","value":"inline","mode":384},{"path":"/etc/plugin/secret","secretRef":{"name":"credentials","key":"key.pem"}},{"path":"/etc/plugin/config","configMapRef":{"name":"settings","key":"config.json"}}]}`
-			response := `{"metadata":{"name":"worker","namespace":"tenant","resourceVersion":"7","uid":"instance-id","creationTimestamp":"2026-10-14T10:00:00Z","labels":{"team":"payments"},"annotations":{"owner":"operations"}},"spec":` + wantSpec + `,"status":{"phase":"Running","resolvedConnectorRef":"stripe","resolvedVersion":"v1.0.0","currentSequence":1000,"sourceTipSequence":2000}}`
+			// Given a public response that omits confidential values and optional status.
+			response := `{"name":"worker","configuration":{"connector":"stripe","ledger":"main","` + selector + `":"` + map[string]string{"version": "v1.0.0", "channel": "stable"}[selector] + `","env":{"EMPTY":""}}}`
 			server, requests := contractServer(t, http.StatusCreated, response)
-
-			// When a typed create request crosses the HTTP transport.
-			created, err := New(server.URL, server.Client()).CreateConnectorInstance(t.Context(), ConnectorInstanceCreate{
-				Name: "worker", Labels: map[string]string{"team": "payments"}, Annotations: map[string]string{"owner": "operations"}, Spec: spec,
-			})
-
-			// Then only tenant fields are sent, and binary cursors and projections decode unchanged.
+			configuration := ConnectionConfiguration{
+				Connector: "stripe", Ledger: pointer("main"), InitialCursor: []byte{0, 0, 0, 0, 0, 0, 3, 232}, PollInterval: pointer("30s"), Suspend: pointer(false),
+				Env: map[string]string{"API_PASSWORD": "synthetic-password", "EMPTY": ""}, Files: map[string]string{"/etc/plugin/key": "synthetic-key"},
+			}
+			if selector == "version" {
+				configuration.Version = pointer("v1.0.0")
+			} else {
+				configuration.Channel = pointer("stable")
+			}
+			// When the typed request crosses the real HTTP transport.
+			created, err := New(server.URL, server.Client()).CreateConnection(t.Context(), ConnectionCreate{Name: "worker", Configuration: configuration})
 			require.NoError(t, err)
 			request := <-requests
 			require.NoError(t, request.err)
 			require.Equal(t, http.MethodPost, request.method)
-			require.Equal(t, "/api/connectivity/connectorinstances", request.path)
+			require.Equal(t, "/api/connectivity/connections", request.path)
 			require.Equal(t, "application/json", request.contentType)
-			require.JSONEq(t, `{"name":"worker","labels":{"team":"payments"},"annotations":{"owner":"operations"},"spec":`+wantSpec+`}`, string(request.body))
-			require.Equal(t, spec, created.Spec)
-			require.Equal(t, spec.Configuration(), created.Spec.Configuration())
-			require.Equal(t, "tenant", *created.Metadata.Namespace)
-			require.Equal(t, "7", *created.Metadata.ResourceVersion)
-			require.Equal(t, "instance-id", *created.Metadata.UID)
-			require.NotNil(t, created.Metadata.CreationTimestamp)
-			require.Equal(t, map[string]string{"team": "payments"}, created.Metadata.Labels)
-			require.Equal(t, map[string]string{"owner": "operations"}, created.Metadata.Annotations)
-			require.Equal(t, "stripe", *created.Status.ResolvedConnectorRef)
-			require.Equal(t, int64(1000), *created.Status.CurrentSequence)
-			require.Equal(t, int64(2000), *created.Status.SourceTipSequence)
+			selectorJSON := `"version":"v1.0.0"`
+			if selector == "channel" {
+				selectorJSON = `"channel":"stable"`
+			}
+			// Then the wire has no metadata, reference objects or value wrappers.
+			require.JSONEq(t, `{"name":"worker","configuration":{"connector":"stripe","ledger":"main",`+selectorJSON+`,"initialCursor":"AAAAAAAAA+g=","pollInterval":"30s","suspend":false,"env":{"API_PASSWORD":"synthetic-password","EMPTY":""},"files":{"/etc/plugin/key":"synthetic-key"}}}`, string(request.body))
+			require.Equal(t, "worker", created.Name)
+			require.Equal(t, map[string]string{"EMPTY": ""}, created.Configuration.Env)
+			require.NotContains(t, created.Configuration.Env, "API_PASSWORD")
+			require.Nil(t, created.Status)
 		})
 	}
 }
 
-func TestGivenTenantContract_WhenSpecIsMergePatched_ThenNullsAndEmptyArraysReachWire(t *testing.T) {
-	// Given an existing bound instance and a response with the requested selector.
-	response := `{"metadata":{"name":"worker"},"spec":{"connectorRef":{"name":"stripe"},"connectivityRef":{"name":"stack"},"ledger":"main","channel":"stable","initialCursor":"AAAAAAAAA+g=","suspend":false,"env":{"REGION":{"configMapRef":{"name":"settings","key":"region"}}},"files":[]}}`
-	server, requests := contractServer(t, http.StatusOK, response)
-
-	// When a patch removes a version and an env entry, replaces files with an
-	// empty array, and sends an opaque cursor without a configuration wrapper.
-	patched, err := New(server.URL, server.Client()).PatchConnectorInstance(t.Context(), "worker", ConnectorInstancePatch{
-		"spec": map[string]any{
-			"connectorRef": &ObjectRef{Name: "stripe"}, "connectivityRef": &ObjectRef{Name: "stack"},
-			"ledger": "main", "version": nil, "channel": "stable", "suspend": false,
-			"initialCursor": []byte{0, 0, 0, 0, 0, 0, 3, 232},
-			"env":           map[string]any{"OLD": nil, "REGION": EnvValue{ConfigMapRef: &KeyRef{Name: "settings", Key: "region"}}},
-			"files":         []FileMount{},
+func TestGivenPublicContract_WhenSelectorAndMapsPatched_ThenNullsAndLiteralsReachHTTP(t *testing.T) {
+	// Given an existing instance whose confidential values are absent on reads.
+	server, requests := contractServer(t, 200, `{"name":"worker","configuration":{"connector":"stripe","ledger":"main","channel":"stable","env":{"EMPTY":""},"files":{"/etc/plugin/key":"replacement"}}}`)
+	// When switching from a pinned version without replacing the full config.
+	patched, err := New(server.URL, server.Client()).PatchConnection(t.Context(), "worker", ConnectionPatch{
+		"configuration": map[string]any{
+			"version": nil, "channel": "stable", "suspend": false, "initialCursor": []byte{0, 0, 0, 0, 0, 0, 3, 232},
+			"env": map[string]any{"OLD": nil, "EMPTY": ""}, "files": map[string]any{"/etc/plugin/old": nil, "/etc/plugin/key": "replacement"},
 		},
 	})
-
-	// Then merge-patch deletion markers survive and the response uses the same model.
 	require.NoError(t, err)
 	request := <-requests
 	require.NoError(t, request.err)
 	require.Equal(t, http.MethodPatch, request.method)
-	require.Equal(t, "/api/connectivity/connectorinstances/worker", request.path)
+	require.Equal(t, "/api/connectivity/connections/worker", request.path)
 	require.Equal(t, "application/merge-patch+json", request.contentType)
-	require.JSONEq(t, `{"spec":{"connectorRef":{"name":"stripe"},"connectivityRef":{"name":"stack"},"ledger":"main","version":null,"channel":"stable","suspend":false,"initialCursor":"AAAAAAAAA+g=","env":{"OLD":null,"REGION":{"configMapRef":{"name":"settings","key":"region"}}},"files":[]}}`, string(request.body))
-	require.Nil(t, patched.Spec.Version)
-	require.Equal(t, "stable", *patched.Spec.Channel)
-	require.Equal(t, []byte{0, 0, 0, 0, 0, 0, 3, 232}, patched.Spec.InitialCursor)
-	require.Equal(t, "stack", patched.Spec.ConnectivityRef.Name)
-	require.NotNil(t, patched.Spec.Files)
-	require.Empty(t, patched.Spec.Files)
-	require.False(t, *patched.Spec.Suspend)
+	// Then null deletion markers survive independently of omitted secret values.
+	require.JSONEq(t, `{"configuration":{"version":null,"channel":"stable","suspend":false,"initialCursor":"AAAAAAAAA+g=","env":{"OLD":null,"EMPTY":""},"files":{"/etc/plugin/old":null,"/etc/plugin/key":"replacement"}}}`, string(request.body))
+	require.Nil(t, patched.Configuration.Version)
+	require.Equal(t, "stable", *patched.Configuration.Channel)
+	require.Equal(t, "replacement", patched.Configuration.Files["/etc/plugin/key"])
 }
 
-func TestGivenTenantContract_WhenConfigurationIsCleared_ThenTopLevelNullsReachWire(t *testing.T) {
-	// Given an instance whose optional configuration can be removed.
-	server, requests := contractServer(t, http.StatusOK, `{"metadata":{"name":"worker"},"spec":{"connectorRef":{"name":"stripe"},"channel":"stable","ledger":"main"}}`)
-
-	// When the caller explicitly removes optional tenant fields.
-	patched, err := New(server.URL, server.Client()).PatchConnectorInstance(t.Context(), "worker", ConnectorInstancePatch{
-		"spec": map[string]any{"initialCursor": nil, "pollInterval": nil, "env": nil, "files": nil},
+func TestGivenPublicContract_WhenOptionalConfigurationCleared_ThenNullsReachHTTP(t *testing.T) {
+	server, requests := contractServer(t, 200, instanceResponse)
+	_, err := New(server.URL, server.Client()).PatchConnection(t.Context(), "worker", ConnectionPatch{
+		"configuration": map[string]any{"initialCursor": nil, "pollInterval": nil, "env": nil, "files": nil},
 	})
-
-	// Then null differs from omission on the wire, and absent fields decode safely.
 	require.NoError(t, err)
 	request := <-requests
 	require.NoError(t, request.err)
-	require.JSONEq(t, `{"spec":{"initialCursor":null,"pollInterval":null,"env":null,"files":null}}`, string(request.body))
-	require.Nil(t, patched.Spec.InitialCursor)
-	require.Nil(t, patched.Spec.PollInterval)
-	require.Equal(t, &ConnectorInstanceConfig{}, patched.Spec.Configuration())
+	require.JSONEq(t, `{"configuration":{"initialCursor":null,"pollInterval":null,"env":null,"files":null}}`, string(request.body))
+}
+
+func TestGivenPublicContract_WhenConfigurationReplaced_ThenPUTUsesUpdateEnvelope(t *testing.T) {
+	server, requests := contractServer(t, 200, instanceResponse)
+	_, err := New(server.URL, server.Client()).ReplaceConnection(t.Context(), "worker", ConnectionUpdate{
+		Configuration: ConnectionConfiguration{Connector: "stripe", Ledger: pointer("main"), Version: pointer("v1.0.0"), Env: map[string]string{"TOKEN": "complete-secret"}},
+	})
+	require.NoError(t, err)
+	request := <-requests
+	require.NoError(t, request.err)
+	require.Equal(t, http.MethodPut, request.method)
+	require.Equal(t, "/api/connectivity/connections/worker", request.path)
+	require.Equal(t, "application/json", request.contentType)
+	require.JSONEq(t, `{"configuration":{"connector":"stripe","ledger":"main","version":"v1.0.0","env":{"TOKEN":"complete-secret"}}}`, string(request.body))
+}
+
+func TestGivenPublicContract_WhenMapsAreEmpty_ThenPatchPreservesEmptyObjects(t *testing.T) {
+	server, requests := contractServer(t, 200, instanceResponse)
+	_, err := New(server.URL, server.Client()).PatchConnection(t.Context(), "worker", ConnectionPatch{
+		"configuration": map[string]any{"env": map[string]string{}, "files": map[string]string{}},
+	})
+	require.NoError(t, err)
+	request := <-requests
+	require.NoError(t, request.err)
+	require.JSONEq(t, `{"configuration":{"env":{},"files":{}}}`, string(request.body))
 }

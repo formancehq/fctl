@@ -8,20 +8,13 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
+
+	sdk "github.com/formancehq/connectivity/pkg/client/http"
+	"github.com/formancehq/connectivity/pkg/client/http/models/components"
 )
 
 const connectivityPath = "/api/connectivity"
-
-const (
-	connectorsResource         = "connectors"
-	connectorVersionsResource  = "versions"
-	connectorInstancesResource = "connectorinstances"
-	facetsSegment              = "_facets"
-	querySegment               = "_query"
-	capabilitiesSegment        = "capabilities"
-)
 
 type client struct {
 	stackURI   string
@@ -41,9 +34,13 @@ type page[T any] struct {
 	} `json:"cursor"`
 }
 
-func listPage[T any](ctx context.Context, c *client, path []string, options ListOptions, validate func(*T) error) (*page[T], error) {
+// This SDK revision substitutes path parameters verbatim. Escape each input
+// segment before handing it to an operation; the SDK still owns route selection.
+type sdkOperation func(context.Context, *sdk.SDK) error
+
+func listPage[T any](ctx context.Context, c *client, options ListOptions, operation sdkOperation, validate func(*T) error) (*page[T], error) {
 	envelope := &page[T]{}
-	if err := c.requestJSON(ctx, http.MethodGet, path, listQuery(options), nil, "", http.StatusOK, envelope, true); err != nil {
+	if err := c.invoke(ctx, http.StatusOK, envelope, options.PageSize == 0, operation); err != nil {
 		return nil, err
 	}
 	if envelope.Cursor == nil {
@@ -60,8 +57,23 @@ func listPage[T any](ctx context.Context, c *client, path []string, options List
 	return envelope, nil
 }
 
+func (c *client) GetInfo(ctx context.Context) (*ServiceInfo, error) {
+	result := &ServiceInfo{}
+	if err := c.invoke(ctx, http.StatusOK, result, false, func(ctx context.Context, s *sdk.SDK) error {
+		_, err := s.Health.Info(ctx)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 func (c *client) ListConnectors(ctx context.Context, options ListOptions) (*ConnectorList, error) {
-	result, err := listPage(ctx, c, []string{connectorsResource}, options, validateConnector)
+	query, size, cursor := sdkListOptions(options)
+	result, err := listPage(ctx, c, options, func(ctx context.Context, s *sdk.SDK) error {
+		_, err := s.Connectors.ListConnectors(ctx, query, size, cursor)
+		return err
+	}, validateConnector)
 	if err != nil {
 		return nil, err
 	}
@@ -75,12 +87,10 @@ func (c *client) ListConnectors(ctx context.Context, options ListOptions) (*Conn
 
 func (c *client) GetConnectorFacets(ctx context.Context, query string) (*FacetDistribution, error) {
 	result := &FacetDistribution{}
-	values := url.Values{}
-	if query != "" {
-		values.Set("query", query)
-	}
-	path := []string{connectorsResource, facetsSegment}
-	if err := c.requestJSON(ctx, http.MethodGet, path, values, nil, "", http.StatusOK, result, true); err != nil {
+	if err := c.invoke(ctx, http.StatusOK, result, false, func(ctx context.Context, s *sdk.SDK) error {
+		_, err := s.Connectors.GetConnectorFacets(ctx, optionalString(query))
+		return err
+	}); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -88,8 +98,10 @@ func (c *client) GetConnectorFacets(ctx context.Context, query string) (*FacetDi
 
 func (c *client) GetQueryCapabilities(ctx context.Context) (*QueryCapabilities, error) {
 	result := &QueryCapabilities{}
-	path := []string{querySegment, capabilitiesSegment}
-	if err := c.requestJSON(ctx, http.MethodGet, path, nil, nil, "", http.StatusOK, result, true); err != nil {
+	if err := c.invoke(ctx, http.StatusOK, result, false, func(ctx context.Context, s *sdk.SDK) error {
+		_, err := s.Query.GetQueryCapabilities(ctx)
+		return err
+	}); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -97,15 +109,21 @@ func (c *client) GetQueryCapabilities(ctx context.Context) (*QueryCapabilities, 
 
 func (c *client) GetConnector(ctx context.Context, name string) (*Connector, error) {
 	result := &Connector{}
-	if err := c.requestJSON(ctx, http.MethodGet, []string{connectorsResource, name}, nil, nil, "", http.StatusOK, result, true); err != nil {
+	if err := c.invoke(ctx, http.StatusOK, result, false, func(ctx context.Context, s *sdk.SDK) error {
+		_, err := s.Connectors.GetConnector(ctx, url.PathEscape(name))
+		return err
+	}); err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
 func (c *client) ListConnectorVersions(ctx context.Context, connector string, options ListOptions) (*ConnectorVersionList, error) {
-	path := []string{connectorsResource, connector, connectorVersionsResource}
-	result, err := listPage(ctx, c, path, options, validateConnectorVersionSummary)
+	query, size, cursor := sdkListOptions(options)
+	result, err := listPage(ctx, c, options, func(ctx context.Context, s *sdk.SDK) error {
+		_, err := s.Connectors.ListConnectorVersions(ctx, url.PathEscape(connector), query, size, cursor)
+		return err
+	}, validateConnectorVersionSummary)
 	if err != nil {
 		return nil, err
 	}
@@ -119,19 +137,25 @@ func (c *client) ListConnectorVersions(ctx context.Context, connector string, op
 
 func (c *client) GetConnectorVersion(ctx context.Context, connector, version string) (*ConnectorVersion, error) {
 	result := &ConnectorVersion{}
-	path := []string{connectorsResource, connector, connectorVersionsResource, version}
-	if err := c.requestJSON(ctx, http.MethodGet, path, nil, nil, "", http.StatusOK, result, true); err != nil {
+	if err := c.invoke(ctx, http.StatusOK, result, false, func(ctx context.Context, s *sdk.SDK) error {
+		_, err := s.Connectors.GetConnectorVersion(ctx, url.PathEscape(connector), url.PathEscape(version))
+		return err
+	}); err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func (c *client) ListConnectorInstances(ctx context.Context, options ListOptions) (*ConnectorInstanceList, error) {
-	result, err := listPage(ctx, c, []string{connectorInstancesResource}, options, validateConnectorInstance)
+func (c *client) ListConnections(ctx context.Context, options ListOptions) (*ConnectionList, error) {
+	query, size, cursor := sdkListOptions(options)
+	result, err := listPage(ctx, c, options, func(ctx context.Context, s *sdk.SDK) error {
+		_, err := s.Connection.ListConnections(ctx, query, size, cursor)
+		return err
+	}, validateConnection)
 	if err != nil {
 		return nil, err
 	}
-	return &ConnectorInstanceList{
+	return &ConnectionList{
 		Items:    result.Cursor.Data,
 		PageSize: result.Cursor.PageSize,
 		HasMore:  result.Cursor.HasMore,
@@ -139,94 +163,178 @@ func (c *client) ListConnectorInstances(ctx context.Context, options ListOptions
 	}, nil
 }
 
-func (c *client) CreateConnectorInstance(ctx context.Context, instance ConnectorInstanceCreate) (*ConnectorInstance, error) {
-	result := &ConnectorInstance{}
-	if err := c.requestJSON(ctx, http.MethodPost, []string{connectorInstancesResource}, nil, instance, "application/json", http.StatusCreated, result, true); err != nil {
+func (c *client) CreateConnection(ctx context.Context, instance ConnectionCreate) (*Connection, error) {
+	if strings.TrimSpace(instance.Name) == "" {
+		return nil, fmt.Errorf("connection name is required")
+	}
+	if err := validateConfigurationWrite(instance.Configuration, true); err != nil {
+		return nil, err
+	}
+	var request components.ConnectionCreate
+	if err := sdkRequest(instance, &request); err != nil {
+		return nil, err
+	}
+	result := &Connection{}
+	if err := c.invoke(ctx, http.StatusCreated, result, false, func(ctx context.Context, s *sdk.SDK) error {
+		_, err := s.Connection.CreateConnection(ctx, request)
+		return err
+	}); err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func (c *client) GetConnectorInstance(ctx context.Context, name string) (*ConnectorInstance, error) {
-	result := &ConnectorInstance{}
-	if err := c.requestJSON(ctx, http.MethodGet, []string{connectorInstancesResource, name}, nil, nil, "", http.StatusOK, result, true); err != nil {
+func (c *client) GetConnection(ctx context.Context, name string) (*Connection, error) {
+	result := &Connection{}
+	if err := c.invoke(ctx, http.StatusOK, result, false, func(ctx context.Context, s *sdk.SDK) error {
+		_, err := s.Connection.GetConnection(ctx, url.PathEscape(name))
+		return err
+	}); err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func (c *client) PatchConnectorInstance(ctx context.Context, name string, patch ConnectorInstancePatch) (*ConnectorInstance, error) {
-	result := &ConnectorInstance{}
-	path := []string{connectorInstancesResource, name}
-	if err := c.requestJSON(ctx, http.MethodPatch, path, nil, patch, "application/merge-patch+json", http.StatusOK, result, true); err != nil {
+func (c *client) ReplaceConnection(ctx context.Context, name string, update ConnectionUpdate) (*Connection, error) {
+	if err := validateConfigurationWrite(update.Configuration, false); err != nil {
+		return nil, err
+	}
+	var request components.ConnectionUpdate
+	if err := sdkRequest(update, &request); err != nil {
+		return nil, err
+	}
+	result := &Connection{}
+	if err := c.invoke(ctx, http.StatusOK, result, false, func(ctx context.Context, s *sdk.SDK) error {
+		_, err := s.Connection.ReplaceConnection(ctx, url.PathEscape(name), request)
+		return err
+	}); err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func (c *client) DeleteConnectorInstance(ctx context.Context, name string) error {
-	return c.requestJSON(ctx, http.MethodDelete, []string{connectorInstancesResource, name}, nil, nil, "", http.StatusNoContent, nil, false)
+func (c *client) PatchConnection(ctx context.Context, name string, patch ConnectionPatch) (*Connection, error) {
+	if err := validatePatch(patch); err != nil {
+		return nil, err
+	}
+	var request components.ConnectionPatch
+	if err := sdkRequest(patch, &request); err != nil {
+		return nil, err
+	}
+	result := &Connection{}
+	if err := c.invoke(ctx, http.StatusOK, result, false, func(ctx context.Context, s *sdk.SDK) error {
+		_, err := s.Connection.PatchConnection(ctx, url.PathEscape(name), request)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
-func listQuery(options ListOptions) url.Values {
-	query := url.Values{}
+func (c *client) DeleteConnection(ctx context.Context, name string) error {
+	return c.invoke(ctx, http.StatusNoContent, nil, false, func(ctx context.Context, s *sdk.SDK) error {
+		_, err := s.Connection.DeleteConnection(ctx, url.PathEscape(name))
+		return err
+	})
+}
+
+// Convert only validated input. The generated patch preserves absent/null/value
+// states, including null entries that a redacted GET never returned.
+func sdkRequest(input, destination any) error {
+	data, err := json.Marshal(input)
+	if err != nil {
+		return fmt.Errorf("marshal connectivity request: %w", err)
+	}
+	if err := json.Unmarshal(data, destination); err != nil {
+		return fmt.Errorf("convert connectivity SDK request: %w", err)
+	}
+	return nil
+}
+
+func optionalString(value string) *string {
+	if value == "" {
+		return nil
+	}
+	return &value
+}
+
+func sdkListOptions(options ListOptions) (*string, *int, *string) {
+	var size *int
 	if options.PageSize != 0 {
-		query.Set("pageSize", strconv.FormatInt(int64(options.PageSize), 10))
+		value := int(options.PageSize)
+		size = &value
 	}
-	if options.Cursor != "" {
-		query.Set("cursor", options.Cursor)
-	}
-	if options.Query != "" {
-		query.Set("query", options.Query)
-	}
-	return query
+	return optionalString(options.Query), size, optionalString(options.Cursor)
 }
 
-func (c *client) requestJSON(ctx context.Context, method string, path []string, query url.Values, body any, contentType string, expectedStatus int, destination any, requireObject bool) error {
-	endpoint, err := endpointURL(c.stackURI, path)
+// Each SDK instance and response capture belongs to one invocation. Generated
+// response models erase required-field presence, so validate the original bytes
+// rather than marshaling their zero values back into the facade's models.
+func (c *client) invoke(ctx context.Context, expectedStatus int, destination any, omitPageSize bool, operation sdkOperation) error {
+	endpoint, err := serviceURL(c.stackURI)
 	if err != nil {
 		return err
 	}
-	endpoint.RawQuery = query.Encode()
-
-	var reader io.Reader
-	if body != nil {
-		encoded, err := json.Marshal(body)
-		if err != nil {
-			return fmt.Errorf("marshal connectivity request: %w", err)
-		}
-		reader = bytes.NewReader(encoded)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, method, endpoint.String(), reader)
-	if err != nil {
-		return fmt.Errorf("create connectivity request: %w", err)
-	}
-	req.Header.Set("Accept", "application/json")
-	if contentType != "" {
-		req.Header.Set("Content-Type", contentType)
-	}
-
 	httpClient := c.httpClient
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
-	response, err := httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("send connectivity request: %w", err)
+	transport := &sdkHTTPClient{client: httpClient, omitPageSize: omitPageSize, expectedStatus: expectedStatus}
+	s := sdk.New(sdk.WithServerURL(endpoint.String()), sdk.WithClient(transport))
+	sdkErr := operation(ctx, s)
+	if transport.response == nil {
+		return fmt.Errorf("send connectivity request: %w", sdkErr)
 	}
-	defer response.Body.Close()
-
-	if response.StatusCode != expectedStatus {
-		return decodeAPIError(response)
+	if transport.readErr != nil {
+		return fmt.Errorf("read connectivity response: %w", transport.readErr)
+	}
+	if transport.response.StatusCode != expectedStatus {
+		response := *transport.response
+		response.Body = io.NopCloser(bytes.NewReader(transport.body))
+		return decodeAPIError(&response)
 	}
 	if destination == nil {
 		return nil
 	}
-	return decodeResponse(response.Body, destination, requireObject)
+	// SDK decoding or Content-Type errors do not replace the facade's existing
+	// JSON validation: the complete original body remains authoritative here.
+	return decodeResponse(bytes.NewReader(transport.body), destination, true)
 }
 
-func endpointURL(stackURI string, segments []string) (*url.URL, error) {
+type sdkHTTPClient struct {
+	client         *http.Client
+	omitPageSize   bool
+	expectedStatus int
+	response       *http.Response
+	body           []byte
+	readErr        error
+}
+
+func (c *sdkHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	if c.omitPageSize {
+		req = req.Clone(req.Context())
+		endpoint := *req.URL
+		req.URL = &endpoint
+		query := endpoint.Query()
+		query.Del("pageSize")
+		req.URL.RawQuery = query.Encode()
+	}
+	response, err := c.client.Do(req)
+	if err != nil {
+		return response, err
+	}
+	c.response = response
+	// Close the real network body exactly once, including read failures. Give the
+	// SDK an independent replay; its decoder must not consume our validation input.
+	if response.StatusCode != http.StatusNoContent || c.expectedStatus != http.StatusNoContent {
+		c.body, c.readErr = io.ReadAll(response.Body)
+	}
+	_ = response.Body.Close()
+	response.Body = io.NopCloser(bytes.NewReader(c.body))
+	return response, nil
+}
+
+func serviceURL(stackURI string) (*url.URL, error) {
 	endpoint, err := url.Parse(stackURI)
 	if err != nil {
 		return nil, fmt.Errorf("parse stack URI: %w", err)
@@ -234,24 +342,9 @@ func endpointURL(stackURI string, segments []string) (*url.URL, error) {
 	if endpoint.Scheme == "" || endpoint.Host == "" {
 		return nil, fmt.Errorf("parse stack URI: expected absolute URI")
 	}
-
-	basePath := strings.TrimSuffix(endpoint.Path, "/")
-	baseRawPath := strings.TrimSuffix(endpoint.EscapedPath(), "/")
-	if baseRawPath == "" {
-		baseRawPath = basePath
-	}
-	path := connectivityPath
-	rawPath := connectivityPath
-	for _, segment := range segments {
-		if segment == "" {
-			continue
-		}
-		path += "/" + segment
-		rawPath += "/" + url.PathEscape(segment)
-	}
-
-	endpoint.Path = basePath + path
-	endpoint.RawPath = baseRawPath + rawPath
+	rawPath := strings.TrimSuffix(endpoint.EscapedPath(), "/") + connectivityPath
+	endpoint.Path = strings.TrimSuffix(endpoint.Path, "/") + connectivityPath
+	endpoint.RawPath = rawPath
 	endpoint.RawQuery = ""
 	endpoint.Fragment = ""
 	return endpoint, nil
@@ -289,9 +382,9 @@ func validateResponse(destination any) error {
 	case *Connector:
 		return validateConnector(value)
 	case *ConnectorVersion:
-		return validateConnectorVersion(value.Version, value.Image)
-	case *ConnectorInstance:
-		return validateConnectorInstance(value)
+		return validateConnectorVersion(value.Version)
+	case *Connection:
+		return validateConnection(value)
 	case *FacetDistribution:
 		if value.Facets == nil {
 			return fmt.Errorf("facets must be a non-null object")
@@ -305,39 +398,122 @@ func validateResponse(destination any) error {
 }
 
 func validateConnector(connector *Connector) error {
-	if connector == nil || connector.Metadata.Name == nil || strings.TrimSpace(*connector.Metadata.Name) == "" {
-		return fmt.Errorf("connector metadata.name is required")
+	if connector == nil || strings.TrimSpace(connector.Name) == "" {
+		return fmt.Errorf("connector name is required")
 	}
 	return nil
 }
 
-func validateConnectorVersion(version, image string) error {
+func validateConnectorVersion(version string) error {
 	if strings.TrimSpace(version) == "" {
 		return fmt.Errorf("connector version version is required")
-	}
-	if strings.TrimSpace(image) == "" {
-		return fmt.Errorf("connector version image is required")
 	}
 	return nil
 }
 
 func validateConnectorVersionSummary(summary *ConnectorVersionSummary) error {
-	return validateConnectorVersion(summary.Version, summary.Image)
+	return validateConnectorVersion(summary.Version)
 }
 
-// Response validation requires the connector identity used by connection
-// commands. Pending instances may have no resolved status yet.
-func validateConnectorInstance(instance *ConnectorInstance) error {
-	if instance == nil || instance.Metadata.Name == nil || strings.TrimSpace(*instance.Metadata.Name) == "" {
-		return fmt.Errorf("connector instance metadata.name is required")
+func validateConnection(instance *Connection) error {
+	if instance == nil || strings.TrimSpace(instance.Name) == "" {
+		return fmt.Errorf("connection name is required")
 	}
-	if instance.Spec.ConnectorRef == nil || strings.TrimSpace(instance.Spec.ConnectorRef.Name) == "" {
-		return fmt.Errorf("connector instance spec.connectorRef.name is required")
+	if instance.Configuration.Ledger != nil && strings.TrimSpace(*instance.Configuration.Ledger) == "" {
+		return fmt.Errorf("connection configuration.ledger must not be empty")
 	}
-	if status := instance.Status; status != nil && status.ResolvedVersion != nil && *status.ResolvedVersion != "" {
-		if status.ResolvedConnectorRef == nil || strings.TrimSpace(*status.ResolvedConnectorRef) == "" {
-			return fmt.Errorf("connector instance status.resolvedConnectorRef is required when status.resolvedVersion is set")
+	if status := instance.Status; status != nil {
+		if !oneOf(status.Lifecycle, "pending", "active", "suspended", "completed", "failed", "unknown") {
+			return fmt.Errorf("connection status.lifecycle is invalid")
 		}
+		if status.SuspendedBy == nil {
+			return fmt.Errorf("connection status.suspendedBy must be a non-null array")
+		}
+		for _, source := range status.SuspendedBy {
+			if !oneOf(source.Source, "request", "policy") {
+				return fmt.Errorf("connection status.suspendedBy entry is invalid")
+			}
+		}
+		if ingestion := status.Ingestion; ingestion != nil && ingestion.State != nil && !oneOf(*ingestion.State, "running", "error", "failed", "stopped", "paused", "finished", "unknown") {
+			return fmt.Errorf("connection status.ingestion.state is invalid")
+		}
+		if failure := status.Error; failure != nil {
+			if !oneOf(failure.Code, "configuration_invalid", "execution_failed", "service_error", "failure_unknown") {
+				return fmt.Errorf("connection status.error is invalid")
+			}
+		}
+	}
+	return nil
+}
+
+func oneOf(value string, values ...string) bool {
+	for _, candidate := range values {
+		if value == candidate {
+			return true
+		}
+	}
+	return false
+}
+
+func validateConfigurationWrite(configuration ConnectionConfiguration, create bool) error {
+	if create && strings.TrimSpace(configuration.Connector) == "" {
+		return fmt.Errorf("configuration.connector is required on writes")
+	}
+	if (create && configuration.Ledger == nil) || (configuration.Ledger != nil && strings.TrimSpace(*configuration.Ledger) == "") {
+		return fmt.Errorf("configuration.ledger is required on writes")
+	}
+	if (configuration.Version == nil) == (configuration.Channel == nil) {
+		return fmt.Errorf("configuration requires exactly one of version and channel")
+	}
+	if configuration.Version != nil && strings.TrimSpace(*configuration.Version) == "" {
+		return fmt.Errorf("configuration.version must not be empty")
+	}
+	if configuration.Channel != nil && !oneOf(*configuration.Channel, "stable", "rc", "beta", "alpha") {
+		return fmt.Errorf("configuration.channel is invalid")
+	}
+	return nil
+}
+
+// A patch may be partial, so selector validation belongs to the service after
+// merging. Binding fields are not PATCH inputs. Preserve mutable-field nulls.
+func validatePatch(patch ConnectionPatch) error {
+	data, err := json.Marshal(patch)
+	if err != nil {
+		return fmt.Errorf("marshal connectivity request: %w", err)
+	}
+	if patch == nil {
+		return fmt.Errorf("configuration patch must be an object")
+	}
+	var fields struct {
+		Configuration json.RawMessage `json:"configuration"`
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&fields); err != nil {
+		return fmt.Errorf("invalid connectivity patch: %w", err)
+	}
+	if len(fields.Configuration) == 0 {
+		return nil
+	}
+	if bytes.Equal(bytes.TrimSpace(fields.Configuration), []byte("null")) {
+		return fmt.Errorf("configuration patch must be an object")
+	}
+	var configuration struct {
+		Version       *string            `json:"version"`
+		Channel       *string            `json:"channel"`
+		Suspend       *bool              `json:"suspend"`
+		InitialCursor *[]byte            `json:"initialCursor"`
+		PollInterval  *string            `json:"pollInterval"`
+		Env           map[string]*string `json:"env"`
+		Files         map[string]*string `json:"files"`
+	}
+	decoder = json.NewDecoder(bytes.NewReader(fields.Configuration))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&configuration); err != nil {
+		return fmt.Errorf("invalid connectivity patch configuration: %w", err)
+	}
+	if configuration.Channel != nil && !oneOf(*configuration.Channel, "stable", "rc", "beta", "alpha") {
+		return fmt.Errorf("configuration.channel is invalid")
 	}
 	return nil
 }

@@ -113,3 +113,25 @@ func TestRedactDebugBodyLeavesNonJSONUnchanged(t *testing.T) {
 
 	require.Equal(t, body, redactDebugBody(body))
 }
+
+func TestRedactDebugBodyRemovesLiteralConfigurationMaps(t *testing.T) {
+	for _, body := range []string{
+		`{"name":"worker","configuration":{"connector":"stripe","ledger":"main","env":{"TOKEN":"request-secret","value":"value-secret"},"files":{"/etc/key":"file-secret"}}}`,
+		`{"configuration":{"connector":"stripe","ledger":"main","env":{"TOKEN":"request-secret","value":"value-secret"},"files":{"/etc/key":"file-secret"}}}`,
+		`{"cursor":{"data":[{"name":"worker","configuration":{"connector":"stripe","ledger":"main","env":{"TOKEN":"request-secret","value":"value-secret"},"files":{"/etc/key":"file-secret"}}}]}}`,
+	} {
+		redacted := string(redactDebugBody([]byte(body)))
+		for _, secret := range []string{"request-secret", "value-secret", "file-secret"} {
+			require.NotContains(t, redacted, secret)
+		}
+		require.Contains(t, redacted, `"connector":"stripe"`)
+		require.Contains(t, redacted, `"ledger":"main"`)
+		require.Contains(t, redacted, `"TOKEN":"[REDACTED]"`)
+		require.Contains(t, redacted, `"/etc/key":"[REDACTED]"`)
+	}
+}
+
+func TestRedactDebugBodyPreservesMergePatchDeletionMarkers(t *testing.T) {
+	body := `{"configuration":{"env":{"TOKEN":null,"value":null},"files":null,"channel":"stable","version":null}}`
+	require.JSONEq(t, body, string(redactDebugBody([]byte(body))))
+}

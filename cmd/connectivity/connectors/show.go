@@ -115,22 +115,14 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 
 	fctl.Section.WithWriter(out).Println("Information")
 	information := pterm.TableData{
-		{pterm.LightCyan("Name"), stringValue(connector.Metadata.Name)},
-		{pterm.LightCyan("Namespace"), stringValue(connector.Metadata.Namespace)},
-		{pterm.LightCyan("UID"), stringValue(connector.Metadata.UID)},
-		{pterm.LightCyan("Resource Version"), stringValue(connector.Metadata.ResourceVersion)},
-		{pterm.LightCyan("Created At"), timeValue(connector.Metadata.CreationTimestamp)},
-		{pterm.LightCyan("Labels"), mapValue(connector.Metadata.Labels)},
-		{pterm.LightCyan("Annotations"), mapValue(connector.Metadata.Annotations)},
-		{pterm.LightCyan("Display Name"), stringValue(connector.Spec.DisplayName)},
-		{pterm.LightCyan("Description"), stringValue(connector.Spec.Description)},
-		{pterm.LightCyan("Image URL"), stringValue(connector.Spec.ImageURL)},
-		{pterm.LightCyan("Catalog"), stringValue(connector.Spec.Catalog)},
-		{pterm.LightCyan("Tags"), strings.Join(connector.Spec.Tags, ", ")},
-		{pterm.LightCyan("Tagline"), stringValue(connector.Spec.Tagline)},
-		{pterm.LightCyan("Latest Version"), stringValue(connector.Spec.LatestVersion)},
-		{pterm.LightCyan("Phase"), connectorPhase(connector.Status)},
-		{pterm.LightCyan("Status Message"), connectorStatusMessage(connector.Status)},
+		{pterm.LightCyan("Name"), connector.Name},
+		{pterm.LightCyan("Created At"), timeValue(connector.CreatedAt)},
+		{pterm.LightCyan("Display Name"), stringValue(connector.DisplayName)},
+		{pterm.LightCyan("Description"), stringValue(connector.Description)},
+		{pterm.LightCyan("Catalog"), stringValue(connector.Catalog)},
+		{pterm.LightCyan("Tags"), strings.Join(connector.Tags, ", ")},
+		{pterm.LightCyan("Tagline"), stringValue(connector.Tagline)},
+		{pterm.LightCyan("Latest Version"), stringValue(connector.LatestVersion)},
 	}
 	if err := pterm.DefaultTable.WithWriter(out).WithData(information).Render(); err != nil {
 		return err
@@ -139,9 +131,9 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 	if len(c.store.Versions) > 0 {
 		fctl.Section.WithWriter(out).Println("Versions")
 		versions := fctl.Map(c.store.Versions, func(version connectivityclient.ConnectorVersionSummary) []string {
-			return []string{version.Version, stringValue(version.Digest), version.Image, timeValue(version.ReleaseDate)}
+			return []string{version.Version, stringValue(version.Digest), timeValue(version.ReleaseDate)}
 		})
-		versions = fctl.Prepend(versions, []string{"Version", "Digest", "Image", "Released"})
+		versions = fctl.Prepend(versions, []string{"Version", "Digest", "Released"})
 		if err := pterm.DefaultTable.WithHasHeader().WithWriter(out).WithData(versions).Render(); err != nil {
 			return err
 		}
@@ -236,24 +228,4 @@ func timeValue(value *time.Time) string {
 		return ""
 	}
 	return value.Format(time.RFC3339)
-}
-
-func mapValue(value map[string]string) string {
-	keys := make([]string, 0, len(value))
-	for key := range value {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	entries := make([]string, 0, len(keys))
-	for _, key := range keys {
-		entries = append(entries, key+"="+value[key])
-	}
-	return strings.Join(entries, ", ")
-}
-
-func connectorStatusMessage(status *connectivityclient.ConnectorStatus) string {
-	if status == nil {
-		return ""
-	}
-	return stringValue(status.Message)
 }

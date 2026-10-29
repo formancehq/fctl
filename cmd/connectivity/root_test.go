@@ -11,6 +11,7 @@ func TestCommandTreeMatchesConnectivityUX(t *testing.T) {
 	require.Equal(t, "connectivity", cmd.Name())
 
 	for _, path := range [][]string{
+		{"status"},
 		{"connectors", "list"},
 		{"connectors", "show"},
 		{"connections", "list"},

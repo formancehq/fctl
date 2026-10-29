@@ -24,7 +24,7 @@ type ConnectorResolver func(context.Context, connectivityclient.Client, *cobra.C
 // drives value completion for a command.
 type ConnectorVersionResolver func(context.Context, connectivityclient.Client, *cobra.Command, []string) (*connectivityclient.ConnectorVersion, error)
 
-func CompleteConnectorInstanceNames(factory connectivityinternal.ClientFactory) cobra.CompletionFunc {
+func CompleteConnectionNames(factory connectivityinternal.ClientFactory) cobra.CompletionFunc {
 	return func(cmd *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		client, completionCommand, cancel, ok := connectivityinternal.CompletionClient(cmd, factory)
 		if !ok {
@@ -33,8 +33,8 @@ func CompleteConnectorInstanceNames(factory connectivityinternal.ClientFactory) 
 		defer cancel()
 
 		instances, err := connectivityinternal.CollectPagesBounded(connectivityinternal.CompletionPageSize, instanceCompletionMaxPages,
-			func(options connectivityclient.ListOptions) ([]connectivityclient.ConnectorInstance, bool, string, error) {
-				page, err := client.ListConnectorInstances(completionCommand.Context(), options)
+			func(options connectivityclient.ListOptions) ([]connectivityclient.Connection, bool, string, error) {
+				page, err := client.ListConnections(completionCommand.Context(), options)
 				if err != nil || page == nil {
 					return nil, false, "", err
 				}
@@ -46,11 +46,11 @@ func CompleteConnectorInstanceNames(factory connectivityinternal.ClientFactory) 
 
 		candidates := make([]string, 0, len(instances))
 		for _, instance := range instances {
-			name := stringValue(instance.Metadata.Name)
+			name := instance.Name
 			if name == "" || !strings.HasPrefix(name, toComplete) {
 				continue
 			}
-			description := strings.Join(nonEmptyStrings(instance.Spec.ConnectorName(), instance.Spec.Ledger), " · ")
+			description := strings.Join(nonEmptyStrings(instance.Configuration.ConnectorName(), stringValue(instance.Configuration.Ledger)), " · ")
 			if description != "" {
 				name += "\t" + description
 			}
@@ -102,10 +102,7 @@ func completeVersions(factory connectivityinternal.ClientFactory, resolveConnect
 				continue
 			}
 			candidate := version.Version
-			description := version.Image
-			if description == "" {
-				description = stringValue(version.Digest)
-			}
+			description := stringValue(version.Digest)
 			if description != "" {
 				candidate += "\t" + description
 			}

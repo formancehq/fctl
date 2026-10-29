@@ -21,19 +21,19 @@ func TestBuildListQueryBuildsMatchLeafFromEquality(t *testing.T) {
 }
 
 func TestBuildListQueryConjoinsMultipleFilters(t *testing.T) {
-	query, err := BuildListQuery("", []string{"catalog=ee", "phase=Ready"})
+	query, err := BuildListQuery("", []string{"ledger=main", "lifecycle=active"})
 
 	require.NoError(t, err)
-	require.JSONEq(t, `{"$and":[{"$match":{"catalog":"ee"}},{"$match":{"phase":"Ready"}}]}`, query)
+	require.JSONEq(t, `{"$and":[{"$match":{"ledger":"main"}},{"$match":{"lifecycle":"active"}}]}`, query)
 }
 
 // A bare $not also selects objects missing the key, so the builder conjoins
 // $exists with the negation (the openapi documents this trap).
 func TestBuildListQueryBuildsGuardedNegation(t *testing.T) {
-	query, err := BuildListQuery("", []string{"phase!=Rejected"})
+	query, err := BuildListQuery("", []string{"lifecycle!=failed"})
 
 	require.NoError(t, err)
-	require.JSONEq(t, `{"$and":[{"$exists":{"phase":true}},{"$not":{"$match":{"phase":"Rejected"}}}]}`, query)
+	require.JSONEq(t, `{"$and":[{"$exists":{"lifecycle":true}},{"$not":{"$match":{"lifecycle":"failed"}}}]}`, query)
 }
 
 func TestBuildListQueryBuildsLikeLeaf(t *testing.T) {
@@ -65,7 +65,7 @@ func TestBuildListQueryRejectsInvalidInput(t *testing.T) {
 		raw     string
 		filters []string
 	}{
-		{name: "raw query combined with filters", raw: `{"$match":{"catalog":"ee"}}`, filters: []string{"phase=Ready"}},
+		{name: "raw query combined with filters", raw: `{"$match":{"catalog":"ee"}}`, filters: []string{"lifecycle=active"}},
 		{name: "raw query is not JSON", raw: `{$match:`},
 		{name: "raw query is not an object", raw: `["$match"]`},
 		{name: "filter without operator", filters: []string{"catalog"}},
@@ -80,4 +80,11 @@ func TestBuildListQueryRejectsInvalidInput(t *testing.T) {
 			require.Error(t, err)
 		})
 	}
+}
+
+func TestBuildListQueryPreservesRawVersionRangesWithoutRewriting(t *testing.T) {
+	raw := ` {"$and": [{"$gte": {"appliedVersion": "v1.2.0"}}, {"$lt": {"appliedVersion": "v2.0.0"}}, {"$match": {"lifecycle": "active"}}]} `
+	query, err := BuildListQuery(raw, nil)
+	require.NoError(t, err)
+	require.Equal(t, raw, query)
 }

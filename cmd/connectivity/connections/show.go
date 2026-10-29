@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -17,7 +16,7 @@ import (
 )
 
 type ShowStore struct {
-	ConnectorInstance connectivityclient.ConnectorInstance `json:"connectorInstance"`
+	Connection connectivityclient.Connection `json:"connection"`
 }
 
 type ShowController struct {
@@ -38,7 +37,7 @@ func NewShowCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
 		fctl.WithAliases("get", "g", "sh", "s"),
 		fctl.WithShortDescription("Show a Connectivity connection"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithValidArgsFunction(CompleteConnectorInstanceNames(factory)),
+		fctl.WithValidArgsFunction(CompleteConnectionNames(factory)),
 		fctl.WithController[*ShowStore](controller),
 	)
 }
@@ -55,71 +54,45 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	if err != nil {
 		return nil, err
 	}
-	instance, err := client.GetConnectorInstance(cmd.Context(), args[0])
+	instance, err := client.GetConnection(cmd.Context(), args[0])
 	if err != nil {
 		return nil, err
 	}
 	if instance == nil {
 		return nil, fmt.Errorf("show connectivity connection %q: empty response", args[0])
 	}
-	c.store.ConnectorInstance = *instance
+	c.store.Connection = *instance
 	return c, nil
 }
 
 func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
-	instance := c.store.ConnectorInstance
+	instance := c.store.Connection
 	out := cmd.OutOrStdout()
-
-	if err := renderInstanceSection(out, "Information", pterm.TableData{
-		{pterm.LightCyan("Name"), stringValue(instance.Metadata.Name)},
-		{pterm.LightCyan("Namespace"), stringValue(instance.Metadata.Namespace)},
-		{pterm.LightCyan("UID"), stringValue(instance.Metadata.UID)},
-		{pterm.LightCyan("Resource Version"), stringValue(instance.Metadata.ResourceVersion)},
-		{pterm.LightCyan("Created At"), timeValue(instance.Metadata.CreationTimestamp)},
-		{pterm.LightCyan("Labels"), mapValue(instance.Metadata.Labels)},
-		{pterm.LightCyan("Annotations"), mapValue(instance.Metadata.Annotations)},
+	if err := renderInstanceSection(out, "Information", pterm.TableData{{"Name", instance.Name}}); err != nil {
+		return err
+	}
+	if err := renderInstanceSection(out, "Desired Configuration", pterm.TableData{
+		{"Connector", instance.Configuration.Connector}, {"Version", stringValue(instance.Configuration.Version)},
+		{"Channel", stringValue(instance.Configuration.Channel)}, {"Ledger", stringValue(instance.Configuration.Ledger)},
+		{"Poll Interval", stringValue(instance.Configuration.PollInterval)}, {"Suspend", boolValue(instance.Configuration.Suspend)},
 	}); err != nil {
 		return err
 	}
-	if err := renderInstanceSection(out, "Desired Specification", pterm.TableData{
-		{pterm.LightCyan("Connector"), instance.Spec.ConnectorName()},
-		{pterm.LightCyan("Version"), stringValue(instance.Spec.Version)},
-		{pterm.LightCyan("Channel"), stringValue(instance.Spec.Channel)},
-		{pterm.LightCyan("Connectivity Reference"), objectRefName(instance.Spec.ConnectivityRef)},
-		{pterm.LightCyan("Ledger"), instance.Spec.Ledger},
-		{pterm.LightCyan("Poll Interval"), stringValue(instance.Spec.PollInterval)},
-		{pterm.LightCyan("Suspend"), boolValue(instance.Spec.Suspend)},
+	if err := renderInstanceSection(out, "Last Recorded Status", pterm.TableData{
+		{"Lifecycle", lifecycleValue(instance.Status)}, {"Applied Version", appliedChannelFloor(&instance)},
+		{"Ingestion State", ingestionState(instance.Status)}, {"Progress Current", ingestionProgress(instance.Status)},
+		{"Last Error (may be historical)", ingestionLastError(instance.Status)},
+		{"Service Error", serviceError(instance.Status)}, {"Suspended by", instanceSuspensionSources(instance.Status)},
 	}); err != nil {
 		return err
 	}
-	if err := renderInstanceSection(out, "Lifecycle", pterm.TableData{
-		{pterm.LightCyan("Resolved Connector"), instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.ResolvedConnectorRef })},
-		{pterm.LightCyan("Resolved Version"), instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.ResolvedVersion })},
-		{pterm.LightCyan("Resolved Image"), instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.ResolvedImage })},
-		{pterm.LightCyan("Resolved Digest"), instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.ResolvedDigest })},
-		{pterm.LightCyan("Connector Address"), instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.ConnectorAddress })},
-		{pterm.LightCyan("Phase"), instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.Phase })},
-		{pterm.LightCyan("State"), instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.State })},
-		{pterm.LightCyan("Suspended by"), instanceSuspensionSources(instance.Status)},
-	}); err != nil {
-		return err
-	}
-	if err := renderInstanceSection(out, "Ingestion Progress", pterm.TableData{
-		{pterm.LightCyan("Current Sequence"), instanceStatusInt64(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *int64 { return status.CurrentSequence })},
-		{pterm.LightCyan("Source Tip Sequence"), instanceStatusInt64(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *int64 { return status.SourceTipSequence })},
-		{pterm.LightCyan("Last Error"), instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.LastError })},
-		{pterm.LightCyan("Message"), instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.Message })},
-	}); err != nil {
-		return err
-	}
-
 	fctl.Section.WithWriter(out).Println("Configuration")
-	rows := configRows(instance.Spec.Configuration())
+	rows := configRows(instance.Configuration.Configuration())
 	if len(rows) == 0 {
 		_, err := fmt.Fprintln(out, "No configuration entries.")
 		return err
 	}
-	rows = fctl.Prepend(rows, []string{"Key", "Kind", "Source", "Mode"})
+	rows = fctl.Prepend(rows, []string{"Key", "Kind", "Source"})
 	return pterm.DefaultTable.WithHasHeader().WithWriter(out).WithData(rows).Render()
 }
 
@@ -128,63 +101,19 @@ func renderInstanceSection(out io.Writer, title string, data pterm.TableData) er
 	return pterm.DefaultTable.WithWriter(out).WithData(data).Render()
 }
 
-func configRows(config *connectivityclient.ConnectorInstanceConfig) [][]string {
+func configRows(config *connectivityclient.ConnectionConfig) [][]string {
 	if config == nil {
 		return nil
 	}
 	rows := make([][]string, 0, len(config.Env)+len(config.Files))
-	envKeys := make([]string, 0, len(config.Env))
 	for key := range config.Env {
-		envKeys = append(envKeys, key)
+		rows = append(rows, []string{key, "environment", "literal"})
 	}
-	sort.Strings(envKeys)
-	for _, key := range envKeys {
-		value := config.Env[key]
-		rows = append(rows, []string{key, "environment", configSource(value.Value, value.SecretRef, value.ConfigMapRef), ""})
+	for key := range config.Files {
+		rows = append(rows, []string{key, "file", "literal"})
 	}
-	files := append([]connectivityclient.FileMount(nil), config.Files...)
-	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
-	for _, file := range files {
-		mode := ""
-		if file.Mode != nil {
-			mode = strconv.FormatInt(int64(*file.Mode), 10)
-		}
-		rows = append(rows, []string{file.Path, "file", configSource(file.Value, file.SecretRef, file.ConfigMapRef), mode})
-	}
+	sort.Slice(rows, func(i, j int) bool { return rows[i][0] < rows[j][0] })
 	return rows
-}
-
-func configSource(value *string, secretRef, configMapRef *connectivityclient.KeyRef) string {
-	if secretRef != nil {
-		return "secret:" + secretRef.Name + "/" + secretRef.Key
-	}
-	if configMapRef != nil {
-		return "configmap:" + configMapRef.Name + "/" + configMapRef.Key
-	}
-	if value != nil {
-		return "inline"
-	}
-	return ""
-}
-
-func timeValue(value *time.Time) string {
-	if value == nil {
-		return ""
-	}
-	return value.Format(time.RFC3339)
-}
-
-func mapValue(value map[string]string) string {
-	keys := make([]string, 0, len(value))
-	for key := range value {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	entries := make([]string, 0, len(keys))
-	for _, key := range keys {
-		entries = append(entries, key+"="+value[key])
-	}
-	return strings.Join(entries, ", ")
 }
 
 func boolValue(value *bool) string {
@@ -193,27 +122,43 @@ func boolValue(value *bool) string {
 	}
 	return strconv.FormatBool(*value)
 }
-
-func objectRefName(value *connectivityclient.ObjectRef) string {
-	if value == nil {
-		return ""
-	}
-	return value.Name
-}
-
-func instanceSuspensionSources(status *connectivityclient.ConnectorInstanceStatus) string {
+func instanceSuspensionSources(status *connectivityclient.ConnectionStatus) string {
 	if status == nil {
 		return ""
 	}
-	// Connectivity orders instance fields first and Policies by priority/name.
-	// Preserve that API order because Policy priority is not part of this model.
 	entries := make([]string, 0, len(status.SuspendedBy))
 	for _, source := range status.SuspendedBy {
-		entry := strings.Join(nonEmptyStrings(source.Kind, source.Name), "/")
-		if source.Field != "" {
-			entry += " (" + source.Field + ")"
-		}
-		entries = append(entries, entry)
+		entries = append(entries, strings.Join(nonEmptyStrings(source.Source, source.Name), "/"))
 	}
 	return strings.Join(entries, ", ")
+}
+func lifecycleValue(status *connectivityclient.ConnectionStatus) string {
+	if status == nil {
+		return ""
+	}
+	return status.Lifecycle
+}
+func ingestionState(status *connectivityclient.ConnectionStatus) string {
+	if status == nil || status.Ingestion == nil {
+		return ""
+	}
+	return stringValue(status.Ingestion.State)
+}
+func ingestionProgress(status *connectivityclient.ConnectionStatus) string {
+	if status == nil || status.Ingestion == nil || status.Ingestion.Progress == nil {
+		return ""
+	}
+	return strconv.FormatInt(status.Ingestion.Progress.Current, 10)
+}
+func ingestionLastError(status *connectivityclient.ConnectionStatus) string {
+	if status == nil || status.Ingestion == nil {
+		return ""
+	}
+	return stringValue(status.Ingestion.LastError)
+}
+func serviceError(status *connectivityclient.ConnectionStatus) string {
+	if status == nil || status.Error == nil {
+		return ""
+	}
+	return status.Error.Code + ": " + status.Error.Message
 }

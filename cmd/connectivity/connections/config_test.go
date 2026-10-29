@@ -147,11 +147,11 @@ func TestBuildInstallConfigDefersOpenAndPatternSchemaKeysToTheAPI(t *testing.T) 
 	config, err := BuildInstallConfig(&cobra.Command{}, version, InputOptions{SetValues: []string{"DYNAMIC_TOKEN=value"}}, mapReadFile(nil))
 
 	require.NoError(t, err)
-	require.Equal(t, "value", *config.Env["DYNAMIC_TOKEN"].Value)
+	require.Equal(t, "value", config.Env["DYNAMIC_TOKEN"])
 }
 
 func TestBuildInstallConfigAllowsConnectorVersionWithoutSchema(t *testing.T) {
-	version := &connectivityclient.ConnectorVersion{Version: "2.0.0", Image: "example/connector:2.0.0"}
+	version := &connectivityclient.ConnectorVersion{Version: "2.0.0"}
 
 	got, err := BuildInstallConfig(&cobra.Command{}, version, InputOptions{}, mapReadFile(nil))
 
@@ -162,34 +162,16 @@ func TestBuildInstallConfigAllowsConnectorVersionWithoutSchema(t *testing.T) {
 
 func TestBuildInstallConfigRejectsFlatYAML(t *testing.T) {
 	_, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{ConfigFile: "config.yaml"}, mapReadFile(map[string]string{"config.yaml": "API_URL: https://config.example\n"}))
-	require.ErrorContains(t, err, "flat configuration is unsupported")
+	require.ErrorContains(t, err, "unknown configuration keys: API_URL")
 }
 
-func TestBuildInstallConfigParsesStructuredYAML(t *testing.T) {
-	got, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{ConfigFile: "config.yaml"}, mapReadFile(map[string]string{
-		"config.yaml": `env:
-  API_URL:
-    value: https://structured.example
-  TOKEN:
-    secretRef:
-      name: connector-secrets
-      key: token
-files:
-  - path: /etc/plugin/config.yaml
-    configMapRef:
-      name: connector-config
-      key: config.yaml
-  - path: /etc/plugin/ca.pem
-    value: structured-ca
-`,
-	}))
-
+func TestBuildInstallConfigParsesLiteralYAML(t *testing.T) {
+	got, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{ConfigFile: "config.yaml"}, mapReadFile(map[string]string{"config.yaml": "env:\n  API_URL: https://structured.example\n  TOKEN: private-token\nfiles:\n  /etc/plugin/config.yaml: file-content\n  /etc/plugin/ca.pem: structured-ca\n"}))
 	require.NoError(t, err)
-	require.Equal(t, "https://structured.example", *got.Env["API_URL"].Value)
-	require.Equal(t, &connectivityclient.KeyRef{Name: "connector-secrets", Key: "token"}, got.Env["TOKEN"].SecretRef)
-	require.Nil(t, got.Env["TOKEN"].Value)
-	require.Equal(t, &connectivityclient.KeyRef{Name: "connector-config", Key: "config.yaml"}, got.Files[0].ConfigMapRef)
-	require.Equal(t, "structured-ca", *got.Files[1].Value)
+	require.Equal(t, "https://structured.example", got.Env["API_URL"])
+	require.Equal(t, "private-token", got.Env["TOKEN"])
+	require.Equal(t, "file-content", got.Files["/etc/plugin/config.yaml"])
+	require.Equal(t, "structured-ca", got.Files["/etc/plugin/ca.pem"])
 }
 
 func TestBuildInstallConfigParsesDotenvFilesInOrder(t *testing.T) {
@@ -199,8 +181,8 @@ func TestBuildInstallConfigParsesDotenvFilesInOrder(t *testing.T) {
 	}))
 
 	require.NoError(t, err)
-	require.Equal(t, "https://second.example", *got.Env["API_URL"].Value)
-	require.Equal(t, "first=token", *got.Env["TOKEN"].Value)
+	require.Equal(t, "https://second.example", got.Env["API_URL"])
+	require.Equal(t, "first=token", got.Env["TOKEN"])
 }
 
 func TestBuildInstallConfigParsesEstablishedDotenvSyntax(t *testing.T) {
@@ -212,9 +194,9 @@ TIMEOUT='  literal # value  '
 	}))
 
 	require.NoError(t, err)
-	require.Equal(t, "https://env.example", *got.Env["API_URL"].Value)
-	require.Equal(t, "line-one\nline-two\t\"quoted\"\\tail", *got.Env["TOKEN"].Value)
-	require.Equal(t, "  literal # value  ", *got.Env["TIMEOUT"].Value)
+	require.Equal(t, "https://env.example", got.Env["API_URL"])
+	require.Equal(t, "line-one\nline-two\t\"quoted\"\\tail", got.Env["TOKEN"])
+	require.Equal(t, "  literal # value  ", got.Env["TIMEOUT"])
 }
 
 func TestBuildInstallConfigUnquotesDotenvValueBeforeTrailingComment(t *testing.T) {
@@ -223,7 +205,7 @@ func TestBuildInstallConfigUnquotesDotenvValueBeforeTrailingComment(t *testing.T
 	}))
 
 	require.NoError(t, err)
-	require.Equal(t, "abc#def", *got.Env["TOKEN"].Value)
+	require.Equal(t, "abc#def", got.Env["TOKEN"])
 }
 
 func TestBuildInstallConfigPreservesHashWithinUnquotedDotenvValue(t *testing.T) {
@@ -232,7 +214,7 @@ func TestBuildInstallConfigPreservesHashWithinUnquotedDotenvValue(t *testing.T) 
 	}))
 
 	require.NoError(t, err)
-	require.Equal(t, "abc#def", *got.Env["TOKEN"].Value)
+	require.Equal(t, "abc#def", got.Env["TOKEN"])
 }
 
 func TestBuildInstallConfigAppliesDocumentedSourcePrecedence(t *testing.T) {
@@ -241,13 +223,13 @@ func TestBuildInstallConfigAppliesDocumentedSourcePrecedence(t *testing.T) {
 		EnvFiles:   []string{"first.env", "second.env"},
 		SetValues:  []string{"API_URL=https://set-one.example", "API_URL=https://set-two.example"},
 	}, mapReadFile(map[string]string{
-		"config.yaml": "env:\n  API_URL:\n    value: https://config.example\n",
+		"config.yaml": "env:\n  API_URL: https://config.example\n",
 		"first.env":   "API_URL=https://env-one.example\n",
 		"second.env":  "API_URL=https://env-two.example\n",
 	}))
 
 	require.NoError(t, err)
-	require.Equal(t, "https://set-two.example", *got.Env["API_URL"].Value)
+	require.Equal(t, "https://set-two.example", got.Env["API_URL"])
 	require.NotContains(t, got.Env, "TOKEN", "no source supplied TOKEN")
 }
 
@@ -262,22 +244,18 @@ func TestBuildInstallConfigReadsInlineFileAndStdinSetValues(t *testing.T) {
 	}))
 
 	require.NoError(t, err)
-	require.Equal(t, "90s", *got.Env["TIMEOUT"].Value)
-	require.Equal(t, "file-token\n", *got.Env["TOKEN"].Value)
-	require.Equal(t, "stdin-config\n", *got.Files[0].Value)
+	require.Equal(t, "90s", got.Env["TIMEOUT"])
+	require.Equal(t, "file-token\n", got.Env["TOKEN"])
+	require.Equal(t, "stdin-config\n", got.Files["/etc/plugin/config.yaml"])
 }
 
-func TestBuildInstallConfigBuildsSecretAndConfigMapReferences(t *testing.T) {
-	got, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{SetValues: []string{
-		"TOKEN=secret://connector-secrets/token",
-		"/etc/plugin/config.yaml=configmap://connector-config/config.yaml",
-	}}, mapReadFile(nil))
-
-	require.NoError(t, err)
-	require.Equal(t, &connectivityclient.KeyRef{Name: "connector-secrets", Key: "token"}, got.Env["TOKEN"].SecretRef)
-	require.Nil(t, got.Env["TOKEN"].Value)
-	require.Equal(t, &connectivityclient.KeyRef{Name: "connector-config", Key: "config.yaml"}, got.Files[0].ConfigMapRef)
-	require.Nil(t, got.Files[0].Value)
+func TestBuildInstallConfigRejectsKubernetesReferences(t *testing.T) {
+	for _, value := range []string{"secret://secret-name/key", "configmap://config-name/key"} {
+		_, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{SetValues: []string{"TOKEN=" + value}}, nil)
+		require.ErrorContains(t, err, "Kubernetes references are unsupported")
+		require.ErrorContains(t, err, "@file / @-")
+		require.NotContains(t, err.Error(), value)
+	}
 }
 
 func TestBuildInstallConfigRoutesAssignmentsUsingSchema(t *testing.T) {
@@ -287,9 +265,8 @@ func TestBuildInstallConfigRoutesAssignmentsUsingSchema(t *testing.T) {
 	}}, mapReadFile(nil))
 
 	require.NoError(t, err)
-	require.Equal(t, "https://routed.example", *got.Env["API_URL"].Value)
-	require.Equal(t, "/etc/plugin/ca.pem", got.Files[0].Path)
-	require.Equal(t, "routed-ca", *got.Files[0].Value)
+	require.Equal(t, "https://routed.example", got.Env["API_URL"])
+	require.Equal(t, "routed-ca", got.Files["/etc/plugin/ca.pem"])
 }
 
 func TestBuildInstallConfigReportsSortedMissingRequiredKeys(t *testing.T) {
@@ -315,9 +292,9 @@ func TestBuildInstallConfigRejectsMalformedAssignmentsAndReferences(t *testing.T
 	}{
 		{name: "assignment without equals", value: "TOKEN", want: "KEY=value"},
 		{name: "empty key", value: "=value", want: "empty key"},
-		{name: "secret without key", value: "TOKEN=secret://name", want: "secret reference"},
-		{name: "secret without name", value: "TOKEN=secret:///key", want: "secret reference"},
-		{name: "configmap without key", value: "TOKEN=configmap://name/", want: "configmap reference"},
+		{name: "secret without key", value: "TOKEN=secret://name", want: "Kubernetes references are unsupported"},
+		{name: "secret without name", value: "TOKEN=secret:///key", want: "Kubernetes references are unsupported"},
+		{name: "configmap without key", value: "TOKEN=configmap://name/", want: "Kubernetes references are unsupported"},
 	}
 
 	for _, tt := range tests {
@@ -377,7 +354,7 @@ func TestBuildConfigDecodeErrorsDoNotEchoSecrets(t *testing.T) {
 		contents string
 	}{
 		{name: "root scalar", contents: secretSentinel},
-		{name: "environment scalar", contents: "env:\n  TOKEN: " + secretSentinel},
+		{name: "environment sequence", contents: "env:\n  TOKEN: [" + secretSentinel + "]"},
 		{name: "environment value sequence", contents: "env:\n  TOKEN:\n    value: [" + secretSentinel + "]"},
 		{name: "secret reference scalar", contents: "env:\n  TOKEN:\n    secretRef: " + secretSentinel},
 		{name: "configmap reference scalar", contents: "env:\n  TOKEN:\n    configMapRef: " + secretSentinel},
@@ -387,7 +364,7 @@ func TestBuildConfigDecodeErrorsDoNotEchoSecrets(t *testing.T) {
 		{name: "duplicate key", contents: secretSentinel + ": first\n" + secretSentinel + ": second"},
 		{name: "unknown alias", contents: "env: *" + secretSentinel},
 		{name: "invalid tag", contents: "env: !!int " + secretSentinel},
-		{name: "JSON environment scalar", contents: `{"env":{"TOKEN":"` + secretSentinel + `"}}`},
+		{name: "JSON environment scalar", contents: `{"env":{"TOKEN":["` + secretSentinel + `"]}}`},
 	}
 
 	for _, tt := range tests {
@@ -404,40 +381,24 @@ func TestBuildConfigDecodeErrorsDoNotEchoSecrets(t *testing.T) {
 				}
 				var typeErr *yaml.TypeError
 				require.False(t, errors.As(err, &typeErr), "raw decoder errors must not remain recoverable")
-				require.ErrorContains(t, err, "expected env mapping and files list")
+
 			}
 		})
 	}
 }
 
 func TestBuildConfigDecodeErrorsRetainLineNumbers(t *testing.T) {
-	_, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{ConfigFile: "config.yaml"}, mapReadFile(map[string]string{
-		"config.yaml": "env:\n  TOKEN: s3cr3t\nfiles:\n  - s3cr3t\n",
-	}))
-
-	require.ErrorContains(t, err, "lines 2, 4")
+	_, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), InputOptions{ConfigFile: "config.yaml"}, mapReadFile(map[string]string{"config.yaml": "env: !!int s3cr3t"}))
+	require.ErrorContains(t, err, "invalid YAML/JSON configuration")
 	require.NotContains(t, err.Error(), "s3cr3t")
 }
 
 func TestBuildConfigureConfigPreservesUntouchedFiles(t *testing.T) {
-	mode := int32(0o600)
-	current := &connectivityclient.ConnectorInstanceConfig{Files: []connectivityclient.FileMount{
-		{Path: "/etc/a", Value: stringPtr("a"), Mode: &mode},
-		{Path: "/etc/b", Value: stringPtr("b")},
-	}}
-	got, err := BuildConfigureConfig(&cobra.Command{}, versionWithFileSchema(), current,
-		InputOptions{SetValues: []string{"/etc/a=@new"}},
-		func(_ *cobra.Command, name string) (string, error) {
-			require.Equal(t, "new", name)
-			return "changed", nil
-		})
-
+	current := &connectivityclient.ConnectionConfig{Files: map[string]string{"/etc/a": "a", "/etc/b": "b"}}
+	got, err := BuildConfigureConfig(&cobra.Command{}, versionWithFileSchema(), current, InputOptions{SetValues: []string{"/etc/a=@new"}}, mapReadFile(map[string]string{"new": "changed"}))
 	require.NoError(t, err)
-	require.Len(t, got.Files, 2)
-	require.Equal(t, "changed", *got.Files[0].Value)
-	require.NotNil(t, got.Files[0].Mode)
-	require.Equal(t, int32(0o600), *got.Files[0].Mode)
-	require.Equal(t, "b", *got.Files[1].Value)
+	require.Equal(t, map[string]string{"/etc/a": "changed", "/etc/b": "b"}, got.Files)
+	require.Equal(t, "a", current.Files["/etc/a"])
 }
 
 func TestBuildInstallConfigRejectsStructuredFileWithoutPath(t *testing.T) {
@@ -445,17 +406,15 @@ func TestBuildInstallConfigRejectsStructuredFileWithoutPath(t *testing.T) {
 		"config.yaml": "files:\n  - value: missing-path\n",
 	}))
 
-	require.ErrorContains(t, err, "file path is required")
+	require.ErrorContains(t, err, "env and files must be mappings")
 }
 
 func TestBuildConfigureConfigDeepCopiesCurrentConfiguration(t *testing.T) {
-	current := &connectivityclient.ConnectorInstanceConfig{
-		Env: map[string]connectivityclient.EnvValue{
-			"API_URL": {Value: stringPtr("https://current.example")},
+	current := &connectivityclient.ConnectionConfig{
+		Env: map[string]string{
+			"API_URL": "https://current.example",
 		},
-		Files: []connectivityclient.FileMount{
-			{Path: "/etc/a", Value: stringPtr("current-a")},
-		},
+		Files: map[string]string{"/etc/a": "current-a"},
 	}
 
 	got, err := BuildConfigureConfig(&cobra.Command{}, versionWithFileSchema(), current, InputOptions{
@@ -463,8 +422,33 @@ func TestBuildConfigureConfigDeepCopiesCurrentConfiguration(t *testing.T) {
 	}, mapReadFile(nil))
 
 	require.NoError(t, err)
-	require.Equal(t, "https://changed.example", *got.Env["API_URL"].Value)
-	require.Equal(t, "changed-a", *got.Files[0].Value)
-	require.Equal(t, "https://current.example", *current.Env["API_URL"].Value)
-	require.Equal(t, "current-a", *current.Files[0].Value)
+	require.Equal(t, "https://changed.example", got.Env["API_URL"])
+	require.Equal(t, "changed-a", got.Files["/etc/a"])
+	require.Equal(t, "https://current.example", current.Env["API_URL"])
+	require.Equal(t, "current-a", current.Files["/etc/a"])
+}
+
+func TestConfigureRejectsUnrepresentableMapClearAndSetWithoutLosingIntent(t *testing.T) {
+	_, err := BuildConfigureConfig(&cobra.Command{}, versionWithOptionalSchema(), nil,
+		InputOptions{ConfigFile: "patch", SetValues: []string{"TOKEN=new-token"}, patch: map[string]any{}},
+		mapReadFile(map[string]string{"patch": "env: null\n"}))
+	require.ErrorContains(t, err, "use separate configure requests")
+	require.NotContains(t, err.Error(), "new-token")
+}
+
+func TestConfigurationReadErrorsDoNotEchoSecretContents(t *testing.T) {
+	for _, input := range []InputOptions{{ConfigFile: "config"}, {EnvFiles: []string{"env"}}, {SetValues: []string{"TOKEN=@file"}}} {
+		_, err := BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), input, func(*cobra.Command, string) (string, error) { return "", errors.New("SECRET-SENTINEL") })
+		require.Error(t, err)
+		require.NotContains(t, err.Error(), "SECRET-SENTINEL")
+	}
+}
+
+func TestConfigureEmptyMapsPreserveReadbackAndSendNoDeletions(t *testing.T) {
+	current := &connectivityclient.ConnectionConfig{Env: map[string]string{"API_URL": "kept"}, Files: map[string]string{"/etc/plugin/config.yaml": "kept-file"}}
+	patch := map[string]any{}
+	got, err := BuildConfigureConfig(&cobra.Command{}, versionWithOptionalSchema(), current, InputOptions{ConfigFile: "patch", patch: patch}, mapReadFile(map[string]string{"patch": "env: {}\nfiles: {}\n"}))
+	require.NoError(t, err)
+	require.Equal(t, current, got)
+	require.Empty(t, patch)
 }

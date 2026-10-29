@@ -2,7 +2,6 @@ package connections
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -16,8 +15,8 @@ import (
 const connectorFlag = "connector"
 
 type ListStore struct {
-	ConnectorInstances []connectivityclient.ConnectorInstance `json:"connectorInstances"`
-	Cursor             fctl.Cursor                            `json:"cursor"`
+	Connections []connectivityclient.Connection `json:"connections"`
+	Cursor      fctl.Cursor                     `json:"cursor"`
 }
 
 type ListController struct {
@@ -30,7 +29,7 @@ var _ fctl.Controller[*ListStore] = (*ListController)(nil)
 func NewListController(factory connectivityinternal.ClientFactory) *ListController {
 	return &ListController{
 		factory: factory,
-		store:   &ListStore{ConnectorInstances: []connectivityclient.ConnectorInstance{}},
+		store:   &ListStore{Connections: []connectivityclient.Connection{}},
 	}
 }
 
@@ -53,7 +52,7 @@ func NewListCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
 	}
 	if err := command.RegisterFlagCompletionFunc(
 		connectivityinternal.FilterFlag,
-		connectivityinternal.CompleteFilterExpressions(factory, connectivityclient.ResourceConnectorInstances),
+		connectivityinternal.CompleteFilterExpressions(factory, connectivityclient.ResourceConnections),
 	); err != nil {
 		panic(err)
 	}
@@ -94,7 +93,7 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 		return nil, err
 	}
 
-	response, err := client.ListConnectorInstances(cmd.Context(), connectivityclient.ListOptions{
+	response, err := client.ListConnections(cmd.Context(), connectivityclient.ListOptions{
 		Query:    query,
 		PageSize: pageSize,
 		Cursor:   cursor,
@@ -106,7 +105,7 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 		return nil, fmt.Errorf("list connectivity connections: empty response")
 	}
 
-	c.store.ConnectorInstances = response.Items
+	c.store.Connections = response.Items
 	c.store.Cursor = fctl.Cursor{PageSize: int64(response.PageSize), HasMore: response.HasMore}
 	if response.Next != "" {
 		c.store.Cursor.Next = fctl.Ptr(response.Next)
@@ -115,24 +114,13 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 }
 
 func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
-	rows := fctl.Map(c.store.ConnectorInstances, func(instance connectivityclient.ConnectorInstance) []string {
-		return []string{
-			stringValue(instance.Metadata.Name),
-			instance.Spec.ConnectorName(),
-			stringValue(instance.Spec.Version),
-			stringValue(instance.Spec.Channel),
-			instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.ResolvedVersion }),
-			instance.Spec.Ledger,
-			instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.Phase }),
-			instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.State }),
-			instanceStatusInt64(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *int64 { return status.CurrentSequence }),
-			instanceStatusInt64(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *int64 { return status.SourceTipSequence }),
-			instanceStatusValue(instance.Status, func(status *connectivityclient.ConnectorInstanceStatus) *string { return status.LastError }),
-		}
+	rows := fctl.Map(c.store.Connections, func(instance connectivityclient.Connection) []string {
+		return []string{instance.Name, instance.Configuration.Connector, stringValue(instance.Configuration.Version),
+			stringValue(instance.Configuration.Channel), appliedChannelFloor(&instance), stringValue(instance.Configuration.Ledger),
+			lifecycleValue(instance.Status), ingestionState(instance.Status), ingestionProgress(instance.Status),
+			ingestionLastError(instance.Status), serviceError(instance.Status)}
 	})
-	rows = fctl.Prepend(rows, []string{
-		"Name", "Connector", "Version", "Channel", "Resolved Version", "Ledger", "Phase", "State", "Current Sequence", "Source Tip Sequence", "Last Error",
-	})
+	rows = fctl.Prepend(rows, []string{"Name", "Connector", "Version", "Channel", "Applied Version", "Ledger", "Lifecycle", "Ingestion State", "Progress Current", "Last Error (may be historical)", "Service Error"})
 	if err := pterm.DefaultTable.
 		WithHasHeader().
 		WithWriter(cmd.OutOrStdout()).
@@ -148,25 +136,4 @@ func stringValue(value *string) string {
 		return ""
 	}
 	return *value
-}
-
-func int64Value(value *int64) string {
-	if value == nil {
-		return ""
-	}
-	return strconv.FormatInt(*value, 10)
-}
-
-func instanceStatusValue(status *connectivityclient.ConnectorInstanceStatus, field func(*connectivityclient.ConnectorInstanceStatus) *string) string {
-	if status == nil {
-		return ""
-	}
-	return stringValue(field(status))
-}
-
-func instanceStatusInt64(status *connectivityclient.ConnectorInstanceStatus, field func(*connectivityclient.ConnectorInstanceStatus) *int64) string {
-	if status == nil {
-		return ""
-	}
-	return int64Value(field(status))
 }

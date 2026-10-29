@@ -2,14 +2,16 @@ package connectivityclient
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 )
 
 const (
-	ResourceConnectors         = "connectors"
-	ResourceConnectorVersions  = "connectorversions"
-	ResourceConnectorInstances = "connectorinstances"
+	ResourceConnectors        = "connectors"
+	ResourceConnectorVersions = "connectorversions"
+	ResourceConnections       = "connections"
 )
 
 // VersionAliasLatest resolves to the newest Validated version across all
@@ -19,37 +21,27 @@ const VersionAliasLatest = "latest"
 
 var VersionAliases = []string{VersionAliasLatest, "stable", "rc", "beta", "alpha"}
 
-type ObjectMeta struct {
-	Name              *string           `json:"name,omitempty"`
-	Namespace         *string           `json:"namespace,omitempty"`
-	ResourceVersion   *string           `json:"resourceVersion,omitempty"`
-	UID               *string           `json:"uid,omitempty"`
-	CreationTimestamp *time.Time        `json:"creationTimestamp,omitempty"`
-	Labels            map[string]string `json:"labels,omitempty"`
-	Annotations       map[string]string `json:"annotations,omitempty"`
+// ServiceInfo identifies the API build; it does not describe service health.
+type ServiceInfo struct {
+	Version   string `json:"version"`
+	Commit    string `json:"commit"`
+	BuildDate string `json:"buildDate"`
 }
 
-type KeyRef struct {
-	Name string `json:"name"`
-	Key  string `json:"key"`
-}
-
-type ObjectRef struct {
-	Name string `json:"name"`
-}
-
-type EnvValue struct {
-	Value        *string `json:"value,omitempty"`
-	SecretRef    *KeyRef `json:"secretRef,omitempty"`
-	ConfigMapRef *KeyRef `json:"configMapRef,omitempty"`
-}
-
-type FileMount struct {
-	Path         string  `json:"path"`
-	Value        *string `json:"value,omitempty"`
-	SecretRef    *KeyRef `json:"secretRef,omitempty"`
-	ConfigMapRef *KeyRef `json:"configMapRef,omitempty"`
-	Mode         *int32  `json:"mode,omitempty"`
+func (s *ServiceInfo) UnmarshalJSON(data []byte) error {
+	var value struct {
+		Version   *string `json:"version"`
+		Commit    *string `json:"commit"`
+		BuildDate *string `json:"buildDate"`
+	}
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	if value.Version == nil || value.Commit == nil || value.BuildDate == nil {
+		return fmt.Errorf("service info version, commit and buildDate are required")
+	}
+	*s = ServiceInfo{Version: *value.Version, Commit: *value.Commit, BuildDate: *value.BuildDate}
+	return nil
 }
 
 type ConnectorBranding struct {
@@ -59,26 +51,16 @@ type ConnectorBranding struct {
 	LogoSvgDark *string `json:"logoSvgDark,omitempty"`
 }
 
-type ConnectorSpec struct {
+type Connector struct {
+	Name          string             `json:"name"`
+	CreatedAt     *time.Time         `json:"createdAt,omitempty"`
 	DisplayName   *string            `json:"displayName,omitempty"`
 	Description   *string            `json:"description,omitempty"`
-	ImageURL      *string            `json:"imageUrl,omitempty"`
 	Catalog       *string            `json:"catalog,omitempty"`
 	Tags          []string           `json:"tags,omitempty"`
 	Tagline       *string            `json:"tagline,omitempty"`
 	Branding      *ConnectorBranding `json:"branding,omitempty"`
 	LatestVersion *string            `json:"latestVersion,omitempty"`
-}
-
-type ConnectorStatus struct {
-	Phase   *string `json:"phase,omitempty"`
-	Message *string `json:"message,omitempty"`
-}
-
-type Connector struct {
-	Metadata ObjectMeta       `json:"metadata"`
-	Spec     ConnectorSpec    `json:"spec"`
-	Status   *ConnectorStatus `json:"status,omitempty"`
 }
 
 type ConnectorList struct {
@@ -90,14 +72,12 @@ type ConnectorList struct {
 
 type ConnectorVersionSummary struct {
 	Version     string     `json:"version"`
-	Image       string     `json:"image"`
 	Digest      *string    `json:"digest,omitempty"`
 	ReleaseDate *time.Time `json:"releaseDate,omitempty"`
 }
 
 type ConnectorVersion struct {
 	Version            string         `json:"version"`
-	Image              string         `json:"image"`
 	Digest             *string        `json:"digest,omitempty"`
 	ReleaseDate        *time.Time     `json:"releaseDate,omitempty"`
 	ConfigSchema       map[string]any `json:"configSchema,omitempty"`
@@ -125,79 +105,150 @@ type QueryCapabilities struct {
 	Resources map[string]map[string]QueryFieldCapability `json:"resources"`
 }
 
-// ConnectorInstanceConfig groups inputs for configuration assembly. The wire
-// spec carries Env and Files directly, without a config wrapper.
-type ConnectorInstanceConfig struct {
-	Env   map[string]EnvValue `json:"env,omitempty"`
-	Files []FileMount         `json:"files,omitempty"`
+// ConnectionConfig groups literal inputs for configuration assembly.
+type ConnectionConfig struct {
+	Env   map[string]string `json:"env,omitempty"`
+	Files map[string]string `json:"files,omitempty"`
 }
 
-type ConnectorInstanceSpec struct {
-	ConnectorRef    *ObjectRef          `json:"connectorRef,omitempty"`
-	Version         *string             `json:"version,omitempty"`
-	Channel         *string             `json:"channel,omitempty"`
-	ConnectivityRef *ObjectRef          `json:"connectivityRef,omitempty"`
-	Ledger          string              `json:"ledger"`
-	InitialCursor   []byte              `json:"initialCursor,omitempty"`
-	PollInterval    *string             `json:"pollInterval,omitempty"`
-	Suspend         *bool               `json:"suspend,omitempty"`
-	Env             map[string]EnvValue `json:"env,omitempty"`
-	Files           []FileMount         `json:"files,omitempty"`
+// ConnectionConfiguration contains only tenant-owned public fields.
+// Connector and Ledger may be absent on imported reads. Create requires both;
+// PUT preserves omitted identities; PATCH excludes identity fields.
+type ConnectionConfiguration struct {
+	Connector     string            `json:"connector,omitempty"`
+	Version       *string           `json:"version,omitempty"`
+	Channel       *string           `json:"channel,omitempty"`
+	Ledger        *string           `json:"ledger,omitempty"`
+	InitialCursor []byte            `json:"initialCursor,omitempty"`
+	PollInterval  *string           `json:"pollInterval,omitempty"`
+	Suspend       *bool             `json:"suspend,omitempty"`
+	Env           map[string]string `json:"env,omitempty"`
+	Files         map[string]string `json:"files,omitempty"`
 }
 
-func (s ConnectorInstanceSpec) ConnectorName() string {
-	if s.ConnectorRef == nil {
-		return ""
-	}
-	return s.ConnectorRef.Name
-}
-
-func (s ConnectorInstanceSpec) Configuration() *ConnectorInstanceConfig {
-	return &ConnectorInstanceConfig{Env: s.Env, Files: s.Files}
+func (s ConnectionConfiguration) ConnectorName() string { return s.Connector }
+func (s ConnectionConfiguration) Configuration() *ConnectionConfig {
+	return &ConnectionConfig{Env: s.Env, Files: s.Files}
 }
 
 type SuspensionSource struct {
-	Kind  string `json:"kind"`
-	Name  string `json:"name"`
-	Field string `json:"field,omitempty"`
+	Source string `json:"source"`
+	Name   string `json:"name"`
 }
 
-type ConnectorInstanceStatus struct {
-	Phase                *string            `json:"phase,omitempty"`
-	State                *string            `json:"state,omitempty"`
-	ConnectorAddress     *string            `json:"connectorAddress,omitempty"`
-	ResolvedImage        *string            `json:"resolvedImage,omitempty"`
-	ResolvedConnectorRef *string            `json:"resolvedConnectorRef,omitempty"`
-	ResolvedVersion      *string            `json:"resolvedVersion,omitempty"`
-	ResolvedDigest       *string            `json:"resolvedDigest,omitempty"`
-	CurrentSequence      *int64             `json:"currentSequence,omitempty"`
-	SourceTipSequence    *int64             `json:"sourceTipSequence,omitempty"`
-	LastError            *string            `json:"lastError,omitempty"`
-	Message              *string            `json:"message,omitempty"`
-	SuspendedBy          []SuspensionSource `json:"suspendedBy,omitempty"`
+func (s *SuspensionSource) UnmarshalJSON(data []byte) error {
+	var value struct {
+		Source *string `json:"source"`
+		Name   *string `json:"name"`
+	}
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	if value.Source == nil || value.Name == nil {
+		return fmt.Errorf("suspension source and name are required")
+	}
+	s.Source, s.Name = *value.Source, *value.Name
+	return nil
 }
 
-type ConnectorInstance struct {
-	Metadata ObjectMeta               `json:"metadata"`
-	Spec     ConnectorInstanceSpec    `json:"spec"`
-	Status   *ConnectorInstanceStatus `json:"status,omitempty"`
+type IngestionProgress struct {
+	Current int64 `json:"current"`
 }
 
-type ConnectorInstanceList struct {
-	Items    []ConnectorInstance `json:"items"`
-	PageSize int32               `json:"pageSize"`
-	HasMore  bool                `json:"hasMore"`
-	Next     string              `json:"next,omitempty"`
+// UnmarshalJSON distinguishes a missing required progress value from zero.
+func (p *IngestionProgress) UnmarshalJSON(data []byte) error {
+	var value struct {
+		Current *int64 `json:"current"`
+	}
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	if value.Current == nil {
+		return fmt.Errorf("ingestion progress.current is required")
+	}
+	p.Current = *value.Current
+	return nil
 }
 
-type ConnectorInstanceCreate struct {
-	Name        string                `json:"name"`
-	Labels      map[string]string     `json:"labels,omitempty"`
-	Annotations map[string]string     `json:"annotations,omitempty"`
-	Spec        ConnectorInstanceSpec `json:"spec"`
+type IngestionStatus struct {
+	State     *string            `json:"state,omitempty"`
+	Progress  *IngestionProgress `json:"progress,omitempty"`
+	LastError *string            `json:"lastError,omitempty"`
+}
+type StatusError struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
 }
 
-type ConnectorInstancePatch map[string]any
+func (s *StatusError) UnmarshalJSON(data []byte) error {
+	var value struct {
+		Code    *string `json:"code"`
+		Message *string `json:"message"`
+	}
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	if value.Code == nil || value.Message == nil {
+		return fmt.Errorf("status error code and message are required")
+	}
+	s.Code, s.Message = *value.Code, *value.Message
+	return nil
+}
+
+// ConnectionStatus reports recorded outcomes, not live worker health.
+type ConnectionStatus struct {
+	AppliedVersion *string            `json:"appliedVersion,omitempty"`
+	Lifecycle      string             `json:"lifecycle"`
+	Ingestion      *IngestionStatus   `json:"ingestion,omitempty"`
+	Error          *StatusError       `json:"error,omitempty"`
+	SuspendedBy    []SuspensionSource `json:"suspendedBy"`
+}
+
+type Connection struct {
+	Name          string                  `json:"name"`
+	Configuration ConnectionConfiguration `json:"configuration"`
+	Status        *ConnectionStatus       `json:"status,omitempty"`
+}
+
+// UnmarshalJSON keeps a missing configuration distinct from an imported empty one.
+func (c *Connection) UnmarshalJSON(data []byte) error {
+	type wire Connection
+	var value struct {
+		*wire
+		Configuration json.RawMessage `json:"configuration"`
+	}
+	var decoded Connection
+	value.wire = (*wire)(&decoded)
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	if len(value.Configuration) == 0 || string(value.Configuration) == "null" {
+		return fmt.Errorf("connection configuration must be an object")
+	}
+	if err := json.Unmarshal(value.Configuration, &decoded.Configuration); err != nil {
+		return err
+	}
+	*c = decoded
+	return nil
+}
+
+type ConnectionList struct {
+	Items    []Connection `json:"items"`
+	PageSize int32        `json:"pageSize"`
+	HasMore  bool         `json:"hasMore"`
+	Next     string       `json:"next,omitempty"`
+}
+
+type ConnectionCreate struct {
+	Name          string                  `json:"name"`
+	Configuration ConnectionConfiguration `json:"configuration"`
+}
+
+type ConnectionUpdate struct {
+	Configuration ConnectionConfiguration `json:"configuration"`
+}
+
+type ConnectionPatch map[string]any
 
 type ListOptions struct {
 	PageSize int32
@@ -213,17 +264,19 @@ type APIError struct {
 }
 
 type Client interface {
+	GetInfo(context.Context) (*ServiceInfo, error)
 	ListConnectors(context.Context, ListOptions) (*ConnectorList, error)
 	GetConnectorFacets(context.Context, string) (*FacetDistribution, error)
 	GetQueryCapabilities(context.Context) (*QueryCapabilities, error)
 	GetConnector(context.Context, string) (*Connector, error)
 	ListConnectorVersions(context.Context, string, ListOptions) (*ConnectorVersionList, error)
 	GetConnectorVersion(context.Context, string, string) (*ConnectorVersion, error)
-	ListConnectorInstances(context.Context, ListOptions) (*ConnectorInstanceList, error)
-	CreateConnectorInstance(context.Context, ConnectorInstanceCreate) (*ConnectorInstance, error)
-	GetConnectorInstance(context.Context, string) (*ConnectorInstance, error)
-	PatchConnectorInstance(context.Context, string, ConnectorInstancePatch) (*ConnectorInstance, error)
-	DeleteConnectorInstance(context.Context, string) error
+	ListConnections(context.Context, ListOptions) (*ConnectionList, error)
+	CreateConnection(context.Context, ConnectionCreate) (*Connection, error)
+	GetConnection(context.Context, string) (*Connection, error)
+	ReplaceConnection(context.Context, string, ConnectionUpdate) (*Connection, error)
+	PatchConnection(context.Context, string, ConnectionPatch) (*Connection, error)
+	DeleteConnection(context.Context, string) error
 }
 
 func New(stackURI string, httpClient *http.Client) Client {
