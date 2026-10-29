@@ -8,7 +8,7 @@ HTTP client and context. Connection routes and the query-capability resource ID 
 ## Public contract
 
 The contract and official SDK come from Connectivity commit
-`98001eee76f1336eb780ca853beb17d4d2dcd684`. Its OpenAPI has SHA-256
+`5be21b3d4705a42d656202bb5e661e5db9498669`. Its OpenAPI has SHA-256
 `3fff9f3ce997c48f8ae15f936f3256f020a31d91336919967b3ee770a28ffc74`
 (`misc/connectivity-api/openapi.yaml` and its identical embedded copy).
 The importable Go module is `github.com/formancehq/connectivity/pkg/client`;
