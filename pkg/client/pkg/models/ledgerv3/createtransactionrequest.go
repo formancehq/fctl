@@ -15,18 +15,18 @@ import (
 type CreateTransactionRequest struct {
 	// Metadata for accounts involved in the transaction (supports typed values). Account addresses must be nonempty and contain only letters, digits, colons, underscores and hyphens, without empty segments. Malformed addresses are rejected before submission; competing invalid addresses select the lexicographically smallest address. Each account's map is bounded independently. Cluster policy defaults allow 128 entries per entity, 256 bytes per key, 16384 bytes per value, 65536 bytes per entity, and 1048576 bytes per request. Effective ceilings are configurable through the replicated cluster policy.
 	AccountMetadata map[string]map[string]*MetadataValue `json:"accountMetadata,omitempty"`
-	// Transaction timestamp (ISO 8601 format). If not provided, current time is used.
-	Timestamp *time.Time `json:"timestamp,omitempty"`
-	// Transaction metadata (supports typed values). Cluster policy defaults allow 128 entries per entity, 256 bytes per key, 16384 bytes per value, 65536 bytes per entity, and 1048576 bytes per request. Effective ceilings are configurable through the replicated cluster policy.
-	Metadata map[string]*MetadataValue `json:"metadata,omitempty"`
-	// Transaction reference
-	Reference *string `json:"reference,omitempty"`
-	// List of postings for the transaction. Mutually exclusive with `script` and `scriptReference`.
-	Postings        []PostingRequest `json:"postings,omitempty"`
-	Script          *Script          `json:"script,omitempty"`
-	ScriptReference *ScriptReference `json:"scriptReference,omitempty"`
 	// Skip the balance check, so the transaction commits even when a source account has insufficient funds.
 	Force *bool `default:"false" json:"force"`
+	// Transaction metadata (supports typed values). Cluster policy defaults allow 128 entries per entity, 256 bytes per key, 16384 bytes per value, 65536 bytes per entity, and 1048576 bytes per request. Effective ceilings are configurable through the replicated cluster policy.
+	Metadata map[string]*MetadataValue `json:"metadata,omitempty"`
+	// List of postings for the transaction. Mutually exclusive with `script` and `scriptReference`.
+	Postings []PostingRequest `json:"postings,omitempty"`
+	// Transaction reference
+	Reference       *string          `json:"reference,omitempty"`
+	Script          *Script          `json:"script,omitempty"`
+	ScriptReference *ScriptReference `json:"scriptReference,omitempty"`
+	// Transaction timestamp (ISO 8601 format). If not provided, current time is used.
+	Timestamp *time.Time `json:"timestamp,omitempty"`
 }
 
 func (c CreateTransactionRequest) MarshalJSON() ([]byte, error) {
@@ -47,11 +47,11 @@ func (c *CreateTransactionRequest) GetAccountMetadata() map[string]map[string]*M
 	return c.AccountMetadata
 }
 
-func (c *CreateTransactionRequest) GetTimestamp() *time.Time {
+func (c *CreateTransactionRequest) GetForce() *bool {
 	if c == nil {
 		return nil
 	}
-	return c.Timestamp
+	return c.Force
 }
 
 func (c *CreateTransactionRequest) GetMetadata() map[string]*MetadataValue {
@@ -61,18 +61,18 @@ func (c *CreateTransactionRequest) GetMetadata() map[string]*MetadataValue {
 	return c.Metadata
 }
 
-func (c *CreateTransactionRequest) GetReference() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Reference
-}
-
 func (c *CreateTransactionRequest) GetPostings() []PostingRequest {
 	if c == nil {
 		return nil
 	}
 	return c.Postings
+}
+
+func (c *CreateTransactionRequest) GetReference() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Reference
 }
 
 func (c *CreateTransactionRequest) GetScript() *Script {
@@ -89,9 +89,9 @@ func (c *CreateTransactionRequest) GetScriptReference() *ScriptReference {
 	return c.ScriptReference
 }
 
-func (c *CreateTransactionRequest) GetForce() *bool {
+func (c *CreateTransactionRequest) GetTimestamp() *time.Time {
 	if c == nil {
 		return nil
 	}
-	return c.Force
+	return c.Timestamp
 }

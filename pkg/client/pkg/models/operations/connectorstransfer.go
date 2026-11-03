@@ -8,16 +8,9 @@ import (
 )
 
 type ConnectorsTransferRequest struct {
-	// The name of the connector.
-	Connector       payments.Connector       `pathParam:"style=simple,explode=false,name=connector"`
 	TransferRequest payments.TransferRequest `request:"mediaType=application/json"`
-}
-
-func (c *ConnectorsTransferRequest) GetConnector() payments.Connector {
-	if c == nil {
-		return payments.Connector("")
-	}
-	return c.Connector
+	// The name of the connector.
+	Connector payments.Connector `pathParam:"style=simple,explode=false,name=connector"`
 }
 
 func (c *ConnectorsTransferRequest) GetTransferRequest() payments.TransferRequest {
@@ -25,6 +18,13 @@ func (c *ConnectorsTransferRequest) GetTransferRequest() payments.TransferReques
 		return payments.TransferRequest{}
 	}
 	return c.TransferRequest
+}
+
+func (c *ConnectorsTransferRequest) GetConnector() payments.Connector {
+	if c == nil {
+		return payments.Connector("")
+	}
+	return c.Connector
 }
 
 type ConnectorsTransferResponse struct {

@@ -8,11 +8,62 @@ import (
 )
 
 type UpdateConnectorConfigV1Request struct {
+	ConnectorConfig payments.ConnectorConfig `request:"mediaType=application/json"`
 	// The name of the connector.
 	Connector payments.Connector `pathParam:"style=simple,explode=false,name=connector"`
 	// The connector ID.
-	ConnectorID     string                   `pathParam:"style=simple,explode=false,name=connectorId"`
-	ConnectorConfig payments.ConnectorConfig `request:"mediaType=application/json"`
+	ConnectorID string `pathParam:"style=simple,explode=false,name=connectorId"`
+}
+
+func (u *UpdateConnectorConfigV1Request) GetConnectorConfig() payments.ConnectorConfig {
+	if u == nil {
+		return payments.ConnectorConfig{}
+	}
+	return u.ConnectorConfig
+}
+
+func (u *UpdateConnectorConfigV1Request) GetConnectorConfigAdyen() *payments.AdyenConfig {
+	return u.GetConnectorConfig().AdyenConfig
+}
+
+func (u *UpdateConnectorConfigV1Request) GetConnectorConfigAtlar() *payments.AtlarConfig {
+	return u.GetConnectorConfig().AtlarConfig
+}
+
+func (u *UpdateConnectorConfigV1Request) GetConnectorConfigBankingcircle() *payments.BankingCircleConfig {
+	return u.GetConnectorConfig().BankingCircleConfig
+}
+
+func (u *UpdateConnectorConfigV1Request) GetConnectorConfigCurrencycloud() *payments.CurrencyCloudConfig {
+	return u.GetConnectorConfig().CurrencyCloudConfig
+}
+
+func (u *UpdateConnectorConfigV1Request) GetConnectorConfigDummypay() *payments.DummyPayConfig {
+	return u.GetConnectorConfig().DummyPayConfig
+}
+
+func (u *UpdateConnectorConfigV1Request) GetConnectorConfigGeneric() *payments.GenericConfig {
+	return u.GetConnectorConfig().GenericConfig
+}
+
+func (u *UpdateConnectorConfigV1Request) GetConnectorConfigMangopay() *payments.MangoPayConfig {
+	return u.GetConnectorConfig().MangoPayConfig
+}
+
+func (u *UpdateConnectorConfigV1Request) GetConnectorConfigModulr() *payments.ModulrConfig {
+	return u.GetConnectorConfig().ModulrConfig
+}
+
+func (u *UpdateConnectorConfigV1Request) GetConnectorConfigMoneycorp() *payments.MoneycorpConfig {
+	return u.GetConnectorConfig().MoneycorpConfig
+}
+
+func (u *UpdateConnectorConfigV1Request) GetConnectorConfigStripe() *payments.StripeConfig {
+	return u.GetConnectorConfig().StripeConfig
+}
+
+func (u *UpdateConnectorConfigV1Request) GetConnectorConfigWise() *payments.WiseConfig {
+	return u.GetConnectorConfig().WiseConfig
 }
 
 func (u *UpdateConnectorConfigV1Request) GetConnector() payments.Connector {
@@ -27,57 +78,6 @@ func (u *UpdateConnectorConfigV1Request) GetConnectorID() string {
 		return ""
 	}
 	return u.ConnectorID
-}
-
-func (u *UpdateConnectorConfigV1Request) GetConnectorConfig() payments.ConnectorConfig {
-	if u == nil {
-		return payments.ConnectorConfig{}
-	}
-	return u.ConnectorConfig
-}
-
-func (u *UpdateConnectorConfigV1Request) GetConnectorConfigStripe() *payments.StripeConfig {
-	return u.GetConnectorConfig().StripeConfig
-}
-
-func (u *UpdateConnectorConfigV1Request) GetConnectorConfigDummypay() *payments.DummyPayConfig {
-	return u.GetConnectorConfig().DummyPayConfig
-}
-
-func (u *UpdateConnectorConfigV1Request) GetConnectorConfigWise() *payments.WiseConfig {
-	return u.GetConnectorConfig().WiseConfig
-}
-
-func (u *UpdateConnectorConfigV1Request) GetConnectorConfigModulr() *payments.ModulrConfig {
-	return u.GetConnectorConfig().ModulrConfig
-}
-
-func (u *UpdateConnectorConfigV1Request) GetConnectorConfigCurrencycloud() *payments.CurrencyCloudConfig {
-	return u.GetConnectorConfig().CurrencyCloudConfig
-}
-
-func (u *UpdateConnectorConfigV1Request) GetConnectorConfigBankingcircle() *payments.BankingCircleConfig {
-	return u.GetConnectorConfig().BankingCircleConfig
-}
-
-func (u *UpdateConnectorConfigV1Request) GetConnectorConfigMangopay() *payments.MangoPayConfig {
-	return u.GetConnectorConfig().MangoPayConfig
-}
-
-func (u *UpdateConnectorConfigV1Request) GetConnectorConfigMoneycorp() *payments.MoneycorpConfig {
-	return u.GetConnectorConfig().MoneycorpConfig
-}
-
-func (u *UpdateConnectorConfigV1Request) GetConnectorConfigAtlar() *payments.AtlarConfig {
-	return u.GetConnectorConfig().AtlarConfig
-}
-
-func (u *UpdateConnectorConfigV1Request) GetConnectorConfigAdyen() *payments.AdyenConfig {
-	return u.GetConnectorConfig().AdyenConfig
-}
-
-func (u *UpdateConnectorConfigV1Request) GetConnectorConfigGeneric() *payments.GenericConfig {
-	return u.GetConnectorConfig().GenericConfig
 }
 
 // #region class-body-updateconnectorconfigv1request

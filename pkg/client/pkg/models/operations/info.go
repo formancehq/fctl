@@ -21,12 +21,12 @@ func (i *InfoSecurity) GetBearerAuth() *string {
 type InfoResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Server build information
+	ServerInfo *ledgerv3.ServerInfo
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Server build information
-	ServerInfo *ledgerv3.ServerInfo
 }
 
 func (i *InfoResponse) GetContentType() string {
@@ -34,6 +34,13 @@ func (i *InfoResponse) GetContentType() string {
 		return ""
 	}
 	return i.ContentType
+}
+
+func (i *InfoResponse) GetServerInfo() *ledgerv3.ServerInfo {
+	if i == nil {
+		return nil
+	}
+	return i.ServerInfo
 }
 
 func (i *InfoResponse) GetStatusCode() int {
@@ -48,11 +55,4 @@ func (i *InfoResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return i.RawResponse
-}
-
-func (i *InfoResponse) GetServerInfo() *ledgerv3.ServerInfo {
-	if i == nil {
-		return nil
-	}
-	return i.ServerInfo
 }

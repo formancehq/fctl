@@ -93,19 +93,12 @@ func (e *MetadataFieldTypeCommandType) UnmarshalJSON(data []byte) error {
 
 // MetadataFieldTypeCommand - Declares the type of a metadata field, seeding a ledger's initial metadata schema.
 type MetadataFieldTypeCommand struct {
-	// Which entity the metadata field applies to.
-	TargetType MetadataFieldTypeCommandTargetType `json:"targetType"`
 	// Metadata key.
 	Key string `json:"key"`
+	// Which entity the metadata field applies to.
+	TargetType MetadataFieldTypeCommandTargetType `json:"targetType"`
 	// Declared metadata value type.
 	Type MetadataFieldTypeCommandType `json:"type"`
-}
-
-func (m *MetadataFieldTypeCommand) GetTargetType() MetadataFieldTypeCommandTargetType {
-	if m == nil {
-		return MetadataFieldTypeCommandTargetType("")
-	}
-	return m.TargetType
 }
 
 func (m *MetadataFieldTypeCommand) GetKey() string {
@@ -113,6 +106,13 @@ func (m *MetadataFieldTypeCommand) GetKey() string {
 		return ""
 	}
 	return m.Key
+}
+
+func (m *MetadataFieldTypeCommand) GetTargetType() MetadataFieldTypeCommandTargetType {
+	if m == nil {
+		return MetadataFieldTypeCommandTargetType("")
+	}
+	return m.TargetType
 }
 
 func (m *MetadataFieldTypeCommand) GetType() MetadataFieldTypeCommandType {

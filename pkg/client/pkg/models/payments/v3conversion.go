@@ -14,44 +14,44 @@ import (
 // Unlike orders, conversions do not carry an adjustment history —
 // Formance records the final state only.
 type V3Conversion struct {
-	// Formance-assigned unique conversion ID.
-	ID string `json:"id"`
 	// ID of the Formance connector this conversion was fetched from.
 	ConnectorID string `json:"connectorID"`
-	// Provider name of the connector (e.g. `coinbaseprime`).
-	Provider string `json:"provider"`
-	// PSP-assigned conversion reference. Unique within the connector.
-	Reference string `json:"reference"`
 	// When the conversion was initiated on the PSP.
 	CreatedAt time.Time `json:"createdAt"`
-	// When Formance last observed a state change on the conversion.
-	UpdatedAt time.Time `json:"updatedAt"`
-	// Asset being converted from, in `SYMBOL/precision` form (e.g. `USD/2`).
-	SourceAsset string `json:"sourceAsset"`
-	// Asset being converted to, in `SYMBOL/precision` form (e.g. `USDC/6`).
-	DestinationAsset string `json:"destinationAsset"`
-	// Amount of source asset debited, as an integer at `sourceAsset` precision.
-	SourceAmount *big.Int `json:"sourceAmount"`
+	// Formance account ID of the wallet the destination asset was credited to.
+	DestinationAccountID *string `json:"destinationAccountID,omitempty"`
 	// Amount of destination asset credited, at `destinationAsset` precision. Null until the conversion completes.
 	DestinationAmount *big.Int `json:"destinationAmount,omitempty"`
+	// Asset being converted to, in `SYMBOL/precision` form (e.g. `USDC/6`).
+	DestinationAsset string `json:"destinationAsset"`
+	// Human-readable error from the PSP when `status` is `FAILED`. Null otherwise.
+	Error *string `json:"error,omitempty"`
 	// PSP fee for the conversion, at `feeAsset` precision.
 	Fee *big.Int `json:"fee,omitempty"`
 	// Currency the fee is denominated in, in `SYMBOL/precision` form.
 	FeeAsset *string `json:"feeAsset,omitempty"`
+	// Formance-assigned unique conversion ID.
+	ID string `json:"id"`
+	// Arbitrary key/value pairs attached to the resource
+	Metadata map[string]string `json:"metadata,omitempty"`
+	// Provider name of the connector (e.g. `coinbaseprime`).
+	Provider string `json:"provider"`
+	// PSP-assigned conversion reference. Unique within the connector.
+	Reference string `json:"reference"`
+	// Formance account ID of the wallet the source asset was debited from.
+	SourceAccountID *string `json:"sourceAccountID,omitempty"`
+	// Amount of source asset debited, as an integer at `sourceAsset` precision.
+	SourceAmount *big.Int `json:"sourceAmount"`
+	// Asset being converted from, in `SYMBOL/precision` form (e.g. `USD/2`).
+	SourceAsset string `json:"sourceAsset"`
 	// Lifecycle of a conversion.
 	// `PENDING` — accepted by the PSP, not yet settled.
 	// `COMPLETED` — settled, terminal.
 	// `FAILED` — rejected or reverted, terminal. See `error`.
 	//
 	Status V3ConversionStatusEnum `json:"status"`
-	// Formance account ID of the wallet the source asset was debited from.
-	SourceAccountID *string `json:"sourceAccountID,omitempty"`
-	// Formance account ID of the wallet the destination asset was credited to.
-	DestinationAccountID *string `json:"destinationAccountID,omitempty"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
-	// Human-readable error from the PSP when `status` is `FAILED`. Null otherwise.
-	Error *string `json:"error,omitempty"`
+	// When Formance last observed a state change on the conversion.
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (v V3Conversion) MarshalJSON() ([]byte, error) {
@@ -65,32 +65,11 @@ func (v *V3Conversion) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V3Conversion) GetID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ID
-}
-
 func (v *V3Conversion) GetConnectorID() string {
 	if v == nil {
 		return ""
 	}
 	return v.ConnectorID
-}
-
-func (v *V3Conversion) GetProvider() string {
-	if v == nil {
-		return ""
-	}
-	return v.Provider
-}
-
-func (v *V3Conversion) GetReference() string {
-	if v == nil {
-		return ""
-	}
-	return v.Reference
 }
 
 func (v *V3Conversion) GetCreatedAt() time.Time {
@@ -100,18 +79,18 @@ func (v *V3Conversion) GetCreatedAt() time.Time {
 	return v.CreatedAt
 }
 
-func (v *V3Conversion) GetUpdatedAt() time.Time {
+func (v *V3Conversion) GetDestinationAccountID() *string {
 	if v == nil {
-		return time.Time{}
+		return nil
 	}
-	return v.UpdatedAt
+	return v.DestinationAccountID
 }
 
-func (v *V3Conversion) GetSourceAsset() string {
+func (v *V3Conversion) GetDestinationAmount() *big.Int {
 	if v == nil {
-		return ""
+		return nil
 	}
-	return v.SourceAsset
+	return v.DestinationAmount
 }
 
 func (v *V3Conversion) GetDestinationAsset() string {
@@ -121,18 +100,11 @@ func (v *V3Conversion) GetDestinationAsset() string {
 	return v.DestinationAsset
 }
 
-func (v *V3Conversion) GetSourceAmount() *big.Int {
-	if v == nil {
-		return big.NewInt(0)
-	}
-	return v.SourceAmount
-}
-
-func (v *V3Conversion) GetDestinationAmount() *big.Int {
+func (v *V3Conversion) GetError() *string {
 	if v == nil {
 		return nil
 	}
-	return v.DestinationAmount
+	return v.Error
 }
 
 func (v *V3Conversion) GetFee() *big.Int {
@@ -149,25 +121,11 @@ func (v *V3Conversion) GetFeeAsset() *string {
 	return v.FeeAsset
 }
 
-func (v *V3Conversion) GetStatus() V3ConversionStatusEnum {
+func (v *V3Conversion) GetID() string {
 	if v == nil {
-		return V3ConversionStatusEnum("")
+		return ""
 	}
-	return v.Status
-}
-
-func (v *V3Conversion) GetSourceAccountID() *string {
-	if v == nil {
-		return nil
-	}
-	return v.SourceAccountID
-}
-
-func (v *V3Conversion) GetDestinationAccountID() *string {
-	if v == nil {
-		return nil
-	}
-	return v.DestinationAccountID
+	return v.ID
 }
 
 func (v *V3Conversion) GetMetadata() map[string]string {
@@ -177,11 +135,53 @@ func (v *V3Conversion) GetMetadata() map[string]string {
 	return v.Metadata
 }
 
-func (v *V3Conversion) GetError() *string {
+func (v *V3Conversion) GetProvider() string {
+	if v == nil {
+		return ""
+	}
+	return v.Provider
+}
+
+func (v *V3Conversion) GetReference() string {
+	if v == nil {
+		return ""
+	}
+	return v.Reference
+}
+
+func (v *V3Conversion) GetSourceAccountID() *string {
 	if v == nil {
 		return nil
 	}
-	return v.Error
+	return v.SourceAccountID
+}
+
+func (v *V3Conversion) GetSourceAmount() *big.Int {
+	if v == nil {
+		return big.NewInt(0)
+	}
+	return v.SourceAmount
+}
+
+func (v *V3Conversion) GetSourceAsset() string {
+	if v == nil {
+		return ""
+	}
+	return v.SourceAsset
+}
+
+func (v *V3Conversion) GetStatus() V3ConversionStatusEnum {
+	if v == nil {
+		return V3ConversionStatusEnum("")
+	}
+	return v.Status
+}
+
+func (v *V3Conversion) GetUpdatedAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.UpdatedAt
 }
 
 // #region class-body-v3conversion

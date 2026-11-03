@@ -22,12 +22,12 @@ func (g *GetMappingRequest) GetLedger() string {
 type GetMappingResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	MappingResponse *ledger.MappingResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	MappingResponse *ledger.MappingResponse
 }
 
 func (g *GetMappingResponse) GetContentType() string {
@@ -35,6 +35,13 @@ func (g *GetMappingResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetMappingResponse) GetMappingResponse() *ledger.MappingResponse {
+	if g == nil {
+		return nil
+	}
+	return g.MappingResponse
 }
 
 func (g *GetMappingResponse) GetStatusCode() int {
@@ -49,11 +56,4 @@ func (g *GetMappingResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetMappingResponse) GetMappingResponse() *ledger.MappingResponse {
-	if g == nil {
-		return nil
-	}
-	return g.MappingResponse
 }

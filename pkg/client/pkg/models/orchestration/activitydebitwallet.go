@@ -4,17 +4,10 @@ package orchestration
 
 // ActivityDebitWallet - Arguments for the activity that debits a wallet
 type ActivityDebitWallet struct {
-	// Identifier of the wallet to debit
-	ID *string `json:"id,omitempty"`
 	// A debit to apply to a wallet
 	Data *DebitWalletRequest `json:"data,omitempty"`
-}
-
-func (a *ActivityDebitWallet) GetID() *string {
-	if a == nil {
-		return nil
-	}
-	return a.ID
+	// Identifier of the wallet to debit
+	ID *string `json:"id,omitempty"`
 }
 
 func (a *ActivityDebitWallet) GetData() *DebitWalletRequest {
@@ -22,4 +15,11 @@ func (a *ActivityDebitWallet) GetData() *DebitWalletRequest {
 		return nil
 	}
 	return a.Data
+}
+
+func (a *ActivityDebitWallet) GetID() *string {
+	if a == nil {
+		return nil
+	}
+	return a.ID
 }

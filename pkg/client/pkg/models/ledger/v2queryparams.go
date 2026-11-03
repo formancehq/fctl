@@ -10,13 +10,6 @@ import (
 )
 
 type QueryTemplateVolumeParams struct {
-	//lint:ignore U1000 accessed via reflection for JSON marshaling
-	resource      string `const:"volumes" json:"resource"`
-	InsertionDate *bool  `json:"insertionDate,omitempty"`
-	GroupBy       *int64 `json:"groupBy,omitempty"`
-	// The maximum number of results to return per page.
-	//
-	PageSize *int64 `json:"pageSize,omitempty"`
 	// Parameter used in pagination requests. Maximum page size is set to 15.
 	// Set to the value of next for the next page of results.
 	// Set to the value of previous for the previous page of results.
@@ -24,9 +17,16 @@ type QueryTemplateVolumeParams struct {
 	//
 	Cursor *string `json:"cursor,omitempty"`
 	// Additional data to include in the response, such as volumes
-	Expand *string `json:"expand,omitempty"`
+	Expand        *string `json:"expand,omitempty"`
+	GroupBy       *int64  `json:"groupBy,omitempty"`
+	InsertionDate *bool   `json:"insertionDate,omitempty"`
+	// The maximum number of results to return per page.
+	//
+	PageSize *int64 `json:"pageSize,omitempty"`
 	// Point-in-time. Returns the state as it existed at this timestamp
 	Pit *time.Time `json:"pit,omitempty"`
+	//lint:ignore U1000 accessed via reflection for JSON marshaling
+	resource string `const:"volumes" json:"resource"`
 	// Sort results using a field name and order (ascending or descending).
 	// Format: `<field>:<order>`, where `<field>` is the field name and `<order>` is either `asc` or `desc`.
 	//
@@ -44,31 +44,6 @@ func (q *QueryTemplateVolumeParams) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (q *QueryTemplateVolumeParams) GetResource() string {
-	return "volumes"
-}
-
-func (q *QueryTemplateVolumeParams) GetInsertionDate() *bool {
-	if q == nil {
-		return nil
-	}
-	return q.InsertionDate
-}
-
-func (q *QueryTemplateVolumeParams) GetGroupBy() *int64 {
-	if q == nil {
-		return nil
-	}
-	return q.GroupBy
-}
-
-func (q *QueryTemplateVolumeParams) GetPageSize() *int64 {
-	if q == nil {
-		return nil
-	}
-	return q.PageSize
-}
-
 func (q *QueryTemplateVolumeParams) GetCursor() *string {
 	if q == nil {
 		return nil
@@ -83,11 +58,36 @@ func (q *QueryTemplateVolumeParams) GetExpand() *string {
 	return q.Expand
 }
 
+func (q *QueryTemplateVolumeParams) GetGroupBy() *int64 {
+	if q == nil {
+		return nil
+	}
+	return q.GroupBy
+}
+
+func (q *QueryTemplateVolumeParams) GetInsertionDate() *bool {
+	if q == nil {
+		return nil
+	}
+	return q.InsertionDate
+}
+
+func (q *QueryTemplateVolumeParams) GetPageSize() *int64 {
+	if q == nil {
+		return nil
+	}
+	return q.PageSize
+}
+
 func (q *QueryTemplateVolumeParams) GetPit() *time.Time {
 	if q == nil {
 		return nil
 	}
 	return q.Pit
+}
+
+func (q *QueryTemplateVolumeParams) GetResource() string {
+	return "volumes"
 }
 
 func (q *QueryTemplateVolumeParams) GetSort() *string {
@@ -98,11 +98,6 @@ func (q *QueryTemplateVolumeParams) GetSort() *string {
 }
 
 type QueryTemplateLogParams struct {
-	//lint:ignore U1000 accessed via reflection for JSON marshaling
-	resource string `const:"logs" json:"resource"`
-	// The maximum number of results to return per page.
-	//
-	PageSize *int64 `json:"pageSize,omitempty"`
 	// Parameter used in pagination requests. Maximum page size is set to 15.
 	// Set to the value of next for the next page of results.
 	// Set to the value of previous for the previous page of results.
@@ -111,8 +106,13 @@ type QueryTemplateLogParams struct {
 	Cursor *string `json:"cursor,omitempty"`
 	// Additional data to include in the response, such as volumes
 	Expand *string `json:"expand,omitempty"`
+	// The maximum number of results to return per page.
+	//
+	PageSize *int64 `json:"pageSize,omitempty"`
 	// Point-in-time. Returns the state as it existed at this timestamp
 	Pit *time.Time `json:"pit,omitempty"`
+	//lint:ignore U1000 accessed via reflection for JSON marshaling
+	resource string `const:"logs" json:"resource"`
 	// Sort results using a field name and order (ascending or descending).
 	// Format: `<field>:<order>`, where `<field>` is the field name and `<order>` is either `asc` or `desc`.
 	//
@@ -130,17 +130,6 @@ func (q *QueryTemplateLogParams) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (q *QueryTemplateLogParams) GetResource() string {
-	return "logs"
-}
-
-func (q *QueryTemplateLogParams) GetPageSize() *int64 {
-	if q == nil {
-		return nil
-	}
-	return q.PageSize
-}
-
 func (q *QueryTemplateLogParams) GetCursor() *string {
 	if q == nil {
 		return nil
@@ -155,11 +144,22 @@ func (q *QueryTemplateLogParams) GetExpand() *string {
 	return q.Expand
 }
 
+func (q *QueryTemplateLogParams) GetPageSize() *int64 {
+	if q == nil {
+		return nil
+	}
+	return q.PageSize
+}
+
 func (q *QueryTemplateLogParams) GetPit() *time.Time {
 	if q == nil {
 		return nil
 	}
 	return q.Pit
+}
+
+func (q *QueryTemplateLogParams) GetResource() string {
+	return "logs"
 }
 
 func (q *QueryTemplateLogParams) GetSort() *string {
@@ -170,11 +170,6 @@ func (q *QueryTemplateLogParams) GetSort() *string {
 }
 
 type QueryTemplateTransactionParams struct {
-	//lint:ignore U1000 accessed via reflection for JSON marshaling
-	resource string `const:"transactions" json:"resource"`
-	// The maximum number of results to return per page.
-	//
-	PageSize *int64 `json:"pageSize,omitempty"`
 	// Parameter used in pagination requests. Maximum page size is set to 15.
 	// Set to the value of next for the next page of results.
 	// Set to the value of previous for the previous page of results.
@@ -183,8 +178,13 @@ type QueryTemplateTransactionParams struct {
 	Cursor *string `json:"cursor,omitempty"`
 	// Additional data to include in the response, such as volumes
 	Expand *string `json:"expand,omitempty"`
+	// The maximum number of results to return per page.
+	//
+	PageSize *int64 `json:"pageSize,omitempty"`
 	// Point-in-time. Returns the state as it existed at this timestamp
 	Pit *time.Time `json:"pit,omitempty"`
+	//lint:ignore U1000 accessed via reflection for JSON marshaling
+	resource string `const:"transactions" json:"resource"`
 	// Sort results using a field name and order (ascending or descending).
 	// Format: `<field>:<order>`, where `<field>` is the field name and `<order>` is either `asc` or `desc`.
 	//
@@ -202,17 +202,6 @@ func (q *QueryTemplateTransactionParams) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (q *QueryTemplateTransactionParams) GetResource() string {
-	return "transactions"
-}
-
-func (q *QueryTemplateTransactionParams) GetPageSize() *int64 {
-	if q == nil {
-		return nil
-	}
-	return q.PageSize
-}
-
 func (q *QueryTemplateTransactionParams) GetCursor() *string {
 	if q == nil {
 		return nil
@@ -227,11 +216,22 @@ func (q *QueryTemplateTransactionParams) GetExpand() *string {
 	return q.Expand
 }
 
+func (q *QueryTemplateTransactionParams) GetPageSize() *int64 {
+	if q == nil {
+		return nil
+	}
+	return q.PageSize
+}
+
 func (q *QueryTemplateTransactionParams) GetPit() *time.Time {
 	if q == nil {
 		return nil
 	}
 	return q.Pit
+}
+
+func (q *QueryTemplateTransactionParams) GetResource() string {
+	return "transactions"
 }
 
 func (q *QueryTemplateTransactionParams) GetSort() *string {
@@ -242,11 +242,6 @@ func (q *QueryTemplateTransactionParams) GetSort() *string {
 }
 
 type QueryTemplateAccountParams struct {
-	//lint:ignore U1000 accessed via reflection for JSON marshaling
-	resource string `const:"accounts" json:"resource"`
-	// The maximum number of results to return per page.
-	//
-	PageSize *int64 `json:"pageSize,omitempty"`
 	// Parameter used in pagination requests. Maximum page size is set to 15.
 	// Set to the value of next for the next page of results.
 	// Set to the value of previous for the previous page of results.
@@ -255,8 +250,13 @@ type QueryTemplateAccountParams struct {
 	Cursor *string `json:"cursor,omitempty"`
 	// Additional data to include in the response, such as volumes
 	Expand *string `json:"expand,omitempty"`
+	// The maximum number of results to return per page.
+	//
+	PageSize *int64 `json:"pageSize,omitempty"`
 	// Point-in-time. Returns the state as it existed at this timestamp
 	Pit *time.Time `json:"pit,omitempty"`
+	//lint:ignore U1000 accessed via reflection for JSON marshaling
+	resource string `const:"accounts" json:"resource"`
 	// Sort results using a field name and order (ascending or descending).
 	// Format: `<field>:<order>`, where `<field>` is the field name and `<order>` is either `asc` or `desc`.
 	//
@@ -274,17 +274,6 @@ func (q *QueryTemplateAccountParams) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (q *QueryTemplateAccountParams) GetResource() string {
-	return "accounts"
-}
-
-func (q *QueryTemplateAccountParams) GetPageSize() *int64 {
-	if q == nil {
-		return nil
-	}
-	return q.PageSize
-}
-
 func (q *QueryTemplateAccountParams) GetCursor() *string {
 	if q == nil {
 		return nil
@@ -299,11 +288,22 @@ func (q *QueryTemplateAccountParams) GetExpand() *string {
 	return q.Expand
 }
 
+func (q *QueryTemplateAccountParams) GetPageSize() *int64 {
+	if q == nil {
+		return nil
+	}
+	return q.PageSize
+}
+
 func (q *QueryTemplateAccountParams) GetPit() *time.Time {
 	if q == nil {
 		return nil
 	}
 	return q.Pit
+}
+
+func (q *QueryTemplateAccountParams) GetResource() string {
+	return "accounts"
 }
 
 func (q *QueryTemplateAccountParams) GetSort() *string {

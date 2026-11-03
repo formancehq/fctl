@@ -38,28 +38,28 @@ func (e *TransferInitiationRequestType) UnmarshalJSON(data []byte) error {
 }
 
 type TransferInitiationRequest struct {
-	// Caller-supplied identifier for the initiation, used to deduplicate retries
-	Reference string `json:"reference"`
-	// When the transfer should be executed
-	ScheduledAt time.Time `json:"scheduledAt"`
-	// Human-readable description carried with the transfer
-	Description string `json:"description"`
-	// Identifier of the account the funds leave
-	SourceAccountID string `json:"sourceAccountID"`
-	// Identifier of the account the funds reach
-	DestinationAccountID string `json:"destinationAccountID"`
-	// Identifier of the connector to execute the transfer through
-	ConnectorID *string `json:"connectorID,omitempty"`
-	// Whether the funds move between your accounts or out to a third party
-	Type TransferInitiationRequestType `json:"type"`
 	// Amount to move, in the asset's smallest unit
 	Amount *big.Int `json:"amount"`
 	// Asset the transfer is denominated in
 	Asset string `json:"asset"`
-	// When true, the transfer executes immediately instead of waiting for approval
-	Validated bool `json:"validated"`
+	// Identifier of the connector to execute the transfer through
+	ConnectorID *string `json:"connectorID,omitempty"`
+	// Human-readable description carried with the transfer
+	Description string `json:"description"`
+	// Identifier of the account the funds reach
+	DestinationAccountID string `json:"destinationAccountID"`
 	// Arbitrary key/value pairs to attach to the initiation
 	Metadata map[string]string `json:"metadata,omitempty"`
+	// Caller-supplied identifier for the initiation, used to deduplicate retries
+	Reference string `json:"reference"`
+	// When the transfer should be executed
+	ScheduledAt time.Time `json:"scheduledAt"`
+	// Identifier of the account the funds leave
+	SourceAccountID string `json:"sourceAccountID"`
+	// Whether the funds move between your accounts or out to a third party
+	Type TransferInitiationRequestType `json:"type"`
+	// When true, the transfer executes immediately instead of waiting for approval
+	Validated bool `json:"validated"`
 }
 
 func (t TransferInitiationRequest) MarshalJSON() ([]byte, error) {
@@ -71,55 +71,6 @@ func (t *TransferInitiationRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (t *TransferInitiationRequest) GetReference() string {
-	if t == nil {
-		return ""
-	}
-	return t.Reference
-}
-
-func (t *TransferInitiationRequest) GetScheduledAt() time.Time {
-	if t == nil {
-		return time.Time{}
-	}
-	return t.ScheduledAt
-}
-
-func (t *TransferInitiationRequest) GetDescription() string {
-	if t == nil {
-		return ""
-	}
-	return t.Description
-}
-
-func (t *TransferInitiationRequest) GetSourceAccountID() string {
-	if t == nil {
-		return ""
-	}
-	return t.SourceAccountID
-}
-
-func (t *TransferInitiationRequest) GetDestinationAccountID() string {
-	if t == nil {
-		return ""
-	}
-	return t.DestinationAccountID
-}
-
-func (t *TransferInitiationRequest) GetConnectorID() *string {
-	if t == nil {
-		return nil
-	}
-	return t.ConnectorID
-}
-
-func (t *TransferInitiationRequest) GetType() TransferInitiationRequestType {
-	if t == nil {
-		return TransferInitiationRequestType("")
-	}
-	return t.Type
 }
 
 func (t *TransferInitiationRequest) GetAmount() *big.Int {
@@ -136,11 +87,25 @@ func (t *TransferInitiationRequest) GetAsset() string {
 	return t.Asset
 }
 
-func (t *TransferInitiationRequest) GetValidated() bool {
+func (t *TransferInitiationRequest) GetConnectorID() *string {
 	if t == nil {
-		return false
+		return nil
 	}
-	return t.Validated
+	return t.ConnectorID
+}
+
+func (t *TransferInitiationRequest) GetDescription() string {
+	if t == nil {
+		return ""
+	}
+	return t.Description
+}
+
+func (t *TransferInitiationRequest) GetDestinationAccountID() string {
+	if t == nil {
+		return ""
+	}
+	return t.DestinationAccountID
 }
 
 func (t *TransferInitiationRequest) GetMetadata() map[string]string {
@@ -148,4 +113,39 @@ func (t *TransferInitiationRequest) GetMetadata() map[string]string {
 		return nil
 	}
 	return t.Metadata
+}
+
+func (t *TransferInitiationRequest) GetReference() string {
+	if t == nil {
+		return ""
+	}
+	return t.Reference
+}
+
+func (t *TransferInitiationRequest) GetScheduledAt() time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return t.ScheduledAt
+}
+
+func (t *TransferInitiationRequest) GetSourceAccountID() string {
+	if t == nil {
+		return ""
+	}
+	return t.SourceAccountID
+}
+
+func (t *TransferInitiationRequest) GetType() TransferInitiationRequestType {
+	if t == nil {
+		return TransferInitiationRequestType("")
+	}
+	return t.Type
+}
+
+func (t *TransferInitiationRequest) GetValidated() bool {
+	if t == nil {
+		return false
+	}
+	return t.Validated
 }

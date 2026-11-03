@@ -22,8 +22,7 @@ func (c *CreateTransactionLedgerV3Security) GetBearerAuth() *string {
 // #endregion class-body-createtransactionledgerv3security
 
 type CreateTransactionLedgerV3Request struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	CreateTransactionRequest ledgerv3.CreateTransactionRequest `request:"mediaType=application/json"`
 	// Render all response Uint256, BigUint and SignedBigInt values as canonical
 	// decimal strings, regardless of business meaning, including posting
 	// amounts, volume input/output and balances. Ordinary integer IDs/counts,
@@ -36,15 +35,16 @@ type CreateTransactionLedgerV3Request struct {
 	//
 	FormanceBigintAsString *string `header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
 	// Idempotency key for the request
-	IdempotencyKey           *string                           `header:"style=simple,explode=false,name=Idempotency-Key"`
-	CreateTransactionRequest ledgerv3.CreateTransactionRequest `request:"mediaType=application/json"`
+	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 }
 
-func (c *CreateTransactionLedgerV3Request) GetLedgerName() string {
+func (c *CreateTransactionLedgerV3Request) GetCreateTransactionRequest() ledgerv3.CreateTransactionRequest {
 	if c == nil {
-		return ""
+		return ledgerv3.CreateTransactionRequest{}
 	}
-	return c.LedgerName
+	return c.CreateTransactionRequest
 }
 
 func (c *CreateTransactionLedgerV3Request) GetFormanceBigintAsString() *string {
@@ -61,11 +61,11 @@ func (c *CreateTransactionLedgerV3Request) GetIdempotencyKey() *string {
 	return c.IdempotencyKey
 }
 
-func (c *CreateTransactionLedgerV3Request) GetCreateTransactionRequest() ledgerv3.CreateTransactionRequest {
+func (c *CreateTransactionLedgerV3Request) GetLedgerName() string {
 	if c == nil {
-		return ledgerv3.CreateTransactionRequest{}
+		return ""
 	}
-	return c.CreateTransactionRequest
+	return c.LedgerName
 }
 
 // #region class-body-createtransactionledgerv3request
@@ -74,19 +74,19 @@ func (c *CreateTransactionLedgerV3Request) GetCreateTransactionRequest() ledgerv
 type CreateTransactionLedgerV3Response struct {
 	// HTTP response content type for this operation
 	ContentType string
-	// HTTP response status code for this operation
-	StatusCode int
-	// Raw HTTP response; suitable for custom response parsing
-	RawResponse *http.Response
 	// Transaction created successfully
 	CreateTransactionResponse *ledgerv3.CreateTransactionResponse
 	// Bad request
 	ErrorResponse *ledgerv3.ErrorResponse
-	// Authentication required (missing or invalid JWT token)
-	Unauthorized *string
 	// Insufficient permissions (missing required scope)
 	Forbidden *string
 	Headers   map[string][]string
+	// HTTP response status code for this operation
+	StatusCode int
+	// Raw HTTP response; suitable for custom response parsing
+	RawResponse *http.Response
+	// Authentication required (missing or invalid JWT token)
+	Unauthorized *string
 }
 
 func (c *CreateTransactionLedgerV3Response) GetContentType() string {
@@ -94,20 +94,6 @@ func (c *CreateTransactionLedgerV3Response) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
-}
-
-func (c *CreateTransactionLedgerV3Response) GetStatusCode() int {
-	if c == nil {
-		return 0
-	}
-	return c.StatusCode
-}
-
-func (c *CreateTransactionLedgerV3Response) GetRawResponse() *http.Response {
-	if c == nil {
-		return nil
-	}
-	return c.RawResponse
 }
 
 func (c *CreateTransactionLedgerV3Response) GetCreateTransactionResponse() *ledgerv3.CreateTransactionResponse {
@@ -124,13 +110,6 @@ func (c *CreateTransactionLedgerV3Response) GetErrorResponse() *ledgerv3.ErrorRe
 	return c.ErrorResponse
 }
 
-func (c *CreateTransactionLedgerV3Response) GetUnauthorized() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Unauthorized
-}
-
 func (c *CreateTransactionLedgerV3Response) GetForbidden() *string {
 	if c == nil {
 		return nil
@@ -143,6 +122,27 @@ func (c *CreateTransactionLedgerV3Response) GetHeaders() map[string][]string {
 		return map[string][]string{}
 	}
 	return c.Headers
+}
+
+func (c *CreateTransactionLedgerV3Response) GetStatusCode() int {
+	if c == nil {
+		return 0
+	}
+	return c.StatusCode
+}
+
+func (c *CreateTransactionLedgerV3Response) GetRawResponse() *http.Response {
+	if c == nil {
+		return nil
+	}
+	return c.RawResponse
+}
+
+func (c *CreateTransactionLedgerV3Response) GetUnauthorized() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Unauthorized
 }
 
 // #region class-body-createtransactionledgerv3response

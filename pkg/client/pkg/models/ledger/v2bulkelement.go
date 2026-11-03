@@ -12,10 +12,10 @@ import (
 type V2BulkElementType string
 
 const (
-	V2BulkElementTypeCreateTransaction V2BulkElementType = "CREATE_TRANSACTION"
 	V2BulkElementTypeAddMetadata       V2BulkElementType = "ADD_METADATA"
-	V2BulkElementTypeRevertTransaction V2BulkElementType = "REVERT_TRANSACTION"
+	V2BulkElementTypeCreateTransaction V2BulkElementType = "CREATE_TRANSACTION"
 	V2BulkElementTypeDeleteMetadata    V2BulkElementType = "DELETE_METADATA"
+	V2BulkElementTypeRevertTransaction V2BulkElementType = "REVERT_TRANSACTION"
 )
 
 type V2BulkElement struct {
@@ -25,18 +25,6 @@ type V2BulkElement struct {
 	V2BulkElementDeleteMetadata    *V2BulkElementDeleteMetadata    `queryParam:"inline" union:"member"`
 
 	Type V2BulkElementType
-}
-
-func CreateV2BulkElementCreateTransaction(createTransaction V2BulkElementCreateTransaction) V2BulkElement {
-	typ := V2BulkElementTypeCreateTransaction
-
-	typStr := string(typ)
-	createTransaction.Action = typStr
-
-	return V2BulkElement{
-		V2BulkElementCreateTransaction: &createTransaction,
-		Type:                           typ,
-	}
 }
 
 func CreateV2BulkElementAddMetadata(addMetadata V2BulkElementAddMetadata) V2BulkElement {
@@ -51,14 +39,14 @@ func CreateV2BulkElementAddMetadata(addMetadata V2BulkElementAddMetadata) V2Bulk
 	}
 }
 
-func CreateV2BulkElementRevertTransaction(revertTransaction V2BulkElementRevertTransaction) V2BulkElement {
-	typ := V2BulkElementTypeRevertTransaction
+func CreateV2BulkElementCreateTransaction(createTransaction V2BulkElementCreateTransaction) V2BulkElement {
+	typ := V2BulkElementTypeCreateTransaction
 
 	typStr := string(typ)
-	revertTransaction.Action = typStr
+	createTransaction.Action = typStr
 
 	return V2BulkElement{
-		V2BulkElementRevertTransaction: &revertTransaction,
+		V2BulkElementCreateTransaction: &createTransaction,
 		Type:                           typ,
 	}
 }
@@ -75,6 +63,18 @@ func CreateV2BulkElementDeleteMetadata(deleteMetadata V2BulkElementDeleteMetadat
 	}
 }
 
+func CreateV2BulkElementRevertTransaction(revertTransaction V2BulkElementRevertTransaction) V2BulkElement {
+	typ := V2BulkElementTypeRevertTransaction
+
+	typStr := string(typ)
+	revertTransaction.Action = typStr
+
+	return V2BulkElement{
+		V2BulkElementRevertTransaction: &revertTransaction,
+		Type:                           typ,
+	}
+}
+
 func (u *V2BulkElement) UnmarshalJSON(data []byte) error {
 
 	type discriminator struct {
@@ -87,15 +87,6 @@ func (u *V2BulkElement) UnmarshalJSON(data []byte) error {
 	}
 
 	switch dis.Action {
-	case "CREATE_TRANSACTION":
-		v2BulkElementCreateTransaction := new(V2BulkElementCreateTransaction)
-		if err := utils.UnmarshalJSON(data, &v2BulkElementCreateTransaction, "", true, nil); err != nil {
-			return fmt.Errorf("could not unmarshal `%s` into expected (Action == CREATE_TRANSACTION) type V2BulkElementCreateTransaction within V2BulkElement: %w", string(data), err)
-		}
-
-		u.V2BulkElementCreateTransaction = v2BulkElementCreateTransaction
-		u.Type = V2BulkElementTypeCreateTransaction
-		return nil
 	case "ADD_METADATA":
 		v2BulkElementAddMetadata := new(V2BulkElementAddMetadata)
 		if err := utils.UnmarshalJSON(data, &v2BulkElementAddMetadata, "", true, nil); err != nil {
@@ -105,14 +96,14 @@ func (u *V2BulkElement) UnmarshalJSON(data []byte) error {
 		u.V2BulkElementAddMetadata = v2BulkElementAddMetadata
 		u.Type = V2BulkElementTypeAddMetadata
 		return nil
-	case "REVERT_TRANSACTION":
-		v2BulkElementRevertTransaction := new(V2BulkElementRevertTransaction)
-		if err := utils.UnmarshalJSON(data, &v2BulkElementRevertTransaction, "", true, nil); err != nil {
-			return fmt.Errorf("could not unmarshal `%s` into expected (Action == REVERT_TRANSACTION) type V2BulkElementRevertTransaction within V2BulkElement: %w", string(data), err)
+	case "CREATE_TRANSACTION":
+		v2BulkElementCreateTransaction := new(V2BulkElementCreateTransaction)
+		if err := utils.UnmarshalJSON(data, &v2BulkElementCreateTransaction, "", true, nil); err != nil {
+			return fmt.Errorf("could not unmarshal `%s` into expected (Action == CREATE_TRANSACTION) type V2BulkElementCreateTransaction within V2BulkElement: %w", string(data), err)
 		}
 
-		u.V2BulkElementRevertTransaction = v2BulkElementRevertTransaction
-		u.Type = V2BulkElementTypeRevertTransaction
+		u.V2BulkElementCreateTransaction = v2BulkElementCreateTransaction
+		u.Type = V2BulkElementTypeCreateTransaction
 		return nil
 	case "DELETE_METADATA":
 		v2BulkElementDeleteMetadata := new(V2BulkElementDeleteMetadata)
@@ -122,6 +113,15 @@ func (u *V2BulkElement) UnmarshalJSON(data []byte) error {
 
 		u.V2BulkElementDeleteMetadata = v2BulkElementDeleteMetadata
 		u.Type = V2BulkElementTypeDeleteMetadata
+		return nil
+	case "REVERT_TRANSACTION":
+		v2BulkElementRevertTransaction := new(V2BulkElementRevertTransaction)
+		if err := utils.UnmarshalJSON(data, &v2BulkElementRevertTransaction, "", true, nil); err != nil {
+			return fmt.Errorf("could not unmarshal `%s` into expected (Action == REVERT_TRANSACTION) type V2BulkElementRevertTransaction within V2BulkElement: %w", string(data), err)
+		}
+
+		u.V2BulkElementRevertTransaction = v2BulkElementRevertTransaction
+		u.Type = V2BulkElementTypeRevertTransaction
 		return nil
 	}
 

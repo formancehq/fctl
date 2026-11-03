@@ -8,10 +8,10 @@ import (
 
 // StageSendSourceWallet - Take the funds from a wallet
 type StageSendSourceWallet struct {
-	// Identifier of the wallet to take funds from
-	ID string `json:"id"`
 	// Name of the balance within the wallet. Defaults to the main balance when omitted
 	Balance *string `json:"balance,omitempty"`
+	// Identifier of the wallet to take funds from
+	ID string `json:"id"`
 }
 
 func (s StageSendSourceWallet) MarshalJSON() ([]byte, error) {
@@ -25,16 +25,16 @@ func (s *StageSendSourceWallet) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (s *StageSendSourceWallet) GetID() string {
-	if s == nil {
-		return ""
-	}
-	return s.ID
-}
-
 func (s *StageSendSourceWallet) GetBalance() *string {
 	if s == nil {
 		return nil
 	}
 	return s.Balance
+}
+
+func (s *StageSendSourceWallet) GetID() string {
+	if s == nil {
+		return ""
+	}
+	return s.ID
 }

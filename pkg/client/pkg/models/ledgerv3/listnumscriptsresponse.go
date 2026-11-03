@@ -5,6 +5,8 @@ package ledgerv3
 type ListNumscriptsResponse struct {
 	// One page of numscripts, in the requested name order
 	Data []NumscriptInfo `json:"data"`
+	// True when a following page exists; set iff `next` is.
+	HasMore bool `json:"hasMore"`
 	// Page token of a paged list. Clients normally pass back the `next` or
 	// `previous` value of a previous response verbatim; building one by hand
 	// is supported.
@@ -79,8 +81,6 @@ type ListNumscriptsResponse struct {
 	// the endpoint, is rejected with 400 `INVALID_REQUEST`.
 	//
 	Previous *string `json:"previous,omitempty"`
-	// True when a following page exists; set iff `next` is.
-	HasMore bool `json:"hasMore"`
 }
 
 func (l *ListNumscriptsResponse) GetData() []NumscriptInfo {
@@ -88,6 +88,13 @@ func (l *ListNumscriptsResponse) GetData() []NumscriptInfo {
 		return []NumscriptInfo{}
 	}
 	return l.Data
+}
+
+func (l *ListNumscriptsResponse) GetHasMore() bool {
+	if l == nil {
+		return false
+	}
+	return l.HasMore
 }
 
 func (l *ListNumscriptsResponse) GetNext() *string {
@@ -102,11 +109,4 @@ func (l *ListNumscriptsResponse) GetPrevious() *string {
 		return nil
 	}
 	return l.Previous
-}
-
-func (l *ListNumscriptsResponse) GetHasMore() bool {
-	if l == nil {
-		return false
-	}
-	return l.HasMore
 }

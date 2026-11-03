@@ -8,16 +8,9 @@ import (
 )
 
 type TestTriggerRequest struct {
-	// The trigger id
-	TriggerID   string         `pathParam:"style=simple,explode=false,name=triggerID"`
 	RequestBody map[string]any `request:"mediaType=application/json"`
-}
-
-func (t *TestTriggerRequest) GetTriggerID() string {
-	if t == nil {
-		return ""
-	}
-	return t.TriggerID
+	// The trigger id
+	TriggerID string `pathParam:"style=simple,explode=false,name=triggerID"`
 }
 
 func (t *TestTriggerRequest) GetRequestBody() map[string]any {
@@ -25,6 +18,13 @@ func (t *TestTriggerRequest) GetRequestBody() map[string]any {
 		return nil
 	}
 	return t.RequestBody
+}
+
+func (t *TestTriggerRequest) GetTriggerID() string {
+	if t == nil {
+		return ""
+	}
+	return t.TriggerID
 }
 
 type TestTriggerResponse struct {

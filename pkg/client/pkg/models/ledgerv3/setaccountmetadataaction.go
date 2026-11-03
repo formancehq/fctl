@@ -6,9 +6,9 @@ package ledgerv3
 type SetAccountMetadataAction struct {
 	Account   string  `json:"account"`
 	Key       string  `json:"key"`
+	Type      *string `json:"type,omitempty"`
 	Value     *string `json:"value,omitempty"`
 	ValueExpr *string `json:"value_expr,omitempty"`
-	Type      *string `json:"type,omitempty"`
 }
 
 func (s *SetAccountMetadataAction) GetAccount() string {
@@ -25,6 +25,13 @@ func (s *SetAccountMetadataAction) GetKey() string {
 	return s.Key
 }
 
+func (s *SetAccountMetadataAction) GetType() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Type
+}
+
 func (s *SetAccountMetadataAction) GetValue() *string {
 	if s == nil {
 		return nil
@@ -37,11 +44,4 @@ func (s *SetAccountMetadataAction) GetValueExpr() *string {
 		return nil
 	}
 	return s.ValueExpr
-}
-
-func (s *SetAccountMetadataAction) GetType() *string {
-	if s == nil {
-		return nil
-	}
-	return s.Type
 }

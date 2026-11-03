@@ -21,23 +21,32 @@ func (l *ListLedgerLogsSecurity) GetBearerAuth() *string {
 }
 
 type ListLedgerLogsRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Maximum number of items per page. 0 or absent means 100; values above 1000 are clamped to 1000.
-	PageSize *int64 `default:"100" queryParam:"style=form,explode=true,name=pageSize"`
+	// Render all response Uint256, BigUint and SignedBigInt values as canonical
+	// decimal strings, regardless of business meaning, including posting
+	// amounts, volume input/output and balances. Ordinary integer IDs/counts,
+	// metadata and explicitly string-encoded counters keep their existing
+	// representation. Case-insensitive true, yes, y and 1 enable
+	// this option, matching Ledger v2. Whitespace is not trimmed. Omission and
+	// every other value retain JSON number tokens. This affects only this
+	// response, including nested objects, maps, arrays, transaction/log/cursor
+	// and bulk results. Request decoding is unchanged.
+	//
+	FormanceBigintAsString *string `header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
+	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
+	// barrier and waits for the receiving node to apply up to it. `stale`
+	// serves the read from the receiving node's own store, with no barrier
+	// and no forwarding to the leader, so the answer may lag the leader.
+	// Matching ignores case and surrounding whitespace. An unknown value, or a
+	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
+	// `/v3` route, writes included; a valid value has no effect on writes. The
+	// gRPC equivalent is the `x-consistency` request metadata.
+	//
+	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
 	// Page token from a previous response's `next` or `previous` field (see
 	// the `PageToken` schema). Omit for the first page. Pass the same
 	// `reverse` and `filter` on every page of a walk.
 	//
 	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
-	// List in descending ledger-local log ID order when true.
-	Reverse *bool `default:"false" queryParam:"style=form,explode=true,name=reverse"`
-	// Filter logs with date >= startDate (inclusive, RFC3339 format).
-	// Must be on or after the Unix epoch (1970-01-01T00:00:00Z); earlier
-	// dates are rejected with a 400.
-	// Requires the builtin `LOG_DATE` index to be enabled on the ledger.
-	//
-	StartDate *time.Time `queryParam:"style=form,explode=true,name=startDate"`
 	// Filter logs with date < endDate (exclusive, RFC3339 format).
 	// Must be on or after the Unix epoch (1970-01-01T00:00:00Z); earlier
 	// dates are rejected with a 400.
@@ -77,27 +86,18 @@ type ListLedgerLogsRequest struct {
 	// structured JSON form and must be passed in the textual representation.
 	//
 	Filter *string `queryParam:"style=form,explode=true,name=filter"`
-	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
-	// barrier and waits for the receiving node to apply up to it. `stale`
-	// serves the read from the receiving node's own store, with no barrier
-	// and no forwarding to the leader, so the answer may lag the leader.
-	// Matching ignores case and surrounding whitespace. An unknown value, or a
-	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
-	// `/v3` route, writes included; a valid value has no effect on writes. The
-	// gRPC equivalent is the `x-consistency` request metadata.
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Maximum number of items per page. 0 or absent means 100; values above 1000 are clamped to 1000.
+	PageSize *int64 `default:"100" queryParam:"style=form,explode=true,name=pageSize"`
+	// List in descending ledger-local log ID order when true.
+	Reverse *bool `default:"false" queryParam:"style=form,explode=true,name=reverse"`
+	// Filter logs with date >= startDate (inclusive, RFC3339 format).
+	// Must be on or after the Unix epoch (1970-01-01T00:00:00Z); earlier
+	// dates are rejected with a 400.
+	// Requires the builtin `LOG_DATE` index to be enabled on the ledger.
 	//
-	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
-	// Render all response Uint256, BigUint and SignedBigInt values as canonical
-	// decimal strings, regardless of business meaning, including posting
-	// amounts, volume input/output and balances. Ordinary integer IDs/counts,
-	// metadata and explicitly string-encoded counters keep their existing
-	// representation. Case-insensitive true, yes, y and 1 enable
-	// this option, matching Ledger v2. Whitespace is not trimmed. Omission and
-	// every other value retain JSON number tokens. This affects only this
-	// response, including nested objects, maps, arrays, transaction/log/cursor
-	// and bulk results. Request decoding is unchanged.
-	//
-	FormanceBigintAsString *string `header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
+	StartDate *time.Time `queryParam:"style=form,explode=true,name=startDate"`
 }
 
 func (l ListLedgerLogsRequest) MarshalJSON() ([]byte, error) {
@@ -111,18 +111,18 @@ func (l *ListLedgerLogsRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (l *ListLedgerLogsRequest) GetLedgerName() string {
-	if l == nil {
-		return ""
-	}
-	return l.LedgerName
-}
-
-func (l *ListLedgerLogsRequest) GetPageSize() *int64 {
+func (l *ListLedgerLogsRequest) GetFormanceBigintAsString() *string {
 	if l == nil {
 		return nil
 	}
-	return l.PageSize
+	return l.FormanceBigintAsString
+}
+
+func (l *ListLedgerLogsRequest) GetXConsistency() *ledgerv3.Consistency {
+	if l == nil {
+		return nil
+	}
+	return l.XConsistency
 }
 
 func (l *ListLedgerLogsRequest) GetCursor() *string {
@@ -130,20 +130,6 @@ func (l *ListLedgerLogsRequest) GetCursor() *string {
 		return nil
 	}
 	return l.Cursor
-}
-
-func (l *ListLedgerLogsRequest) GetReverse() *bool {
-	if l == nil {
-		return nil
-	}
-	return l.Reverse
-}
-
-func (l *ListLedgerLogsRequest) GetStartDate() *time.Time {
-	if l == nil {
-		return nil
-	}
-	return l.StartDate
 }
 
 func (l *ListLedgerLogsRequest) GetEndDate() *time.Time {
@@ -160,23 +146,39 @@ func (l *ListLedgerLogsRequest) GetFilter() *string {
 	return l.Filter
 }
 
-func (l *ListLedgerLogsRequest) GetXConsistency() *ledgerv3.Consistency {
+func (l *ListLedgerLogsRequest) GetLedgerName() string {
 	if l == nil {
-		return nil
+		return ""
 	}
-	return l.XConsistency
+	return l.LedgerName
 }
 
-func (l *ListLedgerLogsRequest) GetFormanceBigintAsString() *string {
+func (l *ListLedgerLogsRequest) GetPageSize() *int64 {
 	if l == nil {
 		return nil
 	}
-	return l.FormanceBigintAsString
+	return l.PageSize
+}
+
+func (l *ListLedgerLogsRequest) GetReverse() *bool {
+	if l == nil {
+		return nil
+	}
+	return l.Reverse
+}
+
+func (l *ListLedgerLogsRequest) GetStartDate() *time.Time {
+	if l == nil {
+		return nil
+	}
+	return l.StartDate
 }
 
 // ListLedgerLogsResponseBody - Logs retrieved successfully
 type ListLedgerLogsResponseBody struct {
 	Data []ledgerv3.SystemLog `json:"data"`
+	// True when a following page exists; set iff `next` is.
+	HasMore bool `json:"hasMore"`
 	// Page token of a paged list. Clients normally pass back the `next` or
 	// `previous` value of a previous response verbatim; building one by hand
 	// is supported.
@@ -251,8 +253,6 @@ type ListLedgerLogsResponseBody struct {
 	// the endpoint, is rejected with 400 `INVALID_REQUEST`.
 	//
 	Previous *string `json:"previous,omitempty"`
-	// True when a following page exists; set iff `next` is.
-	HasMore bool `json:"hasMore"`
 }
 
 func (l *ListLedgerLogsResponseBody) GetData() []ledgerv3.SystemLog {
@@ -260,6 +260,13 @@ func (l *ListLedgerLogsResponseBody) GetData() []ledgerv3.SystemLog {
 		return []ledgerv3.SystemLog{}
 	}
 	return l.Data
+}
+
+func (l *ListLedgerLogsResponseBody) GetHasMore() bool {
+	if l == nil {
+		return false
+	}
+	return l.HasMore
 }
 
 func (l *ListLedgerLogsResponseBody) GetNext() *string {
@@ -276,29 +283,22 @@ func (l *ListLedgerLogsResponseBody) GetPrevious() *string {
 	return l.Previous
 }
 
-func (l *ListLedgerLogsResponseBody) GetHasMore() bool {
-	if l == nil {
-		return false
-	}
-	return l.HasMore
-}
-
 type ListLedgerLogsResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Logs retrieved successfully
-	Object *ListLedgerLogsResponseBody
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
+	// Logs retrieved successfully
+	Object *ListLedgerLogsResponseBody
 }
 
 func (l *ListLedgerLogsResponse) GetContentType() string {
@@ -306,6 +306,27 @@ func (l *ListLedgerLogsResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListLedgerLogsResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ErrorResponse
+}
+
+func (l *ListLedgerLogsResponse) GetForbidden() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Forbidden
+}
+
+func (l *ListLedgerLogsResponse) GetHeaders() map[string][]string {
+	if l == nil {
+		return map[string][]string{}
+	}
+	return l.Headers
 }
 
 func (l *ListLedgerLogsResponse) GetStatusCode() int {
@@ -322,20 +343,6 @@ func (l *ListLedgerLogsResponse) GetRawResponse() *http.Response {
 	return l.RawResponse
 }
 
-func (l *ListLedgerLogsResponse) GetObject() *ListLedgerLogsResponseBody {
-	if l == nil {
-		return nil
-	}
-	return l.Object
-}
-
-func (l *ListLedgerLogsResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ErrorResponse
-}
-
 func (l *ListLedgerLogsResponse) GetUnauthorized() *string {
 	if l == nil {
 		return nil
@@ -343,16 +350,9 @@ func (l *ListLedgerLogsResponse) GetUnauthorized() *string {
 	return l.Unauthorized
 }
 
-func (l *ListLedgerLogsResponse) GetForbidden() *string {
+func (l *ListLedgerLogsResponse) GetObject() *ListLedgerLogsResponseBody {
 	if l == nil {
 		return nil
 	}
-	return l.Forbidden
-}
-
-func (l *ListLedgerLogsResponse) GetHeaders() map[string][]string {
-	if l == nil {
-		return map[string][]string{}
-	}
-	return l.Headers
+	return l.Object
 }

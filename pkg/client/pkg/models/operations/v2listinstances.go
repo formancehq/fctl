@@ -17,10 +17,10 @@ type V2ListInstancesRequest struct {
 	// The maximum number of results to return per page.
 	//
 	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
-	// A workflow id
-	WorkflowID *string `queryParam:"style=form,explode=true,name=workflowID"`
 	// Filter running instances
 	Running *bool `queryParam:"style=form,explode=true,name=running"`
+	// A workflow id
+	WorkflowID *string `queryParam:"style=form,explode=true,name=workflowID"`
 }
 
 func (v *V2ListInstancesRequest) GetCursor() *string {
@@ -37,18 +37,18 @@ func (v *V2ListInstancesRequest) GetPageSize() *int64 {
 	return v.PageSize
 }
 
-func (v *V2ListInstancesRequest) GetWorkflowID() *string {
-	if v == nil {
-		return nil
-	}
-	return v.WorkflowID
-}
-
 func (v *V2ListInstancesRequest) GetRunning() *bool {
 	if v == nil {
 		return nil
 	}
 	return v.Running
+}
+
+func (v *V2ListInstancesRequest) GetWorkflowID() *string {
+	if v == nil {
+		return nil
+	}
+	return v.WorkflowID
 }
 
 // #region class-body-v2listinstancesrequest

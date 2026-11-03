@@ -33,12 +33,12 @@ func (d *DeleteConnectionRequest) GetName() string {
 type DeleteConnectionResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Request or server error. The HTTP status and code identify the failure.
+	Error *connectivity.Error
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Request or server error. The HTTP status and code identify the failure.
-	Error *connectivity.Error
 }
 
 func (d *DeleteConnectionResponse) GetContentType() string {
@@ -46,6 +46,13 @@ func (d *DeleteConnectionResponse) GetContentType() string {
 		return ""
 	}
 	return d.ContentType
+}
+
+func (d *DeleteConnectionResponse) GetError() *connectivity.Error {
+	if d == nil {
+		return nil
+	}
+	return d.Error
 }
 
 func (d *DeleteConnectionResponse) GetStatusCode() int {
@@ -60,11 +67,4 @@ func (d *DeleteConnectionResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return d.RawResponse
-}
-
-func (d *DeleteConnectionResponse) GetError() *connectivity.Error {
-	if d == nil {
-		return nil
-	}
-	return d.Error
 }

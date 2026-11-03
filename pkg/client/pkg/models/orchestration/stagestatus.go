@@ -8,20 +8,20 @@ import (
 )
 
 type StageStatus struct {
-	// Zero-based position of the stage within the workflow
-	Stage float64 `json:"stage"`
+	// Why the stage failed, absent when it succeeded
+	Error *string `json:"error,omitempty"`
 	// Identifier of the workflow instance this stage belongs to
 	InstanceID string `json:"instanceID"`
+	// True when Temporal pause state could not be read; display UNKNOWN rather than inferring active from absent pendingActivities. Omitted on successful reads and missing legacy executions.
+	PauseStateUnavailable *bool `json:"pauseStateUnavailable,omitempty"`
+	// Paused activities hydrated on instance detail reads only; absent when none are paused or legacy Temporal execution is unavailable
+	PendingActivities []ActivityPause `json:"pendingActivities,omitempty"`
+	// Zero-based position of the stage within the workflow
+	Stage float64 `json:"stage"`
 	// When the stage started
 	StartedAt time.Time `json:"startedAt"`
 	// When the stage finished, absent while it is still running
 	TerminatedAt *time.Time `json:"terminatedAt,omitempty"`
-	// Why the stage failed, absent when it succeeded
-	Error *string `json:"error,omitempty"`
-	// Paused activities hydrated on instance detail reads only; absent when none are paused or legacy Temporal execution is unavailable
-	PendingActivities []ActivityPause `json:"pendingActivities,omitempty"`
-	// True when Temporal pause state could not be read; display UNKNOWN rather than inferring active from absent pendingActivities. Omitted on successful reads and missing legacy executions.
-	PauseStateUnavailable *bool `json:"pauseStateUnavailable,omitempty"`
 }
 
 func (s StageStatus) MarshalJSON() ([]byte, error) {
@@ -35,11 +35,11 @@ func (s *StageStatus) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (s *StageStatus) GetStage() float64 {
+func (s *StageStatus) GetError() *string {
 	if s == nil {
-		return 0.0
+		return nil
 	}
-	return s.Stage
+	return s.Error
 }
 
 func (s *StageStatus) GetInstanceID() string {
@@ -47,6 +47,27 @@ func (s *StageStatus) GetInstanceID() string {
 		return ""
 	}
 	return s.InstanceID
+}
+
+func (s *StageStatus) GetPauseStateUnavailable() *bool {
+	if s == nil {
+		return nil
+	}
+	return s.PauseStateUnavailable
+}
+
+func (s *StageStatus) GetPendingActivities() []ActivityPause {
+	if s == nil {
+		return nil
+	}
+	return s.PendingActivities
+}
+
+func (s *StageStatus) GetStage() float64 {
+	if s == nil {
+		return 0.0
+	}
+	return s.Stage
 }
 
 func (s *StageStatus) GetStartedAt() time.Time {
@@ -61,25 +82,4 @@ func (s *StageStatus) GetTerminatedAt() *time.Time {
 		return nil
 	}
 	return s.TerminatedAt
-}
-
-func (s *StageStatus) GetError() *string {
-	if s == nil {
-		return nil
-	}
-	return s.Error
-}
-
-func (s *StageStatus) GetPendingActivities() []ActivityPause {
-	if s == nil {
-		return nil
-	}
-	return s.PendingActivities
-}
-
-func (s *StageStatus) GetPauseStateUnavailable() *bool {
-	if s == nil {
-		return nil
-	}
-	return s.PauseStateUnavailable
 }

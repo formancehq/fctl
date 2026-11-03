@@ -20,15 +20,6 @@ func (l *ListAllLedgersSecurity) GetBearerAuth() *string {
 }
 
 type ListAllLedgersRequest struct {
-	// Maximum number of items per page. 0 or absent means 100; values above 1000 are clamped to 1000.
-	PageSize *int64 `default:"100" queryParam:"style=form,explode=true,name=pageSize"`
-	// Page token from a previous response's `next` or `previous` field (see
-	// the `PageToken` schema). Omit for the first page. Pass the same
-	// `reverse` and `filter` on every page of a walk.
-	//
-	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
-	// List in descending name order when true.
-	Reverse *bool `default:"false" queryParam:"style=form,explode=true,name=reverse"`
 	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
 	// barrier and waits for the receiving node to apply up to it. `stale`
 	// serves the read from the receiving node's own store, with no barrier
@@ -39,6 +30,15 @@ type ListAllLedgersRequest struct {
 	// gRPC equivalent is the `x-consistency` request metadata.
 	//
 	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Page token from a previous response's `next` or `previous` field (see
+	// the `PageToken` schema). Omit for the first page. Pass the same
+	// `reverse` and `filter` on every page of a walk.
+	//
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// Maximum number of items per page. 0 or absent means 100; values above 1000 are clamped to 1000.
+	PageSize *int64 `default:"100" queryParam:"style=form,explode=true,name=pageSize"`
+	// List in descending name order when true.
+	Reverse *bool `default:"false" queryParam:"style=form,explode=true,name=reverse"`
 }
 
 func (l ListAllLedgersRequest) MarshalJSON() ([]byte, error) {
@@ -52,11 +52,11 @@ func (l *ListAllLedgersRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (l *ListAllLedgersRequest) GetPageSize() *int64 {
+func (l *ListAllLedgersRequest) GetXConsistency() *ledgerv3.Consistency {
 	if l == nil {
 		return nil
 	}
-	return l.PageSize
+	return l.XConsistency
 }
 
 func (l *ListAllLedgersRequest) GetCursor() *string {
@@ -66,6 +66,13 @@ func (l *ListAllLedgersRequest) GetCursor() *string {
 	return l.Cursor
 }
 
+func (l *ListAllLedgersRequest) GetPageSize() *int64 {
+	if l == nil {
+		return nil
+	}
+	return l.PageSize
+}
+
 func (l *ListAllLedgersRequest) GetReverse() *bool {
 	if l == nil {
 		return nil
@@ -73,29 +80,22 @@ func (l *ListAllLedgersRequest) GetReverse() *bool {
 	return l.Reverse
 }
 
-func (l *ListAllLedgersRequest) GetXConsistency() *ledgerv3.Consistency {
-	if l == nil {
-		return nil
-	}
-	return l.XConsistency
-}
-
 type ListAllLedgersResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
+	// List of ledgers retrieved successfully
+	ListAllLedgersResponse *ledgerv3.ListAllLedgersResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// List of ledgers retrieved successfully
-	ListAllLedgersResponse *ledgerv3.ListAllLedgersResponse
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (l *ListAllLedgersResponse) GetContentType() string {
@@ -103,6 +103,34 @@ func (l *ListAllLedgersResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListAllLedgersResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ErrorResponse
+}
+
+func (l *ListAllLedgersResponse) GetForbidden() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Forbidden
+}
+
+func (l *ListAllLedgersResponse) GetHeaders() map[string][]string {
+	if l == nil {
+		return map[string][]string{}
+	}
+	return l.Headers
+}
+
+func (l *ListAllLedgersResponse) GetListAllLedgersResponse() *ledgerv3.ListAllLedgersResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ListAllLedgersResponse
 }
 
 func (l *ListAllLedgersResponse) GetStatusCode() int {
@@ -119,37 +147,9 @@ func (l *ListAllLedgersResponse) GetRawResponse() *http.Response {
 	return l.RawResponse
 }
 
-func (l *ListAllLedgersResponse) GetListAllLedgersResponse() *ledgerv3.ListAllLedgersResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ListAllLedgersResponse
-}
-
-func (l *ListAllLedgersResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ErrorResponse
-}
-
 func (l *ListAllLedgersResponse) GetUnauthorized() *string {
 	if l == nil {
 		return nil
 	}
 	return l.Unauthorized
-}
-
-func (l *ListAllLedgersResponse) GetForbidden() *string {
-	if l == nil {
-		return nil
-	}
-	return l.Forbidden
-}
-
-func (l *ListAllLedgersResponse) GetHeaders() map[string][]string {
-	if l == nil {
-		return map[string][]string{}
-	}
-	return l.Headers
 }

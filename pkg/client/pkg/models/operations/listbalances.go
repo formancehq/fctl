@@ -21,12 +21,12 @@ func (l *ListBalancesRequest) GetID() string {
 type ListBalancesResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Balances list
+	ListBalancesResponse *wallets.ListBalancesResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Balances list
-	ListBalancesResponse *wallets.ListBalancesResponse
 }
 
 func (l *ListBalancesResponse) GetContentType() string {
@@ -34,6 +34,13 @@ func (l *ListBalancesResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListBalancesResponse) GetListBalancesResponse() *wallets.ListBalancesResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ListBalancesResponse
 }
 
 func (l *ListBalancesResponse) GetStatusCode() int {
@@ -48,11 +55,4 @@ func (l *ListBalancesResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return l.RawResponse
-}
-
-func (l *ListBalancesResponse) GetListBalancesResponse() *wallets.ListBalancesResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ListBalancesResponse
 }

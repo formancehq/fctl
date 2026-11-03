@@ -7,27 +7,27 @@ import (
 	"math/big"
 )
 
-// Metadata - A set of key/value pairs that you can attach to a transfer object.
+// ActivityStripeTransferMetadata - A set of key/value pairs that you can attach to a transfer object.
 // It can be useful for storing additional information about the transfer in a structured format.
-type Metadata struct {
+type ActivityStripeTransferMetadata struct {
 }
 
 // ActivityStripeTransfer - Arguments for the activity that transfers funds through Stripe
 type ActivityStripeTransfer struct {
-	// Identifier of the Stripe connector to transfer through
-	ConnectorID *string `json:"connectorID,omitempty"`
 	// Amount to transfer, in the asset's smallest unit
 	Amount *big.Int `json:"amount,omitempty"`
 	// Asset the transfer is denominated in
 	Asset *string `json:"asset,omitempty"`
+	// Identifier of the Stripe connector to transfer through
+	ConnectorID *string `json:"connectorID,omitempty"`
 	// Stripe connected account receiving the transfer
 	Destination *string `json:"destination,omitempty"`
-	// When true, the transfer is created but held until it is validated
-	WaitingValidation *bool `default:"false" json:"waitingValidation"`
 	// A set of key/value pairs that you can attach to a transfer object.
 	// It can be useful for storing additional information about the transfer in a structured format.
 	//
-	Metadata *Metadata `json:"metadata,omitempty"`
+	Metadata *ActivityStripeTransferMetadata `json:"metadata,omitempty"`
+	// When true, the transfer is created but held until it is validated
+	WaitingValidation *bool `default:"false" json:"waitingValidation"`
 }
 
 func (a ActivityStripeTransfer) MarshalJSON() ([]byte, error) {
@@ -39,13 +39,6 @@ func (a *ActivityStripeTransfer) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (a *ActivityStripeTransfer) GetConnectorID() *string {
-	if a == nil {
-		return nil
-	}
-	return a.ConnectorID
 }
 
 func (a *ActivityStripeTransfer) GetAmount() *big.Int {
@@ -62,6 +55,13 @@ func (a *ActivityStripeTransfer) GetAsset() *string {
 	return a.Asset
 }
 
+func (a *ActivityStripeTransfer) GetConnectorID() *string {
+	if a == nil {
+		return nil
+	}
+	return a.ConnectorID
+}
+
 func (a *ActivityStripeTransfer) GetDestination() *string {
 	if a == nil {
 		return nil
@@ -69,16 +69,16 @@ func (a *ActivityStripeTransfer) GetDestination() *string {
 	return a.Destination
 }
 
+func (a *ActivityStripeTransfer) GetMetadata() *ActivityStripeTransferMetadata {
+	if a == nil {
+		return nil
+	}
+	return a.Metadata
+}
+
 func (a *ActivityStripeTransfer) GetWaitingValidation() *bool {
 	if a == nil {
 		return nil
 	}
 	return a.WaitingValidation
-}
-
-func (a *ActivityStripeTransfer) GetMetadata() *Metadata {
-	if a == nil {
-		return nil
-	}
-	return a.Metadata
 }

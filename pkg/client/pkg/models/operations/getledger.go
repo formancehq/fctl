@@ -20,8 +20,6 @@ func (g *GetLedgerSecurity) GetBearerAuth() *string {
 }
 
 type GetLedgerRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
 	// barrier and waits for the receiving node to apply up to it. `stale`
 	// serves the read from the receiving node's own store, with no barrier
@@ -32,6 +30,8 @@ type GetLedgerRequest struct {
 	// gRPC equivalent is the `x-consistency` request metadata.
 	//
 	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 }
 
 func (g GetLedgerRequest) MarshalJSON() ([]byte, error) {
@@ -45,13 +45,6 @@ func (g *GetLedgerRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (g *GetLedgerRequest) GetLedgerName() string {
-	if g == nil {
-		return ""
-	}
-	return g.LedgerName
-}
-
 func (g *GetLedgerRequest) GetXConsistency() *ledgerv3.Consistency {
 	if g == nil {
 		return nil
@@ -59,22 +52,29 @@ func (g *GetLedgerRequest) GetXConsistency() *ledgerv3.Consistency {
 	return g.XConsistency
 }
 
+func (g *GetLedgerRequest) GetLedgerName() string {
+	if g == nil {
+		return ""
+	}
+	return g.LedgerName
+}
+
 type GetLedgerResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	// Ledger retrieved successfully
+	GetLedgerResponse *ledgerv3.GetLedgerResponse
+	Headers           map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Ledger retrieved successfully
-	GetLedgerResponse *ledgerv3.GetLedgerResponse
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (g *GetLedgerResponse) GetContentType() string {
@@ -82,6 +82,34 @@ func (g *GetLedgerResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetLedgerResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if g == nil {
+		return nil
+	}
+	return g.ErrorResponse
+}
+
+func (g *GetLedgerResponse) GetForbidden() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Forbidden
+}
+
+func (g *GetLedgerResponse) GetGetLedgerResponse() *ledgerv3.GetLedgerResponse {
+	if g == nil {
+		return nil
+	}
+	return g.GetLedgerResponse
+}
+
+func (g *GetLedgerResponse) GetHeaders() map[string][]string {
+	if g == nil {
+		return map[string][]string{}
+	}
+	return g.Headers
 }
 
 func (g *GetLedgerResponse) GetStatusCode() int {
@@ -98,37 +126,9 @@ func (g *GetLedgerResponse) GetRawResponse() *http.Response {
 	return g.RawResponse
 }
 
-func (g *GetLedgerResponse) GetGetLedgerResponse() *ledgerv3.GetLedgerResponse {
-	if g == nil {
-		return nil
-	}
-	return g.GetLedgerResponse
-}
-
-func (g *GetLedgerResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if g == nil {
-		return nil
-	}
-	return g.ErrorResponse
-}
-
 func (g *GetLedgerResponse) GetUnauthorized() *string {
 	if g == nil {
 		return nil
 	}
 	return g.Unauthorized
-}
-
-func (g *GetLedgerResponse) GetForbidden() *string {
-	if g == nil {
-		return nil
-	}
-	return g.Forbidden
-}
-
-func (g *GetLedgerResponse) GetHeaders() map[string][]string {
-	if g == nil {
-		return map[string][]string{}
-	}
-	return g.Headers
 }

@@ -19,10 +19,6 @@ func (r *RemoveMetadataFieldTypeSecurity) GetBearerAuth() *string {
 }
 
 type RemoveMetadataFieldTypeRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Target type (account, transaction, or ledger)
-	TargetType ledgerv3.TargetType `pathParam:"style=simple,explode=false,name=targetType"`
 	// Raw metadata key, for example formance.com/reviewed. SDK callers pass
 	// the raw key and let the SDK encode it. Direct HTTP clients URL-encode
 	// the key as one path segment, encoding slashes as %2F.
@@ -31,6 +27,17 @@ type RemoveMetadataFieldTypeRequest struct {
 	// are invalid metadata keys and are rejected with HTTP 400.
 	//
 	Key string `pathParam:"style=simple,explode=false,name=key"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Target type (account, transaction, or ledger)
+	TargetType ledgerv3.TargetType `pathParam:"style=simple,explode=false,name=targetType"`
+}
+
+func (r *RemoveMetadataFieldTypeRequest) GetKey() string {
+	if r == nil {
+		return ""
+	}
+	return r.Key
 }
 
 func (r *RemoveMetadataFieldTypeRequest) GetLedgerName() string {
@@ -47,27 +54,20 @@ func (r *RemoveMetadataFieldTypeRequest) GetTargetType() ledgerv3.TargetType {
 	return r.TargetType
 }
 
-func (r *RemoveMetadataFieldTypeRequest) GetKey() string {
-	if r == nil {
-		return ""
-	}
-	return r.Key
-}
-
 type RemoveMetadataFieldTypeResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (r *RemoveMetadataFieldTypeResponse) GetContentType() string {
@@ -75,6 +75,27 @@ func (r *RemoveMetadataFieldTypeResponse) GetContentType() string {
 		return ""
 	}
 	return r.ContentType
+}
+
+func (r *RemoveMetadataFieldTypeResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if r == nil {
+		return nil
+	}
+	return r.ErrorResponse
+}
+
+func (r *RemoveMetadataFieldTypeResponse) GetForbidden() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Forbidden
+}
+
+func (r *RemoveMetadataFieldTypeResponse) GetHeaders() map[string][]string {
+	if r == nil {
+		return map[string][]string{}
+	}
+	return r.Headers
 }
 
 func (r *RemoveMetadataFieldTypeResponse) GetStatusCode() int {
@@ -91,30 +112,9 @@ func (r *RemoveMetadataFieldTypeResponse) GetRawResponse() *http.Response {
 	return r.RawResponse
 }
 
-func (r *RemoveMetadataFieldTypeResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if r == nil {
-		return nil
-	}
-	return r.ErrorResponse
-}
-
 func (r *RemoveMetadataFieldTypeResponse) GetUnauthorized() *string {
 	if r == nil {
 		return nil
 	}
 	return r.Unauthorized
-}
-
-func (r *RemoveMetadataFieldTypeResponse) GetForbidden() *string {
-	if r == nil {
-		return nil
-	}
-	return r.Forbidden
-}
-
-func (r *RemoveMetadataFieldTypeResponse) GetHeaders() map[string][]string {
-	if r == nil {
-		return map[string][]string{}
-	}
-	return r.Headers
 }

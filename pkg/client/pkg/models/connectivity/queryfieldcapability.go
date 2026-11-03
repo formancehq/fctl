@@ -3,15 +3,8 @@
 package connectivity
 
 type QueryFieldCapability struct {
-	Operators []string `json:"operators"`
 	Enum      []string `json:"enum,omitempty"`
-}
-
-func (q *QueryFieldCapability) GetOperators() []string {
-	if q == nil {
-		return []string{}
-	}
-	return q.Operators
+	Operators []string `json:"operators"`
 }
 
 func (q *QueryFieldCapability) GetEnum() []string {
@@ -19,4 +12,11 @@ func (q *QueryFieldCapability) GetEnum() []string {
 		return nil
 	}
 	return q.Enum
+}
+
+func (q *QueryFieldCapability) GetOperators() []string {
+	if q == nil {
+		return []string{}
+	}
+	return q.Operators
 }

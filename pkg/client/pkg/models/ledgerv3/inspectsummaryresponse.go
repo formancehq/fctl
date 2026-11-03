@@ -9,14 +9,14 @@ import (
 type InspectSummaryResponse struct {
 	// Number of distinct values
 	Cardinality int64 `json:"cardinality"`
-	// Minimum value (null if index is empty)
-	Min any `json:"min,omitempty"`
-	// Maximum value (null if index is empty)
-	Max any `json:"max,omitempty"`
 	// Number of entities that have this metadata key set (non-null)
 	EntitiesWithKey int64 `json:"entitiesWithKey"`
 	// Number of entities with a null value for this key
 	EntitiesWithNull int64 `json:"entitiesWithNull"`
+	// Maximum value (null if index is empty)
+	Max any `json:"max,omitempty"`
+	// Minimum value (null if index is empty)
+	Min any `json:"min,omitempty"`
 }
 
 func (i InspectSummaryResponse) MarshalJSON() ([]byte, error) {
@@ -37,20 +37,6 @@ func (i *InspectSummaryResponse) GetCardinality() int64 {
 	return i.Cardinality
 }
 
-func (i *InspectSummaryResponse) GetMin() any {
-	if i == nil {
-		return nil
-	}
-	return i.Min
-}
-
-func (i *InspectSummaryResponse) GetMax() any {
-	if i == nil {
-		return nil
-	}
-	return i.Max
-}
-
 func (i *InspectSummaryResponse) GetEntitiesWithKey() int64 {
 	if i == nil {
 		return 0
@@ -63,4 +49,18 @@ func (i *InspectSummaryResponse) GetEntitiesWithNull() int64 {
 		return 0
 	}
 	return i.EntitiesWithNull
+}
+
+func (i *InspectSummaryResponse) GetMax() any {
+	if i == nil {
+		return nil
+	}
+	return i.Max
+}
+
+func (i *InspectSummaryResponse) GetMin() any {
+	if i == nil {
+		return nil
+	}
+	return i.Min
 }

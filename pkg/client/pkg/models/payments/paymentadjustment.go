@@ -9,16 +9,16 @@ import (
 )
 
 type PaymentAdjustment struct {
-	// Identifier the adjustment carries at the provider
-	Reference string `json:"reference"`
-	// When the adjustment occurred at the provider
-	CreatedAt time.Time `json:"createdAt"`
-	// Where a payment stands in its lifecycle
-	Status PaymentStatus `json:"status"`
 	// Amount carried by this adjustment
 	Amount *big.Int `json:"amount"`
+	// When the adjustment occurred at the provider
+	CreatedAt time.Time `json:"createdAt"`
 	// The provider's original payload for this adjustment
 	Raw map[string]any `json:"raw"`
+	// Identifier the adjustment carries at the provider
+	Reference string `json:"reference"`
+	// Where a payment stands in its lifecycle
+	Status PaymentStatus `json:"status"`
 }
 
 func (p PaymentAdjustment) MarshalJSON() ([]byte, error) {
@@ -32,11 +32,11 @@ func (p *PaymentAdjustment) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (p *PaymentAdjustment) GetReference() string {
+func (p *PaymentAdjustment) GetAmount() *big.Int {
 	if p == nil {
-		return ""
+		return big.NewInt(0)
 	}
-	return p.Reference
+	return p.Amount
 }
 
 func (p *PaymentAdjustment) GetCreatedAt() time.Time {
@@ -46,23 +46,23 @@ func (p *PaymentAdjustment) GetCreatedAt() time.Time {
 	return p.CreatedAt
 }
 
-func (p *PaymentAdjustment) GetStatus() PaymentStatus {
-	if p == nil {
-		return PaymentStatus("")
-	}
-	return p.Status
-}
-
-func (p *PaymentAdjustment) GetAmount() *big.Int {
-	if p == nil {
-		return big.NewInt(0)
-	}
-	return p.Amount
-}
-
 func (p *PaymentAdjustment) GetRaw() map[string]any {
 	if p == nil {
 		return map[string]any{}
 	}
 	return p.Raw
+}
+
+func (p *PaymentAdjustment) GetReference() string {
+	if p == nil {
+		return ""
+	}
+	return p.Reference
+}
+
+func (p *PaymentAdjustment) GetStatus() PaymentStatus {
+	if p == nil {
+		return PaymentStatus("")
+	}
+	return p.Status
 }

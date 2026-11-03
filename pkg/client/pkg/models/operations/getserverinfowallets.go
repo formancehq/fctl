@@ -10,12 +10,12 @@ import (
 type GetServerInfoWalletsResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Server information
+	ServerInfo *wallets.ServerInfo
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Server information
-	ServerInfo *wallets.ServerInfo
 }
 
 func (g *GetServerInfoWalletsResponse) GetContentType() string {
@@ -23,6 +23,13 @@ func (g *GetServerInfoWalletsResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetServerInfoWalletsResponse) GetServerInfo() *wallets.ServerInfo {
+	if g == nil {
+		return nil
+	}
+	return g.ServerInfo
 }
 
 func (g *GetServerInfoWalletsResponse) GetStatusCode() int {
@@ -37,11 +44,4 @@ func (g *GetServerInfoWalletsResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetServerInfoWalletsResponse) GetServerInfo() *wallets.ServerInfo {
-	if g == nil {
-		return nil
-	}
-	return g.ServerInfo
 }

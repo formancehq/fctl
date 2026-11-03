@@ -10,13 +10,13 @@ import (
 )
 
 type GetDeliveriesRequest struct {
-	ConfigID *string `queryParam:"style=form,explode=true,name=configId"`
+	ConfigID      *string    `queryParam:"style=form,explode=true,name=configId"`
+	CreatedAtFrom *time.Time `queryParam:"style=form,explode=true,name=createdAtFrom"`
+	CreatedAtTo   *time.Time `queryParam:"style=form,explode=true,name=createdAtTo"`
+	Cursor        *string    `queryParam:"style=form,explode=true,name=cursor"`
+	PageSize      *int64     `default:"100" queryParam:"style=form,explode=true,name=pageSize"`
 	// Current state of a delivery in its retry lifecycle
-	Status        *webhooks.DeliveryStatus `queryParam:"style=form,explode=true,name=status"`
-	CreatedAtFrom *time.Time               `queryParam:"style=form,explode=true,name=createdAtFrom"`
-	CreatedAtTo   *time.Time               `queryParam:"style=form,explode=true,name=createdAtTo"`
-	Cursor        *string                  `queryParam:"style=form,explode=true,name=cursor"`
-	PageSize      *int64                   `default:"100" queryParam:"style=form,explode=true,name=pageSize"`
+	Status *webhooks.DeliveryStatus `queryParam:"style=form,explode=true,name=status"`
 }
 
 func (g GetDeliveriesRequest) MarshalJSON() ([]byte, error) {
@@ -35,13 +35,6 @@ func (g *GetDeliveriesRequest) GetConfigID() *string {
 		return nil
 	}
 	return g.ConfigID
-}
-
-func (g *GetDeliveriesRequest) GetStatus() *webhooks.DeliveryStatus {
-	if g == nil {
-		return nil
-	}
-	return g.Status
 }
 
 func (g *GetDeliveriesRequest) GetCreatedAtFrom() *time.Time {
@@ -72,15 +65,22 @@ func (g *GetDeliveriesRequest) GetPageSize() *int64 {
 	return g.PageSize
 }
 
+func (g *GetDeliveriesRequest) GetStatus() *webhooks.DeliveryStatus {
+	if g == nil {
+		return nil
+	}
+	return g.Status
+}
+
 type GetDeliveriesResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Paginated deliveries without payloads.
+	DeliveriesResponse *webhooks.DeliveriesResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Paginated deliveries without payloads.
-	DeliveriesResponse *webhooks.DeliveriesResponse
 }
 
 func (g *GetDeliveriesResponse) GetContentType() string {
@@ -88,6 +88,13 @@ func (g *GetDeliveriesResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetDeliveriesResponse) GetDeliveriesResponse() *webhooks.DeliveriesResponse {
+	if g == nil {
+		return nil
+	}
+	return g.DeliveriesResponse
 }
 
 func (g *GetDeliveriesResponse) GetStatusCode() int {
@@ -102,11 +109,4 @@ func (g *GetDeliveriesResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetDeliveriesResponse) GetDeliveriesResponse() *webhooks.DeliveriesResponse {
-	if g == nil {
-		return nil
-	}
-	return g.DeliveriesResponse
 }

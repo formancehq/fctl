@@ -9,24 +9,24 @@ import (
 
 // V2WorkflowInstance - One run of a workflow, tracking its per-stage progress
 type V2WorkflowInstance struct {
-	// Identifier of the workflow this run belongs to
-	WorkflowID string `json:"workflowID"`
-	// Unique identifier of the run
-	ID string `json:"id"`
 	// When the run was started
 	CreatedAt time.Time `json:"createdAt"`
-	// When the run was last updated
-	UpdatedAt time.Time `json:"updatedAt"`
+	// Why the run failed, absent when it succeeded
+	Error *string `json:"error,omitempty"`
+	// Unique identifier of the run
+	ID string `json:"id"`
 	// Per-stage progress of the run
 	Status []V2StageStatus `json:"status,omitempty"`
 	// Whether the run has finished, successfully or not
 	Terminated bool `json:"terminated"`
 	// When the run finished, absent while it is still running
 	TerminatedAt *time.Time `json:"terminatedAt,omitempty"`
-	// Why the run failed, absent when it succeeded
-	Error *string `json:"error,omitempty"`
+	// When the run was last updated
+	UpdatedAt time.Time `json:"updatedAt"`
 	// A workflow definition and the stages it runs
 	Workflow *V2Workflow `json:"workflow,omitempty"`
+	// Identifier of the workflow this run belongs to
+	WorkflowID string `json:"workflowID"`
 }
 
 func (v V2WorkflowInstance) MarshalJSON() ([]byte, error) {
@@ -40,20 +40,6 @@ func (v *V2WorkflowInstance) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2WorkflowInstance) GetWorkflowID() string {
-	if v == nil {
-		return ""
-	}
-	return v.WorkflowID
-}
-
-func (v *V2WorkflowInstance) GetID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ID
-}
-
 func (v *V2WorkflowInstance) GetCreatedAt() time.Time {
 	if v == nil {
 		return time.Time{}
@@ -61,11 +47,18 @@ func (v *V2WorkflowInstance) GetCreatedAt() time.Time {
 	return v.CreatedAt
 }
 
-func (v *V2WorkflowInstance) GetUpdatedAt() time.Time {
+func (v *V2WorkflowInstance) GetError() *string {
 	if v == nil {
-		return time.Time{}
+		return nil
 	}
-	return v.UpdatedAt
+	return v.Error
+}
+
+func (v *V2WorkflowInstance) GetID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ID
 }
 
 func (v *V2WorkflowInstance) GetStatus() []V2StageStatus {
@@ -89,11 +82,11 @@ func (v *V2WorkflowInstance) GetTerminatedAt() *time.Time {
 	return v.TerminatedAt
 }
 
-func (v *V2WorkflowInstance) GetError() *string {
+func (v *V2WorkflowInstance) GetUpdatedAt() time.Time {
 	if v == nil {
-		return nil
+		return time.Time{}
 	}
-	return v.Error
+	return v.UpdatedAt
 }
 
 func (v *V2WorkflowInstance) GetWorkflow() *V2Workflow {
@@ -101,6 +94,13 @@ func (v *V2WorkflowInstance) GetWorkflow() *V2Workflow {
 		return nil
 	}
 	return v.Workflow
+}
+
+func (v *V2WorkflowInstance) GetWorkflowID() string {
+	if v == nil {
+		return ""
+	}
+	return v.WorkflowID
 }
 
 // #region class-body-v2workflowinstance

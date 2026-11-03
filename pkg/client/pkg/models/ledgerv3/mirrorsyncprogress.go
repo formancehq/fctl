@@ -38,16 +38,16 @@ func (e *State) UnmarshalJSON(data []byte) error {
 
 // MirrorSyncProgress - Sync progress for MIRROR ledgers (populated at read time)
 type MirrorSyncProgress struct {
-	// Current sync state (SYNCING = catching up, FOLLOWING = up to date)
-	State State `json:"state"`
 	// Last ingested v2 log ID
 	Cursor *big.Int `bigint:"string" json:"cursor"`
-	// Latest known log ID in the v2 source
-	SourceLogCount *big.Int `bigint:"string" json:"sourceLogCount"`
-	// Number of remaining logs to sync (sourceLogCount - cursor)
-	RemainingLogs *big.Int `bigint:"string" json:"remainingLogs"`
 	// Most recent mirror sync error (null if healthy)
 	Error *MirrorSyncError `json:"error,omitempty"`
+	// Number of remaining logs to sync (sourceLogCount - cursor)
+	RemainingLogs *big.Int `bigint:"string" json:"remainingLogs"`
+	// Latest known log ID in the v2 source
+	SourceLogCount *big.Int `bigint:"string" json:"sourceLogCount"`
+	// Current sync state (SYNCING = catching up, FOLLOWING = up to date)
+	State State `json:"state"`
 }
 
 func (m MirrorSyncProgress) MarshalJSON() ([]byte, error) {
@@ -61,13 +61,6 @@ func (m *MirrorSyncProgress) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (m *MirrorSyncProgress) GetState() State {
-	if m == nil {
-		return State("")
-	}
-	return m.State
-}
-
 func (m *MirrorSyncProgress) GetCursor() *big.Int {
 	if m == nil {
 		return big.NewInt(0)
@@ -75,11 +68,11 @@ func (m *MirrorSyncProgress) GetCursor() *big.Int {
 	return m.Cursor
 }
 
-func (m *MirrorSyncProgress) GetSourceLogCount() *big.Int {
+func (m *MirrorSyncProgress) GetError() *MirrorSyncError {
 	if m == nil {
-		return big.NewInt(0)
+		return nil
 	}
-	return m.SourceLogCount
+	return m.Error
 }
 
 func (m *MirrorSyncProgress) GetRemainingLogs() *big.Int {
@@ -89,9 +82,16 @@ func (m *MirrorSyncProgress) GetRemainingLogs() *big.Int {
 	return m.RemainingLogs
 }
 
-func (m *MirrorSyncProgress) GetError() *MirrorSyncError {
+func (m *MirrorSyncProgress) GetSourceLogCount() *big.Int {
 	if m == nil {
-		return nil
+		return big.NewInt(0)
 	}
-	return m.Error
+	return m.SourceLogCount
+}
+
+func (m *MirrorSyncProgress) GetState() State {
+	if m == nil {
+		return State("")
+	}
+	return m.State
 }

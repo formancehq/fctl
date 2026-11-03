@@ -2,62 +2,62 @@
 
 package wallets
 
-// Cursor - Paginated cursor wrapping the list of transactions
-type Cursor struct {
-	// Number of items requested per page
-	PageSize int64 `json:"pageSize"`
+// GetTransactionsResponseCursor - Paginated cursor wrapping the list of transactions
+type GetTransactionsResponseCursor struct {
+	Data []Transaction `json:"data"`
 	// Whether further pages are available
 	HasMore *bool `json:"hasMore,omitempty"`
+	// Cursor for the next page, absent on the last page
+	Next *string `json:"next,omitempty"`
+	// Number of items requested per page
+	PageSize int64 `json:"pageSize"`
 	// Cursor for the previous page, absent on the first page
 	Previous *string `json:"previous,omitempty"`
-	// Cursor for the next page, absent on the last page
-	Next *string       `json:"next,omitempty"`
-	Data []Transaction `json:"data"`
 }
 
-func (c *Cursor) GetPageSize() int64 {
-	if c == nil {
-		return 0
-	}
-	return c.PageSize
-}
-
-func (c *Cursor) GetHasMore() *bool {
-	if c == nil {
-		return nil
-	}
-	return c.HasMore
-}
-
-func (c *Cursor) GetPrevious() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Previous
-}
-
-func (c *Cursor) GetNext() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Next
-}
-
-func (c *Cursor) GetData() []Transaction {
-	if c == nil {
+func (g *GetTransactionsResponseCursor) GetData() []Transaction {
+	if g == nil {
 		return []Transaction{}
 	}
-	return c.Data
+	return g.Data
+}
+
+func (g *GetTransactionsResponseCursor) GetHasMore() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.HasMore
+}
+
+func (g *GetTransactionsResponseCursor) GetNext() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Next
+}
+
+func (g *GetTransactionsResponseCursor) GetPageSize() int64 {
+	if g == nil {
+		return 0
+	}
+	return g.PageSize
+}
+
+func (g *GetTransactionsResponseCursor) GetPrevious() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Previous
 }
 
 type GetTransactionsResponse struct {
 	// Paginated cursor wrapping the list of transactions
-	Cursor Cursor `json:"cursor"`
+	Cursor GetTransactionsResponseCursor `json:"cursor"`
 }
 
-func (g *GetTransactionsResponse) GetCursor() Cursor {
+func (g *GetTransactionsResponse) GetCursor() GetTransactionsResponseCursor {
 	if g == nil {
-		return Cursor{}
+		return GetTransactionsResponseCursor{}
 	}
 	return g.Cursor
 }

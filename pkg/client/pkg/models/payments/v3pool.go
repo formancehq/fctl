@@ -9,18 +9,18 @@ import (
 
 // V3Pool - A named group of accounts whose balances are aggregated together
 type V3Pool struct {
+	// When the pool was created
+	CreatedAt time.Time `json:"createdAt"`
 	// Unique identifier of the pool
 	ID string `json:"id"`
 	// Human-readable name of the pool
 	Name string `json:"name"`
-	// When the pool was created
-	CreatedAt time.Time `json:"createdAt"`
-	// Whether a pool holds a fixed account list or is driven by a query
-	Type *V3PoolTypeEnum `json:"type,omitempty"`
-	// Filter selecting the accounts a dynamic pool contains
-	Query map[string]any `json:"query,omitempty"`
 	// Accounts currently in the pool
 	PoolAccounts []string `json:"poolAccounts"`
+	// Filter selecting the accounts a dynamic pool contains
+	Query map[string]any `json:"query,omitempty"`
+	// Whether a pool holds a fixed account list or is driven by a query
+	Type *V3PoolTypeEnum `json:"type,omitempty"`
 }
 
 func (v V3Pool) MarshalJSON() ([]byte, error) {
@@ -32,6 +32,13 @@ func (v *V3Pool) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V3Pool) GetCreatedAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.CreatedAt
 }
 
 func (v *V3Pool) GetID() string {
@@ -48,18 +55,11 @@ func (v *V3Pool) GetName() string {
 	return v.Name
 }
 
-func (v *V3Pool) GetCreatedAt() time.Time {
+func (v *V3Pool) GetPoolAccounts() []string {
 	if v == nil {
-		return time.Time{}
+		return []string{}
 	}
-	return v.CreatedAt
-}
-
-func (v *V3Pool) GetType() *V3PoolTypeEnum {
-	if v == nil {
-		return nil
-	}
-	return v.Type
+	return v.PoolAccounts
 }
 
 func (v *V3Pool) GetQuery() map[string]any {
@@ -69,11 +69,11 @@ func (v *V3Pool) GetQuery() map[string]any {
 	return v.Query
 }
 
-func (v *V3Pool) GetPoolAccounts() []string {
+func (v *V3Pool) GetType() *V3PoolTypeEnum {
 	if v == nil {
-		return []string{}
+		return nil
 	}
-	return v.PoolAccounts
+	return v.Type
 }
 
 // #region class-body-v3pool

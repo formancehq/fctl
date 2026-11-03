@@ -8,19 +8,19 @@ import (
 )
 
 type V3GetPaymentServiceUserLinkAttemptFromConnectorIDRequest struct {
-	// The payment service user ID
-	PaymentServiceUserID string `pathParam:"style=simple,explode=false,name=paymentServiceUserID"`
-	// The connector ID
-	ConnectorID string `pathParam:"style=simple,explode=false,name=connectorID"`
 	// The attempt ID
 	AttemptID string `pathParam:"style=simple,explode=false,name=attemptID"`
+	// The connector ID
+	ConnectorID string `pathParam:"style=simple,explode=false,name=connectorID"`
+	// The payment service user ID
+	PaymentServiceUserID string `pathParam:"style=simple,explode=false,name=paymentServiceUserID"`
 }
 
-func (v *V3GetPaymentServiceUserLinkAttemptFromConnectorIDRequest) GetPaymentServiceUserID() string {
+func (v *V3GetPaymentServiceUserLinkAttemptFromConnectorIDRequest) GetAttemptID() string {
 	if v == nil {
 		return ""
 	}
-	return v.PaymentServiceUserID
+	return v.AttemptID
 }
 
 func (v *V3GetPaymentServiceUserLinkAttemptFromConnectorIDRequest) GetConnectorID() string {
@@ -30,11 +30,11 @@ func (v *V3GetPaymentServiceUserLinkAttemptFromConnectorIDRequest) GetConnectorI
 	return v.ConnectorID
 }
 
-func (v *V3GetPaymentServiceUserLinkAttemptFromConnectorIDRequest) GetAttemptID() string {
+func (v *V3GetPaymentServiceUserLinkAttemptFromConnectorIDRequest) GetPaymentServiceUserID() string {
 	if v == nil {
 		return ""
 	}
-	return v.AttemptID
+	return v.PaymentServiceUserID
 }
 
 // #region class-body-v3getpaymentserviceuserlinkattemptfromconnectoridrequest

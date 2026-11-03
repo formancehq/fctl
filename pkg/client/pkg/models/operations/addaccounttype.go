@@ -19,16 +19,9 @@ func (a *AddAccountTypeSecurity) GetBearerAuth() *string {
 }
 
 type AddAccountTypeRequest struct {
-	// Name of the ledger
-	LedgerName            string                         `pathParam:"style=simple,explode=false,name=ledgerName"`
 	AddAccountTypeRequest ledgerv3.AddAccountTypeRequest `request:"mediaType=application/json"`
-}
-
-func (a *AddAccountTypeRequest) GetLedgerName() string {
-	if a == nil {
-		return ""
-	}
-	return a.LedgerName
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 }
 
 func (a *AddAccountTypeRequest) GetAddAccountTypeRequest() ledgerv3.AddAccountTypeRequest {
@@ -38,20 +31,27 @@ func (a *AddAccountTypeRequest) GetAddAccountTypeRequest() ledgerv3.AddAccountTy
 	return a.AddAccountTypeRequest
 }
 
+func (a *AddAccountTypeRequest) GetLedgerName() string {
+	if a == nil {
+		return ""
+	}
+	return a.LedgerName
+}
+
 type AddAccountTypeResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (a *AddAccountTypeResponse) GetContentType() string {
@@ -59,6 +59,27 @@ func (a *AddAccountTypeResponse) GetContentType() string {
 		return ""
 	}
 	return a.ContentType
+}
+
+func (a *AddAccountTypeResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if a == nil {
+		return nil
+	}
+	return a.ErrorResponse
+}
+
+func (a *AddAccountTypeResponse) GetForbidden() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Forbidden
+}
+
+func (a *AddAccountTypeResponse) GetHeaders() map[string][]string {
+	if a == nil {
+		return map[string][]string{}
+	}
+	return a.Headers
 }
 
 func (a *AddAccountTypeResponse) GetStatusCode() int {
@@ -75,30 +96,9 @@ func (a *AddAccountTypeResponse) GetRawResponse() *http.Response {
 	return a.RawResponse
 }
 
-func (a *AddAccountTypeResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if a == nil {
-		return nil
-	}
-	return a.ErrorResponse
-}
-
 func (a *AddAccountTypeResponse) GetUnauthorized() *string {
 	if a == nil {
 		return nil
 	}
 	return a.Unauthorized
-}
-
-func (a *AddAccountTypeResponse) GetForbidden() *string {
-	if a == nil {
-		return nil
-	}
-	return a.Forbidden
-}
-
-func (a *AddAccountTypeResponse) GetHeaders() map[string][]string {
-	if a == nil {
-		return map[string][]string{}
-	}
-	return a.Headers
 }

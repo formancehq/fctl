@@ -4,18 +4,18 @@ package reconciliation
 
 // RulesCursorResponseCursor - Paginated cursor wrapping the list of rules
 type RulesCursorResponseCursor struct {
-	PageSize int64   `json:"pageSize"`
-	HasMore  bool    `json:"hasMore"`
-	Previous *string `json:"previous,omitempty"`
-	Next     *string `json:"next,omitempty"`
 	Data     []Rule  `json:"data"`
+	HasMore  bool    `json:"hasMore"`
+	Next     *string `json:"next,omitempty"`
+	PageSize int64   `json:"pageSize"`
+	Previous *string `json:"previous,omitempty"`
 }
 
-func (r *RulesCursorResponseCursor) GetPageSize() int64 {
+func (r *RulesCursorResponseCursor) GetData() []Rule {
 	if r == nil {
-		return 0
+		return []Rule{}
 	}
-	return r.PageSize
+	return r.Data
 }
 
 func (r *RulesCursorResponseCursor) GetHasMore() bool {
@@ -25,13 +25,6 @@ func (r *RulesCursorResponseCursor) GetHasMore() bool {
 	return r.HasMore
 }
 
-func (r *RulesCursorResponseCursor) GetPrevious() *string {
-	if r == nil {
-		return nil
-	}
-	return r.Previous
-}
-
 func (r *RulesCursorResponseCursor) GetNext() *string {
 	if r == nil {
 		return nil
@@ -39,11 +32,18 @@ func (r *RulesCursorResponseCursor) GetNext() *string {
 	return r.Next
 }
 
-func (r *RulesCursorResponseCursor) GetData() []Rule {
+func (r *RulesCursorResponseCursor) GetPageSize() int64 {
 	if r == nil {
-		return []Rule{}
+		return 0
 	}
-	return r.Data
+	return r.PageSize
+}
+
+func (r *RulesCursorResponseCursor) GetPrevious() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Previous
 }
 
 // RulesCursorResponse - OK

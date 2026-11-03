@@ -20,14 +20,21 @@ func (g *GetAlertRequest) GetAlertID() string {
 }
 
 type GetAlertResponse struct {
+	// OK
+	AlertResponse *reconciliation.AlertResponse
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	AlertResponse *reconciliation.AlertResponse
+}
+
+func (g *GetAlertResponse) GetAlertResponse() *reconciliation.AlertResponse {
+	if g == nil {
+		return nil
+	}
+	return g.AlertResponse
 }
 
 func (g *GetAlertResponse) GetContentType() string {
@@ -49,11 +56,4 @@ func (g *GetAlertResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetAlertResponse) GetAlertResponse() *reconciliation.AlertResponse {
-	if g == nil {
-		return nil
-	}
-	return g.AlertResponse
 }

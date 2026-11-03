@@ -8,17 +8,10 @@ import (
 )
 
 type ListInstancesRequest struct {
-	// A workflow id
-	WorkflowID *string `queryParam:"style=form,explode=true,name=workflowID"`
 	// Filter running instances
 	Running *bool `queryParam:"style=form,explode=true,name=running"`
-}
-
-func (l *ListInstancesRequest) GetWorkflowID() *string {
-	if l == nil {
-		return nil
-	}
-	return l.WorkflowID
+	// A workflow id
+	WorkflowID *string `queryParam:"style=form,explode=true,name=workflowID"`
 }
 
 func (l *ListInstancesRequest) GetRunning() *bool {
@@ -28,15 +21,22 @@ func (l *ListInstancesRequest) GetRunning() *bool {
 	return l.Running
 }
 
+func (l *ListInstancesRequest) GetWorkflowID() *string {
+	if l == nil {
+		return nil
+	}
+	return l.WorkflowID
+}
+
 type ListInstancesResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// List of workflow instances
+	ListRunsResponse *orchestration.ListRunsResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// List of workflow instances
-	ListRunsResponse *orchestration.ListRunsResponse
 }
 
 func (l *ListInstancesResponse) GetContentType() string {
@@ -44,6 +44,13 @@ func (l *ListInstancesResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListInstancesResponse) GetListRunsResponse() *orchestration.ListRunsResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ListRunsResponse
 }
 
 func (l *ListInstancesResponse) GetStatusCode() int {
@@ -58,11 +65,4 @@ func (l *ListInstancesResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return l.RawResponse
-}
-
-func (l *ListInstancesResponse) GetListRunsResponse() *orchestration.ListRunsResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ListRunsResponse
 }

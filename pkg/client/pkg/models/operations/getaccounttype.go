@@ -20,10 +20,6 @@ func (g *GetAccountTypeSecurity) GetBearerAuth() *string {
 }
 
 type GetAccountTypeRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Account type name, URL-encoded as one path segment. Decoded exactly once.
-	TypeName string `pathParam:"style=simple,explode=false,name=typeName"`
 	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
 	// barrier and waits for the receiving node to apply up to it. `stale`
 	// serves the read from the receiving node's own store, with no barrier
@@ -34,6 +30,10 @@ type GetAccountTypeRequest struct {
 	// gRPC equivalent is the `x-consistency` request metadata.
 	//
 	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Account type name, URL-encoded as one path segment. Decoded exactly once.
+	TypeName string `pathParam:"style=simple,explode=false,name=typeName"`
 }
 
 func (g GetAccountTypeRequest) MarshalJSON() ([]byte, error) {
@@ -45,6 +45,13 @@ func (g *GetAccountTypeRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (g *GetAccountTypeRequest) GetXConsistency() *ledgerv3.Consistency {
+	if g == nil {
+		return nil
+	}
+	return g.XConsistency
 }
 
 func (g *GetAccountTypeRequest) GetLedgerName() string {
@@ -61,29 +68,22 @@ func (g *GetAccountTypeRequest) GetTypeName() string {
 	return g.TypeName
 }
 
-func (g *GetAccountTypeRequest) GetXConsistency() *ledgerv3.Consistency {
-	if g == nil {
-		return nil
-	}
-	return g.XConsistency
-}
-
 type GetAccountTypeResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	// Account type retrieved successfully
+	GetAccountTypeResponse *ledgerv3.GetAccountTypeResponse
+	Headers                map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Account type retrieved successfully
-	GetAccountTypeResponse *ledgerv3.GetAccountTypeResponse
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (g *GetAccountTypeResponse) GetContentType() string {
@@ -91,6 +91,34 @@ func (g *GetAccountTypeResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetAccountTypeResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if g == nil {
+		return nil
+	}
+	return g.ErrorResponse
+}
+
+func (g *GetAccountTypeResponse) GetForbidden() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Forbidden
+}
+
+func (g *GetAccountTypeResponse) GetGetAccountTypeResponse() *ledgerv3.GetAccountTypeResponse {
+	if g == nil {
+		return nil
+	}
+	return g.GetAccountTypeResponse
+}
+
+func (g *GetAccountTypeResponse) GetHeaders() map[string][]string {
+	if g == nil {
+		return map[string][]string{}
+	}
+	return g.Headers
 }
 
 func (g *GetAccountTypeResponse) GetStatusCode() int {
@@ -107,37 +135,9 @@ func (g *GetAccountTypeResponse) GetRawResponse() *http.Response {
 	return g.RawResponse
 }
 
-func (g *GetAccountTypeResponse) GetGetAccountTypeResponse() *ledgerv3.GetAccountTypeResponse {
-	if g == nil {
-		return nil
-	}
-	return g.GetAccountTypeResponse
-}
-
-func (g *GetAccountTypeResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if g == nil {
-		return nil
-	}
-	return g.ErrorResponse
-}
-
 func (g *GetAccountTypeResponse) GetUnauthorized() *string {
 	if g == nil {
 		return nil
 	}
 	return g.Unauthorized
-}
-
-func (g *GetAccountTypeResponse) GetForbidden() *string {
-	if g == nil {
-		return nil
-	}
-	return g.Forbidden
-}
-
-func (g *GetAccountTypeResponse) GetHeaders() map[string][]string {
-	if g == nil {
-		return map[string][]string{}
-	}
-	return g.Headers
 }

@@ -7,12 +7,12 @@ import (
 )
 
 type V2WalletSubject struct {
-	// Discriminator identifying this subject as a wallet
-	Type string `json:"type"`
-	// Identifier of the wallet
-	Identifier string `json:"identifier"`
 	// Name of the balance within the wallet. Defaults to the main balance when omitted
 	Balance *string `json:"balance,omitempty"`
+	// Identifier of the wallet
+	Identifier string `json:"identifier"`
+	// Discriminator identifying this subject as a wallet
+	Type string `json:"type"`
 }
 
 func (v V2WalletSubject) MarshalJSON() ([]byte, error) {
@@ -20,17 +20,17 @@ func (v V2WalletSubject) MarshalJSON() ([]byte, error) {
 }
 
 func (v *V2WalletSubject) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"type", "identifier"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"identifier", "type"}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (v *V2WalletSubject) GetType() string {
+func (v *V2WalletSubject) GetBalance() *string {
 	if v == nil {
-		return ""
+		return nil
 	}
-	return v.Type
+	return v.Balance
 }
 
 func (v *V2WalletSubject) GetIdentifier() string {
@@ -40,11 +40,11 @@ func (v *V2WalletSubject) GetIdentifier() string {
 	return v.Identifier
 }
 
-func (v *V2WalletSubject) GetBalance() *string {
+func (v *V2WalletSubject) GetType() string {
 	if v == nil {
-		return nil
+		return ""
 	}
-	return v.Balance
+	return v.Type
 }
 
 // #region class-body-v2walletsubject

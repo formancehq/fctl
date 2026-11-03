@@ -20,10 +20,6 @@ func (g *GetIndexSecurity) GetBearerAuth() *string {
 }
 
 type GetIndexRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Canonical form of the target IndexID.
-	CanonicalID string `pathParam:"style=simple,explode=false,name=canonicalId"`
 	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
 	// barrier and waits for the receiving node to apply up to it. `stale`
 	// serves the read from the receiving node's own store, with no barrier
@@ -34,6 +30,10 @@ type GetIndexRequest struct {
 	// gRPC equivalent is the `x-consistency` request metadata.
 	//
 	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Canonical form of the target IndexID.
+	CanonicalID string `pathParam:"style=simple,explode=false,name=canonicalId"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 }
 
 func (g GetIndexRequest) MarshalJSON() ([]byte, error) {
@@ -47,11 +47,11 @@ func (g *GetIndexRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (g *GetIndexRequest) GetLedgerName() string {
+func (g *GetIndexRequest) GetXConsistency() *ledgerv3.Consistency {
 	if g == nil {
-		return ""
+		return nil
 	}
-	return g.LedgerName
+	return g.XConsistency
 }
 
 func (g *GetIndexRequest) GetCanonicalID() string {
@@ -61,11 +61,11 @@ func (g *GetIndexRequest) GetCanonicalID() string {
 	return g.CanonicalID
 }
 
-func (g *GetIndexRequest) GetXConsistency() *ledgerv3.Consistency {
+func (g *GetIndexRequest) GetLedgerName() string {
 	if g == nil {
-		return nil
+		return ""
 	}
-	return g.XConsistency
+	return g.LedgerName
 }
 
 // GetIndexResponseBody - Index retrieved successfully.
@@ -84,18 +84,18 @@ func (g *GetIndexResponseBody) GetData() map[string]any {
 type GetIndexResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Index retrieved successfully.
-	Object *GetIndexResponseBody
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
+	// Index retrieved successfully.
+	Object *GetIndexResponseBody
 }
 
 func (g *GetIndexResponse) GetContentType() string {
@@ -103,6 +103,20 @@ func (g *GetIndexResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetIndexResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if g == nil {
+		return nil
+	}
+	return g.ErrorResponse
+}
+
+func (g *GetIndexResponse) GetForbidden() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Forbidden
 }
 
 func (g *GetIndexResponse) GetStatusCode() int {
@@ -119,20 +133,6 @@ func (g *GetIndexResponse) GetRawResponse() *http.Response {
 	return g.RawResponse
 }
 
-func (g *GetIndexResponse) GetObject() *GetIndexResponseBody {
-	if g == nil {
-		return nil
-	}
-	return g.Object
-}
-
-func (g *GetIndexResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if g == nil {
-		return nil
-	}
-	return g.ErrorResponse
-}
-
 func (g *GetIndexResponse) GetUnauthorized() *string {
 	if g == nil {
 		return nil
@@ -140,9 +140,9 @@ func (g *GetIndexResponse) GetUnauthorized() *string {
 	return g.Unauthorized
 }
 
-func (g *GetIndexResponse) GetForbidden() *string {
+func (g *GetIndexResponse) GetObject() *GetIndexResponseBody {
 	if g == nil {
 		return nil
 	}
-	return g.Forbidden
+	return g.Object
 }

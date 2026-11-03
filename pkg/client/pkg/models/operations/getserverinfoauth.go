@@ -10,12 +10,12 @@ import (
 type GetServerInfoAuthResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Server information
+	ServerInfo *auth.ServerInfo
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Server information
-	ServerInfo *auth.ServerInfo
 }
 
 func (g *GetServerInfoAuthResponse) GetContentType() string {
@@ -23,6 +23,13 @@ func (g *GetServerInfoAuthResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetServerInfoAuthResponse) GetServerInfo() *auth.ServerInfo {
+	if g == nil {
+		return nil
+	}
+	return g.ServerInfo
 }
 
 func (g *GetServerInfoAuthResponse) GetStatusCode() int {
@@ -37,11 +44,4 @@ func (g *GetServerInfoAuthResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetServerInfoAuthResponse) GetServerInfo() *auth.ServerInfo {
-	if g == nil {
-		return nil
-	}
-	return g.ServerInfo
 }

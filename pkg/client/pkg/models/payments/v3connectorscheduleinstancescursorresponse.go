@@ -4,18 +4,18 @@ package payments
 
 // V3ConnectorScheduleInstancesCursorResponseCursor - Paginated cursor wrapping the schedule's runs
 type V3ConnectorScheduleInstancesCursorResponseCursor struct {
-	PageSize int64        `json:"pageSize"`
-	HasMore  bool         `json:"hasMore"`
-	Previous *string      `json:"previous,omitempty"`
-	Next     *string      `json:"next,omitempty"`
 	Data     []V3Instance `json:"data"`
+	HasMore  bool         `json:"hasMore"`
+	Next     *string      `json:"next,omitempty"`
+	PageSize int64        `json:"pageSize"`
+	Previous *string      `json:"previous,omitempty"`
 }
 
-func (v *V3ConnectorScheduleInstancesCursorResponseCursor) GetPageSize() int64 {
+func (v *V3ConnectorScheduleInstancesCursorResponseCursor) GetData() []V3Instance {
 	if v == nil {
-		return 0
+		return []V3Instance{}
 	}
-	return v.PageSize
+	return v.Data
 }
 
 func (v *V3ConnectorScheduleInstancesCursorResponseCursor) GetHasMore() bool {
@@ -25,13 +25,6 @@ func (v *V3ConnectorScheduleInstancesCursorResponseCursor) GetHasMore() bool {
 	return v.HasMore
 }
 
-func (v *V3ConnectorScheduleInstancesCursorResponseCursor) GetPrevious() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Previous
-}
-
 func (v *V3ConnectorScheduleInstancesCursorResponseCursor) GetNext() *string {
 	if v == nil {
 		return nil
@@ -39,11 +32,18 @@ func (v *V3ConnectorScheduleInstancesCursorResponseCursor) GetNext() *string {
 	return v.Next
 }
 
-func (v *V3ConnectorScheduleInstancesCursorResponseCursor) GetData() []V3Instance {
+func (v *V3ConnectorScheduleInstancesCursorResponseCursor) GetPageSize() int64 {
 	if v == nil {
-		return []V3Instance{}
+		return 0
 	}
-	return v.Data
+	return v.PageSize
+}
+
+func (v *V3ConnectorScheduleInstancesCursorResponseCursor) GetPrevious() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Previous
 }
 
 // #region class-body-v3connectorscheduleinstancescursorresponsecursor

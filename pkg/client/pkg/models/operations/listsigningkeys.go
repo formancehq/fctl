@@ -20,15 +20,6 @@ func (l *ListSigningKeysSecurity) GetBearerAuth() *string {
 }
 
 type ListSigningKeysRequest struct {
-	// Maximum number of items per page. 0 or absent means 100; values above 1000 are clamped to 1000.
-	PageSize *int64 `default:"100" queryParam:"style=form,explode=true,name=pageSize"`
-	// Page token from a previous response's `next` or `previous` field (see
-	// the `PageToken` schema). Omit for the first page. Pass the same
-	// `reverse` and `filter` on every page of a walk.
-	//
-	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
-	// List in descending key id order when true.
-	Reverse *bool `default:"false" queryParam:"style=form,explode=true,name=reverse"`
 	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
 	// barrier and waits for the receiving node to apply up to it. `stale`
 	// serves the read from the receiving node's own store, with no barrier
@@ -39,6 +30,15 @@ type ListSigningKeysRequest struct {
 	// gRPC equivalent is the `x-consistency` request metadata.
 	//
 	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Page token from a previous response's `next` or `previous` field (see
+	// the `PageToken` schema). Omit for the first page. Pass the same
+	// `reverse` and `filter` on every page of a walk.
+	//
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// Maximum number of items per page. 0 or absent means 100; values above 1000 are clamped to 1000.
+	PageSize *int64 `default:"100" queryParam:"style=form,explode=true,name=pageSize"`
+	// List in descending key id order when true.
+	Reverse *bool `default:"false" queryParam:"style=form,explode=true,name=reverse"`
 }
 
 func (l ListSigningKeysRequest) MarshalJSON() ([]byte, error) {
@@ -52,11 +52,11 @@ func (l *ListSigningKeysRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (l *ListSigningKeysRequest) GetPageSize() *int64 {
+func (l *ListSigningKeysRequest) GetXConsistency() *ledgerv3.Consistency {
 	if l == nil {
 		return nil
 	}
-	return l.PageSize
+	return l.XConsistency
 }
 
 func (l *ListSigningKeysRequest) GetCursor() *string {
@@ -66,6 +66,13 @@ func (l *ListSigningKeysRequest) GetCursor() *string {
 	return l.Cursor
 }
 
+func (l *ListSigningKeysRequest) GetPageSize() *int64 {
+	if l == nil {
+		return nil
+	}
+	return l.PageSize
+}
+
 func (l *ListSigningKeysRequest) GetReverse() *bool {
 	if l == nil {
 		return nil
@@ -73,16 +80,11 @@ func (l *ListSigningKeysRequest) GetReverse() *bool {
 	return l.Reverse
 }
 
-func (l *ListSigningKeysRequest) GetXConsistency() *ledgerv3.Consistency {
-	if l == nil {
-		return nil
-	}
-	return l.XConsistency
-}
-
 // ListSigningKeysResponseBody - Signing keys retrieved successfully.
 type ListSigningKeysResponseBody struct {
 	Data []map[string]any `json:"data"`
+	// True when a following page exists; set iff `next` is.
+	HasMore bool `json:"hasMore"`
 	// Page token of a paged list. Clients normally pass back the `next` or
 	// `previous` value of a previous response verbatim; building one by hand
 	// is supported.
@@ -157,8 +159,6 @@ type ListSigningKeysResponseBody struct {
 	// the endpoint, is rejected with 400 `INVALID_REQUEST`.
 	//
 	Previous *string `json:"previous,omitempty"`
-	// True when a following page exists; set iff `next` is.
-	HasMore bool `json:"hasMore"`
 }
 
 func (l *ListSigningKeysResponseBody) GetData() []map[string]any {
@@ -166,6 +166,13 @@ func (l *ListSigningKeysResponseBody) GetData() []map[string]any {
 		return []map[string]any{}
 	}
 	return l.Data
+}
+
+func (l *ListSigningKeysResponseBody) GetHasMore() bool {
+	if l == nil {
+		return false
+	}
+	return l.HasMore
 }
 
 func (l *ListSigningKeysResponseBody) GetNext() *string {
@@ -182,28 +189,21 @@ func (l *ListSigningKeysResponseBody) GetPrevious() *string {
 	return l.Previous
 }
 
-func (l *ListSigningKeysResponseBody) GetHasMore() bool {
-	if l == nil {
-		return false
-	}
-	return l.HasMore
-}
-
 type ListSigningKeysResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Signing keys retrieved successfully.
-	Object *ListSigningKeysResponseBody
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
+	// Signing keys retrieved successfully.
+	Object *ListSigningKeysResponseBody
 }
 
 func (l *ListSigningKeysResponse) GetContentType() string {
@@ -211,6 +211,20 @@ func (l *ListSigningKeysResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListSigningKeysResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ErrorResponse
+}
+
+func (l *ListSigningKeysResponse) GetForbidden() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Forbidden
 }
 
 func (l *ListSigningKeysResponse) GetStatusCode() int {
@@ -227,20 +241,6 @@ func (l *ListSigningKeysResponse) GetRawResponse() *http.Response {
 	return l.RawResponse
 }
 
-func (l *ListSigningKeysResponse) GetObject() *ListSigningKeysResponseBody {
-	if l == nil {
-		return nil
-	}
-	return l.Object
-}
-
-func (l *ListSigningKeysResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ErrorResponse
-}
-
 func (l *ListSigningKeysResponse) GetUnauthorized() *string {
 	if l == nil {
 		return nil
@@ -248,9 +248,9 @@ func (l *ListSigningKeysResponse) GetUnauthorized() *string {
 	return l.Unauthorized
 }
 
-func (l *ListSigningKeysResponse) GetForbidden() *string {
+func (l *ListSigningKeysResponse) GetObject() *ListSigningKeysResponseBody {
 	if l == nil {
 		return nil
 	}
-	return l.Forbidden
+	return l.Object
 }

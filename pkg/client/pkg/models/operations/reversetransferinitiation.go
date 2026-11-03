@@ -8,16 +8,9 @@ import (
 )
 
 type ReverseTransferInitiationRequest struct {
-	// The transfer ID.
-	TransferID                       string                                    `pathParam:"style=simple,explode=false,name=transferId"`
 	ReverseTransferInitiationRequest payments.ReverseTransferInitiationRequest `request:"mediaType=application/json"`
-}
-
-func (r *ReverseTransferInitiationRequest) GetTransferID() string {
-	if r == nil {
-		return ""
-	}
-	return r.TransferID
+	// The transfer ID.
+	TransferID string `pathParam:"style=simple,explode=false,name=transferId"`
 }
 
 func (r *ReverseTransferInitiationRequest) GetReverseTransferInitiationRequest() payments.ReverseTransferInitiationRequest {
@@ -25,6 +18,13 @@ func (r *ReverseTransferInitiationRequest) GetReverseTransferInitiationRequest()
 		return payments.ReverseTransferInitiationRequest{}
 	}
 	return r.ReverseTransferInitiationRequest
+}
+
+func (r *ReverseTransferInitiationRequest) GetTransferID() string {
+	if r == nil {
+		return ""
+	}
+	return r.TransferID
 }
 
 type ReverseTransferInitiationResponse struct {

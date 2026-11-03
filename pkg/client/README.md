@@ -138,6 +138,7 @@ package main
 import (
 	"context"
 	"github.com/formancehq/fctl/v3/pkg/client"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 	"log"
 )
@@ -147,11 +148,22 @@ func main() {
 
 	s := client.New()
 
-	res, err := s.Ledger.V3.ListAllLedgers(ctx, operations.ListAllLedgersRequest{}, client.Pointer(operations.ListAllLedgersSecurity{}))
+	res, err := s.Connectivity.V1.CreateConnection(ctx, connectivity.ConnectionCreate{
+		Configuration: connectivity.Configuration{
+			Channel:   connectivity.ConnectionCreateChannelStable.ToPointer(),
+			Connector: "stripe",
+			Env: map[string]string{
+				"STRIPE_API_KEY": "<your-api-key>",
+			},
+			Ledger:       "main",
+			PollInterval: client.Pointer("30s"),
+		},
+		Name: "stripe-main",
+	}, client.Pointer(operations.CreateConnectionSecurity{}))
 	if err != nil {
 		log.Fatal(err)
 	}
-	if res.ListAllLedgersResponse != nil {
+	if res.Connection != nil {
 		// handle response
 	}
 }
@@ -171,395 +183,395 @@ func main() {
 
 ### [Auth.V1](docs/sdks/v1/README.md)
 
+* [CreateClient](docs/sdks/v1/README.md#createclient) - Create client
+* [CreateSecret](docs/sdks/v1/README.md#createsecret) - Add a secret to a client
+* [DeleteClient](docs/sdks/v1/README.md#deleteclient) - Delete client
+* [DeleteSecret](docs/sdks/v1/README.md#deletesecret) - Delete a secret from a client
 * [GetOIDCWellKnowns](docs/sdks/v1/README.md#getoidcwellknowns) - Retrieve OpenID connect well-knowns.
 * [GetServerInfoAuth](docs/sdks/v1/README.md#getserverinfoauth) - Get server info
 * [ListClients](docs/sdks/v1/README.md#listclients) - List clients
-* [CreateClient](docs/sdks/v1/README.md#createclient) - Create client
-* [ReadClient](docs/sdks/v1/README.md#readclient) - Read client
-* [UpdateClient](docs/sdks/v1/README.md#updateclient) - Update client
-* [DeleteClient](docs/sdks/v1/README.md#deleteclient) - Delete client
-* [CreateSecret](docs/sdks/v1/README.md#createsecret) - Add a secret to a client
-* [DeleteSecret](docs/sdks/v1/README.md#deletesecret) - Delete a secret from a client
 * [ListUsers](docs/sdks/v1/README.md#listusers) - List users
+* [ReadClient](docs/sdks/v1/README.md#readclient) - Read client
 * [ReadUser](docs/sdks/v1/README.md#readuser) - Read user
+* [UpdateClient](docs/sdks/v1/README.md#updateclient) - Update client
 
-### [Connectivity.V1](docs/sdks/formanceconnectivityv1/README.md)
+### [Connectivity.V1](docs/sdks/formancev1/README.md)
 
-* [GetQueryCapabilities](docs/sdks/formanceconnectivityv1/README.md#getquerycapabilities) - The filterable keys, operators and value enums per resource
-* [Healthcheck](docs/sdks/formanceconnectivityv1/README.md#healthcheck) - Health probe
-* [ConnectivityInfo](docs/sdks/formanceconnectivityv1/README.md#connectivityinfo) - Build information
-* [ListConnectors](docs/sdks/formanceconnectivityv1/README.md#listconnectors) - List published Connectors with their catalogue identity
-* [GetConnectorFacets](docs/sdks/formanceconnectivityv1/README.md#getconnectorfacets) - Facet-value distribution over the published catalogue
-* [GetConnector](docs/sdks/formanceconnectivityv1/README.md#getconnector) - Get a Connector (lean connector metadata)
-* [ListConnectorVersions](docs/sdks/formanceconnectivityv1/README.md#listconnectorversions) - List the installable versions of a Connector
-* [GetConnectorVersion](docs/sdks/formanceconnectivityv1/README.md#getconnectorversion) - Get one Connector version (including its configSchema and additionalMetadata)
-* [ListConnections](docs/sdks/formanceconnectivityv1/README.md#listconnections) - List connector instances for this tenant
-* [CreateConnection](docs/sdks/formanceconnectivityv1/README.md#createconnection) - Create a Connection
-* [GetConnection](docs/sdks/formanceconnectivityv1/README.md#getconnection) - Get a Connection
-* [ReplaceConnection](docs/sdks/formanceconnectivityv1/README.md#replaceconnection) - Replace a connector instance configuration
-* [PatchConnection](docs/sdks/formanceconnectivityv1/README.md#patchconnection) - Merge-patch a connector instance configuration
-* [DeleteConnection](docs/sdks/formanceconnectivityv1/README.md#deleteconnection) - Delete a Connection
+* [ConnectivityInfo](docs/sdks/formancev1/README.md#connectivityinfo) - Build information
+* [CreateConnection](docs/sdks/formancev1/README.md#createconnection) - Create a Connection
+* [DeleteConnection](docs/sdks/formancev1/README.md#deleteconnection) - Delete a Connection
+* [GetConnection](docs/sdks/formancev1/README.md#getconnection) - Get a Connection
+* [GetConnector](docs/sdks/formancev1/README.md#getconnector) - Get a Connector (lean connector metadata)
+* [GetConnectorFacets](docs/sdks/formancev1/README.md#getconnectorfacets) - Facet-value distribution over the published catalogue
+* [GetConnectorVersion](docs/sdks/formancev1/README.md#getconnectorversion) - Get one Connector version (including its configSchema and additionalMetadata)
+* [GetQueryCapabilities](docs/sdks/formancev1/README.md#getquerycapabilities) - The filterable keys, operators and value enums per resource
+* [Healthcheck](docs/sdks/formancev1/README.md#healthcheck) - Health probe
+* [ListConnections](docs/sdks/formancev1/README.md#listconnections) - List connector instances for this tenant
+* [ListConnectorVersions](docs/sdks/formancev1/README.md#listconnectorversions) - List the installable versions of a Connector
+* [ListConnectors](docs/sdks/formancev1/README.md#listconnectors) - List published Connectors with their catalogue identity
+* [PatchConnection](docs/sdks/formancev1/README.md#patchconnection) - Merge-patch a connector instance configuration
+* [ReplaceConnection](docs/sdks/formancev1/README.md#replaceconnection) - Replace a connector instance configuration
 
-### [Ledger.V1](docs/sdks/formancev1/README.md)
+### [Ledger.V1](docs/sdks/formanceledgerv1/README.md)
 
-* [GetLedgerInfo](docs/sdks/formancev1/README.md#getledgerinfo) - Get information about a ledger
-* [CountAccounts](docs/sdks/formancev1/README.md#countaccounts) - Count the accounts from a ledger
-* [ListAccountsLedger](docs/sdks/formancev1/README.md#listaccountsledger) - List accounts from a ledger
-* [GetAccountLedger](docs/sdks/formancev1/README.md#getaccountledger) - Get account by its address
-* [AddMetadataToAccount](docs/sdks/formancev1/README.md#addmetadatatoaccount) - Add metadata to an account
-* [GetMapping](docs/sdks/formancev1/README.md#getmapping) - Get the mapping of a ledger
-* [UpdateMapping](docs/sdks/formancev1/README.md#updatemapping) - Update the mapping of a ledger
-* [~~RunScript~~](docs/sdks/formancev1/README.md#runscript) - Execute a Numscript :warning: **Deprecated**
-* [ReadStats](docs/sdks/formancev1/README.md#readstats) - Get statistics from a ledger
-* [CountTransactions](docs/sdks/formancev1/README.md#counttransactions) - Count the transactions from a ledger
-* [ListTransactions](docs/sdks/formancev1/README.md#listtransactions) - List transactions from a ledger
-* [CreateTransactionLedger](docs/sdks/formancev1/README.md#createtransactionledger) - Create a new transaction to a ledger
-* [GetTransactionLedger](docs/sdks/formancev1/README.md#gettransactionledger) - Get transaction from a ledger by its ID
-* [AddMetadataOnTransaction](docs/sdks/formancev1/README.md#addmetadataontransaction) - Set the metadata of a transaction by its ID
-* [RevertTransactionLedger](docs/sdks/formancev1/README.md#reverttransactionledger) - Revert a ledger transaction by its ID
-* [CreateTransactions](docs/sdks/formancev1/README.md#createtransactions) - Create a new batch of transactions to a ledger
-* [GetBalances](docs/sdks/formancev1/README.md#getbalances) - Get the balances from a ledger's account
-* [GetBalancesAggregated](docs/sdks/formancev1/README.md#getbalancesaggregated) - Get the aggregated balances from selected accounts
-* [ListLogs](docs/sdks/formancev1/README.md#listlogs) - List the logs from a ledger
+* [CreateTransactions](docs/sdks/formanceledgerv1/README.md#createtransactions) - Create a new batch of transactions to a ledger
+* [AddMetadataOnTransaction](docs/sdks/formanceledgerv1/README.md#addmetadataontransaction) - Set the metadata of a transaction by its ID
+* [AddMetadataToAccount](docs/sdks/formanceledgerv1/README.md#addmetadatatoaccount) - Add metadata to an account
+* [CountAccounts](docs/sdks/formanceledgerv1/README.md#countaccounts) - Count the accounts from a ledger
+* [CountTransactions](docs/sdks/formanceledgerv1/README.md#counttransactions) - Count the transactions from a ledger
+* [CreateTransactionLedger](docs/sdks/formanceledgerv1/README.md#createtransactionledger) - Create a new transaction to a ledger
+* [GetAccountLedger](docs/sdks/formanceledgerv1/README.md#getaccountledger) - Get account by its address
+* [GetBalances](docs/sdks/formanceledgerv1/README.md#getbalances) - Get the balances from a ledger's account
+* [GetBalancesAggregated](docs/sdks/formanceledgerv1/README.md#getbalancesaggregated) - Get the aggregated balances from selected accounts
+* [GetLedgerInfo](docs/sdks/formanceledgerv1/README.md#getledgerinfo) - Get information about a ledger
+* [GetMapping](docs/sdks/formanceledgerv1/README.md#getmapping) - Get the mapping of a ledger
+* [GetTransactionLedger](docs/sdks/formanceledgerv1/README.md#gettransactionledger) - Get transaction from a ledger by its ID
+* [ListAccountsLedger](docs/sdks/formanceledgerv1/README.md#listaccountsledger) - List accounts from a ledger
+* [ListLogs](docs/sdks/formanceledgerv1/README.md#listlogs) - List the logs from a ledger
+* [ListTransactions](docs/sdks/formanceledgerv1/README.md#listtransactions) - List transactions from a ledger
+* [ReadStats](docs/sdks/formanceledgerv1/README.md#readstats) - Get statistics from a ledger
+* [RevertTransactionLedger](docs/sdks/formanceledgerv1/README.md#reverttransactionledger) - Revert a ledger transaction by its ID
+* [~~RunScript~~](docs/sdks/formanceledgerv1/README.md#runscript) - Execute a Numscript :warning: **Deprecated**
+* [UpdateMapping](docs/sdks/formanceledgerv1/README.md#updatemapping) - Update the mapping of a ledger
 
 ### [Ledger.V2](docs/sdks/v2/README.md)
 
-* [GetInfo](docs/sdks/v2/README.md#getinfo) - Show server information
-* [GetMetrics](docs/sdks/v2/README.md#getmetrics) - Read in memory metrics
-* [ListLedgers](docs/sdks/v2/README.md#listledgers) - List ledgers
-* [GetLedger](docs/sdks/v2/README.md#getledger) - Get a ledger
-* [CreateLedger](docs/sdks/v2/README.md#createledger) - Create a ledger
-* [InsertSchema](docs/sdks/v2/README.md#insertschema) - Insert a schema for a ledger
-* [GetSchema](docs/sdks/v2/README.md#getschema) - Get a schema for a ledger by version
-* [ListSchemas](docs/sdks/v2/README.md#listschemas) - List all schemas for a ledger
-* [UpdateLedgerMetadata](docs/sdks/v2/README.md#updateledgermetadata) - Update ledger metadata
-* [DeleteLedgerMetadata](docs/sdks/v2/README.md#deleteledgermetadata) - Delete ledger metadata by key
-* [GetLedgerInfo](docs/sdks/v2/README.md#getledgerinfo) - Get information about a ledger
-* [CreateBulk](docs/sdks/v2/README.md#createbulk) - Bulk request
-* [CountAccounts](docs/sdks/v2/README.md#countaccounts) - Count the accounts from a ledger
-* [ListAccounts](docs/sdks/v2/README.md#listaccounts) - List accounts from a ledger
-* [GetAccount](docs/sdks/v2/README.md#getaccount) - Get account by its address
-* [AddMetadataToAccount](docs/sdks/v2/README.md#addmetadatatoaccount) - Add metadata to an account
-* [DeleteAccountMetadata](docs/sdks/v2/README.md#deleteaccountmetadata) - Delete metadata by key
-* [ReadStats](docs/sdks/v2/README.md#readstats) - Get statistics from a ledger
-* [CountTransactions](docs/sdks/v2/README.md#counttransactions) - Count the transactions from a ledger
-* [ListTransactions](docs/sdks/v2/README.md#listtransactions) - List transactions from a ledger
-* [CreateTransaction](docs/sdks/v2/README.md#createtransaction) - Create a new transaction to a ledger
-* [GetTransaction](docs/sdks/v2/README.md#gettransaction) - Get transaction from a ledger by its ID
 * [AddMetadataOnTransaction](docs/sdks/v2/README.md#addmetadataontransaction) - Set the metadata of a transaction by its ID
-* [DeleteTransactionMetadata](docs/sdks/v2/README.md#deletetransactionmetadata) - Delete metadata by key
-* [RevertTransaction](docs/sdks/v2/README.md#reverttransaction) - Revert a ledger transaction by its ID
-* [GetBalancesAggregated](docs/sdks/v2/README.md#getbalancesaggregated) - Get the aggregated balances from selected accounts
-* [GetVolumesWithBalances](docs/sdks/v2/README.md#getvolumeswithbalances) - Get list of volumes with balances for (account/asset)
-* [ListLogs](docs/sdks/v2/README.md#listlogs) - List the logs from a ledger
-* [ImportLogs](docs/sdks/v2/README.md#importlogs)
-* [ExportLogs](docs/sdks/v2/README.md#exportlogs) - Export logs
-* [RunQuery](docs/sdks/v2/README.md#runquery) - Run a query template
-* [ListExporters](docs/sdks/v2/README.md#listexporters) - List exporters
+* [AddMetadataToAccount](docs/sdks/v2/README.md#addmetadatatoaccount) - Add metadata to an account
+* [CountAccounts](docs/sdks/v2/README.md#countaccounts) - Count the accounts from a ledger
+* [CountTransactions](docs/sdks/v2/README.md#counttransactions) - Count the transactions from a ledger
+* [CreateBulk](docs/sdks/v2/README.md#createbulk) - Bulk request
 * [CreateExporter](docs/sdks/v2/README.md#createexporter) - Create exporter
-* [GetExporterState](docs/sdks/v2/README.md#getexporterstate) - Get exporter state
-* [UpdateExporter](docs/sdks/v2/README.md#updateexporter) - Update exporter
-* [DeleteExporter](docs/sdks/v2/README.md#deleteexporter) - Delete exporter
-* [DeleteBucket](docs/sdks/v2/README.md#deletebucket) - Delete bucket
-* [RestoreBucket](docs/sdks/v2/README.md#restorebucket) - Restore bucket
-* [ListPipelines](docs/sdks/v2/README.md#listpipelines) - List pipelines
+* [CreateLedger](docs/sdks/v2/README.md#createledger) - Create a ledger
 * [CreatePipeline](docs/sdks/v2/README.md#createpipeline) - Create pipeline
-* [GetPipelineState](docs/sdks/v2/README.md#getpipelinestate) - Get pipeline state
+* [CreateTransaction](docs/sdks/v2/README.md#createtransaction) - Create a new transaction to a ledger
+* [DeleteAccountMetadata](docs/sdks/v2/README.md#deleteaccountmetadata) - Delete metadata by key
+* [DeleteBucket](docs/sdks/v2/README.md#deletebucket) - Delete bucket
+* [DeleteExporter](docs/sdks/v2/README.md#deleteexporter) - Delete exporter
+* [DeleteLedgerMetadata](docs/sdks/v2/README.md#deleteledgermetadata) - Delete ledger metadata by key
 * [DeletePipeline](docs/sdks/v2/README.md#deletepipeline) - Delete pipeline
+* [DeleteTransactionMetadata](docs/sdks/v2/README.md#deletetransactionmetadata) - Delete metadata by key
+* [ExportLogs](docs/sdks/v2/README.md#exportlogs) - Export logs
+* [GetAccount](docs/sdks/v2/README.md#getaccount) - Get account by its address
+* [GetBalancesAggregated](docs/sdks/v2/README.md#getbalancesaggregated) - Get the aggregated balances from selected accounts
+* [GetExporterState](docs/sdks/v2/README.md#getexporterstate) - Get exporter state
+* [GetInfo](docs/sdks/v2/README.md#getinfo) - Show server information
+* [GetLedger](docs/sdks/v2/README.md#getledger) - Get a ledger
+* [GetLedgerInfo](docs/sdks/v2/README.md#getledgerinfo) - Get information about a ledger
+* [GetMetrics](docs/sdks/v2/README.md#getmetrics) - Read in memory metrics
+* [GetPipelineState](docs/sdks/v2/README.md#getpipelinestate) - Get pipeline state
+* [GetSchema](docs/sdks/v2/README.md#getschema) - Get a schema for a ledger by version
+* [GetTransaction](docs/sdks/v2/README.md#gettransaction) - Get transaction from a ledger by its ID
+* [GetVolumesWithBalances](docs/sdks/v2/README.md#getvolumeswithbalances) - Get list of volumes with balances for (account/asset)
+* [ImportLogs](docs/sdks/v2/README.md#importlogs)
+* [InsertSchema](docs/sdks/v2/README.md#insertschema) - Insert a schema for a ledger
+* [ListAccounts](docs/sdks/v2/README.md#listaccounts) - List accounts from a ledger
+* [ListExporters](docs/sdks/v2/README.md#listexporters) - List exporters
+* [ListLedgers](docs/sdks/v2/README.md#listledgers) - List ledgers
+* [ListLogs](docs/sdks/v2/README.md#listlogs) - List the logs from a ledger
+* [ListPipelines](docs/sdks/v2/README.md#listpipelines) - List pipelines
+* [ListSchemas](docs/sdks/v2/README.md#listschemas) - List all schemas for a ledger
+* [ListTransactions](docs/sdks/v2/README.md#listtransactions) - List transactions from a ledger
+* [ReadStats](docs/sdks/v2/README.md#readstats) - Get statistics from a ledger
 * [ResetPipeline](docs/sdks/v2/README.md#resetpipeline) - Reset pipeline
+* [RestoreBucket](docs/sdks/v2/README.md#restorebucket) - Restore bucket
+* [RevertTransaction](docs/sdks/v2/README.md#reverttransaction) - Revert a ledger transaction by its ID
+* [RunQuery](docs/sdks/v2/README.md#runquery) - Run a query template
 * [StartPipeline](docs/sdks/v2/README.md#startpipeline) - Start pipeline
 * [StopPipeline](docs/sdks/v2/README.md#stoppipeline) - Stop pipeline
+* [UpdateExporter](docs/sdks/v2/README.md#updateexporter) - Update exporter
+* [UpdateLedgerMetadata](docs/sdks/v2/README.md#updateledgermetadata) - Update ledger metadata
 
 ### [Ledger.V3](docs/sdks/v3/README.md)
 
-* [ListAllLedgers](docs/sdks/v3/README.md#listallledgers) - List all ledgers
-* [Health](docs/sdks/v3/README.md#health) - Health check
-* [Livez](docs/sdks/v3/README.md#livez) - Liveness probe
-* [Readyz](docs/sdks/v3/README.md#readyz) - Readiness probe
-* [Clusterz](docs/sdks/v3/README.md#clusterz) - Cluster-availability probe
-* [Info](docs/sdks/v3/README.md#info) - Get server build information
-* [GetLedger](docs/sdks/v3/README.md#getledger) - Get a ledger
-* [CreateLedger](docs/sdks/v3/README.md#createledger) - Create a new ledger
-* [DeleteLedger](docs/sdks/v3/README.md#deleteledger) - Delete a ledger
-* [GetLedgerStats](docs/sdks/v3/README.md#getledgerstats) - Get ledger statistics
-* [ListLedgerLogs](docs/sdks/v3/README.md#listledgerlogs) - List logs for a ledger
-* [ListAuditEntries](docs/sdks/v3/README.md#listauditentries) - List audit entries
-* [GetAuditEntry](docs/sdks/v3/README.md#getauditentry) - Get an audit entry
-* [PromoteLedger](docs/sdks/v3/README.md#promoteledger) - Promote a mirror ledger
-* [CreateTransactionLedgerV3](docs/sdks/v3/README.md#createtransactionledgerv3) - Create a new transaction
-* [ListLedgerTransactions](docs/sdks/v3/README.md#listledgertransactions) - List transactions for a ledger
-* [GetTransactionLedgerV3](docs/sdks/v3/README.md#gettransactionledgerv3) - Get a transaction
-* [ListAccountsLedgerV3](docs/sdks/v3/README.md#listaccountsledgerv3) - List accounts
-* [GetAccountLedgerV3](docs/sdks/v3/README.md#getaccountledgerv3) - Get an account
-* [AggregateVolumes](docs/sdks/v3/README.md#aggregatevolumes) - Aggregate volumes
-* [SaveLedgerMetadata](docs/sdks/v3/README.md#saveledgermetadata) - Save ledger metadata
-* [DeleteLedgerMetadata](docs/sdks/v3/README.md#deleteledgermetadata) - Delete ledger metadata
-* [SaveAccountMetadata](docs/sdks/v3/README.md#saveaccountmetadata) - Save account metadata
-* [SaveTransactionMetadata](docs/sdks/v3/README.md#savetransactionmetadata) - Save transaction metadata
-* [DeleteAccountMetadata](docs/sdks/v3/README.md#deleteaccountmetadata) - Delete account metadata
-* [DeleteTransactionMetadata](docs/sdks/v3/README.md#deletetransactionmetadata) - Delete transaction metadata
-* [RevertTransactionLedgerV3](docs/sdks/v3/README.md#reverttransactionledgerv3) - Revert a transaction
-* [GetMetadataSchemaStatus](docs/sdks/v3/README.md#getmetadataschemastatus) - Get metadata schema
-* [InspectIndex](docs/sdks/v3/README.md#inspectindex) - Inspect a metadata index
-* [AnalyzeAccounts](docs/sdks/v3/README.md#analyzeaccounts) - Analyze accounts and suggest a Chart of Accounts
-* [AnalyzeTransactions](docs/sdks/v3/README.md#analyzetransactions) - Analyze transaction flow patterns
-* [SetMetadataFieldType](docs/sdks/v3/README.md#setmetadatafieldtype) - Set metadata field type
-* [RemoveMetadataFieldType](docs/sdks/v3/README.md#removemetadatafieldtype) - Remove metadata field type
-* [AnalyzeNumscript](docs/sdks/v3/README.md#analyzenumscript) - Analyze Numscript source
-* [ListNumscripts](docs/sdks/v3/README.md#listnumscripts) - List all numscripts
-* [GetNumscript](docs/sdks/v3/README.md#getnumscript) - Get a numscript
-* [SaveNumscript](docs/sdks/v3/README.md#savenumscript) - Save a numscript
-* [ListNumscriptVersions](docs/sdks/v3/README.md#listnumscriptversions) - List numscript versions
-* [GetNumscriptUsage](docs/sdks/v3/README.md#getnumscriptusage) - Get template usage
-* [BulkOperations](docs/sdks/v3/README.md#bulkoperations) - Bulk operations
-* [CreatePreparedQuery](docs/sdks/v3/README.md#createpreparedquery) - Create a prepared query
-* [ListPreparedQueries](docs/sdks/v3/README.md#listpreparedqueries) - List prepared queries
-* [UpdatePreparedQuery](docs/sdks/v3/README.md#updatepreparedquery) - Update a prepared query
-* [DeletePreparedQuery](docs/sdks/v3/README.md#deletepreparedquery) - Delete a prepared query
-* [ExecutePreparedQuery](docs/sdks/v3/README.md#executepreparedquery) - Execute a prepared query
 * [AddAccountType](docs/sdks/v3/README.md#addaccounttype) - Add an account type
-* [ListAccountTypes](docs/sdks/v3/README.md#listaccounttypes) - List account types
-* [SetDefaultEnforcementMode](docs/sdks/v3/README.md#setdefaultenforcementmode) - Set default enforcement mode
+* [AggregateVolumes](docs/sdks/v3/README.md#aggregatevolumes) - Aggregate volumes
+* [AnalyzeAccounts](docs/sdks/v3/README.md#analyzeaccounts) - Analyze accounts and suggest a Chart of Accounts
+* [AnalyzeNumscript](docs/sdks/v3/README.md#analyzenumscript) - Analyze Numscript source
+* [AnalyzeTransactions](docs/sdks/v3/README.md#analyzetransactions) - Analyze transaction flow patterns
+* [BulkOperations](docs/sdks/v3/README.md#bulkoperations) - Bulk operations
+* [Clusterz](docs/sdks/v3/README.md#clusterz) - Cluster-availability probe
+* [CreateIndex](docs/sdks/v3/README.md#createindex) - Create an index on a ledger
+* [CreateLedger](docs/sdks/v3/README.md#createledger) - Create a new ledger
+* [CreatePreparedQuery](docs/sdks/v3/README.md#createpreparedquery) - Create a prepared query
+* [CreateTransactionLedgerV3](docs/sdks/v3/README.md#createtransactionledgerv3) - Create a new transaction
+* [DeleteAccountMetadata](docs/sdks/v3/README.md#deleteaccountmetadata) - Delete account metadata
+* [DeleteLedger](docs/sdks/v3/README.md#deleteledger) - Delete a ledger
+* [DeleteLedgerMetadata](docs/sdks/v3/README.md#deleteledgermetadata) - Delete ledger metadata
+* [DeletePreparedQuery](docs/sdks/v3/README.md#deletepreparedquery) - Delete a prepared query
+* [DeleteTransactionMetadata](docs/sdks/v3/README.md#deletetransactionmetadata) - Delete transaction metadata
+* [DropIndex](docs/sdks/v3/README.md#dropindex) - Drop an index from a ledger
+* [ExecutePreparedQuery](docs/sdks/v3/README.md#executepreparedquery) - Execute a prepared query
 * [GetAccountType](docs/sdks/v3/README.md#getaccounttype) - Get an account type
-* [RemoveAccountType](docs/sdks/v3/README.md#removeaccounttype) - Remove an account type
-* [GetLog](docs/sdks/v3/README.md#getlog) - Get a single system log by bucket-wide sequence
-* [GetEventsSinks](docs/sdks/v3/README.md#geteventssinks) - List configured event sinks
-* [RemoveEventsSink](docs/sdks/v3/README.md#removeeventssink) - Remove an event sink
-* [ListSigningKeys](docs/sdks/v3/README.md#listsigningkeys) - List registered Ed25519 signing keys
-* [ListBucketIndexes](docs/sdks/v3/README.md#listbucketindexes) - List bucket-wide indexes
+* [GetAccountLedgerV3](docs/sdks/v3/README.md#getaccountledgerv3) - Get an account
+* [GetAuditEntry](docs/sdks/v3/README.md#getauditentry) - Get an audit entry
 * [GetBucketIndex](docs/sdks/v3/README.md#getbucketindex) - Get a single bucket-scoped index registry entry
 * [GetBucketIndexEntryStatus](docs/sdks/v3/README.md#getbucketindexentrystatus) - Get the per-replica status of a single bucket-scoped index
-* [GetIndexStatus](docs/sdks/v3/README.md#getindexstatus) - Get aggregated index registry status
-* [ListLedgerIndexes](docs/sdks/v3/README.md#listledgerindexes) - List indexes for a ledger
-* [CreateIndex](docs/sdks/v3/README.md#createindex) - Create an index on a ledger
+* [GetEventsSinks](docs/sdks/v3/README.md#geteventssinks) - List configured event sinks
 * [GetIndex](docs/sdks/v3/README.md#getindex) - Get a single index registry entry
-* [DropIndex](docs/sdks/v3/README.md#dropindex) - Drop an index from a ledger
 * [GetIndexEntryStatus](docs/sdks/v3/README.md#getindexentrystatus) - Get the per-replica status of a single index
+* [GetIndexStatus](docs/sdks/v3/README.md#getindexstatus) - Get aggregated index registry status
+* [GetLedger](docs/sdks/v3/README.md#getledger) - Get a ledger
+* [GetLedgerStats](docs/sdks/v3/README.md#getledgerstats) - Get ledger statistics
+* [GetLog](docs/sdks/v3/README.md#getlog) - Get a single system log by bucket-wide sequence
+* [GetMetadataSchemaStatus](docs/sdks/v3/README.md#getmetadataschemastatus) - Get metadata schema
+* [GetNumscript](docs/sdks/v3/README.md#getnumscript) - Get a numscript
+* [GetNumscriptUsage](docs/sdks/v3/README.md#getnumscriptusage) - Get template usage
+* [GetTransactionLedgerV3](docs/sdks/v3/README.md#gettransactionledgerv3) - Get a transaction
+* [Health](docs/sdks/v3/README.md#health) - Health check
+* [Info](docs/sdks/v3/README.md#info) - Get server build information
+* [InspectIndex](docs/sdks/v3/README.md#inspectindex) - Inspect a metadata index
+* [ListAccountTypes](docs/sdks/v3/README.md#listaccounttypes) - List account types
+* [ListAccountsLedgerV3](docs/sdks/v3/README.md#listaccountsledgerv3) - List accounts
+* [ListAllLedgers](docs/sdks/v3/README.md#listallledgers) - List all ledgers
+* [ListAuditEntries](docs/sdks/v3/README.md#listauditentries) - List audit entries
+* [ListBucketIndexes](docs/sdks/v3/README.md#listbucketindexes) - List bucket-wide indexes
+* [ListLedgerIndexes](docs/sdks/v3/README.md#listledgerindexes) - List indexes for a ledger
+* [ListLedgerLogs](docs/sdks/v3/README.md#listledgerlogs) - List logs for a ledger
+* [ListLedgerTransactions](docs/sdks/v3/README.md#listledgertransactions) - List transactions for a ledger
+* [ListNumscriptVersions](docs/sdks/v3/README.md#listnumscriptversions) - List numscript versions
+* [ListNumscripts](docs/sdks/v3/README.md#listnumscripts) - List all numscripts
+* [ListPreparedQueries](docs/sdks/v3/README.md#listpreparedqueries) - List prepared queries
+* [ListSigningKeys](docs/sdks/v3/README.md#listsigningkeys) - List registered Ed25519 signing keys
+* [Livez](docs/sdks/v3/README.md#livez) - Liveness probe
+* [PromoteLedger](docs/sdks/v3/README.md#promoteledger) - Promote a mirror ledger
+* [Readyz](docs/sdks/v3/README.md#readyz) - Readiness probe
+* [RemoveAccountType](docs/sdks/v3/README.md#removeaccounttype) - Remove an account type
+* [RemoveEventsSink](docs/sdks/v3/README.md#removeeventssink) - Remove an event sink
+* [RemoveMetadataFieldType](docs/sdks/v3/README.md#removemetadatafieldtype) - Remove metadata field type
+* [RevertTransactionLedgerV3](docs/sdks/v3/README.md#reverttransactionledgerv3) - Revert a transaction
+* [SaveAccountMetadata](docs/sdks/v3/README.md#saveaccountmetadata) - Save account metadata
+* [SaveLedgerMetadata](docs/sdks/v3/README.md#saveledgermetadata) - Save ledger metadata
+* [SaveNumscript](docs/sdks/v3/README.md#savenumscript) - Save a numscript
+* [SaveTransactionMetadata](docs/sdks/v3/README.md#savetransactionmetadata) - Save transaction metadata
+* [SetDefaultEnforcementMode](docs/sdks/v3/README.md#setdefaultenforcementmode) - Set default enforcement mode
+* [SetMetadataFieldType](docs/sdks/v3/README.md#setmetadatafieldtype) - Set metadata field type
+* [UpdatePreparedQuery](docs/sdks/v3/README.md#updatepreparedquery) - Update a prepared query
 
 ### [Orchestration.V1](docs/sdks/formanceorchestrationv1/README.md)
 
-* [GetServerInfoOrchestration](docs/sdks/formanceorchestrationv1/README.md#getserverinfoorchestration) - Get server info
-* [ListTriggers](docs/sdks/formanceorchestrationv1/README.md#listtriggers) - List triggers
-* [CreateTrigger](docs/sdks/formanceorchestrationv1/README.md#createtrigger) - Create trigger
-* [ReadTrigger](docs/sdks/formanceorchestrationv1/README.md#readtrigger) - Read trigger
-* [DeleteTrigger](docs/sdks/formanceorchestrationv1/README.md#deletetrigger) - Delete trigger
-* [ListTriggersOccurrences](docs/sdks/formanceorchestrationv1/README.md#listtriggersoccurrences) - List triggers occurrences
-* [ListWorkflows](docs/sdks/formanceorchestrationv1/README.md#listworkflows) - List registered workflows
-* [CreateWorkflow](docs/sdks/formanceorchestrationv1/README.md#createworkflow) - Create workflow
-* [GetWorkflow](docs/sdks/formanceorchestrationv1/README.md#getworkflow) - Get a flow by id
-* [DeleteWorkflow](docs/sdks/formanceorchestrationv1/README.md#deleteworkflow) - Delete a flow by id
-* [RunWorkflow](docs/sdks/formanceorchestrationv1/README.md#runworkflow) - Run workflow
-* [ListInstances](docs/sdks/formanceorchestrationv1/README.md#listinstances) - List instances of a workflow
-* [GetInstance](docs/sdks/formanceorchestrationv1/README.md#getinstance) - Get a workflow instance by id
-* [SendEvent](docs/sdks/formanceorchestrationv1/README.md#sendevent) - Send an event to a running workflow
 * [CancelEvent](docs/sdks/formanceorchestrationv1/README.md#cancelevent) - Cancel a running workflow
+* [CreateTrigger](docs/sdks/formanceorchestrationv1/README.md#createtrigger) - Create trigger
+* [CreateWorkflow](docs/sdks/formanceorchestrationv1/README.md#createworkflow) - Create workflow
+* [DeleteTrigger](docs/sdks/formanceorchestrationv1/README.md#deletetrigger) - Delete trigger
+* [DeleteWorkflow](docs/sdks/formanceorchestrationv1/README.md#deleteworkflow) - Delete a flow by id
+* [GetInstance](docs/sdks/formanceorchestrationv1/README.md#getinstance) - Get a workflow instance by id
 * [GetInstanceHistory](docs/sdks/formanceorchestrationv1/README.md#getinstancehistory) - Get a workflow instance history by id
 * [GetInstanceStageHistory](docs/sdks/formanceorchestrationv1/README.md#getinstancestagehistory) - Get a workflow instance stage history
+* [GetServerInfoOrchestration](docs/sdks/formanceorchestrationv1/README.md#getserverinfoorchestration) - Get server info
+* [GetWorkflow](docs/sdks/formanceorchestrationv1/README.md#getworkflow) - Get a flow by id
+* [ListInstances](docs/sdks/formanceorchestrationv1/README.md#listinstances) - List instances of a workflow
+* [ListTriggers](docs/sdks/formanceorchestrationv1/README.md#listtriggers) - List triggers
+* [ListTriggersOccurrences](docs/sdks/formanceorchestrationv1/README.md#listtriggersoccurrences) - List triggers occurrences
+* [ListWorkflows](docs/sdks/formanceorchestrationv1/README.md#listworkflows) - List registered workflows
+* [ReadTrigger](docs/sdks/formanceorchestrationv1/README.md#readtrigger) - Read trigger
 * [ResumeActivity](docs/sdks/formanceorchestrationv1/README.md#resumeactivity) - Resume a paused activity
+* [RunWorkflow](docs/sdks/formanceorchestrationv1/README.md#runworkflow) - Run workflow
+* [SendEvent](docs/sdks/formanceorchestrationv1/README.md#sendevent) - Send an event to a running workflow
 
 ### [Orchestration.V2](docs/sdks/formancev2/README.md)
 
-* [GetServerInfo](docs/sdks/formancev2/README.md#getserverinfo) - Get server info
-* [ListTriggers](docs/sdks/formancev2/README.md#listtriggers) - List triggers
-* [CreateTrigger](docs/sdks/formancev2/README.md#createtrigger) - Create trigger
-* [ReadTrigger](docs/sdks/formancev2/README.md#readtrigger) - Read trigger
-* [DeleteTrigger](docs/sdks/formancev2/README.md#deletetrigger) - Delete trigger
-* [TestTrigger](docs/sdks/formancev2/README.md#testtrigger) - Test trigger
-* [ListTriggersOccurrences](docs/sdks/formancev2/README.md#listtriggersoccurrences) - List triggers occurrences
-* [ListWorkflows](docs/sdks/formancev2/README.md#listworkflows) - List registered workflows
-* [CreateWorkflow](docs/sdks/formancev2/README.md#createworkflow) - Create workflow
-* [GetWorkflow](docs/sdks/formancev2/README.md#getworkflow) - Get a flow by id
-* [DeleteWorkflow](docs/sdks/formancev2/README.md#deleteworkflow) - Delete a flow by id
-* [RunWorkflow](docs/sdks/formancev2/README.md#runworkflow) - Run workflow
-* [ListInstances](docs/sdks/formancev2/README.md#listinstances) - List instances of a workflow
-* [GetInstance](docs/sdks/formancev2/README.md#getinstance) - Get a workflow instance by id
-* [SendEvent](docs/sdks/formancev2/README.md#sendevent) - Send an event to a running workflow
 * [CancelEvent](docs/sdks/formancev2/README.md#cancelevent) - Cancel a running workflow
+* [CreateTrigger](docs/sdks/formancev2/README.md#createtrigger) - Create trigger
+* [CreateWorkflow](docs/sdks/formancev2/README.md#createworkflow) - Create workflow
+* [DeleteTrigger](docs/sdks/formancev2/README.md#deletetrigger) - Delete trigger
+* [DeleteWorkflow](docs/sdks/formancev2/README.md#deleteworkflow) - Delete a flow by id
+* [GetInstance](docs/sdks/formancev2/README.md#getinstance) - Get a workflow instance by id
 * [GetInstanceHistory](docs/sdks/formancev2/README.md#getinstancehistory) - Get a workflow instance history by id
 * [GetInstanceStageHistory](docs/sdks/formancev2/README.md#getinstancestagehistory) - Get a workflow instance stage history
+* [GetServerInfo](docs/sdks/formancev2/README.md#getserverinfo) - Get server info
+* [GetWorkflow](docs/sdks/formancev2/README.md#getworkflow) - Get a flow by id
+* [ListInstances](docs/sdks/formancev2/README.md#listinstances) - List instances of a workflow
+* [ListTriggers](docs/sdks/formancev2/README.md#listtriggers) - List triggers
+* [ListTriggersOccurrences](docs/sdks/formancev2/README.md#listtriggersoccurrences) - List triggers occurrences
+* [ListWorkflows](docs/sdks/formancev2/README.md#listworkflows) - List registered workflows
+* [ReadTrigger](docs/sdks/formancev2/README.md#readtrigger) - Read trigger
 * [ResumeActivity](docs/sdks/formancev2/README.md#resumeactivity) - Resume a paused activity
+* [RunWorkflow](docs/sdks/formancev2/README.md#runworkflow) - Run workflow
+* [SendEvent](docs/sdks/formancev2/README.md#sendevent) - Send an event to a running workflow
+* [TestTrigger](docs/sdks/formancev2/README.md#testtrigger) - Test trigger
 
 ### [Payments.V1](docs/sdks/formancepaymentsv1/README.md)
 
-* [GetServerInfoPayments](docs/sdks/formancepaymentsv1/README.md#getserverinfopayments) - Get server info
-* [CreatePayment](docs/sdks/formancepaymentsv1/README.md#createpayment) - Create a payment
-* [ListPayments](docs/sdks/formancepaymentsv1/README.md#listpayments) - List payments
-* [GetPayment](docs/sdks/formancepaymentsv1/README.md#getpayment) - Get a payment
-* [UpdateMetadata](docs/sdks/formancepaymentsv1/README.md#updatemetadata) - Update metadata
-* [ListTransferInitiations](docs/sdks/formancepaymentsv1/README.md#listtransferinitiations) - List Transfer Initiations
-* [CreateTransferInitiation](docs/sdks/formancepaymentsv1/README.md#createtransferinitiation) - Create a TransferInitiation
-* [GetTransferInitiation](docs/sdks/formancepaymentsv1/README.md#gettransferinitiation) - Get a transfer initiation
-* [DeleteTransferInitiation](docs/sdks/formancepaymentsv1/README.md#deletetransferinitiation) - Delete a transfer initiation
-* [UpdateTransferInitiationStatus](docs/sdks/formancepaymentsv1/README.md#updatetransferinitiationstatus) - Update the status of a transfer initiation
-* [ReverseTransferInitiation](docs/sdks/formancepaymentsv1/README.md#reversetransferinitiation) - Reverse a transfer initiation
-* [RetryTransferInitiation](docs/sdks/formancepaymentsv1/README.md#retrytransferinitiation) - Retry a failed transfer initiation
-* [ListPools](docs/sdks/formancepaymentsv1/README.md#listpools) - List Pools
-* [CreatePool](docs/sdks/formancepaymentsv1/README.md#createpool) - Create a Pool
-* [GetPool](docs/sdks/formancepaymentsv1/README.md#getpool) - Get a Pool
-* [DeletePool](docs/sdks/formancepaymentsv1/README.md#deletepool) - Delete a Pool
-* [UpdatePoolQuery](docs/sdks/formancepaymentsv1/README.md#updatepoolquery) - Update the query of a pool
 * [AddAccountToPool](docs/sdks/formancepaymentsv1/README.md#addaccounttopool) - Add an account to a pool
-* [RemoveAccountFromPool](docs/sdks/formancepaymentsv1/README.md#removeaccountfrompool) - Remove an account from a pool
-* [GetPoolBalances](docs/sdks/formancepaymentsv1/README.md#getpoolbalances) - Get historical pool balances at a particular point in time
-* [GetPoolBalancesLatest](docs/sdks/formancepaymentsv1/README.md#getpoolbalanceslatest) - Get latest pool balances
+* [ConnectorsTransfer](docs/sdks/formancepaymentsv1/README.md#connectorstransfer) - Transfer funds between Connector accounts
 * [CreateAccount](docs/sdks/formancepaymentsv1/README.md#createaccount) - Create an account
-* [ListAccountsPayments](docs/sdks/formancepaymentsv1/README.md#listaccountspayments) - List accounts
-* [GetAccountPayments](docs/sdks/formancepaymentsv1/README.md#getaccountpayments) - Get an account
-* [GetAccountBalances](docs/sdks/formancepaymentsv1/README.md#getaccountbalances) - Get account balances
 * [CreateBankAccount](docs/sdks/formancepaymentsv1/README.md#createbankaccount) - Create a BankAccount in Payments and on the PSP
-* [ListBankAccounts](docs/sdks/formancepaymentsv1/README.md#listbankaccounts) - List bank accounts created by user on Formance
-* [GetBankAccount](docs/sdks/formancepaymentsv1/README.md#getbankaccount) - Get a bank account created by user on Formance
+* [CreatePayment](docs/sdks/formancepaymentsv1/README.md#createpayment) - Create a payment
+* [CreatePool](docs/sdks/formancepaymentsv1/README.md#createpool) - Create a Pool
+* [CreateTransferInitiation](docs/sdks/formancepaymentsv1/README.md#createtransferinitiation) - Create a TransferInitiation
+* [DeletePool](docs/sdks/formancepaymentsv1/README.md#deletepool) - Delete a Pool
+* [DeleteTransferInitiation](docs/sdks/formancepaymentsv1/README.md#deletetransferinitiation) - Delete a transfer initiation
 * [ForwardBankAccount](docs/sdks/formancepaymentsv1/README.md#forwardbankaccount) - Forward a bank account to a connector
-* [UpdateBankAccountMetadata](docs/sdks/formancepaymentsv1/README.md#updatebankaccountmetadata) - Update metadata of a bank account
-* [ListAllConnectors](docs/sdks/formancepaymentsv1/README.md#listallconnectors) - List all installed connectors
-* [ListConfigsAvailableConnectors](docs/sdks/formancepaymentsv1/README.md#listconfigsavailableconnectors) - List the configs of each available connector
-* [InstallConnector](docs/sdks/formancepaymentsv1/README.md#installconnector) - Install a connector
-* [~~UninstallConnector~~](docs/sdks/formancepaymentsv1/README.md#uninstallconnector) - Uninstall a connector :warning: **Deprecated**
-* [UninstallConnectorV1](docs/sdks/formancepaymentsv1/README.md#uninstallconnectorv1) - Uninstall a connector
-* [~~ReadConnectorConfig~~](docs/sdks/formancepaymentsv1/README.md#readconnectorconfig) - Read the config of a connector :warning: **Deprecated**
-* [UpdateConnectorConfigV1](docs/sdks/formancepaymentsv1/README.md#updateconnectorconfigv1) - Update the config of a connector
-* [ReadConnectorConfigV1](docs/sdks/formancepaymentsv1/README.md#readconnectorconfigv1) - Read the config of a connector
-* [~~ResetConnector~~](docs/sdks/formancepaymentsv1/README.md#resetconnector) - Reset a connector :warning: **Deprecated**
-* [ResetConnectorV1](docs/sdks/formancepaymentsv1/README.md#resetconnectorv1) - Reset a connector
-* [~~ListConnectorTasks~~](docs/sdks/formancepaymentsv1/README.md#listconnectortasks) - List tasks from a connector :warning: **Deprecated**
-* [ListConnectorTasksV1](docs/sdks/formancepaymentsv1/README.md#listconnectortasksv1) - List tasks from a connector
+* [GetAccountBalances](docs/sdks/formancepaymentsv1/README.md#getaccountbalances) - Get account balances
+* [GetAccountPayments](docs/sdks/formancepaymentsv1/README.md#getaccountpayments) - Get an account
+* [GetBankAccount](docs/sdks/formancepaymentsv1/README.md#getbankaccount) - Get a bank account created by user on Formance
 * [~~GetConnectorTask~~](docs/sdks/formancepaymentsv1/README.md#getconnectortask) - Read a specific task of the connector :warning: **Deprecated**
 * [GetConnectorTaskV1](docs/sdks/formancepaymentsv1/README.md#getconnectortaskv1) - Read a specific task of the connector
-* [ConnectorsTransfer](docs/sdks/formancepaymentsv1/README.md#connectorstransfer) - Transfer funds between Connector accounts
+* [GetPayment](docs/sdks/formancepaymentsv1/README.md#getpayment) - Get a payment
+* [GetPool](docs/sdks/formancepaymentsv1/README.md#getpool) - Get a Pool
+* [GetPoolBalances](docs/sdks/formancepaymentsv1/README.md#getpoolbalances) - Get historical pool balances at a particular point in time
+* [GetPoolBalancesLatest](docs/sdks/formancepaymentsv1/README.md#getpoolbalanceslatest) - Get latest pool balances
+* [GetServerInfoPayments](docs/sdks/formancepaymentsv1/README.md#getserverinfopayments) - Get server info
+* [GetTransferInitiation](docs/sdks/formancepaymentsv1/README.md#gettransferinitiation) - Get a transfer initiation
+* [InstallConnector](docs/sdks/formancepaymentsv1/README.md#installconnector) - Install a connector
+* [ListAccountsPayments](docs/sdks/formancepaymentsv1/README.md#listaccountspayments) - List accounts
+* [ListAllConnectors](docs/sdks/formancepaymentsv1/README.md#listallconnectors) - List all installed connectors
+* [ListBankAccounts](docs/sdks/formancepaymentsv1/README.md#listbankaccounts) - List bank accounts created by user on Formance
+* [ListConfigsAvailableConnectors](docs/sdks/formancepaymentsv1/README.md#listconfigsavailableconnectors) - List the configs of each available connector
+* [~~ListConnectorTasks~~](docs/sdks/formancepaymentsv1/README.md#listconnectortasks) - List tasks from a connector :warning: **Deprecated**
+* [ListConnectorTasksV1](docs/sdks/formancepaymentsv1/README.md#listconnectortasksv1) - List tasks from a connector
+* [ListPayments](docs/sdks/formancepaymentsv1/README.md#listpayments) - List payments
+* [ListPools](docs/sdks/formancepaymentsv1/README.md#listpools) - List Pools
+* [ListTransferInitiations](docs/sdks/formancepaymentsv1/README.md#listtransferinitiations) - List Transfer Initiations
+* [~~ReadConnectorConfig~~](docs/sdks/formancepaymentsv1/README.md#readconnectorconfig) - Read the config of a connector :warning: **Deprecated**
+* [ReadConnectorConfigV1](docs/sdks/formancepaymentsv1/README.md#readconnectorconfigv1) - Read the config of a connector
+* [RemoveAccountFromPool](docs/sdks/formancepaymentsv1/README.md#removeaccountfrompool) - Remove an account from a pool
+* [~~ResetConnector~~](docs/sdks/formancepaymentsv1/README.md#resetconnector) - Reset a connector :warning: **Deprecated**
+* [ResetConnectorV1](docs/sdks/formancepaymentsv1/README.md#resetconnectorv1) - Reset a connector
+* [RetryTransferInitiation](docs/sdks/formancepaymentsv1/README.md#retrytransferinitiation) - Retry a failed transfer initiation
+* [ReverseTransferInitiation](docs/sdks/formancepaymentsv1/README.md#reversetransferinitiation) - Reverse a transfer initiation
+* [~~UninstallConnector~~](docs/sdks/formancepaymentsv1/README.md#uninstallconnector) - Uninstall a connector :warning: **Deprecated**
+* [UninstallConnectorV1](docs/sdks/formancepaymentsv1/README.md#uninstallconnectorv1) - Uninstall a connector
+* [UpdateBankAccountMetadata](docs/sdks/formancepaymentsv1/README.md#updatebankaccountmetadata) - Update metadata of a bank account
+* [UpdateConnectorConfigV1](docs/sdks/formancepaymentsv1/README.md#updateconnectorconfigv1) - Update the config of a connector
+* [UpdateMetadata](docs/sdks/formancepaymentsv1/README.md#updatemetadata) - Update metadata
+* [UpdatePoolQuery](docs/sdks/formancepaymentsv1/README.md#updatepoolquery) - Update the query of a pool
+* [UpdateTransferInitiationStatus](docs/sdks/formancepaymentsv1/README.md#updatetransferinitiationstatus) - Update the status of a transfer initiation
 
 ### [Payments.V3](docs/sdks/formancev3/README.md)
 
+* [AddAccountToPool](docs/sdks/formancev3/README.md#addaccounttopool) - Add an account to a pool
+* [AddBankAccountToPaymentServiceUser](docs/sdks/formancev3/README.md#addbankaccounttopaymentserviceuser) - Add a bank account to a payment service user
+* [ApprovePaymentInitiation](docs/sdks/formancev3/README.md#approvepaymentinitiation) - Approve a payment initiation
 * [CreateAccount](docs/sdks/formancev3/README.md#createaccount) - Create a formance account object. This object will not be forwarded to the connector. It is only used for internal purposes.
 
-* [ListAccounts](docs/sdks/formancev3/README.md#listaccounts) - List all accounts
-* [GetAccount](docs/sdks/formancev3/README.md#getaccount) - Get an account by ID
-* [GetAccountBalances](docs/sdks/formancev3/README.md#getaccountbalances) - Get account balances
 * [CreateBankAccount](docs/sdks/formancev3/README.md#createbankaccount) - Create a formance bank account object. This object will not be forwarded to the connector until you called the forwardBankAccount method.
 
-* [ListBankAccounts](docs/sdks/formancev3/README.md#listbankaccounts) - List all bank accounts
-* [GetBankAccount](docs/sdks/formancev3/README.md#getbankaccount) - Get a Bank Account by ID
-* [UpdateBankAccountMetadata](docs/sdks/formancev3/README.md#updatebankaccountmetadata) - Update a bank account's metadata
-* [ForwardBankAccount](docs/sdks/formancev3/README.md#forwardbankaccount) - Forward a Bank Account to a PSP for creation
-* [ListConnectors](docs/sdks/formancev3/README.md#listconnectors) - List all connectors
-* [InstallConnector](docs/sdks/formancev3/README.md#installconnector) - Install a connector
-* [ListConnectorConfigs](docs/sdks/formancev3/README.md#listconnectorconfigs) - List all connector configurations
-* [ListConnectorCapabilities](docs/sdks/formancev3/README.md#listconnectorcapabilities) - List the plugin capabilities advertised by every supported provider
-* [UninstallConnector](docs/sdks/formancev3/README.md#uninstallconnector) - Uninstall a connector
-* [GetConnectorConfig](docs/sdks/formancev3/README.md#getconnectorconfig) - Get a connector configuration by ID
-* [V3UpdateConnectorConfig](docs/sdks/formancev3/README.md#v3updateconnectorconfig) - Update the config of a connector
-* [GetConnectorCapabilities](docs/sdks/formancev3/README.md#getconnectorcapabilities) - Get the plugin capabilities of an installed connector
-* [ResetConnector](docs/sdks/formancev3/README.md#resetconnector) - Reset a connector. Be aware that this will delete all data and stop all existing tasks like payment initiations and bank account creations.
-* [ListConnectorSchedules](docs/sdks/formancev3/README.md#listconnectorschedules) - List all connector schedules
-* [GetConnectorSchedule](docs/sdks/formancev3/README.md#getconnectorschedule) - Get a connector schedule by ID
-* [ListConnectorScheduleInstances](docs/sdks/formancev3/README.md#listconnectorscheduleinstances) - List all connector schedule instances
-* [ListOrders](docs/sdks/formancev3/README.md#listorders) - List orders ingested from exchange-style connectors
-* [GetOrder](docs/sdks/formancev3/README.md#getorder) - Get a single order by its Formance ID
-* [ListConversions](docs/sdks/formancev3/README.md#listconversions) - List currency and asset conversions ingested from connectors
-* [GetConversion](docs/sdks/formancev3/README.md#getconversion) - Get a single conversion by its Formance ID
+* [CreateLinkForPaymentServiceUser](docs/sdks/formancev3/README.md#createlinkforpaymentserviceuser) - Create an authentication link for a payment service user on a connector, for oauth flow
 * [CreatePayment](docs/sdks/formancev3/README.md#createpayment) - Create a formance payment object. This object will not be forwarded to the connector. It is only used for internal purposes.
 
-* [ListPayments](docs/sdks/formancev3/README.md#listpayments) - List all payments
-* [GetPayment](docs/sdks/formancev3/README.md#getpayment) - Get a payment by ID
-* [UpdatePaymentMetadata](docs/sdks/formancev3/README.md#updatepaymentmetadata) - Update a payment's metadata
-* [InitiatePayment](docs/sdks/formancev3/README.md#initiatepayment) - Initiate a payment
-* [ListPaymentInitiations](docs/sdks/formancev3/README.md#listpaymentinitiations) - List all payment initiations
+* [CreatePaymentServiceUser](docs/sdks/formancev3/README.md#createpaymentserviceuser) - Create a formance payment service user object
+* [CreatePool](docs/sdks/formancev3/README.md#createpool) - Create a formance pool object
 * [DeletePaymentInitiation](docs/sdks/formancev3/README.md#deletepaymentinitiation) - Delete a payment initiation by ID
+* [DeletePaymentServiceUser](docs/sdks/formancev3/README.md#deletepaymentserviceuser) - Delete a payment service user by ID
+* [DeletePaymentServiceUserConnectionFromConnectorID](docs/sdks/formancev3/README.md#deletepaymentserviceuserconnectionfromconnectorid) - Delete a connection for a payment service user on a connector
+* [DeletePaymentServiceUserConnector](docs/sdks/formancev3/README.md#deletepaymentserviceuserconnector) - Remove a payment service user from a connector, the PSU will still exist in Formance
+* [DeletePool](docs/sdks/formancev3/README.md#deletepool) - Delete a pool by ID
+* [ForwardBankAccount](docs/sdks/formancev3/README.md#forwardbankaccount) - Forward a Bank Account to a PSP for creation
+* [ForwardPaymentServiceUserBankAccount](docs/sdks/formancev3/README.md#forwardpaymentserviceuserbankaccount) - Forward a payment service user's bank account to a connector
+* [ForwardPaymentServiceUserToProvider](docs/sdks/formancev3/README.md#forwardpaymentserviceusertoprovider) - Register/forward a payment service user on/to a connector
+* [GetAccount](docs/sdks/formancev3/README.md#getaccount) - Get an account by ID
+* [GetAccountBalances](docs/sdks/formancev3/README.md#getaccountbalances) - Get account balances
+* [GetBankAccount](docs/sdks/formancev3/README.md#getbankaccount) - Get a Bank Account by ID
+* [GetConnectorCapabilities](docs/sdks/formancev3/README.md#getconnectorcapabilities) - Get the plugin capabilities of an installed connector
+* [GetConnectorConfig](docs/sdks/formancev3/README.md#getconnectorconfig) - Get a connector configuration by ID
+* [GetConnectorSchedule](docs/sdks/formancev3/README.md#getconnectorschedule) - Get a connector schedule by ID
+* [GetConversion](docs/sdks/formancev3/README.md#getconversion) - Get a single conversion by its Formance ID
+* [GetOrder](docs/sdks/formancev3/README.md#getorder) - Get a single order by its Formance ID
+* [GetPayment](docs/sdks/formancev3/README.md#getpayment) - Get a payment by ID
 * [GetPaymentInitiation](docs/sdks/formancev3/README.md#getpaymentinitiation) - Get a payment initiation by ID
-* [RetryPaymentInitiation](docs/sdks/formancev3/README.md#retrypaymentinitiation) - Retry a payment initiation
-* [ApprovePaymentInitiation](docs/sdks/formancev3/README.md#approvepaymentinitiation) - Approve a payment initiation
-* [RejectPaymentInitiation](docs/sdks/formancev3/README.md#rejectpaymentinitiation) - Reject a payment initiation
-* [ReversePaymentInitiation](docs/sdks/formancev3/README.md#reversepaymentinitiation) - Reverse a payment initiation
+* [GetPaymentServiceUser](docs/sdks/formancev3/README.md#getpaymentserviceuser) - Get a payment service user by ID
+* [GetPaymentServiceUserLinkAttemptFromConnectorID](docs/sdks/formancev3/README.md#getpaymentserviceuserlinkattemptfromconnectorid) - Get a link attempt for a payment service user on a connector
+* [GetPool](docs/sdks/formancev3/README.md#getpool) - Get a pool by ID
+* [GetPoolBalances](docs/sdks/formancev3/README.md#getpoolbalances) - Get historical pool balances from a particular point in time
+* [GetPoolBalancesLatest](docs/sdks/formancev3/README.md#getpoolbalanceslatest) - Get latest pool balances
+* [GetTask](docs/sdks/formancev3/README.md#gettask) - Get a task and its result by ID
+* [InitiatePayment](docs/sdks/formancev3/README.md#initiatepayment) - Initiate a payment
+* [InstallConnector](docs/sdks/formancev3/README.md#installconnector) - Install a connector
+* [ListAccounts](docs/sdks/formancev3/README.md#listaccounts) - List all accounts
+* [ListBankAccounts](docs/sdks/formancev3/README.md#listbankaccounts) - List all bank accounts
+* [ListConnectorCapabilities](docs/sdks/formancev3/README.md#listconnectorcapabilities) - List the plugin capabilities advertised by every supported provider
+* [ListConnectorConfigs](docs/sdks/formancev3/README.md#listconnectorconfigs) - List all connector configurations
+* [ListConnectorScheduleInstances](docs/sdks/formancev3/README.md#listconnectorscheduleinstances) - List all connector schedule instances
+* [ListConnectorSchedules](docs/sdks/formancev3/README.md#listconnectorschedules) - List all connector schedules
+* [ListConnectors](docs/sdks/formancev3/README.md#listconnectors) - List all connectors
+* [ListConversions](docs/sdks/formancev3/README.md#listconversions) - List currency and asset conversions ingested from connectors
+* [ListOrders](docs/sdks/formancev3/README.md#listorders) - List orders ingested from exchange-style connectors
 * [ListPaymentInitiationAdjustments](docs/sdks/formancev3/README.md#listpaymentinitiationadjustments) - List all payment initiation adjustments
 * [ListPaymentInitiationRelatedPayments](docs/sdks/formancev3/README.md#listpaymentinitiationrelatedpayments) - List all payments related to a payment initiation
-* [CreatePaymentServiceUser](docs/sdks/formancev3/README.md#createpaymentserviceuser) - Create a formance payment service user object
-* [ListPaymentServiceUsers](docs/sdks/formancev3/README.md#listpaymentserviceusers) - List all payment service users
-* [GetPaymentServiceUser](docs/sdks/formancev3/README.md#getpaymentserviceuser) - Get a payment service user by ID
-* [DeletePaymentServiceUser](docs/sdks/formancev3/README.md#deletepaymentserviceuser) - Delete a payment service user by ID
+* [ListPaymentInitiations](docs/sdks/formancev3/README.md#listpaymentinitiations) - List all payment initiations
 * [ListPaymentServiceUserConnections](docs/sdks/formancev3/README.md#listpaymentserviceuserconnections) - List all connections for a payment service user
-* [DeletePaymentServiceUserConnector](docs/sdks/formancev3/README.md#deletepaymentserviceuserconnector) - Remove a payment service user from a connector, the PSU will still exist in Formance
-* [ForwardPaymentServiceUserToProvider](docs/sdks/formancev3/README.md#forwardpaymentserviceusertoprovider) - Register/forward a payment service user on/to a connector
-* [CreateLinkForPaymentServiceUser](docs/sdks/formancev3/README.md#createlinkforpaymentserviceuser) - Create an authentication link for a payment service user on a connector, for oauth flow
 * [ListPaymentServiceUserConnectionsFromConnectorID](docs/sdks/formancev3/README.md#listpaymentserviceuserconnectionsfromconnectorid) - List enabled connections for a payment service user on a connector (i.e. the various banks PSUser has enabled on the connector)
 * [ListPaymentServiceUserLinkAttemptsFromConnectorID](docs/sdks/formancev3/README.md#listpaymentserviceuserlinkattemptsfromconnectorid) - List all link attempts for a payment service user on a connector.
 Allows to check if users used the link and completed the oauth flow.
 
-* [GetPaymentServiceUserLinkAttemptFromConnectorID](docs/sdks/formancev3/README.md#getpaymentserviceuserlinkattemptfromconnectorid) - Get a link attempt for a payment service user on a connector
-* [DeletePaymentServiceUserConnectionFromConnectorID](docs/sdks/formancev3/README.md#deletepaymentserviceuserconnectionfromconnectorid) - Delete a connection for a payment service user on a connector
-* [UpdateLinkForPaymentServiceUserOnConnector](docs/sdks/formancev3/README.md#updatelinkforpaymentserviceuseronconnector) - Update/Regenerate a link for a payment service user on a connector
-* [AddBankAccountToPaymentServiceUser](docs/sdks/formancev3/README.md#addbankaccounttopaymentserviceuser) - Add a bank account to a payment service user
-* [ForwardPaymentServiceUserBankAccount](docs/sdks/formancev3/README.md#forwardpaymentserviceuserbankaccount) - Forward a payment service user's bank account to a connector
-* [CreatePool](docs/sdks/formancev3/README.md#createpool) - Create a formance pool object
+* [ListPaymentServiceUsers](docs/sdks/formancev3/README.md#listpaymentserviceusers) - List all payment service users
+* [ListPayments](docs/sdks/formancev3/README.md#listpayments) - List all payments
 * [ListPools](docs/sdks/formancev3/README.md#listpools) - List all pools
-* [GetPool](docs/sdks/formancev3/README.md#getpool) - Get a pool by ID
-* [DeletePool](docs/sdks/formancev3/README.md#deletepool) - Delete a pool by ID
-* [UpdatePoolQuery](docs/sdks/formancev3/README.md#updatepoolquery) - Update the query of a pool
-* [GetPoolBalances](docs/sdks/formancev3/README.md#getpoolbalances) - Get historical pool balances from a particular point in time
-* [GetPoolBalancesLatest](docs/sdks/formancev3/README.md#getpoolbalanceslatest) - Get latest pool balances
-* [AddAccountToPool](docs/sdks/formancev3/README.md#addaccounttopool) - Add an account to a pool
+* [RejectPaymentInitiation](docs/sdks/formancev3/README.md#rejectpaymentinitiation) - Reject a payment initiation
 * [RemoveAccountFromPool](docs/sdks/formancev3/README.md#removeaccountfrompool) - Remove an account from a pool
-* [GetTask](docs/sdks/formancev3/README.md#gettask) - Get a task and its result by ID
+* [ResetConnector](docs/sdks/formancev3/README.md#resetconnector) - Reset a connector. Be aware that this will delete all data and stop all existing tasks like payment initiations and bank account creations.
+* [RetryPaymentInitiation](docs/sdks/formancev3/README.md#retrypaymentinitiation) - Retry a payment initiation
+* [ReversePaymentInitiation](docs/sdks/formancev3/README.md#reversepaymentinitiation) - Reverse a payment initiation
+* [UninstallConnector](docs/sdks/formancev3/README.md#uninstallconnector) - Uninstall a connector
+* [UpdateBankAccountMetadata](docs/sdks/formancev3/README.md#updatebankaccountmetadata) - Update a bank account's metadata
+* [UpdateLinkForPaymentServiceUserOnConnector](docs/sdks/formancev3/README.md#updatelinkforpaymentserviceuseronconnector) - Update/Regenerate a link for a payment service user on a connector
+* [UpdatePaymentMetadata](docs/sdks/formancev3/README.md#updatepaymentmetadata) - Update a payment's metadata
+* [UpdatePoolQuery](docs/sdks/formancev3/README.md#updatepoolquery) - Update the query of a pool
+* [V3UpdateConnectorConfig](docs/sdks/formancev3/README.md#v3updateconnectorconfig) - Update the config of a connector
 
 ### [Reconciliation.V1](docs/sdks/formancereconciliationv1/README.md)
 
-* [GetServerInfoReconciliation](docs/sdks/formancereconciliationv1/README.md#getserverinforeconciliation) - Get server info
+* [AcceptAlert](docs/sdks/formancereconciliationv1/README.md#acceptalert) - Accept an alert (accepted_by_business)
+* [AckAlert](docs/sdks/formancereconciliationv1/README.md#ackalert) - Acknowledge an alert
 * [CreatePolicy](docs/sdks/formancereconciliationv1/README.md#createpolicy) - Create a policy
-* [ListPolicies](docs/sdks/formancereconciliationv1/README.md#listpolicies) - List policies
-* [DeletePolicy](docs/sdks/formancereconciliationv1/README.md#deletepolicy) - Delete a policy
-* [GetPolicy](docs/sdks/formancereconciliationv1/README.md#getpolicy) - Get a policy
-* [Reconcile](docs/sdks/formancereconciliationv1/README.md#reconcile) - Reconcile using a policy
-* [ListReconciliations](docs/sdks/formancereconciliationv1/README.md#listreconciliations) - List reconciliations
-* [GetReconciliation](docs/sdks/formancereconciliationv1/README.md#getreconciliation) - Get a reconciliation
 * [CreateRule](docs/sdks/formancereconciliationv1/README.md#createrule) - Create a rule
-* [ListRules](docs/sdks/formancereconciliationv1/README.md#listrules) - List rules
-* [GetRule](docs/sdks/formancereconciliationv1/README.md#getrule) - Get a rule
-* [PatchRule](docs/sdks/formancereconciliationv1/README.md#patchrule) - Patch a rule (partial update)
+* [DeletePolicy](docs/sdks/formancereconciliationv1/README.md#deletepolicy) - Delete a policy
 * [DeleteRule](docs/sdks/formancereconciliationv1/README.md#deleterule) - Delete a rule (cascades to evaluations + alerts + alert events)
 * [EvaluateRule](docs/sdks/formancereconciliationv1/README.md#evaluaterule) - Evaluate a rule now
-* [ListEvaluations](docs/sdks/formancereconciliationv1/README.md#listevaluations) - List evaluations
-* [GetEvaluation](docs/sdks/formancereconciliationv1/README.md#getevaluation) - Get an evaluation
-* [ListAlerts](docs/sdks/formancereconciliationv1/README.md#listalerts) - List alerts
 * [GetAlert](docs/sdks/formancereconciliationv1/README.md#getalert) - Get an alert
+* [GetEvaluation](docs/sdks/formancereconciliationv1/README.md#getevaluation) - Get an evaluation
+* [GetPolicy](docs/sdks/formancereconciliationv1/README.md#getpolicy) - Get a policy
+* [GetReconciliation](docs/sdks/formancereconciliationv1/README.md#getreconciliation) - Get a reconciliation
+* [GetRule](docs/sdks/formancereconciliationv1/README.md#getrule) - Get a rule
+* [GetServerInfoReconciliation](docs/sdks/formancereconciliationv1/README.md#getserverinforeconciliation) - Get server info
 * [ListAlertEvents](docs/sdks/formancereconciliationv1/README.md#listalertevents) - List alert events (append-only timeline)
-* [AckAlert](docs/sdks/formancereconciliationv1/README.md#ackalert) - Acknowledge an alert
+* [ListAlerts](docs/sdks/formancereconciliationv1/README.md#listalerts) - List alerts
+* [ListEvaluations](docs/sdks/formancereconciliationv1/README.md#listevaluations) - List evaluations
+* [ListPolicies](docs/sdks/formancereconciliationv1/README.md#listpolicies) - List policies
+* [ListReconciliations](docs/sdks/formancereconciliationv1/README.md#listreconciliations) - List reconciliations
+* [ListRules](docs/sdks/formancereconciliationv1/README.md#listrules) - List rules
+* [PatchRule](docs/sdks/formancereconciliationv1/README.md#patchrule) - Patch a rule (partial update)
+* [Reconcile](docs/sdks/formancereconciliationv1/README.md#reconcile) - Reconcile using a policy
 * [ResolveAlert](docs/sdks/formancereconciliationv1/README.md#resolvealert) - Resolve an alert (fixed_by_booking)
-* [AcceptAlert](docs/sdks/formancereconciliationv1/README.md#acceptalert) - Accept an alert (accepted_by_business)
 * [SnoozeAlert](docs/sdks/formancereconciliationv1/README.md#snoozealert) - Snooze an alert's notifications until a future instant
 * [UnsnoozeAlert](docs/sdks/formancereconciliationv1/README.md#unsnoozealert) - Lift a snooze early
 
 ### [Wallets.V1](docs/sdks/formancewalletsv1/README.md)
 
+* [ConfirmHold](docs/sdks/formancewalletsv1/README.md#confirmhold) - Confirm a hold
+* [CreateBalance](docs/sdks/formancewalletsv1/README.md#createbalance) - Create a balance
+* [CreateWallet](docs/sdks/formancewalletsv1/README.md#createwallet) - Create a new wallet
+* [CreditWallet](docs/sdks/formancewalletsv1/README.md#creditwallet) - Credit a wallet
+* [DebitWallet](docs/sdks/formancewalletsv1/README.md#debitwallet) - Debit a wallet
+* [GetBalance](docs/sdks/formancewalletsv1/README.md#getbalance) - Get detailed balance
+* [GetHold](docs/sdks/formancewalletsv1/README.md#gethold) - Get a hold
+* [GetHolds](docs/sdks/formancewalletsv1/README.md#getholds) - Get all holds for a wallet
 * [GetServerInfoWallets](docs/sdks/formancewalletsv1/README.md#getserverinfowallets) - Get server info
 * [GetTransactions](docs/sdks/formancewalletsv1/README.md#gettransactions)
-* [ListWallets](docs/sdks/formancewalletsv1/README.md#listwallets) - List all wallets
-* [CreateWallet](docs/sdks/formancewalletsv1/README.md#createwallet) - Create a new wallet
 * [GetWallet](docs/sdks/formancewalletsv1/README.md#getwallet) - Get a wallet
-* [UpdateWallet](docs/sdks/formancewalletsv1/README.md#updatewallet) - Update a wallet
 * [GetWalletSummary](docs/sdks/formancewalletsv1/README.md#getwalletsummary) - Get wallet summary
 * [ListBalances](docs/sdks/formancewalletsv1/README.md#listbalances) - List balances of a wallet
-* [CreateBalance](docs/sdks/formancewalletsv1/README.md#createbalance) - Create a balance
-* [GetBalance](docs/sdks/formancewalletsv1/README.md#getbalance) - Get detailed balance
-* [DebitWallet](docs/sdks/formancewalletsv1/README.md#debitwallet) - Debit a wallet
-* [CreditWallet](docs/sdks/formancewalletsv1/README.md#creditwallet) - Credit a wallet
-* [GetHolds](docs/sdks/formancewalletsv1/README.md#getholds) - Get all holds for a wallet
-* [GetHold](docs/sdks/formancewalletsv1/README.md#gethold) - Get a hold
-* [ConfirmHold](docs/sdks/formancewalletsv1/README.md#confirmhold) - Confirm a hold
+* [ListWallets](docs/sdks/formancewalletsv1/README.md#listwallets) - List all wallets
+* [UpdateWallet](docs/sdks/formancewalletsv1/README.md#updatewallet) - Update a wallet
 * [VoidHold](docs/sdks/formancewalletsv1/README.md#voidhold) - Cancel a hold
 
 ### [Webhooks.V1](docs/sdks/formancewebhooksv1/README.md)
 
-* [GetManyConfigs](docs/sdks/formancewebhooksv1/README.md#getmanyconfigs) - Get many configs
-* [InsertConfig](docs/sdks/formancewebhooksv1/README.md#insertconfig) - Insert a new config
-* [DeleteConfig](docs/sdks/formancewebhooksv1/README.md#deleteconfig) - Delete one config
-* [UpdateConfig](docs/sdks/formancewebhooksv1/README.md#updateconfig) - Update one config
-* [TestConfig](docs/sdks/formancewebhooksv1/README.md#testconfig) - Test one config
 * [ActivateConfig](docs/sdks/formancewebhooksv1/README.md#activateconfig) - Activate one config
-* [DeactivateConfig](docs/sdks/formancewebhooksv1/README.md#deactivateconfig) - Deactivate one config
 * [ChangeConfigSecret](docs/sdks/formancewebhooksv1/README.md#changeconfigsecret) - Change the signing secret of a config
+* [DeactivateConfig](docs/sdks/formancewebhooksv1/README.md#deactivateconfig) - Deactivate one config
+* [DeleteConfig](docs/sdks/formancewebhooksv1/README.md#deleteconfig) - Delete one config
 * [GetDeliveries](docs/sdks/formancewebhooksv1/README.md#getdeliveries) - List webhook deliveries
-* [ReplayDeliveries](docs/sdks/formancewebhooksv1/README.md#replaydeliveries) - Replay a page of failed or pending deliveries
 * [GetDelivery](docs/sdks/formancewebhooksv1/README.md#getdelivery) - Get a webhook delivery
 * [GetDeliveryAttempts](docs/sdks/formancewebhooksv1/README.md#getdeliveryattempts) - List attempts for a webhook delivery
+* [GetManyConfigs](docs/sdks/formancewebhooksv1/README.md#getmanyconfigs) - Get many configs
+* [InsertConfig](docs/sdks/formancewebhooksv1/README.md#insertconfig) - Insert a new config
+* [ReplayDeliveries](docs/sdks/formancewebhooksv1/README.md#replaydeliveries) - Replay a page of failed or pending deliveries
 * [ReplayDelivery](docs/sdks/formancewebhooksv1/README.md#replaydelivery) - Replay one failed or pending delivery
+* [TestConfig](docs/sdks/formancewebhooksv1/README.md#testconfig) - Test one config
+* [UpdateConfig](docs/sdks/formancewebhooksv1/README.md#updateconfig) - Update one config
 
 </details>
 <!-- End Available Resources and Operations [operations] -->
@@ -654,12 +666,12 @@ Handling errors in this SDK should largely match your expectations. All operatio
 
 By Default, an API error will return `sdkerrors.SDKError`. When custom error responses are specified for an operation, the SDK may also return their associated error. You can refer to respective *Errors* tables in SDK docs for more details on possible error types for each operation.
 
-For example, the `GetLedgerInfo` function may return the following errors:
+For example, the `AddMetadataOnTransaction` function may return the following errors:
 
-| Error Type                | Status Code | Content Type     |
-| ------------------------- | ----------- | ---------------- |
-| ledger.ErrorResponseError | default     | application/json |
-| sdkerrors.SDKError        | 4XX, 5XX    | \*/\*            |
+| Error Type                  | Status Code | Content Type     |
+| --------------------------- | ----------- | ---------------- |
+| ledger.V2ErrorResponseError | default     | application/json |
+| sdkerrors.SDKError          | 4XX, 5XX    | \*/\*            |
 
 ### Example
 
@@ -675,6 +687,7 @@ import (
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/shared"
 	"log"
+	"math/big"
 )
 
 func main() {
@@ -687,12 +700,18 @@ func main() {
 		}),
 	)
 
-	res, err := s.Ledger.V1.GetLedgerInfo(ctx, operations.GetLedgerInfoRequest{
-		Ledger: "ledger001",
+	res, err := s.Ledger.V2.AddMetadataOnTransaction(ctx, operations.V2AddMetadataOnTransactionRequest{
+		RequestBody: map[string]string{
+			"admin": "true",
+		},
+		DryRun:        client.Pointer(true),
+		ID:            big.NewInt(1234),
+		Ledger:        "ledger001",
+		SchemaVersion: client.Pointer("v1.0.0"),
 	})
 	if err != nil {
 
-		var e *ledger.ErrorResponseError
+		var e *ledger.V2ErrorResponseError
 		if errors.As(err, &e) {
 			// handle error
 			log.Fatal(e.Error())
@@ -719,14 +738,14 @@ You can override the default server globally using the `WithServerIndex(serverIn
 | #   | Server                                                | Variables                        | Description                                |
 | --- | ----------------------------------------------------- | -------------------------------- | ------------------------------------------ |
 | 0   | `http://localhost`                                    |                                  | local server                               |
-| 1   | `https://{organization}.{environment}.formance.cloud` | `organization`<br/>`environment` | A per-organization and per-environment API |
+| 1   | `https://{organization}.{environment}.formance.cloud` | `environment`<br/>`organization` | A per-organization and per-environment API |
 
 If the selected server has variables, you may override its default values using the associated option(s):
 
 | Variable       | Option                                           | Supported Values                                         | Default           | Description                                                   |
 | -------------- | ------------------------------------------------ | -------------------------------------------------------- | ----------------- | ------------------------------------------------------------- |
-| `organization` | `WithOrganization(organization string)`          | string                                                   | `"orgID-stackID"` | The organization name. Defaults to a generic organization.    |
 | `environment`  | `WithEnvironment(environment ServerEnvironment)` | - `"eu.sandbox"`<br/>- `"eu-west-1"`<br/>- `"us-east-1"` | `"eu.sandbox"`    | The environment name. Defaults to the production environment. |
+| `organization` | `WithOrganization(organization string)`          | string                                                   | `"orgID-stackID"` | The organization name. Defaults to a generic organization.    |
 
 #### Example
 
@@ -744,8 +763,8 @@ func main() {
 
 	s := client.New(
 		client.WithServerIndex(1),
-		client.WithOrganization("orgID-stackID"),
 		client.WithEnvironment("us-east-1"),
+		client.WithOrganization("orgID-stackID"),
 	)
 
 	res, err := s.GetVersions(ctx)

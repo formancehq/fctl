@@ -8,17 +8,10 @@ import (
 )
 
 type GetManyConfigsRequest struct {
-	// Optional filter by Config ID
-	ID *string `queryParam:"style=form,explode=true,name=id"`
 	// Optional filter by endpoint URL
 	Endpoint *string `queryParam:"style=form,explode=true,name=endpoint"`
-}
-
-func (g *GetManyConfigsRequest) GetID() *string {
-	if g == nil {
-		return nil
-	}
-	return g.ID
+	// Optional filter by Config ID
+	ID *string `queryParam:"style=form,explode=true,name=id"`
 }
 
 func (g *GetManyConfigsRequest) GetEndpoint() *string {
@@ -28,15 +21,29 @@ func (g *GetManyConfigsRequest) GetEndpoint() *string {
 	return g.Endpoint
 }
 
+func (g *GetManyConfigsRequest) GetID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ID
+}
+
 type GetManyConfigsResponse struct {
+	// OK
+	ConfigsResponse *webhooks.ConfigsResponse
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	ConfigsResponse *webhooks.ConfigsResponse
+}
+
+func (g *GetManyConfigsResponse) GetConfigsResponse() *webhooks.ConfigsResponse {
+	if g == nil {
+		return nil
+	}
+	return g.ConfigsResponse
 }
 
 func (g *GetManyConfigsResponse) GetContentType() string {
@@ -58,11 +65,4 @@ func (g *GetManyConfigsResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetManyConfigsResponse) GetConfigsResponse() *webhooks.ConfigsResponse {
-	if g == nil {
-		return nil
-	}
-	return g.ConfigsResponse
 }

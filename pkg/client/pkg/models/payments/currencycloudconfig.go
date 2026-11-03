@@ -7,18 +7,18 @@ import (
 )
 
 type CurrencyCloudConfig struct {
-	// Human-readable name identifying this connector instance
-	Name string `json:"name"`
-	// Identifies the payment provider this configuration targets
-	Provider *string `default:"Currencycloud" json:"provider"`
 	// API key issued by Currencycloud, used to authenticate the connector's requests
 	APIKey string `json:"apiKey"`
-	// Username of the API Key holder
-	LoginID string `json:"loginID"`
-	// The frequency at which the connector will fetch transactions
-	PollingPeriod *string `default:"30m" json:"pollingPeriod"`
 	// The endpoint to use for the API. Defaults to https://devapi.currencycloud.com
 	Endpoint *string `json:"endpoint,omitempty"`
+	// Username of the API Key holder
+	LoginID string `json:"loginID"`
+	// Human-readable name identifying this connector instance
+	Name string `json:"name"`
+	// The frequency at which the connector will fetch transactions
+	PollingPeriod *string `default:"30m" json:"pollingPeriod"`
+	// Identifies the payment provider this configuration targets
+	Provider *string `default:"Currencycloud" json:"provider"`
 }
 
 func (c CurrencyCloudConfig) MarshalJSON() ([]byte, error) {
@@ -26,24 +26,10 @@ func (c CurrencyCloudConfig) MarshalJSON() ([]byte, error) {
 }
 
 func (c *CurrencyCloudConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &c, "", false, []string{"name", "apiKey", "loginID"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &c, "", false, []string{"apiKey", "loginID", "name"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (c *CurrencyCloudConfig) GetName() string {
-	if c == nil {
-		return ""
-	}
-	return c.Name
-}
-
-func (c *CurrencyCloudConfig) GetProvider() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Provider
 }
 
 func (c *CurrencyCloudConfig) GetAPIKey() string {
@@ -53,11 +39,25 @@ func (c *CurrencyCloudConfig) GetAPIKey() string {
 	return c.APIKey
 }
 
+func (c *CurrencyCloudConfig) GetEndpoint() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Endpoint
+}
+
 func (c *CurrencyCloudConfig) GetLoginID() string {
 	if c == nil {
 		return ""
 	}
 	return c.LoginID
+}
+
+func (c *CurrencyCloudConfig) GetName() string {
+	if c == nil {
+		return ""
+	}
+	return c.Name
 }
 
 func (c *CurrencyCloudConfig) GetPollingPeriod() *string {
@@ -67,9 +67,9 @@ func (c *CurrencyCloudConfig) GetPollingPeriod() *string {
 	return c.PollingPeriod
 }
 
-func (c *CurrencyCloudConfig) GetEndpoint() *string {
+func (c *CurrencyCloudConfig) GetProvider() *string {
 	if c == nil {
 		return nil
 	}
-	return c.Endpoint
+	return c.Provider
 }

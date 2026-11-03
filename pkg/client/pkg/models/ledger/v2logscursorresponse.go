@@ -8,6 +8,64 @@ import (
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
 )
 
+// V2LogsCursorResponseCursor - Paginated cursor wrapping the list of logs
+type V2LogsCursorResponseCursor struct {
+	Data     []V2Log `json:"data"`
+	HasMore  bool    `json:"hasMore"`
+	Next     *string `json:"next,omitempty"`
+	PageSize int64   `json:"pageSize"`
+	Previous *string `json:"previous,omitempty"`
+}
+
+func (v V2LogsCursorResponseCursor) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(v, "", false)
+}
+
+func (v *V2LogsCursorResponseCursor) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"data", "hasMore", "pageSize"}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *V2LogsCursorResponseCursor) GetData() []V2Log {
+	if v == nil {
+		return []V2Log{}
+	}
+	return v.Data
+}
+
+func (v *V2LogsCursorResponseCursor) GetHasMore() bool {
+	if v == nil {
+		return false
+	}
+	return v.HasMore
+}
+
+func (v *V2LogsCursorResponseCursor) GetNext() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Next
+}
+
+func (v *V2LogsCursorResponseCursor) GetPageSize() int64 {
+	if v == nil {
+		return 0
+	}
+	return v.PageSize
+}
+
+func (v *V2LogsCursorResponseCursor) GetPrevious() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Previous
+}
+
+// #region class-body-v2logscursorresponsecursor
+// #endregion class-body-v2logscursorresponsecursor
+
 // V2LogsCursorResponseResource - The resource type carried by this cursor
 type V2LogsCursorResponseResource string
 
@@ -32,69 +90,11 @@ func (e *V2LogsCursorResponseResource) UnmarshalJSON(data []byte) error {
 	}
 }
 
-// V2LogsCursorResponseCursor - Paginated cursor wrapping the list of logs
-type V2LogsCursorResponseCursor struct {
-	PageSize int64   `json:"pageSize"`
-	HasMore  bool    `json:"hasMore"`
-	Previous *string `json:"previous,omitempty"`
-	Next     *string `json:"next,omitempty"`
-	Data     []V2Log `json:"data"`
-}
-
-func (v V2LogsCursorResponseCursor) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(v, "", false)
-}
-
-func (v *V2LogsCursorResponseCursor) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"pageSize", "hasMore", "data"}); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (v *V2LogsCursorResponseCursor) GetPageSize() int64 {
-	if v == nil {
-		return 0
-	}
-	return v.PageSize
-}
-
-func (v *V2LogsCursorResponseCursor) GetHasMore() bool {
-	if v == nil {
-		return false
-	}
-	return v.HasMore
-}
-
-func (v *V2LogsCursorResponseCursor) GetPrevious() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Previous
-}
-
-func (v *V2LogsCursorResponseCursor) GetNext() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Next
-}
-
-func (v *V2LogsCursorResponseCursor) GetData() []V2Log {
-	if v == nil {
-		return []V2Log{}
-	}
-	return v.Data
-}
-
-// #region class-body-v2logscursorresponsecursor
-// #endregion class-body-v2logscursorresponsecursor
-
 type V2LogsCursorResponse struct {
-	// The resource type carried by this cursor
-	Resource *V2LogsCursorResponseResource `json:"resource,omitempty"`
 	// Paginated cursor wrapping the list of logs
 	Cursor V2LogsCursorResponseCursor `json:"cursor"`
+	// The resource type carried by this cursor
+	Resource *V2LogsCursorResponseResource `json:"resource,omitempty"`
 }
 
 func (v V2LogsCursorResponse) MarshalJSON() ([]byte, error) {
@@ -108,18 +108,18 @@ func (v *V2LogsCursorResponse) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2LogsCursorResponse) GetResource() *V2LogsCursorResponseResource {
-	if v == nil {
-		return nil
-	}
-	return v.Resource
-}
-
 func (v *V2LogsCursorResponse) GetCursor() V2LogsCursorResponseCursor {
 	if v == nil {
 		return V2LogsCursorResponseCursor{}
 	}
 	return v.Cursor
+}
+
+func (v *V2LogsCursorResponse) GetResource() *V2LogsCursorResponseResource {
+	if v == nil {
+		return nil
+	}
+	return v.Resource
 }
 
 // #region class-body-v2logscursorresponse

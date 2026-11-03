@@ -4,15 +4,8 @@ package ledgerv3
 
 // AuditSuccess - The inclusive log sequence range created by a successful proposal.
 type AuditSuccess struct {
-	MinLogSequence *int64 `json:"minLogSequence,omitempty"`
 	MaxLogSequence *int64 `json:"maxLogSequence,omitempty"`
-}
-
-func (a *AuditSuccess) GetMinLogSequence() *int64 {
-	if a == nil {
-		return nil
-	}
-	return a.MinLogSequence
+	MinLogSequence *int64 `json:"minLogSequence,omitempty"`
 }
 
 func (a *AuditSuccess) GetMaxLogSequence() *int64 {
@@ -20,4 +13,11 @@ func (a *AuditSuccess) GetMaxLogSequence() *int64 {
 		return nil
 	}
 	return a.MaxLogSequence
+}
+
+func (a *AuditSuccess) GetMinLogSequence() *int64 {
+	if a == nil {
+		return nil
+	}
+	return a.MinLogSequence
 }

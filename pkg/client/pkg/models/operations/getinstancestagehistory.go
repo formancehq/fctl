@@ -31,12 +31,12 @@ func (g *GetInstanceStageHistoryRequest) GetNumber() int64 {
 type GetInstanceStageHistoryResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// The workflow instance stage history
+	GetWorkflowInstanceHistoryStageResponse *orchestration.GetWorkflowInstanceHistoryStageResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// The workflow instance stage history
-	GetWorkflowInstanceHistoryStageResponse *orchestration.GetWorkflowInstanceHistoryStageResponse
 }
 
 func (g *GetInstanceStageHistoryResponse) GetContentType() string {
@@ -44,6 +44,13 @@ func (g *GetInstanceStageHistoryResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetInstanceStageHistoryResponse) GetGetWorkflowInstanceHistoryStageResponse() *orchestration.GetWorkflowInstanceHistoryStageResponse {
+	if g == nil {
+		return nil
+	}
+	return g.GetWorkflowInstanceHistoryStageResponse
 }
 
 func (g *GetInstanceStageHistoryResponse) GetStatusCode() int {
@@ -58,11 +65,4 @@ func (g *GetInstanceStageHistoryResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetInstanceStageHistoryResponse) GetGetWorkflowInstanceHistoryStageResponse() *orchestration.GetWorkflowInstanceHistoryStageResponse {
-	if g == nil {
-		return nil
-	}
-	return g.GetWorkflowInstanceHistoryStageResponse
 }

@@ -23,19 +23,49 @@ func (l *ListAccountsLedgerV3Security) GetBearerAuth() *string {
 // #endregion class-body-listaccountsledgerv3security
 
 type ListAccountsLedgerV3Request struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Maximum number of items per page. 0 or absent means 100; values above 1000 are clamped to 1000.
-	PageSize *int64 `default:"100" queryParam:"style=form,explode=true,name=pageSize"`
+	// Render all response Uint256, BigUint and SignedBigInt values as canonical
+	// decimal strings, regardless of business meaning, including posting
+	// amounts, volume input/output and balances. Ordinary integer IDs/counts,
+	// metadata and explicitly string-encoded counters keep their existing
+	// representation. Case-insensitive true, yes, y and 1 enable
+	// this option, matching Ledger v2. Whitespace is not trimmed. Omission and
+	// every other value retain JSON number tokens. This affects only this
+	// response, including nested objects, maps, arrays, transaction/log/cursor
+	// and bulk results. Request decoding is unchanged.
+	//
+	FormanceBigintAsString *string `header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
+	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
+	// barrier and waits for the receiving node to apply up to it. `stale`
+	// serves the read from the receiving node's own store, with no barrier
+	// and no forwarding to the leader, so the answer may lag the leader.
+	// Matching ignores case and surrounding whitespace. An unknown value, or a
+	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
+	// `/v3` route, writes included; a valid value has no effect on writes. The
+	// gRPC equivalent is the `x-consistency` request metadata.
+	//
+	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Set to any non-empty value to receive the query profile in the
+	// `X-Query-Profile-Result` response header.
+	//
+	// The profile reports server-side request timing (how long the server spent
+	// handling the request, broken down into prepare / execute / read-barrier /
+	// deliver phases) plus the query execution plan. Use it to tell a slow
+	// network from a slow server: `serverDurationUs` is the
+	// consumer-independent server cost, and it excludes both the
+	// caller-requested read barrier and response delivery.
+	//
+	// Supported on the transactions list, accounts list, aggregated volumes and
+	// prepared-query execution endpoints. The equivalent gRPC opt-in is the
+	// `x-query-profile` request metadata, answered in the
+	// `x-query-profile-result-bin` trailer; `serverDurationUs` has the same
+	// definition on both surfaces, so the two are directly comparable.
+	//
+	XQueryProfile *string `header:"style=simple,explode=false,name=X-Query-Profile"`
 	// Page token from a previous response's `next` or `previous` field (see
 	// the `PageToken` schema). Omit for the first page. Pass the same
 	// `reverse` and `filter` on every page of a walk.
 	//
 	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
-	// Reverse the default order. Default (`false`) returns accounts in
-	// alphabetical order; `true` returns reverse alphabetical order.
-	//
-	Reverse *bool `default:"false" queryParam:"style=form,explode=true,name=reverse"`
 	// A filter, accepted in EITHER of two interchangeable representations that
 	// parse to the same filter and are validated against the same per-target
 	// rules:
@@ -69,44 +99,14 @@ type ListAccountsLedgerV3Request struct {
 	// structured JSON form and must be passed in the textual representation.
 	//
 	Filter *string `queryParam:"style=form,explode=true,name=filter"`
-	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
-	// barrier and waits for the receiving node to apply up to it. `stale`
-	// serves the read from the receiving node's own store, with no barrier
-	// and no forwarding to the leader, so the answer may lag the leader.
-	// Matching ignores case and surrounding whitespace. An unknown value, or a
-	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
-	// `/v3` route, writes included; a valid value has no effect on writes. The
-	// gRPC equivalent is the `x-consistency` request metadata.
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Maximum number of items per page. 0 or absent means 100; values above 1000 are clamped to 1000.
+	PageSize *int64 `default:"100" queryParam:"style=form,explode=true,name=pageSize"`
+	// Reverse the default order. Default (`false`) returns accounts in
+	// alphabetical order; `true` returns reverse alphabetical order.
 	//
-	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
-	// Render all response Uint256, BigUint and SignedBigInt values as canonical
-	// decimal strings, regardless of business meaning, including posting
-	// amounts, volume input/output and balances. Ordinary integer IDs/counts,
-	// metadata and explicitly string-encoded counters keep their existing
-	// representation. Case-insensitive true, yes, y and 1 enable
-	// this option, matching Ledger v2. Whitespace is not trimmed. Omission and
-	// every other value retain JSON number tokens. This affects only this
-	// response, including nested objects, maps, arrays, transaction/log/cursor
-	// and bulk results. Request decoding is unchanged.
-	//
-	FormanceBigintAsString *string `header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
-	// Set to any non-empty value to receive the query profile in the
-	// `X-Query-Profile-Result` response header.
-	//
-	// The profile reports server-side request timing (how long the server spent
-	// handling the request, broken down into prepare / execute / read-barrier /
-	// deliver phases) plus the query execution plan. Use it to tell a slow
-	// network from a slow server: `serverDurationUs` is the
-	// consumer-independent server cost, and it excludes both the
-	// caller-requested read barrier and response delivery.
-	//
-	// Supported on the transactions list, accounts list, aggregated volumes and
-	// prepared-query execution endpoints. The equivalent gRPC opt-in is the
-	// `x-query-profile` request metadata, answered in the
-	// `x-query-profile-result-bin` trailer; `serverDurationUs` has the same
-	// definition on both surfaces, so the two are directly comparable.
-	//
-	XQueryProfile *string `header:"style=simple,explode=false,name=X-Query-Profile"`
+	Reverse *bool `default:"false" queryParam:"style=form,explode=true,name=reverse"`
 }
 
 func (l ListAccountsLedgerV3Request) MarshalJSON() ([]byte, error) {
@@ -118,6 +118,41 @@ func (l *ListAccountsLedgerV3Request) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (l *ListAccountsLedgerV3Request) GetFormanceBigintAsString() *string {
+	if l == nil {
+		return nil
+	}
+	return l.FormanceBigintAsString
+}
+
+func (l *ListAccountsLedgerV3Request) GetXConsistency() *ledgerv3.Consistency {
+	if l == nil {
+		return nil
+	}
+	return l.XConsistency
+}
+
+func (l *ListAccountsLedgerV3Request) GetXQueryProfile() *string {
+	if l == nil {
+		return nil
+	}
+	return l.XQueryProfile
+}
+
+func (l *ListAccountsLedgerV3Request) GetCursor() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Cursor
+}
+
+func (l *ListAccountsLedgerV3Request) GetFilter() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Filter
 }
 
 func (l *ListAccountsLedgerV3Request) GetLedgerName() string {
@@ -134,46 +169,11 @@ func (l *ListAccountsLedgerV3Request) GetPageSize() *int64 {
 	return l.PageSize
 }
 
-func (l *ListAccountsLedgerV3Request) GetCursor() *string {
-	if l == nil {
-		return nil
-	}
-	return l.Cursor
-}
-
 func (l *ListAccountsLedgerV3Request) GetReverse() *bool {
 	if l == nil {
 		return nil
 	}
 	return l.Reverse
-}
-
-func (l *ListAccountsLedgerV3Request) GetFilter() *string {
-	if l == nil {
-		return nil
-	}
-	return l.Filter
-}
-
-func (l *ListAccountsLedgerV3Request) GetXConsistency() *ledgerv3.Consistency {
-	if l == nil {
-		return nil
-	}
-	return l.XConsistency
-}
-
-func (l *ListAccountsLedgerV3Request) GetFormanceBigintAsString() *string {
-	if l == nil {
-		return nil
-	}
-	return l.FormanceBigintAsString
-}
-
-func (l *ListAccountsLedgerV3Request) GetXQueryProfile() *string {
-	if l == nil {
-		return nil
-	}
-	return l.XQueryProfile
 }
 
 // #region class-body-listaccountsledgerv3request
@@ -182,6 +182,8 @@ func (l *ListAccountsLedgerV3Request) GetXQueryProfile() *string {
 // ListAccountsLedgerV3ResponseBody - List of accounts
 type ListAccountsLedgerV3ResponseBody struct {
 	Data []ledgerv3.Account `json:"data"`
+	// True when a following page exists; set iff `next` is.
+	HasMore bool `json:"hasMore"`
 	// Page token of a paged list. Clients normally pass back the `next` or
 	// `previous` value of a previous response verbatim; building one by hand
 	// is supported.
@@ -256,8 +258,6 @@ type ListAccountsLedgerV3ResponseBody struct {
 	// the endpoint, is rejected with 400 `INVALID_REQUEST`.
 	//
 	Previous *string `json:"previous,omitempty"`
-	// True when a following page exists; set iff `next` is.
-	HasMore bool `json:"hasMore"`
 }
 
 func (l *ListAccountsLedgerV3ResponseBody) GetData() []ledgerv3.Account {
@@ -265,6 +265,13 @@ func (l *ListAccountsLedgerV3ResponseBody) GetData() []ledgerv3.Account {
 		return []ledgerv3.Account{}
 	}
 	return l.Data
+}
+
+func (l *ListAccountsLedgerV3ResponseBody) GetHasMore() bool {
+	if l == nil {
+		return false
+	}
+	return l.HasMore
 }
 
 func (l *ListAccountsLedgerV3ResponseBody) GetNext() *string {
@@ -281,32 +288,25 @@ func (l *ListAccountsLedgerV3ResponseBody) GetPrevious() *string {
 	return l.Previous
 }
 
-func (l *ListAccountsLedgerV3ResponseBody) GetHasMore() bool {
-	if l == nil {
-		return false
-	}
-	return l.HasMore
-}
-
 // #region class-body-listaccountsledgerv3responsebody
 // #endregion class-body-listaccountsledgerv3responsebody
 
 type ListAccountsLedgerV3Response struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// List of accounts
-	Object *ListAccountsLedgerV3ResponseBody
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
+	// List of accounts
+	Object *ListAccountsLedgerV3ResponseBody
 }
 
 func (l *ListAccountsLedgerV3Response) GetContentType() string {
@@ -314,6 +314,27 @@ func (l *ListAccountsLedgerV3Response) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListAccountsLedgerV3Response) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ErrorResponse
+}
+
+func (l *ListAccountsLedgerV3Response) GetForbidden() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Forbidden
+}
+
+func (l *ListAccountsLedgerV3Response) GetHeaders() map[string][]string {
+	if l == nil {
+		return map[string][]string{}
+	}
+	return l.Headers
 }
 
 func (l *ListAccountsLedgerV3Response) GetStatusCode() int {
@@ -330,20 +351,6 @@ func (l *ListAccountsLedgerV3Response) GetRawResponse() *http.Response {
 	return l.RawResponse
 }
 
-func (l *ListAccountsLedgerV3Response) GetObject() *ListAccountsLedgerV3ResponseBody {
-	if l == nil {
-		return nil
-	}
-	return l.Object
-}
-
-func (l *ListAccountsLedgerV3Response) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ErrorResponse
-}
-
 func (l *ListAccountsLedgerV3Response) GetUnauthorized() *string {
 	if l == nil {
 		return nil
@@ -351,18 +358,11 @@ func (l *ListAccountsLedgerV3Response) GetUnauthorized() *string {
 	return l.Unauthorized
 }
 
-func (l *ListAccountsLedgerV3Response) GetForbidden() *string {
+func (l *ListAccountsLedgerV3Response) GetObject() *ListAccountsLedgerV3ResponseBody {
 	if l == nil {
 		return nil
 	}
-	return l.Forbidden
-}
-
-func (l *ListAccountsLedgerV3Response) GetHeaders() map[string][]string {
-	if l == nil {
-		return map[string][]string{}
-	}
-	return l.Headers
+	return l.Object
 }
 
 // #region class-body-listaccountsledgerv3response

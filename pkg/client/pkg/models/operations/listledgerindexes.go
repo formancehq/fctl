@@ -20,8 +20,6 @@ func (l *ListLedgerIndexesSecurity) GetBearerAuth() *string {
 }
 
 type ListLedgerIndexesRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
 	// barrier and waits for the receiving node to apply up to it. `stale`
 	// serves the read from the receiving node's own store, with no barrier
@@ -32,6 +30,8 @@ type ListLedgerIndexesRequest struct {
 	// gRPC equivalent is the `x-consistency` request metadata.
 	//
 	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 }
 
 func (l ListLedgerIndexesRequest) MarshalJSON() ([]byte, error) {
@@ -45,18 +45,18 @@ func (l *ListLedgerIndexesRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (l *ListLedgerIndexesRequest) GetLedgerName() string {
-	if l == nil {
-		return ""
-	}
-	return l.LedgerName
-}
-
 func (l *ListLedgerIndexesRequest) GetXConsistency() *ledgerv3.Consistency {
 	if l == nil {
 		return nil
 	}
 	return l.XConsistency
+}
+
+func (l *ListLedgerIndexesRequest) GetLedgerName() string {
+	if l == nil {
+		return ""
+	}
+	return l.LedgerName
 }
 
 // ListLedgerIndexesResponseBody - Indexes retrieved successfully.
@@ -74,18 +74,18 @@ func (l *ListLedgerIndexesResponseBody) GetData() []map[string]any {
 type ListLedgerIndexesResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Indexes retrieved successfully.
-	Object *ListLedgerIndexesResponseBody
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
+	// Indexes retrieved successfully.
+	Object *ListLedgerIndexesResponseBody
 }
 
 func (l *ListLedgerIndexesResponse) GetContentType() string {
@@ -93,6 +93,20 @@ func (l *ListLedgerIndexesResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListLedgerIndexesResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ErrorResponse
+}
+
+func (l *ListLedgerIndexesResponse) GetForbidden() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Forbidden
 }
 
 func (l *ListLedgerIndexesResponse) GetStatusCode() int {
@@ -109,20 +123,6 @@ func (l *ListLedgerIndexesResponse) GetRawResponse() *http.Response {
 	return l.RawResponse
 }
 
-func (l *ListLedgerIndexesResponse) GetObject() *ListLedgerIndexesResponseBody {
-	if l == nil {
-		return nil
-	}
-	return l.Object
-}
-
-func (l *ListLedgerIndexesResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ErrorResponse
-}
-
 func (l *ListLedgerIndexesResponse) GetUnauthorized() *string {
 	if l == nil {
 		return nil
@@ -130,9 +130,9 @@ func (l *ListLedgerIndexesResponse) GetUnauthorized() *string {
 	return l.Unauthorized
 }
 
-func (l *ListLedgerIndexesResponse) GetForbidden() *string {
+func (l *ListLedgerIndexesResponse) GetObject() *ListLedgerIndexesResponseBody {
 	if l == nil {
 		return nil
 	}
-	return l.Forbidden
+	return l.Object
 }

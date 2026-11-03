@@ -3,18 +3,11 @@
 package ledgerv3
 
 type AccountPattern struct {
-	Pattern      *string          `json:"pattern,omitempty"`
 	AccountCount *int64           `json:"accountCount,omitempty"`
 	Assets       []string         `json:"assets,omitempty"`
 	MetadataKeys []string         `json:"metadataKeys,omitempty"`
+	Pattern      *string          `json:"pattern,omitempty"`
 	Segments     []PatternSegment `json:"segments,omitempty"`
-}
-
-func (a *AccountPattern) GetPattern() *string {
-	if a == nil {
-		return nil
-	}
-	return a.Pattern
 }
 
 func (a *AccountPattern) GetAccountCount() *int64 {
@@ -36,6 +29,13 @@ func (a *AccountPattern) GetMetadataKeys() []string {
 		return nil
 	}
 	return a.MetadataKeys
+}
+
+func (a *AccountPattern) GetPattern() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Pattern
 }
 
 func (a *AccountPattern) GetSegments() []PatternSegment {

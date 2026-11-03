@@ -4,22 +4,22 @@ package orchestration
 
 // Cursor - Paginated cursor wrapping the list of wallets
 type Cursor struct {
-	// Number of items requested per page
-	PageSize int64 `json:"pageSize"`
+	Data []Wallet `json:"data"`
 	// Whether further pages are available
 	HasMore *bool `json:"hasMore,omitempty"`
+	// Cursor for the next page, absent on the last page
+	Next *string `json:"next,omitempty"`
+	// Number of items requested per page
+	PageSize int64 `json:"pageSize"`
 	// Cursor for the previous page, absent on the first page
 	Previous *string `json:"previous,omitempty"`
-	// Cursor for the next page, absent on the last page
-	Next *string  `json:"next,omitempty"`
-	Data []Wallet `json:"data"`
 }
 
-func (c *Cursor) GetPageSize() int64 {
+func (c *Cursor) GetData() []Wallet {
 	if c == nil {
-		return 0
+		return []Wallet{}
 	}
-	return c.PageSize
+	return c.Data
 }
 
 func (c *Cursor) GetHasMore() *bool {
@@ -29,13 +29,6 @@ func (c *Cursor) GetHasMore() *bool {
 	return c.HasMore
 }
 
-func (c *Cursor) GetPrevious() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Previous
-}
-
 func (c *Cursor) GetNext() *string {
 	if c == nil {
 		return nil
@@ -43,11 +36,18 @@ func (c *Cursor) GetNext() *string {
 	return c.Next
 }
 
-func (c *Cursor) GetData() []Wallet {
+func (c *Cursor) GetPageSize() int64 {
 	if c == nil {
-		return []Wallet{}
+		return 0
 	}
-	return c.Data
+	return c.PageSize
+}
+
+func (c *Cursor) GetPrevious() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Previous
 }
 
 // ListWalletsResponse - A page of wallets

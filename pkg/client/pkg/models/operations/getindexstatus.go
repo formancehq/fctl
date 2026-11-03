@@ -20,7 +20,6 @@ func (g *GetIndexStatusSecurity) GetBearerAuth() *string {
 }
 
 type GetIndexStatusRequest struct {
-	Ledger *string `queryParam:"style=form,explode=true,name=ledger"`
 	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
 	// barrier and waits for the receiving node to apply up to it. `stale`
 	// serves the read from the receiving node's own store, with no barrier
@@ -31,6 +30,7 @@ type GetIndexStatusRequest struct {
 	// gRPC equivalent is the `x-consistency` request metadata.
 	//
 	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	Ledger       *string               `queryParam:"style=form,explode=true,name=ledger"`
 }
 
 func (g GetIndexStatusRequest) MarshalJSON() ([]byte, error) {
@@ -44,18 +44,18 @@ func (g *GetIndexStatusRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (g *GetIndexStatusRequest) GetLedger() *string {
-	if g == nil {
-		return nil
-	}
-	return g.Ledger
-}
-
 func (g *GetIndexStatusRequest) GetXConsistency() *ledgerv3.Consistency {
 	if g == nil {
 		return nil
 	}
 	return g.XConsistency
+}
+
+func (g *GetIndexStatusRequest) GetLedger() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Ledger
 }
 
 // GetIndexStatusResponseBody - Index status retrieved successfully.
@@ -74,18 +74,18 @@ func (g *GetIndexStatusResponseBody) GetData() map[string]any {
 type GetIndexStatusResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
-	// Index status retrieved successfully.
-	Object *GetIndexStatusResponseBody
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
+	// Index status retrieved successfully.
+	Object *GetIndexStatusResponseBody
 }
 
 func (g *GetIndexStatusResponse) GetContentType() string {
@@ -93,6 +93,20 @@ func (g *GetIndexStatusResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetIndexStatusResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if g == nil {
+		return nil
+	}
+	return g.ErrorResponse
+}
+
+func (g *GetIndexStatusResponse) GetForbidden() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Forbidden
 }
 
 func (g *GetIndexStatusResponse) GetStatusCode() int {
@@ -109,20 +123,6 @@ func (g *GetIndexStatusResponse) GetRawResponse() *http.Response {
 	return g.RawResponse
 }
 
-func (g *GetIndexStatusResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if g == nil {
-		return nil
-	}
-	return g.ErrorResponse
-}
-
-func (g *GetIndexStatusResponse) GetObject() *GetIndexStatusResponseBody {
-	if g == nil {
-		return nil
-	}
-	return g.Object
-}
-
 func (g *GetIndexStatusResponse) GetUnauthorized() *string {
 	if g == nil {
 		return nil
@@ -130,9 +130,9 @@ func (g *GetIndexStatusResponse) GetUnauthorized() *string {
 	return g.Unauthorized
 }
 
-func (g *GetIndexStatusResponse) GetForbidden() *string {
+func (g *GetIndexStatusResponse) GetObject() *GetIndexStatusResponseBody {
 	if g == nil {
 		return nil
 	}
-	return g.Forbidden
+	return g.Object
 }

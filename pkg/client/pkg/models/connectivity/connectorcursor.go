@@ -2,49 +2,49 @@
 
 package connectivity
 
-type Cursor struct {
-	PageSize int  `json:"pageSize"`
-	HasMore  bool `json:"hasMore"`
+type ConnectorCursorCursor struct {
+	Data    []Connector `json:"data"`
+	HasMore bool        `json:"hasMore"`
 	// Cursor of the next page; absent on the last page
-	Next *string     `json:"next,omitempty"`
-	Data []Connector `json:"data"`
+	Next     *string `json:"next,omitempty"`
+	PageSize int     `json:"pageSize"`
 }
 
-func (c *Cursor) GetPageSize() int {
-	if c == nil {
-		return 0
-	}
-	return c.PageSize
-}
-
-func (c *Cursor) GetHasMore() bool {
-	if c == nil {
-		return false
-	}
-	return c.HasMore
-}
-
-func (c *Cursor) GetNext() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Next
-}
-
-func (c *Cursor) GetData() []Connector {
+func (c *ConnectorCursorCursor) GetData() []Connector {
 	if c == nil {
 		return []Connector{}
 	}
 	return c.Data
 }
 
-type ConnectorCursor struct {
-	Cursor Cursor `json:"cursor"`
+func (c *ConnectorCursorCursor) GetHasMore() bool {
+	if c == nil {
+		return false
+	}
+	return c.HasMore
 }
 
-func (c *ConnectorCursor) GetCursor() Cursor {
+func (c *ConnectorCursorCursor) GetNext() *string {
 	if c == nil {
-		return Cursor{}
+		return nil
+	}
+	return c.Next
+}
+
+func (c *ConnectorCursorCursor) GetPageSize() int {
+	if c == nil {
+		return 0
+	}
+	return c.PageSize
+}
+
+type ConnectorCursor struct {
+	Cursor ConnectorCursorCursor `json:"cursor"`
+}
+
+func (c *ConnectorCursor) GetCursor() ConnectorCursorCursor {
+	if c == nil {
+		return ConnectorCursorCursor{}
 	}
 	return c.Cursor
 }

@@ -8,15 +8,8 @@ import (
 )
 
 type GetBalanceRequest struct {
-	ID          string `pathParam:"style=simple,explode=false,name=id"`
 	BalanceName string `pathParam:"style=simple,explode=false,name=balanceName"`
-}
-
-func (g *GetBalanceRequest) GetID() string {
-	if g == nil {
-		return ""
-	}
-	return g.ID
+	ID          string `pathParam:"style=simple,explode=false,name=id"`
 }
 
 func (g *GetBalanceRequest) GetBalanceName() string {
@@ -26,15 +19,22 @@ func (g *GetBalanceRequest) GetBalanceName() string {
 	return g.BalanceName
 }
 
+func (g *GetBalanceRequest) GetID() string {
+	if g == nil {
+		return ""
+	}
+	return g.ID
+}
+
 type GetBalanceResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Balance summary
+	GetBalanceResponse *wallets.GetBalanceResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Balance summary
-	GetBalanceResponse *wallets.GetBalanceResponse
 }
 
 func (g *GetBalanceResponse) GetContentType() string {
@@ -42,6 +42,13 @@ func (g *GetBalanceResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetBalanceResponse) GetGetBalanceResponse() *wallets.GetBalanceResponse {
+	if g == nil {
+		return nil
+	}
+	return g.GetBalanceResponse
 }
 
 func (g *GetBalanceResponse) GetStatusCode() int {
@@ -56,11 +63,4 @@ func (g *GetBalanceResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetBalanceResponse) GetGetBalanceResponse() *wallets.GetBalanceResponse {
-	if g == nil {
-		return nil
-	}
-	return g.GetBalanceResponse
 }

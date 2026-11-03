@@ -8,17 +8,17 @@ import (
 )
 
 type ConfirmHoldRequest struct {
-	HoldID string `pathParam:"style=simple,explode=false,name=hold_id"`
-	// Use an idempotency key
-	IdempotencyKey     *string                     `header:"style=simple,explode=false,name=Idempotency-Key"`
 	ConfirmHoldRequest *wallets.ConfirmHoldRequest `request:"mediaType=application/json"`
+	// Use an idempotency key
+	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
+	HoldID         string  `pathParam:"style=simple,explode=false,name=hold_id"`
 }
 
-func (c *ConfirmHoldRequest) GetHoldID() string {
+func (c *ConfirmHoldRequest) GetConfirmHoldRequest() *wallets.ConfirmHoldRequest {
 	if c == nil {
-		return ""
+		return nil
 	}
-	return c.HoldID
+	return c.ConfirmHoldRequest
 }
 
 func (c *ConfirmHoldRequest) GetIdempotencyKey() *string {
@@ -28,11 +28,11 @@ func (c *ConfirmHoldRequest) GetIdempotencyKey() *string {
 	return c.IdempotencyKey
 }
 
-func (c *ConfirmHoldRequest) GetConfirmHoldRequest() *wallets.ConfirmHoldRequest {
+func (c *ConfirmHoldRequest) GetHoldID() string {
 	if c == nil {
-		return nil
+		return ""
 	}
-	return c.ConfirmHoldRequest
+	return c.HoldID
 }
 
 type ConfirmHoldResponse struct {

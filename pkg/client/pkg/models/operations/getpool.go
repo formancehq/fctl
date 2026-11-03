@@ -22,12 +22,12 @@ func (g *GetPoolRequest) GetPoolID() string {
 type GetPoolResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	PoolResponse *payments.PoolResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	PoolResponse *payments.PoolResponse
 }
 
 func (g *GetPoolResponse) GetContentType() string {
@@ -35,6 +35,13 @@ func (g *GetPoolResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetPoolResponse) GetPoolResponse() *payments.PoolResponse {
+	if g == nil {
+		return nil
+	}
+	return g.PoolResponse
 }
 
 func (g *GetPoolResponse) GetStatusCode() int {
@@ -49,11 +56,4 @@ func (g *GetPoolResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetPoolResponse) GetPoolResponse() *payments.PoolResponse {
-	if g == nil {
-		return nil
-	}
-	return g.PoolResponse
 }

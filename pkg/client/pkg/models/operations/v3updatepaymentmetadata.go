@@ -8,16 +8,9 @@ import (
 )
 
 type V3UpdatePaymentMetadataRequest struct {
-	// The payment ID
-	PaymentID                      string                                   `pathParam:"style=simple,explode=false,name=paymentID"`
 	V3UpdatePaymentMetadataRequest *payments.V3UpdatePaymentMetadataRequest `request:"mediaType=application/json"`
-}
-
-func (v *V3UpdatePaymentMetadataRequest) GetPaymentID() string {
-	if v == nil {
-		return ""
-	}
-	return v.PaymentID
+	// The payment ID
+	PaymentID string `pathParam:"style=simple,explode=false,name=paymentID"`
 }
 
 func (v *V3UpdatePaymentMetadataRequest) GetV3UpdatePaymentMetadataRequest() *payments.V3UpdatePaymentMetadataRequest {
@@ -25,6 +18,13 @@ func (v *V3UpdatePaymentMetadataRequest) GetV3UpdatePaymentMetadataRequest() *pa
 		return nil
 	}
 	return v.V3UpdatePaymentMetadataRequest
+}
+
+func (v *V3UpdatePaymentMetadataRequest) GetPaymentID() string {
+	if v == nil {
+		return ""
+	}
+	return v.PaymentID
 }
 
 // #region class-body-v3updatepaymentmetadatarequest

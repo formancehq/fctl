@@ -8,6 +8,64 @@ import (
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
 )
 
+// V2VolumesWithBalanceCursorResponseCursor - Paginated cursor wrapping the list of volumes
+type V2VolumesWithBalanceCursorResponseCursor struct {
+	Data     []V2VolumesWithBalance `json:"data"`
+	HasMore  bool                   `json:"hasMore"`
+	Next     *string                `json:"next,omitempty"`
+	PageSize int64                  `json:"pageSize"`
+	Previous *string                `json:"previous,omitempty"`
+}
+
+func (v V2VolumesWithBalanceCursorResponseCursor) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(v, "", false)
+}
+
+func (v *V2VolumesWithBalanceCursorResponseCursor) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"data", "hasMore", "pageSize"}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *V2VolumesWithBalanceCursorResponseCursor) GetData() []V2VolumesWithBalance {
+	if v == nil {
+		return []V2VolumesWithBalance{}
+	}
+	return v.Data
+}
+
+func (v *V2VolumesWithBalanceCursorResponseCursor) GetHasMore() bool {
+	if v == nil {
+		return false
+	}
+	return v.HasMore
+}
+
+func (v *V2VolumesWithBalanceCursorResponseCursor) GetNext() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Next
+}
+
+func (v *V2VolumesWithBalanceCursorResponseCursor) GetPageSize() int64 {
+	if v == nil {
+		return 0
+	}
+	return v.PageSize
+}
+
+func (v *V2VolumesWithBalanceCursorResponseCursor) GetPrevious() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Previous
+}
+
+// #region class-body-v2volumeswithbalancecursorresponsecursor
+// #endregion class-body-v2volumeswithbalancecursorresponsecursor
+
 // V2VolumesWithBalanceCursorResponseResource - The resource type carried by this cursor
 type V2VolumesWithBalanceCursorResponseResource string
 
@@ -32,69 +90,11 @@ func (e *V2VolumesWithBalanceCursorResponseResource) UnmarshalJSON(data []byte) 
 	}
 }
 
-// V2VolumesWithBalanceCursorResponseCursor - Paginated cursor wrapping the list of volumes
-type V2VolumesWithBalanceCursorResponseCursor struct {
-	PageSize int64                  `json:"pageSize"`
-	HasMore  bool                   `json:"hasMore"`
-	Previous *string                `json:"previous,omitempty"`
-	Next     *string                `json:"next,omitempty"`
-	Data     []V2VolumesWithBalance `json:"data"`
-}
-
-func (v V2VolumesWithBalanceCursorResponseCursor) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(v, "", false)
-}
-
-func (v *V2VolumesWithBalanceCursorResponseCursor) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"pageSize", "hasMore", "data"}); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (v *V2VolumesWithBalanceCursorResponseCursor) GetPageSize() int64 {
-	if v == nil {
-		return 0
-	}
-	return v.PageSize
-}
-
-func (v *V2VolumesWithBalanceCursorResponseCursor) GetHasMore() bool {
-	if v == nil {
-		return false
-	}
-	return v.HasMore
-}
-
-func (v *V2VolumesWithBalanceCursorResponseCursor) GetPrevious() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Previous
-}
-
-func (v *V2VolumesWithBalanceCursorResponseCursor) GetNext() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Next
-}
-
-func (v *V2VolumesWithBalanceCursorResponseCursor) GetData() []V2VolumesWithBalance {
-	if v == nil {
-		return []V2VolumesWithBalance{}
-	}
-	return v.Data
-}
-
-// #region class-body-v2volumeswithbalancecursorresponsecursor
-// #endregion class-body-v2volumeswithbalancecursorresponsecursor
-
 type V2VolumesWithBalanceCursorResponse struct {
-	// The resource type carried by this cursor
-	Resource *V2VolumesWithBalanceCursorResponseResource `json:"resource,omitempty"`
 	// Paginated cursor wrapping the list of volumes
 	Cursor V2VolumesWithBalanceCursorResponseCursor `json:"cursor"`
+	// The resource type carried by this cursor
+	Resource *V2VolumesWithBalanceCursorResponseResource `json:"resource,omitempty"`
 }
 
 func (v V2VolumesWithBalanceCursorResponse) MarshalJSON() ([]byte, error) {
@@ -108,18 +108,18 @@ func (v *V2VolumesWithBalanceCursorResponse) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2VolumesWithBalanceCursorResponse) GetResource() *V2VolumesWithBalanceCursorResponseResource {
-	if v == nil {
-		return nil
-	}
-	return v.Resource
-}
-
 func (v *V2VolumesWithBalanceCursorResponse) GetCursor() V2VolumesWithBalanceCursorResponseCursor {
 	if v == nil {
 		return V2VolumesWithBalanceCursorResponseCursor{}
 	}
 	return v.Cursor
+}
+
+func (v *V2VolumesWithBalanceCursorResponse) GetResource() *V2VolumesWithBalanceCursorResponseResource {
+	if v == nil {
+		return nil
+	}
+	return v.Resource
 }
 
 // #region class-body-v2volumeswithbalancecursorresponse

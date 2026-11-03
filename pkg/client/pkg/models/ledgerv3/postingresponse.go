@@ -7,8 +7,6 @@ import (
 )
 
 type PostingResponse struct {
-	Source      string `json:"source"`
-	Destination string `json:"destination"`
 	// Unsigned amount from 0 through 2^256-1. Requests accept JSON integer
 	// tokens or canonical decimal strings independently of the response
 	// header; the server enforces the bound for both forms. Responses use
@@ -22,7 +20,9 @@ type PostingResponse struct {
 	// postings on the same (account, asset) but different colors operate
 	// on strictly isolated balances.
 	//
-	Color string `json:"color"`
+	Color       string `json:"color"`
+	Destination string `json:"destination"`
+	Source      string `json:"source"`
 }
 
 func (p PostingResponse) MarshalJSON() ([]byte, error) {
@@ -30,24 +30,10 @@ func (p PostingResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (p *PostingResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &p, "", false, []string{"source", "destination", "amount", "asset", "color"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &p, "", false, []string{"amount", "asset", "color", "destination", "source"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (p *PostingResponse) GetSource() string {
-	if p == nil {
-		return ""
-	}
-	return p.Source
-}
-
-func (p *PostingResponse) GetDestination() string {
-	if p == nil {
-		return ""
-	}
-	return p.Destination
 }
 
 func (p *PostingResponse) GetAmount() PostingAmount {
@@ -69,4 +55,18 @@ func (p *PostingResponse) GetColor() string {
 		return ""
 	}
 	return p.Color
+}
+
+func (p *PostingResponse) GetDestination() string {
+	if p == nil {
+		return ""
+	}
+	return p.Destination
+}
+
+func (p *PostingResponse) GetSource() string {
+	if p == nil {
+		return ""
+	}
+	return p.Source
 }

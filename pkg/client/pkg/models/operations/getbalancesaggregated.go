@@ -8,19 +8,12 @@ import (
 )
 
 type GetBalancesAggregatedRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 	// Filter balances involving given account, either as source or destination.
 	Address *string `queryParam:"style=form,explode=true,name=address"`
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 	// Use insertion date instead of effective date
 	UseInsertionDate *bool `queryParam:"style=form,explode=true,name=useInsertionDate"`
-}
-
-func (g *GetBalancesAggregatedRequest) GetLedger() string {
-	if g == nil {
-		return ""
-	}
-	return g.Ledger
 }
 
 func (g *GetBalancesAggregatedRequest) GetAddress() *string {
@@ -28,6 +21,13 @@ func (g *GetBalancesAggregatedRequest) GetAddress() *string {
 		return nil
 	}
 	return g.Address
+}
+
+func (g *GetBalancesAggregatedRequest) GetLedger() string {
+	if g == nil {
+		return ""
+	}
+	return g.Ledger
 }
 
 func (g *GetBalancesAggregatedRequest) GetUseInsertionDate() *bool {
@@ -38,14 +38,21 @@ func (g *GetBalancesAggregatedRequest) GetUseInsertionDate() *bool {
 }
 
 type GetBalancesAggregatedResponse struct {
+	// OK
+	AggregateBalancesResponse *ledger.AggregateBalancesResponse
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	AggregateBalancesResponse *ledger.AggregateBalancesResponse
+}
+
+func (g *GetBalancesAggregatedResponse) GetAggregateBalancesResponse() *ledger.AggregateBalancesResponse {
+	if g == nil {
+		return nil
+	}
+	return g.AggregateBalancesResponse
 }
 
 func (g *GetBalancesAggregatedResponse) GetContentType() string {
@@ -67,11 +74,4 @@ func (g *GetBalancesAggregatedResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetBalancesAggregatedResponse) GetAggregateBalancesResponse() *ledger.AggregateBalancesResponse {
-	if g == nil {
-		return nil
-	}
-	return g.AggregateBalancesResponse
 }

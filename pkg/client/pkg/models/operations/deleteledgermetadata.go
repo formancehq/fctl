@@ -19,8 +19,8 @@ func (d *DeleteLedgerMetadataSecurity) GetBearerAuth() *string {
 }
 
 type DeleteLedgerMetadataRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Idempotency key for the request
+	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
 	// Raw metadata key, for example formance.com/reviewed. SDK callers pass
 	// the raw key and let the SDK encode it. Direct HTTP clients URL-encode
 	// the key as one path segment, encoding slashes as %2F.
@@ -29,22 +29,8 @@ type DeleteLedgerMetadataRequest struct {
 	// are invalid metadata keys and are rejected with HTTP 400.
 	//
 	Key string `pathParam:"style=simple,explode=false,name=key"`
-	// Idempotency key for the request
-	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
-}
-
-func (d *DeleteLedgerMetadataRequest) GetLedgerName() string {
-	if d == nil {
-		return ""
-	}
-	return d.LedgerName
-}
-
-func (d *DeleteLedgerMetadataRequest) GetKey() string {
-	if d == nil {
-		return ""
-	}
-	return d.Key
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 }
 
 func (d *DeleteLedgerMetadataRequest) GetIdempotencyKey() *string {
@@ -54,20 +40,34 @@ func (d *DeleteLedgerMetadataRequest) GetIdempotencyKey() *string {
 	return d.IdempotencyKey
 }
 
+func (d *DeleteLedgerMetadataRequest) GetKey() string {
+	if d == nil {
+		return ""
+	}
+	return d.Key
+}
+
+func (d *DeleteLedgerMetadataRequest) GetLedgerName() string {
+	if d == nil {
+		return ""
+	}
+	return d.LedgerName
+}
+
 type DeleteLedgerMetadataResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (d *DeleteLedgerMetadataResponse) GetContentType() string {
@@ -75,6 +75,27 @@ func (d *DeleteLedgerMetadataResponse) GetContentType() string {
 		return ""
 	}
 	return d.ContentType
+}
+
+func (d *DeleteLedgerMetadataResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if d == nil {
+		return nil
+	}
+	return d.ErrorResponse
+}
+
+func (d *DeleteLedgerMetadataResponse) GetForbidden() *string {
+	if d == nil {
+		return nil
+	}
+	return d.Forbidden
+}
+
+func (d *DeleteLedgerMetadataResponse) GetHeaders() map[string][]string {
+	if d == nil {
+		return map[string][]string{}
+	}
+	return d.Headers
 }
 
 func (d *DeleteLedgerMetadataResponse) GetStatusCode() int {
@@ -91,30 +112,9 @@ func (d *DeleteLedgerMetadataResponse) GetRawResponse() *http.Response {
 	return d.RawResponse
 }
 
-func (d *DeleteLedgerMetadataResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if d == nil {
-		return nil
-	}
-	return d.ErrorResponse
-}
-
 func (d *DeleteLedgerMetadataResponse) GetUnauthorized() *string {
 	if d == nil {
 		return nil
 	}
 	return d.Unauthorized
-}
-
-func (d *DeleteLedgerMetadataResponse) GetForbidden() *string {
-	if d == nil {
-		return nil
-	}
-	return d.Forbidden
-}
-
-func (d *DeleteLedgerMetadataResponse) GetHeaders() map[string][]string {
-	if d == nil {
-		return map[string][]string{}
-	}
-	return d.Headers
 }

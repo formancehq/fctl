@@ -2,63 +2,63 @@
 
 package payments
 
-// Cursor - Paginated cursor wrapping the list of payments
-type Cursor struct {
-	// Number of items requested per page
-	PageSize int64 `json:"pageSize"`
+// PaymentsCursorCursor - Paginated cursor wrapping the list of payments
+type PaymentsCursorCursor struct {
+	Data []Payment `json:"data"`
 	// Whether further pages are available
 	HasMore bool `json:"hasMore"`
+	// Cursor for the next page, absent on the last page
+	Next *string `json:"next,omitempty"`
+	// Number of items requested per page
+	PageSize int64 `json:"pageSize"`
 	// Cursor for the previous page, absent on the first page
 	Previous *string `json:"previous,omitempty"`
-	// Cursor for the next page, absent on the last page
-	Next *string   `json:"next,omitempty"`
-	Data []Payment `json:"data"`
 }
 
-func (c *Cursor) GetPageSize() int64 {
-	if c == nil {
-		return 0
-	}
-	return c.PageSize
-}
-
-func (c *Cursor) GetHasMore() bool {
-	if c == nil {
-		return false
-	}
-	return c.HasMore
-}
-
-func (c *Cursor) GetPrevious() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Previous
-}
-
-func (c *Cursor) GetNext() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Next
-}
-
-func (c *Cursor) GetData() []Payment {
-	if c == nil {
+func (p *PaymentsCursorCursor) GetData() []Payment {
+	if p == nil {
 		return []Payment{}
 	}
-	return c.Data
+	return p.Data
+}
+
+func (p *PaymentsCursorCursor) GetHasMore() bool {
+	if p == nil {
+		return false
+	}
+	return p.HasMore
+}
+
+func (p *PaymentsCursorCursor) GetNext() *string {
+	if p == nil {
+		return nil
+	}
+	return p.Next
+}
+
+func (p *PaymentsCursorCursor) GetPageSize() int64 {
+	if p == nil {
+		return 0
+	}
+	return p.PageSize
+}
+
+func (p *PaymentsCursorCursor) GetPrevious() *string {
+	if p == nil {
+		return nil
+	}
+	return p.Previous
 }
 
 // PaymentsCursor - OK
 type PaymentsCursor struct {
 	// Paginated cursor wrapping the list of payments
-	Cursor Cursor `json:"cursor"`
+	Cursor PaymentsCursorCursor `json:"cursor"`
 }
 
-func (p *PaymentsCursor) GetCursor() Cursor {
+func (p *PaymentsCursor) GetCursor() PaymentsCursorCursor {
 	if p == nil {
-		return Cursor{}
+		return PaymentsCursorCursor{}
 	}
 	return p.Cursor
 }

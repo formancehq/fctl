@@ -8,16 +8,9 @@ import (
 )
 
 type CreateTransactionsRequest struct {
-	// Name of the ledger.
-	Ledger       string              `pathParam:"style=simple,explode=false,name=ledger"`
 	Transactions ledger.Transactions `request:"mediaType=application/json"`
-}
-
-func (c *CreateTransactionsRequest) GetLedger() string {
-	if c == nil {
-		return ""
-	}
-	return c.Ledger
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 }
 
 func (c *CreateTransactionsRequest) GetTransactions() ledger.Transactions {
@@ -25,6 +18,13 @@ func (c *CreateTransactionsRequest) GetTransactions() ledger.Transactions {
 		return ledger.Transactions{}
 	}
 	return c.Transactions
+}
+
+func (c *CreateTransactionsRequest) GetLedger() string {
+	if c == nil {
+		return ""
+	}
+	return c.Ledger
 }
 
 type CreateTransactionsResponse struct {

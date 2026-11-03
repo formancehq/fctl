@@ -20,13 +20,6 @@ func (g *GetNumscriptSecurity) GetBearerAuth() *string {
 }
 
 type GetNumscriptRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Name of the numscript, URL-encoded as one path segment. Decoded exactly once.
-	Name string `pathParam:"style=simple,explode=false,name=name"`
-	// Semver version to retrieve (e.g. "1.0.0"). If omitted or empty, the latest version is returned.
-	//
-	Version *string `queryParam:"style=form,explode=true,name=version"`
 	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
 	// barrier and waits for the receiving node to apply up to it. `stale`
 	// serves the read from the receiving node's own store, with no barrier
@@ -37,6 +30,13 @@ type GetNumscriptRequest struct {
 	// gRPC equivalent is the `x-consistency` request metadata.
 	//
 	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Name of the numscript, URL-encoded as one path segment. Decoded exactly once.
+	Name string `pathParam:"style=simple,explode=false,name=name"`
+	// Semver version to retrieve (e.g. "1.0.0"). If omitted or empty, the latest version is returned.
+	//
+	Version *string `queryParam:"style=form,explode=true,name=version"`
 }
 
 func (g GetNumscriptRequest) MarshalJSON() ([]byte, error) {
@@ -48,6 +48,13 @@ func (g *GetNumscriptRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (g *GetNumscriptRequest) GetXConsistency() *ledgerv3.Consistency {
+	if g == nil {
+		return nil
+	}
+	return g.XConsistency
 }
 
 func (g *GetNumscriptRequest) GetLedgerName() string {
@@ -71,29 +78,22 @@ func (g *GetNumscriptRequest) GetVersion() *string {
 	return g.Version
 }
 
-func (g *GetNumscriptRequest) GetXConsistency() *ledgerv3.Consistency {
-	if g == nil {
-		return nil
-	}
-	return g.XConsistency
-}
-
 type GetNumscriptResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	// Numscript retrieved successfully
+	GetNumscriptResponse *ledgerv3.GetNumscriptResponse
+	Headers              map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Numscript retrieved successfully
-	GetNumscriptResponse *ledgerv3.GetNumscriptResponse
-	// Authentication required (missing or invalid JWT token)
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (g *GetNumscriptResponse) GetContentType() string {
@@ -101,6 +101,34 @@ func (g *GetNumscriptResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetNumscriptResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if g == nil {
+		return nil
+	}
+	return g.ErrorResponse
+}
+
+func (g *GetNumscriptResponse) GetForbidden() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Forbidden
+}
+
+func (g *GetNumscriptResponse) GetGetNumscriptResponse() *ledgerv3.GetNumscriptResponse {
+	if g == nil {
+		return nil
+	}
+	return g.GetNumscriptResponse
+}
+
+func (g *GetNumscriptResponse) GetHeaders() map[string][]string {
+	if g == nil {
+		return map[string][]string{}
+	}
+	return g.Headers
 }
 
 func (g *GetNumscriptResponse) GetStatusCode() int {
@@ -117,37 +145,9 @@ func (g *GetNumscriptResponse) GetRawResponse() *http.Response {
 	return g.RawResponse
 }
 
-func (g *GetNumscriptResponse) GetGetNumscriptResponse() *ledgerv3.GetNumscriptResponse {
-	if g == nil {
-		return nil
-	}
-	return g.GetNumscriptResponse
-}
-
-func (g *GetNumscriptResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if g == nil {
-		return nil
-	}
-	return g.ErrorResponse
-}
-
 func (g *GetNumscriptResponse) GetUnauthorized() *string {
 	if g == nil {
 		return nil
 	}
 	return g.Unauthorized
-}
-
-func (g *GetNumscriptResponse) GetForbidden() *string {
-	if g == nil {
-		return nil
-	}
-	return g.Forbidden
-}
-
-func (g *GetNumscriptResponse) GetHeaders() map[string][]string {
-	if g == nil {
-		return map[string][]string{}
-	}
-	return g.Headers
 }

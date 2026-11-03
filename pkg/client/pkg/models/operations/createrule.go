@@ -10,12 +10,12 @@ import (
 type CreateRuleResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	RuleResponse *reconciliation.RuleResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	RuleResponse *reconciliation.RuleResponse
 }
 
 func (c *CreateRuleResponse) GetContentType() string {
@@ -23,6 +23,13 @@ func (c *CreateRuleResponse) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
+}
+
+func (c *CreateRuleResponse) GetRuleResponse() *reconciliation.RuleResponse {
+	if c == nil {
+		return nil
+	}
+	return c.RuleResponse
 }
 
 func (c *CreateRuleResponse) GetStatusCode() int {
@@ -37,11 +44,4 @@ func (c *CreateRuleResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return c.RawResponse
-}
-
-func (c *CreateRuleResponse) GetRuleResponse() *reconciliation.RuleResponse {
-	if c == nil {
-		return nil
-	}
-	return c.RuleResponse
 }

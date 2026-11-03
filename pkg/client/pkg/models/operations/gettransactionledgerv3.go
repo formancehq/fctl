@@ -23,20 +23,6 @@ func (g *GetTransactionLedgerV3Security) GetBearerAuth() *string {
 // #endregion class-body-gettransactionledgerv3security
 
 type GetTransactionLedgerV3Request struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Transaction ID
-	TransactionID int64 `pathParam:"style=simple,explode=false,name=transactionId"`
-	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
-	// barrier and waits for the receiving node to apply up to it. `stale`
-	// serves the read from the receiving node's own store, with no barrier
-	// and no forwarding to the leader, so the answer may lag the leader.
-	// Matching ignores case and surrounding whitespace. An unknown value, or a
-	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
-	// `/v3` route, writes included; a valid value has no effect on writes. The
-	// gRPC equivalent is the `x-consistency` request metadata.
-	//
-	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
 	// Render all response Uint256, BigUint and SignedBigInt values as canonical
 	// decimal strings, regardless of business meaning, including posting
 	// amounts, volume input/output and balances. Ordinary integer IDs/counts,
@@ -48,6 +34,20 @@ type GetTransactionLedgerV3Request struct {
 	// and bulk results. Request decoding is unchanged.
 	//
 	FormanceBigintAsString *string `header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
+	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
+	// barrier and waits for the receiving node to apply up to it. `stale`
+	// serves the read from the receiving node's own store, with no barrier
+	// and no forwarding to the leader, so the answer may lag the leader.
+	// Matching ignores case and surrounding whitespace. An unknown value, or a
+	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
+	// `/v3` route, writes included; a valid value has no effect on writes. The
+	// gRPC equivalent is the `x-consistency` request metadata.
+	//
+	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Transaction ID
+	TransactionID int64 `pathParam:"style=simple,explode=false,name=transactionId"`
 }
 
 func (g GetTransactionLedgerV3Request) MarshalJSON() ([]byte, error) {
@@ -59,6 +59,20 @@ func (g *GetTransactionLedgerV3Request) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (g *GetTransactionLedgerV3Request) GetFormanceBigintAsString() *string {
+	if g == nil {
+		return nil
+	}
+	return g.FormanceBigintAsString
+}
+
+func (g *GetTransactionLedgerV3Request) GetXConsistency() *ledgerv3.Consistency {
+	if g == nil {
+		return nil
+	}
+	return g.XConsistency
 }
 
 func (g *GetTransactionLedgerV3Request) GetLedgerName() string {
@@ -75,39 +89,25 @@ func (g *GetTransactionLedgerV3Request) GetTransactionID() int64 {
 	return g.TransactionID
 }
 
-func (g *GetTransactionLedgerV3Request) GetXConsistency() *ledgerv3.Consistency {
-	if g == nil {
-		return nil
-	}
-	return g.XConsistency
-}
-
-func (g *GetTransactionLedgerV3Request) GetFormanceBigintAsString() *string {
-	if g == nil {
-		return nil
-	}
-	return g.FormanceBigintAsString
-}
-
 // #region class-body-gettransactionledgerv3request
 // #endregion class-body-gettransactionledgerv3request
 
 type GetTransactionLedgerV3Response struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	// Transaction retrieved successfully
+	GetTransactionResponse *ledgerv3.GetTransactionResponse
+	Headers                map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Transaction retrieved successfully
-	GetTransactionResponse *ledgerv3.GetTransactionResponse
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (g *GetTransactionLedgerV3Response) GetContentType() string {
@@ -115,6 +115,34 @@ func (g *GetTransactionLedgerV3Response) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetTransactionLedgerV3Response) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if g == nil {
+		return nil
+	}
+	return g.ErrorResponse
+}
+
+func (g *GetTransactionLedgerV3Response) GetForbidden() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Forbidden
+}
+
+func (g *GetTransactionLedgerV3Response) GetGetTransactionResponse() *ledgerv3.GetTransactionResponse {
+	if g == nil {
+		return nil
+	}
+	return g.GetTransactionResponse
+}
+
+func (g *GetTransactionLedgerV3Response) GetHeaders() map[string][]string {
+	if g == nil {
+		return map[string][]string{}
+	}
+	return g.Headers
 }
 
 func (g *GetTransactionLedgerV3Response) GetStatusCode() int {
@@ -131,39 +159,11 @@ func (g *GetTransactionLedgerV3Response) GetRawResponse() *http.Response {
 	return g.RawResponse
 }
 
-func (g *GetTransactionLedgerV3Response) GetGetTransactionResponse() *ledgerv3.GetTransactionResponse {
-	if g == nil {
-		return nil
-	}
-	return g.GetTransactionResponse
-}
-
-func (g *GetTransactionLedgerV3Response) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if g == nil {
-		return nil
-	}
-	return g.ErrorResponse
-}
-
 func (g *GetTransactionLedgerV3Response) GetUnauthorized() *string {
 	if g == nil {
 		return nil
 	}
 	return g.Unauthorized
-}
-
-func (g *GetTransactionLedgerV3Response) GetForbidden() *string {
-	if g == nil {
-		return nil
-	}
-	return g.Forbidden
-}
-
-func (g *GetTransactionLedgerV3Response) GetHeaders() map[string][]string {
-	if g == nil {
-		return map[string][]string{}
-	}
-	return g.Headers
 }
 
 // #region class-body-gettransactionledgerv3response

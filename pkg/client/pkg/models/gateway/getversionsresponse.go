@@ -3,19 +3,12 @@
 package gateway
 
 type GetVersionsResponse struct {
-	// Region the stack is deployed in
-	Region string `json:"region"`
 	// Environment the stack is deployed in
 	Env string `json:"env"`
+	// Region the stack is deployed in
+	Region string `json:"region"`
 	// Version and health of each component in the stack
 	Versions []Version `json:"versions"`
-}
-
-func (g *GetVersionsResponse) GetRegion() string {
-	if g == nil {
-		return ""
-	}
-	return g.Region
 }
 
 func (g *GetVersionsResponse) GetEnv() string {
@@ -23,6 +16,13 @@ func (g *GetVersionsResponse) GetEnv() string {
 		return ""
 	}
 	return g.Env
+}
+
+func (g *GetVersionsResponse) GetRegion() string {
+	if g == nil {
+		return ""
+	}
+	return g.Region
 }
 
 func (g *GetVersionsResponse) GetVersions() []Version {

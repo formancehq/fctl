@@ -11,22 +11,22 @@ import (
 type V2ActivityPause struct {
 	// Stable activity identifier within the owning workflow execution
 	ActivityID string `json:"activityID"`
-	// Run identifier of the described stage workflow execution
-	TemporalRunID string `json:"temporalRunID"`
-	// Activity type name
-	Name string `json:"name"`
 	// Current attempt counter reported by Temporal
 	Attempt int64 `json:"attempt"`
 	// Message of the most recent failed attempt, when available
 	LastFailure *string `json:"lastFailure,omitempty"`
 	// Application failure type of the most recent failed attempt, when available
 	LastFailureType *string `json:"lastFailureType,omitempty"`
+	// Attempt limit decoded from an ACTIVITY_ATTEMPT_LIMIT:<limit> pause reason, when valid
+	MaxAttempts *int64 `json:"maxAttempts,omitempty"`
+	// Activity type name
+	Name string `json:"name"`
 	// Pause timestamp reported by Temporal, when available; send this value with temporalRunID to resume this pause generation
 	PausedAt *time.Time `json:"pausedAt,omitempty"`
 	// Reason recorded by Temporal for this pause, when available
 	Reason *string `json:"reason,omitempty"`
-	// Attempt limit decoded from an ACTIVITY_ATTEMPT_LIMIT:<limit> pause reason, when valid
-	MaxAttempts *int64 `json:"maxAttempts,omitempty"`
+	// Run identifier of the described stage workflow execution
+	TemporalRunID string `json:"temporalRunID"`
 }
 
 func (v V2ActivityPause) MarshalJSON() ([]byte, error) {
@@ -45,20 +45,6 @@ func (v *V2ActivityPause) GetActivityID() string {
 		return ""
 	}
 	return v.ActivityID
-}
-
-func (v *V2ActivityPause) GetTemporalRunID() string {
-	if v == nil {
-		return ""
-	}
-	return v.TemporalRunID
-}
-
-func (v *V2ActivityPause) GetName() string {
-	if v == nil {
-		return ""
-	}
-	return v.Name
 }
 
 func (v *V2ActivityPause) GetAttempt() int64 {
@@ -82,6 +68,20 @@ func (v *V2ActivityPause) GetLastFailureType() *string {
 	return v.LastFailureType
 }
 
+func (v *V2ActivityPause) GetMaxAttempts() *int64 {
+	if v == nil {
+		return nil
+	}
+	return v.MaxAttempts
+}
+
+func (v *V2ActivityPause) GetName() string {
+	if v == nil {
+		return ""
+	}
+	return v.Name
+}
+
 func (v *V2ActivityPause) GetPausedAt() *time.Time {
 	if v == nil {
 		return nil
@@ -96,11 +96,11 @@ func (v *V2ActivityPause) GetReason() *string {
 	return v.Reason
 }
 
-func (v *V2ActivityPause) GetMaxAttempts() *int64 {
+func (v *V2ActivityPause) GetTemporalRunID() string {
 	if v == nil {
-		return nil
+		return ""
 	}
-	return v.MaxAttempts
+	return v.TemporalRunID
 }
 
 // #region class-body-v2activitypause

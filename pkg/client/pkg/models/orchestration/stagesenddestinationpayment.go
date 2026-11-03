@@ -8,20 +8,20 @@ import (
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
 )
 
-// Type of transfer initiation:
+// StageSendDestinationPaymentType - Type of transfer initiation:
 // - TRANSFER: Internal to internal account transfer
 // - PAYOUT: Internal to external account payout
-type Type string
+type StageSendDestinationPaymentType string
 
 const (
-	TypeTransfer Type = "TRANSFER"
-	TypePayout   Type = "PAYOUT"
+	StageSendDestinationPaymentTypeTransfer StageSendDestinationPaymentType = "TRANSFER"
+	StageSendDestinationPaymentTypePayout   StageSendDestinationPaymentType = "PAYOUT"
 )
 
-func (e Type) ToPointer() *Type {
+func (e StageSendDestinationPaymentType) ToPointer() *StageSendDestinationPaymentType {
 	return &e
 }
-func (e *Type) UnmarshalJSON(data []byte) error {
+func (e *StageSendDestinationPaymentType) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
@@ -30,10 +30,10 @@ func (e *Type) UnmarshalJSON(data []byte) error {
 	case "TRANSFER":
 		fallthrough
 	case "PAYOUT":
-		*e = Type(v)
+		*e = StageSendDestinationPaymentType(v)
 		return nil
 	default:
-		return fmt.Errorf("invalid value for Type: %v", v)
+		return fmt.Errorf("invalid value for StageSendDestinationPaymentType: %v", v)
 	}
 }
 
@@ -43,15 +43,15 @@ type StageSendDestinationPayment struct {
 	// Validated by the Payments service based on installed connectors.
 	//
 	Psp string `json:"psp"`
-	// Type of transfer initiation:
-	// - TRANSFER: Internal to internal account transfer
-	// - PAYOUT: Internal to external account payout
-	//
-	Type *Type `default:"TRANSFER" json:"type"`
 	// Formance Payments account ID for the source (internal PSP account).
 	// If not specified, the Payments service may use a default account for the connector.
 	//
 	SourceAccount *string `json:"sourceAccount,omitempty"`
+	// Type of transfer initiation:
+	// - TRANSFER: Internal to internal account transfer
+	// - PAYOUT: Internal to external account payout
+	//
+	Type *StageSendDestinationPaymentType `default:"TRANSFER" json:"type"`
 }
 
 func (s StageSendDestinationPayment) MarshalJSON() ([]byte, error) {
@@ -72,16 +72,16 @@ func (s *StageSendDestinationPayment) GetPsp() string {
 	return s.Psp
 }
 
-func (s *StageSendDestinationPayment) GetType() *Type {
-	if s == nil {
-		return nil
-	}
-	return s.Type
-}
-
 func (s *StageSendDestinationPayment) GetSourceAccount() *string {
 	if s == nil {
 		return nil
 	}
 	return s.SourceAccount
+}
+
+func (s *StageSendDestinationPayment) GetType() *StageSendDestinationPaymentType {
+	if s == nil {
+		return nil
+	}
+	return s.Type
 }

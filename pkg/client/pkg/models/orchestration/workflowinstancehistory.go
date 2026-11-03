@@ -8,16 +8,16 @@ import (
 )
 
 type WorkflowInstanceHistory struct {
-	// Name of the stage this history entry records
-	Name string `json:"name"`
-	// One step of a workflow, whose shape depends on the stage type
-	Input Stage `json:"input"`
 	// Why the stage failed, absent when it succeeded
 	Error *string `json:"error,omitempty"`
-	// Whether the stage has finished
-	Terminated bool `json:"terminated"`
+	// One step of a workflow, whose shape depends on the stage type
+	Input Stage `json:"input"`
+	// Name of the stage this history entry records
+	Name string `json:"name"`
 	// When the stage started
 	StartedAt time.Time `json:"startedAt"`
+	// Whether the stage has finished
+	Terminated bool `json:"terminated"`
 	// When the stage finished, absent while it is still running
 	TerminatedAt *time.Time `json:"terminatedAt,omitempty"`
 }
@@ -33,11 +33,11 @@ func (w *WorkflowInstanceHistory) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (w *WorkflowInstanceHistory) GetName() string {
+func (w *WorkflowInstanceHistory) GetError() *string {
 	if w == nil {
-		return ""
+		return nil
 	}
-	return w.Name
+	return w.Error
 }
 
 func (w *WorkflowInstanceHistory) GetInput() Stage {
@@ -47,18 +47,11 @@ func (w *WorkflowInstanceHistory) GetInput() Stage {
 	return w.Input
 }
 
-func (w *WorkflowInstanceHistory) GetError() *string {
+func (w *WorkflowInstanceHistory) GetName() string {
 	if w == nil {
-		return nil
+		return ""
 	}
-	return w.Error
-}
-
-func (w *WorkflowInstanceHistory) GetTerminated() bool {
-	if w == nil {
-		return false
-	}
-	return w.Terminated
+	return w.Name
 }
 
 func (w *WorkflowInstanceHistory) GetStartedAt() time.Time {
@@ -66,6 +59,13 @@ func (w *WorkflowInstanceHistory) GetStartedAt() time.Time {
 		return time.Time{}
 	}
 	return w.StartedAt
+}
+
+func (w *WorkflowInstanceHistory) GetTerminated() bool {
+	if w == nil {
+		return false
+	}
+	return w.Terminated
 }
 
 func (w *WorkflowInstanceHistory) GetTerminatedAt() *time.Time {

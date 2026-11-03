@@ -48,7 +48,6 @@ func (e *Scope) UnmarshalJSON(data []byte) error {
 }
 
 type ListBucketIndexesRequest struct {
-	Scope *Scope `default:"all" queryParam:"style=form,explode=true,name=scope"`
 	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
 	// barrier and waits for the receiving node to apply up to it. `stale`
 	// serves the read from the receiving node's own store, with no barrier
@@ -59,6 +58,7 @@ type ListBucketIndexesRequest struct {
 	// gRPC equivalent is the `x-consistency` request metadata.
 	//
 	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	Scope        *Scope                `default:"all" queryParam:"style=form,explode=true,name=scope"`
 }
 
 func (l ListBucketIndexesRequest) MarshalJSON() ([]byte, error) {
@@ -72,18 +72,18 @@ func (l *ListBucketIndexesRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (l *ListBucketIndexesRequest) GetScope() *Scope {
-	if l == nil {
-		return nil
-	}
-	return l.Scope
-}
-
 func (l *ListBucketIndexesRequest) GetXConsistency() *ledgerv3.Consistency {
 	if l == nil {
 		return nil
 	}
 	return l.XConsistency
+}
+
+func (l *ListBucketIndexesRequest) GetScope() *Scope {
+	if l == nil {
+		return nil
+	}
+	return l.Scope
 }
 
 // ListBucketIndexesResponseBody - Indexes retrieved successfully.
@@ -101,18 +101,18 @@ func (l *ListBucketIndexesResponseBody) GetData() []map[string]any {
 type ListBucketIndexesResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Indexes retrieved successfully.
-	Object *ListBucketIndexesResponseBody
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
+	// Indexes retrieved successfully.
+	Object *ListBucketIndexesResponseBody
 }
 
 func (l *ListBucketIndexesResponse) GetContentType() string {
@@ -120,6 +120,20 @@ func (l *ListBucketIndexesResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListBucketIndexesResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ErrorResponse
+}
+
+func (l *ListBucketIndexesResponse) GetForbidden() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Forbidden
 }
 
 func (l *ListBucketIndexesResponse) GetStatusCode() int {
@@ -136,20 +150,6 @@ func (l *ListBucketIndexesResponse) GetRawResponse() *http.Response {
 	return l.RawResponse
 }
 
-func (l *ListBucketIndexesResponse) GetObject() *ListBucketIndexesResponseBody {
-	if l == nil {
-		return nil
-	}
-	return l.Object
-}
-
-func (l *ListBucketIndexesResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ErrorResponse
-}
-
 func (l *ListBucketIndexesResponse) GetUnauthorized() *string {
 	if l == nil {
 		return nil
@@ -157,9 +157,9 @@ func (l *ListBucketIndexesResponse) GetUnauthorized() *string {
 	return l.Unauthorized
 }
 
-func (l *ListBucketIndexesResponse) GetForbidden() *string {
+func (l *ListBucketIndexesResponse) GetObject() *ListBucketIndexesResponseBody {
 	if l == nil {
 		return nil
 	}
-	return l.Forbidden
+	return l.Object
 }

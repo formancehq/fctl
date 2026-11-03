@@ -7,6 +7,44 @@ import (
 	"time"
 )
 
+type TaskWiseDescriptor struct {
+	Key       *string `json:"key,omitempty"`
+	Name      *string `json:"name,omitempty"`
+	ProfileID *int64  `json:"profileID,omitempty"`
+}
+
+func (t TaskWiseDescriptor) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(t, "", false)
+}
+
+func (t *TaskWiseDescriptor) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &t, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *TaskWiseDescriptor) GetKey() *string {
+	if t == nil {
+		return nil
+	}
+	return t.Key
+}
+
+func (t *TaskWiseDescriptor) GetName() *string {
+	if t == nil {
+		return nil
+	}
+	return t.Name
+}
+
+func (t *TaskWiseDescriptor) GetProfileID() *int64 {
+	if t == nil {
+		return nil
+	}
+	return t.ProfileID
+}
+
 // TaskWiseState - Internal progress state the task resumes from
 type TaskWiseState struct {
 }
@@ -22,60 +60,22 @@ func (t *TaskWiseState) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type TaskWiseDescriptor struct {
-	Name      *string `json:"name,omitempty"`
-	Key       *string `json:"key,omitempty"`
-	ProfileID *int64  `json:"profileID,omitempty"`
-}
-
-func (t TaskWiseDescriptor) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(t, "", false)
-}
-
-func (t *TaskWiseDescriptor) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &t, "", false, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (t *TaskWiseDescriptor) GetName() *string {
-	if t == nil {
-		return nil
-	}
-	return t.Name
-}
-
-func (t *TaskWiseDescriptor) GetKey() *string {
-	if t == nil {
-		return nil
-	}
-	return t.Key
-}
-
-func (t *TaskWiseDescriptor) GetProfileID() *int64 {
-	if t == nil {
-		return nil
-	}
-	return t.ProfileID
-}
-
 type TaskWise struct {
-	// Unique identifier of the task
-	ID string `json:"id"`
 	// Identifier of the connector the task runs against
 	ConnectorID string `json:"connectorID"`
 	// When the task was created
-	CreatedAt time.Time `json:"createdAt"`
-	// When the task was last updated
-	UpdatedAt time.Time `json:"updatedAt"`
-	// Where a task stands, from pending or active through to stopped, terminated or failed
-	Status TaskStatus `json:"status"`
+	CreatedAt  time.Time          `json:"createdAt"`
+	Descriptor TaskWiseDescriptor `json:"descriptor"`
+	// Why the task failed, absent when it succeeded
+	Error *string `json:"error,omitempty"`
+	// Unique identifier of the task
+	ID string `json:"id"`
 	// Internal progress state the task resumes from
 	State *TaskWiseState `json:"state,omitempty"`
-	// Why the task failed, absent when it succeeded
-	Error      *string            `json:"error,omitempty"`
-	Descriptor TaskWiseDescriptor `json:"descriptor"`
+	// Where a task stands, from pending or active through to stopped, terminated or failed
+	Status TaskStatus `json:"status"`
+	// When the task was last updated
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (t TaskWise) MarshalJSON() ([]byte, error) {
@@ -83,17 +83,10 @@ func (t TaskWise) MarshalJSON() ([]byte, error) {
 }
 
 func (t *TaskWise) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &t, "", false, []string{"id", "connectorID", "createdAt", "updatedAt", "status", "descriptor"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &t, "", false, []string{"connectorID", "createdAt", "descriptor", "id", "status", "updatedAt"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (t *TaskWise) GetID() string {
-	if t == nil {
-		return ""
-	}
-	return t.ID
 }
 
 func (t *TaskWise) GetConnectorID() string {
@@ -110,25 +103,11 @@ func (t *TaskWise) GetCreatedAt() time.Time {
 	return t.CreatedAt
 }
 
-func (t *TaskWise) GetUpdatedAt() time.Time {
+func (t *TaskWise) GetDescriptor() TaskWiseDescriptor {
 	if t == nil {
-		return time.Time{}
+		return TaskWiseDescriptor{}
 	}
-	return t.UpdatedAt
-}
-
-func (t *TaskWise) GetStatus() TaskStatus {
-	if t == nil {
-		return TaskStatus("")
-	}
-	return t.Status
-}
-
-func (t *TaskWise) GetState() *TaskWiseState {
-	if t == nil {
-		return nil
-	}
-	return t.State
+	return t.Descriptor
 }
 
 func (t *TaskWise) GetError() *string {
@@ -138,9 +117,30 @@ func (t *TaskWise) GetError() *string {
 	return t.Error
 }
 
-func (t *TaskWise) GetDescriptor() TaskWiseDescriptor {
+func (t *TaskWise) GetID() string {
 	if t == nil {
-		return TaskWiseDescriptor{}
+		return ""
 	}
-	return t.Descriptor
+	return t.ID
+}
+
+func (t *TaskWise) GetState() *TaskWiseState {
+	if t == nil {
+		return nil
+	}
+	return t.State
+}
+
+func (t *TaskWise) GetStatus() TaskStatus {
+	if t == nil {
+		return TaskStatus("")
+	}
+	return t.Status
+}
+
+func (t *TaskWise) GetUpdatedAt() time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return t.UpdatedAt
 }

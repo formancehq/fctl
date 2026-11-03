@@ -10,86 +10,59 @@ import (
 	"math/big"
 )
 
-// V2LogDataDeleteMetadataTargetType - Type of the target entity
-type V2LogDataDeleteMetadataTargetType string
+type TargetIDType string
 
 const (
-	V2LogDataDeleteMetadataTargetTypeAccount     V2LogDataDeleteMetadataTargetType = "ACCOUNT"
-	V2LogDataDeleteMetadataTargetTypeTransaction V2LogDataDeleteMetadataTargetType = "TRANSACTION"
+	TargetIDTypeStr    TargetIDType = "str"
+	TargetIDTypeBigint TargetIDType = "bigint"
 )
 
-func (e V2LogDataDeleteMetadataTargetType) ToPointer() *V2LogDataDeleteMetadataTargetType {
-	return &e
-}
-func (e *V2LogDataDeleteMetadataTargetType) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "ACCOUNT":
-		fallthrough
-	case "TRANSACTION":
-		*e = V2LogDataDeleteMetadataTargetType(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for V2LogDataDeleteMetadataTargetType: %v", v)
-	}
-}
-
-type V2LogDataDeleteMetadataTargetIDType string
-
-const (
-	V2LogDataDeleteMetadataTargetIDTypeStr    V2LogDataDeleteMetadataTargetIDType = "str"
-	V2LogDataDeleteMetadataTargetIDTypeBigint V2LogDataDeleteMetadataTargetIDType = "bigint"
-)
-
-// V2LogDataDeleteMetadataTargetID - Identifier of the entity the metadata was deleted from, either an account address or a transaction ID
-type V2LogDataDeleteMetadataTargetID struct {
+// TargetID - Identifier of the entity the metadata was deleted from, either an account address or a transaction ID
+type TargetID struct {
 	Str    *string  `queryParam:"inline" union:"member"`
 	Bigint *big.Int `queryParam:"inline" union:"member"`
 
-	Type V2LogDataDeleteMetadataTargetIDType
+	Type TargetIDType
 }
 
-func CreateV2LogDataDeleteMetadataTargetIDStr(str string) V2LogDataDeleteMetadataTargetID {
-	typ := V2LogDataDeleteMetadataTargetIDTypeStr
+func CreateTargetIDStr(str string) TargetID {
+	typ := TargetIDTypeStr
 
-	return V2LogDataDeleteMetadataTargetID{
+	return TargetID{
 		Str:  &str,
 		Type: typ,
 	}
 }
 
-func CreateV2LogDataDeleteMetadataTargetIDBigint(bigint *big.Int) V2LogDataDeleteMetadataTargetID {
-	typ := V2LogDataDeleteMetadataTargetIDTypeBigint
+func CreateTargetIDBigint(bigint *big.Int) TargetID {
+	typ := TargetIDTypeBigint
 
-	return V2LogDataDeleteMetadataTargetID{
+	return TargetID{
 		Bigint: bigint,
 		Type:   typ,
 	}
 }
 
-func (u *V2LogDataDeleteMetadataTargetID) UnmarshalJSON(data []byte) error {
+func (u *TargetID) UnmarshalJSON(data []byte) error {
 
 	var str string = ""
 	if err := utils.UnmarshalJSON(data, &str, "", true, nil); err == nil {
 		u.Str = &str
-		u.Type = V2LogDataDeleteMetadataTargetIDTypeStr
+		u.Type = TargetIDTypeStr
 		return nil
 	}
 
 	var bigint *big.Int = big.NewInt(0)
 	if err := utils.UnmarshalJSON(data, &bigint, "", true, nil); err == nil {
 		u.Bigint = bigint
-		u.Type = V2LogDataDeleteMetadataTargetIDTypeBigint
+		u.Type = TargetIDTypeBigint
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal `%s` into any supported union types for V2LogDataDeleteMetadataTargetID", string(data))
+	return fmt.Errorf("could not unmarshal `%s` into any supported union types for TargetID", string(data))
 }
 
-func (u V2LogDataDeleteMetadataTargetID) MarshalJSON() ([]byte, error) {
+func (u TargetID) MarshalJSON() ([]byte, error) {
 	if u.Str != nil {
 		return utils.MarshalJSON(u.Str, "", true)
 	}
@@ -98,17 +71,44 @@ func (u V2LogDataDeleteMetadataTargetID) MarshalJSON() ([]byte, error) {
 		return utils.MarshalJSON(u.Bigint, "", true)
 	}
 
-	return nil, errors.New("could not marshal union type V2LogDataDeleteMetadataTargetID: all fields are null")
+	return nil, errors.New("could not marshal union type TargetID: all fields are null")
+}
+
+// TargetType - Type of the target entity
+type TargetType string
+
+const (
+	TargetTypeAccount     TargetType = "ACCOUNT"
+	TargetTypeTransaction TargetType = "TRANSACTION"
+)
+
+func (e TargetType) ToPointer() *TargetType {
+	return &e
+}
+func (e *TargetType) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "ACCOUNT":
+		fallthrough
+	case "TRANSACTION":
+		*e = TargetType(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for TargetType: %v", v)
+	}
 }
 
 // V2LogDataDeleteMetadata - Payload for DELETE_METADATA log entries. Contains the target entity and the metadata key that was deleted.
 type V2LogDataDeleteMetadata struct {
-	// Type of the target entity
-	TargetType V2LogDataDeleteMetadataTargetType `json:"targetType"`
-	// Identifier of the entity the metadata was deleted from, either an account address or a transaction ID
-	TargetID V2LogDataDeleteMetadataTargetID `json:"targetId"`
 	// The metadata key that was deleted
 	Key string `json:"key"`
+	// Identifier of the entity the metadata was deleted from, either an account address or a transaction ID
+	TargetID TargetID `json:"targetId"`
+	// Type of the target entity
+	TargetType TargetType `json:"targetType"`
 }
 
 func (v V2LogDataDeleteMetadata) MarshalJSON() ([]byte, error) {
@@ -116,24 +116,10 @@ func (v V2LogDataDeleteMetadata) MarshalJSON() ([]byte, error) {
 }
 
 func (v *V2LogDataDeleteMetadata) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"targetType", "targetId", "key"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"key", "targetId", "targetType"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (v *V2LogDataDeleteMetadata) GetTargetType() V2LogDataDeleteMetadataTargetType {
-	if v == nil {
-		return V2LogDataDeleteMetadataTargetType("")
-	}
-	return v.TargetType
-}
-
-func (v *V2LogDataDeleteMetadata) GetTargetID() V2LogDataDeleteMetadataTargetID {
-	if v == nil {
-		return V2LogDataDeleteMetadataTargetID{}
-	}
-	return v.TargetID
 }
 
 func (v *V2LogDataDeleteMetadata) GetKey() string {
@@ -141,6 +127,20 @@ func (v *V2LogDataDeleteMetadata) GetKey() string {
 		return ""
 	}
 	return v.Key
+}
+
+func (v *V2LogDataDeleteMetadata) GetTargetID() TargetID {
+	if v == nil {
+		return TargetID{}
+	}
+	return v.TargetID
+}
+
+func (v *V2LogDataDeleteMetadata) GetTargetType() TargetType {
+	if v == nil {
+		return TargetType("")
+	}
+	return v.TargetType
 }
 
 // #region class-body-v2logdatadeletemetadata

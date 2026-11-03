@@ -34,16 +34,9 @@ func (e *Source) UnmarshalJSON(data []byte) error {
 }
 
 type SuspensionSource struct {
-	Source Source `json:"source"`
 	// Logical instance or policy name contributing to suspension.
-	Name string `json:"name"`
-}
-
-func (s *SuspensionSource) GetSource() Source {
-	if s == nil {
-		return Source("")
-	}
-	return s.Source
+	Name   string `json:"name"`
+	Source Source `json:"source"`
 }
 
 func (s *SuspensionSource) GetName() string {
@@ -51,4 +44,11 @@ func (s *SuspensionSource) GetName() string {
 		return ""
 	}
 	return s.Name
+}
+
+func (s *SuspensionSource) GetSource() Source {
+	if s == nil {
+		return Source("")
+	}
+	return s.Source
 }

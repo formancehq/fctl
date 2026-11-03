@@ -11,32 +11,32 @@ import (
 // one of `success` / `failure` is set. `items` is populated only by the
 // single-entry lookup, not by the list endpoint.
 type AuditEntry struct {
-	// Global audit sequence number
-	Sequence *int64 `json:"sequence,omitempty"`
-	// Apply timestamp (RFC3339)
-	Timestamp *time.Time `json:"timestamp,omitempty"`
-	// Identifier of the proposal that produced this entry
-	ProposalID *int64 `json:"proposalId,omitempty"`
-	// The inclusive log sequence range created by a successful proposal.
-	Success *AuditSuccess `json:"success,omitempty"`
+	// Admission-time auth snapshot (protobuf JSON); absent when auth is disabled or for system proposals
+	CallerSnapshot map[string]any `json:"callerSnapshot,omitempty"`
 	// Stable reason, subcode, and facts for a failed proposal. Presentation text is rendered when read and is not stored in the audit chain.
 	Failure *AuditFailure `json:"failure,omitempty"`
-	// Number of orders in the proposal
-	OrderCount *int64 `json:"orderCount,omitempty"`
-	// Per-order detail lines. Populated by the single-entry lookup; empty on list.
-	Items []AuditItem `json:"items,omitempty"`
-	// Distinct ledger names targeted by the proposal's orders
-	Ledgers []string `json:"ledgers,omitempty"`
 	// Hex-encoded batch integrity hash chaining audit entries
 	Hash *string `json:"hash,omitempty"`
 	// Hash algorithm version
 	HashVersion *int64 `json:"hashVersion,omitempty"`
-	// Admission-time auth snapshot (protobuf JSON); absent when auth is disabled or for system proposals
-	CallerSnapshot map[string]any `json:"callerSnapshot,omitempty"`
 	// Batch identity / idempotency information (protobuf JSON)
 	Idempotency map[string]any `json:"idempotency,omitempty"`
+	// Per-order detail lines. Populated by the single-entry lookup; empty on list.
+	Items []AuditItem `json:"items,omitempty"`
+	// Distinct ledger names targeted by the proposal's orders
+	Ledgers []string `json:"ledgers,omitempty"`
+	// Number of orders in the proposal
+	OrderCount *int64 `json:"orderCount,omitempty"`
+	// Identifier of the proposal that produced this entry
+	ProposalID *int64 `json:"proposalId,omitempty"`
+	// Global audit sequence number
+	Sequence *int64 `json:"sequence,omitempty"`
 	// Client signature over the ApplyBatch (protobuf JSON); absent for unsigned batches
 	Signature map[string]any `json:"signature,omitempty"`
+	// The inclusive log sequence range created by a successful proposal.
+	Success *AuditSuccess `json:"success,omitempty"`
+	// Apply timestamp (RFC3339)
+	Timestamp *time.Time `json:"timestamp,omitempty"`
 }
 
 func (a AuditEntry) MarshalJSON() ([]byte, error) {
@@ -50,32 +50,11 @@ func (a *AuditEntry) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (a *AuditEntry) GetSequence() *int64 {
+func (a *AuditEntry) GetCallerSnapshot() map[string]any {
 	if a == nil {
 		return nil
 	}
-	return a.Sequence
-}
-
-func (a *AuditEntry) GetTimestamp() *time.Time {
-	if a == nil {
-		return nil
-	}
-	return a.Timestamp
-}
-
-func (a *AuditEntry) GetProposalID() *int64 {
-	if a == nil {
-		return nil
-	}
-	return a.ProposalID
-}
-
-func (a *AuditEntry) GetSuccess() *AuditSuccess {
-	if a == nil {
-		return nil
-	}
-	return a.Success
+	return a.CallerSnapshot
 }
 
 func (a *AuditEntry) GetFailure() *AuditFailure {
@@ -83,27 +62,6 @@ func (a *AuditEntry) GetFailure() *AuditFailure {
 		return nil
 	}
 	return a.Failure
-}
-
-func (a *AuditEntry) GetOrderCount() *int64 {
-	if a == nil {
-		return nil
-	}
-	return a.OrderCount
-}
-
-func (a *AuditEntry) GetItems() []AuditItem {
-	if a == nil {
-		return nil
-	}
-	return a.Items
-}
-
-func (a *AuditEntry) GetLedgers() []string {
-	if a == nil {
-		return nil
-	}
-	return a.Ledgers
 }
 
 func (a *AuditEntry) GetHash() *string {
@@ -120,13 +78,6 @@ func (a *AuditEntry) GetHashVersion() *int64 {
 	return a.HashVersion
 }
 
-func (a *AuditEntry) GetCallerSnapshot() map[string]any {
-	if a == nil {
-		return nil
-	}
-	return a.CallerSnapshot
-}
-
 func (a *AuditEntry) GetIdempotency() map[string]any {
 	if a == nil {
 		return nil
@@ -134,9 +85,58 @@ func (a *AuditEntry) GetIdempotency() map[string]any {
 	return a.Idempotency
 }
 
+func (a *AuditEntry) GetItems() []AuditItem {
+	if a == nil {
+		return nil
+	}
+	return a.Items
+}
+
+func (a *AuditEntry) GetLedgers() []string {
+	if a == nil {
+		return nil
+	}
+	return a.Ledgers
+}
+
+func (a *AuditEntry) GetOrderCount() *int64 {
+	if a == nil {
+		return nil
+	}
+	return a.OrderCount
+}
+
+func (a *AuditEntry) GetProposalID() *int64 {
+	if a == nil {
+		return nil
+	}
+	return a.ProposalID
+}
+
+func (a *AuditEntry) GetSequence() *int64 {
+	if a == nil {
+		return nil
+	}
+	return a.Sequence
+}
+
 func (a *AuditEntry) GetSignature() map[string]any {
 	if a == nil {
 		return nil
 	}
 	return a.Signature
+}
+
+func (a *AuditEntry) GetSuccess() *AuditSuccess {
+	if a == nil {
+		return nil
+	}
+	return a.Success
+}
+
+func (a *AuditEntry) GetTimestamp() *time.Time {
+	if a == nil {
+		return nil
+	}
+	return a.Timestamp
 }

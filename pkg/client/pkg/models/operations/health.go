@@ -21,15 +21,15 @@ func (h *HealthSecurity) GetBearerAuth() *string {
 type HealthResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Service unavailable — the server cannot serve the request right now but an immediate retry can succeed. The `errorCode` field discriminates the cause: `NO_LEADER` (no elected Raft leader), `CACHE_HORIZON_EXCEEDED` (admission snapshot too old, retry against a fresh one), `UNAVAILABLE` (an internal forwarded stream was torn down mid-transfer), or the reason of any domain error of the unavailable kind (e.g. `INDEX_BUILDING`).
+	ErrorResponse *ledgerv3.ErrorResponse
+	Headers       map[string][]string
+	// Node is healthy
+	HealthResponse *ledgerv3.HealthResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Node is healthy
-	HealthResponse *ledgerv3.HealthResponse
-	// Service unavailable — the server cannot serve the request right now but an immediate retry can succeed. The `errorCode` field discriminates the cause: `NO_LEADER` (no elected Raft leader), `CACHE_HORIZON_EXCEEDED` (admission snapshot too old, retry against a fresh one), `UNAVAILABLE` (an internal forwarded stream was torn down mid-transfer), or the reason of any domain error of the unavailable kind (e.g. `INDEX_BUILDING`).
-	ErrorResponse *ledgerv3.ErrorResponse
-	Headers       map[string][]string
 }
 
 func (h *HealthResponse) GetContentType() string {
@@ -37,27 +37,6 @@ func (h *HealthResponse) GetContentType() string {
 		return ""
 	}
 	return h.ContentType
-}
-
-func (h *HealthResponse) GetStatusCode() int {
-	if h == nil {
-		return 0
-	}
-	return h.StatusCode
-}
-
-func (h *HealthResponse) GetRawResponse() *http.Response {
-	if h == nil {
-		return nil
-	}
-	return h.RawResponse
-}
-
-func (h *HealthResponse) GetHealthResponse() *ledgerv3.HealthResponse {
-	if h == nil {
-		return nil
-	}
-	return h.HealthResponse
 }
 
 func (h *HealthResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
@@ -72,4 +51,25 @@ func (h *HealthResponse) GetHeaders() map[string][]string {
 		return map[string][]string{}
 	}
 	return h.Headers
+}
+
+func (h *HealthResponse) GetHealthResponse() *ledgerv3.HealthResponse {
+	if h == nil {
+		return nil
+	}
+	return h.HealthResponse
+}
+
+func (h *HealthResponse) GetStatusCode() int {
+	if h == nil {
+		return 0
+	}
+	return h.StatusCode
+}
+
+func (h *HealthResponse) GetRawResponse() *http.Response {
+	if h == nil {
+		return nil
+	}
+	return h.RawResponse
 }

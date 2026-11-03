@@ -3,25 +3,18 @@
 package payments
 
 type V3CreateBankAccountRequest struct {
-	// Human-readable name for the bank account
-	Name string `json:"name"`
 	// Domestic account number. Supply this or an IBAN
 	AccountNumber *string `json:"accountNumber,omitempty"`
-	// International bank account number. Supply this or an account number
-	Iban *string `json:"iban,omitempty"`
-	// SWIFT/BIC code identifying the bank
-	SwiftBicCode *string `json:"swiftBicCode,omitempty"`
 	// Country the account is held in, as an ISO 3166-1 alpha-2 code
 	Country *string `json:"country,omitempty"`
+	// International bank account number. Supply this or an account number
+	Iban *string `json:"iban,omitempty"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]string `json:"metadata,omitempty"`
-}
-
-func (v *V3CreateBankAccountRequest) GetName() string {
-	if v == nil {
-		return ""
-	}
-	return v.Name
+	// Human-readable name for the bank account
+	Name string `json:"name"`
+	// SWIFT/BIC code identifying the bank
+	SwiftBicCode *string `json:"swiftBicCode,omitempty"`
 }
 
 func (v *V3CreateBankAccountRequest) GetAccountNumber() *string {
@@ -31,20 +24,6 @@ func (v *V3CreateBankAccountRequest) GetAccountNumber() *string {
 	return v.AccountNumber
 }
 
-func (v *V3CreateBankAccountRequest) GetIban() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Iban
-}
-
-func (v *V3CreateBankAccountRequest) GetSwiftBicCode() *string {
-	if v == nil {
-		return nil
-	}
-	return v.SwiftBicCode
-}
-
 func (v *V3CreateBankAccountRequest) GetCountry() *string {
 	if v == nil {
 		return nil
@@ -52,11 +31,32 @@ func (v *V3CreateBankAccountRequest) GetCountry() *string {
 	return v.Country
 }
 
+func (v *V3CreateBankAccountRequest) GetIban() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Iban
+}
+
 func (v *V3CreateBankAccountRequest) GetMetadata() map[string]string {
 	if v == nil {
 		return nil
 	}
 	return v.Metadata
+}
+
+func (v *V3CreateBankAccountRequest) GetName() string {
+	if v == nil {
+		return ""
+	}
+	return v.Name
+}
+
+func (v *V3CreateBankAccountRequest) GetSwiftBicCode() *string {
+	if v == nil {
+		return nil
+	}
+	return v.SwiftBicCode
 }
 
 // #region class-body-v3createbankaccountrequest

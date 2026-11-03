@@ -4,8 +4,8 @@ package payments
 
 type ConnectorsConfigsResponseData struct {
 	DataType     string  `json:"dataType"`
-	Required     bool    `json:"required"`
 	DefaultValue *string `json:"defaultValue,omitempty"`
+	Required     bool    `json:"required"`
 }
 
 func (c *ConnectorsConfigsResponseData) GetDataType() string {
@@ -15,18 +15,18 @@ func (c *ConnectorsConfigsResponseData) GetDataType() string {
 	return c.DataType
 }
 
-func (c *ConnectorsConfigsResponseData) GetRequired() bool {
-	if c == nil {
-		return false
-	}
-	return c.Required
-}
-
 func (c *ConnectorsConfigsResponseData) GetDefaultValue() *string {
 	if c == nil {
 		return nil
 	}
 	return c.DefaultValue
+}
+
+func (c *ConnectorsConfigsResponseData) GetRequired() bool {
+	if c == nil {
+		return false
+	}
+	return c.Required
 }
 
 // ConnectorsConfigsResponse - OK

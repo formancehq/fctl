@@ -19,10 +19,8 @@ func (d *DeleteTransactionMetadataSecurity) GetBearerAuth() *string {
 }
 
 type DeleteTransactionMetadataRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Transaction ID
-	TransactionID int64 `pathParam:"style=simple,explode=false,name=transactionId"`
+	// Idempotency key for the request
+	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
 	// Raw metadata key, for example formance.com/reviewed. SDK callers pass
 	// the raw key and let the SDK encode it. Direct HTTP clients URL-encode
 	// the key as one path segment, encoding slashes as %2F.
@@ -31,8 +29,24 @@ type DeleteTransactionMetadataRequest struct {
 	// are invalid metadata keys and are rejected with HTTP 400.
 	//
 	Key string `pathParam:"style=simple,explode=false,name=key"`
-	// Idempotency key for the request
-	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Transaction ID
+	TransactionID int64 `pathParam:"style=simple,explode=false,name=transactionId"`
+}
+
+func (d *DeleteTransactionMetadataRequest) GetIdempotencyKey() *string {
+	if d == nil {
+		return nil
+	}
+	return d.IdempotencyKey
+}
+
+func (d *DeleteTransactionMetadataRequest) GetKey() string {
+	if d == nil {
+		return ""
+	}
+	return d.Key
 }
 
 func (d *DeleteTransactionMetadataRequest) GetLedgerName() string {
@@ -49,34 +63,20 @@ func (d *DeleteTransactionMetadataRequest) GetTransactionID() int64 {
 	return d.TransactionID
 }
 
-func (d *DeleteTransactionMetadataRequest) GetKey() string {
-	if d == nil {
-		return ""
-	}
-	return d.Key
-}
-
-func (d *DeleteTransactionMetadataRequest) GetIdempotencyKey() *string {
-	if d == nil {
-		return nil
-	}
-	return d.IdempotencyKey
-}
-
 type DeleteTransactionMetadataResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (d *DeleteTransactionMetadataResponse) GetContentType() string {
@@ -84,6 +84,27 @@ func (d *DeleteTransactionMetadataResponse) GetContentType() string {
 		return ""
 	}
 	return d.ContentType
+}
+
+func (d *DeleteTransactionMetadataResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if d == nil {
+		return nil
+	}
+	return d.ErrorResponse
+}
+
+func (d *DeleteTransactionMetadataResponse) GetForbidden() *string {
+	if d == nil {
+		return nil
+	}
+	return d.Forbidden
+}
+
+func (d *DeleteTransactionMetadataResponse) GetHeaders() map[string][]string {
+	if d == nil {
+		return map[string][]string{}
+	}
+	return d.Headers
 }
 
 func (d *DeleteTransactionMetadataResponse) GetStatusCode() int {
@@ -100,30 +121,9 @@ func (d *DeleteTransactionMetadataResponse) GetRawResponse() *http.Response {
 	return d.RawResponse
 }
 
-func (d *DeleteTransactionMetadataResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if d == nil {
-		return nil
-	}
-	return d.ErrorResponse
-}
-
 func (d *DeleteTransactionMetadataResponse) GetUnauthorized() *string {
 	if d == nil {
 		return nil
 	}
 	return d.Unauthorized
-}
-
-func (d *DeleteTransactionMetadataResponse) GetForbidden() *string {
-	if d == nil {
-		return nil
-	}
-	return d.Forbidden
-}
-
-func (d *DeleteTransactionMetadataResponse) GetHeaders() map[string][]string {
-	if d == nil {
-		return map[string][]string{}
-	}
-	return d.Headers
 }

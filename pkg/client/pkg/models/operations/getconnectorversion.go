@@ -46,16 +46,23 @@ func (g *GetConnectorVersionRequest) GetVersion() string {
 }
 
 type GetConnectorVersionResponse struct {
+	// OK
+	ConnectorVersion *connectivity.ConnectorVersion
 	// HTTP response content type for this operation
 	ContentType string
+	// Request or server error. The HTTP status and code identify the failure.
+	Error *connectivity.Error
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	ConnectorVersion *connectivity.ConnectorVersion
-	// Request or server error. The HTTP status and code identify the failure.
-	Error *connectivity.Error
+}
+
+func (g *GetConnectorVersionResponse) GetConnectorVersion() *connectivity.ConnectorVersion {
+	if g == nil {
+		return nil
+	}
+	return g.ConnectorVersion
 }
 
 func (g *GetConnectorVersionResponse) GetContentType() string {
@@ -63,6 +70,13 @@ func (g *GetConnectorVersionResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetConnectorVersionResponse) GetError() *connectivity.Error {
+	if g == nil {
+		return nil
+	}
+	return g.Error
 }
 
 func (g *GetConnectorVersionResponse) GetStatusCode() int {
@@ -77,18 +91,4 @@ func (g *GetConnectorVersionResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetConnectorVersionResponse) GetConnectorVersion() *connectivity.ConnectorVersion {
-	if g == nil {
-		return nil
-	}
-	return g.ConnectorVersion
-}
-
-func (g *GetConnectorVersionResponse) GetError() *connectivity.Error {
-	if g == nil {
-		return nil
-	}
-	return g.Error
 }

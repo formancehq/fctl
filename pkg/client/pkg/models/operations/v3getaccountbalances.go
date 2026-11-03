@@ -14,15 +14,15 @@ type V3GetAccountBalancesRequest struct {
 	AccountID string `pathParam:"style=simple,explode=false,name=accountID"`
 	// The asset to filter by
 	Asset *string `queryParam:"style=form,explode=true,name=asset"`
-	// The start of the time range to filter by
-	FromTimestamp *time.Time `queryParam:"style=form,explode=true,name=fromTimestamp"`
-	// The end of the time range to filter by
-	ToTimestamp *time.Time `queryParam:"style=form,explode=true,name=toTimestamp"`
-	// The number of items to return
-	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
 	// Parameter used in pagination requests. Set to the value of next for the next page of results. Set to the value of previous for the previous page of results. No other parameters can be set when this parameter is set.
 	//
 	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// The start of the time range to filter by
+	FromTimestamp *time.Time `queryParam:"style=form,explode=true,name=fromTimestamp"`
+	// The number of items to return
+	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
+	// The end of the time range to filter by
+	ToTimestamp *time.Time `queryParam:"style=form,explode=true,name=toTimestamp"`
 }
 
 func (v V3GetAccountBalancesRequest) MarshalJSON() ([]byte, error) {
@@ -50,18 +50,18 @@ func (v *V3GetAccountBalancesRequest) GetAsset() *string {
 	return v.Asset
 }
 
+func (v *V3GetAccountBalancesRequest) GetCursor() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Cursor
+}
+
 func (v *V3GetAccountBalancesRequest) GetFromTimestamp() *time.Time {
 	if v == nil {
 		return nil
 	}
 	return v.FromTimestamp
-}
-
-func (v *V3GetAccountBalancesRequest) GetToTimestamp() *time.Time {
-	if v == nil {
-		return nil
-	}
-	return v.ToTimestamp
 }
 
 func (v *V3GetAccountBalancesRequest) GetPageSize() *int64 {
@@ -71,11 +71,11 @@ func (v *V3GetAccountBalancesRequest) GetPageSize() *int64 {
 	return v.PageSize
 }
 
-func (v *V3GetAccountBalancesRequest) GetCursor() *string {
+func (v *V3GetAccountBalancesRequest) GetToTimestamp() *time.Time {
 	if v == nil {
 		return nil
 	}
-	return v.Cursor
+	return v.ToTimestamp
 }
 
 // #region class-body-v3getaccountbalancesrequest

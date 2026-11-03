@@ -8,16 +8,9 @@ import (
 )
 
 type ChangeConfigSecretRequest struct {
-	// Config ID
-	ID                 string                       `pathParam:"style=simple,explode=false,name=id"`
 	ConfigChangeSecret *webhooks.ConfigChangeSecret `request:"mediaType=application/json"`
-}
-
-func (c *ChangeConfigSecretRequest) GetID() string {
-	if c == nil {
-		return ""
-	}
-	return c.ID
+	// Config ID
+	ID string `pathParam:"style=simple,explode=false,name=id"`
 }
 
 func (c *ChangeConfigSecretRequest) GetConfigChangeSecret() *webhooks.ConfigChangeSecret {
@@ -27,15 +20,29 @@ func (c *ChangeConfigSecretRequest) GetConfigChangeSecret() *webhooks.ConfigChan
 	return c.ConfigChangeSecret
 }
 
+func (c *ChangeConfigSecretRequest) GetID() string {
+	if c == nil {
+		return ""
+	}
+	return c.ID
+}
+
 type ChangeConfigSecretResponse struct {
+	// Secret successfully changed.
+	ConfigResponse *webhooks.ConfigResponse
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Secret successfully changed.
-	ConfigResponse *webhooks.ConfigResponse
+}
+
+func (c *ChangeConfigSecretResponse) GetConfigResponse() *webhooks.ConfigResponse {
+	if c == nil {
+		return nil
+	}
+	return c.ConfigResponse
 }
 
 func (c *ChangeConfigSecretResponse) GetContentType() string {
@@ -57,11 +64,4 @@ func (c *ChangeConfigSecretResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return c.RawResponse
-}
-
-func (c *ChangeConfigSecretResponse) GetConfigResponse() *webhooks.ConfigResponse {
-	if c == nil {
-		return nil
-	}
-	return c.ConfigResponse
 }

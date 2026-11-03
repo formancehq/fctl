@@ -9,14 +9,6 @@ import (
 )
 
 type V2CreateTransactionRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
-	// Set the dryRun mode. dry run mode doesn't add the logs to the database or publish a message to the message broker.
-	DryRun *bool `queryParam:"style=form,explode=true,name=dryRun"`
-	// Disable balance checks when passing postings
-	Force *bool `queryParam:"style=form,explode=true,name=force"`
-	// Schema version to use for validation
-	SchemaVersion *string `queryParam:"style=form,explode=true,name=schemaVersion"`
 	// When set to `true`, all bigint values in the response will be serialized
 	// as strings instead of JSON numbers.
 	// Useful for clients that cannot handle large numbers natively (e.g. JavaScript).
@@ -29,6 +21,14 @@ type V2CreateTransactionRequest struct {
 	//   - `script`: enabling more complex transactions with Numscript
 	//
 	V2PostTransaction ledger.V2PostTransaction `request:"mediaType=application/json"`
+	// Set the dryRun mode. dry run mode doesn't add the logs to the database or publish a message to the message broker.
+	DryRun *bool `queryParam:"style=form,explode=true,name=dryRun"`
+	// Disable balance checks when passing postings
+	Force *bool `queryParam:"style=form,explode=true,name=force"`
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
+	// Schema version to use for validation
+	SchemaVersion *string `queryParam:"style=form,explode=true,name=schemaVersion"`
 }
 
 func (v V2CreateTransactionRequest) MarshalJSON() ([]byte, error) {
@@ -40,34 +40,6 @@ func (v *V2CreateTransactionRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (v *V2CreateTransactionRequest) GetLedger() string {
-	if v == nil {
-		return ""
-	}
-	return v.Ledger
-}
-
-func (v *V2CreateTransactionRequest) GetDryRun() *bool {
-	if v == nil {
-		return nil
-	}
-	return v.DryRun
-}
-
-func (v *V2CreateTransactionRequest) GetForce() *bool {
-	if v == nil {
-		return nil
-	}
-	return v.Force
-}
-
-func (v *V2CreateTransactionRequest) GetSchemaVersion() *string {
-	if v == nil {
-		return nil
-	}
-	return v.SchemaVersion
 }
 
 func (v *V2CreateTransactionRequest) GetFormanceBigintAsString() *bool {
@@ -91,19 +63,47 @@ func (v *V2CreateTransactionRequest) GetV2PostTransaction() ledger.V2PostTransac
 	return v.V2PostTransaction
 }
 
+func (v *V2CreateTransactionRequest) GetDryRun() *bool {
+	if v == nil {
+		return nil
+	}
+	return v.DryRun
+}
+
+func (v *V2CreateTransactionRequest) GetForce() *bool {
+	if v == nil {
+		return nil
+	}
+	return v.Force
+}
+
+func (v *V2CreateTransactionRequest) GetLedger() string {
+	if v == nil {
+		return ""
+	}
+	return v.Ledger
+}
+
+func (v *V2CreateTransactionRequest) GetSchemaVersion() *string {
+	if v == nil {
+		return nil
+	}
+	return v.SchemaVersion
+}
+
 // #region class-body-v2createtransactionrequest
 // #endregion class-body-v2createtransactionrequest
 
 type V2CreateTransactionResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	Headers     map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
 	// OK
 	V2CreateTransactionResponse *ledger.V2CreateTransactionResponse
-	Headers                     map[string][]string
 }
 
 func (v *V2CreateTransactionResponse) GetContentType() string {
@@ -111,6 +111,13 @@ func (v *V2CreateTransactionResponse) GetContentType() string {
 		return ""
 	}
 	return v.ContentType
+}
+
+func (v *V2CreateTransactionResponse) GetHeaders() map[string][]string {
+	if v == nil {
+		return map[string][]string{}
+	}
+	return v.Headers
 }
 
 func (v *V2CreateTransactionResponse) GetStatusCode() int {
@@ -132,13 +139,6 @@ func (v *V2CreateTransactionResponse) GetV2CreateTransactionResponse() *ledger.V
 		return nil
 	}
 	return v.V2CreateTransactionResponse
-}
-
-func (v *V2CreateTransactionResponse) GetHeaders() map[string][]string {
-	if v == nil {
-		return map[string][]string{}
-	}
-	return v.Headers
 }
 
 // #region class-body-v2createtransactionresponse

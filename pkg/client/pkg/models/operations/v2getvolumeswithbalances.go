@@ -10,33 +10,33 @@ import (
 )
 
 type V2GetVolumesWithBalancesRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
-	// The maximum number of results to return per page.
-	//
-	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
-	// Parameter used in pagination requests. Maximum page size is set to 15.
-	// Set to the value of next for the next page of results.
-	// Set to the value of previous for the previous page of results.
-	// No other parameters can be set when this parameter is set.
-	//
-	Cursor    *string    `queryParam:"style=form,explode=true,name=cursor"`
-	EndTime   *time.Time `queryParam:"style=form,explode=true,name=endTime"`
-	StartTime *time.Time `queryParam:"style=form,explode=true,name=startTime"`
-	// Use insertion date instead of effective date
-	InsertionDate *bool `queryParam:"style=form,explode=true,name=insertionDate"`
-	// Group volumes and balance by the level of the segment of the address
-	GroupBy *int64 `queryParam:"style=form,explode=true,name=groupBy"`
-	// Sort results using a field name and order (ascending or descending).
-	// Format: `<field>:<order>`, where `<field>` is the field name and `<order>` is either `asc` or `desc`.
-	//
-	Sort *string `queryParam:"style=form,explode=true,name=sort"`
 	// When set to `true`, all bigint values in the response will be serialized
 	// as strings instead of JSON numbers.
 	// Useful for clients that cannot handle large numbers natively (e.g. JavaScript).
 	//
 	FormanceBigintAsString *bool          `default:"false" header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
 	RequestBody            map[string]any `request:"mediaType=application/json"`
+	// Parameter used in pagination requests. Maximum page size is set to 15.
+	// Set to the value of next for the next page of results.
+	// Set to the value of previous for the previous page of results.
+	// No other parameters can be set when this parameter is set.
+	//
+	Cursor  *string    `queryParam:"style=form,explode=true,name=cursor"`
+	EndTime *time.Time `queryParam:"style=form,explode=true,name=endTime"`
+	// Group volumes and balance by the level of the segment of the address
+	GroupBy *int64 `queryParam:"style=form,explode=true,name=groupBy"`
+	// Use insertion date instead of effective date
+	InsertionDate *bool `queryParam:"style=form,explode=true,name=insertionDate"`
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
+	// The maximum number of results to return per page.
+	//
+	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
+	// Sort results using a field name and order (ascending or descending).
+	// Format: `<field>:<order>`, where `<field>` is the field name and `<order>` is either `asc` or `desc`.
+	//
+	Sort      *string    `queryParam:"style=form,explode=true,name=sort"`
+	StartTime *time.Time `queryParam:"style=form,explode=true,name=startTime"`
 }
 
 func (v V2GetVolumesWithBalancesRequest) MarshalJSON() ([]byte, error) {
@@ -50,18 +50,18 @@ func (v *V2GetVolumesWithBalancesRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2GetVolumesWithBalancesRequest) GetLedger() string {
-	if v == nil {
-		return ""
-	}
-	return v.Ledger
-}
-
-func (v *V2GetVolumesWithBalancesRequest) GetPageSize() *int64 {
+func (v *V2GetVolumesWithBalancesRequest) GetFormanceBigintAsString() *bool {
 	if v == nil {
 		return nil
 	}
-	return v.PageSize
+	return v.FormanceBigintAsString
+}
+
+func (v *V2GetVolumesWithBalancesRequest) GetRequestBody() map[string]any {
+	if v == nil {
+		return map[string]any{}
+	}
+	return v.RequestBody
 }
 
 func (v *V2GetVolumesWithBalancesRequest) GetCursor() *string {
@@ -78,11 +78,11 @@ func (v *V2GetVolumesWithBalancesRequest) GetEndTime() *time.Time {
 	return v.EndTime
 }
 
-func (v *V2GetVolumesWithBalancesRequest) GetStartTime() *time.Time {
+func (v *V2GetVolumesWithBalancesRequest) GetGroupBy() *int64 {
 	if v == nil {
 		return nil
 	}
-	return v.StartTime
+	return v.GroupBy
 }
 
 func (v *V2GetVolumesWithBalancesRequest) GetInsertionDate() *bool {
@@ -92,11 +92,18 @@ func (v *V2GetVolumesWithBalancesRequest) GetInsertionDate() *bool {
 	return v.InsertionDate
 }
 
-func (v *V2GetVolumesWithBalancesRequest) GetGroupBy() *int64 {
+func (v *V2GetVolumesWithBalancesRequest) GetLedger() string {
+	if v == nil {
+		return ""
+	}
+	return v.Ledger
+}
+
+func (v *V2GetVolumesWithBalancesRequest) GetPageSize() *int64 {
 	if v == nil {
 		return nil
 	}
-	return v.GroupBy
+	return v.PageSize
 }
 
 func (v *V2GetVolumesWithBalancesRequest) GetSort() *string {
@@ -106,18 +113,11 @@ func (v *V2GetVolumesWithBalancesRequest) GetSort() *string {
 	return v.Sort
 }
 
-func (v *V2GetVolumesWithBalancesRequest) GetFormanceBigintAsString() *bool {
+func (v *V2GetVolumesWithBalancesRequest) GetStartTime() *time.Time {
 	if v == nil {
 		return nil
 	}
-	return v.FormanceBigintAsString
-}
-
-func (v *V2GetVolumesWithBalancesRequest) GetRequestBody() map[string]any {
-	if v == nil {
-		return map[string]any{}
-	}
-	return v.RequestBody
+	return v.StartTime
 }
 
 // #region class-body-v2getvolumeswithbalancesrequest

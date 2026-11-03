@@ -9,26 +9,26 @@ import (
 
 // Attempt - A single delivery attempt made against a webhook endpoint
 type Attempt struct {
-	// Unique identifier of the attempt
-	ID string `json:"id"`
-	// Identifier of the webhook this attempt belongs to
-	WebhookID string `json:"webhookID"`
-	// When the attempt was created
-	CreatedAt time.Time `json:"createdAt"`
-	// When the attempt was last modified
-	UpdatedAt time.Time `json:"updatedAt"`
 	// A webhook endpoint together with the event types it subscribes to
 	Config WebhooksConfig `json:"config"`
+	// When the attempt was created
+	CreatedAt time.Time `json:"createdAt"`
+	// Unique identifier of the attempt
+	ID string `json:"id"`
+	// When the next retry is scheduled, absent once the attempt is settled
+	NextRetryAfter *time.Time `json:"nextRetryAfter,omitempty"`
 	// The event body sent to the endpoint
 	Payload string `json:"payload"`
-	// HTTP status code returned by the endpoint
-	StatusCode int64 `json:"statusCode"`
 	// Position of this attempt in the retry sequence
 	RetryAttempt int64 `json:"retryAttempt"`
 	// Current status of the attempt
 	Status string `json:"status"`
-	// When the next retry is scheduled, absent once the attempt is settled
-	NextRetryAfter *time.Time `json:"nextRetryAfter,omitempty"`
+	// HTTP status code returned by the endpoint
+	StatusCode int64 `json:"statusCode"`
+	// When the attempt was last modified
+	UpdatedAt time.Time `json:"updatedAt"`
+	// Identifier of the webhook this attempt belongs to
+	WebhookID string `json:"webhookID"`
 }
 
 func (a Attempt) MarshalJSON() ([]byte, error) {
@@ -42,18 +42,11 @@ func (a *Attempt) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (a *Attempt) GetID() string {
+func (a *Attempt) GetConfig() WebhooksConfig {
 	if a == nil {
-		return ""
+		return WebhooksConfig{}
 	}
-	return a.ID
-}
-
-func (a *Attempt) GetWebhookID() string {
-	if a == nil {
-		return ""
-	}
-	return a.WebhookID
+	return a.Config
 }
 
 func (a *Attempt) GetCreatedAt() time.Time {
@@ -63,18 +56,18 @@ func (a *Attempt) GetCreatedAt() time.Time {
 	return a.CreatedAt
 }
 
-func (a *Attempt) GetUpdatedAt() time.Time {
+func (a *Attempt) GetID() string {
 	if a == nil {
-		return time.Time{}
+		return ""
 	}
-	return a.UpdatedAt
+	return a.ID
 }
 
-func (a *Attempt) GetConfig() WebhooksConfig {
+func (a *Attempt) GetNextRetryAfter() *time.Time {
 	if a == nil {
-		return WebhooksConfig{}
+		return nil
 	}
-	return a.Config
+	return a.NextRetryAfter
 }
 
 func (a *Attempt) GetPayload() string {
@@ -82,13 +75,6 @@ func (a *Attempt) GetPayload() string {
 		return ""
 	}
 	return a.Payload
-}
-
-func (a *Attempt) GetStatusCode() int64 {
-	if a == nil {
-		return 0
-	}
-	return a.StatusCode
 }
 
 func (a *Attempt) GetRetryAttempt() int64 {
@@ -105,9 +91,23 @@ func (a *Attempt) GetStatus() string {
 	return a.Status
 }
 
-func (a *Attempt) GetNextRetryAfter() *time.Time {
+func (a *Attempt) GetStatusCode() int64 {
 	if a == nil {
-		return nil
+		return 0
 	}
-	return a.NextRetryAfter
+	return a.StatusCode
+}
+
+func (a *Attempt) GetUpdatedAt() time.Time {
+	if a == nil {
+		return time.Time{}
+	}
+	return a.UpdatedAt
+}
+
+func (a *Attempt) GetWebhookID() string {
+	if a == nil {
+		return ""
+	}
+	return a.WebhookID
 }

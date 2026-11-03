@@ -10,12 +10,12 @@ import (
 type ListWorkflowsResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// List of workflows
+	ListWorkflowsResponse *orchestration.ListWorkflowsResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// List of workflows
-	ListWorkflowsResponse *orchestration.ListWorkflowsResponse
 }
 
 func (l *ListWorkflowsResponse) GetContentType() string {
@@ -23,6 +23,13 @@ func (l *ListWorkflowsResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListWorkflowsResponse) GetListWorkflowsResponse() *orchestration.ListWorkflowsResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ListWorkflowsResponse
 }
 
 func (l *ListWorkflowsResponse) GetStatusCode() int {
@@ -37,11 +44,4 @@ func (l *ListWorkflowsResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return l.RawResponse
-}
-
-func (l *ListWorkflowsResponse) GetListWorkflowsResponse() *orchestration.ListWorkflowsResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ListWorkflowsResponse
 }

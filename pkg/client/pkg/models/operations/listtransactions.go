@@ -10,37 +10,37 @@ import (
 )
 
 type ListTransactionsRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
-	// The maximum number of results to return per page.
-	//
-	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
-	// Pagination cursor, will return transactions after given txid (in descending order).
-	After *string `queryParam:"style=form,explode=true,name=after"`
-	// Find transactions by reference field.
-	Reference *string `queryParam:"style=form,explode=true,name=reference"`
 	// Filter transactions with postings involving given account, either as source or destination (regular expression placed between ^ and $).
 	Account *string `queryParam:"style=form,explode=true,name=account"`
-	// Filter transactions with postings involving given account at source (regular expression placed between ^ and $).
-	Source *string `queryParam:"style=form,explode=true,name=source"`
-	// Filter transactions with postings involving given account at destination (regular expression placed between ^ and $).
-	Destination *string `queryParam:"style=form,explode=true,name=destination"`
-	// Filter transactions that occurred after this timestamp.
-	// The format is RFC3339 and is inclusive (for example, "2023-01-02T15:04:01Z" includes the first second of 4th minute).
-	//
-	StartTime *time.Time `queryParam:"style=form,explode=true,name=startTime"`
-	// Filter transactions that occurred before this timestamp.
-	// The format is RFC3339 and is exclusive (for example, "2023-01-02T15:04:01Z" excludes the first second of 4th minute).
-	//
-	EndTime *time.Time `queryParam:"style=form,explode=true,name=endTime"`
+	// Pagination cursor, will return transactions after given txid (in descending order).
+	After *string `queryParam:"style=form,explode=true,name=after"`
 	// Parameter used in pagination requests. Maximum page size is set to 1000.
 	// Set to the value of next for the next page of results.
 	// Set to the value of previous for the previous page of results.
 	// No other parameters can be set when this parameter is set.
 	//
 	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// Filter transactions with postings involving given account at destination (regular expression placed between ^ and $).
+	Destination *string `queryParam:"style=form,explode=true,name=destination"`
+	// Filter transactions that occurred before this timestamp.
+	// The format is RFC3339 and is exclusive (for example, "2023-01-02T15:04:01Z" excludes the first second of 4th minute).
+	//
+	EndTime *time.Time `queryParam:"style=form,explode=true,name=endTime"`
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 	// Filter transactions by metadata key value pairs. Nested objects can be used as seen in the example below.
 	Metadata map[string]any `queryParam:"style=deepObject,explode=true,name=metadata"`
+	// The maximum number of results to return per page.
+	//
+	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
+	// Find transactions by reference field.
+	Reference *string `queryParam:"style=form,explode=true,name=reference"`
+	// Filter transactions with postings involving given account at source (regular expression placed between ^ and $).
+	Source *string `queryParam:"style=form,explode=true,name=source"`
+	// Filter transactions that occurred after this timestamp.
+	// The format is RFC3339 and is inclusive (for example, "2023-01-02T15:04:01Z" includes the first second of 4th minute).
+	//
+	StartTime *time.Time `queryParam:"style=form,explode=true,name=startTime"`
 }
 
 func (l ListTransactionsRequest) MarshalJSON() ([]byte, error) {
@@ -54,18 +54,11 @@ func (l *ListTransactionsRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (l *ListTransactionsRequest) GetLedger() string {
-	if l == nil {
-		return ""
-	}
-	return l.Ledger
-}
-
-func (l *ListTransactionsRequest) GetPageSize() *int64 {
+func (l *ListTransactionsRequest) GetAccount() *string {
 	if l == nil {
 		return nil
 	}
-	return l.PageSize
+	return l.Account
 }
 
 func (l *ListTransactionsRequest) GetAfter() *string {
@@ -75,25 +68,11 @@ func (l *ListTransactionsRequest) GetAfter() *string {
 	return l.After
 }
 
-func (l *ListTransactionsRequest) GetReference() *string {
+func (l *ListTransactionsRequest) GetCursor() *string {
 	if l == nil {
 		return nil
 	}
-	return l.Reference
-}
-
-func (l *ListTransactionsRequest) GetAccount() *string {
-	if l == nil {
-		return nil
-	}
-	return l.Account
-}
-
-func (l *ListTransactionsRequest) GetSource() *string {
-	if l == nil {
-		return nil
-	}
-	return l.Source
+	return l.Cursor
 }
 
 func (l *ListTransactionsRequest) GetDestination() *string {
@@ -103,13 +82,6 @@ func (l *ListTransactionsRequest) GetDestination() *string {
 	return l.Destination
 }
 
-func (l *ListTransactionsRequest) GetStartTime() *time.Time {
-	if l == nil {
-		return nil
-	}
-	return l.StartTime
-}
-
 func (l *ListTransactionsRequest) GetEndTime() *time.Time {
 	if l == nil {
 		return nil
@@ -117,11 +89,11 @@ func (l *ListTransactionsRequest) GetEndTime() *time.Time {
 	return l.EndTime
 }
 
-func (l *ListTransactionsRequest) GetCursor() *string {
+func (l *ListTransactionsRequest) GetLedger() string {
 	if l == nil {
-		return nil
+		return ""
 	}
-	return l.Cursor
+	return l.Ledger
 }
 
 func (l *ListTransactionsRequest) GetMetadata() map[string]any {
@@ -129,6 +101,34 @@ func (l *ListTransactionsRequest) GetMetadata() map[string]any {
 		return nil
 	}
 	return l.Metadata
+}
+
+func (l *ListTransactionsRequest) GetPageSize() *int64 {
+	if l == nil {
+		return nil
+	}
+	return l.PageSize
+}
+
+func (l *ListTransactionsRequest) GetReference() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Reference
+}
+
+func (l *ListTransactionsRequest) GetSource() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Source
+}
+
+func (l *ListTransactionsRequest) GetStartTime() *time.Time {
+	if l == nil {
+		return nil
+	}
+	return l.StartTime
 }
 
 type ListTransactionsResponse struct {

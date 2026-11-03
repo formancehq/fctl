@@ -2,27 +2,27 @@
 
 package payments
 
-// ConnectorResponseData - The connector that was installed
-type ConnectorResponseData struct {
+// Data - The connector that was installed
+type Data struct {
 	ConnectorID string `json:"connectorID"`
 }
 
-func (c *ConnectorResponseData) GetConnectorID() string {
-	if c == nil {
+func (d *Data) GetConnectorID() string {
+	if d == nil {
 		return ""
 	}
-	return c.ConnectorID
+	return d.ConnectorID
 }
 
 // ConnectorResponse - OK
 type ConnectorResponse struct {
 	// The connector that was installed
-	Data ConnectorResponseData `json:"data"`
+	Data Data `json:"data"`
 }
 
-func (c *ConnectorResponse) GetData() ConnectorResponseData {
+func (c *ConnectorResponse) GetData() Data {
 	if c == nil {
-		return ConnectorResponseData{}
+		return Data{}
 	}
 	return c.Data
 }

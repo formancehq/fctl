@@ -13,10 +13,10 @@ type V2Workflow struct {
 	Config V2WorkflowConfig `json:"config"`
 	// When the workflow was created
 	CreatedAt time.Time `json:"createdAt"`
-	// When the workflow was last modified
-	UpdatedAt time.Time `json:"updatedAt"`
 	// Unique identifier of the workflow
 	ID string `json:"id"`
+	// When the workflow was last modified
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (v V2Workflow) MarshalJSON() ([]byte, error) {
@@ -44,18 +44,18 @@ func (v *V2Workflow) GetCreatedAt() time.Time {
 	return v.CreatedAt
 }
 
-func (v *V2Workflow) GetUpdatedAt() time.Time {
-	if v == nil {
-		return time.Time{}
-	}
-	return v.UpdatedAt
-}
-
 func (v *V2Workflow) GetID() string {
 	if v == nil {
 		return ""
 	}
 	return v.ID
+}
+
+func (v *V2Workflow) GetUpdatedAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.UpdatedAt
 }
 
 // #region class-body-v2workflow

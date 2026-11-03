@@ -10,9 +10,9 @@ import (
 type SetAccountMetadataActionRead struct {
 	Account   string  `json:"account"`
 	Key       string  `json:"key"`
+	Type      *string `json:"type,omitempty"`
 	Value     *string `json:"value,omitempty"`
 	ValueExpr *string `json:"valueExpr,omitempty"`
-	Type      *string `json:"type,omitempty"`
 }
 
 func (s SetAccountMetadataActionRead) MarshalJSON() ([]byte, error) {
@@ -40,6 +40,13 @@ func (s *SetAccountMetadataActionRead) GetKey() string {
 	return s.Key
 }
 
+func (s *SetAccountMetadataActionRead) GetType() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Type
+}
+
 func (s *SetAccountMetadataActionRead) GetValue() *string {
 	if s == nil {
 		return nil
@@ -52,11 +59,4 @@ func (s *SetAccountMetadataActionRead) GetValueExpr() *string {
 		return nil
 	}
 	return s.ValueExpr
-}
-
-func (s *SetAccountMetadataActionRead) GetType() *string {
-	if s == nil {
-		return nil
-	}
-	return s.Type
 }

@@ -9,20 +9,20 @@ import (
 
 // Trigger - A rule that starts a workflow when a matching event arrives
 type Trigger struct {
+	CreatedAt time.Time `json:"createdAt"`
 	// Type of event that fires this trigger
 	Event string `json:"event"`
-	// Identifier of the workflow to run when the trigger fires
-	WorkflowID string `json:"workflowID"`
-	// Version of the trigger definition
-	Version *string `json:"version,omitempty"`
 	// Expression evaluated against the event. The workflow runs only when it matches
 	Filter *string `json:"filter,omitempty"`
+	ID     string  `json:"id"`
+	// Human-readable name for the trigger
+	Name *string `json:"name,omitempty"`
 	// Expressions evaluated against the event to build the workflow's input variables
 	Vars map[string]any `json:"vars,omitempty"`
-	// Human-readable name for the trigger
-	Name      *string   `json:"name,omitempty"`
-	ID        string    `json:"id"`
-	CreatedAt time.Time `json:"createdAt"`
+	// Version of the trigger definition
+	Version *string `json:"version,omitempty"`
+	// Identifier of the workflow to run when the trigger fires
+	WorkflowID string `json:"workflowID"`
 }
 
 func (t Trigger) MarshalJSON() ([]byte, error) {
@@ -36,25 +36,18 @@ func (t *Trigger) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (t *Trigger) GetCreatedAt() time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return t.CreatedAt
+}
+
 func (t *Trigger) GetEvent() string {
 	if t == nil {
 		return ""
 	}
 	return t.Event
-}
-
-func (t *Trigger) GetWorkflowID() string {
-	if t == nil {
-		return ""
-	}
-	return t.WorkflowID
-}
-
-func (t *Trigger) GetVersion() *string {
-	if t == nil {
-		return nil
-	}
-	return t.Version
 }
 
 func (t *Trigger) GetFilter() *string {
@@ -64,11 +57,11 @@ func (t *Trigger) GetFilter() *string {
 	return t.Filter
 }
 
-func (t *Trigger) GetVars() map[string]any {
+func (t *Trigger) GetID() string {
 	if t == nil {
-		return nil
+		return ""
 	}
-	return t.Vars
+	return t.ID
 }
 
 func (t *Trigger) GetName() *string {
@@ -78,16 +71,23 @@ func (t *Trigger) GetName() *string {
 	return t.Name
 }
 
-func (t *Trigger) GetID() string {
+func (t *Trigger) GetVars() map[string]any {
+	if t == nil {
+		return nil
+	}
+	return t.Vars
+}
+
+func (t *Trigger) GetVersion() *string {
+	if t == nil {
+		return nil
+	}
+	return t.Version
+}
+
+func (t *Trigger) GetWorkflowID() string {
 	if t == nil {
 		return ""
 	}
-	return t.ID
-}
-
-func (t *Trigger) GetCreatedAt() time.Time {
-	if t == nil {
-		return time.Time{}
-	}
-	return t.CreatedAt
+	return t.WorkflowID
 }

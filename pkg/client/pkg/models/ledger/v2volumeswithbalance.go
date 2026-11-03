@@ -12,12 +12,12 @@ type V2VolumesWithBalance struct {
 	Account string `json:"account"`
 	// The asset these volumes are denominated in
 	Asset string `json:"asset"`
+	// Net balance for this asset, equal to input minus output
+	Balance *big.Int `json:"balance"`
 	// Total amount credited to the account for this asset
 	Input *big.Int `json:"input"`
 	// Total amount debited from the account for this asset
 	Output *big.Int `json:"output"`
-	// Net balance for this asset, equal to input minus output
-	Balance *big.Int `json:"balance"`
 }
 
 func (v V2VolumesWithBalance) MarshalJSON() ([]byte, error) {
@@ -25,7 +25,7 @@ func (v V2VolumesWithBalance) MarshalJSON() ([]byte, error) {
 }
 
 func (v *V2VolumesWithBalance) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"account", "asset", "input", "output", "balance"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"account", "asset", "balance", "input", "output"}); err != nil {
 		return err
 	}
 	return nil
@@ -45,6 +45,13 @@ func (v *V2VolumesWithBalance) GetAsset() string {
 	return v.Asset
 }
 
+func (v *V2VolumesWithBalance) GetBalance() *big.Int {
+	if v == nil {
+		return big.NewInt(0)
+	}
+	return v.Balance
+}
+
 func (v *V2VolumesWithBalance) GetInput() *big.Int {
 	if v == nil {
 		return big.NewInt(0)
@@ -57,13 +64,6 @@ func (v *V2VolumesWithBalance) GetOutput() *big.Int {
 		return big.NewInt(0)
 	}
 	return v.Output
-}
-
-func (v *V2VolumesWithBalance) GetBalance() *big.Int {
-	if v == nil {
-		return big.NewInt(0)
-	}
-	return v.Balance
 }
 
 // #region class-body-v2volumeswithbalance

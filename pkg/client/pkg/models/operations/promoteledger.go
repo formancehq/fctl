@@ -33,19 +33,19 @@ func (p *PromoteLedgerRequest) GetLedgerName() string {
 type PromoteLedgerResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// The request is invalid, or the ledger is not in mirror mode (`LEDGER_NOT_IN_MIRROR_MODE`).
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
+	// Ledger promoted successfully
+	PromoteLedgerResponse *ledgerv3.PromoteLedgerResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Ledger promoted successfully
-	PromoteLedgerResponse *ledgerv3.PromoteLedgerResponse
-	// The request is invalid, or the ledger is not in mirror mode (`LEDGER_NOT_IN_MIRROR_MODE`).
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (p *PromoteLedgerResponse) GetContentType() string {
@@ -53,6 +53,34 @@ func (p *PromoteLedgerResponse) GetContentType() string {
 		return ""
 	}
 	return p.ContentType
+}
+
+func (p *PromoteLedgerResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if p == nil {
+		return nil
+	}
+	return p.ErrorResponse
+}
+
+func (p *PromoteLedgerResponse) GetForbidden() *string {
+	if p == nil {
+		return nil
+	}
+	return p.Forbidden
+}
+
+func (p *PromoteLedgerResponse) GetHeaders() map[string][]string {
+	if p == nil {
+		return map[string][]string{}
+	}
+	return p.Headers
+}
+
+func (p *PromoteLedgerResponse) GetPromoteLedgerResponse() *ledgerv3.PromoteLedgerResponse {
+	if p == nil {
+		return nil
+	}
+	return p.PromoteLedgerResponse
 }
 
 func (p *PromoteLedgerResponse) GetStatusCode() int {
@@ -69,37 +97,9 @@ func (p *PromoteLedgerResponse) GetRawResponse() *http.Response {
 	return p.RawResponse
 }
 
-func (p *PromoteLedgerResponse) GetPromoteLedgerResponse() *ledgerv3.PromoteLedgerResponse {
-	if p == nil {
-		return nil
-	}
-	return p.PromoteLedgerResponse
-}
-
-func (p *PromoteLedgerResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if p == nil {
-		return nil
-	}
-	return p.ErrorResponse
-}
-
 func (p *PromoteLedgerResponse) GetUnauthorized() *string {
 	if p == nil {
 		return nil
 	}
 	return p.Unauthorized
-}
-
-func (p *PromoteLedgerResponse) GetForbidden() *string {
-	if p == nil {
-		return nil
-	}
-	return p.Forbidden
-}
-
-func (p *PromoteLedgerResponse) GetHeaders() map[string][]string {
-	if p == nil {
-		return map[string][]string{}
-	}
-	return p.Headers
 }

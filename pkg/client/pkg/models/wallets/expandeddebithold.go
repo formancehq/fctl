@@ -9,22 +9,22 @@ import (
 
 // ExpandedDebitHold - A hold together with the amounts it currently locks and has already released
 type ExpandedDebitHold struct {
-	// The unique ID of the hold.
-	ID string `json:"id"`
-	// The ID of the wallet the hold is associated with.
-	WalletID string `json:"walletID"`
-	// Metadata associated with the hold.
-	Metadata map[string]string `json:"metadata"`
 	// Asset the held funds are denominated in
 	Asset string `json:"asset"`
 	// Human-readable reason the funds were held
 	Description string `json:"description"`
 	// The counterparty of a wallet movement, either a ledger account or another wallet
 	Destination *Subject `json:"destination,omitempty"`
-	// Remaining amount on hold
-	Remaining *big.Int `json:"remaining"`
+	// The unique ID of the hold.
+	ID string `json:"id"`
+	// Metadata associated with the hold.
+	Metadata map[string]string `json:"metadata"`
 	// Original amount on hold
 	OriginalAmount *big.Int `json:"originalAmount"`
+	// Remaining amount on hold
+	Remaining *big.Int `json:"remaining"`
+	// The ID of the wallet the hold is associated with.
+	WalletID string `json:"walletID"`
 }
 
 func (e ExpandedDebitHold) MarshalJSON() ([]byte, error) {
@@ -36,27 +36,6 @@ func (e *ExpandedDebitHold) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (e *ExpandedDebitHold) GetID() string {
-	if e == nil {
-		return ""
-	}
-	return e.ID
-}
-
-func (e *ExpandedDebitHold) GetWalletID() string {
-	if e == nil {
-		return ""
-	}
-	return e.WalletID
-}
-
-func (e *ExpandedDebitHold) GetMetadata() map[string]string {
-	if e == nil {
-		return map[string]string{}
-	}
-	return e.Metadata
 }
 
 func (e *ExpandedDebitHold) GetAsset() string {
@@ -94,11 +73,18 @@ func (e *ExpandedDebitHold) GetDestinationWallet() *WalletSubject {
 	return nil
 }
 
-func (e *ExpandedDebitHold) GetRemaining() *big.Int {
+func (e *ExpandedDebitHold) GetID() string {
 	if e == nil {
-		return big.NewInt(0)
+		return ""
 	}
-	return e.Remaining
+	return e.ID
+}
+
+func (e *ExpandedDebitHold) GetMetadata() map[string]string {
+	if e == nil {
+		return map[string]string{}
+	}
+	return e.Metadata
 }
 
 func (e *ExpandedDebitHold) GetOriginalAmount() *big.Int {
@@ -106,4 +92,18 @@ func (e *ExpandedDebitHold) GetOriginalAmount() *big.Int {
 		return big.NewInt(0)
 	}
 	return e.OriginalAmount
+}
+
+func (e *ExpandedDebitHold) GetRemaining() *big.Int {
+	if e == nil {
+		return big.NewInt(0)
+	}
+	return e.Remaining
+}
+
+func (e *ExpandedDebitHold) GetWalletID() string {
+	if e == nil {
+		return ""
+	}
+	return e.WalletID
 }

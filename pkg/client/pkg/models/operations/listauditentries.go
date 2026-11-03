@@ -20,15 +20,21 @@ func (l *ListAuditEntriesSecurity) GetBearerAuth() *string {
 }
 
 type ListAuditEntriesRequest struct {
-	// Maximum number of items per page. 0 or absent means 100; values above 1000 are clamped to 1000.
-	PageSize *int64 `default:"100" queryParam:"style=form,explode=true,name=pageSize"`
+	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
+	// barrier and waits for the receiving node to apply up to it. `stale`
+	// serves the read from the receiving node's own store, with no barrier
+	// and no forwarding to the leader, so the answer may lag the leader.
+	// Matching ignores case and surrounding whitespace. An unknown value, or a
+	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
+	// `/v3` route, writes included; a valid value has no effect on writes. The
+	// gRPC equivalent is the `x-consistency` request metadata.
+	//
+	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
 	// Page token from a previous response's `next` or `previous` field (see
 	// the `PageToken` schema). Omit for the first page. Pass the same
 	// `reverse` and `filter` on every page of a walk.
 	//
 	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
-	// Iterate newest-first (descending sequence) when true
-	Reverse *bool `default:"false" queryParam:"style=form,explode=true,name=reverse"`
 	// A filter, decoded by the same shared dual-format decoder every list
 	// endpoint uses (see the `ListFilter` parameter). In practice audit
 	// filters use the **textual** representation, restricted to bare
@@ -66,16 +72,10 @@ type ListAuditEntriesRequest struct {
 	// cannot carry an audit condition and is rejected.
 	//
 	Filter *string `queryParam:"style=form,explode=true,name=filter"`
-	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
-	// barrier and waits for the receiving node to apply up to it. `stale`
-	// serves the read from the receiving node's own store, with no barrier
-	// and no forwarding to the leader, so the answer may lag the leader.
-	// Matching ignores case and surrounding whitespace. An unknown value, or a
-	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
-	// `/v3` route, writes included; a valid value has no effect on writes. The
-	// gRPC equivalent is the `x-consistency` request metadata.
-	//
-	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Maximum number of items per page. 0 or absent means 100; values above 1000 are clamped to 1000.
+	PageSize *int64 `default:"100" queryParam:"style=form,explode=true,name=pageSize"`
+	// Iterate newest-first (descending sequence) when true
+	Reverse *bool `default:"false" queryParam:"style=form,explode=true,name=reverse"`
 }
 
 func (l ListAuditEntriesRequest) MarshalJSON() ([]byte, error) {
@@ -89,11 +89,11 @@ func (l *ListAuditEntriesRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (l *ListAuditEntriesRequest) GetPageSize() *int64 {
+func (l *ListAuditEntriesRequest) GetXConsistency() *ledgerv3.Consistency {
 	if l == nil {
 		return nil
 	}
-	return l.PageSize
+	return l.XConsistency
 }
 
 func (l *ListAuditEntriesRequest) GetCursor() *string {
@@ -103,13 +103,6 @@ func (l *ListAuditEntriesRequest) GetCursor() *string {
 	return l.Cursor
 }
 
-func (l *ListAuditEntriesRequest) GetReverse() *bool {
-	if l == nil {
-		return nil
-	}
-	return l.Reverse
-}
-
 func (l *ListAuditEntriesRequest) GetFilter() *string {
 	if l == nil {
 		return nil
@@ -117,16 +110,25 @@ func (l *ListAuditEntriesRequest) GetFilter() *string {
 	return l.Filter
 }
 
-func (l *ListAuditEntriesRequest) GetXConsistency() *ledgerv3.Consistency {
+func (l *ListAuditEntriesRequest) GetPageSize() *int64 {
 	if l == nil {
 		return nil
 	}
-	return l.XConsistency
+	return l.PageSize
+}
+
+func (l *ListAuditEntriesRequest) GetReverse() *bool {
+	if l == nil {
+		return nil
+	}
+	return l.Reverse
 }
 
 // ListAuditEntriesResponseBody - List of audit entries
 type ListAuditEntriesResponseBody struct {
 	Data []ledgerv3.AuditEntry `json:"data"`
+	// True when a following page exists; set iff `next` is.
+	HasMore bool `json:"hasMore"`
 	// Page token of a paged list. Clients normally pass back the `next` or
 	// `previous` value of a previous response verbatim; building one by hand
 	// is supported.
@@ -201,8 +203,6 @@ type ListAuditEntriesResponseBody struct {
 	// the endpoint, is rejected with 400 `INVALID_REQUEST`.
 	//
 	Previous *string `json:"previous,omitempty"`
-	// True when a following page exists; set iff `next` is.
-	HasMore bool `json:"hasMore"`
 }
 
 func (l *ListAuditEntriesResponseBody) GetData() []ledgerv3.AuditEntry {
@@ -210,6 +210,13 @@ func (l *ListAuditEntriesResponseBody) GetData() []ledgerv3.AuditEntry {
 		return []ledgerv3.AuditEntry{}
 	}
 	return l.Data
+}
+
+func (l *ListAuditEntriesResponseBody) GetHasMore() bool {
+	if l == nil {
+		return false
+	}
+	return l.HasMore
 }
 
 func (l *ListAuditEntriesResponseBody) GetNext() *string {
@@ -226,29 +233,22 @@ func (l *ListAuditEntriesResponseBody) GetPrevious() *string {
 	return l.Previous
 }
 
-func (l *ListAuditEntriesResponseBody) GetHasMore() bool {
-	if l == nil {
-		return false
-	}
-	return l.HasMore
-}
-
 type ListAuditEntriesResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// List of audit entries
-	Object *ListAuditEntriesResponseBody
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
+	// List of audit entries
+	Object *ListAuditEntriesResponseBody
 }
 
 func (l *ListAuditEntriesResponse) GetContentType() string {
@@ -256,6 +256,27 @@ func (l *ListAuditEntriesResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListAuditEntriesResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ErrorResponse
+}
+
+func (l *ListAuditEntriesResponse) GetForbidden() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Forbidden
+}
+
+func (l *ListAuditEntriesResponse) GetHeaders() map[string][]string {
+	if l == nil {
+		return map[string][]string{}
+	}
+	return l.Headers
 }
 
 func (l *ListAuditEntriesResponse) GetStatusCode() int {
@@ -272,20 +293,6 @@ func (l *ListAuditEntriesResponse) GetRawResponse() *http.Response {
 	return l.RawResponse
 }
 
-func (l *ListAuditEntriesResponse) GetObject() *ListAuditEntriesResponseBody {
-	if l == nil {
-		return nil
-	}
-	return l.Object
-}
-
-func (l *ListAuditEntriesResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ErrorResponse
-}
-
 func (l *ListAuditEntriesResponse) GetUnauthorized() *string {
 	if l == nil {
 		return nil
@@ -293,16 +300,9 @@ func (l *ListAuditEntriesResponse) GetUnauthorized() *string {
 	return l.Unauthorized
 }
 
-func (l *ListAuditEntriesResponse) GetForbidden() *string {
+func (l *ListAuditEntriesResponse) GetObject() *ListAuditEntriesResponseBody {
 	if l == nil {
 		return nil
 	}
-	return l.Forbidden
-}
-
-func (l *ListAuditEntriesResponse) GetHeaders() map[string][]string {
-	if l == nil {
-		return map[string][]string{}
-	}
-	return l.Headers
+	return l.Object
 }

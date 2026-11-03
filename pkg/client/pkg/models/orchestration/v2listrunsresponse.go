@@ -4,18 +4,18 @@ package orchestration
 
 // V2ListRunsResponseCursor - Paginated cursor wrapping the list of runs
 type V2ListRunsResponseCursor struct {
-	PageSize int64                `json:"pageSize"`
-	HasMore  bool                 `json:"hasMore"`
-	Previous *string              `json:"previous,omitempty"`
-	Next     *string              `json:"next,omitempty"`
 	Data     []V2WorkflowInstance `json:"data"`
+	HasMore  bool                 `json:"hasMore"`
+	Next     *string              `json:"next,omitempty"`
+	PageSize int64                `json:"pageSize"`
+	Previous *string              `json:"previous,omitempty"`
 }
 
-func (v *V2ListRunsResponseCursor) GetPageSize() int64 {
+func (v *V2ListRunsResponseCursor) GetData() []V2WorkflowInstance {
 	if v == nil {
-		return 0
+		return []V2WorkflowInstance{}
 	}
-	return v.PageSize
+	return v.Data
 }
 
 func (v *V2ListRunsResponseCursor) GetHasMore() bool {
@@ -25,13 +25,6 @@ func (v *V2ListRunsResponseCursor) GetHasMore() bool {
 	return v.HasMore
 }
 
-func (v *V2ListRunsResponseCursor) GetPrevious() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Previous
-}
-
 func (v *V2ListRunsResponseCursor) GetNext() *string {
 	if v == nil {
 		return nil
@@ -39,11 +32,18 @@ func (v *V2ListRunsResponseCursor) GetNext() *string {
 	return v.Next
 }
 
-func (v *V2ListRunsResponseCursor) GetData() []V2WorkflowInstance {
+func (v *V2ListRunsResponseCursor) GetPageSize() int64 {
 	if v == nil {
-		return []V2WorkflowInstance{}
+		return 0
 	}
-	return v.Data
+	return v.PageSize
+}
+
+func (v *V2ListRunsResponseCursor) GetPrevious() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Previous
 }
 
 // #region class-body-v2listrunsresponsecursor

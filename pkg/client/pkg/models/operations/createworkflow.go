@@ -10,12 +10,12 @@ import (
 type CreateWorkflowResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Created workflow
+	CreateWorkflowResponse *orchestration.CreateWorkflowResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Created workflow
-	CreateWorkflowResponse *orchestration.CreateWorkflowResponse
 }
 
 func (c *CreateWorkflowResponse) GetContentType() string {
@@ -23,6 +23,13 @@ func (c *CreateWorkflowResponse) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
+}
+
+func (c *CreateWorkflowResponse) GetCreateWorkflowResponse() *orchestration.CreateWorkflowResponse {
+	if c == nil {
+		return nil
+	}
+	return c.CreateWorkflowResponse
 }
 
 func (c *CreateWorkflowResponse) GetStatusCode() int {
@@ -37,11 +44,4 @@ func (c *CreateWorkflowResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return c.RawResponse
-}
-
-func (c *CreateWorkflowResponse) GetCreateWorkflowResponse() *orchestration.CreateWorkflowResponse {
-	if c == nil {
-		return nil
-	}
-	return c.CreateWorkflowResponse
 }

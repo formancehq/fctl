@@ -10,16 +10,16 @@ import (
 type TriggerOccurrence struct {
 	// When the trigger fired
 	Date time.Time `json:"date"`
-	// Identifier of the run the trigger started, absent when it started none
-	WorkflowInstanceID *string `json:"workflowInstanceID,omitempty"`
-	// One run of a workflow, tracking its per-stage progress
-	WorkflowInstance *WorkflowInstance `json:"workflowInstance,omitempty"`
-	// Identifier of the trigger that fired
-	TriggerID string `json:"triggerID"`
-	// The event that fired the trigger
-	Event map[string]any `json:"event"`
 	// Why the trigger failed to start a run, absent when it succeeded
 	Error *string `json:"error,omitempty"`
+	// The event that fired the trigger
+	Event map[string]any `json:"event"`
+	// Identifier of the trigger that fired
+	TriggerID string `json:"triggerID"`
+	// One run of a workflow, tracking its per-stage progress
+	WorkflowInstance *WorkflowInstance `json:"workflowInstance,omitempty"`
+	// Identifier of the run the trigger started, absent when it started none
+	WorkflowInstanceID *string `json:"workflowInstanceID,omitempty"`
 }
 
 func (t TriggerOccurrence) MarshalJSON() ([]byte, error) {
@@ -40,25 +40,11 @@ func (t *TriggerOccurrence) GetDate() time.Time {
 	return t.Date
 }
 
-func (t *TriggerOccurrence) GetWorkflowInstanceID() *string {
+func (t *TriggerOccurrence) GetError() *string {
 	if t == nil {
 		return nil
 	}
-	return t.WorkflowInstanceID
-}
-
-func (t *TriggerOccurrence) GetWorkflowInstance() *WorkflowInstance {
-	if t == nil {
-		return nil
-	}
-	return t.WorkflowInstance
-}
-
-func (t *TriggerOccurrence) GetTriggerID() string {
-	if t == nil {
-		return ""
-	}
-	return t.TriggerID
+	return t.Error
 }
 
 func (t *TriggerOccurrence) GetEvent() map[string]any {
@@ -68,9 +54,23 @@ func (t *TriggerOccurrence) GetEvent() map[string]any {
 	return t.Event
 }
 
-func (t *TriggerOccurrence) GetError() *string {
+func (t *TriggerOccurrence) GetTriggerID() string {
+	if t == nil {
+		return ""
+	}
+	return t.TriggerID
+}
+
+func (t *TriggerOccurrence) GetWorkflowInstance() *WorkflowInstance {
 	if t == nil {
 		return nil
 	}
-	return t.Error
+	return t.WorkflowInstance
+}
+
+func (t *TriggerOccurrence) GetWorkflowInstanceID() *string {
+	if t == nil {
+		return nil
+	}
+	return t.WorkflowInstanceID
 }

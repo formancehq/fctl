@@ -10,34 +10,34 @@ import (
 type WorkflowInstanceHistoryStage struct {
 	// Stable identifier of the activity within its workflow execution
 	ActivityID *string `json:"activityID,omitempty"`
-	// Run identifier of the described stage workflow execution
-	TemporalRunID *string `json:"temporalRunID,omitempty"`
-	// Whether Temporal has paused this pending activity; a pause is not a terminal failure
-	Paused *bool `json:"paused,omitempty"`
-	// Reason recorded by Temporal for the activity pause, when available
-	PauseReason *string `json:"pauseReason,omitempty"`
+	// How many times the activity has been attempted
+	Attempt int64 `json:"attempt"`
+	// Why the activity failed, absent when it succeeded
+	Error *string `json:"error,omitempty"`
+	// Arguments an activity was called with, keyed by activity name
+	Input WorkflowInstanceHistoryStageInput `json:"input"`
+	// Error reported by the most recent failed attempt
+	LastFailure *string `json:"lastFailure,omitempty"`
 	// Application failure type of the most recent failed attempt, when available
 	LastFailureType *string `json:"lastFailureType,omitempty"`
 	// Name of the activity this history entry records
 	Name string `json:"name"`
-	// Arguments an activity was called with, keyed by activity name
-	Input WorkflowInstanceHistoryStageInput `json:"input"`
-	// Result an activity returned, keyed by activity name
-	Output *WorkflowInstanceHistoryStageOutput `json:"output,omitempty"`
-	// Why the activity failed, absent when it succeeded
-	Error *string `json:"error,omitempty"`
-	// Whether the activity has finished
-	Terminated bool `json:"terminated"`
-	// When the activity started
-	StartedAt time.Time `json:"startedAt"`
-	// When the activity finished, absent while it is still running
-	TerminatedAt *time.Time `json:"terminatedAt,omitempty"`
-	// Error reported by the most recent failed attempt
-	LastFailure *string `json:"lastFailure,omitempty"`
-	// How many times the activity has been attempted
-	Attempt int64 `json:"attempt"`
 	// When the next retry is scheduled, absent while paused, when no retry is scheduled, or once settled
 	NextExecution *time.Time `json:"nextExecution,omitempty"`
+	// Result an activity returned, keyed by activity name
+	Output *WorkflowInstanceHistoryStageOutput `json:"output,omitempty"`
+	// Reason recorded by Temporal for the activity pause, when available
+	PauseReason *string `json:"pauseReason,omitempty"`
+	// Whether Temporal has paused this pending activity; a pause is not a terminal failure
+	Paused *bool `json:"paused,omitempty"`
+	// When the activity started
+	StartedAt time.Time `json:"startedAt"`
+	// Run identifier of the described stage workflow execution
+	TemporalRunID *string `json:"temporalRunID,omitempty"`
+	// Whether the activity has finished
+	Terminated bool `json:"terminated"`
+	// When the activity finished, absent while it is still running
+	TerminatedAt *time.Time `json:"terminatedAt,omitempty"`
 }
 
 func (w WorkflowInstanceHistoryStage) MarshalJSON() ([]byte, error) {
@@ -58,25 +58,32 @@ func (w *WorkflowInstanceHistoryStage) GetActivityID() *string {
 	return w.ActivityID
 }
 
-func (w *WorkflowInstanceHistoryStage) GetTemporalRunID() *string {
+func (w *WorkflowInstanceHistoryStage) GetAttempt() int64 {
 	if w == nil {
-		return nil
+		return 0
 	}
-	return w.TemporalRunID
+	return w.Attempt
 }
 
-func (w *WorkflowInstanceHistoryStage) GetPaused() *bool {
+func (w *WorkflowInstanceHistoryStage) GetError() *string {
 	if w == nil {
 		return nil
 	}
-	return w.Paused
+	return w.Error
 }
 
-func (w *WorkflowInstanceHistoryStage) GetPauseReason() *string {
+func (w *WorkflowInstanceHistoryStage) GetInput() WorkflowInstanceHistoryStageInput {
+	if w == nil {
+		return WorkflowInstanceHistoryStageInput{}
+	}
+	return w.Input
+}
+
+func (w *WorkflowInstanceHistoryStage) GetLastFailure() *string {
 	if w == nil {
 		return nil
 	}
-	return w.PauseReason
+	return w.LastFailure
 }
 
 func (w *WorkflowInstanceHistoryStage) GetLastFailureType() *string {
@@ -93,11 +100,11 @@ func (w *WorkflowInstanceHistoryStage) GetName() string {
 	return w.Name
 }
 
-func (w *WorkflowInstanceHistoryStage) GetInput() WorkflowInstanceHistoryStageInput {
+func (w *WorkflowInstanceHistoryStage) GetNextExecution() *time.Time {
 	if w == nil {
-		return WorkflowInstanceHistoryStageInput{}
+		return nil
 	}
-	return w.Input
+	return w.NextExecution
 }
 
 func (w *WorkflowInstanceHistoryStage) GetOutput() *WorkflowInstanceHistoryStageOutput {
@@ -107,18 +114,18 @@ func (w *WorkflowInstanceHistoryStage) GetOutput() *WorkflowInstanceHistoryStage
 	return w.Output
 }
 
-func (w *WorkflowInstanceHistoryStage) GetError() *string {
+func (w *WorkflowInstanceHistoryStage) GetPauseReason() *string {
 	if w == nil {
 		return nil
 	}
-	return w.Error
+	return w.PauseReason
 }
 
-func (w *WorkflowInstanceHistoryStage) GetTerminated() bool {
+func (w *WorkflowInstanceHistoryStage) GetPaused() *bool {
 	if w == nil {
-		return false
+		return nil
 	}
-	return w.Terminated
+	return w.Paused
 }
 
 func (w *WorkflowInstanceHistoryStage) GetStartedAt() time.Time {
@@ -128,30 +135,23 @@ func (w *WorkflowInstanceHistoryStage) GetStartedAt() time.Time {
 	return w.StartedAt
 }
 
+func (w *WorkflowInstanceHistoryStage) GetTemporalRunID() *string {
+	if w == nil {
+		return nil
+	}
+	return w.TemporalRunID
+}
+
+func (w *WorkflowInstanceHistoryStage) GetTerminated() bool {
+	if w == nil {
+		return false
+	}
+	return w.Terminated
+}
+
 func (w *WorkflowInstanceHistoryStage) GetTerminatedAt() *time.Time {
 	if w == nil {
 		return nil
 	}
 	return w.TerminatedAt
-}
-
-func (w *WorkflowInstanceHistoryStage) GetLastFailure() *string {
-	if w == nil {
-		return nil
-	}
-	return w.LastFailure
-}
-
-func (w *WorkflowInstanceHistoryStage) GetAttempt() int64 {
-	if w == nil {
-		return 0
-	}
-	return w.Attempt
-}
-
-func (w *WorkflowInstanceHistoryStage) GetNextExecution() *time.Time {
-	if w == nil {
-		return nil
-	}
-	return w.NextExecution
 }

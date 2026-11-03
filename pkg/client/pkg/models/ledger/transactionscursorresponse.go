@@ -4,18 +4,18 @@ package ledger
 
 // TransactionsCursorResponseCursor - Paginated cursor wrapping the list of transactions
 type TransactionsCursorResponseCursor struct {
-	PageSize int64         `json:"pageSize"`
-	HasMore  bool          `json:"hasMore"`
-	Previous *string       `json:"previous,omitempty"`
-	Next     *string       `json:"next,omitempty"`
 	Data     []Transaction `json:"data"`
+	HasMore  bool          `json:"hasMore"`
+	Next     *string       `json:"next,omitempty"`
+	PageSize int64         `json:"pageSize"`
+	Previous *string       `json:"previous,omitempty"`
 }
 
-func (t *TransactionsCursorResponseCursor) GetPageSize() int64 {
+func (t *TransactionsCursorResponseCursor) GetData() []Transaction {
 	if t == nil {
-		return 0
+		return []Transaction{}
 	}
-	return t.PageSize
+	return t.Data
 }
 
 func (t *TransactionsCursorResponseCursor) GetHasMore() bool {
@@ -25,13 +25,6 @@ func (t *TransactionsCursorResponseCursor) GetHasMore() bool {
 	return t.HasMore
 }
 
-func (t *TransactionsCursorResponseCursor) GetPrevious() *string {
-	if t == nil {
-		return nil
-	}
-	return t.Previous
-}
-
 func (t *TransactionsCursorResponseCursor) GetNext() *string {
 	if t == nil {
 		return nil
@@ -39,11 +32,18 @@ func (t *TransactionsCursorResponseCursor) GetNext() *string {
 	return t.Next
 }
 
-func (t *TransactionsCursorResponseCursor) GetData() []Transaction {
+func (t *TransactionsCursorResponseCursor) GetPageSize() int64 {
 	if t == nil {
-		return []Transaction{}
+		return 0
 	}
-	return t.Data
+	return t.PageSize
+}
+
+func (t *TransactionsCursorResponseCursor) GetPrevious() *string {
+	if t == nil {
+		return nil
+	}
+	return t.Previous
 }
 
 type TransactionsCursorResponse struct {

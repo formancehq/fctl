@@ -8,16 +8,16 @@ import (
 )
 
 type NumscriptInfo struct {
-	// Name of the numscript
-	Name string `json:"name"`
 	// The numscript source code
 	Content *string `json:"content,omitempty"`
-	// Semver version string (e.g. "1.0.0")
-	Version *string `json:"version,omitempty"`
 	// Creation/update timestamp (ISO 8601 format)
 	CreatedAt *time.Time `json:"createdAt,omitempty"`
 	// Ledger name this numscript belongs to
 	Ledger *string `json:"ledger,omitempty"`
+	// Name of the numscript
+	Name string `json:"name"`
+	// Semver version string (e.g. "1.0.0")
+	Version *string `json:"version,omitempty"`
 }
 
 func (n NumscriptInfo) MarshalJSON() ([]byte, error) {
@@ -31,25 +31,11 @@ func (n *NumscriptInfo) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (n *NumscriptInfo) GetName() string {
-	if n == nil {
-		return ""
-	}
-	return n.Name
-}
-
 func (n *NumscriptInfo) GetContent() *string {
 	if n == nil {
 		return nil
 	}
 	return n.Content
-}
-
-func (n *NumscriptInfo) GetVersion() *string {
-	if n == nil {
-		return nil
-	}
-	return n.Version
 }
 
 func (n *NumscriptInfo) GetCreatedAt() *time.Time {
@@ -64,4 +50,18 @@ func (n *NumscriptInfo) GetLedger() *string {
 		return nil
 	}
 	return n.Ledger
+}
+
+func (n *NumscriptInfo) GetName() string {
+	if n == nil {
+		return ""
+	}
+	return n.Name
+}
+
+func (n *NumscriptInfo) GetVersion() *string {
+	if n == nil {
+		return nil
+	}
+	return n.Version
 }

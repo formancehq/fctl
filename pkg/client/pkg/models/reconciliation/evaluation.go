@@ -10,44 +10,14 @@ import (
 	"time"
 )
 
-// Result - Whether the rule passed, failed, or could not be evaluated
-type Result string
-
-const (
-	ResultPass  Result = "PASS"
-	ResultFail  Result = "FAIL"
-	ResultError Result = "ERROR"
-)
-
-func (e Result) ToPointer() *Result {
-	return &e
-}
-func (e *Result) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "PASS":
-		fallthrough
-	case "FAIL":
-		fallthrough
-	case "ERROR":
-		*e = Result(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for Result: %v", v)
-	}
-}
-
 type One struct {
-	Fingerprint *string `json:"fingerprint,omitempty"`
-	Passed      *bool   `json:"passed,omitempty"`
+	AdditionalProperties map[string]any `additionalProperties:"true" json:"-"`
+	// Full breakdown. Present on FAIL entries.
+	Evidence    map[string]any `json:"evidence,omitempty"`
+	Fingerprint *string        `json:"fingerprint,omitempty"`
+	Passed      *bool          `json:"passed,omitempty"`
 	// Compact green-proof (observed balance integers as strings). Present on PASS entries.
 	Proof map[string]string `json:"proof,omitempty"`
-	// Full breakdown. Present on FAIL entries.
-	Evidence             map[string]any `json:"evidence,omitempty"`
-	AdditionalProperties map[string]any `additionalProperties:"true" json:"-"`
 }
 
 func (o One) MarshalJSON() ([]byte, error) {
@@ -59,6 +29,20 @@ func (o *One) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (o *One) GetAdditionalProperties() map[string]any {
+	if o == nil {
+		return nil
+	}
+	return o.AdditionalProperties
+}
+
+func (o *One) GetEvidence() map[string]any {
+	if o == nil {
+		return nil
+	}
+	return o.Evidence
 }
 
 func (o *One) GetFingerprint() *string {
@@ -80,20 +64,6 @@ func (o *One) GetProof() map[string]string {
 		return nil
 	}
 	return o.Proof
-}
-
-func (o *One) GetEvidence() map[string]any {
-	if o == nil {
-		return nil
-	}
-	return o.Evidence
-}
-
-func (o *One) GetAdditionalProperties() map[string]any {
-	if o == nil {
-		return nil
-	}
-	return o.AdditionalProperties
 }
 
 type EvidenceType string
@@ -160,28 +130,58 @@ func (u Evidence) MarshalJSON() ([]byte, error) {
 	return nil, errors.New("could not marshal union type Evidence: all fields are null")
 }
 
+// Result - Whether the rule passed, failed, or could not be evaluated
+type Result string
+
+const (
+	ResultPass  Result = "PASS"
+	ResultFail  Result = "FAIL"
+	ResultError Result = "ERROR"
+)
+
+func (e Result) ToPointer() *Result {
+	return &e
+}
+func (e *Result) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "PASS":
+		fallthrough
+	case "FAIL":
+		fallthrough
+	case "ERROR":
+		*e = Result(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for Result: %v", v)
+	}
+}
+
 // Evaluation - One run of a rule, carrying its outcome and cost
 type Evaluation struct {
-	// Unique identifier of the evaluation
-	ID string `json:"id"`
-	// Identifier of the rule that was evaluated
-	RuleID string `json:"ruleID"`
-	// When the evaluation started
-	StartedAt time.Time `json:"startedAt"`
-	// When the evaluation finished
-	EndedAt time.Time `json:"endedAt"`
-	// Effective historical PITs used by sources. For a Payments `latest` read, the value is the successful observation time because the upstream response has no snapshot timestamp; the evaluation evidence is frozen, but exact historical replay of that latest snapshot is not guaranteed.
-	PitPerSource map[string]time.Time `json:"pitPerSource,omitempty"`
-	// Whether the rule passed, failed, or could not be evaluated
-	Result Result `json:"result"`
-	// For PASS/FAIL: the per-fingerprint roster. Each PASS entry carries a compact `proof`: the observed balances that make the check hold, with self-describing keys — both sides where two are compared, e.g. {"ledger":"523500","pool":"-523500"} (drift), {"left":…,"right":…} (source_parity), {"positive":…,"negative":…} (ledger_invariant), or {"balance":…} (account_threshold). These reuse the FAIL balance keys, so under tolerance the residual (left−right) is visible without recomputation. Each FAIL entry carries the full `evidence` breakdown (balances, drift, tolerance, compiled CEL). Bounded by asset count (per-asset granularity; per-account is parked). An empty array means no outcomes were produced (no assets matched). For ERROR: an object describing the engine failure.
-	Evidence *Evidence `json:"evidence,omitempty"`
-	// Why the evaluation could not complete, when its result reports an error
-	Error *string `json:"error,omitempty"`
 	// Cumulative CEL runtime cost of the evaluation, used to track expensive rules
 	CostUnits *int64 `json:"costUnits,omitempty"`
 	// When the evaluation record was created
 	CreatedAt time.Time `json:"createdAt"`
+	// When the evaluation finished
+	EndedAt time.Time `json:"endedAt"`
+	// Why the evaluation could not complete, when its result reports an error
+	Error *string `json:"error,omitempty"`
+	// For PASS/FAIL: the per-fingerprint roster. Each PASS entry carries a compact `proof`: the observed balances that make the check hold, with self-describing keys — both sides where two are compared, e.g. {"ledger":"523500","pool":"-523500"} (drift), {"left":…,"right":…} (source_parity), {"positive":…,"negative":…} (ledger_invariant), or {"balance":…} (account_threshold). These reuse the FAIL balance keys, so under tolerance the residual (left−right) is visible without recomputation. Each FAIL entry carries the full `evidence` breakdown (balances, drift, tolerance, compiled CEL). Bounded by asset count (per-asset granularity; per-account is parked). An empty array means no outcomes were produced (no assets matched). For ERROR: an object describing the engine failure.
+	Evidence *Evidence `json:"evidence,omitempty"`
+	// Unique identifier of the evaluation
+	ID string `json:"id"`
+	// Effective historical PITs used by sources. For a Payments `latest` read, the value is the successful observation time because the upstream response has no snapshot timestamp; the evaluation evidence is frozen, but exact historical replay of that latest snapshot is not guaranteed.
+	PitPerSource map[string]time.Time `json:"pitPerSource,omitempty"`
+	// Whether the rule passed, failed, or could not be evaluated
+	Result Result `json:"result"`
+	// Identifier of the rule that was evaluated
+	RuleID string `json:"ruleID"`
+	// When the evaluation started
+	StartedAt time.Time `json:"startedAt"`
 }
 
 func (e Evaluation) MarshalJSON() ([]byte, error) {
@@ -195,25 +195,18 @@ func (e *Evaluation) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (e *Evaluation) GetID() string {
+func (e *Evaluation) GetCostUnits() *int64 {
 	if e == nil {
-		return ""
+		return nil
 	}
-	return e.ID
+	return e.CostUnits
 }
 
-func (e *Evaluation) GetRuleID() string {
-	if e == nil {
-		return ""
-	}
-	return e.RuleID
-}
-
-func (e *Evaluation) GetStartedAt() time.Time {
+func (e *Evaluation) GetCreatedAt() time.Time {
 	if e == nil {
 		return time.Time{}
 	}
-	return e.StartedAt
+	return e.CreatedAt
 }
 
 func (e *Evaluation) GetEndedAt() time.Time {
@@ -221,6 +214,27 @@ func (e *Evaluation) GetEndedAt() time.Time {
 		return time.Time{}
 	}
 	return e.EndedAt
+}
+
+func (e *Evaluation) GetError() *string {
+	if e == nil {
+		return nil
+	}
+	return e.Error
+}
+
+func (e *Evaluation) GetEvidence() *Evidence {
+	if e == nil {
+		return nil
+	}
+	return e.Evidence
+}
+
+func (e *Evaluation) GetID() string {
+	if e == nil {
+		return ""
+	}
+	return e.ID
 }
 
 func (e *Evaluation) GetPitPerSource() map[string]time.Time {
@@ -237,30 +251,16 @@ func (e *Evaluation) GetResult() Result {
 	return e.Result
 }
 
-func (e *Evaluation) GetEvidence() *Evidence {
+func (e *Evaluation) GetRuleID() string {
 	if e == nil {
-		return nil
+		return ""
 	}
-	return e.Evidence
+	return e.RuleID
 }
 
-func (e *Evaluation) GetError() *string {
-	if e == nil {
-		return nil
-	}
-	return e.Error
-}
-
-func (e *Evaluation) GetCostUnits() *int64 {
-	if e == nil {
-		return nil
-	}
-	return e.CostUnits
-}
-
-func (e *Evaluation) GetCreatedAt() time.Time {
+func (e *Evaluation) GetStartedAt() time.Time {
 	if e == nil {
 		return time.Time{}
 	}
-	return e.CreatedAt
+	return e.StartedAt
 }

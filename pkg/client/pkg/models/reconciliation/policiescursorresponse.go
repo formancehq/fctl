@@ -2,59 +2,59 @@
 
 package reconciliation
 
-// Cursor - Paginated cursor wrapping the list of policies
-type Cursor struct {
-	PageSize int64    `json:"pageSize"`
-	HasMore  bool     `json:"hasMore"`
-	Previous *string  `json:"previous,omitempty"`
-	Next     *string  `json:"next,omitempty"`
+// PoliciesCursorResponseCursor - Paginated cursor wrapping the list of policies
+type PoliciesCursorResponseCursor struct {
 	Data     []Policy `json:"data"`
+	HasMore  bool     `json:"hasMore"`
+	Next     *string  `json:"next,omitempty"`
+	PageSize int64    `json:"pageSize"`
+	Previous *string  `json:"previous,omitempty"`
 }
 
-func (c *Cursor) GetPageSize() int64 {
-	if c == nil {
-		return 0
-	}
-	return c.PageSize
-}
-
-func (c *Cursor) GetHasMore() bool {
-	if c == nil {
-		return false
-	}
-	return c.HasMore
-}
-
-func (c *Cursor) GetPrevious() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Previous
-}
-
-func (c *Cursor) GetNext() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Next
-}
-
-func (c *Cursor) GetData() []Policy {
-	if c == nil {
+func (p *PoliciesCursorResponseCursor) GetData() []Policy {
+	if p == nil {
 		return []Policy{}
 	}
-	return c.Data
+	return p.Data
+}
+
+func (p *PoliciesCursorResponseCursor) GetHasMore() bool {
+	if p == nil {
+		return false
+	}
+	return p.HasMore
+}
+
+func (p *PoliciesCursorResponseCursor) GetNext() *string {
+	if p == nil {
+		return nil
+	}
+	return p.Next
+}
+
+func (p *PoliciesCursorResponseCursor) GetPageSize() int64 {
+	if p == nil {
+		return 0
+	}
+	return p.PageSize
+}
+
+func (p *PoliciesCursorResponseCursor) GetPrevious() *string {
+	if p == nil {
+		return nil
+	}
+	return p.Previous
 }
 
 // PoliciesCursorResponse - OK
 type PoliciesCursorResponse struct {
 	// Paginated cursor wrapping the list of policies
-	Cursor Cursor `json:"cursor"`
+	Cursor PoliciesCursorResponseCursor `json:"cursor"`
 }
 
-func (p *PoliciesCursorResponse) GetCursor() Cursor {
+func (p *PoliciesCursorResponse) GetCursor() PoliciesCursorResponseCursor {
 	if p == nil {
-		return Cursor{}
+		return PoliciesCursorResponseCursor{}
 	}
 	return p.Cursor
 }

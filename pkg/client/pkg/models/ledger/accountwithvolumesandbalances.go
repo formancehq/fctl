@@ -11,14 +11,14 @@ import (
 type AccountWithVolumesAndBalances struct {
 	// The account address, a colon-separated segmented path such as users:001
 	Address string `json:"address"`
-	// Free-form classification of the account
-	Type *string `json:"type,omitempty"`
-	// Arbitrary key/value pairs attached to the account
-	Metadata map[string]any `json:"metadata,omitempty"`
-	// Volumes per asset for a single account
-	Volumes map[string]Volume `json:"volumes,omitempty"`
 	// Net balance per asset, equal to input minus output
 	Balances map[string]*big.Int `json:"balances,omitempty"`
+	// Arbitrary key/value pairs attached to the account
+	Metadata map[string]any `json:"metadata,omitempty"`
+	// Free-form classification of the account
+	Type *string `json:"type,omitempty"`
+	// Volumes per asset for a single account
+	Volumes map[string]Volume `json:"volumes,omitempty"`
 }
 
 func (a AccountWithVolumesAndBalances) MarshalJSON() ([]byte, error) {
@@ -39,11 +39,11 @@ func (a *AccountWithVolumesAndBalances) GetAddress() string {
 	return a.Address
 }
 
-func (a *AccountWithVolumesAndBalances) GetType() *string {
+func (a *AccountWithVolumesAndBalances) GetBalances() map[string]*big.Int {
 	if a == nil {
 		return nil
 	}
-	return a.Type
+	return a.Balances
 }
 
 func (a *AccountWithVolumesAndBalances) GetMetadata() map[string]any {
@@ -53,16 +53,16 @@ func (a *AccountWithVolumesAndBalances) GetMetadata() map[string]any {
 	return a.Metadata
 }
 
+func (a *AccountWithVolumesAndBalances) GetType() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Type
+}
+
 func (a *AccountWithVolumesAndBalances) GetVolumes() map[string]Volume {
 	if a == nil {
 		return nil
 	}
 	return a.Volumes
-}
-
-func (a *AccountWithVolumesAndBalances) GetBalances() map[string]*big.Int {
-	if a == nil {
-		return nil
-	}
-	return a.Balances
 }

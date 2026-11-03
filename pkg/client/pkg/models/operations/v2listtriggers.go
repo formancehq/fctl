@@ -14,11 +14,11 @@ type V2ListTriggersRequest struct {
 	// No other parameters can be set when this parameter is set.
 	//
 	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// search by name
+	Name *string `queryParam:"style=form,explode=true,name=name"`
 	// The maximum number of results to return per page.
 	//
 	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
-	// search by name
-	Name *string `queryParam:"style=form,explode=true,name=name"`
 }
 
 func (v *V2ListTriggersRequest) GetCursor() *string {
@@ -28,18 +28,18 @@ func (v *V2ListTriggersRequest) GetCursor() *string {
 	return v.Cursor
 }
 
-func (v *V2ListTriggersRequest) GetPageSize() *int64 {
-	if v == nil {
-		return nil
-	}
-	return v.PageSize
-}
-
 func (v *V2ListTriggersRequest) GetName() *string {
 	if v == nil {
 		return nil
 	}
 	return v.Name
+}
+
+func (v *V2ListTriggersRequest) GetPageSize() *int64 {
+	if v == nil {
+		return nil
+	}
+	return v.PageSize
 }
 
 // #region class-body-v2listtriggersrequest

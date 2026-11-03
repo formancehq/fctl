@@ -8,16 +8,9 @@ import (
 )
 
 type V2CreatePipelineRequest struct {
-	// Name of the ledger.
-	Ledger                  string                          `pathParam:"style=simple,explode=false,name=ledger"`
 	V2CreatePipelineRequest *ledger.V2CreatePipelineRequest `request:"mediaType=application/json"`
-}
-
-func (v *V2CreatePipelineRequest) GetLedger() string {
-	if v == nil {
-		return ""
-	}
-	return v.Ledger
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 }
 
 func (v *V2CreatePipelineRequest) GetV2CreatePipelineRequest() *ledger.V2CreatePipelineRequest {
@@ -25,6 +18,13 @@ func (v *V2CreatePipelineRequest) GetV2CreatePipelineRequest() *ledger.V2CreateP
 		return nil
 	}
 	return v.V2CreatePipelineRequest
+}
+
+func (v *V2CreatePipelineRequest) GetLedger() string {
+	if v == nil {
+		return ""
+	}
+	return v.Ledger
 }
 
 // #region class-body-v2createpipelinerequest

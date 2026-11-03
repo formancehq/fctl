@@ -8,25 +8,11 @@ import (
 )
 
 type TransactionResponse struct {
-	Postings []PostingResponse         `json:"postings"`
-	Metadata map[string]*MetadataValue `json:"metadata"`
-	// Transaction timestamp (ISO 8601 format)
-	Timestamp *time.Time `json:"timestamp,omitempty"`
-	Reference *string    `json:"reference,omitempty"`
 	// Transaction ID (assigned by the system)
 	ID int64 `json:"id"`
-	// Whether this transaction has been reverted
-	Reverted bool `json:"reverted"`
 	// When the transaction was inserted into the ledger
-	InsertedAt *time.Time `json:"insertedAt,omitempty"`
-	// Last update timestamp
-	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
-	// When the transaction was reverted (null if not reverted)
-	RevertedAt *time.Time `json:"revertedAt,omitempty"`
-	// ID of the transaction that reverted this one (absent when not reverted)
-	RevertedByTransactionID *int64 `json:"revertedByTransactionId,omitempty"`
-	// ID of the original transaction this transaction reverts (absent when this is not a revert)
-	RevertsTransactionID *int64 `json:"revertsTransactionId,omitempty"`
+	InsertedAt *time.Time                `json:"insertedAt,omitempty"`
+	Metadata   map[string]*MetadataValue `json:"metadata"`
 	// Post-commit volumes, keyed by account address. Each account maps to a
 	// flat array of per-(asset, color) volume tuples. The wire is a plain
 	// `{"addr": [{asset, color, input, output}]}` map — the proto
@@ -36,6 +22,20 @@ type TransactionResponse struct {
 	// bucket uniquely once a color dimension exists.
 	//
 	PostCommitVolumes map[string][]VolumeEntry `json:"postCommitVolumes,omitempty"`
+	Postings          []PostingResponse        `json:"postings"`
+	Reference         *string                  `json:"reference,omitempty"`
+	// Whether this transaction has been reverted
+	Reverted bool `json:"reverted"`
+	// When the transaction was reverted (null if not reverted)
+	RevertedAt *time.Time `json:"revertedAt,omitempty"`
+	// ID of the transaction that reverted this one (absent when not reverted)
+	RevertedByTransactionID *int64 `json:"revertedByTransactionId,omitempty"`
+	// ID of the original transaction this transaction reverts (absent when this is not a revert)
+	RevertsTransactionID *int64 `json:"revertsTransactionId,omitempty"`
+	// Transaction timestamp (ISO 8601 format)
+	Timestamp *time.Time `json:"timestamp,omitempty"`
+	// Last update timestamp
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
 }
 
 func (t TransactionResponse) MarshalJSON() ([]byte, error) {
@@ -49,46 +49,11 @@ func (t *TransactionResponse) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (t *TransactionResponse) GetPostings() []PostingResponse {
-	if t == nil {
-		return []PostingResponse{}
-	}
-	return t.Postings
-}
-
-func (t *TransactionResponse) GetMetadata() map[string]*MetadataValue {
-	if t == nil {
-		return map[string]*MetadataValue{}
-	}
-	return t.Metadata
-}
-
-func (t *TransactionResponse) GetTimestamp() *time.Time {
-	if t == nil {
-		return nil
-	}
-	return t.Timestamp
-}
-
-func (t *TransactionResponse) GetReference() *string {
-	if t == nil {
-		return nil
-	}
-	return t.Reference
-}
-
 func (t *TransactionResponse) GetID() int64 {
 	if t == nil {
 		return 0
 	}
 	return t.ID
-}
-
-func (t *TransactionResponse) GetReverted() bool {
-	if t == nil {
-		return false
-	}
-	return t.Reverted
 }
 
 func (t *TransactionResponse) GetInsertedAt() *time.Time {
@@ -98,11 +63,39 @@ func (t *TransactionResponse) GetInsertedAt() *time.Time {
 	return t.InsertedAt
 }
 
-func (t *TransactionResponse) GetUpdatedAt() *time.Time {
+func (t *TransactionResponse) GetMetadata() map[string]*MetadataValue {
+	if t == nil {
+		return map[string]*MetadataValue{}
+	}
+	return t.Metadata
+}
+
+func (t *TransactionResponse) GetPostCommitVolumes() map[string][]VolumeEntry {
 	if t == nil {
 		return nil
 	}
-	return t.UpdatedAt
+	return t.PostCommitVolumes
+}
+
+func (t *TransactionResponse) GetPostings() []PostingResponse {
+	if t == nil {
+		return []PostingResponse{}
+	}
+	return t.Postings
+}
+
+func (t *TransactionResponse) GetReference() *string {
+	if t == nil {
+		return nil
+	}
+	return t.Reference
+}
+
+func (t *TransactionResponse) GetReverted() bool {
+	if t == nil {
+		return false
+	}
+	return t.Reverted
 }
 
 func (t *TransactionResponse) GetRevertedAt() *time.Time {
@@ -126,9 +119,16 @@ func (t *TransactionResponse) GetRevertsTransactionID() *int64 {
 	return t.RevertsTransactionID
 }
 
-func (t *TransactionResponse) GetPostCommitVolumes() map[string][]VolumeEntry {
+func (t *TransactionResponse) GetTimestamp() *time.Time {
 	if t == nil {
 		return nil
 	}
-	return t.PostCommitVolumes
+	return t.Timestamp
+}
+
+func (t *TransactionResponse) GetUpdatedAt() *time.Time {
+	if t == nil {
+		return nil
+	}
+	return t.UpdatedAt
 }

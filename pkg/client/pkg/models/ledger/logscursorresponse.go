@@ -4,18 +4,18 @@ package ledger
 
 // LogsCursorResponseCursor - Paginated cursor wrapping the list of logs
 type LogsCursorResponseCursor struct {
-	PageSize int64   `json:"pageSize"`
-	HasMore  bool    `json:"hasMore"`
-	Previous *string `json:"previous,omitempty"`
-	Next     *string `json:"next,omitempty"`
 	Data     []Log   `json:"data"`
+	HasMore  bool    `json:"hasMore"`
+	Next     *string `json:"next,omitempty"`
+	PageSize int64   `json:"pageSize"`
+	Previous *string `json:"previous,omitempty"`
 }
 
-func (l *LogsCursorResponseCursor) GetPageSize() int64 {
+func (l *LogsCursorResponseCursor) GetData() []Log {
 	if l == nil {
-		return 0
+		return []Log{}
 	}
-	return l.PageSize
+	return l.Data
 }
 
 func (l *LogsCursorResponseCursor) GetHasMore() bool {
@@ -25,13 +25,6 @@ func (l *LogsCursorResponseCursor) GetHasMore() bool {
 	return l.HasMore
 }
 
-func (l *LogsCursorResponseCursor) GetPrevious() *string {
-	if l == nil {
-		return nil
-	}
-	return l.Previous
-}
-
 func (l *LogsCursorResponseCursor) GetNext() *string {
 	if l == nil {
 		return nil
@@ -39,11 +32,18 @@ func (l *LogsCursorResponseCursor) GetNext() *string {
 	return l.Next
 }
 
-func (l *LogsCursorResponseCursor) GetData() []Log {
+func (l *LogsCursorResponseCursor) GetPageSize() int64 {
 	if l == nil {
-		return []Log{}
+		return 0
 	}
-	return l.Data
+	return l.PageSize
+}
+
+func (l *LogsCursorResponseCursor) GetPrevious() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Previous
 }
 
 type LogsCursorResponse struct {

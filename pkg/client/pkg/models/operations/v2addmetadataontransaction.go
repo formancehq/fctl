@@ -9,18 +9,18 @@ import (
 )
 
 type V2AddMetadataOnTransactionRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
-	// Transaction ID.
-	ID *big.Int `pathParam:"style=simple,explode=false,name=id"`
-	// Set the dryRun mode. Dry run mode doesn't add the logs to the database or publish a message to the message broker.
-	DryRun *bool `queryParam:"style=form,explode=true,name=dryRun"`
-	// Schema version to use for validation
-	SchemaVersion *string `queryParam:"style=form,explode=true,name=schemaVersion"`
 	// Use an idempotency key
 	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
 	// metadata
 	RequestBody map[string]string `request:"mediaType=application/json"`
+	// Set the dryRun mode. Dry run mode doesn't add the logs to the database or publish a message to the message broker.
+	DryRun *bool `queryParam:"style=form,explode=true,name=dryRun"`
+	// Transaction ID.
+	ID *big.Int `pathParam:"style=simple,explode=false,name=id"`
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
+	// Schema version to use for validation
+	SchemaVersion *string `queryParam:"style=form,explode=true,name=schemaVersion"`
 }
 
 func (v V2AddMetadataOnTransactionRequest) MarshalJSON() ([]byte, error) {
@@ -32,34 +32,6 @@ func (v *V2AddMetadataOnTransactionRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (v *V2AddMetadataOnTransactionRequest) GetLedger() string {
-	if v == nil {
-		return ""
-	}
-	return v.Ledger
-}
-
-func (v *V2AddMetadataOnTransactionRequest) GetID() *big.Int {
-	if v == nil {
-		return big.NewInt(0)
-	}
-	return v.ID
-}
-
-func (v *V2AddMetadataOnTransactionRequest) GetDryRun() *bool {
-	if v == nil {
-		return nil
-	}
-	return v.DryRun
-}
-
-func (v *V2AddMetadataOnTransactionRequest) GetSchemaVersion() *string {
-	if v == nil {
-		return nil
-	}
-	return v.SchemaVersion
 }
 
 func (v *V2AddMetadataOnTransactionRequest) GetIdempotencyKey() *string {
@@ -76,17 +48,45 @@ func (v *V2AddMetadataOnTransactionRequest) GetRequestBody() map[string]string {
 	return v.RequestBody
 }
 
+func (v *V2AddMetadataOnTransactionRequest) GetDryRun() *bool {
+	if v == nil {
+		return nil
+	}
+	return v.DryRun
+}
+
+func (v *V2AddMetadataOnTransactionRequest) GetID() *big.Int {
+	if v == nil {
+		return big.NewInt(0)
+	}
+	return v.ID
+}
+
+func (v *V2AddMetadataOnTransactionRequest) GetLedger() string {
+	if v == nil {
+		return ""
+	}
+	return v.Ledger
+}
+
+func (v *V2AddMetadataOnTransactionRequest) GetSchemaVersion() *string {
+	if v == nil {
+		return nil
+	}
+	return v.SchemaVersion
+}
+
 // #region class-body-v2addmetadataontransactionrequest
 // #endregion class-body-v2addmetadataontransactionrequest
 
 type V2AddMetadataOnTransactionResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	Headers     map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	Headers     map[string][]string
 }
 
 func (v *V2AddMetadataOnTransactionResponse) GetContentType() string {
@@ -94,6 +94,13 @@ func (v *V2AddMetadataOnTransactionResponse) GetContentType() string {
 		return ""
 	}
 	return v.ContentType
+}
+
+func (v *V2AddMetadataOnTransactionResponse) GetHeaders() map[string][]string {
+	if v == nil {
+		return map[string][]string{}
+	}
+	return v.Headers
 }
 
 func (v *V2AddMetadataOnTransactionResponse) GetStatusCode() int {
@@ -108,13 +115,6 @@ func (v *V2AddMetadataOnTransactionResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return v.RawResponse
-}
-
-func (v *V2AddMetadataOnTransactionResponse) GetHeaders() map[string][]string {
-	if v == nil {
-		return map[string][]string{}
-	}
-	return v.Headers
 }
 
 // #region class-body-v2addmetadataontransactionresponse

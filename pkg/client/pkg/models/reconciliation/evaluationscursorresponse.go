@@ -4,18 +4,18 @@ package reconciliation
 
 // EvaluationsCursorResponseCursor - Paginated cursor wrapping the list of evaluations
 type EvaluationsCursorResponseCursor struct {
-	PageSize int64        `json:"pageSize"`
-	HasMore  bool         `json:"hasMore"`
-	Previous *string      `json:"previous,omitempty"`
-	Next     *string      `json:"next,omitempty"`
 	Data     []Evaluation `json:"data"`
+	HasMore  bool         `json:"hasMore"`
+	Next     *string      `json:"next,omitempty"`
+	PageSize int64        `json:"pageSize"`
+	Previous *string      `json:"previous,omitempty"`
 }
 
-func (e *EvaluationsCursorResponseCursor) GetPageSize() int64 {
+func (e *EvaluationsCursorResponseCursor) GetData() []Evaluation {
 	if e == nil {
-		return 0
+		return []Evaluation{}
 	}
-	return e.PageSize
+	return e.Data
 }
 
 func (e *EvaluationsCursorResponseCursor) GetHasMore() bool {
@@ -25,13 +25,6 @@ func (e *EvaluationsCursorResponseCursor) GetHasMore() bool {
 	return e.HasMore
 }
 
-func (e *EvaluationsCursorResponseCursor) GetPrevious() *string {
-	if e == nil {
-		return nil
-	}
-	return e.Previous
-}
-
 func (e *EvaluationsCursorResponseCursor) GetNext() *string {
 	if e == nil {
 		return nil
@@ -39,11 +32,18 @@ func (e *EvaluationsCursorResponseCursor) GetNext() *string {
 	return e.Next
 }
 
-func (e *EvaluationsCursorResponseCursor) GetData() []Evaluation {
+func (e *EvaluationsCursorResponseCursor) GetPageSize() int64 {
 	if e == nil {
-		return []Evaluation{}
+		return 0
 	}
-	return e.Data
+	return e.PageSize
+}
+
+func (e *EvaluationsCursorResponseCursor) GetPrevious() *string {
+	if e == nil {
+		return nil
+	}
+	return e.Previous
 }
 
 // EvaluationsCursorResponse - OK

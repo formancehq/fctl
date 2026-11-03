@@ -4,12 +4,19 @@ package reconciliation
 
 // ErrorResponse - Error response
 type ErrorResponse struct {
+	// Optional link carrying additional context about the error
+	Details *string `json:"details,omitempty"`
 	// Machine-readable error code identifying the failure
 	ErrorCode string `json:"errorCode"`
 	// Human-readable description of the error
 	ErrorMessage string `json:"errorMessage"`
-	// Optional link carrying additional context about the error
-	Details *string `json:"details,omitempty"`
+}
+
+func (e *ErrorResponse) GetDetails() *string {
+	if e == nil {
+		return nil
+	}
+	return e.Details
 }
 
 func (e *ErrorResponse) GetErrorCode() string {
@@ -24,11 +31,4 @@ func (e *ErrorResponse) GetErrorMessage() string {
 		return ""
 	}
 	return e.ErrorMessage
-}
-
-func (e *ErrorResponse) GetDetails() *string {
-	if e == nil {
-		return nil
-	}
-	return e.Details
 }

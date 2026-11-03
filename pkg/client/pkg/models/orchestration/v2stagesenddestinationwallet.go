@@ -8,10 +8,10 @@ import (
 
 // V2StageSendDestinationWallet - Send the funds to a wallet
 type V2StageSendDestinationWallet struct {
-	// Identifier of the wallet to take funds from
-	ID string `json:"id"`
 	// Name of the balance within the wallet. Defaults to the main balance when omitted
 	Balance *string `json:"balance,omitempty"`
+	// Identifier of the wallet to take funds from
+	ID string `json:"id"`
 }
 
 func (v V2StageSendDestinationWallet) MarshalJSON() ([]byte, error) {
@@ -25,18 +25,18 @@ func (v *V2StageSendDestinationWallet) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2StageSendDestinationWallet) GetID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ID
-}
-
 func (v *V2StageSendDestinationWallet) GetBalance() *string {
 	if v == nil {
 		return nil
 	}
 	return v.Balance
+}
+
+func (v *V2StageSendDestinationWallet) GetID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ID
 }
 
 // #region class-body-v2stagesenddestinationwallet

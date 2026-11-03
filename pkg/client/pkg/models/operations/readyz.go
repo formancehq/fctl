@@ -21,15 +21,15 @@ func (r *ReadyzSecurity) GetBearerAuth() *string {
 type ReadyzResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Service unavailable — the server cannot serve the request right now but an immediate retry can succeed. The `errorCode` field discriminates the cause: `NO_LEADER` (no elected Raft leader), `CACHE_HORIZON_EXCEEDED` (admission snapshot too old, retry against a fresh one), `UNAVAILABLE` (an internal forwarded stream was torn down mid-transfer), or the reason of any domain error of the unavailable kind (e.g. `INDEX_BUILDING`).
+	ErrorResponse *ledgerv3.ErrorResponse
+	Headers       map[string][]string
+	// Local Raft loop has started
+	HealthResponse *ledgerv3.HealthResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Local Raft loop has started
-	HealthResponse *ledgerv3.HealthResponse
-	// Service unavailable — the server cannot serve the request right now but an immediate retry can succeed. The `errorCode` field discriminates the cause: `NO_LEADER` (no elected Raft leader), `CACHE_HORIZON_EXCEEDED` (admission snapshot too old, retry against a fresh one), `UNAVAILABLE` (an internal forwarded stream was torn down mid-transfer), or the reason of any domain error of the unavailable kind (e.g. `INDEX_BUILDING`).
-	ErrorResponse *ledgerv3.ErrorResponse
-	Headers       map[string][]string
 }
 
 func (r *ReadyzResponse) GetContentType() string {
@@ -37,27 +37,6 @@ func (r *ReadyzResponse) GetContentType() string {
 		return ""
 	}
 	return r.ContentType
-}
-
-func (r *ReadyzResponse) GetStatusCode() int {
-	if r == nil {
-		return 0
-	}
-	return r.StatusCode
-}
-
-func (r *ReadyzResponse) GetRawResponse() *http.Response {
-	if r == nil {
-		return nil
-	}
-	return r.RawResponse
-}
-
-func (r *ReadyzResponse) GetHealthResponse() *ledgerv3.HealthResponse {
-	if r == nil {
-		return nil
-	}
-	return r.HealthResponse
 }
 
 func (r *ReadyzResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
@@ -72,4 +51,25 @@ func (r *ReadyzResponse) GetHeaders() map[string][]string {
 		return map[string][]string{}
 	}
 	return r.Headers
+}
+
+func (r *ReadyzResponse) GetHealthResponse() *ledgerv3.HealthResponse {
+	if r == nil {
+		return nil
+	}
+	return r.HealthResponse
+}
+
+func (r *ReadyzResponse) GetStatusCode() int {
+	if r == nil {
+		return 0
+	}
+	return r.StatusCode
+}
+
+func (r *ReadyzResponse) GetRawResponse() *http.Response {
+	if r == nil {
+		return nil
+	}
+	return r.RawResponse
 }

@@ -9,16 +9,16 @@ import (
 
 // Policy - A reconciliation policy pairing a ledger query with a payments pool
 type Policy struct {
-	// Unique identifier of the policy
-	ID string `json:"id"`
-	// Human-readable name of the policy
-	Name string `json:"name"`
 	// When the policy was created
 	CreatedAt time.Time `json:"createdAt"`
+	// Unique identifier of the policy
+	ID string `json:"id"`
 	// Name of the ledger the policy reconciles against
 	LedgerName string `json:"ledgerName"`
 	// Filter selecting the ledger accounts whose balances are reconciled
 	LedgerQuery map[string]any `json:"ledgerQuery"`
+	// Human-readable name of the policy
+	Name string `json:"name"`
 	// Identifier of the payments pool the ledger side is compared against
 	PaymentsPoolID string `json:"paymentsPoolID"`
 }
@@ -34,25 +34,18 @@ func (p *Policy) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (p *Policy) GetID() string {
-	if p == nil {
-		return ""
-	}
-	return p.ID
-}
-
-func (p *Policy) GetName() string {
-	if p == nil {
-		return ""
-	}
-	return p.Name
-}
-
 func (p *Policy) GetCreatedAt() time.Time {
 	if p == nil {
 		return time.Time{}
 	}
 	return p.CreatedAt
+}
+
+func (p *Policy) GetID() string {
+	if p == nil {
+		return ""
+	}
+	return p.ID
 }
 
 func (p *Policy) GetLedgerName() string {
@@ -67,6 +60,13 @@ func (p *Policy) GetLedgerQuery() map[string]any {
 		return map[string]any{}
 	}
 	return p.LedgerQuery
+}
+
+func (p *Policy) GetName() string {
+	if p == nil {
+		return ""
+	}
+	return p.Name
 }
 
 func (p *Policy) GetPaymentsPoolID() string {

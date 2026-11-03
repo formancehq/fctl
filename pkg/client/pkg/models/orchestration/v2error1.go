@@ -7,20 +7,20 @@ import (
 	"fmt"
 )
 
-// SchemasV2ErrorErrorCode - Machine-readable error code identifying the failure
-type SchemasV2ErrorErrorCode string
+// SchemasErrorCode - Machine-readable error code identifying the failure
+type SchemasErrorCode string
 
 const (
-	SchemasV2ErrorErrorCodeValidation SchemasV2ErrorErrorCode = "VALIDATION"
-	SchemasV2ErrorErrorCodeNotFound   SchemasV2ErrorErrorCode = "NOT_FOUND"
-	SchemasV2ErrorErrorCodeInternal   SchemasV2ErrorErrorCode = "INTERNAL"
-	SchemasV2ErrorErrorCodeConflict   SchemasV2ErrorErrorCode = "CONFLICT"
+	SchemasErrorCodeValidation SchemasErrorCode = "VALIDATION"
+	SchemasErrorCodeNotFound   SchemasErrorCode = "NOT_FOUND"
+	SchemasErrorCodeInternal   SchemasErrorCode = "INTERNAL"
+	SchemasErrorCodeConflict   SchemasErrorCode = "CONFLICT"
 )
 
-func (e SchemasV2ErrorErrorCode) ToPointer() *SchemasV2ErrorErrorCode {
+func (e SchemasErrorCode) ToPointer() *SchemasErrorCode {
 	return &e
 }
-func (e *SchemasV2ErrorErrorCode) UnmarshalJSON(data []byte) error {
+func (e *SchemasErrorCode) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
@@ -33,17 +33,17 @@ func (e *SchemasV2ErrorErrorCode) UnmarshalJSON(data []byte) error {
 	case "INTERNAL":
 		fallthrough
 	case "CONFLICT":
-		*e = SchemasV2ErrorErrorCode(v)
+		*e = SchemasErrorCode(v)
 		return nil
 	default:
-		return fmt.Errorf("invalid value for SchemasV2ErrorErrorCode: %v", v)
+		return fmt.Errorf("invalid value for SchemasErrorCode: %v", v)
 	}
 }
 
 // V2Error1 - General error
 type V2Error1 struct {
 	// Machine-readable error code identifying the failure
-	ErrorCode SchemasV2ErrorErrorCode `json:"errorCode"`
+	ErrorCode SchemasErrorCode `json:"errorCode"`
 	// Human-readable description of the error
 	ErrorMessage string `json:"errorMessage"`
 }
@@ -54,3 +54,28 @@ func (e *V2Error1) Error() string {
 	data, _ := json.Marshal(e)
 	return string(data)
 }
+
+// V2Error - General error
+type V2Error struct {
+	// Machine-readable error code identifying the failure
+	ErrorCode SchemasErrorCode `json:"errorCode"`
+	// Human-readable description of the error
+	ErrorMessage string `json:"errorMessage"`
+}
+
+func (v *V2Error) GetErrorCode() SchemasErrorCode {
+	if v == nil {
+		return SchemasErrorCode("")
+	}
+	return v.ErrorCode
+}
+
+func (v *V2Error) GetErrorMessage() string {
+	if v == nil {
+		return ""
+	}
+	return v.ErrorMessage
+}
+
+// #region class-body-v2error
+// #endregion class-body-v2error

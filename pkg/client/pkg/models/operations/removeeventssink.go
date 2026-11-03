@@ -19,26 +19,12 @@ func (r *RemoveEventsSinkSecurity) GetBearerAuth() *string {
 }
 
 type RemoveEventsSinkRequest struct {
-	// Name of the event sink to remove
-	SinkName string `pathParam:"style=simple,explode=false,name=sinkName"`
-	// Optional opaque owner identity used as a removal precondition
-	ControllerID *string `queryParam:"style=form,explode=true,name=controllerId"`
 	// Idempotency key for the request
 	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
-}
-
-func (r *RemoveEventsSinkRequest) GetSinkName() string {
-	if r == nil {
-		return ""
-	}
-	return r.SinkName
-}
-
-func (r *RemoveEventsSinkRequest) GetControllerID() *string {
-	if r == nil {
-		return nil
-	}
-	return r.ControllerID
+	// Optional opaque owner identity used as a removal precondition
+	ControllerID *string `queryParam:"style=form,explode=true,name=controllerId"`
+	// Name of the event sink to remove
+	SinkName string `pathParam:"style=simple,explode=false,name=sinkName"`
 }
 
 func (r *RemoveEventsSinkRequest) GetIdempotencyKey() *string {
@@ -48,20 +34,34 @@ func (r *RemoveEventsSinkRequest) GetIdempotencyKey() *string {
 	return r.IdempotencyKey
 }
 
+func (r *RemoveEventsSinkRequest) GetControllerID() *string {
+	if r == nil {
+		return nil
+	}
+	return r.ControllerID
+}
+
+func (r *RemoveEventsSinkRequest) GetSinkName() string {
+	if r == nil {
+		return ""
+	}
+	return r.SinkName
+}
+
 type RemoveEventsSinkResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (r *RemoveEventsSinkResponse) GetContentType() string {
@@ -69,6 +69,27 @@ func (r *RemoveEventsSinkResponse) GetContentType() string {
 		return ""
 	}
 	return r.ContentType
+}
+
+func (r *RemoveEventsSinkResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if r == nil {
+		return nil
+	}
+	return r.ErrorResponse
+}
+
+func (r *RemoveEventsSinkResponse) GetForbidden() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Forbidden
+}
+
+func (r *RemoveEventsSinkResponse) GetHeaders() map[string][]string {
+	if r == nil {
+		return map[string][]string{}
+	}
+	return r.Headers
 }
 
 func (r *RemoveEventsSinkResponse) GetStatusCode() int {
@@ -85,30 +106,9 @@ func (r *RemoveEventsSinkResponse) GetRawResponse() *http.Response {
 	return r.RawResponse
 }
 
-func (r *RemoveEventsSinkResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if r == nil {
-		return nil
-	}
-	return r.ErrorResponse
-}
-
 func (r *RemoveEventsSinkResponse) GetUnauthorized() *string {
 	if r == nil {
 		return nil
 	}
 	return r.Unauthorized
-}
-
-func (r *RemoveEventsSinkResponse) GetForbidden() *string {
-	if r == nil {
-		return nil
-	}
-	return r.Forbidden
-}
-
-func (r *RemoveEventsSinkResponse) GetHeaders() map[string][]string {
-	if r == nil {
-		return map[string][]string{}
-	}
-	return r.Headers
 }

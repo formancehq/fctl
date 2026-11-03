@@ -8,16 +8,16 @@ import (
 )
 
 type ReverseTransferInitiationRequest struct {
-	// Caller-supplied identifier for the reversal, used to deduplicate retries
-	Reference string `json:"reference"`
-	// Human-readable reason for the reversal
-	Description string `json:"description"`
 	// Amount to reverse, in the asset's smallest unit
 	Amount *big.Int `json:"amount"`
 	// Asset the reversal is denominated in
 	Asset string `json:"asset"`
+	// Human-readable reason for the reversal
+	Description string `json:"description"`
 	// Arbitrary key/value pairs to attach to the reversal
 	Metadata map[string]string `json:"metadata"`
+	// Caller-supplied identifier for the reversal, used to deduplicate retries
+	Reference string `json:"reference"`
 }
 
 func (r ReverseTransferInitiationRequest) MarshalJSON() ([]byte, error) {
@@ -29,20 +29,6 @@ func (r *ReverseTransferInitiationRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (r *ReverseTransferInitiationRequest) GetReference() string {
-	if r == nil {
-		return ""
-	}
-	return r.Reference
-}
-
-func (r *ReverseTransferInitiationRequest) GetDescription() string {
-	if r == nil {
-		return ""
-	}
-	return r.Description
 }
 
 func (r *ReverseTransferInitiationRequest) GetAmount() *big.Int {
@@ -59,9 +45,23 @@ func (r *ReverseTransferInitiationRequest) GetAsset() string {
 	return r.Asset
 }
 
+func (r *ReverseTransferInitiationRequest) GetDescription() string {
+	if r == nil {
+		return ""
+	}
+	return r.Description
+}
+
 func (r *ReverseTransferInitiationRequest) GetMetadata() map[string]string {
 	if r == nil {
 		return nil
 	}
 	return r.Metadata
+}
+
+func (r *ReverseTransferInitiationRequest) GetReference() string {
+	if r == nil {
+		return ""
+	}
+	return r.Reference
 }

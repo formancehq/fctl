@@ -8,21 +8,21 @@ import (
 )
 
 type ConnectorVersion struct {
-	// Version tag (e.g. `v1.4.2`)
-	Version string `json:"version"`
-	// Image digest pinning this version immutably, when known
-	Digest      *string    `json:"digest,omitempty"`
-	ReleaseDate *time.Time `json:"releaseDate,omitempty"`
-	// JSON Schema (draft 2020-12) describing the environment variables
-	// and files required to install this version. Consumed by the CLI /
-	// UI to render a form.
-	//
-	ConfigSchema map[string]any `json:"configSchema,omitempty"`
 	// Free-form, schemaless metadata the connector's producer published in
 	// its manifest and the service does not interpret. Absent when the
 	// producer supplied none.
 	//
 	AdditionalMetadata map[string]any `json:"additionalMetadata,omitempty"`
+	// JSON Schema (draft 2020-12) describing the environment variables
+	// and files required to install this version. Consumed by the CLI /
+	// UI to render a form.
+	//
+	ConfigSchema map[string]any `json:"configSchema,omitempty"`
+	// Image digest pinning this version immutably, when known
+	Digest      *string    `json:"digest,omitempty"`
+	ReleaseDate *time.Time `json:"releaseDate,omitempty"`
+	// Version tag (e.g. `v1.4.2`)
+	Version string `json:"version"`
 }
 
 func (c ConnectorVersion) MarshalJSON() ([]byte, error) {
@@ -36,11 +36,18 @@ func (c *ConnectorVersion) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (c *ConnectorVersion) GetVersion() string {
+func (c *ConnectorVersion) GetAdditionalMetadata() map[string]any {
 	if c == nil {
-		return ""
+		return nil
 	}
-	return c.Version
+	return c.AdditionalMetadata
+}
+
+func (c *ConnectorVersion) GetConfigSchema() map[string]any {
+	if c == nil {
+		return nil
+	}
+	return c.ConfigSchema
 }
 
 func (c *ConnectorVersion) GetDigest() *string {
@@ -57,16 +64,9 @@ func (c *ConnectorVersion) GetReleaseDate() *time.Time {
 	return c.ReleaseDate
 }
 
-func (c *ConnectorVersion) GetConfigSchema() map[string]any {
+func (c *ConnectorVersion) GetVersion() string {
 	if c == nil {
-		return nil
+		return ""
 	}
-	return c.ConfigSchema
-}
-
-func (c *ConnectorVersion) GetAdditionalMetadata() map[string]any {
-	if c == nil {
-		return nil
-	}
-	return c.AdditionalMetadata
+	return c.Version
 }

@@ -7,67 +7,67 @@ import (
 	"time"
 )
 
-// TaskBankingCircleState - Internal progress state the task resumes from
-type TaskBankingCircleState struct {
-}
-
-func (t TaskBankingCircleState) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(t, "", false)
-}
-
-func (t *TaskBankingCircleState) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &t, "", false, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-type TaskBankingCircleDescriptor struct {
-	Name *string `json:"name,omitempty"`
+type Descriptor struct {
 	Key  *string `json:"key,omitempty"`
+	Name *string `json:"name,omitempty"`
 }
 
-func (t TaskBankingCircleDescriptor) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(t, "", false)
+func (d Descriptor) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(d, "", false)
 }
 
-func (t *TaskBankingCircleDescriptor) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &t, "", false, nil); err != nil {
+func (d *Descriptor) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &d, "", false, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (t *TaskBankingCircleDescriptor) GetName() *string {
-	if t == nil {
+func (d *Descriptor) GetKey() *string {
+	if d == nil {
 		return nil
 	}
-	return t.Name
+	return d.Key
 }
 
-func (t *TaskBankingCircleDescriptor) GetKey() *string {
-	if t == nil {
+func (d *Descriptor) GetName() *string {
+	if d == nil {
 		return nil
 	}
-	return t.Key
+	return d.Name
+}
+
+// State - Internal progress state the task resumes from
+type State struct {
+}
+
+func (s State) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(s, "", false)
+}
+
+func (s *State) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &s, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 type TaskBankingCircle struct {
-	// Unique identifier of the task
-	ID string `json:"id"`
 	// Identifier of the connector the task runs against
 	ConnectorID string `json:"connectorID"`
 	// When the task was created
-	CreatedAt time.Time `json:"createdAt"`
-	// When the task was last updated
-	UpdatedAt time.Time `json:"updatedAt"`
+	CreatedAt  time.Time  `json:"createdAt"`
+	Descriptor Descriptor `json:"descriptor"`
+	// Why the task failed, absent when it succeeded
+	Error *string `json:"error,omitempty"`
+	// Unique identifier of the task
+	ID string `json:"id"`
+	// Internal progress state the task resumes from
+	State *State `json:"state,omitempty"`
 	// Where a task stands, from pending or active through to stopped, terminated or failed
 	Status TaskStatus `json:"status"`
-	// Internal progress state the task resumes from
-	State *TaskBankingCircleState `json:"state,omitempty"`
-	// Why the task failed, absent when it succeeded
-	Error      *string                     `json:"error,omitempty"`
-	Descriptor TaskBankingCircleDescriptor `json:"descriptor"`
+	// When the task was last updated
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (t TaskBankingCircle) MarshalJSON() ([]byte, error) {
@@ -75,17 +75,10 @@ func (t TaskBankingCircle) MarshalJSON() ([]byte, error) {
 }
 
 func (t *TaskBankingCircle) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &t, "", false, []string{"id", "connectorID", "createdAt", "updatedAt", "status", "descriptor"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &t, "", false, []string{"connectorID", "createdAt", "descriptor", "id", "status", "updatedAt"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (t *TaskBankingCircle) GetID() string {
-	if t == nil {
-		return ""
-	}
-	return t.ID
 }
 
 func (t *TaskBankingCircle) GetConnectorID() string {
@@ -102,25 +95,11 @@ func (t *TaskBankingCircle) GetCreatedAt() time.Time {
 	return t.CreatedAt
 }
 
-func (t *TaskBankingCircle) GetUpdatedAt() time.Time {
+func (t *TaskBankingCircle) GetDescriptor() Descriptor {
 	if t == nil {
-		return time.Time{}
+		return Descriptor{}
 	}
-	return t.UpdatedAt
-}
-
-func (t *TaskBankingCircle) GetStatus() TaskStatus {
-	if t == nil {
-		return TaskStatus("")
-	}
-	return t.Status
-}
-
-func (t *TaskBankingCircle) GetState() *TaskBankingCircleState {
-	if t == nil {
-		return nil
-	}
-	return t.State
+	return t.Descriptor
 }
 
 func (t *TaskBankingCircle) GetError() *string {
@@ -130,9 +109,30 @@ func (t *TaskBankingCircle) GetError() *string {
 	return t.Error
 }
 
-func (t *TaskBankingCircle) GetDescriptor() TaskBankingCircleDescriptor {
+func (t *TaskBankingCircle) GetID() string {
 	if t == nil {
-		return TaskBankingCircleDescriptor{}
+		return ""
 	}
-	return t.Descriptor
+	return t.ID
+}
+
+func (t *TaskBankingCircle) GetState() *State {
+	if t == nil {
+		return nil
+	}
+	return t.State
+}
+
+func (t *TaskBankingCircle) GetStatus() TaskStatus {
+	if t == nil {
+		return TaskStatus("")
+	}
+	return t.Status
+}
+
+func (t *TaskBankingCircle) GetUpdatedAt() time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return t.UpdatedAt
 }

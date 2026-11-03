@@ -8,10 +8,10 @@ import (
 
 // WorkflowConfig - The stages a workflow runs, in order
 type WorkflowConfig struct {
-	// Human-readable name for the workflow
-	Name *string `json:"name,omitempty"`
 	// Total attempts per stage activity, including the initial attempt. Stored at workflow creation; defaults to 15 when omitted.
 	ActivityMaxAttempts *int `default:"15" json:"activityMaxAttempts"`
+	// Human-readable name for the workflow
+	Name *string `json:"name,omitempty"`
 	// The stages executed in order when the workflow runs
 	Stages []map[string]any `json:"stages"`
 }
@@ -27,18 +27,18 @@ func (w *WorkflowConfig) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (w *WorkflowConfig) GetName() *string {
-	if w == nil {
-		return nil
-	}
-	return w.Name
-}
-
 func (w *WorkflowConfig) GetActivityMaxAttempts() *int {
 	if w == nil {
 		return nil
 	}
 	return w.ActivityMaxAttempts
+}
+
+func (w *WorkflowConfig) GetName() *string {
+	if w == nil {
+		return nil
+	}
+	return w.Name
 }
 
 func (w *WorkflowConfig) GetStages() []map[string]any {

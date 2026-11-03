@@ -21,18 +21,18 @@ func (b *Balances) GetMain() AssetHolder {
 
 // Wallet - A wallet backed by a set of ledger accounts
 type Wallet struct {
+	// The wallet's main balance, keyed by asset
+	Balances *Balances `json:"balances,omitempty"`
+	// When the wallet was created
+	CreatedAt time.Time `json:"createdAt"`
 	// The unique ID of the wallet.
 	ID string `json:"id"`
+	// Name of the ledger backing this wallet
+	Ledger string `json:"ledger"`
 	// Metadata associated with the wallet.
 	Metadata map[string]string `json:"metadata"`
 	// Human-readable name of the wallet
 	Name string `json:"name"`
-	// When the wallet was created
-	CreatedAt time.Time `json:"createdAt"`
-	// Name of the ledger backing this wallet
-	Ledger string `json:"ledger"`
-	// The wallet's main balance, keyed by asset
-	Balances *Balances `json:"balances,omitempty"`
 }
 
 func (w Wallet) MarshalJSON() ([]byte, error) {
@@ -46,11 +46,32 @@ func (w *Wallet) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (w *Wallet) GetBalances() *Balances {
+	if w == nil {
+		return nil
+	}
+	return w.Balances
+}
+
+func (w *Wallet) GetCreatedAt() time.Time {
+	if w == nil {
+		return time.Time{}
+	}
+	return w.CreatedAt
+}
+
 func (w *Wallet) GetID() string {
 	if w == nil {
 		return ""
 	}
 	return w.ID
+}
+
+func (w *Wallet) GetLedger() string {
+	if w == nil {
+		return ""
+	}
+	return w.Ledger
 }
 
 func (w *Wallet) GetMetadata() map[string]string {
@@ -65,25 +86,4 @@ func (w *Wallet) GetName() string {
 		return ""
 	}
 	return w.Name
-}
-
-func (w *Wallet) GetCreatedAt() time.Time {
-	if w == nil {
-		return time.Time{}
-	}
-	return w.CreatedAt
-}
-
-func (w *Wallet) GetLedger() string {
-	if w == nil {
-		return ""
-	}
-	return w.Ledger
-}
-
-func (w *Wallet) GetBalances() *Balances {
-	if w == nil {
-		return nil
-	}
-	return w.Balances
 }

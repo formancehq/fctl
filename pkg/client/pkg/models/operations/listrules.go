@@ -8,30 +8,16 @@ import (
 )
 
 type ListRulesRequest struct {
-	// The maximum number of results to return per page.
-	//
-	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
+	RequestBody map[string]any `request:"mediaType=application/json"`
 	// Parameter used in pagination requests. Maximum page size is set to 15.
 	// Set to the value of next for the next page of results.
 	// Set to the value of previous for the previous page of results.
 	// No other parameters can be set when this parameter is set.
 	//
-	Cursor      *string        `queryParam:"style=form,explode=true,name=cursor"`
-	RequestBody map[string]any `request:"mediaType=application/json"`
-}
-
-func (l *ListRulesRequest) GetPageSize() *int64 {
-	if l == nil {
-		return nil
-	}
-	return l.PageSize
-}
-
-func (l *ListRulesRequest) GetCursor() *string {
-	if l == nil {
-		return nil
-	}
-	return l.Cursor
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// The maximum number of results to return per page.
+	//
+	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
 }
 
 func (l *ListRulesRequest) GetRequestBody() map[string]any {
@@ -41,15 +27,29 @@ func (l *ListRulesRequest) GetRequestBody() map[string]any {
 	return l.RequestBody
 }
 
+func (l *ListRulesRequest) GetCursor() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Cursor
+}
+
+func (l *ListRulesRequest) GetPageSize() *int64 {
+	if l == nil {
+		return nil
+	}
+	return l.PageSize
+}
+
 type ListRulesResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	RulesCursorResponse *reconciliation.RulesCursorResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	RulesCursorResponse *reconciliation.RulesCursorResponse
 }
 
 func (l *ListRulesResponse) GetContentType() string {
@@ -57,6 +57,13 @@ func (l *ListRulesResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListRulesResponse) GetRulesCursorResponse() *reconciliation.RulesCursorResponse {
+	if l == nil {
+		return nil
+	}
+	return l.RulesCursorResponse
 }
 
 func (l *ListRulesResponse) GetStatusCode() int {
@@ -71,11 +78,4 @@ func (l *ListRulesResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return l.RawResponse
-}
-
-func (l *ListRulesResponse) GetRulesCursorResponse() *reconciliation.RulesCursorResponse {
-	if l == nil {
-		return nil
-	}
-	return l.RulesCursorResponse
 }

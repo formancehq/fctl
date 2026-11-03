@@ -3,28 +3,14 @@
 package auth
 
 type ClientSecret struct {
-	// Last digits of the secret. The full plaintext is hidden, and only the last digits are exposed.
-	LastDigits string `json:"lastDigits"`
-	// Human-readable name identifying the secret
-	Name string `json:"name"`
 	// Unique identifier of the secret
 	ID string `json:"id"`
+	// Last digits of the secret. The full plaintext is hidden, and only the last digits are exposed.
+	LastDigits string `json:"lastDigits"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]string `json:"metadata,omitempty"`
-}
-
-func (c *ClientSecret) GetLastDigits() string {
-	if c == nil {
-		return ""
-	}
-	return c.LastDigits
-}
-
-func (c *ClientSecret) GetName() string {
-	if c == nil {
-		return ""
-	}
-	return c.Name
+	// Human-readable name identifying the secret
+	Name string `json:"name"`
 }
 
 func (c *ClientSecret) GetID() string {
@@ -34,9 +20,23 @@ func (c *ClientSecret) GetID() string {
 	return c.ID
 }
 
+func (c *ClientSecret) GetLastDigits() string {
+	if c == nil {
+		return ""
+	}
+	return c.LastDigits
+}
+
 func (c *ClientSecret) GetMetadata() map[string]string {
 	if c == nil {
 		return nil
 	}
 	return c.Metadata
+}
+
+func (c *ClientSecret) GetName() string {
+	if c == nil {
+		return ""
+	}
+	return c.Name
 }

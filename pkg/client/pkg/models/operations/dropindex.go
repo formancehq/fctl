@@ -19,25 +19,11 @@ func (d *DropIndexSecurity) GetBearerAuth() *string {
 }
 
 type DropIndexRequest struct {
+	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
+	// Canonical form of the target IndexID.
+	CanonicalID string `pathParam:"style=simple,explode=false,name=canonicalId"`
 	// Name of the ledger
 	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Canonical form of the target IndexID.
-	CanonicalID    string  `pathParam:"style=simple,explode=false,name=canonicalId"`
-	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
-}
-
-func (d *DropIndexRequest) GetLedgerName() string {
-	if d == nil {
-		return ""
-	}
-	return d.LedgerName
-}
-
-func (d *DropIndexRequest) GetCanonicalID() string {
-	if d == nil {
-		return ""
-	}
-	return d.CanonicalID
 }
 
 func (d *DropIndexRequest) GetIdempotencyKey() *string {
@@ -47,20 +33,34 @@ func (d *DropIndexRequest) GetIdempotencyKey() *string {
 	return d.IdempotencyKey
 }
 
+func (d *DropIndexRequest) GetCanonicalID() string {
+	if d == nil {
+		return ""
+	}
+	return d.CanonicalID
+}
+
+func (d *DropIndexRequest) GetLedgerName() string {
+	if d == nil {
+		return ""
+	}
+	return d.LedgerName
+}
+
 type DropIndexResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (d *DropIndexResponse) GetContentType() string {
@@ -68,6 +68,27 @@ func (d *DropIndexResponse) GetContentType() string {
 		return ""
 	}
 	return d.ContentType
+}
+
+func (d *DropIndexResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if d == nil {
+		return nil
+	}
+	return d.ErrorResponse
+}
+
+func (d *DropIndexResponse) GetForbidden() *string {
+	if d == nil {
+		return nil
+	}
+	return d.Forbidden
+}
+
+func (d *DropIndexResponse) GetHeaders() map[string][]string {
+	if d == nil {
+		return map[string][]string{}
+	}
+	return d.Headers
 }
 
 func (d *DropIndexResponse) GetStatusCode() int {
@@ -84,30 +105,9 @@ func (d *DropIndexResponse) GetRawResponse() *http.Response {
 	return d.RawResponse
 }
 
-func (d *DropIndexResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if d == nil {
-		return nil
-	}
-	return d.ErrorResponse
-}
-
 func (d *DropIndexResponse) GetUnauthorized() *string {
 	if d == nil {
 		return nil
 	}
 	return d.Unauthorized
-}
-
-func (d *DropIndexResponse) GetForbidden() *string {
-	if d == nil {
-		return nil
-	}
-	return d.Forbidden
-}
-
-func (d *DropIndexResponse) GetHeaders() map[string][]string {
-	if d == nil {
-		return map[string][]string{}
-	}
-	return d.Headers
 }

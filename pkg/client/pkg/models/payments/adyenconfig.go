@@ -7,19 +7,19 @@ import (
 )
 
 type AdyenConfig struct {
-	// Human-readable name identifying this connector instance
-	Name string `json:"name"`
-	// Identifies the payment provider this configuration targets
-	Provider *string `default:"Adyen" json:"provider"`
 	// API key issued by Adyen, used to authenticate the connector's requests
 	APIKey string `json:"apiKey"`
 	// HMAC key used to verify the signature on webhooks sent by Adyen
 	HmacKey string `json:"hmacKey"`
 	// Prefix of your live Adyen endpoint. Required when the connector runs against production
 	LiveEndpointPrefix *string `json:"liveEndpointPrefix,omitempty"`
+	// Human-readable name identifying this connector instance
+	Name string `json:"name"`
 	// The frequency at which the connector will try to fetch new BalanceTransaction objects from Adyen API.
 	//
 	PollingPeriod *string `default:"30m" json:"pollingPeriod"`
+	// Identifies the payment provider this configuration targets
+	Provider *string `default:"Adyen" json:"provider"`
 }
 
 func (a AdyenConfig) MarshalJSON() ([]byte, error) {
@@ -27,24 +27,10 @@ func (a AdyenConfig) MarshalJSON() ([]byte, error) {
 }
 
 func (a *AdyenConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"name", "apiKey", "hmacKey"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"apiKey", "hmacKey", "name"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (a *AdyenConfig) GetName() string {
-	if a == nil {
-		return ""
-	}
-	return a.Name
-}
-
-func (a *AdyenConfig) GetProvider() *string {
-	if a == nil {
-		return nil
-	}
-	return a.Provider
 }
 
 func (a *AdyenConfig) GetAPIKey() string {
@@ -68,9 +54,23 @@ func (a *AdyenConfig) GetLiveEndpointPrefix() *string {
 	return a.LiveEndpointPrefix
 }
 
+func (a *AdyenConfig) GetName() string {
+	if a == nil {
+		return ""
+	}
+	return a.Name
+}
+
 func (a *AdyenConfig) GetPollingPeriod() *string {
 	if a == nil {
 		return nil
 	}
 	return a.PollingPeriod
+}
+
+func (a *AdyenConfig) GetProvider() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Provider
 }

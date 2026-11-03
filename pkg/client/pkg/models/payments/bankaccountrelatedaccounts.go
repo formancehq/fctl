@@ -8,16 +8,16 @@ import (
 )
 
 type BankAccountRelatedAccounts struct {
-	// Unique identifier of the link between the bank account and the provider
-	ID string `json:"id"`
-	// When the bank account was forwarded to this provider
-	CreatedAt time.Time `json:"createdAt"`
-	// Name of the payment provider behind the connector
-	Provider string `json:"provider"`
-	// Identifier of the connector holding the provider-side account
-	ConnectorID string `json:"connectorID"`
 	// Identifier of the provider-side account
 	AccountID string `json:"accountID"`
+	// Identifier of the connector holding the provider-side account
+	ConnectorID string `json:"connectorID"`
+	// When the bank account was forwarded to this provider
+	CreatedAt time.Time `json:"createdAt"`
+	// Unique identifier of the link between the bank account and the provider
+	ID string `json:"id"`
+	// Name of the payment provider behind the connector
+	Provider string `json:"provider"`
 }
 
 func (b BankAccountRelatedAccounts) MarshalJSON() ([]byte, error) {
@@ -31,25 +31,11 @@ func (b *BankAccountRelatedAccounts) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (b *BankAccountRelatedAccounts) GetID() string {
+func (b *BankAccountRelatedAccounts) GetAccountID() string {
 	if b == nil {
 		return ""
 	}
-	return b.ID
-}
-
-func (b *BankAccountRelatedAccounts) GetCreatedAt() time.Time {
-	if b == nil {
-		return time.Time{}
-	}
-	return b.CreatedAt
-}
-
-func (b *BankAccountRelatedAccounts) GetProvider() string {
-	if b == nil {
-		return ""
-	}
-	return b.Provider
+	return b.AccountID
 }
 
 func (b *BankAccountRelatedAccounts) GetConnectorID() string {
@@ -59,9 +45,23 @@ func (b *BankAccountRelatedAccounts) GetConnectorID() string {
 	return b.ConnectorID
 }
 
-func (b *BankAccountRelatedAccounts) GetAccountID() string {
+func (b *BankAccountRelatedAccounts) GetCreatedAt() time.Time {
+	if b == nil {
+		return time.Time{}
+	}
+	return b.CreatedAt
+}
+
+func (b *BankAccountRelatedAccounts) GetID() string {
 	if b == nil {
 		return ""
 	}
-	return b.AccountID
+	return b.ID
+}
+
+func (b *BankAccountRelatedAccounts) GetProvider() string {
+	if b == nil {
+		return ""
+	}
+	return b.Provider
 }

@@ -10,12 +10,12 @@ import (
 type CreatePolicyResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	PolicyResponse *reconciliation.PolicyResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	PolicyResponse *reconciliation.PolicyResponse
 }
 
 func (c *CreatePolicyResponse) GetContentType() string {
@@ -23,6 +23,13 @@ func (c *CreatePolicyResponse) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
+}
+
+func (c *CreatePolicyResponse) GetPolicyResponse() *reconciliation.PolicyResponse {
+	if c == nil {
+		return nil
+	}
+	return c.PolicyResponse
 }
 
 func (c *CreatePolicyResponse) GetStatusCode() int {
@@ -37,11 +44,4 @@ func (c *CreatePolicyResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return c.RawResponse
-}
-
-func (c *CreatePolicyResponse) GetPolicyResponse() *reconciliation.PolicyResponse {
-	if c == nil {
-		return nil
-	}
-	return c.PolicyResponse
 }

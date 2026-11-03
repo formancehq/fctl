@@ -8,16 +8,9 @@ import (
 )
 
 type V3UpdatePoolQueryRequest struct {
-	// The pool ID
-	PoolID                   string                             `pathParam:"style=simple,explode=false,name=poolID"`
 	V3UpdatePoolQueryRequest *payments.V3UpdatePoolQueryRequest `request:"mediaType=application/json"`
-}
-
-func (v *V3UpdatePoolQueryRequest) GetPoolID() string {
-	if v == nil {
-		return ""
-	}
-	return v.PoolID
+	// The pool ID
+	PoolID string `pathParam:"style=simple,explode=false,name=poolID"`
 }
 
 func (v *V3UpdatePoolQueryRequest) GetV3UpdatePoolQueryRequest() *payments.V3UpdatePoolQueryRequest {
@@ -25,6 +18,13 @@ func (v *V3UpdatePoolQueryRequest) GetV3UpdatePoolQueryRequest() *payments.V3Upd
 		return nil
 	}
 	return v.V3UpdatePoolQueryRequest
+}
+
+func (v *V3UpdatePoolQueryRequest) GetPoolID() string {
+	if v == nil {
+		return ""
+	}
+	return v.PoolID
 }
 
 // #region class-body-v3updatepoolqueryrequest

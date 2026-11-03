@@ -8,16 +8,9 @@ import (
 )
 
 type V3InstallConnectorRequest struct {
-	// The connector to filter by
-	Connector         string                      `pathParam:"style=simple,explode=false,name=connector"`
 	V3ConnectorConfig *payments.V3ConnectorConfig `request:"mediaType=application/json"`
-}
-
-func (v *V3InstallConnectorRequest) GetConnector() string {
-	if v == nil {
-		return ""
-	}
-	return v.Connector
+	// The connector to filter by
+	Connector string `pathParam:"style=simple,explode=false,name=connector"`
 }
 
 func (v *V3InstallConnectorRequest) GetV3ConnectorConfig() *payments.V3ConnectorConfig {
@@ -186,6 +179,13 @@ func (v *V3InstallConnectorRequest) GetV3ConnectorConfigWise() *payments.V3WiseC
 		return v.V3WiseConfig
 	}
 	return nil
+}
+
+func (v *V3InstallConnectorRequest) GetConnector() string {
+	if v == nil {
+		return ""
+	}
+	return v.Connector
 }
 
 // #region class-body-v3installconnectorrequest

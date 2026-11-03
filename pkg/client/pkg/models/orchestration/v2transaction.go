@@ -9,14 +9,14 @@ import (
 )
 
 type V2Transaction struct {
-	// The transaction time: when the transaction is considered to have occurred. See [bi-temporality](https://docs.formance.com/modules/ledger/working-with/bi-temporality)
-	Timestamp time.Time `json:"timestamp"`
+	// Arbitrary key/value pairs attached to the resource
+	Metadata map[string]string `json:"metadata"`
 	// The fund movements making up the transaction
 	Postings []V2Posting `json:"postings"`
 	// Optional caller-supplied identifier, unique within the ledger, used to deduplicate transactions
 	Reference *string `json:"reference,omitempty"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata"`
+	// The transaction time: when the transaction is considered to have occurred. See [bi-temporality](https://docs.formance.com/modules/ledger/working-with/bi-temporality)
+	Timestamp time.Time `json:"timestamp"`
 	// Unique sequential identifier for this transaction within the ledger
 	Txid *big.Int `json:"txid"`
 }
@@ -32,11 +32,11 @@ func (v *V2Transaction) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2Transaction) GetTimestamp() time.Time {
+func (v *V2Transaction) GetMetadata() map[string]string {
 	if v == nil {
-		return time.Time{}
+		return map[string]string{}
 	}
-	return v.Timestamp
+	return v.Metadata
 }
 
 func (v *V2Transaction) GetPostings() []V2Posting {
@@ -53,11 +53,11 @@ func (v *V2Transaction) GetReference() *string {
 	return v.Reference
 }
 
-func (v *V2Transaction) GetMetadata() map[string]string {
+func (v *V2Transaction) GetTimestamp() time.Time {
 	if v == nil {
-		return map[string]string{}
+		return time.Time{}
 	}
-	return v.Metadata
+	return v.Timestamp
 }
 
 func (v *V2Transaction) GetTxid() *big.Int {

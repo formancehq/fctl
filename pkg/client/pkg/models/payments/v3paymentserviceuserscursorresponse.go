@@ -4,18 +4,18 @@ package payments
 
 // V3PaymentServiceUsersCursorResponseCursor - Paginated cursor wrapping the list of payment service users
 type V3PaymentServiceUsersCursorResponseCursor struct {
-	PageSize int64                  `json:"pageSize"`
-	HasMore  bool                   `json:"hasMore"`
-	Previous *string                `json:"previous,omitempty"`
-	Next     *string                `json:"next,omitempty"`
 	Data     []V3PaymentServiceUser `json:"data"`
+	HasMore  bool                   `json:"hasMore"`
+	Next     *string                `json:"next,omitempty"`
+	PageSize int64                  `json:"pageSize"`
+	Previous *string                `json:"previous,omitempty"`
 }
 
-func (v *V3PaymentServiceUsersCursorResponseCursor) GetPageSize() int64 {
+func (v *V3PaymentServiceUsersCursorResponseCursor) GetData() []V3PaymentServiceUser {
 	if v == nil {
-		return 0
+		return []V3PaymentServiceUser{}
 	}
-	return v.PageSize
+	return v.Data
 }
 
 func (v *V3PaymentServiceUsersCursorResponseCursor) GetHasMore() bool {
@@ -25,13 +25,6 @@ func (v *V3PaymentServiceUsersCursorResponseCursor) GetHasMore() bool {
 	return v.HasMore
 }
 
-func (v *V3PaymentServiceUsersCursorResponseCursor) GetPrevious() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Previous
-}
-
 func (v *V3PaymentServiceUsersCursorResponseCursor) GetNext() *string {
 	if v == nil {
 		return nil
@@ -39,11 +32,18 @@ func (v *V3PaymentServiceUsersCursorResponseCursor) GetNext() *string {
 	return v.Next
 }
 
-func (v *V3PaymentServiceUsersCursorResponseCursor) GetData() []V3PaymentServiceUser {
+func (v *V3PaymentServiceUsersCursorResponseCursor) GetPageSize() int64 {
 	if v == nil {
-		return []V3PaymentServiceUser{}
+		return 0
 	}
-	return v.Data
+	return v.PageSize
+}
+
+func (v *V3PaymentServiceUsersCursorResponseCursor) GetPrevious() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Previous
 }
 
 // #region class-body-v3paymentserviceuserscursorresponsecursor

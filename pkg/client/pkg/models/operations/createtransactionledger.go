@@ -8,15 +8,22 @@ import (
 )
 
 type CreateTransactionLedgerRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
-	// Set the preview mode. Preview mode doesn't add the logs to the database or publish a message to the message broker.
-	Preview *bool `queryParam:"style=form,explode=true,name=preview"`
 	// The request body must contain at least one of the following objects:
 	//   - `postings`: suitable for simple transactions
 	//   - `script`: enabling more complex transactions with Numscript
 	//
 	PostTransaction ledger.PostTransaction `request:"mediaType=application/json"`
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
+	// Set the preview mode. Preview mode doesn't add the logs to the database or publish a message to the message broker.
+	Preview *bool `queryParam:"style=form,explode=true,name=preview"`
+}
+
+func (c *CreateTransactionLedgerRequest) GetPostTransaction() ledger.PostTransaction {
+	if c == nil {
+		return ledger.PostTransaction{}
+	}
+	return c.PostTransaction
 }
 
 func (c *CreateTransactionLedgerRequest) GetLedger() string {
@@ -33,23 +40,16 @@ func (c *CreateTransactionLedgerRequest) GetPreview() *bool {
 	return c.Preview
 }
 
-func (c *CreateTransactionLedgerRequest) GetPostTransaction() ledger.PostTransaction {
-	if c == nil {
-		return ledger.PostTransaction{}
-	}
-	return c.PostTransaction
-}
-
 type CreateTransactionLedgerResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	Headers     map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
 	// OK
 	TransactionsResponse *ledger.TransactionsResponse
-	Headers              map[string][]string
 }
 
 func (c *CreateTransactionLedgerResponse) GetContentType() string {
@@ -57,6 +57,13 @@ func (c *CreateTransactionLedgerResponse) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
+}
+
+func (c *CreateTransactionLedgerResponse) GetHeaders() map[string][]string {
+	if c == nil {
+		return map[string][]string{}
+	}
+	return c.Headers
 }
 
 func (c *CreateTransactionLedgerResponse) GetStatusCode() int {
@@ -78,11 +85,4 @@ func (c *CreateTransactionLedgerResponse) GetTransactionsResponse() *ledger.Tran
 		return nil
 	}
 	return c.TransactionsResponse
-}
-
-func (c *CreateTransactionLedgerResponse) GetHeaders() map[string][]string {
-	if c == nil {
-		return map[string][]string{}
-	}
-	return c.Headers
 }

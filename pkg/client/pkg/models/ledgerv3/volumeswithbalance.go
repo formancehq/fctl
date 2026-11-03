@@ -3,6 +3,12 @@
 package ledgerv3
 
 type VolumesWithBalance struct {
+	// Arbitrary-precision SignedBigInt value encoded as a JSON number by
+	// default, or a canonical decimal string when Formance-Bigint-As-String
+	// is enabled. The same rule applies to every response SignedBigInt value,
+	// including nested fields, regardless of business meaning.
+	//
+	Balance SignedMonetaryAmount `json:"balance"`
 	// Arbitrary-precision unsigned BigUint value encoded as a JSON number by
 	// default, or a canonical decimal string when Formance-Bigint-As-String
 	// is enabled. The same rule applies to every response BigUint value,
@@ -17,12 +23,13 @@ type VolumesWithBalance struct {
 	// JavaScript consumers should enable the header to avoid number rounding.
 	//
 	Output UnsignedMonetaryAmount `json:"output"`
-	// Arbitrary-precision SignedBigInt value encoded as a JSON number by
-	// default, or a canonical decimal string when Formance-Bigint-As-String
-	// is enabled. The same rule applies to every response SignedBigInt value,
-	// including nested fields, regardless of business meaning.
-	//
-	Balance SignedMonetaryAmount `json:"balance"`
+}
+
+func (v *VolumesWithBalance) GetBalance() SignedMonetaryAmount {
+	if v == nil {
+		return SignedMonetaryAmount{}
+	}
+	return v.Balance
 }
 
 func (v *VolumesWithBalance) GetInput() UnsignedMonetaryAmount {
@@ -37,11 +44,4 @@ func (v *VolumesWithBalance) GetOutput() UnsignedMonetaryAmount {
 		return UnsignedMonetaryAmount{}
 	}
 	return v.Output
-}
-
-func (v *VolumesWithBalance) GetBalance() SignedMonetaryAmount {
-	if v == nil {
-		return SignedMonetaryAmount{}
-	}
-	return v.Balance
 }

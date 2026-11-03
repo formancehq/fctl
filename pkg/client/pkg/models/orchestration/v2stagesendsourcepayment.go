@@ -8,24 +8,24 @@ import (
 
 // V2StageSendSourcePayment - Take the funds from a payment
 type V2StageSendSourcePayment struct {
+	// Enables unbounded overdraft on the throughAccount when set to true.
+	// Only applies when throughAccount is not "world" (which already has unbounded overdraft).
+	//
+	AllowOverdraft *bool `default:"false" json:"allowOverdraft"`
+	// Intermediate account where payment funds are held.
+	// Defaults to "payment:{paymentID}" format.
+	//
+	HoldingAccount *string `json:"holdingAccount,omitempty"`
 	// Identifier of the payment to take funds from
 	ID string `json:"id"`
 	// Ledger to use for payment ingestion.
 	// Defaults to the internal orchestration ledger.
 	//
 	Ledger *string `json:"ledger,omitempty"`
-	// Intermediate account where payment funds are held.
-	// Defaults to "payment:{paymentID}" format.
-	//
-	HoldingAccount *string `json:"holdingAccount,omitempty"`
 	// Source account for the payment ingestion transaction.
 	// Defaults to "world".
 	//
 	ThroughAccount *string `default:"world" json:"throughAccount"`
-	// Enables unbounded overdraft on the throughAccount when set to true.
-	// Only applies when throughAccount is not "world" (which already has unbounded overdraft).
-	//
-	AllowOverdraft *bool `default:"false" json:"allowOverdraft"`
 }
 
 func (v V2StageSendSourcePayment) MarshalJSON() ([]byte, error) {
@@ -37,6 +37,20 @@ func (v *V2StageSendSourcePayment) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V2StageSendSourcePayment) GetAllowOverdraft() *bool {
+	if v == nil {
+		return nil
+	}
+	return v.AllowOverdraft
+}
+
+func (v *V2StageSendSourcePayment) GetHoldingAccount() *string {
+	if v == nil {
+		return nil
+	}
+	return v.HoldingAccount
 }
 
 func (v *V2StageSendSourcePayment) GetID() string {
@@ -53,25 +67,11 @@ func (v *V2StageSendSourcePayment) GetLedger() *string {
 	return v.Ledger
 }
 
-func (v *V2StageSendSourcePayment) GetHoldingAccount() *string {
-	if v == nil {
-		return nil
-	}
-	return v.HoldingAccount
-}
-
 func (v *V2StageSendSourcePayment) GetThroughAccount() *string {
 	if v == nil {
 		return nil
 	}
 	return v.ThroughAccount
-}
-
-func (v *V2StageSendSourcePayment) GetAllowOverdraft() *bool {
-	if v == nil {
-		return nil
-	}
-	return v.AllowOverdraft
 }
 
 // #region class-body-v2stagesendsourcepayment

@@ -8,27 +8,20 @@ import (
 )
 
 type V3UpdateLinkForPaymentServiceUserOnConnectorRequest struct {
-	// The payment service user ID
-	PaymentServiceUserID string `pathParam:"style=simple,explode=false,name=paymentServiceUserID"`
+	V3PaymentServiceUserUpdateLinkRequest *payments.V3PaymentServiceUserUpdateLinkRequest `request:"mediaType=application/json"`
+	// The connection ID
+	ConnectionID string `pathParam:"style=simple,explode=false,name=connectionID"`
 	// The connector ID
 	ConnectorID string `pathParam:"style=simple,explode=false,name=connectorID"`
-	// The connection ID
-	ConnectionID                          string                                          `pathParam:"style=simple,explode=false,name=connectionID"`
-	V3PaymentServiceUserUpdateLinkRequest *payments.V3PaymentServiceUserUpdateLinkRequest `request:"mediaType=application/json"`
+	// The payment service user ID
+	PaymentServiceUserID string `pathParam:"style=simple,explode=false,name=paymentServiceUserID"`
 }
 
-func (v *V3UpdateLinkForPaymentServiceUserOnConnectorRequest) GetPaymentServiceUserID() string {
+func (v *V3UpdateLinkForPaymentServiceUserOnConnectorRequest) GetV3PaymentServiceUserUpdateLinkRequest() *payments.V3PaymentServiceUserUpdateLinkRequest {
 	if v == nil {
-		return ""
+		return nil
 	}
-	return v.PaymentServiceUserID
-}
-
-func (v *V3UpdateLinkForPaymentServiceUserOnConnectorRequest) GetConnectorID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ConnectorID
+	return v.V3PaymentServiceUserUpdateLinkRequest
 }
 
 func (v *V3UpdateLinkForPaymentServiceUserOnConnectorRequest) GetConnectionID() string {
@@ -38,11 +31,18 @@ func (v *V3UpdateLinkForPaymentServiceUserOnConnectorRequest) GetConnectionID() 
 	return v.ConnectionID
 }
 
-func (v *V3UpdateLinkForPaymentServiceUserOnConnectorRequest) GetV3PaymentServiceUserUpdateLinkRequest() *payments.V3PaymentServiceUserUpdateLinkRequest {
+func (v *V3UpdateLinkForPaymentServiceUserOnConnectorRequest) GetConnectorID() string {
 	if v == nil {
-		return nil
+		return ""
 	}
-	return v.V3PaymentServiceUserUpdateLinkRequest
+	return v.ConnectorID
+}
+
+func (v *V3UpdateLinkForPaymentServiceUserOnConnectorRequest) GetPaymentServiceUserID() string {
+	if v == nil {
+		return ""
+	}
+	return v.PaymentServiceUserID
 }
 
 // #region class-body-v3updatelinkforpaymentserviceuseronconnectorrequest

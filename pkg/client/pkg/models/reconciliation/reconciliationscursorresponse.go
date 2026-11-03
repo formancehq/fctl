@@ -4,18 +4,18 @@ package reconciliation
 
 // ReconciliationsCursorResponseCursor - Paginated cursor wrapping the list of reconciliations
 type ReconciliationsCursorResponseCursor struct {
-	PageSize int64            `json:"pageSize"`
-	HasMore  bool             `json:"hasMore"`
-	Previous *string          `json:"previous,omitempty"`
-	Next     *string          `json:"next,omitempty"`
 	Data     []Reconciliation `json:"data"`
+	HasMore  bool             `json:"hasMore"`
+	Next     *string          `json:"next,omitempty"`
+	PageSize int64            `json:"pageSize"`
+	Previous *string          `json:"previous,omitempty"`
 }
 
-func (r *ReconciliationsCursorResponseCursor) GetPageSize() int64 {
+func (r *ReconciliationsCursorResponseCursor) GetData() []Reconciliation {
 	if r == nil {
-		return 0
+		return []Reconciliation{}
 	}
-	return r.PageSize
+	return r.Data
 }
 
 func (r *ReconciliationsCursorResponseCursor) GetHasMore() bool {
@@ -25,13 +25,6 @@ func (r *ReconciliationsCursorResponseCursor) GetHasMore() bool {
 	return r.HasMore
 }
 
-func (r *ReconciliationsCursorResponseCursor) GetPrevious() *string {
-	if r == nil {
-		return nil
-	}
-	return r.Previous
-}
-
 func (r *ReconciliationsCursorResponseCursor) GetNext() *string {
 	if r == nil {
 		return nil
@@ -39,11 +32,18 @@ func (r *ReconciliationsCursorResponseCursor) GetNext() *string {
 	return r.Next
 }
 
-func (r *ReconciliationsCursorResponseCursor) GetData() []Reconciliation {
+func (r *ReconciliationsCursorResponseCursor) GetPageSize() int64 {
 	if r == nil {
-		return []Reconciliation{}
+		return 0
 	}
-	return r.Data
+	return r.PageSize
+}
+
+func (r *ReconciliationsCursorResponseCursor) GetPrevious() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Previous
 }
 
 // ReconciliationsCursorResponse - OK

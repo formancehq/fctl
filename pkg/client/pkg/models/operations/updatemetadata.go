@@ -7,16 +7,9 @@ import (
 )
 
 type UpdateMetadataRequest struct {
-	// The payment ID.
-	PaymentID   string            `pathParam:"style=simple,explode=false,name=paymentId"`
 	RequestBody map[string]string `request:"mediaType=application/json"`
-}
-
-func (u *UpdateMetadataRequest) GetPaymentID() string {
-	if u == nil {
-		return ""
-	}
-	return u.PaymentID
+	// The payment ID.
+	PaymentID string `pathParam:"style=simple,explode=false,name=paymentId"`
 }
 
 func (u *UpdateMetadataRequest) GetRequestBody() map[string]string {
@@ -24,6 +17,13 @@ func (u *UpdateMetadataRequest) GetRequestBody() map[string]string {
 		return nil
 	}
 	return u.RequestBody
+}
+
+func (u *UpdateMetadataRequest) GetPaymentID() string {
+	if u == nil {
+		return ""
+	}
+	return u.PaymentID
 }
 
 type UpdateMetadataResponse struct {

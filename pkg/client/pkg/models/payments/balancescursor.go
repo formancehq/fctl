@@ -4,22 +4,22 @@ package payments
 
 // BalancesCursorCursor - Paginated cursor wrapping the list of balances
 type BalancesCursorCursor struct {
-	// Number of items requested per page
-	PageSize int64 `json:"pageSize"`
+	Data []AccountBalance `json:"data"`
 	// Whether further pages are available
 	HasMore bool `json:"hasMore"`
+	// Cursor for the next page, absent on the last page
+	Next *string `json:"next,omitempty"`
+	// Number of items requested per page
+	PageSize int64 `json:"pageSize"`
 	// Cursor for the previous page, absent on the first page
 	Previous *string `json:"previous,omitempty"`
-	// Cursor for the next page, absent on the last page
-	Next *string          `json:"next,omitempty"`
-	Data []AccountBalance `json:"data"`
 }
 
-func (b *BalancesCursorCursor) GetPageSize() int64 {
+func (b *BalancesCursorCursor) GetData() []AccountBalance {
 	if b == nil {
-		return 0
+		return []AccountBalance{}
 	}
-	return b.PageSize
+	return b.Data
 }
 
 func (b *BalancesCursorCursor) GetHasMore() bool {
@@ -29,13 +29,6 @@ func (b *BalancesCursorCursor) GetHasMore() bool {
 	return b.HasMore
 }
 
-func (b *BalancesCursorCursor) GetPrevious() *string {
-	if b == nil {
-		return nil
-	}
-	return b.Previous
-}
-
 func (b *BalancesCursorCursor) GetNext() *string {
 	if b == nil {
 		return nil
@@ -43,11 +36,18 @@ func (b *BalancesCursorCursor) GetNext() *string {
 	return b.Next
 }
 
-func (b *BalancesCursorCursor) GetData() []AccountBalance {
+func (b *BalancesCursorCursor) GetPageSize() int64 {
 	if b == nil {
-		return []AccountBalance{}
+		return 0
 	}
-	return b.Data
+	return b.PageSize
+}
+
+func (b *BalancesCursorCursor) GetPrevious() *string {
+	if b == nil {
+		return nil
+	}
+	return b.Previous
 }
 
 // BalancesCursor - OK

@@ -3,15 +3,8 @@
 package ledgerv3
 
 type RevertedTransactionRule struct {
-	Match   *string                     `json:"match,omitempty"`
 	Actions []RevertedTransactionAction `json:"actions,omitempty"`
-}
-
-func (r *RevertedTransactionRule) GetMatch() *string {
-	if r == nil {
-		return nil
-	}
-	return r.Match
+	Match   *string                     `json:"match,omitempty"`
 }
 
 func (r *RevertedTransactionRule) GetActions() []RevertedTransactionAction {
@@ -19,4 +12,11 @@ func (r *RevertedTransactionRule) GetActions() []RevertedTransactionAction {
 		return nil
 	}
 	return r.Actions
+}
+
+func (r *RevertedTransactionRule) GetMatch() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Match
 }

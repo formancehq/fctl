@@ -189,10 +189,10 @@ type BulkElement struct {
 	// are rejected here.
 	//
 	Action Action `json:"action"`
-	// Idempotency key for this operation
-	Ik *string `json:"ik,omitempty"`
 	// Operation-specific data
 	Data BulkElementData `json:"data"`
+	// Idempotency key for this operation
+	Ik *string `json:"ik,omitempty"`
 	// Opt-in continue-on-failure list for this entry. When the FSM
 	// would otherwise reject the underlying order with a business
 	// error whose typed reason matches one of these entries, the
@@ -222,18 +222,18 @@ func (b *BulkElement) GetAction() Action {
 	return b.Action
 }
 
-func (b *BulkElement) GetIk() *string {
-	if b == nil {
-		return nil
-	}
-	return b.Ik
-}
-
 func (b *BulkElement) GetData() BulkElementData {
 	if b == nil {
 		return BulkElementData{}
 	}
 	return b.Data
+}
+
+func (b *BulkElement) GetIk() *string {
+	if b == nil {
+		return nil
+	}
+	return b.Ik
 }
 
 func (b *BulkElement) GetSkippableReasons() []SkippableReasons {

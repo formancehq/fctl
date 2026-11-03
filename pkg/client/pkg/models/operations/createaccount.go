@@ -8,14 +8,21 @@ import (
 )
 
 type CreateAccountResponse struct {
+	// OK
+	AccountResponse *payments.AccountResponse
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	AccountResponse *payments.AccountResponse
+}
+
+func (c *CreateAccountResponse) GetAccountResponse() *payments.AccountResponse {
+	if c == nil {
+		return nil
+	}
+	return c.AccountResponse
 }
 
 func (c *CreateAccountResponse) GetContentType() string {
@@ -37,11 +44,4 @@ func (c *CreateAccountResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return c.RawResponse
-}
-
-func (c *CreateAccountResponse) GetAccountResponse() *payments.AccountResponse {
-	if c == nil {
-		return nil
-	}
-	return c.AccountResponse
 }

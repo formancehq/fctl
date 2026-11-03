@@ -4,32 +4,18 @@ package payments
 
 // V3Address - A postal address
 type V3Address struct {
-	// Street number of the address
-	StreetNumber *string `json:"streetNumber,omitempty"`
-	// Street name of the address
-	StreetName *string `json:"streetName,omitempty"`
 	// City of the address
 	City *string `json:"city,omitempty"`
-	// Region, state or province of the address
-	Region *string `json:"region,omitempty"`
-	// Postal or ZIP code of the address
-	PostalCode *string `json:"postalCode,omitempty"`
 	// Country of the address, as an ISO 3166-1 alpha-2 code
 	Country *string `json:"country,omitempty"`
-}
-
-func (v *V3Address) GetStreetNumber() *string {
-	if v == nil {
-		return nil
-	}
-	return v.StreetNumber
-}
-
-func (v *V3Address) GetStreetName() *string {
-	if v == nil {
-		return nil
-	}
-	return v.StreetName
+	// Postal or ZIP code of the address
+	PostalCode *string `json:"postalCode,omitempty"`
+	// Region, state or province of the address
+	Region *string `json:"region,omitempty"`
+	// Street name of the address
+	StreetName *string `json:"streetName,omitempty"`
+	// Street number of the address
+	StreetNumber *string `json:"streetNumber,omitempty"`
 }
 
 func (v *V3Address) GetCity() *string {
@@ -39,11 +25,11 @@ func (v *V3Address) GetCity() *string {
 	return v.City
 }
 
-func (v *V3Address) GetRegion() *string {
+func (v *V3Address) GetCountry() *string {
 	if v == nil {
 		return nil
 	}
-	return v.Region
+	return v.Country
 }
 
 func (v *V3Address) GetPostalCode() *string {
@@ -53,11 +39,25 @@ func (v *V3Address) GetPostalCode() *string {
 	return v.PostalCode
 }
 
-func (v *V3Address) GetCountry() *string {
+func (v *V3Address) GetRegion() *string {
 	if v == nil {
 		return nil
 	}
-	return v.Country
+	return v.Region
+}
+
+func (v *V3Address) GetStreetName() *string {
+	if v == nil {
+		return nil
+	}
+	return v.StreetName
+}
+
+func (v *V3Address) GetStreetNumber() *string {
+	if v == nil {
+		return nil
+	}
+	return v.StreetNumber
 }
 
 // #region class-body-v3address

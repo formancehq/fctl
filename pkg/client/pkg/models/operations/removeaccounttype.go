@@ -42,17 +42,17 @@ func (r *RemoveAccountTypeRequest) GetTypeName() string {
 type RemoveAccountTypeResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (r *RemoveAccountTypeResponse) GetContentType() string {
@@ -60,6 +60,27 @@ func (r *RemoveAccountTypeResponse) GetContentType() string {
 		return ""
 	}
 	return r.ContentType
+}
+
+func (r *RemoveAccountTypeResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if r == nil {
+		return nil
+	}
+	return r.ErrorResponse
+}
+
+func (r *RemoveAccountTypeResponse) GetForbidden() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Forbidden
+}
+
+func (r *RemoveAccountTypeResponse) GetHeaders() map[string][]string {
+	if r == nil {
+		return map[string][]string{}
+	}
+	return r.Headers
 }
 
 func (r *RemoveAccountTypeResponse) GetStatusCode() int {
@@ -76,30 +97,9 @@ func (r *RemoveAccountTypeResponse) GetRawResponse() *http.Response {
 	return r.RawResponse
 }
 
-func (r *RemoveAccountTypeResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if r == nil {
-		return nil
-	}
-	return r.ErrorResponse
-}
-
 func (r *RemoveAccountTypeResponse) GetUnauthorized() *string {
 	if r == nil {
 		return nil
 	}
 	return r.Unauthorized
-}
-
-func (r *RemoveAccountTypeResponse) GetForbidden() *string {
-	if r == nil {
-		return nil
-	}
-	return r.Forbidden
-}
-
-func (r *RemoveAccountTypeResponse) GetHeaders() map[string][]string {
-	if r == nil {
-		return map[string][]string{}
-	}
-	return r.Headers
 }

@@ -9,21 +9,21 @@ import (
 )
 
 type ListAccountsPaymentsRequest struct {
-	// The maximum number of results to return per page.
-	//
-	PageSize *int64 `default:"15" queryParam:"style=form,explode=true,name=pageSize"`
+	RequestBody map[string]any `request:"mediaType=application/json"`
 	// Parameter used in pagination requests. Maximum page size is set to 15.
 	// Set to the value of next for the next page of results.
 	// Set to the value of previous for the previous page of results.
 	// No other parameters can be set when this parameter is set.
 	//
 	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
-	// Fields used to sort payments (default is date:desc).
-	Sort []string `queryParam:"style=form,explode=true,name=sort"`
+	// The maximum number of results to return per page.
+	//
+	PageSize *int64 `default:"15" queryParam:"style=form,explode=true,name=pageSize"`
 	// Filters used to filter resources.
 	//
-	Query       *string        `queryParam:"style=form,explode=true,name=query"`
-	RequestBody map[string]any `request:"mediaType=application/json"`
+	Query *string `queryParam:"style=form,explode=true,name=query"`
+	// Fields used to sort payments (default is date:desc).
+	Sort []string `queryParam:"style=form,explode=true,name=sort"`
 }
 
 func (l ListAccountsPaymentsRequest) MarshalJSON() ([]byte, error) {
@@ -37,11 +37,11 @@ func (l *ListAccountsPaymentsRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (l *ListAccountsPaymentsRequest) GetPageSize() *int64 {
+func (l *ListAccountsPaymentsRequest) GetRequestBody() map[string]any {
 	if l == nil {
 		return nil
 	}
-	return l.PageSize
+	return l.RequestBody
 }
 
 func (l *ListAccountsPaymentsRequest) GetCursor() *string {
@@ -51,11 +51,11 @@ func (l *ListAccountsPaymentsRequest) GetCursor() *string {
 	return l.Cursor
 }
 
-func (l *ListAccountsPaymentsRequest) GetSort() []string {
+func (l *ListAccountsPaymentsRequest) GetPageSize() *int64 {
 	if l == nil {
 		return nil
 	}
-	return l.Sort
+	return l.PageSize
 }
 
 func (l *ListAccountsPaymentsRequest) GetQuery() *string {
@@ -65,22 +65,29 @@ func (l *ListAccountsPaymentsRequest) GetQuery() *string {
 	return l.Query
 }
 
-func (l *ListAccountsPaymentsRequest) GetRequestBody() map[string]any {
+func (l *ListAccountsPaymentsRequest) GetSort() []string {
 	if l == nil {
 		return nil
 	}
-	return l.RequestBody
+	return l.Sort
 }
 
 type ListAccountsPaymentsResponse struct {
+	// OK
+	AccountsCursor *payments.AccountsCursor
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	AccountsCursor *payments.AccountsCursor
+}
+
+func (l *ListAccountsPaymentsResponse) GetAccountsCursor() *payments.AccountsCursor {
+	if l == nil {
+		return nil
+	}
+	return l.AccountsCursor
 }
 
 func (l *ListAccountsPaymentsResponse) GetContentType() string {
@@ -102,11 +109,4 @@ func (l *ListAccountsPaymentsResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return l.RawResponse
-}
-
-func (l *ListAccountsPaymentsResponse) GetAccountsCursor() *payments.AccountsCursor {
-	if l == nil {
-		return nil
-	}
-	return l.AccountsCursor
 }

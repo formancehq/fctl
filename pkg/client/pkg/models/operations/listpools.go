@@ -9,20 +9,20 @@ import (
 )
 
 type ListPoolsRequest struct {
-	// The maximum number of results to return per page.
-	//
-	PageSize *int64 `default:"15" queryParam:"style=form,explode=true,name=pageSize"`
 	// Parameter used in pagination requests. Maximum page size is set to 15.
 	// Set to the value of next for the next page of results.
 	// Set to the value of previous for the previous page of results.
 	// No other parameters can be set when this parameter is set.
 	//
 	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
-	// Fields used to sort payments (default is date:desc).
-	Sort []string `queryParam:"style=form,explode=true,name=sort"`
+	// The maximum number of results to return per page.
+	//
+	PageSize *int64 `default:"15" queryParam:"style=form,explode=true,name=pageSize"`
 	// Filters used to filter resources.
 	//
 	Query *string `queryParam:"style=form,explode=true,name=query"`
+	// Fields used to sort payments (default is date:desc).
+	Sort []string `queryParam:"style=form,explode=true,name=sort"`
 }
 
 func (l ListPoolsRequest) MarshalJSON() ([]byte, error) {
@@ -36,13 +36,6 @@ func (l *ListPoolsRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (l *ListPoolsRequest) GetPageSize() *int64 {
-	if l == nil {
-		return nil
-	}
-	return l.PageSize
-}
-
 func (l *ListPoolsRequest) GetCursor() *string {
 	if l == nil {
 		return nil
@@ -50,11 +43,11 @@ func (l *ListPoolsRequest) GetCursor() *string {
 	return l.Cursor
 }
 
-func (l *ListPoolsRequest) GetSort() []string {
+func (l *ListPoolsRequest) GetPageSize() *int64 {
 	if l == nil {
 		return nil
 	}
-	return l.Sort
+	return l.PageSize
 }
 
 func (l *ListPoolsRequest) GetQuery() *string {
@@ -64,15 +57,22 @@ func (l *ListPoolsRequest) GetQuery() *string {
 	return l.Query
 }
 
+func (l *ListPoolsRequest) GetSort() []string {
+	if l == nil {
+		return nil
+	}
+	return l.Sort
+}
+
 type ListPoolsResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	PoolsCursor *payments.PoolsCursor
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	PoolsCursor *payments.PoolsCursor
 }
 
 func (l *ListPoolsResponse) GetContentType() string {
@@ -80,6 +80,13 @@ func (l *ListPoolsResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListPoolsResponse) GetPoolsCursor() *payments.PoolsCursor {
+	if l == nil {
+		return nil
+	}
+	return l.PoolsCursor
 }
 
 func (l *ListPoolsResponse) GetStatusCode() int {
@@ -94,11 +101,4 @@ func (l *ListPoolsResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return l.RawResponse
-}
-
-func (l *ListPoolsResponse) GetPoolsCursor() *payments.PoolsCursor {
-	if l == nil {
-		return nil
-	}
-	return l.PoolsCursor
 }

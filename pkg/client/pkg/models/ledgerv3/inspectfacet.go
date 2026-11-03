@@ -7,10 +7,10 @@ import (
 )
 
 type InspectFacet struct {
-	// The metadata value
-	Value any `json:"value"`
 	// Number of entities with this value
 	Count int64 `json:"count"`
+	// The metadata value
+	Value any `json:"value"`
 }
 
 func (i InspectFacet) MarshalJSON() ([]byte, error) {
@@ -18,17 +18,10 @@ func (i InspectFacet) MarshalJSON() ([]byte, error) {
 }
 
 func (i *InspectFacet) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &i, "", false, []string{"value", "count"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &i, "", false, []string{"count", "value"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (i *InspectFacet) GetValue() any {
-	if i == nil {
-		return nil
-	}
-	return i.Value
 }
 
 func (i *InspectFacet) GetCount() int64 {
@@ -36,4 +29,11 @@ func (i *InspectFacet) GetCount() int64 {
 		return 0
 	}
 	return i.Count
+}
+
+func (i *InspectFacet) GetValue() any {
+	if i == nil {
+		return nil
+	}
+	return i.Value
 }

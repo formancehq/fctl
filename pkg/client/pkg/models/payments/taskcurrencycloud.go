@@ -7,21 +7,6 @@ import (
 	"time"
 )
 
-// TaskCurrencyCloudState - Internal progress state the task resumes from
-type TaskCurrencyCloudState struct {
-}
-
-func (t TaskCurrencyCloudState) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(t, "", false)
-}
-
-func (t *TaskCurrencyCloudState) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &t, "", false, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
 type TaskCurrencyCloudDescriptor struct {
 	Name *string `json:"name,omitempty"`
 }
@@ -44,22 +29,37 @@ func (t *TaskCurrencyCloudDescriptor) GetName() *string {
 	return t.Name
 }
 
+// TaskCurrencyCloudState - Internal progress state the task resumes from
+type TaskCurrencyCloudState struct {
+}
+
+func (t TaskCurrencyCloudState) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(t, "", false)
+}
+
+func (t *TaskCurrencyCloudState) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &t, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 type TaskCurrencyCloud struct {
-	// Unique identifier of the task
-	ID string `json:"id"`
 	// Identifier of the connector the task runs against
 	ConnectorID string `json:"connectorID"`
 	// When the task was created
-	CreatedAt time.Time `json:"createdAt"`
-	// When the task was last updated
-	UpdatedAt time.Time `json:"updatedAt"`
-	// Where a task stands, from pending or active through to stopped, terminated or failed
-	Status TaskStatus `json:"status"`
+	CreatedAt  time.Time                   `json:"createdAt"`
+	Descriptor TaskCurrencyCloudDescriptor `json:"descriptor"`
+	// Why the task failed, absent when it succeeded
+	Error *string `json:"error,omitempty"`
+	// Unique identifier of the task
+	ID string `json:"id"`
 	// Internal progress state the task resumes from
 	State *TaskCurrencyCloudState `json:"state,omitempty"`
-	// Why the task failed, absent when it succeeded
-	Error      *string                     `json:"error,omitempty"`
-	Descriptor TaskCurrencyCloudDescriptor `json:"descriptor"`
+	// Where a task stands, from pending or active through to stopped, terminated or failed
+	Status TaskStatus `json:"status"`
+	// When the task was last updated
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (t TaskCurrencyCloud) MarshalJSON() ([]byte, error) {
@@ -67,17 +67,10 @@ func (t TaskCurrencyCloud) MarshalJSON() ([]byte, error) {
 }
 
 func (t *TaskCurrencyCloud) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &t, "", false, []string{"id", "connectorID", "createdAt", "updatedAt", "status", "descriptor"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &t, "", false, []string{"connectorID", "createdAt", "descriptor", "id", "status", "updatedAt"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (t *TaskCurrencyCloud) GetID() string {
-	if t == nil {
-		return ""
-	}
-	return t.ID
 }
 
 func (t *TaskCurrencyCloud) GetConnectorID() string {
@@ -94,25 +87,11 @@ func (t *TaskCurrencyCloud) GetCreatedAt() time.Time {
 	return t.CreatedAt
 }
 
-func (t *TaskCurrencyCloud) GetUpdatedAt() time.Time {
+func (t *TaskCurrencyCloud) GetDescriptor() TaskCurrencyCloudDescriptor {
 	if t == nil {
-		return time.Time{}
+		return TaskCurrencyCloudDescriptor{}
 	}
-	return t.UpdatedAt
-}
-
-func (t *TaskCurrencyCloud) GetStatus() TaskStatus {
-	if t == nil {
-		return TaskStatus("")
-	}
-	return t.Status
-}
-
-func (t *TaskCurrencyCloud) GetState() *TaskCurrencyCloudState {
-	if t == nil {
-		return nil
-	}
-	return t.State
+	return t.Descriptor
 }
 
 func (t *TaskCurrencyCloud) GetError() *string {
@@ -122,9 +101,30 @@ func (t *TaskCurrencyCloud) GetError() *string {
 	return t.Error
 }
 
-func (t *TaskCurrencyCloud) GetDescriptor() TaskCurrencyCloudDescriptor {
+func (t *TaskCurrencyCloud) GetID() string {
 	if t == nil {
-		return TaskCurrencyCloudDescriptor{}
+		return ""
 	}
-	return t.Descriptor
+	return t.ID
+}
+
+func (t *TaskCurrencyCloud) GetState() *TaskCurrencyCloudState {
+	if t == nil {
+		return nil
+	}
+	return t.State
+}
+
+func (t *TaskCurrencyCloud) GetStatus() TaskStatus {
+	if t == nil {
+		return TaskStatus("")
+	}
+	return t.Status
+}
+
+func (t *TaskCurrencyCloud) GetUpdatedAt() time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return t.UpdatedAt
 }

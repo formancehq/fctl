@@ -9,10 +9,10 @@ import (
 type V2TransactionTemplate struct {
 	// Human-readable description of what the template does
 	Description *string `json:"description,omitempty"`
-	// The Numscript program the template executes
-	Script string `json:"script"`
 	// The numscript runtime used to execute the script. Uses "machine" by default, unless the "--experimental-numscript-interpreter" feature flag is passed.
 	Runtime *Runtime `json:"runtime,omitempty"`
+	// The Numscript program the template executes
+	Script string `json:"script"`
 }
 
 func (v V2TransactionTemplate) MarshalJSON() ([]byte, error) {
@@ -33,18 +33,18 @@ func (v *V2TransactionTemplate) GetDescription() *string {
 	return v.Description
 }
 
-func (v *V2TransactionTemplate) GetScript() string {
-	if v == nil {
-		return ""
-	}
-	return v.Script
-}
-
 func (v *V2TransactionTemplate) GetRuntime() *Runtime {
 	if v == nil {
 		return nil
 	}
 	return v.Runtime
+}
+
+func (v *V2TransactionTemplate) GetScript() string {
+	if v == nil {
+		return ""
+	}
+	return v.Script
 }
 
 // #region class-body-v2transactiontemplate

@@ -4,22 +4,22 @@ package payments
 
 // TransferInitiationsCursorCursor - Paginated cursor wrapping the list of transfer initiations
 type TransferInitiationsCursorCursor struct {
-	// Number of items requested per page
-	PageSize int64 `json:"pageSize"`
+	Data []TransferInitiation `json:"data"`
 	// Whether further pages are available
 	HasMore bool `json:"hasMore"`
+	// Cursor for the next page, absent on the last page
+	Next *string `json:"next,omitempty"`
+	// Number of items requested per page
+	PageSize int64 `json:"pageSize"`
 	// Cursor for the previous page, absent on the first page
 	Previous *string `json:"previous,omitempty"`
-	// Cursor for the next page, absent on the last page
-	Next *string              `json:"next,omitempty"`
-	Data []TransferInitiation `json:"data"`
 }
 
-func (t *TransferInitiationsCursorCursor) GetPageSize() int64 {
+func (t *TransferInitiationsCursorCursor) GetData() []TransferInitiation {
 	if t == nil {
-		return 0
+		return []TransferInitiation{}
 	}
-	return t.PageSize
+	return t.Data
 }
 
 func (t *TransferInitiationsCursorCursor) GetHasMore() bool {
@@ -29,13 +29,6 @@ func (t *TransferInitiationsCursorCursor) GetHasMore() bool {
 	return t.HasMore
 }
 
-func (t *TransferInitiationsCursorCursor) GetPrevious() *string {
-	if t == nil {
-		return nil
-	}
-	return t.Previous
-}
-
 func (t *TransferInitiationsCursorCursor) GetNext() *string {
 	if t == nil {
 		return nil
@@ -43,11 +36,18 @@ func (t *TransferInitiationsCursorCursor) GetNext() *string {
 	return t.Next
 }
 
-func (t *TransferInitiationsCursorCursor) GetData() []TransferInitiation {
+func (t *TransferInitiationsCursorCursor) GetPageSize() int64 {
 	if t == nil {
-		return []TransferInitiation{}
+		return 0
 	}
-	return t.Data
+	return t.PageSize
+}
+
+func (t *TransferInitiationsCursorCursor) GetPrevious() *string {
+	if t == nil {
+		return nil
+	}
+	return t.Previous
 }
 
 // TransferInitiationsCursor - OK

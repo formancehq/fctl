@@ -9,19 +9,19 @@ import (
 	"time"
 )
 
-// ResolutionKind - How the alert was resolved, whether automatically, by booking a correcting transaction, or by business acceptance
-type ResolutionKind string
+// Kind - How the alert was resolved, whether automatically, by booking a correcting transaction, or by business acceptance
+type Kind string
 
 const (
-	ResolutionKindAuto               ResolutionKind = "auto"
-	ResolutionKindFixedByBooking     ResolutionKind = "fixed_by_booking"
-	ResolutionKindAcceptedByBusiness ResolutionKind = "accepted_by_business"
+	KindAuto               Kind = "auto"
+	KindFixedByBooking     Kind = "fixed_by_booking"
+	KindAcceptedByBusiness Kind = "accepted_by_business"
 )
 
-func (e ResolutionKind) ToPointer() *ResolutionKind {
+func (e Kind) ToPointer() *Kind {
 	return &e
 }
-func (e *ResolutionKind) UnmarshalJSON(data []byte) error {
+func (e *Kind) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
@@ -32,27 +32,27 @@ func (e *ResolutionKind) UnmarshalJSON(data []byte) error {
 	case "fixed_by_booking":
 		fallthrough
 	case "accepted_by_business":
-		*e = ResolutionKind(v)
+		*e = Kind(v)
 		return nil
 	default:
-		return fmt.Errorf("invalid value for ResolutionKind: %v", v)
+		return fmt.Errorf("invalid value for Kind: %v", v)
 	}
 }
 
 // Resolution - Record of how an alert was resolved and by whom
 type Resolution struct {
-	// How the alert was resolved, whether automatically, by booking a correcting transaction, or by business acceptance
-	Kind ResolutionKind `json:"kind"`
-	// Who resolved the alert
-	By string `json:"by"`
 	// When the alert was resolved
 	At time.Time `json:"at"`
+	// Who resolved the alert
+	By string `json:"by"`
+	// The alert's evidence captured at resolution time, kept for audit
+	EvidenceSnapshot map[string]any `json:"evidenceSnapshot,omitempty"`
+	// How the alert was resolved, whether automatically, by booking a correcting transaction, or by business acceptance
+	Kind Kind `json:"kind"`
 	// Free-text note left by whoever resolved the alert
 	Note *string `json:"note,omitempty"`
 	// References of the transactions booked to correct the break
 	TransactionRefs []string `json:"transactionRefs,omitempty"`
-	// The alert's evidence captured at resolution time, kept for audit
-	EvidenceSnapshot map[string]any `json:"evidenceSnapshot,omitempty"`
 }
 
 func (r Resolution) MarshalJSON() ([]byte, error) {
@@ -66,11 +66,11 @@ func (r *Resolution) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (r *Resolution) GetKind() ResolutionKind {
+func (r *Resolution) GetAt() time.Time {
 	if r == nil {
-		return ResolutionKind("")
+		return time.Time{}
 	}
-	return r.Kind
+	return r.At
 }
 
 func (r *Resolution) GetBy() string {
@@ -80,11 +80,18 @@ func (r *Resolution) GetBy() string {
 	return r.By
 }
 
-func (r *Resolution) GetAt() time.Time {
+func (r *Resolution) GetEvidenceSnapshot() map[string]any {
 	if r == nil {
-		return time.Time{}
+		return nil
 	}
-	return r.At
+	return r.EvidenceSnapshot
+}
+
+func (r *Resolution) GetKind() Kind {
+	if r == nil {
+		return Kind("")
+	}
+	return r.Kind
 }
 
 func (r *Resolution) GetNote() *string {
@@ -99,11 +106,4 @@ func (r *Resolution) GetTransactionRefs() []string {
 		return nil
 	}
 	return r.TransactionRefs
-}
-
-func (r *Resolution) GetEvidenceSnapshot() map[string]any {
-	if r == nil {
-		return nil
-	}
-	return r.EvidenceSnapshot
 }

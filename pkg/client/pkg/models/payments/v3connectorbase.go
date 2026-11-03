@@ -9,16 +9,16 @@ import (
 
 // V3ConnectorBase - Summary of a connector, without its configuration
 type V3ConnectorBase struct {
-	// Unique identifier of the connector
-	ID *string `json:"id,omitempty"`
-	// Stable reference identifying the connector
-	Reference *string `json:"reference,omitempty"`
-	// Human-readable name of the connector instance
-	Name *string `json:"name,omitempty"`
 	// When the connector was installed
 	CreatedAt *time.Time `json:"createdAt,omitempty"`
+	// Unique identifier of the connector
+	ID *string `json:"id,omitempty"`
+	// Human-readable name of the connector instance
+	Name *string `json:"name,omitempty"`
 	// Name of the payment provider behind the connector
 	Provider *string `json:"provider,omitempty"`
+	// Stable reference identifying the connector
+	Reference *string `json:"reference,omitempty"`
 }
 
 func (v V3ConnectorBase) MarshalJSON() ([]byte, error) {
@@ -32,18 +32,18 @@ func (v *V3ConnectorBase) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (v *V3ConnectorBase) GetCreatedAt() *time.Time {
+	if v == nil {
+		return nil
+	}
+	return v.CreatedAt
+}
+
 func (v *V3ConnectorBase) GetID() *string {
 	if v == nil {
 		return nil
 	}
 	return v.ID
-}
-
-func (v *V3ConnectorBase) GetReference() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Reference
 }
 
 func (v *V3ConnectorBase) GetName() *string {
@@ -53,18 +53,18 @@ func (v *V3ConnectorBase) GetName() *string {
 	return v.Name
 }
 
-func (v *V3ConnectorBase) GetCreatedAt() *time.Time {
-	if v == nil {
-		return nil
-	}
-	return v.CreatedAt
-}
-
 func (v *V3ConnectorBase) GetProvider() *string {
 	if v == nil {
 		return nil
 	}
 	return v.Provider
+}
+
+func (v *V3ConnectorBase) GetReference() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Reference
 }
 
 // #region class-body-v3connectorbase

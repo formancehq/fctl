@@ -7,16 +7,9 @@ import (
 )
 
 type VoidHoldRequest struct {
-	HoldID string `pathParam:"style=simple,explode=false,name=hold_id"`
 	// Use an idempotency key
 	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
-}
-
-func (v *VoidHoldRequest) GetHoldID() string {
-	if v == nil {
-		return ""
-	}
-	return v.HoldID
+	HoldID         string  `pathParam:"style=simple,explode=false,name=hold_id"`
 }
 
 func (v *VoidHoldRequest) GetIdempotencyKey() *string {
@@ -24,6 +17,13 @@ func (v *VoidHoldRequest) GetIdempotencyKey() *string {
 		return nil
 	}
 	return v.IdempotencyKey
+}
+
+func (v *VoidHoldRequest) GetHoldID() string {
+	if v == nil {
+		return ""
+	}
+	return v.HoldID
 }
 
 type VoidHoldResponse struct {

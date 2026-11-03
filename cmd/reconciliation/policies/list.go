@@ -14,7 +14,7 @@ import (
 )
 
 type ListStore struct {
-	Cursor *reconciliation.Cursor `json:"cursor"`
+	Cursor *reconciliation.PoliciesCursorResponseCursor `json:"cursor"`
 }
 
 type ListController struct {
@@ -28,7 +28,7 @@ var _ fctl.Controller[*ListStore] = (*ListController)(nil)
 
 func NewListStore() *ListStore {
 	return &ListStore{
-		Cursor: &reconciliation.Cursor{},
+		Cursor: &reconciliation.PoliciesCursorResponseCursor{},
 	}
 }
 

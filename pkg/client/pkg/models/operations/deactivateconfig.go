@@ -20,14 +20,21 @@ func (d *DeactivateConfigRequest) GetID() string {
 }
 
 type DeactivateConfigResponse struct {
+	// Config successfully deactivated.
+	ConfigResponse *webhooks.ConfigResponse
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Config successfully deactivated.
-	ConfigResponse *webhooks.ConfigResponse
+}
+
+func (d *DeactivateConfigResponse) GetConfigResponse() *webhooks.ConfigResponse {
+	if d == nil {
+		return nil
+	}
+	return d.ConfigResponse
 }
 
 func (d *DeactivateConfigResponse) GetContentType() string {
@@ -49,11 +56,4 @@ func (d *DeactivateConfigResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return d.RawResponse
-}
-
-func (d *DeactivateConfigResponse) GetConfigResponse() *webhooks.ConfigResponse {
-	if d == nil {
-		return nil
-	}
-	return d.ConfigResponse
 }

@@ -36,17 +36,10 @@ func (c *CreateIndexRequestBody) GetID() string {
 }
 
 type CreateIndexRequest struct {
-	// Name of the ledger
-	LedgerName     string                 `pathParam:"style=simple,explode=false,name=ledgerName"`
 	IdempotencyKey *string                `header:"style=simple,explode=false,name=Idempotency-Key"`
 	RequestBody    CreateIndexRequestBody `request:"mediaType=application/json"`
-}
-
-func (c *CreateIndexRequest) GetLedgerName() string {
-	if c == nil {
-		return ""
-	}
-	return c.LedgerName
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 }
 
 func (c *CreateIndexRequest) GetIdempotencyKey() *string {
@@ -63,13 +56,16 @@ func (c *CreateIndexRequest) GetRequestBody() CreateIndexRequestBody {
 	return c.RequestBody
 }
 
+func (c *CreateIndexRequest) GetLedgerName() string {
+	if c == nil {
+		return ""
+	}
+	return c.LedgerName
+}
+
 type CreateIndexResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
-	// HTTP response status code for this operation
-	StatusCode int
-	// Raw HTTP response; suitable for custom response parsing
-	RawResponse *http.Response
 	// Index creation queued. The body carries the canonical id of the
 	// created index (round-trip normalized), usable directly on the
 	// follow-up GET/DELETE `/v3/{ledgerName}/indexes/{canonicalId}` routes.
@@ -77,11 +73,15 @@ type CreateIndexResponse struct {
 	CreateIndexResponse *ledgerv3.CreateIndexResponse
 	// Bad request
 	ErrorResponse *ledgerv3.ErrorResponse
-	// Authentication required (missing or invalid JWT token)
-	Unauthorized *string
 	// Insufficient permissions (missing required scope)
 	Forbidden *string
 	Headers   map[string][]string
+	// HTTP response status code for this operation
+	StatusCode int
+	// Raw HTTP response; suitable for custom response parsing
+	RawResponse *http.Response
+	// Authentication required (missing or invalid JWT token)
+	Unauthorized *string
 }
 
 func (c *CreateIndexResponse) GetContentType() string {
@@ -89,20 +89,6 @@ func (c *CreateIndexResponse) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
-}
-
-func (c *CreateIndexResponse) GetStatusCode() int {
-	if c == nil {
-		return 0
-	}
-	return c.StatusCode
-}
-
-func (c *CreateIndexResponse) GetRawResponse() *http.Response {
-	if c == nil {
-		return nil
-	}
-	return c.RawResponse
 }
 
 func (c *CreateIndexResponse) GetCreateIndexResponse() *ledgerv3.CreateIndexResponse {
@@ -119,13 +105,6 @@ func (c *CreateIndexResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
 	return c.ErrorResponse
 }
 
-func (c *CreateIndexResponse) GetUnauthorized() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Unauthorized
-}
-
 func (c *CreateIndexResponse) GetForbidden() *string {
 	if c == nil {
 		return nil
@@ -138,4 +117,25 @@ func (c *CreateIndexResponse) GetHeaders() map[string][]string {
 		return map[string][]string{}
 	}
 	return c.Headers
+}
+
+func (c *CreateIndexResponse) GetStatusCode() int {
+	if c == nil {
+		return 0
+	}
+	return c.StatusCode
+}
+
+func (c *CreateIndexResponse) GetRawResponse() *http.Response {
+	if c == nil {
+		return nil
+	}
+	return c.RawResponse
+}
+
+func (c *CreateIndexResponse) GetUnauthorized() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Unauthorized
 }

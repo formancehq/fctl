@@ -8,16 +8,9 @@ import (
 )
 
 type V2CreateLedgerRequest struct {
-	// Name of the ledger.
-	Ledger                string                       `pathParam:"style=simple,explode=false,name=ledger"`
 	V2CreateLedgerRequest ledger.V2CreateLedgerRequest `request:"mediaType=application/json"`
-}
-
-func (v *V2CreateLedgerRequest) GetLedger() string {
-	if v == nil {
-		return ""
-	}
-	return v.Ledger
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 }
 
 func (v *V2CreateLedgerRequest) GetV2CreateLedgerRequest() ledger.V2CreateLedgerRequest {
@@ -25,6 +18,13 @@ func (v *V2CreateLedgerRequest) GetV2CreateLedgerRequest() ledger.V2CreateLedger
 		return ledger.V2CreateLedgerRequest{}
 	}
 	return v.V2CreateLedgerRequest
+}
+
+func (v *V2CreateLedgerRequest) GetLedger() string {
+	if v == nil {
+		return ""
+	}
+	return v.Ledger
 }
 
 // #region class-body-v2createledgerrequest

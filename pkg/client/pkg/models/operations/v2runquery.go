@@ -12,30 +12,6 @@ import (
 	"time"
 )
 
-// V2RunQueryQueryParamOrder - Deprecated: Use sort param
-type V2RunQueryQueryParamOrder string
-
-const (
-	V2RunQueryQueryParamOrderEffective V2RunQueryQueryParamOrder = "effective"
-)
-
-func (e V2RunQueryQueryParamOrder) ToPointer() *V2RunQueryQueryParamOrder {
-	return &e
-}
-func (e *V2RunQueryQueryParamOrder) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "effective":
-		*e = V2RunQueryQueryParamOrder(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for V2RunQueryQueryParamOrder: %v", v)
-	}
-}
-
 type V2RunQueryRequestBody struct {
 	Cursor *string `json:"cursor,omitempty"`
 	// Parameters applied when running a query template
@@ -67,39 +43,63 @@ func (v *V2RunQueryRequestBody) GetVars() map[string]string {
 // #region class-body-v2runqueryrequestbody
 // #endregion class-body-v2runqueryrequestbody
 
+// V2RunQueryQueryParamOrder - Deprecated: Use sort param
+type V2RunQueryQueryParamOrder string
+
+const (
+	V2RunQueryQueryParamOrderEffective V2RunQueryQueryParamOrder = "effective"
+)
+
+func (e V2RunQueryQueryParamOrder) ToPointer() *V2RunQueryQueryParamOrder {
+	return &e
+}
+func (e *V2RunQueryQueryParamOrder) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "effective":
+		*e = V2RunQueryQueryParamOrder(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for V2RunQueryQueryParamOrder: %v", v)
+	}
+}
+
 type V2RunQueryRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
-	// Query template ID.
-	ID string `pathParam:"style=simple,explode=false,name=id"`
-	// Schema version to use for validation
-	SchemaVersion string `queryParam:"style=form,explode=true,name=schemaVersion"`
-	// The maximum number of results to return per page.
-	//
-	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
-	// Parameter used in pagination requests. Maximum page size is set to 15.
-	// Set to the value of next for the next page of results.
-	// Set to the value of previous for the previous page of results.
-	// No other parameters can be set when this parameter is set.
-	//
-	Cursor *string    `queryParam:"style=form,explode=true,name=cursor"`
-	Expand *string    `queryParam:"style=form,explode=true,name=expand"`
-	Pit    *time.Time `queryParam:"style=form,explode=true,name=pit"`
-	// Deprecated: Use sort param
-	//
-	// Deprecated: This will be removed in a future release, please migrate away from it as soon as possible.
-	Order   *V2RunQueryQueryParamOrder `queryParam:"style=form,explode=true,name=order"`
-	Reverse *bool                      `queryParam:"style=form,explode=true,name=reverse"`
-	// Sort results using a field name and order (ascending or descending).
-	// Format: `<field>:<order>`, where `<field>` is the field name and `<order>` is either `asc` or `desc`.
-	//
-	Sort *string `queryParam:"style=form,explode=true,name=sort"`
 	// When set to `true`, all bigint values in the response will be serialized
 	// as strings instead of JSON numbers.
 	// Useful for clients that cannot handle large numbers natively (e.g. JavaScript).
 	//
 	FormanceBigintAsString *bool                 `default:"false" header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
 	RequestBody            V2RunQueryRequestBody `request:"mediaType=application/json"`
+	// Parameter used in pagination requests. Maximum page size is set to 15.
+	// Set to the value of next for the next page of results.
+	// Set to the value of previous for the previous page of results.
+	// No other parameters can be set when this parameter is set.
+	//
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	Expand *string `queryParam:"style=form,explode=true,name=expand"`
+	// Query template ID.
+	ID string `pathParam:"style=simple,explode=false,name=id"`
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
+	// Deprecated: Use sort param
+	//
+	// Deprecated: This will be removed in a future release, please migrate away from it as soon as possible.
+	Order *V2RunQueryQueryParamOrder `queryParam:"style=form,explode=true,name=order"`
+	// The maximum number of results to return per page.
+	//
+	PageSize *int64     `queryParam:"style=form,explode=true,name=pageSize"`
+	Pit      *time.Time `queryParam:"style=form,explode=true,name=pit"`
+	Reverse  *bool      `queryParam:"style=form,explode=true,name=reverse"`
+	// Schema version to use for validation
+	SchemaVersion string `queryParam:"style=form,explode=true,name=schemaVersion"`
+	// Sort results using a field name and order (ascending or descending).
+	// Format: `<field>:<order>`, where `<field>` is the field name and `<order>` is either `asc` or `desc`.
+	//
+	Sort *string `queryParam:"style=form,explode=true,name=sort"`
 }
 
 func (v V2RunQueryRequest) MarshalJSON() ([]byte, error) {
@@ -113,32 +113,18 @@ func (v *V2RunQueryRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2RunQueryRequest) GetLedger() string {
-	if v == nil {
-		return ""
-	}
-	return v.Ledger
-}
-
-func (v *V2RunQueryRequest) GetID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ID
-}
-
-func (v *V2RunQueryRequest) GetSchemaVersion() string {
-	if v == nil {
-		return ""
-	}
-	return v.SchemaVersion
-}
-
-func (v *V2RunQueryRequest) GetPageSize() *int64 {
+func (v *V2RunQueryRequest) GetFormanceBigintAsString() *bool {
 	if v == nil {
 		return nil
 	}
-	return v.PageSize
+	return v.FormanceBigintAsString
+}
+
+func (v *V2RunQueryRequest) GetRequestBody() V2RunQueryRequestBody {
+	if v == nil {
+		return V2RunQueryRequestBody{}
+	}
+	return v.RequestBody
 }
 
 func (v *V2RunQueryRequest) GetCursor() *string {
@@ -155,11 +141,18 @@ func (v *V2RunQueryRequest) GetExpand() *string {
 	return v.Expand
 }
 
-func (v *V2RunQueryRequest) GetPit() *time.Time {
+func (v *V2RunQueryRequest) GetID() string {
 	if v == nil {
-		return nil
+		return ""
 	}
-	return v.Pit
+	return v.ID
+}
+
+func (v *V2RunQueryRequest) GetLedger() string {
+	if v == nil {
+		return ""
+	}
+	return v.Ledger
 }
 
 func (v *V2RunQueryRequest) GetOrder() *V2RunQueryQueryParamOrder {
@@ -169,6 +162,20 @@ func (v *V2RunQueryRequest) GetOrder() *V2RunQueryQueryParamOrder {
 	return v.Order
 }
 
+func (v *V2RunQueryRequest) GetPageSize() *int64 {
+	if v == nil {
+		return nil
+	}
+	return v.PageSize
+}
+
+func (v *V2RunQueryRequest) GetPit() *time.Time {
+	if v == nil {
+		return nil
+	}
+	return v.Pit
+}
+
 func (v *V2RunQueryRequest) GetReverse() *bool {
 	if v == nil {
 		return nil
@@ -176,25 +183,18 @@ func (v *V2RunQueryRequest) GetReverse() *bool {
 	return v.Reverse
 }
 
+func (v *V2RunQueryRequest) GetSchemaVersion() string {
+	if v == nil {
+		return ""
+	}
+	return v.SchemaVersion
+}
+
 func (v *V2RunQueryRequest) GetSort() *string {
 	if v == nil {
 		return nil
 	}
 	return v.Sort
-}
-
-func (v *V2RunQueryRequest) GetFormanceBigintAsString() *bool {
-	if v == nil {
-		return nil
-	}
-	return v.FormanceBigintAsString
-}
-
-func (v *V2RunQueryRequest) GetRequestBody() V2RunQueryRequestBody {
-	if v == nil {
-		return V2RunQueryRequestBody{}
-	}
-	return v.RequestBody
 }
 
 // #region class-body-v2runqueryrequest

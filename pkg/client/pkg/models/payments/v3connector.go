@@ -12,22 +12,22 @@ type Config struct {
 }
 
 type V3Connector struct {
-	// Unique identifier of the connector
-	ID string `json:"id"`
-	// Stable reference identifying the connector
-	Reference string `json:"reference"`
-	// Human-readable name of the connector instance
-	Name string `json:"name"`
-	// When the connector was installed
-	CreatedAt time.Time `json:"createdAt"`
-	// Name of the payment provider behind the connector
-	Provider string `json:"provider"`
-	// Whether the connector is being uninstalled
-	ScheduledForDeletion bool `json:"scheduledForDeletion"`
-	// The connector's configuration, whose shape depends on the provider
-	Config Config `json:"config"`
 	// Plugin capabilities advertised by the connector's provider.
 	Capabilities []V3Capability `json:"capabilities,omitempty"`
+	// The connector's configuration, whose shape depends on the provider
+	Config Config `json:"config"`
+	// When the connector was installed
+	CreatedAt time.Time `json:"createdAt"`
+	// Unique identifier of the connector
+	ID string `json:"id"`
+	// Human-readable name of the connector instance
+	Name string `json:"name"`
+	// Name of the payment provider behind the connector
+	Provider string `json:"provider"`
+	// Stable reference identifying the connector
+	Reference string `json:"reference"`
+	// Whether the connector is being uninstalled
+	ScheduledForDeletion bool `json:"scheduledForDeletion"`
 	// When the connector's configuration was last changed
 	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
 }
@@ -43,46 +43,11 @@ func (v *V3Connector) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V3Connector) GetID() string {
+func (v *V3Connector) GetCapabilities() []V3Capability {
 	if v == nil {
-		return ""
+		return nil
 	}
-	return v.ID
-}
-
-func (v *V3Connector) GetReference() string {
-	if v == nil {
-		return ""
-	}
-	return v.Reference
-}
-
-func (v *V3Connector) GetName() string {
-	if v == nil {
-		return ""
-	}
-	return v.Name
-}
-
-func (v *V3Connector) GetCreatedAt() time.Time {
-	if v == nil {
-		return time.Time{}
-	}
-	return v.CreatedAt
-}
-
-func (v *V3Connector) GetProvider() string {
-	if v == nil {
-		return ""
-	}
-	return v.Provider
-}
-
-func (v *V3Connector) GetScheduledForDeletion() bool {
-	if v == nil {
-		return false
-	}
-	return v.ScheduledForDeletion
+	return v.Capabilities
 }
 
 func (v *V3Connector) GetConfig() Config {
@@ -92,11 +57,46 @@ func (v *V3Connector) GetConfig() Config {
 	return v.Config
 }
 
-func (v *V3Connector) GetCapabilities() []V3Capability {
+func (v *V3Connector) GetCreatedAt() time.Time {
 	if v == nil {
-		return nil
+		return time.Time{}
 	}
-	return v.Capabilities
+	return v.CreatedAt
+}
+
+func (v *V3Connector) GetID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ID
+}
+
+func (v *V3Connector) GetName() string {
+	if v == nil {
+		return ""
+	}
+	return v.Name
+}
+
+func (v *V3Connector) GetProvider() string {
+	if v == nil {
+		return ""
+	}
+	return v.Provider
+}
+
+func (v *V3Connector) GetReference() string {
+	if v == nil {
+		return ""
+	}
+	return v.Reference
+}
+
+func (v *V3Connector) GetScheduledForDeletion() bool {
+	if v == nil {
+		return false
+	}
+	return v.ScheduledForDeletion
 }
 
 func (v *V3Connector) GetUpdatedAt() *time.Time {

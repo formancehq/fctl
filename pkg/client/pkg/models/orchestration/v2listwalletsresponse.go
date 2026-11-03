@@ -4,22 +4,22 @@ package orchestration
 
 // V2ListWalletsResponseCursor - Paginated cursor wrapping the list of wallets
 type V2ListWalletsResponseCursor struct {
-	// Number of items requested per page
-	PageSize int64 `json:"pageSize"`
+	Data []V2Wallet `json:"data"`
 	// Whether further pages are available
 	HasMore *bool `json:"hasMore,omitempty"`
+	// Cursor for the next page, absent on the last page
+	Next *string `json:"next,omitempty"`
+	// Number of items requested per page
+	PageSize int64 `json:"pageSize"`
 	// Cursor for the previous page, absent on the first page
 	Previous *string `json:"previous,omitempty"`
-	// Cursor for the next page, absent on the last page
-	Next *string    `json:"next,omitempty"`
-	Data []V2Wallet `json:"data"`
 }
 
-func (v *V2ListWalletsResponseCursor) GetPageSize() int64 {
+func (v *V2ListWalletsResponseCursor) GetData() []V2Wallet {
 	if v == nil {
-		return 0
+		return []V2Wallet{}
 	}
-	return v.PageSize
+	return v.Data
 }
 
 func (v *V2ListWalletsResponseCursor) GetHasMore() *bool {
@@ -29,13 +29,6 @@ func (v *V2ListWalletsResponseCursor) GetHasMore() *bool {
 	return v.HasMore
 }
 
-func (v *V2ListWalletsResponseCursor) GetPrevious() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Previous
-}
-
 func (v *V2ListWalletsResponseCursor) GetNext() *string {
 	if v == nil {
 		return nil
@@ -43,11 +36,18 @@ func (v *V2ListWalletsResponseCursor) GetNext() *string {
 	return v.Next
 }
 
-func (v *V2ListWalletsResponseCursor) GetData() []V2Wallet {
+func (v *V2ListWalletsResponseCursor) GetPageSize() int64 {
 	if v == nil {
-		return []V2Wallet{}
+		return 0
 	}
-	return v.Data
+	return v.PageSize
+}
+
+func (v *V2ListWalletsResponseCursor) GetPrevious() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Previous
 }
 
 // #region class-body-v2listwalletsresponsecursor

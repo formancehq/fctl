@@ -3,22 +3,50 @@
 package auth
 
 type ClientOptions struct {
+	// Human-readable description of the client
+	Description *string `json:"description,omitempty"`
+	// Arbitrary key/value pairs attached to the resource
+	Metadata map[string]string `json:"metadata,omitempty"`
+	// Display name of the client
+	Name string `json:"name"`
+	// URIs the authorization server may redirect to after logout
+	PostLogoutRedirectUris []string `json:"postLogoutRedirectUris,omitempty"`
 	// Whether the client is public, meaning it cannot keep a secret and uses PKCE instead
 	Public *bool `json:"public,omitempty"`
 	// URIs the authorization server may redirect to after a successful authorization
 	RedirectUris []string `json:"redirectUris,omitempty"`
-	// Human-readable description of the client
-	Description *string `json:"description,omitempty"`
-	// Display name of the client
-	Name string `json:"name"`
-	// Whether the client is trusted, skipping the user consent screen
-	Trusted *bool `json:"trusted,omitempty"`
-	// URIs the authorization server may redirect to after logout
-	PostLogoutRedirectUris []string `json:"postLogoutRedirectUris,omitempty"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
 	// Scopes the client is allowed to request
 	Scopes []string `json:"scopes,omitempty"`
+	// Whether the client is trusted, skipping the user consent screen
+	Trusted *bool `json:"trusted,omitempty"`
+}
+
+func (c *ClientOptions) GetDescription() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Description
+}
+
+func (c *ClientOptions) GetMetadata() map[string]string {
+	if c == nil {
+		return nil
+	}
+	return c.Metadata
+}
+
+func (c *ClientOptions) GetName() string {
+	if c == nil {
+		return ""
+	}
+	return c.Name
+}
+
+func (c *ClientOptions) GetPostLogoutRedirectUris() []string {
+	if c == nil {
+		return nil
+	}
+	return c.PostLogoutRedirectUris
 }
 
 func (c *ClientOptions) GetPublic() *bool {
@@ -35,18 +63,11 @@ func (c *ClientOptions) GetRedirectUris() []string {
 	return c.RedirectUris
 }
 
-func (c *ClientOptions) GetDescription() *string {
+func (c *ClientOptions) GetScopes() []string {
 	if c == nil {
 		return nil
 	}
-	return c.Description
-}
-
-func (c *ClientOptions) GetName() string {
-	if c == nil {
-		return ""
-	}
-	return c.Name
+	return c.Scopes
 }
 
 func (c *ClientOptions) GetTrusted() *bool {
@@ -54,25 +75,4 @@ func (c *ClientOptions) GetTrusted() *bool {
 		return nil
 	}
 	return c.Trusted
-}
-
-func (c *ClientOptions) GetPostLogoutRedirectUris() []string {
-	if c == nil {
-		return nil
-	}
-	return c.PostLogoutRedirectUris
-}
-
-func (c *ClientOptions) GetMetadata() map[string]string {
-	if c == nil {
-		return nil
-	}
-	return c.Metadata
-}
-
-func (c *ClientOptions) GetScopes() []string {
-	if c == nil {
-		return nil
-	}
-	return c.Scopes
 }

@@ -7,21 +7,21 @@ import (
 )
 
 type V2DeleteAccountMetadataRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
+	// Use an idempotency key
+	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
 	// Account address
 	Address string `pathParam:"style=simple,explode=false,name=address"`
 	// The key to remove.
 	Key string `pathParam:"style=simple,explode=false,name=key"`
-	// Use an idempotency key
-	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 }
 
-func (v *V2DeleteAccountMetadataRequest) GetLedger() string {
+func (v *V2DeleteAccountMetadataRequest) GetIdempotencyKey() *string {
 	if v == nil {
-		return ""
+		return nil
 	}
-	return v.Ledger
+	return v.IdempotencyKey
 }
 
 func (v *V2DeleteAccountMetadataRequest) GetAddress() string {
@@ -38,11 +38,11 @@ func (v *V2DeleteAccountMetadataRequest) GetKey() string {
 	return v.Key
 }
 
-func (v *V2DeleteAccountMetadataRequest) GetIdempotencyKey() *string {
+func (v *V2DeleteAccountMetadataRequest) GetLedger() string {
 	if v == nil {
-		return nil
+		return ""
 	}
-	return v.IdempotencyKey
+	return v.Ledger
 }
 
 // #region class-body-v2deleteaccountmetadatarequest
@@ -51,11 +51,11 @@ func (v *V2DeleteAccountMetadataRequest) GetIdempotencyKey() *string {
 type V2DeleteAccountMetadataResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	Headers     map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	Headers     map[string][]string
 }
 
 func (v *V2DeleteAccountMetadataResponse) GetContentType() string {
@@ -63,6 +63,13 @@ func (v *V2DeleteAccountMetadataResponse) GetContentType() string {
 		return ""
 	}
 	return v.ContentType
+}
+
+func (v *V2DeleteAccountMetadataResponse) GetHeaders() map[string][]string {
+	if v == nil {
+		return map[string][]string{}
+	}
+	return v.Headers
 }
 
 func (v *V2DeleteAccountMetadataResponse) GetStatusCode() int {
@@ -77,13 +84,6 @@ func (v *V2DeleteAccountMetadataResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return v.RawResponse
-}
-
-func (v *V2DeleteAccountMetadataResponse) GetHeaders() map[string][]string {
-	if v == nil {
-		return map[string][]string{}
-	}
-	return v.Headers
 }
 
 // #region class-body-v2deleteaccountmetadataresponse

@@ -5,10 +5,10 @@ package ledger
 type Account struct {
 	// The account address, a colon-separated segmented path such as users:001
 	Address string `json:"address"`
-	// Free-form classification of the account
-	Type *string `json:"type,omitempty"`
 	// Arbitrary key/value pairs attached to the account
 	Metadata map[string]any `json:"metadata,omitempty"`
+	// Free-form classification of the account
+	Type *string `json:"type,omitempty"`
 }
 
 func (a *Account) GetAddress() string {
@@ -18,16 +18,16 @@ func (a *Account) GetAddress() string {
 	return a.Address
 }
 
-func (a *Account) GetType() *string {
-	if a == nil {
-		return nil
-	}
-	return a.Type
-}
-
 func (a *Account) GetMetadata() map[string]any {
 	if a == nil {
 		return nil
 	}
 	return a.Metadata
+}
+
+func (a *Account) GetType() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Type
 }

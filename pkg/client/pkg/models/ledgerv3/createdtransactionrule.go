@@ -4,15 +4,8 @@ package ledgerv3
 
 // CreatedTransactionRule - Rule scoped to MirrorCreatedTransaction. Inside `match`, `log` is the created-transaction proto directly (e.g. `log.metadata["k"]`).
 type CreatedTransactionRule struct {
-	Match   *string                    `json:"match,omitempty"`
 	Actions []CreatedTransactionAction `json:"actions,omitempty"`
-}
-
-func (c *CreatedTransactionRule) GetMatch() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Match
+	Match   *string                    `json:"match,omitempty"`
 }
 
 func (c *CreatedTransactionRule) GetActions() []CreatedTransactionAction {
@@ -20,4 +13,11 @@ func (c *CreatedTransactionRule) GetActions() []CreatedTransactionAction {
 		return nil
 	}
 	return c.Actions
+}
+
+func (c *CreatedTransactionRule) GetMatch() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Match
 }

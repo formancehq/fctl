@@ -3,14 +3,21 @@
 package ledger
 
 type ScriptResponse struct {
+	// Optional link carrying additional context about the error, such as a Numscript playground URL reproducing it
+	Details *string `json:"details,omitempty"`
 	// Machine-readable error code identifying the failure
 	ErrorCode *ErrorsEnum `json:"errorCode,omitempty"`
 	// Human-readable description of the error
 	ErrorMessage *string `json:"errorMessage,omitempty"`
-	// Optional link carrying additional context about the error, such as a Numscript playground URL reproducing it
-	Details *string `json:"details,omitempty"`
 	// A transaction recorded in the ledger, carrying its postings and metadata
 	Transaction *Transaction `json:"transaction,omitempty"`
+}
+
+func (s *ScriptResponse) GetDetails() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Details
 }
 
 func (s *ScriptResponse) GetErrorCode() *ErrorsEnum {
@@ -25,13 +32,6 @@ func (s *ScriptResponse) GetErrorMessage() *string {
 		return nil
 	}
 	return s.ErrorMessage
-}
-
-func (s *ScriptResponse) GetDetails() *string {
-	if s == nil {
-		return nil
-	}
-	return s.Details
 }
 
 func (s *ScriptResponse) GetTransaction() *Transaction {

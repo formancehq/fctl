@@ -7,9 +7,9 @@ import (
 )
 
 type PostgresMirrorSourceRead struct {
-	// Connection string with password material masked; malformed values are fully redacted
-	Dsn        *string               `json:"dsn,omitempty"`
 	AwsIamAuth *MirrorAwsIamAuthRead `json:"awsIamAuth,omitempty"`
+	// Connection string with password material masked; malformed values are fully redacted
+	Dsn *string `json:"dsn,omitempty"`
 }
 
 func (p PostgresMirrorSourceRead) MarshalJSON() ([]byte, error) {
@@ -23,16 +23,16 @@ func (p *PostgresMirrorSourceRead) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (p *PostgresMirrorSourceRead) GetDsn() *string {
-	if p == nil {
-		return nil
-	}
-	return p.Dsn
-}
-
 func (p *PostgresMirrorSourceRead) GetAwsIamAuth() *MirrorAwsIamAuthRead {
 	if p == nil {
 		return nil
 	}
 	return p.AwsIamAuth
+}
+
+func (p *PostgresMirrorSourceRead) GetDsn() *string {
+	if p == nil {
+		return nil
+	}
+	return p.Dsn
 }

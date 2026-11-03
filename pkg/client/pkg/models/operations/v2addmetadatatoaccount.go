@@ -7,8 +7,10 @@ import (
 )
 
 type V2AddMetadataToAccountRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
+	// Use an idempotency key
+	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
+	// metadata
+	RequestBody map[string]string `request:"mediaType=application/json"`
 	// Exact address of the account. It must match the following regular expressions pattern:
 	// ```
 	// ^\w+(:\w+)*$
@@ -17,40 +19,10 @@ type V2AddMetadataToAccountRequest struct {
 	Address string `pathParam:"style=simple,explode=false,name=address"`
 	// Set the dry run mode. Dry run mode doesn't add the logs to the database or publish a message to the message broker.
 	DryRun *bool `queryParam:"style=form,explode=true,name=dryRun"`
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 	// Schema version to use for validation
 	SchemaVersion *string `queryParam:"style=form,explode=true,name=schemaVersion"`
-	// Use an idempotency key
-	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
-	// metadata
-	RequestBody map[string]string `request:"mediaType=application/json"`
-}
-
-func (v *V2AddMetadataToAccountRequest) GetLedger() string {
-	if v == nil {
-		return ""
-	}
-	return v.Ledger
-}
-
-func (v *V2AddMetadataToAccountRequest) GetAddress() string {
-	if v == nil {
-		return ""
-	}
-	return v.Address
-}
-
-func (v *V2AddMetadataToAccountRequest) GetDryRun() *bool {
-	if v == nil {
-		return nil
-	}
-	return v.DryRun
-}
-
-func (v *V2AddMetadataToAccountRequest) GetSchemaVersion() *string {
-	if v == nil {
-		return nil
-	}
-	return v.SchemaVersion
 }
 
 func (v *V2AddMetadataToAccountRequest) GetIdempotencyKey() *string {
@@ -67,17 +39,45 @@ func (v *V2AddMetadataToAccountRequest) GetRequestBody() map[string]string {
 	return v.RequestBody
 }
 
+func (v *V2AddMetadataToAccountRequest) GetAddress() string {
+	if v == nil {
+		return ""
+	}
+	return v.Address
+}
+
+func (v *V2AddMetadataToAccountRequest) GetDryRun() *bool {
+	if v == nil {
+		return nil
+	}
+	return v.DryRun
+}
+
+func (v *V2AddMetadataToAccountRequest) GetLedger() string {
+	if v == nil {
+		return ""
+	}
+	return v.Ledger
+}
+
+func (v *V2AddMetadataToAccountRequest) GetSchemaVersion() *string {
+	if v == nil {
+		return nil
+	}
+	return v.SchemaVersion
+}
+
 // #region class-body-v2addmetadatatoaccountrequest
 // #endregion class-body-v2addmetadatatoaccountrequest
 
 type V2AddMetadataToAccountResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	Headers     map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	Headers     map[string][]string
 }
 
 func (v *V2AddMetadataToAccountResponse) GetContentType() string {
@@ -85,6 +85,13 @@ func (v *V2AddMetadataToAccountResponse) GetContentType() string {
 		return ""
 	}
 	return v.ContentType
+}
+
+func (v *V2AddMetadataToAccountResponse) GetHeaders() map[string][]string {
+	if v == nil {
+		return map[string][]string{}
+	}
+	return v.Headers
 }
 
 func (v *V2AddMetadataToAccountResponse) GetStatusCode() int {
@@ -99,13 +106,6 @@ func (v *V2AddMetadataToAccountResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return v.RawResponse
-}
-
-func (v *V2AddMetadataToAccountResponse) GetHeaders() map[string][]string {
-	if v == nil {
-		return map[string][]string{}
-	}
-	return v.Headers
 }
 
 // #region class-body-v2addmetadatatoaccountresponse

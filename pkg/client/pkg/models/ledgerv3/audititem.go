@@ -4,12 +4,19 @@ package ledgerv3
 
 // AuditItem - One order within a proposal.
 type AuditItem struct {
+	// Sequence of the log produced by this order (0 for idempotent replay or failed proposals)
+	LogSequence *int64 `json:"logSequence,omitempty"`
 	// Zero-based position of this order within the proposal
 	OrderIndex *int64 `json:"orderIndex,omitempty"`
 	// Hex-encoded deterministic serialized bytes of the order at apply time
 	SerializedOrder *string `json:"serializedOrder,omitempty"`
-	// Sequence of the log produced by this order (0 for idempotent replay or failed proposals)
-	LogSequence *int64 `json:"logSequence,omitempty"`
+}
+
+func (a *AuditItem) GetLogSequence() *int64 {
+	if a == nil {
+		return nil
+	}
+	return a.LogSequence
 }
 
 func (a *AuditItem) GetOrderIndex() *int64 {
@@ -24,11 +31,4 @@ func (a *AuditItem) GetSerializedOrder() *string {
 		return nil
 	}
 	return a.SerializedOrder
-}
-
-func (a *AuditItem) GetLogSequence() *int64 {
-	if a == nil {
-		return nil
-	}
-	return a.LogSequence
 }

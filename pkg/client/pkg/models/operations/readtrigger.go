@@ -22,12 +22,12 @@ func (r *ReadTriggerRequest) GetTriggerID() string {
 type ReadTriggerResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// A specific trigger
+	ReadTriggerResponse *orchestration.ReadTriggerResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// A specific trigger
-	ReadTriggerResponse *orchestration.ReadTriggerResponse
 }
 
 func (r *ReadTriggerResponse) GetContentType() string {
@@ -35,6 +35,13 @@ func (r *ReadTriggerResponse) GetContentType() string {
 		return ""
 	}
 	return r.ContentType
+}
+
+func (r *ReadTriggerResponse) GetReadTriggerResponse() *orchestration.ReadTriggerResponse {
+	if r == nil {
+		return nil
+	}
+	return r.ReadTriggerResponse
 }
 
 func (r *ReadTriggerResponse) GetStatusCode() int {
@@ -49,11 +56,4 @@ func (r *ReadTriggerResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return r.RawResponse
-}
-
-func (r *ReadTriggerResponse) GetReadTriggerResponse() *orchestration.ReadTriggerResponse {
-	if r == nil {
-		return nil
-	}
-	return r.ReadTriggerResponse
 }

@@ -8,16 +8,9 @@ import (
 )
 
 type ResolveAlertRequest struct {
-	// The alert ID.
-	AlertID             string                             `pathParam:"style=simple,explode=false,name=alertID"`
 	ResolveAlertRequest reconciliation.ResolveAlertRequest `request:"mediaType=application/json"`
-}
-
-func (r *ResolveAlertRequest) GetAlertID() string {
-	if r == nil {
-		return ""
-	}
-	return r.AlertID
+	// The alert ID.
+	AlertID string `pathParam:"style=simple,explode=false,name=alertID"`
 }
 
 func (r *ResolveAlertRequest) GetResolveAlertRequest() reconciliation.ResolveAlertRequest {
@@ -27,15 +20,29 @@ func (r *ResolveAlertRequest) GetResolveAlertRequest() reconciliation.ResolveAle
 	return r.ResolveAlertRequest
 }
 
+func (r *ResolveAlertRequest) GetAlertID() string {
+	if r == nil {
+		return ""
+	}
+	return r.AlertID
+}
+
 type ResolveAlertResponse struct {
+	// OK
+	AlertResponse *reconciliation.AlertResponse
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	AlertResponse *reconciliation.AlertResponse
+}
+
+func (r *ResolveAlertResponse) GetAlertResponse() *reconciliation.AlertResponse {
+	if r == nil {
+		return nil
+	}
+	return r.AlertResponse
 }
 
 func (r *ResolveAlertResponse) GetContentType() string {
@@ -57,11 +64,4 @@ func (r *ResolveAlertResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return r.RawResponse
-}
-
-func (r *ResolveAlertResponse) GetAlertResponse() *reconciliation.AlertResponse {
-	if r == nil {
-		return nil
-	}
-	return r.AlertResponse
 }

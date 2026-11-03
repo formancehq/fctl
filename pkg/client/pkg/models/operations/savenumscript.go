@@ -19,11 +19,18 @@ func (s *SaveNumscriptSecurity) GetBearerAuth() *string {
 }
 
 type SaveNumscriptRequest struct {
+	SaveNumscriptRequest ledgerv3.SaveNumscriptRequest `request:"mediaType=application/json"`
 	// Name of the ledger
 	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 	// Name of the numscript, URL-encoded as one path segment. Decoded exactly once.
-	Name                 string                        `pathParam:"style=simple,explode=false,name=name"`
-	SaveNumscriptRequest ledgerv3.SaveNumscriptRequest `request:"mediaType=application/json"`
+	Name string `pathParam:"style=simple,explode=false,name=name"`
+}
+
+func (s *SaveNumscriptRequest) GetSaveNumscriptRequest() ledgerv3.SaveNumscriptRequest {
+	if s == nil {
+		return ledgerv3.SaveNumscriptRequest{}
+	}
+	return s.SaveNumscriptRequest
 }
 
 func (s *SaveNumscriptRequest) GetLedgerName() string {
@@ -40,29 +47,22 @@ func (s *SaveNumscriptRequest) GetName() string {
 	return s.Name
 }
 
-func (s *SaveNumscriptRequest) GetSaveNumscriptRequest() ledgerv3.SaveNumscriptRequest {
-	if s == nil {
-		return ledgerv3.SaveNumscriptRequest{}
-	}
-	return s.SaveNumscriptRequest
-}
-
 type SaveNumscriptResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request (version not an explicit full semver, parse error, etc.)
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	// Numscript saved successfully
+	GetNumscriptResponse *ledgerv3.GetNumscriptResponse
+	Headers              map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Numscript saved successfully
-	GetNumscriptResponse *ledgerv3.GetNumscriptResponse
-	// Authentication required (missing or invalid JWT token)
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (s *SaveNumscriptResponse) GetContentType() string {
@@ -70,6 +70,34 @@ func (s *SaveNumscriptResponse) GetContentType() string {
 		return ""
 	}
 	return s.ContentType
+}
+
+func (s *SaveNumscriptResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if s == nil {
+		return nil
+	}
+	return s.ErrorResponse
+}
+
+func (s *SaveNumscriptResponse) GetForbidden() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Forbidden
+}
+
+func (s *SaveNumscriptResponse) GetGetNumscriptResponse() *ledgerv3.GetNumscriptResponse {
+	if s == nil {
+		return nil
+	}
+	return s.GetNumscriptResponse
+}
+
+func (s *SaveNumscriptResponse) GetHeaders() map[string][]string {
+	if s == nil {
+		return map[string][]string{}
+	}
+	return s.Headers
 }
 
 func (s *SaveNumscriptResponse) GetStatusCode() int {
@@ -86,37 +114,9 @@ func (s *SaveNumscriptResponse) GetRawResponse() *http.Response {
 	return s.RawResponse
 }
 
-func (s *SaveNumscriptResponse) GetGetNumscriptResponse() *ledgerv3.GetNumscriptResponse {
-	if s == nil {
-		return nil
-	}
-	return s.GetNumscriptResponse
-}
-
-func (s *SaveNumscriptResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if s == nil {
-		return nil
-	}
-	return s.ErrorResponse
-}
-
 func (s *SaveNumscriptResponse) GetUnauthorized() *string {
 	if s == nil {
 		return nil
 	}
 	return s.Unauthorized
-}
-
-func (s *SaveNumscriptResponse) GetForbidden() *string {
-	if s == nil {
-		return nil
-	}
-	return s.Forbidden
-}
-
-func (s *SaveNumscriptResponse) GetHeaders() map[string][]string {
-	if s == nil {
-		return map[string][]string{}
-	}
-	return s.Headers
 }

@@ -8,16 +8,9 @@ import (
 )
 
 type CreateSecretRequest struct {
-	// Client ID
-	ClientID      string              `pathParam:"style=simple,explode=false,name=clientId"`
 	SecretOptions *auth.SecretOptions `request:"mediaType=application/json"`
-}
-
-func (c *CreateSecretRequest) GetClientID() string {
-	if c == nil {
-		return ""
-	}
-	return c.ClientID
+	// Client ID
+	ClientID string `pathParam:"style=simple,explode=false,name=clientId"`
 }
 
 func (c *CreateSecretRequest) GetSecretOptions() *auth.SecretOptions {
@@ -27,15 +20,22 @@ func (c *CreateSecretRequest) GetSecretOptions() *auth.SecretOptions {
 	return c.SecretOptions
 }
 
+func (c *CreateSecretRequest) GetClientID() string {
+	if c == nil {
+		return ""
+	}
+	return c.ClientID
+}
+
 type CreateSecretResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Created secret
+	CreateSecretResponse *auth.CreateSecretResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Created secret
-	CreateSecretResponse *auth.CreateSecretResponse
 }
 
 func (c *CreateSecretResponse) GetContentType() string {
@@ -43,6 +43,13 @@ func (c *CreateSecretResponse) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
+}
+
+func (c *CreateSecretResponse) GetCreateSecretResponse() *auth.CreateSecretResponse {
+	if c == nil {
+		return nil
+	}
+	return c.CreateSecretResponse
 }
 
 func (c *CreateSecretResponse) GetStatusCode() int {
@@ -57,11 +64,4 @@ func (c *CreateSecretResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return c.RawResponse
-}
-
-func (c *CreateSecretResponse) GetCreateSecretResponse() *auth.CreateSecretResponse {
-	if c == nil {
-		return nil
-	}
-	return c.CreateSecretResponse
 }

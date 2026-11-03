@@ -8,13 +8,8 @@ import (
 )
 
 type GetBalancesRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 	// Filter balances involving given account, either as source or destination.
 	Address *string `queryParam:"style=form,explode=true,name=address"`
-	// The maximum number of results to return per page.
-	//
-	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
 	// Pagination cursor, will return accounts after given address, in descending order.
 	After *string `queryParam:"style=form,explode=true,name=after"`
 	// Parameter used in pagination requests. Maximum page size is set to 1000.
@@ -23,13 +18,11 @@ type GetBalancesRequest struct {
 	// No other parameters can be set when this parameter is set.
 	//
 	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
-}
-
-func (g *GetBalancesRequest) GetLedger() string {
-	if g == nil {
-		return ""
-	}
-	return g.Ledger
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
+	// The maximum number of results to return per page.
+	//
+	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
 }
 
 func (g *GetBalancesRequest) GetAddress() *string {
@@ -37,13 +30,6 @@ func (g *GetBalancesRequest) GetAddress() *string {
 		return nil
 	}
 	return g.Address
-}
-
-func (g *GetBalancesRequest) GetPageSize() *int64 {
-	if g == nil {
-		return nil
-	}
-	return g.PageSize
 }
 
 func (g *GetBalancesRequest) GetAfter() *string {
@@ -60,15 +46,36 @@ func (g *GetBalancesRequest) GetCursor() *string {
 	return g.Cursor
 }
 
+func (g *GetBalancesRequest) GetLedger() string {
+	if g == nil {
+		return ""
+	}
+	return g.Ledger
+}
+
+func (g *GetBalancesRequest) GetPageSize() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.PageSize
+}
+
 type GetBalancesResponse struct {
+	// OK
+	BalancesCursorResponse *ledger.BalancesCursorResponse
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	BalancesCursorResponse *ledger.BalancesCursorResponse
+}
+
+func (g *GetBalancesResponse) GetBalancesCursorResponse() *ledger.BalancesCursorResponse {
+	if g == nil {
+		return nil
+	}
+	return g.BalancesCursorResponse
 }
 
 func (g *GetBalancesResponse) GetContentType() string {
@@ -90,11 +97,4 @@ func (g *GetBalancesResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetBalancesResponse) GetBalancesCursorResponse() *ledger.BalancesCursorResponse {
-	if g == nil {
-		return nil
-	}
-	return g.BalancesCursorResponse
 }

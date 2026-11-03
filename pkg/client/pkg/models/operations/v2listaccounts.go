@@ -10,29 +10,29 @@ import (
 )
 
 type V2ListAccountsRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
-	// The maximum number of results to return per page.
-	//
-	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
-	// Parameter used in pagination requests. Maximum page size is set to 15.
-	// Set to the value of next for the next page of results.
-	// Set to the value of previous for the previous page of results.
-	// No other parameters can be set when this parameter is set.
-	//
-	Cursor *string    `queryParam:"style=form,explode=true,name=cursor"`
-	Expand *string    `queryParam:"style=form,explode=true,name=expand"`
-	Pit    *time.Time `queryParam:"style=form,explode=true,name=pit"`
-	// Sort results using a field name and order (ascending or descending).
-	// Format: `<field>:<order>`, where `<field>` is the field name and `<order>` is either `asc` or `desc`.
-	//
-	Sort *string `queryParam:"style=form,explode=true,name=sort"`
 	// When set to `true`, all bigint values in the response will be serialized
 	// as strings instead of JSON numbers.
 	// Useful for clients that cannot handle large numbers natively (e.g. JavaScript).
 	//
 	FormanceBigintAsString *bool          `default:"false" header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
 	RequestBody            map[string]any `request:"mediaType=application/json"`
+	// Parameter used in pagination requests. Maximum page size is set to 15.
+	// Set to the value of next for the next page of results.
+	// Set to the value of previous for the previous page of results.
+	// No other parameters can be set when this parameter is set.
+	//
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	Expand *string `queryParam:"style=form,explode=true,name=expand"`
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
+	// The maximum number of results to return per page.
+	//
+	PageSize *int64     `queryParam:"style=form,explode=true,name=pageSize"`
+	Pit      *time.Time `queryParam:"style=form,explode=true,name=pit"`
+	// Sort results using a field name and order (ascending or descending).
+	// Format: `<field>:<order>`, where `<field>` is the field name and `<order>` is either `asc` or `desc`.
+	//
+	Sort *string `queryParam:"style=form,explode=true,name=sort"`
 }
 
 func (v V2ListAccountsRequest) MarshalJSON() ([]byte, error) {
@@ -46,18 +46,18 @@ func (v *V2ListAccountsRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2ListAccountsRequest) GetLedger() string {
-	if v == nil {
-		return ""
-	}
-	return v.Ledger
-}
-
-func (v *V2ListAccountsRequest) GetPageSize() *int64 {
+func (v *V2ListAccountsRequest) GetFormanceBigintAsString() *bool {
 	if v == nil {
 		return nil
 	}
-	return v.PageSize
+	return v.FormanceBigintAsString
+}
+
+func (v *V2ListAccountsRequest) GetRequestBody() map[string]any {
+	if v == nil {
+		return map[string]any{}
+	}
+	return v.RequestBody
 }
 
 func (v *V2ListAccountsRequest) GetCursor() *string {
@@ -74,6 +74,20 @@ func (v *V2ListAccountsRequest) GetExpand() *string {
 	return v.Expand
 }
 
+func (v *V2ListAccountsRequest) GetLedger() string {
+	if v == nil {
+		return ""
+	}
+	return v.Ledger
+}
+
+func (v *V2ListAccountsRequest) GetPageSize() *int64 {
+	if v == nil {
+		return nil
+	}
+	return v.PageSize
+}
+
 func (v *V2ListAccountsRequest) GetPit() *time.Time {
 	if v == nil {
 		return nil
@@ -86,20 +100,6 @@ func (v *V2ListAccountsRequest) GetSort() *string {
 		return nil
 	}
 	return v.Sort
-}
-
-func (v *V2ListAccountsRequest) GetFormanceBigintAsString() *bool {
-	if v == nil {
-		return nil
-	}
-	return v.FormanceBigintAsString
-}
-
-func (v *V2ListAccountsRequest) GetRequestBody() map[string]any {
-	if v == nil {
-		return map[string]any{}
-	}
-	return v.RequestBody
 }
 
 // #region class-body-v2listaccountsrequest

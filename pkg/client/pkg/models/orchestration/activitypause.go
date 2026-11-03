@@ -11,22 +11,22 @@ import (
 type ActivityPause struct {
 	// Stable activity identifier within the owning workflow execution
 	ActivityID string `json:"activityID"`
-	// Run identifier of the described stage workflow execution
-	TemporalRunID string `json:"temporalRunID"`
-	// Activity type name
-	Name string `json:"name"`
 	// Current attempt counter reported by Temporal
 	Attempt int64 `json:"attempt"`
 	// Message of the most recent failed attempt, when available
 	LastFailure *string `json:"lastFailure,omitempty"`
 	// Application failure type of the most recent failed attempt, when available
 	LastFailureType *string `json:"lastFailureType,omitempty"`
+	// Attempt limit decoded from an ACTIVITY_ATTEMPT_LIMIT:<limit> pause reason, when valid
+	MaxAttempts *int64 `json:"maxAttempts,omitempty"`
+	// Activity type name
+	Name string `json:"name"`
 	// Pause timestamp reported by Temporal, when available; send this value with temporalRunID to resume this pause generation
 	PausedAt *time.Time `json:"pausedAt,omitempty"`
 	// Reason recorded by Temporal for this pause, when available
 	Reason *string `json:"reason,omitempty"`
-	// Attempt limit decoded from an ACTIVITY_ATTEMPT_LIMIT:<limit> pause reason, when valid
-	MaxAttempts *int64 `json:"maxAttempts,omitempty"`
+	// Run identifier of the described stage workflow execution
+	TemporalRunID string `json:"temporalRunID"`
 }
 
 func (a ActivityPause) MarshalJSON() ([]byte, error) {
@@ -45,20 +45,6 @@ func (a *ActivityPause) GetActivityID() string {
 		return ""
 	}
 	return a.ActivityID
-}
-
-func (a *ActivityPause) GetTemporalRunID() string {
-	if a == nil {
-		return ""
-	}
-	return a.TemporalRunID
-}
-
-func (a *ActivityPause) GetName() string {
-	if a == nil {
-		return ""
-	}
-	return a.Name
 }
 
 func (a *ActivityPause) GetAttempt() int64 {
@@ -82,6 +68,20 @@ func (a *ActivityPause) GetLastFailureType() *string {
 	return a.LastFailureType
 }
 
+func (a *ActivityPause) GetMaxAttempts() *int64 {
+	if a == nil {
+		return nil
+	}
+	return a.MaxAttempts
+}
+
+func (a *ActivityPause) GetName() string {
+	if a == nil {
+		return ""
+	}
+	return a.Name
+}
+
 func (a *ActivityPause) GetPausedAt() *time.Time {
 	if a == nil {
 		return nil
@@ -96,9 +96,9 @@ func (a *ActivityPause) GetReason() *string {
 	return a.Reason
 }
 
-func (a *ActivityPause) GetMaxAttempts() *int64 {
+func (a *ActivityPause) GetTemporalRunID() string {
 	if a == nil {
-		return nil
+		return ""
 	}
-	return a.MaxAttempts
+	return a.TemporalRunID
 }

@@ -6,8 +6,8 @@ package connectivity
 type Error struct {
 	// Machine-readable error code (e.g. `not_found`, `unauthorized`, `connector_missing`)
 	Code    string         `json:"code"`
-	Message string         `json:"message"`
 	Details map[string]any `json:"details,omitempty"`
+	Message string         `json:"message"`
 }
 
 func (e *Error) GetCode() string {
@@ -17,16 +17,16 @@ func (e *Error) GetCode() string {
 	return e.Code
 }
 
-func (e *Error) GetMessage() string {
-	if e == nil {
-		return ""
-	}
-	return e.Message
-}
-
 func (e *Error) GetDetails() map[string]any {
 	if e == nil {
 		return nil
 	}
 	return e.Details
+}
+
+func (e *Error) GetMessage() string {
+	if e == nil {
+		return ""
+	}
+	return e.Message
 }

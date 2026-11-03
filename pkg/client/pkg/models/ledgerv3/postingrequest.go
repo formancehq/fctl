@@ -7,10 +7,6 @@ import (
 )
 
 type PostingRequest struct {
-	// Source account address
-	Source string `json:"source"`
-	// Destination account address
-	Destination string `json:"destination"`
 	// Unsigned amount from 0 through 2^256-1. Requests accept JSON integer
 	// tokens or canonical decimal strings independently of the response
 	// header; the server enforces the bound for both forms. Responses use
@@ -27,6 +23,10 @@ type PostingRequest struct {
 	// 32 characters, and is immutable once carried by funds.
 	//
 	Color *string `json:"color,omitempty"`
+	// Destination account address
+	Destination string `json:"destination"`
+	// Source account address
+	Source string `json:"source"`
 }
 
 func (p PostingRequest) MarshalJSON() ([]byte, error) {
@@ -34,24 +34,10 @@ func (p PostingRequest) MarshalJSON() ([]byte, error) {
 }
 
 func (p *PostingRequest) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &p, "", false, []string{"source", "destination", "amount", "asset"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &p, "", false, []string{"amount", "asset", "destination", "source"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (p *PostingRequest) GetSource() string {
-	if p == nil {
-		return ""
-	}
-	return p.Source
-}
-
-func (p *PostingRequest) GetDestination() string {
-	if p == nil {
-		return ""
-	}
-	return p.Destination
 }
 
 func (p *PostingRequest) GetAmount() PostingAmount {
@@ -73,4 +59,18 @@ func (p *PostingRequest) GetColor() *string {
 		return nil
 	}
 	return p.Color
+}
+
+func (p *PostingRequest) GetDestination() string {
+	if p == nil {
+		return ""
+	}
+	return p.Destination
+}
+
+func (p *PostingRequest) GetSource() string {
+	if p == nil {
+		return ""
+	}
+	return p.Source
 }

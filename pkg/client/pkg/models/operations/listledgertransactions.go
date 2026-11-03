@@ -21,25 +21,49 @@ func (l *ListLedgerTransactionsSecurity) GetBearerAuth() *string {
 }
 
 type ListLedgerTransactionsRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Maximum number of items per page. 0 or absent means 100; values above 1000 are clamped to 1000.
-	PageSize *int64 `default:"100" queryParam:"style=form,explode=true,name=pageSize"`
+	// Render all response Uint256, BigUint and SignedBigInt values as canonical
+	// decimal strings, regardless of business meaning, including posting
+	// amounts, volume input/output and balances. Ordinary integer IDs/counts,
+	// metadata and explicitly string-encoded counters keep their existing
+	// representation. Case-insensitive true, yes, y and 1 enable
+	// this option, matching Ledger v2. Whitespace is not trimmed. Omission and
+	// every other value retain JSON number tokens. This affects only this
+	// response, including nested objects, maps, arrays, transaction/log/cursor
+	// and bulk results. Request decoding is unchanged.
+	//
+	FormanceBigintAsString *string `header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
+	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
+	// barrier and waits for the receiving node to apply up to it. `stale`
+	// serves the read from the receiving node's own store, with no barrier
+	// and no forwarding to the leader, so the answer may lag the leader.
+	// Matching ignores case and surrounding whitespace. An unknown value, or a
+	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
+	// `/v3` route, writes included; a valid value has no effect on writes. The
+	// gRPC equivalent is the `x-consistency` request metadata.
+	//
+	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Set to any non-empty value to receive the query profile in the
+	// `X-Query-Profile-Result` response header.
+	//
+	// The profile reports server-side request timing (how long the server spent
+	// handling the request, broken down into prepare / execute / read-barrier /
+	// deliver phases) plus the query execution plan. Use it to tell a slow
+	// network from a slow server: `serverDurationUs` is the
+	// consumer-independent server cost, and it excludes both the
+	// caller-requested read barrier and response delivery.
+	//
+	// Supported on the transactions list, accounts list, aggregated volumes and
+	// prepared-query execution endpoints. The equivalent gRPC opt-in is the
+	// `x-query-profile` request metadata, answered in the
+	// `x-query-profile-result-bin` trailer; `serverDurationUs` has the same
+	// definition on both surfaces, so the two are directly comparable.
+	//
+	XQueryProfile *string `header:"style=simple,explode=false,name=X-Query-Profile"`
 	// Page token from a previous response's `next` or `previous` field (see
 	// the `PageToken` schema). Omit for the first page. Pass the same
 	// `reverse` and `filter` on every page of a walk.
 	//
 	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
-	// Reverse the default order. Default (`false`) returns
-	// newest-first (descending); `true` returns oldest-first
-	// (ascending). Mirrors the gRPC `ListTransactions` reverse
-	// flag semantic.
-	//
-	Reverse *bool `default:"false" queryParam:"style=form,explode=true,name=reverse"`
-	// Filter transactions with timestamp >= startDate (inclusive, RFC3339 format).
-	// Requires the builtin `TX_BUILTIN_INDEX_TIMESTAMP` index to be enabled on the ledger.
-	//
-	StartDate *time.Time `queryParam:"style=form,explode=true,name=startDate"`
 	// Filter transactions with timestamp < endDate (exclusive, RFC3339 format).
 	// Requires the builtin `TX_BUILTIN_INDEX_TIMESTAMP` index to be enabled on the ledger.
 	//
@@ -77,44 +101,20 @@ type ListLedgerTransactionsRequest struct {
 	// structured JSON form and must be passed in the textual representation.
 	//
 	Filter *string `queryParam:"style=form,explode=true,name=filter"`
-	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
-	// barrier and waits for the receiving node to apply up to it. `stale`
-	// serves the read from the receiving node's own store, with no barrier
-	// and no forwarding to the leader, so the answer may lag the leader.
-	// Matching ignores case and surrounding whitespace. An unknown value, or a
-	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
-	// `/v3` route, writes included; a valid value has no effect on writes. The
-	// gRPC equivalent is the `x-consistency` request metadata.
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Maximum number of items per page. 0 or absent means 100; values above 1000 are clamped to 1000.
+	PageSize *int64 `default:"100" queryParam:"style=form,explode=true,name=pageSize"`
+	// Reverse the default order. Default (`false`) returns
+	// newest-first (descending); `true` returns oldest-first
+	// (ascending). Mirrors the gRPC `ListTransactions` reverse
+	// flag semantic.
 	//
-	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
-	// Render all response Uint256, BigUint and SignedBigInt values as canonical
-	// decimal strings, regardless of business meaning, including posting
-	// amounts, volume input/output and balances. Ordinary integer IDs/counts,
-	// metadata and explicitly string-encoded counters keep their existing
-	// representation. Case-insensitive true, yes, y and 1 enable
-	// this option, matching Ledger v2. Whitespace is not trimmed. Omission and
-	// every other value retain JSON number tokens. This affects only this
-	// response, including nested objects, maps, arrays, transaction/log/cursor
-	// and bulk results. Request decoding is unchanged.
+	Reverse *bool `default:"false" queryParam:"style=form,explode=true,name=reverse"`
+	// Filter transactions with timestamp >= startDate (inclusive, RFC3339 format).
+	// Requires the builtin `TX_BUILTIN_INDEX_TIMESTAMP` index to be enabled on the ledger.
 	//
-	FormanceBigintAsString *string `header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
-	// Set to any non-empty value to receive the query profile in the
-	// `X-Query-Profile-Result` response header.
-	//
-	// The profile reports server-side request timing (how long the server spent
-	// handling the request, broken down into prepare / execute / read-barrier /
-	// deliver phases) plus the query execution plan. Use it to tell a slow
-	// network from a slow server: `serverDurationUs` is the
-	// consumer-independent server cost, and it excludes both the
-	// caller-requested read barrier and response delivery.
-	//
-	// Supported on the transactions list, accounts list, aggregated volumes and
-	// prepared-query execution endpoints. The equivalent gRPC opt-in is the
-	// `x-query-profile` request metadata, answered in the
-	// `x-query-profile-result-bin` trailer; `serverDurationUs` has the same
-	// definition on both surfaces, so the two are directly comparable.
-	//
-	XQueryProfile *string `header:"style=simple,explode=false,name=X-Query-Profile"`
+	StartDate *time.Time `queryParam:"style=form,explode=true,name=startDate"`
 }
 
 func (l ListLedgerTransactionsRequest) MarshalJSON() ([]byte, error) {
@@ -128,18 +128,25 @@ func (l *ListLedgerTransactionsRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (l *ListLedgerTransactionsRequest) GetLedgerName() string {
-	if l == nil {
-		return ""
-	}
-	return l.LedgerName
-}
-
-func (l *ListLedgerTransactionsRequest) GetPageSize() *int64 {
+func (l *ListLedgerTransactionsRequest) GetFormanceBigintAsString() *string {
 	if l == nil {
 		return nil
 	}
-	return l.PageSize
+	return l.FormanceBigintAsString
+}
+
+func (l *ListLedgerTransactionsRequest) GetXConsistency() *ledgerv3.Consistency {
+	if l == nil {
+		return nil
+	}
+	return l.XConsistency
+}
+
+func (l *ListLedgerTransactionsRequest) GetXQueryProfile() *string {
+	if l == nil {
+		return nil
+	}
+	return l.XQueryProfile
 }
 
 func (l *ListLedgerTransactionsRequest) GetCursor() *string {
@@ -147,20 +154,6 @@ func (l *ListLedgerTransactionsRequest) GetCursor() *string {
 		return nil
 	}
 	return l.Cursor
-}
-
-func (l *ListLedgerTransactionsRequest) GetReverse() *bool {
-	if l == nil {
-		return nil
-	}
-	return l.Reverse
-}
-
-func (l *ListLedgerTransactionsRequest) GetStartDate() *time.Time {
-	if l == nil {
-		return nil
-	}
-	return l.StartDate
 }
 
 func (l *ListLedgerTransactionsRequest) GetEndDate() *time.Time {
@@ -177,30 +170,39 @@ func (l *ListLedgerTransactionsRequest) GetFilter() *string {
 	return l.Filter
 }
 
-func (l *ListLedgerTransactionsRequest) GetXConsistency() *ledgerv3.Consistency {
+func (l *ListLedgerTransactionsRequest) GetLedgerName() string {
 	if l == nil {
-		return nil
+		return ""
 	}
-	return l.XConsistency
+	return l.LedgerName
 }
 
-func (l *ListLedgerTransactionsRequest) GetFormanceBigintAsString() *string {
+func (l *ListLedgerTransactionsRequest) GetPageSize() *int64 {
 	if l == nil {
 		return nil
 	}
-	return l.FormanceBigintAsString
+	return l.PageSize
 }
 
-func (l *ListLedgerTransactionsRequest) GetXQueryProfile() *string {
+func (l *ListLedgerTransactionsRequest) GetReverse() *bool {
 	if l == nil {
 		return nil
 	}
-	return l.XQueryProfile
+	return l.Reverse
+}
+
+func (l *ListLedgerTransactionsRequest) GetStartDate() *time.Time {
+	if l == nil {
+		return nil
+	}
+	return l.StartDate
 }
 
 // ListLedgerTransactionsResponseBody - Transactions retrieved successfully.
 type ListLedgerTransactionsResponseBody struct {
 	Data []ledgerv3.TransactionResponse `json:"data"`
+	// True when a following page exists; set iff `next` is.
+	HasMore bool `json:"hasMore"`
 	// Page token of a paged list. Clients normally pass back the `next` or
 	// `previous` value of a previous response verbatim; building one by hand
 	// is supported.
@@ -275,8 +277,6 @@ type ListLedgerTransactionsResponseBody struct {
 	// the endpoint, is rejected with 400 `INVALID_REQUEST`.
 	//
 	Previous *string `json:"previous,omitempty"`
-	// True when a following page exists; set iff `next` is.
-	HasMore bool `json:"hasMore"`
 }
 
 func (l *ListLedgerTransactionsResponseBody) GetData() []ledgerv3.TransactionResponse {
@@ -284,6 +284,13 @@ func (l *ListLedgerTransactionsResponseBody) GetData() []ledgerv3.TransactionRes
 		return []ledgerv3.TransactionResponse{}
 	}
 	return l.Data
+}
+
+func (l *ListLedgerTransactionsResponseBody) GetHasMore() bool {
+	if l == nil {
+		return false
+	}
+	return l.HasMore
 }
 
 func (l *ListLedgerTransactionsResponseBody) GetNext() *string {
@@ -300,29 +307,22 @@ func (l *ListLedgerTransactionsResponseBody) GetPrevious() *string {
 	return l.Previous
 }
 
-func (l *ListLedgerTransactionsResponseBody) GetHasMore() bool {
-	if l == nil {
-		return false
-	}
-	return l.HasMore
-}
-
 type ListLedgerTransactionsResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Transactions retrieved successfully.
-	Object *ListLedgerTransactionsResponseBody
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
+	// Transactions retrieved successfully.
+	Object *ListLedgerTransactionsResponseBody
 }
 
 func (l *ListLedgerTransactionsResponse) GetContentType() string {
@@ -330,6 +330,27 @@ func (l *ListLedgerTransactionsResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListLedgerTransactionsResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ErrorResponse
+}
+
+func (l *ListLedgerTransactionsResponse) GetForbidden() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Forbidden
+}
+
+func (l *ListLedgerTransactionsResponse) GetHeaders() map[string][]string {
+	if l == nil {
+		return map[string][]string{}
+	}
+	return l.Headers
 }
 
 func (l *ListLedgerTransactionsResponse) GetStatusCode() int {
@@ -346,20 +367,6 @@ func (l *ListLedgerTransactionsResponse) GetRawResponse() *http.Response {
 	return l.RawResponse
 }
 
-func (l *ListLedgerTransactionsResponse) GetObject() *ListLedgerTransactionsResponseBody {
-	if l == nil {
-		return nil
-	}
-	return l.Object
-}
-
-func (l *ListLedgerTransactionsResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ErrorResponse
-}
-
 func (l *ListLedgerTransactionsResponse) GetUnauthorized() *string {
 	if l == nil {
 		return nil
@@ -367,16 +374,9 @@ func (l *ListLedgerTransactionsResponse) GetUnauthorized() *string {
 	return l.Unauthorized
 }
 
-func (l *ListLedgerTransactionsResponse) GetForbidden() *string {
+func (l *ListLedgerTransactionsResponse) GetObject() *ListLedgerTransactionsResponseBody {
 	if l == nil {
 		return nil
 	}
-	return l.Forbidden
-}
-
-func (l *ListLedgerTransactionsResponse) GetHeaders() map[string][]string {
-	if l == nil {
-		return map[string][]string{}
-	}
-	return l.Headers
+	return l.Object
 }

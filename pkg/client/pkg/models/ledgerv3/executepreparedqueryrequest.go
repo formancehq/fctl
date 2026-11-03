@@ -36,14 +36,6 @@ func (e *ExecutePreparedQueryRequestMode) UnmarshalJSON(data []byte) error {
 }
 
 type ExecutePreparedQueryRequest struct {
-	// Parameter values for the query (substituted into filter placeholders)
-	Parameters map[string]string `json:"parameters,omitempty"`
-	// LIST page size. Omitted or zero means 100. The effective maximum is
-	// 1000; larger uint32 values are accepted and clamped, not rejected.
-	// A supplied query parameter overrides this value. Ignored for
-	// AGGREGATE_VOLUMES.
-	//
-	PageSize *int64 `default:"100" json:"pageSize"`
 	// Page token from a previous response's `cursor.next` or
 	// `cursor.previous` (see the `PageToken` schema). The key is the
 	// decimal id for TRANSACTIONS and LOGS targets, the address for
@@ -52,6 +44,14 @@ type ExecutePreparedQueryRequest struct {
 	Cursor *string `json:"cursor,omitempty"`
 	// Execution mode (default LIST)
 	Mode *ExecutePreparedQueryRequestMode `json:"mode,omitempty"`
+	// LIST page size. Omitted or zero means 100. The effective maximum is
+	// 1000; larger uint32 values are accepted and clamped, not rejected.
+	// A supplied query parameter overrides this value. Ignored for
+	// AGGREGATE_VOLUMES.
+	//
+	PageSize *int64 `default:"100" json:"pageSize"`
+	// Parameter values for the query (substituted into filter placeholders)
+	Parameters map[string]string `json:"parameters,omitempty"`
 	// List in descending entity order (address, transaction id or log id).
 	// A page token is relative to the requested order, so every page of a
 	// descending walk must set `reverse`. Rejected with 400 in
@@ -71,20 +71,6 @@ func (e *ExecutePreparedQueryRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (e *ExecutePreparedQueryRequest) GetParameters() map[string]string {
-	if e == nil {
-		return nil
-	}
-	return e.Parameters
-}
-
-func (e *ExecutePreparedQueryRequest) GetPageSize() *int64 {
-	if e == nil {
-		return nil
-	}
-	return e.PageSize
-}
-
 func (e *ExecutePreparedQueryRequest) GetCursor() *string {
 	if e == nil {
 		return nil
@@ -97,6 +83,20 @@ func (e *ExecutePreparedQueryRequest) GetMode() *ExecutePreparedQueryRequestMode
 		return nil
 	}
 	return e.Mode
+}
+
+func (e *ExecutePreparedQueryRequest) GetPageSize() *int64 {
+	if e == nil {
+		return nil
+	}
+	return e.PageSize
+}
+
+func (e *ExecutePreparedQueryRequest) GetParameters() map[string]string {
+	if e == nil {
+		return nil
+	}
+	return e.Parameters
 }
 
 func (e *ExecutePreparedQueryRequest) GetReverse() *bool {

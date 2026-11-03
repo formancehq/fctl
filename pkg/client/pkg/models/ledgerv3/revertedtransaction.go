@@ -3,16 +3,9 @@
 package ledgerv3
 
 type RevertedTransaction struct {
+	RevertTransaction *TransactionResponse `json:"revertTransaction,omitempty"`
 	// ID of the original transaction that was reverted
-	RevertedTransactionID *int64               `json:"revertedTransactionId,omitempty"`
-	RevertTransaction     *TransactionResponse `json:"revertTransaction,omitempty"`
-}
-
-func (r *RevertedTransaction) GetRevertedTransactionID() *int64 {
-	if r == nil {
-		return nil
-	}
-	return r.RevertedTransactionID
+	RevertedTransactionID *int64 `json:"revertedTransactionId,omitempty"`
 }
 
 func (r *RevertedTransaction) GetRevertTransaction() *TransactionResponse {
@@ -20,4 +13,11 @@ func (r *RevertedTransaction) GetRevertTransaction() *TransactionResponse {
 		return nil
 	}
 	return r.RevertTransaction
+}
+
+func (r *RevertedTransaction) GetRevertedTransactionID() *int64 {
+	if r == nil {
+		return nil
+	}
+	return r.RevertedTransactionID
 }

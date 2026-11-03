@@ -8,16 +8,9 @@ import (
 )
 
 type UpdateMappingRequest struct {
-	// Name of the ledger.
-	Ledger  string          `pathParam:"style=simple,explode=false,name=ledger"`
 	Mapping *ledger.Mapping `request:"mediaType=application/json"`
-}
-
-func (u *UpdateMappingRequest) GetLedger() string {
-	if u == nil {
-		return ""
-	}
-	return u.Ledger
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 }
 
 func (u *UpdateMappingRequest) GetMapping() *ledger.Mapping {
@@ -27,15 +20,22 @@ func (u *UpdateMappingRequest) GetMapping() *ledger.Mapping {
 	return u.Mapping
 }
 
+func (u *UpdateMappingRequest) GetLedger() string {
+	if u == nil {
+		return ""
+	}
+	return u.Ledger
+}
+
 type UpdateMappingResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	MappingResponse *ledger.MappingResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	MappingResponse *ledger.MappingResponse
 }
 
 func (u *UpdateMappingResponse) GetContentType() string {
@@ -43,6 +43,13 @@ func (u *UpdateMappingResponse) GetContentType() string {
 		return ""
 	}
 	return u.ContentType
+}
+
+func (u *UpdateMappingResponse) GetMappingResponse() *ledger.MappingResponse {
+	if u == nil {
+		return nil
+	}
+	return u.MappingResponse
 }
 
 func (u *UpdateMappingResponse) GetStatusCode() int {
@@ -57,11 +64,4 @@ func (u *UpdateMappingResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return u.RawResponse
-}
-
-func (u *UpdateMappingResponse) GetMappingResponse() *ledger.MappingResponse {
-	if u == nil {
-		return nil
-	}
-	return u.MappingResponse
 }

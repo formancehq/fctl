@@ -9,20 +9,20 @@ import (
 
 // V3Task - An asynchronous unit of work, tracking an operation that completes in the background
 type V3Task struct {
-	// Unique identifier of the task
-	ID string `json:"id"`
-	// Where a task stands, from processing through to succeeded or failed
-	Status V3TaskStatusEnum `json:"status"`
-	// When the task was created
-	CreatedAt time.Time `json:"createdAt"`
-	// When the task was last updated
-	UpdatedAt time.Time `json:"updatedAt"`
 	// Identifier of the connector the task runs against
 	ConnectorID *string `json:"connectorID,omitempty"`
+	// When the task was created
+	CreatedAt time.Time `json:"createdAt"`
 	// Identifier of the object the task created, once it has succeeded
 	CreatedObjectID *string `json:"createdObjectID,omitempty"`
 	// Why the task failed, absent when it succeeded
 	Error *string `json:"error,omitempty"`
+	// Unique identifier of the task
+	ID string `json:"id"`
+	// Where a task stands, from processing through to succeeded or failed
+	Status V3TaskStatusEnum `json:"status"`
+	// When the task was last updated
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (v V3Task) MarshalJSON() ([]byte, error) {
@@ -34,6 +34,34 @@ func (v *V3Task) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V3Task) GetConnectorID() *string {
+	if v == nil {
+		return nil
+	}
+	return v.ConnectorID
+}
+
+func (v *V3Task) GetCreatedAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.CreatedAt
+}
+
+func (v *V3Task) GetCreatedObjectID() *string {
+	if v == nil {
+		return nil
+	}
+	return v.CreatedObjectID
+}
+
+func (v *V3Task) GetError() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Error
 }
 
 func (v *V3Task) GetID() string {
@@ -50,39 +78,11 @@ func (v *V3Task) GetStatus() V3TaskStatusEnum {
 	return v.Status
 }
 
-func (v *V3Task) GetCreatedAt() time.Time {
-	if v == nil {
-		return time.Time{}
-	}
-	return v.CreatedAt
-}
-
 func (v *V3Task) GetUpdatedAt() time.Time {
 	if v == nil {
 		return time.Time{}
 	}
 	return v.UpdatedAt
-}
-
-func (v *V3Task) GetConnectorID() *string {
-	if v == nil {
-		return nil
-	}
-	return v.ConnectorID
-}
-
-func (v *V3Task) GetCreatedObjectID() *string {
-	if v == nil {
-		return nil
-	}
-	return v.CreatedObjectID
-}
-
-func (v *V3Task) GetError() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Error
 }
 
 // #region class-body-v3task

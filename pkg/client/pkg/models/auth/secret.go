@@ -4,27 +4,20 @@ package auth
 
 // Secret - A client secret. The full value is returned only at creation and cannot be retrieved again
 type Secret struct {
+	Clear      string `json:"clear"`
+	ID         string `json:"id"`
+	LastDigits string `json:"lastDigits"`
+	// Arbitrary key/value pairs attached to the resource
+	Metadata map[string]string `json:"metadata,omitempty"`
 	// Human-readable name identifying the secret
 	Name string `json:"name"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata   map[string]string `json:"metadata,omitempty"`
-	ID         string            `json:"id"`
-	LastDigits string            `json:"lastDigits"`
-	Clear      string            `json:"clear"`
 }
 
-func (s *Secret) GetName() string {
+func (s *Secret) GetClear() string {
 	if s == nil {
 		return ""
 	}
-	return s.Name
-}
-
-func (s *Secret) GetMetadata() map[string]string {
-	if s == nil {
-		return nil
-	}
-	return s.Metadata
+	return s.Clear
 }
 
 func (s *Secret) GetID() string {
@@ -41,9 +34,16 @@ func (s *Secret) GetLastDigits() string {
 	return s.LastDigits
 }
 
-func (s *Secret) GetClear() string {
+func (s *Secret) GetMetadata() map[string]string {
+	if s == nil {
+		return nil
+	}
+	return s.Metadata
+}
+
+func (s *Secret) GetName() string {
 	if s == nil {
 		return ""
 	}
-	return s.Clear
+	return s.Name
 }

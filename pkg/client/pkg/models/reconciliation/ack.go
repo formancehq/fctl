@@ -9,10 +9,10 @@ import (
 
 // Ack - Record of who acknowledged an alert and when
 type Ack struct {
-	// Who acknowledged the alert
-	By string `json:"by"`
 	// When the alert was acknowledged
 	At time.Time `json:"at"`
+	// Who acknowledged the alert
+	By string `json:"by"`
 	// Free-text note left by whoever acknowledged the alert
 	Note *string `json:"note,omitempty"`
 }
@@ -28,18 +28,18 @@ func (a *Ack) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (a *Ack) GetBy() string {
-	if a == nil {
-		return ""
-	}
-	return a.By
-}
-
 func (a *Ack) GetAt() time.Time {
 	if a == nil {
 		return time.Time{}
 	}
 	return a.At
+}
+
+func (a *Ack) GetBy() string {
+	if a == nil {
+		return ""
+	}
+	return a.By
 }
 
 func (a *Ack) GetNote() *string {

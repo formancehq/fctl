@@ -8,19 +8,19 @@ import (
 )
 
 type V3DeletePaymentServiceUserConnectionFromConnectorIDRequest struct {
-	// The payment service user ID
-	PaymentServiceUserID string `pathParam:"style=simple,explode=false,name=paymentServiceUserID"`
-	// The connector ID
-	ConnectorID string `pathParam:"style=simple,explode=false,name=connectorID"`
 	// The connection ID
 	ConnectionID string `pathParam:"style=simple,explode=false,name=connectionID"`
+	// The connector ID
+	ConnectorID string `pathParam:"style=simple,explode=false,name=connectorID"`
+	// The payment service user ID
+	PaymentServiceUserID string `pathParam:"style=simple,explode=false,name=paymentServiceUserID"`
 }
 
-func (v *V3DeletePaymentServiceUserConnectionFromConnectorIDRequest) GetPaymentServiceUserID() string {
+func (v *V3DeletePaymentServiceUserConnectionFromConnectorIDRequest) GetConnectionID() string {
 	if v == nil {
 		return ""
 	}
-	return v.PaymentServiceUserID
+	return v.ConnectionID
 }
 
 func (v *V3DeletePaymentServiceUserConnectionFromConnectorIDRequest) GetConnectorID() string {
@@ -30,11 +30,11 @@ func (v *V3DeletePaymentServiceUserConnectionFromConnectorIDRequest) GetConnecto
 	return v.ConnectorID
 }
 
-func (v *V3DeletePaymentServiceUserConnectionFromConnectorIDRequest) GetConnectionID() string {
+func (v *V3DeletePaymentServiceUserConnectionFromConnectorIDRequest) GetPaymentServiceUserID() string {
 	if v == nil {
 		return ""
 	}
-	return v.ConnectionID
+	return v.PaymentServiceUserID
 }
 
 // #region class-body-v3deletepaymentserviceuserconnectionfromconnectoridrequest

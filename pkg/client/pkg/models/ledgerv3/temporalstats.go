@@ -10,8 +10,8 @@ import (
 type TemporalStats struct {
 	FirstSeen          *time.Time   `json:"firstSeen,omitempty"`
 	LastSeen           *time.Time   `json:"lastSeen,omitempty"`
-	TransactionsPerDay *float64     `json:"transactionsPerDay,omitempty"`
 	PeakHours          []HourBucket `json:"peakHours,omitempty"`
+	TransactionsPerDay *float64     `json:"transactionsPerDay,omitempty"`
 }
 
 func (t TemporalStats) MarshalJSON() ([]byte, error) {
@@ -39,16 +39,16 @@ func (t *TemporalStats) GetLastSeen() *time.Time {
 	return t.LastSeen
 }
 
-func (t *TemporalStats) GetTransactionsPerDay() *float64 {
-	if t == nil {
-		return nil
-	}
-	return t.TransactionsPerDay
-}
-
 func (t *TemporalStats) GetPeakHours() []HourBucket {
 	if t == nil {
 		return nil
 	}
 	return t.PeakHours
+}
+
+func (t *TemporalStats) GetTransactionsPerDay() *float64 {
+	if t == nil {
+		return nil
+	}
+	return t.TransactionsPerDay
 }

@@ -7,17 +7,10 @@ import (
 )
 
 type V3RemoveAccountFromPoolRequest struct {
-	// The pool ID
-	PoolID string `pathParam:"style=simple,explode=false,name=poolID"`
 	// The account ID
 	AccountID string `pathParam:"style=simple,explode=false,name=accountID"`
-}
-
-func (v *V3RemoveAccountFromPoolRequest) GetPoolID() string {
-	if v == nil {
-		return ""
-	}
-	return v.PoolID
+	// The pool ID
+	PoolID string `pathParam:"style=simple,explode=false,name=poolID"`
 }
 
 func (v *V3RemoveAccountFromPoolRequest) GetAccountID() string {
@@ -25,6 +18,13 @@ func (v *V3RemoveAccountFromPoolRequest) GetAccountID() string {
 		return ""
 	}
 	return v.AccountID
+}
+
+func (v *V3RemoveAccountFromPoolRequest) GetPoolID() string {
+	if v == nil {
+		return ""
+	}
+	return v.PoolID
 }
 
 // #region class-body-v3removeaccountfrompoolrequest

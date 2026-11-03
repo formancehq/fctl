@@ -7,75 +7,75 @@ import (
 	"time"
 )
 
-// State - Internal progress state the task resumes from
-type State struct {
-}
-
-func (s State) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(s, "", false)
-}
-
-func (s *State) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &s, "", false, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-type Descriptor struct {
-	Name    string `json:"name"`
-	Main    *bool  `json:"main,omitempty"`
+type TaskStripeDescriptor struct {
 	Account string `json:"account"`
+	Main    *bool  `json:"main,omitempty"`
+	Name    string `json:"name"`
 }
 
-func (d Descriptor) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(d, "", false)
+func (t TaskStripeDescriptor) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(t, "", false)
 }
 
-func (d *Descriptor) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &d, "", false, []string{"name", "account"}); err != nil {
+func (t *TaskStripeDescriptor) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &t, "", false, []string{"account", "name"}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (d *Descriptor) GetName() string {
-	if d == nil {
+func (t *TaskStripeDescriptor) GetAccount() string {
+	if t == nil {
 		return ""
 	}
-	return d.Name
+	return t.Account
 }
 
-func (d *Descriptor) GetMain() *bool {
-	if d == nil {
+func (t *TaskStripeDescriptor) GetMain() *bool {
+	if t == nil {
 		return nil
 	}
-	return d.Main
+	return t.Main
 }
 
-func (d *Descriptor) GetAccount() string {
-	if d == nil {
+func (t *TaskStripeDescriptor) GetName() string {
+	if t == nil {
 		return ""
 	}
-	return d.Account
+	return t.Name
+}
+
+// TaskStripeState - Internal progress state the task resumes from
+type TaskStripeState struct {
+}
+
+func (t TaskStripeState) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(t, "", false)
+}
+
+func (t *TaskStripeState) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &t, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 type TaskStripe struct {
-	// Unique identifier of the task
-	ID string `json:"id"`
 	// Identifier of the connector the task runs against
 	ConnectorID string `json:"connectorID"`
 	// When the task was created
-	CreatedAt time.Time `json:"createdAt"`
-	// When the task was last updated
-	UpdatedAt time.Time `json:"updatedAt"`
+	CreatedAt  time.Time            `json:"createdAt"`
+	Descriptor TaskStripeDescriptor `json:"descriptor"`
+	// Why the task failed, absent when it succeeded
+	Error *string `json:"error,omitempty"`
+	// Unique identifier of the task
+	ID string `json:"id"`
+	// Internal progress state the task resumes from
+	State *TaskStripeState `json:"state,omitempty"`
 	// Where a task stands, from pending or active through to stopped, terminated or failed
 	Status TaskStatus `json:"status"`
-	// Internal progress state the task resumes from
-	State *State `json:"state,omitempty"`
-	// Why the task failed, absent when it succeeded
-	Error      *string    `json:"error,omitempty"`
-	Descriptor Descriptor `json:"descriptor"`
+	// When the task was last updated
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (t TaskStripe) MarshalJSON() ([]byte, error) {
@@ -83,17 +83,10 @@ func (t TaskStripe) MarshalJSON() ([]byte, error) {
 }
 
 func (t *TaskStripe) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &t, "", false, []string{"id", "connectorID", "createdAt", "updatedAt", "status", "descriptor"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &t, "", false, []string{"connectorID", "createdAt", "descriptor", "id", "status", "updatedAt"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (t *TaskStripe) GetID() string {
-	if t == nil {
-		return ""
-	}
-	return t.ID
 }
 
 func (t *TaskStripe) GetConnectorID() string {
@@ -110,25 +103,11 @@ func (t *TaskStripe) GetCreatedAt() time.Time {
 	return t.CreatedAt
 }
 
-func (t *TaskStripe) GetUpdatedAt() time.Time {
+func (t *TaskStripe) GetDescriptor() TaskStripeDescriptor {
 	if t == nil {
-		return time.Time{}
+		return TaskStripeDescriptor{}
 	}
-	return t.UpdatedAt
-}
-
-func (t *TaskStripe) GetStatus() TaskStatus {
-	if t == nil {
-		return TaskStatus("")
-	}
-	return t.Status
-}
-
-func (t *TaskStripe) GetState() *State {
-	if t == nil {
-		return nil
-	}
-	return t.State
+	return t.Descriptor
 }
 
 func (t *TaskStripe) GetError() *string {
@@ -138,9 +117,30 @@ func (t *TaskStripe) GetError() *string {
 	return t.Error
 }
 
-func (t *TaskStripe) GetDescriptor() Descriptor {
+func (t *TaskStripe) GetID() string {
 	if t == nil {
-		return Descriptor{}
+		return ""
 	}
-	return t.Descriptor
+	return t.ID
+}
+
+func (t *TaskStripe) GetState() *TaskStripeState {
+	if t == nil {
+		return nil
+	}
+	return t.State
+}
+
+func (t *TaskStripe) GetStatus() TaskStatus {
+	if t == nil {
+		return TaskStatus("")
+	}
+	return t.Status
+}
+
+func (t *TaskStripe) GetUpdatedAt() time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return t.UpdatedAt
 }

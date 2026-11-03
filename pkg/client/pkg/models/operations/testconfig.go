@@ -20,14 +20,21 @@ func (t *TestConfigRequest) GetID() string {
 }
 
 type TestConfigResponse struct {
+	// OK
+	AttemptResponse *webhooks.AttemptResponse
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	AttemptResponse *webhooks.AttemptResponse
+}
+
+func (t *TestConfigResponse) GetAttemptResponse() *webhooks.AttemptResponse {
+	if t == nil {
+		return nil
+	}
+	return t.AttemptResponse
 }
 
 func (t *TestConfigResponse) GetContentType() string {
@@ -49,11 +56,4 @@ func (t *TestConfigResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return t.RawResponse
-}
-
-func (t *TestConfigResponse) GetAttemptResponse() *webhooks.AttemptResponse {
-	if t == nil {
-		return nil
-	}
-	return t.AttemptResponse
 }

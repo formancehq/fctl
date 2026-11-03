@@ -8,16 +8,9 @@ import (
 )
 
 type V3ForwardBankAccountRequest struct {
-	// The bank account ID
-	BankAccountID               string                                `pathParam:"style=simple,explode=false,name=bankAccountID"`
 	V3ForwardBankAccountRequest *payments.V3ForwardBankAccountRequest `request:"mediaType=application/json"`
-}
-
-func (v *V3ForwardBankAccountRequest) GetBankAccountID() string {
-	if v == nil {
-		return ""
-	}
-	return v.BankAccountID
+	// The bank account ID
+	BankAccountID string `pathParam:"style=simple,explode=false,name=bankAccountID"`
 }
 
 func (v *V3ForwardBankAccountRequest) GetV3ForwardBankAccountRequest() *payments.V3ForwardBankAccountRequest {
@@ -25,6 +18,13 @@ func (v *V3ForwardBankAccountRequest) GetV3ForwardBankAccountRequest() *payments
 		return nil
 	}
 	return v.V3ForwardBankAccountRequest
+}
+
+func (v *V3ForwardBankAccountRequest) GetBankAccountID() string {
+	if v == nil {
+		return ""
+	}
+	return v.BankAccountID
 }
 
 // #region class-body-v3forwardbankaccountrequest

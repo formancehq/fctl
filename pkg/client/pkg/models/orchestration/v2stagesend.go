@@ -12,10 +12,10 @@ type V2StageSend struct {
 	Amount *V2Monetary `json:"amount,omitempty"`
 	// Where a send stage puts the funds
 	Destination *V2StageSendDestination `json:"destination,omitempty"`
-	// Where a send stage takes the funds from
-	Source *V2StageSendSource `json:"source,omitempty"`
 	// Metadata to attach to the resulting transaction
 	Metadata map[string]string `json:"metadata,omitempty"`
+	// Where a send stage takes the funds from
+	Source *V2StageSendSource `json:"source,omitempty"`
 	// The transaction time to record on the resulting transaction. See [bi-temporality](https://docs.formance.com/modules/ledger/working-with/bi-temporality)
 	Timestamp *time.Time `json:"timestamp,omitempty"`
 }
@@ -45,18 +45,18 @@ func (v *V2StageSend) GetDestination() *V2StageSendDestination {
 	return v.Destination
 }
 
-func (v *V2StageSend) GetSource() *V2StageSendSource {
-	if v == nil {
-		return nil
-	}
-	return v.Source
-}
-
 func (v *V2StageSend) GetMetadata() map[string]string {
 	if v == nil {
 		return nil
 	}
 	return v.Metadata
+}
+
+func (v *V2StageSend) GetSource() *V2StageSendSource {
+	if v == nil {
+		return nil
+	}
+	return v.Source
 }
 
 func (v *V2StageSend) GetTimestamp() *time.Time {

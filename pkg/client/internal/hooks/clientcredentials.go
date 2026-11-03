@@ -9,7 +9,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/formancehq/fctl/v3/pkg/client/internal/config"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/shared"
 	"golang.org/x/sync/singleflight"
 	"io"
@@ -63,9 +62,9 @@ func NewClientCredentialsHook() *clientCredentialsHook {
 	}
 }
 
-func (c *clientCredentialsHook) SDKInit(config config.SDKConfiguration) config.SDKConfiguration {
-	c.client = config.Client
-	return config
+func (c *clientCredentialsHook) SDKInit(baseURL string, client HTTPClient) (string, HTTPClient) {
+	c.client = client
+	return baseURL, client
 }
 
 func (c *clientCredentialsHook) isHookDisabled(ctx HookContext) bool {

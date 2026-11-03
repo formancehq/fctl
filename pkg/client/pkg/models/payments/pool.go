@@ -4,16 +4,23 @@ package payments
 
 // Pool - A named group of accounts whose balances are aggregated together
 type Pool struct {
+	// Accounts currently in the pool
+	Accounts []string `json:"accounts"`
 	// Unique identifier of the pool
 	ID string `json:"id"`
 	// Human-readable name of the pool
 	Name string `json:"name"`
-	// Whether a pool holds a fixed account list or is driven by a query
-	Type *PoolTypeEnum `json:"type,omitempty"`
 	// Filter selecting the accounts a dynamic pool contains
 	Query map[string]any `json:"query,omitempty"`
-	// Accounts currently in the pool
-	Accounts []string `json:"accounts"`
+	// Whether a pool holds a fixed account list or is driven by a query
+	Type *PoolTypeEnum `json:"type,omitempty"`
+}
+
+func (p *Pool) GetAccounts() []string {
+	if p == nil {
+		return []string{}
+	}
+	return p.Accounts
 }
 
 func (p *Pool) GetID() string {
@@ -30,13 +37,6 @@ func (p *Pool) GetName() string {
 	return p.Name
 }
 
-func (p *Pool) GetType() *PoolTypeEnum {
-	if p == nil {
-		return nil
-	}
-	return p.Type
-}
-
 func (p *Pool) GetQuery() map[string]any {
 	if p == nil {
 		return nil
@@ -44,9 +44,9 @@ func (p *Pool) GetQuery() map[string]any {
 	return p.Query
 }
 
-func (p *Pool) GetAccounts() []string {
+func (p *Pool) GetType() *PoolTypeEnum {
 	if p == nil {
-		return []string{}
+		return nil
 	}
-	return p.Accounts
+	return p.Type
 }

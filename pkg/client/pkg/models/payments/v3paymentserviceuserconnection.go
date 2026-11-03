@@ -16,12 +16,12 @@ type V3PaymentServiceUserConnection struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// When data was last refreshed over this connection
 	DataUpdatedAt time.Time `json:"dataUpdatedAt"`
-	// Whether an open banking connection is still usable or needs the user to reconnect
-	Status V3ConnectionStatusEnum `json:"status"`
 	// Why the connection is failing, absent while it is healthy
 	Error *string `json:"error,omitempty"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]string `json:"metadata,omitempty"`
+	// Whether an open banking connection is still usable or needs the user to reconnect
+	Status V3ConnectionStatusEnum `json:"status"`
 }
 
 func (v V3PaymentServiceUserConnection) MarshalJSON() ([]byte, error) {
@@ -63,13 +63,6 @@ func (v *V3PaymentServiceUserConnection) GetDataUpdatedAt() time.Time {
 	return v.DataUpdatedAt
 }
 
-func (v *V3PaymentServiceUserConnection) GetStatus() V3ConnectionStatusEnum {
-	if v == nil {
-		return V3ConnectionStatusEnum("")
-	}
-	return v.Status
-}
-
 func (v *V3PaymentServiceUserConnection) GetError() *string {
 	if v == nil {
 		return nil
@@ -82,6 +75,13 @@ func (v *V3PaymentServiceUserConnection) GetMetadata() map[string]string {
 		return nil
 	}
 	return v.Metadata
+}
+
+func (v *V3PaymentServiceUserConnection) GetStatus() V3ConnectionStatusEnum {
+	if v == nil {
+		return V3ConnectionStatusEnum("")
+	}
+	return v.Status
 }
 
 // #region class-body-v3paymentserviceuserconnection

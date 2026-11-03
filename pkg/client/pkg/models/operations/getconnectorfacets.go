@@ -45,14 +45,14 @@ func (g *GetConnectorFacetsRequest) GetQuery() *string {
 type GetConnectorFacetsResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Request or server error. The HTTP status and code identify the failure.
+	Error *connectivity.Error
+	// OK
+	FacetDistribution *connectivity.FacetDistribution
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	FacetDistribution *connectivity.FacetDistribution
-	// Request or server error. The HTTP status and code identify the failure.
-	Error *connectivity.Error
 }
 
 func (g *GetConnectorFacetsResponse) GetContentType() string {
@@ -60,6 +60,20 @@ func (g *GetConnectorFacetsResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetConnectorFacetsResponse) GetError() *connectivity.Error {
+	if g == nil {
+		return nil
+	}
+	return g.Error
+}
+
+func (g *GetConnectorFacetsResponse) GetFacetDistribution() *connectivity.FacetDistribution {
+	if g == nil {
+		return nil
+	}
+	return g.FacetDistribution
 }
 
 func (g *GetConnectorFacetsResponse) GetStatusCode() int {
@@ -74,18 +88,4 @@ func (g *GetConnectorFacetsResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetConnectorFacetsResponse) GetFacetDistribution() *connectivity.FacetDistribution {
-	if g == nil {
-		return nil
-	}
-	return g.FacetDistribution
-}
-
-func (g *GetConnectorFacetsResponse) GetError() *connectivity.Error {
-	if g == nil {
-		return nil
-	}
-	return g.Error
 }

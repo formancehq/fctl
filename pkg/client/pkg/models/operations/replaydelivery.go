@@ -8,15 +8,8 @@ import (
 )
 
 type ReplayDeliveryRequest struct {
-	ID             string `pathParam:"style=simple,explode=false,name=id"`
 	IdempotencyKey string `header:"style=simple,explode=false,name=Idempotency-Key"`
-}
-
-func (r *ReplayDeliveryRequest) GetID() string {
-	if r == nil {
-		return ""
-	}
-	return r.ID
+	ID             string `pathParam:"style=simple,explode=false,name=id"`
 }
 
 func (r *ReplayDeliveryRequest) GetIdempotencyKey() string {
@@ -26,15 +19,22 @@ func (r *ReplayDeliveryRequest) GetIdempotencyKey() string {
 	return r.IdempotencyKey
 }
 
+func (r *ReplayDeliveryRequest) GetID() string {
+	if r == nil {
+		return ""
+	}
+	return r.ID
+}
+
 type ReplayDeliveryResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Delivery synchronously placed back in the durable queue.
+	DeliveryResponse *webhooks.DeliveryResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Delivery synchronously placed back in the durable queue.
-	DeliveryResponse *webhooks.DeliveryResponse
 }
 
 func (r *ReplayDeliveryResponse) GetContentType() string {
@@ -42,6 +42,13 @@ func (r *ReplayDeliveryResponse) GetContentType() string {
 		return ""
 	}
 	return r.ContentType
+}
+
+func (r *ReplayDeliveryResponse) GetDeliveryResponse() *webhooks.DeliveryResponse {
+	if r == nil {
+		return nil
+	}
+	return r.DeliveryResponse
 }
 
 func (r *ReplayDeliveryResponse) GetStatusCode() int {
@@ -56,11 +63,4 @@ func (r *ReplayDeliveryResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return r.RawResponse
-}
-
-func (r *ReplayDeliveryResponse) GetDeliveryResponse() *webhooks.DeliveryResponse {
-	if r == nil {
-		return nil
-	}
-	return r.DeliveryResponse
 }

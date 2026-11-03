@@ -7,6 +7,44 @@ import (
 	"time"
 )
 
+type TaskModulrDescriptor struct {
+	AccountID *string `json:"accountID,omitempty"`
+	Key       *string `json:"key,omitempty"`
+	Name      *string `json:"name,omitempty"`
+}
+
+func (t TaskModulrDescriptor) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(t, "", false)
+}
+
+func (t *TaskModulrDescriptor) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &t, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *TaskModulrDescriptor) GetAccountID() *string {
+	if t == nil {
+		return nil
+	}
+	return t.AccountID
+}
+
+func (t *TaskModulrDescriptor) GetKey() *string {
+	if t == nil {
+		return nil
+	}
+	return t.Key
+}
+
+func (t *TaskModulrDescriptor) GetName() *string {
+	if t == nil {
+		return nil
+	}
+	return t.Name
+}
+
 // TaskModulrState - Internal progress state the task resumes from
 type TaskModulrState struct {
 }
@@ -22,60 +60,22 @@ func (t *TaskModulrState) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type TaskModulrDescriptor struct {
-	Name      *string `json:"name,omitempty"`
-	Key       *string `json:"key,omitempty"`
-	AccountID *string `json:"accountID,omitempty"`
-}
-
-func (t TaskModulrDescriptor) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(t, "", false)
-}
-
-func (t *TaskModulrDescriptor) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &t, "", false, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (t *TaskModulrDescriptor) GetName() *string {
-	if t == nil {
-		return nil
-	}
-	return t.Name
-}
-
-func (t *TaskModulrDescriptor) GetKey() *string {
-	if t == nil {
-		return nil
-	}
-	return t.Key
-}
-
-func (t *TaskModulrDescriptor) GetAccountID() *string {
-	if t == nil {
-		return nil
-	}
-	return t.AccountID
-}
-
 type TaskModulr struct {
-	// Unique identifier of the task
-	ID string `json:"id"`
 	// Identifier of the connector the task runs against
 	ConnectorID string `json:"connectorID"`
 	// When the task was created
-	CreatedAt time.Time `json:"createdAt"`
-	// When the task was last updated
-	UpdatedAt time.Time `json:"updatedAt"`
-	// Where a task stands, from pending or active through to stopped, terminated or failed
-	Status TaskStatus `json:"status"`
+	CreatedAt  time.Time            `json:"createdAt"`
+	Descriptor TaskModulrDescriptor `json:"descriptor"`
+	// Why the task failed, absent when it succeeded
+	Error *string `json:"error,omitempty"`
+	// Unique identifier of the task
+	ID string `json:"id"`
 	// Internal progress state the task resumes from
 	State *TaskModulrState `json:"state,omitempty"`
-	// Why the task failed, absent when it succeeded
-	Error      *string              `json:"error,omitempty"`
-	Descriptor TaskModulrDescriptor `json:"descriptor"`
+	// Where a task stands, from pending or active through to stopped, terminated or failed
+	Status TaskStatus `json:"status"`
+	// When the task was last updated
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (t TaskModulr) MarshalJSON() ([]byte, error) {
@@ -83,17 +83,10 @@ func (t TaskModulr) MarshalJSON() ([]byte, error) {
 }
 
 func (t *TaskModulr) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &t, "", false, []string{"id", "connectorID", "createdAt", "updatedAt", "status", "descriptor"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &t, "", false, []string{"connectorID", "createdAt", "descriptor", "id", "status", "updatedAt"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (t *TaskModulr) GetID() string {
-	if t == nil {
-		return ""
-	}
-	return t.ID
 }
 
 func (t *TaskModulr) GetConnectorID() string {
@@ -110,25 +103,11 @@ func (t *TaskModulr) GetCreatedAt() time.Time {
 	return t.CreatedAt
 }
 
-func (t *TaskModulr) GetUpdatedAt() time.Time {
+func (t *TaskModulr) GetDescriptor() TaskModulrDescriptor {
 	if t == nil {
-		return time.Time{}
+		return TaskModulrDescriptor{}
 	}
-	return t.UpdatedAt
-}
-
-func (t *TaskModulr) GetStatus() TaskStatus {
-	if t == nil {
-		return TaskStatus("")
-	}
-	return t.Status
-}
-
-func (t *TaskModulr) GetState() *TaskModulrState {
-	if t == nil {
-		return nil
-	}
-	return t.State
+	return t.Descriptor
 }
 
 func (t *TaskModulr) GetError() *string {
@@ -138,9 +117,30 @@ func (t *TaskModulr) GetError() *string {
 	return t.Error
 }
 
-func (t *TaskModulr) GetDescriptor() TaskModulrDescriptor {
+func (t *TaskModulr) GetID() string {
 	if t == nil {
-		return TaskModulrDescriptor{}
+		return ""
 	}
-	return t.Descriptor
+	return t.ID
+}
+
+func (t *TaskModulr) GetState() *TaskModulrState {
+	if t == nil {
+		return nil
+	}
+	return t.State
+}
+
+func (t *TaskModulr) GetStatus() TaskStatus {
+	if t == nil {
+		return TaskStatus("")
+	}
+	return t.Status
+}
+
+func (t *TaskModulr) GetUpdatedAt() time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return t.UpdatedAt
 }

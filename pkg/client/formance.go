@@ -71,13 +71,13 @@ func Pointer[T any](v T) *T { return &v }
 type Formance struct {
 	SDKVersion     string
 	Auth           *Auth
-	Ledger         *Ledger
-	Payments       *Payments
-	Webhooks       *Webhooks
-	Wallets        *Wallets
-	Orchestration  *Orchestration
-	Reconciliation *Reconciliation
 	Connectivity   *Connectivity
+	Ledger         *Ledger
+	Orchestration  *Orchestration
+	Payments       *Payments
+	Reconciliation *Reconciliation
+	Wallets        *Wallets
+	Webhooks       *Webhooks
 
 	sdkConfiguration config.SDKConfiguration
 	hooks            *hooks.Hooks
@@ -111,19 +111,6 @@ func WithServerIndex(serverIndex int) SDKOption {
 		}
 
 		sdk.sdkConfiguration.ServerIndex = serverIndex
-	}
-}
-
-// WithOrganization allows setting the organization variable for url substitution
-func WithOrganization(organization string) SDKOption {
-	return func(sdk *Formance) {
-		for idx := range sdk.sdkConfiguration.ServerVariables {
-			if _, ok := sdk.sdkConfiguration.ServerVariables[idx]["organization"]; !ok {
-				continue
-			}
-
-			sdk.sdkConfiguration.ServerVariables[idx]["organization"] = fmt.Sprintf("%v", organization)
-		}
 	}
 }
 
@@ -166,6 +153,19 @@ func WithEnvironment(environment ServerEnvironment) SDKOption {
 			}
 
 			sdk.sdkConfiguration.ServerVariables[idx]["environment"] = fmt.Sprintf("%v", environment)
+		}
+	}
+}
+
+// WithOrganization allows setting the organization variable for url substitution
+func WithOrganization(organization string) SDKOption {
+	return func(sdk *Formance) {
+		for idx := range sdk.sdkConfiguration.ServerVariables {
+			if _, ok := sdk.sdkConfiguration.ServerVariables[idx]["organization"]; !ok {
+				continue
+			}
+
+			sdk.sdkConfiguration.ServerVariables[idx]["organization"] = fmt.Sprintf("%v", organization)
 		}
 	}
 }
@@ -216,8 +216,8 @@ func New(opts ...SDKOption) *Formance {
 			ServerVariables: []map[string]string{
 				{},
 				{
-					"organization": "orgID-stackID",
 					"environment":  "eu.sandbox",
+					"organization": "orgID-stackID",
 				},
 			},
 		},
@@ -232,16 +232,21 @@ func New(opts ...SDKOption) *Formance {
 		sdk.sdkConfiguration.Client = &http.Client{Timeout: 60 * time.Second}
 	}
 
-	sdk.sdkConfiguration = sdk.hooks.SDKInit(sdk.sdkConfiguration)
+	currentServerURL, _ := sdk.sdkConfiguration.GetServerDetails()
+	serverURL := currentServerURL
+	serverURL, sdk.sdkConfiguration.Client = sdk.hooks.SDKInit(currentServerURL, sdk.sdkConfiguration.Client)
+	if currentServerURL != serverURL {
+		sdk.sdkConfiguration.ServerURL = serverURL
+	}
 
 	sdk.Auth = newAuth(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Ledger = newLedger(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Payments = newPayments(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Webhooks = newWebhooks(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Wallets = newWallets(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Orchestration = newOrchestration(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Reconciliation = newReconciliation(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.Connectivity = newConnectivity(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.Ledger = newLedger(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.Orchestration = newOrchestration(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.Payments = newPayments(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.Reconciliation = newReconciliation(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.Wallets = newWallets(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.Webhooks = newWebhooks(sdk, sdk.sdkConfiguration, sdk.hooks)
 
 	return sdk
 }

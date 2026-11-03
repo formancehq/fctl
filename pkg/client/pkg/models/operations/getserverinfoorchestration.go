@@ -10,12 +10,12 @@ import (
 type GetServerInfoOrchestrationResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Server information
+	ServerInfo *orchestration.ServerInfo
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Server information
-	ServerInfo *orchestration.ServerInfo
 }
 
 func (g *GetServerInfoOrchestrationResponse) GetContentType() string {
@@ -23,6 +23,13 @@ func (g *GetServerInfoOrchestrationResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetServerInfoOrchestrationResponse) GetServerInfo() *orchestration.ServerInfo {
+	if g == nil {
+		return nil
+	}
+	return g.ServerInfo
 }
 
 func (g *GetServerInfoOrchestrationResponse) GetStatusCode() int {
@@ -37,11 +44,4 @@ func (g *GetServerInfoOrchestrationResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetServerInfoOrchestrationResponse) GetServerInfo() *orchestration.ServerInfo {
-	if g == nil {
-		return nil
-	}
-	return g.ServerInfo
 }

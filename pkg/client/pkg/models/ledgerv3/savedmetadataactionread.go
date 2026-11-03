@@ -7,13 +7,13 @@ import (
 )
 
 type SavedMetadataActionRead struct {
+	DeleteMetadata *DeleteMetadataAction `json:"deleteMetadata,omitempty"`
+	// Turns the entry into a fill-gap that preserves log-ID and tx-ID continuity.
+	Drop           *DropAction               `json:"drop,omitempty"`
 	RewriteAddress *RewriteAddressActionRead `json:"rewriteAddress,omitempty"`
 	// `value` is a literal metadata string; `valueExpr` is a CEL expression typed against the current variant and evaluated at commit time (e.g. `log.reference`). Exactly one of the two should be set; if neither is set the value defaults to the empty string. Optional `type` coerces the produced string into a typed MetadataValue via the platform conversion matrix — one of "string" (default), "int64", "bool", "uint64", "int8"/"int16"/"int32", "uint8"/"uint16"/"uint32", "datetime".
 	//
-	SetMetadata    *SetMetadataActionRead `json:"setMetadata,omitempty"`
-	DeleteMetadata *DeleteMetadataAction  `json:"deleteMetadata,omitempty"`
-	// Turns the entry into a fill-gap that preserves log-ID and tx-ID continuity.
-	Drop *DropAction `json:"drop,omitempty"`
+	SetMetadata *SetMetadataActionRead `json:"setMetadata,omitempty"`
 }
 
 func (s SavedMetadataActionRead) MarshalJSON() ([]byte, error) {
@@ -25,20 +25,6 @@ func (s *SavedMetadataActionRead) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (s *SavedMetadataActionRead) GetRewriteAddress() *RewriteAddressActionRead {
-	if s == nil {
-		return nil
-	}
-	return s.RewriteAddress
-}
-
-func (s *SavedMetadataActionRead) GetSetMetadata() *SetMetadataActionRead {
-	if s == nil {
-		return nil
-	}
-	return s.SetMetadata
 }
 
 func (s *SavedMetadataActionRead) GetDeleteMetadata() *DeleteMetadataAction {
@@ -53,4 +39,18 @@ func (s *SavedMetadataActionRead) GetDrop() *DropAction {
 		return nil
 	}
 	return s.Drop
+}
+
+func (s *SavedMetadataActionRead) GetRewriteAddress() *RewriteAddressActionRead {
+	if s == nil {
+		return nil
+	}
+	return s.RewriteAddress
+}
+
+func (s *SavedMetadataActionRead) GetSetMetadata() *SetMetadataActionRead {
+	if s == nil {
+		return nil
+	}
+	return s.SetMetadata
 }

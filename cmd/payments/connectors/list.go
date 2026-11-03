@@ -163,7 +163,7 @@ func V3toConnectorData(connector payments.V3Connector) ConnectorData {
 	}
 }
 
-func V1toConnectorData(connector payments.Data) ConnectorData {
+func V1toConnectorData(connector payments.ConnectorsResponseData) ConnectorData {
 	return ConnectorData{
 		ID:       connector.ConnectorID,
 		Name:     connector.Name,

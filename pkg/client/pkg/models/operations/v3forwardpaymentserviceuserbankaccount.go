@@ -8,18 +8,18 @@ import (
 )
 
 type V3ForwardPaymentServiceUserBankAccountRequest struct {
+	V3ForwardPaymentServiceUserBankAccountRequest *payments.V3ForwardPaymentServiceUserBankAccountRequest `request:"mediaType=application/json"`
+	// The bank account ID
+	BankAccountID string `pathParam:"style=simple,explode=false,name=bankAccountID"`
 	// The payment service user ID
 	PaymentServiceUserID string `pathParam:"style=simple,explode=false,name=paymentServiceUserID"`
-	// The bank account ID
-	BankAccountID                                 string                                                  `pathParam:"style=simple,explode=false,name=bankAccountID"`
-	V3ForwardPaymentServiceUserBankAccountRequest *payments.V3ForwardPaymentServiceUserBankAccountRequest `request:"mediaType=application/json"`
 }
 
-func (v *V3ForwardPaymentServiceUserBankAccountRequest) GetPaymentServiceUserID() string {
+func (v *V3ForwardPaymentServiceUserBankAccountRequest) GetV3ForwardPaymentServiceUserBankAccountRequest() *payments.V3ForwardPaymentServiceUserBankAccountRequest {
 	if v == nil {
-		return ""
+		return nil
 	}
-	return v.PaymentServiceUserID
+	return v.V3ForwardPaymentServiceUserBankAccountRequest
 }
 
 func (v *V3ForwardPaymentServiceUserBankAccountRequest) GetBankAccountID() string {
@@ -29,11 +29,11 @@ func (v *V3ForwardPaymentServiceUserBankAccountRequest) GetBankAccountID() strin
 	return v.BankAccountID
 }
 
-func (v *V3ForwardPaymentServiceUserBankAccountRequest) GetV3ForwardPaymentServiceUserBankAccountRequest() *payments.V3ForwardPaymentServiceUserBankAccountRequest {
+func (v *V3ForwardPaymentServiceUserBankAccountRequest) GetPaymentServiceUserID() string {
 	if v == nil {
-		return nil
+		return ""
 	}
-	return v.V3ForwardPaymentServiceUserBankAccountRequest
+	return v.PaymentServiceUserID
 }
 
 // #region class-body-v3forwardpaymentserviceuserbankaccountrequest

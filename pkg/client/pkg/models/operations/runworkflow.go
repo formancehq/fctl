@@ -8,25 +8,11 @@ import (
 )
 
 type RunWorkflowRequest struct {
+	RequestBody map[string]string `request:"mediaType=application/json"`
+	// Wait end of the workflow before return
+	Wait *bool `queryParam:"style=form,explode=true,name=wait"`
 	// The flow id
 	WorkflowID string `pathParam:"style=simple,explode=false,name=workflowID"`
-	// Wait end of the workflow before return
-	Wait        *bool             `queryParam:"style=form,explode=true,name=wait"`
-	RequestBody map[string]string `request:"mediaType=application/json"`
-}
-
-func (r *RunWorkflowRequest) GetWorkflowID() string {
-	if r == nil {
-		return ""
-	}
-	return r.WorkflowID
-}
-
-func (r *RunWorkflowRequest) GetWait() *bool {
-	if r == nil {
-		return nil
-	}
-	return r.Wait
 }
 
 func (r *RunWorkflowRequest) GetRequestBody() map[string]string {
@@ -36,15 +22,29 @@ func (r *RunWorkflowRequest) GetRequestBody() map[string]string {
 	return r.RequestBody
 }
 
+func (r *RunWorkflowRequest) GetWait() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Wait
+}
+
+func (r *RunWorkflowRequest) GetWorkflowID() string {
+	if r == nil {
+		return ""
+	}
+	return r.WorkflowID
+}
+
 type RunWorkflowResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// The workflow instance
+	RunWorkflowResponse *orchestration.RunWorkflowResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// The workflow instance
-	RunWorkflowResponse *orchestration.RunWorkflowResponse
 }
 
 func (r *RunWorkflowResponse) GetContentType() string {
@@ -52,6 +52,13 @@ func (r *RunWorkflowResponse) GetContentType() string {
 		return ""
 	}
 	return r.ContentType
+}
+
+func (r *RunWorkflowResponse) GetRunWorkflowResponse() *orchestration.RunWorkflowResponse {
+	if r == nil {
+		return nil
+	}
+	return r.RunWorkflowResponse
 }
 
 func (r *RunWorkflowResponse) GetStatusCode() int {
@@ -66,11 +73,4 @@ func (r *RunWorkflowResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return r.RawResponse
-}
-
-func (r *RunWorkflowResponse) GetRunWorkflowResponse() *orchestration.RunWorkflowResponse {
-	if r == nil {
-		return nil
-	}
-	return r.RunWorkflowResponse
 }

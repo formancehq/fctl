@@ -13,40 +13,73 @@ import (
 // Status transitions are captured via the `adjustments` array; each
 // adjustment is a point-in-time snapshot from the PSP.
 type V3Order struct {
-	// Formance-assigned unique order ID (composed from the PSP reference and connector ID).
-	ID string `json:"id"`
-	// ID of the Formance connector this order was fetched from.
-	ConnectorID string `json:"connectorID"`
-	// Provider name of the connector (e.g. `coinbaseprime`).
-	Provider string `json:"provider"`
-	// PSP-assigned order reference. Unique within the connector; used as the storage dedup key.
-	Reference string `json:"reference"`
+	// Ordered history of state snapshots for this order. The most recent element reflects the current `status`.
+	Adjustments []V3OrderAdjustment `json:"adjustments,omitempty"`
+	// Volume-weighted average price across all fills so far, in `priceAsset` precision. Analytics field — may be absent if the PSP does not report it.
+	AverageFillPrice *big.Int `json:"averageFillPrice,omitempty"`
+	// Amount of base asset filled so far, as an integer at the base asset's precision. Null before any fill.
+	BaseQuantityFilled *big.Int `json:"baseQuantityFilled,omitempty"`
+	// Amount of base asset the order was placed for, as an integer at the base asset's precision.
+	BaseQuantityOrdered *big.Int `json:"baseQuantityOrdered"`
 	// Client-assigned ID supplied to the PSP for placement idempotency
 	// (e.g. Coinbase `client_order_id`, Kraken `cl_ord_id`, Binance
 	// `clientOrderId`). Stored for traceability only — Formance does
 	// NOT dedup on this field.
 	//
 	ClientOrderID *string `json:"clientOrderID,omitempty"`
+	// ID of the Formance connector this order was fetched from.
+	ConnectorID string `json:"connectorID"`
 	// When the order was created on the PSP.
 	CreatedAt time.Time `json:"createdAt"`
-	// When Formance last observed a state change on the order. Equivalent to the latest adjustment's `createdAt`.
-	UpdatedAt time.Time `json:"updatedAt"`
+	// Formance account ID of the wallet the destination asset was credited to. Null if unresolvable.
+	DestinationAccountID *string `json:"destinationAccountID,omitempty"`
+	// Asset being received, in `SYMBOL/precision` form.
+	// For BUY: the base currency. For SELL: the quote currency.
+	//
+	DestinationAsset string `json:"destinationAsset"`
 	// Whether an order buys or sells the base asset.
 	Direction V3OrderDirectionEnum `json:"direction"`
+	// Human-readable error from the PSP (e.g. rejection reason) when `status` is `FAILED`. Null otherwise.
+	Error *string `json:"error,omitempty"`
+	// Expiration instant for `GOOD_UNTIL_DATE_TIME` orders. Null for other time-in-force values.
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+	// Commission charged by the PSP for the order, as an integer in `feeAsset` precision.
+	Fee *big.Int `json:"fee,omitempty"`
+	// Currency the fee is denominated in, in `SYMBOL/precision` form. Typically the quote asset.
+	FeeAsset *string `json:"feeAsset,omitempty"`
+	// Formance-assigned unique order ID (composed from the PSP reference and connector ID).
+	ID string `json:"id"`
+	// Maximum price (for BUY) or minimum price (for SELL) at which the order may execute, in `priceAsset` precision. Required for LIMIT-family order types; null otherwise.
+	LimitPrice *big.Int `json:"limitPrice,omitempty"`
+	// Arbitrary key/value pairs attached to the resource
+	Metadata map[string]string `json:"metadata,omitempty"`
+	// Currency + precision under which `limitPrice`, `stopPrice`, and
+	// `averageFillPrice` should be interpreted. Separate from
+	// `quoteAsset` because some PSPs return price strings with more
+	// decimal digits than the quote currency's natural precision.
+	//
+	PriceAsset *string `json:"priceAsset,omitempty"`
+	// Provider name of the connector (e.g. `coinbaseprime`).
+	Provider string `json:"provider"`
+	// Total amount of quote currency exchanged so far, as reported by
+	// the PSP (e.g. Coinbase `filled_value`), at `quoteAsset`
+	// precision. For BUY: amount spent. For SELL: amount received.
+	//
+	QuoteAmount *big.Int `json:"quoteAmount,omitempty"`
+	// Quote currency with precision (e.g. `USD/2`). Null when the order has no quote-side amounts reported yet.
+	QuoteAsset *string `json:"quoteAsset,omitempty"`
+	// PSP-assigned order reference. Unique within the connector; used as the storage dedup key.
+	Reference string `json:"reference"`
+	// Formance account ID of the wallet the source asset was debited
+	// from. Null if the PSP did not return enough information to
+	// resolve it at ingestion time.
+	//
+	SourceAccountID *string `json:"sourceAccountID,omitempty"`
 	// Asset being spent, in `SYMBOL/precision` form (e.g. `USD/2`,
 	// `BTC/8`). For BUY: the quote currency. For SELL: the base
 	// currency.
 	//
 	SourceAsset string `json:"sourceAsset"`
-	// Asset being received, in `SYMBOL/precision` form.
-	// For BUY: the base currency. For SELL: the quote currency.
-	//
-	DestinationAsset string `json:"destinationAsset"`
-	// Exchange order type. Determines which price fields are meaningful on
-	// `V3Order`: LIMIT-family types use `limitPrice`; STOP-family types use
-	// `stopPrice`; TWAP/VWAP are time-weighted execution algorithms.
-	//
-	Type V3OrderTypeEnum `json:"type"`
 	// Lifecycle of an order on the exchange.
 	// `PENDING` — accepted by the exchange, not yet working.
 	// `OPEN` — live on the book, no fills yet.
@@ -57,12 +90,6 @@ type V3Order struct {
 	// `EXPIRED` — `timeInForce` elapsed before full fill, terminal.
 	//
 	Status V3OrderStatusEnum `json:"status"`
-	// Amount of base asset the order was placed for, as an integer at the base asset's precision.
-	BaseQuantityOrdered *big.Int `json:"baseQuantityOrdered"`
-	// Amount of base asset filled so far, as an integer at the base asset's precision. Null before any fill.
-	BaseQuantityFilled *big.Int `json:"baseQuantityFilled,omitempty"`
-	// Maximum price (for BUY) or minimum price (for SELL) at which the order may execute, in `priceAsset` precision. Required for LIMIT-family order types; null otherwise.
-	LimitPrice *big.Int `json:"limitPrice,omitempty"`
 	// Trigger price at which a STOP / STOP_LIMIT order activates, in `priceAsset` precision. Null for non-stop order types.
 	StopPrice *big.Int `json:"stopPrice,omitempty"`
 	// How long an order is valid on the exchange.
@@ -72,40 +99,13 @@ type V3Order struct {
 	// `FILL_OR_KILL` — fill fully and immediately, or cancel entirely.
 	//
 	TimeInForce V3TimeInForceEnum `json:"timeInForce"`
-	// Expiration instant for `GOOD_UNTIL_DATE_TIME` orders. Null for other time-in-force values.
-	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
-	// Commission charged by the PSP for the order, as an integer in `feeAsset` precision.
-	Fee *big.Int `json:"fee,omitempty"`
-	// Currency the fee is denominated in, in `SYMBOL/precision` form. Typically the quote asset.
-	FeeAsset *string `json:"feeAsset,omitempty"`
-	// Volume-weighted average price across all fills so far, in `priceAsset` precision. Analytics field — may be absent if the PSP does not report it.
-	AverageFillPrice *big.Int `json:"averageFillPrice,omitempty"`
-	// Total amount of quote currency exchanged so far, as reported by
-	// the PSP (e.g. Coinbase `filled_value`), at `quoteAsset`
-	// precision. For BUY: amount spent. For SELL: amount received.
+	// Exchange order type. Determines which price fields are meaningful on
+	// `V3Order`: LIMIT-family types use `limitPrice`; STOP-family types use
+	// `stopPrice`; TWAP/VWAP are time-weighted execution algorithms.
 	//
-	QuoteAmount *big.Int `json:"quoteAmount,omitempty"`
-	// Quote currency with precision (e.g. `USD/2`). Null when the order has no quote-side amounts reported yet.
-	QuoteAsset *string `json:"quoteAsset,omitempty"`
-	// Currency + precision under which `limitPrice`, `stopPrice`, and
-	// `averageFillPrice` should be interpreted. Separate from
-	// `quoteAsset` because some PSPs return price strings with more
-	// decimal digits than the quote currency's natural precision.
-	//
-	PriceAsset *string `json:"priceAsset,omitempty"`
-	// Formance account ID of the wallet the source asset was debited
-	// from. Null if the PSP did not return enough information to
-	// resolve it at ingestion time.
-	//
-	SourceAccountID *string `json:"sourceAccountID,omitempty"`
-	// Formance account ID of the wallet the destination asset was credited to. Null if unresolvable.
-	DestinationAccountID *string `json:"destinationAccountID,omitempty"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
-	// Ordered history of state snapshots for this order. The most recent element reflects the current `status`.
-	Adjustments []V3OrderAdjustment `json:"adjustments,omitempty"`
-	// Human-readable error from the PSP (e.g. rejection reason) when `status` is `FAILED`. Null otherwise.
-	Error *string `json:"error,omitempty"`
+	Type V3OrderTypeEnum `json:"type"`
+	// When Formance last observed a state change on the order. Equivalent to the latest adjustment's `createdAt`.
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (v V3Order) MarshalJSON() ([]byte, error) {
@@ -119,95 +119,18 @@ func (v *V3Order) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V3Order) GetID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ID
-}
-
-func (v *V3Order) GetConnectorID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ConnectorID
-}
-
-func (v *V3Order) GetProvider() string {
-	if v == nil {
-		return ""
-	}
-	return v.Provider
-}
-
-func (v *V3Order) GetReference() string {
-	if v == nil {
-		return ""
-	}
-	return v.Reference
-}
-
-func (v *V3Order) GetClientOrderID() *string {
+func (v *V3Order) GetAdjustments() []V3OrderAdjustment {
 	if v == nil {
 		return nil
 	}
-	return v.ClientOrderID
+	return v.Adjustments
 }
 
-func (v *V3Order) GetCreatedAt() time.Time {
+func (v *V3Order) GetAverageFillPrice() *big.Int {
 	if v == nil {
-		return time.Time{}
+		return nil
 	}
-	return v.CreatedAt
-}
-
-func (v *V3Order) GetUpdatedAt() time.Time {
-	if v == nil {
-		return time.Time{}
-	}
-	return v.UpdatedAt
-}
-
-func (v *V3Order) GetDirection() V3OrderDirectionEnum {
-	if v == nil {
-		return V3OrderDirectionEnum("")
-	}
-	return v.Direction
-}
-
-func (v *V3Order) GetSourceAsset() string {
-	if v == nil {
-		return ""
-	}
-	return v.SourceAsset
-}
-
-func (v *V3Order) GetDestinationAsset() string {
-	if v == nil {
-		return ""
-	}
-	return v.DestinationAsset
-}
-
-func (v *V3Order) GetType() V3OrderTypeEnum {
-	if v == nil {
-		return V3OrderTypeEnum("")
-	}
-	return v.Type
-}
-
-func (v *V3Order) GetStatus() V3OrderStatusEnum {
-	if v == nil {
-		return V3OrderStatusEnum("")
-	}
-	return v.Status
-}
-
-func (v *V3Order) GetBaseQuantityOrdered() *big.Int {
-	if v == nil {
-		return big.NewInt(0)
-	}
-	return v.BaseQuantityOrdered
+	return v.AverageFillPrice
 }
 
 func (v *V3Order) GetBaseQuantityFilled() *big.Int {
@@ -217,25 +140,60 @@ func (v *V3Order) GetBaseQuantityFilled() *big.Int {
 	return v.BaseQuantityFilled
 }
 
-func (v *V3Order) GetLimitPrice() *big.Int {
+func (v *V3Order) GetBaseQuantityOrdered() *big.Int {
+	if v == nil {
+		return big.NewInt(0)
+	}
+	return v.BaseQuantityOrdered
+}
+
+func (v *V3Order) GetClientOrderID() *string {
 	if v == nil {
 		return nil
 	}
-	return v.LimitPrice
+	return v.ClientOrderID
 }
 
-func (v *V3Order) GetStopPrice() *big.Int {
+func (v *V3Order) GetConnectorID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ConnectorID
+}
+
+func (v *V3Order) GetCreatedAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.CreatedAt
+}
+
+func (v *V3Order) GetDestinationAccountID() *string {
 	if v == nil {
 		return nil
 	}
-	return v.StopPrice
+	return v.DestinationAccountID
 }
 
-func (v *V3Order) GetTimeInForce() V3TimeInForceEnum {
+func (v *V3Order) GetDestinationAsset() string {
 	if v == nil {
-		return V3TimeInForceEnum("")
+		return ""
 	}
-	return v.TimeInForce
+	return v.DestinationAsset
+}
+
+func (v *V3Order) GetDirection() V3OrderDirectionEnum {
+	if v == nil {
+		return V3OrderDirectionEnum("")
+	}
+	return v.Direction
+}
+
+func (v *V3Order) GetError() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Error
 }
 
 func (v *V3Order) GetExpiresAt() *time.Time {
@@ -259,11 +217,39 @@ func (v *V3Order) GetFeeAsset() *string {
 	return v.FeeAsset
 }
 
-func (v *V3Order) GetAverageFillPrice() *big.Int {
+func (v *V3Order) GetID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ID
+}
+
+func (v *V3Order) GetLimitPrice() *big.Int {
 	if v == nil {
 		return nil
 	}
-	return v.AverageFillPrice
+	return v.LimitPrice
+}
+
+func (v *V3Order) GetMetadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.Metadata
+}
+
+func (v *V3Order) GetPriceAsset() *string {
+	if v == nil {
+		return nil
+	}
+	return v.PriceAsset
+}
+
+func (v *V3Order) GetProvider() string {
+	if v == nil {
+		return ""
+	}
+	return v.Provider
 }
 
 func (v *V3Order) GetQuoteAmount() *big.Int {
@@ -280,11 +266,11 @@ func (v *V3Order) GetQuoteAsset() *string {
 	return v.QuoteAsset
 }
 
-func (v *V3Order) GetPriceAsset() *string {
+func (v *V3Order) GetReference() string {
 	if v == nil {
-		return nil
+		return ""
 	}
-	return v.PriceAsset
+	return v.Reference
 }
 
 func (v *V3Order) GetSourceAccountID() *string {
@@ -294,32 +280,46 @@ func (v *V3Order) GetSourceAccountID() *string {
 	return v.SourceAccountID
 }
 
-func (v *V3Order) GetDestinationAccountID() *string {
+func (v *V3Order) GetSourceAsset() string {
 	if v == nil {
-		return nil
+		return ""
 	}
-	return v.DestinationAccountID
+	return v.SourceAsset
 }
 
-func (v *V3Order) GetMetadata() map[string]string {
+func (v *V3Order) GetStatus() V3OrderStatusEnum {
 	if v == nil {
-		return nil
+		return V3OrderStatusEnum("")
 	}
-	return v.Metadata
+	return v.Status
 }
 
-func (v *V3Order) GetAdjustments() []V3OrderAdjustment {
+func (v *V3Order) GetStopPrice() *big.Int {
 	if v == nil {
 		return nil
 	}
-	return v.Adjustments
+	return v.StopPrice
 }
 
-func (v *V3Order) GetError() *string {
+func (v *V3Order) GetTimeInForce() V3TimeInForceEnum {
 	if v == nil {
-		return nil
+		return V3TimeInForceEnum("")
 	}
-	return v.Error
+	return v.TimeInForce
+}
+
+func (v *V3Order) GetType() V3OrderTypeEnum {
+	if v == nil {
+		return V3OrderTypeEnum("")
+	}
+	return v.Type
+}
+
+func (v *V3Order) GetUpdatedAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.UpdatedAt
 }
 
 // #region class-body-v3order

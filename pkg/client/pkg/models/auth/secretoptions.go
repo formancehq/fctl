@@ -3,17 +3,10 @@
 package auth
 
 type SecretOptions struct {
-	// Human-readable name identifying the secret
-	Name string `json:"name"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]string `json:"metadata,omitempty"`
-}
-
-func (s *SecretOptions) GetName() string {
-	if s == nil {
-		return ""
-	}
-	return s.Name
+	// Human-readable name identifying the secret
+	Name string `json:"name"`
 }
 
 func (s *SecretOptions) GetMetadata() map[string]string {
@@ -21,4 +14,11 @@ func (s *SecretOptions) GetMetadata() map[string]string {
 		return nil
 	}
 	return s.Metadata
+}
+
+func (s *SecretOptions) GetName() string {
+	if s == nil {
+		return ""
+	}
+	return s.Name
 }

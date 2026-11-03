@@ -10,12 +10,12 @@ import (
 type CreateTriggerResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Created trigger
+	CreateTriggerResponse *orchestration.CreateTriggerResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Created trigger
-	CreateTriggerResponse *orchestration.CreateTriggerResponse
 }
 
 func (c *CreateTriggerResponse) GetContentType() string {
@@ -23,6 +23,13 @@ func (c *CreateTriggerResponse) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
+}
+
+func (c *CreateTriggerResponse) GetCreateTriggerResponse() *orchestration.CreateTriggerResponse {
+	if c == nil {
+		return nil
+	}
+	return c.CreateTriggerResponse
 }
 
 func (c *CreateTriggerResponse) GetStatusCode() int {
@@ -37,11 +44,4 @@ func (c *CreateTriggerResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return c.RawResponse
-}
-
-func (c *CreateTriggerResponse) GetCreateTriggerResponse() *orchestration.CreateTriggerResponse {
-	if c == nil {
-		return nil
-	}
-	return c.CreateTriggerResponse
 }

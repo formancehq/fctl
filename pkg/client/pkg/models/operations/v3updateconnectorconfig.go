@@ -8,16 +8,9 @@ import (
 )
 
 type V3UpdateConnectorConfigRequest struct {
-	// The connector ID
-	ConnectorID       string                      `pathParam:"style=simple,explode=false,name=connectorID"`
 	V3ConnectorConfig *payments.V3ConnectorConfig `request:"mediaType=application/json"`
-}
-
-func (v *V3UpdateConnectorConfigRequest) GetConnectorID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ConnectorID
+	// The connector ID
+	ConnectorID string `pathParam:"style=simple,explode=false,name=connectorID"`
 }
 
 func (v *V3UpdateConnectorConfigRequest) GetV3ConnectorConfig() *payments.V3ConnectorConfig {
@@ -186,6 +179,13 @@ func (v *V3UpdateConnectorConfigRequest) GetV3ConnectorConfigWise() *payments.V3
 		return v.V3WiseConfig
 	}
 	return nil
+}
+
+func (v *V3UpdateConnectorConfigRequest) GetConnectorID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ConnectorID
 }
 
 // #region class-body-v3updateconnectorconfigrequest

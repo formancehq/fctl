@@ -8,30 +8,16 @@ import (
 )
 
 type ListReconciliationsRequest struct {
-	// The maximum number of results to return per page.
-	//
-	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
+	RequestBody map[string]any `request:"mediaType=application/json"`
 	// Parameter used in pagination requests. Maximum page size is set to 15.
 	// Set to the value of next for the next page of results.
 	// Set to the value of previous for the previous page of results.
 	// No other parameters can be set when this parameter is set.
 	//
-	Cursor      *string        `queryParam:"style=form,explode=true,name=cursor"`
-	RequestBody map[string]any `request:"mediaType=application/json"`
-}
-
-func (l *ListReconciliationsRequest) GetPageSize() *int64 {
-	if l == nil {
-		return nil
-	}
-	return l.PageSize
-}
-
-func (l *ListReconciliationsRequest) GetCursor() *string {
-	if l == nil {
-		return nil
-	}
-	return l.Cursor
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// The maximum number of results to return per page.
+	//
+	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
 }
 
 func (l *ListReconciliationsRequest) GetRequestBody() map[string]any {
@@ -41,15 +27,29 @@ func (l *ListReconciliationsRequest) GetRequestBody() map[string]any {
 	return l.RequestBody
 }
 
+func (l *ListReconciliationsRequest) GetCursor() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Cursor
+}
+
+func (l *ListReconciliationsRequest) GetPageSize() *int64 {
+	if l == nil {
+		return nil
+	}
+	return l.PageSize
+}
+
 type ListReconciliationsResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	ReconciliationsCursorResponse *reconciliation.ReconciliationsCursorResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	ReconciliationsCursorResponse *reconciliation.ReconciliationsCursorResponse
 }
 
 func (l *ListReconciliationsResponse) GetContentType() string {
@@ -57,6 +57,13 @@ func (l *ListReconciliationsResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListReconciliationsResponse) GetReconciliationsCursorResponse() *reconciliation.ReconciliationsCursorResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ReconciliationsCursorResponse
 }
 
 func (l *ListReconciliationsResponse) GetStatusCode() int {
@@ -71,11 +78,4 @@ func (l *ListReconciliationsResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return l.RawResponse
-}
-
-func (l *ListReconciliationsResponse) GetReconciliationsCursorResponse() *reconciliation.ReconciliationsCursorResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ReconciliationsCursorResponse
 }

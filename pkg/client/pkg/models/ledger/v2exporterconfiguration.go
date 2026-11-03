@@ -3,17 +3,10 @@
 package ledger
 
 type V2ExporterConfiguration struct {
-	// Name of the exporter driver to use
-	Driver string `json:"driver"`
 	// Driver-specific configuration for the exporter
 	Config map[string]any `json:"config"`
-}
-
-func (v *V2ExporterConfiguration) GetDriver() string {
-	if v == nil {
-		return ""
-	}
-	return v.Driver
+	// Name of the exporter driver to use
+	Driver string `json:"driver"`
 }
 
 func (v *V2ExporterConfiguration) GetConfig() map[string]any {
@@ -21,6 +14,13 @@ func (v *V2ExporterConfiguration) GetConfig() map[string]any {
 		return map[string]any{}
 	}
 	return v.Config
+}
+
+func (v *V2ExporterConfiguration) GetDriver() string {
+	if v == nil {
+		return ""
+	}
+	return v.Driver
 }
 
 // #region class-body-v2exporterconfiguration

@@ -9,16 +9,16 @@ import (
 
 // V2Schema - Complete schema structure with metadata
 type V2Schema struct {
-	// Schema version
-	Version string `json:"version"`
-	// Schema creation timestamp
-	CreatedAt time.Time `json:"createdAt"`
 	// Chart of account
 	Chart map[string]V2ChartSegment `json:"chart"`
-	// Transaction templates
-	Transactions map[string]V2TransactionTemplate `json:"transactions,omitempty"`
+	// Schema creation timestamp
+	CreatedAt time.Time `json:"createdAt"`
 	// Query templates
 	Queries map[string]V2QueryTemplate `json:"queries,omitempty"`
+	// Transaction templates
+	Transactions map[string]V2TransactionTemplate `json:"transactions,omitempty"`
+	// Schema version
+	Version string `json:"version"`
 }
 
 func (v V2Schema) MarshalJSON() ([]byte, error) {
@@ -26,24 +26,10 @@ func (v V2Schema) MarshalJSON() ([]byte, error) {
 }
 
 func (v *V2Schema) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"version", "createdAt", "chart"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"chart", "createdAt", "version"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (v *V2Schema) GetVersion() string {
-	if v == nil {
-		return ""
-	}
-	return v.Version
-}
-
-func (v *V2Schema) GetCreatedAt() time.Time {
-	if v == nil {
-		return time.Time{}
-	}
-	return v.CreatedAt
 }
 
 func (v *V2Schema) GetChart() map[string]V2ChartSegment {
@@ -53,11 +39,11 @@ func (v *V2Schema) GetChart() map[string]V2ChartSegment {
 	return v.Chart
 }
 
-func (v *V2Schema) GetTransactions() map[string]V2TransactionTemplate {
+func (v *V2Schema) GetCreatedAt() time.Time {
 	if v == nil {
-		return nil
+		return time.Time{}
 	}
-	return v.Transactions
+	return v.CreatedAt
 }
 
 func (v *V2Schema) GetQueries() map[string]V2QueryTemplate {
@@ -65,6 +51,20 @@ func (v *V2Schema) GetQueries() map[string]V2QueryTemplate {
 		return nil
 	}
 	return v.Queries
+}
+
+func (v *V2Schema) GetTransactions() map[string]V2TransactionTemplate {
+	if v == nil {
+		return nil
+	}
+	return v.Transactions
+}
+
+func (v *V2Schema) GetVersion() string {
+	if v == nil {
+		return ""
+	}
+	return v.Version
 }
 
 // #region class-body-v2schema

@@ -8,11 +8,11 @@ import (
 )
 
 type ConnectorVersionSummary struct {
-	// Version tag (e.g. `v1.4.2`)
-	Version string `json:"version"`
 	// Image digest pinning this version immutably, when known
 	Digest      *string    `json:"digest,omitempty"`
 	ReleaseDate *time.Time `json:"releaseDate,omitempty"`
+	// Version tag (e.g. `v1.4.2`)
+	Version string `json:"version"`
 }
 
 func (c ConnectorVersionSummary) MarshalJSON() ([]byte, error) {
@@ -24,13 +24,6 @@ func (c *ConnectorVersionSummary) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (c *ConnectorVersionSummary) GetVersion() string {
-	if c == nil {
-		return ""
-	}
-	return c.Version
 }
 
 func (c *ConnectorVersionSummary) GetDigest() *string {
@@ -45,4 +38,11 @@ func (c *ConnectorVersionSummary) GetReleaseDate() *time.Time {
 		return nil
 	}
 	return c.ReleaseDate
+}
+
+func (c *ConnectorVersionSummary) GetVersion() string {
+	if c == nil {
+		return ""
+	}
+	return c.Version
 }

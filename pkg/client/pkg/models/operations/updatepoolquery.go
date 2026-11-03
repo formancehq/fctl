@@ -8,16 +8,9 @@ import (
 )
 
 type UpdatePoolQueryRequest struct {
-	// The pool ID.
-	PoolID                 string                          `pathParam:"style=simple,explode=false,name=poolId"`
 	UpdatePoolQueryRequest payments.UpdatePoolQueryRequest `request:"mediaType=application/json"`
-}
-
-func (u *UpdatePoolQueryRequest) GetPoolID() string {
-	if u == nil {
-		return ""
-	}
-	return u.PoolID
+	// The pool ID.
+	PoolID string `pathParam:"style=simple,explode=false,name=poolId"`
 }
 
 func (u *UpdatePoolQueryRequest) GetUpdatePoolQueryRequest() payments.UpdatePoolQueryRequest {
@@ -25,6 +18,13 @@ func (u *UpdatePoolQueryRequest) GetUpdatePoolQueryRequest() payments.UpdatePool
 		return payments.UpdatePoolQueryRequest{}
 	}
 	return u.UpdatePoolQueryRequest
+}
+
+func (u *UpdatePoolQueryRequest) GetPoolID() string {
+	if u == nil {
+		return ""
+	}
+	return u.PoolID
 }
 
 type UpdatePoolQueryResponse struct {

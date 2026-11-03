@@ -4,18 +4,18 @@ package ledger
 
 // Cursor - Paginated cursor wrapping the list of accounts
 type Cursor struct {
-	PageSize int64     `json:"pageSize"`
-	HasMore  bool      `json:"hasMore"`
-	Previous *string   `json:"previous,omitempty"`
-	Next     *string   `json:"next,omitempty"`
 	Data     []Account `json:"data"`
+	HasMore  bool      `json:"hasMore"`
+	Next     *string   `json:"next,omitempty"`
+	PageSize int64     `json:"pageSize"`
+	Previous *string   `json:"previous,omitempty"`
 }
 
-func (c *Cursor) GetPageSize() int64 {
+func (c *Cursor) GetData() []Account {
 	if c == nil {
-		return 0
+		return []Account{}
 	}
-	return c.PageSize
+	return c.Data
 }
 
 func (c *Cursor) GetHasMore() bool {
@@ -25,13 +25,6 @@ func (c *Cursor) GetHasMore() bool {
 	return c.HasMore
 }
 
-func (c *Cursor) GetPrevious() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Previous
-}
-
 func (c *Cursor) GetNext() *string {
 	if c == nil {
 		return nil
@@ -39,11 +32,18 @@ func (c *Cursor) GetNext() *string {
 	return c.Next
 }
 
-func (c *Cursor) GetData() []Account {
+func (c *Cursor) GetPageSize() int64 {
 	if c == nil {
-		return []Account{}
+		return 0
 	}
-	return c.Data
+	return c.PageSize
+}
+
+func (c *Cursor) GetPrevious() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Previous
 }
 
 type AccountsCursorResponse struct {

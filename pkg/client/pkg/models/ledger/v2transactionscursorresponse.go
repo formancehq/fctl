@@ -8,6 +8,64 @@ import (
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
 )
 
+// V2TransactionsCursorResponseCursor - Paginated cursor wrapping the list of transactions
+type V2TransactionsCursorResponseCursor struct {
+	Data     []V2Transaction `json:"data"`
+	HasMore  bool            `json:"hasMore"`
+	Next     *string         `json:"next,omitempty"`
+	PageSize int64           `json:"pageSize"`
+	Previous *string         `json:"previous,omitempty"`
+}
+
+func (v V2TransactionsCursorResponseCursor) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(v, "", false)
+}
+
+func (v *V2TransactionsCursorResponseCursor) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"data", "hasMore", "pageSize"}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *V2TransactionsCursorResponseCursor) GetData() []V2Transaction {
+	if v == nil {
+		return []V2Transaction{}
+	}
+	return v.Data
+}
+
+func (v *V2TransactionsCursorResponseCursor) GetHasMore() bool {
+	if v == nil {
+		return false
+	}
+	return v.HasMore
+}
+
+func (v *V2TransactionsCursorResponseCursor) GetNext() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Next
+}
+
+func (v *V2TransactionsCursorResponseCursor) GetPageSize() int64 {
+	if v == nil {
+		return 0
+	}
+	return v.PageSize
+}
+
+func (v *V2TransactionsCursorResponseCursor) GetPrevious() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Previous
+}
+
+// #region class-body-v2transactionscursorresponsecursor
+// #endregion class-body-v2transactionscursorresponsecursor
+
 // V2TransactionsCursorResponseResource - The resource type carried by this cursor
 type V2TransactionsCursorResponseResource string
 
@@ -32,69 +90,11 @@ func (e *V2TransactionsCursorResponseResource) UnmarshalJSON(data []byte) error 
 	}
 }
 
-// V2TransactionsCursorResponseCursor - Paginated cursor wrapping the list of transactions
-type V2TransactionsCursorResponseCursor struct {
-	PageSize int64           `json:"pageSize"`
-	HasMore  bool            `json:"hasMore"`
-	Previous *string         `json:"previous,omitempty"`
-	Next     *string         `json:"next,omitempty"`
-	Data     []V2Transaction `json:"data"`
-}
-
-func (v V2TransactionsCursorResponseCursor) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(v, "", false)
-}
-
-func (v *V2TransactionsCursorResponseCursor) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"pageSize", "hasMore", "data"}); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (v *V2TransactionsCursorResponseCursor) GetPageSize() int64 {
-	if v == nil {
-		return 0
-	}
-	return v.PageSize
-}
-
-func (v *V2TransactionsCursorResponseCursor) GetHasMore() bool {
-	if v == nil {
-		return false
-	}
-	return v.HasMore
-}
-
-func (v *V2TransactionsCursorResponseCursor) GetPrevious() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Previous
-}
-
-func (v *V2TransactionsCursorResponseCursor) GetNext() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Next
-}
-
-func (v *V2TransactionsCursorResponseCursor) GetData() []V2Transaction {
-	if v == nil {
-		return []V2Transaction{}
-	}
-	return v.Data
-}
-
-// #region class-body-v2transactionscursorresponsecursor
-// #endregion class-body-v2transactionscursorresponsecursor
-
 type V2TransactionsCursorResponse struct {
-	// The resource type carried by this cursor
-	Resource *V2TransactionsCursorResponseResource `json:"resource,omitempty"`
 	// Paginated cursor wrapping the list of transactions
 	Cursor V2TransactionsCursorResponseCursor `json:"cursor"`
+	// The resource type carried by this cursor
+	Resource *V2TransactionsCursorResponseResource `json:"resource,omitempty"`
 }
 
 func (v V2TransactionsCursorResponse) MarshalJSON() ([]byte, error) {
@@ -108,18 +108,18 @@ func (v *V2TransactionsCursorResponse) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2TransactionsCursorResponse) GetResource() *V2TransactionsCursorResponseResource {
-	if v == nil {
-		return nil
-	}
-	return v.Resource
-}
-
 func (v *V2TransactionsCursorResponse) GetCursor() V2TransactionsCursorResponseCursor {
 	if v == nil {
 		return V2TransactionsCursorResponseCursor{}
 	}
 	return v.Cursor
+}
+
+func (v *V2TransactionsCursorResponse) GetResource() *V2TransactionsCursorResponseResource {
+	if v == nil {
+		return nil
+	}
+	return v.Resource
 }
 
 // #region class-body-v2transactionscursorresponse

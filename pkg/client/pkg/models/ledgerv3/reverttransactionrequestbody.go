@@ -7,10 +7,10 @@ import (
 )
 
 type RevertTransactionRequestBody struct {
-	// Force revert even if accounts don't have sufficient funds
-	Force *bool `default:"false" json:"force"`
 	// Set the timestamp of the reverted transaction to the original transaction timestamp
 	AtEffectiveDate *bool `default:"false" json:"atEffectiveDate"`
+	// Force revert even if accounts don't have sufficient funds
+	Force *bool `default:"false" json:"force"`
 	// Metadata for the revert transaction (supports typed values). Cluster policy defaults allow 128 entries per entity, 256 bytes per key, 16384 bytes per value, 65536 bytes per entity, and 1048576 bytes per request. Effective ceilings are configurable through the replicated cluster policy.
 	Metadata map[string]*MetadataValue `json:"metadata,omitempty"`
 }
@@ -26,18 +26,18 @@ func (r *RevertTransactionRequestBody) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (r *RevertTransactionRequestBody) GetForce() *bool {
-	if r == nil {
-		return nil
-	}
-	return r.Force
-}
-
 func (r *RevertTransactionRequestBody) GetAtEffectiveDate() *bool {
 	if r == nil {
 		return nil
 	}
 	return r.AtEffectiveDate
+}
+
+func (r *RevertTransactionRequestBody) GetForce() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Force
 }
 
 func (r *RevertTransactionRequestBody) GetMetadata() map[string]*MetadataValue {

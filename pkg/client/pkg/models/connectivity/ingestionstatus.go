@@ -50,18 +50,18 @@ func (e *State) UnmarshalJSON(data []byte) error {
 }
 
 type IngestionStatus struct {
-	// Last recorded ingestion state; it can be stale. paused can represent requested suspension before ingestion exists. finished is successful bounded completion.
-	State    *State             `json:"state,omitempty"`
-	Progress *IngestionProgress `json:"progress,omitempty"`
 	// Last recorded ingestion error string, possibly historical after retry. Presence alone does not indicate an active error. No occurrence timestamp is available.
-	LastError *string `json:"lastError,omitempty"`
+	LastError *string            `json:"lastError,omitempty"`
+	Progress  *IngestionProgress `json:"progress,omitempty"`
+	// Last recorded ingestion state; it can be stale. paused can represent requested suspension before ingestion exists. finished is successful bounded completion.
+	State *State `json:"state,omitempty"`
 }
 
-func (i *IngestionStatus) GetState() *State {
+func (i *IngestionStatus) GetLastError() *string {
 	if i == nil {
 		return nil
 	}
-	return i.State
+	return i.LastError
 }
 
 func (i *IngestionStatus) GetProgress() *IngestionProgress {
@@ -71,9 +71,9 @@ func (i *IngestionStatus) GetProgress() *IngestionProgress {
 	return i.Progress
 }
 
-func (i *IngestionStatus) GetLastError() *string {
+func (i *IngestionStatus) GetState() *State {
 	if i == nil {
 		return nil
 	}
-	return i.LastError
+	return i.State
 }

@@ -7,17 +7,10 @@ import (
 )
 
 type V2DeleteLedgerMetadataRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 	// Key to remove.
 	Key string `pathParam:"style=simple,explode=false,name=key"`
-}
-
-func (v *V2DeleteLedgerMetadataRequest) GetLedger() string {
-	if v == nil {
-		return ""
-	}
-	return v.Ledger
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 }
 
 func (v *V2DeleteLedgerMetadataRequest) GetKey() string {
@@ -25,6 +18,13 @@ func (v *V2DeleteLedgerMetadataRequest) GetKey() string {
 		return ""
 	}
 	return v.Key
+}
+
+func (v *V2DeleteLedgerMetadataRequest) GetLedger() string {
+	if v == nil {
+		return ""
+	}
+	return v.Ledger
 }
 
 // #region class-body-v2deleteledgermetadatarequest

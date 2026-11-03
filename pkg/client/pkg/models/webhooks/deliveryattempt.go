@@ -40,28 +40,28 @@ func (e *Outcome) UnmarshalJSON(data []byte) error {
 }
 
 type DeliveryAttempt struct {
-	// Unique identifier of the attempt
-	ID string `json:"id"`
-	// Identifier of the delivery this attempt belongs to
-	DeliveryID string `json:"deliveryID"`
 	// Position of this attempt within its retry cycle
 	AttemptNumber int64 `json:"attemptNumber"`
-	// Retry cycle this attempt belongs to
-	ReplayGeneration int64 `json:"replayGeneration"`
-	// URL the attempt was sent to
-	Endpoint string `json:"endpoint"`
-	// How the attempt ended. A retryable failure is retried, a permanent failure is not
-	Outcome Outcome `json:"outcome"`
-	// HTTP status code returned by the endpoint
-	StatusCode int64 `json:"statusCode"`
-	// Error reported by the attempt, when it did not succeed
-	Error *string `json:"error,omitempty"`
-	// How long the attempt took, in milliseconds
-	DurationMillis *int64 `json:"durationMillis,omitempty"`
-	// Truncated body returned by the endpoint, kept for troubleshooting
-	ResponseExcerpt *string `json:"responseExcerpt,omitempty"`
 	// When the attempt was made
 	CreatedAt time.Time `json:"createdAt"`
+	// Identifier of the delivery this attempt belongs to
+	DeliveryID string `json:"deliveryID"`
+	// How long the attempt took, in milliseconds
+	DurationMillis *int64 `json:"durationMillis,omitempty"`
+	// URL the attempt was sent to
+	Endpoint string `json:"endpoint"`
+	// Error reported by the attempt, when it did not succeed
+	Error *string `json:"error,omitempty"`
+	// Unique identifier of the attempt
+	ID string `json:"id"`
+	// How the attempt ended. A retryable failure is retried, a permanent failure is not
+	Outcome Outcome `json:"outcome"`
+	// Retry cycle this attempt belongs to
+	ReplayGeneration int64 `json:"replayGeneration"`
+	// Truncated body returned by the endpoint, kept for troubleshooting
+	ResponseExcerpt *string `json:"responseExcerpt,omitempty"`
+	// HTTP status code returned by the endpoint
+	StatusCode int64 `json:"statusCode"`
 }
 
 func (d DeliveryAttempt) MarshalJSON() ([]byte, error) {
@@ -75,11 +75,18 @@ func (d *DeliveryAttempt) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (d *DeliveryAttempt) GetID() string {
+func (d *DeliveryAttempt) GetAttemptNumber() int64 {
 	if d == nil {
-		return ""
+		return 0
 	}
-	return d.ID
+	return d.AttemptNumber
+}
+
+func (d *DeliveryAttempt) GetCreatedAt() time.Time {
+	if d == nil {
+		return time.Time{}
+	}
+	return d.CreatedAt
 }
 
 func (d *DeliveryAttempt) GetDeliveryID() string {
@@ -89,18 +96,11 @@ func (d *DeliveryAttempt) GetDeliveryID() string {
 	return d.DeliveryID
 }
 
-func (d *DeliveryAttempt) GetAttemptNumber() int64 {
+func (d *DeliveryAttempt) GetDurationMillis() *int64 {
 	if d == nil {
-		return 0
+		return nil
 	}
-	return d.AttemptNumber
-}
-
-func (d *DeliveryAttempt) GetReplayGeneration() int64 {
-	if d == nil {
-		return 0
-	}
-	return d.ReplayGeneration
+	return d.DurationMillis
 }
 
 func (d *DeliveryAttempt) GetEndpoint() string {
@@ -110,20 +110,6 @@ func (d *DeliveryAttempt) GetEndpoint() string {
 	return d.Endpoint
 }
 
-func (d *DeliveryAttempt) GetOutcome() Outcome {
-	if d == nil {
-		return Outcome("")
-	}
-	return d.Outcome
-}
-
-func (d *DeliveryAttempt) GetStatusCode() int64 {
-	if d == nil {
-		return 0
-	}
-	return d.StatusCode
-}
-
 func (d *DeliveryAttempt) GetError() *string {
 	if d == nil {
 		return nil
@@ -131,11 +117,25 @@ func (d *DeliveryAttempt) GetError() *string {
 	return d.Error
 }
 
-func (d *DeliveryAttempt) GetDurationMillis() *int64 {
+func (d *DeliveryAttempt) GetID() string {
 	if d == nil {
-		return nil
+		return ""
 	}
-	return d.DurationMillis
+	return d.ID
+}
+
+func (d *DeliveryAttempt) GetOutcome() Outcome {
+	if d == nil {
+		return Outcome("")
+	}
+	return d.Outcome
+}
+
+func (d *DeliveryAttempt) GetReplayGeneration() int64 {
+	if d == nil {
+		return 0
+	}
+	return d.ReplayGeneration
 }
 
 func (d *DeliveryAttempt) GetResponseExcerpt() *string {
@@ -145,9 +145,9 @@ func (d *DeliveryAttempt) GetResponseExcerpt() *string {
 	return d.ResponseExcerpt
 }
 
-func (d *DeliveryAttempt) GetCreatedAt() time.Time {
+func (d *DeliveryAttempt) GetStatusCode() int64 {
 	if d == nil {
-		return time.Time{}
+		return 0
 	}
-	return d.CreatedAt
+	return d.StatusCode
 }

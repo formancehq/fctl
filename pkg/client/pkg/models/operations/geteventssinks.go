@@ -50,36 +50,36 @@ func (g *GetEventsSinksRequest) GetXConsistency() *ledgerv3.Consistency {
 	return g.XConsistency
 }
 
-// GetEventsSinksData - Configured sinks together with their per-sink status, at parity with the gRPC GetEventsSinks response.
-type GetEventsSinksData struct {
-	Sinks        []map[string]any `json:"sinks,omitempty"`
+// Data - Configured sinks together with their per-sink status, at parity with the gRPC GetEventsSinks response.
+type Data struct {
 	SinkStatuses []map[string]any `json:"sinkStatuses,omitempty"`
+	Sinks        []map[string]any `json:"sinks,omitempty"`
 }
 
-func (g *GetEventsSinksData) GetSinks() []map[string]any {
-	if g == nil {
+func (d *Data) GetSinkStatuses() []map[string]any {
+	if d == nil {
 		return nil
 	}
-	return g.Sinks
+	return d.SinkStatuses
 }
 
-func (g *GetEventsSinksData) GetSinkStatuses() []map[string]any {
-	if g == nil {
+func (d *Data) GetSinks() []map[string]any {
+	if d == nil {
 		return nil
 	}
-	return g.SinkStatuses
+	return d.Sinks
 }
 
 // GetEventsSinksResponseBody - Event sinks retrieved successfully.
 type GetEventsSinksResponseBody struct {
 	// Configured sinks together with their per-sink status, at parity with the gRPC GetEventsSinks response.
 	//
-	Data GetEventsSinksData `json:"data"`
+	Data Data `json:"data"`
 }
 
-func (g *GetEventsSinksResponseBody) GetData() GetEventsSinksData {
+func (g *GetEventsSinksResponseBody) GetData() Data {
 	if g == nil {
-		return GetEventsSinksData{}
+		return Data{}
 	}
 	return g.Data
 }
@@ -87,18 +87,18 @@ func (g *GetEventsSinksResponseBody) GetData() GetEventsSinksData {
 type GetEventsSinksResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
-	// Event sinks retrieved successfully.
-	Object *GetEventsSinksResponseBody
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
+	// Event sinks retrieved successfully.
+	Object *GetEventsSinksResponseBody
 }
 
 func (g *GetEventsSinksResponse) GetContentType() string {
@@ -106,6 +106,20 @@ func (g *GetEventsSinksResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetEventsSinksResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if g == nil {
+		return nil
+	}
+	return g.ErrorResponse
+}
+
+func (g *GetEventsSinksResponse) GetForbidden() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Forbidden
 }
 
 func (g *GetEventsSinksResponse) GetStatusCode() int {
@@ -122,20 +136,6 @@ func (g *GetEventsSinksResponse) GetRawResponse() *http.Response {
 	return g.RawResponse
 }
 
-func (g *GetEventsSinksResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if g == nil {
-		return nil
-	}
-	return g.ErrorResponse
-}
-
-func (g *GetEventsSinksResponse) GetObject() *GetEventsSinksResponseBody {
-	if g == nil {
-		return nil
-	}
-	return g.Object
-}
-
 func (g *GetEventsSinksResponse) GetUnauthorized() *string {
 	if g == nil {
 		return nil
@@ -143,9 +143,9 @@ func (g *GetEventsSinksResponse) GetUnauthorized() *string {
 	return g.Unauthorized
 }
 
-func (g *GetEventsSinksResponse) GetForbidden() *string {
+func (g *GetEventsSinksResponse) GetObject() *GetEventsSinksResponseBody {
 	if g == nil {
 		return nil
 	}
-	return g.Forbidden
+	return g.Object
 }

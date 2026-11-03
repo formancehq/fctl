@@ -3,16 +3,9 @@
 package ledgerv3
 
 type DeletedMetadataAction struct {
-	RewriteAddress *RewriteAddressAction `json:"rewriteAddress,omitempty"`
 	// Turns the entry into a fill-gap that preserves log-ID and tx-ID continuity.
-	Drop *DropAction `json:"drop,omitempty"`
-}
-
-func (d *DeletedMetadataAction) GetRewriteAddress() *RewriteAddressAction {
-	if d == nil {
-		return nil
-	}
-	return d.RewriteAddress
+	Drop           *DropAction           `json:"drop,omitempty"`
+	RewriteAddress *RewriteAddressAction `json:"rewriteAddress,omitempty"`
 }
 
 func (d *DeletedMetadataAction) GetDrop() *DropAction {
@@ -20,4 +13,11 @@ func (d *DeletedMetadataAction) GetDrop() *DropAction {
 		return nil
 	}
 	return d.Drop
+}
+
+func (d *DeletedMetadataAction) GetRewriteAddress() *RewriteAddressAction {
+	if d == nil {
+		return nil
+	}
+	return d.RewriteAddress
 }

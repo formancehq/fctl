@@ -10,30 +10,6 @@ import (
 	"net/http"
 )
 
-// Sort - The field to sort by
-type Sort string
-
-const (
-	SortCreatedAt Sort = "created_at"
-)
-
-func (e Sort) ToPointer() *Sort {
-	return &e
-}
-func (e *Sort) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "created_at":
-		*e = Sort(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for Sort: %v", v)
-	}
-}
-
 // Order - The sort order
 type Order string
 
@@ -61,17 +37,41 @@ func (e *Order) UnmarshalJSON(data []byte) error {
 	}
 }
 
+// Sort - The field to sort by
+type Sort string
+
+const (
+	SortCreatedAt Sort = "created_at"
+)
+
+func (e Sort) ToPointer() *Sort {
+	return &e
+}
+func (e *Sort) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "created_at":
+		*e = Sort(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for Sort: %v", v)
+	}
+}
+
 type V2ListSchemasRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 	// The pagination cursor value
 	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
+	// The sort order
+	Order *Order `default:"desc" queryParam:"style=form,explode=true,name=order"`
 	// The maximum number of results to return per page
 	PageSize *int64 `default:"15" queryParam:"style=form,explode=true,name=pageSize"`
 	// The field to sort by
 	Sort *Sort `default:"created_at" queryParam:"style=form,explode=true,name=sort"`
-	// The sort order
-	Order *Order `default:"desc" queryParam:"style=form,explode=true,name=order"`
 }
 
 func (v V2ListSchemasRequest) MarshalJSON() ([]byte, error) {
@@ -85,6 +85,13 @@ func (v *V2ListSchemasRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (v *V2ListSchemasRequest) GetCursor() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Cursor
+}
+
 func (v *V2ListSchemasRequest) GetLedger() string {
 	if v == nil {
 		return ""
@@ -92,11 +99,11 @@ func (v *V2ListSchemasRequest) GetLedger() string {
 	return v.Ledger
 }
 
-func (v *V2ListSchemasRequest) GetCursor() *string {
+func (v *V2ListSchemasRequest) GetOrder() *Order {
 	if v == nil {
 		return nil
 	}
-	return v.Cursor
+	return v.Order
 }
 
 func (v *V2ListSchemasRequest) GetPageSize() *int64 {
@@ -111,13 +118,6 @@ func (v *V2ListSchemasRequest) GetSort() *Sort {
 		return nil
 	}
 	return v.Sort
-}
-
-func (v *V2ListSchemasRequest) GetOrder() *Order {
-	if v == nil {
-		return nil
-	}
-	return v.Order
 }
 
 // #region class-body-v2listschemasrequest

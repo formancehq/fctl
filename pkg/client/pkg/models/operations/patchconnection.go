@@ -19,17 +19,10 @@ func (p *PatchConnectionSecurity) GetBearerAuth() *string {
 }
 
 type PatchConnectionRequest struct {
-	// Instance name within this tenant
-	Name string `pathParam:"style=simple,explode=false,name=name"`
 	// Encoded request body must not exceed 1 MiB (1,048,576 bytes).
 	ConnectionPatch connectivity.ConnectionPatch `request:"mediaType=application/merge-patch+json"`
-}
-
-func (p *PatchConnectionRequest) GetName() string {
-	if p == nil {
-		return ""
-	}
-	return p.Name
+	// Instance name within this tenant
+	Name string `pathParam:"style=simple,explode=false,name=name"`
 }
 
 func (p *PatchConnectionRequest) GetConnectionPatch() connectivity.ConnectionPatch {
@@ -39,17 +32,31 @@ func (p *PatchConnectionRequest) GetConnectionPatch() connectivity.ConnectionPat
 	return p.ConnectionPatch
 }
 
+func (p *PatchConnectionRequest) GetName() string {
+	if p == nil {
+		return ""
+	}
+	return p.Name
+}
+
 type PatchConnectionResponse struct {
+	// Patched
+	Connection *connectivity.Connection
 	// HTTP response content type for this operation
 	ContentType string
+	// Request or server error. The HTTP status and code identify the failure.
+	Error *connectivity.Error
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Patched
-	Connection *connectivity.Connection
-	// Request or server error. The HTTP status and code identify the failure.
-	Error *connectivity.Error
+}
+
+func (p *PatchConnectionResponse) GetConnection() *connectivity.Connection {
+	if p == nil {
+		return nil
+	}
+	return p.Connection
 }
 
 func (p *PatchConnectionResponse) GetContentType() string {
@@ -57,6 +64,13 @@ func (p *PatchConnectionResponse) GetContentType() string {
 		return ""
 	}
 	return p.ContentType
+}
+
+func (p *PatchConnectionResponse) GetError() *connectivity.Error {
+	if p == nil {
+		return nil
+	}
+	return p.Error
 }
 
 func (p *PatchConnectionResponse) GetStatusCode() int {
@@ -71,18 +85,4 @@ func (p *PatchConnectionResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return p.RawResponse
-}
-
-func (p *PatchConnectionResponse) GetConnection() *connectivity.Connection {
-	if p == nil {
-		return nil
-	}
-	return p.Connection
-}
-
-func (p *PatchConnectionResponse) GetError() *connectivity.Error {
-	if p == nil {
-		return nil
-	}
-	return p.Error
 }

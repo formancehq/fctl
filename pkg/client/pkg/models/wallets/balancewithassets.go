@@ -10,14 +10,14 @@ import (
 
 // BalanceWithAssets - A named balance within a wallet together with the amounts it holds per asset
 type BalanceWithAssets struct {
-	// Name of the balance within the wallet
-	Name string `json:"name"`
-	// When the funds in this balance expire. Expired funds stop counting towards available funds
-	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
-	// Ordering hint when choosing which balances to debit first. Lower values are debited first, and it only breaks ties between balances that carry no expiry date
-	Priority *big.Int `json:"priority,omitempty"`
 	// Amounts held, keyed by asset
 	Assets map[string]*big.Int `json:"assets"`
+	// When the funds in this balance expire. Expired funds stop counting towards available funds
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+	// Name of the balance within the wallet
+	Name string `json:"name"`
+	// Ordering hint when choosing which balances to debit first. Lower values are debited first, and it only breaks ties between balances that carry no expiry date
+	Priority *big.Int `json:"priority,omitempty"`
 }
 
 func (b BalanceWithAssets) MarshalJSON() ([]byte, error) {
@@ -31,11 +31,11 @@ func (b *BalanceWithAssets) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (b *BalanceWithAssets) GetName() string {
+func (b *BalanceWithAssets) GetAssets() map[string]*big.Int {
 	if b == nil {
-		return ""
+		return map[string]*big.Int{}
 	}
-	return b.Name
+	return b.Assets
 }
 
 func (b *BalanceWithAssets) GetExpiresAt() *time.Time {
@@ -45,16 +45,16 @@ func (b *BalanceWithAssets) GetExpiresAt() *time.Time {
 	return b.ExpiresAt
 }
 
+func (b *BalanceWithAssets) GetName() string {
+	if b == nil {
+		return ""
+	}
+	return b.Name
+}
+
 func (b *BalanceWithAssets) GetPriority() *big.Int {
 	if b == nil {
 		return nil
 	}
 	return b.Priority
-}
-
-func (b *BalanceWithAssets) GetAssets() map[string]*big.Int {
-	if b == nil {
-		return map[string]*big.Int{}
-	}
-	return b.Assets
 }

@@ -2,32 +2,32 @@
 
 package ledgerv3
 
-type AnalyzeAccountsResponseData struct {
+type Data struct {
 	Patterns      []AccountPattern `json:"patterns,omitempty"`
 	TotalAccounts *int64           `json:"totalAccounts,omitempty"`
 }
 
-func (a *AnalyzeAccountsResponseData) GetPatterns() []AccountPattern {
-	if a == nil {
+func (d *Data) GetPatterns() []AccountPattern {
+	if d == nil {
 		return nil
 	}
-	return a.Patterns
+	return d.Patterns
 }
 
-func (a *AnalyzeAccountsResponseData) GetTotalAccounts() *int64 {
-	if a == nil {
+func (d *Data) GetTotalAccounts() *int64 {
+	if d == nil {
 		return nil
 	}
-	return a.TotalAccounts
+	return d.TotalAccounts
 }
 
 type AnalyzeAccountsResponse struct {
-	Data AnalyzeAccountsResponseData `json:"data"`
+	Data Data `json:"data"`
 }
 
-func (a *AnalyzeAccountsResponse) GetData() AnalyzeAccountsResponseData {
+func (a *AnalyzeAccountsResponse) GetData() Data {
 	if a == nil {
-		return AnalyzeAccountsResponseData{}
+		return Data{}
 	}
 	return a.Data
 }

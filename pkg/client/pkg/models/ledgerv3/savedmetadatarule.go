@@ -3,15 +3,8 @@
 package ledgerv3
 
 type SavedMetadataRule struct {
-	Match   *string               `json:"match,omitempty"`
 	Actions []SavedMetadataAction `json:"actions,omitempty"`
-}
-
-func (s *SavedMetadataRule) GetMatch() *string {
-	if s == nil {
-		return nil
-	}
-	return s.Match
+	Match   *string               `json:"match,omitempty"`
 }
 
 func (s *SavedMetadataRule) GetActions() []SavedMetadataAction {
@@ -19,4 +12,11 @@ func (s *SavedMetadataRule) GetActions() []SavedMetadataAction {
 		return nil
 	}
 	return s.Actions
+}
+
+func (s *SavedMetadataRule) GetMatch() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Match
 }

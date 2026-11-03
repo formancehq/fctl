@@ -7,20 +7,20 @@ import (
 )
 
 type DummyPayConfig struct {
-	// Human-readable name identifying this connector instance
-	Name string `json:"name"`
-	// Identifies the payment provider this configuration targets
-	Provider *string `default:"Dummypay" json:"provider"`
-	// The frequency at which the connector will try to fetch new payment objects from the directory
-	FilePollingPeriod *string `default:"30s" json:"filePollingPeriod"`
 	// Filesystem directory the connector reads payment files from
 	Directory string `json:"directory"`
-	// Only ingest files whose name starts with this prefix
-	PrefixFileToIngest *string `json:"prefixFileToIngest,omitempty"`
+	// The frequency at which the connector will try to fetch new payment objects from the directory
+	FilePollingPeriod *string `default:"30s" json:"filePollingPeriod"`
+	// Human-readable name identifying this connector instance
+	Name string `json:"name"`
 	// How many synthetic accounts to create on startup
 	NumberOfAccountsPreGenerated *int64 `json:"numberOfAccountsPreGenerated,omitempty"`
 	// How many synthetic payments to create on startup
 	NumberOfPaymentsPreGenerated *int64 `json:"numberOfPaymentsPreGenerated,omitempty"`
+	// Only ingest files whose name starts with this prefix
+	PrefixFileToIngest *string `json:"prefixFileToIngest,omitempty"`
+	// Identifies the payment provider this configuration targets
+	Provider *string `default:"Dummypay" json:"provider"`
 }
 
 func (d DummyPayConfig) MarshalJSON() ([]byte, error) {
@@ -28,31 +28,10 @@ func (d DummyPayConfig) MarshalJSON() ([]byte, error) {
 }
 
 func (d *DummyPayConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &d, "", false, []string{"name", "directory"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &d, "", false, []string{"directory", "name"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (d *DummyPayConfig) GetName() string {
-	if d == nil {
-		return ""
-	}
-	return d.Name
-}
-
-func (d *DummyPayConfig) GetProvider() *string {
-	if d == nil {
-		return nil
-	}
-	return d.Provider
-}
-
-func (d *DummyPayConfig) GetFilePollingPeriod() *string {
-	if d == nil {
-		return nil
-	}
-	return d.FilePollingPeriod
 }
 
 func (d *DummyPayConfig) GetDirectory() string {
@@ -62,11 +41,18 @@ func (d *DummyPayConfig) GetDirectory() string {
 	return d.Directory
 }
 
-func (d *DummyPayConfig) GetPrefixFileToIngest() *string {
+func (d *DummyPayConfig) GetFilePollingPeriod() *string {
 	if d == nil {
 		return nil
 	}
-	return d.PrefixFileToIngest
+	return d.FilePollingPeriod
+}
+
+func (d *DummyPayConfig) GetName() string {
+	if d == nil {
+		return ""
+	}
+	return d.Name
 }
 
 func (d *DummyPayConfig) GetNumberOfAccountsPreGenerated() *int64 {
@@ -81,4 +67,18 @@ func (d *DummyPayConfig) GetNumberOfPaymentsPreGenerated() *int64 {
 		return nil
 	}
 	return d.NumberOfPaymentsPreGenerated
+}
+
+func (d *DummyPayConfig) GetPrefixFileToIngest() *string {
+	if d == nil {
+		return nil
+	}
+	return d.PrefixFileToIngest
+}
+
+func (d *DummyPayConfig) GetProvider() *string {
+	if d == nil {
+		return nil
+	}
+	return d.Provider
 }

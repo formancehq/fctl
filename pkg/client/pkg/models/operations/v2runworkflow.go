@@ -8,18 +8,18 @@ import (
 )
 
 type V2RunWorkflowRequest struct {
+	RequestBody map[string]string `request:"mediaType=application/json"`
+	// Wait end of the workflow before return
+	Wait *bool `queryParam:"style=form,explode=true,name=wait"`
 	// The flow id
 	WorkflowID string `pathParam:"style=simple,explode=false,name=workflowID"`
-	// Wait end of the workflow before return
-	Wait        *bool             `queryParam:"style=form,explode=true,name=wait"`
-	RequestBody map[string]string `request:"mediaType=application/json"`
 }
 
-func (v *V2RunWorkflowRequest) GetWorkflowID() string {
+func (v *V2RunWorkflowRequest) GetRequestBody() map[string]string {
 	if v == nil {
-		return ""
+		return nil
 	}
-	return v.WorkflowID
+	return v.RequestBody
 }
 
 func (v *V2RunWorkflowRequest) GetWait() *bool {
@@ -29,11 +29,11 @@ func (v *V2RunWorkflowRequest) GetWait() *bool {
 	return v.Wait
 }
 
-func (v *V2RunWorkflowRequest) GetRequestBody() map[string]string {
+func (v *V2RunWorkflowRequest) GetWorkflowID() string {
 	if v == nil {
-		return nil
+		return ""
 	}
-	return v.RequestBody
+	return v.WorkflowID
 }
 
 // #region class-body-v2runworkflowrequest

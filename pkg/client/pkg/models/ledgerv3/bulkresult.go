@@ -15,10 +15,6 @@ import (
 // `true` on this shape — branch on it to distinguish from the
 // normal Transaction data.
 type OrderSkippedResponse struct {
-	// Always true on this shape.
-	Skipped bool `json:"skipped"`
-	// Typed reason that matched the skip (e.g. `TRANSACTION_REFERENCE_CONFLICT`). Same identifier the gRPC ErrorInfo.reason and the REST error responses use.
-	Reason string `json:"reason"`
 	// Stable subcode for the skipped failure.
 	Code string `json:"code"`
 	// Validated, reason-specific correlators. For
@@ -26,6 +22,10 @@ type OrderSkippedResponse struct {
 	// `reference` and `existingTransactionId`.
 	//
 	Facts map[string]string `json:"facts,omitempty"`
+	// Typed reason that matched the skip (e.g. `TRANSACTION_REFERENCE_CONFLICT`). Same identifier the gRPC ErrorInfo.reason and the REST error responses use.
+	Reason string `json:"reason"`
+	// Always true on this shape.
+	Skipped bool `json:"skipped"`
 }
 
 func (o OrderSkippedResponse) MarshalJSON() ([]byte, error) {
@@ -33,24 +33,10 @@ func (o OrderSkippedResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (o *OrderSkippedResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &o, "", false, []string{"skipped", "reason", "code"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &o, "", false, []string{"code", "reason", "skipped"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (o *OrderSkippedResponse) GetSkipped() bool {
-	if o == nil {
-		return false
-	}
-	return o.Skipped
-}
-
-func (o *OrderSkippedResponse) GetReason() string {
-	if o == nil {
-		return ""
-	}
-	return o.Reason
 }
 
 func (o *OrderSkippedResponse) GetCode() string {
@@ -67,26 +53,26 @@ func (o *OrderSkippedResponse) GetFacts() map[string]string {
 	return o.Facts
 }
 
+func (o *OrderSkippedResponse) GetReason() string {
+	if o == nil {
+		return ""
+	}
+	return o.Reason
+}
+
+func (o *OrderSkippedResponse) GetSkipped() bool {
+	if o == nil {
+		return false
+	}
+	return o.Skipped
+}
+
 type SchemasTransactionResponse struct {
-	Postings []PostingResponse         `json:"postings"`
-	Metadata map[string]*MetadataValue `json:"metadata"`
-	// Transaction timestamp (ISO 8601 format)
-	Timestamp *time.Time `json:"timestamp,omitempty"`
-	Reference *string    `json:"reference,omitempty"`
 	// Transaction ID (assigned by the system)
 	ID int64 `json:"id"`
-	// Whether this transaction has been reverted
-	Reverted bool `json:"reverted"`
 	// When the transaction was inserted into the ledger
-	InsertedAt *time.Time `json:"insertedAt,omitempty"`
-	// Last update timestamp
-	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
-	// When the transaction was reverted (null if not reverted)
-	RevertedAt *time.Time `json:"revertedAt,omitempty"`
-	// ID of the transaction that reverted this one (absent when not reverted)
-	RevertedByTransactionID *int64 `json:"revertedByTransactionId,omitempty"`
-	// ID of the original transaction this transaction reverts (absent when this is not a revert)
-	RevertsTransactionID *int64 `json:"revertsTransactionId,omitempty"`
+	InsertedAt *time.Time                `json:"insertedAt,omitempty"`
+	Metadata   map[string]*MetadataValue `json:"metadata"`
 	// Post-commit volumes, keyed by account address. Each account maps to a
 	// flat array of per-(asset, color) volume tuples. The wire is a plain
 	// `{"addr": [{asset, color, input, output}]}` map — the proto
@@ -96,6 +82,20 @@ type SchemasTransactionResponse struct {
 	// bucket uniquely once a color dimension exists.
 	//
 	PostCommitVolumes map[string][]VolumeEntry `json:"postCommitVolumes,omitempty"`
+	Postings          []PostingResponse        `json:"postings"`
+	Reference         *string                  `json:"reference,omitempty"`
+	// Whether this transaction has been reverted
+	Reverted bool `json:"reverted"`
+	// When the transaction was reverted (null if not reverted)
+	RevertedAt *time.Time `json:"revertedAt,omitempty"`
+	// ID of the transaction that reverted this one (absent when not reverted)
+	RevertedByTransactionID *int64 `json:"revertedByTransactionId,omitempty"`
+	// ID of the original transaction this transaction reverts (absent when this is not a revert)
+	RevertsTransactionID *int64 `json:"revertsTransactionId,omitempty"`
+	// Transaction timestamp (ISO 8601 format)
+	Timestamp *time.Time `json:"timestamp,omitempty"`
+	// Last update timestamp
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
 }
 
 func (s SchemasTransactionResponse) MarshalJSON() ([]byte, error) {
@@ -103,38 +103,10 @@ func (s SchemasTransactionResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (s *SchemasTransactionResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &s, "", false, []string{"postings", "metadata", "id", "reverted"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &s, "", false, []string{"id", "metadata", "postings", "reverted"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (s *SchemasTransactionResponse) GetPostings() []PostingResponse {
-	if s == nil {
-		return []PostingResponse{}
-	}
-	return s.Postings
-}
-
-func (s *SchemasTransactionResponse) GetMetadata() map[string]*MetadataValue {
-	if s == nil {
-		return map[string]*MetadataValue{}
-	}
-	return s.Metadata
-}
-
-func (s *SchemasTransactionResponse) GetTimestamp() *time.Time {
-	if s == nil {
-		return nil
-	}
-	return s.Timestamp
-}
-
-func (s *SchemasTransactionResponse) GetReference() *string {
-	if s == nil {
-		return nil
-	}
-	return s.Reference
 }
 
 func (s *SchemasTransactionResponse) GetID() int64 {
@@ -144,13 +116,6 @@ func (s *SchemasTransactionResponse) GetID() int64 {
 	return s.ID
 }
 
-func (s *SchemasTransactionResponse) GetReverted() bool {
-	if s == nil {
-		return false
-	}
-	return s.Reverted
-}
-
 func (s *SchemasTransactionResponse) GetInsertedAt() *time.Time {
 	if s == nil {
 		return nil
@@ -158,11 +123,39 @@ func (s *SchemasTransactionResponse) GetInsertedAt() *time.Time {
 	return s.InsertedAt
 }
 
-func (s *SchemasTransactionResponse) GetUpdatedAt() *time.Time {
+func (s *SchemasTransactionResponse) GetMetadata() map[string]*MetadataValue {
+	if s == nil {
+		return map[string]*MetadataValue{}
+	}
+	return s.Metadata
+}
+
+func (s *SchemasTransactionResponse) GetPostCommitVolumes() map[string][]VolumeEntry {
 	if s == nil {
 		return nil
 	}
-	return s.UpdatedAt
+	return s.PostCommitVolumes
+}
+
+func (s *SchemasTransactionResponse) GetPostings() []PostingResponse {
+	if s == nil {
+		return []PostingResponse{}
+	}
+	return s.Postings
+}
+
+func (s *SchemasTransactionResponse) GetReference() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Reference
+}
+
+func (s *SchemasTransactionResponse) GetReverted() bool {
+	if s == nil {
+		return false
+	}
+	return s.Reverted
 }
 
 func (s *SchemasTransactionResponse) GetRevertedAt() *time.Time {
@@ -186,11 +179,18 @@ func (s *SchemasTransactionResponse) GetRevertsTransactionID() *int64 {
 	return s.RevertsTransactionID
 }
 
-func (s *SchemasTransactionResponse) GetPostCommitVolumes() map[string][]VolumeEntry {
+func (s *SchemasTransactionResponse) GetTimestamp() *time.Time {
 	if s == nil {
 		return nil
 	}
-	return s.PostCommitVolumes
+	return s.Timestamp
+}
+
+func (s *SchemasTransactionResponse) GetUpdatedAt() *time.Time {
+	if s == nil {
+		return nil
+	}
+	return s.UpdatedAt
 }
 
 type BulkResultDataType string
@@ -270,18 +270,6 @@ func (u BulkResultData) MarshalJSON() ([]byte, error) {
 }
 
 type BulkResult struct {
-	// Type of response (action name or ERROR)
-	ResponseType *string `json:"responseType,omitempty"`
-	// Log ID of the applied operation (0 on error)
-	LogID *int64 `json:"logID,omitempty"`
-	// Error code (present only on error)
-	ErrorCode *string `json:"errorCode,omitempty"`
-	// Client-facing error description (present only on error). Unknown
-	// internal failures carry a generic message with a correlation ID;
-	// internal index/coverage details are omitted. Machine-readable
-	// error codes and the bulk response shape are preserved.
-	//
-	ErrorDescription *string `json:"errorDescription,omitempty"`
 	// Operation result data. Shape depends on the originating action:
 	//   - `CREATE_TRANSACTION` success: a `TransactionResponse` — the
 	//     created Transaction object.
@@ -296,6 +284,18 @@ type BulkResult struct {
 	// from a successful transaction.
 	//
 	Data *BulkResultData `json:"data,omitempty"`
+	// Error code (present only on error)
+	ErrorCode *string `json:"errorCode,omitempty"`
+	// Client-facing error description (present only on error). Unknown
+	// internal failures carry a generic message with a correlation ID;
+	// internal index/coverage details are omitted. Machine-readable
+	// error codes and the bulk response shape are preserved.
+	//
+	ErrorDescription *string `json:"errorDescription,omitempty"`
+	// Log ID of the applied operation (0 on error)
+	LogID *int64 `json:"logID,omitempty"`
+	// Type of response (action name or ERROR)
+	ResponseType *string `json:"responseType,omitempty"`
 }
 
 func (b BulkResult) MarshalJSON() ([]byte, error) {
@@ -309,18 +309,11 @@ func (b *BulkResult) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (b *BulkResult) GetResponseType() *string {
+func (b *BulkResult) GetData() *BulkResultData {
 	if b == nil {
 		return nil
 	}
-	return b.ResponseType
-}
-
-func (b *BulkResult) GetLogID() *int64 {
-	if b == nil {
-		return nil
-	}
-	return b.LogID
+	return b.Data
 }
 
 func (b *BulkResult) GetErrorCode() *string {
@@ -337,9 +330,16 @@ func (b *BulkResult) GetErrorDescription() *string {
 	return b.ErrorDescription
 }
 
-func (b *BulkResult) GetData() *BulkResultData {
+func (b *BulkResult) GetLogID() *int64 {
 	if b == nil {
 		return nil
 	}
-	return b.Data
+	return b.LogID
+}
+
+func (b *BulkResult) GetResponseType() *string {
+	if b == nil {
+		return nil
+	}
+	return b.ResponseType
 }

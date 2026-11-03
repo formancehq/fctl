@@ -8,28 +8,21 @@ import (
 )
 
 type V3ListPaymentInitiationAdjustmentsRequest struct {
-	// The payment initiation ID
-	PaymentInitiationID string `pathParam:"style=simple,explode=false,name=paymentInitiationID"`
-	// The number of items to return
-	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
+	RequestBody map[string]any `request:"mediaType=application/json"`
 	// Parameter used in pagination requests. Set to the value of next for the next page of results. Set to the value of previous for the previous page of results. No other parameters can be set when this parameter is set.
 	//
-	Cursor      *string        `queryParam:"style=form,explode=true,name=cursor"`
-	RequestBody map[string]any `request:"mediaType=application/json"`
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// The number of items to return
+	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
+	// The payment initiation ID
+	PaymentInitiationID string `pathParam:"style=simple,explode=false,name=paymentInitiationID"`
 }
 
-func (v *V3ListPaymentInitiationAdjustmentsRequest) GetPaymentInitiationID() string {
-	if v == nil {
-		return ""
-	}
-	return v.PaymentInitiationID
-}
-
-func (v *V3ListPaymentInitiationAdjustmentsRequest) GetPageSize() *int64 {
+func (v *V3ListPaymentInitiationAdjustmentsRequest) GetRequestBody() map[string]any {
 	if v == nil {
 		return nil
 	}
-	return v.PageSize
+	return v.RequestBody
 }
 
 func (v *V3ListPaymentInitiationAdjustmentsRequest) GetCursor() *string {
@@ -39,11 +32,18 @@ func (v *V3ListPaymentInitiationAdjustmentsRequest) GetCursor() *string {
 	return v.Cursor
 }
 
-func (v *V3ListPaymentInitiationAdjustmentsRequest) GetRequestBody() map[string]any {
+func (v *V3ListPaymentInitiationAdjustmentsRequest) GetPageSize() *int64 {
 	if v == nil {
 		return nil
 	}
-	return v.RequestBody
+	return v.PageSize
+}
+
+func (v *V3ListPaymentInitiationAdjustmentsRequest) GetPaymentInitiationID() string {
+	if v == nil {
+		return ""
+	}
+	return v.PaymentInitiationID
 }
 
 // #region class-body-v3listpaymentinitiationadjustmentsrequest

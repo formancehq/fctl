@@ -9,18 +9,18 @@ import (
 
 // ReplayDeliveriesResult - Outcome of a bulk replay, counting the deliveries it moved
 type ReplayDeliveriesResult struct {
-	// Number of failed deliveries moved back to pending and scheduled for a new retry cycle
-	Replayed int64 `json:"replayed"`
+	// Upper time bound actually applied, echoed so a paginated replay stays on a fixed window
+	CreatedAtTo time.Time `json:"createdAtTo"`
 	// Number of already-pending deliveries whose next attempt was brought forward to now
 	Expedited int64 `json:"expedited"`
-	// Number of candidates left untouched, because their status changed before the replay applied
-	Skipped int64 `json:"skipped"`
 	// Whether further deliveries match and can be processed with the returned cursor
 	HasMore bool `json:"hasMore"`
 	// Cursor to pass to the next replay call to continue where this one stopped
 	NextCursor *string `json:"nextCursor,omitempty"`
-	// Upper time bound actually applied, echoed so a paginated replay stays on a fixed window
-	CreatedAtTo time.Time `json:"createdAtTo"`
+	// Number of failed deliveries moved back to pending and scheduled for a new retry cycle
+	Replayed int64 `json:"replayed"`
+	// Number of candidates left untouched, because their status changed before the replay applied
+	Skipped int64 `json:"skipped"`
 }
 
 func (r ReplayDeliveriesResult) MarshalJSON() ([]byte, error) {
@@ -34,11 +34,11 @@ func (r *ReplayDeliveriesResult) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (r *ReplayDeliveriesResult) GetReplayed() int64 {
+func (r *ReplayDeliveriesResult) GetCreatedAtTo() time.Time {
 	if r == nil {
-		return 0
+		return time.Time{}
 	}
-	return r.Replayed
+	return r.CreatedAtTo
 }
 
 func (r *ReplayDeliveriesResult) GetExpedited() int64 {
@@ -46,13 +46,6 @@ func (r *ReplayDeliveriesResult) GetExpedited() int64 {
 		return 0
 	}
 	return r.Expedited
-}
-
-func (r *ReplayDeliveriesResult) GetSkipped() int64 {
-	if r == nil {
-		return 0
-	}
-	return r.Skipped
 }
 
 func (r *ReplayDeliveriesResult) GetHasMore() bool {
@@ -69,9 +62,16 @@ func (r *ReplayDeliveriesResult) GetNextCursor() *string {
 	return r.NextCursor
 }
 
-func (r *ReplayDeliveriesResult) GetCreatedAtTo() time.Time {
+func (r *ReplayDeliveriesResult) GetReplayed() int64 {
 	if r == nil {
-		return time.Time{}
+		return 0
 	}
-	return r.CreatedAtTo
+	return r.Replayed
+}
+
+func (r *ReplayDeliveriesResult) GetSkipped() int64 {
+	if r == nil {
+		return 0
+	}
+	return r.Skipped
 }

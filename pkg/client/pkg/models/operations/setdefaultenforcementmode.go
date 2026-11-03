@@ -19,16 +19,9 @@ func (s *SetDefaultEnforcementModeSecurity) GetBearerAuth() *string {
 }
 
 type SetDefaultEnforcementModeRequest struct {
-	// Name of the ledger
-	LedgerName                       string                                    `pathParam:"style=simple,explode=false,name=ledgerName"`
 	SetDefaultEnforcementModeRequest ledgerv3.SetDefaultEnforcementModeRequest `request:"mediaType=application/json"`
-}
-
-func (s *SetDefaultEnforcementModeRequest) GetLedgerName() string {
-	if s == nil {
-		return ""
-	}
-	return s.LedgerName
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 }
 
 func (s *SetDefaultEnforcementModeRequest) GetSetDefaultEnforcementModeRequest() ledgerv3.SetDefaultEnforcementModeRequest {
@@ -38,20 +31,27 @@ func (s *SetDefaultEnforcementModeRequest) GetSetDefaultEnforcementModeRequest()
 	return s.SetDefaultEnforcementModeRequest
 }
 
+func (s *SetDefaultEnforcementModeRequest) GetLedgerName() string {
+	if s == nil {
+		return ""
+	}
+	return s.LedgerName
+}
+
 type SetDefaultEnforcementModeResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (s *SetDefaultEnforcementModeResponse) GetContentType() string {
@@ -59,6 +59,27 @@ func (s *SetDefaultEnforcementModeResponse) GetContentType() string {
 		return ""
 	}
 	return s.ContentType
+}
+
+func (s *SetDefaultEnforcementModeResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if s == nil {
+		return nil
+	}
+	return s.ErrorResponse
+}
+
+func (s *SetDefaultEnforcementModeResponse) GetForbidden() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Forbidden
+}
+
+func (s *SetDefaultEnforcementModeResponse) GetHeaders() map[string][]string {
+	if s == nil {
+		return map[string][]string{}
+	}
+	return s.Headers
 }
 
 func (s *SetDefaultEnforcementModeResponse) GetStatusCode() int {
@@ -75,30 +96,9 @@ func (s *SetDefaultEnforcementModeResponse) GetRawResponse() *http.Response {
 	return s.RawResponse
 }
 
-func (s *SetDefaultEnforcementModeResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if s == nil {
-		return nil
-	}
-	return s.ErrorResponse
-}
-
 func (s *SetDefaultEnforcementModeResponse) GetUnauthorized() *string {
 	if s == nil {
 		return nil
 	}
 	return s.Unauthorized
-}
-
-func (s *SetDefaultEnforcementModeResponse) GetForbidden() *string {
-	if s == nil {
-		return nil
-	}
-	return s.Forbidden
-}
-
-func (s *SetDefaultEnforcementModeResponse) GetHeaders() map[string][]string {
-	if s == nil {
-		return map[string][]string{}
-	}
-	return s.Headers
 }

@@ -8,16 +8,16 @@ import (
 )
 
 type V3ReversePaymentInitiationRequest struct {
-	// Caller-supplied identifier for the reversal, used to deduplicate retries
-	Reference string `json:"reference"`
-	// Human-readable reason for the reversal
-	Description string `json:"description"`
 	// Amount to reverse, in the asset's smallest unit
 	Amount *big.Int `json:"amount"`
 	// Asset the reversal is denominated in
 	Asset string `json:"asset"`
+	// Human-readable reason for the reversal
+	Description string `json:"description"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]string `json:"metadata,omitempty"`
+	// Caller-supplied identifier for the reversal, used to deduplicate retries
+	Reference string `json:"reference"`
 }
 
 func (v V3ReversePaymentInitiationRequest) MarshalJSON() ([]byte, error) {
@@ -29,20 +29,6 @@ func (v *V3ReversePaymentInitiationRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (v *V3ReversePaymentInitiationRequest) GetReference() string {
-	if v == nil {
-		return ""
-	}
-	return v.Reference
-}
-
-func (v *V3ReversePaymentInitiationRequest) GetDescription() string {
-	if v == nil {
-		return ""
-	}
-	return v.Description
 }
 
 func (v *V3ReversePaymentInitiationRequest) GetAmount() *big.Int {
@@ -59,11 +45,25 @@ func (v *V3ReversePaymentInitiationRequest) GetAsset() string {
 	return v.Asset
 }
 
+func (v *V3ReversePaymentInitiationRequest) GetDescription() string {
+	if v == nil {
+		return ""
+	}
+	return v.Description
+}
+
 func (v *V3ReversePaymentInitiationRequest) GetMetadata() map[string]string {
 	if v == nil {
 		return nil
 	}
 	return v.Metadata
+}
+
+func (v *V3ReversePaymentInitiationRequest) GetReference() string {
+	if v == nil {
+		return ""
+	}
+	return v.Reference
 }
 
 // #region class-body-v3reversepaymentinitiationrequest

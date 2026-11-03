@@ -20,14 +20,21 @@ func (a *ActivateConfigRequest) GetID() string {
 }
 
 type ActivateConfigResponse struct {
+	// Config successfully activated.
+	ConfigResponse *webhooks.ConfigResponse
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Config successfully activated.
-	ConfigResponse *webhooks.ConfigResponse
+}
+
+func (a *ActivateConfigResponse) GetConfigResponse() *webhooks.ConfigResponse {
+	if a == nil {
+		return nil
+	}
+	return a.ConfigResponse
 }
 
 func (a *ActivateConfigResponse) GetContentType() string {
@@ -49,11 +56,4 @@ func (a *ActivateConfigResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return a.RawResponse
-}
-
-func (a *ActivateConfigResponse) GetConfigResponse() *webhooks.ConfigResponse {
-	if a == nil {
-		return nil
-	}
-	return a.ConfigResponse
 }

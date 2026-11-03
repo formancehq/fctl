@@ -8,8 +8,8 @@ import (
 
 // AnyVariantRuleRead - Rule scoped to every variant. `log` is the full MirrorLogEntry — use `has(log.<variant>)` guards to read variant-specific fields.
 type AnyVariantRuleRead struct {
-	Match   *string                `json:"match,omitempty"`
 	Actions []AnyVariantActionRead `json:"actions,omitempty"`
+	Match   *string                `json:"match,omitempty"`
 }
 
 func (a AnyVariantRuleRead) MarshalJSON() ([]byte, error) {
@@ -23,16 +23,16 @@ func (a *AnyVariantRuleRead) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (a *AnyVariantRuleRead) GetMatch() *string {
-	if a == nil {
-		return nil
-	}
-	return a.Match
-}
-
 func (a *AnyVariantRuleRead) GetActions() []AnyVariantActionRead {
 	if a == nil {
 		return nil
 	}
 	return a.Actions
+}
+
+func (a *AnyVariantRuleRead) GetMatch() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Match
 }

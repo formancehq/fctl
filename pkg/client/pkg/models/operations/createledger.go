@@ -19,25 +19,11 @@ func (c *CreateLedgerSecurity) GetBearerAuth() *string {
 }
 
 type CreateLedgerRequest struct {
+	CreateLedgerRequest ledgerv3.CreateLedgerRequest `request:"mediaType=application/json"`
+	// Idempotency key for the request
+	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
 	// Name of the ledger
 	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Idempotency key for the request
-	IdempotencyKey      *string                      `header:"style=simple,explode=false,name=Idempotency-Key"`
-	CreateLedgerRequest ledgerv3.CreateLedgerRequest `request:"mediaType=application/json"`
-}
-
-func (c *CreateLedgerRequest) GetLedgerName() string {
-	if c == nil {
-		return ""
-	}
-	return c.LedgerName
-}
-
-func (c *CreateLedgerRequest) GetIdempotencyKey() *string {
-	if c == nil {
-		return nil
-	}
-	return c.IdempotencyKey
 }
 
 func (c *CreateLedgerRequest) GetCreateLedgerRequest() ledgerv3.CreateLedgerRequest {
@@ -47,22 +33,36 @@ func (c *CreateLedgerRequest) GetCreateLedgerRequest() ledgerv3.CreateLedgerRequ
 	return c.CreateLedgerRequest
 }
 
+func (c *CreateLedgerRequest) GetIdempotencyKey() *string {
+	if c == nil {
+		return nil
+	}
+	return c.IdempotencyKey
+}
+
+func (c *CreateLedgerRequest) GetLedgerName() string {
+	if c == nil {
+		return ""
+	}
+	return c.LedgerName
+}
+
 type CreateLedgerResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
-	// HTTP response status code for this operation
-	StatusCode int
-	// Raw HTTP response; suitable for custom response parsing
-	RawResponse *http.Response
 	// Ledger created successfully
 	CreateLedgerResponse *ledgerv3.CreateLedgerResponse
 	// Bad request
 	ErrorResponse *ledgerv3.ErrorResponse
-	// Authentication required (missing or invalid JWT token)
-	Unauthorized *string
 	// Insufficient permissions (missing required scope)
 	Forbidden *string
 	Headers   map[string][]string
+	// HTTP response status code for this operation
+	StatusCode int
+	// Raw HTTP response; suitable for custom response parsing
+	RawResponse *http.Response
+	// Authentication required (missing or invalid JWT token)
+	Unauthorized *string
 }
 
 func (c *CreateLedgerResponse) GetContentType() string {
@@ -70,20 +70,6 @@ func (c *CreateLedgerResponse) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
-}
-
-func (c *CreateLedgerResponse) GetStatusCode() int {
-	if c == nil {
-		return 0
-	}
-	return c.StatusCode
-}
-
-func (c *CreateLedgerResponse) GetRawResponse() *http.Response {
-	if c == nil {
-		return nil
-	}
-	return c.RawResponse
 }
 
 func (c *CreateLedgerResponse) GetCreateLedgerResponse() *ledgerv3.CreateLedgerResponse {
@@ -100,13 +86,6 @@ func (c *CreateLedgerResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
 	return c.ErrorResponse
 }
 
-func (c *CreateLedgerResponse) GetUnauthorized() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Unauthorized
-}
-
 func (c *CreateLedgerResponse) GetForbidden() *string {
 	if c == nil {
 		return nil
@@ -119,4 +98,25 @@ func (c *CreateLedgerResponse) GetHeaders() map[string][]string {
 		return map[string][]string{}
 	}
 	return c.Headers
+}
+
+func (c *CreateLedgerResponse) GetStatusCode() int {
+	if c == nil {
+		return 0
+	}
+	return c.StatusCode
+}
+
+func (c *CreateLedgerResponse) GetRawResponse() *http.Response {
+	if c == nil {
+		return nil
+	}
+	return c.RawResponse
+}
+
+func (c *CreateLedgerResponse) GetUnauthorized() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Unauthorized
 }

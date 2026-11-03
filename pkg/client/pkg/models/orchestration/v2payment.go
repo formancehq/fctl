@@ -10,38 +10,12 @@ import (
 	"time"
 )
 
-// V2PaymentType - Direction of the payment
-type V2PaymentType string
-
-const (
-	V2PaymentTypePayIn    V2PaymentType = "PAY-IN"
-	V2PaymentTypePayout   V2PaymentType = "PAYOUT"
-	V2PaymentTypeTransfer V2PaymentType = "TRANSFER"
-	V2PaymentTypeOther    V2PaymentType = "OTHER"
-)
-
-func (e V2PaymentType) ToPointer() *V2PaymentType {
-	return &e
+// V2PaymentRaw - The provider's original payload, passed through untouched
+type V2PaymentRaw struct {
 }
-func (e *V2PaymentType) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "PAY-IN":
-		fallthrough
-	case "PAYOUT":
-		fallthrough
-	case "TRANSFER":
-		fallthrough
-	case "OTHER":
-		*e = V2PaymentType(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for V2PaymentType: %v", v)
-	}
-}
+
+// #region class-body-v2paymentraw
+// #endregion class-body-v2paymentraw
 
 // V2PaymentScheme - Payment scheme or rail the payment travelled over
 type V2PaymentScheme string
@@ -118,45 +92,71 @@ func (e *V2PaymentScheme) UnmarshalJSON(data []byte) error {
 	}
 }
 
-// V2PaymentRaw - The provider's original payload, passed through untouched
-type V2PaymentRaw struct {
-}
+// V2PaymentType - Direction of the payment
+type V2PaymentType string
 
-// #region class-body-v2paymentraw
-// #endregion class-body-v2paymentraw
+const (
+	V2PaymentTypePayIn    V2PaymentType = "PAY-IN"
+	V2PaymentTypePayout   V2PaymentType = "PAYOUT"
+	V2PaymentTypeTransfer V2PaymentType = "TRANSFER"
+	V2PaymentTypeOther    V2PaymentType = "OTHER"
+)
+
+func (e V2PaymentType) ToPointer() *V2PaymentType {
+	return &e
+}
+func (e *V2PaymentType) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "PAY-IN":
+		fallthrough
+	case "PAYOUT":
+		fallthrough
+	case "TRANSFER":
+		fallthrough
+	case "OTHER":
+		*e = V2PaymentType(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for V2PaymentType: %v", v)
+	}
+}
 
 // V2Payment - A payment observed or initiated through a connector
 type V2Payment struct {
-	// Unique identifier of the payment
-	ID string `json:"id"`
-	// Identifier the payment carries at the provider
-	Reference string `json:"reference"`
-	// Identifier of the account the funds left
-	SourceAccountID string `json:"sourceAccountID"`
-	// Identifier of the account the funds reached
-	DestinationAccountID string `json:"destinationAccountID"`
-	// Identifier of the connector that produced the payment
-	ConnectorID string `json:"connectorID"`
-	// The payment provider behind a connector
-	Provider *V2Connector `json:"provider,omitempty"`
-	// Direction of the payment
-	Type V2PaymentType `json:"type"`
-	// Where a payment stands in its lifecycle
-	Status V2PaymentStatus `json:"status"`
-	// Amount the payment was created with, before any adjustment
-	InitialAmount *big.Int `json:"initialAmount"`
-	// Payment scheme or rail the payment travelled over
-	Scheme V2PaymentScheme `json:"scheme"`
-	// Asset the payment is denominated in
-	Asset string `json:"asset"`
-	// When the payment was created
-	CreatedAt time.Time `json:"createdAt"`
-	// The provider's original payload, passed through untouched
-	Raw *V2PaymentRaw `json:"raw"`
 	// Successive changes to the payment's amount and status
 	Adjustments []V2PaymentAdjustment `json:"adjustments"`
+	// Asset the payment is denominated in
+	Asset string `json:"asset"`
+	// Identifier of the connector that produced the payment
+	ConnectorID string `json:"connectorID"`
+	// When the payment was created
+	CreatedAt time.Time `json:"createdAt"`
+	// Identifier of the account the funds reached
+	DestinationAccountID string `json:"destinationAccountID"`
+	// Unique identifier of the payment
+	ID string `json:"id"`
+	// Amount the payment was created with, before any adjustment
+	InitialAmount *big.Int `json:"initialAmount"`
 	// Arbitrary key/value pairs attached to a payment
 	Metadata *V2PaymentMetadata `json:"metadata"`
+	// The payment provider behind a connector
+	Provider *V2Connector `json:"provider,omitempty"`
+	// The provider's original payload, passed through untouched
+	Raw *V2PaymentRaw `json:"raw"`
+	// Identifier the payment carries at the provider
+	Reference string `json:"reference"`
+	// Payment scheme or rail the payment travelled over
+	Scheme V2PaymentScheme `json:"scheme"`
+	// Identifier of the account the funds left
+	SourceAccountID string `json:"sourceAccountID"`
+	// Where a payment stands in its lifecycle
+	Status V2PaymentStatus `json:"status"`
+	// Direction of the payment
+	Type V2PaymentType `json:"type"`
 }
 
 func (v V2Payment) MarshalJSON() ([]byte, error) {
@@ -170,74 +170,11 @@ func (v *V2Payment) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2Payment) GetID() string {
+func (v *V2Payment) GetAdjustments() []V2PaymentAdjustment {
 	if v == nil {
-		return ""
+		return []V2PaymentAdjustment{}
 	}
-	return v.ID
-}
-
-func (v *V2Payment) GetReference() string {
-	if v == nil {
-		return ""
-	}
-	return v.Reference
-}
-
-func (v *V2Payment) GetSourceAccountID() string {
-	if v == nil {
-		return ""
-	}
-	return v.SourceAccountID
-}
-
-func (v *V2Payment) GetDestinationAccountID() string {
-	if v == nil {
-		return ""
-	}
-	return v.DestinationAccountID
-}
-
-func (v *V2Payment) GetConnectorID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ConnectorID
-}
-
-func (v *V2Payment) GetProvider() *V2Connector {
-	if v == nil {
-		return nil
-	}
-	return v.Provider
-}
-
-func (v *V2Payment) GetType() V2PaymentType {
-	if v == nil {
-		return V2PaymentType("")
-	}
-	return v.Type
-}
-
-func (v *V2Payment) GetStatus() V2PaymentStatus {
-	if v == nil {
-		return V2PaymentStatus("")
-	}
-	return v.Status
-}
-
-func (v *V2Payment) GetInitialAmount() *big.Int {
-	if v == nil {
-		return big.NewInt(0)
-	}
-	return v.InitialAmount
-}
-
-func (v *V2Payment) GetScheme() V2PaymentScheme {
-	if v == nil {
-		return V2PaymentScheme("")
-	}
-	return v.Scheme
+	return v.Adjustments
 }
 
 func (v *V2Payment) GetAsset() string {
@@ -247,11 +184,53 @@ func (v *V2Payment) GetAsset() string {
 	return v.Asset
 }
 
+func (v *V2Payment) GetConnectorID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ConnectorID
+}
+
 func (v *V2Payment) GetCreatedAt() time.Time {
 	if v == nil {
 		return time.Time{}
 	}
 	return v.CreatedAt
+}
+
+func (v *V2Payment) GetDestinationAccountID() string {
+	if v == nil {
+		return ""
+	}
+	return v.DestinationAccountID
+}
+
+func (v *V2Payment) GetID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ID
+}
+
+func (v *V2Payment) GetInitialAmount() *big.Int {
+	if v == nil {
+		return big.NewInt(0)
+	}
+	return v.InitialAmount
+}
+
+func (v *V2Payment) GetMetadata() *V2PaymentMetadata {
+	if v == nil {
+		return nil
+	}
+	return v.Metadata
+}
+
+func (v *V2Payment) GetProvider() *V2Connector {
+	if v == nil {
+		return nil
+	}
+	return v.Provider
 }
 
 func (v *V2Payment) GetRaw() *V2PaymentRaw {
@@ -261,18 +240,39 @@ func (v *V2Payment) GetRaw() *V2PaymentRaw {
 	return v.Raw
 }
 
-func (v *V2Payment) GetAdjustments() []V2PaymentAdjustment {
+func (v *V2Payment) GetReference() string {
 	if v == nil {
-		return []V2PaymentAdjustment{}
+		return ""
 	}
-	return v.Adjustments
+	return v.Reference
 }
 
-func (v *V2Payment) GetMetadata() *V2PaymentMetadata {
+func (v *V2Payment) GetScheme() V2PaymentScheme {
 	if v == nil {
-		return nil
+		return V2PaymentScheme("")
 	}
-	return v.Metadata
+	return v.Scheme
+}
+
+func (v *V2Payment) GetSourceAccountID() string {
+	if v == nil {
+		return ""
+	}
+	return v.SourceAccountID
+}
+
+func (v *V2Payment) GetStatus() V2PaymentStatus {
+	if v == nil {
+		return V2PaymentStatus("")
+	}
+	return v.Status
+}
+
+func (v *V2Payment) GetType() V2PaymentType {
+	if v == nil {
+		return V2PaymentType("")
+	}
+	return v.Type
 }
 
 // #region class-body-v2payment

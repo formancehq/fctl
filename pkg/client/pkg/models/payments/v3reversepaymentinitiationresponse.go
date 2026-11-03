@@ -4,19 +4,12 @@ package payments
 
 // V3ReversePaymentInitiationResponseData - The task tracking the reversal, which completes asynchronously
 type V3ReversePaymentInitiationResponseData struct {
-	// Since this call is asynchronous, the response will contain the ID of the task that was created to reverse the payment initiation. You can use the task API to check the status of the task and get the resulting payment ID.
-	//
-	TaskID *string `json:"taskID,omitempty"`
 	// Related payment initiation reversal object ID created.
 	//
 	PaymentInitiationReversalID *string `json:"paymentInitiationReversalID,omitempty"`
-}
-
-func (v *V3ReversePaymentInitiationResponseData) GetTaskID() *string {
-	if v == nil {
-		return nil
-	}
-	return v.TaskID
+	// Since this call is asynchronous, the response will contain the ID of the task that was created to reverse the payment initiation. You can use the task API to check the status of the task and get the resulting payment ID.
+	//
+	TaskID *string `json:"taskID,omitempty"`
 }
 
 func (v *V3ReversePaymentInitiationResponseData) GetPaymentInitiationReversalID() *string {
@@ -24,6 +17,13 @@ func (v *V3ReversePaymentInitiationResponseData) GetPaymentInitiationReversalID(
 		return nil
 	}
 	return v.PaymentInitiationReversalID
+}
+
+func (v *V3ReversePaymentInitiationResponseData) GetTaskID() *string {
+	if v == nil {
+		return nil
+	}
+	return v.TaskID
 }
 
 // #region class-body-v3reversepaymentinitiationresponsedata

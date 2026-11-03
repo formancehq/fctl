@@ -19,17 +19,10 @@ func (d *DeleteLedgerSecurity) GetBearerAuth() *string {
 }
 
 type DeleteLedgerRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 	// Idempotency key for the request
 	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
-}
-
-func (d *DeleteLedgerRequest) GetLedgerName() string {
-	if d == nil {
-		return ""
-	}
-	return d.LedgerName
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 }
 
 func (d *DeleteLedgerRequest) GetIdempotencyKey() *string {
@@ -39,20 +32,27 @@ func (d *DeleteLedgerRequest) GetIdempotencyKey() *string {
 	return d.IdempotencyKey
 }
 
+func (d *DeleteLedgerRequest) GetLedgerName() string {
+	if d == nil {
+		return ""
+	}
+	return d.LedgerName
+}
+
 type DeleteLedgerResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (d *DeleteLedgerResponse) GetContentType() string {
@@ -60,6 +60,27 @@ func (d *DeleteLedgerResponse) GetContentType() string {
 		return ""
 	}
 	return d.ContentType
+}
+
+func (d *DeleteLedgerResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if d == nil {
+		return nil
+	}
+	return d.ErrorResponse
+}
+
+func (d *DeleteLedgerResponse) GetForbidden() *string {
+	if d == nil {
+		return nil
+	}
+	return d.Forbidden
+}
+
+func (d *DeleteLedgerResponse) GetHeaders() map[string][]string {
+	if d == nil {
+		return map[string][]string{}
+	}
+	return d.Headers
 }
 
 func (d *DeleteLedgerResponse) GetStatusCode() int {
@@ -76,30 +97,9 @@ func (d *DeleteLedgerResponse) GetRawResponse() *http.Response {
 	return d.RawResponse
 }
 
-func (d *DeleteLedgerResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if d == nil {
-		return nil
-	}
-	return d.ErrorResponse
-}
-
 func (d *DeleteLedgerResponse) GetUnauthorized() *string {
 	if d == nil {
 		return nil
 	}
 	return d.Unauthorized
-}
-
-func (d *DeleteLedgerResponse) GetForbidden() *string {
-	if d == nil {
-		return nil
-	}
-	return d.Forbidden
-}
-
-func (d *DeleteLedgerResponse) GetHeaders() map[string][]string {
-	if d == nil {
-		return map[string][]string{}
-	}
-	return d.Headers
 }

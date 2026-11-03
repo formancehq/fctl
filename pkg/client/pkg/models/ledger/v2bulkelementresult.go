@@ -10,13 +10,13 @@ import (
 )
 
 type V2BulkElementResultError struct {
-	// The action this result corresponds to
-	ResponseType string `json:"responseType"`
-	// Identifier of the log entry produced by this element
-	LogID            int64   `json:"logID"`
 	ErrorCode        string  `json:"errorCode"`
 	ErrorDescription string  `json:"errorDescription"`
 	ErrorDetails     *string `json:"errorDetails,omitempty"`
+	// Identifier of the log entry produced by this element
+	LogID int64 `json:"logID"`
+	// The action this result corresponds to
+	ResponseType string `json:"responseType"`
 }
 
 func (v V2BulkElementResultError) MarshalJSON() ([]byte, error) {
@@ -24,24 +24,10 @@ func (v V2BulkElementResultError) MarshalJSON() ([]byte, error) {
 }
 
 func (v *V2BulkElementResultError) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"responseType", "logID", "errorCode", "errorDescription"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"errorCode", "errorDescription", "logID", "responseType"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (v *V2BulkElementResultError) GetResponseType() string {
-	if v == nil {
-		return ""
-	}
-	return v.ResponseType
-}
-
-func (v *V2BulkElementResultError) GetLogID() int64 {
-	if v == nil {
-		return 0
-	}
-	return v.LogID
 }
 
 func (v *V2BulkElementResultError) GetErrorCode() string {
@@ -65,14 +51,28 @@ func (v *V2BulkElementResultError) GetErrorDetails() *string {
 	return v.ErrorDetails
 }
 
+func (v *V2BulkElementResultError) GetLogID() int64 {
+	if v == nil {
+		return 0
+	}
+	return v.LogID
+}
+
+func (v *V2BulkElementResultError) GetResponseType() string {
+	if v == nil {
+		return ""
+	}
+	return v.ResponseType
+}
+
 // #region class-body-v2bulkelementresulterror
 // #endregion class-body-v2bulkelementresulterror
 
 type V2BulkElementResultDeleteMetadata struct {
-	// The action this result corresponds to
-	ResponseType string `json:"responseType"`
 	// Identifier of the log entry produced by this element
 	LogID int64 `json:"logID"`
+	// The action this result corresponds to
+	ResponseType string `json:"responseType"`
 }
 
 func (v V2BulkElementResultDeleteMetadata) MarshalJSON() ([]byte, error) {
@@ -80,17 +80,10 @@ func (v V2BulkElementResultDeleteMetadata) MarshalJSON() ([]byte, error) {
 }
 
 func (v *V2BulkElementResultDeleteMetadata) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"responseType", "logID"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"logID", "responseType"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (v *V2BulkElementResultDeleteMetadata) GetResponseType() string {
-	if v == nil {
-		return ""
-	}
-	return v.ResponseType
 }
 
 func (v *V2BulkElementResultDeleteMetadata) GetLogID() int64 {
@@ -100,16 +93,23 @@ func (v *V2BulkElementResultDeleteMetadata) GetLogID() int64 {
 	return v.LogID
 }
 
+func (v *V2BulkElementResultDeleteMetadata) GetResponseType() string {
+	if v == nil {
+		return ""
+	}
+	return v.ResponseType
+}
+
 // #region class-body-v2bulkelementresultdeletemetadata
 // #endregion class-body-v2bulkelementresultdeletemetadata
 
 type V2BulkElementResultRevertTransaction struct {
-	// The action this result corresponds to
-	ResponseType string `json:"responseType"`
-	// Identifier of the log entry produced by this element
-	LogID int64 `json:"logID"`
 	// A transaction recorded in the ledger, carrying its postings, metadata and both bi-temporal timestamps
 	Data V2Transaction `json:"data"`
+	// Identifier of the log entry produced by this element
+	LogID int64 `json:"logID"`
+	// The action this result corresponds to
+	ResponseType string `json:"responseType"`
 }
 
 func (v V2BulkElementResultRevertTransaction) MarshalJSON() ([]byte, error) {
@@ -117,24 +117,10 @@ func (v V2BulkElementResultRevertTransaction) MarshalJSON() ([]byte, error) {
 }
 
 func (v *V2BulkElementResultRevertTransaction) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"responseType", "logID", "data"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"data", "logID", "responseType"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (v *V2BulkElementResultRevertTransaction) GetResponseType() string {
-	if v == nil {
-		return ""
-	}
-	return v.ResponseType
-}
-
-func (v *V2BulkElementResultRevertTransaction) GetLogID() int64 {
-	if v == nil {
-		return 0
-	}
-	return v.LogID
 }
 
 func (v *V2BulkElementResultRevertTransaction) GetData() V2Transaction {
@@ -144,14 +130,28 @@ func (v *V2BulkElementResultRevertTransaction) GetData() V2Transaction {
 	return v.Data
 }
 
+func (v *V2BulkElementResultRevertTransaction) GetLogID() int64 {
+	if v == nil {
+		return 0
+	}
+	return v.LogID
+}
+
+func (v *V2BulkElementResultRevertTransaction) GetResponseType() string {
+	if v == nil {
+		return ""
+	}
+	return v.ResponseType
+}
+
 // #region class-body-v2bulkelementresultreverttransaction
 // #endregion class-body-v2bulkelementresultreverttransaction
 
 type V2BulkElementResultAddMetadata struct {
-	// The action this result corresponds to
-	ResponseType string `json:"responseType"`
 	// Identifier of the log entry produced by this element
 	LogID int64 `json:"logID"`
+	// The action this result corresponds to
+	ResponseType string `json:"responseType"`
 }
 
 func (v V2BulkElementResultAddMetadata) MarshalJSON() ([]byte, error) {
@@ -159,17 +159,10 @@ func (v V2BulkElementResultAddMetadata) MarshalJSON() ([]byte, error) {
 }
 
 func (v *V2BulkElementResultAddMetadata) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"responseType", "logID"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"logID", "responseType"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (v *V2BulkElementResultAddMetadata) GetResponseType() string {
-	if v == nil {
-		return ""
-	}
-	return v.ResponseType
 }
 
 func (v *V2BulkElementResultAddMetadata) GetLogID() int64 {
@@ -179,16 +172,23 @@ func (v *V2BulkElementResultAddMetadata) GetLogID() int64 {
 	return v.LogID
 }
 
+func (v *V2BulkElementResultAddMetadata) GetResponseType() string {
+	if v == nil {
+		return ""
+	}
+	return v.ResponseType
+}
+
 // #region class-body-v2bulkelementresultaddmetadata
 // #endregion class-body-v2bulkelementresultaddmetadata
 
 type V2BulkElementResultCreateTransaction struct {
-	// The action this result corresponds to
-	ResponseType string `json:"responseType"`
-	// Identifier of the log entry produced by this element
-	LogID int64 `json:"logID"`
 	// A transaction recorded in the ledger, carrying its postings, metadata and both bi-temporal timestamps
 	Data V2Transaction `json:"data"`
+	// Identifier of the log entry produced by this element
+	LogID int64 `json:"logID"`
+	// The action this result corresponds to
+	ResponseType string `json:"responseType"`
 }
 
 func (v V2BulkElementResultCreateTransaction) MarshalJSON() ([]byte, error) {
@@ -196,24 +196,10 @@ func (v V2BulkElementResultCreateTransaction) MarshalJSON() ([]byte, error) {
 }
 
 func (v *V2BulkElementResultCreateTransaction) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"responseType", "logID", "data"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"data", "logID", "responseType"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (v *V2BulkElementResultCreateTransaction) GetResponseType() string {
-	if v == nil {
-		return ""
-	}
-	return v.ResponseType
-}
-
-func (v *V2BulkElementResultCreateTransaction) GetLogID() int64 {
-	if v == nil {
-		return 0
-	}
-	return v.LogID
 }
 
 func (v *V2BulkElementResultCreateTransaction) GetData() V2Transaction {
@@ -223,17 +209,31 @@ func (v *V2BulkElementResultCreateTransaction) GetData() V2Transaction {
 	return v.Data
 }
 
+func (v *V2BulkElementResultCreateTransaction) GetLogID() int64 {
+	if v == nil {
+		return 0
+	}
+	return v.LogID
+}
+
+func (v *V2BulkElementResultCreateTransaction) GetResponseType() string {
+	if v == nil {
+		return ""
+	}
+	return v.ResponseType
+}
+
 // #region class-body-v2bulkelementresultcreatetransaction
 // #endregion class-body-v2bulkelementresultcreatetransaction
 
 type V2BulkElementResultType string
 
 const (
-	V2BulkElementResultTypeCreateTransaction V2BulkElementResultType = "CREATE_TRANSACTION"
 	V2BulkElementResultTypeAddMetadata       V2BulkElementResultType = "ADD_METADATA"
-	V2BulkElementResultTypeRevertTransaction V2BulkElementResultType = "REVERT_TRANSACTION"
+	V2BulkElementResultTypeCreateTransaction V2BulkElementResultType = "CREATE_TRANSACTION"
 	V2BulkElementResultTypeDeleteMetadata    V2BulkElementResultType = "DELETE_METADATA"
 	V2BulkElementResultTypeError             V2BulkElementResultType = "ERROR"
+	V2BulkElementResultTypeRevertTransaction V2BulkElementResultType = "REVERT_TRANSACTION"
 )
 
 type V2BulkElementResult struct {
@@ -244,18 +244,6 @@ type V2BulkElementResult struct {
 	V2BulkElementResultError             *V2BulkElementResultError             `queryParam:"inline" union:"member"`
 
 	Type V2BulkElementResultType
-}
-
-func CreateV2BulkElementResultCreateTransaction(createTransaction V2BulkElementResultCreateTransaction) V2BulkElementResult {
-	typ := V2BulkElementResultTypeCreateTransaction
-
-	typStr := string(typ)
-	createTransaction.ResponseType = typStr
-
-	return V2BulkElementResult{
-		V2BulkElementResultCreateTransaction: &createTransaction,
-		Type:                                 typ,
-	}
 }
 
 func CreateV2BulkElementResultAddMetadata(addMetadata V2BulkElementResultAddMetadata) V2BulkElementResult {
@@ -270,14 +258,14 @@ func CreateV2BulkElementResultAddMetadata(addMetadata V2BulkElementResultAddMeta
 	}
 }
 
-func CreateV2BulkElementResultRevertTransaction(revertTransaction V2BulkElementResultRevertTransaction) V2BulkElementResult {
-	typ := V2BulkElementResultTypeRevertTransaction
+func CreateV2BulkElementResultCreateTransaction(createTransaction V2BulkElementResultCreateTransaction) V2BulkElementResult {
+	typ := V2BulkElementResultTypeCreateTransaction
 
 	typStr := string(typ)
-	revertTransaction.ResponseType = typStr
+	createTransaction.ResponseType = typStr
 
 	return V2BulkElementResult{
-		V2BulkElementResultRevertTransaction: &revertTransaction,
+		V2BulkElementResultCreateTransaction: &createTransaction,
 		Type:                                 typ,
 	}
 }
@@ -306,6 +294,18 @@ func CreateV2BulkElementResultError(errorT V2BulkElementResultError) V2BulkEleme
 	}
 }
 
+func CreateV2BulkElementResultRevertTransaction(revertTransaction V2BulkElementResultRevertTransaction) V2BulkElementResult {
+	typ := V2BulkElementResultTypeRevertTransaction
+
+	typStr := string(typ)
+	revertTransaction.ResponseType = typStr
+
+	return V2BulkElementResult{
+		V2BulkElementResultRevertTransaction: &revertTransaction,
+		Type:                                 typ,
+	}
+}
+
 func (u *V2BulkElementResult) UnmarshalJSON(data []byte) error {
 
 	type discriminator struct {
@@ -318,15 +318,6 @@ func (u *V2BulkElementResult) UnmarshalJSON(data []byte) error {
 	}
 
 	switch dis.ResponseType {
-	case "CREATE_TRANSACTION":
-		v2BulkElementResultCreateTransaction := new(V2BulkElementResultCreateTransaction)
-		if err := utils.UnmarshalJSON(data, &v2BulkElementResultCreateTransaction, "", true, nil); err != nil {
-			return fmt.Errorf("could not unmarshal `%s` into expected (ResponseType == CREATE_TRANSACTION) type V2BulkElementResultCreateTransaction within V2BulkElementResult: %w", string(data), err)
-		}
-
-		u.V2BulkElementResultCreateTransaction = v2BulkElementResultCreateTransaction
-		u.Type = V2BulkElementResultTypeCreateTransaction
-		return nil
 	case "ADD_METADATA":
 		v2BulkElementResultAddMetadata := new(V2BulkElementResultAddMetadata)
 		if err := utils.UnmarshalJSON(data, &v2BulkElementResultAddMetadata, "", true, nil); err != nil {
@@ -336,14 +327,14 @@ func (u *V2BulkElementResult) UnmarshalJSON(data []byte) error {
 		u.V2BulkElementResultAddMetadata = v2BulkElementResultAddMetadata
 		u.Type = V2BulkElementResultTypeAddMetadata
 		return nil
-	case "REVERT_TRANSACTION":
-		v2BulkElementResultRevertTransaction := new(V2BulkElementResultRevertTransaction)
-		if err := utils.UnmarshalJSON(data, &v2BulkElementResultRevertTransaction, "", true, nil); err != nil {
-			return fmt.Errorf("could not unmarshal `%s` into expected (ResponseType == REVERT_TRANSACTION) type V2BulkElementResultRevertTransaction within V2BulkElementResult: %w", string(data), err)
+	case "CREATE_TRANSACTION":
+		v2BulkElementResultCreateTransaction := new(V2BulkElementResultCreateTransaction)
+		if err := utils.UnmarshalJSON(data, &v2BulkElementResultCreateTransaction, "", true, nil); err != nil {
+			return fmt.Errorf("could not unmarshal `%s` into expected (ResponseType == CREATE_TRANSACTION) type V2BulkElementResultCreateTransaction within V2BulkElementResult: %w", string(data), err)
 		}
 
-		u.V2BulkElementResultRevertTransaction = v2BulkElementResultRevertTransaction
-		u.Type = V2BulkElementResultTypeRevertTransaction
+		u.V2BulkElementResultCreateTransaction = v2BulkElementResultCreateTransaction
+		u.Type = V2BulkElementResultTypeCreateTransaction
 		return nil
 	case "DELETE_METADATA":
 		v2BulkElementResultDeleteMetadata := new(V2BulkElementResultDeleteMetadata)
@@ -362,6 +353,15 @@ func (u *V2BulkElementResult) UnmarshalJSON(data []byte) error {
 
 		u.V2BulkElementResultError = v2BulkElementResultError
 		u.Type = V2BulkElementResultTypeError
+		return nil
+	case "REVERT_TRANSACTION":
+		v2BulkElementResultRevertTransaction := new(V2BulkElementResultRevertTransaction)
+		if err := utils.UnmarshalJSON(data, &v2BulkElementResultRevertTransaction, "", true, nil); err != nil {
+			return fmt.Errorf("could not unmarshal `%s` into expected (ResponseType == REVERT_TRANSACTION) type V2BulkElementResultRevertTransaction within V2BulkElementResult: %w", string(data), err)
+		}
+
+		u.V2BulkElementResultRevertTransaction = v2BulkElementResultRevertTransaction
+		u.Type = V2BulkElementResultTypeRevertTransaction
 		return nil
 	}
 

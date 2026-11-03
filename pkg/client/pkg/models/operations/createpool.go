@@ -10,12 +10,12 @@ import (
 type CreatePoolResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	PoolResponse *payments.PoolResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	PoolResponse *payments.PoolResponse
 }
 
 func (c *CreatePoolResponse) GetContentType() string {
@@ -23,6 +23,13 @@ func (c *CreatePoolResponse) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
+}
+
+func (c *CreatePoolResponse) GetPoolResponse() *payments.PoolResponse {
+	if c == nil {
+		return nil
+	}
+	return c.PoolResponse
 }
 
 func (c *CreatePoolResponse) GetStatusCode() int {
@@ -37,11 +44,4 @@ func (c *CreatePoolResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return c.RawResponse
-}
-
-func (c *CreatePoolResponse) GetPoolResponse() *payments.PoolResponse {
-	if c == nil {
-		return nil
-	}
-	return c.PoolResponse
 }

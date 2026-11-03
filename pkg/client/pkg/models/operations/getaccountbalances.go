@@ -12,31 +12,31 @@ import (
 type GetAccountBalancesRequest struct {
 	// The account ID.
 	AccountID string `pathParam:"style=simple,explode=false,name=accountId"`
-	// The maximum number of results to return per page.
-	Limit *int64 `queryParam:"style=form,explode=true,name=limit"`
 	// Filter balances by currency.
 	// If not specified, all account's balances will be returned.
 	//
 	Asset *string `queryParam:"style=form,explode=true,name=asset"`
-	// Filter balances by date.
-	// If not specified, all account's balances will be returned.
-	//
-	From *time.Time `queryParam:"style=form,explode=true,name=from"`
-	// Filter balances by date.
-	// If not specified, default will be set to now.
-	//
-	To *time.Time `queryParam:"style=form,explode=true,name=to"`
-	// The maximum number of results to return per page.
-	//
-	PageSize *int64 `default:"15" queryParam:"style=form,explode=true,name=pageSize"`
 	// Parameter used in pagination requests. Maximum page size is set to 15.
 	// Set to the value of next for the next page of results.
 	// Set to the value of previous for the previous page of results.
 	// No other parameters can be set when this parameter is set.
 	//
 	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// Filter balances by date.
+	// If not specified, all account's balances will be returned.
+	//
+	From *time.Time `queryParam:"style=form,explode=true,name=from"`
+	// The maximum number of results to return per page.
+	Limit *int64 `queryParam:"style=form,explode=true,name=limit"`
+	// The maximum number of results to return per page.
+	//
+	PageSize *int64 `default:"15" queryParam:"style=form,explode=true,name=pageSize"`
 	// Fields used to sort payments (default is date:desc).
 	Sort []string `queryParam:"style=form,explode=true,name=sort"`
+	// Filter balances by date.
+	// If not specified, default will be set to now.
+	//
+	To *time.Time `queryParam:"style=form,explode=true,name=to"`
 }
 
 func (g GetAccountBalancesRequest) MarshalJSON() ([]byte, error) {
@@ -57,39 +57,11 @@ func (g *GetAccountBalancesRequest) GetAccountID() string {
 	return g.AccountID
 }
 
-func (g *GetAccountBalancesRequest) GetLimit() *int64 {
-	if g == nil {
-		return nil
-	}
-	return g.Limit
-}
-
 func (g *GetAccountBalancesRequest) GetAsset() *string {
 	if g == nil {
 		return nil
 	}
 	return g.Asset
-}
-
-func (g *GetAccountBalancesRequest) GetFrom() *time.Time {
-	if g == nil {
-		return nil
-	}
-	return g.From
-}
-
-func (g *GetAccountBalancesRequest) GetTo() *time.Time {
-	if g == nil {
-		return nil
-	}
-	return g.To
-}
-
-func (g *GetAccountBalancesRequest) GetPageSize() *int64 {
-	if g == nil {
-		return nil
-	}
-	return g.PageSize
 }
 
 func (g *GetAccountBalancesRequest) GetCursor() *string {
@@ -99,6 +71,27 @@ func (g *GetAccountBalancesRequest) GetCursor() *string {
 	return g.Cursor
 }
 
+func (g *GetAccountBalancesRequest) GetFrom() *time.Time {
+	if g == nil {
+		return nil
+	}
+	return g.From
+}
+
+func (g *GetAccountBalancesRequest) GetLimit() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Limit
+}
+
+func (g *GetAccountBalancesRequest) GetPageSize() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.PageSize
+}
+
 func (g *GetAccountBalancesRequest) GetSort() []string {
 	if g == nil {
 		return nil
@@ -106,15 +99,29 @@ func (g *GetAccountBalancesRequest) GetSort() []string {
 	return g.Sort
 }
 
+func (g *GetAccountBalancesRequest) GetTo() *time.Time {
+	if g == nil {
+		return nil
+	}
+	return g.To
+}
+
 type GetAccountBalancesResponse struct {
+	// OK
+	BalancesCursor *payments.BalancesCursor
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	BalancesCursor *payments.BalancesCursor
+}
+
+func (g *GetAccountBalancesResponse) GetBalancesCursor() *payments.BalancesCursor {
+	if g == nil {
+		return nil
+	}
+	return g.BalancesCursor
 }
 
 func (g *GetAccountBalancesResponse) GetContentType() string {
@@ -136,11 +143,4 @@ func (g *GetAccountBalancesResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetAccountBalancesResponse) GetBalancesCursor() *payments.BalancesCursor {
-	if g == nil {
-		return nil
-	}
-	return g.BalancesCursor
 }

@@ -10,86 +10,59 @@ import (
 	"math/big"
 )
 
-// TargetType - Type of the target entity
-type TargetType string
+type V2LogDataSetMetadataTargetIDType string
 
 const (
-	TargetTypeAccount     TargetType = "ACCOUNT"
-	TargetTypeTransaction TargetType = "TRANSACTION"
+	V2LogDataSetMetadataTargetIDTypeStr    V2LogDataSetMetadataTargetIDType = "str"
+	V2LogDataSetMetadataTargetIDTypeBigint V2LogDataSetMetadataTargetIDType = "bigint"
 )
 
-func (e TargetType) ToPointer() *TargetType {
-	return &e
-}
-func (e *TargetType) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "ACCOUNT":
-		fallthrough
-	case "TRANSACTION":
-		*e = TargetType(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for TargetType: %v", v)
-	}
-}
-
-type TargetIDType string
-
-const (
-	TargetIDTypeStr    TargetIDType = "str"
-	TargetIDTypeBigint TargetIDType = "bigint"
-)
-
-// TargetID - Identifier of the entity the metadata was set on, either an account address or a transaction ID
-type TargetID struct {
+// V2LogDataSetMetadataTargetID - Identifier of the entity the metadata was set on, either an account address or a transaction ID
+type V2LogDataSetMetadataTargetID struct {
 	Str    *string  `queryParam:"inline" union:"member"`
 	Bigint *big.Int `queryParam:"inline" union:"member"`
 
-	Type TargetIDType
+	Type V2LogDataSetMetadataTargetIDType
 }
 
-func CreateTargetIDStr(str string) TargetID {
-	typ := TargetIDTypeStr
+func CreateV2LogDataSetMetadataTargetIDStr(str string) V2LogDataSetMetadataTargetID {
+	typ := V2LogDataSetMetadataTargetIDTypeStr
 
-	return TargetID{
+	return V2LogDataSetMetadataTargetID{
 		Str:  &str,
 		Type: typ,
 	}
 }
 
-func CreateTargetIDBigint(bigint *big.Int) TargetID {
-	typ := TargetIDTypeBigint
+func CreateV2LogDataSetMetadataTargetIDBigint(bigint *big.Int) V2LogDataSetMetadataTargetID {
+	typ := V2LogDataSetMetadataTargetIDTypeBigint
 
-	return TargetID{
+	return V2LogDataSetMetadataTargetID{
 		Bigint: bigint,
 		Type:   typ,
 	}
 }
 
-func (u *TargetID) UnmarshalJSON(data []byte) error {
+func (u *V2LogDataSetMetadataTargetID) UnmarshalJSON(data []byte) error {
 
 	var str string = ""
 	if err := utils.UnmarshalJSON(data, &str, "", true, nil); err == nil {
 		u.Str = &str
-		u.Type = TargetIDTypeStr
+		u.Type = V2LogDataSetMetadataTargetIDTypeStr
 		return nil
 	}
 
 	var bigint *big.Int = big.NewInt(0)
 	if err := utils.UnmarshalJSON(data, &bigint, "", true, nil); err == nil {
 		u.Bigint = bigint
-		u.Type = TargetIDTypeBigint
+		u.Type = V2LogDataSetMetadataTargetIDTypeBigint
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal `%s` into any supported union types for TargetID", string(data))
+	return fmt.Errorf("could not unmarshal `%s` into any supported union types for V2LogDataSetMetadataTargetID", string(data))
 }
 
-func (u TargetID) MarshalJSON() ([]byte, error) {
+func (u V2LogDataSetMetadataTargetID) MarshalJSON() ([]byte, error) {
 	if u.Str != nil {
 		return utils.MarshalJSON(u.Str, "", true)
 	}
@@ -98,17 +71,44 @@ func (u TargetID) MarshalJSON() ([]byte, error) {
 		return utils.MarshalJSON(u.Bigint, "", true)
 	}
 
-	return nil, errors.New("could not marshal union type TargetID: all fields are null")
+	return nil, errors.New("could not marshal union type V2LogDataSetMetadataTargetID: all fields are null")
+}
+
+// V2LogDataSetMetadataTargetType - Type of the target entity
+type V2LogDataSetMetadataTargetType string
+
+const (
+	V2LogDataSetMetadataTargetTypeAccount     V2LogDataSetMetadataTargetType = "ACCOUNT"
+	V2LogDataSetMetadataTargetTypeTransaction V2LogDataSetMetadataTargetType = "TRANSACTION"
+)
+
+func (e V2LogDataSetMetadataTargetType) ToPointer() *V2LogDataSetMetadataTargetType {
+	return &e
+}
+func (e *V2LogDataSetMetadataTargetType) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "ACCOUNT":
+		fallthrough
+	case "TRANSACTION":
+		*e = V2LogDataSetMetadataTargetType(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for V2LogDataSetMetadataTargetType: %v", v)
+	}
 }
 
 // V2LogDataSetMetadata - Payload for SET_METADATA log entries. Contains the target entity and the metadata that was set.
 type V2LogDataSetMetadata struct {
-	// Type of the target entity
-	TargetType TargetType `json:"targetType"`
-	// Identifier of the entity the metadata was set on, either an account address or a transaction ID
-	TargetID TargetID `json:"targetId"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]string `json:"metadata"`
+	// Identifier of the entity the metadata was set on, either an account address or a transaction ID
+	TargetID V2LogDataSetMetadataTargetID `json:"targetId"`
+	// Type of the target entity
+	TargetType V2LogDataSetMetadataTargetType `json:"targetType"`
 }
 
 func (v V2LogDataSetMetadata) MarshalJSON() ([]byte, error) {
@@ -116,24 +116,10 @@ func (v V2LogDataSetMetadata) MarshalJSON() ([]byte, error) {
 }
 
 func (v *V2LogDataSetMetadata) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"targetType", "targetId", "metadata"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"metadata", "targetId", "targetType"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (v *V2LogDataSetMetadata) GetTargetType() TargetType {
-	if v == nil {
-		return TargetType("")
-	}
-	return v.TargetType
-}
-
-func (v *V2LogDataSetMetadata) GetTargetID() TargetID {
-	if v == nil {
-		return TargetID{}
-	}
-	return v.TargetID
 }
 
 func (v *V2LogDataSetMetadata) GetMetadata() map[string]string {
@@ -141,6 +127,20 @@ func (v *V2LogDataSetMetadata) GetMetadata() map[string]string {
 		return map[string]string{}
 	}
 	return v.Metadata
+}
+
+func (v *V2LogDataSetMetadata) GetTargetID() V2LogDataSetMetadataTargetID {
+	if v == nil {
+		return V2LogDataSetMetadataTargetID{}
+	}
+	return v.TargetID
+}
+
+func (v *V2LogDataSetMetadata) GetTargetType() V2LogDataSetMetadataTargetType {
+	if v == nil {
+		return V2LogDataSetMetadataTargetType("")
+	}
+	return v.TargetType
 }
 
 // #region class-body-v2logdatasetmetadata

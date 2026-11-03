@@ -50,11 +50,11 @@ func (e *Lifecycle) UnmarshalJSON(data []byte) error {
 type ConnectionStatus struct {
 	// Last recorded applied release; absent when unknown. May differ from the requested version or channel and does not establish worker health.
 	AppliedVersion *string `json:"appliedVersion,omitempty"`
-	// Last recorded service outcome. completed means successful bounded completion. unknown means the recorded outcome is unrecognized, not healthy.
-	Lifecycle Lifecycle        `json:"lifecycle"`
-	Ingestion *IngestionStatus `json:"ingestion,omitempty"`
 	// Fixed sanitized failure diagnostic. Unknown or stale failure provenance is failure_unknown. Ingestion failures with known provenance are reported under ingestion instead.
-	Error       *StatusError       `json:"error,omitempty"`
+	Error     *StatusError     `json:"error,omitempty"`
+	Ingestion *IngestionStatus `json:"ingestion,omitempty"`
+	// Last recorded service outcome. completed means successful bounded completion. unknown means the recorded outcome is unrecognized, not healthy.
+	Lifecycle   Lifecycle          `json:"lifecycle"`
 	SuspendedBy []SuspensionSource `json:"suspendedBy"`
 }
 
@@ -65,11 +65,11 @@ func (c *ConnectionStatus) GetAppliedVersion() *string {
 	return c.AppliedVersion
 }
 
-func (c *ConnectionStatus) GetLifecycle() Lifecycle {
+func (c *ConnectionStatus) GetError() *StatusError {
 	if c == nil {
-		return Lifecycle("")
+		return nil
 	}
-	return c.Lifecycle
+	return c.Error
 }
 
 func (c *ConnectionStatus) GetIngestion() *IngestionStatus {
@@ -79,11 +79,11 @@ func (c *ConnectionStatus) GetIngestion() *IngestionStatus {
 	return c.Ingestion
 }
 
-func (c *ConnectionStatus) GetError() *StatusError {
+func (c *ConnectionStatus) GetLifecycle() Lifecycle {
 	if c == nil {
-		return nil
+		return Lifecycle("")
 	}
-	return c.Error
+	return c.Lifecycle
 }
 
 func (c *ConnectionStatus) GetSuspendedBy() []SuspensionSource {

@@ -5,9 +5,9 @@ package ledgerv3
 // SetMetadataAction - `value` is a literal metadata string; `value_expr` is a CEL expression typed against the current variant and evaluated at commit time (e.g. `log.reference`). Exactly one of the two should be set; if neither is set the value defaults to the empty string. Optional `type` coerces the produced string into a typed MetadataValue via the platform conversion matrix — one of "string" (default), "int64", "bool", "uint64", "int8"/"int16"/"int32", "uint8"/"uint16"/"uint32", "datetime".
 type SetMetadataAction struct {
 	Key       string  `json:"key"`
+	Type      *string `json:"type,omitempty"`
 	Value     *string `json:"value,omitempty"`
 	ValueExpr *string `json:"value_expr,omitempty"`
-	Type      *string `json:"type,omitempty"`
 }
 
 func (s *SetMetadataAction) GetKey() string {
@@ -15,6 +15,13 @@ func (s *SetMetadataAction) GetKey() string {
 		return ""
 	}
 	return s.Key
+}
+
+func (s *SetMetadataAction) GetType() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Type
 }
 
 func (s *SetMetadataAction) GetValue() *string {
@@ -29,11 +36,4 @@ func (s *SetMetadataAction) GetValueExpr() *string {
 		return nil
 	}
 	return s.ValueExpr
-}
-
-func (s *SetMetadataAction) GetType() *string {
-	if s == nil {
-		return nil
-	}
-	return s.Type
 }

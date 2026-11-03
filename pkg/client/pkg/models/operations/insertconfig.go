@@ -8,14 +8,21 @@ import (
 )
 
 type InsertConfigResponse struct {
+	// Config created successfully.
+	ConfigResponse *webhooks.ConfigResponse
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Config created successfully.
-	ConfigResponse *webhooks.ConfigResponse
+}
+
+func (i *InsertConfigResponse) GetConfigResponse() *webhooks.ConfigResponse {
+	if i == nil {
+		return nil
+	}
+	return i.ConfigResponse
 }
 
 func (i *InsertConfigResponse) GetContentType() string {
@@ -37,11 +44,4 @@ func (i *InsertConfigResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return i.RawResponse
-}
-
-func (i *InsertConfigResponse) GetConfigResponse() *webhooks.ConfigResponse {
-	if i == nil {
-		return nil
-	}
-	return i.ConfigResponse
 }

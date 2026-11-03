@@ -7,17 +7,17 @@ import (
 )
 
 type GenericConfig struct {
-	// Human-readable name identifying this connector instance
-	Name string `json:"name"`
-	// Identifies the payment provider this configuration targets
-	Provider *string `default:"Generic" json:"provider"`
 	// API key used to authenticate the connector's requests
 	APIKey string `json:"apiKey"`
 	// Base URL of the API the connector calls
 	Endpoint string `json:"endpoint"`
+	// Human-readable name identifying this connector instance
+	Name string `json:"name"`
 	// The frequency at which the connector will try to fetch new BalanceTransaction objects from the API.
 	//
 	PollingPeriod *string `default:"30m" json:"pollingPeriod"`
+	// Identifies the payment provider this configuration targets
+	Provider *string `default:"Generic" json:"provider"`
 }
 
 func (g GenericConfig) MarshalJSON() ([]byte, error) {
@@ -25,24 +25,10 @@ func (g GenericConfig) MarshalJSON() ([]byte, error) {
 }
 
 func (g *GenericConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &g, "", false, []string{"name", "apiKey", "endpoint"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &g, "", false, []string{"apiKey", "endpoint", "name"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (g *GenericConfig) GetName() string {
-	if g == nil {
-		return ""
-	}
-	return g.Name
-}
-
-func (g *GenericConfig) GetProvider() *string {
-	if g == nil {
-		return nil
-	}
-	return g.Provider
 }
 
 func (g *GenericConfig) GetAPIKey() string {
@@ -59,9 +45,23 @@ func (g *GenericConfig) GetEndpoint() string {
 	return g.Endpoint
 }
 
+func (g *GenericConfig) GetName() string {
+	if g == nil {
+		return ""
+	}
+	return g.Name
+}
+
 func (g *GenericConfig) GetPollingPeriod() *string {
 	if g == nil {
 		return nil
 	}
 	return g.PollingPeriod
+}
+
+func (g *GenericConfig) GetProvider() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Provider
 }

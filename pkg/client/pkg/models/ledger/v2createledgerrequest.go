@@ -5,10 +5,10 @@ package ledger
 type V2CreateLedgerRequest struct {
 	// Name of the storage bucket backing the ledger. Ledgers sharing a bucket share a database schema
 	Bucket *string `json:"bucket,omitempty"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
 	// Feature flags to enable on the ledger, keyed by feature name
 	Features map[string]string `json:"features,omitempty"`
+	// Arbitrary key/value pairs attached to the resource
+	Metadata map[string]string `json:"metadata,omitempty"`
 }
 
 func (v *V2CreateLedgerRequest) GetBucket() *string {
@@ -18,18 +18,18 @@ func (v *V2CreateLedgerRequest) GetBucket() *string {
 	return v.Bucket
 }
 
-func (v *V2CreateLedgerRequest) GetMetadata() map[string]string {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
-}
-
 func (v *V2CreateLedgerRequest) GetFeatures() map[string]string {
 	if v == nil {
 		return nil
 	}
 	return v.Features
+}
+
+func (v *V2CreateLedgerRequest) GetMetadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.Metadata
 }
 
 // #region class-body-v2createledgerrequest

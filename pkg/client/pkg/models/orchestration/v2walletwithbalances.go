@@ -7,35 +7,32 @@ import (
 	"time"
 )
 
-// V2WalletWithBalancesBalances - Aggregated funds held by the wallet, keyed by asset
-type V2WalletWithBalancesBalances struct {
+// Balances - Aggregated funds held by the wallet, keyed by asset
+type Balances struct {
 	Main V2AssetHolder `json:"main"`
 }
 
-func (v *V2WalletWithBalancesBalances) GetMain() V2AssetHolder {
-	if v == nil {
+func (b *Balances) GetMain() V2AssetHolder {
+	if b == nil {
 		return V2AssetHolder{}
 	}
-	return v.Main
+	return b.Main
 }
-
-// #region class-body-v2walletwithbalancesbalances
-// #endregion class-body-v2walletwithbalancesbalances
 
 // V2WalletWithBalances - A wallet together with the funds it currently holds
 type V2WalletWithBalances struct {
+	// Aggregated funds held by the wallet, keyed by asset
+	Balances Balances `json:"balances"`
+	// When the wallet was created
+	CreatedAt time.Time `json:"createdAt"`
 	// The unique ID of the wallet.
 	ID string `json:"id"`
+	// Name of the ledger backing this wallet
+	Ledger string `json:"ledger"`
 	// Metadata associated with the wallet.
 	Metadata map[string]string `json:"metadata"`
 	// Human-readable name of the wallet
 	Name string `json:"name"`
-	// When the wallet was created
-	CreatedAt time.Time `json:"createdAt"`
-	// Aggregated funds held by the wallet, keyed by asset
-	Balances V2WalletWithBalancesBalances `json:"balances"`
-	// Name of the ledger backing this wallet
-	Ledger string `json:"ledger"`
 }
 
 func (v V2WalletWithBalances) MarshalJSON() ([]byte, error) {
@@ -49,11 +46,32 @@ func (v *V2WalletWithBalances) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (v *V2WalletWithBalances) GetBalances() Balances {
+	if v == nil {
+		return Balances{}
+	}
+	return v.Balances
+}
+
+func (v *V2WalletWithBalances) GetCreatedAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.CreatedAt
+}
+
 func (v *V2WalletWithBalances) GetID() string {
 	if v == nil {
 		return ""
 	}
 	return v.ID
+}
+
+func (v *V2WalletWithBalances) GetLedger() string {
+	if v == nil {
+		return ""
+	}
+	return v.Ledger
 }
 
 func (v *V2WalletWithBalances) GetMetadata() map[string]string {
@@ -68,27 +86,6 @@ func (v *V2WalletWithBalances) GetName() string {
 		return ""
 	}
 	return v.Name
-}
-
-func (v *V2WalletWithBalances) GetCreatedAt() time.Time {
-	if v == nil {
-		return time.Time{}
-	}
-	return v.CreatedAt
-}
-
-func (v *V2WalletWithBalances) GetBalances() V2WalletWithBalancesBalances {
-	if v == nil {
-		return V2WalletWithBalancesBalances{}
-	}
-	return v.Balances
-}
-
-func (v *V2WalletWithBalances) GetLedger() string {
-	if v == nil {
-		return ""
-	}
-	return v.Ledger
 }
 
 // #region class-body-v2walletwithbalances

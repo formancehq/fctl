@@ -8,16 +8,9 @@ import (
 )
 
 type CreateWalletRequest struct {
-	// Use an idempotency key
-	IdempotencyKey      *string                      `header:"style=simple,explode=false,name=Idempotency-Key"`
 	CreateWalletRequest *wallets.CreateWalletRequest `request:"mediaType=application/json"`
-}
-
-func (c *CreateWalletRequest) GetIdempotencyKey() *string {
-	if c == nil {
-		return nil
-	}
-	return c.IdempotencyKey
+	// Use an idempotency key
+	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
 }
 
 func (c *CreateWalletRequest) GetCreateWalletRequest() *wallets.CreateWalletRequest {
@@ -27,15 +20,22 @@ func (c *CreateWalletRequest) GetCreateWalletRequest() *wallets.CreateWalletRequ
 	return c.CreateWalletRequest
 }
 
+func (c *CreateWalletRequest) GetIdempotencyKey() *string {
+	if c == nil {
+		return nil
+	}
+	return c.IdempotencyKey
+}
+
 type CreateWalletResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Wallet created
+	CreateWalletResponse *wallets.CreateWalletResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Wallet created
-	CreateWalletResponse *wallets.CreateWalletResponse
 }
 
 func (c *CreateWalletResponse) GetContentType() string {
@@ -43,6 +43,13 @@ func (c *CreateWalletResponse) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
+}
+
+func (c *CreateWalletResponse) GetCreateWalletResponse() *wallets.CreateWalletResponse {
+	if c == nil {
+		return nil
+	}
+	return c.CreateWalletResponse
 }
 
 func (c *CreateWalletResponse) GetStatusCode() int {
@@ -57,11 +64,4 @@ func (c *CreateWalletResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return c.RawResponse
-}
-
-func (c *CreateWalletResponse) GetCreateWalletResponse() *wallets.CreateWalletResponse {
-	if c == nil {
-		return nil
-	}
-	return c.CreateWalletResponse
 }

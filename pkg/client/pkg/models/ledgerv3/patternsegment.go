@@ -34,14 +34,35 @@ func (e *PatternSegmentType) UnmarshalJSON(data []byte) error {
 }
 
 type PatternSegment struct {
+	Examples        []string            `json:"examples,omitempty"`
+	FixedValue      *string             `json:"fixedValue,omitempty"`
+	InferredPattern *string             `json:"inferredPattern,omitempty"`
 	Position        *int                `json:"position,omitempty"`
 	Type            *PatternSegmentType `json:"type,omitempty"`
-	FixedValue      *string             `json:"fixedValue,omitempty"`
-	VariableName    *string             `json:"variableName,omitempty"`
-	InferredPattern *string             `json:"inferredPattern,omitempty"`
 	// Number of distinct values observed at this segment position.
-	UniqueValues *int64   `json:"uniqueValues,omitempty"`
-	Examples     []string `json:"examples,omitempty"`
+	UniqueValues *int64  `json:"uniqueValues,omitempty"`
+	VariableName *string `json:"variableName,omitempty"`
+}
+
+func (p *PatternSegment) GetExamples() []string {
+	if p == nil {
+		return nil
+	}
+	return p.Examples
+}
+
+func (p *PatternSegment) GetFixedValue() *string {
+	if p == nil {
+		return nil
+	}
+	return p.FixedValue
+}
+
+func (p *PatternSegment) GetInferredPattern() *string {
+	if p == nil {
+		return nil
+	}
+	return p.InferredPattern
 }
 
 func (p *PatternSegment) GetPosition() *int {
@@ -58,27 +79,6 @@ func (p *PatternSegment) GetType() *PatternSegmentType {
 	return p.Type
 }
 
-func (p *PatternSegment) GetFixedValue() *string {
-	if p == nil {
-		return nil
-	}
-	return p.FixedValue
-}
-
-func (p *PatternSegment) GetVariableName() *string {
-	if p == nil {
-		return nil
-	}
-	return p.VariableName
-}
-
-func (p *PatternSegment) GetInferredPattern() *string {
-	if p == nil {
-		return nil
-	}
-	return p.InferredPattern
-}
-
 func (p *PatternSegment) GetUniqueValues() *int64 {
 	if p == nil {
 		return nil
@@ -86,9 +86,9 @@ func (p *PatternSegment) GetUniqueValues() *int64 {
 	return p.UniqueValues
 }
 
-func (p *PatternSegment) GetExamples() []string {
+func (p *PatternSegment) GetVariableName() *string {
 	if p == nil {
 		return nil
 	}
-	return p.Examples
+	return p.VariableName
 }

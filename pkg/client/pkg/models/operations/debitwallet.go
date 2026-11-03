@@ -8,24 +8,10 @@ import (
 )
 
 type DebitWalletRequest struct {
-	ID string `pathParam:"style=simple,explode=false,name=id"`
-	// Use an idempotency key
-	IdempotencyKey     *string                     `header:"style=simple,explode=false,name=Idempotency-Key"`
 	DebitWalletRequest *wallets.DebitWalletRequest `request:"mediaType=application/json"`
-}
-
-func (d *DebitWalletRequest) GetID() string {
-	if d == nil {
-		return ""
-	}
-	return d.ID
-}
-
-func (d *DebitWalletRequest) GetIdempotencyKey() *string {
-	if d == nil {
-		return nil
-	}
-	return d.IdempotencyKey
+	// Use an idempotency key
+	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
+	ID             string  `pathParam:"style=simple,explode=false,name=id"`
 }
 
 func (d *DebitWalletRequest) GetDebitWalletRequest() *wallets.DebitWalletRequest {
@@ -35,15 +21,29 @@ func (d *DebitWalletRequest) GetDebitWalletRequest() *wallets.DebitWalletRequest
 	return d.DebitWalletRequest
 }
 
+func (d *DebitWalletRequest) GetIdempotencyKey() *string {
+	if d == nil {
+		return nil
+	}
+	return d.IdempotencyKey
+}
+
+func (d *DebitWalletRequest) GetID() string {
+	if d == nil {
+		return ""
+	}
+	return d.ID
+}
+
 type DebitWalletResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Wallet successfully debited as a pending hold
+	DebitWalletResponse *wallets.DebitWalletResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Wallet successfully debited as a pending hold
-	DebitWalletResponse *wallets.DebitWalletResponse
 }
 
 func (d *DebitWalletResponse) GetContentType() string {
@@ -51,6 +51,13 @@ func (d *DebitWalletResponse) GetContentType() string {
 		return ""
 	}
 	return d.ContentType
+}
+
+func (d *DebitWalletResponse) GetDebitWalletResponse() *wallets.DebitWalletResponse {
+	if d == nil {
+		return nil
+	}
+	return d.DebitWalletResponse
 }
 
 func (d *DebitWalletResponse) GetStatusCode() int {
@@ -65,11 +72,4 @@ func (d *DebitWalletResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return d.RawResponse
-}
-
-func (d *DebitWalletResponse) GetDebitWalletResponse() *wallets.DebitWalletResponse {
-	if d == nil {
-		return nil
-	}
-	return d.DebitWalletResponse
 }

@@ -7,19 +7,19 @@ import (
 )
 
 type MoneycorpConfig struct {
-	// Human-readable name identifying this connector instance
-	Name string `json:"name"`
-	// Identifies the payment provider this configuration targets
-	Provider *string `default:"Moneycorp" json:"provider"`
-	// Client ID issued by Moneycorp
-	ClientID string `json:"clientID"`
 	// API key issued by Moneycorp, used to authenticate the connector's requests
 	APIKey string `json:"apiKey"`
+	// Client ID issued by Moneycorp
+	ClientID string `json:"clientID"`
 	// Base URL of the Moneycorp API the connector calls
 	Endpoint string `json:"endpoint"`
+	// Human-readable name identifying this connector instance
+	Name string `json:"name"`
 	// The frequency at which the connector will try to fetch new BalanceTransaction objects from MoneyCorp API.
 	//
 	PollingPeriod *string `default:"30m" json:"pollingPeriod"`
+	// Identifies the payment provider this configuration targets
+	Provider *string `default:"Moneycorp" json:"provider"`
 }
 
 func (m MoneycorpConfig) MarshalJSON() ([]byte, error) {
@@ -27,31 +27,10 @@ func (m MoneycorpConfig) MarshalJSON() ([]byte, error) {
 }
 
 func (m *MoneycorpConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &m, "", false, []string{"name", "clientID", "apiKey", "endpoint"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &m, "", false, []string{"apiKey", "clientID", "endpoint", "name"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (m *MoneycorpConfig) GetName() string {
-	if m == nil {
-		return ""
-	}
-	return m.Name
-}
-
-func (m *MoneycorpConfig) GetProvider() *string {
-	if m == nil {
-		return nil
-	}
-	return m.Provider
-}
-
-func (m *MoneycorpConfig) GetClientID() string {
-	if m == nil {
-		return ""
-	}
-	return m.ClientID
 }
 
 func (m *MoneycorpConfig) GetAPIKey() string {
@@ -61,6 +40,13 @@ func (m *MoneycorpConfig) GetAPIKey() string {
 	return m.APIKey
 }
 
+func (m *MoneycorpConfig) GetClientID() string {
+	if m == nil {
+		return ""
+	}
+	return m.ClientID
+}
+
 func (m *MoneycorpConfig) GetEndpoint() string {
 	if m == nil {
 		return ""
@@ -68,9 +54,23 @@ func (m *MoneycorpConfig) GetEndpoint() string {
 	return m.Endpoint
 }
 
+func (m *MoneycorpConfig) GetName() string {
+	if m == nil {
+		return ""
+	}
+	return m.Name
+}
+
 func (m *MoneycorpConfig) GetPollingPeriod() *string {
 	if m == nil {
 		return nil
 	}
 	return m.PollingPeriod
+}
+
+func (m *MoneycorpConfig) GetProvider() *string {
+	if m == nil {
+		return nil
+	}
+	return m.Provider
 }

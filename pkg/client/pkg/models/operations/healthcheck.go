@@ -10,14 +10,14 @@ import (
 type HealthcheckResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Request or server error. The HTTP status and code identify the failure.
+	Error *connectivity.Error
+	// Ready
+	Health *connectivity.Health
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Ready
-	Health *connectivity.Health
-	// Request or server error. The HTTP status and code identify the failure.
-	Error *connectivity.Error
 }
 
 func (h *HealthcheckResponse) GetContentType() string {
@@ -25,6 +25,20 @@ func (h *HealthcheckResponse) GetContentType() string {
 		return ""
 	}
 	return h.ContentType
+}
+
+func (h *HealthcheckResponse) GetError() *connectivity.Error {
+	if h == nil {
+		return nil
+	}
+	return h.Error
+}
+
+func (h *HealthcheckResponse) GetHealth() *connectivity.Health {
+	if h == nil {
+		return nil
+	}
+	return h.Health
 }
 
 func (h *HealthcheckResponse) GetStatusCode() int {
@@ -39,18 +53,4 @@ func (h *HealthcheckResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return h.RawResponse
-}
-
-func (h *HealthcheckResponse) GetHealth() *connectivity.Health {
-	if h == nil {
-		return nil
-	}
-	return h.Health
-}
-
-func (h *HealthcheckResponse) GetError() *connectivity.Error {
-	if h == nil {
-		return nil
-	}
-	return h.Error
 }

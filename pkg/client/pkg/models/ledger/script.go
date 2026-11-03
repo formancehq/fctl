@@ -3,14 +3,21 @@
 package ledger
 
 type Script struct {
-	// The Numscript program to execute
-	Plain string `json:"plain"`
-	// Values bound to the script's declared variables, keyed by variable name
-	Vars map[string]any `json:"vars,omitempty"`
-	// Reference to attach to the generated transaction
-	Reference *string `json:"reference,omitempty"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]any `json:"metadata,omitempty"`
+	// The Numscript program to execute
+	Plain string `json:"plain"`
+	// Reference to attach to the generated transaction
+	Reference *string `json:"reference,omitempty"`
+	// Values bound to the script's declared variables, keyed by variable name
+	Vars map[string]any `json:"vars,omitempty"`
+}
+
+func (s *Script) GetMetadata() map[string]any {
+	if s == nil {
+		return nil
+	}
+	return s.Metadata
 }
 
 func (s *Script) GetPlain() string {
@@ -20,13 +27,6 @@ func (s *Script) GetPlain() string {
 	return s.Plain
 }
 
-func (s *Script) GetVars() map[string]any {
-	if s == nil {
-		return nil
-	}
-	return s.Vars
-}
-
 func (s *Script) GetReference() *string {
 	if s == nil {
 		return nil
@@ -34,9 +34,9 @@ func (s *Script) GetReference() *string {
 	return s.Reference
 }
 
-func (s *Script) GetMetadata() map[string]any {
+func (s *Script) GetVars() map[string]any {
 	if s == nil {
 		return nil
 	}
-	return s.Metadata
+	return s.Vars
 }

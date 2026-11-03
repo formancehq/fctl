@@ -7,10 +7,10 @@ import (
 )
 
 type V2LedgerAccountSubject struct {
-	// Discriminator identifying this subject as a ledger account
-	Type string `json:"type"`
 	// Address of the ledger account
 	Identifier string `json:"identifier"`
+	// Discriminator identifying this subject as a ledger account
+	Type string `json:"type"`
 }
 
 func (v V2LedgerAccountSubject) MarshalJSON() ([]byte, error) {
@@ -18,17 +18,10 @@ func (v V2LedgerAccountSubject) MarshalJSON() ([]byte, error) {
 }
 
 func (v *V2LedgerAccountSubject) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"type", "identifier"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"identifier", "type"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (v *V2LedgerAccountSubject) GetType() string {
-	if v == nil {
-		return ""
-	}
-	return v.Type
 }
 
 func (v *V2LedgerAccountSubject) GetIdentifier() string {
@@ -36,6 +29,13 @@ func (v *V2LedgerAccountSubject) GetIdentifier() string {
 		return ""
 	}
 	return v.Identifier
+}
+
+func (v *V2LedgerAccountSubject) GetType() string {
+	if v == nil {
+		return ""
+	}
+	return v.Type
 }
 
 // #region class-body-v2ledgeraccountsubject

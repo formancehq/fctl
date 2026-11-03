@@ -9,36 +9,6 @@ import (
 
 // Rule - A monitoring rule evaluated on a schedule, raising alerts when it fails
 type Rule struct {
-	// Unique identifier of the rule
-	ID string `json:"id"`
-	// Human-readable name of the rule
-	Name string `json:"name"`
-	// Which built-in check a rule applies, determining the shape of its templateSpec
-	TemplateKind TemplateKind `json:"templateKind"`
-	// Parameters for the chosen template, whose shape depends on templateKind
-	TemplateSpec map[string]any `json:"templateSpec"`
-	// Representative CEL for human explanation; not the runtime program.
-	ExplanationCEL *string `json:"explanationCEL,omitempty"`
-	// Whether the rule is evaluated. Disabled rules produce no evaluations
-	Enabled bool `json:"enabled"`
-	// How serious an alert is, used to route and prioritise notifications
-	Severity Severity `json:"severity"`
-	// How long a reconciliation period lasts. Scopes each failing fingerprint
-	// into a period so a March break and an April break are distinct,
-	// independently-closable cases.
-	//
-	// Omit the key to get `continuous`, a single unbounded period (live
-	// monitoring). There is deliberately no schema-level `default`: SDK
-	// generators materialize defaults into the serialized body, which would
-	// make an omitted key indistinguishable from an explicit one and collide
-	// with the deprecated `cadence` alias. The server owns the default.
-	//
-	// This is not how often the rule runs — that is `schedule`, and the two are
-	// independent: an hourly schedule with a `monthly` period type is normal.
-	// The period type determines the `periodID` an alert is filed under:
-	// `monthly` yields `2026-07`.
-	//
-	PeriodType *PeriodType `json:"periodType,omitempty"`
 	// Deprecated alias of `periodType`. Same members. Use `periodType`; this is
 	// removed at the next API major.
 	//
@@ -72,14 +42,44 @@ type Rule struct {
 	//
 	// Deprecated: This will be removed in a future release, please migrate away from it as soon as possible.
 	Cadence *Cadence `json:"cadence,omitempty"`
-	// When a rule runs, either on demand or on a cron expression
-	Schedule *Schedule `json:"schedule,omitempty"`
-	// Channels notified when this rule raises an alert
-	Notifications []string `json:"notifications,omitempty"`
-	// Arbitrary key/value pairs attached to the rule and copied onto the alerts it raises
-	Labels map[string]string `json:"labels,omitempty"`
 	// When the rule was created
 	CreatedAt time.Time `json:"createdAt"`
+	// Whether the rule is evaluated. Disabled rules produce no evaluations
+	Enabled bool `json:"enabled"`
+	// Representative CEL for human explanation; not the runtime program.
+	ExplanationCEL *string `json:"explanationCEL,omitempty"`
+	// Unique identifier of the rule
+	ID string `json:"id"`
+	// Arbitrary key/value pairs attached to the rule and copied onto the alerts it raises
+	Labels map[string]string `json:"labels,omitempty"`
+	// Human-readable name of the rule
+	Name string `json:"name"`
+	// Channels notified when this rule raises an alert
+	Notifications []string `json:"notifications,omitempty"`
+	// How long a reconciliation period lasts. Scopes each failing fingerprint
+	// into a period so a March break and an April break are distinct,
+	// independently-closable cases.
+	//
+	// Omit the key to get `continuous`, a single unbounded period (live
+	// monitoring). There is deliberately no schema-level `default`: SDK
+	// generators materialize defaults into the serialized body, which would
+	// make an omitted key indistinguishable from an explicit one and collide
+	// with the deprecated `cadence` alias. The server owns the default.
+	//
+	// This is not how often the rule runs — that is `schedule`, and the two are
+	// independent: an hourly schedule with a `monthly` period type is normal.
+	// The period type determines the `periodID` an alert is filed under:
+	// `monthly` yields `2026-07`.
+	//
+	PeriodType *PeriodType `json:"periodType,omitempty"`
+	// When a rule runs, either on demand or on a cron expression
+	Schedule *Schedule `json:"schedule,omitempty"`
+	// How serious an alert is, used to route and prioritise notifications
+	Severity Severity `json:"severity"`
+	// Which built-in check a rule applies, determining the shape of its templateSpec
+	TemplateKind TemplateKind `json:"templateKind"`
+	// Parameters for the chosen template, whose shape depends on templateKind
+	TemplateSpec map[string]any `json:"templateSpec"`
 	// When the rule was last modified
 	UpdatedAt time.Time `json:"updatedAt"`
 }
@@ -95,6 +95,34 @@ func (r *Rule) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (r *Rule) GetCadence() *Cadence {
+	if r == nil {
+		return nil
+	}
+	return r.Cadence
+}
+
+func (r *Rule) GetCreatedAt() time.Time {
+	if r == nil {
+		return time.Time{}
+	}
+	return r.CreatedAt
+}
+
+func (r *Rule) GetEnabled() bool {
+	if r == nil {
+		return false
+	}
+	return r.Enabled
+}
+
+func (r *Rule) GetExplanationCEL() *string {
+	if r == nil {
+		return nil
+	}
+	return r.ExplanationCEL
+}
+
 func (r *Rule) GetID() string {
 	if r == nil {
 		return ""
@@ -102,11 +130,46 @@ func (r *Rule) GetID() string {
 	return r.ID
 }
 
+func (r *Rule) GetLabels() map[string]string {
+	if r == nil {
+		return nil
+	}
+	return r.Labels
+}
+
 func (r *Rule) GetName() string {
 	if r == nil {
 		return ""
 	}
 	return r.Name
+}
+
+func (r *Rule) GetNotifications() []string {
+	if r == nil {
+		return nil
+	}
+	return r.Notifications
+}
+
+func (r *Rule) GetPeriodType() *PeriodType {
+	if r == nil {
+		return nil
+	}
+	return r.PeriodType
+}
+
+func (r *Rule) GetSchedule() *Schedule {
+	if r == nil {
+		return nil
+	}
+	return r.Schedule
+}
+
+func (r *Rule) GetSeverity() Severity {
+	if r == nil {
+		return Severity("")
+	}
+	return r.Severity
 }
 
 func (r *Rule) GetTemplateKind() TemplateKind {
@@ -121,69 +184,6 @@ func (r *Rule) GetTemplateSpec() map[string]any {
 		return map[string]any{}
 	}
 	return r.TemplateSpec
-}
-
-func (r *Rule) GetExplanationCEL() *string {
-	if r == nil {
-		return nil
-	}
-	return r.ExplanationCEL
-}
-
-func (r *Rule) GetEnabled() bool {
-	if r == nil {
-		return false
-	}
-	return r.Enabled
-}
-
-func (r *Rule) GetSeverity() Severity {
-	if r == nil {
-		return Severity("")
-	}
-	return r.Severity
-}
-
-func (r *Rule) GetPeriodType() *PeriodType {
-	if r == nil {
-		return nil
-	}
-	return r.PeriodType
-}
-
-func (r *Rule) GetCadence() *Cadence {
-	if r == nil {
-		return nil
-	}
-	return r.Cadence
-}
-
-func (r *Rule) GetSchedule() *Schedule {
-	if r == nil {
-		return nil
-	}
-	return r.Schedule
-}
-
-func (r *Rule) GetNotifications() []string {
-	if r == nil {
-		return nil
-	}
-	return r.Notifications
-}
-
-func (r *Rule) GetLabels() map[string]string {
-	if r == nil {
-		return nil
-	}
-	return r.Labels
-}
-
-func (r *Rule) GetCreatedAt() time.Time {
-	if r == nil {
-		return time.Time{}
-	}
-	return r.CreatedAt
 }
 
 func (r *Rule) GetUpdatedAt() time.Time {

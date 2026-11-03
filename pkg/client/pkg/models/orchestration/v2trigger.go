@@ -9,20 +9,20 @@ import (
 
 // V2Trigger - A rule that starts a workflow when a matching event arrives
 type V2Trigger struct {
+	CreatedAt time.Time `json:"createdAt"`
 	// Type of event that fires this trigger
 	Event string `json:"event"`
-	// Identifier of the workflow to run when the trigger fires
-	WorkflowID string `json:"workflowID"`
-	// Version of the trigger definition
-	Version *string `json:"version,omitempty"`
 	// Expression evaluated against the event. The workflow runs only when it matches
 	Filter *string `json:"filter,omitempty"`
+	ID     string  `json:"id"`
+	// Human-readable name for the trigger
+	Name *string `json:"name,omitempty"`
 	// Expressions evaluated against the event to build the workflow's input variables
 	Vars map[string]any `json:"vars,omitempty"`
-	// Human-readable name for the trigger
-	Name      *string   `json:"name,omitempty"`
-	ID        string    `json:"id"`
-	CreatedAt time.Time `json:"createdAt"`
+	// Version of the trigger definition
+	Version *string `json:"version,omitempty"`
+	// Identifier of the workflow to run when the trigger fires
+	WorkflowID string `json:"workflowID"`
 }
 
 func (v V2Trigger) MarshalJSON() ([]byte, error) {
@@ -36,25 +36,18 @@ func (v *V2Trigger) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (v *V2Trigger) GetCreatedAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.CreatedAt
+}
+
 func (v *V2Trigger) GetEvent() string {
 	if v == nil {
 		return ""
 	}
 	return v.Event
-}
-
-func (v *V2Trigger) GetWorkflowID() string {
-	if v == nil {
-		return ""
-	}
-	return v.WorkflowID
-}
-
-func (v *V2Trigger) GetVersion() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Version
 }
 
 func (v *V2Trigger) GetFilter() *string {
@@ -64,11 +57,11 @@ func (v *V2Trigger) GetFilter() *string {
 	return v.Filter
 }
 
-func (v *V2Trigger) GetVars() map[string]any {
+func (v *V2Trigger) GetID() string {
 	if v == nil {
-		return nil
+		return ""
 	}
-	return v.Vars
+	return v.ID
 }
 
 func (v *V2Trigger) GetName() *string {
@@ -78,18 +71,25 @@ func (v *V2Trigger) GetName() *string {
 	return v.Name
 }
 
-func (v *V2Trigger) GetID() string {
+func (v *V2Trigger) GetVars() map[string]any {
+	if v == nil {
+		return nil
+	}
+	return v.Vars
+}
+
+func (v *V2Trigger) GetVersion() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Version
+}
+
+func (v *V2Trigger) GetWorkflowID() string {
 	if v == nil {
 		return ""
 	}
-	return v.ID
-}
-
-func (v *V2Trigger) GetCreatedAt() time.Time {
-	if v == nil {
-		return time.Time{}
-	}
-	return v.CreatedAt
+	return v.WorkflowID
 }
 
 // #region class-body-v2trigger

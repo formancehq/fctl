@@ -9,12 +9,12 @@ import (
 )
 
 type AddMetadataOnTransactionRequest struct {
+	// metadata
+	RequestBody map[string]any `request:"mediaType=application/json"`
 	// Name of the ledger.
 	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 	// Transaction ID.
 	Txid *big.Int `pathParam:"style=simple,explode=false,name=txid"`
-	// metadata
-	RequestBody map[string]any `request:"mediaType=application/json"`
 }
 
 func (a AddMetadataOnTransactionRequest) MarshalJSON() ([]byte, error) {
@@ -26,6 +26,13 @@ func (a *AddMetadataOnTransactionRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (a *AddMetadataOnTransactionRequest) GetRequestBody() map[string]any {
+	if a == nil {
+		return nil
+	}
+	return a.RequestBody
 }
 
 func (a *AddMetadataOnTransactionRequest) GetLedger() string {
@@ -42,21 +49,14 @@ func (a *AddMetadataOnTransactionRequest) GetTxid() *big.Int {
 	return a.Txid
 }
 
-func (a *AddMetadataOnTransactionRequest) GetRequestBody() map[string]any {
-	if a == nil {
-		return nil
-	}
-	return a.RequestBody
-}
-
 type AddMetadataOnTransactionResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	Headers     map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	Headers     map[string][]string
 }
 
 func (a *AddMetadataOnTransactionResponse) GetContentType() string {
@@ -64,6 +64,13 @@ func (a *AddMetadataOnTransactionResponse) GetContentType() string {
 		return ""
 	}
 	return a.ContentType
+}
+
+func (a *AddMetadataOnTransactionResponse) GetHeaders() map[string][]string {
+	if a == nil {
+		return map[string][]string{}
+	}
+	return a.Headers
 }
 
 func (a *AddMetadataOnTransactionResponse) GetStatusCode() int {
@@ -78,11 +85,4 @@ func (a *AddMetadataOnTransactionResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return a.RawResponse
-}
-
-func (a *AddMetadataOnTransactionResponse) GetHeaders() map[string][]string {
-	if a == nil {
-		return map[string][]string{}
-	}
-	return a.Headers
 }

@@ -7,26 +7,6 @@ import (
 	"fmt"
 )
 
-type Inputs struct {
-	Name string `json:"name"`
-	// Numscript type spelling.
-	Type string `json:"type"`
-}
-
-func (i *Inputs) GetName() string {
-	if i == nil {
-		return ""
-	}
-	return i.Name
-}
-
-func (i *Inputs) GetType() string {
-	if i == nil {
-		return ""
-	}
-	return i.Type
-}
-
 type Kind string
 
 const (
@@ -60,20 +40,13 @@ func (e *Kind) UnmarshalJSON(data []byte) error {
 }
 
 type Diagnostics struct {
-	Kind        Kind   `json:"kind"`
 	Code        string `json:"code"`
-	Message     string `json:"message"`
-	StartLine   *int64 `json:"startLine,omitempty"`
-	StartColumn *int64 `json:"startColumn,omitempty"`
-	EndLine     *int64 `json:"endLine,omitempty"`
 	EndColumn   *int64 `json:"endColumn,omitempty"`
-}
-
-func (d *Diagnostics) GetKind() Kind {
-	if d == nil {
-		return Kind("")
-	}
-	return d.Kind
+	EndLine     *int64 `json:"endLine,omitempty"`
+	Kind        Kind   `json:"kind"`
+	Message     string `json:"message"`
+	StartColumn *int64 `json:"startColumn,omitempty"`
+	StartLine   *int64 `json:"startLine,omitempty"`
 }
 
 func (d *Diagnostics) GetCode() string {
@@ -83,25 +56,11 @@ func (d *Diagnostics) GetCode() string {
 	return d.Code
 }
 
-func (d *Diagnostics) GetMessage() string {
-	if d == nil {
-		return ""
-	}
-	return d.Message
-}
-
-func (d *Diagnostics) GetStartLine() *int64 {
+func (d *Diagnostics) GetEndColumn() *int64 {
 	if d == nil {
 		return nil
 	}
-	return d.StartLine
-}
-
-func (d *Diagnostics) GetStartColumn() *int64 {
-	if d == nil {
-		return nil
-	}
-	return d.StartColumn
+	return d.EndColumn
 }
 
 func (d *Diagnostics) GetEndLine() *int64 {
@@ -111,23 +70,57 @@ func (d *Diagnostics) GetEndLine() *int64 {
 	return d.EndLine
 }
 
-func (d *Diagnostics) GetEndColumn() *int64 {
+func (d *Diagnostics) GetKind() Kind {
+	if d == nil {
+		return Kind("")
+	}
+	return d.Kind
+}
+
+func (d *Diagnostics) GetMessage() string {
+	if d == nil {
+		return ""
+	}
+	return d.Message
+}
+
+func (d *Diagnostics) GetStartColumn() *int64 {
 	if d == nil {
 		return nil
 	}
-	return d.EndColumn
+	return d.StartColumn
+}
+
+func (d *Diagnostics) GetStartLine() *int64 {
+	if d == nil {
+		return nil
+	}
+	return d.StartLine
+}
+
+type Inputs struct {
+	Name string `json:"name"`
+	// Numscript type spelling.
+	Type string `json:"type"`
+}
+
+func (i *Inputs) GetName() string {
+	if i == nil {
+		return ""
+	}
+	return i.Name
+}
+
+func (i *Inputs) GetType() string {
+	if i == nil {
+		return ""
+	}
+	return i.Type
 }
 
 type AnalyzeNumscriptResponseData struct {
-	Inputs      []Inputs      `json:"inputs"`
 	Diagnostics []Diagnostics `json:"diagnostics"`
-}
-
-func (a *AnalyzeNumscriptResponseData) GetInputs() []Inputs {
-	if a == nil {
-		return []Inputs{}
-	}
-	return a.Inputs
+	Inputs      []Inputs      `json:"inputs"`
 }
 
 func (a *AnalyzeNumscriptResponseData) GetDiagnostics() []Diagnostics {
@@ -135,6 +128,13 @@ func (a *AnalyzeNumscriptResponseData) GetDiagnostics() []Diagnostics {
 		return []Diagnostics{}
 	}
 	return a.Diagnostics
+}
+
+func (a *AnalyzeNumscriptResponseData) GetInputs() []Inputs {
+	if a == nil {
+		return []Inputs{}
+	}
+	return a.Inputs
 }
 
 type AnalyzeNumscriptResponse struct {

@@ -9,10 +9,10 @@ import (
 )
 
 type V2CountTransactionsRequest struct {
-	// Name of the ledger.
-	Ledger      string         `pathParam:"style=simple,explode=false,name=ledger"`
-	Pit         *time.Time     `queryParam:"style=form,explode=true,name=pit"`
 	RequestBody map[string]any `request:"mediaType=application/json"`
+	// Name of the ledger.
+	Ledger string     `pathParam:"style=simple,explode=false,name=ledger"`
+	Pit    *time.Time `queryParam:"style=form,explode=true,name=pit"`
 }
 
 func (v V2CountTransactionsRequest) MarshalJSON() ([]byte, error) {
@@ -24,6 +24,13 @@ func (v *V2CountTransactionsRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V2CountTransactionsRequest) GetRequestBody() map[string]any {
+	if v == nil {
+		return map[string]any{}
+	}
+	return v.RequestBody
 }
 
 func (v *V2CountTransactionsRequest) GetLedger() string {
@@ -40,24 +47,17 @@ func (v *V2CountTransactionsRequest) GetPit() *time.Time {
 	return v.Pit
 }
 
-func (v *V2CountTransactionsRequest) GetRequestBody() map[string]any {
-	if v == nil {
-		return map[string]any{}
-	}
-	return v.RequestBody
-}
-
 // #region class-body-v2counttransactionsrequest
 // #endregion class-body-v2counttransactionsrequest
 
 type V2CountTransactionsResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	Headers     map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	Headers     map[string][]string
 }
 
 func (v *V2CountTransactionsResponse) GetContentType() string {
@@ -65,6 +65,13 @@ func (v *V2CountTransactionsResponse) GetContentType() string {
 		return ""
 	}
 	return v.ContentType
+}
+
+func (v *V2CountTransactionsResponse) GetHeaders() map[string][]string {
+	if v == nil {
+		return map[string][]string{}
+	}
+	return v.Headers
 }
 
 func (v *V2CountTransactionsResponse) GetStatusCode() int {
@@ -79,13 +86,6 @@ func (v *V2CountTransactionsResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return v.RawResponse
-}
-
-func (v *V2CountTransactionsResponse) GetHeaders() map[string][]string {
-	if v == nil {
-		return map[string][]string{}
-	}
-	return v.Headers
 }
 
 // #region class-body-v2counttransactionsresponse

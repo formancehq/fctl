@@ -8,9 +8,9 @@ import (
 )
 
 type V2BulkElementRevertTransactionData struct {
-	ID              *big.Int `json:"id"`
-	Force           *bool    `json:"force,omitempty"`
 	AtEffectiveDate *bool    `json:"atEffectiveDate,omitempty"`
+	Force           *bool    `json:"force,omitempty"`
+	ID              *big.Int `json:"id"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]string `json:"metadata,omitempty"`
 }
@@ -26,11 +26,11 @@ func (v *V2BulkElementRevertTransactionData) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2BulkElementRevertTransactionData) GetID() *big.Int {
+func (v *V2BulkElementRevertTransactionData) GetAtEffectiveDate() *bool {
 	if v == nil {
-		return big.NewInt(0)
+		return nil
 	}
-	return v.ID
+	return v.AtEffectiveDate
 }
 
 func (v *V2BulkElementRevertTransactionData) GetForce() *bool {
@@ -40,11 +40,11 @@ func (v *V2BulkElementRevertTransactionData) GetForce() *bool {
 	return v.Force
 }
 
-func (v *V2BulkElementRevertTransactionData) GetAtEffectiveDate() *bool {
+func (v *V2BulkElementRevertTransactionData) GetID() *big.Int {
 	if v == nil {
-		return nil
+		return big.NewInt(0)
 	}
-	return v.AtEffectiveDate
+	return v.ID
 }
 
 func (v *V2BulkElementRevertTransactionData) GetMetadata() map[string]string {
@@ -59,10 +59,10 @@ func (v *V2BulkElementRevertTransactionData) GetMetadata() map[string]string {
 
 type V2BulkElementRevertTransaction struct {
 	// The bulk action this element performs
-	Action string `json:"action"`
+	Action string                              `json:"action"`
+	Data   *V2BulkElementRevertTransactionData `json:"data,omitempty"`
 	// Idempotency key scoped to this element, making it safe to retry the bulk request
-	Ik   *string                             `json:"ik,omitempty"`
-	Data *V2BulkElementRevertTransactionData `json:"data,omitempty"`
+	Ik *string `json:"ik,omitempty"`
 }
 
 func (v V2BulkElementRevertTransaction) MarshalJSON() ([]byte, error) {
@@ -83,18 +83,18 @@ func (v *V2BulkElementRevertTransaction) GetAction() string {
 	return v.Action
 }
 
-func (v *V2BulkElementRevertTransaction) GetIk() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Ik
-}
-
 func (v *V2BulkElementRevertTransaction) GetData() *V2BulkElementRevertTransactionData {
 	if v == nil {
 		return nil
 	}
 	return v.Data
+}
+
+func (v *V2BulkElementRevertTransaction) GetIk() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Ik
 }
 
 // #region class-body-v2bulkelementreverttransaction

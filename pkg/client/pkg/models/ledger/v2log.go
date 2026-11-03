@@ -11,42 +11,6 @@ import (
 	"time"
 )
 
-// V2LogType - The type of operation this log represents
-type V2LogType string
-
-const (
-	V2LogTypeNewTransaction      V2LogType = "NEW_TRANSACTION"
-	V2LogTypeSetMetadata         V2LogType = "SET_METADATA"
-	V2LogTypeRevertedTransaction V2LogType = "REVERTED_TRANSACTION"
-	V2LogTypeDeleteMetadata      V2LogType = "DELETE_METADATA"
-	V2LogTypeInsertedSchema      V2LogType = "INSERTED_SCHEMA"
-)
-
-func (e V2LogType) ToPointer() *V2LogType {
-	return &e
-}
-func (e *V2LogType) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "NEW_TRANSACTION":
-		fallthrough
-	case "SET_METADATA":
-		fallthrough
-	case "REVERTED_TRANSACTION":
-		fallthrough
-	case "DELETE_METADATA":
-		fallthrough
-	case "INSERTED_SCHEMA":
-		*e = V2LogType(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for V2LogType: %v", v)
-	}
-}
-
 type V2LogDataType string
 
 const (
@@ -182,14 +146,46 @@ func (u V2LogData) MarshalJSON() ([]byte, error) {
 	return nil, errors.New("could not marshal union type V2LogData: all fields are null")
 }
 
+// V2LogType - The type of operation this log represents
+type V2LogType string
+
+const (
+	V2LogTypeNewTransaction      V2LogType = "NEW_TRANSACTION"
+	V2LogTypeSetMetadata         V2LogType = "SET_METADATA"
+	V2LogTypeRevertedTransaction V2LogType = "REVERTED_TRANSACTION"
+	V2LogTypeDeleteMetadata      V2LogType = "DELETE_METADATA"
+	V2LogTypeInsertedSchema      V2LogType = "INSERTED_SCHEMA"
+)
+
+func (e V2LogType) ToPointer() *V2LogType {
+	return &e
+}
+func (e *V2LogType) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "NEW_TRANSACTION":
+		fallthrough
+	case "SET_METADATA":
+		fallthrough
+	case "REVERTED_TRANSACTION":
+		fallthrough
+	case "DELETE_METADATA":
+		fallthrough
+	case "INSERTED_SCHEMA":
+		*e = V2LogType(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for V2LogType: %v", v)
+	}
+}
+
 // V2Log - Represents an immutable log entry in the ledger. Each log captures an atomic operation
 // with its full payload, enabling audit trails and event sourcing patterns.
 // The data field structure depends on the log type.
 type V2Log struct {
-	// Unique sequential identifier for this log entry within the ledger
-	ID *big.Int `json:"id"`
-	// The type of operation this log represents
-	Type V2LogType `json:"type"`
 	// The payload of the log entry. Structure depends on the log type:
 	// - NEW_TRANSACTION: V2LogDataNewTransaction
 	// - SET_METADATA: V2LogDataSetMetadata
@@ -198,12 +194,16 @@ type V2Log struct {
 	// - INSERTED_SCHEMA: V2LogDataInsertedSchema
 	//
 	Data V2LogData `json:"data"`
-	// SHA256 hash of the log entry, chained from the previous log for integrity verification
-	Hash string `json:"hash"`
 	// Timestamp when the operation was recorded
 	Date time.Time `json:"date"`
+	// SHA256 hash of the log entry, chained from the previous log for integrity verification
+	Hash string `json:"hash"`
+	// Unique sequential identifier for this log entry within the ledger
+	ID *big.Int `json:"id"`
 	// Schema version used for validation when the log was created
 	SchemaVersion *string `json:"schemaVersion,omitempty"`
+	// The type of operation this log represents
+	Type V2LogType `json:"type"`
 }
 
 func (v V2Log) MarshalJSON() ([]byte, error) {
@@ -211,24 +211,10 @@ func (v V2Log) MarshalJSON() ([]byte, error) {
 }
 
 func (v *V2Log) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"id", "type", "data", "hash", "date"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"data", "date", "hash", "id", "type"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (v *V2Log) GetID() *big.Int {
-	if v == nil {
-		return big.NewInt(0)
-	}
-	return v.ID
-}
-
-func (v *V2Log) GetType() V2LogType {
-	if v == nil {
-		return V2LogType("")
-	}
-	return v.Type
 }
 
 func (v *V2Log) GetData() V2LogData {
@@ -238,13 +224,6 @@ func (v *V2Log) GetData() V2LogData {
 	return v.Data
 }
 
-func (v *V2Log) GetHash() string {
-	if v == nil {
-		return ""
-	}
-	return v.Hash
-}
-
 func (v *V2Log) GetDate() time.Time {
 	if v == nil {
 		return time.Time{}
@@ -252,11 +231,32 @@ func (v *V2Log) GetDate() time.Time {
 	return v.Date
 }
 
+func (v *V2Log) GetHash() string {
+	if v == nil {
+		return ""
+	}
+	return v.Hash
+}
+
+func (v *V2Log) GetID() *big.Int {
+	if v == nil {
+		return big.NewInt(0)
+	}
+	return v.ID
+}
+
 func (v *V2Log) GetSchemaVersion() *string {
 	if v == nil {
 		return nil
 	}
 	return v.SchemaVersion
+}
+
+func (v *V2Log) GetType() V2LogType {
+	if v == nil {
+		return V2LogType("")
+	}
+	return v.Type
 }
 
 // #region class-body-v2log

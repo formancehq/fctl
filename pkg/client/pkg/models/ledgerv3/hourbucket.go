@@ -3,15 +3,8 @@
 package ledgerv3
 
 type HourBucket struct {
-	Hour  *int   `json:"hour,omitempty"`
 	Count *int64 `json:"count,omitempty"`
-}
-
-func (h *HourBucket) GetHour() *int {
-	if h == nil {
-		return nil
-	}
-	return h.Hour
+	Hour  *int   `json:"hour,omitempty"`
 }
 
 func (h *HourBucket) GetCount() *int64 {
@@ -19,4 +12,11 @@ func (h *HourBucket) GetCount() *int64 {
 		return nil
 	}
 	return h.Count
+}
+
+func (h *HourBucket) GetHour() *int {
+	if h == nil {
+		return nil
+	}
+	return h.Hour
 }

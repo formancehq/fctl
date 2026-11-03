@@ -48,41 +48,41 @@ func (e *Status) UnmarshalJSON(data []byte) error {
 // The full history of transitions lives in alert_event
 // (see /alerts/{alertID}/events).
 type Alert struct {
-	// Unique identifier of the alert
-	ID string `json:"id"`
-	// Identifier of the rule that raised the alert
-	RuleID string `json:"ruleID"`
+	// Record of who acknowledged an alert and when
+	Ack *Ack `json:"ack,omitempty"`
+	// When the alert was created
+	CreatedAt time.Time `json:"createdAt"`
+	// Data captured from the failing evaluation, explaining what broke
+	Evidence map[string]any `json:"evidence,omitempty"`
 	// Identifies what is failing within the rule, so the same break dedupes to one alert
 	Fingerprint string `json:"fingerprint"`
-	// Reconciliation period this alert is scoped to ('continuous' for live-monitoring rules).
-	PeriodID string `json:"periodID"`
-	// Where the alert stands in its open, acknowledged, resolved lifecycle
-	Status Status `json:"status"`
-	// How serious an alert is, used to route and prioritise notifications
-	Severity Severity `json:"severity"`
 	// When the fingerprint first failed within this period
 	FirstSeenAt time.Time `json:"firstSeenAt"`
+	// Unique identifier of the alert
+	ID string `json:"id"`
+	// Key/value pairs copied from the rule that raised the alert
+	Labels map[string]string `json:"labels,omitempty"`
+	// Identifier of the evaluation that last touched the alert
+	LastEvaluationID string `json:"lastEvaluationID"`
 	// When the fingerprint most recently failed
 	LastSeenAt time.Time `json:"lastSeenAt"`
 	// Count of FAIL events on this alert across reopen cycles within its period (lifetime, for a `continuous` period type).
 	OccurrenceCount int64 `json:"occurrenceCount"`
-	// Identifier of the evaluation that last touched the alert
-	LastEvaluationID string `json:"lastEvaluationID"`
-	// Data captured from the failing evaluation, explaining what broke
-	Evidence map[string]any `json:"evidence,omitempty"`
-	// Record of who acknowledged an alert and when
-	Ack *Ack `json:"ack,omitempty"`
+	// Reconciliation period this alert is scoped to ('continuous' for live-monitoring rules).
+	PeriodID string `json:"periodID"`
 	// Record of how an alert was resolved and by whom
 	Resolution *Resolution `json:"resolution,omitempty"`
+	// Identifier of the rule that raised the alert
+	RuleID string `json:"ruleID"`
+	// How serious an alert is, used to route and prioritise notifications
+	Severity Severity `json:"severity"`
 	// A time-boxed, operator-initiated mute of an alert's notifications. While
 	// `until` is in the future the alert keeps failing and keeps counting
 	// against period-green — only its notifications are suppressed.
 	//
 	Snooze *Snooze `json:"snooze,omitempty"`
-	// Key/value pairs copied from the rule that raised the alert
-	Labels map[string]string `json:"labels,omitempty"`
-	// When the alert was created
-	CreatedAt time.Time `json:"createdAt"`
+	// Where the alert stands in its open, acknowledged, resolved lifecycle
+	Status Status `json:"status"`
 	// When the alert was last modified
 	UpdatedAt time.Time `json:"updatedAt"`
 }
@@ -98,18 +98,25 @@ func (a *Alert) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (a *Alert) GetID() string {
+func (a *Alert) GetAck() *Ack {
 	if a == nil {
-		return ""
+		return nil
 	}
-	return a.ID
+	return a.Ack
 }
 
-func (a *Alert) GetRuleID() string {
+func (a *Alert) GetCreatedAt() time.Time {
 	if a == nil {
-		return ""
+		return time.Time{}
 	}
-	return a.RuleID
+	return a.CreatedAt
+}
+
+func (a *Alert) GetEvidence() map[string]any {
+	if a == nil {
+		return nil
+	}
+	return a.Evidence
 }
 
 func (a *Alert) GetFingerprint() string {
@@ -119,32 +126,32 @@ func (a *Alert) GetFingerprint() string {
 	return a.Fingerprint
 }
 
-func (a *Alert) GetPeriodID() string {
-	if a == nil {
-		return ""
-	}
-	return a.PeriodID
-}
-
-func (a *Alert) GetStatus() Status {
-	if a == nil {
-		return Status("")
-	}
-	return a.Status
-}
-
-func (a *Alert) GetSeverity() Severity {
-	if a == nil {
-		return Severity("")
-	}
-	return a.Severity
-}
-
 func (a *Alert) GetFirstSeenAt() time.Time {
 	if a == nil {
 		return time.Time{}
 	}
 	return a.FirstSeenAt
+}
+
+func (a *Alert) GetID() string {
+	if a == nil {
+		return ""
+	}
+	return a.ID
+}
+
+func (a *Alert) GetLabels() map[string]string {
+	if a == nil {
+		return nil
+	}
+	return a.Labels
+}
+
+func (a *Alert) GetLastEvaluationID() string {
+	if a == nil {
+		return ""
+	}
+	return a.LastEvaluationID
 }
 
 func (a *Alert) GetLastSeenAt() time.Time {
@@ -161,25 +168,11 @@ func (a *Alert) GetOccurrenceCount() int64 {
 	return a.OccurrenceCount
 }
 
-func (a *Alert) GetLastEvaluationID() string {
+func (a *Alert) GetPeriodID() string {
 	if a == nil {
 		return ""
 	}
-	return a.LastEvaluationID
-}
-
-func (a *Alert) GetEvidence() map[string]any {
-	if a == nil {
-		return nil
-	}
-	return a.Evidence
-}
-
-func (a *Alert) GetAck() *Ack {
-	if a == nil {
-		return nil
-	}
-	return a.Ack
+	return a.PeriodID
 }
 
 func (a *Alert) GetResolution() *Resolution {
@@ -189,6 +182,20 @@ func (a *Alert) GetResolution() *Resolution {
 	return a.Resolution
 }
 
+func (a *Alert) GetRuleID() string {
+	if a == nil {
+		return ""
+	}
+	return a.RuleID
+}
+
+func (a *Alert) GetSeverity() Severity {
+	if a == nil {
+		return Severity("")
+	}
+	return a.Severity
+}
+
 func (a *Alert) GetSnooze() *Snooze {
 	if a == nil {
 		return nil
@@ -196,18 +203,11 @@ func (a *Alert) GetSnooze() *Snooze {
 	return a.Snooze
 }
 
-func (a *Alert) GetLabels() map[string]string {
+func (a *Alert) GetStatus() Status {
 	if a == nil {
-		return nil
+		return Status("")
 	}
-	return a.Labels
-}
-
-func (a *Alert) GetCreatedAt() time.Time {
-	if a == nil {
-		return time.Time{}
-	}
-	return a.CreatedAt
+	return a.Status
 }
 
 func (a *Alert) GetUpdatedAt() time.Time {

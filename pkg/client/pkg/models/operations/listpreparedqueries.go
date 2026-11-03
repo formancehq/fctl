@@ -20,8 +20,6 @@ func (l *ListPreparedQueriesSecurity) GetBearerAuth() *string {
 }
 
 type ListPreparedQueriesRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
 	// barrier and waits for the receiving node to apply up to it. `stale`
 	// serves the read from the receiving node's own store, with no barrier
@@ -32,6 +30,8 @@ type ListPreparedQueriesRequest struct {
 	// gRPC equivalent is the `x-consistency` request metadata.
 	//
 	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 }
 
 func (l ListPreparedQueriesRequest) MarshalJSON() ([]byte, error) {
@@ -45,13 +45,6 @@ func (l *ListPreparedQueriesRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (l *ListPreparedQueriesRequest) GetLedgerName() string {
-	if l == nil {
-		return ""
-	}
-	return l.LedgerName
-}
-
 func (l *ListPreparedQueriesRequest) GetXConsistency() *ledgerv3.Consistency {
 	if l == nil {
 		return nil
@@ -59,22 +52,29 @@ func (l *ListPreparedQueriesRequest) GetXConsistency() *ledgerv3.Consistency {
 	return l.XConsistency
 }
 
+func (l *ListPreparedQueriesRequest) GetLedgerName() string {
+	if l == nil {
+		return ""
+	}
+	return l.LedgerName
+}
+
 type ListPreparedQueriesResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
+	// List of prepared queries retrieved successfully
+	ListPreparedQueriesResponse *ledgerv3.ListPreparedQueriesResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// List of prepared queries retrieved successfully
-	ListPreparedQueriesResponse *ledgerv3.ListPreparedQueriesResponse
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (l *ListPreparedQueriesResponse) GetContentType() string {
@@ -82,6 +82,34 @@ func (l *ListPreparedQueriesResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListPreparedQueriesResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ErrorResponse
+}
+
+func (l *ListPreparedQueriesResponse) GetForbidden() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Forbidden
+}
+
+func (l *ListPreparedQueriesResponse) GetHeaders() map[string][]string {
+	if l == nil {
+		return map[string][]string{}
+	}
+	return l.Headers
+}
+
+func (l *ListPreparedQueriesResponse) GetListPreparedQueriesResponse() *ledgerv3.ListPreparedQueriesResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ListPreparedQueriesResponse
 }
 
 func (l *ListPreparedQueriesResponse) GetStatusCode() int {
@@ -98,37 +126,9 @@ func (l *ListPreparedQueriesResponse) GetRawResponse() *http.Response {
 	return l.RawResponse
 }
 
-func (l *ListPreparedQueriesResponse) GetListPreparedQueriesResponse() *ledgerv3.ListPreparedQueriesResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ListPreparedQueriesResponse
-}
-
-func (l *ListPreparedQueriesResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ErrorResponse
-}
-
 func (l *ListPreparedQueriesResponse) GetUnauthorized() *string {
 	if l == nil {
 		return nil
 	}
 	return l.Unauthorized
-}
-
-func (l *ListPreparedQueriesResponse) GetForbidden() *string {
-	if l == nil {
-		return nil
-	}
-	return l.Forbidden
-}
-
-func (l *ListPreparedQueriesResponse) GetHeaders() map[string][]string {
-	if l == nil {
-		return map[string][]string{}
-	}
-	return l.Headers
 }

@@ -9,20 +9,20 @@ import (
 )
 
 type V3PaymentInitiationAdjustment struct {
-	// Unique identifier of the adjustment
-	ID string `json:"id"`
-	// When the adjustment was recorded
-	CreatedAt time.Time `json:"createdAt"`
-	// Where a payment initiation stands in its lifecycle
-	Status V3PaymentInitiationStatusEnum `json:"status"`
 	// Amount carried by this adjustment
 	Amount *big.Int `json:"amount,omitempty"`
 	// Asset the adjustment is denominated in
 	Asset *string `json:"asset,omitempty"`
+	// When the adjustment was recorded
+	CreatedAt time.Time `json:"createdAt"`
 	// Why this step failed, absent when it succeeded
 	Error *string `json:"error,omitempty"`
+	// Unique identifier of the adjustment
+	ID string `json:"id"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]string `json:"metadata,omitempty"`
+	// Where a payment initiation stands in its lifecycle
+	Status V3PaymentInitiationStatusEnum `json:"status"`
 }
 
 func (v V3PaymentInitiationAdjustment) MarshalJSON() ([]byte, error) {
@@ -34,27 +34,6 @@ func (v *V3PaymentInitiationAdjustment) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (v *V3PaymentInitiationAdjustment) GetID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ID
-}
-
-func (v *V3PaymentInitiationAdjustment) GetCreatedAt() time.Time {
-	if v == nil {
-		return time.Time{}
-	}
-	return v.CreatedAt
-}
-
-func (v *V3PaymentInitiationAdjustment) GetStatus() V3PaymentInitiationStatusEnum {
-	if v == nil {
-		return V3PaymentInitiationStatusEnum("")
-	}
-	return v.Status
 }
 
 func (v *V3PaymentInitiationAdjustment) GetAmount() *big.Int {
@@ -71,6 +50,13 @@ func (v *V3PaymentInitiationAdjustment) GetAsset() *string {
 	return v.Asset
 }
 
+func (v *V3PaymentInitiationAdjustment) GetCreatedAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.CreatedAt
+}
+
 func (v *V3PaymentInitiationAdjustment) GetError() *string {
 	if v == nil {
 		return nil
@@ -78,11 +64,25 @@ func (v *V3PaymentInitiationAdjustment) GetError() *string {
 	return v.Error
 }
 
+func (v *V3PaymentInitiationAdjustment) GetID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ID
+}
+
 func (v *V3PaymentInitiationAdjustment) GetMetadata() map[string]string {
 	if v == nil {
 		return nil
 	}
 	return v.Metadata
+}
+
+func (v *V3PaymentInitiationAdjustment) GetStatus() V3PaymentInitiationStatusEnum {
+	if v == nil {
+		return V3PaymentInitiationStatusEnum("")
+	}
+	return v.Status
 }
 
 // #region class-body-v3paymentinitiationadjustment

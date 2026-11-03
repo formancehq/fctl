@@ -3,19 +3,19 @@
 package connectivity
 
 type Info struct {
-	// Build version of the API binary (the image tag)
-	Version string `json:"version"`
-	// Git commit SHA of the build
-	Commit string `json:"commit"`
 	// Source commit timestamp (`org.opencontainers.image.created`)
 	BuildDate string `json:"buildDate"`
+	// Git commit SHA of the build
+	Commit string `json:"commit"`
+	// Build version of the API binary (the image tag)
+	Version string `json:"version"`
 }
 
-func (i *Info) GetVersion() string {
+func (i *Info) GetBuildDate() string {
 	if i == nil {
 		return ""
 	}
-	return i.Version
+	return i.BuildDate
 }
 
 func (i *Info) GetCommit() string {
@@ -25,9 +25,9 @@ func (i *Info) GetCommit() string {
 	return i.Commit
 }
 
-func (i *Info) GetBuildDate() string {
+func (i *Info) GetVersion() string {
 	if i == nil {
 		return ""
 	}
-	return i.BuildDate
+	return i.Version
 }

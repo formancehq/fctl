@@ -19,16 +19,23 @@ func (c *CreateConnectionSecurity) GetBearerAuth() *string {
 }
 
 type CreateConnectionResponse struct {
+	// Created
+	Connection *connectivity.Connection
 	// HTTP response content type for this operation
 	ContentType string
+	// Request or server error. The HTTP status and code identify the failure.
+	Error *connectivity.Error
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Created
-	Connection *connectivity.Connection
-	// Request or server error. The HTTP status and code identify the failure.
-	Error *connectivity.Error
+}
+
+func (c *CreateConnectionResponse) GetConnection() *connectivity.Connection {
+	if c == nil {
+		return nil
+	}
+	return c.Connection
 }
 
 func (c *CreateConnectionResponse) GetContentType() string {
@@ -36,6 +43,13 @@ func (c *CreateConnectionResponse) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
+}
+
+func (c *CreateConnectionResponse) GetError() *connectivity.Error {
+	if c == nil {
+		return nil
+	}
+	return c.Error
 }
 
 func (c *CreateConnectionResponse) GetStatusCode() int {
@@ -50,18 +64,4 @@ func (c *CreateConnectionResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return c.RawResponse
-}
-
-func (c *CreateConnectionResponse) GetConnection() *connectivity.Connection {
-	if c == nil {
-		return nil
-	}
-	return c.Connection
-}
-
-func (c *CreateConnectionResponse) GetError() *connectivity.Error {
-	if c == nil {
-		return nil
-	}
-	return c.Error
 }

@@ -3,8 +3,6 @@
 package connectivity
 
 type Connection struct {
-	// Instance name.
-	Name string `json:"name"`
 	// Tenant configuration. `env` and `files` contain literal string values,
 	// persisted by the service. Properties marked
 	// `format: password` by the selected connector schema are stored confidentially
@@ -18,15 +16,10 @@ type Connection struct {
 	// Once assigned, either value may be repeated but never changed or cleared.
 	//
 	Configuration ConnectionConfiguration `json:"configuration"`
+	// Instance name.
+	Name string `json:"name"`
 	// Last recorded service and ingestion outcomes, not live health or observation freshness. Absent when no nonempty status is stored.
 	Status *ConnectionStatus `json:"status,omitempty"`
-}
-
-func (c *Connection) GetName() string {
-	if c == nil {
-		return ""
-	}
-	return c.Name
 }
 
 func (c *Connection) GetConfiguration() ConnectionConfiguration {
@@ -34,6 +27,13 @@ func (c *Connection) GetConfiguration() ConnectionConfiguration {
 		return ConnectionConfiguration{}
 	}
 	return c.Configuration
+}
+
+func (c *Connection) GetName() string {
+	if c == nil {
+		return ""
+	}
+	return c.Name
 }
 
 func (c *Connection) GetStatus() *ConnectionStatus {

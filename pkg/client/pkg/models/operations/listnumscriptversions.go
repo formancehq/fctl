@@ -20,10 +20,6 @@ func (l *ListNumscriptVersionsSecurity) GetBearerAuth() *string {
 }
 
 type ListNumscriptVersionsRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Name of the numscript, URL-encoded as one path segment. Decoded exactly once.
-	Name string `pathParam:"style=simple,explode=false,name=name"`
 	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
 	// barrier and waits for the receiving node to apply up to it. `stale`
 	// serves the read from the receiving node's own store, with no barrier
@@ -34,6 +30,10 @@ type ListNumscriptVersionsRequest struct {
 	// gRPC equivalent is the `x-consistency` request metadata.
 	//
 	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Name of the numscript, URL-encoded as one path segment. Decoded exactly once.
+	Name string `pathParam:"style=simple,explode=false,name=name"`
 }
 
 func (l ListNumscriptVersionsRequest) MarshalJSON() ([]byte, error) {
@@ -45,6 +45,13 @@ func (l *ListNumscriptVersionsRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (l *ListNumscriptVersionsRequest) GetXConsistency() *ledgerv3.Consistency {
+	if l == nil {
+		return nil
+	}
+	return l.XConsistency
 }
 
 func (l *ListNumscriptVersionsRequest) GetLedgerName() string {
@@ -61,29 +68,22 @@ func (l *ListNumscriptVersionsRequest) GetName() string {
 	return l.Name
 }
 
-func (l *ListNumscriptVersionsRequest) GetXConsistency() *ledgerv3.Consistency {
-	if l == nil {
-		return nil
-	}
-	return l.XConsistency
-}
-
 type ListNumscriptVersionsResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
+	// Numscript versions retrieved successfully
+	ListNumscriptVersionsResponse *ledgerv3.ListNumscriptVersionsResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Numscript versions retrieved successfully
-	ListNumscriptVersionsResponse *ledgerv3.ListNumscriptVersionsResponse
-	// Authentication required (missing or invalid JWT token)
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (l *ListNumscriptVersionsResponse) GetContentType() string {
@@ -91,6 +91,34 @@ func (l *ListNumscriptVersionsResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListNumscriptVersionsResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ErrorResponse
+}
+
+func (l *ListNumscriptVersionsResponse) GetForbidden() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Forbidden
+}
+
+func (l *ListNumscriptVersionsResponse) GetHeaders() map[string][]string {
+	if l == nil {
+		return map[string][]string{}
+	}
+	return l.Headers
+}
+
+func (l *ListNumscriptVersionsResponse) GetListNumscriptVersionsResponse() *ledgerv3.ListNumscriptVersionsResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ListNumscriptVersionsResponse
 }
 
 func (l *ListNumscriptVersionsResponse) GetStatusCode() int {
@@ -107,37 +135,9 @@ func (l *ListNumscriptVersionsResponse) GetRawResponse() *http.Response {
 	return l.RawResponse
 }
 
-func (l *ListNumscriptVersionsResponse) GetListNumscriptVersionsResponse() *ledgerv3.ListNumscriptVersionsResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ListNumscriptVersionsResponse
-}
-
-func (l *ListNumscriptVersionsResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ErrorResponse
-}
-
 func (l *ListNumscriptVersionsResponse) GetUnauthorized() *string {
 	if l == nil {
 		return nil
 	}
 	return l.Unauthorized
-}
-
-func (l *ListNumscriptVersionsResponse) GetForbidden() *string {
-	if l == nil {
-		return nil
-	}
-	return l.Forbidden
-}
-
-func (l *ListNumscriptVersionsResponse) GetHeaders() map[string][]string {
-	if l == nil {
-		return map[string][]string{}
-	}
-	return l.Headers
 }

@@ -19,27 +19,13 @@ func (s *SaveTransactionMetadataSecurity) GetBearerAuth() *string {
 }
 
 type SaveTransactionMetadataRequest struct {
+	// Idempotency key for the request
+	IdempotencyKey *string                            `header:"style=simple,explode=false,name=Idempotency-Key"`
+	RequestBody    map[string]*ledgerv3.MetadataValue `request:"mediaType=application/json"`
 	// Name of the ledger
 	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 	// Transaction ID
 	TransactionID int64 `pathParam:"style=simple,explode=false,name=transactionId"`
-	// Idempotency key for the request
-	IdempotencyKey *string                            `header:"style=simple,explode=false,name=Idempotency-Key"`
-	RequestBody    map[string]*ledgerv3.MetadataValue `request:"mediaType=application/json"`
-}
-
-func (s *SaveTransactionMetadataRequest) GetLedgerName() string {
-	if s == nil {
-		return ""
-	}
-	return s.LedgerName
-}
-
-func (s *SaveTransactionMetadataRequest) GetTransactionID() int64 {
-	if s == nil {
-		return 0
-	}
-	return s.TransactionID
 }
 
 func (s *SaveTransactionMetadataRequest) GetIdempotencyKey() *string {
@@ -56,20 +42,34 @@ func (s *SaveTransactionMetadataRequest) GetRequestBody() map[string]*ledgerv3.M
 	return s.RequestBody
 }
 
+func (s *SaveTransactionMetadataRequest) GetLedgerName() string {
+	if s == nil {
+		return ""
+	}
+	return s.LedgerName
+}
+
+func (s *SaveTransactionMetadataRequest) GetTransactionID() int64 {
+	if s == nil {
+		return 0
+	}
+	return s.TransactionID
+}
+
 type SaveTransactionMetadataResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (s *SaveTransactionMetadataResponse) GetContentType() string {
@@ -77,6 +77,27 @@ func (s *SaveTransactionMetadataResponse) GetContentType() string {
 		return ""
 	}
 	return s.ContentType
+}
+
+func (s *SaveTransactionMetadataResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if s == nil {
+		return nil
+	}
+	return s.ErrorResponse
+}
+
+func (s *SaveTransactionMetadataResponse) GetForbidden() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Forbidden
+}
+
+func (s *SaveTransactionMetadataResponse) GetHeaders() map[string][]string {
+	if s == nil {
+		return map[string][]string{}
+	}
+	return s.Headers
 }
 
 func (s *SaveTransactionMetadataResponse) GetStatusCode() int {
@@ -93,30 +114,9 @@ func (s *SaveTransactionMetadataResponse) GetRawResponse() *http.Response {
 	return s.RawResponse
 }
 
-func (s *SaveTransactionMetadataResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if s == nil {
-		return nil
-	}
-	return s.ErrorResponse
-}
-
 func (s *SaveTransactionMetadataResponse) GetUnauthorized() *string {
 	if s == nil {
 		return nil
 	}
 	return s.Unauthorized
-}
-
-func (s *SaveTransactionMetadataResponse) GetForbidden() *string {
-	if s == nil {
-		return nil
-	}
-	return s.Forbidden
-}
-
-func (s *SaveTransactionMetadataResponse) GetHeaders() map[string][]string {
-	if s == nil {
-		return map[string][]string{}
-	}
-	return s.Headers
 }

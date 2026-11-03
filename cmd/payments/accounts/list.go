@@ -13,7 +13,7 @@ import (
 )
 
 type ListStore struct {
-	Cursor *payments.AccountsCursorCursor `json:"cursor"`
+	Cursor *payments.Cursor `json:"cursor"`
 }
 
 type ListController struct {
@@ -27,7 +27,7 @@ var _ fctl.Controller[*ListStore] = (*ListController)(nil)
 
 func NewListStore() *ListStore {
 	return &ListStore{
-		Cursor: &payments.AccountsCursorCursor{},
+		Cursor: &payments.Cursor{},
 	}
 }
 

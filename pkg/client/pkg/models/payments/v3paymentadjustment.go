@@ -9,22 +9,22 @@ import (
 )
 
 type V3PaymentAdjustment struct {
-	// Unique identifier of the adjustment
-	ID string `json:"id"`
-	// Identifier the adjustment carries at the provider
-	Reference string `json:"reference"`
-	// When the adjustment occurred at the provider
-	CreatedAt time.Time `json:"createdAt"`
-	// Where a payment stands in its lifecycle
-	Status V3PaymentStatusEnum `json:"status"`
 	// Amount carried by this adjustment
 	Amount *big.Int `json:"amount,omitempty"`
 	// Asset the adjustment is denominated in
 	Asset *string `json:"asset,omitempty"`
+	// When the adjustment occurred at the provider
+	CreatedAt time.Time `json:"createdAt"`
+	// Unique identifier of the adjustment
+	ID string `json:"id"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]string `json:"metadata,omitempty"`
 	// The provider's original payload for this adjustment
 	Raw map[string]any `json:"raw"`
+	// Identifier the adjustment carries at the provider
+	Reference string `json:"reference"`
+	// Where a payment stands in its lifecycle
+	Status V3PaymentStatusEnum `json:"status"`
 }
 
 func (v V3PaymentAdjustment) MarshalJSON() ([]byte, error) {
@@ -36,34 +36,6 @@ func (v *V3PaymentAdjustment) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (v *V3PaymentAdjustment) GetID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ID
-}
-
-func (v *V3PaymentAdjustment) GetReference() string {
-	if v == nil {
-		return ""
-	}
-	return v.Reference
-}
-
-func (v *V3PaymentAdjustment) GetCreatedAt() time.Time {
-	if v == nil {
-		return time.Time{}
-	}
-	return v.CreatedAt
-}
-
-func (v *V3PaymentAdjustment) GetStatus() V3PaymentStatusEnum {
-	if v == nil {
-		return V3PaymentStatusEnum("")
-	}
-	return v.Status
 }
 
 func (v *V3PaymentAdjustment) GetAmount() *big.Int {
@@ -80,6 +52,20 @@ func (v *V3PaymentAdjustment) GetAsset() *string {
 	return v.Asset
 }
 
+func (v *V3PaymentAdjustment) GetCreatedAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.CreatedAt
+}
+
+func (v *V3PaymentAdjustment) GetID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ID
+}
+
 func (v *V3PaymentAdjustment) GetMetadata() map[string]string {
 	if v == nil {
 		return nil
@@ -92,6 +78,20 @@ func (v *V3PaymentAdjustment) GetRaw() map[string]any {
 		return map[string]any{}
 	}
 	return v.Raw
+}
+
+func (v *V3PaymentAdjustment) GetReference() string {
+	if v == nil {
+		return ""
+	}
+	return v.Reference
+}
+
+func (v *V3PaymentAdjustment) GetStatus() V3PaymentStatusEnum {
+	if v == nil {
+		return V3PaymentStatusEnum("")
+	}
+	return v.Status
 }
 
 // #region class-body-v3paymentadjustment

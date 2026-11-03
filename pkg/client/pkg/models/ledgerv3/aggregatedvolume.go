@@ -9,6 +9,12 @@ package ledgerv3
 type AggregatedVolume struct {
 	// Asset identifier (e.g. "USD/2")
 	Asset string `json:"asset"`
+	// Arbitrary-precision SignedBigInt value encoded as a JSON number by
+	// default, or a canonical decimal string when Formance-Bigint-As-String
+	// is enabled. The same rule applies to every response SignedBigInt value,
+	// including nested fields, regardless of business meaning.
+	//
+	Balance SignedMonetaryAmount `json:"balance"`
 	// Color of the aggregated bucket. By default the response contains
 	// one AggregatedVolume per (asset, color) tuple. With
 	// `collapseColors=true`, every colored bucket of the same
@@ -30,12 +36,6 @@ type AggregatedVolume struct {
 	// JavaScript consumers should enable the header to avoid number rounding.
 	//
 	Output UnsignedMonetaryAmount `json:"output"`
-	// Arbitrary-precision SignedBigInt value encoded as a JSON number by
-	// default, or a canonical decimal string when Formance-Bigint-As-String
-	// is enabled. The same rule applies to every response SignedBigInt value,
-	// including nested fields, regardless of business meaning.
-	//
-	Balance SignedMonetaryAmount `json:"balance"`
 }
 
 func (a *AggregatedVolume) GetAsset() string {
@@ -43,6 +43,13 @@ func (a *AggregatedVolume) GetAsset() string {
 		return ""
 	}
 	return a.Asset
+}
+
+func (a *AggregatedVolume) GetBalance() SignedMonetaryAmount {
+	if a == nil {
+		return SignedMonetaryAmount{}
+	}
+	return a.Balance
 }
 
 func (a *AggregatedVolume) GetColor() string {
@@ -64,11 +71,4 @@ func (a *AggregatedVolume) GetOutput() UnsignedMonetaryAmount {
 		return UnsignedMonetaryAmount{}
 	}
 	return a.Output
-}
-
-func (a *AggregatedVolume) GetBalance() SignedMonetaryAmount {
-	if a == nil {
-		return SignedMonetaryAmount{}
-	}
-	return a.Balance
 }

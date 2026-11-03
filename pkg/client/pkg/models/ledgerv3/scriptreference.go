@@ -9,13 +9,13 @@ import (
 type ScriptReference struct {
 	// Name of the numscript in the ledger's library
 	Name string `json:"name"`
+	// Variables to pass to the referenced script
+	Vars map[string]string `json:"vars,omitempty"`
 	// Version selector: the literal `latest` or an exact full semver
 	// (`1.2.3`). Partial selectors such as `1` or `1.2` are read-only and
 	// rejected here.
 	//
 	Version string `json:"version"`
-	// Variables to pass to the referenced script
-	Vars map[string]string `json:"vars,omitempty"`
 }
 
 func (s ScriptReference) MarshalJSON() ([]byte, error) {
@@ -36,16 +36,16 @@ func (s *ScriptReference) GetName() string {
 	return s.Name
 }
 
-func (s *ScriptReference) GetVersion() string {
-	if s == nil {
-		return ""
-	}
-	return s.Version
-}
-
 func (s *ScriptReference) GetVars() map[string]string {
 	if s == nil {
 		return nil
 	}
 	return s.Vars
+}
+
+func (s *ScriptReference) GetVersion() string {
+	if s == nil {
+		return ""
+	}
+	return s.Version
 }

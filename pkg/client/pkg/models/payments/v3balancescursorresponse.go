@@ -4,18 +4,18 @@ package payments
 
 // V3BalancesCursorResponseCursor - Paginated cursor wrapping the list of balances
 type V3BalancesCursorResponseCursor struct {
-	PageSize int64       `json:"pageSize"`
-	HasMore  bool        `json:"hasMore"`
-	Previous *string     `json:"previous,omitempty"`
-	Next     *string     `json:"next,omitempty"`
 	Data     []V3Balance `json:"data"`
+	HasMore  bool        `json:"hasMore"`
+	Next     *string     `json:"next,omitempty"`
+	PageSize int64       `json:"pageSize"`
+	Previous *string     `json:"previous,omitempty"`
 }
 
-func (v *V3BalancesCursorResponseCursor) GetPageSize() int64 {
+func (v *V3BalancesCursorResponseCursor) GetData() []V3Balance {
 	if v == nil {
-		return 0
+		return []V3Balance{}
 	}
-	return v.PageSize
+	return v.Data
 }
 
 func (v *V3BalancesCursorResponseCursor) GetHasMore() bool {
@@ -25,13 +25,6 @@ func (v *V3BalancesCursorResponseCursor) GetHasMore() bool {
 	return v.HasMore
 }
 
-func (v *V3BalancesCursorResponseCursor) GetPrevious() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Previous
-}
-
 func (v *V3BalancesCursorResponseCursor) GetNext() *string {
 	if v == nil {
 		return nil
@@ -39,11 +32,18 @@ func (v *V3BalancesCursorResponseCursor) GetNext() *string {
 	return v.Next
 }
 
-func (v *V3BalancesCursorResponseCursor) GetData() []V3Balance {
+func (v *V3BalancesCursorResponseCursor) GetPageSize() int64 {
 	if v == nil {
-		return []V3Balance{}
+		return 0
 	}
-	return v.Data
+	return v.PageSize
+}
+
+func (v *V3BalancesCursorResponseCursor) GetPrevious() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Previous
 }
 
 // #region class-body-v3balancescursorresponsecursor

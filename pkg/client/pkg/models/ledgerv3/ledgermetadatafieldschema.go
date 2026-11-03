@@ -7,27 +7,27 @@ import (
 	"fmt"
 )
 
-// Type - Declared metadata type, using the same tokens as schema creation
-type Type string
+// LedgerMetadataFieldSchemaType - Declared metadata type, using the same tokens as schema creation
+type LedgerMetadataFieldSchemaType string
 
 const (
-	TypeString   Type = "string"
-	TypeInt64    Type = "int64"
-	TypeBool     Type = "bool"
-	TypeUint64   Type = "uint64"
-	TypeInt8     Type = "int8"
-	TypeInt16    Type = "int16"
-	TypeInt32    Type = "int32"
-	TypeUint8    Type = "uint8"
-	TypeUint16   Type = "uint16"
-	TypeUint32   Type = "uint32"
-	TypeDatetime Type = "datetime"
+	LedgerMetadataFieldSchemaTypeString   LedgerMetadataFieldSchemaType = "string"
+	LedgerMetadataFieldSchemaTypeInt64    LedgerMetadataFieldSchemaType = "int64"
+	LedgerMetadataFieldSchemaTypeBool     LedgerMetadataFieldSchemaType = "bool"
+	LedgerMetadataFieldSchemaTypeUint64   LedgerMetadataFieldSchemaType = "uint64"
+	LedgerMetadataFieldSchemaTypeInt8     LedgerMetadataFieldSchemaType = "int8"
+	LedgerMetadataFieldSchemaTypeInt16    LedgerMetadataFieldSchemaType = "int16"
+	LedgerMetadataFieldSchemaTypeInt32    LedgerMetadataFieldSchemaType = "int32"
+	LedgerMetadataFieldSchemaTypeUint8    LedgerMetadataFieldSchemaType = "uint8"
+	LedgerMetadataFieldSchemaTypeUint16   LedgerMetadataFieldSchemaType = "uint16"
+	LedgerMetadataFieldSchemaTypeUint32   LedgerMetadataFieldSchemaType = "uint32"
+	LedgerMetadataFieldSchemaTypeDatetime LedgerMetadataFieldSchemaType = "datetime"
 )
 
-func (e Type) ToPointer() *Type {
+func (e LedgerMetadataFieldSchemaType) ToPointer() *LedgerMetadataFieldSchemaType {
 	return &e
 }
-func (e *Type) UnmarshalJSON(data []byte) error {
+func (e *LedgerMetadataFieldSchemaType) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
@@ -54,21 +54,21 @@ func (e *Type) UnmarshalJSON(data []byte) error {
 	case "uint32":
 		fallthrough
 	case "datetime":
-		*e = Type(v)
+		*e = LedgerMetadataFieldSchemaType(v)
 		return nil
 	default:
-		return fmt.Errorf("invalid value for Type: %v", v)
+		return fmt.Errorf("invalid value for LedgerMetadataFieldSchemaType: %v", v)
 	}
 }
 
 type LedgerMetadataFieldSchema struct {
 	// Declared metadata type, using the same tokens as schema creation
-	Type Type `json:"type"`
+	Type LedgerMetadataFieldSchemaType `json:"type"`
 }
 
-func (l *LedgerMetadataFieldSchema) GetType() Type {
+func (l *LedgerMetadataFieldSchema) GetType() LedgerMetadataFieldSchemaType {
 	if l == nil {
-		return Type("")
+		return LedgerMetadataFieldSchemaType("")
 	}
 	return l.Type
 }

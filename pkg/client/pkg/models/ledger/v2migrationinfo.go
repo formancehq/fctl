@@ -40,14 +40,14 @@ func (e *V2MigrationInfoState) UnmarshalJSON(data []byte) error {
 }
 
 type V2MigrationInfo struct {
-	// Sequence number of the migration
-	Version *string `json:"version,omitempty"`
-	// Name of the migration
-	Name *string `json:"name,omitempty"`
 	// When the migration was applied
 	Date *time.Time `json:"date,omitempty"`
+	// Name of the migration
+	Name *string `json:"name,omitempty"`
 	// Current state of the migration
 	State *V2MigrationInfoState `json:"state,omitempty"`
+	// Sequence number of the migration
+	Version *string `json:"version,omitempty"`
 }
 
 func (v V2MigrationInfo) MarshalJSON() ([]byte, error) {
@@ -61,11 +61,11 @@ func (v *V2MigrationInfo) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2MigrationInfo) GetVersion() *string {
+func (v *V2MigrationInfo) GetDate() *time.Time {
 	if v == nil {
 		return nil
 	}
-	return v.Version
+	return v.Date
 }
 
 func (v *V2MigrationInfo) GetName() *string {
@@ -75,18 +75,18 @@ func (v *V2MigrationInfo) GetName() *string {
 	return v.Name
 }
 
-func (v *V2MigrationInfo) GetDate() *time.Time {
-	if v == nil {
-		return nil
-	}
-	return v.Date
-}
-
 func (v *V2MigrationInfo) GetState() *V2MigrationInfoState {
 	if v == nil {
 		return nil
 	}
 	return v.State
+}
+
+func (v *V2MigrationInfo) GetVersion() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Version
 }
 
 // #region class-body-v2migrationinfo

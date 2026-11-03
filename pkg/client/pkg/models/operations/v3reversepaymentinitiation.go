@@ -8,16 +8,9 @@ import (
 )
 
 type V3ReversePaymentInitiationRequest struct {
-	// The payment initiation ID
-	PaymentInitiationID               string                                      `pathParam:"style=simple,explode=false,name=paymentInitiationID"`
 	V3ReversePaymentInitiationRequest *payments.V3ReversePaymentInitiationRequest `request:"mediaType=application/json"`
-}
-
-func (v *V3ReversePaymentInitiationRequest) GetPaymentInitiationID() string {
-	if v == nil {
-		return ""
-	}
-	return v.PaymentInitiationID
+	// The payment initiation ID
+	PaymentInitiationID string `pathParam:"style=simple,explode=false,name=paymentInitiationID"`
 }
 
 func (v *V3ReversePaymentInitiationRequest) GetV3ReversePaymentInitiationRequest() *payments.V3ReversePaymentInitiationRequest {
@@ -25,6 +18,13 @@ func (v *V3ReversePaymentInitiationRequest) GetV3ReversePaymentInitiationRequest
 		return nil
 	}
 	return v.V3ReversePaymentInitiationRequest
+}
+
+func (v *V3ReversePaymentInitiationRequest) GetPaymentInitiationID() string {
+	if v == nil {
+		return ""
+	}
+	return v.PaymentInitiationID
 }
 
 // #region class-body-v3reversepaymentinitiationrequest

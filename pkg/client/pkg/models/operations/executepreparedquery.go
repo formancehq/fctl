@@ -20,32 +20,7 @@ func (e *ExecutePreparedQuerySecurity) GetBearerAuth() *string {
 }
 
 type ExecutePreparedQueryRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Prepared query name, URL-encoded as one path segment. Decoded exactly once.
-	QueryName string `pathParam:"style=simple,explode=false,name=queryName"`
-	// LIST page size. A supplied value overrides the body, including empty or
-	// zero (default 100). The effective maximum is 1000; larger uint32 values
-	// are accepted and clamped, not rejected. Ignored for AGGREGATE_VOLUMES.
-	//
-	PageSize *int64 `default:"100" queryParam:"style=form,explode=true,name=pageSize"`
-	// Page token from a previous response's `cursor.next` or
-	// `cursor.previous` (see the `PageToken` schema). Overrides the body
-	// value.
-	//
-	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
-	// List in descending entity order when true (overrides body value)
-	Reverse *bool `queryParam:"style=form,explode=true,name=reverse"`
-	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
-	// barrier and waits for the receiving node to apply up to it. `stale`
-	// serves the read from the receiving node's own store, with no barrier
-	// and no forwarding to the leader, so the answer may lag the leader.
-	// Matching ignores case and surrounding whitespace. An unknown value, or a
-	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
-	// `/v3` route, writes included; a valid value has no effect on writes. The
-	// gRPC equivalent is the `x-consistency` request metadata.
-	//
-	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	ExecutePreparedQueryRequest *ledgerv3.ExecutePreparedQueryRequest `request:"mediaType=application/json"`
 	// Render all response Uint256, BigUint and SignedBigInt values as canonical
 	// decimal strings, regardless of business meaning, including posting
 	// amounts, volume input/output and balances. Ordinary integer IDs/counts,
@@ -57,6 +32,16 @@ type ExecutePreparedQueryRequest struct {
 	// and bulk results. Request decoding is unchanged.
 	//
 	FormanceBigintAsString *string `header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
+	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
+	// barrier and waits for the receiving node to apply up to it. `stale`
+	// serves the read from the receiving node's own store, with no barrier
+	// and no forwarding to the leader, so the answer may lag the leader.
+	// Matching ignores case and surrounding whitespace. An unknown value, or a
+	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
+	// `/v3` route, writes included; a valid value has no effect on writes. The
+	// gRPC equivalent is the `x-consistency` request metadata.
+	//
+	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
 	// Set to any non-empty value to receive the query profile in the
 	// `X-Query-Profile-Result` response header.
 	//
@@ -73,8 +58,23 @@ type ExecutePreparedQueryRequest struct {
 	// `x-query-profile-result-bin` trailer; `serverDurationUs` has the same
 	// definition on both surfaces, so the two are directly comparable.
 	//
-	XQueryProfile               *string                               `header:"style=simple,explode=false,name=X-Query-Profile"`
-	ExecutePreparedQueryRequest *ledgerv3.ExecutePreparedQueryRequest `request:"mediaType=application/json"`
+	XQueryProfile *string `header:"style=simple,explode=false,name=X-Query-Profile"`
+	// Page token from a previous response's `cursor.next` or
+	// `cursor.previous` (see the `PageToken` schema). Overrides the body
+	// value.
+	//
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// LIST page size. A supplied value overrides the body, including empty or
+	// zero (default 100). The effective maximum is 1000; larger uint32 values
+	// are accepted and clamped, not rejected. Ignored for AGGREGATE_VOLUMES.
+	//
+	PageSize *int64 `default:"100" queryParam:"style=form,explode=true,name=pageSize"`
+	// Prepared query name, URL-encoded as one path segment. Decoded exactly once.
+	QueryName string `pathParam:"style=simple,explode=false,name=queryName"`
+	// List in descending entity order when true (overrides body value)
+	Reverse *bool `queryParam:"style=form,explode=true,name=reverse"`
 }
 
 func (e ExecutePreparedQueryRequest) MarshalJSON() ([]byte, error) {
@@ -88,46 +88,11 @@ func (e *ExecutePreparedQueryRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (e *ExecutePreparedQueryRequest) GetLedgerName() string {
-	if e == nil {
-		return ""
-	}
-	return e.LedgerName
-}
-
-func (e *ExecutePreparedQueryRequest) GetQueryName() string {
-	if e == nil {
-		return ""
-	}
-	return e.QueryName
-}
-
-func (e *ExecutePreparedQueryRequest) GetPageSize() *int64 {
+func (e *ExecutePreparedQueryRequest) GetExecutePreparedQueryRequest() *ledgerv3.ExecutePreparedQueryRequest {
 	if e == nil {
 		return nil
 	}
-	return e.PageSize
-}
-
-func (e *ExecutePreparedQueryRequest) GetCursor() *string {
-	if e == nil {
-		return nil
-	}
-	return e.Cursor
-}
-
-func (e *ExecutePreparedQueryRequest) GetReverse() *bool {
-	if e == nil {
-		return nil
-	}
-	return e.Reverse
-}
-
-func (e *ExecutePreparedQueryRequest) GetXConsistency() *ledgerv3.Consistency {
-	if e == nil {
-		return nil
-	}
-	return e.XConsistency
+	return e.ExecutePreparedQueryRequest
 }
 
 func (e *ExecutePreparedQueryRequest) GetFormanceBigintAsString() *string {
@@ -137,6 +102,13 @@ func (e *ExecutePreparedQueryRequest) GetFormanceBigintAsString() *string {
 	return e.FormanceBigintAsString
 }
 
+func (e *ExecutePreparedQueryRequest) GetXConsistency() *ledgerv3.Consistency {
+	if e == nil {
+		return nil
+	}
+	return e.XConsistency
+}
+
 func (e *ExecutePreparedQueryRequest) GetXQueryProfile() *string {
 	if e == nil {
 		return nil
@@ -144,29 +116,57 @@ func (e *ExecutePreparedQueryRequest) GetXQueryProfile() *string {
 	return e.XQueryProfile
 }
 
-func (e *ExecutePreparedQueryRequest) GetExecutePreparedQueryRequest() *ledgerv3.ExecutePreparedQueryRequest {
+func (e *ExecutePreparedQueryRequest) GetCursor() *string {
 	if e == nil {
 		return nil
 	}
-	return e.ExecutePreparedQueryRequest
+	return e.Cursor
+}
+
+func (e *ExecutePreparedQueryRequest) GetLedgerName() string {
+	if e == nil {
+		return ""
+	}
+	return e.LedgerName
+}
+
+func (e *ExecutePreparedQueryRequest) GetPageSize() *int64 {
+	if e == nil {
+		return nil
+	}
+	return e.PageSize
+}
+
+func (e *ExecutePreparedQueryRequest) GetQueryName() string {
+	if e == nil {
+		return ""
+	}
+	return e.QueryName
+}
+
+func (e *ExecutePreparedQueryRequest) GetReverse() *bool {
+	if e == nil {
+		return nil
+	}
+	return e.Reverse
 }
 
 type ExecutePreparedQueryResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Query executed successfully
+	ExecutePreparedQueryResponse *ledgerv3.ExecutePreparedQueryResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Query executed successfully
-	ExecutePreparedQueryResponse *ledgerv3.ExecutePreparedQueryResponse
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (e *ExecutePreparedQueryResponse) GetContentType() string {
@@ -174,6 +174,34 @@ func (e *ExecutePreparedQueryResponse) GetContentType() string {
 		return ""
 	}
 	return e.ContentType
+}
+
+func (e *ExecutePreparedQueryResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if e == nil {
+		return nil
+	}
+	return e.ErrorResponse
+}
+
+func (e *ExecutePreparedQueryResponse) GetExecutePreparedQueryResponse() *ledgerv3.ExecutePreparedQueryResponse {
+	if e == nil {
+		return nil
+	}
+	return e.ExecutePreparedQueryResponse
+}
+
+func (e *ExecutePreparedQueryResponse) GetForbidden() *string {
+	if e == nil {
+		return nil
+	}
+	return e.Forbidden
+}
+
+func (e *ExecutePreparedQueryResponse) GetHeaders() map[string][]string {
+	if e == nil {
+		return map[string][]string{}
+	}
+	return e.Headers
 }
 
 func (e *ExecutePreparedQueryResponse) GetStatusCode() int {
@@ -190,37 +218,9 @@ func (e *ExecutePreparedQueryResponse) GetRawResponse() *http.Response {
 	return e.RawResponse
 }
 
-func (e *ExecutePreparedQueryResponse) GetExecutePreparedQueryResponse() *ledgerv3.ExecutePreparedQueryResponse {
-	if e == nil {
-		return nil
-	}
-	return e.ExecutePreparedQueryResponse
-}
-
-func (e *ExecutePreparedQueryResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if e == nil {
-		return nil
-	}
-	return e.ErrorResponse
-}
-
 func (e *ExecutePreparedQueryResponse) GetUnauthorized() *string {
 	if e == nil {
 		return nil
 	}
 	return e.Unauthorized
-}
-
-func (e *ExecutePreparedQueryResponse) GetForbidden() *string {
-	if e == nil {
-		return nil
-	}
-	return e.Forbidden
-}
-
-func (e *ExecutePreparedQueryResponse) GetHeaders() map[string][]string {
-	if e == nil {
-		return map[string][]string{}
-	}
-	return e.Headers
 }

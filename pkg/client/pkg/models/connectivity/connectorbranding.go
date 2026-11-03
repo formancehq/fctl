@@ -6,17 +6,10 @@ package connectivity
 // `logoSvg` is the light-theme mark; render it when `logoSvgDark` is
 // absent (documented fallback).
 type ConnectorBranding struct {
-	DisplayName *string `json:"displayName,omitempty"`
 	AccentColor *string `json:"accentColor,omitempty"`
+	DisplayName *string `json:"displayName,omitempty"`
 	LogoSvg     *string `json:"logoSvg,omitempty"`
 	LogoSvgDark *string `json:"logoSvgDark,omitempty"`
-}
-
-func (c *ConnectorBranding) GetDisplayName() *string {
-	if c == nil {
-		return nil
-	}
-	return c.DisplayName
 }
 
 func (c *ConnectorBranding) GetAccentColor() *string {
@@ -24,6 +17,13 @@ func (c *ConnectorBranding) GetAccentColor() *string {
 		return nil
 	}
 	return c.AccentColor
+}
+
+func (c *ConnectorBranding) GetDisplayName() *string {
+	if c == nil {
+		return nil
+	}
+	return c.DisplayName
 }
 
 func (c *ConnectorBranding) GetLogoSvg() *string {

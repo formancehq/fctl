@@ -8,24 +8,31 @@ import (
 )
 
 type V2CreateBulkRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
-	// Continue on failure
-	ContinueOnFailure *bool `queryParam:"style=form,explode=true,name=continueOnFailure"`
+	RequestBody []ledger.V2BulkElement `request:"mediaType=application/json"`
 	// Make bulk atomic
 	Atomic *bool `queryParam:"style=form,explode=true,name=atomic"`
+	// Continue on failure
+	ContinueOnFailure *bool `queryParam:"style=form,explode=true,name=continueOnFailure"`
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 	// Process bulk elements in parallel
 	Parallel *bool `queryParam:"style=form,explode=true,name=parallel"`
 	// Default schema version to use for validation (can be overridden per element)
-	SchemaVersion *string                `queryParam:"style=form,explode=true,name=schemaVersion"`
-	RequestBody   []ledger.V2BulkElement `request:"mediaType=application/json"`
+	SchemaVersion *string `queryParam:"style=form,explode=true,name=schemaVersion"`
 }
 
-func (v *V2CreateBulkRequest) GetLedger() string {
+func (v *V2CreateBulkRequest) GetRequestBody() []ledger.V2BulkElement {
 	if v == nil {
-		return ""
+		return []ledger.V2BulkElement{}
 	}
-	return v.Ledger
+	return v.RequestBody
+}
+
+func (v *V2CreateBulkRequest) GetAtomic() *bool {
+	if v == nil {
+		return nil
+	}
+	return v.Atomic
 }
 
 func (v *V2CreateBulkRequest) GetContinueOnFailure() *bool {
@@ -35,11 +42,11 @@ func (v *V2CreateBulkRequest) GetContinueOnFailure() *bool {
 	return v.ContinueOnFailure
 }
 
-func (v *V2CreateBulkRequest) GetAtomic() *bool {
+func (v *V2CreateBulkRequest) GetLedger() string {
 	if v == nil {
-		return nil
+		return ""
 	}
-	return v.Atomic
+	return v.Ledger
 }
 
 func (v *V2CreateBulkRequest) GetParallel() *bool {
@@ -54,13 +61,6 @@ func (v *V2CreateBulkRequest) GetSchemaVersion() *string {
 		return nil
 	}
 	return v.SchemaVersion
-}
-
-func (v *V2CreateBulkRequest) GetRequestBody() []ledger.V2BulkElement {
-	if v == nil {
-		return []ledger.V2BulkElement{}
-	}
-	return v.RequestBody
 }
 
 // #region class-body-v2createbulkrequest

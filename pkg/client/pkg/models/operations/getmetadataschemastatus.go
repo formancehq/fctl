@@ -20,8 +20,6 @@ func (g *GetMetadataSchemaStatusSecurity) GetBearerAuth() *string {
 }
 
 type GetMetadataSchemaStatusRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
 	// barrier and waits for the receiving node to apply up to it. `stale`
 	// serves the read from the receiving node's own store, with no barrier
@@ -32,6 +30,8 @@ type GetMetadataSchemaStatusRequest struct {
 	// gRPC equivalent is the `x-consistency` request metadata.
 	//
 	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 }
 
 func (g GetMetadataSchemaStatusRequest) MarshalJSON() ([]byte, error) {
@@ -45,13 +45,6 @@ func (g *GetMetadataSchemaStatusRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (g *GetMetadataSchemaStatusRequest) GetLedgerName() string {
-	if g == nil {
-		return ""
-	}
-	return g.LedgerName
-}
-
 func (g *GetMetadataSchemaStatusRequest) GetXConsistency() *ledgerv3.Consistency {
 	if g == nil {
 		return nil
@@ -59,22 +52,29 @@ func (g *GetMetadataSchemaStatusRequest) GetXConsistency() *ledgerv3.Consistency
 	return g.XConsistency
 }
 
+func (g *GetMetadataSchemaStatusRequest) GetLedgerName() string {
+	if g == nil {
+		return ""
+	}
+	return g.LedgerName
+}
+
 type GetMetadataSchemaStatusResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
+	// Metadata schema status retrieved successfully
+	MetadataSchemaStatusResponse *ledgerv3.MetadataSchemaStatusResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Metadata schema status retrieved successfully
-	MetadataSchemaStatusResponse *ledgerv3.MetadataSchemaStatusResponse
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (g *GetMetadataSchemaStatusResponse) GetContentType() string {
@@ -82,6 +82,34 @@ func (g *GetMetadataSchemaStatusResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetMetadataSchemaStatusResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if g == nil {
+		return nil
+	}
+	return g.ErrorResponse
+}
+
+func (g *GetMetadataSchemaStatusResponse) GetForbidden() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Forbidden
+}
+
+func (g *GetMetadataSchemaStatusResponse) GetHeaders() map[string][]string {
+	if g == nil {
+		return map[string][]string{}
+	}
+	return g.Headers
+}
+
+func (g *GetMetadataSchemaStatusResponse) GetMetadataSchemaStatusResponse() *ledgerv3.MetadataSchemaStatusResponse {
+	if g == nil {
+		return nil
+	}
+	return g.MetadataSchemaStatusResponse
 }
 
 func (g *GetMetadataSchemaStatusResponse) GetStatusCode() int {
@@ -98,37 +126,9 @@ func (g *GetMetadataSchemaStatusResponse) GetRawResponse() *http.Response {
 	return g.RawResponse
 }
 
-func (g *GetMetadataSchemaStatusResponse) GetMetadataSchemaStatusResponse() *ledgerv3.MetadataSchemaStatusResponse {
-	if g == nil {
-		return nil
-	}
-	return g.MetadataSchemaStatusResponse
-}
-
-func (g *GetMetadataSchemaStatusResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if g == nil {
-		return nil
-	}
-	return g.ErrorResponse
-}
-
 func (g *GetMetadataSchemaStatusResponse) GetUnauthorized() *string {
 	if g == nil {
 		return nil
 	}
 	return g.Unauthorized
-}
-
-func (g *GetMetadataSchemaStatusResponse) GetForbidden() *string {
-	if g == nil {
-		return nil
-	}
-	return g.Forbidden
-}
-
-func (g *GetMetadataSchemaStatusResponse) GetHeaders() map[string][]string {
-	if g == nil {
-		return map[string][]string{}
-	}
-	return g.Headers
 }

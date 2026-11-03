@@ -7,15 +7,15 @@ import (
 )
 
 type WiseConfig struct {
-	// Human-readable name identifying this connector instance
-	Name string `json:"name"`
-	// Identifies the payment provider this configuration targets
-	Provider *string `default:"Wise" json:"provider"`
 	// API key issued by Wise, used to authenticate the connector's requests
 	APIKey string `json:"apiKey"`
+	// Human-readable name identifying this connector instance
+	Name string `json:"name"`
 	// The frequency at which the connector will try to fetch new BalanceTransaction objects from Wise API.
 	//
 	PollingPeriod *string `default:"30m" json:"pollingPeriod"`
+	// Identifies the payment provider this configuration targets
+	Provider *string `default:"Wise" json:"provider"`
 }
 
 func (w WiseConfig) MarshalJSON() ([]byte, error) {
@@ -23,24 +23,10 @@ func (w WiseConfig) MarshalJSON() ([]byte, error) {
 }
 
 func (w *WiseConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &w, "", false, []string{"name", "apiKey"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &w, "", false, []string{"apiKey", "name"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (w *WiseConfig) GetName() string {
-	if w == nil {
-		return ""
-	}
-	return w.Name
-}
-
-func (w *WiseConfig) GetProvider() *string {
-	if w == nil {
-		return nil
-	}
-	return w.Provider
 }
 
 func (w *WiseConfig) GetAPIKey() string {
@@ -50,9 +36,23 @@ func (w *WiseConfig) GetAPIKey() string {
 	return w.APIKey
 }
 
+func (w *WiseConfig) GetName() string {
+	if w == nil {
+		return ""
+	}
+	return w.Name
+}
+
 func (w *WiseConfig) GetPollingPeriod() *string {
 	if w == nil {
 		return nil
 	}
 	return w.PollingPeriod
+}
+
+func (w *WiseConfig) GetProvider() *string {
+	if w == nil {
+		return nil
+	}
+	return w.Provider
 }

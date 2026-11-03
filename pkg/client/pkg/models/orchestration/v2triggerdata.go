@@ -5,16 +5,16 @@ package orchestration
 type V2TriggerData struct {
 	// Type of event that fires this trigger
 	Event string `json:"event"`
-	// Identifier of the workflow to run when the trigger fires
-	WorkflowID string `json:"workflowID"`
-	// Version of the trigger definition
-	Version *string `json:"version,omitempty"`
 	// Expression evaluated against the event. The workflow runs only when it matches
 	Filter *string `json:"filter,omitempty"`
-	// Expressions evaluated against the event to build the workflow's input variables
-	Vars map[string]any `json:"vars,omitempty"`
 	// Human-readable name for the trigger
 	Name *string `json:"name,omitempty"`
+	// Expressions evaluated against the event to build the workflow's input variables
+	Vars map[string]any `json:"vars,omitempty"`
+	// Version of the trigger definition
+	Version *string `json:"version,omitempty"`
+	// Identifier of the workflow to run when the trigger fires
+	WorkflowID string `json:"workflowID"`
 }
 
 func (v *V2TriggerData) GetEvent() string {
@@ -24,25 +24,18 @@ func (v *V2TriggerData) GetEvent() string {
 	return v.Event
 }
 
-func (v *V2TriggerData) GetWorkflowID() string {
-	if v == nil {
-		return ""
-	}
-	return v.WorkflowID
-}
-
-func (v *V2TriggerData) GetVersion() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Version
-}
-
 func (v *V2TriggerData) GetFilter() *string {
 	if v == nil {
 		return nil
 	}
 	return v.Filter
+}
+
+func (v *V2TriggerData) GetName() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Name
 }
 
 func (v *V2TriggerData) GetVars() map[string]any {
@@ -52,11 +45,18 @@ func (v *V2TriggerData) GetVars() map[string]any {
 	return v.Vars
 }
 
-func (v *V2TriggerData) GetName() *string {
+func (v *V2TriggerData) GetVersion() *string {
 	if v == nil {
 		return nil
 	}
-	return v.Name
+	return v.Version
+}
+
+func (v *V2TriggerData) GetWorkflowID() string {
+	if v == nil {
+		return ""
+	}
+	return v.WorkflowID
 }
 
 // #region class-body-v2triggerdata

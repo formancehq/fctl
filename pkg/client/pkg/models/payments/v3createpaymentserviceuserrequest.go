@@ -3,30 +3,16 @@
 package payments
 
 type V3CreatePaymentServiceUserRequest struct {
-	// Full name of the payment service user
-	Name string `json:"name"`
-	// How to reach the payment service user
-	ContactDetails *V3ContactDetailsRequest `json:"contactDetails,omitempty"`
 	// A postal address to record on the payment service user
 	Address *V3AddressRequest `json:"address,omitempty"`
 	// Bank accounts to associate with the user
 	BankAccountIDs []string `json:"bankAccountIDs,omitempty"`
+	// How to reach the payment service user
+	ContactDetails *V3ContactDetailsRequest `json:"contactDetails,omitempty"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]string `json:"metadata,omitempty"`
-}
-
-func (v *V3CreatePaymentServiceUserRequest) GetName() string {
-	if v == nil {
-		return ""
-	}
-	return v.Name
-}
-
-func (v *V3CreatePaymentServiceUserRequest) GetContactDetails() *V3ContactDetailsRequest {
-	if v == nil {
-		return nil
-	}
-	return v.ContactDetails
+	// Full name of the payment service user
+	Name string `json:"name"`
 }
 
 func (v *V3CreatePaymentServiceUserRequest) GetAddress() *V3AddressRequest {
@@ -43,11 +29,25 @@ func (v *V3CreatePaymentServiceUserRequest) GetBankAccountIDs() []string {
 	return v.BankAccountIDs
 }
 
+func (v *V3CreatePaymentServiceUserRequest) GetContactDetails() *V3ContactDetailsRequest {
+	if v == nil {
+		return nil
+	}
+	return v.ContactDetails
+}
+
 func (v *V3CreatePaymentServiceUserRequest) GetMetadata() map[string]string {
 	if v == nil {
 		return nil
 	}
 	return v.Metadata
+}
+
+func (v *V3CreatePaymentServiceUserRequest) GetName() string {
+	if v == nil {
+		return ""
+	}
+	return v.Name
 }
 
 // #region class-body-v3createpaymentserviceuserrequest

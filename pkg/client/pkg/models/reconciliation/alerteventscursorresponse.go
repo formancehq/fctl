@@ -2,59 +2,59 @@
 
 package reconciliation
 
-// AlertEventsCursorResponseCursor - Paginated cursor wrapping the alert's event log
-type AlertEventsCursorResponseCursor struct {
-	PageSize int64        `json:"pageSize"`
-	HasMore  bool         `json:"hasMore"`
-	Previous *string      `json:"previous,omitempty"`
-	Next     *string      `json:"next,omitempty"`
+// Cursor - Paginated cursor wrapping the alert's event log
+type Cursor struct {
 	Data     []AlertEvent `json:"data"`
+	HasMore  bool         `json:"hasMore"`
+	Next     *string      `json:"next,omitempty"`
+	PageSize int64        `json:"pageSize"`
+	Previous *string      `json:"previous,omitempty"`
 }
 
-func (a *AlertEventsCursorResponseCursor) GetPageSize() int64 {
-	if a == nil {
-		return 0
-	}
-	return a.PageSize
-}
-
-func (a *AlertEventsCursorResponseCursor) GetHasMore() bool {
-	if a == nil {
-		return false
-	}
-	return a.HasMore
-}
-
-func (a *AlertEventsCursorResponseCursor) GetPrevious() *string {
-	if a == nil {
-		return nil
-	}
-	return a.Previous
-}
-
-func (a *AlertEventsCursorResponseCursor) GetNext() *string {
-	if a == nil {
-		return nil
-	}
-	return a.Next
-}
-
-func (a *AlertEventsCursorResponseCursor) GetData() []AlertEvent {
-	if a == nil {
+func (c *Cursor) GetData() []AlertEvent {
+	if c == nil {
 		return []AlertEvent{}
 	}
-	return a.Data
+	return c.Data
+}
+
+func (c *Cursor) GetHasMore() bool {
+	if c == nil {
+		return false
+	}
+	return c.HasMore
+}
+
+func (c *Cursor) GetNext() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Next
+}
+
+func (c *Cursor) GetPageSize() int64 {
+	if c == nil {
+		return 0
+	}
+	return c.PageSize
+}
+
+func (c *Cursor) GetPrevious() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Previous
 }
 
 // AlertEventsCursorResponse - OK
 type AlertEventsCursorResponse struct {
 	// Paginated cursor wrapping the alert's event log
-	Cursor AlertEventsCursorResponseCursor `json:"cursor"`
+	Cursor Cursor `json:"cursor"`
 }
 
-func (a *AlertEventsCursorResponse) GetCursor() AlertEventsCursorResponseCursor {
+func (a *AlertEventsCursorResponse) GetCursor() Cursor {
 	if a == nil {
-		return AlertEventsCursorResponseCursor{}
+		return Cursor{}
 	}
 	return a.Cursor
 }

@@ -21,12 +21,12 @@ func (l *LivezSecurity) GetBearerAuth() *string {
 type LivezResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Process is alive
+	HealthResponse *ledgerv3.HealthResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Process is alive
-	HealthResponse *ledgerv3.HealthResponse
 }
 
 func (l *LivezResponse) GetContentType() string {
@@ -34,6 +34,13 @@ func (l *LivezResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *LivezResponse) GetHealthResponse() *ledgerv3.HealthResponse {
+	if l == nil {
+		return nil
+	}
+	return l.HealthResponse
 }
 
 func (l *LivezResponse) GetStatusCode() int {
@@ -48,11 +55,4 @@ func (l *LivezResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return l.RawResponse
-}
-
-func (l *LivezResponse) GetHealthResponse() *ledgerv3.HealthResponse {
-	if l == nil {
-		return nil
-	}
-	return l.HealthResponse
 }

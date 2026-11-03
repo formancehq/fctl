@@ -8,45 +8,18 @@ import (
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
 )
 
-// CreateLedgerRequestMode - Ledger mode. MIRROR creates a read-only ledger that syncs from an external v2 source. Values are case-sensitive; any other value is rejected with 400 INVALID_REQUEST.
-type CreateLedgerRequestMode string
+// DefaultEnforcementMode - Default chart-of-accounts enforcement for accounts that match no account type.
+type DefaultEnforcementMode string
 
 const (
-	CreateLedgerRequestModeNormal CreateLedgerRequestMode = "NORMAL"
-	CreateLedgerRequestModeMirror CreateLedgerRequestMode = "MIRROR"
+	DefaultEnforcementModeStrict DefaultEnforcementMode = "STRICT"
+	DefaultEnforcementModeAudit  DefaultEnforcementMode = "AUDIT"
 )
 
-func (e CreateLedgerRequestMode) ToPointer() *CreateLedgerRequestMode {
+func (e DefaultEnforcementMode) ToPointer() *DefaultEnforcementMode {
 	return &e
 }
-func (e *CreateLedgerRequestMode) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "NORMAL":
-		fallthrough
-	case "MIRROR":
-		*e = CreateLedgerRequestMode(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for CreateLedgerRequestMode: %v", v)
-	}
-}
-
-// CreateLedgerRequestDefaultEnforcementMode - Default chart-of-accounts enforcement for accounts that match no account type.
-type CreateLedgerRequestDefaultEnforcementMode string
-
-const (
-	CreateLedgerRequestDefaultEnforcementModeStrict CreateLedgerRequestDefaultEnforcementMode = "STRICT"
-	CreateLedgerRequestDefaultEnforcementModeAudit  CreateLedgerRequestDefaultEnforcementMode = "AUDIT"
-)
-
-func (e CreateLedgerRequestDefaultEnforcementMode) ToPointer() *CreateLedgerRequestDefaultEnforcementMode {
-	return &e
-}
-func (e *CreateLedgerRequestDefaultEnforcementMode) UnmarshalJSON(data []byte) error {
+func (e *DefaultEnforcementMode) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
@@ -55,26 +28,53 @@ func (e *CreateLedgerRequestDefaultEnforcementMode) UnmarshalJSON(data []byte) e
 	case "STRICT":
 		fallthrough
 	case "AUDIT":
-		*e = CreateLedgerRequestDefaultEnforcementMode(v)
+		*e = DefaultEnforcementMode(v)
 		return nil
 	default:
-		return fmt.Errorf("invalid value for CreateLedgerRequestDefaultEnforcementMode: %v", v)
+		return fmt.Errorf("invalid value for DefaultEnforcementMode: %v", v)
+	}
+}
+
+// Mode - Ledger mode. MIRROR creates a read-only ledger that syncs from an external v2 source. Values are case-sensitive; any other value is rejected with 400 INVALID_REQUEST.
+type Mode string
+
+const (
+	ModeNormal Mode = "NORMAL"
+	ModeMirror Mode = "MIRROR"
+)
+
+func (e Mode) ToPointer() *Mode {
+	return &e
+}
+func (e *Mode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "NORMAL":
+		fallthrough
+	case "MIRROR":
+		*e = Mode(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for Mode: %v", v)
 	}
 }
 
 type CreateLedgerRequest struct {
-	// Initial typed metadata, persisted atomically with creation in NORMAL and MIRROR modes. Creation requires ledger:WriteLedger, including initial metadata; later metadata saves require ledger:WriteMetadata. JSON null entries are omitted. Schema declarations govern indexing and queries, not write-time value coercion. Cluster policy defaults allow 128 entries per entity, 256 bytes per key, 16384 bytes per value, 65536 bytes per entity, and 1048576 bytes per request. Effective ceilings are configurable through the replicated cluster policy.
-	Metadata map[string]*MetadataValue `json:"metadata,omitempty"`
-	// Ledger mode. MIRROR creates a read-only ledger that syncs from an external v2 source. Values are case-sensitive; any other value is rejected with 400 INVALID_REQUEST.
-	Mode *CreateLedgerRequestMode `default:"NORMAL" json:"mode"`
-	// Configuration for the mirror source (required when mode is MIRROR)
-	MirrorSource *MirrorSourceConfig `json:"mirrorSource,omitempty"`
-	// Default chart-of-accounts enforcement for accounts that match no account type.
-	DefaultEnforcementMode *CreateLedgerRequestDefaultEnforcementMode `json:"defaultEnforcementMode,omitempty"`
-	// Metadata field type declarations to seed at creation time.
-	InitialSchema []MetadataFieldTypeCommand `json:"initialSchema,omitempty"`
 	// Initial account types (name -> account type definition).
 	AccountTypes map[string]AddAccountTypeRequest `json:"accountTypes,omitempty"`
+	// Default chart-of-accounts enforcement for accounts that match no account type.
+	DefaultEnforcementMode *DefaultEnforcementMode `json:"defaultEnforcementMode,omitempty"`
+	// Metadata field type declarations to seed at creation time.
+	InitialSchema []MetadataFieldTypeCommand `json:"initialSchema,omitempty"`
+	// Initial typed metadata, persisted atomically with creation in NORMAL and MIRROR modes. Creation requires ledger:WriteLedger, including initial metadata; later metadata saves require ledger:WriteMetadata. JSON null entries are omitted. Schema declarations govern indexing and queries, not write-time value coercion. Cluster policy defaults allow 128 entries per entity, 256 bytes per key, 16384 bytes per value, 65536 bytes per entity, and 1048576 bytes per request. Effective ceilings are configurable through the replicated cluster policy.
+	Metadata map[string]*MetadataValue `json:"metadata,omitempty"`
+	// Configuration for the mirror source (required when mode is MIRROR)
+	MirrorSource *MirrorSourceConfig `json:"mirrorSource,omitempty"`
+	// Ledger mode. MIRROR creates a read-only ledger that syncs from an external v2 source. Values are case-sensitive; any other value is rejected with 400 INVALID_REQUEST.
+	Mode *Mode `default:"NORMAL" json:"mode"`
 }
 
 func (c CreateLedgerRequest) MarshalJSON() ([]byte, error) {
@@ -88,28 +88,14 @@ func (c *CreateLedgerRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (c *CreateLedgerRequest) GetMetadata() map[string]*MetadataValue {
+func (c *CreateLedgerRequest) GetAccountTypes() map[string]AddAccountTypeRequest {
 	if c == nil {
 		return nil
 	}
-	return c.Metadata
+	return c.AccountTypes
 }
 
-func (c *CreateLedgerRequest) GetMode() *CreateLedgerRequestMode {
-	if c == nil {
-		return nil
-	}
-	return c.Mode
-}
-
-func (c *CreateLedgerRequest) GetMirrorSource() *MirrorSourceConfig {
-	if c == nil {
-		return nil
-	}
-	return c.MirrorSource
-}
-
-func (c *CreateLedgerRequest) GetDefaultEnforcementMode() *CreateLedgerRequestDefaultEnforcementMode {
+func (c *CreateLedgerRequest) GetDefaultEnforcementMode() *DefaultEnforcementMode {
 	if c == nil {
 		return nil
 	}
@@ -123,9 +109,23 @@ func (c *CreateLedgerRequest) GetInitialSchema() []MetadataFieldTypeCommand {
 	return c.InitialSchema
 }
 
-func (c *CreateLedgerRequest) GetAccountTypes() map[string]AddAccountTypeRequest {
+func (c *CreateLedgerRequest) GetMetadata() map[string]*MetadataValue {
 	if c == nil {
 		return nil
 	}
-	return c.AccountTypes
+	return c.Metadata
+}
+
+func (c *CreateLedgerRequest) GetMirrorSource() *MirrorSourceConfig {
+	if c == nil {
+		return nil
+	}
+	return c.MirrorSource
+}
+
+func (c *CreateLedgerRequest) GetMode() *Mode {
+	if c == nil {
+		return nil
+	}
+	return c.Mode
 }

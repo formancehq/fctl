@@ -42,17 +42,17 @@ func (d *DeletePreparedQueryRequest) GetQueryName() string {
 type DeletePreparedQueryResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (d *DeletePreparedQueryResponse) GetContentType() string {
@@ -60,6 +60,27 @@ func (d *DeletePreparedQueryResponse) GetContentType() string {
 		return ""
 	}
 	return d.ContentType
+}
+
+func (d *DeletePreparedQueryResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if d == nil {
+		return nil
+	}
+	return d.ErrorResponse
+}
+
+func (d *DeletePreparedQueryResponse) GetForbidden() *string {
+	if d == nil {
+		return nil
+	}
+	return d.Forbidden
+}
+
+func (d *DeletePreparedQueryResponse) GetHeaders() map[string][]string {
+	if d == nil {
+		return map[string][]string{}
+	}
+	return d.Headers
 }
 
 func (d *DeletePreparedQueryResponse) GetStatusCode() int {
@@ -76,30 +97,9 @@ func (d *DeletePreparedQueryResponse) GetRawResponse() *http.Response {
 	return d.RawResponse
 }
 
-func (d *DeletePreparedQueryResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if d == nil {
-		return nil
-	}
-	return d.ErrorResponse
-}
-
 func (d *DeletePreparedQueryResponse) GetUnauthorized() *string {
 	if d == nil {
 		return nil
 	}
 	return d.Unauthorized
-}
-
-func (d *DeletePreparedQueryResponse) GetForbidden() *string {
-	if d == nil {
-		return nil
-	}
-	return d.Forbidden
-}
-
-func (d *DeletePreparedQueryResponse) GetHeaders() map[string][]string {
-	if d == nil {
-		return map[string][]string{}
-	}
-	return d.Headers
 }

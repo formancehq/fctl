@@ -7,8 +7,8 @@ import (
 )
 
 type DeletedMetadataRuleRead struct {
-	Match   *string                     `json:"match,omitempty"`
 	Actions []DeletedMetadataActionRead `json:"actions,omitempty"`
+	Match   *string                     `json:"match,omitempty"`
 }
 
 func (d DeletedMetadataRuleRead) MarshalJSON() ([]byte, error) {
@@ -22,16 +22,16 @@ func (d *DeletedMetadataRuleRead) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (d *DeletedMetadataRuleRead) GetMatch() *string {
-	if d == nil {
-		return nil
-	}
-	return d.Match
-}
-
 func (d *DeletedMetadataRuleRead) GetActions() []DeletedMetadataActionRead {
 	if d == nil {
 		return nil
 	}
 	return d.Actions
+}
+
+func (d *DeletedMetadataRuleRead) GetMatch() *string {
+	if d == nil {
+		return nil
+	}
+	return d.Match
 }

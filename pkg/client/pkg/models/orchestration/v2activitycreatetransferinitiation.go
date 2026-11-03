@@ -9,6 +9,13 @@ import (
 	"math/big"
 )
 
+// V2ActivityCreateTransferInitiationMetadata - A set of key/value pairs that you can attach to a transfer object. It can be useful for storing additional information about the transfer in a structured format.
+type V2ActivityCreateTransferInitiationMetadata struct {
+}
+
+// #region class-body-v2activitycreatetransferinitiationmetadata
+// #endregion class-body-v2activitycreatetransferinitiationmetadata
+
 // V2ActivityCreateTransferInitiationType - Type of transfer initiation:
 // - TRANSFER: Internal to internal account transfer
 // - PAYOUT: Internal to external account payout
@@ -38,27 +45,25 @@ func (e *V2ActivityCreateTransferInitiationType) UnmarshalJSON(data []byte) erro
 	}
 }
 
-// V2ActivityCreateTransferInitiationMetadata - A set of key/value pairs that you can attach to a transfer object. It can be useful for storing additional information about the transfer in a structured format.
-type V2ActivityCreateTransferInitiationMetadata struct {
-}
-
-// #region class-body-v2activitycreatetransferinitiationmetadata
-// #endregion class-body-v2activitycreatetransferinitiationmetadata
-
 // V2ActivityCreateTransferInitiation - Arguments for the activity that initiates a transfer through a connector
 type V2ActivityCreateTransferInitiation struct {
-	// Identifier of the connector to transfer through
-	ConnectorID *string `json:"connectorID,omitempty"`
-	// Payment service provider name (e.g., stripe, wise, mangopay).
-	// Validated by the Payments service based on installed connectors.
-	//
-	Provider *string `json:"provider,omitempty"`
 	// Amount to transfer, in the asset's smallest unit
 	Amount *big.Int `json:"amount,omitempty"`
 	// Asset the transfer is denominated in
 	Asset *string `json:"asset,omitempty"`
+	// Identifier of the connector to transfer through
+	ConnectorID *string `json:"connectorID,omitempty"`
+	// Description for the transfer initiation
+	Description *string `json:"description,omitempty"`
 	// Destination account ID
 	Destination *string `json:"destination,omitempty"`
+	// A set of key/value pairs that you can attach to a transfer object. It can be useful for storing additional information about the transfer in a structured format.
+	//
+	Metadata *V2ActivityCreateTransferInitiationMetadata `json:"metadata,omitempty"`
+	// Payment service provider name (e.g., stripe, wise, mangopay).
+	// Validated by the Payments service based on installed connectors.
+	//
+	Provider *string `json:"provider,omitempty"`
 	// Source account ID (required for TRANSFER type)
 	Source *string `json:"source,omitempty"`
 	// Type of transfer initiation:
@@ -66,13 +71,8 @@ type V2ActivityCreateTransferInitiation struct {
 	// - PAYOUT: Internal to external account payout
 	//
 	Type *V2ActivityCreateTransferInitiationType `default:"TRANSFER" json:"type"`
-	// Description for the transfer initiation
-	Description *string `json:"description,omitempty"`
 	// When true, the transfer is created but held until it is validated
 	WaitingValidation *bool `default:"false" json:"waitingValidation"`
-	// A set of key/value pairs that you can attach to a transfer object. It can be useful for storing additional information about the transfer in a structured format.
-	//
-	Metadata *V2ActivityCreateTransferInitiationMetadata `json:"metadata,omitempty"`
 }
 
 func (v V2ActivityCreateTransferInitiation) MarshalJSON() ([]byte, error) {
@@ -84,20 +84,6 @@ func (v *V2ActivityCreateTransferInitiation) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (v *V2ActivityCreateTransferInitiation) GetConnectorID() *string {
-	if v == nil {
-		return nil
-	}
-	return v.ConnectorID
-}
-
-func (v *V2ActivityCreateTransferInitiation) GetProvider() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Provider
 }
 
 func (v *V2ActivityCreateTransferInitiation) GetAmount() *big.Int {
@@ -114,11 +100,39 @@ func (v *V2ActivityCreateTransferInitiation) GetAsset() *string {
 	return v.Asset
 }
 
+func (v *V2ActivityCreateTransferInitiation) GetConnectorID() *string {
+	if v == nil {
+		return nil
+	}
+	return v.ConnectorID
+}
+
+func (v *V2ActivityCreateTransferInitiation) GetDescription() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Description
+}
+
 func (v *V2ActivityCreateTransferInitiation) GetDestination() *string {
 	if v == nil {
 		return nil
 	}
 	return v.Destination
+}
+
+func (v *V2ActivityCreateTransferInitiation) GetMetadata() *V2ActivityCreateTransferInitiationMetadata {
+	if v == nil {
+		return nil
+	}
+	return v.Metadata
+}
+
+func (v *V2ActivityCreateTransferInitiation) GetProvider() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Provider
 }
 
 func (v *V2ActivityCreateTransferInitiation) GetSource() *string {
@@ -135,25 +149,11 @@ func (v *V2ActivityCreateTransferInitiation) GetType() *V2ActivityCreateTransfer
 	return v.Type
 }
 
-func (v *V2ActivityCreateTransferInitiation) GetDescription() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Description
-}
-
 func (v *V2ActivityCreateTransferInitiation) GetWaitingValidation() *bool {
 	if v == nil {
 		return nil
 	}
 	return v.WaitingValidation
-}
-
-func (v *V2ActivityCreateTransferInitiation) GetMetadata() *V2ActivityCreateTransferInitiationMetadata {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
 }
 
 // #region class-body-v2activitycreatetransferinitiation

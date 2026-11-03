@@ -10,12 +10,12 @@ import (
 type CreateClientResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Client created
+	CreateClientResponse *auth.CreateClientResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Client created
-	CreateClientResponse *auth.CreateClientResponse
 }
 
 func (c *CreateClientResponse) GetContentType() string {
@@ -23,6 +23,13 @@ func (c *CreateClientResponse) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
+}
+
+func (c *CreateClientResponse) GetCreateClientResponse() *auth.CreateClientResponse {
+	if c == nil {
+		return nil
+	}
+	return c.CreateClientResponse
 }
 
 func (c *CreateClientResponse) GetStatusCode() int {
@@ -37,11 +44,4 @@ func (c *CreateClientResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return c.RawResponse
-}
-
-func (c *CreateClientResponse) GetCreateClientResponse() *auth.CreateClientResponse {
-	if c == nil {
-		return nil
-	}
-	return c.CreateClientResponse
 }

@@ -10,12 +10,12 @@ import (
 type CreatePaymentResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	PaymentResponse *payments.PaymentResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	PaymentResponse *payments.PaymentResponse
 }
 
 func (c *CreatePaymentResponse) GetContentType() string {
@@ -23,6 +23,13 @@ func (c *CreatePaymentResponse) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
+}
+
+func (c *CreatePaymentResponse) GetPaymentResponse() *payments.PaymentResponse {
+	if c == nil {
+		return nil
+	}
+	return c.PaymentResponse
 }
 
 func (c *CreatePaymentResponse) GetStatusCode() int {
@@ -37,11 +44,4 @@ func (c *CreatePaymentResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return c.RawResponse
-}
-
-func (c *CreatePaymentResponse) GetPaymentResponse() *payments.PaymentResponse {
-	if c == nil {
-		return nil
-	}
-	return c.PaymentResponse
 }

@@ -4,17 +4,10 @@ package orchestration
 
 // ActivityRevertTransaction - Arguments for the activity that reverts a ledger transaction
 type ActivityRevertTransaction struct {
-	// Name of the ledger holding the transaction
-	Ledger string `json:"ledger"`
 	// Identifier of the transaction to revert
 	ID string `json:"id"`
-}
-
-func (a *ActivityRevertTransaction) GetLedger() string {
-	if a == nil {
-		return ""
-	}
-	return a.Ledger
+	// Name of the ledger holding the transaction
+	Ledger string `json:"ledger"`
 }
 
 func (a *ActivityRevertTransaction) GetID() string {
@@ -22,4 +15,11 @@ func (a *ActivityRevertTransaction) GetID() string {
 		return ""
 	}
 	return a.ID
+}
+
+func (a *ActivityRevertTransaction) GetLedger() string {
+	if a == nil {
+		return ""
+	}
+	return a.Ledger
 }

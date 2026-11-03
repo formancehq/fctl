@@ -8,16 +8,9 @@ import (
 )
 
 type V3UpdateBankAccountMetadataRequest struct {
-	// The bank account ID
-	BankAccountID                      string                                       `pathParam:"style=simple,explode=false,name=bankAccountID"`
 	V3UpdateBankAccountMetadataRequest *payments.V3UpdateBankAccountMetadataRequest `request:"mediaType=application/json"`
-}
-
-func (v *V3UpdateBankAccountMetadataRequest) GetBankAccountID() string {
-	if v == nil {
-		return ""
-	}
-	return v.BankAccountID
+	// The bank account ID
+	BankAccountID string `pathParam:"style=simple,explode=false,name=bankAccountID"`
 }
 
 func (v *V3UpdateBankAccountMetadataRequest) GetV3UpdateBankAccountMetadataRequest() *payments.V3UpdateBankAccountMetadataRequest {
@@ -25,6 +18,13 @@ func (v *V3UpdateBankAccountMetadataRequest) GetV3UpdateBankAccountMetadataReque
 		return nil
 	}
 	return v.V3UpdateBankAccountMetadataRequest
+}
+
+func (v *V3UpdateBankAccountMetadataRequest) GetBankAccountID() string {
+	if v == nil {
+		return ""
+	}
+	return v.BankAccountID
 }
 
 // #region class-body-v3updatebankaccountmetadatarequest

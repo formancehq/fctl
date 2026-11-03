@@ -11,14 +11,14 @@ import (
 type CreditWalletRequest struct {
 	// An amount together with the asset it is denominated in
 	Amount Monetary `json:"amount"`
+	// The balance to credit
+	Balance *string `json:"balance,omitempty"`
 	// Metadata associated with the wallet.
 	Metadata map[string]string `json:"metadata"`
 	// Optional caller-supplied identifier used to deduplicate the credit
 	Reference *string `json:"reference,omitempty"`
 	// Where the funds come from
 	Sources []Subject `json:"sources"`
-	// The balance to credit
-	Balance *string `json:"balance,omitempty"`
 	// The transaction time to record on the resulting transaction. See [bi-temporality](https://docs.formance.com/modules/ledger/working-with/bi-temporality)
 	Timestamp *time.Time `json:"timestamp,omitempty"`
 }
@@ -41,6 +41,13 @@ func (c *CreditWalletRequest) GetAmount() Monetary {
 	return c.Amount
 }
 
+func (c *CreditWalletRequest) GetBalance() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Balance
+}
+
 func (c *CreditWalletRequest) GetMetadata() map[string]string {
 	if c == nil {
 		return map[string]string{}
@@ -60,13 +67,6 @@ func (c *CreditWalletRequest) GetSources() []Subject {
 		return []Subject{}
 	}
 	return c.Sources
-}
-
-func (c *CreditWalletRequest) GetBalance() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Balance
 }
 
 func (c *CreditWalletRequest) GetTimestamp() *time.Time {

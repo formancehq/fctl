@@ -11,17 +11,17 @@ import (
 )
 
 type V2GetTransactionRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
-	// Transaction ID.
-	ID     *big.Int   `pathParam:"style=simple,explode=false,name=id"`
-	Expand *string    `queryParam:"style=form,explode=true,name=expand"`
-	Pit    *time.Time `queryParam:"style=form,explode=true,name=pit"`
 	// When set to `true`, all bigint values in the response will be serialized
 	// as strings instead of JSON numbers.
 	// Useful for clients that cannot handle large numbers natively (e.g. JavaScript).
 	//
-	FormanceBigintAsString *bool `default:"false" header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
+	FormanceBigintAsString *bool   `default:"false" header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
+	Expand                 *string `queryParam:"style=form,explode=true,name=expand"`
+	// Transaction ID.
+	ID *big.Int `pathParam:"style=simple,explode=false,name=id"`
+	// Name of the ledger.
+	Ledger string     `pathParam:"style=simple,explode=false,name=ledger"`
+	Pit    *time.Time `queryParam:"style=form,explode=true,name=pit"`
 }
 
 func (v V2GetTransactionRequest) MarshalJSON() ([]byte, error) {
@@ -35,18 +35,11 @@ func (v *V2GetTransactionRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2GetTransactionRequest) GetLedger() string {
+func (v *V2GetTransactionRequest) GetFormanceBigintAsString() *bool {
 	if v == nil {
-		return ""
+		return nil
 	}
-	return v.Ledger
-}
-
-func (v *V2GetTransactionRequest) GetID() *big.Int {
-	if v == nil {
-		return big.NewInt(0)
-	}
-	return v.ID
+	return v.FormanceBigintAsString
 }
 
 func (v *V2GetTransactionRequest) GetExpand() *string {
@@ -56,18 +49,25 @@ func (v *V2GetTransactionRequest) GetExpand() *string {
 	return v.Expand
 }
 
+func (v *V2GetTransactionRequest) GetID() *big.Int {
+	if v == nil {
+		return big.NewInt(0)
+	}
+	return v.ID
+}
+
+func (v *V2GetTransactionRequest) GetLedger() string {
+	if v == nil {
+		return ""
+	}
+	return v.Ledger
+}
+
 func (v *V2GetTransactionRequest) GetPit() *time.Time {
 	if v == nil {
 		return nil
 	}
 	return v.Pit
-}
-
-func (v *V2GetTransactionRequest) GetFormanceBigintAsString() *bool {
-	if v == nil {
-		return nil
-	}
-	return v.FormanceBigintAsString
 }
 
 // #region class-body-v2gettransactionrequest

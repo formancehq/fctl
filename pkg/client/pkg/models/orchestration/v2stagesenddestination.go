@@ -8,12 +8,12 @@ import (
 
 // V2StageSendDestination - Where a send stage puts the funds
 type V2StageSendDestination struct {
-	// Send the funds to a wallet
-	Wallet *V2StageSendDestinationWallet `json:"wallet,omitempty"`
 	// Send the funds to a ledger account
 	Account *V2StageSendDestinationAccount `json:"account,omitempty"`
 	// Send the funds to a payment
 	Payment *V2StageSendDestinationPayment `json:"payment,omitempty"`
+	// Send the funds to a wallet
+	Wallet *V2StageSendDestinationWallet `json:"wallet,omitempty"`
 }
 
 func (v V2StageSendDestination) MarshalJSON() ([]byte, error) {
@@ -25,13 +25,6 @@ func (v *V2StageSendDestination) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (v *V2StageSendDestination) GetWallet() *V2StageSendDestinationWallet {
-	if v == nil {
-		return nil
-	}
-	return v.Wallet
 }
 
 func (v *V2StageSendDestination) GetAccount() *V2StageSendDestinationAccount {
@@ -46,6 +39,13 @@ func (v *V2StageSendDestination) GetPayment() *V2StageSendDestinationPayment {
 		return nil
 	}
 	return v.Payment
+}
+
+func (v *V2StageSendDestination) GetWallet() *V2StageSendDestinationWallet {
+	if v == nil {
+		return nil
+	}
+	return v.Wallet
 }
 
 // #region class-body-v2stagesenddestination

@@ -8,16 +8,9 @@ import (
 )
 
 type UpdateConfigRequest struct {
-	// Config ID
-	ID         string              `pathParam:"style=simple,explode=false,name=id"`
 	ConfigUser webhooks.ConfigUser `request:"mediaType=application/json"`
-}
-
-func (u *UpdateConfigRequest) GetID() string {
-	if u == nil {
-		return ""
-	}
-	return u.ID
+	// Config ID
+	ID string `pathParam:"style=simple,explode=false,name=id"`
 }
 
 func (u *UpdateConfigRequest) GetConfigUser() webhooks.ConfigUser {
@@ -25,6 +18,13 @@ func (u *UpdateConfigRequest) GetConfigUser() webhooks.ConfigUser {
 		return webhooks.ConfigUser{}
 	}
 	return u.ConfigUser
+}
+
+func (u *UpdateConfigRequest) GetID() string {
+	if u == nil {
+		return ""
+	}
+	return u.ID
 }
 
 type UpdateConfigResponse struct {

@@ -13,10 +13,10 @@ type Workflow struct {
 	Config WorkflowConfig `json:"config"`
 	// When the workflow was created
 	CreatedAt time.Time `json:"createdAt"`
-	// When the workflow was last modified
-	UpdatedAt time.Time `json:"updatedAt"`
 	// Unique identifier of the workflow
 	ID string `json:"id"`
+	// When the workflow was last modified
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (w Workflow) MarshalJSON() ([]byte, error) {
@@ -44,16 +44,16 @@ func (w *Workflow) GetCreatedAt() time.Time {
 	return w.CreatedAt
 }
 
-func (w *Workflow) GetUpdatedAt() time.Time {
-	if w == nil {
-		return time.Time{}
-	}
-	return w.UpdatedAt
-}
-
 func (w *Workflow) GetID() string {
 	if w == nil {
 		return ""
 	}
 	return w.ID
+}
+
+func (w *Workflow) GetUpdatedAt() time.Time {
+	if w == nil {
+		return time.Time{}
+	}
+	return w.UpdatedAt
 }

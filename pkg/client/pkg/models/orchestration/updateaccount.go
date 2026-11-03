@@ -10,10 +10,10 @@ import (
 type UpdateAccount struct {
 	// Address of the ledger account to update
 	ID string `json:"id"`
-	// Metadata to set on the account
-	Metadata map[string]string `json:"metadata"`
 	// Name of the ledger holding the account
 	Ledger string `json:"ledger"`
+	// Metadata to set on the account
+	Metadata map[string]string `json:"metadata"`
 }
 
 func (u UpdateAccount) MarshalJSON() ([]byte, error) {
@@ -21,7 +21,7 @@ func (u UpdateAccount) MarshalJSON() ([]byte, error) {
 }
 
 func (u *UpdateAccount) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &u, "", false, []string{"id", "metadata", "ledger"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &u, "", false, []string{"id", "ledger", "metadata"}); err != nil {
 		return err
 	}
 	return nil
@@ -34,16 +34,16 @@ func (u *UpdateAccount) GetID() string {
 	return u.ID
 }
 
-func (u *UpdateAccount) GetMetadata() map[string]string {
-	if u == nil {
-		return map[string]string{}
-	}
-	return u.Metadata
-}
-
 func (u *UpdateAccount) GetLedger() string {
 	if u == nil {
 		return ""
 	}
 	return u.Ledger
+}
+
+func (u *UpdateAccount) GetMetadata() map[string]string {
+	if u == nil {
+		return map[string]string{}
+	}
+	return u.Metadata
 }

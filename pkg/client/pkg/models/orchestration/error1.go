@@ -7,20 +7,20 @@ import (
 	"fmt"
 )
 
-// SchemasErrorCode - Machine-readable error code identifying the failure
-type SchemasErrorCode string
+// ErrorCode - Machine-readable error code identifying the failure
+type ErrorCode string
 
 const (
-	SchemasErrorCodeValidation SchemasErrorCode = "VALIDATION"
-	SchemasErrorCodeNotFound   SchemasErrorCode = "NOT_FOUND"
-	SchemasErrorCodeInternal   SchemasErrorCode = "INTERNAL"
-	SchemasErrorCodeConflict   SchemasErrorCode = "CONFLICT"
+	ErrorCodeValidation ErrorCode = "VALIDATION"
+	ErrorCodeNotFound   ErrorCode = "NOT_FOUND"
+	ErrorCodeInternal   ErrorCode = "INTERNAL"
+	ErrorCodeConflict   ErrorCode = "CONFLICT"
 )
 
-func (e SchemasErrorCode) ToPointer() *SchemasErrorCode {
+func (e ErrorCode) ToPointer() *ErrorCode {
 	return &e
 }
-func (e *SchemasErrorCode) UnmarshalJSON(data []byte) error {
+func (e *ErrorCode) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
@@ -33,17 +33,17 @@ func (e *SchemasErrorCode) UnmarshalJSON(data []byte) error {
 	case "INTERNAL":
 		fallthrough
 	case "CONFLICT":
-		*e = SchemasErrorCode(v)
+		*e = ErrorCode(v)
 		return nil
 	default:
-		return fmt.Errorf("invalid value for SchemasErrorCode: %v", v)
+		return fmt.Errorf("invalid value for ErrorCode: %v", v)
 	}
 }
 
 // Error1 - General error
 type Error1 struct {
 	// Machine-readable error code identifying the failure
-	ErrorCode SchemasErrorCode `json:"errorCode"`
+	ErrorCode ErrorCode `json:"errorCode"`
 	// Human-readable description of the error
 	ErrorMessage string `json:"errorMessage"`
 }
@@ -53,4 +53,26 @@ var _ error = &Error1{}
 func (e *Error1) Error() string {
 	data, _ := json.Marshal(e)
 	return string(data)
+}
+
+// Error - General error
+type Error struct {
+	// Machine-readable error code identifying the failure
+	ErrorCode ErrorCode `json:"errorCode"`
+	// Human-readable description of the error
+	ErrorMessage string `json:"errorMessage"`
+}
+
+func (e *Error) GetErrorCode() ErrorCode {
+	if e == nil {
+		return ErrorCode("")
+	}
+	return e.ErrorCode
+}
+
+func (e *Error) GetErrorMessage() string {
+	if e == nil {
+		return ""
+	}
+	return e.ErrorMessage
 }

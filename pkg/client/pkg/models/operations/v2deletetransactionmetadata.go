@@ -9,14 +9,14 @@ import (
 )
 
 type V2DeleteTransactionMetadataRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
+	// Use an idempotency key
+	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
 	// Transaction ID.
 	ID *big.Int `pathParam:"style=simple,explode=false,name=id"`
 	// The key to remove.
 	Key string `pathParam:"style=simple,explode=false,name=key"`
-	// Use an idempotency key
-	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 }
 
 func (v V2DeleteTransactionMetadataRequest) MarshalJSON() ([]byte, error) {
@@ -30,11 +30,11 @@ func (v *V2DeleteTransactionMetadataRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2DeleteTransactionMetadataRequest) GetLedger() string {
+func (v *V2DeleteTransactionMetadataRequest) GetIdempotencyKey() *string {
 	if v == nil {
-		return ""
+		return nil
 	}
-	return v.Ledger
+	return v.IdempotencyKey
 }
 
 func (v *V2DeleteTransactionMetadataRequest) GetID() *big.Int {
@@ -51,11 +51,11 @@ func (v *V2DeleteTransactionMetadataRequest) GetKey() string {
 	return v.Key
 }
 
-func (v *V2DeleteTransactionMetadataRequest) GetIdempotencyKey() *string {
+func (v *V2DeleteTransactionMetadataRequest) GetLedger() string {
 	if v == nil {
-		return nil
+		return ""
 	}
-	return v.IdempotencyKey
+	return v.Ledger
 }
 
 // #region class-body-v2deletetransactionmetadatarequest
@@ -64,11 +64,11 @@ func (v *V2DeleteTransactionMetadataRequest) GetIdempotencyKey() *string {
 type V2DeleteTransactionMetadataResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	Headers     map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	Headers     map[string][]string
 }
 
 func (v *V2DeleteTransactionMetadataResponse) GetContentType() string {
@@ -76,6 +76,13 @@ func (v *V2DeleteTransactionMetadataResponse) GetContentType() string {
 		return ""
 	}
 	return v.ContentType
+}
+
+func (v *V2DeleteTransactionMetadataResponse) GetHeaders() map[string][]string {
+	if v == nil {
+		return map[string][]string{}
+	}
+	return v.Headers
 }
 
 func (v *V2DeleteTransactionMetadataResponse) GetStatusCode() int {
@@ -90,13 +97,6 @@ func (v *V2DeleteTransactionMetadataResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return v.RawResponse
-}
-
-func (v *V2DeleteTransactionMetadataResponse) GetHeaders() map[string][]string {
-	if v == nil {
-		return map[string][]string{}
-	}
-	return v.Headers
 }
 
 // #region class-body-v2deletetransactionmetadataresponse

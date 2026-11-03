@@ -7,17 +7,10 @@ import (
 )
 
 type V3AddBankAccountToPaymentServiceUserRequest struct {
-	// The payment service user ID
-	PaymentServiceUserID string `pathParam:"style=simple,explode=false,name=paymentServiceUserID"`
 	// The bank account ID
 	BankAccountID string `pathParam:"style=simple,explode=false,name=bankAccountID"`
-}
-
-func (v *V3AddBankAccountToPaymentServiceUserRequest) GetPaymentServiceUserID() string {
-	if v == nil {
-		return ""
-	}
-	return v.PaymentServiceUserID
+	// The payment service user ID
+	PaymentServiceUserID string `pathParam:"style=simple,explode=false,name=paymentServiceUserID"`
 }
 
 func (v *V3AddBankAccountToPaymentServiceUserRequest) GetBankAccountID() string {
@@ -25,6 +18,13 @@ func (v *V3AddBankAccountToPaymentServiceUserRequest) GetBankAccountID() string 
 		return ""
 	}
 	return v.BankAccountID
+}
+
+func (v *V3AddBankAccountToPaymentServiceUserRequest) GetPaymentServiceUserID() string {
+	if v == nil {
+		return ""
+	}
+	return v.PaymentServiceUserID
 }
 
 // #region class-body-v3addbankaccounttopaymentserviceuserrequest

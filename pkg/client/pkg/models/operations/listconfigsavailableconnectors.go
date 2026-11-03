@@ -8,14 +8,21 @@ import (
 )
 
 type ListConfigsAvailableConnectorsResponse struct {
+	// OK
+	ConnectorsConfigsResponse *payments.ConnectorsConfigsResponse
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	ConnectorsConfigsResponse *payments.ConnectorsConfigsResponse
+}
+
+func (l *ListConfigsAvailableConnectorsResponse) GetConnectorsConfigsResponse() *payments.ConnectorsConfigsResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ConnectorsConfigsResponse
 }
 
 func (l *ListConfigsAvailableConnectorsResponse) GetContentType() string {
@@ -37,11 +44,4 @@ func (l *ListConfigsAvailableConnectorsResponse) GetRawResponse() *http.Response
 		return nil
 	}
 	return l.RawResponse
-}
-
-func (l *ListConfigsAvailableConnectorsResponse) GetConnectorsConfigsResponse() *payments.ConnectorsConfigsResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ConnectorsConfigsResponse
 }

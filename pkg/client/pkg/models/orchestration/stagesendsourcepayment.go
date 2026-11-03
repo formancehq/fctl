@@ -8,24 +8,24 @@ import (
 
 // StageSendSourcePayment - Take the funds from a payment
 type StageSendSourcePayment struct {
+	// Enables unbounded overdraft on the throughAccount when set to true.
+	// Only applies when throughAccount is not "world" (which already has unbounded overdraft).
+	//
+	AllowOverdraft *bool `default:"false" json:"allowOverdraft"`
+	// Intermediate account where payment funds are held.
+	// Defaults to "payment:{paymentID}" format.
+	//
+	HoldingAccount *string `json:"holdingAccount,omitempty"`
 	// Identifier of the payment to take funds from
 	ID string `json:"id"`
 	// Ledger to use for payment ingestion.
 	// Defaults to the internal orchestration ledger.
 	//
 	Ledger *string `json:"ledger,omitempty"`
-	// Intermediate account where payment funds are held.
-	// Defaults to "payment:{paymentID}" format.
-	//
-	HoldingAccount *string `json:"holdingAccount,omitempty"`
 	// Source account for the payment ingestion transaction.
 	// Defaults to "world".
 	//
 	ThroughAccount *string `default:"world" json:"throughAccount"`
-	// Enables unbounded overdraft on the throughAccount when set to true.
-	// Only applies when throughAccount is not "world" (which already has unbounded overdraft).
-	//
-	AllowOverdraft *bool `default:"false" json:"allowOverdraft"`
 }
 
 func (s StageSendSourcePayment) MarshalJSON() ([]byte, error) {
@@ -37,6 +37,20 @@ func (s *StageSendSourcePayment) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (s *StageSendSourcePayment) GetAllowOverdraft() *bool {
+	if s == nil {
+		return nil
+	}
+	return s.AllowOverdraft
+}
+
+func (s *StageSendSourcePayment) GetHoldingAccount() *string {
+	if s == nil {
+		return nil
+	}
+	return s.HoldingAccount
 }
 
 func (s *StageSendSourcePayment) GetID() string {
@@ -53,23 +67,9 @@ func (s *StageSendSourcePayment) GetLedger() *string {
 	return s.Ledger
 }
 
-func (s *StageSendSourcePayment) GetHoldingAccount() *string {
-	if s == nil {
-		return nil
-	}
-	return s.HoldingAccount
-}
-
 func (s *StageSendSourcePayment) GetThroughAccount() *string {
 	if s == nil {
 		return nil
 	}
 	return s.ThroughAccount
-}
-
-func (s *StageSendSourcePayment) GetAllowOverdraft() *bool {
-	if s == nil {
-		return nil
-	}
-	return s.AllowOverdraft
 }

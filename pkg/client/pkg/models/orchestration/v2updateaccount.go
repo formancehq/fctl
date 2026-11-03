@@ -10,10 +10,10 @@ import (
 type V2UpdateAccount struct {
 	// Address of the ledger account to update
 	ID string `json:"id"`
-	// Metadata to set on the account
-	Metadata map[string]string `json:"metadata"`
 	// Name of the ledger holding the account
 	Ledger string `json:"ledger"`
+	// Metadata to set on the account
+	Metadata map[string]string `json:"metadata"`
 }
 
 func (v V2UpdateAccount) MarshalJSON() ([]byte, error) {
@@ -21,7 +21,7 @@ func (v V2UpdateAccount) MarshalJSON() ([]byte, error) {
 }
 
 func (v *V2UpdateAccount) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"id", "metadata", "ledger"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"id", "ledger", "metadata"}); err != nil {
 		return err
 	}
 	return nil
@@ -34,18 +34,18 @@ func (v *V2UpdateAccount) GetID() string {
 	return v.ID
 }
 
-func (v *V2UpdateAccount) GetMetadata() map[string]string {
-	if v == nil {
-		return map[string]string{}
-	}
-	return v.Metadata
-}
-
 func (v *V2UpdateAccount) GetLedger() string {
 	if v == nil {
 		return ""
 	}
 	return v.Ledger
+}
+
+func (v *V2UpdateAccount) GetMetadata() map[string]string {
+	if v == nil {
+		return map[string]string{}
+	}
+	return v.Metadata
 }
 
 // #region class-body-v2updateaccount

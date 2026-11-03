@@ -4,37 +4,16 @@ package orchestration
 
 // V2Hold - Funds locked by a pending wallet debit, later either confirmed or voided
 type V2Hold struct {
-	// The unique ID of the hold.
-	ID string `json:"id"`
-	// The ID of the wallet the hold is associated with.
-	WalletID string `json:"walletID"`
-	// Metadata associated with the hold.
-	Metadata map[string]string `json:"metadata"`
 	// Human-readable reason the funds were held
 	Description string `json:"description"`
 	// The counterparty of a wallet movement, either a ledger account or another wallet
 	Destination *V2Subject `json:"destination,omitempty"`
-}
-
-func (v *V2Hold) GetID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ID
-}
-
-func (v *V2Hold) GetWalletID() string {
-	if v == nil {
-		return ""
-	}
-	return v.WalletID
-}
-
-func (v *V2Hold) GetMetadata() map[string]string {
-	if v == nil {
-		return map[string]string{}
-	}
-	return v.Metadata
+	// The unique ID of the hold.
+	ID string `json:"id"`
+	// Metadata associated with the hold.
+	Metadata map[string]string `json:"metadata"`
+	// The ID of the wallet the hold is associated with.
+	WalletID string `json:"walletID"`
 }
 
 func (v *V2Hold) GetDescription() string {
@@ -63,6 +42,27 @@ func (v *V2Hold) GetDestinationWallet() *V2WalletSubject {
 		return v.V2WalletSubject
 	}
 	return nil
+}
+
+func (v *V2Hold) GetID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ID
+}
+
+func (v *V2Hold) GetMetadata() map[string]string {
+	if v == nil {
+		return map[string]string{}
+	}
+	return v.Metadata
+}
+
+func (v *V2Hold) GetWalletID() string {
+	if v == nil {
+		return ""
+	}
+	return v.WalletID
 }
 
 // #region class-body-v2hold

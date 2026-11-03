@@ -3,19 +3,19 @@
 package connectivity
 
 type ConnectorVersionCursorCursor struct {
-	PageSize int  `json:"pageSize"`
-	HasMore  bool `json:"hasMore"`
-	// Cursor of the next page; absent on the last page
-	Next *string `json:"next,omitempty"`
 	// Versions sorted ascending by semantic version
-	Data []ConnectorVersionSummary `json:"data"`
+	Data    []ConnectorVersionSummary `json:"data"`
+	HasMore bool                      `json:"hasMore"`
+	// Cursor of the next page; absent on the last page
+	Next     *string `json:"next,omitempty"`
+	PageSize int     `json:"pageSize"`
 }
 
-func (c *ConnectorVersionCursorCursor) GetPageSize() int {
+func (c *ConnectorVersionCursorCursor) GetData() []ConnectorVersionSummary {
 	if c == nil {
-		return 0
+		return []ConnectorVersionSummary{}
 	}
-	return c.PageSize
+	return c.Data
 }
 
 func (c *ConnectorVersionCursorCursor) GetHasMore() bool {
@@ -32,11 +32,11 @@ func (c *ConnectorVersionCursorCursor) GetNext() *string {
 	return c.Next
 }
 
-func (c *ConnectorVersionCursorCursor) GetData() []ConnectorVersionSummary {
+func (c *ConnectorVersionCursorCursor) GetPageSize() int {
 	if c == nil {
-		return []ConnectorVersionSummary{}
+		return 0
 	}
-	return c.Data
+	return c.PageSize
 }
 
 type ConnectorVersionCursor struct {

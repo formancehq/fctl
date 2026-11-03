@@ -9,16 +9,16 @@ import (
 )
 
 type GetTransactionsRequest struct {
-	// The maximum number of results to return per page
-	PageSize *int64 `default:"15" queryParam:"style=form,explode=true,name=pageSize"`
-	// A wallet ID to filter on
-	WalletID *string `queryParam:"style=form,explode=true,name=walletID"`
 	// Parameter used in pagination requests.
 	// Set to the value of next for the next page of results.
 	// Set to the value of previous for the previous page of results.
 	// No other parameters can be set when the cursor is set.
 	//
 	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// The maximum number of results to return per page
+	PageSize *int64 `default:"15" queryParam:"style=form,explode=true,name=pageSize"`
+	// A wallet ID to filter on
+	WalletID *string `queryParam:"style=form,explode=true,name=walletID"`
 }
 
 func (g GetTransactionsRequest) MarshalJSON() ([]byte, error) {
@@ -30,6 +30,13 @@ func (g *GetTransactionsRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (g *GetTransactionsRequest) GetCursor() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Cursor
 }
 
 func (g *GetTransactionsRequest) GetPageSize() *int64 {
@@ -46,22 +53,15 @@ func (g *GetTransactionsRequest) GetWalletID() *string {
 	return g.WalletID
 }
 
-func (g *GetTransactionsRequest) GetCursor() *string {
-	if g == nil {
-		return nil
-	}
-	return g.Cursor
-}
-
 type GetTransactionsResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	GetTransactionsResponse *wallets.GetTransactionsResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	GetTransactionsResponse *wallets.GetTransactionsResponse
 }
 
 func (g *GetTransactionsResponse) GetContentType() string {
@@ -69,6 +69,13 @@ func (g *GetTransactionsResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetTransactionsResponse) GetGetTransactionsResponse() *wallets.GetTransactionsResponse {
+	if g == nil {
+		return nil
+	}
+	return g.GetTransactionsResponse
 }
 
 func (g *GetTransactionsResponse) GetStatusCode() int {
@@ -83,11 +90,4 @@ func (g *GetTransactionsResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetTransactionsResponse) GetGetTransactionsResponse() *wallets.GetTransactionsResponse {
-	if g == nil {
-		return nil
-	}
-	return g.GetTransactionsResponse
 }

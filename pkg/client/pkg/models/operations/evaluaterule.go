@@ -8,16 +8,9 @@ import (
 )
 
 type EvaluateRuleRequest struct {
-	// The rule ID.
-	RuleID              string                              `pathParam:"style=simple,explode=false,name=ruleID"`
 	EvaluateRuleRequest *reconciliation.EvaluateRuleRequest `request:"mediaType=application/json"`
-}
-
-func (e *EvaluateRuleRequest) GetRuleID() string {
-	if e == nil {
-		return ""
-	}
-	return e.RuleID
+	// The rule ID.
+	RuleID string `pathParam:"style=simple,explode=false,name=ruleID"`
 }
 
 func (e *EvaluateRuleRequest) GetEvaluateRuleRequest() *reconciliation.EvaluateRuleRequest {
@@ -27,17 +20,24 @@ func (e *EvaluateRuleRequest) GetEvaluateRuleRequest() *reconciliation.EvaluateR
 	return e.EvaluateRuleRequest
 }
 
+func (e *EvaluateRuleRequest) GetRuleID() string {
+	if e == nil {
+		return ""
+	}
+	return e.RuleID
+}
+
 type EvaluateRuleResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Error response
+	ErrorResponse *reconciliation.ErrorResponse
+	// OK
+	EvaluationResponse *reconciliation.EvaluationResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	EvaluationResponse *reconciliation.EvaluationResponse
-	// Error response
-	ErrorResponse *reconciliation.ErrorResponse
 }
 
 func (e *EvaluateRuleResponse) GetContentType() string {
@@ -45,6 +45,20 @@ func (e *EvaluateRuleResponse) GetContentType() string {
 		return ""
 	}
 	return e.ContentType
+}
+
+func (e *EvaluateRuleResponse) GetErrorResponse() *reconciliation.ErrorResponse {
+	if e == nil {
+		return nil
+	}
+	return e.ErrorResponse
+}
+
+func (e *EvaluateRuleResponse) GetEvaluationResponse() *reconciliation.EvaluationResponse {
+	if e == nil {
+		return nil
+	}
+	return e.EvaluationResponse
 }
 
 func (e *EvaluateRuleResponse) GetStatusCode() int {
@@ -59,18 +73,4 @@ func (e *EvaluateRuleResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return e.RawResponse
-}
-
-func (e *EvaluateRuleResponse) GetEvaluationResponse() *reconciliation.EvaluationResponse {
-	if e == nil {
-		return nil
-	}
-	return e.EvaluationResponse
-}
-
-func (e *EvaluateRuleResponse) GetErrorResponse() *reconciliation.ErrorResponse {
-	if e == nil {
-		return nil
-	}
-	return e.ErrorResponse
 }

@@ -8,12 +8,12 @@ import (
 
 // StageSendSource - Where a send stage takes the funds from
 type StageSendSource struct {
-	// Take the funds from a wallet
-	Wallet *StageSendSourceWallet `json:"wallet,omitempty"`
 	// Take the funds from a ledger account
 	Account *StageSendSourceAccount `json:"account,omitempty"`
 	// Take the funds from a payment
 	Payment *StageSendSourcePayment `json:"payment,omitempty"`
+	// Take the funds from a wallet
+	Wallet *StageSendSourceWallet `json:"wallet,omitempty"`
 }
 
 func (s StageSendSource) MarshalJSON() ([]byte, error) {
@@ -25,13 +25,6 @@ func (s *StageSendSource) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (s *StageSendSource) GetWallet() *StageSendSourceWallet {
-	if s == nil {
-		return nil
-	}
-	return s.Wallet
 }
 
 func (s *StageSendSource) GetAccount() *StageSendSourceAccount {
@@ -46,4 +39,11 @@ func (s *StageSendSource) GetPayment() *StageSendSourcePayment {
 		return nil
 	}
 	return s.Payment
+}
+
+func (s *StageSendSource) GetWallet() *StageSendSourceWallet {
+	if s == nil {
+		return nil
+	}
+	return s.Wallet
 }

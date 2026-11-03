@@ -10,14 +10,14 @@ import (
 type ConnectivityInfoResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Request or server error. The HTTP status and code identify the failure.
+	Error *connectivity.Error
+	// Build information
+	Info *connectivity.Info
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Build information
-	Info *connectivity.Info
-	// Request or server error. The HTTP status and code identify the failure.
-	Error *connectivity.Error
 }
 
 func (c *ConnectivityInfoResponse) GetContentType() string {
@@ -25,6 +25,20 @@ func (c *ConnectivityInfoResponse) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
+}
+
+func (c *ConnectivityInfoResponse) GetError() *connectivity.Error {
+	if c == nil {
+		return nil
+	}
+	return c.Error
+}
+
+func (c *ConnectivityInfoResponse) GetInfo() *connectivity.Info {
+	if c == nil {
+		return nil
+	}
+	return c.Info
 }
 
 func (c *ConnectivityInfoResponse) GetStatusCode() int {
@@ -39,18 +53,4 @@ func (c *ConnectivityInfoResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return c.RawResponse
-}
-
-func (c *ConnectivityInfoResponse) GetInfo() *connectivity.Info {
-	if c == nil {
-		return nil
-	}
-	return c.Info
-}
-
-func (c *ConnectivityInfoResponse) GetError() *connectivity.Error {
-	if c == nil {
-		return nil
-	}
-	return c.Error
 }

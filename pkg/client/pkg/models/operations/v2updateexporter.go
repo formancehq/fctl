@@ -8,16 +8,9 @@ import (
 )
 
 type V2UpdateExporterRequest struct {
-	// The exporter id
-	ExporterID              string                         `pathParam:"style=simple,explode=false,name=exporterID"`
 	V2ExporterConfiguration ledger.V2ExporterConfiguration `request:"mediaType=application/json"`
-}
-
-func (v *V2UpdateExporterRequest) GetExporterID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ExporterID
+	// The exporter id
+	ExporterID string `pathParam:"style=simple,explode=false,name=exporterID"`
 }
 
 func (v *V2UpdateExporterRequest) GetV2ExporterConfiguration() ledger.V2ExporterConfiguration {
@@ -25,6 +18,13 @@ func (v *V2UpdateExporterRequest) GetV2ExporterConfiguration() ledger.V2Exporter
 		return ledger.V2ExporterConfiguration{}
 	}
 	return v.V2ExporterConfiguration
+}
+
+func (v *V2UpdateExporterRequest) GetExporterID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ExporterID
 }
 
 // #region class-body-v2updateexporterrequest

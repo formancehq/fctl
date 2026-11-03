@@ -20,19 +20,6 @@ func (b *BulkOperationsSecurity) GetBearerAuth() *string {
 }
 
 type BulkOperationsRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Continue sequential processing after a failure and suppress the
-	// top-level status for business errors. Does not suppress 429 or 5xx
-	// failures, or permit partial application when atomic=true.
-	//
-	ContinueOnFailure *bool `default:"false" queryParam:"style=form,explode=true,name=continueOnFailure"`
-	// Submit all operations as one atomic batch under the optional
-	// Idempotency-Key header. Per-element ik values are ignored.
-	// All elements target ledgerName. On failure every element reports
-	// the batch error; continueOnFailure does not change atomicity.
-	//
-	Atomic *bool `default:"false" queryParam:"style=form,explode=true,name=atomic"`
 	// Render all response Uint256, BigUint and SignedBigInt values as canonical
 	// decimal strings, regardless of business meaning, including posting
 	// amounts, volume input/output and balances. Ordinary integer IDs/counts,
@@ -47,6 +34,19 @@ type BulkOperationsRequest struct {
 	// Idempotency key for the request
 	IdempotencyKey *string                `header:"style=simple,explode=false,name=Idempotency-Key"`
 	RequestBody    []ledgerv3.BulkElement `request:"mediaType=application/json"`
+	// Submit all operations as one atomic batch under the optional
+	// Idempotency-Key header. Per-element ik values are ignored.
+	// All elements target ledgerName. On failure every element reports
+	// the batch error; continueOnFailure does not change atomicity.
+	//
+	Atomic *bool `default:"false" queryParam:"style=form,explode=true,name=atomic"`
+	// Continue sequential processing after a failure and suppress the
+	// top-level status for business errors. Does not suppress 429 or 5xx
+	// failures, or permit partial application when atomic=true.
+	//
+	ContinueOnFailure *bool `default:"false" queryParam:"style=form,explode=true,name=continueOnFailure"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 }
 
 func (b BulkOperationsRequest) MarshalJSON() ([]byte, error) {
@@ -58,27 +58,6 @@ func (b *BulkOperationsRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (b *BulkOperationsRequest) GetLedgerName() string {
-	if b == nil {
-		return ""
-	}
-	return b.LedgerName
-}
-
-func (b *BulkOperationsRequest) GetContinueOnFailure() *bool {
-	if b == nil {
-		return nil
-	}
-	return b.ContinueOnFailure
-}
-
-func (b *BulkOperationsRequest) GetAtomic() *bool {
-	if b == nil {
-		return nil
-	}
-	return b.Atomic
 }
 
 func (b *BulkOperationsRequest) GetFormanceBigintAsString() *string {
@@ -102,22 +81,57 @@ func (b *BulkOperationsRequest) GetRequestBody() []ledgerv3.BulkElement {
 	return b.RequestBody
 }
 
+func (b *BulkOperationsRequest) GetAtomic() *bool {
+	if b == nil {
+		return nil
+	}
+	return b.Atomic
+}
+
+func (b *BulkOperationsRequest) GetContinueOnFailure() *bool {
+	if b == nil {
+		return nil
+	}
+	return b.ContinueOnFailure
+}
+
+func (b *BulkOperationsRequest) GetLedgerName() string {
+	if b == nil {
+		return ""
+	}
+	return b.LedgerName
+}
+
 type BulkOperationsResponse struct {
+	// Bulk operations completed with errors, or invalid request
+	BulkErrorResponse *ledgerv3.BulkErrorResponse
+	// Bulk operations completed
+	BulkResponse *ledgerv3.BulkResponse
 	// HTTP response content type for this operation
 	ContentType string
+	// Method not allowed
+	ErrorResponse *ledgerv3.ErrorResponse
+	Headers       map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Bulk operations completed
-	BulkResponse *ledgerv3.BulkResponse
-	// Bulk operations completed with errors, or invalid request
-	BulkErrorResponse *ledgerv3.BulkErrorResponse
 	// Authentication failure before processing or in an element
 	Res *string
-	// Request entity too large
-	ErrorResponse *ledgerv3.ErrorResponse
-	Headers       map[string][]string
+}
+
+func (b *BulkOperationsResponse) GetBulkErrorResponse() *ledgerv3.BulkErrorResponse {
+	if b == nil {
+		return nil
+	}
+	return b.BulkErrorResponse
+}
+
+func (b *BulkOperationsResponse) GetBulkResponse() *ledgerv3.BulkResponse {
+	if b == nil {
+		return nil
+	}
+	return b.BulkResponse
 }
 
 func (b *BulkOperationsResponse) GetContentType() string {
@@ -125,6 +139,20 @@ func (b *BulkOperationsResponse) GetContentType() string {
 		return ""
 	}
 	return b.ContentType
+}
+
+func (b *BulkOperationsResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if b == nil {
+		return nil
+	}
+	return b.ErrorResponse
+}
+
+func (b *BulkOperationsResponse) GetHeaders() map[string][]string {
+	if b == nil {
+		return map[string][]string{}
+	}
+	return b.Headers
 }
 
 func (b *BulkOperationsResponse) GetStatusCode() int {
@@ -141,37 +169,9 @@ func (b *BulkOperationsResponse) GetRawResponse() *http.Response {
 	return b.RawResponse
 }
 
-func (b *BulkOperationsResponse) GetBulkResponse() *ledgerv3.BulkResponse {
-	if b == nil {
-		return nil
-	}
-	return b.BulkResponse
-}
-
-func (b *BulkOperationsResponse) GetBulkErrorResponse() *ledgerv3.BulkErrorResponse {
-	if b == nil {
-		return nil
-	}
-	return b.BulkErrorResponse
-}
-
 func (b *BulkOperationsResponse) GetRes() *string {
 	if b == nil {
 		return nil
 	}
 	return b.Res
-}
-
-func (b *BulkOperationsResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if b == nil {
-		return nil
-	}
-	return b.ErrorResponse
-}
-
-func (b *BulkOperationsResponse) GetHeaders() map[string][]string {
-	if b == nil {
-		return map[string][]string{}
-	}
-	return b.Headers
 }

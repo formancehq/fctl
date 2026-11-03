@@ -5,10 +5,10 @@ package ledgerv3
 type MetadataSchemaStatusResponseData struct {
 	// Account metadata field declarations
 	AccountFields map[string]MetadataFieldStatus `json:"accountFields"`
-	// Transaction metadata field declarations
-	TransactionFields map[string]MetadataFieldStatus `json:"transactionFields"`
 	// Ledger metadata field declarations
 	LedgerFields map[string]MetadataFieldStatus `json:"ledgerFields"`
+	// Transaction metadata field declarations
+	TransactionFields map[string]MetadataFieldStatus `json:"transactionFields"`
 }
 
 func (m *MetadataSchemaStatusResponseData) GetAccountFields() map[string]MetadataFieldStatus {
@@ -18,18 +18,18 @@ func (m *MetadataSchemaStatusResponseData) GetAccountFields() map[string]Metadat
 	return m.AccountFields
 }
 
-func (m *MetadataSchemaStatusResponseData) GetTransactionFields() map[string]MetadataFieldStatus {
-	if m == nil {
-		return map[string]MetadataFieldStatus{}
-	}
-	return m.TransactionFields
-}
-
 func (m *MetadataSchemaStatusResponseData) GetLedgerFields() map[string]MetadataFieldStatus {
 	if m == nil {
 		return map[string]MetadataFieldStatus{}
 	}
 	return m.LedgerFields
+}
+
+func (m *MetadataSchemaStatusResponseData) GetTransactionFields() map[string]MetadataFieldStatus {
+	if m == nil {
+		return map[string]MetadataFieldStatus{}
+	}
+	return m.TransactionFields
 }
 
 type MetadataSchemaStatusResponse struct {

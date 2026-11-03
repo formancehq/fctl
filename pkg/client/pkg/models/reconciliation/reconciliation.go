@@ -10,26 +10,26 @@ import (
 
 // Reconciliation - One run of a policy, comparing both sides and reporting the drift between them
 type Reconciliation struct {
-	// Unique identifier of the reconciliation run
-	ID string `json:"id"`
-	// Identifier of the policy this run applied
-	PolicyID string `json:"policyID"`
 	// When the reconciliation was run
 	CreatedAt time.Time `json:"createdAt"`
+	// Difference between the two sides, keyed by asset. All-zero means the sides agree
+	DriftBalances map[string]*big.Int `json:"driftBalances"`
+	// Why the run failed, when its status reports an error
+	Error *string `json:"error,omitempty"`
+	// Unique identifier of the reconciliation run
+	ID string `json:"id"`
+	// Balances observed on the ledger side, keyed by asset
+	LedgerBalances map[string]*big.Int `json:"ledgerBalances"`
+	// Balances observed on the payments side, keyed by asset
+	PaymentsBalances map[string]*big.Int `json:"paymentsBalances"`
+	// Identifier of the policy this run applied
+	PolicyID string `json:"policyID"`
 	// Point in time at which the ledger side was evaluated
 	ReconciledAtLedger time.Time `json:"reconciledAtLedger"`
 	// Point in time at which the payments side was evaluated
 	ReconciledAtPayments time.Time `json:"reconciledAtPayments"`
 	// Outcome of the reconciliation run
 	Status string `json:"status"`
-	// Balances observed on the payments side, keyed by asset
-	PaymentsBalances map[string]*big.Int `json:"paymentsBalances"`
-	// Balances observed on the ledger side, keyed by asset
-	LedgerBalances map[string]*big.Int `json:"ledgerBalances"`
-	// Difference between the two sides, keyed by asset. All-zero means the sides agree
-	DriftBalances map[string]*big.Int `json:"driftBalances"`
-	// Why the run failed, when its status reports an error
-	Error *string `json:"error,omitempty"`
 }
 
 func (r Reconciliation) MarshalJSON() ([]byte, error) {
@@ -43,6 +43,27 @@ func (r *Reconciliation) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (r *Reconciliation) GetCreatedAt() time.Time {
+	if r == nil {
+		return time.Time{}
+	}
+	return r.CreatedAt
+}
+
+func (r *Reconciliation) GetDriftBalances() map[string]*big.Int {
+	if r == nil {
+		return map[string]*big.Int{}
+	}
+	return r.DriftBalances
+}
+
+func (r *Reconciliation) GetError() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Error
+}
+
 func (r *Reconciliation) GetID() string {
 	if r == nil {
 		return ""
@@ -50,18 +71,25 @@ func (r *Reconciliation) GetID() string {
 	return r.ID
 }
 
+func (r *Reconciliation) GetLedgerBalances() map[string]*big.Int {
+	if r == nil {
+		return map[string]*big.Int{}
+	}
+	return r.LedgerBalances
+}
+
+func (r *Reconciliation) GetPaymentsBalances() map[string]*big.Int {
+	if r == nil {
+		return map[string]*big.Int{}
+	}
+	return r.PaymentsBalances
+}
+
 func (r *Reconciliation) GetPolicyID() string {
 	if r == nil {
 		return ""
 	}
 	return r.PolicyID
-}
-
-func (r *Reconciliation) GetCreatedAt() time.Time {
-	if r == nil {
-		return time.Time{}
-	}
-	return r.CreatedAt
 }
 
 func (r *Reconciliation) GetReconciledAtLedger() time.Time {
@@ -83,32 +111,4 @@ func (r *Reconciliation) GetStatus() string {
 		return ""
 	}
 	return r.Status
-}
-
-func (r *Reconciliation) GetPaymentsBalances() map[string]*big.Int {
-	if r == nil {
-		return map[string]*big.Int{}
-	}
-	return r.PaymentsBalances
-}
-
-func (r *Reconciliation) GetLedgerBalances() map[string]*big.Int {
-	if r == nil {
-		return map[string]*big.Int{}
-	}
-	return r.LedgerBalances
-}
-
-func (r *Reconciliation) GetDriftBalances() map[string]*big.Int {
-	if r == nil {
-		return map[string]*big.Int{}
-	}
-	return r.DriftBalances
-}
-
-func (r *Reconciliation) GetError() *string {
-	if r == nil {
-		return nil
-	}
-	return r.Error
 }

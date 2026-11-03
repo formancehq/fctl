@@ -23,27 +23,6 @@ func (g *GetAccountLedgerV3Security) GetBearerAuth() *string {
 // #endregion class-body-getaccountledgerv3security
 
 type GetAccountLedgerV3Request struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Raw account address, for example users:001. Direct HTTP clients may
-	// URL-encode it as one path segment (users%3A001). Decoded exactly once.
-	//
-	Address string `pathParam:"style=simple,explode=false,name=address"`
-	// When true, every colored bucket of the same asset is summed
-	// into a single AccountVolume entry with color = "". By default
-	// each (asset, color) tuple is returned as its own entry.
-	//
-	CollapseColors *bool `default:"false" queryParam:"style=form,explode=true,name=collapseColors"`
-	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
-	// barrier and waits for the receiving node to apply up to it. `stale`
-	// serves the read from the receiving node's own store, with no barrier
-	// and no forwarding to the leader, so the answer may lag the leader.
-	// Matching ignores case and surrounding whitespace. An unknown value, or a
-	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
-	// `/v3` route, writes included; a valid value has no effect on writes. The
-	// gRPC equivalent is the `x-consistency` request metadata.
-	//
-	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
 	// Render all response Uint256, BigUint and SignedBigInt values as canonical
 	// decimal strings, regardless of business meaning, including posting
 	// amounts, volume input/output and balances. Ordinary integer IDs/counts,
@@ -55,6 +34,27 @@ type GetAccountLedgerV3Request struct {
 	// and bulk results. Request decoding is unchanged.
 	//
 	FormanceBigintAsString *string `header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
+	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
+	// barrier and waits for the receiving node to apply up to it. `stale`
+	// serves the read from the receiving node's own store, with no barrier
+	// and no forwarding to the leader, so the answer may lag the leader.
+	// Matching ignores case and surrounding whitespace. An unknown value, or a
+	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
+	// `/v3` route, writes included; a valid value has no effect on writes. The
+	// gRPC equivalent is the `x-consistency` request metadata.
+	//
+	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Raw account address, for example users:001. Direct HTTP clients may
+	// URL-encode it as one path segment (users%3A001). Decoded exactly once.
+	//
+	Address string `pathParam:"style=simple,explode=false,name=address"`
+	// When true, every colored bucket of the same asset is summed
+	// into a single AccountVolume entry with color = "". By default
+	// each (asset, color) tuple is returned as its own entry.
+	//
+	CollapseColors *bool `default:"false" queryParam:"style=form,explode=true,name=collapseColors"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 }
 
 func (g GetAccountLedgerV3Request) MarshalJSON() ([]byte, error) {
@@ -68,11 +68,18 @@ func (g *GetAccountLedgerV3Request) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (g *GetAccountLedgerV3Request) GetLedgerName() string {
+func (g *GetAccountLedgerV3Request) GetFormanceBigintAsString() *string {
 	if g == nil {
-		return ""
+		return nil
 	}
-	return g.LedgerName
+	return g.FormanceBigintAsString
+}
+
+func (g *GetAccountLedgerV3Request) GetXConsistency() *ledgerv3.Consistency {
+	if g == nil {
+		return nil
+	}
+	return g.XConsistency
 }
 
 func (g *GetAccountLedgerV3Request) GetAddress() string {
@@ -89,18 +96,11 @@ func (g *GetAccountLedgerV3Request) GetCollapseColors() *bool {
 	return g.CollapseColors
 }
 
-func (g *GetAccountLedgerV3Request) GetXConsistency() *ledgerv3.Consistency {
+func (g *GetAccountLedgerV3Request) GetLedgerName() string {
 	if g == nil {
-		return nil
+		return ""
 	}
-	return g.XConsistency
-}
-
-func (g *GetAccountLedgerV3Request) GetFormanceBigintAsString() *string {
-	if g == nil {
-		return nil
-	}
-	return g.FormanceBigintAsString
+	return g.LedgerName
 }
 
 // #region class-body-getaccountledgerv3request
@@ -109,19 +109,19 @@ func (g *GetAccountLedgerV3Request) GetFormanceBigintAsString() *string {
 type GetAccountLedgerV3Response struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	// Account retrieved successfully
+	GetAccountResponse *ledgerv3.GetAccountResponse
+	Headers            map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Account retrieved successfully
-	GetAccountResponse *ledgerv3.GetAccountResponse
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (g *GetAccountLedgerV3Response) GetContentType() string {
@@ -129,6 +129,34 @@ func (g *GetAccountLedgerV3Response) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetAccountLedgerV3Response) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if g == nil {
+		return nil
+	}
+	return g.ErrorResponse
+}
+
+func (g *GetAccountLedgerV3Response) GetForbidden() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Forbidden
+}
+
+func (g *GetAccountLedgerV3Response) GetGetAccountResponse() *ledgerv3.GetAccountResponse {
+	if g == nil {
+		return nil
+	}
+	return g.GetAccountResponse
+}
+
+func (g *GetAccountLedgerV3Response) GetHeaders() map[string][]string {
+	if g == nil {
+		return map[string][]string{}
+	}
+	return g.Headers
 }
 
 func (g *GetAccountLedgerV3Response) GetStatusCode() int {
@@ -145,39 +173,11 @@ func (g *GetAccountLedgerV3Response) GetRawResponse() *http.Response {
 	return g.RawResponse
 }
 
-func (g *GetAccountLedgerV3Response) GetGetAccountResponse() *ledgerv3.GetAccountResponse {
-	if g == nil {
-		return nil
-	}
-	return g.GetAccountResponse
-}
-
-func (g *GetAccountLedgerV3Response) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if g == nil {
-		return nil
-	}
-	return g.ErrorResponse
-}
-
 func (g *GetAccountLedgerV3Response) GetUnauthorized() *string {
 	if g == nil {
 		return nil
 	}
 	return g.Unauthorized
-}
-
-func (g *GetAccountLedgerV3Response) GetForbidden() *string {
-	if g == nil {
-		return nil
-	}
-	return g.Forbidden
-}
-
-func (g *GetAccountLedgerV3Response) GetHeaders() map[string][]string {
-	if g == nil {
-		return map[string][]string{}
-	}
-	return g.Headers
 }
 
 // #region class-body-getaccountledgerv3response

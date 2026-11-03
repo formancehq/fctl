@@ -9,10 +9,10 @@ import (
 
 // V2Monetary - An amount together with the asset it is denominated in
 type V2Monetary struct {
-	// The asset of the monetary value.
-	Asset string `json:"asset"`
 	// The amount of the monetary value.
 	Amount *big.Int `json:"amount"`
+	// The asset of the monetary value.
+	Asset string `json:"asset"`
 }
 
 func (v V2Monetary) MarshalJSON() ([]byte, error) {
@@ -20,17 +20,10 @@ func (v V2Monetary) MarshalJSON() ([]byte, error) {
 }
 
 func (v *V2Monetary) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"asset", "amount"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"amount", "asset"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (v *V2Monetary) GetAsset() string {
-	if v == nil {
-		return ""
-	}
-	return v.Asset
 }
 
 func (v *V2Monetary) GetAmount() *big.Int {
@@ -38,6 +31,13 @@ func (v *V2Monetary) GetAmount() *big.Int {
 		return big.NewInt(0)
 	}
 	return v.Amount
+}
+
+func (v *V2Monetary) GetAsset() string {
+	if v == nil {
+		return ""
+	}
+	return v.Asset
 }
 
 // #region class-body-v2monetary

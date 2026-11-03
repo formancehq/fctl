@@ -8,12 +8,12 @@ import (
 )
 
 type Volume struct {
+	// Net balance, equal to input minus output
+	Balance *big.Int `json:"balance,omitempty"`
 	// Total amount credited for this asset
 	Input *big.Int `json:"input"`
 	// Total amount debited for this asset
 	Output *big.Int `json:"output"`
-	// Net balance, equal to input minus output
-	Balance *big.Int `json:"balance,omitempty"`
 }
 
 func (v Volume) MarshalJSON() ([]byte, error) {
@@ -25,6 +25,13 @@ func (v *Volume) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *Volume) GetBalance() *big.Int {
+	if v == nil {
+		return nil
+	}
+	return v.Balance
 }
 
 func (v *Volume) GetInput() *big.Int {
@@ -39,11 +46,4 @@ func (v *Volume) GetOutput() *big.Int {
 		return big.NewInt(0)
 	}
 	return v.Output
-}
-
-func (v *Volume) GetBalance() *big.Int {
-	if v == nil {
-		return nil
-	}
-	return v.Balance
 }

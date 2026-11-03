@@ -9,33 +9,6 @@ import (
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
 )
 
-// AddMetadataRequestTargetType - Type of target (account or transaction)
-type AddMetadataRequestTargetType string
-
-const (
-	AddMetadataRequestTargetTypeAccount     AddMetadataRequestTargetType = "ACCOUNT"
-	AddMetadataRequestTargetTypeTransaction AddMetadataRequestTargetType = "TRANSACTION"
-)
-
-func (e AddMetadataRequestTargetType) ToPointer() *AddMetadataRequestTargetType {
-	return &e
-}
-func (e *AddMetadataRequestTargetType) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "ACCOUNT":
-		fallthrough
-	case "TRANSACTION":
-		*e = AddMetadataRequestTargetType(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for AddMetadataRequestTargetType: %v", v)
-	}
-}
-
 type TargetIDType string
 
 const (
@@ -100,14 +73,41 @@ func (u TargetID) MarshalJSON() ([]byte, error) {
 	return nil, errors.New("could not marshal union type TargetID: all fields are null")
 }
 
+// AddMetadataRequestTargetType - Type of target (account or transaction)
+type AddMetadataRequestTargetType string
+
+const (
+	AddMetadataRequestTargetTypeAccount     AddMetadataRequestTargetType = "ACCOUNT"
+	AddMetadataRequestTargetTypeTransaction AddMetadataRequestTargetType = "TRANSACTION"
+)
+
+func (e AddMetadataRequestTargetType) ToPointer() *AddMetadataRequestTargetType {
+	return &e
+}
+func (e *AddMetadataRequestTargetType) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "ACCOUNT":
+		fallthrough
+	case "TRANSACTION":
+		*e = AddMetadataRequestTargetType(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for AddMetadataRequestTargetType: %v", v)
+	}
+}
+
 type AddMetadataRequest struct {
-	// Type of target (account or transaction)
-	TargetType AddMetadataRequestTargetType `json:"targetType"`
+	// Metadata to add (supports typed values). Cluster policy defaults allow 128 entries per entity, 256 bytes per key, 16384 bytes per value, 65536 bytes per entity, and 1048576 bytes per request. Effective ceilings are configurable through the replicated cluster policy.
+	Metadata map[string]*MetadataValue `json:"metadata"`
 	// ID of the target (account address or transaction ID). Required.
 	//
 	TargetID TargetID `json:"targetId"`
-	// Metadata to add (supports typed values). Cluster policy defaults allow 128 entries per entity, 256 bytes per key, 16384 bytes per value, 65536 bytes per entity, and 1048576 bytes per request. Effective ceilings are configurable through the replicated cluster policy.
-	Metadata map[string]*MetadataValue `json:"metadata"`
+	// Type of target (account or transaction)
+	TargetType AddMetadataRequestTargetType `json:"targetType"`
 }
 
 func (a AddMetadataRequest) MarshalJSON() ([]byte, error) {
@@ -115,17 +115,17 @@ func (a AddMetadataRequest) MarshalJSON() ([]byte, error) {
 }
 
 func (a *AddMetadataRequest) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"targetType", "targetId", "metadata"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"metadata", "targetId", "targetType"}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (a *AddMetadataRequest) GetTargetType() AddMetadataRequestTargetType {
+func (a *AddMetadataRequest) GetMetadata() map[string]*MetadataValue {
 	if a == nil {
-		return AddMetadataRequestTargetType("")
+		return map[string]*MetadataValue{}
 	}
-	return a.TargetType
+	return a.Metadata
 }
 
 func (a *AddMetadataRequest) GetTargetID() TargetID {
@@ -135,9 +135,9 @@ func (a *AddMetadataRequest) GetTargetID() TargetID {
 	return a.TargetID
 }
 
-func (a *AddMetadataRequest) GetMetadata() map[string]*MetadataValue {
+func (a *AddMetadataRequest) GetTargetType() AddMetadataRequestTargetType {
 	if a == nil {
-		return map[string]*MetadataValue{}
+		return AddMetadataRequestTargetType("")
 	}
-	return a.Metadata
+	return a.TargetType
 }

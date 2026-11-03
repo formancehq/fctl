@@ -36,8 +36,8 @@ func (a *Apply) GetLog() *LedgerLog {
 // nested fields and future sibling variants. Only apply is typed here;
 // other variants remain open-ended (EN-2781).
 type Payload struct {
-	Apply                *Apply         `json:"apply,omitempty"`
 	AdditionalProperties map[string]any `additionalProperties:"true" json:"-"`
+	Apply                *Apply         `json:"apply,omitempty"`
 }
 
 func (p Payload) MarshalJSON() ([]byte, error) {
@@ -51,18 +51,18 @@ func (p *Payload) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (p *Payload) GetApply() *Apply {
-	if p == nil {
-		return nil
-	}
-	return p.Apply
-}
-
 func (p *Payload) GetAdditionalProperties() map[string]any {
 	if p == nil {
 		return nil
 	}
 	return p.AdditionalProperties
+}
+
+func (p *Payload) GetApply() *Apply {
+	if p == nil {
+		return nil
+	}
+	return p.Apply
 }
 
 // SystemLog - System log entry, shared by single-log responses, ledger-log lists,
@@ -71,20 +71,13 @@ func (p *Payload) GetAdditionalProperties() map[string]any {
 // inside payload.apply.log uses the flat LedgerLog contract.
 // Non-apply system payload variants are not exhaustively described here.
 type SystemLog struct {
-	Sequence *int64 `json:"sequence,omitempty"`
 	// Named system payload variants are preserved as supplied, including
 	// nested fields and future sibling variants. Only apply is typed here;
 	// other variants remain open-ended (EN-2781).
 	//
 	Payload           *Payload       `json:"payload,omitempty"`
 	ResponseSignature map[string]any `json:"responseSignature,omitempty"`
-}
-
-func (s *SystemLog) GetSequence() *int64 {
-	if s == nil {
-		return nil
-	}
-	return s.Sequence
+	Sequence          *int64         `json:"sequence,omitempty"`
 }
 
 func (s *SystemLog) GetPayload() *Payload {
@@ -99,4 +92,11 @@ func (s *SystemLog) GetResponseSignature() map[string]any {
 		return nil
 	}
 	return s.ResponseSignature
+}
+
+func (s *SystemLog) GetSequence() *int64 {
+	if s == nil {
+		return nil
+	}
+	return s.Sequence
 }

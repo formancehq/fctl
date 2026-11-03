@@ -6,7 +6,7 @@ import (
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
 )
 
-// ErrorResponse - Bad request
+// ErrorResponse - Service unavailable — the server cannot serve the request right now but an immediate retry can succeed. The `errorCode` field discriminates the cause: `NO_LEADER` (no elected Raft leader), `CACHE_HORIZON_EXCEEDED` (admission snapshot too old, retry against a fresh one), `UNAVAILABLE` (an internal forwarded stream was torn down mid-transfer), or the reason of any domain error of the unavailable kind (e.g. `INDEX_BUILDING`).
 type ErrorResponse struct {
 	// Error code identifier
 	ErrorCode string `json:"errorCode"`

@@ -31,16 +31,23 @@ func (g *GetConnectionRequest) GetName() string {
 }
 
 type GetConnectionResponse struct {
+	// OK
+	Connection *connectivity.Connection
 	// HTTP response content type for this operation
 	ContentType string
+	// Request or server error. The HTTP status and code identify the failure.
+	Error *connectivity.Error
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	Connection *connectivity.Connection
-	// Request or server error. The HTTP status and code identify the failure.
-	Error *connectivity.Error
+}
+
+func (g *GetConnectionResponse) GetConnection() *connectivity.Connection {
+	if g == nil {
+		return nil
+	}
+	return g.Connection
 }
 
 func (g *GetConnectionResponse) GetContentType() string {
@@ -48,6 +55,13 @@ func (g *GetConnectionResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetConnectionResponse) GetError() *connectivity.Error {
+	if g == nil {
+		return nil
+	}
+	return g.Error
 }
 
 func (g *GetConnectionResponse) GetStatusCode() int {
@@ -62,18 +76,4 @@ func (g *GetConnectionResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetConnectionResponse) GetConnection() *connectivity.Connection {
-	if g == nil {
-		return nil
-	}
-	return g.Connection
-}
-
-func (g *GetConnectionResponse) GetError() *connectivity.Error {
-	if g == nil {
-		return nil
-	}
-	return g.Error
 }

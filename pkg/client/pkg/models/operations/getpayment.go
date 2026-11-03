@@ -22,12 +22,12 @@ func (g *GetPaymentRequest) GetPaymentID() string {
 type GetPaymentResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	PaymentResponse *payments.PaymentResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	PaymentResponse *payments.PaymentResponse
 }
 
 func (g *GetPaymentResponse) GetContentType() string {
@@ -35,6 +35,13 @@ func (g *GetPaymentResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetPaymentResponse) GetPaymentResponse() *payments.PaymentResponse {
+	if g == nil {
+		return nil
+	}
+	return g.PaymentResponse
 }
 
 func (g *GetPaymentResponse) GetStatusCode() int {
@@ -49,11 +56,4 @@ func (g *GetPaymentResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetPaymentResponse) GetPaymentResponse() *payments.PaymentResponse {
-	if g == nil {
-		return nil
-	}
-	return g.PaymentResponse
 }

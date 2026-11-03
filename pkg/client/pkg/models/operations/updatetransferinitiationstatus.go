@@ -8,16 +8,9 @@ import (
 )
 
 type UpdateTransferInitiationStatusRequest struct {
-	// The transfer ID.
-	TransferID                            string                                         `pathParam:"style=simple,explode=false,name=transferId"`
 	UpdateTransferInitiationStatusRequest payments.UpdateTransferInitiationStatusRequest `request:"mediaType=application/json"`
-}
-
-func (u *UpdateTransferInitiationStatusRequest) GetTransferID() string {
-	if u == nil {
-		return ""
-	}
-	return u.TransferID
+	// The transfer ID.
+	TransferID string `pathParam:"style=simple,explode=false,name=transferId"`
 }
 
 func (u *UpdateTransferInitiationStatusRequest) GetUpdateTransferInitiationStatusRequest() payments.UpdateTransferInitiationStatusRequest {
@@ -25,6 +18,13 @@ func (u *UpdateTransferInitiationStatusRequest) GetUpdateTransferInitiationStatu
 		return payments.UpdateTransferInitiationStatusRequest{}
 	}
 	return u.UpdateTransferInitiationStatusRequest
+}
+
+func (u *UpdateTransferInitiationStatusRequest) GetTransferID() string {
+	if u == nil {
+		return ""
+	}
+	return u.TransferID
 }
 
 type UpdateTransferInitiationStatusResponse struct {

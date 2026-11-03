@@ -9,14 +9,14 @@ import (
 
 // WalletSummary - Aggregated funds held by a wallet, broken down by availability
 type WalletSummary struct {
-	// Each balance of the wallet with its per-asset amounts
-	Balances []BalanceWithAssets `json:"balances"`
 	// Funds available to debit, keyed by asset. Covers balances with no expiry and those not yet expired
 	AvailableFunds map[string]*big.Int `json:"availableFunds"`
-	// Funds held in balances whose expiry date has passed, keyed by asset
-	ExpiredFunds map[string]*big.Int `json:"expiredFunds"`
+	// Each balance of the wallet with its per-asset amounts
+	Balances []BalanceWithAssets `json:"balances"`
 	// Funds held in balances carrying an expiry date that has not yet passed, keyed by asset
 	ExpirableFunds map[string]*big.Int `json:"expirableFunds"`
+	// Funds held in balances whose expiry date has passed, keyed by asset
+	ExpiredFunds map[string]*big.Int `json:"expiredFunds"`
 	// Funds currently locked by pending holds, keyed by asset
 	HoldFunds map[string]*big.Int `json:"holdFunds"`
 }
@@ -32,13 +32,6 @@ func (w *WalletSummary) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (w *WalletSummary) GetBalances() []BalanceWithAssets {
-	if w == nil {
-		return []BalanceWithAssets{}
-	}
-	return w.Balances
-}
-
 func (w *WalletSummary) GetAvailableFunds() map[string]*big.Int {
 	if w == nil {
 		return map[string]*big.Int{}
@@ -46,11 +39,11 @@ func (w *WalletSummary) GetAvailableFunds() map[string]*big.Int {
 	return w.AvailableFunds
 }
 
-func (w *WalletSummary) GetExpiredFunds() map[string]*big.Int {
+func (w *WalletSummary) GetBalances() []BalanceWithAssets {
 	if w == nil {
-		return map[string]*big.Int{}
+		return []BalanceWithAssets{}
 	}
-	return w.ExpiredFunds
+	return w.Balances
 }
 
 func (w *WalletSummary) GetExpirableFunds() map[string]*big.Int {
@@ -58,6 +51,13 @@ func (w *WalletSummary) GetExpirableFunds() map[string]*big.Int {
 		return map[string]*big.Int{}
 	}
 	return w.ExpirableFunds
+}
+
+func (w *WalletSummary) GetExpiredFunds() map[string]*big.Int {
+	if w == nil {
+		return map[string]*big.Int{}
+	}
+	return w.ExpiredFunds
 }
 
 func (w *WalletSummary) GetHoldFunds() map[string]*big.Int {

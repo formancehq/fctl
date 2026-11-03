@@ -3,17 +3,10 @@
 package ledgerv3
 
 type AggregateVolumesData struct {
-	// Flat aggregated volumes per asset
-	Volumes []AggregatedVolume `json:"volumes"`
 	// Per-prefix aggregated volumes (present when groupByPrefixes is set)
 	Groups []GroupedAggregateResult `json:"groups,omitempty"`
-}
-
-func (a *AggregateVolumesData) GetVolumes() []AggregatedVolume {
-	if a == nil {
-		return []AggregatedVolume{}
-	}
-	return a.Volumes
+	// Flat aggregated volumes per asset
+	Volumes []AggregatedVolume `json:"volumes"`
 }
 
 func (a *AggregateVolumesData) GetGroups() []GroupedAggregateResult {
@@ -21,4 +14,11 @@ func (a *AggregateVolumesData) GetGroups() []GroupedAggregateResult {
 		return nil
 	}
 	return a.Groups
+}
+
+func (a *AggregateVolumesData) GetVolumes() []AggregatedVolume {
+	if a == nil {
+		return []AggregatedVolume{}
+	}
+	return a.Volumes
 }

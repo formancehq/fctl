@@ -7,32 +7,32 @@ import (
 	"time"
 )
 
-// Balances - Aggregated funds held by the wallet, keyed by asset
-type Balances struct {
+// WalletWithBalancesBalances - Aggregated funds held by the wallet, keyed by asset
+type WalletWithBalancesBalances struct {
 	Main AssetHolder `json:"main"`
 }
 
-func (b *Balances) GetMain() AssetHolder {
-	if b == nil {
+func (w *WalletWithBalancesBalances) GetMain() AssetHolder {
+	if w == nil {
 		return AssetHolder{}
 	}
-	return b.Main
+	return w.Main
 }
 
 // WalletWithBalances - A wallet together with the funds it currently holds
 type WalletWithBalances struct {
+	// Aggregated funds held by the wallet, keyed by asset
+	Balances WalletWithBalancesBalances `json:"balances"`
+	// When the wallet was created
+	CreatedAt time.Time `json:"createdAt"`
 	// The unique ID of the wallet.
 	ID string `json:"id"`
+	// Name of the ledger backing this wallet
+	Ledger string `json:"ledger"`
 	// Metadata associated with the wallet.
 	Metadata map[string]string `json:"metadata"`
 	// Human-readable name of the wallet
 	Name string `json:"name"`
-	// When the wallet was created
-	CreatedAt time.Time `json:"createdAt"`
-	// Aggregated funds held by the wallet, keyed by asset
-	Balances Balances `json:"balances"`
-	// Name of the ledger backing this wallet
-	Ledger string `json:"ledger"`
 }
 
 func (w WalletWithBalances) MarshalJSON() ([]byte, error) {
@@ -46,11 +46,32 @@ func (w *WalletWithBalances) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (w *WalletWithBalances) GetBalances() WalletWithBalancesBalances {
+	if w == nil {
+		return WalletWithBalancesBalances{}
+	}
+	return w.Balances
+}
+
+func (w *WalletWithBalances) GetCreatedAt() time.Time {
+	if w == nil {
+		return time.Time{}
+	}
+	return w.CreatedAt
+}
+
 func (w *WalletWithBalances) GetID() string {
 	if w == nil {
 		return ""
 	}
 	return w.ID
+}
+
+func (w *WalletWithBalances) GetLedger() string {
+	if w == nil {
+		return ""
+	}
+	return w.Ledger
 }
 
 func (w *WalletWithBalances) GetMetadata() map[string]string {
@@ -65,25 +86,4 @@ func (w *WalletWithBalances) GetName() string {
 		return ""
 	}
 	return w.Name
-}
-
-func (w *WalletWithBalances) GetCreatedAt() time.Time {
-	if w == nil {
-		return time.Time{}
-	}
-	return w.CreatedAt
-}
-
-func (w *WalletWithBalances) GetBalances() Balances {
-	if w == nil {
-		return Balances{}
-	}
-	return w.Balances
-}
-
-func (w *WalletWithBalances) GetLedger() string {
-	if w == nil {
-		return ""
-	}
-	return w.Ledger
 }

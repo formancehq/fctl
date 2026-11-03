@@ -20,8 +20,6 @@ func (l *ListAccountTypesSecurity) GetBearerAuth() *string {
 }
 
 type ListAccountTypesRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
 	// barrier and waits for the receiving node to apply up to it. `stale`
 	// serves the read from the receiving node's own store, with no barrier
@@ -32,6 +30,8 @@ type ListAccountTypesRequest struct {
 	// gRPC equivalent is the `x-consistency` request metadata.
 	//
 	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 }
 
 func (l ListAccountTypesRequest) MarshalJSON() ([]byte, error) {
@@ -45,13 +45,6 @@ func (l *ListAccountTypesRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (l *ListAccountTypesRequest) GetLedgerName() string {
-	if l == nil {
-		return ""
-	}
-	return l.LedgerName
-}
-
 func (l *ListAccountTypesRequest) GetXConsistency() *ledgerv3.Consistency {
 	if l == nil {
 		return nil
@@ -59,22 +52,29 @@ func (l *ListAccountTypesRequest) GetXConsistency() *ledgerv3.Consistency {
 	return l.XConsistency
 }
 
+func (l *ListAccountTypesRequest) GetLedgerName() string {
+	if l == nil {
+		return ""
+	}
+	return l.LedgerName
+}
+
 type ListAccountTypesResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
+	// Account types retrieved successfully
+	ListAccountTypesResponse *ledgerv3.ListAccountTypesResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Account types retrieved successfully
-	ListAccountTypesResponse *ledgerv3.ListAccountTypesResponse
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (l *ListAccountTypesResponse) GetContentType() string {
@@ -82,6 +82,34 @@ func (l *ListAccountTypesResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListAccountTypesResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ErrorResponse
+}
+
+func (l *ListAccountTypesResponse) GetForbidden() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Forbidden
+}
+
+func (l *ListAccountTypesResponse) GetHeaders() map[string][]string {
+	if l == nil {
+		return map[string][]string{}
+	}
+	return l.Headers
+}
+
+func (l *ListAccountTypesResponse) GetListAccountTypesResponse() *ledgerv3.ListAccountTypesResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ListAccountTypesResponse
 }
 
 func (l *ListAccountTypesResponse) GetStatusCode() int {
@@ -98,37 +126,9 @@ func (l *ListAccountTypesResponse) GetRawResponse() *http.Response {
 	return l.RawResponse
 }
 
-func (l *ListAccountTypesResponse) GetListAccountTypesResponse() *ledgerv3.ListAccountTypesResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ListAccountTypesResponse
-}
-
-func (l *ListAccountTypesResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ErrorResponse
-}
-
 func (l *ListAccountTypesResponse) GetUnauthorized() *string {
 	if l == nil {
 		return nil
 	}
 	return l.Unauthorized
-}
-
-func (l *ListAccountTypesResponse) GetForbidden() *string {
-	if l == nil {
-		return nil
-	}
-	return l.Forbidden
-}
-
-func (l *ListAccountTypesResponse) GetHeaders() map[string][]string {
-	if l == nil {
-		return map[string][]string{}
-	}
-	return l.Headers
 }

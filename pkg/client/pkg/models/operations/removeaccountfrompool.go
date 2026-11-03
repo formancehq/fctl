@@ -7,17 +7,10 @@ import (
 )
 
 type RemoveAccountFromPoolRequest struct {
-	// The pool ID.
-	PoolID string `pathParam:"style=simple,explode=false,name=poolId"`
 	// The account ID.
 	AccountID string `pathParam:"style=simple,explode=false,name=accountId"`
-}
-
-func (r *RemoveAccountFromPoolRequest) GetPoolID() string {
-	if r == nil {
-		return ""
-	}
-	return r.PoolID
+	// The pool ID.
+	PoolID string `pathParam:"style=simple,explode=false,name=poolId"`
 }
 
 func (r *RemoveAccountFromPoolRequest) GetAccountID() string {
@@ -25,6 +18,13 @@ func (r *RemoveAccountFromPoolRequest) GetAccountID() string {
 		return ""
 	}
 	return r.AccountID
+}
+
+func (r *RemoveAccountFromPoolRequest) GetPoolID() string {
+	if r == nil {
+		return ""
+	}
+	return r.PoolID
 }
 
 type RemoveAccountFromPoolResponse struct {

@@ -175,7 +175,7 @@ func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (f
 			return nil, fmt.Errorf("unexpected status code: %d", connectorList.StatusCode)
 		}
 
-		connectorsFiltered := collectionutils.Filter(connectorList.ConnectorsResponse.Data, func(connector payments.Data) bool {
+		connectorsFiltered := collectionutils.Filter(connectorList.ConnectorsResponse.Data, func(connector payments.ConnectorsResponseData) bool {
 			if connectorID != "" {
 				return connector.ConnectorID == connectorID
 			}

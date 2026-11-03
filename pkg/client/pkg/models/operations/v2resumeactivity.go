@@ -10,10 +10,10 @@ import (
 )
 
 type V2ResumeActivityRequestBody struct {
-	// Expected Temporal run id from the paused activity projection
-	TemporalRunID string `json:"temporalRunID"`
 	// Nonzero RFC3339 timestamp from the paused activity projection identifying the pause generation
 	PausedAt time.Time `json:"pausedAt"`
+	// Expected Temporal run id from the paused activity projection
+	TemporalRunID string `json:"temporalRunID"`
 }
 
 func (v V2ResumeActivityRequestBody) MarshalJSON() ([]byte, error) {
@@ -27,13 +27,6 @@ func (v *V2ResumeActivityRequestBody) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2ResumeActivityRequestBody) GetTemporalRunID() string {
-	if v == nil {
-		return ""
-	}
-	return v.TemporalRunID
-}
-
 func (v *V2ResumeActivityRequestBody) GetPausedAt() time.Time {
 	if v == nil {
 		return time.Time{}
@@ -41,17 +34,38 @@ func (v *V2ResumeActivityRequestBody) GetPausedAt() time.Time {
 	return v.PausedAt
 }
 
+func (v *V2ResumeActivityRequestBody) GetTemporalRunID() string {
+	if v == nil {
+		return ""
+	}
+	return v.TemporalRunID
+}
+
 // #region class-body-v2resumeactivityrequestbody
 // #endregion class-body-v2resumeactivityrequestbody
 
 type V2ResumeActivityRequest struct {
+	RequestBody V2ResumeActivityRequestBody `request:"mediaType=application/json"`
+	// The paused activity id
+	ActivityID string `pathParam:"style=simple,explode=false,name=activityID"`
 	// The instance id
 	InstanceID string `pathParam:"style=simple,explode=false,name=instanceID"`
 	// The nonnegative stage number
 	Number int64 `pathParam:"style=simple,explode=false,name=number"`
-	// The paused activity id
-	ActivityID  string                      `pathParam:"style=simple,explode=false,name=activityID"`
-	RequestBody V2ResumeActivityRequestBody `request:"mediaType=application/json"`
+}
+
+func (v *V2ResumeActivityRequest) GetRequestBody() V2ResumeActivityRequestBody {
+	if v == nil {
+		return V2ResumeActivityRequestBody{}
+	}
+	return v.RequestBody
+}
+
+func (v *V2ResumeActivityRequest) GetActivityID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ActivityID
 }
 
 func (v *V2ResumeActivityRequest) GetInstanceID() string {
@@ -66,20 +80,6 @@ func (v *V2ResumeActivityRequest) GetNumber() int64 {
 		return 0
 	}
 	return v.Number
-}
-
-func (v *V2ResumeActivityRequest) GetActivityID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ActivityID
-}
-
-func (v *V2ResumeActivityRequest) GetRequestBody() V2ResumeActivityRequestBody {
-	if v == nil {
-		return V2ResumeActivityRequestBody{}
-	}
-	return v.RequestBody
 }
 
 // #region class-body-v2resumeactivityrequest

@@ -4,18 +4,18 @@ package payments
 
 // V3PaymentInitiationAdjustmentsCursorResponseCursor - Paginated cursor wrapping the initiation's adjustments
 type V3PaymentInitiationAdjustmentsCursorResponseCursor struct {
-	PageSize int64                           `json:"pageSize"`
-	HasMore  bool                            `json:"hasMore"`
-	Previous *string                         `json:"previous,omitempty"`
-	Next     *string                         `json:"next,omitempty"`
 	Data     []V3PaymentInitiationAdjustment `json:"data"`
+	HasMore  bool                            `json:"hasMore"`
+	Next     *string                         `json:"next,omitempty"`
+	PageSize int64                           `json:"pageSize"`
+	Previous *string                         `json:"previous,omitempty"`
 }
 
-func (v *V3PaymentInitiationAdjustmentsCursorResponseCursor) GetPageSize() int64 {
+func (v *V3PaymentInitiationAdjustmentsCursorResponseCursor) GetData() []V3PaymentInitiationAdjustment {
 	if v == nil {
-		return 0
+		return []V3PaymentInitiationAdjustment{}
 	}
-	return v.PageSize
+	return v.Data
 }
 
 func (v *V3PaymentInitiationAdjustmentsCursorResponseCursor) GetHasMore() bool {
@@ -25,13 +25,6 @@ func (v *V3PaymentInitiationAdjustmentsCursorResponseCursor) GetHasMore() bool {
 	return v.HasMore
 }
 
-func (v *V3PaymentInitiationAdjustmentsCursorResponseCursor) GetPrevious() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Previous
-}
-
 func (v *V3PaymentInitiationAdjustmentsCursorResponseCursor) GetNext() *string {
 	if v == nil {
 		return nil
@@ -39,11 +32,18 @@ func (v *V3PaymentInitiationAdjustmentsCursorResponseCursor) GetNext() *string {
 	return v.Next
 }
 
-func (v *V3PaymentInitiationAdjustmentsCursorResponseCursor) GetData() []V3PaymentInitiationAdjustment {
+func (v *V3PaymentInitiationAdjustmentsCursorResponseCursor) GetPageSize() int64 {
 	if v == nil {
-		return []V3PaymentInitiationAdjustment{}
+		return 0
 	}
-	return v.Data
+	return v.PageSize
+}
+
+func (v *V3PaymentInitiationAdjustmentsCursorResponseCursor) GetPrevious() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Previous
 }
 
 // #region class-body-v3paymentinitiationadjustmentscursorresponsecursor

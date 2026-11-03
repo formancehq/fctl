@@ -8,7 +8,7 @@ import (
 )
 
 type Connectivity struct {
-	V1 *FormanceConnectivityV1
+	V1 *FormanceV1
 
 	rootSDK          *Formance
 	sdkConfiguration config.SDKConfiguration
@@ -20,6 +20,6 @@ func newConnectivity(rootSDK *Formance, sdkConfig config.SDKConfiguration, hooks
 		rootSDK:          rootSDK,
 		sdkConfiguration: sdkConfig,
 		hooks:            hooks,
-		V1:               newFormanceConnectivityV1(rootSDK, sdkConfig, hooks),
+		V1:               newFormanceV1(rootSDK, sdkConfig, hooks),
 	}
 }

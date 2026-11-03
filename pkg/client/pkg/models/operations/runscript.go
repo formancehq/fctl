@@ -8,11 +8,18 @@ import (
 )
 
 type RunScriptRequest struct {
+	Script ledger.Script `request:"mediaType=application/json"`
 	// Name of the ledger.
 	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 	// Set the preview mode. Preview mode doesn't add the logs to the database or publish a message to the message broker.
-	Preview *bool         `queryParam:"style=form,explode=true,name=preview"`
-	Script  ledger.Script `request:"mediaType=application/json"`
+	Preview *bool `queryParam:"style=form,explode=true,name=preview"`
+}
+
+func (r *RunScriptRequest) GetScript() ledger.Script {
+	if r == nil {
+		return ledger.Script{}
+	}
+	return r.Script
 }
 
 func (r *RunScriptRequest) GetLedger() string {
@@ -29,20 +36,9 @@ func (r *RunScriptRequest) GetPreview() *bool {
 	return r.Preview
 }
 
-func (r *RunScriptRequest) GetScript() ledger.Script {
-	if r == nil {
-		return ledger.Script{}
-	}
-	return r.Script
-}
-
 type RunScriptResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
-	// HTTP response status code for this operation
-	StatusCode int
-	// Raw HTTP response; suitable for custom response parsing
-	RawResponse *http.Response
 	// On success, it will return a 200 status code, and the resulting transaction under the `transaction` field.
 	//
 	// On failure, it will also return a 200 status code, and the following fields:
@@ -54,6 +50,10 @@ type RunScriptResponse struct {
 	//   - `errorMessage` and `error_message` (deprecated): contains a human-readable indication of what went wrong, for example that an account had insufficient funds, or that there was an error in the provided Numscript.
 	//
 	ScriptResponse *ledger.ScriptResponse
+	// HTTP response status code for this operation
+	StatusCode int
+	// Raw HTTP response; suitable for custom response parsing
+	RawResponse *http.Response
 }
 
 func (r *RunScriptResponse) GetContentType() string {
@@ -61,6 +61,13 @@ func (r *RunScriptResponse) GetContentType() string {
 		return ""
 	}
 	return r.ContentType
+}
+
+func (r *RunScriptResponse) GetScriptResponse() *ledger.ScriptResponse {
+	if r == nil {
+		return nil
+	}
+	return r.ScriptResponse
 }
 
 func (r *RunScriptResponse) GetStatusCode() int {
@@ -75,11 +82,4 @@ func (r *RunScriptResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return r.RawResponse
-}
-
-func (r *RunScriptResponse) GetScriptResponse() *ledger.ScriptResponse {
-	if r == nil {
-		return nil
-	}
-	return r.ScriptResponse
 }

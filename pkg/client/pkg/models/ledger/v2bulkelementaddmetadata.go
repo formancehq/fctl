@@ -7,9 +7,9 @@ import (
 )
 
 type Data struct {
+	Metadata   map[string]string `json:"metadata"`
 	TargetID   V2TargetID        `json:"targetId"`
 	TargetType V2TargetType      `json:"targetType"`
-	Metadata   map[string]string `json:"metadata"`
 }
 
 func (d Data) MarshalJSON() ([]byte, error) {
@@ -17,10 +17,17 @@ func (d Data) MarshalJSON() ([]byte, error) {
 }
 
 func (d *Data) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &d, "", false, []string{"targetId", "targetType", "metadata"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &d, "", false, []string{"metadata", "targetId", "targetType"}); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (d *Data) GetMetadata() map[string]string {
+	if d == nil {
+		return map[string]string{}
+	}
+	return d.Metadata
 }
 
 func (d *Data) GetTargetID() V2TargetID {
@@ -37,19 +44,12 @@ func (d *Data) GetTargetType() V2TargetType {
 	return d.TargetType
 }
 
-func (d *Data) GetMetadata() map[string]string {
-	if d == nil {
-		return map[string]string{}
-	}
-	return d.Metadata
-}
-
 type V2BulkElementAddMetadata struct {
 	// The bulk action this element performs
 	Action string `json:"action"`
+	Data   *Data  `json:"data,omitempty"`
 	// Idempotency key scoped to this element, making it safe to retry the bulk request
-	Ik   *string `json:"ik,omitempty"`
-	Data *Data   `json:"data,omitempty"`
+	Ik *string `json:"ik,omitempty"`
 }
 
 func (v V2BulkElementAddMetadata) MarshalJSON() ([]byte, error) {
@@ -70,18 +70,18 @@ func (v *V2BulkElementAddMetadata) GetAction() string {
 	return v.Action
 }
 
-func (v *V2BulkElementAddMetadata) GetIk() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Ik
-}
-
 func (v *V2BulkElementAddMetadata) GetData() *Data {
 	if v == nil {
 		return nil
 	}
 	return v.Data
+}
+
+func (v *V2BulkElementAddMetadata) GetIk() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Ik
 }
 
 // #region class-body-v2bulkelementaddmetadata

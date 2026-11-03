@@ -8,20 +8,20 @@ import (
 )
 
 type AccountRequest struct {
-	// Identifier the account carries at the provider
-	Reference string `json:"reference"`
+	// Human-readable name of the account
+	AccountName *string `json:"accountName,omitempty"`
 	// Identifier of the connector the account belongs to
 	ConnectorID string `json:"connectorID"`
 	// When the account was created at the provider
 	CreatedAt time.Time `json:"createdAt"`
-	// Whether an account is internal to the provider or belongs to an external party
-	Type AccountType `json:"type"`
 	// Asset the account is denominated in by default
 	DefaultAsset *string `json:"defaultAsset,omitempty"`
-	// Human-readable name of the account
-	AccountName *string `json:"accountName,omitempty"`
 	// Arbitrary key/value pairs attached to the account
 	Metadata map[string]string `json:"metadata,omitempty"`
+	// Identifier the account carries at the provider
+	Reference string `json:"reference"`
+	// Whether an account is internal to the provider or belongs to an external party
+	Type AccountType `json:"type"`
 }
 
 func (a AccountRequest) MarshalJSON() ([]byte, error) {
@@ -35,11 +35,11 @@ func (a *AccountRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (a *AccountRequest) GetReference() string {
+func (a *AccountRequest) GetAccountName() *string {
 	if a == nil {
-		return ""
+		return nil
 	}
-	return a.Reference
+	return a.AccountName
 }
 
 func (a *AccountRequest) GetConnectorID() string {
@@ -56,13 +56,6 @@ func (a *AccountRequest) GetCreatedAt() time.Time {
 	return a.CreatedAt
 }
 
-func (a *AccountRequest) GetType() AccountType {
-	if a == nil {
-		return AccountType("")
-	}
-	return a.Type
-}
-
 func (a *AccountRequest) GetDefaultAsset() *string {
 	if a == nil {
 		return nil
@@ -70,16 +63,23 @@ func (a *AccountRequest) GetDefaultAsset() *string {
 	return a.DefaultAsset
 }
 
-func (a *AccountRequest) GetAccountName() *string {
-	if a == nil {
-		return nil
-	}
-	return a.AccountName
-}
-
 func (a *AccountRequest) GetMetadata() map[string]string {
 	if a == nil {
 		return nil
 	}
 	return a.Metadata
+}
+
+func (a *AccountRequest) GetReference() string {
+	if a == nil {
+		return ""
+	}
+	return a.Reference
+}
+
+func (a *AccountRequest) GetType() AccountType {
+	if a == nil {
+		return AccountType("")
+	}
+	return a.Type
 }

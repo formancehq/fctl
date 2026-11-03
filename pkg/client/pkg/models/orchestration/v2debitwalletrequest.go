@@ -11,16 +11,16 @@ import (
 type V2DebitWalletRequest struct {
 	// An amount together with the asset it is denominated in
 	Amount V2Monetary `json:"amount"`
-	// Set to true to create a pending hold. If false, the wallet will be debited immediately.
-	Pending *bool `json:"pending,omitempty"`
-	// Metadata associated with the wallet.
-	Metadata map[string]string `json:"metadata"`
+	// Names of the balances to debit from, in order. Defaults to the main balance when omitted
+	Balances []string `json:"balances,omitempty"`
 	// Human-readable reason for the debit
 	Description *string `json:"description,omitempty"`
 	// The counterparty of a wallet movement, either a ledger account or another wallet
 	Destination *V2Subject `json:"destination,omitempty"`
-	// Names of the balances to debit from, in order. Defaults to the main balance when omitted
-	Balances []string `json:"balances,omitempty"`
+	// Metadata associated with the wallet.
+	Metadata map[string]string `json:"metadata"`
+	// Set to true to create a pending hold. If false, the wallet will be debited immediately.
+	Pending *bool `json:"pending,omitempty"`
 	// cannot be used in conjunction with `pending` property
 	Timestamp *time.Time `json:"timestamp,omitempty"`
 }
@@ -43,18 +43,11 @@ func (v *V2DebitWalletRequest) GetAmount() V2Monetary {
 	return v.Amount
 }
 
-func (v *V2DebitWalletRequest) GetPending() *bool {
+func (v *V2DebitWalletRequest) GetBalances() []string {
 	if v == nil {
 		return nil
 	}
-	return v.Pending
-}
-
-func (v *V2DebitWalletRequest) GetMetadata() map[string]string {
-	if v == nil {
-		return map[string]string{}
-	}
-	return v.Metadata
+	return v.Balances
 }
 
 func (v *V2DebitWalletRequest) GetDescription() *string {
@@ -85,11 +78,18 @@ func (v *V2DebitWalletRequest) GetDestinationWallet() *V2WalletSubject {
 	return nil
 }
 
-func (v *V2DebitWalletRequest) GetBalances() []string {
+func (v *V2DebitWalletRequest) GetMetadata() map[string]string {
+	if v == nil {
+		return map[string]string{}
+	}
+	return v.Metadata
+}
+
+func (v *V2DebitWalletRequest) GetPending() *bool {
 	if v == nil {
 		return nil
 	}
-	return v.Balances
+	return v.Pending
 }
 
 func (v *V2DebitWalletRequest) GetTimestamp() *time.Time {

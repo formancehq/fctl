@@ -9,26 +9,26 @@ import (
 )
 
 type V3InitiatePaymentRequest struct {
-	// Caller-supplied identifier for the initiation, used to deduplicate retries
-	Reference string `json:"reference"`
-	// When the payment should be executed
-	ScheduledAt time.Time `json:"scheduledAt"`
-	// Identifier of the connector to execute the payment through
-	ConnectorID string `json:"connectorID"`
-	// Human-readable description carried with the payment
-	Description string `json:"description"`
-	// Kind of movement a payment initiation performs, such as a transfer or a payout
-	Type V3PaymentInitiationTypeEnum `json:"type"`
 	// Amount to move, in the asset's smallest unit
 	Amount *big.Int `json:"amount"`
 	// Asset the payment is denominated in
 	Asset string `json:"asset"`
-	// Identifier of the account the funds leave
-	SourceAccountID *string `json:"sourceAccountID,omitempty"`
+	// Identifier of the connector to execute the payment through
+	ConnectorID string `json:"connectorID"`
+	// Human-readable description carried with the payment
+	Description string `json:"description"`
 	// Identifier of the account the funds reach
 	DestinationAccountID *string `json:"destinationAccountID,omitempty"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]string `json:"metadata,omitempty"`
+	// Caller-supplied identifier for the initiation, used to deduplicate retries
+	Reference string `json:"reference"`
+	// When the payment should be executed
+	ScheduledAt time.Time `json:"scheduledAt"`
+	// Identifier of the account the funds leave
+	SourceAccountID *string `json:"sourceAccountID,omitempty"`
+	// Kind of movement a payment initiation performs, such as a transfer or a payout
+	Type V3PaymentInitiationTypeEnum `json:"type"`
 }
 
 func (v V3InitiatePaymentRequest) MarshalJSON() ([]byte, error) {
@@ -40,41 +40,6 @@ func (v *V3InitiatePaymentRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (v *V3InitiatePaymentRequest) GetReference() string {
-	if v == nil {
-		return ""
-	}
-	return v.Reference
-}
-
-func (v *V3InitiatePaymentRequest) GetScheduledAt() time.Time {
-	if v == nil {
-		return time.Time{}
-	}
-	return v.ScheduledAt
-}
-
-func (v *V3InitiatePaymentRequest) GetConnectorID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ConnectorID
-}
-
-func (v *V3InitiatePaymentRequest) GetDescription() string {
-	if v == nil {
-		return ""
-	}
-	return v.Description
-}
-
-func (v *V3InitiatePaymentRequest) GetType() V3PaymentInitiationTypeEnum {
-	if v == nil {
-		return V3PaymentInitiationTypeEnum("")
-	}
-	return v.Type
 }
 
 func (v *V3InitiatePaymentRequest) GetAmount() *big.Int {
@@ -91,11 +56,18 @@ func (v *V3InitiatePaymentRequest) GetAsset() string {
 	return v.Asset
 }
 
-func (v *V3InitiatePaymentRequest) GetSourceAccountID() *string {
+func (v *V3InitiatePaymentRequest) GetConnectorID() string {
 	if v == nil {
-		return nil
+		return ""
 	}
-	return v.SourceAccountID
+	return v.ConnectorID
+}
+
+func (v *V3InitiatePaymentRequest) GetDescription() string {
+	if v == nil {
+		return ""
+	}
+	return v.Description
 }
 
 func (v *V3InitiatePaymentRequest) GetDestinationAccountID() *string {
@@ -110,6 +82,34 @@ func (v *V3InitiatePaymentRequest) GetMetadata() map[string]string {
 		return nil
 	}
 	return v.Metadata
+}
+
+func (v *V3InitiatePaymentRequest) GetReference() string {
+	if v == nil {
+		return ""
+	}
+	return v.Reference
+}
+
+func (v *V3InitiatePaymentRequest) GetScheduledAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.ScheduledAt
+}
+
+func (v *V3InitiatePaymentRequest) GetSourceAccountID() *string {
+	if v == nil {
+		return nil
+	}
+	return v.SourceAccountID
+}
+
+func (v *V3InitiatePaymentRequest) GetType() V3PaymentInitiationTypeEnum {
+	if v == nil {
+		return V3PaymentInitiationTypeEnum("")
+	}
+	return v.Type
 }
 
 // #region class-body-v3initiatepaymentrequest

@@ -10,21 +10,21 @@ import (
 )
 
 type V2GetAccountRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
-	// Exact address of the account. It must match the following regular expressions pattern:
-	// ```
-	// ^\w+(:\w+)*$
-	// ```
-	//
-	Address string     `pathParam:"style=simple,explode=false,name=address"`
-	Expand  *string    `queryParam:"style=form,explode=true,name=expand"`
-	Pit     *time.Time `queryParam:"style=form,explode=true,name=pit"`
 	// When set to `true`, all bigint values in the response will be serialized
 	// as strings instead of JSON numbers.
 	// Useful for clients that cannot handle large numbers natively (e.g. JavaScript).
 	//
 	FormanceBigintAsString *bool `default:"false" header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
+	// Exact address of the account. It must match the following regular expressions pattern:
+	// ```
+	// ^\w+(:\w+)*$
+	// ```
+	//
+	Address string  `pathParam:"style=simple,explode=false,name=address"`
+	Expand  *string `queryParam:"style=form,explode=true,name=expand"`
+	// Name of the ledger.
+	Ledger string     `pathParam:"style=simple,explode=false,name=ledger"`
+	Pit    *time.Time `queryParam:"style=form,explode=true,name=pit"`
 }
 
 func (v V2GetAccountRequest) MarshalJSON() ([]byte, error) {
@@ -38,11 +38,11 @@ func (v *V2GetAccountRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2GetAccountRequest) GetLedger() string {
+func (v *V2GetAccountRequest) GetFormanceBigintAsString() *bool {
 	if v == nil {
-		return ""
+		return nil
 	}
-	return v.Ledger
+	return v.FormanceBigintAsString
 }
 
 func (v *V2GetAccountRequest) GetAddress() string {
@@ -59,18 +59,18 @@ func (v *V2GetAccountRequest) GetExpand() *string {
 	return v.Expand
 }
 
+func (v *V2GetAccountRequest) GetLedger() string {
+	if v == nil {
+		return ""
+	}
+	return v.Ledger
+}
+
 func (v *V2GetAccountRequest) GetPit() *time.Time {
 	if v == nil {
 		return nil
 	}
 	return v.Pit
-}
-
-func (v *V2GetAccountRequest) GetFormanceBigintAsString() *bool {
-	if v == nil {
-		return nil
-	}
-	return v.FormanceBigintAsString
 }
 
 // #region class-body-v2getaccountrequest

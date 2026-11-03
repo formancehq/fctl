@@ -19,8 +19,8 @@ func (d *DeleteAccountMetadataSecurity) GetBearerAuth() *string {
 }
 
 type DeleteAccountMetadataRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Idempotency key for the request
+	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
 	// Raw account address, for example users:001. Direct HTTP clients may
 	// URL-encode it as one path segment (users%3A001). Decoded exactly once.
 	//
@@ -33,15 +33,15 @@ type DeleteAccountMetadataRequest struct {
 	// are invalid metadata keys and are rejected with HTTP 400.
 	//
 	Key string `pathParam:"style=simple,explode=false,name=key"`
-	// Idempotency key for the request
-	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 }
 
-func (d *DeleteAccountMetadataRequest) GetLedgerName() string {
+func (d *DeleteAccountMetadataRequest) GetIdempotencyKey() *string {
 	if d == nil {
-		return ""
+		return nil
 	}
-	return d.LedgerName
+	return d.IdempotencyKey
 }
 
 func (d *DeleteAccountMetadataRequest) GetAddress() string {
@@ -58,27 +58,27 @@ func (d *DeleteAccountMetadataRequest) GetKey() string {
 	return d.Key
 }
 
-func (d *DeleteAccountMetadataRequest) GetIdempotencyKey() *string {
+func (d *DeleteAccountMetadataRequest) GetLedgerName() string {
 	if d == nil {
-		return nil
+		return ""
 	}
-	return d.IdempotencyKey
+	return d.LedgerName
 }
 
 type DeleteAccountMetadataResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (d *DeleteAccountMetadataResponse) GetContentType() string {
@@ -86,6 +86,27 @@ func (d *DeleteAccountMetadataResponse) GetContentType() string {
 		return ""
 	}
 	return d.ContentType
+}
+
+func (d *DeleteAccountMetadataResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if d == nil {
+		return nil
+	}
+	return d.ErrorResponse
+}
+
+func (d *DeleteAccountMetadataResponse) GetForbidden() *string {
+	if d == nil {
+		return nil
+	}
+	return d.Forbidden
+}
+
+func (d *DeleteAccountMetadataResponse) GetHeaders() map[string][]string {
+	if d == nil {
+		return map[string][]string{}
+	}
+	return d.Headers
 }
 
 func (d *DeleteAccountMetadataResponse) GetStatusCode() int {
@@ -102,30 +123,9 @@ func (d *DeleteAccountMetadataResponse) GetRawResponse() *http.Response {
 	return d.RawResponse
 }
 
-func (d *DeleteAccountMetadataResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if d == nil {
-		return nil
-	}
-	return d.ErrorResponse
-}
-
 func (d *DeleteAccountMetadataResponse) GetUnauthorized() *string {
 	if d == nil {
 		return nil
 	}
 	return d.Unauthorized
-}
-
-func (d *DeleteAccountMetadataResponse) GetForbidden() *string {
-	if d == nil {
-		return nil
-	}
-	return d.Forbidden
-}
-
-func (d *DeleteAccountMetadataResponse) GetHeaders() map[string][]string {
-	if d == nil {
-		return map[string][]string{}
-	}
-	return d.Headers
 }

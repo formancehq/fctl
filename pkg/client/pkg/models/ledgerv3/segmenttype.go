@@ -48,21 +48,14 @@ func (e *SegmentTypeType) UnmarshalJSON(data []byte) error {
 // `type` field discriminates the constraint kind; only `regex` carries a
 // value.
 type SegmentType struct {
+	// Regular expression to match the segment against. Required when `type` is `regex`.
+	Regex *string `json:"regex,omitempty"`
 	// regex: custom regular expression (requires `regex`).
 	// uuid: RFC 4122 UUID format.
 	// uint64: decimal uint64.
 	// bytes: hex-encoded bytes (even length).
 	//
 	Type SegmentTypeType `json:"type"`
-	// Regular expression to match the segment against. Required when `type` is `regex`.
-	Regex *string `json:"regex,omitempty"`
-}
-
-func (s *SegmentType) GetType() SegmentTypeType {
-	if s == nil {
-		return SegmentTypeType("")
-	}
-	return s.Type
 }
 
 func (s *SegmentType) GetRegex() *string {
@@ -70,4 +63,11 @@ func (s *SegmentType) GetRegex() *string {
 		return nil
 	}
 	return s.Regex
+}
+
+func (s *SegmentType) GetType() SegmentTypeType {
+	if s == nil {
+		return SegmentTypeType("")
+	}
+	return s.Type
 }

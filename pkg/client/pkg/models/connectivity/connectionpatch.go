@@ -40,20 +40,13 @@ func (e *ConnectionPatchChannel) UnmarshalJSON(data []byte) error {
 }
 
 type ConnectionPatchConfiguration struct {
-	Version       *string                 `json:"version,omitempty"`
 	Channel       *ConnectionPatchChannel `json:"channel,omitempty"`
-	Suspend       *bool                   `json:"suspend,omitempty"`
-	InitialCursor *string                 `json:"initialCursor,omitempty"`
-	PollInterval  *string                 `json:"pollInterval,omitempty"`
 	Env           map[string]*string      `json:"env,omitempty"`
 	Files         map[string]*string      `json:"files,omitempty"`
-}
-
-func (c *ConnectionPatchConfiguration) GetVersion() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Version
+	InitialCursor *string                 `json:"initialCursor,omitempty"`
+	PollInterval  *string                 `json:"pollInterval,omitempty"`
+	Suspend       *bool                   `json:"suspend,omitempty"`
+	Version       *string                 `json:"version,omitempty"`
 }
 
 func (c *ConnectionPatchConfiguration) GetChannel() *ConnectionPatchChannel {
@@ -63,11 +56,18 @@ func (c *ConnectionPatchConfiguration) GetChannel() *ConnectionPatchChannel {
 	return c.Channel
 }
 
-func (c *ConnectionPatchConfiguration) GetSuspend() *bool {
+func (c *ConnectionPatchConfiguration) GetEnv() map[string]*string {
 	if c == nil {
 		return nil
 	}
-	return c.Suspend
+	return c.Env
+}
+
+func (c *ConnectionPatchConfiguration) GetFiles() map[string]*string {
+	if c == nil {
+		return nil
+	}
+	return c.Files
 }
 
 func (c *ConnectionPatchConfiguration) GetInitialCursor() *string {
@@ -84,18 +84,18 @@ func (c *ConnectionPatchConfiguration) GetPollInterval() *string {
 	return c.PollInterval
 }
 
-func (c *ConnectionPatchConfiguration) GetEnv() map[string]*string {
+func (c *ConnectionPatchConfiguration) GetSuspend() *bool {
 	if c == nil {
 		return nil
 	}
-	return c.Env
+	return c.Suspend
 }
 
-func (c *ConnectionPatchConfiguration) GetFiles() map[string]*string {
+func (c *ConnectionPatchConfiguration) GetVersion() *string {
 	if c == nil {
 		return nil
 	}
-	return c.Files
+	return c.Version
 }
 
 // ConnectionPatch - JSON merge patch (RFC 7396) over tenant `configuration` only. Omitted fields and

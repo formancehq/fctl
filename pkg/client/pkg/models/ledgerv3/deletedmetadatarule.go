@@ -3,15 +3,8 @@
 package ledgerv3
 
 type DeletedMetadataRule struct {
-	Match   *string                 `json:"match,omitempty"`
 	Actions []DeletedMetadataAction `json:"actions,omitempty"`
-}
-
-func (d *DeletedMetadataRule) GetMatch() *string {
-	if d == nil {
-		return nil
-	}
-	return d.Match
+	Match   *string                 `json:"match,omitempty"`
 }
 
 func (d *DeletedMetadataRule) GetActions() []DeletedMetadataAction {
@@ -19,4 +12,11 @@ func (d *DeletedMetadataRule) GetActions() []DeletedMetadataAction {
 		return nil
 	}
 	return d.Actions
+}
+
+func (d *DeletedMetadataRule) GetMatch() *string {
+	if d == nil {
+		return nil
+	}
+	return d.Match
 }

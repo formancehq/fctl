@@ -19,10 +19,7 @@ func (s *SetMetadataFieldTypeSecurity) GetBearerAuth() *string {
 }
 
 type SetMetadataFieldTypeRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Target type (account, transaction, or ledger)
-	TargetType ledgerv3.TargetType `pathParam:"style=simple,explode=false,name=targetType"`
+	SetMetadataTypeRequest ledgerv3.SetMetadataTypeRequest `request:"mediaType=application/json"`
 	// Raw metadata key, for example formance.com/reviewed. SDK callers pass
 	// the raw key and let the SDK encode it. Direct HTTP clients URL-encode
 	// the key as one path segment, encoding slashes as %2F.
@@ -30,8 +27,25 @@ type SetMetadataFieldTypeRequest struct {
 	// characters remaining after decoding, including double-encoded slashes,
 	// are invalid metadata keys and are rejected with HTTP 400.
 	//
-	Key                    string                          `pathParam:"style=simple,explode=false,name=key"`
-	SetMetadataTypeRequest ledgerv3.SetMetadataTypeRequest `request:"mediaType=application/json"`
+	Key string `pathParam:"style=simple,explode=false,name=key"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Target type (account, transaction, or ledger)
+	TargetType ledgerv3.TargetType `pathParam:"style=simple,explode=false,name=targetType"`
+}
+
+func (s *SetMetadataFieldTypeRequest) GetSetMetadataTypeRequest() ledgerv3.SetMetadataTypeRequest {
+	if s == nil {
+		return ledgerv3.SetMetadataTypeRequest{}
+	}
+	return s.SetMetadataTypeRequest
+}
+
+func (s *SetMetadataFieldTypeRequest) GetKey() string {
+	if s == nil {
+		return ""
+	}
+	return s.Key
 }
 
 func (s *SetMetadataFieldTypeRequest) GetLedgerName() string {
@@ -48,34 +62,20 @@ func (s *SetMetadataFieldTypeRequest) GetTargetType() ledgerv3.TargetType {
 	return s.TargetType
 }
 
-func (s *SetMetadataFieldTypeRequest) GetKey() string {
-	if s == nil {
-		return ""
-	}
-	return s.Key
-}
-
-func (s *SetMetadataFieldTypeRequest) GetSetMetadataTypeRequest() ledgerv3.SetMetadataTypeRequest {
-	if s == nil {
-		return ledgerv3.SetMetadataTypeRequest{}
-	}
-	return s.SetMetadataTypeRequest
-}
-
 type SetMetadataFieldTypeResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (s *SetMetadataFieldTypeResponse) GetContentType() string {
@@ -83,6 +83,27 @@ func (s *SetMetadataFieldTypeResponse) GetContentType() string {
 		return ""
 	}
 	return s.ContentType
+}
+
+func (s *SetMetadataFieldTypeResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if s == nil {
+		return nil
+	}
+	return s.ErrorResponse
+}
+
+func (s *SetMetadataFieldTypeResponse) GetForbidden() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Forbidden
+}
+
+func (s *SetMetadataFieldTypeResponse) GetHeaders() map[string][]string {
+	if s == nil {
+		return map[string][]string{}
+	}
+	return s.Headers
 }
 
 func (s *SetMetadataFieldTypeResponse) GetStatusCode() int {
@@ -99,30 +120,9 @@ func (s *SetMetadataFieldTypeResponse) GetRawResponse() *http.Response {
 	return s.RawResponse
 }
 
-func (s *SetMetadataFieldTypeResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if s == nil {
-		return nil
-	}
-	return s.ErrorResponse
-}
-
 func (s *SetMetadataFieldTypeResponse) GetUnauthorized() *string {
 	if s == nil {
 		return nil
 	}
 	return s.Unauthorized
-}
-
-func (s *SetMetadataFieldTypeResponse) GetForbidden() *string {
-	if s == nil {
-		return nil
-	}
-	return s.Forbidden
-}
-
-func (s *SetMetadataFieldTypeResponse) GetHeaders() map[string][]string {
-	if s == nil {
-		return map[string][]string{}
-	}
-	return s.Headers
 }

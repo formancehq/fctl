@@ -4,19 +4,12 @@ package ledgerv3
 
 // AuditFailure - Stable reason, subcode, and facts for a failed proposal. Presentation text is rendered when read and is not stored in the audit chain.
 type AuditFailure struct {
-	// Typed error reason identifier (e.g. ERROR_REASON_INSUFFICIENT_FUNDS)
-	Reason *string `json:"reason,omitempty"`
 	// Stable failure subcode
 	Code *string `json:"code,omitempty"`
 	// Validated facts used to render the failure
 	Facts map[string]string `json:"facts,omitempty"`
-}
-
-func (a *AuditFailure) GetReason() *string {
-	if a == nil {
-		return nil
-	}
-	return a.Reason
+	// Typed error reason identifier (e.g. ERROR_REASON_INSUFFICIENT_FUNDS)
+	Reason *string `json:"reason,omitempty"`
 }
 
 func (a *AuditFailure) GetCode() *string {
@@ -31,4 +24,11 @@ func (a *AuditFailure) GetFacts() map[string]string {
 		return nil
 	}
 	return a.Facts
+}
+
+func (a *AuditFailure) GetReason() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Reason
 }

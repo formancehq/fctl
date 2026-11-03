@@ -8,10 +8,10 @@ import (
 )
 
 type NumscriptVersionEntry struct {
-	// Stored semver version string (e.g. "1.0.0")
-	Version string `json:"version"`
 	// When this version was stored (ISO 8601 format)
 	CreatedAt *time.Time `json:"createdAt,omitempty"`
+	// Stored semver version string (e.g. "1.0.0")
+	Version string `json:"version"`
 }
 
 func (n NumscriptVersionEntry) MarshalJSON() ([]byte, error) {
@@ -25,16 +25,16 @@ func (n *NumscriptVersionEntry) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (n *NumscriptVersionEntry) GetVersion() string {
-	if n == nil {
-		return ""
-	}
-	return n.Version
-}
-
 func (n *NumscriptVersionEntry) GetCreatedAt() *time.Time {
 	if n == nil {
 		return nil
 	}
 	return n.CreatedAt
+}
+
+func (n *NumscriptVersionEntry) GetVersion() string {
+	if n == nil {
+		return ""
+	}
+	return n.Version
 }

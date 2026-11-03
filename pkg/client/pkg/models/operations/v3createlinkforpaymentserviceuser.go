@@ -8,18 +8,18 @@ import (
 )
 
 type V3CreateLinkForPaymentServiceUserRequest struct {
+	V3PaymentServiceUserCreateLinkRequest *payments.V3PaymentServiceUserCreateLinkRequest `request:"mediaType=application/json"`
+	// The connector ID
+	ConnectorID string `pathParam:"style=simple,explode=false,name=connectorID"`
 	// The payment service user ID
 	PaymentServiceUserID string `pathParam:"style=simple,explode=false,name=paymentServiceUserID"`
-	// The connector ID
-	ConnectorID                           string                                          `pathParam:"style=simple,explode=false,name=connectorID"`
-	V3PaymentServiceUserCreateLinkRequest *payments.V3PaymentServiceUserCreateLinkRequest `request:"mediaType=application/json"`
 }
 
-func (v *V3CreateLinkForPaymentServiceUserRequest) GetPaymentServiceUserID() string {
+func (v *V3CreateLinkForPaymentServiceUserRequest) GetV3PaymentServiceUserCreateLinkRequest() *payments.V3PaymentServiceUserCreateLinkRequest {
 	if v == nil {
-		return ""
+		return nil
 	}
-	return v.PaymentServiceUserID
+	return v.V3PaymentServiceUserCreateLinkRequest
 }
 
 func (v *V3CreateLinkForPaymentServiceUserRequest) GetConnectorID() string {
@@ -29,11 +29,11 @@ func (v *V3CreateLinkForPaymentServiceUserRequest) GetConnectorID() string {
 	return v.ConnectorID
 }
 
-func (v *V3CreateLinkForPaymentServiceUserRequest) GetV3PaymentServiceUserCreateLinkRequest() *payments.V3PaymentServiceUserCreateLinkRequest {
+func (v *V3CreateLinkForPaymentServiceUserRequest) GetPaymentServiceUserID() string {
 	if v == nil {
-		return nil
+		return ""
 	}
-	return v.V3PaymentServiceUserCreateLinkRequest
+	return v.PaymentServiceUserID
 }
 
 // #region class-body-v3createlinkforpaymentserviceuserrequest

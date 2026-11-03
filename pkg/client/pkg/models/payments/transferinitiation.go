@@ -39,42 +39,42 @@ func (e *Type) UnmarshalJSON(data []byte) error {
 
 // TransferInitiation - A transfer Formance asked a connector to execute
 type TransferInitiation struct {
-	// Unique identifier of the transfer initiation
-	ID string `json:"id"`
-	// Caller-supplied identifier for the initiation
-	Reference string `json:"reference"`
-	// When the initiation was created
-	CreatedAt time.Time `json:"createdAt"`
-	// When the transfer is scheduled to execute
-	ScheduledAt time.Time `json:"scheduledAt"`
-	// Human-readable description carried with the transfer
-	Description string `json:"description"`
-	// Identifier of the account the funds leave
-	SourceAccountID string `json:"sourceAccountID"`
-	// Identifier of the account the funds reach
-	DestinationAccountID string `json:"destinationAccountID"`
-	// Identifier of the connector executing the transfer
-	ConnectorID string `json:"connectorID"`
-	// Name of the payment provider behind the connector
-	Provider *string `json:"provider"`
-	// Whether the funds move between your accounts or out to a third party
-	Type Type `json:"type"`
 	// Amount to move, in the asset's smallest unit
 	Amount *big.Int `json:"amount"`
-	// Amount the initiation was created with, before any adjustment
-	InitialAmount *big.Int `json:"initialAmount"`
 	// Asset the transfer is denominated in
 	Asset string `json:"asset"`
-	// Where a transfer initiation stands in its lifecycle
-	Status TransferInitiationStatus `json:"status"`
+	// Identifier of the connector executing the transfer
+	ConnectorID string `json:"connectorID"`
+	// When the initiation was created
+	CreatedAt time.Time `json:"createdAt"`
+	// Human-readable description carried with the transfer
+	Description string `json:"description"`
+	// Identifier of the account the funds reach
+	DestinationAccountID string `json:"destinationAccountID"`
 	// Why the initiation failed, absent when it succeeded
 	Error *string `json:"error,omitempty"`
+	// Unique identifier of the transfer initiation
+	ID string `json:"id"`
+	// Amount the initiation was created with, before any adjustment
+	InitialAmount *big.Int `json:"initialAmount"`
 	// Arbitrary key/value pairs attached to the initiation
 	Metadata map[string]string `json:"metadata,omitempty"`
-	// Payments produced by this initiation
-	RelatedPayments []TransferInitiationPayments `json:"relatedPayments,omitempty"`
+	// Name of the payment provider behind the connector
+	Provider *string `json:"provider"`
+	// Caller-supplied identifier for the initiation
+	Reference string `json:"reference"`
 	// Successive status changes recorded against the initiation
 	RelatedAdjustments []TransferInitiationAdjustments `json:"relatedAdjustments,omitempty"`
+	// Payments produced by this initiation
+	RelatedPayments []TransferInitiationPayments `json:"relatedPayments,omitempty"`
+	// When the transfer is scheduled to execute
+	ScheduledAt time.Time `json:"scheduledAt"`
+	// Identifier of the account the funds leave
+	SourceAccountID string `json:"sourceAccountID"`
+	// Where a transfer initiation stands in its lifecycle
+	Status TransferInitiationStatus `json:"status"`
+	// Whether the funds move between your accounts or out to a third party
+	Type Type `json:"type"`
 }
 
 func (t TransferInitiation) MarshalJSON() ([]byte, error) {
@@ -88,88 +88,11 @@ func (t *TransferInitiation) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (t *TransferInitiation) GetID() string {
-	if t == nil {
-		return ""
-	}
-	return t.ID
-}
-
-func (t *TransferInitiation) GetReference() string {
-	if t == nil {
-		return ""
-	}
-	return t.Reference
-}
-
-func (t *TransferInitiation) GetCreatedAt() time.Time {
-	if t == nil {
-		return time.Time{}
-	}
-	return t.CreatedAt
-}
-
-func (t *TransferInitiation) GetScheduledAt() time.Time {
-	if t == nil {
-		return time.Time{}
-	}
-	return t.ScheduledAt
-}
-
-func (t *TransferInitiation) GetDescription() string {
-	if t == nil {
-		return ""
-	}
-	return t.Description
-}
-
-func (t *TransferInitiation) GetSourceAccountID() string {
-	if t == nil {
-		return ""
-	}
-	return t.SourceAccountID
-}
-
-func (t *TransferInitiation) GetDestinationAccountID() string {
-	if t == nil {
-		return ""
-	}
-	return t.DestinationAccountID
-}
-
-func (t *TransferInitiation) GetConnectorID() string {
-	if t == nil {
-		return ""
-	}
-	return t.ConnectorID
-}
-
-func (t *TransferInitiation) GetProvider() *string {
-	if t == nil {
-		return nil
-	}
-	return t.Provider
-}
-
-func (t *TransferInitiation) GetType() Type {
-	if t == nil {
-		return Type("")
-	}
-	return t.Type
-}
-
 func (t *TransferInitiation) GetAmount() *big.Int {
 	if t == nil {
 		return big.NewInt(0)
 	}
 	return t.Amount
-}
-
-func (t *TransferInitiation) GetInitialAmount() *big.Int {
-	if t == nil {
-		return big.NewInt(0)
-	}
-	return t.InitialAmount
 }
 
 func (t *TransferInitiation) GetAsset() string {
@@ -179,11 +102,32 @@ func (t *TransferInitiation) GetAsset() string {
 	return t.Asset
 }
 
-func (t *TransferInitiation) GetStatus() TransferInitiationStatus {
+func (t *TransferInitiation) GetConnectorID() string {
 	if t == nil {
-		return TransferInitiationStatus("")
+		return ""
 	}
-	return t.Status
+	return t.ConnectorID
+}
+
+func (t *TransferInitiation) GetCreatedAt() time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return t.CreatedAt
+}
+
+func (t *TransferInitiation) GetDescription() string {
+	if t == nil {
+		return ""
+	}
+	return t.Description
+}
+
+func (t *TransferInitiation) GetDestinationAccountID() string {
+	if t == nil {
+		return ""
+	}
+	return t.DestinationAccountID
 }
 
 func (t *TransferInitiation) GetError() *string {
@@ -193,11 +137,46 @@ func (t *TransferInitiation) GetError() *string {
 	return t.Error
 }
 
+func (t *TransferInitiation) GetID() string {
+	if t == nil {
+		return ""
+	}
+	return t.ID
+}
+
+func (t *TransferInitiation) GetInitialAmount() *big.Int {
+	if t == nil {
+		return big.NewInt(0)
+	}
+	return t.InitialAmount
+}
+
 func (t *TransferInitiation) GetMetadata() map[string]string {
 	if t == nil {
 		return nil
 	}
 	return t.Metadata
+}
+
+func (t *TransferInitiation) GetProvider() *string {
+	if t == nil {
+		return nil
+	}
+	return t.Provider
+}
+
+func (t *TransferInitiation) GetReference() string {
+	if t == nil {
+		return ""
+	}
+	return t.Reference
+}
+
+func (t *TransferInitiation) GetRelatedAdjustments() []TransferInitiationAdjustments {
+	if t == nil {
+		return nil
+	}
+	return t.RelatedAdjustments
 }
 
 func (t *TransferInitiation) GetRelatedPayments() []TransferInitiationPayments {
@@ -207,9 +186,30 @@ func (t *TransferInitiation) GetRelatedPayments() []TransferInitiationPayments {
 	return t.RelatedPayments
 }
 
-func (t *TransferInitiation) GetRelatedAdjustments() []TransferInitiationAdjustments {
+func (t *TransferInitiation) GetScheduledAt() time.Time {
 	if t == nil {
-		return nil
+		return time.Time{}
 	}
-	return t.RelatedAdjustments
+	return t.ScheduledAt
+}
+
+func (t *TransferInitiation) GetSourceAccountID() string {
+	if t == nil {
+		return ""
+	}
+	return t.SourceAccountID
+}
+
+func (t *TransferInitiation) GetStatus() TransferInitiationStatus {
+	if t == nil {
+		return TransferInitiationStatus("")
+	}
+	return t.Status
+}
+
+func (t *TransferInitiation) GetType() Type {
+	if t == nil {
+		return Type("")
+	}
+	return t.Type
 }

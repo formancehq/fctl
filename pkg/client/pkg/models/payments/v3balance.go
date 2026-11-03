@@ -11,14 +11,14 @@ import (
 type V3Balance struct {
 	// Identifier of the account this balance belongs to
 	AccountID string `json:"accountID"`
-	// Start of the period this balance covers
-	CreatedAt time.Time `json:"createdAt"`
-	// When the balance was last refreshed from the provider
-	LastUpdatedAt time.Time `json:"lastUpdatedAt"`
 	// Asset the balance is denominated in
 	Asset string `json:"asset"`
 	// Amount held, in the asset's smallest unit
 	Balance *big.Int `json:"balance"`
+	// Start of the period this balance covers
+	CreatedAt time.Time `json:"createdAt"`
+	// When the balance was last refreshed from the provider
+	LastUpdatedAt time.Time `json:"lastUpdatedAt"`
 }
 
 func (v V3Balance) MarshalJSON() ([]byte, error) {
@@ -39,20 +39,6 @@ func (v *V3Balance) GetAccountID() string {
 	return v.AccountID
 }
 
-func (v *V3Balance) GetCreatedAt() time.Time {
-	if v == nil {
-		return time.Time{}
-	}
-	return v.CreatedAt
-}
-
-func (v *V3Balance) GetLastUpdatedAt() time.Time {
-	if v == nil {
-		return time.Time{}
-	}
-	return v.LastUpdatedAt
-}
-
 func (v *V3Balance) GetAsset() string {
 	if v == nil {
 		return ""
@@ -65,6 +51,20 @@ func (v *V3Balance) GetBalance() *big.Int {
 		return big.NewInt(0)
 	}
 	return v.Balance
+}
+
+func (v *V3Balance) GetCreatedAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.CreatedAt
+}
+
+func (v *V3Balance) GetLastUpdatedAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.LastUpdatedAt
 }
 
 // #region class-body-v3balance

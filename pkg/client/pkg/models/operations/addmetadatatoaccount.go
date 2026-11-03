@@ -7,30 +7,16 @@ import (
 )
 
 type AddMetadataToAccountRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
+	// metadata
+	RequestBody map[string]any `request:"mediaType=application/json"`
 	// Exact address of the account. It must match the following regular expressions pattern:
 	// ```
 	// ^\w+(:\w+)*$
 	// ```
 	//
 	Address string `pathParam:"style=simple,explode=false,name=address"`
-	// metadata
-	RequestBody map[string]any `request:"mediaType=application/json"`
-}
-
-func (a *AddMetadataToAccountRequest) GetLedger() string {
-	if a == nil {
-		return ""
-	}
-	return a.Ledger
-}
-
-func (a *AddMetadataToAccountRequest) GetAddress() string {
-	if a == nil {
-		return ""
-	}
-	return a.Address
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 }
 
 func (a *AddMetadataToAccountRequest) GetRequestBody() map[string]any {
@@ -40,14 +26,28 @@ func (a *AddMetadataToAccountRequest) GetRequestBody() map[string]any {
 	return a.RequestBody
 }
 
+func (a *AddMetadataToAccountRequest) GetAddress() string {
+	if a == nil {
+		return ""
+	}
+	return a.Address
+}
+
+func (a *AddMetadataToAccountRequest) GetLedger() string {
+	if a == nil {
+		return ""
+	}
+	return a.Ledger
+}
+
 type AddMetadataToAccountResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	Headers     map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	Headers     map[string][]string
 }
 
 func (a *AddMetadataToAccountResponse) GetContentType() string {
@@ -55,6 +55,13 @@ func (a *AddMetadataToAccountResponse) GetContentType() string {
 		return ""
 	}
 	return a.ContentType
+}
+
+func (a *AddMetadataToAccountResponse) GetHeaders() map[string][]string {
+	if a == nil {
+		return map[string][]string{}
+	}
+	return a.Headers
 }
 
 func (a *AddMetadataToAccountResponse) GetStatusCode() int {
@@ -69,11 +76,4 @@ func (a *AddMetadataToAccountResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return a.RawResponse
-}
-
-func (a *AddMetadataToAccountResponse) GetHeaders() map[string][]string {
-	if a == nil {
-		return map[string][]string{}
-	}
-	return a.Headers
 }

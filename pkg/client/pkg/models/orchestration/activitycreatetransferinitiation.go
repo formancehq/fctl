@@ -9,20 +9,24 @@ import (
 	"math/big"
 )
 
-// ActivityCreateTransferInitiationType - Type of transfer initiation:
+// Metadata - A set of key/value pairs that you can attach to a transfer object. It can be useful for storing additional information about the transfer in a structured format.
+type Metadata struct {
+}
+
+// Type of transfer initiation:
 // - TRANSFER: Internal to internal account transfer
 // - PAYOUT: Internal to external account payout
-type ActivityCreateTransferInitiationType string
+type Type string
 
 const (
-	ActivityCreateTransferInitiationTypeTransfer ActivityCreateTransferInitiationType = "TRANSFER"
-	ActivityCreateTransferInitiationTypePayout   ActivityCreateTransferInitiationType = "PAYOUT"
+	TypeTransfer Type = "TRANSFER"
+	TypePayout   Type = "PAYOUT"
 )
 
-func (e ActivityCreateTransferInitiationType) ToPointer() *ActivityCreateTransferInitiationType {
+func (e Type) ToPointer() *Type {
 	return &e
 }
-func (e *ActivityCreateTransferInitiationType) UnmarshalJSON(data []byte) error {
+func (e *Type) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
@@ -31,45 +35,41 @@ func (e *ActivityCreateTransferInitiationType) UnmarshalJSON(data []byte) error 
 	case "TRANSFER":
 		fallthrough
 	case "PAYOUT":
-		*e = ActivityCreateTransferInitiationType(v)
+		*e = Type(v)
 		return nil
 	default:
-		return fmt.Errorf("invalid value for ActivityCreateTransferInitiationType: %v", v)
+		return fmt.Errorf("invalid value for Type: %v", v)
 	}
-}
-
-// ActivityCreateTransferInitiationMetadata - A set of key/value pairs that you can attach to a transfer object. It can be useful for storing additional information about the transfer in a structured format.
-type ActivityCreateTransferInitiationMetadata struct {
 }
 
 // ActivityCreateTransferInitiation - Arguments for the activity that initiates a transfer through a connector
 type ActivityCreateTransferInitiation struct {
-	// Identifier of the connector to transfer through
-	ConnectorID *string `json:"connectorID,omitempty"`
-	// Payment service provider name (e.g., stripe, wise, mangopay).
-	// Validated by the Payments service based on installed connectors.
-	//
-	Provider *string `json:"provider,omitempty"`
 	// Amount to transfer, in the asset's smallest unit
 	Amount *big.Int `json:"amount,omitempty"`
 	// Asset the transfer is denominated in
 	Asset *string `json:"asset,omitempty"`
+	// Identifier of the connector to transfer through
+	ConnectorID *string `json:"connectorID,omitempty"`
+	// Description for the transfer initiation
+	Description *string `json:"description,omitempty"`
 	// Destination account ID
 	Destination *string `json:"destination,omitempty"`
+	// A set of key/value pairs that you can attach to a transfer object. It can be useful for storing additional information about the transfer in a structured format.
+	//
+	Metadata *Metadata `json:"metadata,omitempty"`
+	// Payment service provider name (e.g., stripe, wise, mangopay).
+	// Validated by the Payments service based on installed connectors.
+	//
+	Provider *string `json:"provider,omitempty"`
 	// Source account ID (required for TRANSFER type)
 	Source *string `json:"source,omitempty"`
 	// Type of transfer initiation:
 	// - TRANSFER: Internal to internal account transfer
 	// - PAYOUT: Internal to external account payout
 	//
-	Type *ActivityCreateTransferInitiationType `default:"TRANSFER" json:"type"`
-	// Description for the transfer initiation
-	Description *string `json:"description,omitempty"`
+	Type *Type `default:"TRANSFER" json:"type"`
 	// When true, the transfer is created but held until it is validated
 	WaitingValidation *bool `default:"false" json:"waitingValidation"`
-	// A set of key/value pairs that you can attach to a transfer object. It can be useful for storing additional information about the transfer in a structured format.
-	//
-	Metadata *ActivityCreateTransferInitiationMetadata `json:"metadata,omitempty"`
 }
 
 func (a ActivityCreateTransferInitiation) MarshalJSON() ([]byte, error) {
@@ -81,20 +81,6 @@ func (a *ActivityCreateTransferInitiation) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (a *ActivityCreateTransferInitiation) GetConnectorID() *string {
-	if a == nil {
-		return nil
-	}
-	return a.ConnectorID
-}
-
-func (a *ActivityCreateTransferInitiation) GetProvider() *string {
-	if a == nil {
-		return nil
-	}
-	return a.Provider
 }
 
 func (a *ActivityCreateTransferInitiation) GetAmount() *big.Int {
@@ -111,25 +97,11 @@ func (a *ActivityCreateTransferInitiation) GetAsset() *string {
 	return a.Asset
 }
 
-func (a *ActivityCreateTransferInitiation) GetDestination() *string {
+func (a *ActivityCreateTransferInitiation) GetConnectorID() *string {
 	if a == nil {
 		return nil
 	}
-	return a.Destination
-}
-
-func (a *ActivityCreateTransferInitiation) GetSource() *string {
-	if a == nil {
-		return nil
-	}
-	return a.Source
-}
-
-func (a *ActivityCreateTransferInitiation) GetType() *ActivityCreateTransferInitiationType {
-	if a == nil {
-		return nil
-	}
-	return a.Type
+	return a.ConnectorID
 }
 
 func (a *ActivityCreateTransferInitiation) GetDescription() *string {
@@ -139,16 +111,44 @@ func (a *ActivityCreateTransferInitiation) GetDescription() *string {
 	return a.Description
 }
 
+func (a *ActivityCreateTransferInitiation) GetDestination() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Destination
+}
+
+func (a *ActivityCreateTransferInitiation) GetMetadata() *Metadata {
+	if a == nil {
+		return nil
+	}
+	return a.Metadata
+}
+
+func (a *ActivityCreateTransferInitiation) GetProvider() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Provider
+}
+
+func (a *ActivityCreateTransferInitiation) GetSource() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Source
+}
+
+func (a *ActivityCreateTransferInitiation) GetType() *Type {
+	if a == nil {
+		return nil
+	}
+	return a.Type
+}
+
 func (a *ActivityCreateTransferInitiation) GetWaitingValidation() *bool {
 	if a == nil {
 		return nil
 	}
 	return a.WaitingValidation
-}
-
-func (a *ActivityCreateTransferInitiation) GetMetadata() *ActivityCreateTransferInitiationMetadata {
-	if a == nil {
-		return nil
-	}
-	return a.Metadata
 }

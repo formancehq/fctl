@@ -20,10 +20,6 @@ func (a *AnalyzeAccountsSecurity) GetBearerAuth() *string {
 }
 
 type AnalyzeAccountsRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Max distinct children before classifying as variable (0 = default 10)
-	VariableThreshold *int `default:"0" queryParam:"style=form,explode=true,name=variableThreshold"`
 	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
 	// barrier and waits for the receiving node to apply up to it. `stale`
 	// serves the read from the receiving node's own store, with no barrier
@@ -34,6 +30,10 @@ type AnalyzeAccountsRequest struct {
 	// gRPC equivalent is the `x-consistency` request metadata.
 	//
 	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Max distinct children before classifying as variable (0 = default 10)
+	VariableThreshold *int `default:"0" queryParam:"style=form,explode=true,name=variableThreshold"`
 }
 
 func (a AnalyzeAccountsRequest) MarshalJSON() ([]byte, error) {
@@ -45,6 +45,13 @@ func (a *AnalyzeAccountsRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (a *AnalyzeAccountsRequest) GetXConsistency() *ledgerv3.Consistency {
+	if a == nil {
+		return nil
+	}
+	return a.XConsistency
 }
 
 func (a *AnalyzeAccountsRequest) GetLedgerName() string {
@@ -61,29 +68,29 @@ func (a *AnalyzeAccountsRequest) GetVariableThreshold() *int {
 	return a.VariableThreshold
 }
 
-func (a *AnalyzeAccountsRequest) GetXConsistency() *ledgerv3.Consistency {
-	if a == nil {
-		return nil
-	}
-	return a.XConsistency
-}
-
 type AnalyzeAccountsResponse struct {
+	// Analysis completed successfully
+	AnalyzeAccountsResponse *ledgerv3.AnalyzeAccountsResponse
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Analysis completed successfully
-	AnalyzeAccountsResponse *ledgerv3.AnalyzeAccountsResponse
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
+}
+
+func (a *AnalyzeAccountsResponse) GetAnalyzeAccountsResponse() *ledgerv3.AnalyzeAccountsResponse {
+	if a == nil {
+		return nil
+	}
+	return a.AnalyzeAccountsResponse
 }
 
 func (a *AnalyzeAccountsResponse) GetContentType() string {
@@ -91,6 +98,27 @@ func (a *AnalyzeAccountsResponse) GetContentType() string {
 		return ""
 	}
 	return a.ContentType
+}
+
+func (a *AnalyzeAccountsResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if a == nil {
+		return nil
+	}
+	return a.ErrorResponse
+}
+
+func (a *AnalyzeAccountsResponse) GetForbidden() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Forbidden
+}
+
+func (a *AnalyzeAccountsResponse) GetHeaders() map[string][]string {
+	if a == nil {
+		return map[string][]string{}
+	}
+	return a.Headers
 }
 
 func (a *AnalyzeAccountsResponse) GetStatusCode() int {
@@ -107,37 +135,9 @@ func (a *AnalyzeAccountsResponse) GetRawResponse() *http.Response {
 	return a.RawResponse
 }
 
-func (a *AnalyzeAccountsResponse) GetAnalyzeAccountsResponse() *ledgerv3.AnalyzeAccountsResponse {
-	if a == nil {
-		return nil
-	}
-	return a.AnalyzeAccountsResponse
-}
-
-func (a *AnalyzeAccountsResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if a == nil {
-		return nil
-	}
-	return a.ErrorResponse
-}
-
 func (a *AnalyzeAccountsResponse) GetUnauthorized() *string {
 	if a == nil {
 		return nil
 	}
 	return a.Unauthorized
-}
-
-func (a *AnalyzeAccountsResponse) GetForbidden() *string {
-	if a == nil {
-		return nil
-	}
-	return a.Forbidden
-}
-
-func (a *AnalyzeAccountsResponse) GetHeaders() map[string][]string {
-	if a == nil {
-		return map[string][]string{}
-	}
-	return a.Headers
 }

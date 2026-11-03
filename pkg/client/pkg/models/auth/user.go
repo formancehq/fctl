@@ -4,12 +4,19 @@ package auth
 
 // User - A user known to the stack's identity provider
 type User struct {
+	// Email address of the user
+	Email *string `json:"email,omitempty"`
 	// Unique identifier of the user
 	ID *string `json:"id,omitempty"`
 	// Subject claim identifying the user with the identity provider
 	Subject *string `json:"subject,omitempty"`
-	// Email address of the user
-	Email *string `json:"email,omitempty"`
+}
+
+func (u *User) GetEmail() *string {
+	if u == nil {
+		return nil
+	}
+	return u.Email
 }
 
 func (u *User) GetID() *string {
@@ -24,11 +31,4 @@ func (u *User) GetSubject() *string {
 		return nil
 	}
 	return u.Subject
-}
-
-func (u *User) GetEmail() *string {
-	if u == nil {
-		return nil
-	}
-	return u.Email
 }

@@ -9,27 +9,27 @@ import (
 
 // Connector - Read-only published connector information.
 type Connector struct {
-	Name      string     `json:"name"`
-	CreatedAt *time.Time `json:"createdAt,omitempty"`
-	// Human-readable name (e.g. `Adyen`)
-	DisplayName *string `json:"displayName,omitempty"`
-	Description *string `json:"description,omitempty"`
-	// Catalog (audience) this connector was discovered from; empty for hand-authored connectors
-	Catalog *string `json:"catalog,omitempty"`
-	// `facet:value` tags (e.g. `provider:psp`, `domain:payouts`)
-	// projected from the newest Validated version's marketing block.
-	// Absent when the producer published none.
-	//
-	Tags []string `json:"tags,omitempty"`
-	// One-line marketing copy from the newest Validated version
-	Tagline *string `json:"tagline,omitempty"`
 	// Producer-supplied branding of the newest Validated version, verbatim.
 	// `logoSvg` is the light-theme mark; render it when `logoSvgDark` is
 	// absent (documented fallback).
 	//
 	Branding *ConnectorBranding `json:"branding,omitempty"`
+	// Catalog (audience) this connector was discovered from; empty for hand-authored connectors
+	Catalog     *string    `json:"catalog,omitempty"`
+	CreatedAt   *time.Time `json:"createdAt,omitempty"`
+	Description *string    `json:"description,omitempty"`
+	// Human-readable name (e.g. `Adyen`)
+	DisplayName *string `json:"displayName,omitempty"`
 	// The newest Validated version (what `versions/latest` resolves to)
 	LatestVersion *string `json:"latestVersion,omitempty"`
+	Name          string  `json:"name"`
+	// One-line marketing copy from the newest Validated version
+	Tagline *string `json:"tagline,omitempty"`
+	// `facet:value` tags (e.g. `provider:psp`, `domain:payouts`)
+	// projected from the newest Validated version's marketing block.
+	// Absent when the producer published none.
+	//
+	Tags []string `json:"tags,omitempty"`
 }
 
 func (c Connector) MarshalJSON() ([]byte, error) {
@@ -43,32 +43,11 @@ func (c *Connector) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (c *Connector) GetName() string {
-	if c == nil {
-		return ""
-	}
-	return c.Name
-}
-
-func (c *Connector) GetCreatedAt() *time.Time {
+func (c *Connector) GetBranding() *ConnectorBranding {
 	if c == nil {
 		return nil
 	}
-	return c.CreatedAt
-}
-
-func (c *Connector) GetDisplayName() *string {
-	if c == nil {
-		return nil
-	}
-	return c.DisplayName
-}
-
-func (c *Connector) GetDescription() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Description
+	return c.Branding
 }
 
 func (c *Connector) GetCatalog() *string {
@@ -78,11 +57,39 @@ func (c *Connector) GetCatalog() *string {
 	return c.Catalog
 }
 
-func (c *Connector) GetTags() []string {
+func (c *Connector) GetCreatedAt() *time.Time {
 	if c == nil {
 		return nil
 	}
-	return c.Tags
+	return c.CreatedAt
+}
+
+func (c *Connector) GetDescription() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Description
+}
+
+func (c *Connector) GetDisplayName() *string {
+	if c == nil {
+		return nil
+	}
+	return c.DisplayName
+}
+
+func (c *Connector) GetLatestVersion() *string {
+	if c == nil {
+		return nil
+	}
+	return c.LatestVersion
+}
+
+func (c *Connector) GetName() string {
+	if c == nil {
+		return ""
+	}
+	return c.Name
 }
 
 func (c *Connector) GetTagline() *string {
@@ -92,16 +99,9 @@ func (c *Connector) GetTagline() *string {
 	return c.Tagline
 }
 
-func (c *Connector) GetBranding() *ConnectorBranding {
+func (c *Connector) GetTags() []string {
 	if c == nil {
 		return nil
 	}
-	return c.Branding
-}
-
-func (c *Connector) GetLatestVersion() *string {
-	if c == nil {
-		return nil
-	}
-	return c.LatestVersion
+	return c.Tags
 }

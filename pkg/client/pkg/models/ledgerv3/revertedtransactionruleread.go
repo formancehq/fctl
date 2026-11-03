@@ -7,8 +7,8 @@ import (
 )
 
 type RevertedTransactionRuleRead struct {
-	Match   *string                         `json:"match,omitempty"`
 	Actions []RevertedTransactionActionRead `json:"actions,omitempty"`
+	Match   *string                         `json:"match,omitempty"`
 }
 
 func (r RevertedTransactionRuleRead) MarshalJSON() ([]byte, error) {
@@ -22,16 +22,16 @@ func (r *RevertedTransactionRuleRead) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (r *RevertedTransactionRuleRead) GetMatch() *string {
-	if r == nil {
-		return nil
-	}
-	return r.Match
-}
-
 func (r *RevertedTransactionRuleRead) GetActions() []RevertedTransactionActionRead {
 	if r == nil {
 		return nil
 	}
 	return r.Actions
+}
+
+func (r *RevertedTransactionRuleRead) GetMatch() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Match
 }

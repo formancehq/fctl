@@ -2,51 +2,51 @@
 
 package payments
 
-type Data struct {
+type ConnectorsResponseData struct {
+	ConnectorID string `json:"connectorID"`
+	Enabled     *bool  `json:"enabled,omitempty"`
+	Name        string `json:"name"`
 	// The payment provider behind a connector
-	Provider    Connector `json:"provider"`
-	Name        string    `json:"name"`
-	ConnectorID string    `json:"connectorID"`
-	Enabled     *bool     `json:"enabled,omitempty"`
+	Provider Connector `json:"provider"`
 }
 
-func (d *Data) GetProvider() Connector {
-	if d == nil {
-		return Connector("")
-	}
-	return d.Provider
-}
-
-func (d *Data) GetName() string {
-	if d == nil {
+func (c *ConnectorsResponseData) GetConnectorID() string {
+	if c == nil {
 		return ""
 	}
-	return d.Name
+	return c.ConnectorID
 }
 
-func (d *Data) GetConnectorID() string {
-	if d == nil {
-		return ""
-	}
-	return d.ConnectorID
-}
-
-func (d *Data) GetEnabled() *bool {
-	if d == nil {
+func (c *ConnectorsResponseData) GetEnabled() *bool {
+	if c == nil {
 		return nil
 	}
-	return d.Enabled
+	return c.Enabled
+}
+
+func (c *ConnectorsResponseData) GetName() string {
+	if c == nil {
+		return ""
+	}
+	return c.Name
+}
+
+func (c *ConnectorsResponseData) GetProvider() Connector {
+	if c == nil {
+		return Connector("")
+	}
+	return c.Provider
 }
 
 // ConnectorsResponse - OK
 type ConnectorsResponse struct {
 	// The connectors installed on this stack
-	Data []Data `json:"data"`
+	Data []ConnectorsResponseData `json:"data"`
 }
 
-func (c *ConnectorsResponse) GetData() []Data {
+func (c *ConnectorsResponse) GetData() []ConnectorsResponseData {
 	if c == nil {
-		return []Data{}
+		return []ConnectorsResponseData{}
 	}
 	return c.Data
 }

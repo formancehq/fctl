@@ -10,12 +10,12 @@ import (
 )
 
 type RevertTransactionLedgerRequest struct {
+	// Allow to disable balances checks
+	DisableChecks *bool `queryParam:"style=form,explode=true,name=disableChecks"`
 	// Name of the ledger.
 	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 	// Transaction ID.
 	Txid *big.Int `pathParam:"style=simple,explode=false,name=txid"`
-	// Allow to disable balances checks
-	DisableChecks *bool `queryParam:"style=form,explode=true,name=disableChecks"`
 }
 
 func (r RevertTransactionLedgerRequest) MarshalJSON() ([]byte, error) {
@@ -27,6 +27,13 @@ func (r *RevertTransactionLedgerRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (r *RevertTransactionLedgerRequest) GetDisableChecks() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.DisableChecks
 }
 
 func (r *RevertTransactionLedgerRequest) GetLedger() string {
@@ -43,23 +50,16 @@ func (r *RevertTransactionLedgerRequest) GetTxid() *big.Int {
 	return r.Txid
 }
 
-func (r *RevertTransactionLedgerRequest) GetDisableChecks() *bool {
-	if r == nil {
-		return nil
-	}
-	return r.DisableChecks
-}
-
 type RevertTransactionLedgerResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	Headers     map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
 	// OK
 	TransactionResponse *ledger.TransactionResponse
-	Headers             map[string][]string
 }
 
 func (r *RevertTransactionLedgerResponse) GetContentType() string {
@@ -67,6 +67,13 @@ func (r *RevertTransactionLedgerResponse) GetContentType() string {
 		return ""
 	}
 	return r.ContentType
+}
+
+func (r *RevertTransactionLedgerResponse) GetHeaders() map[string][]string {
+	if r == nil {
+		return map[string][]string{}
+	}
+	return r.Headers
 }
 
 func (r *RevertTransactionLedgerResponse) GetStatusCode() int {
@@ -88,11 +95,4 @@ func (r *RevertTransactionLedgerResponse) GetTransactionResponse() *ledger.Trans
 		return nil
 	}
 	return r.TransactionResponse
-}
-
-func (r *RevertTransactionLedgerResponse) GetHeaders() map[string][]string {
-	if r == nil {
-		return map[string][]string{}
-	}
-	return r.Headers
 }

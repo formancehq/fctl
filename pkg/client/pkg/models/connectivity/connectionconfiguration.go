@@ -53,47 +53,33 @@ func (e *Channel) UnmarshalJSON(data []byte) error {
 // configuration validation against a currently published release.
 // Once assigned, either value may be repeated but never changed or cleared.
 type ConnectionConfiguration struct {
-	// Published connector name. Required on create and immutable once set; omission on update preserves it.
-	Connector *string `json:"connector,omitempty"`
-	// Requested ConnectorVersion (e.g. `v1.4.2`). Exactly one of
-	// `version` and `channel`. The last applied release is reported in `status.appliedVersion`.
-	//
-	Version *string `json:"version,omitempty"`
 	// Maturity channel the service resolves to an exact release. Exactly
 	// one of `version` and `channel`. The last applied release is reported in `status.appliedVersion`.
 	//
 	Channel *Channel `json:"channel,omitempty"`
+	// Published connector name. Required on create and immutable once set; omission on update preserves it.
+	Connector *string `json:"connector,omitempty"`
+	// Environment variable name to literal value. Reference-backed entries are omitted from responses.
+	Env map[string]string `json:"env,omitempty"`
+	// Absolute mount path to literal file content. Reference-backed entries are omitted from responses.
+	Files map[string]string `json:"files,omitempty"`
+	// Opaque, connector-owned cursor to start ingestion from, base64
+	// encoded. Absent starts from the beginning.
+	//
+	InitialCursor *string `json:"initialCursor,omitempty"`
 	// Target ledger. Required on create and immutable once set. Omission
 	// on update preserves it; changing or clearing it returns `422 ledger_immutable`.
 	// An imported instance without a ledger may assign one after full validation.
 	//
 	Ledger *string `json:"ledger,omitempty"`
-	// Requests suspension of ingestion; observed suspension is recorded in status
-	Suspend *bool `json:"suspend,omitempty"`
-	// Opaque, connector-owned cursor to start ingestion from, base64
-	// encoded. Absent starts from the beginning.
-	//
-	InitialCursor *string `json:"initialCursor,omitempty"`
 	// Go duration string (e.g. `30s`). When absent, the service default applies.
 	PollInterval *string `json:"pollInterval,omitempty"`
-	// Environment variable name to literal value. Reference-backed entries are omitted from responses.
-	Env map[string]string `json:"env,omitempty"`
-	// Absolute mount path to literal file content. Reference-backed entries are omitted from responses.
-	Files map[string]string `json:"files,omitempty"`
-}
-
-func (c *ConnectionConfiguration) GetConnector() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Connector
-}
-
-func (c *ConnectionConfiguration) GetVersion() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Version
+	// Requests suspension of ingestion; observed suspension is recorded in status
+	Suspend *bool `json:"suspend,omitempty"`
+	// Requested ConnectorVersion (e.g. `v1.4.2`). Exactly one of
+	// `version` and `channel`. The last applied release is reported in `status.appliedVersion`.
+	//
+	Version *string `json:"version,omitempty"`
 }
 
 func (c *ConnectionConfiguration) GetChannel() *Channel {
@@ -103,32 +89,11 @@ func (c *ConnectionConfiguration) GetChannel() *Channel {
 	return c.Channel
 }
 
-func (c *ConnectionConfiguration) GetLedger() *string {
+func (c *ConnectionConfiguration) GetConnector() *string {
 	if c == nil {
 		return nil
 	}
-	return c.Ledger
-}
-
-func (c *ConnectionConfiguration) GetSuspend() *bool {
-	if c == nil {
-		return nil
-	}
-	return c.Suspend
-}
-
-func (c *ConnectionConfiguration) GetInitialCursor() *string {
-	if c == nil {
-		return nil
-	}
-	return c.InitialCursor
-}
-
-func (c *ConnectionConfiguration) GetPollInterval() *string {
-	if c == nil {
-		return nil
-	}
-	return c.PollInterval
+	return c.Connector
 }
 
 func (c *ConnectionConfiguration) GetEnv() map[string]string {
@@ -143,4 +108,39 @@ func (c *ConnectionConfiguration) GetFiles() map[string]string {
 		return nil
 	}
 	return c.Files
+}
+
+func (c *ConnectionConfiguration) GetInitialCursor() *string {
+	if c == nil {
+		return nil
+	}
+	return c.InitialCursor
+}
+
+func (c *ConnectionConfiguration) GetLedger() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Ledger
+}
+
+func (c *ConnectionConfiguration) GetPollInterval() *string {
+	if c == nil {
+		return nil
+	}
+	return c.PollInterval
+}
+
+func (c *ConnectionConfiguration) GetSuspend() *bool {
+	if c == nil {
+		return nil
+	}
+	return c.Suspend
+}
+
+func (c *ConnectionConfiguration) GetVersion() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Version
 }

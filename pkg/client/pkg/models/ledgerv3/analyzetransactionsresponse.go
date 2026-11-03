@@ -4,8 +4,8 @@ package ledgerv3
 
 type AnalyzeTransactionsResponseData struct {
 	FlowPatterns      []FlowPattern `json:"flowPatterns,omitempty"`
-	TotalTransactions *int64        `json:"totalTransactions,omitempty"`
 	TotalReverted     *int64        `json:"totalReverted,omitempty"`
+	TotalTransactions *int64        `json:"totalTransactions,omitempty"`
 }
 
 func (a *AnalyzeTransactionsResponseData) GetFlowPatterns() []FlowPattern {
@@ -15,18 +15,18 @@ func (a *AnalyzeTransactionsResponseData) GetFlowPatterns() []FlowPattern {
 	return a.FlowPatterns
 }
 
-func (a *AnalyzeTransactionsResponseData) GetTotalTransactions() *int64 {
-	if a == nil {
-		return nil
-	}
-	return a.TotalTransactions
-}
-
 func (a *AnalyzeTransactionsResponseData) GetTotalReverted() *int64 {
 	if a == nil {
 		return nil
 	}
 	return a.TotalReverted
+}
+
+func (a *AnalyzeTransactionsResponseData) GetTotalTransactions() *int64 {
+	if a == nil {
+		return nil
+	}
+	return a.TotalTransactions
 }
 
 type AnalyzeTransactionsResponse struct {

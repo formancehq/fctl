@@ -9,28 +9,28 @@ import (
 	"time"
 )
 
-type LedgerLogType string
+type Type string
 
 const (
-	LedgerLogTypeNewTransaction                LedgerLogType = "NEW_TRANSACTION"
-	LedgerLogTypeRevertedTransaction           LedgerLogType = "REVERTED_TRANSACTION"
-	LedgerLogTypeSetMetadata                   LedgerLogType = "SET_METADATA"
-	LedgerLogTypeDeleteMetadata                LedgerLogType = "DELETE_METADATA"
-	LedgerLogTypeSetMetadataFieldType          LedgerLogType = "SET_METADATA_FIELD_TYPE"
-	LedgerLogTypeRemovedMetadataFieldType      LedgerLogType = "REMOVED_METADATA_FIELD_TYPE"
-	LedgerLogTypeOrderSkipped                  LedgerLogType = "ORDER_SKIPPED"
-	LedgerLogTypeFillGap                       LedgerLogType = "FILL_GAP"
-	LedgerLogTypeCreateIndex                   LedgerLogType = "CREATE_INDEX"
-	LedgerLogTypeDropIndex                     LedgerLogType = "DROP_INDEX"
-	LedgerLogTypeAddedAccountType              LedgerLogType = "ADDED_ACCOUNT_TYPE"
-	LedgerLogTypeRemovedAccountType            LedgerLogType = "REMOVED_ACCOUNT_TYPE"
-	LedgerLogTypeUpdatedDefaultEnforcementMode LedgerLogType = "UPDATED_DEFAULT_ENFORCEMENT_MODE"
+	TypeNewTransaction                Type = "NEW_TRANSACTION"
+	TypeRevertedTransaction           Type = "REVERTED_TRANSACTION"
+	TypeSetMetadata                   Type = "SET_METADATA"
+	TypeDeleteMetadata                Type = "DELETE_METADATA"
+	TypeSetMetadataFieldType          Type = "SET_METADATA_FIELD_TYPE"
+	TypeRemovedMetadataFieldType      Type = "REMOVED_METADATA_FIELD_TYPE"
+	TypeOrderSkipped                  Type = "ORDER_SKIPPED"
+	TypeFillGap                       Type = "FILL_GAP"
+	TypeCreateIndex                   Type = "CREATE_INDEX"
+	TypeDropIndex                     Type = "DROP_INDEX"
+	TypeAddedAccountType              Type = "ADDED_ACCOUNT_TYPE"
+	TypeRemovedAccountType            Type = "REMOVED_ACCOUNT_TYPE"
+	TypeUpdatedDefaultEnforcementMode Type = "UPDATED_DEFAULT_ENFORCEMENT_MODE"
 )
 
-func (e LedgerLogType) ToPointer() *LedgerLogType {
+func (e Type) ToPointer() *Type {
 	return &e
 }
-func (e *LedgerLogType) UnmarshalJSON(data []byte) error {
+func (e *Type) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
@@ -61,10 +61,10 @@ func (e *LedgerLogType) UnmarshalJSON(data []byte) error {
 	case "REMOVED_ACCOUNT_TYPE":
 		fallthrough
 	case "UPDATED_DEFAULT_ENFORCEMENT_MODE":
-		*e = LedgerLogType(v)
+		*e = Type(v)
 		return nil
 	default:
-		return fmt.Errorf("invalid value for LedgerLogType: %v", v)
+		return fmt.Errorf("invalid value for Type: %v", v)
 	}
 }
 
@@ -75,7 +75,6 @@ func (e *LedgerLogType) UnmarshalJSON(data []byte) error {
 // the reversing transaction rather than the full original transaction.
 // This JSON projection is not an audit replay or backup format.
 type LedgerLog struct {
-	Type LedgerLogType `json:"type"`
 	// Direct operation payload selected by type. NEW_TRANSACTION contains
 	// transaction and optional accountMetadata. REVERTED_TRANSACTION
 	// contains revertedTransactionId and revertTransaction.
@@ -94,7 +93,8 @@ type LedgerLog struct {
 	Data map[string]any `json:"data"`
 	Date *time.Time     `json:"date,omitempty"`
 	// Ledger-local log ID; omitted when zero.
-	ID *int64 `json:"id,omitempty"`
+	ID   *int64 `json:"id,omitempty"`
+	Type Type   `json:"type"`
 }
 
 func (l LedgerLog) MarshalJSON() ([]byte, error) {
@@ -106,13 +106,6 @@ func (l *LedgerLog) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (l *LedgerLog) GetType() LedgerLogType {
-	if l == nil {
-		return LedgerLogType("")
-	}
-	return l.Type
 }
 
 func (l *LedgerLog) GetData() map[string]any {
@@ -134,4 +127,11 @@ func (l *LedgerLog) GetID() *int64 {
 		return nil
 	}
 	return l.ID
+}
+
+func (l *LedgerLog) GetType() Type {
+	if l == nil {
+		return Type("")
+	}
+	return l.Type
 }

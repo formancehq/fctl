@@ -19,11 +19,18 @@ func (u *UpdatePreparedQuerySecurity) GetBearerAuth() *string {
 }
 
 type UpdatePreparedQueryRequest struct {
+	UpdatePreparedQueryRequest ledgerv3.UpdatePreparedQueryRequest `request:"mediaType=application/json"`
 	// Name of the ledger
 	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 	// Prepared query name, URL-encoded as one path segment. Decoded exactly once.
-	QueryName                  string                              `pathParam:"style=simple,explode=false,name=queryName"`
-	UpdatePreparedQueryRequest ledgerv3.UpdatePreparedQueryRequest `request:"mediaType=application/json"`
+	QueryName string `pathParam:"style=simple,explode=false,name=queryName"`
+}
+
+func (u *UpdatePreparedQueryRequest) GetUpdatePreparedQueryRequest() ledgerv3.UpdatePreparedQueryRequest {
+	if u == nil {
+		return ledgerv3.UpdatePreparedQueryRequest{}
+	}
+	return u.UpdatePreparedQueryRequest
 }
 
 func (u *UpdatePreparedQueryRequest) GetLedgerName() string {
@@ -40,27 +47,20 @@ func (u *UpdatePreparedQueryRequest) GetQueryName() string {
 	return u.QueryName
 }
 
-func (u *UpdatePreparedQueryRequest) GetUpdatePreparedQueryRequest() ledgerv3.UpdatePreparedQueryRequest {
-	if u == nil {
-		return ledgerv3.UpdatePreparedQueryRequest{}
-	}
-	return u.UpdatePreparedQueryRequest
-}
-
 type UpdatePreparedQueryResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (u *UpdatePreparedQueryResponse) GetContentType() string {
@@ -68,6 +68,27 @@ func (u *UpdatePreparedQueryResponse) GetContentType() string {
 		return ""
 	}
 	return u.ContentType
+}
+
+func (u *UpdatePreparedQueryResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if u == nil {
+		return nil
+	}
+	return u.ErrorResponse
+}
+
+func (u *UpdatePreparedQueryResponse) GetForbidden() *string {
+	if u == nil {
+		return nil
+	}
+	return u.Forbidden
+}
+
+func (u *UpdatePreparedQueryResponse) GetHeaders() map[string][]string {
+	if u == nil {
+		return map[string][]string{}
+	}
+	return u.Headers
 }
 
 func (u *UpdatePreparedQueryResponse) GetStatusCode() int {
@@ -84,30 +105,9 @@ func (u *UpdatePreparedQueryResponse) GetRawResponse() *http.Response {
 	return u.RawResponse
 }
 
-func (u *UpdatePreparedQueryResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if u == nil {
-		return nil
-	}
-	return u.ErrorResponse
-}
-
 func (u *UpdatePreparedQueryResponse) GetUnauthorized() *string {
 	if u == nil {
 		return nil
 	}
 	return u.Unauthorized
-}
-
-func (u *UpdatePreparedQueryResponse) GetForbidden() *string {
-	if u == nil {
-		return nil
-	}
-	return u.Forbidden
-}
-
-func (u *UpdatePreparedQueryResponse) GetHeaders() map[string][]string {
-	if u == nil {
-		return map[string][]string{}
-	}
-	return u.Headers
 }

@@ -8,12 +8,12 @@ type V2SchemasCursor struct {
 	Data []V2Schema `json:"data"`
 	// Whether further pages are available
 	HasMore bool `json:"hasMore"`
-	// Cursor for the previous page, absent on the first page
-	Previous *string `json:"previous,omitempty"`
 	// Cursor for the next page, absent on the last page
 	Next *string `json:"next,omitempty"`
 	// Number of items requested per page
 	PageSize int64 `json:"pageSize"`
+	// Cursor for the previous page, absent on the first page
+	Previous *string `json:"previous,omitempty"`
 }
 
 func (v *V2SchemasCursor) GetData() []V2Schema {
@@ -30,13 +30,6 @@ func (v *V2SchemasCursor) GetHasMore() bool {
 	return v.HasMore
 }
 
-func (v *V2SchemasCursor) GetPrevious() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Previous
-}
-
 func (v *V2SchemasCursor) GetNext() *string {
 	if v == nil {
 		return nil
@@ -49,6 +42,13 @@ func (v *V2SchemasCursor) GetPageSize() int64 {
 		return 0
 	}
 	return v.PageSize
+}
+
+func (v *V2SchemasCursor) GetPrevious() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Previous
 }
 
 // #region class-body-v2schemascursor

@@ -9,45 +9,18 @@ import (
 	"time"
 )
 
-// Mode - Ledger mode, including the default NORMAL value
-type Mode string
+// LedgerInfoDefaultEnforcementMode - Default enforcement for unmatched accounts; defaults to STRICT
+type LedgerInfoDefaultEnforcementMode string
 
 const (
-	ModeNormal Mode = "NORMAL"
-	ModeMirror Mode = "MIRROR"
+	LedgerInfoDefaultEnforcementModeStrict LedgerInfoDefaultEnforcementMode = "STRICT"
+	LedgerInfoDefaultEnforcementModeAudit  LedgerInfoDefaultEnforcementMode = "AUDIT"
 )
 
-func (e Mode) ToPointer() *Mode {
+func (e LedgerInfoDefaultEnforcementMode) ToPointer() *LedgerInfoDefaultEnforcementMode {
 	return &e
 }
-func (e *Mode) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "NORMAL":
-		fallthrough
-	case "MIRROR":
-		*e = Mode(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for Mode: %v", v)
-	}
-}
-
-// DefaultEnforcementMode - Default enforcement for unmatched accounts; defaults to STRICT
-type DefaultEnforcementMode string
-
-const (
-	DefaultEnforcementModeStrict DefaultEnforcementMode = "STRICT"
-	DefaultEnforcementModeAudit  DefaultEnforcementMode = "AUDIT"
-)
-
-func (e DefaultEnforcementMode) ToPointer() *DefaultEnforcementMode {
-	return &e
-}
-func (e *DefaultEnforcementMode) UnmarshalJSON(data []byte) error {
+func (e *LedgerInfoDefaultEnforcementMode) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
@@ -56,31 +29,58 @@ func (e *DefaultEnforcementMode) UnmarshalJSON(data []byte) error {
 	case "STRICT":
 		fallthrough
 	case "AUDIT":
-		*e = DefaultEnforcementMode(v)
+		*e = LedgerInfoDefaultEnforcementMode(v)
 		return nil
 	default:
-		return fmt.Errorf("invalid value for DefaultEnforcementMode: %v", v)
+		return fmt.Errorf("invalid value for LedgerInfoDefaultEnforcementMode: %v", v)
+	}
+}
+
+// LedgerInfoMode - Ledger mode, including the default NORMAL value
+type LedgerInfoMode string
+
+const (
+	LedgerInfoModeNormal LedgerInfoMode = "NORMAL"
+	LedgerInfoModeMirror LedgerInfoMode = "MIRROR"
+)
+
+func (e LedgerInfoMode) ToPointer() *LedgerInfoMode {
+	return &e
+}
+func (e *LedgerInfoMode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "NORMAL":
+		fallthrough
+	case "MIRROR":
+		*e = LedgerInfoMode(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for LedgerInfoMode: %v", v)
 	}
 }
 
 type LedgerInfo struct {
-	// Name of the ledger
-	Name      string     `json:"name"`
-	CreatedAt *time.Time `json:"createdAt,omitempty"`
+	AccountTypes map[string]AccountTypeInfo `json:"accountTypes,omitempty"`
+	CreatedAt    *time.Time                 `json:"createdAt,omitempty"`
+	// Default enforcement for unmatched accounts; defaults to STRICT
+	DefaultEnforcementMode LedgerInfoDefaultEnforcementMode `json:"defaultEnforcementMode"`
 	// Soft deletion timestamp; omitted for active ledgers
 	DeletedAt *time.Time `json:"deletedAt,omitempty"`
 	// Enriched typed ledger metadata
 	Metadata       map[string]*MetadataValue `json:"metadata,omitempty"`
 	MetadataSchema *LedgerMetadataSchema     `json:"metadataSchema,omitempty"`
-	// Ledger mode, including the default NORMAL value
-	Mode Mode `json:"mode"`
 	// Detached credential-safe mirror configuration returned by ledger reads
 	MirrorSource *MirrorSourceRead `json:"mirrorSource,omitempty"`
 	// Sync progress for MIRROR ledgers (populated at read time)
-	MirrorSyncProgress *MirrorSyncProgress        `json:"mirrorSyncProgress,omitempty"`
-	AccountTypes       map[string]AccountTypeInfo `json:"accountTypes,omitempty"`
-	// Default enforcement for unmatched accounts; defaults to STRICT
-	DefaultEnforcementMode DefaultEnforcementMode `json:"defaultEnforcementMode"`
+	MirrorSyncProgress *MirrorSyncProgress `json:"mirrorSyncProgress,omitempty"`
+	// Ledger mode, including the default NORMAL value
+	Mode LedgerInfoMode `json:"mode"`
+	// Name of the ledger
+	Name string `json:"name"`
 }
 
 func (l LedgerInfo) MarshalJSON() ([]byte, error) {
@@ -94,11 +94,11 @@ func (l *LedgerInfo) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (l *LedgerInfo) GetName() string {
+func (l *LedgerInfo) GetAccountTypes() map[string]AccountTypeInfo {
 	if l == nil {
-		return ""
+		return nil
 	}
-	return l.Name
+	return l.AccountTypes
 }
 
 func (l *LedgerInfo) GetCreatedAt() *time.Time {
@@ -106,6 +106,13 @@ func (l *LedgerInfo) GetCreatedAt() *time.Time {
 		return nil
 	}
 	return l.CreatedAt
+}
+
+func (l *LedgerInfo) GetDefaultEnforcementMode() LedgerInfoDefaultEnforcementMode {
+	if l == nil {
+		return LedgerInfoDefaultEnforcementMode("")
+	}
+	return l.DefaultEnforcementMode
 }
 
 func (l *LedgerInfo) GetDeletedAt() *time.Time {
@@ -129,13 +136,6 @@ func (l *LedgerInfo) GetMetadataSchema() *LedgerMetadataSchema {
 	return l.MetadataSchema
 }
 
-func (l *LedgerInfo) GetMode() Mode {
-	if l == nil {
-		return Mode("")
-	}
-	return l.Mode
-}
-
 func (l *LedgerInfo) GetMirrorSource() *MirrorSourceRead {
 	if l == nil {
 		return nil
@@ -150,16 +150,16 @@ func (l *LedgerInfo) GetMirrorSyncProgress() *MirrorSyncProgress {
 	return l.MirrorSyncProgress
 }
 
-func (l *LedgerInfo) GetAccountTypes() map[string]AccountTypeInfo {
+func (l *LedgerInfo) GetMode() LedgerInfoMode {
 	if l == nil {
-		return nil
+		return LedgerInfoMode("")
 	}
-	return l.AccountTypes
+	return l.Mode
 }
 
-func (l *LedgerInfo) GetDefaultEnforcementMode() DefaultEnforcementMode {
+func (l *LedgerInfo) GetName() string {
 	if l == nil {
-		return DefaultEnforcementMode("")
+		return ""
 	}
-	return l.DefaultEnforcementMode
+	return l.Name
 }

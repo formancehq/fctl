@@ -11,14 +11,14 @@ import (
 // `until` is in the future the alert keeps failing and keeps counting
 // against period-green — only its notifications are suppressed.
 type Snooze struct {
-	// When the mute expires and notifications resume. Must be in the future
-	Until time.Time `json:"until"`
-	// Who snoozed the alert
-	By string `json:"by"`
 	// When the alert was snoozed
 	At time.Time `json:"at"`
+	// Who snoozed the alert
+	By string `json:"by"`
 	// Free-text note left by whoever snoozed the alert
 	Note *string `json:"note,omitempty"`
+	// When the mute expires and notifications resume. Must be in the future
+	Until time.Time `json:"until"`
 }
 
 func (s Snooze) MarshalJSON() ([]byte, error) {
@@ -32,11 +32,11 @@ func (s *Snooze) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (s *Snooze) GetUntil() time.Time {
+func (s *Snooze) GetAt() time.Time {
 	if s == nil {
 		return time.Time{}
 	}
-	return s.Until
+	return s.At
 }
 
 func (s *Snooze) GetBy() string {
@@ -46,16 +46,16 @@ func (s *Snooze) GetBy() string {
 	return s.By
 }
 
-func (s *Snooze) GetAt() time.Time {
-	if s == nil {
-		return time.Time{}
-	}
-	return s.At
-}
-
 func (s *Snooze) GetNote() *string {
 	if s == nil {
 		return nil
 	}
 	return s.Note
+}
+
+func (s *Snooze) GetUntil() time.Time {
+	if s == nil {
+		return time.Time{}
+	}
+	return s.Until
 }

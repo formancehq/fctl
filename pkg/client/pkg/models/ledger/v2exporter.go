@@ -8,12 +8,12 @@ import (
 )
 
 type V2Exporter struct {
-	// Name of the exporter driver to use
-	Driver string `json:"driver"`
 	// Driver-specific configuration for the exporter
 	Config    map[string]any `json:"config"`
-	ID        string         `json:"id"`
 	CreatedAt time.Time      `json:"createdAt"`
+	// Name of the exporter driver to use
+	Driver string `json:"driver"`
+	ID     string `json:"id"`
 }
 
 func (v V2Exporter) MarshalJSON() ([]byte, error) {
@@ -27,13 +27,6 @@ func (v *V2Exporter) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2Exporter) GetDriver() string {
-	if v == nil {
-		return ""
-	}
-	return v.Driver
-}
-
 func (v *V2Exporter) GetConfig() map[string]any {
 	if v == nil {
 		return map[string]any{}
@@ -41,18 +34,25 @@ func (v *V2Exporter) GetConfig() map[string]any {
 	return v.Config
 }
 
-func (v *V2Exporter) GetID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ID
-}
-
 func (v *V2Exporter) GetCreatedAt() time.Time {
 	if v == nil {
 		return time.Time{}
 	}
 	return v.CreatedAt
+}
+
+func (v *V2Exporter) GetDriver() string {
+	if v == nil {
+		return ""
+	}
+	return v.Driver
+}
+
+func (v *V2Exporter) GetID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ID
 }
 
 // #region class-body-v2exporter

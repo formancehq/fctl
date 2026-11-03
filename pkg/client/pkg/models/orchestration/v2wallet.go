@@ -8,16 +8,16 @@ import (
 )
 
 type V2Wallet struct {
+	// When the wallet was created
+	CreatedAt time.Time `json:"createdAt"`
 	// The unique ID of the wallet.
 	ID string `json:"id"`
+	// Name of the ledger backing this wallet
+	Ledger string `json:"ledger"`
 	// Metadata associated with the wallet.
 	Metadata map[string]string `json:"metadata"`
 	// Human-readable name of the wallet
 	Name string `json:"name"`
-	// When the wallet was created
-	CreatedAt time.Time `json:"createdAt"`
-	// Name of the ledger backing this wallet
-	Ledger string `json:"ledger"`
 }
 
 func (v V2Wallet) MarshalJSON() ([]byte, error) {
@@ -31,11 +31,25 @@ func (v *V2Wallet) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (v *V2Wallet) GetCreatedAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.CreatedAt
+}
+
 func (v *V2Wallet) GetID() string {
 	if v == nil {
 		return ""
 	}
 	return v.ID
+}
+
+func (v *V2Wallet) GetLedger() string {
+	if v == nil {
+		return ""
+	}
+	return v.Ledger
 }
 
 func (v *V2Wallet) GetMetadata() map[string]string {
@@ -50,20 +64,6 @@ func (v *V2Wallet) GetName() string {
 		return ""
 	}
 	return v.Name
-}
-
-func (v *V2Wallet) GetCreatedAt() time.Time {
-	if v == nil {
-		return time.Time{}
-	}
-	return v.CreatedAt
-}
-
-func (v *V2Wallet) GetLedger() string {
-	if v == nil {
-		return ""
-	}
-	return v.Ledger
 }
 
 // #region class-body-v2wallet

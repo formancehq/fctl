@@ -3,30 +3,16 @@
 package ledgerv3
 
 type ServerInfo struct {
-	// Server release version
-	Version string `json:"version"`
-	// Git commit the binary was built from
-	Commit string `json:"commit"`
 	// Build timestamp (RFC3339, "unknown" if unset)
 	BuildDate string `json:"buildDate"`
+	// Git commit the binary was built from
+	Commit string `json:"commit"`
 	// Go runtime version the binary was built with
 	GoVersion string `json:"goVersion"`
 	// Required ledger-protocol-version metadata on Ledger gRPC business RPCs; independent of the release version
 	ProtocolVersion string `json:"protocolVersion"`
-}
-
-func (s *ServerInfo) GetVersion() string {
-	if s == nil {
-		return ""
-	}
-	return s.Version
-}
-
-func (s *ServerInfo) GetCommit() string {
-	if s == nil {
-		return ""
-	}
-	return s.Commit
+	// Server release version
+	Version string `json:"version"`
 }
 
 func (s *ServerInfo) GetBuildDate() string {
@@ -34,6 +20,13 @@ func (s *ServerInfo) GetBuildDate() string {
 		return ""
 	}
 	return s.BuildDate
+}
+
+func (s *ServerInfo) GetCommit() string {
+	if s == nil {
+		return ""
+	}
+	return s.Commit
 }
 
 func (s *ServerInfo) GetGoVersion() string {
@@ -48,4 +41,11 @@ func (s *ServerInfo) GetProtocolVersion() string {
 		return ""
 	}
 	return s.ProtocolVersion
+}
+
+func (s *ServerInfo) GetVersion() string {
+	if s == nil {
+		return ""
+	}
+	return s.Version
 }

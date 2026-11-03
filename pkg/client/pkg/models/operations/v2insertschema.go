@@ -8,27 +8,13 @@ import (
 )
 
 type V2InsertSchemaRequest struct {
+	// Use an idempotency key
+	IdempotencyKey *string             `header:"style=simple,explode=false,name=Idempotency-Key"`
+	V2SchemaData   ledger.V2SchemaData `request:"mediaType=application/json"`
 	// Name of the ledger.
 	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 	// Schema version.
 	Version string `pathParam:"style=simple,explode=false,name=version"`
-	// Use an idempotency key
-	IdempotencyKey *string             `header:"style=simple,explode=false,name=Idempotency-Key"`
-	V2SchemaData   ledger.V2SchemaData `request:"mediaType=application/json"`
-}
-
-func (v *V2InsertSchemaRequest) GetLedger() string {
-	if v == nil {
-		return ""
-	}
-	return v.Ledger
-}
-
-func (v *V2InsertSchemaRequest) GetVersion() string {
-	if v == nil {
-		return ""
-	}
-	return v.Version
 }
 
 func (v *V2InsertSchemaRequest) GetIdempotencyKey() *string {
@@ -45,17 +31,31 @@ func (v *V2InsertSchemaRequest) GetV2SchemaData() ledger.V2SchemaData {
 	return v.V2SchemaData
 }
 
+func (v *V2InsertSchemaRequest) GetLedger() string {
+	if v == nil {
+		return ""
+	}
+	return v.Ledger
+}
+
+func (v *V2InsertSchemaRequest) GetVersion() string {
+	if v == nil {
+		return ""
+	}
+	return v.Version
+}
+
 // #region class-body-v2insertschemarequest
 // #endregion class-body-v2insertschemarequest
 
 type V2InsertSchemaResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	Headers     map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	Headers     map[string][]string
 }
 
 func (v *V2InsertSchemaResponse) GetContentType() string {
@@ -63,6 +63,13 @@ func (v *V2InsertSchemaResponse) GetContentType() string {
 		return ""
 	}
 	return v.ContentType
+}
+
+func (v *V2InsertSchemaResponse) GetHeaders() map[string][]string {
+	if v == nil {
+		return map[string][]string{}
+	}
+	return v.Headers
 }
 
 func (v *V2InsertSchemaResponse) GetStatusCode() int {
@@ -77,13 +84,6 @@ func (v *V2InsertSchemaResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return v.RawResponse
-}
-
-func (v *V2InsertSchemaResponse) GetHeaders() map[string][]string {
-	if v == nil {
-		return map[string][]string{}
-	}
-	return v.Headers
 }
 
 // #region class-body-v2insertschemaresponse

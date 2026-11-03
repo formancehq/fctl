@@ -22,12 +22,12 @@ func (l *ListTriggersOccurrencesRequest) GetTriggerID() string {
 type ListTriggersOccurrencesResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// List of triggers occurrences
+	ListTriggersOccurrencesResponse *orchestration.ListTriggersOccurrencesResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// List of triggers occurrences
-	ListTriggersOccurrencesResponse *orchestration.ListTriggersOccurrencesResponse
 }
 
 func (l *ListTriggersOccurrencesResponse) GetContentType() string {
@@ -35,6 +35,13 @@ func (l *ListTriggersOccurrencesResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListTriggersOccurrencesResponse) GetListTriggersOccurrencesResponse() *orchestration.ListTriggersOccurrencesResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ListTriggersOccurrencesResponse
 }
 
 func (l *ListTriggersOccurrencesResponse) GetStatusCode() int {
@@ -49,11 +56,4 @@ func (l *ListTriggersOccurrencesResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return l.RawResponse
-}
-
-func (l *ListTriggersOccurrencesResponse) GetListTriggersOccurrencesResponse() *orchestration.ListTriggersOccurrencesResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ListTriggersOccurrencesResponse
 }

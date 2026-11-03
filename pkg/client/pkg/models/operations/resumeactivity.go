@@ -10,10 +10,10 @@ import (
 )
 
 type ResumeActivityRequestBody struct {
-	// Expected Temporal run id from the paused activity projection
-	TemporalRunID string `json:"temporalRunID"`
 	// Nonzero RFC3339 timestamp from the paused activity projection identifying the pause generation
 	PausedAt time.Time `json:"pausedAt"`
+	// Expected Temporal run id from the paused activity projection
+	TemporalRunID string `json:"temporalRunID"`
 }
 
 func (r ResumeActivityRequestBody) MarshalJSON() ([]byte, error) {
@@ -27,13 +27,6 @@ func (r *ResumeActivityRequestBody) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (r *ResumeActivityRequestBody) GetTemporalRunID() string {
-	if r == nil {
-		return ""
-	}
-	return r.TemporalRunID
-}
-
 func (r *ResumeActivityRequestBody) GetPausedAt() time.Time {
 	if r == nil {
 		return time.Time{}
@@ -41,14 +34,35 @@ func (r *ResumeActivityRequestBody) GetPausedAt() time.Time {
 	return r.PausedAt
 }
 
+func (r *ResumeActivityRequestBody) GetTemporalRunID() string {
+	if r == nil {
+		return ""
+	}
+	return r.TemporalRunID
+}
+
 type ResumeActivityRequest struct {
+	RequestBody ResumeActivityRequestBody `request:"mediaType=application/json"`
+	// The paused activity id
+	ActivityID string `pathParam:"style=simple,explode=false,name=activityID"`
 	// The instance id
 	InstanceID string `pathParam:"style=simple,explode=false,name=instanceID"`
 	// The nonnegative stage number
 	Number int64 `pathParam:"style=simple,explode=false,name=number"`
-	// The paused activity id
-	ActivityID  string                    `pathParam:"style=simple,explode=false,name=activityID"`
-	RequestBody ResumeActivityRequestBody `request:"mediaType=application/json"`
+}
+
+func (r *ResumeActivityRequest) GetRequestBody() ResumeActivityRequestBody {
+	if r == nil {
+		return ResumeActivityRequestBody{}
+	}
+	return r.RequestBody
+}
+
+func (r *ResumeActivityRequest) GetActivityID() string {
+	if r == nil {
+		return ""
+	}
+	return r.ActivityID
 }
 
 func (r *ResumeActivityRequest) GetInstanceID() string {
@@ -65,29 +79,15 @@ func (r *ResumeActivityRequest) GetNumber() int64 {
 	return r.Number
 }
 
-func (r *ResumeActivityRequest) GetActivityID() string {
-	if r == nil {
-		return ""
-	}
-	return r.ActivityID
-}
-
-func (r *ResumeActivityRequest) GetRequestBody() ResumeActivityRequestBody {
-	if r == nil {
-		return ResumeActivityRequestBody{}
-	}
-	return r.RequestBody
-}
-
 type ResumeActivityResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// General error
+	Error *orchestration.Error
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// General error
-	Error *orchestration.Error
 }
 
 func (r *ResumeActivityResponse) GetContentType() string {
@@ -95,6 +95,13 @@ func (r *ResumeActivityResponse) GetContentType() string {
 		return ""
 	}
 	return r.ContentType
+}
+
+func (r *ResumeActivityResponse) GetError() *orchestration.Error {
+	if r == nil {
+		return nil
+	}
+	return r.Error
 }
 
 func (r *ResumeActivityResponse) GetStatusCode() int {
@@ -109,11 +116,4 @@ func (r *ResumeActivityResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return r.RawResponse
-}
-
-func (r *ResumeActivityResponse) GetError() *orchestration.Error {
-	if r == nil {
-		return nil
-	}
-	return r.Error
 }

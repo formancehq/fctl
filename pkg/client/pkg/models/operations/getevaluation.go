@@ -22,12 +22,12 @@ func (g *GetEvaluationRequest) GetEvaluationID() string {
 type GetEvaluationResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	EvaluationResponse *reconciliation.EvaluationResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	EvaluationResponse *reconciliation.EvaluationResponse
 }
 
 func (g *GetEvaluationResponse) GetContentType() string {
@@ -35,6 +35,13 @@ func (g *GetEvaluationResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetEvaluationResponse) GetEvaluationResponse() *reconciliation.EvaluationResponse {
+	if g == nil {
+		return nil
+	}
+	return g.EvaluationResponse
 }
 
 func (g *GetEvaluationResponse) GetStatusCode() int {
@@ -49,11 +56,4 @@ func (g *GetEvaluationResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetEvaluationResponse) GetEvaluationResponse() *reconciliation.EvaluationResponse {
-	if g == nil {
-		return nil
-	}
-	return g.EvaluationResponse
 }

@@ -21,12 +21,12 @@ func (g *GetWalletSummaryRequest) GetID() string {
 type GetWalletSummaryResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Wallet summary
+	GetWalletSummaryResponse *wallets.GetWalletSummaryResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Wallet summary
-	GetWalletSummaryResponse *wallets.GetWalletSummaryResponse
 }
 
 func (g *GetWalletSummaryResponse) GetContentType() string {
@@ -34,6 +34,13 @@ func (g *GetWalletSummaryResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetWalletSummaryResponse) GetGetWalletSummaryResponse() *wallets.GetWalletSummaryResponse {
+	if g == nil {
+		return nil
+	}
+	return g.GetWalletSummaryResponse
 }
 
 func (g *GetWalletSummaryResponse) GetStatusCode() int {
@@ -48,11 +55,4 @@ func (g *GetWalletSummaryResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetWalletSummaryResponse) GetGetWalletSummaryResponse() *wallets.GetWalletSummaryResponse {
-	if g == nil {
-		return nil
-	}
-	return g.GetWalletSummaryResponse
 }

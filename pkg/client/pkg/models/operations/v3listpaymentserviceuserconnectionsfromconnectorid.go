@@ -8,23 +8,23 @@ import (
 )
 
 type V3ListPaymentServiceUserConnectionsFromConnectorIDRequest struct {
-	// The payment service user ID
-	PaymentServiceUserID string `pathParam:"style=simple,explode=false,name=paymentServiceUserID"`
+	RequestBody map[string]any `request:"mediaType=application/json"`
 	// The connector ID
 	ConnectorID string `pathParam:"style=simple,explode=false,name=connectorID"`
-	// The number of items to return
-	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
 	// Parameter used in pagination requests. Set to the value of next for the next page of results. Set to the value of previous for the previous page of results. No other parameters can be set when this parameter is set.
 	//
-	Cursor      *string        `queryParam:"style=form,explode=true,name=cursor"`
-	RequestBody map[string]any `request:"mediaType=application/json"`
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// The number of items to return
+	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
+	// The payment service user ID
+	PaymentServiceUserID string `pathParam:"style=simple,explode=false,name=paymentServiceUserID"`
 }
 
-func (v *V3ListPaymentServiceUserConnectionsFromConnectorIDRequest) GetPaymentServiceUserID() string {
+func (v *V3ListPaymentServiceUserConnectionsFromConnectorIDRequest) GetRequestBody() map[string]any {
 	if v == nil {
-		return ""
+		return nil
 	}
-	return v.PaymentServiceUserID
+	return v.RequestBody
 }
 
 func (v *V3ListPaymentServiceUserConnectionsFromConnectorIDRequest) GetConnectorID() string {
@@ -34,13 +34,6 @@ func (v *V3ListPaymentServiceUserConnectionsFromConnectorIDRequest) GetConnector
 	return v.ConnectorID
 }
 
-func (v *V3ListPaymentServiceUserConnectionsFromConnectorIDRequest) GetPageSize() *int64 {
-	if v == nil {
-		return nil
-	}
-	return v.PageSize
-}
-
 func (v *V3ListPaymentServiceUserConnectionsFromConnectorIDRequest) GetCursor() *string {
 	if v == nil {
 		return nil
@@ -48,11 +41,18 @@ func (v *V3ListPaymentServiceUserConnectionsFromConnectorIDRequest) GetCursor() 
 	return v.Cursor
 }
 
-func (v *V3ListPaymentServiceUserConnectionsFromConnectorIDRequest) GetRequestBody() map[string]any {
+func (v *V3ListPaymentServiceUserConnectionsFromConnectorIDRequest) GetPageSize() *int64 {
 	if v == nil {
 		return nil
 	}
-	return v.RequestBody
+	return v.PageSize
+}
+
+func (v *V3ListPaymentServiceUserConnectionsFromConnectorIDRequest) GetPaymentServiceUserID() string {
+	if v == nil {
+		return ""
+	}
+	return v.PaymentServiceUserID
 }
 
 // #region class-body-v3listpaymentserviceuserconnectionsfromconnectoridrequest

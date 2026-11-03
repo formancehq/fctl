@@ -3,59 +3,24 @@
 package ledgerv3
 
 type LedgerStats struct {
-	// Number of transactions in the ledger
-	TransactionCount int64 `json:"transactionCount"`
-	// Number of persisted (account, asset, color) volume rows
-	VolumeCount int64 `json:"volumeCount"`
-	// Number of transaction references registered in the ledger
-	ReferenceCount int64 `json:"referenceCount"`
-	// Total number of postings across all transactions
-	PostingCount int64 `json:"postingCount"`
-	// Number of log entries in the ledger
-	LogCount int64 `json:"logCount"`
 	// Number of ephemeral/draining volumes evicted from storage at commit
 	EphemeralEvictedCount int64 `json:"ephemeralEvictedCount"`
-	// Number of transient volumes used across proposals
-	TransientUsedCount int64 `json:"transientUsedCount"`
-	// Number of reverted transactions in the ledger
-	RevertCount int64 `json:"revertCount"`
+	// Number of log entries in the ledger
+	LogCount int64 `json:"logCount"`
 	// Number of Numscript executions in the ledger
 	NumscriptExecutionCount int64 `json:"numscriptExecutionCount"`
-}
-
-func (l *LedgerStats) GetTransactionCount() int64 {
-	if l == nil {
-		return 0
-	}
-	return l.TransactionCount
-}
-
-func (l *LedgerStats) GetVolumeCount() int64 {
-	if l == nil {
-		return 0
-	}
-	return l.VolumeCount
-}
-
-func (l *LedgerStats) GetReferenceCount() int64 {
-	if l == nil {
-		return 0
-	}
-	return l.ReferenceCount
-}
-
-func (l *LedgerStats) GetPostingCount() int64 {
-	if l == nil {
-		return 0
-	}
-	return l.PostingCount
-}
-
-func (l *LedgerStats) GetLogCount() int64 {
-	if l == nil {
-		return 0
-	}
-	return l.LogCount
+	// Total number of postings across all transactions
+	PostingCount int64 `json:"postingCount"`
+	// Number of transaction references registered in the ledger
+	ReferenceCount int64 `json:"referenceCount"`
+	// Number of reverted transactions in the ledger
+	RevertCount int64 `json:"revertCount"`
+	// Number of transactions in the ledger
+	TransactionCount int64 `json:"transactionCount"`
+	// Number of transient volumes used across proposals
+	TransientUsedCount int64 `json:"transientUsedCount"`
+	// Number of persisted (account, asset, color) volume rows
+	VolumeCount int64 `json:"volumeCount"`
 }
 
 func (l *LedgerStats) GetEphemeralEvictedCount() int64 {
@@ -65,11 +30,32 @@ func (l *LedgerStats) GetEphemeralEvictedCount() int64 {
 	return l.EphemeralEvictedCount
 }
 
-func (l *LedgerStats) GetTransientUsedCount() int64 {
+func (l *LedgerStats) GetLogCount() int64 {
 	if l == nil {
 		return 0
 	}
-	return l.TransientUsedCount
+	return l.LogCount
+}
+
+func (l *LedgerStats) GetNumscriptExecutionCount() int64 {
+	if l == nil {
+		return 0
+	}
+	return l.NumscriptExecutionCount
+}
+
+func (l *LedgerStats) GetPostingCount() int64 {
+	if l == nil {
+		return 0
+	}
+	return l.PostingCount
+}
+
+func (l *LedgerStats) GetReferenceCount() int64 {
+	if l == nil {
+		return 0
+	}
+	return l.ReferenceCount
 }
 
 func (l *LedgerStats) GetRevertCount() int64 {
@@ -79,9 +65,23 @@ func (l *LedgerStats) GetRevertCount() int64 {
 	return l.RevertCount
 }
 
-func (l *LedgerStats) GetNumscriptExecutionCount() int64 {
+func (l *LedgerStats) GetTransactionCount() int64 {
 	if l == nil {
 		return 0
 	}
-	return l.NumscriptExecutionCount
+	return l.TransactionCount
+}
+
+func (l *LedgerStats) GetTransientUsedCount() int64 {
+	if l == nil {
+		return 0
+	}
+	return l.TransientUsedCount
+}
+
+func (l *LedgerStats) GetVolumeCount() int64 {
+	if l == nil {
+		return 0
+	}
+	return l.VolumeCount
 }

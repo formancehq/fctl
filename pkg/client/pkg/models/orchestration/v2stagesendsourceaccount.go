@@ -8,6 +8,12 @@ import (
 
 // V2StageSendSourceAccount - Take the funds from a ledger account
 type V2StageSendSourceAccount struct {
+	// Enables unbounded overdraft on the throughAccount when set to true.
+	// This is useful when the throughAccount represents a liability or bridge account
+	// that needs to go negative (e.g., "liabilities:payouts-pending").
+	// Only applies when throughAccount is not "world" (which already has unbounded overdraft).
+	//
+	AllowOverdraft *bool `default:"false" json:"allowOverdraft"`
 	// Address of the ledger account to take funds from
 	ID string `json:"id"`
 	// Name of the ledger holding the account
@@ -18,12 +24,6 @@ type V2StageSendSourceAccount struct {
 	// - For cross-ledger transfers: replaces "world" on both sides
 	//
 	ThroughAccount *string `default:"world" json:"throughAccount"`
-	// Enables unbounded overdraft on the throughAccount when set to true.
-	// This is useful when the throughAccount represents a liability or bridge account
-	// that needs to go negative (e.g., "liabilities:payouts-pending").
-	// Only applies when throughAccount is not "world" (which already has unbounded overdraft).
-	//
-	AllowOverdraft *bool `default:"false" json:"allowOverdraft"`
 }
 
 func (v V2StageSendSourceAccount) MarshalJSON() ([]byte, error) {
@@ -35,6 +35,13 @@ func (v *V2StageSendSourceAccount) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V2StageSendSourceAccount) GetAllowOverdraft() *bool {
+	if v == nil {
+		return nil
+	}
+	return v.AllowOverdraft
 }
 
 func (v *V2StageSendSourceAccount) GetID() string {
@@ -56,13 +63,6 @@ func (v *V2StageSendSourceAccount) GetThroughAccount() *string {
 		return nil
 	}
 	return v.ThroughAccount
-}
-
-func (v *V2StageSendSourceAccount) GetAllowOverdraft() *bool {
-	if v == nil {
-		return nil
-	}
-	return v.AllowOverdraft
 }
 
 // #region class-body-v2stagesendsourceaccount

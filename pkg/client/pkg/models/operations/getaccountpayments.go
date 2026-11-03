@@ -20,14 +20,21 @@ func (g *GetAccountPaymentsRequest) GetAccountID() string {
 }
 
 type GetAccountPaymentsResponse struct {
+	// OK
+	AccountResponse *payments.AccountResponse
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	AccountResponse *payments.AccountResponse
+}
+
+func (g *GetAccountPaymentsResponse) GetAccountResponse() *payments.AccountResponse {
+	if g == nil {
+		return nil
+	}
+	return g.AccountResponse
 }
 
 func (g *GetAccountPaymentsResponse) GetContentType() string {
@@ -49,11 +56,4 @@ func (g *GetAccountPaymentsResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetAccountPaymentsResponse) GetAccountResponse() *payments.AccountResponse {
-	if g == nil {
-		return nil
-	}
-	return g.AccountResponse
 }

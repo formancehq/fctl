@@ -7,18 +7,18 @@ import (
 )
 
 type StripeConfig struct {
-	// Human-readable name identifying this connector instance
-	Name string `json:"name"`
-	// Identifies the payment provider this configuration targets
-	Provider *string `default:"Stripe" json:"provider"`
-	// The frequency at which the connector will try to fetch new BalanceTransaction objects from Stripe API.
-	//
-	PollingPeriod *string `default:"30m" json:"pollingPeriod"`
 	// API key issued by Stripe, used to authenticate the connector's requests
 	APIKey string `json:"apiKey"`
+	// Human-readable name identifying this connector instance
+	Name string `json:"name"`
 	// Number of BalanceTransaction to fetch at each polling interval.
 	//
 	PageSize *int64 `default:"100" json:"pageSize"`
+	// The frequency at which the connector will try to fetch new BalanceTransaction objects from Stripe API.
+	//
+	PollingPeriod *string `default:"30m" json:"pollingPeriod"`
+	// Identifies the payment provider this configuration targets
+	Provider *string `default:"Stripe" json:"provider"`
 }
 
 func (s StripeConfig) MarshalJSON() ([]byte, error) {
@@ -26,31 +26,10 @@ func (s StripeConfig) MarshalJSON() ([]byte, error) {
 }
 
 func (s *StripeConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &s, "", false, []string{"name", "apiKey"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &s, "", false, []string{"apiKey", "name"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (s *StripeConfig) GetName() string {
-	if s == nil {
-		return ""
-	}
-	return s.Name
-}
-
-func (s *StripeConfig) GetProvider() *string {
-	if s == nil {
-		return nil
-	}
-	return s.Provider
-}
-
-func (s *StripeConfig) GetPollingPeriod() *string {
-	if s == nil {
-		return nil
-	}
-	return s.PollingPeriod
 }
 
 func (s *StripeConfig) GetAPIKey() string {
@@ -60,9 +39,30 @@ func (s *StripeConfig) GetAPIKey() string {
 	return s.APIKey
 }
 
+func (s *StripeConfig) GetName() string {
+	if s == nil {
+		return ""
+	}
+	return s.Name
+}
+
 func (s *StripeConfig) GetPageSize() *int64 {
 	if s == nil {
 		return nil
 	}
 	return s.PageSize
+}
+
+func (s *StripeConfig) GetPollingPeriod() *string {
+	if s == nil {
+		return nil
+	}
+	return s.PollingPeriod
+}
+
+func (s *StripeConfig) GetProvider() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Provider
 }

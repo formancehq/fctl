@@ -8,22 +8,22 @@ import (
 )
 
 type Transaction struct {
-	// Name of the ledger the transaction was recorded in
-	Ledger *string `json:"ledger,omitempty"`
-	// The transaction time: when the transaction is considered to have occurred. See [bi- temporality](https://docs.formance.com/modules/ledger/working-with/bi-temporality)
-	Timestamp time.Time `json:"timestamp"`
-	// The fund movements making up the transaction
-	Postings []Posting `json:"postings"`
-	// Optional caller-supplied identifier, unique within the ledger, used to deduplicate transactions
-	Reference *string `json:"reference,omitempty"`
-	// Metadata associated with the wallet.
-	Metadata map[string]string `json:"metadata"`
 	// Unique sequential identifier for this transaction within the ledger
 	ID int64 `json:"id"`
-	// Volumes aggregated per account and per asset
-	PreCommitVolumes map[string]map[string]Volume `json:"preCommitVolumes,omitempty"`
+	// Name of the ledger the transaction was recorded in
+	Ledger *string `json:"ledger,omitempty"`
+	// Metadata associated with the wallet.
+	Metadata map[string]string `json:"metadata"`
 	// Volumes aggregated per account and per asset
 	PostCommitVolumes map[string]map[string]Volume `json:"postCommitVolumes,omitempty"`
+	// The fund movements making up the transaction
+	Postings []Posting `json:"postings"`
+	// Volumes aggregated per account and per asset
+	PreCommitVolumes map[string]map[string]Volume `json:"preCommitVolumes,omitempty"`
+	// Optional caller-supplied identifier, unique within the ledger, used to deduplicate transactions
+	Reference *string `json:"reference,omitempty"`
+	// The transaction time: when the transaction is considered to have occurred. See [bi- temporality](https://docs.formance.com/modules/ledger/working-with/bi-temporality)
+	Timestamp time.Time `json:"timestamp"`
 }
 
 func (t Transaction) MarshalJSON() ([]byte, error) {
@@ -37,32 +37,18 @@ func (t *Transaction) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (t *Transaction) GetID() int64 {
+	if t == nil {
+		return 0
+	}
+	return t.ID
+}
+
 func (t *Transaction) GetLedger() *string {
 	if t == nil {
 		return nil
 	}
 	return t.Ledger
-}
-
-func (t *Transaction) GetTimestamp() time.Time {
-	if t == nil {
-		return time.Time{}
-	}
-	return t.Timestamp
-}
-
-func (t *Transaction) GetPostings() []Posting {
-	if t == nil {
-		return []Posting{}
-	}
-	return t.Postings
-}
-
-func (t *Transaction) GetReference() *string {
-	if t == nil {
-		return nil
-	}
-	return t.Reference
 }
 
 func (t *Transaction) GetMetadata() map[string]string {
@@ -72,11 +58,18 @@ func (t *Transaction) GetMetadata() map[string]string {
 	return t.Metadata
 }
 
-func (t *Transaction) GetID() int64 {
+func (t *Transaction) GetPostCommitVolumes() map[string]map[string]Volume {
 	if t == nil {
-		return 0
+		return nil
 	}
-	return t.ID
+	return t.PostCommitVolumes
+}
+
+func (t *Transaction) GetPostings() []Posting {
+	if t == nil {
+		return []Posting{}
+	}
+	return t.Postings
 }
 
 func (t *Transaction) GetPreCommitVolumes() map[string]map[string]Volume {
@@ -86,9 +79,16 @@ func (t *Transaction) GetPreCommitVolumes() map[string]map[string]Volume {
 	return t.PreCommitVolumes
 }
 
-func (t *Transaction) GetPostCommitVolumes() map[string]map[string]Volume {
+func (t *Transaction) GetReference() *string {
 	if t == nil {
 		return nil
 	}
-	return t.PostCommitVolumes
+	return t.Reference
+}
+
+func (t *Transaction) GetTimestamp() time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return t.Timestamp
 }

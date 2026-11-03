@@ -32,14 +32,21 @@ func (r *ReadConnectorConfigV1Request) GetConnectorID() string {
 // #endregion class-body-readconnectorconfigv1request
 
 type ReadConnectorConfigV1Response struct {
+	// OK
+	ConnectorConfigResponse *payments.ConnectorConfigResponse
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	ConnectorConfigResponse *payments.ConnectorConfigResponse
+}
+
+func (r *ReadConnectorConfigV1Response) GetConnectorConfigResponse() *payments.ConnectorConfigResponse {
+	if r == nil {
+		return nil
+	}
+	return r.ConnectorConfigResponse
 }
 
 func (r *ReadConnectorConfigV1Response) GetContentType() string {
@@ -61,13 +68,6 @@ func (r *ReadConnectorConfigV1Response) GetRawResponse() *http.Response {
 		return nil
 	}
 	return r.RawResponse
-}
-
-func (r *ReadConnectorConfigV1Response) GetConnectorConfigResponse() *payments.ConnectorConfigResponse {
-	if r == nil {
-		return nil
-	}
-	return r.ConnectorConfigResponse
 }
 
 // #region class-body-readconnectorconfigv1response

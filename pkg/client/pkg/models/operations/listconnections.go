@@ -20,6 +20,10 @@ func (l *ListConnectionsSecurity) GetBearerAuth() *string {
 }
 
 type ListConnectionsRequest struct {
+	// Opaque cursor from a previous response's `cursor.next`
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// Page size (1-100, default 15)
+	PageSize *int `default:"15" queryParam:"style=form,explode=true,name=pageSize"`
 	// JSON-encoded filter in the go-libs query dialect: boolean nodes
 	// `$and`/`$or`/`$not` over leaves `$match`/`$in`/`$exists`/`$like`/
 	// `$gt`/`$gte`/`$lt`/`$lte`, each leaf `{"$op": {"key": value}}`.
@@ -34,10 +38,6 @@ type ListConnectionsRequest struct {
 	// `/connections` accepts `{"$match":{"connector":"bitcoin"}}`.
 	//
 	Query *string `queryParam:"style=form,explode=true,name=query"`
-	// Page size (1-100, default 15)
-	PageSize *int `default:"15" queryParam:"style=form,explode=true,name=pageSize"`
-	// Opaque cursor from a previous response's `cursor.next`
-	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
 }
 
 func (l ListConnectionsRequest) MarshalJSON() ([]byte, error) {
@@ -51,11 +51,11 @@ func (l *ListConnectionsRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (l *ListConnectionsRequest) GetQuery() *string {
+func (l *ListConnectionsRequest) GetCursor() *string {
 	if l == nil {
 		return nil
 	}
-	return l.Query
+	return l.Cursor
 }
 
 func (l *ListConnectionsRequest) GetPageSize() *int {
@@ -65,24 +65,31 @@ func (l *ListConnectionsRequest) GetPageSize() *int {
 	return l.PageSize
 }
 
-func (l *ListConnectionsRequest) GetCursor() *string {
+func (l *ListConnectionsRequest) GetQuery() *string {
 	if l == nil {
 		return nil
 	}
-	return l.Cursor
+	return l.Query
 }
 
 type ListConnectionsResponse struct {
+	// OK
+	ConnectionCursor *connectivity.ConnectionCursor
 	// HTTP response content type for this operation
 	ContentType string
+	// Request or server error. The HTTP status and code identify the failure.
+	Error *connectivity.Error
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	ConnectionCursor *connectivity.ConnectionCursor
-	// Request or server error. The HTTP status and code identify the failure.
-	Error *connectivity.Error
+}
+
+func (l *ListConnectionsResponse) GetConnectionCursor() *connectivity.ConnectionCursor {
+	if l == nil {
+		return nil
+	}
+	return l.ConnectionCursor
 }
 
 func (l *ListConnectionsResponse) GetContentType() string {
@@ -90,6 +97,13 @@ func (l *ListConnectionsResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListConnectionsResponse) GetError() *connectivity.Error {
+	if l == nil {
+		return nil
+	}
+	return l.Error
 }
 
 func (l *ListConnectionsResponse) GetStatusCode() int {
@@ -104,18 +118,4 @@ func (l *ListConnectionsResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return l.RawResponse
-}
-
-func (l *ListConnectionsResponse) GetConnectionCursor() *connectivity.ConnectionCursor {
-	if l == nil {
-		return nil
-	}
-	return l.ConnectionCursor
-}
-
-func (l *ListConnectionsResponse) GetError() *connectivity.Error {
-	if l == nil {
-		return nil
-	}
-	return l.Error
 }

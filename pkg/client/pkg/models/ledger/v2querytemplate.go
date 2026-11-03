@@ -7,16 +7,16 @@ import (
 )
 
 type V2QueryTemplate struct {
-	// Human-readable description of what the query returns
-	Description *string `json:"description,omitempty"`
-	// The resource a query template targets
-	Resource *V2QueryResource `json:"resource,omitempty"`
-	// Parameters applied when running a query template
-	Params *V2QueryParams `json:"params,omitempty"`
-	// Variables the query accepts, keyed by variable name
-	Vars map[string]V2QueryTemplateVar `json:"vars,omitempty"`
 	// The filter expression the query evaluates
 	Body map[string]any `json:"body,omitempty"`
+	// Human-readable description of what the query returns
+	Description *string `json:"description,omitempty"`
+	// Parameters applied when running a query template
+	Params *V2QueryParams `json:"params,omitempty"`
+	// The resource a query template targets
+	Resource *V2QueryResource `json:"resource,omitempty"`
+	// Variables the query accepts, keyed by variable name
+	Vars map[string]V2QueryTemplateVar `json:"vars,omitempty"`
 }
 
 func (v V2QueryTemplate) MarshalJSON() ([]byte, error) {
@@ -30,18 +30,18 @@ func (v *V2QueryTemplate) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (v *V2QueryTemplate) GetBody() map[string]any {
+	if v == nil {
+		return nil
+	}
+	return v.Body
+}
+
 func (v *V2QueryTemplate) GetDescription() *string {
 	if v == nil {
 		return nil
 	}
 	return v.Description
-}
-
-func (v *V2QueryTemplate) GetResource() *V2QueryResource {
-	if v == nil {
-		return nil
-	}
-	return v.Resource
 }
 
 func (v *V2QueryTemplate) GetParams() *V2QueryParams {
@@ -51,18 +51,18 @@ func (v *V2QueryTemplate) GetParams() *V2QueryParams {
 	return v.Params
 }
 
+func (v *V2QueryTemplate) GetResource() *V2QueryResource {
+	if v == nil {
+		return nil
+	}
+	return v.Resource
+}
+
 func (v *V2QueryTemplate) GetVars() map[string]V2QueryTemplateVar {
 	if v == nil {
 		return nil
 	}
 	return v.Vars
-}
-
-func (v *V2QueryTemplate) GetBody() map[string]any {
-	if v == nil {
-		return nil
-	}
-	return v.Body
 }
 
 // #region class-body-v2querytemplate

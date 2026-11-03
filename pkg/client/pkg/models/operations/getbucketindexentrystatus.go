@@ -20,8 +20,6 @@ func (g *GetBucketIndexEntryStatusSecurity) GetBearerAuth() *string {
 }
 
 type GetBucketIndexEntryStatusRequest struct {
-	// Canonical form of the target IndexID.
-	CanonicalID string `pathParam:"style=simple,explode=false,name=canonicalId"`
 	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
 	// barrier and waits for the receiving node to apply up to it. `stale`
 	// serves the read from the receiving node's own store, with no barrier
@@ -32,6 +30,8 @@ type GetBucketIndexEntryStatusRequest struct {
 	// gRPC equivalent is the `x-consistency` request metadata.
 	//
 	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Canonical form of the target IndexID.
+	CanonicalID string `pathParam:"style=simple,explode=false,name=canonicalId"`
 }
 
 func (g GetBucketIndexEntryStatusRequest) MarshalJSON() ([]byte, error) {
@@ -45,18 +45,18 @@ func (g *GetBucketIndexEntryStatusRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (g *GetBucketIndexEntryStatusRequest) GetCanonicalID() string {
-	if g == nil {
-		return ""
-	}
-	return g.CanonicalID
-}
-
 func (g *GetBucketIndexEntryStatusRequest) GetXConsistency() *ledgerv3.Consistency {
 	if g == nil {
 		return nil
 	}
 	return g.XConsistency
+}
+
+func (g *GetBucketIndexEntryStatusRequest) GetCanonicalID() string {
+	if g == nil {
+		return ""
+	}
+	return g.CanonicalID
 }
 
 // GetBucketIndexEntryStatusResponseBody - Index entry retrieved successfully.
@@ -75,18 +75,18 @@ func (g *GetBucketIndexEntryStatusResponseBody) GetData() map[string]any {
 type GetBucketIndexEntryStatusResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Index entry retrieved successfully.
-	Object *GetBucketIndexEntryStatusResponseBody
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
+	// Index entry retrieved successfully.
+	Object *GetBucketIndexEntryStatusResponseBody
 }
 
 func (g *GetBucketIndexEntryStatusResponse) GetContentType() string {
@@ -94,6 +94,20 @@ func (g *GetBucketIndexEntryStatusResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetBucketIndexEntryStatusResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if g == nil {
+		return nil
+	}
+	return g.ErrorResponse
+}
+
+func (g *GetBucketIndexEntryStatusResponse) GetForbidden() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Forbidden
 }
 
 func (g *GetBucketIndexEntryStatusResponse) GetStatusCode() int {
@@ -110,20 +124,6 @@ func (g *GetBucketIndexEntryStatusResponse) GetRawResponse() *http.Response {
 	return g.RawResponse
 }
 
-func (g *GetBucketIndexEntryStatusResponse) GetObject() *GetBucketIndexEntryStatusResponseBody {
-	if g == nil {
-		return nil
-	}
-	return g.Object
-}
-
-func (g *GetBucketIndexEntryStatusResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if g == nil {
-		return nil
-	}
-	return g.ErrorResponse
-}
-
 func (g *GetBucketIndexEntryStatusResponse) GetUnauthorized() *string {
 	if g == nil {
 		return nil
@@ -131,9 +131,9 @@ func (g *GetBucketIndexEntryStatusResponse) GetUnauthorized() *string {
 	return g.Unauthorized
 }
 
-func (g *GetBucketIndexEntryStatusResponse) GetForbidden() *string {
+func (g *GetBucketIndexEntryStatusResponse) GetObject() *GetBucketIndexEntryStatusResponseBody {
 	if g == nil {
 		return nil
 	}
-	return g.Forbidden
+	return g.Object
 }

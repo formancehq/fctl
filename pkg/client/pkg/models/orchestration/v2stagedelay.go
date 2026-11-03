@@ -8,10 +8,10 @@ import (
 )
 
 type V2StageDelay struct {
-	// Wait until this absolute point in time. Mutually exclusive with duration
-	Until *time.Time `json:"until,omitempty"`
 	// Wait for this long, expressed as a Go duration such as 10s. Mutually exclusive with until
 	Duration *string `json:"duration,omitempty"`
+	// Wait until this absolute point in time. Mutually exclusive with duration
+	Until *time.Time `json:"until,omitempty"`
 }
 
 func (v V2StageDelay) MarshalJSON() ([]byte, error) {
@@ -25,18 +25,18 @@ func (v *V2StageDelay) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2StageDelay) GetUntil() *time.Time {
-	if v == nil {
-		return nil
-	}
-	return v.Until
-}
-
 func (v *V2StageDelay) GetDuration() *string {
 	if v == nil {
 		return nil
 	}
 	return v.Duration
+}
+
+func (v *V2StageDelay) GetUntil() *time.Time {
+	if v == nil {
+		return nil
+	}
+	return v.Until
 }
 
 // #region class-body-v2stagedelay

@@ -7,18 +7,18 @@ import (
 	"fmt"
 )
 
-// Kind - Whether the rule runs only when triggered or on a recurring cron schedule
-type Kind string
+// ScheduleKind - Whether the rule runs only when triggered or on a recurring cron schedule
+type ScheduleKind string
 
 const (
-	KindOnDemand Kind = "on_demand"
-	KindCron     Kind = "cron"
+	ScheduleKindOnDemand ScheduleKind = "on_demand"
+	ScheduleKindCron     ScheduleKind = "cron"
 )
 
-func (e Kind) ToPointer() *Kind {
+func (e ScheduleKind) ToPointer() *ScheduleKind {
 	return &e
 }
-func (e *Kind) UnmarshalJSON(data []byte) error {
+func (e *ScheduleKind) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
@@ -27,30 +27,23 @@ func (e *Kind) UnmarshalJSON(data []byte) error {
 	case "on_demand":
 		fallthrough
 	case "cron":
-		*e = Kind(v)
+		*e = ScheduleKind(v)
 		return nil
 	default:
-		return fmt.Errorf("invalid value for Kind: %v", v)
+		return fmt.Errorf("invalid value for ScheduleKind: %v", v)
 	}
 }
 
 // Schedule - When a rule runs, either on demand or on a cron expression
 type Schedule struct {
-	// Whether the rule runs only when triggered or on a recurring cron schedule
-	Kind Kind `json:"kind"`
 	// Cron expression driving the schedule, required when kind is cron
 	Expr *string `json:"expr,omitempty"`
-	// Timezone the cron expression is interpreted in
-	Tz *string `json:"tz,omitempty"`
+	// Whether the rule runs only when triggered or on a recurring cron schedule
+	Kind ScheduleKind `json:"kind"`
 	// Go duration string
 	SafetyMargin *string `json:"safetyMargin,omitempty"`
-}
-
-func (s *Schedule) GetKind() Kind {
-	if s == nil {
-		return Kind("")
-	}
-	return s.Kind
+	// Timezone the cron expression is interpreted in
+	Tz *string `json:"tz,omitempty"`
 }
 
 func (s *Schedule) GetExpr() *string {
@@ -60,11 +53,11 @@ func (s *Schedule) GetExpr() *string {
 	return s.Expr
 }
 
-func (s *Schedule) GetTz() *string {
+func (s *Schedule) GetKind() ScheduleKind {
 	if s == nil {
-		return nil
+		return ScheduleKind("")
 	}
-	return s.Tz
+	return s.Kind
 }
 
 func (s *Schedule) GetSafetyMargin() *string {
@@ -72,4 +65,11 @@ func (s *Schedule) GetSafetyMargin() *string {
 		return nil
 	}
 	return s.SafetyMargin
+}
+
+func (s *Schedule) GetTz() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Tz
 }

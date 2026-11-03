@@ -8,24 +8,10 @@ import (
 )
 
 type CreateBalanceRequest struct {
-	ID string `pathParam:"style=simple,explode=false,name=id"`
+	Balance *wallets.Balance `request:"mediaType=application/json"`
 	// Use an idempotency key
-	IdempotencyKey *string          `header:"style=simple,explode=false,name=Idempotency-Key"`
-	Balance        *wallets.Balance `request:"mediaType=application/json"`
-}
-
-func (c *CreateBalanceRequest) GetID() string {
-	if c == nil {
-		return ""
-	}
-	return c.ID
-}
-
-func (c *CreateBalanceRequest) GetIdempotencyKey() *string {
-	if c == nil {
-		return nil
-	}
-	return c.IdempotencyKey
+	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
+	ID             string  `pathParam:"style=simple,explode=false,name=id"`
 }
 
 func (c *CreateBalanceRequest) GetBalance() *wallets.Balance {
@@ -35,15 +21,29 @@ func (c *CreateBalanceRequest) GetBalance() *wallets.Balance {
 	return c.Balance
 }
 
+func (c *CreateBalanceRequest) GetIdempotencyKey() *string {
+	if c == nil {
+		return nil
+	}
+	return c.IdempotencyKey
+}
+
+func (c *CreateBalanceRequest) GetID() string {
+	if c == nil {
+		return ""
+	}
+	return c.ID
+}
+
 type CreateBalanceResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Created balance
+	CreateBalanceResponse *wallets.CreateBalanceResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Created balance
-	CreateBalanceResponse *wallets.CreateBalanceResponse
 }
 
 func (c *CreateBalanceResponse) GetContentType() string {
@@ -51,6 +51,13 @@ func (c *CreateBalanceResponse) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
+}
+
+func (c *CreateBalanceResponse) GetCreateBalanceResponse() *wallets.CreateBalanceResponse {
+	if c == nil {
+		return nil
+	}
+	return c.CreateBalanceResponse
 }
 
 func (c *CreateBalanceResponse) GetStatusCode() int {
@@ -65,11 +72,4 @@ func (c *CreateBalanceResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return c.RawResponse
-}
-
-func (c *CreateBalanceResponse) GetCreateBalanceResponse() *wallets.CreateBalanceResponse {
-	if c == nil {
-		return nil
-	}
-	return c.CreateBalanceResponse
 }

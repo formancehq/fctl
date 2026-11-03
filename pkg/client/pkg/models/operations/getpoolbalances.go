@@ -10,11 +10,11 @@ import (
 )
 
 type GetPoolBalancesRequest struct {
-	// The pool ID.
-	PoolID string `pathParam:"style=simple,explode=false,name=poolId"`
 	// Filter balances by date.
 	//
 	At time.Time `queryParam:"style=form,explode=true,name=at"`
+	// The pool ID.
+	PoolID string `pathParam:"style=simple,explode=false,name=poolId"`
 }
 
 func (g GetPoolBalancesRequest) MarshalJSON() ([]byte, error) {
@@ -28,13 +28,6 @@ func (g *GetPoolBalancesRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (g *GetPoolBalancesRequest) GetPoolID() string {
-	if g == nil {
-		return ""
-	}
-	return g.PoolID
-}
-
 func (g *GetPoolBalancesRequest) GetAt() time.Time {
 	if g == nil {
 		return time.Time{}
@@ -42,15 +35,22 @@ func (g *GetPoolBalancesRequest) GetAt() time.Time {
 	return g.At
 }
 
+func (g *GetPoolBalancesRequest) GetPoolID() string {
+	if g == nil {
+		return ""
+	}
+	return g.PoolID
+}
+
 type GetPoolBalancesResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	PoolBalancesResponse *payments.PoolBalancesResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	PoolBalancesResponse *payments.PoolBalancesResponse
 }
 
 func (g *GetPoolBalancesResponse) GetContentType() string {
@@ -58,6 +58,13 @@ func (g *GetPoolBalancesResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetPoolBalancesResponse) GetPoolBalancesResponse() *payments.PoolBalancesResponse {
+	if g == nil {
+		return nil
+	}
+	return g.PoolBalancesResponse
 }
 
 func (g *GetPoolBalancesResponse) GetStatusCode() int {
@@ -72,11 +79,4 @@ func (g *GetPoolBalancesResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetPoolBalancesResponse) GetPoolBalancesResponse() *payments.PoolBalancesResponse {
-	if g == nil {
-		return nil
-	}
-	return g.PoolBalancesResponse
 }

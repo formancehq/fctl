@@ -8,17 +8,17 @@ import (
 )
 
 type CreditWalletRequest struct {
-	ID string `pathParam:"style=simple,explode=false,name=id"`
-	// Use an idempotency key
-	IdempotencyKey      *string                      `header:"style=simple,explode=false,name=Idempotency-Key"`
 	CreditWalletRequest *wallets.CreditWalletRequest `request:"mediaType=application/json"`
+	// Use an idempotency key
+	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
+	ID             string  `pathParam:"style=simple,explode=false,name=id"`
 }
 
-func (c *CreditWalletRequest) GetID() string {
+func (c *CreditWalletRequest) GetCreditWalletRequest() *wallets.CreditWalletRequest {
 	if c == nil {
-		return ""
+		return nil
 	}
-	return c.ID
+	return c.CreditWalletRequest
 }
 
 func (c *CreditWalletRequest) GetIdempotencyKey() *string {
@@ -28,11 +28,11 @@ func (c *CreditWalletRequest) GetIdempotencyKey() *string {
 	return c.IdempotencyKey
 }
 
-func (c *CreditWalletRequest) GetCreditWalletRequest() *wallets.CreditWalletRequest {
+func (c *CreditWalletRequest) GetID() string {
 	if c == nil {
-		return nil
+		return ""
 	}
-	return c.CreditWalletRequest
+	return c.ID
 }
 
 type CreditWalletResponse struct {

@@ -37,27 +37,27 @@ func (e *MirrorSourceConfigType) UnmarshalJSON(data []byte) error {
 
 // MirrorSourceConfig - Configuration for the mirror source (required when mode is MIRROR)
 type MirrorSourceConfig struct {
-	// Name of the source ledger in the v2 system
-	LedgerName string `json:"ledgerName"`
-	// Source type (defaults to "http" if omitted)
-	Type *MirrorSourceConfigType `default:"http" json:"type"`
 	// Valid absolute HTTP(S) URL with a nonempty hostname for the v2 API (required for HTTP source); checked at creation before persistence, without a network probe
 	BaseURL *string `json:"baseUrl,omitempty"`
+	// Max logs per batch (0 = server default 100, capped by server's --mirror-max-batch-size)
+	BatchSize *int64 `default:"0" json:"batchSize"`
+	// PostgreSQL connection string (required for PostgreSQL source)
+	Dsn *string `json:"dsn,omitempty"`
+	// Name of the source ledger in the v2 system
+	LedgerName string `json:"ledgerName"`
 	// OAuth2 client ID for the v2 API (HTTP source only)
 	Oauth2ClientID *string `json:"oauth2ClientId,omitempty"`
 	// OAuth2 client secret for the v2 API (HTTP source only)
 	Oauth2ClientSecret *string `json:"oauth2ClientSecret,omitempty"`
-	// OAuth2 token endpoint URL (HTTP source only)
-	Oauth2TokenEndpoint *string `json:"oauth2TokenEndpoint,omitempty"`
 	// OAuth2 scopes (HTTP source only)
 	Oauth2Scopes []string `json:"oauth2Scopes,omitempty"`
-	// PostgreSQL connection string (required for PostgreSQL source)
-	Dsn *string `json:"dsn,omitempty"`
-	// Max logs per batch (0 = server default 100, capped by server's --mirror-max-batch-size)
-	BatchSize *int64 `default:"0" json:"batchSize"`
+	// OAuth2 token endpoint URL (HTTP source only)
+	Oauth2TokenEndpoint *string `json:"oauth2TokenEndpoint,omitempty"`
 	// Mirror rewrite rules applied, in order, to every mirror log entry as v2 logs are translated into v3 orders. Each rule is scoped to exactly one variant of the log's `data` oneof, with a CEL `match` predicate and a list of typed actions.
 	//
 	RewriteRules []MirrorRewriteRule `json:"rewriteRules,omitempty"`
+	// Source type (defaults to "http" if omitted)
+	Type *MirrorSourceConfigType `default:"http" json:"type"`
 }
 
 func (m MirrorSourceConfig) MarshalJSON() ([]byte, error) {
@@ -71,25 +71,32 @@ func (m *MirrorSourceConfig) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (m *MirrorSourceConfig) GetLedgerName() string {
-	if m == nil {
-		return ""
-	}
-	return m.LedgerName
-}
-
-func (m *MirrorSourceConfig) GetType() *MirrorSourceConfigType {
-	if m == nil {
-		return nil
-	}
-	return m.Type
-}
-
 func (m *MirrorSourceConfig) GetBaseURL() *string {
 	if m == nil {
 		return nil
 	}
 	return m.BaseURL
+}
+
+func (m *MirrorSourceConfig) GetBatchSize() *int64 {
+	if m == nil {
+		return nil
+	}
+	return m.BatchSize
+}
+
+func (m *MirrorSourceConfig) GetDsn() *string {
+	if m == nil {
+		return nil
+	}
+	return m.Dsn
+}
+
+func (m *MirrorSourceConfig) GetLedgerName() string {
+	if m == nil {
+		return ""
+	}
+	return m.LedgerName
 }
 
 func (m *MirrorSourceConfig) GetOauth2ClientID() *string {
@@ -106,13 +113,6 @@ func (m *MirrorSourceConfig) GetOauth2ClientSecret() *string {
 	return m.Oauth2ClientSecret
 }
 
-func (m *MirrorSourceConfig) GetOauth2TokenEndpoint() *string {
-	if m == nil {
-		return nil
-	}
-	return m.Oauth2TokenEndpoint
-}
-
 func (m *MirrorSourceConfig) GetOauth2Scopes() []string {
 	if m == nil {
 		return nil
@@ -120,18 +120,11 @@ func (m *MirrorSourceConfig) GetOauth2Scopes() []string {
 	return m.Oauth2Scopes
 }
 
-func (m *MirrorSourceConfig) GetDsn() *string {
+func (m *MirrorSourceConfig) GetOauth2TokenEndpoint() *string {
 	if m == nil {
 		return nil
 	}
-	return m.Dsn
-}
-
-func (m *MirrorSourceConfig) GetBatchSize() *int64 {
-	if m == nil {
-		return nil
-	}
-	return m.BatchSize
+	return m.Oauth2TokenEndpoint
 }
 
 func (m *MirrorSourceConfig) GetRewriteRules() []MirrorRewriteRule {
@@ -139,4 +132,11 @@ func (m *MirrorSourceConfig) GetRewriteRules() []MirrorRewriteRule {
 		return nil
 	}
 	return m.RewriteRules
+}
+
+func (m *MirrorSourceConfig) GetType() *MirrorSourceConfigType {
+	if m == nil {
+		return nil
+	}
+	return m.Type
 }

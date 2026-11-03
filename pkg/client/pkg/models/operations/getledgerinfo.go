@@ -22,12 +22,12 @@ func (g *GetLedgerInfoRequest) GetLedger() string {
 type GetLedgerInfoResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	LedgerInfoResponse *ledger.LedgerInfoResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	LedgerInfoResponse *ledger.LedgerInfoResponse
 }
 
 func (g *GetLedgerInfoResponse) GetContentType() string {
@@ -35,6 +35,13 @@ func (g *GetLedgerInfoResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetLedgerInfoResponse) GetLedgerInfoResponse() *ledger.LedgerInfoResponse {
+	if g == nil {
+		return nil
+	}
+	return g.LedgerInfoResponse
 }
 
 func (g *GetLedgerInfoResponse) GetStatusCode() int {
@@ -49,11 +56,4 @@ func (g *GetLedgerInfoResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetLedgerInfoResponse) GetLedgerInfoResponse() *ledger.LedgerInfoResponse {
-	if g == nil {
-		return nil
-	}
-	return g.LedgerInfoResponse
 }

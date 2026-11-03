@@ -9,10 +9,10 @@ import (
 )
 
 type V3InitiatePaymentRequest struct {
+	V3InitiatePaymentRequest *payments.V3InitiatePaymentRequest `request:"mediaType=application/json"`
 	// If set to true, the request will not have to be validated. This is useful if we want to directly forward the request to the PSP.
 	//
-	NoValidation             *bool                              `default:"false" queryParam:"style=form,explode=true,name=noValidation"`
-	V3InitiatePaymentRequest *payments.V3InitiatePaymentRequest `request:"mediaType=application/json"`
+	NoValidation *bool `default:"false" queryParam:"style=form,explode=true,name=noValidation"`
 }
 
 func (v V3InitiatePaymentRequest) MarshalJSON() ([]byte, error) {
@@ -26,18 +26,18 @@ func (v *V3InitiatePaymentRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V3InitiatePaymentRequest) GetNoValidation() *bool {
-	if v == nil {
-		return nil
-	}
-	return v.NoValidation
-}
-
 func (v *V3InitiatePaymentRequest) GetV3InitiatePaymentRequest() *payments.V3InitiatePaymentRequest {
 	if v == nil {
 		return nil
 	}
 	return v.V3InitiatePaymentRequest
+}
+
+func (v *V3InitiatePaymentRequest) GetNoValidation() *bool {
+	if v == nil {
+		return nil
+	}
+	return v.NoValidation
 }
 
 // #region class-body-v3initiatepaymentrequest

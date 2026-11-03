@@ -8,16 +8,9 @@ import (
 )
 
 type PatchRuleRequest struct {
-	// The rule ID.
-	RuleID           string                          `pathParam:"style=simple,explode=false,name=ruleID"`
 	RulePatchRequest reconciliation.RulePatchRequest `request:"mediaType=application/json"`
-}
-
-func (p *PatchRuleRequest) GetRuleID() string {
-	if p == nil {
-		return ""
-	}
-	return p.RuleID
+	// The rule ID.
+	RuleID string `pathParam:"style=simple,explode=false,name=ruleID"`
 }
 
 func (p *PatchRuleRequest) GetRulePatchRequest() reconciliation.RulePatchRequest {
@@ -27,15 +20,22 @@ func (p *PatchRuleRequest) GetRulePatchRequest() reconciliation.RulePatchRequest
 	return p.RulePatchRequest
 }
 
+func (p *PatchRuleRequest) GetRuleID() string {
+	if p == nil {
+		return ""
+	}
+	return p.RuleID
+}
+
 type PatchRuleResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	RuleResponse *reconciliation.RuleResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	RuleResponse *reconciliation.RuleResponse
 }
 
 func (p *PatchRuleResponse) GetContentType() string {
@@ -43,6 +43,13 @@ func (p *PatchRuleResponse) GetContentType() string {
 		return ""
 	}
 	return p.ContentType
+}
+
+func (p *PatchRuleResponse) GetRuleResponse() *reconciliation.RuleResponse {
+	if p == nil {
+		return nil
+	}
+	return p.RuleResponse
 }
 
 func (p *PatchRuleResponse) GetStatusCode() int {
@@ -57,11 +64,4 @@ func (p *PatchRuleResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return p.RawResponse
-}
-
-func (p *PatchRuleResponse) GetRuleResponse() *reconciliation.RuleResponse {
-	if p == nil {
-		return nil
-	}
-	return p.RuleResponse
 }

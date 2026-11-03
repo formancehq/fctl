@@ -18,16 +18,9 @@ func (s *SendEventRequestBody) GetName() string {
 }
 
 type SendEventRequest struct {
-	// The instance id
-	InstanceID  string                `pathParam:"style=simple,explode=false,name=instanceID"`
 	RequestBody *SendEventRequestBody `request:"mediaType=application/json"`
-}
-
-func (s *SendEventRequest) GetInstanceID() string {
-	if s == nil {
-		return ""
-	}
-	return s.InstanceID
+	// The instance id
+	InstanceID string `pathParam:"style=simple,explode=false,name=instanceID"`
 }
 
 func (s *SendEventRequest) GetRequestBody() *SendEventRequestBody {
@@ -35,6 +28,13 @@ func (s *SendEventRequest) GetRequestBody() *SendEventRequestBody {
 		return nil
 	}
 	return s.RequestBody
+}
+
+func (s *SendEventRequest) GetInstanceID() string {
+	if s == nil {
+		return ""
+	}
+	return s.InstanceID
 }
 
 type SendEventResponse struct {

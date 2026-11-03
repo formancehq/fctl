@@ -21,14 +21,14 @@ func (g *GetQueryCapabilitiesSecurity) GetBearerAuth() *string {
 type GetQueryCapabilitiesResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Request or server error. The HTTP status and code identify the failure.
+	Error *connectivity.Error
+	// OK
+	QueryCapabilities *connectivity.QueryCapabilities
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	QueryCapabilities *connectivity.QueryCapabilities
-	// Request or server error. The HTTP status and code identify the failure.
-	Error *connectivity.Error
 }
 
 func (g *GetQueryCapabilitiesResponse) GetContentType() string {
@@ -36,6 +36,20 @@ func (g *GetQueryCapabilitiesResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetQueryCapabilitiesResponse) GetError() *connectivity.Error {
+	if g == nil {
+		return nil
+	}
+	return g.Error
+}
+
+func (g *GetQueryCapabilitiesResponse) GetQueryCapabilities() *connectivity.QueryCapabilities {
+	if g == nil {
+		return nil
+	}
+	return g.QueryCapabilities
 }
 
 func (g *GetQueryCapabilitiesResponse) GetStatusCode() int {
@@ -50,18 +64,4 @@ func (g *GetQueryCapabilitiesResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetQueryCapabilitiesResponse) GetQueryCapabilities() *connectivity.QueryCapabilities {
-	if g == nil {
-		return nil
-	}
-	return g.QueryCapabilities
-}
-
-func (g *GetQueryCapabilitiesResponse) GetError() *connectivity.Error {
-	if g == nil {
-		return nil
-	}
-	return g.Error
 }

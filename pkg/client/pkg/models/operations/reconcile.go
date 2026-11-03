@@ -8,16 +8,9 @@ import (
 )
 
 type ReconcileRequest struct {
-	// The policy ID.
-	PolicyID              string                               `pathParam:"style=simple,explode=false,name=policyID"`
 	ReconciliationRequest reconciliation.ReconciliationRequest `request:"mediaType=application/json"`
-}
-
-func (r *ReconcileRequest) GetPolicyID() string {
-	if r == nil {
-		return ""
-	}
-	return r.PolicyID
+	// The policy ID.
+	PolicyID string `pathParam:"style=simple,explode=false,name=policyID"`
 }
 
 func (r *ReconcileRequest) GetReconciliationRequest() reconciliation.ReconciliationRequest {
@@ -27,15 +20,22 @@ func (r *ReconcileRequest) GetReconciliationRequest() reconciliation.Reconciliat
 	return r.ReconciliationRequest
 }
 
+func (r *ReconcileRequest) GetPolicyID() string {
+	if r == nil {
+		return ""
+	}
+	return r.PolicyID
+}
+
 type ReconcileResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	ReconciliationResponse *reconciliation.ReconciliationResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	ReconciliationResponse *reconciliation.ReconciliationResponse
 }
 
 func (r *ReconcileResponse) GetContentType() string {
@@ -43,6 +43,13 @@ func (r *ReconcileResponse) GetContentType() string {
 		return ""
 	}
 	return r.ContentType
+}
+
+func (r *ReconcileResponse) GetReconciliationResponse() *reconciliation.ReconciliationResponse {
+	if r == nil {
+		return nil
+	}
+	return r.ReconciliationResponse
 }
 
 func (r *ReconcileResponse) GetStatusCode() int {
@@ -57,11 +64,4 @@ func (r *ReconcileResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return r.RawResponse
-}
-
-func (r *ReconcileResponse) GetReconciliationResponse() *reconciliation.ReconciliationResponse {
-	if r == nil {
-		return nil
-	}
-	return r.ReconciliationResponse
 }

@@ -7,8 +7,6 @@ import (
 )
 
 type InspectDistinctValuesResponse struct {
-	// Distinct values in sorted order
-	Values []any `json:"values"`
 	// Whether more values are available; set iff `nextCursor` is
 	HasMore bool `json:"hasMore"`
 	// Page token of a paged list. Clients normally pass back the `next` or
@@ -85,6 +83,8 @@ type InspectDistinctValuesResponse struct {
 	// the endpoint, is rejected with 400 `INVALID_REQUEST`.
 	//
 	PreviousCursor *string `json:"previousCursor,omitempty"`
+	// Distinct values in sorted order
+	Values []any `json:"values"`
 }
 
 func (i InspectDistinctValuesResponse) MarshalJSON() ([]byte, error) {
@@ -92,17 +92,10 @@ func (i InspectDistinctValuesResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (i *InspectDistinctValuesResponse) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &i, "", false, []string{"values", "hasMore"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &i, "", false, []string{"hasMore", "values"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (i *InspectDistinctValuesResponse) GetValues() []any {
-	if i == nil {
-		return []any{}
-	}
-	return i.Values
 }
 
 func (i *InspectDistinctValuesResponse) GetHasMore() bool {
@@ -124,4 +117,11 @@ func (i *InspectDistinctValuesResponse) GetPreviousCursor() *string {
 		return nil
 	}
 	return i.PreviousCursor
+}
+
+func (i *InspectDistinctValuesResponse) GetValues() []any {
+	if i == nil {
+		return []any{}
+	}
+	return i.Values
 }

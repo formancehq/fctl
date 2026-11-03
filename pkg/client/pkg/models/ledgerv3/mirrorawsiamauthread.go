@@ -7,8 +7,8 @@ import (
 )
 
 type MirrorAwsIamAuthRead struct {
-	Region        *string `json:"region,omitempty"`
 	AssumeRoleArn *string `json:"assumeRoleArn,omitempty"`
+	Region        *string `json:"region,omitempty"`
 }
 
 func (m MirrorAwsIamAuthRead) MarshalJSON() ([]byte, error) {
@@ -22,16 +22,16 @@ func (m *MirrorAwsIamAuthRead) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (m *MirrorAwsIamAuthRead) GetRegion() *string {
-	if m == nil {
-		return nil
-	}
-	return m.Region
-}
-
 func (m *MirrorAwsIamAuthRead) GetAssumeRoleArn() *string {
 	if m == nil {
 		return nil
 	}
 	return m.AssumeRoleArn
+}
+
+func (m *MirrorAwsIamAuthRead) GetRegion() *string {
+	if m == nil {
+		return nil
+	}
+	return m.Region
 }

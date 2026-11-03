@@ -10,14 +10,14 @@ type AssetVolumeStats struct {
 	// including nested fields, regardless of business meaning.
 	// JavaScript consumers should enable the header to avoid number rounding.
 	//
-	TotalVolume *UnsignedMonetaryAmount `json:"totalVolume,omitempty"`
+	AverageVolume *UnsignedMonetaryAmount `json:"averageVolume,omitempty"`
 	// Arbitrary-precision unsigned BigUint value encoded as a JSON number by
 	// default, or a canonical decimal string when Formance-Bigint-As-String
 	// is enabled. The same rule applies to every response BigUint value,
 	// including nested fields, regardless of business meaning.
 	// JavaScript consumers should enable the header to avoid number rounding.
 	//
-	AverageVolume *UnsignedMonetaryAmount `json:"averageVolume,omitempty"`
+	MaxVolume *UnsignedMonetaryAmount `json:"maxVolume,omitempty"`
 	// Arbitrary-precision unsigned BigUint value encoded as a JSON number by
 	// default, or a canonical decimal string when Formance-Bigint-As-String
 	// is enabled. The same rule applies to every response BigUint value,
@@ -31,7 +31,7 @@ type AssetVolumeStats struct {
 	// including nested fields, regardless of business meaning.
 	// JavaScript consumers should enable the header to avoid number rounding.
 	//
-	MaxVolume        *UnsignedMonetaryAmount `json:"maxVolume,omitempty"`
+	TotalVolume      *UnsignedMonetaryAmount `json:"totalVolume,omitempty"`
 	TransactionCount *int64                  `json:"transactionCount,omitempty"`
 }
 
@@ -42,18 +42,18 @@ func (a *AssetVolumeStats) GetAsset() *string {
 	return a.Asset
 }
 
-func (a *AssetVolumeStats) GetTotalVolume() *UnsignedMonetaryAmount {
-	if a == nil {
-		return nil
-	}
-	return a.TotalVolume
-}
-
 func (a *AssetVolumeStats) GetAverageVolume() *UnsignedMonetaryAmount {
 	if a == nil {
 		return nil
 	}
 	return a.AverageVolume
+}
+
+func (a *AssetVolumeStats) GetMaxVolume() *UnsignedMonetaryAmount {
+	if a == nil {
+		return nil
+	}
+	return a.MaxVolume
 }
 
 func (a *AssetVolumeStats) GetMinVolume() *UnsignedMonetaryAmount {
@@ -63,11 +63,11 @@ func (a *AssetVolumeStats) GetMinVolume() *UnsignedMonetaryAmount {
 	return a.MinVolume
 }
 
-func (a *AssetVolumeStats) GetMaxVolume() *UnsignedMonetaryAmount {
+func (a *AssetVolumeStats) GetTotalVolume() *UnsignedMonetaryAmount {
 	if a == nil {
 		return nil
 	}
-	return a.MaxVolume
+	return a.TotalVolume
 }
 
 func (a *AssetVolumeStats) GetTransactionCount() *int64 {

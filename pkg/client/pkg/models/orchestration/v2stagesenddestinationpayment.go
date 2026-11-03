@@ -43,15 +43,15 @@ type V2StageSendDestinationPayment struct {
 	// Validated by the Payments service based on installed connectors.
 	//
 	Psp string `json:"psp"`
+	// Formance Payments account ID for the source (internal PSP account).
+	// If not specified, the Payments service may use a default account for the connector.
+	//
+	SourceAccount *string `json:"sourceAccount,omitempty"`
 	// Type of transfer initiation:
 	// - TRANSFER: Internal to internal account transfer
 	// - PAYOUT: Internal to external account payout
 	//
 	Type *V2StageSendDestinationPaymentType `default:"TRANSFER" json:"type"`
-	// Formance Payments account ID for the source (internal PSP account).
-	// If not specified, the Payments service may use a default account for the connector.
-	//
-	SourceAccount *string `json:"sourceAccount,omitempty"`
 }
 
 func (v V2StageSendDestinationPayment) MarshalJSON() ([]byte, error) {
@@ -72,18 +72,18 @@ func (v *V2StageSendDestinationPayment) GetPsp() string {
 	return v.Psp
 }
 
-func (v *V2StageSendDestinationPayment) GetType() *V2StageSendDestinationPaymentType {
-	if v == nil {
-		return nil
-	}
-	return v.Type
-}
-
 func (v *V2StageSendDestinationPayment) GetSourceAccount() *string {
 	if v == nil {
 		return nil
 	}
 	return v.SourceAccount
+}
+
+func (v *V2StageSendDestinationPayment) GetType() *V2StageSendDestinationPaymentType {
+	if v == nil {
+		return nil
+	}
+	return v.Type
 }
 
 // #region class-body-v2stagesenddestinationpayment

@@ -4,17 +4,17 @@ package webhooks
 
 // DeliveryAttemptsResponseCursor - Paginated cursor wrapping the list of delivery attempts
 type DeliveryAttemptsResponseCursor struct {
-	PageSize *int64            `json:"pageSize,omitempty"`
+	Data     []DeliveryAttempt `json:"data"`
 	HasMore  bool              `json:"hasMore"`
 	Next     *string           `json:"next,omitempty"`
-	Data     []DeliveryAttempt `json:"data"`
+	PageSize *int64            `json:"pageSize,omitempty"`
 }
 
-func (d *DeliveryAttemptsResponseCursor) GetPageSize() *int64 {
+func (d *DeliveryAttemptsResponseCursor) GetData() []DeliveryAttempt {
 	if d == nil {
-		return nil
+		return []DeliveryAttempt{}
 	}
-	return d.PageSize
+	return d.Data
 }
 
 func (d *DeliveryAttemptsResponseCursor) GetHasMore() bool {
@@ -31,11 +31,11 @@ func (d *DeliveryAttemptsResponseCursor) GetNext() *string {
 	return d.Next
 }
 
-func (d *DeliveryAttemptsResponseCursor) GetData() []DeliveryAttempt {
+func (d *DeliveryAttemptsResponseCursor) GetPageSize() *int64 {
 	if d == nil {
-		return []DeliveryAttempt{}
+		return nil
 	}
-	return d.Data
+	return d.PageSize
 }
 
 type DeliveryAttemptsResponse struct {

@@ -22,10 +22,6 @@ func (r *RevertTransactionLedgerV3Security) GetBearerAuth() *string {
 // #endregion class-body-reverttransactionledgerv3security
 
 type RevertTransactionLedgerV3Request struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Transaction ID
-	TransactionID int64 `pathParam:"style=simple,explode=false,name=transactionId"`
 	// Render all response Uint256, BigUint and SignedBigInt values as canonical
 	// decimal strings, regardless of business meaning, including posting
 	// amounts, volume input/output and balances. Ordinary integer IDs/counts,
@@ -40,20 +36,10 @@ type RevertTransactionLedgerV3Request struct {
 	// Idempotency key for the request
 	IdempotencyKey               *string                                `header:"style=simple,explode=false,name=Idempotency-Key"`
 	RevertTransactionRequestBody *ledgerv3.RevertTransactionRequestBody `request:"mediaType=application/json"`
-}
-
-func (r *RevertTransactionLedgerV3Request) GetLedgerName() string {
-	if r == nil {
-		return ""
-	}
-	return r.LedgerName
-}
-
-func (r *RevertTransactionLedgerV3Request) GetTransactionID() int64 {
-	if r == nil {
-		return 0
-	}
-	return r.TransactionID
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Transaction ID
+	TransactionID int64 `pathParam:"style=simple,explode=false,name=transactionId"`
 }
 
 func (r *RevertTransactionLedgerV3Request) GetFormanceBigintAsString() *string {
@@ -77,25 +63,39 @@ func (r *RevertTransactionLedgerV3Request) GetRevertTransactionRequestBody() *le
 	return r.RevertTransactionRequestBody
 }
 
+func (r *RevertTransactionLedgerV3Request) GetLedgerName() string {
+	if r == nil {
+		return ""
+	}
+	return r.LedgerName
+}
+
+func (r *RevertTransactionLedgerV3Request) GetTransactionID() int64 {
+	if r == nil {
+		return 0
+	}
+	return r.TransactionID
+}
+
 // #region class-body-reverttransactionledgerv3request
 // #endregion class-body-reverttransactionledgerv3request
 
 type RevertTransactionLedgerV3Response struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
 	// Transaction reverted successfully
 	RevertedTransactionResponse *ledgerv3.RevertedTransactionResponse
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (r *RevertTransactionLedgerV3Response) GetContentType() string {
@@ -103,6 +103,27 @@ func (r *RevertTransactionLedgerV3Response) GetContentType() string {
 		return ""
 	}
 	return r.ContentType
+}
+
+func (r *RevertTransactionLedgerV3Response) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if r == nil {
+		return nil
+	}
+	return r.ErrorResponse
+}
+
+func (r *RevertTransactionLedgerV3Response) GetForbidden() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Forbidden
+}
+
+func (r *RevertTransactionLedgerV3Response) GetHeaders() map[string][]string {
+	if r == nil {
+		return map[string][]string{}
+	}
+	return r.Headers
 }
 
 func (r *RevertTransactionLedgerV3Response) GetStatusCode() int {
@@ -126,32 +147,11 @@ func (r *RevertTransactionLedgerV3Response) GetRevertedTransactionResponse() *le
 	return r.RevertedTransactionResponse
 }
 
-func (r *RevertTransactionLedgerV3Response) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if r == nil {
-		return nil
-	}
-	return r.ErrorResponse
-}
-
 func (r *RevertTransactionLedgerV3Response) GetUnauthorized() *string {
 	if r == nil {
 		return nil
 	}
 	return r.Unauthorized
-}
-
-func (r *RevertTransactionLedgerV3Response) GetForbidden() *string {
-	if r == nil {
-		return nil
-	}
-	return r.Forbidden
-}
-
-func (r *RevertTransactionLedgerV3Response) GetHeaders() map[string][]string {
-	if r == nil {
-		return map[string][]string{}
-	}
-	return r.Headers
 }
 
 // #region class-body-reverttransactionledgerv3response

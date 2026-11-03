@@ -20,17 +20,6 @@ func (g *GetLogSecurity) GetBearerAuth() *string {
 }
 
 type GetLogRequest struct {
-	Sequence int64 `pathParam:"style=simple,explode=false,name=sequence"`
-	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
-	// barrier and waits for the receiving node to apply up to it. `stale`
-	// serves the read from the receiving node's own store, with no barrier
-	// and no forwarding to the leader, so the answer may lag the leader.
-	// Matching ignores case and surrounding whitespace. An unknown value, or a
-	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
-	// `/v3` route, writes included; a valid value has no effect on writes. The
-	// gRPC equivalent is the `x-consistency` request metadata.
-	//
-	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
 	// Render all response Uint256, BigUint and SignedBigInt values as canonical
 	// decimal strings, regardless of business meaning, including posting
 	// amounts, volume input/output and balances. Ordinary integer IDs/counts,
@@ -42,6 +31,17 @@ type GetLogRequest struct {
 	// and bulk results. Request decoding is unchanged.
 	//
 	FormanceBigintAsString *string `header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
+	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
+	// barrier and waits for the receiving node to apply up to it. `stale`
+	// serves the read from the receiving node's own store, with no barrier
+	// and no forwarding to the leader, so the answer may lag the leader.
+	// Matching ignores case and surrounding whitespace. An unknown value, or a
+	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
+	// `/v3` route, writes included; a valid value has no effect on writes. The
+	// gRPC equivalent is the `x-consistency` request metadata.
+	//
+	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	Sequence     int64                 `pathParam:"style=simple,explode=false,name=sequence"`
 }
 
 func (g GetLogRequest) MarshalJSON() ([]byte, error) {
@@ -55,11 +55,11 @@ func (g *GetLogRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (g *GetLogRequest) GetSequence() int64 {
+func (g *GetLogRequest) GetFormanceBigintAsString() *string {
 	if g == nil {
-		return 0
+		return nil
 	}
-	return g.Sequence
+	return g.FormanceBigintAsString
 }
 
 func (g *GetLogRequest) GetXConsistency() *ledgerv3.Consistency {
@@ -69,11 +69,11 @@ func (g *GetLogRequest) GetXConsistency() *ledgerv3.Consistency {
 	return g.XConsistency
 }
 
-func (g *GetLogRequest) GetFormanceBigintAsString() *string {
+func (g *GetLogRequest) GetSequence() int64 {
 	if g == nil {
-		return nil
+		return 0
 	}
-	return g.FormanceBigintAsString
+	return g.Sequence
 }
 
 // GetLogResponseBody - Log retrieved successfully.
@@ -97,18 +97,18 @@ func (g *GetLogResponseBody) GetData() ledgerv3.SystemLog {
 type GetLogResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Log retrieved successfully.
-	Object *GetLogResponseBody
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
+	// Log retrieved successfully.
+	Object *GetLogResponseBody
 }
 
 func (g *GetLogResponse) GetContentType() string {
@@ -116,6 +116,20 @@ func (g *GetLogResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetLogResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if g == nil {
+		return nil
+	}
+	return g.ErrorResponse
+}
+
+func (g *GetLogResponse) GetForbidden() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Forbidden
 }
 
 func (g *GetLogResponse) GetStatusCode() int {
@@ -132,20 +146,6 @@ func (g *GetLogResponse) GetRawResponse() *http.Response {
 	return g.RawResponse
 }
 
-func (g *GetLogResponse) GetObject() *GetLogResponseBody {
-	if g == nil {
-		return nil
-	}
-	return g.Object
-}
-
-func (g *GetLogResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if g == nil {
-		return nil
-	}
-	return g.ErrorResponse
-}
-
 func (g *GetLogResponse) GetUnauthorized() *string {
 	if g == nil {
 		return nil
@@ -153,9 +153,9 @@ func (g *GetLogResponse) GetUnauthorized() *string {
 	return g.Unauthorized
 }
 
-func (g *GetLogResponse) GetForbidden() *string {
+func (g *GetLogResponse) GetObject() *GetLogResponseBody {
 	if g == nil {
 		return nil
 	}
-	return g.Forbidden
+	return g.Object
 }

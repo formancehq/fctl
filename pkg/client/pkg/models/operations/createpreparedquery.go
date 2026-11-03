@@ -19,25 +19,11 @@ func (c *CreatePreparedQuerySecurity) GetBearerAuth() *string {
 }
 
 type CreatePreparedQueryRequest struct {
+	CreatePreparedQueryRequest ledgerv3.CreatePreparedQueryRequest `request:"mediaType=application/json"`
+	// Idempotency key for the request
+	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
 	// Name of the ledger
 	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Idempotency key for the request
-	IdempotencyKey             *string                             `header:"style=simple,explode=false,name=Idempotency-Key"`
-	CreatePreparedQueryRequest ledgerv3.CreatePreparedQueryRequest `request:"mediaType=application/json"`
-}
-
-func (c *CreatePreparedQueryRequest) GetLedgerName() string {
-	if c == nil {
-		return ""
-	}
-	return c.LedgerName
-}
-
-func (c *CreatePreparedQueryRequest) GetIdempotencyKey() *string {
-	if c == nil {
-		return nil
-	}
-	return c.IdempotencyKey
 }
 
 func (c *CreatePreparedQueryRequest) GetCreatePreparedQueryRequest() ledgerv3.CreatePreparedQueryRequest {
@@ -47,20 +33,34 @@ func (c *CreatePreparedQueryRequest) GetCreatePreparedQueryRequest() ledgerv3.Cr
 	return c.CreatePreparedQueryRequest
 }
 
+func (c *CreatePreparedQueryRequest) GetIdempotencyKey() *string {
+	if c == nil {
+		return nil
+	}
+	return c.IdempotencyKey
+}
+
+func (c *CreatePreparedQueryRequest) GetLedgerName() string {
+	if c == nil {
+		return ""
+	}
+	return c.LedgerName
+}
+
 type CreatePreparedQueryResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (c *CreatePreparedQueryResponse) GetContentType() string {
@@ -68,6 +68,27 @@ func (c *CreatePreparedQueryResponse) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
+}
+
+func (c *CreatePreparedQueryResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if c == nil {
+		return nil
+	}
+	return c.ErrorResponse
+}
+
+func (c *CreatePreparedQueryResponse) GetForbidden() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Forbidden
+}
+
+func (c *CreatePreparedQueryResponse) GetHeaders() map[string][]string {
+	if c == nil {
+		return map[string][]string{}
+	}
+	return c.Headers
 }
 
 func (c *CreatePreparedQueryResponse) GetStatusCode() int {
@@ -84,30 +105,9 @@ func (c *CreatePreparedQueryResponse) GetRawResponse() *http.Response {
 	return c.RawResponse
 }
 
-func (c *CreatePreparedQueryResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if c == nil {
-		return nil
-	}
-	return c.ErrorResponse
-}
-
 func (c *CreatePreparedQueryResponse) GetUnauthorized() *string {
 	if c == nil {
 		return nil
 	}
 	return c.Unauthorized
-}
-
-func (c *CreatePreparedQueryResponse) GetForbidden() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Forbidden
-}
-
-func (c *CreatePreparedQueryResponse) GetHeaders() map[string][]string {
-	if c == nil {
-		return map[string][]string{}
-	}
-	return c.Headers
 }

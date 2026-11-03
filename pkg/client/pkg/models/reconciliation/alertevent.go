@@ -9,6 +9,66 @@ import (
 	"time"
 )
 
+// NewStatus - Status after this event
+type NewStatus string
+
+const (
+	NewStatusOpen         NewStatus = "OPEN"
+	NewStatusAcknowledged NewStatus = "ACKNOWLEDGED"
+	NewStatusResolved     NewStatus = "RESOLVED"
+)
+
+func (e NewStatus) ToPointer() *NewStatus {
+	return &e
+}
+func (e *NewStatus) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "OPEN":
+		fallthrough
+	case "ACKNOWLEDGED":
+		fallthrough
+	case "RESOLVED":
+		*e = NewStatus(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for NewStatus: %v", v)
+	}
+}
+
+// PrevStatus - Status before this event. Null only for the alert's inaugural event
+type PrevStatus string
+
+const (
+	PrevStatusOpen         PrevStatus = "OPEN"
+	PrevStatusAcknowledged PrevStatus = "ACKNOWLEDGED"
+	PrevStatusResolved     PrevStatus = "RESOLVED"
+)
+
+func (e PrevStatus) ToPointer() *PrevStatus {
+	return &e
+}
+func (e *PrevStatus) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "OPEN":
+		fallthrough
+	case "ACKNOWLEDGED":
+		fallthrough
+	case "RESOLVED":
+		*e = PrevStatus(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for PrevStatus: %v", v)
+	}
+}
+
 // Type - What happened, whether an evaluation outcome or a manual transition
 type Type string
 
@@ -51,66 +111,6 @@ func (e *Type) UnmarshalJSON(data []byte) error {
 	}
 }
 
-// PrevStatus - Status before this event. Null only for the alert's inaugural event
-type PrevStatus string
-
-const (
-	PrevStatusOpen         PrevStatus = "OPEN"
-	PrevStatusAcknowledged PrevStatus = "ACKNOWLEDGED"
-	PrevStatusResolved     PrevStatus = "RESOLVED"
-)
-
-func (e PrevStatus) ToPointer() *PrevStatus {
-	return &e
-}
-func (e *PrevStatus) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "OPEN":
-		fallthrough
-	case "ACKNOWLEDGED":
-		fallthrough
-	case "RESOLVED":
-		*e = PrevStatus(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for PrevStatus: %v", v)
-	}
-}
-
-// NewStatus - Status after this event
-type NewStatus string
-
-const (
-	NewStatusOpen         NewStatus = "OPEN"
-	NewStatusAcknowledged NewStatus = "ACKNOWLEDGED"
-	NewStatusResolved     NewStatus = "RESOLVED"
-)
-
-func (e NewStatus) ToPointer() *NewStatus {
-	return &e
-}
-func (e *NewStatus) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "OPEN":
-		fallthrough
-	case "ACKNOWLEDGED":
-		fallthrough
-	case "RESOLVED":
-		*e = NewStatus(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for NewStatus: %v", v)
-	}
-}
-
 // AlertEvent - One row of the alert's append-only event log. Captures every
 // evaluation that touched the alert plus every manual transition
 // (ack / resolve / accept / snooze / unsnooze). `prevStatus` is null
@@ -120,26 +120,26 @@ func (e *NewStatus) UnmarshalJSON(data []byte) error {
 // a transition kept for audit but deliberately not published (a repeated
 // identical fail, or a fail muted by an active snooze).
 type AlertEvent struct {
-	// Unique identifier of the event
-	ID string `json:"id"`
 	// Identifier of the alert this event belongs to
 	AlertID string `json:"alertID"`
-	// Identifier of the evaluation that produced this event, absent for manual transitions
-	EvaluationID *string `json:"evaluationID,omitempty"`
-	// What happened, whether an evaluation outcome or a manual transition
-	Type Type `json:"type"`
-	// Status before this event. Null only for the alert's inaugural event
-	PrevStatus *PrevStatus `json:"prevStatus,omitempty"`
-	// Status after this event
-	NewStatus NewStatus `json:"newStatus"`
-	// Event-type-specific payload (evidence for fail, resolution for resolve/accept, ack object for ack, snooze object for snooze).
-	Payload map[string]any `json:"payload,omitempty"`
 	// When the event occurred
 	At time.Time `json:"at"`
+	// Identifier of the evaluation that produced this event, absent for manual transitions
+	EvaluationID *string `json:"evaluationID,omitempty"`
+	// Unique identifier of the event
+	ID string `json:"id"`
 	// True when a failure landed on an already-resolved alert, reopening it
 	IsReopen bool `json:"isReopen"`
+	// Status after this event
+	NewStatus NewStatus `json:"newStatus"`
 	// Whether this transition was published to the message bus. false = recorded for audit but suppressed.
 	Notify bool `json:"notify"`
+	// Event-type-specific payload (evidence for fail, resolution for resolve/accept, ack object for ack, snooze object for snooze).
+	Payload map[string]any `json:"payload,omitempty"`
+	// Status before this event. Null only for the alert's inaugural event
+	PrevStatus *PrevStatus `json:"prevStatus,omitempty"`
+	// What happened, whether an evaluation outcome or a manual transition
+	Type Type `json:"type"`
 }
 
 func (a AlertEvent) MarshalJSON() ([]byte, error) {
@@ -153,53 +153,11 @@ func (a *AlertEvent) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (a *AlertEvent) GetID() string {
-	if a == nil {
-		return ""
-	}
-	return a.ID
-}
-
 func (a *AlertEvent) GetAlertID() string {
 	if a == nil {
 		return ""
 	}
 	return a.AlertID
-}
-
-func (a *AlertEvent) GetEvaluationID() *string {
-	if a == nil {
-		return nil
-	}
-	return a.EvaluationID
-}
-
-func (a *AlertEvent) GetType() Type {
-	if a == nil {
-		return Type("")
-	}
-	return a.Type
-}
-
-func (a *AlertEvent) GetPrevStatus() *PrevStatus {
-	if a == nil {
-		return nil
-	}
-	return a.PrevStatus
-}
-
-func (a *AlertEvent) GetNewStatus() NewStatus {
-	if a == nil {
-		return NewStatus("")
-	}
-	return a.NewStatus
-}
-
-func (a *AlertEvent) GetPayload() map[string]any {
-	if a == nil {
-		return nil
-	}
-	return a.Payload
 }
 
 func (a *AlertEvent) GetAt() time.Time {
@@ -209,6 +167,20 @@ func (a *AlertEvent) GetAt() time.Time {
 	return a.At
 }
 
+func (a *AlertEvent) GetEvaluationID() *string {
+	if a == nil {
+		return nil
+	}
+	return a.EvaluationID
+}
+
+func (a *AlertEvent) GetID() string {
+	if a == nil {
+		return ""
+	}
+	return a.ID
+}
+
 func (a *AlertEvent) GetIsReopen() bool {
 	if a == nil {
 		return false
@@ -216,9 +188,37 @@ func (a *AlertEvent) GetIsReopen() bool {
 	return a.IsReopen
 }
 
+func (a *AlertEvent) GetNewStatus() NewStatus {
+	if a == nil {
+		return NewStatus("")
+	}
+	return a.NewStatus
+}
+
 func (a *AlertEvent) GetNotify() bool {
 	if a == nil {
 		return false
 	}
 	return a.Notify
+}
+
+func (a *AlertEvent) GetPayload() map[string]any {
+	if a == nil {
+		return nil
+	}
+	return a.Payload
+}
+
+func (a *AlertEvent) GetPrevStatus() *PrevStatus {
+	if a == nil {
+		return nil
+	}
+	return a.PrevStatus
+}
+
+func (a *AlertEvent) GetType() Type {
+	if a == nil {
+		return Type("")
+	}
+	return a.Type
 }

@@ -20,8 +20,49 @@ func (a *AggregateVolumesSecurity) GetBearerAuth() *string {
 }
 
 type AggregateVolumesRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Render all response Uint256, BigUint and SignedBigInt values as canonical
+	// decimal strings, regardless of business meaning, including posting
+	// amounts, volume input/output and balances. Ordinary integer IDs/counts,
+	// metadata and explicitly string-encoded counters keep their existing
+	// representation. Case-insensitive true, yes, y and 1 enable
+	// this option, matching Ledger v2. Whitespace is not trimmed. Omission and
+	// every other value retain JSON number tokens. This affects only this
+	// response, including nested objects, maps, arrays, transaction/log/cursor
+	// and bulk results. Request decoding is unchanged.
+	//
+	FormanceBigintAsString *string `header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
+	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
+	// barrier and waits for the receiving node to apply up to it. `stale`
+	// serves the read from the receiving node's own store, with no barrier
+	// and no forwarding to the leader, so the answer may lag the leader.
+	// Matching ignores case and surrounding whitespace. An unknown value, or a
+	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
+	// `/v3` route, writes included; a valid value has no effect on writes. The
+	// gRPC equivalent is the `x-consistency` request metadata.
+	//
+	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Set to any non-empty value to receive the query profile in the
+	// `X-Query-Profile-Result` response header.
+	//
+	// The profile reports server-side request timing (how long the server spent
+	// handling the request, broken down into prepare / execute / read-barrier /
+	// deliver phases) plus the query execution plan. Use it to tell a slow
+	// network from a slow server: `serverDurationUs` is the
+	// consumer-independent server cost, and it excludes both the
+	// caller-requested read barrier and response delivery.
+	//
+	// Supported on the transactions list, accounts list, aggregated volumes and
+	// prepared-query execution endpoints. The equivalent gRPC opt-in is the
+	// `x-query-profile` request metadata, answered in the
+	// `x-query-profile-result-bin` trailer; `serverDurationUs` has the same
+	// definition on both surfaces, so the two are directly comparable.
+	//
+	XQueryProfile *string `header:"style=simple,explode=false,name=X-Query-Profile"`
+	// When true, every colored bucket of the same (asset, precision) is
+	// summed and the resulting AggregatedVolume entry carries color = "".
+	// By default the response is segregated per (asset, color).
+	//
+	CollapseColors *bool `default:"false" queryParam:"style=form,explode=true,name=collapseColors"`
 	// A filter, accepted in EITHER of two interchangeable representations that
 	// parse to the same filter and are validated against the same per-target
 	// rules:
@@ -55,53 +96,12 @@ type AggregateVolumesRequest struct {
 	// structured JSON form and must be passed in the textual representation.
 	//
 	Filter *string `queryParam:"style=form,explode=true,name=filter"`
-	// Merge assets with the same base at the highest observed precision
-	UseMaxPrecision *bool `default:"false" queryParam:"style=form,explode=true,name=useMaxPrecision"`
 	// Comma-separated list of account prefixes to group volumes by
 	GroupByPrefixes *string `queryParam:"style=form,explode=true,name=groupByPrefixes"`
-	// When true, every colored bucket of the same (asset, precision) is
-	// summed and the resulting AggregatedVolume entry carries color = "".
-	// By default the response is segregated per (asset, color).
-	//
-	CollapseColors *bool `default:"false" queryParam:"style=form,explode=true,name=collapseColors"`
-	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
-	// barrier and waits for the receiving node to apply up to it. `stale`
-	// serves the read from the receiving node's own store, with no barrier
-	// and no forwarding to the leader, so the answer may lag the leader.
-	// Matching ignores case and surrounding whitespace. An unknown value, or a
-	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
-	// `/v3` route, writes included; a valid value has no effect on writes. The
-	// gRPC equivalent is the `x-consistency` request metadata.
-	//
-	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
-	// Render all response Uint256, BigUint and SignedBigInt values as canonical
-	// decimal strings, regardless of business meaning, including posting
-	// amounts, volume input/output and balances. Ordinary integer IDs/counts,
-	// metadata and explicitly string-encoded counters keep their existing
-	// representation. Case-insensitive true, yes, y and 1 enable
-	// this option, matching Ledger v2. Whitespace is not trimmed. Omission and
-	// every other value retain JSON number tokens. This affects only this
-	// response, including nested objects, maps, arrays, transaction/log/cursor
-	// and bulk results. Request decoding is unchanged.
-	//
-	FormanceBigintAsString *string `header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
-	// Set to any non-empty value to receive the query profile in the
-	// `X-Query-Profile-Result` response header.
-	//
-	// The profile reports server-side request timing (how long the server spent
-	// handling the request, broken down into prepare / execute / read-barrier /
-	// deliver phases) plus the query execution plan. Use it to tell a slow
-	// network from a slow server: `serverDurationUs` is the
-	// consumer-independent server cost, and it excludes both the
-	// caller-requested read barrier and response delivery.
-	//
-	// Supported on the transactions list, accounts list, aggregated volumes and
-	// prepared-query execution endpoints. The equivalent gRPC opt-in is the
-	// `x-query-profile` request metadata, answered in the
-	// `x-query-profile-result-bin` trailer; `serverDurationUs` has the same
-	// definition on both surfaces, so the two are directly comparable.
-	//
-	XQueryProfile *string `header:"style=simple,explode=false,name=X-Query-Profile"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Merge assets with the same base at the highest observed precision
+	UseMaxPrecision *bool `default:"false" queryParam:"style=form,explode=true,name=useMaxPrecision"`
 }
 
 func (a AggregateVolumesRequest) MarshalJSON() ([]byte, error) {
@@ -115,39 +115,11 @@ func (a *AggregateVolumesRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (a *AggregateVolumesRequest) GetLedgerName() string {
-	if a == nil {
-		return ""
-	}
-	return a.LedgerName
-}
-
-func (a *AggregateVolumesRequest) GetFilter() *string {
+func (a *AggregateVolumesRequest) GetFormanceBigintAsString() *string {
 	if a == nil {
 		return nil
 	}
-	return a.Filter
-}
-
-func (a *AggregateVolumesRequest) GetUseMaxPrecision() *bool {
-	if a == nil {
-		return nil
-	}
-	return a.UseMaxPrecision
-}
-
-func (a *AggregateVolumesRequest) GetGroupByPrefixes() *string {
-	if a == nil {
-		return nil
-	}
-	return a.GroupByPrefixes
-}
-
-func (a *AggregateVolumesRequest) GetCollapseColors() *bool {
-	if a == nil {
-		return nil
-	}
-	return a.CollapseColors
+	return a.FormanceBigintAsString
 }
 
 func (a *AggregateVolumesRequest) GetXConsistency() *ledgerv3.Consistency {
@@ -157,13 +129,6 @@ func (a *AggregateVolumesRequest) GetXConsistency() *ledgerv3.Consistency {
 	return a.XConsistency
 }
 
-func (a *AggregateVolumesRequest) GetFormanceBigintAsString() *string {
-	if a == nil {
-		return nil
-	}
-	return a.FormanceBigintAsString
-}
-
 func (a *AggregateVolumesRequest) GetXQueryProfile() *string {
 	if a == nil {
 		return nil
@@ -171,22 +136,64 @@ func (a *AggregateVolumesRequest) GetXQueryProfile() *string {
 	return a.XQueryProfile
 }
 
+func (a *AggregateVolumesRequest) GetCollapseColors() *bool {
+	if a == nil {
+		return nil
+	}
+	return a.CollapseColors
+}
+
+func (a *AggregateVolumesRequest) GetFilter() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Filter
+}
+
+func (a *AggregateVolumesRequest) GetGroupByPrefixes() *string {
+	if a == nil {
+		return nil
+	}
+	return a.GroupByPrefixes
+}
+
+func (a *AggregateVolumesRequest) GetLedgerName() string {
+	if a == nil {
+		return ""
+	}
+	return a.LedgerName
+}
+
+func (a *AggregateVolumesRequest) GetUseMaxPrecision() *bool {
+	if a == nil {
+		return nil
+	}
+	return a.UseMaxPrecision
+}
+
 type AggregateVolumesResponse struct {
+	// Aggregated volumes retrieved successfully
+	AggregateVolumesResponse *ledgerv3.AggregateVolumesResponse
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Aggregated volumes retrieved successfully
-	AggregateVolumesResponse *ledgerv3.AggregateVolumesResponse
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
+}
+
+func (a *AggregateVolumesResponse) GetAggregateVolumesResponse() *ledgerv3.AggregateVolumesResponse {
+	if a == nil {
+		return nil
+	}
+	return a.AggregateVolumesResponse
 }
 
 func (a *AggregateVolumesResponse) GetContentType() string {
@@ -194,6 +201,27 @@ func (a *AggregateVolumesResponse) GetContentType() string {
 		return ""
 	}
 	return a.ContentType
+}
+
+func (a *AggregateVolumesResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if a == nil {
+		return nil
+	}
+	return a.ErrorResponse
+}
+
+func (a *AggregateVolumesResponse) GetForbidden() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Forbidden
+}
+
+func (a *AggregateVolumesResponse) GetHeaders() map[string][]string {
+	if a == nil {
+		return map[string][]string{}
+	}
+	return a.Headers
 }
 
 func (a *AggregateVolumesResponse) GetStatusCode() int {
@@ -210,37 +238,9 @@ func (a *AggregateVolumesResponse) GetRawResponse() *http.Response {
 	return a.RawResponse
 }
 
-func (a *AggregateVolumesResponse) GetAggregateVolumesResponse() *ledgerv3.AggregateVolumesResponse {
-	if a == nil {
-		return nil
-	}
-	return a.AggregateVolumesResponse
-}
-
-func (a *AggregateVolumesResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if a == nil {
-		return nil
-	}
-	return a.ErrorResponse
-}
-
 func (a *AggregateVolumesResponse) GetUnauthorized() *string {
 	if a == nil {
 		return nil
 	}
 	return a.Unauthorized
-}
-
-func (a *AggregateVolumesResponse) GetForbidden() *string {
-	if a == nil {
-		return nil
-	}
-	return a.Forbidden
-}
-
-func (a *AggregateVolumesResponse) GetHeaders() map[string][]string {
-	if a == nil {
-		return map[string][]string{}
-	}
-	return a.Headers
 }

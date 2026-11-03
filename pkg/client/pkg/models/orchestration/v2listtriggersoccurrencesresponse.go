@@ -4,18 +4,18 @@ package orchestration
 
 // V2ListTriggersOccurrencesResponseCursor - Paginated cursor wrapping the trigger's occurrences
 type V2ListTriggersOccurrencesResponseCursor struct {
-	PageSize int64                 `json:"pageSize"`
-	HasMore  bool                  `json:"hasMore"`
-	Previous *string               `json:"previous,omitempty"`
-	Next     *string               `json:"next,omitempty"`
 	Data     []V2TriggerOccurrence `json:"data"`
+	HasMore  bool                  `json:"hasMore"`
+	Next     *string               `json:"next,omitempty"`
+	PageSize int64                 `json:"pageSize"`
+	Previous *string               `json:"previous,omitempty"`
 }
 
-func (v *V2ListTriggersOccurrencesResponseCursor) GetPageSize() int64 {
+func (v *V2ListTriggersOccurrencesResponseCursor) GetData() []V2TriggerOccurrence {
 	if v == nil {
-		return 0
+		return []V2TriggerOccurrence{}
 	}
-	return v.PageSize
+	return v.Data
 }
 
 func (v *V2ListTriggersOccurrencesResponseCursor) GetHasMore() bool {
@@ -25,13 +25,6 @@ func (v *V2ListTriggersOccurrencesResponseCursor) GetHasMore() bool {
 	return v.HasMore
 }
 
-func (v *V2ListTriggersOccurrencesResponseCursor) GetPrevious() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Previous
-}
-
 func (v *V2ListTriggersOccurrencesResponseCursor) GetNext() *string {
 	if v == nil {
 		return nil
@@ -39,11 +32,18 @@ func (v *V2ListTriggersOccurrencesResponseCursor) GetNext() *string {
 	return v.Next
 }
 
-func (v *V2ListTriggersOccurrencesResponseCursor) GetData() []V2TriggerOccurrence {
+func (v *V2ListTriggersOccurrencesResponseCursor) GetPageSize() int64 {
 	if v == nil {
-		return []V2TriggerOccurrence{}
+		return 0
 	}
-	return v.Data
+	return v.PageSize
+}
+
+func (v *V2ListTriggersOccurrencesResponseCursor) GetPrevious() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Previous
 }
 
 // #region class-body-v2listtriggersoccurrencesresponsecursor

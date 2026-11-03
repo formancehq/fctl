@@ -8,22 +8,22 @@ import (
 )
 
 type V3Instance struct {
-	// Unique identifier of the run
-	ID string `json:"id"`
 	// Identifier of the connector this run belongs to
 	ConnectorID string `json:"connectorID"`
-	// Identifier of the schedule that started this run
-	ScheduleID string `json:"scheduleID"`
 	// When the run started
 	CreatedAt time.Time `json:"createdAt"`
-	// When the run was last updated
-	UpdatedAt time.Time `json:"updatedAt"`
+	// Why the run failed, absent when it succeeded
+	Error *string `json:"error,omitempty"`
+	// Unique identifier of the run
+	ID string `json:"id"`
+	// Identifier of the schedule that started this run
+	ScheduleID string `json:"scheduleID"`
 	// Whether the run has finished, successfully or not
 	Terminated bool `json:"terminated"`
 	// When the run finished, absent while it is still running
 	TerminatedAt *time.Time `json:"terminatedAt,omitempty"`
-	// Why the run failed, absent when it succeeded
-	Error *string `json:"error,omitempty"`
+	// When the run was last updated
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (v V3Instance) MarshalJSON() ([]byte, error) {
@@ -37,25 +37,11 @@ func (v *V3Instance) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V3Instance) GetID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ID
-}
-
 func (v *V3Instance) GetConnectorID() string {
 	if v == nil {
 		return ""
 	}
 	return v.ConnectorID
-}
-
-func (v *V3Instance) GetScheduleID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ScheduleID
 }
 
 func (v *V3Instance) GetCreatedAt() time.Time {
@@ -65,11 +51,25 @@ func (v *V3Instance) GetCreatedAt() time.Time {
 	return v.CreatedAt
 }
 
-func (v *V3Instance) GetUpdatedAt() time.Time {
+func (v *V3Instance) GetError() *string {
 	if v == nil {
-		return time.Time{}
+		return nil
 	}
-	return v.UpdatedAt
+	return v.Error
+}
+
+func (v *V3Instance) GetID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ID
+}
+
+func (v *V3Instance) GetScheduleID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ScheduleID
 }
 
 func (v *V3Instance) GetTerminated() bool {
@@ -86,11 +86,11 @@ func (v *V3Instance) GetTerminatedAt() *time.Time {
 	return v.TerminatedAt
 }
 
-func (v *V3Instance) GetError() *string {
+func (v *V3Instance) GetUpdatedAt() time.Time {
 	if v == nil {
-		return nil
+		return time.Time{}
 	}
-	return v.Error
+	return v.UpdatedAt
 }
 
 // #region class-body-v3instance

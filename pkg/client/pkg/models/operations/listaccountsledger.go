@@ -8,17 +8,10 @@ import (
 )
 
 type ListAccountsLedgerRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
-	// The maximum number of results to return per page.
-	//
-	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
-	// Pagination cursor, will return accounts after given address, in descending order.
-	After *string `queryParam:"style=form,explode=true,name=after"`
 	// Filter accounts by address pattern (regular expression placed between ^ and $).
 	Address *string `queryParam:"style=form,explode=true,name=address"`
-	// Filter accounts by metadata key value pairs. Nested objects can be used as seen in the example below.
-	Metadata map[string]any `queryParam:"style=deepObject,explode=true,name=metadata"`
+	// Pagination cursor, will return accounts after given address, in descending order.
+	After *string `queryParam:"style=form,explode=true,name=after"`
 	// Filter accounts by their balance (default operator is gte)
 	Balance *int64 `queryParam:"style=form,explode=true,name=balance"`
 	// Parameter used in pagination requests. Maximum page size is set to 1000.
@@ -27,6 +20,13 @@ type ListAccountsLedgerRequest struct {
 	// No other parameters can be set when this parameter is set.
 	//
 	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
+	// Filter accounts by metadata key value pairs. Nested objects can be used as seen in the example below.
+	Metadata map[string]any `queryParam:"style=deepObject,explode=true,name=metadata"`
+	// The maximum number of results to return per page.
+	//
+	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
 	// Parameter used in pagination requests. Maximum page size is set to 1000.
 	// Set to the value of next for the next page of results.
 	// Set to the value of previous for the previous page of results.
@@ -38,27 +38,6 @@ type ListAccountsLedgerRequest struct {
 	PaginationToken *string `queryParam:"style=form,explode=true,name=pagination_token"`
 }
 
-func (l *ListAccountsLedgerRequest) GetLedger() string {
-	if l == nil {
-		return ""
-	}
-	return l.Ledger
-}
-
-func (l *ListAccountsLedgerRequest) GetPageSize() *int64 {
-	if l == nil {
-		return nil
-	}
-	return l.PageSize
-}
-
-func (l *ListAccountsLedgerRequest) GetAfter() *string {
-	if l == nil {
-		return nil
-	}
-	return l.After
-}
-
 func (l *ListAccountsLedgerRequest) GetAddress() *string {
 	if l == nil {
 		return nil
@@ -66,11 +45,11 @@ func (l *ListAccountsLedgerRequest) GetAddress() *string {
 	return l.Address
 }
 
-func (l *ListAccountsLedgerRequest) GetMetadata() map[string]any {
+func (l *ListAccountsLedgerRequest) GetAfter() *string {
 	if l == nil {
 		return nil
 	}
-	return l.Metadata
+	return l.After
 }
 
 func (l *ListAccountsLedgerRequest) GetBalance() *int64 {
@@ -87,6 +66,27 @@ func (l *ListAccountsLedgerRequest) GetCursor() *string {
 	return l.Cursor
 }
 
+func (l *ListAccountsLedgerRequest) GetLedger() string {
+	if l == nil {
+		return ""
+	}
+	return l.Ledger
+}
+
+func (l *ListAccountsLedgerRequest) GetMetadata() map[string]any {
+	if l == nil {
+		return nil
+	}
+	return l.Metadata
+}
+
+func (l *ListAccountsLedgerRequest) GetPageSize() *int64 {
+	if l == nil {
+		return nil
+	}
+	return l.PageSize
+}
+
 func (l *ListAccountsLedgerRequest) GetPaginationToken() *string {
 	if l == nil {
 		return nil
@@ -95,16 +95,23 @@ func (l *ListAccountsLedgerRequest) GetPaginationToken() *string {
 }
 
 type ListAccountsLedgerResponse struct {
+	// OK
+	AccountsCursorResponse *ledger.AccountsCursorResponse
 	// HTTP response content type for this operation
 	ContentType string
+	// Not found
+	ErrorResponse *ledger.ErrorResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	AccountsCursorResponse *ledger.AccountsCursorResponse
-	// Not found
-	ErrorResponse *ledger.ErrorResponse
+}
+
+func (l *ListAccountsLedgerResponse) GetAccountsCursorResponse() *ledger.AccountsCursorResponse {
+	if l == nil {
+		return nil
+	}
+	return l.AccountsCursorResponse
 }
 
 func (l *ListAccountsLedgerResponse) GetContentType() string {
@@ -112,6 +119,13 @@ func (l *ListAccountsLedgerResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListAccountsLedgerResponse) GetErrorResponse() *ledger.ErrorResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ErrorResponse
 }
 
 func (l *ListAccountsLedgerResponse) GetStatusCode() int {
@@ -126,18 +140,4 @@ func (l *ListAccountsLedgerResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return l.RawResponse
-}
-
-func (l *ListAccountsLedgerResponse) GetAccountsCursorResponse() *ledger.AccountsCursorResponse {
-	if l == nil {
-		return nil
-	}
-	return l.AccountsCursorResponse
-}
-
-func (l *ListAccountsLedgerResponse) GetErrorResponse() *ledger.ErrorResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ErrorResponse
 }

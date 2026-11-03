@@ -9,30 +9,30 @@ import (
 )
 
 type V3CreatePaymentRequest struct {
-	// Identifier the payment carries at the provider
-	Reference string `json:"reference"`
-	// Identifier of the connector the payment belongs to
-	ConnectorID string `json:"connectorID"`
-	// When the payment was created at the provider
-	CreatedAt time.Time `json:"createdAt"`
-	// Direction of a payment
-	Type V3PaymentTypeEnum `json:"type"`
-	// Amount the payment was created with, before any adjustment
-	InitialAmount *big.Int `json:"initialAmount"`
+	// Status and amount changes to record alongside the payment
+	Adjustments []V3CreatePaymentAdjustmentRequest `json:"adjustments,omitempty"`
 	// Current amount of the payment, in the asset's smallest unit
 	Amount *big.Int `json:"amount"`
 	// Asset the payment is denominated in
 	Asset string `json:"asset"`
+	// Identifier of the connector the payment belongs to
+	ConnectorID string `json:"connectorID"`
+	// When the payment was created at the provider
+	CreatedAt time.Time `json:"createdAt"`
+	// Identifier of the account the funds reach
+	DestinationAccountID *string `json:"destinationAccountID,omitempty"`
+	// Amount the payment was created with, before any adjustment
+	InitialAmount *big.Int `json:"initialAmount"`
+	// Arbitrary key/value pairs attached to the resource
+	Metadata map[string]string `json:"metadata,omitempty"`
+	// Identifier the payment carries at the provider
+	Reference string `json:"reference"`
 	// Payment scheme or rail the payment travels over
 	Scheme string `json:"scheme"`
 	// Identifier of the account the funds leave
 	SourceAccountID *string `json:"sourceAccountID,omitempty"`
-	// Identifier of the account the funds reach
-	DestinationAccountID *string `json:"destinationAccountID,omitempty"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
-	// Status and amount changes to record alongside the payment
-	Adjustments []V3CreatePaymentAdjustmentRequest `json:"adjustments,omitempty"`
+	// Direction of a payment
+	Type V3PaymentTypeEnum `json:"type"`
 }
 
 func (v V3CreatePaymentRequest) MarshalJSON() ([]byte, error) {
@@ -46,39 +46,11 @@ func (v *V3CreatePaymentRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V3CreatePaymentRequest) GetReference() string {
+func (v *V3CreatePaymentRequest) GetAdjustments() []V3CreatePaymentAdjustmentRequest {
 	if v == nil {
-		return ""
+		return nil
 	}
-	return v.Reference
-}
-
-func (v *V3CreatePaymentRequest) GetConnectorID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ConnectorID
-}
-
-func (v *V3CreatePaymentRequest) GetCreatedAt() time.Time {
-	if v == nil {
-		return time.Time{}
-	}
-	return v.CreatedAt
-}
-
-func (v *V3CreatePaymentRequest) GetType() V3PaymentTypeEnum {
-	if v == nil {
-		return V3PaymentTypeEnum("")
-	}
-	return v.Type
-}
-
-func (v *V3CreatePaymentRequest) GetInitialAmount() *big.Int {
-	if v == nil {
-		return big.NewInt(0)
-	}
-	return v.InitialAmount
+	return v.Adjustments
 }
 
 func (v *V3CreatePaymentRequest) GetAmount() *big.Int {
@@ -95,6 +67,48 @@ func (v *V3CreatePaymentRequest) GetAsset() string {
 	return v.Asset
 }
 
+func (v *V3CreatePaymentRequest) GetConnectorID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ConnectorID
+}
+
+func (v *V3CreatePaymentRequest) GetCreatedAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.CreatedAt
+}
+
+func (v *V3CreatePaymentRequest) GetDestinationAccountID() *string {
+	if v == nil {
+		return nil
+	}
+	return v.DestinationAccountID
+}
+
+func (v *V3CreatePaymentRequest) GetInitialAmount() *big.Int {
+	if v == nil {
+		return big.NewInt(0)
+	}
+	return v.InitialAmount
+}
+
+func (v *V3CreatePaymentRequest) GetMetadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.Metadata
+}
+
+func (v *V3CreatePaymentRequest) GetReference() string {
+	if v == nil {
+		return ""
+	}
+	return v.Reference
+}
+
 func (v *V3CreatePaymentRequest) GetScheme() string {
 	if v == nil {
 		return ""
@@ -109,25 +123,11 @@ func (v *V3CreatePaymentRequest) GetSourceAccountID() *string {
 	return v.SourceAccountID
 }
 
-func (v *V3CreatePaymentRequest) GetDestinationAccountID() *string {
+func (v *V3CreatePaymentRequest) GetType() V3PaymentTypeEnum {
 	if v == nil {
-		return nil
+		return V3PaymentTypeEnum("")
 	}
-	return v.DestinationAccountID
-}
-
-func (v *V3CreatePaymentRequest) GetMetadata() map[string]string {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
-}
-
-func (v *V3CreatePaymentRequest) GetAdjustments() []V3CreatePaymentAdjustmentRequest {
-	if v == nil {
-		return nil
-	}
-	return v.Adjustments
+	return v.Type
 }
 
 // #region class-body-v3createpaymentrequest

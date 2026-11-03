@@ -8,8 +8,8 @@ import (
 
 // CreatedTransactionRuleRead - Rule scoped to MirrorCreatedTransaction. Inside `match`, `log` is the created-transaction proto directly (e.g. `log.metadata["k"]`).
 type CreatedTransactionRuleRead struct {
-	Match   *string                        `json:"match,omitempty"`
 	Actions []CreatedTransactionActionRead `json:"actions,omitempty"`
+	Match   *string                        `json:"match,omitempty"`
 }
 
 func (c CreatedTransactionRuleRead) MarshalJSON() ([]byte, error) {
@@ -23,16 +23,16 @@ func (c *CreatedTransactionRuleRead) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (c *CreatedTransactionRuleRead) GetMatch() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Match
-}
-
 func (c *CreatedTransactionRuleRead) GetActions() []CreatedTransactionActionRead {
 	if c == nil {
 		return nil
 	}
 	return c.Actions
+}
+
+func (c *CreatedTransactionRuleRead) GetMatch() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Match
 }

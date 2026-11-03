@@ -9,8 +9,8 @@ import (
 )
 
 type GetDeliveryAttemptsRequest struct {
-	ID       string  `pathParam:"style=simple,explode=false,name=id"`
 	Cursor   *string `queryParam:"style=form,explode=true,name=cursor"`
+	ID       string  `pathParam:"style=simple,explode=false,name=id"`
 	PageSize *int64  `default:"100" queryParam:"style=form,explode=true,name=pageSize"`
 }
 
@@ -25,18 +25,18 @@ func (g *GetDeliveryAttemptsRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (g *GetDeliveryAttemptsRequest) GetID() string {
-	if g == nil {
-		return ""
-	}
-	return g.ID
-}
-
 func (g *GetDeliveryAttemptsRequest) GetCursor() *string {
 	if g == nil {
 		return nil
 	}
 	return g.Cursor
+}
+
+func (g *GetDeliveryAttemptsRequest) GetID() string {
+	if g == nil {
+		return ""
+	}
+	return g.ID
 }
 
 func (g *GetDeliveryAttemptsRequest) GetPageSize() *int64 {
@@ -49,12 +49,12 @@ func (g *GetDeliveryAttemptsRequest) GetPageSize() *int64 {
 type GetDeliveryAttemptsResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Paginated append-only attempt history.
+	DeliveryAttemptsResponse *webhooks.DeliveryAttemptsResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Paginated append-only attempt history.
-	DeliveryAttemptsResponse *webhooks.DeliveryAttemptsResponse
 }
 
 func (g *GetDeliveryAttemptsResponse) GetContentType() string {
@@ -62,6 +62,13 @@ func (g *GetDeliveryAttemptsResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetDeliveryAttemptsResponse) GetDeliveryAttemptsResponse() *webhooks.DeliveryAttemptsResponse {
+	if g == nil {
+		return nil
+	}
+	return g.DeliveryAttemptsResponse
 }
 
 func (g *GetDeliveryAttemptsResponse) GetStatusCode() int {
@@ -76,11 +83,4 @@ func (g *GetDeliveryAttemptsResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetDeliveryAttemptsResponse) GetDeliveryAttemptsResponse() *webhooks.DeliveryAttemptsResponse {
-	if g == nil {
-		return nil
-	}
-	return g.DeliveryAttemptsResponse
 }

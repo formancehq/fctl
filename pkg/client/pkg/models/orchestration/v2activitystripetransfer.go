@@ -17,20 +17,20 @@ type V2ActivityStripeTransferMetadata struct {
 
 // V2ActivityStripeTransfer - Arguments for the activity that transfers funds through Stripe
 type V2ActivityStripeTransfer struct {
-	// Identifier of the Stripe connector to transfer through
-	ConnectorID *string `json:"connectorID,omitempty"`
 	// Amount to transfer, in the asset's smallest unit
 	Amount *big.Int `json:"amount,omitempty"`
 	// Asset the transfer is denominated in
 	Asset *string `json:"asset,omitempty"`
+	// Identifier of the Stripe connector to transfer through
+	ConnectorID *string `json:"connectorID,omitempty"`
 	// Stripe connected account receiving the transfer
 	Destination *string `json:"destination,omitempty"`
-	// When true, the transfer is created but held until it is validated
-	WaitingValidation *bool `default:"false" json:"waitingValidation"`
 	// A set of key/value pairs that you can attach to a transfer object.
 	// It can be useful for storing additional information about the transfer in a structured format.
 	//
 	Metadata *V2ActivityStripeTransferMetadata `json:"metadata,omitempty"`
+	// When true, the transfer is created but held until it is validated
+	WaitingValidation *bool `default:"false" json:"waitingValidation"`
 }
 
 func (v V2ActivityStripeTransfer) MarshalJSON() ([]byte, error) {
@@ -42,13 +42,6 @@ func (v *V2ActivityStripeTransfer) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (v *V2ActivityStripeTransfer) GetConnectorID() *string {
-	if v == nil {
-		return nil
-	}
-	return v.ConnectorID
 }
 
 func (v *V2ActivityStripeTransfer) GetAmount() *big.Int {
@@ -65,6 +58,13 @@ func (v *V2ActivityStripeTransfer) GetAsset() *string {
 	return v.Asset
 }
 
+func (v *V2ActivityStripeTransfer) GetConnectorID() *string {
+	if v == nil {
+		return nil
+	}
+	return v.ConnectorID
+}
+
 func (v *V2ActivityStripeTransfer) GetDestination() *string {
 	if v == nil {
 		return nil
@@ -72,18 +72,18 @@ func (v *V2ActivityStripeTransfer) GetDestination() *string {
 	return v.Destination
 }
 
-func (v *V2ActivityStripeTransfer) GetWaitingValidation() *bool {
-	if v == nil {
-		return nil
-	}
-	return v.WaitingValidation
-}
-
 func (v *V2ActivityStripeTransfer) GetMetadata() *V2ActivityStripeTransferMetadata {
 	if v == nil {
 		return nil
 	}
 	return v.Metadata
+}
+
+func (v *V2ActivityStripeTransfer) GetWaitingValidation() *bool {
+	if v == nil {
+		return nil
+	}
+	return v.WaitingValidation
 }
 
 // #region class-body-v2activitystripetransfer

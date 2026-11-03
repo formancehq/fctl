@@ -32,16 +32,16 @@ func (v *V2PostTransactionScript) GetVars() map[string]any {
 
 // V2PostTransaction - A transaction to write to a ledger
 type V2PostTransaction struct {
-	// The transaction time to record, letting you backdate or postdate the transaction. See [bi-temporality](https://docs.formance.com/modules/ledger/working-with/bi-temporality)
-	Timestamp *time.Time `json:"timestamp,omitempty"`
-	// Fund movements to apply. Mutually exclusive with script
-	Postings []V2Posting `json:"postings,omitempty"`
-	// A Numscript program executed to produce the postings. Mutually exclusive with postings
-	Script *V2PostTransactionScript `json:"script,omitempty"`
-	// Optional caller-supplied identifier, unique within the ledger, used to deduplicate transactions
-	Reference *string `json:"reference,omitempty"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]string `json:"metadata"`
+	// Fund movements to apply. Mutually exclusive with script
+	Postings []V2Posting `json:"postings,omitempty"`
+	// Optional caller-supplied identifier, unique within the ledger, used to deduplicate transactions
+	Reference *string `json:"reference,omitempty"`
+	// A Numscript program executed to produce the postings. Mutually exclusive with postings
+	Script *V2PostTransactionScript `json:"script,omitempty"`
+	// The transaction time to record, letting you backdate or postdate the transaction. See [bi-temporality](https://docs.formance.com/modules/ledger/working-with/bi-temporality)
+	Timestamp *time.Time `json:"timestamp,omitempty"`
 }
 
 func (v V2PostTransaction) MarshalJSON() ([]byte, error) {
@@ -55,11 +55,11 @@ func (v *V2PostTransaction) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2PostTransaction) GetTimestamp() *time.Time {
+func (v *V2PostTransaction) GetMetadata() map[string]string {
 	if v == nil {
-		return nil
+		return map[string]string{}
 	}
-	return v.Timestamp
+	return v.Metadata
 }
 
 func (v *V2PostTransaction) GetPostings() []V2Posting {
@@ -69,13 +69,6 @@ func (v *V2PostTransaction) GetPostings() []V2Posting {
 	return v.Postings
 }
 
-func (v *V2PostTransaction) GetScript() *V2PostTransactionScript {
-	if v == nil {
-		return nil
-	}
-	return v.Script
-}
-
 func (v *V2PostTransaction) GetReference() *string {
 	if v == nil {
 		return nil
@@ -83,11 +76,18 @@ func (v *V2PostTransaction) GetReference() *string {
 	return v.Reference
 }
 
-func (v *V2PostTransaction) GetMetadata() map[string]string {
+func (v *V2PostTransaction) GetScript() *V2PostTransactionScript {
 	if v == nil {
-		return map[string]string{}
+		return nil
 	}
-	return v.Metadata
+	return v.Script
+}
+
+func (v *V2PostTransaction) GetTimestamp() *time.Time {
+	if v == nil {
+		return nil
+	}
+	return v.Timestamp
 }
 
 // #region class-body-v2posttransaction

@@ -2,62 +2,62 @@
 
 package wallets
 
-// GetHoldsResponseCursor - Paginated cursor wrapping the list of holds
-type GetHoldsResponseCursor struct {
-	// Number of items requested per page
-	PageSize int64 `json:"pageSize"`
+// Cursor - Paginated cursor wrapping the list of holds
+type Cursor struct {
+	Data []Hold `json:"data"`
 	// Whether further pages are available
 	HasMore *bool `json:"hasMore,omitempty"`
-	// Cursor for the previous page, absent on the first page
-	Previous *string `json:"previous,omitempty"`
 	// Cursor for the next page, absent on the last page
 	Next *string `json:"next,omitempty"`
-	Data []Hold  `json:"data"`
+	// Number of items requested per page
+	PageSize int64 `json:"pageSize"`
+	// Cursor for the previous page, absent on the first page
+	Previous *string `json:"previous,omitempty"`
 }
 
-func (g *GetHoldsResponseCursor) GetPageSize() int64 {
-	if g == nil {
-		return 0
-	}
-	return g.PageSize
-}
-
-func (g *GetHoldsResponseCursor) GetHasMore() *bool {
-	if g == nil {
-		return nil
-	}
-	return g.HasMore
-}
-
-func (g *GetHoldsResponseCursor) GetPrevious() *string {
-	if g == nil {
-		return nil
-	}
-	return g.Previous
-}
-
-func (g *GetHoldsResponseCursor) GetNext() *string {
-	if g == nil {
-		return nil
-	}
-	return g.Next
-}
-
-func (g *GetHoldsResponseCursor) GetData() []Hold {
-	if g == nil {
+func (c *Cursor) GetData() []Hold {
+	if c == nil {
 		return []Hold{}
 	}
-	return g.Data
+	return c.Data
+}
+
+func (c *Cursor) GetHasMore() *bool {
+	if c == nil {
+		return nil
+	}
+	return c.HasMore
+}
+
+func (c *Cursor) GetNext() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Next
+}
+
+func (c *Cursor) GetPageSize() int64 {
+	if c == nil {
+		return 0
+	}
+	return c.PageSize
+}
+
+func (c *Cursor) GetPrevious() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Previous
 }
 
 type GetHoldsResponse struct {
 	// Paginated cursor wrapping the list of holds
-	Cursor GetHoldsResponseCursor `json:"cursor"`
+	Cursor Cursor `json:"cursor"`
 }
 
-func (g *GetHoldsResponse) GetCursor() GetHoldsResponseCursor {
+func (g *GetHoldsResponse) GetCursor() Cursor {
 	if g == nil {
-		return GetHoldsResponseCursor{}
+		return Cursor{}
 	}
 	return g.Cursor
 }

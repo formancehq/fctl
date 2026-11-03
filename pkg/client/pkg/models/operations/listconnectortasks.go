@@ -11,15 +11,15 @@ import (
 type ListConnectorTasksRequest struct {
 	// The name of the connector.
 	Connector payments.Connector `pathParam:"style=simple,explode=false,name=connector"`
-	// The maximum number of results to return per page.
-	//
-	PageSize *int64 `default:"15" queryParam:"style=form,explode=true,name=pageSize"`
 	// Parameter used in pagination requests. Maximum page size is set to 15.
 	// Set to the value of next for the next page of results.
 	// Set to the value of previous for the previous page of results.
 	// No other parameters can be set when this parameter is set.
 	//
 	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// The maximum number of results to return per page.
+	//
+	PageSize *int64 `default:"15" queryParam:"style=form,explode=true,name=pageSize"`
 }
 
 func (l ListConnectorTasksRequest) MarshalJSON() ([]byte, error) {
@@ -40,18 +40,18 @@ func (l *ListConnectorTasksRequest) GetConnector() payments.Connector {
 	return l.Connector
 }
 
-func (l *ListConnectorTasksRequest) GetPageSize() *int64 {
-	if l == nil {
-		return nil
-	}
-	return l.PageSize
-}
-
 func (l *ListConnectorTasksRequest) GetCursor() *string {
 	if l == nil {
 		return nil
 	}
 	return l.Cursor
+}
+
+func (l *ListConnectorTasksRequest) GetPageSize() *int64 {
+	if l == nil {
+		return nil
+	}
+	return l.PageSize
 }
 
 type ListConnectorTasksResponse struct {

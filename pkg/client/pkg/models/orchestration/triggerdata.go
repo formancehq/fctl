@@ -5,16 +5,16 @@ package orchestration
 type TriggerData struct {
 	// Type of event that fires this trigger
 	Event string `json:"event"`
-	// Identifier of the workflow to run when the trigger fires
-	WorkflowID string `json:"workflowID"`
-	// Version of the trigger definition
-	Version *string `json:"version,omitempty"`
 	// Expression evaluated against the event. The workflow runs only when it matches
 	Filter *string `json:"filter,omitempty"`
-	// Expressions evaluated against the event to build the workflow's input variables
-	Vars map[string]any `json:"vars,omitempty"`
 	// Human-readable name for the trigger
 	Name *string `json:"name,omitempty"`
+	// Expressions evaluated against the event to build the workflow's input variables
+	Vars map[string]any `json:"vars,omitempty"`
+	// Version of the trigger definition
+	Version *string `json:"version,omitempty"`
+	// Identifier of the workflow to run when the trigger fires
+	WorkflowID string `json:"workflowID"`
 }
 
 func (t *TriggerData) GetEvent() string {
@@ -24,25 +24,18 @@ func (t *TriggerData) GetEvent() string {
 	return t.Event
 }
 
-func (t *TriggerData) GetWorkflowID() string {
-	if t == nil {
-		return ""
-	}
-	return t.WorkflowID
-}
-
-func (t *TriggerData) GetVersion() *string {
-	if t == nil {
-		return nil
-	}
-	return t.Version
-}
-
 func (t *TriggerData) GetFilter() *string {
 	if t == nil {
 		return nil
 	}
 	return t.Filter
+}
+
+func (t *TriggerData) GetName() *string {
+	if t == nil {
+		return nil
+	}
+	return t.Name
 }
 
 func (t *TriggerData) GetVars() map[string]any {
@@ -52,9 +45,16 @@ func (t *TriggerData) GetVars() map[string]any {
 	return t.Vars
 }
 
-func (t *TriggerData) GetName() *string {
+func (t *TriggerData) GetVersion() *string {
 	if t == nil {
 		return nil
 	}
-	return t.Name
+	return t.Version
+}
+
+func (t *TriggerData) GetWorkflowID() string {
+	if t == nil {
+		return ""
+	}
+	return t.WorkflowID
 }

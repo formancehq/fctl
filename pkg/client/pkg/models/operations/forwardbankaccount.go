@@ -8,16 +8,9 @@ import (
 )
 
 type ForwardBankAccountRequest struct {
-	// The bank account ID.
-	BankAccountID             string                             `pathParam:"style=simple,explode=false,name=bankAccountId"`
 	ForwardBankAccountRequest payments.ForwardBankAccountRequest `request:"mediaType=application/json"`
-}
-
-func (f *ForwardBankAccountRequest) GetBankAccountID() string {
-	if f == nil {
-		return ""
-	}
-	return f.BankAccountID
+	// The bank account ID.
+	BankAccountID string `pathParam:"style=simple,explode=false,name=bankAccountId"`
 }
 
 func (f *ForwardBankAccountRequest) GetForwardBankAccountRequest() payments.ForwardBankAccountRequest {
@@ -27,15 +20,29 @@ func (f *ForwardBankAccountRequest) GetForwardBankAccountRequest() payments.Forw
 	return f.ForwardBankAccountRequest
 }
 
+func (f *ForwardBankAccountRequest) GetBankAccountID() string {
+	if f == nil {
+		return ""
+	}
+	return f.BankAccountID
+}
+
 type ForwardBankAccountResponse struct {
+	// OK
+	BankAccountResponse *payments.BankAccountResponse
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	BankAccountResponse *payments.BankAccountResponse
+}
+
+func (f *ForwardBankAccountResponse) GetBankAccountResponse() *payments.BankAccountResponse {
+	if f == nil {
+		return nil
+	}
+	return f.BankAccountResponse
 }
 
 func (f *ForwardBankAccountResponse) GetContentType() string {
@@ -57,11 +64,4 @@ func (f *ForwardBankAccountResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return f.RawResponse
-}
-
-func (f *ForwardBankAccountResponse) GetBankAccountResponse() *payments.BankAccountResponse {
-	if f == nil {
-		return nil
-	}
-	return f.BankAccountResponse
 }

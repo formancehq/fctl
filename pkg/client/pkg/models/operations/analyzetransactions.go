@@ -20,20 +20,6 @@ func (a *AnalyzeTransactionsSecurity) GetBearerAuth() *string {
 }
 
 type AnalyzeTransactionsRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Max distinct children before classifying as variable (0 = default 10)
-	VariableThreshold *int `default:"0" queryParam:"style=form,explode=true,name=variableThreshold"`
-	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
-	// barrier and waits for the receiving node to apply up to it. `stale`
-	// serves the read from the receiving node's own store, with no barrier
-	// and no forwarding to the leader, so the answer may lag the leader.
-	// Matching ignores case and surrounding whitespace. An unknown value, or a
-	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
-	// `/v3` route, writes included; a valid value has no effect on writes. The
-	// gRPC equivalent is the `x-consistency` request metadata.
-	//
-	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
 	// Render all response Uint256, BigUint and SignedBigInt values as canonical
 	// decimal strings, regardless of business meaning, including posting
 	// amounts, volume input/output and balances. Ordinary integer IDs/counts,
@@ -45,6 +31,20 @@ type AnalyzeTransactionsRequest struct {
 	// and bulk results. Request decoding is unchanged.
 	//
 	FormanceBigintAsString *string `header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
+	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
+	// barrier and waits for the receiving node to apply up to it. `stale`
+	// serves the read from the receiving node's own store, with no barrier
+	// and no forwarding to the leader, so the answer may lag the leader.
+	// Matching ignores case and surrounding whitespace. An unknown value, or a
+	// repeated or comma-joined header, returns `400 INVALID_REQUEST` on every
+	// `/v3` route, writes included; a valid value has no effect on writes. The
+	// gRPC equivalent is the `x-consistency` request metadata.
+	//
+	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Max distinct children before classifying as variable (0 = default 10)
+	VariableThreshold *int `default:"0" queryParam:"style=form,explode=true,name=variableThreshold"`
 }
 
 func (a AnalyzeTransactionsRequest) MarshalJSON() ([]byte, error) {
@@ -56,6 +56,20 @@ func (a *AnalyzeTransactionsRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (a *AnalyzeTransactionsRequest) GetFormanceBigintAsString() *string {
+	if a == nil {
+		return nil
+	}
+	return a.FormanceBigintAsString
+}
+
+func (a *AnalyzeTransactionsRequest) GetXConsistency() *ledgerv3.Consistency {
+	if a == nil {
+		return nil
+	}
+	return a.XConsistency
 }
 
 func (a *AnalyzeTransactionsRequest) GetLedgerName() string {
@@ -72,36 +86,29 @@ func (a *AnalyzeTransactionsRequest) GetVariableThreshold() *int {
 	return a.VariableThreshold
 }
 
-func (a *AnalyzeTransactionsRequest) GetXConsistency() *ledgerv3.Consistency {
-	if a == nil {
-		return nil
-	}
-	return a.XConsistency
-}
-
-func (a *AnalyzeTransactionsRequest) GetFormanceBigintAsString() *string {
-	if a == nil {
-		return nil
-	}
-	return a.FormanceBigintAsString
-}
-
 type AnalyzeTransactionsResponse struct {
+	// Analysis completed successfully
+	AnalyzeTransactionsResponse *ledgerv3.AnalyzeTransactionsResponse
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Analysis completed successfully
-	AnalyzeTransactionsResponse *ledgerv3.AnalyzeTransactionsResponse
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
+}
+
+func (a *AnalyzeTransactionsResponse) GetAnalyzeTransactionsResponse() *ledgerv3.AnalyzeTransactionsResponse {
+	if a == nil {
+		return nil
+	}
+	return a.AnalyzeTransactionsResponse
 }
 
 func (a *AnalyzeTransactionsResponse) GetContentType() string {
@@ -109,6 +116,27 @@ func (a *AnalyzeTransactionsResponse) GetContentType() string {
 		return ""
 	}
 	return a.ContentType
+}
+
+func (a *AnalyzeTransactionsResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if a == nil {
+		return nil
+	}
+	return a.ErrorResponse
+}
+
+func (a *AnalyzeTransactionsResponse) GetForbidden() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Forbidden
+}
+
+func (a *AnalyzeTransactionsResponse) GetHeaders() map[string][]string {
+	if a == nil {
+		return map[string][]string{}
+	}
+	return a.Headers
 }
 
 func (a *AnalyzeTransactionsResponse) GetStatusCode() int {
@@ -125,37 +153,9 @@ func (a *AnalyzeTransactionsResponse) GetRawResponse() *http.Response {
 	return a.RawResponse
 }
 
-func (a *AnalyzeTransactionsResponse) GetAnalyzeTransactionsResponse() *ledgerv3.AnalyzeTransactionsResponse {
-	if a == nil {
-		return nil
-	}
-	return a.AnalyzeTransactionsResponse
-}
-
-func (a *AnalyzeTransactionsResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if a == nil {
-		return nil
-	}
-	return a.ErrorResponse
-}
-
 func (a *AnalyzeTransactionsResponse) GetUnauthorized() *string {
 	if a == nil {
 		return nil
 	}
 	return a.Unauthorized
-}
-
-func (a *AnalyzeTransactionsResponse) GetForbidden() *string {
-	if a == nil {
-		return nil
-	}
-	return a.Forbidden
-}
-
-func (a *AnalyzeTransactionsResponse) GetHeaders() map[string][]string {
-	if a == nil {
-		return map[string][]string{}
-	}
-	return a.Headers
 }

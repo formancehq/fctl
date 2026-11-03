@@ -4,18 +4,18 @@ package ledger
 
 // V2ExportersCursorResponseCursor - Paginated cursor wrapping the list of exporters
 type V2ExportersCursorResponseCursor struct {
-	PageSize int64        `json:"pageSize"`
-	HasMore  bool         `json:"hasMore"`
-	Previous *string      `json:"previous,omitempty"`
-	Next     *string      `json:"next,omitempty"`
 	Data     []V2Exporter `json:"data"`
+	HasMore  bool         `json:"hasMore"`
+	Next     *string      `json:"next,omitempty"`
+	PageSize int64        `json:"pageSize"`
+	Previous *string      `json:"previous,omitempty"`
 }
 
-func (v *V2ExportersCursorResponseCursor) GetPageSize() int64 {
+func (v *V2ExportersCursorResponseCursor) GetData() []V2Exporter {
 	if v == nil {
-		return 0
+		return []V2Exporter{}
 	}
-	return v.PageSize
+	return v.Data
 }
 
 func (v *V2ExportersCursorResponseCursor) GetHasMore() bool {
@@ -25,13 +25,6 @@ func (v *V2ExportersCursorResponseCursor) GetHasMore() bool {
 	return v.HasMore
 }
 
-func (v *V2ExportersCursorResponseCursor) GetPrevious() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Previous
-}
-
 func (v *V2ExportersCursorResponseCursor) GetNext() *string {
 	if v == nil {
 		return nil
@@ -39,11 +32,18 @@ func (v *V2ExportersCursorResponseCursor) GetNext() *string {
 	return v.Next
 }
 
-func (v *V2ExportersCursorResponseCursor) GetData() []V2Exporter {
+func (v *V2ExportersCursorResponseCursor) GetPageSize() int64 {
 	if v == nil {
-		return []V2Exporter{}
+		return 0
 	}
-	return v.Data
+	return v.PageSize
+}
+
+func (v *V2ExportersCursorResponseCursor) GetPrevious() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Previous
 }
 
 // #region class-body-v2exporterscursorresponsecursor

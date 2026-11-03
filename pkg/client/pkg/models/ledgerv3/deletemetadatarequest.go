@@ -9,33 +9,6 @@ import (
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
 )
 
-// DeleteMetadataRequestTargetType - Type of target (account or transaction)
-type DeleteMetadataRequestTargetType string
-
-const (
-	DeleteMetadataRequestTargetTypeAccount     DeleteMetadataRequestTargetType = "ACCOUNT"
-	DeleteMetadataRequestTargetTypeTransaction DeleteMetadataRequestTargetType = "TRANSACTION"
-)
-
-func (e DeleteMetadataRequestTargetType) ToPointer() *DeleteMetadataRequestTargetType {
-	return &e
-}
-func (e *DeleteMetadataRequestTargetType) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "ACCOUNT":
-		fallthrough
-	case "TRANSACTION":
-		*e = DeleteMetadataRequestTargetType(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for DeleteMetadataRequestTargetType: %v", v)
-	}
-}
-
 type DeleteMetadataRequestTargetIDType string
 
 const (
@@ -100,14 +73,41 @@ func (u DeleteMetadataRequestTargetID) MarshalJSON() ([]byte, error) {
 	return nil, errors.New("could not marshal union type DeleteMetadataRequestTargetID: all fields are null")
 }
 
+// DeleteMetadataRequestTargetType - Type of target (account or transaction)
+type DeleteMetadataRequestTargetType string
+
+const (
+	DeleteMetadataRequestTargetTypeAccount     DeleteMetadataRequestTargetType = "ACCOUNT"
+	DeleteMetadataRequestTargetTypeTransaction DeleteMetadataRequestTargetType = "TRANSACTION"
+)
+
+func (e DeleteMetadataRequestTargetType) ToPointer() *DeleteMetadataRequestTargetType {
+	return &e
+}
+func (e *DeleteMetadataRequestTargetType) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "ACCOUNT":
+		fallthrough
+	case "TRANSACTION":
+		*e = DeleteMetadataRequestTargetType(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for DeleteMetadataRequestTargetType: %v", v)
+	}
+}
+
 type DeleteMetadataRequest struct {
-	// Type of target (account or transaction)
-	TargetType DeleteMetadataRequestTargetType `json:"targetType"`
+	// Metadata key to delete
+	Key string `json:"key"`
 	// ID of the target (account address or transaction ID). Required.
 	//
 	TargetID DeleteMetadataRequestTargetID `json:"targetId"`
-	// Metadata key to delete
-	Key string `json:"key"`
+	// Type of target (account or transaction)
+	TargetType DeleteMetadataRequestTargetType `json:"targetType"`
 }
 
 func (d DeleteMetadataRequest) MarshalJSON() ([]byte, error) {
@@ -115,17 +115,17 @@ func (d DeleteMetadataRequest) MarshalJSON() ([]byte, error) {
 }
 
 func (d *DeleteMetadataRequest) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &d, "", false, []string{"targetType", "targetId", "key"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &d, "", false, []string{"key", "targetId", "targetType"}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (d *DeleteMetadataRequest) GetTargetType() DeleteMetadataRequestTargetType {
+func (d *DeleteMetadataRequest) GetKey() string {
 	if d == nil {
-		return DeleteMetadataRequestTargetType("")
+		return ""
 	}
-	return d.TargetType
+	return d.Key
 }
 
 func (d *DeleteMetadataRequest) GetTargetID() DeleteMetadataRequestTargetID {
@@ -135,9 +135,9 @@ func (d *DeleteMetadataRequest) GetTargetID() DeleteMetadataRequestTargetID {
 	return d.TargetID
 }
 
-func (d *DeleteMetadataRequest) GetKey() string {
+func (d *DeleteMetadataRequest) GetTargetType() DeleteMetadataRequestTargetType {
 	if d == nil {
-		return ""
+		return DeleteMetadataRequestTargetType("")
 	}
-	return d.Key
+	return d.TargetType
 }

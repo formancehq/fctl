@@ -8,8 +8,6 @@ import (
 )
 
 type V2ListTriggersOccurrencesRequest struct {
-	// The trigger id
-	TriggerID string `pathParam:"style=simple,explode=false,name=triggerID"`
 	// Parameter used in pagination requests.
 	// Set to the value of next for the next page of results.
 	// Set to the value of previous for the previous page of results.
@@ -19,13 +17,8 @@ type V2ListTriggersOccurrencesRequest struct {
 	// The maximum number of results to return per page.
 	//
 	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
-}
-
-func (v *V2ListTriggersOccurrencesRequest) GetTriggerID() string {
-	if v == nil {
-		return ""
-	}
-	return v.TriggerID
+	// The trigger id
+	TriggerID string `pathParam:"style=simple,explode=false,name=triggerID"`
 }
 
 func (v *V2ListTriggersOccurrencesRequest) GetCursor() *string {
@@ -40,6 +33,13 @@ func (v *V2ListTriggersOccurrencesRequest) GetPageSize() *int64 {
 		return nil
 	}
 	return v.PageSize
+}
+
+func (v *V2ListTriggersOccurrencesRequest) GetTriggerID() string {
+	if v == nil {
+		return ""
+	}
+	return v.TriggerID
 }
 
 // #region class-body-v2listtriggersoccurrencesrequest

@@ -19,17 +19,10 @@ func (r *ReplaceConnectionSecurity) GetBearerAuth() *string {
 }
 
 type ReplaceConnectionRequest struct {
-	// Instance name within this tenant
-	Name string `pathParam:"style=simple,explode=false,name=name"`
 	// Encoded request body must not exceed 1 MiB (1,048,576 bytes).
 	ConnectionUpdate connectivity.ConnectionUpdate `request:"mediaType=application/json"`
-}
-
-func (r *ReplaceConnectionRequest) GetName() string {
-	if r == nil {
-		return ""
-	}
-	return r.Name
+	// Instance name within this tenant
+	Name string `pathParam:"style=simple,explode=false,name=name"`
 }
 
 func (r *ReplaceConnectionRequest) GetConnectionUpdate() connectivity.ConnectionUpdate {
@@ -39,17 +32,31 @@ func (r *ReplaceConnectionRequest) GetConnectionUpdate() connectivity.Connection
 	return r.ConnectionUpdate
 }
 
+func (r *ReplaceConnectionRequest) GetName() string {
+	if r == nil {
+		return ""
+	}
+	return r.Name
+}
+
 type ReplaceConnectionResponse struct {
+	// Updated
+	Connection *connectivity.Connection
 	// HTTP response content type for this operation
 	ContentType string
+	// Request or server error. The HTTP status and code identify the failure.
+	Error *connectivity.Error
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Updated
-	Connection *connectivity.Connection
-	// Request or server error. The HTTP status and code identify the failure.
-	Error *connectivity.Error
+}
+
+func (r *ReplaceConnectionResponse) GetConnection() *connectivity.Connection {
+	if r == nil {
+		return nil
+	}
+	return r.Connection
 }
 
 func (r *ReplaceConnectionResponse) GetContentType() string {
@@ -57,6 +64,13 @@ func (r *ReplaceConnectionResponse) GetContentType() string {
 		return ""
 	}
 	return r.ContentType
+}
+
+func (r *ReplaceConnectionResponse) GetError() *connectivity.Error {
+	if r == nil {
+		return nil
+	}
+	return r.Error
 }
 
 func (r *ReplaceConnectionResponse) GetStatusCode() int {
@@ -71,18 +85,4 @@ func (r *ReplaceConnectionResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return r.RawResponse
-}
-
-func (r *ReplaceConnectionResponse) GetConnection() *connectivity.Connection {
-	if r == nil {
-		return nil
-	}
-	return r.Connection
-}
-
-func (r *ReplaceConnectionResponse) GetError() *connectivity.Error {
-	if r == nil {
-		return nil
-	}
-	return r.Error
 }

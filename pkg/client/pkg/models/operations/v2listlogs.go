@@ -10,28 +10,28 @@ import (
 )
 
 type V2ListLogsRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
-	// The maximum number of results to return per page.
-	//
-	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
-	// Parameter used in pagination requests. Maximum page size is set to 15.
-	// Set to the value of next for the next page of results.
-	// Set to the value of previous for the previous page of results.
-	// No other parameters can be set when this parameter is set.
-	//
-	Cursor *string    `queryParam:"style=form,explode=true,name=cursor"`
-	Pit    *time.Time `queryParam:"style=form,explode=true,name=pit"`
-	// Sort results using a field name and order (ascending or descending).
-	// Format: `<field>:<order>`, where `<field>` is the field name and `<order>` is either `asc` or `desc`.
-	//
-	Sort *string `queryParam:"style=form,explode=true,name=sort"`
 	// When set to `true`, all bigint values in the response will be serialized
 	// as strings instead of JSON numbers.
 	// Useful for clients that cannot handle large numbers natively (e.g. JavaScript).
 	//
 	FormanceBigintAsString *bool          `default:"false" header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
 	RequestBody            map[string]any `request:"mediaType=application/json"`
+	// Parameter used in pagination requests. Maximum page size is set to 15.
+	// Set to the value of next for the next page of results.
+	// Set to the value of previous for the previous page of results.
+	// No other parameters can be set when this parameter is set.
+	//
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
+	// The maximum number of results to return per page.
+	//
+	PageSize *int64     `queryParam:"style=form,explode=true,name=pageSize"`
+	Pit      *time.Time `queryParam:"style=form,explode=true,name=pit"`
+	// Sort results using a field name and order (ascending or descending).
+	// Format: `<field>:<order>`, where `<field>` is the field name and `<order>` is either `asc` or `desc`.
+	//
+	Sort *string `queryParam:"style=form,explode=true,name=sort"`
 }
 
 func (v V2ListLogsRequest) MarshalJSON() ([]byte, error) {
@@ -43,6 +43,27 @@ func (v *V2ListLogsRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V2ListLogsRequest) GetFormanceBigintAsString() *bool {
+	if v == nil {
+		return nil
+	}
+	return v.FormanceBigintAsString
+}
+
+func (v *V2ListLogsRequest) GetRequestBody() map[string]any {
+	if v == nil {
+		return map[string]any{}
+	}
+	return v.RequestBody
+}
+
+func (v *V2ListLogsRequest) GetCursor() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Cursor
 }
 
 func (v *V2ListLogsRequest) GetLedger() string {
@@ -59,13 +80,6 @@ func (v *V2ListLogsRequest) GetPageSize() *int64 {
 	return v.PageSize
 }
 
-func (v *V2ListLogsRequest) GetCursor() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Cursor
-}
-
 func (v *V2ListLogsRequest) GetPit() *time.Time {
 	if v == nil {
 		return nil
@@ -78,20 +92,6 @@ func (v *V2ListLogsRequest) GetSort() *string {
 		return nil
 	}
 	return v.Sort
-}
-
-func (v *V2ListLogsRequest) GetFormanceBigintAsString() *bool {
-	if v == nil {
-		return nil
-	}
-	return v.FormanceBigintAsString
-}
-
-func (v *V2ListLogsRequest) GetRequestBody() map[string]any {
-	if v == nil {
-		return map[string]any{}
-	}
-	return v.RequestBody
 }
 
 // #region class-body-v2listlogsrequest

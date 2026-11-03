@@ -9,20 +9,20 @@ import (
 
 // V3PaymentServiceUser - An end user on whose behalf payments and open banking connections are made
 type V3PaymentServiceUser struct {
-	// Unique identifier of the payment service user
-	ID string `json:"id"`
-	// Full name of the payment service user
-	Name string `json:"name"`
-	// When the user was registered
-	CreatedAt time.Time `json:"createdAt"`
-	// How to reach a payment service user
-	ContactDetails *V3ContactDetails `json:"contactDetails,omitempty"`
 	// A postal address
 	Address *V3Address `json:"address,omitempty"`
 	// Bank accounts associated with the user
 	BankAccountIDs []string `json:"bankAccountIDs,omitempty"`
+	// How to reach a payment service user
+	ContactDetails *V3ContactDetails `json:"contactDetails,omitempty"`
+	// When the user was registered
+	CreatedAt time.Time `json:"createdAt"`
+	// Unique identifier of the payment service user
+	ID string `json:"id"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]string `json:"metadata,omitempty"`
+	// Full name of the payment service user
+	Name string `json:"name"`
 }
 
 func (v V3PaymentServiceUser) MarshalJSON() ([]byte, error) {
@@ -34,34 +34,6 @@ func (v *V3PaymentServiceUser) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (v *V3PaymentServiceUser) GetID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ID
-}
-
-func (v *V3PaymentServiceUser) GetName() string {
-	if v == nil {
-		return ""
-	}
-	return v.Name
-}
-
-func (v *V3PaymentServiceUser) GetCreatedAt() time.Time {
-	if v == nil {
-		return time.Time{}
-	}
-	return v.CreatedAt
-}
-
-func (v *V3PaymentServiceUser) GetContactDetails() *V3ContactDetails {
-	if v == nil {
-		return nil
-	}
-	return v.ContactDetails
 }
 
 func (v *V3PaymentServiceUser) GetAddress() *V3Address {
@@ -78,11 +50,39 @@ func (v *V3PaymentServiceUser) GetBankAccountIDs() []string {
 	return v.BankAccountIDs
 }
 
+func (v *V3PaymentServiceUser) GetContactDetails() *V3ContactDetails {
+	if v == nil {
+		return nil
+	}
+	return v.ContactDetails
+}
+
+func (v *V3PaymentServiceUser) GetCreatedAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.CreatedAt
+}
+
+func (v *V3PaymentServiceUser) GetID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ID
+}
+
 func (v *V3PaymentServiceUser) GetMetadata() map[string]string {
 	if v == nil {
 		return nil
 	}
 	return v.Metadata
+}
+
+func (v *V3PaymentServiceUser) GetName() string {
+	if v == nil {
+		return ""
+	}
+	return v.Name
 }
 
 // #region class-body-v3paymentserviceuser

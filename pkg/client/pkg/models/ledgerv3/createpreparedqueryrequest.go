@@ -38,10 +38,6 @@ func (e *Target) UnmarshalJSON(data []byte) error {
 }
 
 type CreatePreparedQueryRequest struct {
-	// Unique name for the prepared query
-	Name string `json:"name"`
-	// Target entity type. `LOGS` queries return log entries; the log-only filter fields (`logId`, `date`, `ledger`) are valid only when the target is `LOGS`.
-	Target Target `json:"target"`
 	// A filter supplied to a prepared-query create/update request, accepted in EITHER of two interchangeable representations that parse to the same filter and are validated against the same per-target rules (EN-1511):
 	//
 	// - the structured JSON QueryFilter object (see `QueryFilter`); or
@@ -53,6 +49,17 @@ type CreatePreparedQueryRequest struct {
 	//
 	// `null` represents a match-all query. An empty object and an empty or whitespace-only textual expression are invalid. Responses echo a stored non-null filter in the structured `QueryFilter` form and omit this field for match-all queries.
 	Filter *PreparedQueryFilterInput `json:"filter,omitempty"`
+	// Unique name for the prepared query
+	Name string `json:"name"`
+	// Target entity type. `LOGS` queries return log entries; the log-only filter fields (`logId`, `date`, `ledger`) are valid only when the target is `LOGS`.
+	Target Target `json:"target"`
+}
+
+func (c *CreatePreparedQueryRequest) GetFilter() *PreparedQueryFilterInput {
+	if c == nil {
+		return nil
+	}
+	return c.Filter
 }
 
 func (c *CreatePreparedQueryRequest) GetName() string {
@@ -67,11 +74,4 @@ func (c *CreatePreparedQueryRequest) GetTarget() Target {
 		return Target("")
 	}
 	return c.Target
-}
-
-func (c *CreatePreparedQueryRequest) GetFilter() *PreparedQueryFilterInput {
-	if c == nil {
-		return nil
-	}
-	return c.Filter
 }

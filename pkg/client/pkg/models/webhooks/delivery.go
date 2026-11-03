@@ -9,38 +9,38 @@ import (
 
 // Delivery - An event queued for delivery to a webhook endpoint, tracking its retry state
 type Delivery struct {
-	// Unique identifier of the delivery
-	ID string `json:"id"`
-	// Identifier of the event being delivered
-	EventID string `json:"eventID"`
-	// Key sent with the request so the receiver can deduplicate retries of the same delivery
-	IdempotencyKey *string `json:"idempotencyKey,omitempty"`
-	// Identifier of the webhook configuration this delivery targets
-	ConfigID string `json:"configID"`
-	// Type of the event being delivered
-	EventType string `json:"eventType"`
-	// Present only on delivery detail responses.
-	Payload *string `json:"payload,omitempty"`
-	// Current state of a delivery in its retry lifecycle
-	Status DeliveryStatus `json:"status"`
 	// Number of attempts made in the current retry cycle. Reset when a failed delivery is replayed
 	AttemptCount int64 `json:"attemptCount"`
-	// Incremented each time a failed delivery is replayed, grouping attempts into retry cycles. Replaying a pending delivery leaves it unchanged
-	ReplayGeneration int64 `json:"replayGeneration"`
-	// When the current retry cycle began. Cleared when a failed delivery is replayed
-	CycleStartedAt *time.Time `json:"cycleStartedAt,omitempty"`
-	// When the next delivery attempt is scheduled
-	NextAttemptAt *time.Time `json:"nextAttemptAt,omitempty"`
 	// When a worker claimed this delivery for the attempt in flight. Cleared when a failed delivery is replayed
 	ClaimedAt *time.Time `json:"claimedAt,omitempty"`
-	// When the most recent attempt was made
-	LastAttemptAt *time.Time `json:"lastAttemptAt,omitempty"`
-	// HTTP status code returned by the most recent attempt
-	LastStatusCode *int64 `json:"lastStatusCode,omitempty"`
-	// Error reported by the most recent attempt
-	LastError *string `json:"lastError,omitempty"`
+	// Identifier of the webhook configuration this delivery targets
+	ConfigID string `json:"configID"`
 	// When the delivery was created
 	CreatedAt time.Time `json:"createdAt"`
+	// When the current retry cycle began. Cleared when a failed delivery is replayed
+	CycleStartedAt *time.Time `json:"cycleStartedAt,omitempty"`
+	// Identifier of the event being delivered
+	EventID string `json:"eventID"`
+	// Type of the event being delivered
+	EventType string `json:"eventType"`
+	// Unique identifier of the delivery
+	ID string `json:"id"`
+	// Key sent with the request so the receiver can deduplicate retries of the same delivery
+	IdempotencyKey *string `json:"idempotencyKey,omitempty"`
+	// When the most recent attempt was made
+	LastAttemptAt *time.Time `json:"lastAttemptAt,omitempty"`
+	// Error reported by the most recent attempt
+	LastError *string `json:"lastError,omitempty"`
+	// HTTP status code returned by the most recent attempt
+	LastStatusCode *int64 `json:"lastStatusCode,omitempty"`
+	// When the next delivery attempt is scheduled
+	NextAttemptAt *time.Time `json:"nextAttemptAt,omitempty"`
+	// Present only on delivery detail responses.
+	Payload *string `json:"payload,omitempty"`
+	// Incremented each time a failed delivery is replayed, grouping attempts into retry cycles. Replaying a pending delivery leaves it unchanged
+	ReplayGeneration int64 `json:"replayGeneration"`
+	// Current state of a delivery in its retry lifecycle
+	Status DeliveryStatus `json:"status"`
 	// When the delivery was last modified
 	UpdatedAt time.Time `json:"updatedAt"`
 }
@@ -56,81 +56,11 @@ func (d *Delivery) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (d *Delivery) GetID() string {
-	if d == nil {
-		return ""
-	}
-	return d.ID
-}
-
-func (d *Delivery) GetEventID() string {
-	if d == nil {
-		return ""
-	}
-	return d.EventID
-}
-
-func (d *Delivery) GetIdempotencyKey() *string {
-	if d == nil {
-		return nil
-	}
-	return d.IdempotencyKey
-}
-
-func (d *Delivery) GetConfigID() string {
-	if d == nil {
-		return ""
-	}
-	return d.ConfigID
-}
-
-func (d *Delivery) GetEventType() string {
-	if d == nil {
-		return ""
-	}
-	return d.EventType
-}
-
-func (d *Delivery) GetPayload() *string {
-	if d == nil {
-		return nil
-	}
-	return d.Payload
-}
-
-func (d *Delivery) GetStatus() DeliveryStatus {
-	if d == nil {
-		return DeliveryStatus("")
-	}
-	return d.Status
-}
-
 func (d *Delivery) GetAttemptCount() int64 {
 	if d == nil {
 		return 0
 	}
 	return d.AttemptCount
-}
-
-func (d *Delivery) GetReplayGeneration() int64 {
-	if d == nil {
-		return 0
-	}
-	return d.ReplayGeneration
-}
-
-func (d *Delivery) GetCycleStartedAt() *time.Time {
-	if d == nil {
-		return nil
-	}
-	return d.CycleStartedAt
-}
-
-func (d *Delivery) GetNextAttemptAt() *time.Time {
-	if d == nil {
-		return nil
-	}
-	return d.NextAttemptAt
 }
 
 func (d *Delivery) GetClaimedAt() *time.Time {
@@ -140,18 +70,60 @@ func (d *Delivery) GetClaimedAt() *time.Time {
 	return d.ClaimedAt
 }
 
+func (d *Delivery) GetConfigID() string {
+	if d == nil {
+		return ""
+	}
+	return d.ConfigID
+}
+
+func (d *Delivery) GetCreatedAt() time.Time {
+	if d == nil {
+		return time.Time{}
+	}
+	return d.CreatedAt
+}
+
+func (d *Delivery) GetCycleStartedAt() *time.Time {
+	if d == nil {
+		return nil
+	}
+	return d.CycleStartedAt
+}
+
+func (d *Delivery) GetEventID() string {
+	if d == nil {
+		return ""
+	}
+	return d.EventID
+}
+
+func (d *Delivery) GetEventType() string {
+	if d == nil {
+		return ""
+	}
+	return d.EventType
+}
+
+func (d *Delivery) GetID() string {
+	if d == nil {
+		return ""
+	}
+	return d.ID
+}
+
+func (d *Delivery) GetIdempotencyKey() *string {
+	if d == nil {
+		return nil
+	}
+	return d.IdempotencyKey
+}
+
 func (d *Delivery) GetLastAttemptAt() *time.Time {
 	if d == nil {
 		return nil
 	}
 	return d.LastAttemptAt
-}
-
-func (d *Delivery) GetLastStatusCode() *int64 {
-	if d == nil {
-		return nil
-	}
-	return d.LastStatusCode
 }
 
 func (d *Delivery) GetLastError() *string {
@@ -161,11 +133,39 @@ func (d *Delivery) GetLastError() *string {
 	return d.LastError
 }
 
-func (d *Delivery) GetCreatedAt() time.Time {
+func (d *Delivery) GetLastStatusCode() *int64 {
 	if d == nil {
-		return time.Time{}
+		return nil
 	}
-	return d.CreatedAt
+	return d.LastStatusCode
+}
+
+func (d *Delivery) GetNextAttemptAt() *time.Time {
+	if d == nil {
+		return nil
+	}
+	return d.NextAttemptAt
+}
+
+func (d *Delivery) GetPayload() *string {
+	if d == nil {
+		return nil
+	}
+	return d.Payload
+}
+
+func (d *Delivery) GetReplayGeneration() int64 {
+	if d == nil {
+		return 0
+	}
+	return d.ReplayGeneration
+}
+
+func (d *Delivery) GetStatus() DeliveryStatus {
+	if d == nil {
+		return DeliveryStatus("")
+	}
+	return d.Status
 }
 
 func (d *Delivery) GetUpdatedAt() time.Time {

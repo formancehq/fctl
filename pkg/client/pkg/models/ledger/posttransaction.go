@@ -28,16 +28,16 @@ func (p *PostTransactionScript) GetVars() map[string]any {
 }
 
 type PostTransaction struct {
-	// The transaction time to record, letting you backdate or postdate the transaction. See [bi-temporality](https://docs.formance.com/modules/ledger/working-with/bi-temporality)
-	Timestamp *time.Time `json:"timestamp,omitempty"`
-	// Fund movements to apply. Mutually exclusive with script
-	Postings []Posting `json:"postings,omitempty"`
-	// A Numscript program executed to produce the postings. Mutually exclusive with postings
-	Script *PostTransactionScript `json:"script,omitempty"`
-	// Optional caller-supplied identifier, unique within the ledger, used to deduplicate transactions
-	Reference *string `json:"reference,omitempty"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]any `json:"metadata,omitempty"`
+	// Fund movements to apply. Mutually exclusive with script
+	Postings []Posting `json:"postings,omitempty"`
+	// Optional caller-supplied identifier, unique within the ledger, used to deduplicate transactions
+	Reference *string `json:"reference,omitempty"`
+	// A Numscript program executed to produce the postings. Mutually exclusive with postings
+	Script *PostTransactionScript `json:"script,omitempty"`
+	// The transaction time to record, letting you backdate or postdate the transaction. See [bi-temporality](https://docs.formance.com/modules/ledger/working-with/bi-temporality)
+	Timestamp *time.Time `json:"timestamp,omitempty"`
 }
 
 func (p PostTransaction) MarshalJSON() ([]byte, error) {
@@ -51,11 +51,11 @@ func (p *PostTransaction) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (p *PostTransaction) GetTimestamp() *time.Time {
+func (p *PostTransaction) GetMetadata() map[string]any {
 	if p == nil {
 		return nil
 	}
-	return p.Timestamp
+	return p.Metadata
 }
 
 func (p *PostTransaction) GetPostings() []Posting {
@@ -65,13 +65,6 @@ func (p *PostTransaction) GetPostings() []Posting {
 	return p.Postings
 }
 
-func (p *PostTransaction) GetScript() *PostTransactionScript {
-	if p == nil {
-		return nil
-	}
-	return p.Script
-}
-
 func (p *PostTransaction) GetReference() *string {
 	if p == nil {
 		return nil
@@ -79,9 +72,16 @@ func (p *PostTransaction) GetReference() *string {
 	return p.Reference
 }
 
-func (p *PostTransaction) GetMetadata() map[string]any {
+func (p *PostTransaction) GetScript() *PostTransactionScript {
 	if p == nil {
 		return nil
 	}
-	return p.Metadata
+	return p.Script
+}
+
+func (p *PostTransaction) GetTimestamp() *time.Time {
+	if p == nil {
+		return nil
+	}
+	return p.Timestamp
 }

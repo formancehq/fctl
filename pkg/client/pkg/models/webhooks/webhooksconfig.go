@@ -9,18 +9,18 @@ import (
 
 // WebhooksConfig - A webhook endpoint together with the event types it subscribes to
 type WebhooksConfig struct {
-	// Unique identifier of the configuration
-	ID string `json:"id"`
-	// URL events are delivered to
-	Endpoint string `json:"endpoint"`
-	// Secret used to sign delivery payloads, letting the receiver verify their authenticity
-	Secret string `json:"secret"`
-	// Types of event that trigger a delivery to this endpoint
-	EventTypes []string `json:"eventTypes"`
 	// Whether the configuration is active. Deactivated configurations receive no deliveries
 	Active bool `json:"active"`
 	// When the configuration was created
 	CreatedAt time.Time `json:"createdAt"`
+	// URL events are delivered to
+	Endpoint string `json:"endpoint"`
+	// Types of event that trigger a delivery to this endpoint
+	EventTypes []string `json:"eventTypes"`
+	// Unique identifier of the configuration
+	ID string `json:"id"`
+	// Secret used to sign delivery payloads, letting the receiver verify their authenticity
+	Secret string `json:"secret"`
 	// When the configuration was last modified
 	UpdatedAt time.Time `json:"updatedAt"`
 }
@@ -36,34 +36,6 @@ func (w *WebhooksConfig) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (w *WebhooksConfig) GetID() string {
-	if w == nil {
-		return ""
-	}
-	return w.ID
-}
-
-func (w *WebhooksConfig) GetEndpoint() string {
-	if w == nil {
-		return ""
-	}
-	return w.Endpoint
-}
-
-func (w *WebhooksConfig) GetSecret() string {
-	if w == nil {
-		return ""
-	}
-	return w.Secret
-}
-
-func (w *WebhooksConfig) GetEventTypes() []string {
-	if w == nil {
-		return []string{}
-	}
-	return w.EventTypes
-}
-
 func (w *WebhooksConfig) GetActive() bool {
 	if w == nil {
 		return false
@@ -76,6 +48,34 @@ func (w *WebhooksConfig) GetCreatedAt() time.Time {
 		return time.Time{}
 	}
 	return w.CreatedAt
+}
+
+func (w *WebhooksConfig) GetEndpoint() string {
+	if w == nil {
+		return ""
+	}
+	return w.Endpoint
+}
+
+func (w *WebhooksConfig) GetEventTypes() []string {
+	if w == nil {
+		return []string{}
+	}
+	return w.EventTypes
+}
+
+func (w *WebhooksConfig) GetID() string {
+	if w == nil {
+		return ""
+	}
+	return w.ID
+}
+
+func (w *WebhooksConfig) GetSecret() string {
+	if w == nil {
+		return ""
+	}
+	return w.Secret
 }
 
 func (w *WebhooksConfig) GetUpdatedAt() time.Time {

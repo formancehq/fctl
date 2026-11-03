@@ -20,8 +20,6 @@ func (g *GetAuditEntrySecurity) GetBearerAuth() *string {
 }
 
 type GetAuditEntryRequest struct {
-	// Audit entry sequence
-	Sequence int64 `pathParam:"style=simple,explode=false,name=sequence"`
 	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
 	// barrier and waits for the receiving node to apply up to it. `stale`
 	// serves the read from the receiving node's own store, with no barrier
@@ -32,6 +30,8 @@ type GetAuditEntryRequest struct {
 	// gRPC equivalent is the `x-consistency` request metadata.
 	//
 	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Audit entry sequence
+	Sequence int64 `pathParam:"style=simple,explode=false,name=sequence"`
 }
 
 func (g GetAuditEntryRequest) MarshalJSON() ([]byte, error) {
@@ -45,18 +45,18 @@ func (g *GetAuditEntryRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (g *GetAuditEntryRequest) GetSequence() int64 {
-	if g == nil {
-		return 0
-	}
-	return g.Sequence
-}
-
 func (g *GetAuditEntryRequest) GetXConsistency() *ledgerv3.Consistency {
 	if g == nil {
 		return nil
 	}
 	return g.XConsistency
+}
+
+func (g *GetAuditEntryRequest) GetSequence() int64 {
+	if g == nil {
+		return 0
+	}
+	return g.Sequence
 }
 
 // GetAuditEntryResponseBody - The audit entry
@@ -78,19 +78,19 @@ func (g *GetAuditEntryResponseBody) GetData() *ledgerv3.AuditEntry {
 type GetAuditEntryResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// The audit entry
-	Object *GetAuditEntryResponseBody
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
+	// The audit entry
+	Object *GetAuditEntryResponseBody
 }
 
 func (g *GetAuditEntryResponse) GetContentType() string {
@@ -98,6 +98,27 @@ func (g *GetAuditEntryResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetAuditEntryResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if g == nil {
+		return nil
+	}
+	return g.ErrorResponse
+}
+
+func (g *GetAuditEntryResponse) GetForbidden() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Forbidden
+}
+
+func (g *GetAuditEntryResponse) GetHeaders() map[string][]string {
+	if g == nil {
+		return map[string][]string{}
+	}
+	return g.Headers
 }
 
 func (g *GetAuditEntryResponse) GetStatusCode() int {
@@ -114,20 +135,6 @@ func (g *GetAuditEntryResponse) GetRawResponse() *http.Response {
 	return g.RawResponse
 }
 
-func (g *GetAuditEntryResponse) GetObject() *GetAuditEntryResponseBody {
-	if g == nil {
-		return nil
-	}
-	return g.Object
-}
-
-func (g *GetAuditEntryResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if g == nil {
-		return nil
-	}
-	return g.ErrorResponse
-}
-
 func (g *GetAuditEntryResponse) GetUnauthorized() *string {
 	if g == nil {
 		return nil
@@ -135,16 +142,9 @@ func (g *GetAuditEntryResponse) GetUnauthorized() *string {
 	return g.Unauthorized
 }
 
-func (g *GetAuditEntryResponse) GetForbidden() *string {
+func (g *GetAuditEntryResponse) GetObject() *GetAuditEntryResponseBody {
 	if g == nil {
 		return nil
 	}
-	return g.Forbidden
-}
-
-func (g *GetAuditEntryResponse) GetHeaders() map[string][]string {
-	if g == nil {
-		return map[string][]string{}
-	}
-	return g.Headers
+	return g.Object
 }

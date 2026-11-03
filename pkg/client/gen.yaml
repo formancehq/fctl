@@ -1,11 +1,9 @@
 configVersion: 2.0.0
 generation:
   sdkClassName: Formance
-  maintainOpenAPIOrder: true
   usageSnippets:
     optionalPropertyRendering: withExample
     sdkInitStyle: constructor
-  useClassNamesForArrayFields: true
   fixes:
     nameResolutionFeb2025: false
     parameterOrderingFeb2024: false
@@ -18,8 +16,6 @@ generation:
     oAuth2ClientCredentialsEnabled: true
     oAuth2PasswordEnabled: false
     hoistGlobalSecurity: true
-  inferSSEOverload: true
-  sdkHooksConfigAccess: true
   schemas:
     allOfMergeStrategy: shallowMerge
   requestBodyFieldName: ""

@@ -3,12 +3,19 @@
 package ledger
 
 type V2ConfigInfo struct {
+	// Experimental feature flags enabled on this deployment
+	ExperimentalFeatures []string `json:"experimentalFeatures,omitempty"`
 	// Name of the server serving the API
 	Server string `json:"server"`
 	// Version of the ledger service
 	Version string `json:"version"`
-	// Experimental feature flags enabled on this deployment
-	ExperimentalFeatures []string `json:"experimentalFeatures,omitempty"`
+}
+
+func (v *V2ConfigInfo) GetExperimentalFeatures() []string {
+	if v == nil {
+		return nil
+	}
+	return v.ExperimentalFeatures
 }
 
 func (v *V2ConfigInfo) GetServer() string {
@@ -23,13 +30,6 @@ func (v *V2ConfigInfo) GetVersion() string {
 		return ""
 	}
 	return v.Version
-}
-
-func (v *V2ConfigInfo) GetExperimentalFeatures() []string {
-	if v == nil {
-		return nil
-	}
-	return v.ExperimentalFeatures
 }
 
 // #region class-body-v2configinfo

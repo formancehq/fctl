@@ -9,12 +9,6 @@ import (
 )
 
 type ListWalletsRequest struct {
-	// Filter on wallet name
-	Name *string `queryParam:"style=form,explode=true,name=name"`
-	// Filter wallets by metadata key value pairs. Nested objects can be used as seen in the example below.
-	Metadata map[string]string `queryParam:"style=deepObject,explode=true,name=metadata"`
-	// The maximum number of results to return per page
-	PageSize *int64 `default:"15" queryParam:"style=form,explode=true,name=pageSize"`
 	// Parameter used in pagination requests.
 	// Set to the value of next for the next page of results.
 	// Set to the value of previous for the previous page of results.
@@ -22,6 +16,12 @@ type ListWalletsRequest struct {
 	//
 	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
 	Expand *string `queryParam:"style=form,explode=true,name=expand"`
+	// Filter wallets by metadata key value pairs. Nested objects can be used as seen in the example below.
+	Metadata map[string]string `queryParam:"style=deepObject,explode=true,name=metadata"`
+	// Filter on wallet name
+	Name *string `queryParam:"style=form,explode=true,name=name"`
+	// The maximum number of results to return per page
+	PageSize *int64 `default:"15" queryParam:"style=form,explode=true,name=pageSize"`
 }
 
 func (l ListWalletsRequest) MarshalJSON() ([]byte, error) {
@@ -33,27 +33,6 @@ func (l *ListWalletsRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (l *ListWalletsRequest) GetName() *string {
-	if l == nil {
-		return nil
-	}
-	return l.Name
-}
-
-func (l *ListWalletsRequest) GetMetadata() map[string]string {
-	if l == nil {
-		return nil
-	}
-	return l.Metadata
-}
-
-func (l *ListWalletsRequest) GetPageSize() *int64 {
-	if l == nil {
-		return nil
-	}
-	return l.PageSize
 }
 
 func (l *ListWalletsRequest) GetCursor() *string {
@@ -70,15 +49,36 @@ func (l *ListWalletsRequest) GetExpand() *string {
 	return l.Expand
 }
 
+func (l *ListWalletsRequest) GetMetadata() map[string]string {
+	if l == nil {
+		return nil
+	}
+	return l.Metadata
+}
+
+func (l *ListWalletsRequest) GetName() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Name
+}
+
+func (l *ListWalletsRequest) GetPageSize() *int64 {
+	if l == nil {
+		return nil
+	}
+	return l.PageSize
+}
+
 type ListWalletsResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	ListWalletsResponse *wallets.ListWalletsResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	ListWalletsResponse *wallets.ListWalletsResponse
 }
 
 func (l *ListWalletsResponse) GetContentType() string {
@@ -86,6 +86,13 @@ func (l *ListWalletsResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListWalletsResponse) GetListWalletsResponse() *wallets.ListWalletsResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ListWalletsResponse
 }
 
 func (l *ListWalletsResponse) GetStatusCode() int {
@@ -100,11 +107,4 @@ func (l *ListWalletsResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return l.RawResponse
-}
-
-func (l *ListWalletsResponse) GetListWalletsResponse() *wallets.ListWalletsResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ListWalletsResponse
 }

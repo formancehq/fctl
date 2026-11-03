@@ -10,12 +10,12 @@ import (
 type GetServerInfoReconciliationResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Server information
+	ServerInfo *reconciliation.ServerInfo
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Server information
-	ServerInfo *reconciliation.ServerInfo
 }
 
 func (g *GetServerInfoReconciliationResponse) GetContentType() string {
@@ -23,6 +23,13 @@ func (g *GetServerInfoReconciliationResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetServerInfoReconciliationResponse) GetServerInfo() *reconciliation.ServerInfo {
+	if g == nil {
+		return nil
+	}
+	return g.ServerInfo
 }
 
 func (g *GetServerInfoReconciliationResponse) GetStatusCode() int {
@@ -37,11 +44,4 @@ func (g *GetServerInfoReconciliationResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetServerInfoReconciliationResponse) GetServerInfo() *reconciliation.ServerInfo {
-	if g == nil {
-		return nil
-	}
-	return g.ServerInfo
 }

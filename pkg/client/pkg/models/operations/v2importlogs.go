@@ -7,17 +7,10 @@ import (
 )
 
 type V2ImportLogsRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 	// This field accepts []byte data or io.Reader implementations, such as *os.File.
 	V2ImportLogsRequest any `request:"mediaType=application/octet-stream"`
-}
-
-func (v *V2ImportLogsRequest) GetLedger() string {
-	if v == nil {
-		return ""
-	}
-	return v.Ledger
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 }
 
 func (v *V2ImportLogsRequest) GetV2ImportLogsRequest() any {
@@ -25,6 +18,13 @@ func (v *V2ImportLogsRequest) GetV2ImportLogsRequest() any {
 		return nil
 	}
 	return v.V2ImportLogsRequest
+}
+
+func (v *V2ImportLogsRequest) GetLedger() string {
+	if v == nil {
+		return ""
+	}
+	return v.Ledger
 }
 
 // #region class-body-v2importlogsrequest

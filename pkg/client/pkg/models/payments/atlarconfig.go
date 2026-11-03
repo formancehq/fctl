@@ -7,32 +7,32 @@ import (
 )
 
 type AtlarConfig struct {
-	// Human-readable name identifying this connector instance
-	Name string `json:"name"`
-	// Identifies the payment provider this configuration targets
-	Provider *string `default:"Atlar" json:"provider"`
+	// The access key used by the connector for authorizing requests to the Atlar API.
+	// You can obtain it along with the associated secret from the Atlar dashboard.
+	//
+	AccessKey string `json:"accessKey"`
 	// The base URL the client uses for making requests towards the Atlar API.
 	//
 	BaseURL *string `default:"https://api.atlar.com" json:"baseUrl"`
+	// Human-readable name identifying this connector instance
+	Name string `json:"name"`
+	// Number of items to fetch when querying paginated APIs.
+	//
+	PageSize *int64 `default:"25" json:"pageSize"`
 	// The frequency at which the connector tries to fetch new Transaction objects from the Atlar API.
 	//
 	PollingPeriod *string `default:"30m" json:"pollingPeriod"`
+	// Identifies the payment provider this configuration targets
+	Provider *string `default:"Atlar" json:"provider"`
+	// The secret used by the connector for authorizing requests to the Atlar API.
+	// You can obtain it along with the associated access key from the Atlar dashboard.
+	//
+	Secret string `json:"secret"`
 	// The frequency at which the connector tries to fetch the status of payment initiations from the Atlar API.
 	//
 	//
 	// Deprecated: This will be removed in a future release, please migrate away from it as soon as possible.
 	TransferInitiationStatusPollingPeriod *string `default:"120s" json:"transferInitiationStatusPollingPeriod"`
-	// The access key used by the connector for authorizing requests to the Atlar API.
-	// You can obtain it along with the associated secret from the Atlar dashboard.
-	//
-	AccessKey string `json:"accessKey"`
-	// The secret used by the connector for authorizing requests to the Atlar API.
-	// You can obtain it along with the associated access key from the Atlar dashboard.
-	//
-	Secret string `json:"secret"`
-	// Number of items to fetch when querying paginated APIs.
-	//
-	PageSize *int64 `default:"25" json:"pageSize"`
 }
 
 func (a AtlarConfig) MarshalJSON() ([]byte, error) {
@@ -40,45 +40,10 @@ func (a AtlarConfig) MarshalJSON() ([]byte, error) {
 }
 
 func (a *AtlarConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"name", "accessKey", "secret"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &a, "", false, []string{"accessKey", "name", "secret"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (a *AtlarConfig) GetName() string {
-	if a == nil {
-		return ""
-	}
-	return a.Name
-}
-
-func (a *AtlarConfig) GetProvider() *string {
-	if a == nil {
-		return nil
-	}
-	return a.Provider
-}
-
-func (a *AtlarConfig) GetBaseURL() *string {
-	if a == nil {
-		return nil
-	}
-	return a.BaseURL
-}
-
-func (a *AtlarConfig) GetPollingPeriod() *string {
-	if a == nil {
-		return nil
-	}
-	return a.PollingPeriod
-}
-
-func (a *AtlarConfig) GetTransferInitiationStatusPollingPeriod() *string {
-	if a == nil {
-		return nil
-	}
-	return a.TransferInitiationStatusPollingPeriod
 }
 
 func (a *AtlarConfig) GetAccessKey() string {
@@ -88,11 +53,18 @@ func (a *AtlarConfig) GetAccessKey() string {
 	return a.AccessKey
 }
 
-func (a *AtlarConfig) GetSecret() string {
+func (a *AtlarConfig) GetBaseURL() *string {
+	if a == nil {
+		return nil
+	}
+	return a.BaseURL
+}
+
+func (a *AtlarConfig) GetName() string {
 	if a == nil {
 		return ""
 	}
-	return a.Secret
+	return a.Name
 }
 
 func (a *AtlarConfig) GetPageSize() *int64 {
@@ -100,4 +72,32 @@ func (a *AtlarConfig) GetPageSize() *int64 {
 		return nil
 	}
 	return a.PageSize
+}
+
+func (a *AtlarConfig) GetPollingPeriod() *string {
+	if a == nil {
+		return nil
+	}
+	return a.PollingPeriod
+}
+
+func (a *AtlarConfig) GetProvider() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Provider
+}
+
+func (a *AtlarConfig) GetSecret() string {
+	if a == nil {
+		return ""
+	}
+	return a.Secret
+}
+
+func (a *AtlarConfig) GetTransferInitiationStatusPollingPeriod() *string {
+	if a == nil {
+		return nil
+	}
+	return a.TransferInitiationStatusPollingPeriod
 }

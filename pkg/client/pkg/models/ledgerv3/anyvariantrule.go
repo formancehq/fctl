@@ -4,15 +4,8 @@ package ledgerv3
 
 // AnyVariantRule - Rule scoped to every variant. `log` is the full MirrorLogEntry — use `has(log.<variant>)` guards to read variant-specific fields.
 type AnyVariantRule struct {
-	Match   *string            `json:"match,omitempty"`
 	Actions []AnyVariantAction `json:"actions,omitempty"`
-}
-
-func (a *AnyVariantRule) GetMatch() *string {
-	if a == nil {
-		return nil
-	}
-	return a.Match
+	Match   *string            `json:"match,omitempty"`
 }
 
 func (a *AnyVariantRule) GetActions() []AnyVariantAction {
@@ -20,4 +13,11 @@ func (a *AnyVariantRule) GetActions() []AnyVariantAction {
 		return nil
 	}
 	return a.Actions
+}
+
+func (a *AnyVariantRule) GetMatch() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Match
 }

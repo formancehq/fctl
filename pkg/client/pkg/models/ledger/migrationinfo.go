@@ -37,14 +37,14 @@ func (e *State) UnmarshalJSON(data []byte) error {
 }
 
 type MigrationInfo struct {
-	// Sequence number of the migration
-	Version *string `json:"version,omitempty"`
-	// Name of the migration
-	Name *string `json:"name,omitempty"`
 	// When the migration was applied
 	Date *time.Time `json:"date,omitempty"`
+	// Name of the migration
+	Name *string `json:"name,omitempty"`
 	// Current state of the migration
 	State *State `json:"state,omitempty"`
+	// Sequence number of the migration
+	Version *string `json:"version,omitempty"`
 }
 
 func (m MigrationInfo) MarshalJSON() ([]byte, error) {
@@ -58,11 +58,11 @@ func (m *MigrationInfo) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (m *MigrationInfo) GetVersion() *string {
+func (m *MigrationInfo) GetDate() *time.Time {
 	if m == nil {
 		return nil
 	}
-	return m.Version
+	return m.Date
 }
 
 func (m *MigrationInfo) GetName() *string {
@@ -72,16 +72,16 @@ func (m *MigrationInfo) GetName() *string {
 	return m.Name
 }
 
-func (m *MigrationInfo) GetDate() *time.Time {
-	if m == nil {
-		return nil
-	}
-	return m.Date
-}
-
 func (m *MigrationInfo) GetState() *State {
 	if m == nil {
 		return nil
 	}
 	return m.State
+}
+
+func (m *MigrationInfo) GetVersion() *string {
+	if m == nil {
+		return nil
+	}
+	return m.Version
 }

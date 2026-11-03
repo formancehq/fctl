@@ -6,12 +6,12 @@ package orchestration
 type V2Account struct {
 	// The account address, a colon-separated segmented path such as users:001
 	Address string `json:"address"`
+	// Volumes per asset for a single account
+	EffectiveVolumes map[string]V2Volume `json:"effectiveVolumes,omitempty"`
 	// Arbitrary key/value pairs attached to the account
 	Metadata map[string]string `json:"metadata"`
 	// Volumes per asset for a single account
 	Volumes map[string]V2Volume `json:"volumes,omitempty"`
-	// Volumes per asset for a single account
-	EffectiveVolumes map[string]V2Volume `json:"effectiveVolumes,omitempty"`
 }
 
 func (v *V2Account) GetAddress() string {
@@ -19,6 +19,13 @@ func (v *V2Account) GetAddress() string {
 		return ""
 	}
 	return v.Address
+}
+
+func (v *V2Account) GetEffectiveVolumes() map[string]V2Volume {
+	if v == nil {
+		return nil
+	}
+	return v.EffectiveVolumes
 }
 
 func (v *V2Account) GetMetadata() map[string]string {
@@ -33,13 +40,6 @@ func (v *V2Account) GetVolumes() map[string]V2Volume {
 		return nil
 	}
 	return v.Volumes
-}
-
-func (v *V2Account) GetEffectiveVolumes() map[string]V2Volume {
-	if v == nil {
-		return nil
-	}
-	return v.EffectiveVolumes
 }
 
 // #region class-body-v2account

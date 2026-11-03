@@ -36,18 +36,18 @@ func (e *Statuses) UnmarshalJSON(data []byte) error {
 }
 
 type ReplayDeliveriesRequest struct {
+	// Restrict the replay to deliveries targeting these webhook configurations
+	ConfigIds []string `json:"configIds,omitempty"`
 	// Replay deliveries created at or after this time
 	CreatedAtFrom time.Time `json:"createdAtFrom"`
 	// Replay deliveries created at or before this time. Defaults to now when omitted
 	CreatedAtTo *time.Time `json:"createdAtTo,omitempty"`
-	// Restrict the replay to deliveries in these statuses
-	Statuses []Statuses `json:"statuses,omitempty"`
-	// Restrict the replay to deliveries targeting these webhook configurations
-	ConfigIds []string `json:"configIds,omitempty"`
 	// Pagination cursor from a previous replay response, used to continue a large replay
 	Cursor *string `json:"cursor,omitempty"`
 	// Maximum number of deliveries to process in this call
 	PageSize *int64 `default:"1000" json:"pageSize"`
+	// Restrict the replay to deliveries in these statuses
+	Statuses []Statuses `json:"statuses,omitempty"`
 }
 
 func (r ReplayDeliveriesRequest) MarshalJSON() ([]byte, error) {
@@ -59,6 +59,13 @@ func (r *ReplayDeliveriesRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (r *ReplayDeliveriesRequest) GetConfigIds() []string {
+	if r == nil {
+		return nil
+	}
+	return r.ConfigIds
 }
 
 func (r *ReplayDeliveriesRequest) GetCreatedAtFrom() time.Time {
@@ -75,20 +82,6 @@ func (r *ReplayDeliveriesRequest) GetCreatedAtTo() *time.Time {
 	return r.CreatedAtTo
 }
 
-func (r *ReplayDeliveriesRequest) GetStatuses() []Statuses {
-	if r == nil {
-		return nil
-	}
-	return r.Statuses
-}
-
-func (r *ReplayDeliveriesRequest) GetConfigIds() []string {
-	if r == nil {
-		return nil
-	}
-	return r.ConfigIds
-}
-
 func (r *ReplayDeliveriesRequest) GetCursor() *string {
 	if r == nil {
 		return nil
@@ -101,4 +94,11 @@ func (r *ReplayDeliveriesRequest) GetPageSize() *int64 {
 		return nil
 	}
 	return r.PageSize
+}
+
+func (r *ReplayDeliveriesRequest) GetStatuses() []Statuses {
+	if r == nil {
+		return nil
+	}
+	return r.Statuses
 }

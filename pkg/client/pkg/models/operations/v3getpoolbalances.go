@@ -10,10 +10,10 @@ import (
 )
 
 type V3GetPoolBalancesRequest struct {
-	// The pool ID
-	PoolID string `pathParam:"style=simple,explode=false,name=poolID"`
 	// The time to filter by
 	At *time.Time `queryParam:"style=form,explode=true,name=at"`
+	// The pool ID
+	PoolID string `pathParam:"style=simple,explode=false,name=poolID"`
 }
 
 func (v V3GetPoolBalancesRequest) MarshalJSON() ([]byte, error) {
@@ -27,18 +27,18 @@ func (v *V3GetPoolBalancesRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V3GetPoolBalancesRequest) GetPoolID() string {
-	if v == nil {
-		return ""
-	}
-	return v.PoolID
-}
-
 func (v *V3GetPoolBalancesRequest) GetAt() *time.Time {
 	if v == nil {
 		return nil
 	}
 	return v.At
+}
+
+func (v *V3GetPoolBalancesRequest) GetPoolID() string {
+	if v == nil {
+		return ""
+	}
+	return v.PoolID
 }
 
 // #region class-body-v3getpoolbalancesrequest

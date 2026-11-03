@@ -6,10 +6,10 @@ package ledger
 type V2SchemaData struct {
 	// Chart of account
 	Chart map[string]V2ChartSegment `json:"chart"`
-	// Transaction templates
-	Transactions map[string]V2TransactionTemplate `json:"transactions,omitempty"`
 	// Query templates
 	Queries map[string]V2QueryTemplate `json:"queries,omitempty"`
+	// Transaction templates
+	Transactions map[string]V2TransactionTemplate `json:"transactions,omitempty"`
 }
 
 func (v *V2SchemaData) GetChart() map[string]V2ChartSegment {
@@ -19,18 +19,18 @@ func (v *V2SchemaData) GetChart() map[string]V2ChartSegment {
 	return v.Chart
 }
 
-func (v *V2SchemaData) GetTransactions() map[string]V2TransactionTemplate {
-	if v == nil {
-		return nil
-	}
-	return v.Transactions
-}
-
 func (v *V2SchemaData) GetQueries() map[string]V2QueryTemplate {
 	if v == nil {
 		return nil
 	}
 	return v.Queries
+}
+
+func (v *V2SchemaData) GetTransactions() map[string]V2TransactionTemplate {
+	if v == nil {
+		return nil
+	}
+	return v.Transactions
 }
 
 // #region class-body-v2schemadata

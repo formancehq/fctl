@@ -5,18 +5,11 @@ package connectivity
 // FacetDistribution - Distinct-connector counts per facet value, computed from the
 // namespaced `facet:value` tags of the connectors matching the query.
 type FacetDistribution struct {
-	// Published connectors matching the query.
-	Total int64 `json:"total"`
 	// Facet name to value-to-count map, e.g. `{"provider": {"psp": 6}}`.
 	//
 	Facets map[string]map[string]int64 `json:"facets"`
-}
-
-func (f *FacetDistribution) GetTotal() int64 {
-	if f == nil {
-		return 0
-	}
-	return f.Total
+	// Published connectors matching the query.
+	Total int64 `json:"total"`
 }
 
 func (f *FacetDistribution) GetFacets() map[string]map[string]int64 {
@@ -24,4 +17,11 @@ func (f *FacetDistribution) GetFacets() map[string]map[string]int64 {
 		return map[string]map[string]int64{}
 	}
 	return f.Facets
+}
+
+func (f *FacetDistribution) GetTotal() int64 {
+	if f == nil {
+		return 0
+	}
+	return f.Total
 }

@@ -4,18 +4,18 @@ package ledger
 
 // BalancesCursorResponseCursor - Paginated cursor wrapping the list of balances
 type BalancesCursorResponseCursor struct {
-	PageSize int64                         `json:"pageSize"`
-	HasMore  bool                          `json:"hasMore"`
-	Previous *string                       `json:"previous,omitempty"`
-	Next     *string                       `json:"next,omitempty"`
 	Data     []map[string]map[string]int64 `json:"data"`
+	HasMore  bool                          `json:"hasMore"`
+	Next     *string                       `json:"next,omitempty"`
+	PageSize int64                         `json:"pageSize"`
+	Previous *string                       `json:"previous,omitempty"`
 }
 
-func (b *BalancesCursorResponseCursor) GetPageSize() int64 {
+func (b *BalancesCursorResponseCursor) GetData() []map[string]map[string]int64 {
 	if b == nil {
-		return 0
+		return []map[string]map[string]int64{}
 	}
-	return b.PageSize
+	return b.Data
 }
 
 func (b *BalancesCursorResponseCursor) GetHasMore() bool {
@@ -25,13 +25,6 @@ func (b *BalancesCursorResponseCursor) GetHasMore() bool {
 	return b.HasMore
 }
 
-func (b *BalancesCursorResponseCursor) GetPrevious() *string {
-	if b == nil {
-		return nil
-	}
-	return b.Previous
-}
-
 func (b *BalancesCursorResponseCursor) GetNext() *string {
 	if b == nil {
 		return nil
@@ -39,11 +32,18 @@ func (b *BalancesCursorResponseCursor) GetNext() *string {
 	return b.Next
 }
 
-func (b *BalancesCursorResponseCursor) GetData() []map[string]map[string]int64 {
+func (b *BalancesCursorResponseCursor) GetPageSize() int64 {
 	if b == nil {
-		return []map[string]map[string]int64{}
+		return 0
 	}
-	return b.Data
+	return b.PageSize
+}
+
+func (b *BalancesCursorResponseCursor) GetPrevious() *string {
+	if b == nil {
+		return nil
+	}
+	return b.Previous
 }
 
 type BalancesCursorResponse struct {

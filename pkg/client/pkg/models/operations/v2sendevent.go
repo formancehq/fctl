@@ -21,16 +21,9 @@ func (v *V2SendEventRequestBody) GetName() string {
 // #endregion class-body-v2sendeventrequestbody
 
 type V2SendEventRequest struct {
-	// The instance id
-	InstanceID  string                  `pathParam:"style=simple,explode=false,name=instanceID"`
 	RequestBody *V2SendEventRequestBody `request:"mediaType=application/json"`
-}
-
-func (v *V2SendEventRequest) GetInstanceID() string {
-	if v == nil {
-		return ""
-	}
-	return v.InstanceID
+	// The instance id
+	InstanceID string `pathParam:"style=simple,explode=false,name=instanceID"`
 }
 
 func (v *V2SendEventRequest) GetRequestBody() *V2SendEventRequestBody {
@@ -38,6 +31,13 @@ func (v *V2SendEventRequest) GetRequestBody() *V2SendEventRequestBody {
 		return nil
 	}
 	return v.RequestBody
+}
+
+func (v *V2SendEventRequest) GetInstanceID() string {
+	if v == nil {
+		return ""
+	}
+	return v.InstanceID
 }
 
 // #region class-body-v2sendeventrequest

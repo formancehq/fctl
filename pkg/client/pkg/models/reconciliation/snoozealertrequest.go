@@ -11,10 +11,10 @@ import (
 type SnoozeAlertRequest struct {
 	// Who is snoozing the alert
 	By string `json:"by"`
-	// When the mute expires and notifications resume. Must be in the future
-	Until time.Time `json:"until"`
 	// Free-text note to record with the snooze
 	Note *string `json:"note,omitempty"`
+	// When the mute expires and notifications resume. Must be in the future
+	Until time.Time `json:"until"`
 }
 
 func (s SnoozeAlertRequest) MarshalJSON() ([]byte, error) {
@@ -35,16 +35,16 @@ func (s *SnoozeAlertRequest) GetBy() string {
 	return s.By
 }
 
-func (s *SnoozeAlertRequest) GetUntil() time.Time {
-	if s == nil {
-		return time.Time{}
-	}
-	return s.Until
-}
-
 func (s *SnoozeAlertRequest) GetNote() *string {
 	if s == nil {
 		return nil
 	}
 	return s.Note
+}
+
+func (s *SnoozeAlertRequest) GetUntil() time.Time {
+	if s == nil {
+		return time.Time{}
+	}
+	return s.Until
 }

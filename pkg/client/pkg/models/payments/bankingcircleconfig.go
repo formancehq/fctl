@@ -7,25 +7,25 @@ import (
 )
 
 type BankingCircleConfig struct {
-	// Human-readable name identifying this connector instance
-	Name string `json:"name"`
-	// Identifies the payment provider this configuration targets
-	Provider *string `default:"Bankingcircle" json:"provider"`
-	// Username issued by Banking Circle, used to authenticate the connector
-	Username string `json:"username"`
-	// Password issued by Banking Circle, used to authenticate the connector
-	Password string `json:"password"`
-	// Base URL of the Banking Circle API the connector calls
-	Endpoint string `json:"endpoint"`
 	// URL the connector calls to obtain an access token
 	AuthorizationEndpoint string `json:"authorizationEndpoint"`
+	// Base URL of the Banking Circle API the connector calls
+	Endpoint string `json:"endpoint"`
+	// Human-readable name identifying this connector instance
+	Name string `json:"name"`
+	// Password issued by Banking Circle, used to authenticate the connector
+	Password string `json:"password"`
+	// The frequency at which the connector will try to fetch new BalanceTransaction objects from Banking Circle API.
+	//
+	PollingPeriod *string `default:"30m" json:"pollingPeriod"`
+	// Identifies the payment provider this configuration targets
+	Provider *string `default:"Bankingcircle" json:"provider"`
 	// Client certificate presented on the mutual-TLS connection to Banking Circle
 	UserCertificate string `json:"userCertificate"`
 	// Private key matching the client certificate
 	UserCertificateKey string `json:"userCertificateKey"`
-	// The frequency at which the connector will try to fetch new BalanceTransaction objects from Banking Circle API.
-	//
-	PollingPeriod *string `default:"30m" json:"pollingPeriod"`
+	// Username issued by Banking Circle, used to authenticate the connector
+	Username string `json:"username"`
 }
 
 func (b BankingCircleConfig) MarshalJSON() ([]byte, error) {
@@ -33,38 +33,17 @@ func (b BankingCircleConfig) MarshalJSON() ([]byte, error) {
 }
 
 func (b *BankingCircleConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &b, "", false, []string{"name", "username", "password", "endpoint", "authorizationEndpoint", "userCertificate", "userCertificateKey"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &b, "", false, []string{"authorizationEndpoint", "endpoint", "name", "password", "userCertificate", "userCertificateKey", "username"}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (b *BankingCircleConfig) GetName() string {
+func (b *BankingCircleConfig) GetAuthorizationEndpoint() string {
 	if b == nil {
 		return ""
 	}
-	return b.Name
-}
-
-func (b *BankingCircleConfig) GetProvider() *string {
-	if b == nil {
-		return nil
-	}
-	return b.Provider
-}
-
-func (b *BankingCircleConfig) GetUsername() string {
-	if b == nil {
-		return ""
-	}
-	return b.Username
-}
-
-func (b *BankingCircleConfig) GetPassword() string {
-	if b == nil {
-		return ""
-	}
-	return b.Password
+	return b.AuthorizationEndpoint
 }
 
 func (b *BankingCircleConfig) GetEndpoint() string {
@@ -74,11 +53,32 @@ func (b *BankingCircleConfig) GetEndpoint() string {
 	return b.Endpoint
 }
 
-func (b *BankingCircleConfig) GetAuthorizationEndpoint() string {
+func (b *BankingCircleConfig) GetName() string {
 	if b == nil {
 		return ""
 	}
-	return b.AuthorizationEndpoint
+	return b.Name
+}
+
+func (b *BankingCircleConfig) GetPassword() string {
+	if b == nil {
+		return ""
+	}
+	return b.Password
+}
+
+func (b *BankingCircleConfig) GetPollingPeriod() *string {
+	if b == nil {
+		return nil
+	}
+	return b.PollingPeriod
+}
+
+func (b *BankingCircleConfig) GetProvider() *string {
+	if b == nil {
+		return nil
+	}
+	return b.Provider
 }
 
 func (b *BankingCircleConfig) GetUserCertificate() string {
@@ -95,9 +95,9 @@ func (b *BankingCircleConfig) GetUserCertificateKey() string {
 	return b.UserCertificateKey
 }
 
-func (b *BankingCircleConfig) GetPollingPeriod() *string {
+func (b *BankingCircleConfig) GetUsername() string {
 	if b == nil {
-		return nil
+		return ""
 	}
-	return b.PollingPeriod
+	return b.Username
 }

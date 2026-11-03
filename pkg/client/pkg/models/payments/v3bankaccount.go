@@ -9,24 +9,24 @@ import (
 
 // V3BankAccount - A bank account registered with Formance and forwardable to connectors
 type V3BankAccount struct {
-	// Unique identifier of the bank account within Formance
-	ID string `json:"id"`
-	// When the bank account was registered
-	CreatedAt time.Time `json:"createdAt"`
-	// Human-readable name of the bank account
-	Name string `json:"name"`
 	// Domestic account number, when the account is identified that way
 	AccountNumber *string `json:"accountNumber,omitempty"`
-	// International bank account number, when the account is identified that way
-	Iban *string `json:"iban,omitempty"`
-	// SWIFT/BIC code identifying the bank
-	SwiftBicCode *string `json:"swiftBicCode,omitempty"`
 	// Country the account is held in, as an ISO 3166-1 alpha-2 code
 	Country *string `json:"country,omitempty"`
+	// When the bank account was registered
+	CreatedAt time.Time `json:"createdAt"`
+	// International bank account number, when the account is identified that way
+	Iban *string `json:"iban,omitempty"`
+	// Unique identifier of the bank account within Formance
+	ID string `json:"id"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]string `json:"metadata,omitempty"`
+	// Human-readable name of the bank account
+	Name string `json:"name"`
 	// Provider-side accounts this bank account has been forwarded to
 	RelatedAccounts []V3BankAccountRelatedAccount `json:"relatedAccounts,omitempty"`
+	// SWIFT/BIC code identifying the bank
+	SwiftBicCode *string `json:"swiftBicCode,omitempty"`
 }
 
 func (v V3BankAccount) MarshalJSON() ([]byte, error) {
@@ -40,46 +40,11 @@ func (v *V3BankAccount) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V3BankAccount) GetID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ID
-}
-
-func (v *V3BankAccount) GetCreatedAt() time.Time {
-	if v == nil {
-		return time.Time{}
-	}
-	return v.CreatedAt
-}
-
-func (v *V3BankAccount) GetName() string {
-	if v == nil {
-		return ""
-	}
-	return v.Name
-}
-
 func (v *V3BankAccount) GetAccountNumber() *string {
 	if v == nil {
 		return nil
 	}
 	return v.AccountNumber
-}
-
-func (v *V3BankAccount) GetIban() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Iban
-}
-
-func (v *V3BankAccount) GetSwiftBicCode() *string {
-	if v == nil {
-		return nil
-	}
-	return v.SwiftBicCode
 }
 
 func (v *V3BankAccount) GetCountry() *string {
@@ -89,6 +54,27 @@ func (v *V3BankAccount) GetCountry() *string {
 	return v.Country
 }
 
+func (v *V3BankAccount) GetCreatedAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.CreatedAt
+}
+
+func (v *V3BankAccount) GetIban() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Iban
+}
+
+func (v *V3BankAccount) GetID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ID
+}
+
 func (v *V3BankAccount) GetMetadata() map[string]string {
 	if v == nil {
 		return nil
@@ -96,11 +82,25 @@ func (v *V3BankAccount) GetMetadata() map[string]string {
 	return v.Metadata
 }
 
+func (v *V3BankAccount) GetName() string {
+	if v == nil {
+		return ""
+	}
+	return v.Name
+}
+
 func (v *V3BankAccount) GetRelatedAccounts() []V3BankAccountRelatedAccount {
 	if v == nil {
 		return nil
 	}
 	return v.RelatedAccounts
+}
+
+func (v *V3BankAccount) GetSwiftBicCode() *string {
+	if v == nil {
+		return nil
+	}
+	return v.SwiftBicCode
 }
 
 // #region class-body-v3bankaccount

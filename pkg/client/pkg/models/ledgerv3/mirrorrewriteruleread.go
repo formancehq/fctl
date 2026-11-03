@@ -8,16 +8,16 @@ import (
 
 // MirrorRewriteRuleRead - Read representation of a mirror rewrite rule, using protojson camelCase names. Default scalar values (including empty regex replacements) are omitted; missing replacements mean the empty string. Creation uses the separate MirrorRewriteRule schema.
 type MirrorRewriteRuleRead struct {
-	// Rule scoped to MirrorCreatedTransaction. Inside `match`, `log` is the created-transaction proto directly (e.g. `log.metadata["k"]`).
-	//
-	CreatedTransaction  *CreatedTransactionRuleRead  `json:"createdTransaction,omitempty"`
-	RevertedTransaction *RevertedTransactionRuleRead `json:"revertedTransaction,omitempty"`
-	SavedMetadata       *SavedMetadataRuleRead       `json:"savedMetadata,omitempty"`
-	DeletedMetadata     *DeletedMetadataRuleRead     `json:"deletedMetadata,omitempty"`
 	// Rule scoped to every variant. `log` is the full MirrorLogEntry — use `has(log.<variant>)` guards to read variant-specific fields.
 	//
 	AnyVariant *AnyVariantRuleRead `json:"anyVariant,omitempty"`
-	Stop       *bool               `json:"stop,omitempty"`
+	// Rule scoped to MirrorCreatedTransaction. Inside `match`, `log` is the created-transaction proto directly (e.g. `log.metadata["k"]`).
+	//
+	CreatedTransaction  *CreatedTransactionRuleRead  `json:"createdTransaction,omitempty"`
+	DeletedMetadata     *DeletedMetadataRuleRead     `json:"deletedMetadata,omitempty"`
+	RevertedTransaction *RevertedTransactionRuleRead `json:"revertedTransaction,omitempty"`
+	SavedMetadata       *SavedMetadataRuleRead       `json:"savedMetadata,omitempty"`
+	Stop                *bool                        `json:"stop,omitempty"`
 }
 
 func (m MirrorRewriteRuleRead) MarshalJSON() ([]byte, error) {
@@ -31,11 +31,25 @@ func (m *MirrorRewriteRuleRead) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (m *MirrorRewriteRuleRead) GetAnyVariant() *AnyVariantRuleRead {
+	if m == nil {
+		return nil
+	}
+	return m.AnyVariant
+}
+
 func (m *MirrorRewriteRuleRead) GetCreatedTransaction() *CreatedTransactionRuleRead {
 	if m == nil {
 		return nil
 	}
 	return m.CreatedTransaction
+}
+
+func (m *MirrorRewriteRuleRead) GetDeletedMetadata() *DeletedMetadataRuleRead {
+	if m == nil {
+		return nil
+	}
+	return m.DeletedMetadata
 }
 
 func (m *MirrorRewriteRuleRead) GetRevertedTransaction() *RevertedTransactionRuleRead {
@@ -50,20 +64,6 @@ func (m *MirrorRewriteRuleRead) GetSavedMetadata() *SavedMetadataRuleRead {
 		return nil
 	}
 	return m.SavedMetadata
-}
-
-func (m *MirrorRewriteRuleRead) GetDeletedMetadata() *DeletedMetadataRuleRead {
-	if m == nil {
-		return nil
-	}
-	return m.DeletedMetadata
-}
-
-func (m *MirrorRewriteRuleRead) GetAnyVariant() *AnyVariantRuleRead {
-	if m == nil {
-		return nil
-	}
-	return m.AnyVariant
 }
 
 func (m *MirrorRewriteRuleRead) GetStop() *bool {

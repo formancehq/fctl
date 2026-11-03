@@ -4,22 +4,22 @@ package payments
 
 // PoolsCursorCursor - Paginated cursor wrapping the list of pools
 type PoolsCursorCursor struct {
-	// Number of items requested per page
-	PageSize int64 `json:"pageSize"`
+	Data []Pool `json:"data"`
 	// Whether further pages are available
 	HasMore bool `json:"hasMore"`
-	// Cursor for the previous page, absent on the first page
-	Previous *string `json:"previous,omitempty"`
 	// Cursor for the next page, absent on the last page
 	Next *string `json:"next,omitempty"`
-	Data []Pool  `json:"data"`
+	// Number of items requested per page
+	PageSize int64 `json:"pageSize"`
+	// Cursor for the previous page, absent on the first page
+	Previous *string `json:"previous,omitempty"`
 }
 
-func (p *PoolsCursorCursor) GetPageSize() int64 {
+func (p *PoolsCursorCursor) GetData() []Pool {
 	if p == nil {
-		return 0
+		return []Pool{}
 	}
-	return p.PageSize
+	return p.Data
 }
 
 func (p *PoolsCursorCursor) GetHasMore() bool {
@@ -29,13 +29,6 @@ func (p *PoolsCursorCursor) GetHasMore() bool {
 	return p.HasMore
 }
 
-func (p *PoolsCursorCursor) GetPrevious() *string {
-	if p == nil {
-		return nil
-	}
-	return p.Previous
-}
-
 func (p *PoolsCursorCursor) GetNext() *string {
 	if p == nil {
 		return nil
@@ -43,11 +36,18 @@ func (p *PoolsCursorCursor) GetNext() *string {
 	return p.Next
 }
 
-func (p *PoolsCursorCursor) GetData() []Pool {
+func (p *PoolsCursorCursor) GetPageSize() int64 {
 	if p == nil {
-		return []Pool{}
+		return 0
 	}
-	return p.Data
+	return p.PageSize
+}
+
+func (p *PoolsCursorCursor) GetPrevious() *string {
+	if p == nil {
+		return nil
+	}
+	return p.Previous
 }
 
 // PoolsCursor - OK

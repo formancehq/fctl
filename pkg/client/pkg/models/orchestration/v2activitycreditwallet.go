@@ -4,17 +4,10 @@ package orchestration
 
 // V2ActivityCreditWallet - Arguments for the activity that credits a wallet
 type V2ActivityCreditWallet struct {
-	// Identifier of the wallet to credit
-	ID *string `json:"id,omitempty"`
 	// A credit to apply to a wallet
 	Data *V2CreditWalletRequest `json:"data,omitempty"`
-}
-
-func (v *V2ActivityCreditWallet) GetID() *string {
-	if v == nil {
-		return nil
-	}
-	return v.ID
+	// Identifier of the wallet to credit
+	ID *string `json:"id,omitempty"`
 }
 
 func (v *V2ActivityCreditWallet) GetData() *V2CreditWalletRequest {
@@ -22,6 +15,13 @@ func (v *V2ActivityCreditWallet) GetData() *V2CreditWalletRequest {
 		return nil
 	}
 	return v.Data
+}
+
+func (v *V2ActivityCreditWallet) GetID() *string {
+	if v == nil {
+		return nil
+	}
+	return v.ID
 }
 
 // #region class-body-v2activitycreditwallet

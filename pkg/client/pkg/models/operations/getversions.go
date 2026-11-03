@@ -10,12 +10,12 @@ import (
 type GetVersionsResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	GetVersionsResponse *gateway.GetVersionsResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	GetVersionsResponse *gateway.GetVersionsResponse
 }
 
 func (g *GetVersionsResponse) GetContentType() string {
@@ -23,6 +23,13 @@ func (g *GetVersionsResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetVersionsResponse) GetGetVersionsResponse() *gateway.GetVersionsResponse {
+	if g == nil {
+		return nil
+	}
+	return g.GetVersionsResponse
 }
 
 func (g *GetVersionsResponse) GetStatusCode() int {
@@ -37,11 +44,4 @@ func (g *GetVersionsResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetVersionsResponse) GetGetVersionsResponse() *gateway.GetVersionsResponse {
-	if g == nil {
-		return nil
-	}
-	return g.GetVersionsResponse
 }

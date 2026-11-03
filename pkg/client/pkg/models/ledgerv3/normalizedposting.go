@@ -3,29 +3,15 @@
 package ledgerv3
 
 type NormalizedPosting struct {
-	SourcePattern      string `json:"sourcePattern"`
-	DestinationPattern string `json:"destinationPattern"`
-	Asset              string `json:"asset"`
+	Asset string `json:"asset"`
 	// Color discriminates postings on the same (source, destination, asset)
 	// but different color buckets in the FSM. Always emitted (even empty)
 	// so clients can distinguish the uncolored bucket from patterns that
 	// differ only by color.
 	//
-	Color string `json:"color"`
-}
-
-func (n *NormalizedPosting) GetSourcePattern() string {
-	if n == nil {
-		return ""
-	}
-	return n.SourcePattern
-}
-
-func (n *NormalizedPosting) GetDestinationPattern() string {
-	if n == nil {
-		return ""
-	}
-	return n.DestinationPattern
+	Color              string `json:"color"`
+	DestinationPattern string `json:"destinationPattern"`
+	SourcePattern      string `json:"sourcePattern"`
 }
 
 func (n *NormalizedPosting) GetAsset() string {
@@ -40,4 +26,18 @@ func (n *NormalizedPosting) GetColor() string {
 		return ""
 	}
 	return n.Color
+}
+
+func (n *NormalizedPosting) GetDestinationPattern() string {
+	if n == nil {
+		return ""
+	}
+	return n.DestinationPattern
+}
+
+func (n *NormalizedPosting) GetSourcePattern() string {
+	if n == nil {
+		return ""
+	}
+	return n.SourcePattern
 }

@@ -22,12 +22,12 @@ func (g *GetHoldRequest) GetHoldID() string {
 type GetHoldResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Holds
+	GetHoldResponse *wallets.GetHoldResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Holds
-	GetHoldResponse *wallets.GetHoldResponse
 }
 
 func (g *GetHoldResponse) GetContentType() string {
@@ -35,6 +35,13 @@ func (g *GetHoldResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetHoldResponse) GetGetHoldResponse() *wallets.GetHoldResponse {
+	if g == nil {
+		return nil
+	}
+	return g.GetHoldResponse
 }
 
 func (g *GetHoldResponse) GetStatusCode() int {
@@ -49,11 +56,4 @@ func (g *GetHoldResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetHoldResponse) GetGetHoldResponse() *wallets.GetHoldResponse {
-	if g == nil {
-		return nil
-	}
-	return g.GetHoldResponse
 }

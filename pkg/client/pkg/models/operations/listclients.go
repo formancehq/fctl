@@ -10,12 +10,12 @@ import (
 type ListClientsResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// List of clients
+	ListClientsResponse *auth.ListClientsResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// List of clients
-	ListClientsResponse *auth.ListClientsResponse
 }
 
 func (l *ListClientsResponse) GetContentType() string {
@@ -23,6 +23,13 @@ func (l *ListClientsResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListClientsResponse) GetListClientsResponse() *auth.ListClientsResponse {
+	if l == nil {
+		return nil
+	}
+	return l.ListClientsResponse
 }
 
 func (l *ListClientsResponse) GetStatusCode() int {
@@ -37,11 +44,4 @@ func (l *ListClientsResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return l.RawResponse
-}
-
-func (l *ListClientsResponse) GetListClientsResponse() *auth.ListClientsResponse {
-	if l == nil {
-		return nil
-	}
-	return l.ListClientsResponse
 }

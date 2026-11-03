@@ -19,29 +19,15 @@ func (s *SaveAccountMetadataSecurity) GetBearerAuth() *string {
 }
 
 type SaveAccountMetadataRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Idempotency key for the request
+	IdempotencyKey *string                            `header:"style=simple,explode=false,name=Idempotency-Key"`
+	RequestBody    map[string]*ledgerv3.MetadataValue `request:"mediaType=application/json"`
 	// Raw account address, for example users:001. Direct HTTP clients may
 	// URL-encode it as one path segment (users%3A001). Decoded exactly once.
 	//
 	Address string `pathParam:"style=simple,explode=false,name=address"`
-	// Idempotency key for the request
-	IdempotencyKey *string                            `header:"style=simple,explode=false,name=Idempotency-Key"`
-	RequestBody    map[string]*ledgerv3.MetadataValue `request:"mediaType=application/json"`
-}
-
-func (s *SaveAccountMetadataRequest) GetLedgerName() string {
-	if s == nil {
-		return ""
-	}
-	return s.LedgerName
-}
-
-func (s *SaveAccountMetadataRequest) GetAddress() string {
-	if s == nil {
-		return ""
-	}
-	return s.Address
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 }
 
 func (s *SaveAccountMetadataRequest) GetIdempotencyKey() *string {
@@ -58,20 +44,34 @@ func (s *SaveAccountMetadataRequest) GetRequestBody() map[string]*ledgerv3.Metad
 	return s.RequestBody
 }
 
+func (s *SaveAccountMetadataRequest) GetAddress() string {
+	if s == nil {
+		return ""
+	}
+	return s.Address
+}
+
+func (s *SaveAccountMetadataRequest) GetLedgerName() string {
+	if s == nil {
+		return ""
+	}
+	return s.LedgerName
+}
+
 type SaveAccountMetadataResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (s *SaveAccountMetadataResponse) GetContentType() string {
@@ -79,6 +79,27 @@ func (s *SaveAccountMetadataResponse) GetContentType() string {
 		return ""
 	}
 	return s.ContentType
+}
+
+func (s *SaveAccountMetadataResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if s == nil {
+		return nil
+	}
+	return s.ErrorResponse
+}
+
+func (s *SaveAccountMetadataResponse) GetForbidden() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Forbidden
+}
+
+func (s *SaveAccountMetadataResponse) GetHeaders() map[string][]string {
+	if s == nil {
+		return map[string][]string{}
+	}
+	return s.Headers
 }
 
 func (s *SaveAccountMetadataResponse) GetStatusCode() int {
@@ -95,30 +116,9 @@ func (s *SaveAccountMetadataResponse) GetRawResponse() *http.Response {
 	return s.RawResponse
 }
 
-func (s *SaveAccountMetadataResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if s == nil {
-		return nil
-	}
-	return s.ErrorResponse
-}
-
 func (s *SaveAccountMetadataResponse) GetUnauthorized() *string {
 	if s == nil {
 		return nil
 	}
 	return s.Unauthorized
-}
-
-func (s *SaveAccountMetadataResponse) GetForbidden() *string {
-	if s == nil {
-		return nil
-	}
-	return s.Forbidden
-}
-
-func (s *SaveAccountMetadataResponse) GetHeaders() map[string][]string {
-	if s == nil {
-		return map[string][]string{}
-	}
-	return s.Headers
 }

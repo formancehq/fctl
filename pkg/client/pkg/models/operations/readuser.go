@@ -22,12 +22,12 @@ func (r *ReadUserRequest) GetUserID() string {
 type ReadUserResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Retrieved user
+	ReadUserResponse *auth.ReadUserResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Retrieved user
-	ReadUserResponse *auth.ReadUserResponse
 }
 
 func (r *ReadUserResponse) GetContentType() string {
@@ -35,6 +35,13 @@ func (r *ReadUserResponse) GetContentType() string {
 		return ""
 	}
 	return r.ContentType
+}
+
+func (r *ReadUserResponse) GetReadUserResponse() *auth.ReadUserResponse {
+	if r == nil {
+		return nil
+	}
+	return r.ReadUserResponse
 }
 
 func (r *ReadUserResponse) GetStatusCode() int {
@@ -49,11 +56,4 @@ func (r *ReadUserResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return r.RawResponse
-}
-
-func (r *ReadUserResponse) GetReadUserResponse() *auth.ReadUserResponse {
-	if r == nil {
-		return nil
-	}
-	return r.ReadUserResponse
 }

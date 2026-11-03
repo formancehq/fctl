@@ -7,9 +7,9 @@ import (
 )
 
 type V2BulkElementDeleteMetadataData struct {
+	Key        string       `json:"key"`
 	TargetID   V2TargetID   `json:"targetId"`
 	TargetType V2TargetType `json:"targetType"`
-	Key        string       `json:"key"`
 }
 
 func (v V2BulkElementDeleteMetadataData) MarshalJSON() ([]byte, error) {
@@ -17,10 +17,17 @@ func (v V2BulkElementDeleteMetadataData) MarshalJSON() ([]byte, error) {
 }
 
 func (v *V2BulkElementDeleteMetadataData) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"targetId", "targetType", "key"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"key", "targetId", "targetType"}); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (v *V2BulkElementDeleteMetadataData) GetKey() string {
+	if v == nil {
+		return ""
+	}
+	return v.Key
 }
 
 func (v *V2BulkElementDeleteMetadataData) GetTargetID() V2TargetID {
@@ -37,22 +44,15 @@ func (v *V2BulkElementDeleteMetadataData) GetTargetType() V2TargetType {
 	return v.TargetType
 }
 
-func (v *V2BulkElementDeleteMetadataData) GetKey() string {
-	if v == nil {
-		return ""
-	}
-	return v.Key
-}
-
 // #region class-body-v2bulkelementdeletemetadatadata
 // #endregion class-body-v2bulkelementdeletemetadatadata
 
 type V2BulkElementDeleteMetadata struct {
 	// The bulk action this element performs
-	Action string `json:"action"`
+	Action string                           `json:"action"`
+	Data   *V2BulkElementDeleteMetadataData `json:"data,omitempty"`
 	// Idempotency key scoped to this element, making it safe to retry the bulk request
-	Ik   *string                          `json:"ik,omitempty"`
-	Data *V2BulkElementDeleteMetadataData `json:"data,omitempty"`
+	Ik *string `json:"ik,omitempty"`
 }
 
 func (v V2BulkElementDeleteMetadata) MarshalJSON() ([]byte, error) {
@@ -73,18 +73,18 @@ func (v *V2BulkElementDeleteMetadata) GetAction() string {
 	return v.Action
 }
 
-func (v *V2BulkElementDeleteMetadata) GetIk() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Ik
-}
-
 func (v *V2BulkElementDeleteMetadata) GetData() *V2BulkElementDeleteMetadataData {
 	if v == nil {
 		return nil
 	}
 	return v.Data
+}
+
+func (v *V2BulkElementDeleteMetadata) GetIk() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Ik
 }
 
 // #region class-body-v2bulkelementdeletemetadata

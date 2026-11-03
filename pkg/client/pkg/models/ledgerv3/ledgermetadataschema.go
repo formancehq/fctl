@@ -4,8 +4,8 @@ package ledgerv3
 
 type LedgerMetadataSchema struct {
 	AccountFields     map[string]LedgerMetadataFieldSchema `json:"accountFields,omitempty"`
-	TransactionFields map[string]LedgerMetadataFieldSchema `json:"transactionFields,omitempty"`
 	LedgerFields      map[string]LedgerMetadataFieldSchema `json:"ledgerFields,omitempty"`
+	TransactionFields map[string]LedgerMetadataFieldSchema `json:"transactionFields,omitempty"`
 }
 
 func (l *LedgerMetadataSchema) GetAccountFields() map[string]LedgerMetadataFieldSchema {
@@ -15,16 +15,16 @@ func (l *LedgerMetadataSchema) GetAccountFields() map[string]LedgerMetadataField
 	return l.AccountFields
 }
 
-func (l *LedgerMetadataSchema) GetTransactionFields() map[string]LedgerMetadataFieldSchema {
-	if l == nil {
-		return nil
-	}
-	return l.TransactionFields
-}
-
 func (l *LedgerMetadataSchema) GetLedgerFields() map[string]LedgerMetadataFieldSchema {
 	if l == nil {
 		return nil
 	}
 	return l.LedgerFields
+}
+
+func (l *LedgerMetadataSchema) GetTransactionFields() map[string]LedgerMetadataFieldSchema {
+	if l == nil {
+		return nil
+	}
+	return l.TransactionFields
 }

@@ -22,12 +22,12 @@ func (g *GetPolicyRequest) GetPolicyID() string {
 type GetPolicyResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	PolicyResponse *reconciliation.PolicyResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	PolicyResponse *reconciliation.PolicyResponse
 }
 
 func (g *GetPolicyResponse) GetContentType() string {
@@ -35,6 +35,13 @@ func (g *GetPolicyResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetPolicyResponse) GetPolicyResponse() *reconciliation.PolicyResponse {
+	if g == nil {
+		return nil
+	}
+	return g.PolicyResponse
 }
 
 func (g *GetPolicyResponse) GetStatusCode() int {
@@ -49,11 +56,4 @@ func (g *GetPolicyResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetPolicyResponse) GetPolicyResponse() *reconciliation.PolicyResponse {
-	if g == nil {
-		return nil
-	}
-	return g.PolicyResponse
 }

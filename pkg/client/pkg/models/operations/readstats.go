@@ -22,12 +22,12 @@ func (r *ReadStatsRequest) GetLedger() string {
 type ReadStatsResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	StatsResponse *ledger.StatsResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	StatsResponse *ledger.StatsResponse
 }
 
 func (r *ReadStatsResponse) GetContentType() string {
@@ -35,6 +35,13 @@ func (r *ReadStatsResponse) GetContentType() string {
 		return ""
 	}
 	return r.ContentType
+}
+
+func (r *ReadStatsResponse) GetStatsResponse() *ledger.StatsResponse {
+	if r == nil {
+		return nil
+	}
+	return r.StatsResponse
 }
 
 func (r *ReadStatsResponse) GetStatusCode() int {
@@ -49,11 +56,4 @@ func (r *ReadStatsResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return r.RawResponse
-}
-
-func (r *ReadStatsResponse) GetStatsResponse() *ledger.StatsResponse {
-	if r == nil {
-		return nil
-	}
-	return r.StatsResponse
 }

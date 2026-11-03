@@ -22,12 +22,12 @@ func (g *GetWorkflowRequest) GetFlowID() string {
 type GetWorkflowResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// The workflow
+	GetWorkflowResponse *orchestration.GetWorkflowResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// The workflow
-	GetWorkflowResponse *orchestration.GetWorkflowResponse
 }
 
 func (g *GetWorkflowResponse) GetContentType() string {
@@ -35,6 +35,13 @@ func (g *GetWorkflowResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetWorkflowResponse) GetGetWorkflowResponse() *orchestration.GetWorkflowResponse {
+	if g == nil {
+		return nil
+	}
+	return g.GetWorkflowResponse
 }
 
 func (g *GetWorkflowResponse) GetStatusCode() int {
@@ -49,11 +56,4 @@ func (g *GetWorkflowResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetWorkflowResponse) GetGetWorkflowResponse() *orchestration.GetWorkflowResponse {
-	if g == nil {
-		return nil
-	}
-	return g.GetWorkflowResponse
 }

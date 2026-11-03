@@ -7,10 +7,10 @@ import (
 )
 
 type LedgerAccountSubject struct {
-	// Discriminator identifying this subject as a ledger account
-	Type string `json:"type"`
 	// Address of the ledger account
 	Identifier string `json:"identifier"`
+	// Discriminator identifying this subject as a ledger account
+	Type string `json:"type"`
 }
 
 func (l LedgerAccountSubject) MarshalJSON() ([]byte, error) {
@@ -18,17 +18,10 @@ func (l LedgerAccountSubject) MarshalJSON() ([]byte, error) {
 }
 
 func (l *LedgerAccountSubject) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &l, "", false, []string{"type", "identifier"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &l, "", false, []string{"identifier", "type"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (l *LedgerAccountSubject) GetType() string {
-	if l == nil {
-		return ""
-	}
-	return l.Type
 }
 
 func (l *LedgerAccountSubject) GetIdentifier() string {
@@ -36,4 +29,11 @@ func (l *LedgerAccountSubject) GetIdentifier() string {
 		return ""
 	}
 	return l.Identifier
+}
+
+func (l *LedgerAccountSubject) GetType() string {
+	if l == nil {
+		return ""
+	}
+	return l.Type
 }

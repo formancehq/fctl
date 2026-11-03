@@ -10,36 +10,36 @@ import (
 
 // V3PaymentInitiation - A payment Formance asked a connector to execute
 type V3PaymentInitiation struct {
-	// Unique identifier of the payment initiation
-	ID string `json:"id"`
-	// Identifier of the connector executing the payment
-	ConnectorID string `json:"connectorID"`
-	// Name of the payment provider behind the connector
-	Provider string `json:"provider"`
-	// Caller-supplied identifier for the initiation
-	Reference string `json:"reference"`
-	// When the initiation was created
-	CreatedAt time.Time `json:"createdAt"`
-	// When the payment is scheduled to execute
-	ScheduledAt time.Time `json:"scheduledAt"`
-	// Human-readable description carried with the payment
-	Description string `json:"description"`
-	// Kind of movement a payment initiation performs, such as a transfer or a payout
-	Type V3PaymentInitiationTypeEnum `json:"type"`
 	// Amount to move, in the asset's smallest unit
 	Amount *big.Int `json:"amount"`
 	// Asset the payment is denominated in
 	Asset string `json:"asset"`
-	// Where a payment initiation stands in its lifecycle
-	Status V3PaymentInitiationStatusEnum `json:"status"`
-	// Identifier of the account the funds leave
-	SourceAccountID *string `json:"sourceAccountID,omitempty"`
+	// Identifier of the connector executing the payment
+	ConnectorID string `json:"connectorID"`
+	// When the initiation was created
+	CreatedAt time.Time `json:"createdAt"`
+	// Human-readable description carried with the payment
+	Description string `json:"description"`
 	// Identifier of the account the funds reach
 	DestinationAccountID *string `json:"destinationAccountID,omitempty"`
 	// Why the initiation failed, absent when it succeeded
 	Error *string `json:"error,omitempty"`
+	// Unique identifier of the payment initiation
+	ID string `json:"id"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]string `json:"metadata,omitempty"`
+	// Name of the payment provider behind the connector
+	Provider string `json:"provider"`
+	// Caller-supplied identifier for the initiation
+	Reference string `json:"reference"`
+	// When the payment is scheduled to execute
+	ScheduledAt time.Time `json:"scheduledAt"`
+	// Identifier of the account the funds leave
+	SourceAccountID *string `json:"sourceAccountID,omitempty"`
+	// Where a payment initiation stands in its lifecycle
+	Status V3PaymentInitiationStatusEnum `json:"status"`
+	// Kind of movement a payment initiation performs, such as a transfer or a payout
+	Type V3PaymentInitiationTypeEnum `json:"type"`
 }
 
 func (v V3PaymentInitiation) MarshalJSON() ([]byte, error) {
@@ -51,62 +51,6 @@ func (v *V3PaymentInitiation) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (v *V3PaymentInitiation) GetID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ID
-}
-
-func (v *V3PaymentInitiation) GetConnectorID() string {
-	if v == nil {
-		return ""
-	}
-	return v.ConnectorID
-}
-
-func (v *V3PaymentInitiation) GetProvider() string {
-	if v == nil {
-		return ""
-	}
-	return v.Provider
-}
-
-func (v *V3PaymentInitiation) GetReference() string {
-	if v == nil {
-		return ""
-	}
-	return v.Reference
-}
-
-func (v *V3PaymentInitiation) GetCreatedAt() time.Time {
-	if v == nil {
-		return time.Time{}
-	}
-	return v.CreatedAt
-}
-
-func (v *V3PaymentInitiation) GetScheduledAt() time.Time {
-	if v == nil {
-		return time.Time{}
-	}
-	return v.ScheduledAt
-}
-
-func (v *V3PaymentInitiation) GetDescription() string {
-	if v == nil {
-		return ""
-	}
-	return v.Description
-}
-
-func (v *V3PaymentInitiation) GetType() V3PaymentInitiationTypeEnum {
-	if v == nil {
-		return V3PaymentInitiationTypeEnum("")
-	}
-	return v.Type
 }
 
 func (v *V3PaymentInitiation) GetAmount() *big.Int {
@@ -123,18 +67,25 @@ func (v *V3PaymentInitiation) GetAsset() string {
 	return v.Asset
 }
 
-func (v *V3PaymentInitiation) GetStatus() V3PaymentInitiationStatusEnum {
+func (v *V3PaymentInitiation) GetConnectorID() string {
 	if v == nil {
-		return V3PaymentInitiationStatusEnum("")
+		return ""
 	}
-	return v.Status
+	return v.ConnectorID
 }
 
-func (v *V3PaymentInitiation) GetSourceAccountID() *string {
+func (v *V3PaymentInitiation) GetCreatedAt() time.Time {
 	if v == nil {
-		return nil
+		return time.Time{}
 	}
-	return v.SourceAccountID
+	return v.CreatedAt
+}
+
+func (v *V3PaymentInitiation) GetDescription() string {
+	if v == nil {
+		return ""
+	}
+	return v.Description
 }
 
 func (v *V3PaymentInitiation) GetDestinationAccountID() *string {
@@ -151,11 +102,60 @@ func (v *V3PaymentInitiation) GetError() *string {
 	return v.Error
 }
 
+func (v *V3PaymentInitiation) GetID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ID
+}
+
 func (v *V3PaymentInitiation) GetMetadata() map[string]string {
 	if v == nil {
 		return nil
 	}
 	return v.Metadata
+}
+
+func (v *V3PaymentInitiation) GetProvider() string {
+	if v == nil {
+		return ""
+	}
+	return v.Provider
+}
+
+func (v *V3PaymentInitiation) GetReference() string {
+	if v == nil {
+		return ""
+	}
+	return v.Reference
+}
+
+func (v *V3PaymentInitiation) GetScheduledAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.ScheduledAt
+}
+
+func (v *V3PaymentInitiation) GetSourceAccountID() *string {
+	if v == nil {
+		return nil
+	}
+	return v.SourceAccountID
+}
+
+func (v *V3PaymentInitiation) GetStatus() V3PaymentInitiationStatusEnum {
+	if v == nil {
+		return V3PaymentInitiationStatusEnum("")
+	}
+	return v.Status
+}
+
+func (v *V3PaymentInitiation) GetType() V3PaymentInitiationTypeEnum {
+	if v == nil {
+		return V3PaymentInitiationTypeEnum("")
+	}
+	return v.Type
 }
 
 // #region class-body-v3paymentinitiation

@@ -8,16 +8,9 @@ import (
 )
 
 type AddAccountToPoolRequest struct {
-	// The pool ID.
-	PoolID                  string                           `pathParam:"style=simple,explode=false,name=poolId"`
 	AddAccountToPoolRequest payments.AddAccountToPoolRequest `request:"mediaType=application/json"`
-}
-
-func (a *AddAccountToPoolRequest) GetPoolID() string {
-	if a == nil {
-		return ""
-	}
-	return a.PoolID
+	// The pool ID.
+	PoolID string `pathParam:"style=simple,explode=false,name=poolId"`
 }
 
 func (a *AddAccountToPoolRequest) GetAddAccountToPoolRequest() payments.AddAccountToPoolRequest {
@@ -25,6 +18,13 @@ func (a *AddAccountToPoolRequest) GetAddAccountToPoolRequest() payments.AddAccou
 		return payments.AddAccountToPoolRequest{}
 	}
 	return a.AddAccountToPoolRequest
+}
+
+func (a *AddAccountToPoolRequest) GetPoolID() string {
+	if a == nil {
+		return ""
+	}
+	return a.PoolID
 }
 
 type AddAccountToPoolResponse struct {

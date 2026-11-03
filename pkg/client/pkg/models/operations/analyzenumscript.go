@@ -19,20 +19,27 @@ func (a *AnalyzeNumscriptSecurity) GetBearerAuth() *string {
 }
 
 type AnalyzeNumscriptResponse struct {
+	// Analysis result
+	AnalyzeNumscriptResponse *ledgerv3.AnalyzeNumscriptResponse
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Analysis result
-	AnalyzeNumscriptResponse *ledgerv3.AnalyzeNumscriptResponse
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
+}
+
+func (a *AnalyzeNumscriptResponse) GetAnalyzeNumscriptResponse() *ledgerv3.AnalyzeNumscriptResponse {
+	if a == nil {
+		return nil
+	}
+	return a.AnalyzeNumscriptResponse
 }
 
 func (a *AnalyzeNumscriptResponse) GetContentType() string {
@@ -40,6 +47,20 @@ func (a *AnalyzeNumscriptResponse) GetContentType() string {
 		return ""
 	}
 	return a.ContentType
+}
+
+func (a *AnalyzeNumscriptResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if a == nil {
+		return nil
+	}
+	return a.ErrorResponse
+}
+
+func (a *AnalyzeNumscriptResponse) GetForbidden() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Forbidden
 }
 
 func (a *AnalyzeNumscriptResponse) GetStatusCode() int {
@@ -56,30 +77,9 @@ func (a *AnalyzeNumscriptResponse) GetRawResponse() *http.Response {
 	return a.RawResponse
 }
 
-func (a *AnalyzeNumscriptResponse) GetAnalyzeNumscriptResponse() *ledgerv3.AnalyzeNumscriptResponse {
-	if a == nil {
-		return nil
-	}
-	return a.AnalyzeNumscriptResponse
-}
-
-func (a *AnalyzeNumscriptResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if a == nil {
-		return nil
-	}
-	return a.ErrorResponse
-}
-
 func (a *AnalyzeNumscriptResponse) GetUnauthorized() *string {
 	if a == nil {
 		return nil
 	}
 	return a.Unauthorized
-}
-
-func (a *AnalyzeNumscriptResponse) GetForbidden() *string {
-	if a == nil {
-		return nil
-	}
-	return a.Forbidden
 }

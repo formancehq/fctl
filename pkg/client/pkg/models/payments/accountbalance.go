@@ -11,18 +11,18 @@ import (
 type AccountBalance struct {
 	// Identifier of the account this balance belongs to
 	AccountID string `json:"accountId"`
-	// Start of the period this balance covers
-	CreatedAt time.Time `json:"createdAt"`
-	// When the balance was last refreshed from the provider
-	LastUpdatedAt time.Time `json:"lastUpdatedAt"`
-	// Deprecated alias of asset, kept for backwards compatibility
-	//
-	// Deprecated: This will be removed in a future release, please migrate away from it as soon as possible.
-	Currency string `json:"currency"`
 	// Asset the balance is denominated in
 	Asset string `json:"asset"`
 	// Amount held, in the asset's smallest unit
 	Balance *big.Int `json:"balance"`
+	// Start of the period this balance covers
+	CreatedAt time.Time `json:"createdAt"`
+	// Deprecated alias of asset, kept for backwards compatibility
+	//
+	// Deprecated: This will be removed in a future release, please migrate away from it as soon as possible.
+	Currency string `json:"currency"`
+	// When the balance was last refreshed from the provider
+	LastUpdatedAt time.Time `json:"lastUpdatedAt"`
 }
 
 func (a AccountBalance) MarshalJSON() ([]byte, error) {
@@ -43,27 +43,6 @@ func (a *AccountBalance) GetAccountID() string {
 	return a.AccountID
 }
 
-func (a *AccountBalance) GetCreatedAt() time.Time {
-	if a == nil {
-		return time.Time{}
-	}
-	return a.CreatedAt
-}
-
-func (a *AccountBalance) GetLastUpdatedAt() time.Time {
-	if a == nil {
-		return time.Time{}
-	}
-	return a.LastUpdatedAt
-}
-
-func (a *AccountBalance) GetCurrency() string {
-	if a == nil {
-		return ""
-	}
-	return a.Currency
-}
-
 func (a *AccountBalance) GetAsset() string {
 	if a == nil {
 		return ""
@@ -76,4 +55,25 @@ func (a *AccountBalance) GetBalance() *big.Int {
 		return big.NewInt(0)
 	}
 	return a.Balance
+}
+
+func (a *AccountBalance) GetCreatedAt() time.Time {
+	if a == nil {
+		return time.Time{}
+	}
+	return a.CreatedAt
+}
+
+func (a *AccountBalance) GetCurrency() string {
+	if a == nil {
+		return ""
+	}
+	return a.Currency
+}
+
+func (a *AccountBalance) GetLastUpdatedAt() time.Time {
+	if a == nil {
+		return time.Time{}
+	}
+	return a.LastUpdatedAt
 }

@@ -10,17 +10,17 @@ import (
 )
 
 type V2GetBalancesAggregatedRequest struct {
-	// Name of the ledger.
-	Ledger string     `pathParam:"style=simple,explode=false,name=ledger"`
-	Pit    *time.Time `queryParam:"style=form,explode=true,name=pit"`
-	// Use insertion date instead of effective date
-	UseInsertionDate *bool `queryParam:"style=form,explode=true,name=useInsertionDate"`
 	// When set to `true`, all bigint values in the response will be serialized
 	// as strings instead of JSON numbers.
 	// Useful for clients that cannot handle large numbers natively (e.g. JavaScript).
 	//
 	FormanceBigintAsString *bool          `default:"false" header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
 	RequestBody            map[string]any `request:"mediaType=application/json"`
+	// Name of the ledger.
+	Ledger string     `pathParam:"style=simple,explode=false,name=ledger"`
+	Pit    *time.Time `queryParam:"style=form,explode=true,name=pit"`
+	// Use insertion date instead of effective date
+	UseInsertionDate *bool `queryParam:"style=form,explode=true,name=useInsertionDate"`
 }
 
 func (v V2GetBalancesAggregatedRequest) MarshalJSON() ([]byte, error) {
@@ -32,6 +32,20 @@ func (v *V2GetBalancesAggregatedRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V2GetBalancesAggregatedRequest) GetFormanceBigintAsString() *bool {
+	if v == nil {
+		return nil
+	}
+	return v.FormanceBigintAsString
+}
+
+func (v *V2GetBalancesAggregatedRequest) GetRequestBody() map[string]any {
+	if v == nil {
+		return map[string]any{}
+	}
+	return v.RequestBody
 }
 
 func (v *V2GetBalancesAggregatedRequest) GetLedger() string {
@@ -53,20 +67,6 @@ func (v *V2GetBalancesAggregatedRequest) GetUseInsertionDate() *bool {
 		return nil
 	}
 	return v.UseInsertionDate
-}
-
-func (v *V2GetBalancesAggregatedRequest) GetFormanceBigintAsString() *bool {
-	if v == nil {
-		return nil
-	}
-	return v.FormanceBigintAsString
-}
-
-func (v *V2GetBalancesAggregatedRequest) GetRequestBody() map[string]any {
-	if v == nil {
-		return map[string]any{}
-	}
-	return v.RequestBody
 }
 
 // #region class-body-v2getbalancesaggregatedrequest

@@ -38,10 +38,7 @@ func (e *PreparedQueryTarget) UnmarshalJSON(data []byte) error {
 }
 
 type PreparedQuery struct {
-	// Query name
-	Name string `json:"name"`
-	// Target entity type. `LOGS`, `ACCOUNTS` and `TRANSACTIONS` are all usable prepared-query targets (create, list/get and execute).
-	Target PreparedQueryTarget `json:"target"`
+	AllowedModes []string `json:"allowedModes,omitempty"`
 	// Recursive filter expression using the Formance query DSL (aligned with the v2 API). Each node is an object with **exactly one** top-level `$`-prefixed operator key.
 	//
 	// Combinators:
@@ -71,8 +68,25 @@ type PreparedQuery struct {
 	// Supported fields: `metadata[<key>]`, `address`, `source`, `destination`, `reference`, `reverted` (bool), `ledger`, `id`, `timestamp`, `insertedAt`, `revertedAt`, `logId`, `date`. Not every field applies to every query target; a field that does not apply is rejected. The numeric built-ins (`id`, `timestamp`, `insertedAt`, `revertedAt`, `logId`, `date`) are **range-only** — use `$gt`/`$gte`/`$lt`/`$lte`; `$match` on them is rejected. The log-only fields (`logId`, `date`, `ledger`) are valid only when the prepared query targets `LOGS`; they are rejected on `ACCOUNTS` and `TRANSACTIONS` targets.
 	//
 	// A value is either a JSON literal or a parameter reference `{"$param": "<name>"}`, resolved at prepared-query execution time. A JSON `null` in value position is rejected. uint64 fields (`id`, `timestamp`, `insertedAt`, `revertedAt`, `logId`, `date`) are carried as decimal strings to stay lossless above 2^53. The date-semantic fields (`timestamp`, `insertedAt`, `revertedAt`, `date`) additionally accept an RFC3339 timestamp string (e.g. `{"$gte":{"date":"2023-11-14T22:13:20Z"}}`), coerced to the same Unix microseconds as the raw form; a value before the Unix epoch (1970-01-01) is rejected.
-	Filter       *QueryFilter `json:"filter,omitempty"`
-	AllowedModes []string     `json:"allowedModes,omitempty"`
+	Filter *QueryFilter `json:"filter,omitempty"`
+	// Query name
+	Name string `json:"name"`
+	// Target entity type. `LOGS`, `ACCOUNTS` and `TRANSACTIONS` are all usable prepared-query targets (create, list/get and execute).
+	Target PreparedQueryTarget `json:"target"`
+}
+
+func (p *PreparedQuery) GetAllowedModes() []string {
+	if p == nil {
+		return nil
+	}
+	return p.AllowedModes
+}
+
+func (p *PreparedQuery) GetFilter() *QueryFilter {
+	if p == nil {
+		return nil
+	}
+	return p.Filter
 }
 
 func (p *PreparedQuery) GetName() string {
@@ -87,18 +101,4 @@ func (p *PreparedQuery) GetTarget() PreparedQueryTarget {
 		return PreparedQueryTarget("")
 	}
 	return p.Target
-}
-
-func (p *PreparedQuery) GetFilter() *QueryFilter {
-	if p == nil {
-		return nil
-	}
-	return p.Filter
-}
-
-func (p *PreparedQuery) GetAllowedModes() []string {
-	if p == nil {
-		return nil
-	}
-	return p.AllowedModes
 }

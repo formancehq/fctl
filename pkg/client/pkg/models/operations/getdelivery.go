@@ -21,12 +21,12 @@ func (g *GetDeliveryRequest) GetID() string {
 type GetDeliveryResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Delivery detail including its payload.
+	DeliveryResponse *webhooks.DeliveryResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Delivery detail including its payload.
-	DeliveryResponse *webhooks.DeliveryResponse
 }
 
 func (g *GetDeliveryResponse) GetContentType() string {
@@ -34,6 +34,13 @@ func (g *GetDeliveryResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetDeliveryResponse) GetDeliveryResponse() *webhooks.DeliveryResponse {
+	if g == nil {
+		return nil
+	}
+	return g.DeliveryResponse
 }
 
 func (g *GetDeliveryResponse) GetStatusCode() int {
@@ -48,11 +55,4 @@ func (g *GetDeliveryResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetDeliveryResponse) GetDeliveryResponse() *webhooks.DeliveryResponse {
-	if g == nil {
-		return nil
-	}
-	return g.DeliveryResponse
 }

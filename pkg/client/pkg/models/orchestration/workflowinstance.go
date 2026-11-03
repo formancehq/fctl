@@ -9,24 +9,24 @@ import (
 
 // WorkflowInstance - One run of a workflow, tracking its per-stage progress
 type WorkflowInstance struct {
-	// Identifier of the workflow this run belongs to
-	WorkflowID string `json:"workflowID"`
-	// Unique identifier of the run
-	ID string `json:"id"`
 	// When the run was started
 	CreatedAt time.Time `json:"createdAt"`
-	// When the run was last updated
-	UpdatedAt time.Time `json:"updatedAt"`
+	// Why the run failed, absent when it succeeded
+	Error *string `json:"error,omitempty"`
+	// Unique identifier of the run
+	ID string `json:"id"`
 	// Per-stage progress of the run
 	Status []StageStatus `json:"status,omitempty"`
 	// Whether the run has finished, successfully or not
 	Terminated bool `json:"terminated"`
 	// When the run finished, absent while it is still running
 	TerminatedAt *time.Time `json:"terminatedAt,omitempty"`
-	// Why the run failed, absent when it succeeded
-	Error *string `json:"error,omitempty"`
+	// When the run was last updated
+	UpdatedAt time.Time `json:"updatedAt"`
 	// A workflow definition and the stages it runs
 	Workflow *Workflow `json:"workflow,omitempty"`
+	// Identifier of the workflow this run belongs to
+	WorkflowID string `json:"workflowID"`
 }
 
 func (w WorkflowInstance) MarshalJSON() ([]byte, error) {
@@ -40,20 +40,6 @@ func (w *WorkflowInstance) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (w *WorkflowInstance) GetWorkflowID() string {
-	if w == nil {
-		return ""
-	}
-	return w.WorkflowID
-}
-
-func (w *WorkflowInstance) GetID() string {
-	if w == nil {
-		return ""
-	}
-	return w.ID
-}
-
 func (w *WorkflowInstance) GetCreatedAt() time.Time {
 	if w == nil {
 		return time.Time{}
@@ -61,11 +47,18 @@ func (w *WorkflowInstance) GetCreatedAt() time.Time {
 	return w.CreatedAt
 }
 
-func (w *WorkflowInstance) GetUpdatedAt() time.Time {
+func (w *WorkflowInstance) GetError() *string {
 	if w == nil {
-		return time.Time{}
+		return nil
 	}
-	return w.UpdatedAt
+	return w.Error
+}
+
+func (w *WorkflowInstance) GetID() string {
+	if w == nil {
+		return ""
+	}
+	return w.ID
 }
 
 func (w *WorkflowInstance) GetStatus() []StageStatus {
@@ -89,11 +82,11 @@ func (w *WorkflowInstance) GetTerminatedAt() *time.Time {
 	return w.TerminatedAt
 }
 
-func (w *WorkflowInstance) GetError() *string {
+func (w *WorkflowInstance) GetUpdatedAt() time.Time {
 	if w == nil {
-		return nil
+		return time.Time{}
 	}
-	return w.Error
+	return w.UpdatedAt
 }
 
 func (w *WorkflowInstance) GetWorkflow() *Workflow {
@@ -101,4 +94,11 @@ func (w *WorkflowInstance) GetWorkflow() *Workflow {
 		return nil
 	}
 	return w.Workflow
+}
+
+func (w *WorkflowInstance) GetWorkflowID() string {
+	if w == nil {
+		return ""
+	}
+	return w.WorkflowID
 }

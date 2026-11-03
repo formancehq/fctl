@@ -5,10 +5,10 @@ package webhooks
 type ConfigUser struct {
 	// URL events are delivered to
 	Endpoint string `json:"endpoint"`
-	// Secret used to sign delivery payloads. Generated automatically when omitted
-	Secret *string `json:"secret,omitempty"`
 	// Types of event that trigger a delivery to this endpoint
 	EventTypes []string `json:"eventTypes"`
+	// Secret used to sign delivery payloads. Generated automatically when omitted
+	Secret *string `json:"secret,omitempty"`
 }
 
 func (c *ConfigUser) GetEndpoint() string {
@@ -18,16 +18,16 @@ func (c *ConfigUser) GetEndpoint() string {
 	return c.Endpoint
 }
 
-func (c *ConfigUser) GetSecret() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Secret
-}
-
 func (c *ConfigUser) GetEventTypes() []string {
 	if c == nil {
 		return []string{}
 	}
 	return c.EventTypes
+}
+
+func (c *ConfigUser) GetSecret() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Secret
 }

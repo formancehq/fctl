@@ -7,6 +7,44 @@ import (
 	"time"
 )
 
+type TaskDummyPayDescriptor struct {
+	FileName *string `json:"fileName,omitempty"`
+	Key      *string `json:"key,omitempty"`
+	Name     *string `json:"name,omitempty"`
+}
+
+func (t TaskDummyPayDescriptor) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(t, "", false)
+}
+
+func (t *TaskDummyPayDescriptor) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &t, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *TaskDummyPayDescriptor) GetFileName() *string {
+	if t == nil {
+		return nil
+	}
+	return t.FileName
+}
+
+func (t *TaskDummyPayDescriptor) GetKey() *string {
+	if t == nil {
+		return nil
+	}
+	return t.Key
+}
+
+func (t *TaskDummyPayDescriptor) GetName() *string {
+	if t == nil {
+		return nil
+	}
+	return t.Name
+}
+
 // TaskDummyPayState - Internal progress state the task resumes from
 type TaskDummyPayState struct {
 }
@@ -22,60 +60,22 @@ func (t *TaskDummyPayState) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type TaskDummyPayDescriptor struct {
-	Name     *string `json:"name,omitempty"`
-	Key      *string `json:"key,omitempty"`
-	FileName *string `json:"fileName,omitempty"`
-}
-
-func (t TaskDummyPayDescriptor) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(t, "", false)
-}
-
-func (t *TaskDummyPayDescriptor) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &t, "", false, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (t *TaskDummyPayDescriptor) GetName() *string {
-	if t == nil {
-		return nil
-	}
-	return t.Name
-}
-
-func (t *TaskDummyPayDescriptor) GetKey() *string {
-	if t == nil {
-		return nil
-	}
-	return t.Key
-}
-
-func (t *TaskDummyPayDescriptor) GetFileName() *string {
-	if t == nil {
-		return nil
-	}
-	return t.FileName
-}
-
 type TaskDummyPay struct {
-	// Unique identifier of the task
-	ID string `json:"id"`
 	// Identifier of the connector the task runs against
 	ConnectorID string `json:"connectorID"`
 	// When the task was created
-	CreatedAt time.Time `json:"createdAt"`
-	// When the task was last updated
-	UpdatedAt time.Time `json:"updatedAt"`
-	// Where a task stands, from pending or active through to stopped, terminated or failed
-	Status TaskStatus `json:"status"`
+	CreatedAt  time.Time              `json:"createdAt"`
+	Descriptor TaskDummyPayDescriptor `json:"descriptor"`
+	// Why the task failed, absent when it succeeded
+	Error *string `json:"error,omitempty"`
+	// Unique identifier of the task
+	ID string `json:"id"`
 	// Internal progress state the task resumes from
 	State *TaskDummyPayState `json:"state,omitempty"`
-	// Why the task failed, absent when it succeeded
-	Error      *string                `json:"error,omitempty"`
-	Descriptor TaskDummyPayDescriptor `json:"descriptor"`
+	// Where a task stands, from pending or active through to stopped, terminated or failed
+	Status TaskStatus `json:"status"`
+	// When the task was last updated
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (t TaskDummyPay) MarshalJSON() ([]byte, error) {
@@ -83,17 +83,10 @@ func (t TaskDummyPay) MarshalJSON() ([]byte, error) {
 }
 
 func (t *TaskDummyPay) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &t, "", false, []string{"id", "connectorID", "createdAt", "updatedAt", "status", "descriptor"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &t, "", false, []string{"connectorID", "createdAt", "descriptor", "id", "status", "updatedAt"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (t *TaskDummyPay) GetID() string {
-	if t == nil {
-		return ""
-	}
-	return t.ID
 }
 
 func (t *TaskDummyPay) GetConnectorID() string {
@@ -110,25 +103,11 @@ func (t *TaskDummyPay) GetCreatedAt() time.Time {
 	return t.CreatedAt
 }
 
-func (t *TaskDummyPay) GetUpdatedAt() time.Time {
+func (t *TaskDummyPay) GetDescriptor() TaskDummyPayDescriptor {
 	if t == nil {
-		return time.Time{}
+		return TaskDummyPayDescriptor{}
 	}
-	return t.UpdatedAt
-}
-
-func (t *TaskDummyPay) GetStatus() TaskStatus {
-	if t == nil {
-		return TaskStatus("")
-	}
-	return t.Status
-}
-
-func (t *TaskDummyPay) GetState() *TaskDummyPayState {
-	if t == nil {
-		return nil
-	}
-	return t.State
+	return t.Descriptor
 }
 
 func (t *TaskDummyPay) GetError() *string {
@@ -138,9 +117,30 @@ func (t *TaskDummyPay) GetError() *string {
 	return t.Error
 }
 
-func (t *TaskDummyPay) GetDescriptor() TaskDummyPayDescriptor {
+func (t *TaskDummyPay) GetID() string {
 	if t == nil {
-		return TaskDummyPayDescriptor{}
+		return ""
 	}
-	return t.Descriptor
+	return t.ID
+}
+
+func (t *TaskDummyPay) GetState() *TaskDummyPayState {
+	if t == nil {
+		return nil
+	}
+	return t.State
+}
+
+func (t *TaskDummyPay) GetStatus() TaskStatus {
+	if t == nil {
+		return TaskStatus("")
+	}
+	return t.Status
+}
+
+func (t *TaskDummyPay) GetUpdatedAt() time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return t.UpdatedAt
 }

@@ -2,25 +2,25 @@
 
 package ledgerv3
 
-type Data struct {
+type HealthResponseData struct {
 	// Health status (e.g. "ok")
 	Status string `json:"status"`
 }
 
-func (d *Data) GetStatus() string {
-	if d == nil {
+func (h *HealthResponseData) GetStatus() string {
+	if h == nil {
 		return ""
 	}
-	return d.Status
+	return h.Status
 }
 
 type HealthResponse struct {
-	Data Data `json:"data"`
+	Data HealthResponseData `json:"data"`
 }
 
-func (h *HealthResponse) GetData() Data {
+func (h *HealthResponse) GetData() HealthResponseData {
 	if h == nil {
-		return Data{}
+		return HealthResponseData{}
 	}
 	return h.Data
 }

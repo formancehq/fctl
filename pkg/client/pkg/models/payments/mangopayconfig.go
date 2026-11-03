@@ -7,19 +7,19 @@ import (
 )
 
 type MangoPayConfig struct {
+	// API key issued by MangoPay, used to authenticate the connector's requests
+	APIKey string `json:"apiKey"`
+	// Client ID issued by MangoPay
+	ClientID string `json:"clientID"`
+	// Base URL of the MangoPay API the connector calls
+	Endpoint string `json:"endpoint"`
 	// Human-readable name identifying this connector instance
 	Name string `json:"name"`
-	// Identifies the payment provider this configuration targets
-	Provider *string `default:"Mangopay" json:"provider"`
 	// The frequency at which the connector will try to fetch new BalanceTransaction objects from MangoPay API.
 	//
 	PollingPeriod *string `default:"30m" json:"pollingPeriod"`
-	// Client ID issued by MangoPay
-	ClientID string `json:"clientID"`
-	// API key issued by MangoPay, used to authenticate the connector's requests
-	APIKey string `json:"apiKey"`
-	// Base URL of the MangoPay API the connector calls
-	Endpoint string `json:"endpoint"`
+	// Identifies the payment provider this configuration targets
+	Provider *string `default:"Mangopay" json:"provider"`
 }
 
 func (m MangoPayConfig) MarshalJSON() ([]byte, error) {
@@ -27,38 +27,10 @@ func (m MangoPayConfig) MarshalJSON() ([]byte, error) {
 }
 
 func (m *MangoPayConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &m, "", false, []string{"name", "clientID", "apiKey", "endpoint"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &m, "", false, []string{"apiKey", "clientID", "endpoint", "name"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (m *MangoPayConfig) GetName() string {
-	if m == nil {
-		return ""
-	}
-	return m.Name
-}
-
-func (m *MangoPayConfig) GetProvider() *string {
-	if m == nil {
-		return nil
-	}
-	return m.Provider
-}
-
-func (m *MangoPayConfig) GetPollingPeriod() *string {
-	if m == nil {
-		return nil
-	}
-	return m.PollingPeriod
-}
-
-func (m *MangoPayConfig) GetClientID() string {
-	if m == nil {
-		return ""
-	}
-	return m.ClientID
 }
 
 func (m *MangoPayConfig) GetAPIKey() string {
@@ -68,9 +40,37 @@ func (m *MangoPayConfig) GetAPIKey() string {
 	return m.APIKey
 }
 
+func (m *MangoPayConfig) GetClientID() string {
+	if m == nil {
+		return ""
+	}
+	return m.ClientID
+}
+
 func (m *MangoPayConfig) GetEndpoint() string {
 	if m == nil {
 		return ""
 	}
 	return m.Endpoint
+}
+
+func (m *MangoPayConfig) GetName() string {
+	if m == nil {
+		return ""
+	}
+	return m.Name
+}
+
+func (m *MangoPayConfig) GetPollingPeriod() *string {
+	if m == nil {
+		return nil
+	}
+	return m.PollingPeriod
+}
+
+func (m *MangoPayConfig) GetProvider() *string {
+	if m == nil {
+		return nil
+	}
+	return m.Provider
 }

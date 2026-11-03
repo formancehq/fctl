@@ -10,10 +10,10 @@ import (
 
 // Balance - A named balance within a wallet, optionally carrying an expiry date
 type Balance struct {
-	// Name of the balance within the wallet
-	Name string `json:"name"`
 	// When the funds in this balance expire. Expired funds stop counting towards available funds
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+	// Name of the balance within the wallet
+	Name string `json:"name"`
 	// Ordering hint when choosing which balances to debit first. Lower values are debited first, and it only breaks ties between balances that carry no expiry date
 	Priority *big.Int `json:"priority,omitempty"`
 }
@@ -29,18 +29,18 @@ func (b *Balance) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (b *Balance) GetName() string {
-	if b == nil {
-		return ""
-	}
-	return b.Name
-}
-
 func (b *Balance) GetExpiresAt() *time.Time {
 	if b == nil {
 		return nil
 	}
 	return b.ExpiresAt
+}
+
+func (b *Balance) GetName() string {
+	if b == nil {
+		return ""
+	}
+	return b.Name
 }
 
 func (b *Balance) GetPriority() *big.Int {

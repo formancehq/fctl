@@ -7,17 +7,10 @@ import (
 )
 
 type V3ForwardPaymentServiceUserToProviderRequest struct {
-	// The payment service user ID
-	PaymentServiceUserID string `pathParam:"style=simple,explode=false,name=paymentServiceUserID"`
 	// The connector ID
 	ConnectorID string `pathParam:"style=simple,explode=false,name=connectorID"`
-}
-
-func (v *V3ForwardPaymentServiceUserToProviderRequest) GetPaymentServiceUserID() string {
-	if v == nil {
-		return ""
-	}
-	return v.PaymentServiceUserID
+	// The payment service user ID
+	PaymentServiceUserID string `pathParam:"style=simple,explode=false,name=paymentServiceUserID"`
 }
 
 func (v *V3ForwardPaymentServiceUserToProviderRequest) GetConnectorID() string {
@@ -25,6 +18,13 @@ func (v *V3ForwardPaymentServiceUserToProviderRequest) GetConnectorID() string {
 		return ""
 	}
 	return v.ConnectorID
+}
+
+func (v *V3ForwardPaymentServiceUserToProviderRequest) GetPaymentServiceUserID() string {
+	if v == nil {
+		return ""
+	}
+	return v.PaymentServiceUserID
 }
 
 // #region class-body-v3forwardpaymentserviceusertoproviderrequest

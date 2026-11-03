@@ -8,16 +8,9 @@ import (
 )
 
 type SnoozeAlertRequest struct {
-	// The alert ID.
-	AlertID            string                            `pathParam:"style=simple,explode=false,name=alertID"`
 	SnoozeAlertRequest reconciliation.SnoozeAlertRequest `request:"mediaType=application/json"`
-}
-
-func (s *SnoozeAlertRequest) GetAlertID() string {
-	if s == nil {
-		return ""
-	}
-	return s.AlertID
+	// The alert ID.
+	AlertID string `pathParam:"style=simple,explode=false,name=alertID"`
 }
 
 func (s *SnoozeAlertRequest) GetSnoozeAlertRequest() reconciliation.SnoozeAlertRequest {
@@ -27,15 +20,29 @@ func (s *SnoozeAlertRequest) GetSnoozeAlertRequest() reconciliation.SnoozeAlertR
 	return s.SnoozeAlertRequest
 }
 
+func (s *SnoozeAlertRequest) GetAlertID() string {
+	if s == nil {
+		return ""
+	}
+	return s.AlertID
+}
+
 type SnoozeAlertResponse struct {
+	// OK
+	AlertResponse *reconciliation.AlertResponse
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	AlertResponse *reconciliation.AlertResponse
+}
+
+func (s *SnoozeAlertResponse) GetAlertResponse() *reconciliation.AlertResponse {
+	if s == nil {
+		return nil
+	}
+	return s.AlertResponse
 }
 
 func (s *SnoozeAlertResponse) GetContentType() string {
@@ -57,11 +64,4 @@ func (s *SnoozeAlertResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return s.RawResponse
-}
-
-func (s *SnoozeAlertResponse) GetAlertResponse() *reconciliation.AlertResponse {
-	if s == nil {
-		return nil
-	}
-	return s.AlertResponse
 }

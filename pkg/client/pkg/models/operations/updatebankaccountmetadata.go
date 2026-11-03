@@ -8,16 +8,9 @@ import (
 )
 
 type UpdateBankAccountMetadataRequest struct {
-	// The bank account ID.
-	BankAccountID                    string                                    `pathParam:"style=simple,explode=false,name=bankAccountId"`
 	UpdateBankAccountMetadataRequest payments.UpdateBankAccountMetadataRequest `request:"mediaType=application/json"`
-}
-
-func (u *UpdateBankAccountMetadataRequest) GetBankAccountID() string {
-	if u == nil {
-		return ""
-	}
-	return u.BankAccountID
+	// The bank account ID.
+	BankAccountID string `pathParam:"style=simple,explode=false,name=bankAccountId"`
 }
 
 func (u *UpdateBankAccountMetadataRequest) GetUpdateBankAccountMetadataRequest() payments.UpdateBankAccountMetadataRequest {
@@ -25,6 +18,13 @@ func (u *UpdateBankAccountMetadataRequest) GetUpdateBankAccountMetadataRequest()
 		return payments.UpdateBankAccountMetadataRequest{}
 	}
 	return u.UpdateBankAccountMetadataRequest
+}
+
+func (u *UpdateBankAccountMetadataRequest) GetBankAccountID() string {
+	if u == nil {
+		return ""
+	}
+	return u.BankAccountID
 }
 
 type UpdateBankAccountMetadataResponse struct {

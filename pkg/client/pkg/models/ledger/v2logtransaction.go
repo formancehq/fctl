@@ -12,32 +12,32 @@ import (
 type V2LogTransaction struct {
 	// Unique sequential identifier for this transaction within the ledger
 	ID *big.Int `json:"id"`
-	// The fund movements making up the transaction
-	Postings []V2Posting `json:"postings"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata"`
-	// The transaction time: when the transaction is considered to have occurred. See [bi-temporality](https://docs.formance.com/modules/ledger/working-with/bi-temporality)
-	Timestamp time.Time `json:"timestamp"`
-	// Optional caller-supplied identifier, unique within the ledger
-	Reference *string `json:"reference,omitempty"`
 	// The request time: when the transaction was actually written to the ledger. See [bi-temporality](https://docs.formance.com/modules/ledger/working-with/bi-temporality)
 	InsertedAt *time.Time `json:"insertedAt,omitempty"`
-	// When the transaction row was last modified
-	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
-	// When the transaction was reverted, on the request-time axis
-	RevertedAt *time.Time `json:"revertedAt,omitempty"`
-	// Indicates if the transaction has been reverted
-	Reverted bool `json:"reverted"`
-	// Transaction template used
-	Template *string `json:"template,omitempty"`
-	// Volumes aggregated per account and per asset
-	PostCommitVolumes map[string]map[string]V2Volume `json:"postCommitVolumes,omitempty"`
+	// Arbitrary key/value pairs attached to the resource
+	Metadata map[string]string `json:"metadata"`
 	// Volumes aggregated per account and per asset
 	PostCommitEffectiveVolumes map[string]map[string]V2Volume `json:"postCommitEffectiveVolumes,omitempty"`
 	// Volumes aggregated per account and per asset
-	PreCommitVolumes map[string]map[string]V2Volume `json:"preCommitVolumes,omitempty"`
+	PostCommitVolumes map[string]map[string]V2Volume `json:"postCommitVolumes,omitempty"`
+	// The fund movements making up the transaction
+	Postings []V2Posting `json:"postings"`
 	// Volumes aggregated per account and per asset
 	PreCommitEffectiveVolumes map[string]map[string]V2Volume `json:"preCommitEffectiveVolumes,omitempty"`
+	// Volumes aggregated per account and per asset
+	PreCommitVolumes map[string]map[string]V2Volume `json:"preCommitVolumes,omitempty"`
+	// Optional caller-supplied identifier, unique within the ledger
+	Reference *string `json:"reference,omitempty"`
+	// Indicates if the transaction has been reverted
+	Reverted bool `json:"reverted"`
+	// When the transaction was reverted, on the request-time axis
+	RevertedAt *time.Time `json:"revertedAt,omitempty"`
+	// Transaction template used
+	Template *string `json:"template,omitempty"`
+	// The transaction time: when the transaction is considered to have occurred. See [bi-temporality](https://docs.formance.com/modules/ledger/working-with/bi-temporality)
+	Timestamp time.Time `json:"timestamp"`
+	// When the transaction row was last modified
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
 }
 
 func (v V2LogTransaction) MarshalJSON() ([]byte, error) {
@@ -45,7 +45,7 @@ func (v V2LogTransaction) MarshalJSON() ([]byte, error) {
 }
 
 func (v *V2LogTransaction) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"id", "postings", "metadata", "timestamp", "reverted"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"id", "metadata", "postings", "reverted", "timestamp"}); err != nil {
 		return err
 	}
 	return nil
@@ -58,11 +58,11 @@ func (v *V2LogTransaction) GetID() *big.Int {
 	return v.ID
 }
 
-func (v *V2LogTransaction) GetPostings() []V2Posting {
+func (v *V2LogTransaction) GetInsertedAt() *time.Time {
 	if v == nil {
-		return []V2Posting{}
+		return nil
 	}
-	return v.Postings
+	return v.InsertedAt
 }
 
 func (v *V2LogTransaction) GetMetadata() map[string]string {
@@ -72,53 +72,11 @@ func (v *V2LogTransaction) GetMetadata() map[string]string {
 	return v.Metadata
 }
 
-func (v *V2LogTransaction) GetTimestamp() time.Time {
-	if v == nil {
-		return time.Time{}
-	}
-	return v.Timestamp
-}
-
-func (v *V2LogTransaction) GetReference() *string {
+func (v *V2LogTransaction) GetPostCommitEffectiveVolumes() map[string]map[string]V2Volume {
 	if v == nil {
 		return nil
 	}
-	return v.Reference
-}
-
-func (v *V2LogTransaction) GetInsertedAt() *time.Time {
-	if v == nil {
-		return nil
-	}
-	return v.InsertedAt
-}
-
-func (v *V2LogTransaction) GetUpdatedAt() *time.Time {
-	if v == nil {
-		return nil
-	}
-	return v.UpdatedAt
-}
-
-func (v *V2LogTransaction) GetRevertedAt() *time.Time {
-	if v == nil {
-		return nil
-	}
-	return v.RevertedAt
-}
-
-func (v *V2LogTransaction) GetReverted() bool {
-	if v == nil {
-		return false
-	}
-	return v.Reverted
-}
-
-func (v *V2LogTransaction) GetTemplate() *string {
-	if v == nil {
-		return nil
-	}
-	return v.Template
+	return v.PostCommitEffectiveVolumes
 }
 
 func (v *V2LogTransaction) GetPostCommitVolumes() map[string]map[string]V2Volume {
@@ -128,11 +86,18 @@ func (v *V2LogTransaction) GetPostCommitVolumes() map[string]map[string]V2Volume
 	return v.PostCommitVolumes
 }
 
-func (v *V2LogTransaction) GetPostCommitEffectiveVolumes() map[string]map[string]V2Volume {
+func (v *V2LogTransaction) GetPostings() []V2Posting {
+	if v == nil {
+		return []V2Posting{}
+	}
+	return v.Postings
+}
+
+func (v *V2LogTransaction) GetPreCommitEffectiveVolumes() map[string]map[string]V2Volume {
 	if v == nil {
 		return nil
 	}
-	return v.PostCommitEffectiveVolumes
+	return v.PreCommitEffectiveVolumes
 }
 
 func (v *V2LogTransaction) GetPreCommitVolumes() map[string]map[string]V2Volume {
@@ -142,11 +107,46 @@ func (v *V2LogTransaction) GetPreCommitVolumes() map[string]map[string]V2Volume 
 	return v.PreCommitVolumes
 }
 
-func (v *V2LogTransaction) GetPreCommitEffectiveVolumes() map[string]map[string]V2Volume {
+func (v *V2LogTransaction) GetReference() *string {
 	if v == nil {
 		return nil
 	}
-	return v.PreCommitEffectiveVolumes
+	return v.Reference
+}
+
+func (v *V2LogTransaction) GetReverted() bool {
+	if v == nil {
+		return false
+	}
+	return v.Reverted
+}
+
+func (v *V2LogTransaction) GetRevertedAt() *time.Time {
+	if v == nil {
+		return nil
+	}
+	return v.RevertedAt
+}
+
+func (v *V2LogTransaction) GetTemplate() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Template
+}
+
+func (v *V2LogTransaction) GetTimestamp() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.Timestamp
+}
+
+func (v *V2LogTransaction) GetUpdatedAt() *time.Time {
+	if v == nil {
+		return nil
+	}
+	return v.UpdatedAt
 }
 
 // #region class-body-v2logtransaction

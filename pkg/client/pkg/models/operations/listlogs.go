@@ -10,27 +10,27 @@ import (
 )
 
 type ListLogsRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
-	// The maximum number of results to return per page.
-	//
-	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
 	// Pagination cursor, will return the logs after a given ID. (in descending order).
 	After *string `queryParam:"style=form,explode=true,name=after"`
-	// Filter transactions that occurred after this timestamp.
-	// The format is RFC3339 and is inclusive (for example, "2023-01-02T15:04:01Z" includes the first second of 4th minute).
-	//
-	StartTime *time.Time `queryParam:"style=form,explode=true,name=startTime"`
-	// Filter transactions that occurred before this timestamp.
-	// The format is RFC3339 and is exclusive (for example, "2023-01-02T15:04:01Z" excludes the first second of 4th minute).
-	//
-	EndTime *time.Time `queryParam:"style=form,explode=true,name=endTime"`
 	// Parameter used in pagination requests. Maximum page size is set to 1000.
 	// Set to the value of next for the next page of results.
 	// Set to the value of previous for the previous page of results.
 	// No other parameters can be set when this parameter is set.
 	//
 	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// Filter transactions that occurred before this timestamp.
+	// The format is RFC3339 and is exclusive (for example, "2023-01-02T15:04:01Z" excludes the first second of 4th minute).
+	//
+	EndTime *time.Time `queryParam:"style=form,explode=true,name=endTime"`
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
+	// The maximum number of results to return per page.
+	//
+	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
+	// Filter transactions that occurred after this timestamp.
+	// The format is RFC3339 and is inclusive (for example, "2023-01-02T15:04:01Z" includes the first second of 4th minute).
+	//
+	StartTime *time.Time `queryParam:"style=form,explode=true,name=startTime"`
 }
 
 func (l ListLogsRequest) MarshalJSON() ([]byte, error) {
@@ -42,6 +42,27 @@ func (l *ListLogsRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (l *ListLogsRequest) GetAfter() *string {
+	if l == nil {
+		return nil
+	}
+	return l.After
+}
+
+func (l *ListLogsRequest) GetCursor() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Cursor
+}
+
+func (l *ListLogsRequest) GetEndTime() *time.Time {
+	if l == nil {
+		return nil
+	}
+	return l.EndTime
 }
 
 func (l *ListLogsRequest) GetLedger() string {
@@ -58,13 +79,6 @@ func (l *ListLogsRequest) GetPageSize() *int64 {
 	return l.PageSize
 }
 
-func (l *ListLogsRequest) GetAfter() *string {
-	if l == nil {
-		return nil
-	}
-	return l.After
-}
-
 func (l *ListLogsRequest) GetStartTime() *time.Time {
 	if l == nil {
 		return nil
@@ -72,29 +86,15 @@ func (l *ListLogsRequest) GetStartTime() *time.Time {
 	return l.StartTime
 }
 
-func (l *ListLogsRequest) GetEndTime() *time.Time {
-	if l == nil {
-		return nil
-	}
-	return l.EndTime
-}
-
-func (l *ListLogsRequest) GetCursor() *string {
-	if l == nil {
-		return nil
-	}
-	return l.Cursor
-}
-
 type ListLogsResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	LogsCursorResponse *ledger.LogsCursorResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	LogsCursorResponse *ledger.LogsCursorResponse
 }
 
 func (l *ListLogsResponse) GetContentType() string {
@@ -102,6 +102,13 @@ func (l *ListLogsResponse) GetContentType() string {
 		return ""
 	}
 	return l.ContentType
+}
+
+func (l *ListLogsResponse) GetLogsCursorResponse() *ledger.LogsCursorResponse {
+	if l == nil {
+		return nil
+	}
+	return l.LogsCursorResponse
 }
 
 func (l *ListLogsResponse) GetStatusCode() int {
@@ -116,11 +123,4 @@ func (l *ListLogsResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return l.RawResponse
-}
-
-func (l *ListLogsResponse) GetLogsCursorResponse() *ledger.LogsCursorResponse {
-	if l == nil {
-		return nil
-	}
-	return l.LogsCursorResponse
 }

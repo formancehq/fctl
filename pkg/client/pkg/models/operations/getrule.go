@@ -22,12 +22,12 @@ func (g *GetRuleRequest) GetRuleID() string {
 type GetRuleResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	RuleResponse *reconciliation.RuleResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	RuleResponse *reconciliation.RuleResponse
 }
 
 func (g *GetRuleResponse) GetContentType() string {
@@ -35,6 +35,13 @@ func (g *GetRuleResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetRuleResponse) GetRuleResponse() *reconciliation.RuleResponse {
+	if g == nil {
+		return nil
+	}
+	return g.RuleResponse
 }
 
 func (g *GetRuleResponse) GetStatusCode() int {
@@ -49,11 +56,4 @@ func (g *GetRuleResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetRuleResponse) GetRuleResponse() *reconciliation.RuleResponse {
-	if g == nil {
-		return nil
-	}
-	return g.RuleResponse
 }

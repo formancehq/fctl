@@ -8,21 +8,14 @@ import (
 )
 
 type GetAccountLedgerRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 	// Exact address of the account. It must match the following regular expressions pattern:
 	// ```
 	// ^\w+(:\w+)*$
 	// ```
 	//
 	Address string `pathParam:"style=simple,explode=false,name=address"`
-}
-
-func (g *GetAccountLedgerRequest) GetLedger() string {
-	if g == nil {
-		return ""
-	}
-	return g.Ledger
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 }
 
 func (g *GetAccountLedgerRequest) GetAddress() string {
@@ -32,15 +25,29 @@ func (g *GetAccountLedgerRequest) GetAddress() string {
 	return g.Address
 }
 
+func (g *GetAccountLedgerRequest) GetLedger() string {
+	if g == nil {
+		return ""
+	}
+	return g.Ledger
+}
+
 type GetAccountLedgerResponse struct {
+	// OK
+	AccountResponse *ledger.AccountResponse
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	AccountResponse *ledger.AccountResponse
+}
+
+func (g *GetAccountLedgerResponse) GetAccountResponse() *ledger.AccountResponse {
+	if g == nil {
+		return nil
+	}
+	return g.AccountResponse
 }
 
 func (g *GetAccountLedgerResponse) GetContentType() string {
@@ -62,11 +69,4 @@ func (g *GetAccountLedgerResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetAccountLedgerResponse) GetAccountResponse() *ledger.AccountResponse {
-	if g == nil {
-		return nil
-	}
-	return g.AccountResponse
 }

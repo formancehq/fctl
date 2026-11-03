@@ -10,13 +10,13 @@ import (
 type V3ListConnectorScheduleInstancesRequest struct {
 	// The connector ID
 	ConnectorID string `pathParam:"style=simple,explode=false,name=connectorID"`
-	// The schedule ID
-	ScheduleID string `pathParam:"style=simple,explode=false,name=scheduleID"`
-	// The number of items to return
-	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
 	// Parameter used in pagination requests. Set to the value of next for the next page of results. Set to the value of previous for the previous page of results. No other parameters can be set when this parameter is set.
 	//
 	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// The number of items to return
+	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
+	// The schedule ID
+	ScheduleID string `pathParam:"style=simple,explode=false,name=scheduleID"`
 }
 
 func (v *V3ListConnectorScheduleInstancesRequest) GetConnectorID() string {
@@ -26,11 +26,11 @@ func (v *V3ListConnectorScheduleInstancesRequest) GetConnectorID() string {
 	return v.ConnectorID
 }
 
-func (v *V3ListConnectorScheduleInstancesRequest) GetScheduleID() string {
+func (v *V3ListConnectorScheduleInstancesRequest) GetCursor() *string {
 	if v == nil {
-		return ""
+		return nil
 	}
-	return v.ScheduleID
+	return v.Cursor
 }
 
 func (v *V3ListConnectorScheduleInstancesRequest) GetPageSize() *int64 {
@@ -40,11 +40,11 @@ func (v *V3ListConnectorScheduleInstancesRequest) GetPageSize() *int64 {
 	return v.PageSize
 }
 
-func (v *V3ListConnectorScheduleInstancesRequest) GetCursor() *string {
+func (v *V3ListConnectorScheduleInstancesRequest) GetScheduleID() string {
 	if v == nil {
-		return nil
+		return ""
 	}
-	return v.Cursor
+	return v.ScheduleID
 }
 
 // #region class-body-v3listconnectorscheduleinstancesrequest

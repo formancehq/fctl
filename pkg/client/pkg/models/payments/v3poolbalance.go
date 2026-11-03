@@ -8,10 +8,10 @@ import (
 )
 
 type V3PoolBalance struct {
-	// Asset the balance is denominated in
-	Asset string `json:"asset"`
 	// Total held across the pool for this asset, in the asset's smallest unit
 	Amount *big.Int `json:"amount"`
+	// Asset the balance is denominated in
+	Asset string `json:"asset"`
 	// Accounts contributing to this balance
 	RelatedAccounts []string `json:"relatedAccounts,omitempty"`
 }
@@ -27,18 +27,18 @@ func (v *V3PoolBalance) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V3PoolBalance) GetAsset() string {
-	if v == nil {
-		return ""
-	}
-	return v.Asset
-}
-
 func (v *V3PoolBalance) GetAmount() *big.Int {
 	if v == nil {
 		return big.NewInt(0)
 	}
 	return v.Amount
+}
+
+func (v *V3PoolBalance) GetAsset() string {
+	if v == nil {
+		return ""
+	}
+	return v.Asset
 }
 
 func (v *V3PoolBalance) GetRelatedAccounts() []string {

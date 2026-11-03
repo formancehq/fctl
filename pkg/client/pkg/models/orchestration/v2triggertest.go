@@ -4,15 +4,8 @@ package orchestration
 
 // Filter - How the trigger's filter evaluated against the sample event
 type Filter struct {
-	Match *bool   `json:"match,omitempty"`
 	Error *string `json:"error,omitempty"`
-}
-
-func (f *Filter) GetMatch() *bool {
-	if f == nil {
-		return nil
-	}
-	return f.Match
+	Match *bool   `json:"match,omitempty"`
 }
 
 func (f *Filter) GetError() *string {
@@ -22,16 +15,16 @@ func (f *Filter) GetError() *string {
 	return f.Error
 }
 
-type Variables struct {
-	Value *string `json:"value,omitempty"`
-	Error *string `json:"error,omitempty"`
-}
-
-func (v *Variables) GetValue() *string {
-	if v == nil {
+func (f *Filter) GetMatch() *bool {
+	if f == nil {
 		return nil
 	}
-	return v.Value
+	return f.Match
+}
+
+type Variables struct {
+	Error *string `json:"error,omitempty"`
+	Value *string `json:"value,omitempty"`
 }
 
 func (v *Variables) GetError() *string {
@@ -39,6 +32,13 @@ func (v *Variables) GetError() *string {
 		return nil
 	}
 	return v.Error
+}
+
+func (v *Variables) GetValue() *string {
+	if v == nil {
+		return nil
+	}
+	return v.Value
 }
 
 // V2TriggerTest - Result of evaluating a trigger against a sample event, without running the workflow

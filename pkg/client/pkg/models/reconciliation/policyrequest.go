@@ -3,21 +3,14 @@
 package reconciliation
 
 type PolicyRequest struct {
-	// Human-readable name for the policy
-	Name string `json:"name"`
 	// Name of the ledger the policy reconciles against
 	LedgerName string `json:"ledgerName"`
 	// Filter selecting the ledger accounts whose balances are reconciled
 	LedgerQuery map[string]any `json:"ledgerQuery"`
+	// Human-readable name for the policy
+	Name string `json:"name"`
 	// Identifier of the payments pool the ledger side is compared against
 	PaymentsPoolID string `json:"paymentsPoolID"`
-}
-
-func (p *PolicyRequest) GetName() string {
-	if p == nil {
-		return ""
-	}
-	return p.Name
 }
 
 func (p *PolicyRequest) GetLedgerName() string {
@@ -32,6 +25,13 @@ func (p *PolicyRequest) GetLedgerQuery() map[string]any {
 		return map[string]any{}
 	}
 	return p.LedgerQuery
+}
+
+func (p *PolicyRequest) GetName() string {
+	if p == nil {
+		return ""
+	}
+	return p.Name
 }
 
 func (p *PolicyRequest) GetPaymentsPoolID() string {

@@ -8,30 +8,16 @@ import (
 )
 
 type ListAlertsRequest struct {
-	// The maximum number of results to return per page.
-	//
-	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
+	RequestBody map[string]any `request:"mediaType=application/json"`
 	// Parameter used in pagination requests. Maximum page size is set to 15.
 	// Set to the value of next for the next page of results.
 	// Set to the value of previous for the previous page of results.
 	// No other parameters can be set when this parameter is set.
 	//
-	Cursor      *string        `queryParam:"style=form,explode=true,name=cursor"`
-	RequestBody map[string]any `request:"mediaType=application/json"`
-}
-
-func (l *ListAlertsRequest) GetPageSize() *int64 {
-	if l == nil {
-		return nil
-	}
-	return l.PageSize
-}
-
-func (l *ListAlertsRequest) GetCursor() *string {
-	if l == nil {
-		return nil
-	}
-	return l.Cursor
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// The maximum number of results to return per page.
+	//
+	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
 }
 
 func (l *ListAlertsRequest) GetRequestBody() map[string]any {
@@ -41,15 +27,36 @@ func (l *ListAlertsRequest) GetRequestBody() map[string]any {
 	return l.RequestBody
 }
 
+func (l *ListAlertsRequest) GetCursor() *string {
+	if l == nil {
+		return nil
+	}
+	return l.Cursor
+}
+
+func (l *ListAlertsRequest) GetPageSize() *int64 {
+	if l == nil {
+		return nil
+	}
+	return l.PageSize
+}
+
 type ListAlertsResponse struct {
+	// OK
+	AlertsCursorResponse *reconciliation.AlertsCursorResponse
 	// HTTP response content type for this operation
 	ContentType string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	AlertsCursorResponse *reconciliation.AlertsCursorResponse
+}
+
+func (l *ListAlertsResponse) GetAlertsCursorResponse() *reconciliation.AlertsCursorResponse {
+	if l == nil {
+		return nil
+	}
+	return l.AlertsCursorResponse
 }
 
 func (l *ListAlertsResponse) GetContentType() string {
@@ -71,11 +78,4 @@ func (l *ListAlertsResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return l.RawResponse
-}
-
-func (l *ListAlertsResponse) GetAlertsCursorResponse() *reconciliation.AlertsCursorResponse {
-	if l == nil {
-		return nil
-	}
-	return l.AlertsCursorResponse
 }

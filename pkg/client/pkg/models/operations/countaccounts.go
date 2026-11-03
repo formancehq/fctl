@@ -7,19 +7,12 @@ import (
 )
 
 type CountAccountsRequest struct {
-	// Name of the ledger.
-	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 	// Filter accounts by address pattern (regular expression placed between ^ and $).
 	Address *string `queryParam:"style=form,explode=true,name=address"`
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 	// Filter accounts by metadata key value pairs. The filter can be used like this metadata[key]=value1&metadata[a.nested.key]=value2
 	Metadata map[string]any `queryParam:"style=deepObject,explode=true,name=metadata"`
-}
-
-func (c *CountAccountsRequest) GetLedger() string {
-	if c == nil {
-		return ""
-	}
-	return c.Ledger
 }
 
 func (c *CountAccountsRequest) GetAddress() *string {
@@ -27,6 +20,13 @@ func (c *CountAccountsRequest) GetAddress() *string {
 		return nil
 	}
 	return c.Address
+}
+
+func (c *CountAccountsRequest) GetLedger() string {
+	if c == nil {
+		return ""
+	}
+	return c.Ledger
 }
 
 func (c *CountAccountsRequest) GetMetadata() map[string]any {
@@ -39,11 +39,11 @@ func (c *CountAccountsRequest) GetMetadata() map[string]any {
 type CountAccountsResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	Headers     map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	Headers     map[string][]string
 }
 
 func (c *CountAccountsResponse) GetContentType() string {
@@ -51,6 +51,13 @@ func (c *CountAccountsResponse) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
+}
+
+func (c *CountAccountsResponse) GetHeaders() map[string][]string {
+	if c == nil {
+		return map[string][]string{}
+	}
+	return c.Headers
 }
 
 func (c *CountAccountsResponse) GetStatusCode() int {
@@ -65,11 +72,4 @@ func (c *CountAccountsResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return c.RawResponse
-}
-
-func (c *CountAccountsResponse) GetHeaders() map[string][]string {
-	if c == nil {
-		return map[string][]string{}
-	}
-	return c.Headers
 }

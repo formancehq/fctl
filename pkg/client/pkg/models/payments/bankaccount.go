@@ -9,30 +9,30 @@ import (
 
 // BankAccount - A bank account registered with Formance and forwardable to connectors
 type BankAccount struct {
-	// Unique identifier of the bank account within Formance
-	ID string `json:"id"`
-	// Human-readable name of the bank account
-	Name string `json:"name"`
-	// When the bank account was registered
-	CreatedAt time.Time `json:"createdAt"`
-	// Country the account is held in, as an ISO 3166-1 alpha-2 code
-	Country string `json:"country"`
-	// Identifier of the connector the account has been forwarded to
-	ConnectorID *string `json:"connectorID,omitempty"`
 	// Identifier of the provider-side account created by forwarding
 	AccountID *string `json:"accountID,omitempty"`
-	// Name of the payment provider behind the connector
-	Provider *string `json:"provider,omitempty"`
-	// International bank account number, when the account is identified that way
-	Iban *string `json:"iban,omitempty"`
 	// Domestic account number, when the account is identified that way
 	AccountNumber *string `json:"accountNumber,omitempty"`
-	// SWIFT/BIC code identifying the bank
-	SwiftBicCode *string `json:"swiftBicCode,omitempty"`
-	// Provider-side accounts this bank account has been forwarded to
-	RelatedAccounts []BankAccountRelatedAccounts `json:"relatedAccounts,omitempty"`
+	// Identifier of the connector the account has been forwarded to
+	ConnectorID *string `json:"connectorID,omitempty"`
+	// Country the account is held in, as an ISO 3166-1 alpha-2 code
+	Country string `json:"country"`
+	// When the bank account was registered
+	CreatedAt time.Time `json:"createdAt"`
+	// International bank account number, when the account is identified that way
+	Iban *string `json:"iban,omitempty"`
+	// Unique identifier of the bank account within Formance
+	ID string `json:"id"`
 	// Arbitrary key/value pairs attached to the bank account
 	Metadata map[string]string `json:"metadata,omitempty"`
+	// Human-readable name of the bank account
+	Name string `json:"name"`
+	// Name of the payment provider behind the connector
+	Provider *string `json:"provider,omitempty"`
+	// Provider-side accounts this bank account has been forwarded to
+	RelatedAccounts []BankAccountRelatedAccounts `json:"relatedAccounts,omitempty"`
+	// SWIFT/BIC code identifying the bank
+	SwiftBicCode *string `json:"swiftBicCode,omitempty"`
 }
 
 func (b BankAccount) MarshalJSON() ([]byte, error) {
@@ -46,60 +46,11 @@ func (b *BankAccount) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (b *BankAccount) GetID() string {
-	if b == nil {
-		return ""
-	}
-	return b.ID
-}
-
-func (b *BankAccount) GetName() string {
-	if b == nil {
-		return ""
-	}
-	return b.Name
-}
-
-func (b *BankAccount) GetCreatedAt() time.Time {
-	if b == nil {
-		return time.Time{}
-	}
-	return b.CreatedAt
-}
-
-func (b *BankAccount) GetCountry() string {
-	if b == nil {
-		return ""
-	}
-	return b.Country
-}
-
-func (b *BankAccount) GetConnectorID() *string {
-	if b == nil {
-		return nil
-	}
-	return b.ConnectorID
-}
-
 func (b *BankAccount) GetAccountID() *string {
 	if b == nil {
 		return nil
 	}
 	return b.AccountID
-}
-
-func (b *BankAccount) GetProvider() *string {
-	if b == nil {
-		return nil
-	}
-	return b.Provider
-}
-
-func (b *BankAccount) GetIban() *string {
-	if b == nil {
-		return nil
-	}
-	return b.Iban
 }
 
 func (b *BankAccount) GetAccountNumber() *string {
@@ -109,11 +60,60 @@ func (b *BankAccount) GetAccountNumber() *string {
 	return b.AccountNumber
 }
 
-func (b *BankAccount) GetSwiftBicCode() *string {
+func (b *BankAccount) GetConnectorID() *string {
 	if b == nil {
 		return nil
 	}
-	return b.SwiftBicCode
+	return b.ConnectorID
+}
+
+func (b *BankAccount) GetCountry() string {
+	if b == nil {
+		return ""
+	}
+	return b.Country
+}
+
+func (b *BankAccount) GetCreatedAt() time.Time {
+	if b == nil {
+		return time.Time{}
+	}
+	return b.CreatedAt
+}
+
+func (b *BankAccount) GetIban() *string {
+	if b == nil {
+		return nil
+	}
+	return b.Iban
+}
+
+func (b *BankAccount) GetID() string {
+	if b == nil {
+		return ""
+	}
+	return b.ID
+}
+
+func (b *BankAccount) GetMetadata() map[string]string {
+	if b == nil {
+		return nil
+	}
+	return b.Metadata
+}
+
+func (b *BankAccount) GetName() string {
+	if b == nil {
+		return ""
+	}
+	return b.Name
+}
+
+func (b *BankAccount) GetProvider() *string {
+	if b == nil {
+		return nil
+	}
+	return b.Provider
 }
 
 func (b *BankAccount) GetRelatedAccounts() []BankAccountRelatedAccounts {
@@ -123,9 +123,9 @@ func (b *BankAccount) GetRelatedAccounts() []BankAccountRelatedAccounts {
 	return b.RelatedAccounts
 }
 
-func (b *BankAccount) GetMetadata() map[string]string {
+func (b *BankAccount) GetSwiftBicCode() *string {
 	if b == nil {
 		return nil
 	}
-	return b.Metadata
+	return b.SwiftBicCode
 }

@@ -53,27 +53,6 @@ func (e *Mode) UnmarshalJSON(data []byte) error {
 }
 
 type InspectIndexRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Canonical form of the target IndexID, e.g.
-	// `metadata:TARGET_TYPE_ACCOUNT:color`. Must resolve to a metadata
-	// index; builtin indexes (`tx_builtin:...`, etc.) are rejected.
-	//
-	CanonicalID string `pathParam:"style=simple,explode=false,name=canonicalId"`
-	// Inspection mode. The deprecated distinct-values alias for distinctValues remains accepted. An explicitly empty or unsupported value returns 400.
-	Mode *Mode `default:"summary" queryParam:"style=form,explode=true,name=mode"`
-	// Page size for distinctValues/facets modes (defaults to 100 when
-	// omitted). Any supplied value must be in 1..10000, including in
-	// summary mode, which does not use pagination. Empty or invalid
-	// values return 400.
-	//
-	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
-	// Page token from a previous response's `nextCursor` or
-	// `previousCursor`, for distinctValues/facets modes (see the
-	// `PageToken` schema; the key is the base64url encoding of the
-	// metadata value). Omit for the first page.
-	//
-	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
 	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
 	// barrier and waits for the receiving node to apply up to it. `stale`
 	// serves the read from the receiving node's own store, with no barrier
@@ -84,6 +63,27 @@ type InspectIndexRequest struct {
 	// gRPC equivalent is the `x-consistency` request metadata.
 	//
 	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Canonical form of the target IndexID, e.g.
+	// `metadata:TARGET_TYPE_ACCOUNT:color`. Must resolve to a metadata
+	// index; builtin indexes (`tx_builtin:...`, etc.) are rejected.
+	//
+	CanonicalID string `pathParam:"style=simple,explode=false,name=canonicalId"`
+	// Page token from a previous response's `nextCursor` or
+	// `previousCursor`, for distinctValues/facets modes (see the
+	// `PageToken` schema; the key is the base64url encoding of the
+	// metadata value). Omit for the first page.
+	//
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Inspection mode. The deprecated distinct-values alias for distinctValues remains accepted. An explicitly empty or unsupported value returns 400.
+	Mode *Mode `default:"summary" queryParam:"style=form,explode=true,name=mode"`
+	// Page size for distinctValues/facets modes (defaults to 100 when
+	// omitted). Any supplied value must be in 1..10000, including in
+	// summary mode, which does not use pagination. Empty or invalid
+	// values return 400.
+	//
+	PageSize *int64 `queryParam:"style=form,explode=true,name=pageSize"`
 }
 
 func (i InspectIndexRequest) MarshalJSON() ([]byte, error) {
@@ -97,11 +97,11 @@ func (i *InspectIndexRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *InspectIndexRequest) GetLedgerName() string {
+func (i *InspectIndexRequest) GetXConsistency() *ledgerv3.Consistency {
 	if i == nil {
-		return ""
+		return nil
 	}
-	return i.LedgerName
+	return i.XConsistency
 }
 
 func (i *InspectIndexRequest) GetCanonicalID() string {
@@ -109,6 +109,20 @@ func (i *InspectIndexRequest) GetCanonicalID() string {
 		return ""
 	}
 	return i.CanonicalID
+}
+
+func (i *InspectIndexRequest) GetCursor() *string {
+	if i == nil {
+		return nil
+	}
+	return i.Cursor
+}
+
+func (i *InspectIndexRequest) GetLedgerName() string {
+	if i == nil {
+		return ""
+	}
+	return i.LedgerName
 }
 
 func (i *InspectIndexRequest) GetMode() *Mode {
@@ -125,90 +139,76 @@ func (i *InspectIndexRequest) GetPageSize() *int64 {
 	return i.PageSize
 }
 
-func (i *InspectIndexRequest) GetCursor() *string {
-	if i == nil {
-		return nil
-	}
-	return i.Cursor
-}
-
-func (i *InspectIndexRequest) GetXConsistency() *ledgerv3.Consistency {
-	if i == nil {
-		return nil
-	}
-	return i.XConsistency
-}
-
-type DataType string
+type InspectIndexDataType string
 
 const (
-	DataTypeInspectSummaryResponse        DataType = "InspectSummaryResponse"
-	DataTypeInspectDistinctValuesResponse DataType = "InspectDistinctValuesResponse"
-	DataTypeInspectFacetsResponse         DataType = "InspectFacetsResponse"
+	InspectIndexDataTypeInspectSummaryResponse        InspectIndexDataType = "InspectSummaryResponse"
+	InspectIndexDataTypeInspectDistinctValuesResponse InspectIndexDataType = "InspectDistinctValuesResponse"
+	InspectIndexDataTypeInspectFacetsResponse         InspectIndexDataType = "InspectFacetsResponse"
 )
 
-type Data struct {
+type InspectIndexData struct {
 	InspectSummaryResponse        *ledgerv3.InspectSummaryResponse        `queryParam:"inline" union:"member"`
 	InspectDistinctValuesResponse *ledgerv3.InspectDistinctValuesResponse `queryParam:"inline" union:"member"`
 	InspectFacetsResponse         *ledgerv3.InspectFacetsResponse         `queryParam:"inline" union:"member"`
 
-	Type DataType
+	Type InspectIndexDataType
 }
 
-func CreateDataInspectSummaryResponse(inspectSummaryResponse ledgerv3.InspectSummaryResponse) Data {
-	typ := DataTypeInspectSummaryResponse
+func CreateInspectIndexDataInspectSummaryResponse(inspectSummaryResponse ledgerv3.InspectSummaryResponse) InspectIndexData {
+	typ := InspectIndexDataTypeInspectSummaryResponse
 
-	return Data{
+	return InspectIndexData{
 		InspectSummaryResponse: &inspectSummaryResponse,
 		Type:                   typ,
 	}
 }
 
-func CreateDataInspectDistinctValuesResponse(inspectDistinctValuesResponse ledgerv3.InspectDistinctValuesResponse) Data {
-	typ := DataTypeInspectDistinctValuesResponse
+func CreateInspectIndexDataInspectDistinctValuesResponse(inspectDistinctValuesResponse ledgerv3.InspectDistinctValuesResponse) InspectIndexData {
+	typ := InspectIndexDataTypeInspectDistinctValuesResponse
 
-	return Data{
+	return InspectIndexData{
 		InspectDistinctValuesResponse: &inspectDistinctValuesResponse,
 		Type:                          typ,
 	}
 }
 
-func CreateDataInspectFacetsResponse(inspectFacetsResponse ledgerv3.InspectFacetsResponse) Data {
-	typ := DataTypeInspectFacetsResponse
+func CreateInspectIndexDataInspectFacetsResponse(inspectFacetsResponse ledgerv3.InspectFacetsResponse) InspectIndexData {
+	typ := InspectIndexDataTypeInspectFacetsResponse
 
-	return Data{
+	return InspectIndexData{
 		InspectFacetsResponse: &inspectFacetsResponse,
 		Type:                  typ,
 	}
 }
 
-func (u *Data) UnmarshalJSON(data []byte) error {
+func (u *InspectIndexData) UnmarshalJSON(data []byte) error {
 
 	var inspectSummaryResponse ledgerv3.InspectSummaryResponse = ledgerv3.InspectSummaryResponse{}
 	if err := utils.UnmarshalJSON(data, &inspectSummaryResponse, "", true, nil); err == nil {
 		u.InspectSummaryResponse = &inspectSummaryResponse
-		u.Type = DataTypeInspectSummaryResponse
+		u.Type = InspectIndexDataTypeInspectSummaryResponse
 		return nil
 	}
 
 	var inspectDistinctValuesResponse ledgerv3.InspectDistinctValuesResponse = ledgerv3.InspectDistinctValuesResponse{}
 	if err := utils.UnmarshalJSON(data, &inspectDistinctValuesResponse, "", true, nil); err == nil {
 		u.InspectDistinctValuesResponse = &inspectDistinctValuesResponse
-		u.Type = DataTypeInspectDistinctValuesResponse
+		u.Type = InspectIndexDataTypeInspectDistinctValuesResponse
 		return nil
 	}
 
 	var inspectFacetsResponse ledgerv3.InspectFacetsResponse = ledgerv3.InspectFacetsResponse{}
 	if err := utils.UnmarshalJSON(data, &inspectFacetsResponse, "", true, nil); err == nil {
 		u.InspectFacetsResponse = &inspectFacetsResponse
-		u.Type = DataTypeInspectFacetsResponse
+		u.Type = InspectIndexDataTypeInspectFacetsResponse
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal `%s` into any supported union types for Data", string(data))
+	return fmt.Errorf("could not unmarshal `%s` into any supported union types for InspectIndexData", string(data))
 }
 
-func (u Data) MarshalJSON() ([]byte, error) {
+func (u InspectIndexData) MarshalJSON() ([]byte, error) {
 	if u.InspectSummaryResponse != nil {
 		return utils.MarshalJSON(u.InspectSummaryResponse, "", true)
 	}
@@ -221,17 +221,17 @@ func (u Data) MarshalJSON() ([]byte, error) {
 		return utils.MarshalJSON(u.InspectFacetsResponse, "", true)
 	}
 
-	return nil, errors.New("could not marshal union type Data: all fields are null")
+	return nil, errors.New("could not marshal union type InspectIndexData: all fields are null")
 }
 
 // InspectIndexResponseBody - Index inspection result
 type InspectIndexResponseBody struct {
-	Data Data `json:"data"`
+	Data InspectIndexData `json:"data"`
 }
 
-func (i *InspectIndexResponseBody) GetData() Data {
+func (i *InspectIndexResponseBody) GetData() InspectIndexData {
 	if i == nil {
-		return Data{}
+		return InspectIndexData{}
 	}
 	return i.Data
 }
@@ -239,19 +239,19 @@ func (i *InspectIndexResponseBody) GetData() Data {
 type InspectIndexResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Index inspection result
-	Object *InspectIndexResponseBody
-	// Bad request
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
+	// Index inspection result
+	Object *InspectIndexResponseBody
 }
 
 func (i *InspectIndexResponse) GetContentType() string {
@@ -259,6 +259,27 @@ func (i *InspectIndexResponse) GetContentType() string {
 		return ""
 	}
 	return i.ContentType
+}
+
+func (i *InspectIndexResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if i == nil {
+		return nil
+	}
+	return i.ErrorResponse
+}
+
+func (i *InspectIndexResponse) GetForbidden() *string {
+	if i == nil {
+		return nil
+	}
+	return i.Forbidden
+}
+
+func (i *InspectIndexResponse) GetHeaders() map[string][]string {
+	if i == nil {
+		return map[string][]string{}
+	}
+	return i.Headers
 }
 
 func (i *InspectIndexResponse) GetStatusCode() int {
@@ -275,20 +296,6 @@ func (i *InspectIndexResponse) GetRawResponse() *http.Response {
 	return i.RawResponse
 }
 
-func (i *InspectIndexResponse) GetObject() *InspectIndexResponseBody {
-	if i == nil {
-		return nil
-	}
-	return i.Object
-}
-
-func (i *InspectIndexResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if i == nil {
-		return nil
-	}
-	return i.ErrorResponse
-}
-
 func (i *InspectIndexResponse) GetUnauthorized() *string {
 	if i == nil {
 		return nil
@@ -296,16 +303,9 @@ func (i *InspectIndexResponse) GetUnauthorized() *string {
 	return i.Unauthorized
 }
 
-func (i *InspectIndexResponse) GetForbidden() *string {
+func (i *InspectIndexResponse) GetObject() *InspectIndexResponseBody {
 	if i == nil {
 		return nil
 	}
-	return i.Forbidden
-}
-
-func (i *InspectIndexResponse) GetHeaders() map[string][]string {
-	if i == nil {
-		return map[string][]string{}
-	}
-	return i.Headers
+	return i.Object
 }

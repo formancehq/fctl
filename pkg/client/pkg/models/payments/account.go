@@ -9,32 +9,32 @@ import (
 
 // Account - An account held at a payment provider, surfaced through a connector
 type Account struct {
-	// Unique identifier of the account within Formance
-	ID string `json:"id"`
-	// When the account was created at the provider
-	CreatedAt time.Time `json:"createdAt"`
-	// Identifier the account carries at the provider
-	Reference string `json:"reference"`
+	// Human-readable name of the account
+	AccountName string `json:"accountName"`
 	// Identifier of the connector the account belongs to
 	ConnectorID string `json:"connectorID"`
-	// Name of the payment provider behind the connector
-	Provider *string `json:"provider,omitempty"`
+	// When the account was created at the provider
+	CreatedAt time.Time `json:"createdAt"`
+	// Asset the account is denominated in by default
+	DefaultAsset string `json:"defaultAsset"`
 	// Deprecated alias of defaultAsset, kept for backwards compatibility
 	//
 	// Deprecated: This will be removed in a future release, please migrate away from it as soon as possible.
 	DefaultCurrency string `json:"defaultCurrency"`
-	// Asset the account is denominated in by default
-	DefaultAsset string `json:"defaultAsset"`
-	// Human-readable name of the account
-	AccountName string `json:"accountName"`
-	// Whether an account is internal to the provider or belongs to an external party
-	Type AccountType `json:"type"`
-	// Pools this account belongs to
-	Pools []string `json:"pools,omitempty"`
+	// Unique identifier of the account within Formance
+	ID string `json:"id"`
 	// Arbitrary key/value pairs attached to the account
 	Metadata map[string]string `json:"metadata"`
+	// Pools this account belongs to
+	Pools []string `json:"pools,omitempty"`
+	// Name of the payment provider behind the connector
+	Provider *string `json:"provider,omitempty"`
 	// The provider's original payload, passed through untouched
 	Raw map[string]any `json:"raw"`
+	// Identifier the account carries at the provider
+	Reference string `json:"reference"`
+	// Whether an account is internal to the provider or belongs to an external party
+	Type AccountType `json:"type"`
 }
 
 func (a Account) MarshalJSON() ([]byte, error) {
@@ -48,25 +48,11 @@ func (a *Account) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (a *Account) GetID() string {
+func (a *Account) GetAccountName() string {
 	if a == nil {
 		return ""
 	}
-	return a.ID
-}
-
-func (a *Account) GetCreatedAt() time.Time {
-	if a == nil {
-		return time.Time{}
-	}
-	return a.CreatedAt
-}
-
-func (a *Account) GetReference() string {
-	if a == nil {
-		return ""
-	}
-	return a.Reference
+	return a.AccountName
 }
 
 func (a *Account) GetConnectorID() string {
@@ -76,18 +62,11 @@ func (a *Account) GetConnectorID() string {
 	return a.ConnectorID
 }
 
-func (a *Account) GetProvider() *string {
+func (a *Account) GetCreatedAt() time.Time {
 	if a == nil {
-		return nil
+		return time.Time{}
 	}
-	return a.Provider
-}
-
-func (a *Account) GetDefaultCurrency() string {
-	if a == nil {
-		return ""
-	}
-	return a.DefaultCurrency
+	return a.CreatedAt
 }
 
 func (a *Account) GetDefaultAsset() string {
@@ -97,25 +76,18 @@ func (a *Account) GetDefaultAsset() string {
 	return a.DefaultAsset
 }
 
-func (a *Account) GetAccountName() string {
+func (a *Account) GetDefaultCurrency() string {
 	if a == nil {
 		return ""
 	}
-	return a.AccountName
+	return a.DefaultCurrency
 }
 
-func (a *Account) GetType() AccountType {
+func (a *Account) GetID() string {
 	if a == nil {
-		return AccountType("")
+		return ""
 	}
-	return a.Type
-}
-
-func (a *Account) GetPools() []string {
-	if a == nil {
-		return nil
-	}
-	return a.Pools
+	return a.ID
 }
 
 func (a *Account) GetMetadata() map[string]string {
@@ -125,9 +97,37 @@ func (a *Account) GetMetadata() map[string]string {
 	return a.Metadata
 }
 
+func (a *Account) GetPools() []string {
+	if a == nil {
+		return nil
+	}
+	return a.Pools
+}
+
+func (a *Account) GetProvider() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Provider
+}
+
 func (a *Account) GetRaw() map[string]any {
 	if a == nil {
 		return nil
 	}
 	return a.Raw
+}
+
+func (a *Account) GetReference() string {
+	if a == nil {
+		return ""
+	}
+	return a.Reference
+}
+
+func (a *Account) GetType() AccountType {
+	if a == nil {
+		return AccountType("")
+	}
+	return a.Type
 }

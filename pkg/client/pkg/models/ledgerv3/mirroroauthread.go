@@ -36,9 +36,9 @@ type MirrorOAuthRead struct {
 	ClientID *string `json:"clientId,omitempty"`
 	// Presence marker only; reusable secret material is never returned
 	ClientSecret *ClientSecret `json:"clientSecret,omitempty"`
+	Scopes       []string      `json:"scopes,omitempty"`
 	// OAuth endpoint URL with userinfo (including passwordless tokens) and query credentials masked
-	TokenEndpoint *string  `json:"tokenEndpoint,omitempty"`
-	Scopes        []string `json:"scopes,omitempty"`
+	TokenEndpoint *string `json:"tokenEndpoint,omitempty"`
 }
 
 func (m MirrorOAuthRead) MarshalJSON() ([]byte, error) {
@@ -66,16 +66,16 @@ func (m *MirrorOAuthRead) GetClientSecret() *ClientSecret {
 	return m.ClientSecret
 }
 
-func (m *MirrorOAuthRead) GetTokenEndpoint() *string {
-	if m == nil {
-		return nil
-	}
-	return m.TokenEndpoint
-}
-
 func (m *MirrorOAuthRead) GetScopes() []string {
 	if m == nil {
 		return nil
 	}
 	return m.Scopes
+}
+
+func (m *MirrorOAuthRead) GetTokenEndpoint() *string {
+	if m == nil {
+		return nil
+	}
+	return m.TokenEndpoint
 }

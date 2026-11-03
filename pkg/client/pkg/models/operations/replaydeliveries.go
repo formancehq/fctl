@@ -29,12 +29,12 @@ func (r *ReplayDeliveriesRequest) GetReplayDeliveriesRequest() webhooks.ReplayDe
 type ReplayDeliveriesResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Deliveries synchronously placed back in the durable queue.
+	ReplayDeliveriesResponse *webhooks.ReplayDeliveriesResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Deliveries synchronously placed back in the durable queue.
-	ReplayDeliveriesResponse *webhooks.ReplayDeliveriesResponse
 }
 
 func (r *ReplayDeliveriesResponse) GetContentType() string {
@@ -42,6 +42,13 @@ func (r *ReplayDeliveriesResponse) GetContentType() string {
 		return ""
 	}
 	return r.ContentType
+}
+
+func (r *ReplayDeliveriesResponse) GetReplayDeliveriesResponse() *webhooks.ReplayDeliveriesResponse {
+	if r == nil {
+		return nil
+	}
+	return r.ReplayDeliveriesResponse
 }
 
 func (r *ReplayDeliveriesResponse) GetStatusCode() int {
@@ -56,11 +63,4 @@ func (r *ReplayDeliveriesResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return r.RawResponse
-}
-
-func (r *ReplayDeliveriesResponse) GetReplayDeliveriesResponse() *webhooks.ReplayDeliveriesResponse {
-	if r == nil {
-		return nil
-	}
-	return r.ReplayDeliveriesResponse
 }

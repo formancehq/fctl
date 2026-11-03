@@ -7,10 +7,10 @@ package ledgerv3
 // `transactionData` for TRANSACTIONS, `logData` for LOGS. Rows use the
 // same camelCase shapes as the non-prepared list endpoints.
 type Cursor struct {
-	// Effective LIST page size after applying the default and cap.
-	PageSize *int64 `json:"pageSize,omitempty"`
+	AccountData []Account `json:"accountData,omitempty"`
 	// True when a following page exists; set iff `next` is.
-	HasMore *bool `json:"hasMore,omitempty"`
+	HasMore *bool       `json:"hasMore,omitempty"`
+	LogData []SystemLog `json:"logData,omitempty"`
 	// Page token of a paged list. Clients normally pass back the `next` or
 	// `previous` value of a previous response verbatim; building one by hand
 	// is supported.
@@ -48,6 +48,8 @@ type Cursor struct {
 	// the endpoint, is rejected with 400 `INVALID_REQUEST`.
 	//
 	Next *string `json:"next,omitempty"`
+	// Effective LIST page size after applying the default and cap.
+	PageSize *int64 `json:"pageSize,omitempty"`
 	// Page token of a paged list. Clients normally pass back the `next` or
 	// `previous` value of a previous response verbatim; building one by hand
 	// is supported.
@@ -85,37 +87,7 @@ type Cursor struct {
 	// the endpoint, is rejected with 400 `INVALID_REQUEST`.
 	//
 	Previous        *string               `json:"previous,omitempty"`
-	AccountData     []Account             `json:"accountData,omitempty"`
 	TransactionData []TransactionResponse `json:"transactionData,omitempty"`
-	LogData         []SystemLog           `json:"logData,omitempty"`
-}
-
-func (c *Cursor) GetPageSize() *int64 {
-	if c == nil {
-		return nil
-	}
-	return c.PageSize
-}
-
-func (c *Cursor) GetHasMore() *bool {
-	if c == nil {
-		return nil
-	}
-	return c.HasMore
-}
-
-func (c *Cursor) GetNext() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Next
-}
-
-func (c *Cursor) GetPrevious() *string {
-	if c == nil {
-		return nil
-	}
-	return c.Previous
 }
 
 func (c *Cursor) GetAccountData() []Account {
@@ -125,11 +97,11 @@ func (c *Cursor) GetAccountData() []Account {
 	return c.AccountData
 }
 
-func (c *Cursor) GetTransactionData() []TransactionResponse {
+func (c *Cursor) GetHasMore() *bool {
 	if c == nil {
 		return nil
 	}
-	return c.TransactionData
+	return c.HasMore
 }
 
 func (c *Cursor) GetLogData() []SystemLog {
@@ -137,6 +109,34 @@ func (c *Cursor) GetLogData() []SystemLog {
 		return nil
 	}
 	return c.LogData
+}
+
+func (c *Cursor) GetNext() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Next
+}
+
+func (c *Cursor) GetPageSize() *int64 {
+	if c == nil {
+		return nil
+	}
+	return c.PageSize
+}
+
+func (c *Cursor) GetPrevious() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Previous
+}
+
+func (c *Cursor) GetTransactionData() []TransactionResponse {
+	if c == nil {
+		return nil
+	}
+	return c.TransactionData
 }
 
 // ExecutePreparedQueryResponse - Result of executing a prepared query. Exactly one field is set,
@@ -152,20 +152,13 @@ func (c *Cursor) GetLogData() []SystemLog {
 // (header-negotiated monetary amounts, `color` always present on every volume row
 // including the uncolored bucket).
 type ExecutePreparedQueryResponse struct {
+	AggregateResult *AggregateVolumesData `json:"aggregateResult,omitempty"`
 	// Paged cursor, returned when the request `mode` is `LIST`. The row
 	// type follows the query `target`: `accountData` for ACCOUNTS,
 	// `transactionData` for TRANSACTIONS, `logData` for LOGS. Rows use the
 	// same camelCase shapes as the non-prepared list endpoints.
 	//
-	Cursor          *Cursor               `json:"cursor,omitempty"`
-	AggregateResult *AggregateVolumesData `json:"aggregateResult,omitempty"`
-}
-
-func (e *ExecutePreparedQueryResponse) GetCursor() *Cursor {
-	if e == nil {
-		return nil
-	}
-	return e.Cursor
+	Cursor *Cursor `json:"cursor,omitempty"`
 }
 
 func (e *ExecutePreparedQueryResponse) GetAggregateResult() *AggregateVolumesData {
@@ -173,4 +166,11 @@ func (e *ExecutePreparedQueryResponse) GetAggregateResult() *AggregateVolumesDat
 		return nil
 	}
 	return e.AggregateResult
+}
+
+func (e *ExecutePreparedQueryResponse) GetCursor() *Cursor {
+	if e == nil {
+		return nil
+	}
+	return e.Cursor
 }

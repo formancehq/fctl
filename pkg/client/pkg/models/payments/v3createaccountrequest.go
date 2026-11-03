@@ -8,20 +8,20 @@ import (
 )
 
 type V3CreateAccountRequest struct {
-	// Identifier the account carries at the provider
-	Reference string `json:"reference"`
+	// Human-readable name of the account
+	AccountName string `json:"accountName"`
 	// Identifier of the connector the account belongs to
 	ConnectorID string `json:"connectorID"`
 	// When the account was created at the provider
 	CreatedAt time.Time `json:"createdAt"`
-	// Human-readable name of the account
-	AccountName string `json:"accountName"`
-	// Whether an account is internal to the provider or belongs to an external party
-	Type V3AccountTypeEnum `json:"type"`
 	// Asset the account is denominated in by default
 	DefaultAsset *string `json:"defaultAsset,omitempty"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]string `json:"metadata,omitempty"`
+	// Identifier the account carries at the provider
+	Reference string `json:"reference"`
+	// Whether an account is internal to the provider or belongs to an external party
+	Type V3AccountTypeEnum `json:"type"`
 }
 
 func (v V3CreateAccountRequest) MarshalJSON() ([]byte, error) {
@@ -35,11 +35,11 @@ func (v *V3CreateAccountRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V3CreateAccountRequest) GetReference() string {
+func (v *V3CreateAccountRequest) GetAccountName() string {
 	if v == nil {
 		return ""
 	}
-	return v.Reference
+	return v.AccountName
 }
 
 func (v *V3CreateAccountRequest) GetConnectorID() string {
@@ -56,20 +56,6 @@ func (v *V3CreateAccountRequest) GetCreatedAt() time.Time {
 	return v.CreatedAt
 }
 
-func (v *V3CreateAccountRequest) GetAccountName() string {
-	if v == nil {
-		return ""
-	}
-	return v.AccountName
-}
-
-func (v *V3CreateAccountRequest) GetType() V3AccountTypeEnum {
-	if v == nil {
-		return V3AccountTypeEnum("")
-	}
-	return v.Type
-}
-
 func (v *V3CreateAccountRequest) GetDefaultAsset() *string {
 	if v == nil {
 		return nil
@@ -82,6 +68,20 @@ func (v *V3CreateAccountRequest) GetMetadata() map[string]string {
 		return nil
 	}
 	return v.Metadata
+}
+
+func (v *V3CreateAccountRequest) GetReference() string {
+	if v == nil {
+		return ""
+	}
+	return v.Reference
+}
+
+func (v *V3CreateAccountRequest) GetType() V3AccountTypeEnum {
+	if v == nil {
+		return V3AccountTypeEnum("")
+	}
+	return v.Type
 }
 
 // #region class-body-v3createaccountrequest

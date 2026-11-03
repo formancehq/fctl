@@ -7,19 +7,19 @@ import (
 )
 
 type ModulrConfig struct {
-	// Human-readable name identifying this connector instance
-	Name string `json:"name"`
-	// Identifies the payment provider this configuration targets
-	Provider *string `default:"Modulr" json:"provider"`
 	// API key issued by Modulr, used to authenticate the connector's requests
 	APIKey string `json:"apiKey"`
 	// API secret issued by Modulr, paired with the API key to sign requests
 	APISecret string `json:"apiSecret"`
 	// Base URL of the Modulr API the connector calls
 	Endpoint *string `json:"endpoint,omitempty"`
+	// Human-readable name identifying this connector instance
+	Name string `json:"name"`
 	// The frequency at which the connector will try to fetch new BalanceTransaction objects from Modulr API.
 	//
 	PollingPeriod *string `default:"30m" json:"pollingPeriod"`
+	// Identifies the payment provider this configuration targets
+	Provider *string `default:"Modulr" json:"provider"`
 }
 
 func (m ModulrConfig) MarshalJSON() ([]byte, error) {
@@ -27,24 +27,10 @@ func (m ModulrConfig) MarshalJSON() ([]byte, error) {
 }
 
 func (m *ModulrConfig) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &m, "", false, []string{"name", "apiKey", "apiSecret"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &m, "", false, []string{"apiKey", "apiSecret", "name"}); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (m *ModulrConfig) GetName() string {
-	if m == nil {
-		return ""
-	}
-	return m.Name
-}
-
-func (m *ModulrConfig) GetProvider() *string {
-	if m == nil {
-		return nil
-	}
-	return m.Provider
 }
 
 func (m *ModulrConfig) GetAPIKey() string {
@@ -68,9 +54,23 @@ func (m *ModulrConfig) GetEndpoint() *string {
 	return m.Endpoint
 }
 
+func (m *ModulrConfig) GetName() string {
+	if m == nil {
+		return ""
+	}
+	return m.Name
+}
+
 func (m *ModulrConfig) GetPollingPeriod() *string {
 	if m == nil {
 		return nil
 	}
 	return m.PollingPeriod
+}
+
+func (m *ModulrConfig) GetProvider() *string {
+	if m == nil {
+		return nil
+	}
+	return m.Provider
 }

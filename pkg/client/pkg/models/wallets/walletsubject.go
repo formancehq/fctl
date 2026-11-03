@@ -7,12 +7,12 @@ import (
 )
 
 type WalletSubject struct {
-	// Discriminator identifying this subject as a wallet
-	Type string `json:"type"`
-	// Identifier of the wallet
-	Identifier string `json:"identifier"`
 	// Name of the balance within the wallet to use. Defaults to the main balance when omitted
 	Balance *string `json:"balance,omitempty"`
+	// Identifier of the wallet
+	Identifier string `json:"identifier"`
+	// Discriminator identifying this subject as a wallet
+	Type string `json:"type"`
 }
 
 func (w WalletSubject) MarshalJSON() ([]byte, error) {
@@ -20,17 +20,17 @@ func (w WalletSubject) MarshalJSON() ([]byte, error) {
 }
 
 func (w *WalletSubject) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &w, "", false, []string{"type", "identifier"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &w, "", false, []string{"identifier", "type"}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (w *WalletSubject) GetType() string {
+func (w *WalletSubject) GetBalance() *string {
 	if w == nil {
-		return ""
+		return nil
 	}
-	return w.Type
+	return w.Balance
 }
 
 func (w *WalletSubject) GetIdentifier() string {
@@ -40,9 +40,9 @@ func (w *WalletSubject) GetIdentifier() string {
 	return w.Identifier
 }
 
-func (w *WalletSubject) GetBalance() *string {
+func (w *WalletSubject) GetType() string {
 	if w == nil {
-		return nil
+		return ""
 	}
-	return w.Balance
+	return w.Type
 }

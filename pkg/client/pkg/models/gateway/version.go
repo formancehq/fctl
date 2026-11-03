@@ -3,12 +3,19 @@
 package gateway
 
 type Version struct {
+	// Whether the component is reporting itself healthy
+	Health bool `json:"health"`
 	// Name of the component
 	Name string `json:"name"`
 	// Version of the component currently deployed
 	Version string `json:"version"`
-	// Whether the component is reporting itself healthy
-	Health bool `json:"health"`
+}
+
+func (v *Version) GetHealth() bool {
+	if v == nil {
+		return false
+	}
+	return v.Health
 }
 
 func (v *Version) GetName() string {
@@ -23,11 +30,4 @@ func (v *Version) GetVersion() string {
 		return ""
 	}
 	return v.Version
-}
-
-func (v *Version) GetHealth() bool {
-	if v == nil {
-		return false
-	}
-	return v.Health
 }

@@ -20,10 +20,6 @@ func (g *GetNumscriptUsageSecurity) GetBearerAuth() *string {
 }
 
 type GetNumscriptUsageRequest struct {
-	// Name of the ledger
-	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-	// Name of the numscript template, URL-encoded as one path segment. Decoded exactly once.
-	Name string `pathParam:"style=simple,explode=false,name=name"`
 	// Read consistency. `linearizable` (the default) runs a Raft ReadIndex
 	// barrier and waits for the receiving node to apply up to it. `stale`
 	// serves the read from the receiving node's own store, with no barrier
@@ -34,6 +30,10 @@ type GetNumscriptUsageRequest struct {
 	// gRPC equivalent is the `x-consistency` request metadata.
 	//
 	XConsistency *ledgerv3.Consistency `default:"linearizable" header:"style=simple,explode=false,name=X-Consistency"`
+	// Name of the ledger
+	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
+	// Name of the numscript template, URL-encoded as one path segment. Decoded exactly once.
+	Name string `pathParam:"style=simple,explode=false,name=name"`
 }
 
 func (g GetNumscriptUsageRequest) MarshalJSON() ([]byte, error) {
@@ -45,6 +45,13 @@ func (g *GetNumscriptUsageRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (g *GetNumscriptUsageRequest) GetXConsistency() *ledgerv3.Consistency {
+	if g == nil {
+		return nil
+	}
+	return g.XConsistency
 }
 
 func (g *GetNumscriptUsageRequest) GetLedgerName() string {
@@ -61,29 +68,22 @@ func (g *GetNumscriptUsageRequest) GetName() string {
 	return g.Name
 }
 
-func (g *GetNumscriptUsageRequest) GetXConsistency() *ledgerv3.Consistency {
-	if g == nil {
-		return nil
-	}
-	return g.XConsistency
-}
-
 type GetNumscriptUsageResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// Bad request
+	ErrorResponse *ledgerv3.ErrorResponse
+	// Insufficient permissions (missing required scope)
+	Forbidden *string
+	// Template usage retrieved successfully
+	GetTemplateUsageResponse *ledgerv3.GetTemplateUsageResponse
+	Headers                  map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Template usage retrieved successfully
-	GetTemplateUsageResponse *ledgerv3.GetTemplateUsageResponse
-	// Authentication required (missing or invalid JWT token)
-	ErrorResponse *ledgerv3.ErrorResponse
 	// Authentication required (missing or invalid JWT token)
 	Unauthorized *string
-	// Insufficient permissions (missing required scope)
-	Forbidden *string
-	Headers   map[string][]string
 }
 
 func (g *GetNumscriptUsageResponse) GetContentType() string {
@@ -91,6 +91,34 @@ func (g *GetNumscriptUsageResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetNumscriptUsageResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
+	if g == nil {
+		return nil
+	}
+	return g.ErrorResponse
+}
+
+func (g *GetNumscriptUsageResponse) GetForbidden() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Forbidden
+}
+
+func (g *GetNumscriptUsageResponse) GetGetTemplateUsageResponse() *ledgerv3.GetTemplateUsageResponse {
+	if g == nil {
+		return nil
+	}
+	return g.GetTemplateUsageResponse
+}
+
+func (g *GetNumscriptUsageResponse) GetHeaders() map[string][]string {
+	if g == nil {
+		return map[string][]string{}
+	}
+	return g.Headers
 }
 
 func (g *GetNumscriptUsageResponse) GetStatusCode() int {
@@ -107,37 +135,9 @@ func (g *GetNumscriptUsageResponse) GetRawResponse() *http.Response {
 	return g.RawResponse
 }
 
-func (g *GetNumscriptUsageResponse) GetGetTemplateUsageResponse() *ledgerv3.GetTemplateUsageResponse {
-	if g == nil {
-		return nil
-	}
-	return g.GetTemplateUsageResponse
-}
-
-func (g *GetNumscriptUsageResponse) GetErrorResponse() *ledgerv3.ErrorResponse {
-	if g == nil {
-		return nil
-	}
-	return g.ErrorResponse
-}
-
 func (g *GetNumscriptUsageResponse) GetUnauthorized() *string {
 	if g == nil {
 		return nil
 	}
 	return g.Unauthorized
-}
-
-func (g *GetNumscriptUsageResponse) GetForbidden() *string {
-	if g == nil {
-		return nil
-	}
-	return g.Forbidden
-}
-
-func (g *GetNumscriptUsageResponse) GetHeaders() map[string][]string {
-	if g == nil {
-		return map[string][]string{}
-	}
-	return g.Headers
 }

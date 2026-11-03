@@ -4,8 +4,8 @@ package payments
 
 type V3ConnectorConfigsResponseData struct {
 	DataType     string  `json:"dataType"`
-	Required     bool    `json:"required"`
 	DefaultValue *string `json:"defaultValue,omitempty"`
+	Required     bool    `json:"required"`
 }
 
 func (v *V3ConnectorConfigsResponseData) GetDataType() string {
@@ -15,18 +15,18 @@ func (v *V3ConnectorConfigsResponseData) GetDataType() string {
 	return v.DataType
 }
 
-func (v *V3ConnectorConfigsResponseData) GetRequired() bool {
-	if v == nil {
-		return false
-	}
-	return v.Required
-}
-
 func (v *V3ConnectorConfigsResponseData) GetDefaultValue() *string {
 	if v == nil {
 		return nil
 	}
 	return v.DefaultValue
+}
+
+func (v *V3ConnectorConfigsResponseData) GetRequired() bool {
+	if v == nil {
+		return false
+	}
+	return v.Required
 }
 
 // #region class-body-v3connectorconfigsresponsedata

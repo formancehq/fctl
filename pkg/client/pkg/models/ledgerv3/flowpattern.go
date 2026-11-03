@@ -40,14 +40,28 @@ func (e *Structure) UnmarshalJSON(data []byte) error {
 }
 
 type FlowPattern struct {
+	MetadataKeys []string            `json:"metadataKeys,omitempty"`
+	Postings     []NormalizedPosting `json:"postings,omitempty"`
 	// Canonical flow signature (e.g. "users:{id}:main->bank:fees[USD]")
-	Signature        *string             `json:"signature,omitempty"`
-	Structure        *Structure          `json:"structure,omitempty"`
-	TransactionCount *int64              `json:"transactionCount,omitempty"`
-	Postings         []NormalizedPosting `json:"postings,omitempty"`
-	Temporal         *TemporalStats      `json:"temporal,omitempty"`
-	VolumeStats      []AssetVolumeStats  `json:"volumeStats,omitempty"`
-	MetadataKeys     []string            `json:"metadataKeys,omitempty"`
+	Signature        *string            `json:"signature,omitempty"`
+	Structure        *Structure         `json:"structure,omitempty"`
+	Temporal         *TemporalStats     `json:"temporal,omitempty"`
+	TransactionCount *int64             `json:"transactionCount,omitempty"`
+	VolumeStats      []AssetVolumeStats `json:"volumeStats,omitempty"`
+}
+
+func (f *FlowPattern) GetMetadataKeys() []string {
+	if f == nil {
+		return nil
+	}
+	return f.MetadataKeys
+}
+
+func (f *FlowPattern) GetPostings() []NormalizedPosting {
+	if f == nil {
+		return nil
+	}
+	return f.Postings
 }
 
 func (f *FlowPattern) GetSignature() *string {
@@ -64,20 +78,6 @@ func (f *FlowPattern) GetStructure() *Structure {
 	return f.Structure
 }
 
-func (f *FlowPattern) GetTransactionCount() *int64 {
-	if f == nil {
-		return nil
-	}
-	return f.TransactionCount
-}
-
-func (f *FlowPattern) GetPostings() []NormalizedPosting {
-	if f == nil {
-		return nil
-	}
-	return f.Postings
-}
-
 func (f *FlowPattern) GetTemporal() *TemporalStats {
 	if f == nil {
 		return nil
@@ -85,16 +85,16 @@ func (f *FlowPattern) GetTemporal() *TemporalStats {
 	return f.Temporal
 }
 
+func (f *FlowPattern) GetTransactionCount() *int64 {
+	if f == nil {
+		return nil
+	}
+	return f.TransactionCount
+}
+
 func (f *FlowPattern) GetVolumeStats() []AssetVolumeStats {
 	if f == nil {
 		return nil
 	}
 	return f.VolumeStats
-}
-
-func (f *FlowPattern) GetMetadataKeys() []string {
-	if f == nil {
-		return nil
-	}
-	return f.MetadataKeys
 }

@@ -8,16 +8,9 @@ import (
 )
 
 type V2UpdateLedgerMetadataRequest struct {
-	// Name of the ledger.
-	Ledger      string            `pathParam:"style=simple,explode=false,name=ledger"`
 	RequestBody map[string]string `request:"mediaType=application/json"`
-}
-
-func (v *V2UpdateLedgerMetadataRequest) GetLedger() string {
-	if v == nil {
-		return ""
-	}
-	return v.Ledger
+	// Name of the ledger.
+	Ledger string `pathParam:"style=simple,explode=false,name=ledger"`
 }
 
 func (v *V2UpdateLedgerMetadataRequest) GetRequestBody() map[string]string {
@@ -25,6 +18,13 @@ func (v *V2UpdateLedgerMetadataRequest) GetRequestBody() map[string]string {
 		return map[string]string{}
 	}
 	return v.RequestBody
+}
+
+func (v *V2UpdateLedgerMetadataRequest) GetLedger() string {
+	if v == nil {
+		return ""
+	}
+	return v.Ledger
 }
 
 // #region class-body-v2updateledgermetadatarequest

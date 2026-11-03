@@ -9,10 +9,10 @@ import (
 
 // Monetary - An amount together with the asset it is denominated in
 type Monetary struct {
-	// The asset of the monetary value.
-	Asset string `json:"asset"`
 	// The amount of the monetary value.
 	Amount *big.Int `json:"amount"`
+	// The asset of the monetary value.
+	Asset string `json:"asset"`
 }
 
 func (m Monetary) MarshalJSON() ([]byte, error) {
@@ -26,16 +26,16 @@ func (m *Monetary) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (m *Monetary) GetAsset() string {
-	if m == nil {
-		return ""
-	}
-	return m.Asset
-}
-
 func (m *Monetary) GetAmount() *big.Int {
 	if m == nil {
 		return big.NewInt(0)
 	}
 	return m.Amount
+}
+
+func (m *Monetary) GetAsset() string {
+	if m == nil {
+		return ""
+	}
+	return m.Asset
 }

@@ -22,12 +22,12 @@ func (g *GetReconciliationRequest) GetReconciliationID() string {
 type GetReconciliationResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
+	// OK
+	ReconciliationResponse *reconciliation.ReconciliationResponse
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// OK
-	ReconciliationResponse *reconciliation.ReconciliationResponse
 }
 
 func (g *GetReconciliationResponse) GetContentType() string {
@@ -35,6 +35,13 @@ func (g *GetReconciliationResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
+}
+
+func (g *GetReconciliationResponse) GetReconciliationResponse() *reconciliation.ReconciliationResponse {
+	if g == nil {
+		return nil
+	}
+	return g.ReconciliationResponse
 }
 
 func (g *GetReconciliationResponse) GetStatusCode() int {
@@ -49,11 +56,4 @@ func (g *GetReconciliationResponse) GetRawResponse() *http.Response {
 		return nil
 	}
 	return g.RawResponse
-}
-
-func (g *GetReconciliationResponse) GetReconciliationResponse() *reconciliation.ReconciliationResponse {
-	if g == nil {
-		return nil
-	}
-	return g.ReconciliationResponse
 }

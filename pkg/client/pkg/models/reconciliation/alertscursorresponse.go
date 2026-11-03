@@ -4,18 +4,18 @@ package reconciliation
 
 // AlertsCursorResponseCursor - Paginated cursor wrapping the list of alerts
 type AlertsCursorResponseCursor struct {
-	PageSize int64   `json:"pageSize"`
-	HasMore  bool    `json:"hasMore"`
-	Previous *string `json:"previous,omitempty"`
-	Next     *string `json:"next,omitempty"`
 	Data     []Alert `json:"data"`
+	HasMore  bool    `json:"hasMore"`
+	Next     *string `json:"next,omitempty"`
+	PageSize int64   `json:"pageSize"`
+	Previous *string `json:"previous,omitempty"`
 }
 
-func (a *AlertsCursorResponseCursor) GetPageSize() int64 {
+func (a *AlertsCursorResponseCursor) GetData() []Alert {
 	if a == nil {
-		return 0
+		return []Alert{}
 	}
-	return a.PageSize
+	return a.Data
 }
 
 func (a *AlertsCursorResponseCursor) GetHasMore() bool {
@@ -25,13 +25,6 @@ func (a *AlertsCursorResponseCursor) GetHasMore() bool {
 	return a.HasMore
 }
 
-func (a *AlertsCursorResponseCursor) GetPrevious() *string {
-	if a == nil {
-		return nil
-	}
-	return a.Previous
-}
-
 func (a *AlertsCursorResponseCursor) GetNext() *string {
 	if a == nil {
 		return nil
@@ -39,11 +32,18 @@ func (a *AlertsCursorResponseCursor) GetNext() *string {
 	return a.Next
 }
 
-func (a *AlertsCursorResponseCursor) GetData() []Alert {
+func (a *AlertsCursorResponseCursor) GetPageSize() int64 {
 	if a == nil {
-		return []Alert{}
+		return 0
 	}
-	return a.Data
+	return a.PageSize
+}
+
+func (a *AlertsCursorResponseCursor) GetPrevious() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Previous
 }
 
 // AlertsCursorResponse - OK
