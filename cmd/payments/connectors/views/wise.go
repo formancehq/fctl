@@ -4,13 +4,12 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/payments"
 )
 
 func DisplayWiseConfig(cmd *cobra.Command, connectorConfig *payments.ConnectorConfigResponse) error {
-	config := connectorConfig.ConnectorConfig.WiseConfig
+	config := connectorConfig.Data.WiseConfig
 
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})
@@ -32,7 +31,7 @@ func DisplayWiseConfig(cmd *cobra.Command, connectorConfig *payments.ConnectorCo
 }
 
 func DisplayWiseConfigV3(cmd *cobra.Command, v3Config *payments.V3GetConnectorConfigResponse) error {
-	config := v3Config.V3ConnectorConfig.V3WiseConfig
+	config := v3Config.Data.V3WiseConfig
 
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})

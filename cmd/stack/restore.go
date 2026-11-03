@@ -10,10 +10,10 @@ import (
 
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/operations"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/gateway"
 
 	"github.com/formancehq/fctl/v3/cmd/stack/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/gateway"
 )
 
 type StackRestoreStore struct {

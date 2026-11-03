@@ -7,12 +7,11 @@ import (
 
 	"github.com/pterm/pterm"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/auth"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/auth"
 )
 
-func PrintClient(out io.Writer, client *auth.ClientOptions) error {
+func PrintClient(out io.Writer, client *auth.Client) error {
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("ID"), client.ID})
 	tableData = append(tableData, []string{pterm.LightCyan("Name"), client.Name})

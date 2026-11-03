@@ -6,11 +6,10 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
-
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/payments"
 )
 
 type UpdateMetadataStore struct {
@@ -86,7 +85,7 @@ func (c *UpdateMetadataController) Run(cmd *cobra.Command, args []string) (fctl.
 	if c.PaymentsVersion.Major >= versions.V3 {
 		request := operations.V3UpdateBankAccountMetadataRequest{
 			V3UpdateBankAccountMetadataRequest: &payments.V3UpdateBankAccountMetadataRequest{
-				V3Metadata: metadata,
+				Metadata: metadata,
 			},
 			BankAccountID: bankAccountID,
 		}
@@ -106,7 +105,7 @@ func (c *UpdateMetadataController) Run(cmd *cobra.Command, args []string) (fctl.
 
 	request := operations.UpdateBankAccountMetadataRequest{
 		UpdateBankAccountMetadataRequest: payments.UpdateBankAccountMetadataRequest{
-			BankAccountMetadata: metadata,
+			Metadata: metadata,
 		},
 		BankAccountID: bankAccountID,
 	}

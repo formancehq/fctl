@@ -7,10 +7,9 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/orchestration"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/orchestration"
 )
 
 type TriggersTestStore struct {
@@ -70,7 +69,7 @@ func (c *TriggersTestController) Run(cmd *cobra.Command, args []string) (fctl.Re
 		return nil, fmt.Errorf("testing trigger: %w", err)
 	}
 
-	c.store.Trigger = res.V2TestTriggerResponse.V2TriggerTest
+	c.store.Trigger = res.V2TestTriggerResponse.Data
 
 	return c, nil
 }

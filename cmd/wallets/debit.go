@@ -7,11 +7,10 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	walletsmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/wallets"
-
 	"github.com/formancehq/fctl/v3/cmd/wallets/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	walletsmodels "github.com/formancehq/fctl/v3/pkg/client/pkg/models/wallets"
 )
 
 type DebitWalletStore struct {
@@ -121,14 +120,14 @@ func (c *DebitWalletController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 
 	response, err := stackClient.Wallets.V1.DebitWallet(cmd.Context(), operations.DebitWalletRequest{
 		DebitWalletRequest: &walletsmodels.DebitWalletRequest{
-			Monetary: walletsmodels.Monetary{
+			Amount: walletsmodels.Monetary{
 				Asset:  asset,
 				Amount: amount,
 			},
 			Pending:     &pending,
 			Metadata:    metadata,
 			Description: &description,
-			Subject:     destination,
+			Destination: destination,
 			Balances:    fctl.GetStringSlice(cmd, c.balanceFlag),
 		},
 		ID: walletID,
@@ -138,7 +137,7 @@ func (c *DebitWalletController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 	}
 
 	if response.DebitWalletResponse != nil {
-		c.store.HoldID = &response.DebitWalletResponse.Hold.ID
+		c.store.HoldID = &response.DebitWalletResponse.Data.ID
 	}
 
 	c.store.Success = true

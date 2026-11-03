@@ -6,9 +6,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/auth"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/auth"
 )
 
 type Client struct {
@@ -73,7 +72,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", clients.StatusCode)
 	}
 
-	c.store.Clients = fctl.Map(clients.ListClientsResponse.Data, func(o auth.ClientOptions) Client {
+	c.store.Clients = fctl.Map(clients.ListClientsResponse.Data, func(o auth.Client) Client {
 		return Client{
 			ID:   o.ID,
 			Name: o.Name,

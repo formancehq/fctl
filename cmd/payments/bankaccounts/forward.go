@@ -7,11 +7,10 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
-
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/payments"
 )
 
 type ForwardStore struct {
@@ -108,8 +107,8 @@ func (c *ForwardController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 			return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 		}
 
-		c.store.BankAccountID = response.BankAccountResponse.BankAccount.ID
-		c.store.ConnectorID = *response.BankAccountResponse.BankAccount.ConnectorID
+		c.store.BankAccountID = response.BankAccountResponse.Data.ID
+		c.store.ConnectorID = *response.BankAccountResponse.Data.ConnectorID
 
 		return c, nil
 	}

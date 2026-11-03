@@ -9,10 +9,10 @@ import (
 
 	"github.com/pterm/pterm"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/ledger"
 	"github.com/formancehq/go-libs/v4/collectionutils"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/ledger"
 )
 
 func printCommonInformation(
@@ -132,7 +132,7 @@ func (t v2Transaction) GetPostings() []ledger.Posting {
 }
 
 func (t v2Transaction) GetMetadata() map[string]string {
-	return t.V2Transaction.GetV2Metadata()
+	return t.V2Transaction.GetMetadata()
 }
 
 var _ Transaction = (*v2Transaction)(nil)
@@ -156,11 +156,11 @@ func (t v1Transaction) GetMetadata() map[string]string {
 }
 
 func (t v1Transaction) GetPreCommitVolumes() map[string]map[string]ledger.Volume {
-	return t.Transaction.GetAggregatedVolumes()
+	return t.Transaction.GetPreCommitVolumes()
 }
 
 func (t v1Transaction) GetPostCommitVolumes() map[string]map[string]ledger.Volume {
-	return t.Transaction.GetAggregatedVolumes1()
+	return t.Transaction.GetPostCommitVolumes()
 }
 
 var _ Transaction = (*v1Transaction)(nil)

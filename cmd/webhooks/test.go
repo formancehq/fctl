@@ -8,10 +8,9 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	webhooksmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/webhooks"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	webhooksmodels "github.com/formancehq/fctl/v3/pkg/client/pkg/models/webhooks"
 )
 
 type TestWebhookStore struct {
@@ -50,7 +49,7 @@ func (c *TestWebhookController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 	if response.AttemptResponse == nil {
 		return nil, fmt.Errorf("testing config: empty response")
 	}
-	c.store.Attempt = response.AttemptResponse.Attempt
+	c.store.Attempt = response.AttemptResponse.Data
 	return c, nil
 }
 

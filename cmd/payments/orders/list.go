@@ -8,11 +8,10 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	paymentsmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
-
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	paymentsmodels "github.com/formancehq/fctl/v3/pkg/client/pkg/models/payments"
 )
 
 const ordersMinMinor = 3
@@ -208,16 +207,16 @@ func toOrder(o paymentsmodels.V3Order) Order {
 		ClientOrderID:        o.ClientOrderID,
 		CreatedAt:            o.CreatedAt,
 		UpdatedAt:            o.UpdatedAt,
-		Direction:            string(o.V3OrderDirectionEnum),
+		Direction:            string(o.Direction),
 		SourceAsset:          o.SourceAsset,
 		DestinationAsset:     o.DestinationAsset,
-		Type:                 string(o.V3OrderTypeEnum),
-		Status:               string(o.V3OrderStatusEnum),
+		Type:                 string(o.Type),
+		Status:               string(o.Status),
 		BaseQuantityOrdered:  o.BaseQuantityOrdered,
 		BaseQuantityFilled:   o.BaseQuantityFilled,
 		LimitPrice:           o.LimitPrice,
 		StopPrice:            o.StopPrice,
-		TimeInForce:          string(o.V3TimeInForceEnum),
+		TimeInForce:          string(o.TimeInForce),
 		ExpiresAt:            o.ExpiresAt,
 		Fee:                  o.Fee,
 		FeeAsset:             o.FeeAsset,
@@ -227,7 +226,7 @@ func toOrder(o paymentsmodels.V3Order) Order {
 		PriceAsset:           o.PriceAsset,
 		SourceAccountID:      o.SourceAccountID,
 		DestinationAccountID: o.DestinationAccountID,
-		Metadata:             o.V3Metadata,
+		Metadata:             o.Metadata,
 		Adjustments:          fctl.Map(o.Adjustments, toOrderAdjustment),
 		Error:                o.Error,
 	}
@@ -238,11 +237,11 @@ func toOrderAdjustment(a paymentsmodels.V3OrderAdjustment) OrderAdjustment {
 		ID:                 a.ID,
 		Reference:          a.Reference,
 		CreatedAt:          a.CreatedAt,
-		Status:             string(a.V3OrderStatusEnum),
+		Status:             string(a.Status),
 		BaseQuantityFilled: a.BaseQuantityFilled,
 		Fee:                a.Fee,
 		FeeAsset:           a.FeeAsset,
-		Metadata:           a.V3Metadata,
+		Metadata:           a.Metadata,
 	}
 }
 

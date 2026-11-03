@@ -7,12 +7,11 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	formance "github.com/formancehq/formance-sdk-go/v4"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
-
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	formance "github.com/formancehq/fctl/v3/pkg/client"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/payments"
 )
 
 type LatestBalancesStore struct {
@@ -86,7 +85,7 @@ func (c *LatestBalancesController) CallV1(context context.Context, client *forma
 	if response.StatusCode >= 300 {
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
-	c.store.Balances = &payments.PoolBalances{Balances: response.PoolBalancesLatestResponse.PoolBalancesLatest}
+	c.store.Balances = &payments.PoolBalances{Balances: response.PoolBalancesLatestResponse.Data}
 	return c, nil
 }
 
@@ -103,7 +102,7 @@ func (c *LatestBalancesController) CallV3(context context.Context, client *forma
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	v3Balances := &response.V3PoolBalancesResponse.V3PoolBalances
+	v3Balances := &response.V3PoolBalancesResponse.Data
 
 	poolBalances := make([]payments.PoolBalance, 0, len(*v3Balances))
 	for _, v3Balance := range *v3Balances {

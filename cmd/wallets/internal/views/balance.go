@@ -6,12 +6,11 @@ import (
 
 	"github.com/pterm/pterm"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/wallets"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/wallets"
 )
 
-func PrintBalance(out io.Writer, balance wallets.AssetHolder1) error {
+func PrintBalance(out io.Writer, balance wallets.BalanceWithAssets) error {
 	fctl.Section.Println("Information")
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Name"), balance.Name})

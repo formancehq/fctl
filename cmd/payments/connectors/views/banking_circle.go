@@ -4,13 +4,12 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/payments"
 )
 
 func DisplayBankingCircleConfig(cmd *cobra.Command, connectorConfig *payments.ConnectorConfigResponse) error {
-	config := connectorConfig.ConnectorConfig.BankingCircleConfig
+	config := connectorConfig.Data.BankingCircleConfig
 
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})
@@ -31,7 +30,7 @@ func DisplayBankingCircleConfig(cmd *cobra.Command, connectorConfig *payments.Co
 }
 
 func DisplayBankingCircleConfigV3(cmd *cobra.Command, v3Config *payments.V3GetConnectorConfigResponse) error {
-	config := v3Config.V3ConnectorConfig.V3BankingcircleConfig
+	config := v3Config.Data.V3BankingcircleConfig
 
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})

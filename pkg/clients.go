@@ -16,10 +16,11 @@ import (
 	"github.com/formancehq/fctl/internal/deployserverclient/v3"
 	"github.com/formancehq/fctl/internal/membershipclient/v3"
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
-	formance "github.com/formancehq/formance-sdk-go/v4"
 	"github.com/formancehq/go-libs/v4/collectionutils"
 	"github.com/formancehq/go-libs/v4/oidc"
 	"github.com/formancehq/go-libs/v4/oidc/client"
+
+	formance "github.com/formancehq/fctl/v3/pkg/client"
 )
 
 func getVersion(cmd *cobra.Command) string {
@@ -645,7 +646,8 @@ func NewAppDeployClientFromFlags(
 }
 
 type stackTokenSource struct {
-	mu sync.Mutex
+	mu  sync.Mutex
+	ctx context.Context
 
 	// Membership token
 	stackToken AccessToken
@@ -683,7 +685,7 @@ func (t *stackTokenSource) Token() (*oauth2.Token, error) {
 		}
 
 		if t.stackToken.Expired() {
-			newStackToken, err := Refresh(context.Background(), t.relyingParty, t.stackToken)
+			newStackToken, err := Refresh(t.ctx, t.relyingParty, t.stackToken)
 			if err != nil {
 				oidcErr := &oidc.Error{}
 				if errors.As(err, &oidcErr) && (oidcErr.ErrorType == oidc.InvalidToken || oidcErr.ErrorType == oidc.InvalidRequest) {
@@ -697,7 +699,7 @@ func (t *stackTokenSource) Token() (*oauth2.Token, error) {
 			}
 		}
 
-		token, err := FetchStackToken(context.Background(), t.relyingParty.HttpClient(), t.stackAccess.URI, t.stackToken.Token)
+		token, err := FetchStackToken(t.ctx, t.relyingParty.HttpClient(), t.stackAccess.URI, t.stackToken.Token)
 		if err != nil {
 			return nil, err
 		}
@@ -729,7 +731,12 @@ func NewStackTokenSource(
 	organizationID string,
 	stackID string,
 ) oauth2.TokenSource {
+	tokenContext := context.Background()
+	if cmd != nil && cmd.Context() != nil {
+		tokenContext = cmd.Context()
+	}
 	return &stackTokenSource{
+		ctx:            tokenContext,
 		stackToken:     stackToken,
 		stackAccess:    stackAccess,
 		relyingParty:   relyingParty,

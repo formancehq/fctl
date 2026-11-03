@@ -7,11 +7,10 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/orchestration"
-
 	"github.com/formancehq/fctl/v3/cmd/orchestration/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/orchestration"
 )
 
 type InstancesShowStore struct {
@@ -66,15 +65,15 @@ func (c *InstancesShowController) Run(cmd *cobra.Command, args []string) (fctl.R
 		return nil, fmt.Errorf("reading instance: %w", err)
 	}
 
-	c.store.WorkflowInstance = res.GetWorkflowInstanceResponse.WorkflowInstance
+	c.store.WorkflowInstance = res.GetWorkflowInstanceResponse.Data
 	response, err := stackClient.Orchestration.V1.GetWorkflow(cmd.Context(), operations.GetWorkflowRequest{
-		FlowID: res.GetWorkflowInstanceResponse.WorkflowInstance.WorkflowID,
+		FlowID: res.GetWorkflowInstanceResponse.Data.WorkflowID,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Workflow = response.GetWorkflowResponse.Workflow
+	c.store.Workflow = response.GetWorkflowResponse.Data
 
 	return c, nil
 }

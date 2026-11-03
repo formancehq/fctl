@@ -7,9 +7,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/orchestration"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/orchestration"
 )
 
 type Workflow struct {
@@ -72,8 +71,8 @@ func (c *WorkflowsListController) Run(cmd *cobra.Command, args []string) (fctl.R
 		return Workflow{
 			ID: src.ID,
 			Name: func() string {
-				if src.WorkflowConfig.Name != nil {
-					return *src.WorkflowConfig.Name
+				if src.Config.Name != nil {
+					return *src.Config.Name
 				}
 				return ""
 			}(),

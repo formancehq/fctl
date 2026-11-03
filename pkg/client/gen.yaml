@@ -1,0 +1,68 @@
+configVersion: 2.0.0
+generation:
+  sdkClassName: Formance
+  maintainOpenAPIOrder: true
+  usageSnippets:
+    optionalPropertyRendering: withExample
+    sdkInitStyle: constructor
+  useClassNamesForArrayFields: true
+  fixes:
+    nameResolutionFeb2025: false
+    parameterOrderingFeb2024: false
+    requestResponseComponentNamesFeb2024: false
+    securityFeb2025: false
+    sharedErrorComponentsApr2025: false
+    sharedNestedComponentsJan2026: false
+    nameOverrideFeb2026: true
+  auth:
+    oAuth2ClientCredentialsEnabled: true
+    oAuth2PasswordEnabled: false
+    hoistGlobalSecurity: true
+  inferSSEOverload: true
+  sdkHooksConfigAccess: true
+  schemas:
+    allOfMergeStrategy: shallowMerge
+  requestBodyFieldName: ""
+  versioningStrategy: automatic
+  persistentEdits: {}
+  tests:
+    generateTests: true
+    generateNewTests: false
+    skipResponseBodyAssertions: false
+  telemetryEnabled: false
+go:
+  version: 0.0.0
+  additionalDependencies: {}
+  allowUnknownFieldsInWeakUnions: false
+  author: Formance
+  baseErrorName: FormanceError
+  clientServerStatusCodesAsErrors: true
+  defaultErrorName: SDKError
+  enableCustomCodeRegions: false
+  enableSkipDeserialization: false
+  flattenGlobalSecurity: false
+  forwardCompatibleEnumsByDefault: false
+  forwardCompatibleUnionsByDefault: "false"
+  imports:
+    option: openapi
+    paths:
+      callbacks: pkg/models/callbacks
+      errors: pkg/models/sdkerrors
+      operations: pkg/models/operations
+      shared: pkg/models/shared
+      webhooks: pkg/models/webhooks
+  includeEmptyObjects: false
+  inferUnionDiscriminators: false
+  inputModelSuffix: input
+  maxMethodParams: 0
+  methodArguments: require-security-and-request
+  modulePath: github.com/formancehq/fctl/v3/pkg/client
+  multipartArrayFormat: legacy
+  nullableOptionalWrapper: false
+  outputModelSuffix: output
+  packageName: github.com/formancehq/fctl/v3/pkg/client
+  respectRequiredFields: false
+  respectTitlesForPrimitiveUnionMembers: false
+  responseFormat: envelope
+  sdkPackageName: ""
+  unionStrategy: left-to-right

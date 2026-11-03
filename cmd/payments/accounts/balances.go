@@ -7,14 +7,13 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/payments"
 )
 
 type ListBalancesStore struct {
-	Cursor *payments.BalancesCursorCursorBase `json:"cursor"`
+	Cursor *payments.BalancesCursorCursor `json:"cursor"`
 }
 
 type ListBalancesController struct {
@@ -28,7 +27,7 @@ var _ fctl.Controller[*ListBalancesStore] = (*ListBalancesController)(nil)
 
 func NewListBalanceStore() *ListBalancesStore {
 	return &ListBalancesStore{
-		Cursor: &payments.BalancesCursorCursorBase{},
+		Cursor: &payments.BalancesCursorCursor{},
 	}
 }
 
@@ -83,7 +82,7 @@ func (c *ListBalancesController) Run(cmd *cobra.Command, args []string) (fctl.Re
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Cursor = &response.BalancesCursor.CursorBase
+	c.store.Cursor = &response.BalancesCursor.Cursor
 
 	return c, nil
 }

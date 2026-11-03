@@ -8,9 +8,9 @@ import (
 	"github.com/pterm/pterm"
 
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/components"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/gateway"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/gateway"
 )
 
 func PrintStackInformation(out io.Writer, stack *components.Stack, versions *gateway.GetVersionsResponse) error {

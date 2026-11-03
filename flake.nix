@@ -67,6 +67,27 @@
     {
       packages = forEachSupportedSystem ({ pkgs, pkgs-unstable, system }:
         {
+          stack-speakeasy = pkgs.stdenv.mkDerivation {
+            pname = "stack-speakeasy";
+            version = "1.770.0";
+            src = pkgs.fetchurl {
+              url = "https://github.com/speakeasy-api/speakeasy/releases/download/v1.770.0/speakeasy_${speakeasyPlatforms.${system}}.zip";
+              sha256 = {
+                "x86_64-linux" = "736e56ae7e7faf81592a36ff69f41f25e8bf52b4c0e00e4ac66f876802265d8f";
+                "aarch64-linux" = "2fec38a5843d1813e64f863360cb2aca47e82b4a9e13d00b1803300b67ba96b0";
+                "x86_64-darwin" = "5de9a85514963d1f6c9183e0341f9e0bbabf34e69cdba47d4f02db6e7b62395f";
+                "aarch64-darwin" = "316706951a5948a8662192abe51e09312f795a900cb5a6f29eba030265f15eea";
+              }.${system};
+            };
+            nativeBuildInputs = [ pkgs.unzip ];
+            dontUnpack = true;
+            installPhase = ''
+              mkdir -p $out/bin
+              unzip $src
+              install -m755 speakeasy $out/bin/speakeasy
+            '';
+            meta.mainProgram = "speakeasy";
+          };
           speakeasy = pkgs.stdenv.mkDerivation {
             pname = "speakeasy";
             version = speakeasyVersion;

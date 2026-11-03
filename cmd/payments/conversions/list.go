@@ -8,11 +8,10 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	paymentsmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
-
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	paymentsmodels "github.com/formancehq/fctl/v3/pkg/client/pkg/models/payments"
 )
 
 const conversionsMinMinor = 3
@@ -179,10 +178,10 @@ func toConversion(cv paymentsmodels.V3Conversion) Conversion {
 		DestinationAmount:    cv.DestinationAmount,
 		Fee:                  cv.Fee,
 		FeeAsset:             cv.FeeAsset,
-		Status:               string(cv.V3ConversionStatusEnum),
+		Status:               string(cv.Status),
 		SourceAccountID:      cv.SourceAccountID,
 		DestinationAccountID: cv.DestinationAccountID,
-		Metadata:             cv.V3Metadata,
+		Metadata:             cv.Metadata,
 		Error:                cv.Error,
 	}
 }

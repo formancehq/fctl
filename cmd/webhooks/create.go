@@ -7,9 +7,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	webhooksmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/webhooks"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	webhooksmodels "github.com/formancehq/fctl/v3/pkg/client/pkg/models/webhooks"
 )
 
 const (
@@ -73,7 +72,7 @@ func (c *CreateWebhookController) Run(cmd *cobra.Command, args []string) (fctl.R
 		return nil, fmt.Errorf("creating config: %w", err)
 	}
 
-	c.store.Webhook = response.ConfigResponse.WebhooksConfig
+	c.store.Webhook = response.ConfigResponse.Data
 
 	return c, nil
 }

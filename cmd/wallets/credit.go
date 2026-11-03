@@ -8,12 +8,11 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	formance "github.com/formancehq/formance-sdk-go/v4"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	walletsmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/wallets"
-
 	"github.com/formancehq/fctl/v3/cmd/wallets/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	formance "github.com/formancehq/fctl/v3/pkg/client"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	walletsmodels "github.com/formancehq/fctl/v3/pkg/client/pkg/models/wallets"
 )
 
 type CreditWalletStore struct {
@@ -113,7 +112,7 @@ func (c *CreditWalletController) Run(cmd *cobra.Command, args []string) (fctl.Re
 		IdempotencyKey: fctl.Ptr(fctl.GetString(cmd, c.ikFlag)),
 		ID:             walletID,
 		CreditWalletRequest: &walletsmodels.CreditWalletRequest{
-			Monetary: walletsmodels.Monetary{
+			Amount: walletsmodels.Monetary{
 				Asset:  asset,
 				Amount: amount,
 			},

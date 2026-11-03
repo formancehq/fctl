@@ -7,11 +7,10 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/wallets"
-
 	"github.com/formancehq/fctl/v3/cmd/wallets/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/wallets"
 )
 
 type CreateStore struct {
@@ -97,7 +96,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fmt.Errorf("creating balance: %w", err)
 	}
 
-	c.store.BalanceName = response.CreateBalanceResponse.Balance.Name
+	c.store.BalanceName = response.CreateBalanceResponse.Data.Name
 	return c, nil
 }
 

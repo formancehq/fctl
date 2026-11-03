@@ -7,9 +7,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/auth"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/auth"
 )
 
 type CreateClient struct {
@@ -95,7 +94,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 	trusted := fctl.GetBool(cmd, c.trustedFlag)
 	description := fctl.GetString(cmd, c.descriptionFlag)
 
-	request := auth.ClientOptions1{
+	request := auth.ClientOptions{
 		Public:                 &public,
 		RedirectUris:           fctl.GetStringSlice(cmd, c.redirectUriFlag),
 		Description:            &description,
@@ -114,13 +113,13 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 	}
 
 	c.store.Client = &CreateClient{
-		ID:                    response.CreateClientResponse.ClientOptions.ID,
-		Name:                  response.CreateClientResponse.ClientOptions.Name,
-		Description:           fctl.StringPointerToString(response.CreateClientResponse.ClientOptions.Description),
-		IsPublic:              fctl.BoolPointerToString(response.CreateClientResponse.ClientOptions.Public),
-		RedirectUri:           strings.Join(response.CreateClientResponse.ClientOptions.RedirectUris, ","),
-		PostLogoutRedirectUri: strings.Join(response.CreateClientResponse.ClientOptions.PostLogoutRedirectUris, ","),
-		Scopes:                response.CreateClientResponse.ClientOptions.Scopes,
+		ID:                    response.CreateClientResponse.Data.ID,
+		Name:                  response.CreateClientResponse.Data.Name,
+		Description:           fctl.StringPointerToString(response.CreateClientResponse.Data.Description),
+		IsPublic:              fctl.BoolPointerToString(response.CreateClientResponse.Data.Public),
+		RedirectUri:           strings.Join(response.CreateClientResponse.Data.RedirectUris, ","),
+		PostLogoutRedirectUri: strings.Join(response.CreateClientResponse.Data.PostLogoutRedirectUris, ","),
+		Scopes:                response.CreateClientResponse.Data.Scopes,
 	}
 
 	return c, nil

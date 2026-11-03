@@ -7,10 +7,9 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	paymentsmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
-
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	paymentsmodels "github.com/formancehq/fctl/v3/pkg/client/pkg/models/payments"
 )
 
 type CreateStore struct {
@@ -96,7 +95,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.PaymentID = response.PaymentResponse.Payment.ID
+	c.store.PaymentID = response.PaymentResponse.Data.ID
 
 	return c, nil
 }

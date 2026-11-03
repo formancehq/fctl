@@ -5,3 +5,10 @@ dist/
 autocomplete.*
 fctl
 coverage.*
+
+**/.speakeasy/temp/
+**/.speakeasy/logs/
+**/.speakeasy/reports/
+
+# Speakeasy SDK reference docs are not maintained in FCTL
+/pkg/client/docs/

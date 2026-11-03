@@ -1,12 +1,14 @@
 package ledger
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	formance "github.com/formancehq/fctl/v3/pkg/client"
 )
 
 type ServerInfoStore struct {
@@ -58,15 +60,25 @@ func (c *ServerInfoController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 		return nil, err
 	}
 
-	response, err := stackClient.Ledger.V1.GetInfo(cmd.Context())
-	if err != nil {
+	if err := c.readInfo(cmd.Context(), stackClient); err != nil {
 		return nil, err
 	}
-
-	c.store.Server = response.ConfigInfoResponse.ConfigInfo.Server
-	c.store.Version = response.ConfigInfoResponse.ConfigInfo.Version
-
 	return c, nil
+}
+
+func (c *ServerInfoController) readInfo(ctx context.Context, stackClient *formance.Formance) error {
+	response, err := stackClient.Ledger.V2.GetInfo(ctx)
+	if err != nil {
+		return err
+	}
+
+	if response == nil || response.V2ConfigInfo == nil {
+		return fmt.Errorf("read Ledger server info: empty response")
+	}
+	c.store.Server = response.V2ConfigInfo.Server
+	c.store.Version = response.V2ConfigInfo.Version
+
+	return nil
 }
 
 func (c *ServerInfoController) Render(cmd *cobra.Command, args []string) error {

@@ -6,9 +6,8 @@ import (
 
 	"github.com/pterm/pterm"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/wallets"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/wallets"
 )
 
 func PrintWallet(out io.Writer, wallet wallets.WalletWithBalances) error {
@@ -25,13 +24,13 @@ func PrintWallet(out io.Writer, wallet wallets.WalletWithBalances) error {
 	}
 
 	fctl.Section.Println("Balances")
-	if len(wallet.Balances.AssetHolder.Assets) == 0 {
+	if len(wallet.Balances.Main.Assets) == 0 {
 		fctl.Println("No balances found.")
 		return nil
 	}
 	tableData = pterm.TableData{}
 	tableData = append(tableData, []string{"Asset", "Amount"})
-	for asset, amount := range wallet.Balances.AssetHolder.Assets {
+	for asset, amount := range wallet.Balances.Main.Assets {
 		tableData = append(tableData, []string{asset, fmt.Sprint(amount)})
 	}
 	if err := pterm.DefaultTable.

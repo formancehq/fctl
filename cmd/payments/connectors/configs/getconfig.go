@@ -11,14 +11,14 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
 	"github.com/formancehq/go-libs/v4/collectionutils"
 
 	"github.com/formancehq/fctl/v3/cmd/payments/connectors/internal"
 	"github.com/formancehq/fctl/v3/cmd/payments/connectors/views"
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/payments"
 )
 
 type PaymentsLoadConfigStore struct {
@@ -175,13 +175,13 @@ func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (f
 			return nil, fmt.Errorf("unexpected status code: %d", connectorList.StatusCode)
 		}
 
-		connectorsFiltered := collectionutils.Filter(connectorList.ConnectorsResponse.Data, func(connector payments.ConnectorsResponseData) bool {
+		connectorsFiltered := collectionutils.Filter(connectorList.ConnectorsResponse.Data, func(connector payments.Data) bool {
 			if connectorID != "" {
 				return connector.ConnectorID == connectorID
 			}
 
 			if provider != "" {
-				return connector.Connector == payments.Connector(strings.ToUpper(provider))
+				return connector.Provider == payments.Connector(strings.ToUpper(provider))
 			}
 
 			return true
@@ -191,12 +191,12 @@ func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (f
 		case 0:
 			return nil, fmt.Errorf("no connectors found")
 		case 1:
-			provider = string(connectorsFiltered[0].Connector)
+			provider = string(connectorsFiltered[0].Provider)
 			connectorID = connectorsFiltered[0].ConnectorID
 		default:
 			options := make([]string, 0, len(connectorsFiltered))
 			for _, connector := range connectorsFiltered {
-				options = append(options, strings.Join([]string{"id:" + connector.ConnectorID, "provider:" + string(connector.Connector), "name:" + connector.Name, "enabled:" + fctl.BoolPointerToString(connector.Enabled)}, " "))
+				options = append(options, strings.Join([]string{"id:" + connector.ConnectorID, "provider:" + string(connector.Provider), "name:" + connector.Name, "enabled:" + fctl.BoolPointerToString(connector.Enabled)}, " "))
 			}
 			printer := pterm.DefaultInteractiveSelect.WithOptions(options)
 			selectedOption, err := printer.Show("Please select a connector")

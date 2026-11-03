@@ -3,11 +3,10 @@ package transactions
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/ledger"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-
 	"github.com/formancehq/fctl/v3/cmd/ledger/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/ledger"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type ShowStore struct {
@@ -61,7 +60,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, err
 	}
 
-	response, err := stackClient.Ledger.V1.GetTransaction(cmd.Context(), operations.GetTransactionRequest{
+	response, err := stackClient.Ledger.V1.GetTransactionLedger(cmd.Context(), operations.GetTransactionLedgerRequest{
 		Ledger: ledger,
 		Txid:   txId,
 	})
@@ -69,7 +68,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, err
 	}
 
-	c.store.Transaction = response.TransactionResponse.Transaction
+	c.store.Transaction = response.TransactionResponse.Data
 
 	return c, nil
 }

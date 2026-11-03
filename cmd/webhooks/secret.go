@@ -6,10 +6,9 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	webhooksmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/webhooks"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	webhooksmodels "github.com/formancehq/fctl/v3/pkg/client/pkg/models/webhooks"
 )
 
 type ChangeSecretStore struct {
@@ -68,8 +67,8 @@ func (c *ChangeSecretWebhookController) Run(cmd *cobra.Command, args []string) (
 		return nil, fmt.Errorf("changing secret: %w", err)
 	}
 
-	c.store.ID = response.ConfigResponse.WebhooksConfig.ID
-	c.store.Secret = response.ConfigResponse.WebhooksConfig.Secret
+	c.store.ID = response.ConfigResponse.Data.ID
+	c.store.Secret = response.ConfigResponse.Data.Secret
 
 	return c, nil
 }

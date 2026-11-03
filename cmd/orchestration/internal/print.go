@@ -7,9 +7,8 @@ import (
 
 	"github.com/pterm/pterm"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/orchestration"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/orchestration"
 )
 
 func PrintWorkflowInstance(out io.Writer, w orchestration.Workflow, instance orchestration.WorkflowInstance) error {
@@ -23,7 +22,7 @@ func PrintWorkflowInstance(out io.Writer, w orchestration.Workflow, instance orc
 			fctl.Prepend(
 				fctl.Map(instance.Status,
 					func(src orchestration.StageStatus) []string {
-						stage := w.WorkflowConfig.Stages[ind]
+						stage := w.Config.Stages[ind]
 						var name string
 						for name = range stage {
 						}

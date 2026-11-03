@@ -7,14 +7,13 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/orchestration"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/orchestration"
 )
 
 type TriggersShowStore struct {
-	Trigger orchestration.TriggerData `json:"trigger"`
+	Trigger orchestration.Trigger `json:"trigger"`
 }
 type TriggersShowController struct {
 	store *TriggersShowStore
@@ -64,7 +63,7 @@ func (c *TriggersShowController) Run(cmd *cobra.Command, args []string) (fctl.Re
 		return nil, fmt.Errorf("reading trigger: %w", err)
 	}
 
-	c.store.Trigger = res.ReadTriggerResponse.TriggerData
+	c.store.Trigger = res.ReadTriggerResponse.Data
 
 	return c, nil
 }

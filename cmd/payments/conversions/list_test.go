@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	paymentsmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
+	paymentsmodels "github.com/formancehq/fctl/v3/pkg/client/pkg/models/payments"
 )
 
 func TestBuildQuery(t *testing.T) {
@@ -44,18 +44,18 @@ func TestBuildQuery(t *testing.T) {
 func TestToConversion(t *testing.T) {
 	now := time.Now().UTC().Truncate(time.Second)
 	got := toConversion(paymentsmodels.V3Conversion{
-		ID:                     "cv_1",
-		ConnectorID:            "conn_1",
-		Provider:               "coinbaseprime",
-		Reference:              "ref-1",
-		CreatedAt:              now,
-		UpdatedAt:              now,
-		V3ConversionStatusEnum: paymentsmodels.V3ConversionStatusEnum("COMPLETED"),
-		SourceAsset:            "USD/2",
-		DestinationAsset:       "USDC/6",
-		SourceAmount:           big.NewInt(1000),
-		DestinationAmount:      big.NewInt(999),
-		V3Metadata:             map[string]string{"k": "v"},
+		ID:                "cv_1",
+		ConnectorID:       "conn_1",
+		Provider:          "coinbaseprime",
+		Reference:         "ref-1",
+		CreatedAt:         now,
+		UpdatedAt:         now,
+		Status:            paymentsmodels.V3ConversionStatusEnum("COMPLETED"),
+		SourceAsset:       "USD/2",
+		DestinationAsset:  "USDC/6",
+		SourceAmount:      big.NewInt(1000),
+		DestinationAmount: big.NewInt(999),
+		Metadata:          map[string]string{"k": "v"},
 	})
 
 	if got.ID != "cv_1" {

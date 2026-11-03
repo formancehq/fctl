@@ -6,10 +6,9 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	ledgermodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/ledger"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	ledgermodels "github.com/formancehq/fctl/v3/pkg/client/pkg/models/ledger"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type ListStore struct {
@@ -72,7 +71,7 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
 	tableData := fctl.Map(c.store.Ledgers, func(ledger ledgermodels.V2Ledger) []string {
 		return []string{
-			ledger.Name, ledger.AddedAt.Format(time.RFC3339Nano), fctl.MetadataAsShortString(ledger.V2Metadata),
+			ledger.Name, ledger.AddedAt.Format(time.RFC3339Nano), fctl.MetadataAsShortString(ledger.Metadata),
 		}
 	})
 	tableData = fctl.Prepend(tableData, []string{"Name", "Created at", "Metadata"})

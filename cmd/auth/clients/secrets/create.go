@@ -6,10 +6,9 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/auth"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/auth"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type CreateStore struct {
@@ -79,9 +78,9 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.SecretId = response.CreateSecretResponse.SecretOptions.ID
-	c.store.Name = response.CreateSecretResponse.SecretOptions.Name
-	c.store.Clear = response.CreateSecretResponse.SecretOptions.Clear
+	c.store.SecretId = response.CreateSecretResponse.Data.ID
+	c.store.Name = response.CreateSecretResponse.Data.Name
+	c.store.Clear = response.CreateSecretResponse.Data.Clear
 
 	return c, nil
 }

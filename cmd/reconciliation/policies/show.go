@@ -8,10 +8,9 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/reconciliation"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/reconciliation"
 )
 
 type ShowStore struct {
@@ -74,7 +73,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("policy not found")
 	}
 
-	c.store.Policy = response.PolicyResponse.Policy
+	c.store.Policy = response.PolicyResponse.Data
 
 	return c, nil
 }

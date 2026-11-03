@@ -6,15 +6,14 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/auth"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-
 	"github.com/formancehq/fctl/v3/cmd/auth/clients/views"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/auth"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type ShowStore struct {
-	Client *auth.ClientOptions `json:"client,omitempty"`
+	Client *auth.Client `json:"client,omitempty"`
 }
 type ShowController struct {
 	store *ShowStore
@@ -70,7 +69,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Client = response.ReadClientResponse.ClientOptions
+	c.store.Client = response.ReadClientResponse.Data
 
 	return c, nil
 }

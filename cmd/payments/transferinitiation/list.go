@@ -7,15 +7,14 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
-
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/payments"
 )
 
 type ListStore struct {
-	Cursor *payments.TransferInitiationsCursorCursorBase `json:"cursor"`
+	Cursor *payments.TransferInitiationsCursorCursor `json:"cursor"`
 }
 
 type ListController struct {
@@ -35,7 +34,7 @@ var _ fctl.Controller[*ListStore] = (*ListController)(nil)
 
 func NewListStore() *ListStore {
 	return &ListStore{
-		Cursor: &payments.TransferInitiationsCursorCursorBase{},
+		Cursor: &payments.TransferInitiationsCursorCursor{},
 	}
 }
 
@@ -96,7 +95,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Cursor = &response.TransferInitiationsCursor.CursorBase
+	c.store.Cursor = &response.TransferInitiationsCursor.Cursor
 
 	return c, nil
 }
@@ -116,7 +115,7 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 			fmt.Sprint(tf.Amount),
 			fmt.Sprint(tf.InitialAmount),
 			tf.Asset,
-			string(tf.TransferInitiationStatus),
+			string(tf.Status),
 			*tf.Error,
 		}
 	})

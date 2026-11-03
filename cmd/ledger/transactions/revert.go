@@ -3,11 +3,11 @@ package transactions
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
 	"github.com/formancehq/go-libs/v4/pointer"
 
 	"github.com/formancehq/fctl/v3/cmd/ledger/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type RevertStore struct {
@@ -82,20 +82,20 @@ func (c *RevertController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 			return nil, err
 		}
 
-		c.store.Transaction = internal.WrapV2Transaction(response.V2CreateTransactionResponse.V2Transaction)
+		c.store.Transaction = internal.WrapV2Transaction(response.V2CreateTransactionResponse.Data)
 	} else {
-		request := operations.RevertTransactionRequest{
+		request := operations.RevertTransactionLedgerRequest{
 			Ledger:        ledger,
 			Txid:          txId,
 			DisableChecks: &force,
 		}
 
-		response, err := stackClient.Ledger.V1.RevertTransaction(cmd.Context(), request)
+		response, err := stackClient.Ledger.V1.RevertTransactionLedger(cmd.Context(), request)
 		if err != nil {
 			return nil, err
 		}
 
-		c.store.Transaction = internal.WrapV1Transaction(response.TransactionResponse.Transaction)
+		c.store.Transaction = internal.WrapV1Transaction(response.TransactionResponse.Data)
 	}
 
 	return c, nil

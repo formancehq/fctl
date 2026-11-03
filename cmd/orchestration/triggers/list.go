@@ -7,14 +7,13 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/orchestration"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/orchestration"
 )
 
 type TriggersListStore struct {
-	WorkflowTrigger []orchestration.TriggerData `json:"workflowTriggers"`
+	WorkflowTrigger []orchestration.Trigger `json:"workflowTriggers"`
 }
 type TriggersListController struct {
 	store    *TriggersListStore
@@ -86,7 +85,7 @@ func (c *TriggersListController) Render(cmd *cobra.Command, args []string) error
 		WithData(
 			fctl.Prepend(
 				fctl.Map(c.store.WorkflowTrigger,
-					func(src orchestration.TriggerData) []string {
+					func(src orchestration.Trigger) []string {
 						return []string{
 							src.ID,
 							*src.Name,

@@ -8,14 +8,14 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/orchestration"
 	"github.com/formancehq/go-libs/v4/pointer"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/orchestration"
 )
 
 type TriggersCreateStore struct {
-	Trigger orchestration.TriggerData `json:"trigger"`
+	Trigger orchestration.Trigger `json:"trigger"`
 }
 type TriggersCreateController struct {
 	store      *TriggersCreateStore
@@ -76,7 +76,7 @@ func (c *TriggersCreateController) Run(cmd *cobra.Command, args []string) (fctl.
 		workflow = args[1]
 	)
 
-	data := &orchestration.TriggerData1{
+	data := &orchestration.TriggerData{
 		Event:      event,
 		Name:       &name,
 		WorkflowID: workflow,
@@ -100,7 +100,7 @@ func (c *TriggersCreateController) Run(cmd *cobra.Command, args []string) (fctl.
 		return nil, fmt.Errorf("reading trigger: %w", err)
 	}
 
-	c.store.Trigger = res.CreateTriggerResponse.TriggerData
+	c.store.Trigger = res.CreateTriggerResponse.Data
 
 	return c, nil
 }

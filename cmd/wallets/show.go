@@ -6,12 +6,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	walletsmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/wallets"
-
 	"github.com/formancehq/fctl/v3/cmd/wallets/internal"
 	"github.com/formancehq/fctl/v3/cmd/wallets/internal/views"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	walletsmodels "github.com/formancehq/fctl/v3/pkg/client/pkg/models/wallets"
 )
 
 type ShowStore struct {
@@ -78,7 +77,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("getting wallet: %w", err)
 	}
 
-	c.store.Wallet = response.GetWalletResponse.WalletWithBalances
+	c.store.Wallet = response.GetWalletResponse.Data
 
 	return c, nil
 }

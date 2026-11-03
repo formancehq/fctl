@@ -1,0 +1,16 @@
+speakeasyVersion: 1.770.0
+sources: {}
+targets:
+    formance-sdk-go:
+        source: stacks-source
+workflow:
+    workflowVersion: 1.0.0
+    speakeasyVersion: 1.770.0
+    sources:
+        stacks-source:
+            inputs:
+                - location: registry.speakeasyapi.dev/formance/formance/stacks-source@v4.0.0-beta.1
+    targets:
+        formance-sdk-go:
+            target: go
+            source: stacks-source

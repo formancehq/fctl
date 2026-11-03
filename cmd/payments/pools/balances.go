@@ -7,10 +7,9 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/payments"
 )
 
 type BalancesStore struct {
@@ -71,7 +70,7 @@ func (c *BalancesController) Run(cmd *cobra.Command, args []string) (fctl.Render
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Balances = &response.PoolBalancesResponse.PoolBalances
+	c.store.Balances = &response.PoolBalancesResponse.Data
 
 	return c, nil
 }

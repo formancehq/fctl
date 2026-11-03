@@ -7,12 +7,11 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	formance "github.com/formancehq/formance-sdk-go/v4"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
-
 	"github.com/formancehq/fctl/v3/cmd/payments/versions"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	formance "github.com/formancehq/fctl/v3/pkg/client"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/payments"
 )
 
 type ListStore struct {
@@ -102,7 +101,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Cursor = ToV3BankAccountCursor(&response.BankAccountsCursor.CursorBase)
+	c.store.Cursor = ToV3BankAccountCursor(&response.BankAccountsCursor.Cursor)
 
 	return c, nil
 }
@@ -128,7 +127,7 @@ func (c *ListController) v3list(cmd *cobra.Command, stackClient *formance.Forman
 	return c, nil
 }
 
-func ToV3BankAccountCursor(c *payments.BankAccountsCursorCursorBase) *payments.V3BankAccountsCursorResponseCursor {
+func ToV3BankAccountCursor(c *payments.BankAccountsCursorCursor) *payments.V3BankAccountsCursorResponseCursor {
 	cursor := &payments.V3BankAccountsCursorResponseCursor{
 		Data:     make([]payments.V3BankAccount, 0, len(c.Data)),
 		HasMore:  c.HasMore,
