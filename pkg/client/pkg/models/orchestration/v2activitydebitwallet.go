@@ -5,16 +5,16 @@ package orchestration
 // V2ActivityDebitWallet - Arguments for the activity that debits a wallet
 type V2ActivityDebitWallet struct {
 	// A debit to apply to a wallet
-	Data *V2DebitWalletRequest `json:"data,omitempty"`
+	V2DebitWalletRequest *V2DebitWalletRequest `json:"data,omitempty"`
 	// Identifier of the wallet to debit
 	ID *string `json:"id,omitempty"`
 }
 
-func (v *V2ActivityDebitWallet) GetData() *V2DebitWalletRequest {
+func (v *V2ActivityDebitWallet) GetV2DebitWalletRequest() *V2DebitWalletRequest {
 	if v == nil {
 		return nil
 	}
-	return v.Data
+	return v.V2DebitWalletRequest
 }
 
 func (v *V2ActivityDebitWallet) GetID() *string {

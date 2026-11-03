@@ -73,7 +73,7 @@ func (c *WorkflowsCreateController) Run(cmd *cobra.Command, args []string) (fctl
 		return nil, err
 	}
 
-	c.store.WorkflowId = response.CreateWorkflowResponse.Data.ID
+	c.store.WorkflowId = response.CreateWorkflowResponse.Workflow.ID
 
 	return c, nil
 }

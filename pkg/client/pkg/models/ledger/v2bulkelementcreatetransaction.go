@@ -7,9 +7,9 @@ import (
 )
 
 type V2BulkElementCreateTransaction struct {
+	V2PostTransaction *V2PostTransaction `json:"data,omitempty"`
 	// The bulk action this element performs
-	Action string             `json:"action"`
-	Data   *V2PostTransaction `json:"data,omitempty"`
+	Action string `json:"action"`
 	// Idempotency key scoped to this element, making it safe to retry the bulk request
 	Ik *string `json:"ik,omitempty"`
 }
@@ -25,18 +25,18 @@ func (v *V2BulkElementCreateTransaction) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (v *V2BulkElementCreateTransaction) GetV2PostTransaction() *V2PostTransaction {
+	if v == nil {
+		return nil
+	}
+	return v.V2PostTransaction
+}
+
 func (v *V2BulkElementCreateTransaction) GetAction() string {
 	if v == nil {
 		return ""
 	}
 	return v.Action
-}
-
-func (v *V2BulkElementCreateTransaction) GetData() *V2PostTransaction {
-	if v == nil {
-		return nil
-	}
-	return v.Data
 }
 
 func (v *V2BulkElementCreateTransaction) GetIk() *string {

@@ -8,20 +8,20 @@ import (
 
 // CreatedTransactionActionRead - Exactly one field must be set.
 type CreatedTransactionActionRead struct {
-	DeleteAccountMetadata *DeleteAccountMetadataAction `json:"deleteAccountMetadata,omitempty"`
-	DeleteMetadata        *DeleteMetadataAction        `json:"deleteMetadata,omitempty"`
+	DeleteAccountMetadataAction *DeleteAccountMetadataAction `json:"deleteAccountMetadata,omitempty"`
+	DeleteMetadataAction        *DeleteMetadataAction        `json:"deleteMetadata,omitempty"`
 	// Turns the entry into a fill-gap that preserves log-ID and tx-ID continuity.
-	Drop           *DropAction               `json:"drop,omitempty"`
-	RewriteAddress *RewriteAddressActionRead `json:"rewriteAddress,omitempty"`
+	DropAction               *DropAction               `json:"drop,omitempty"`
+	RewriteAddressActionRead *RewriteAddressActionRead `json:"rewriteAddress,omitempty"`
 	// See SetMetadataActionRead for the literal-vs-CEL and `type` semantics.
 	//
-	SetAccountMetadata *SetAccountMetadataActionRead `json:"setAccountMetadata,omitempty"`
+	SetAccountMetadataActionRead *SetAccountMetadataActionRead `json:"setAccountMetadata,omitempty"`
 	// For every posting address matching `pattern`, iterate every entry in `replacements` and set accountMetadata[address][key] to the RE2 replacement of the address. Each replacement carries an optional metadata `type` token (same tokens as SetMetadataActionRead.type).
 	//
-	SetAccountMetadataFromAddress *SetAccountMetadataFromAddressActionRead `json:"setAccountMetadataFromAddress,omitempty"`
+	SetAccountMetadataFromAddressActionRead *SetAccountMetadataFromAddressActionRead `json:"setAccountMetadataFromAddress,omitempty"`
 	// `value` is a literal metadata string; `valueExpr` is a CEL expression typed against the current variant and evaluated at commit time (e.g. `log.reference`). Exactly one of the two should be set; if neither is set the value defaults to the empty string. Optional `type` coerces the produced string into a typed MetadataValue via the platform conversion matrix — one of "string" (default), "int64", "bool", "uint64", "int8"/"int16"/"int32", "uint8"/"uint16"/"uint32", "datetime".
 	//
-	SetMetadata *SetMetadataActionRead `json:"setMetadata,omitempty"`
+	SetMetadataActionRead *SetMetadataActionRead `json:"setMetadata,omitempty"`
 }
 
 func (c CreatedTransactionActionRead) MarshalJSON() ([]byte, error) {
@@ -35,51 +35,51 @@ func (c *CreatedTransactionActionRead) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (c *CreatedTransactionActionRead) GetDeleteAccountMetadata() *DeleteAccountMetadataAction {
+func (c *CreatedTransactionActionRead) GetDeleteAccountMetadataAction() *DeleteAccountMetadataAction {
 	if c == nil {
 		return nil
 	}
-	return c.DeleteAccountMetadata
+	return c.DeleteAccountMetadataAction
 }
 
-func (c *CreatedTransactionActionRead) GetDeleteMetadata() *DeleteMetadataAction {
+func (c *CreatedTransactionActionRead) GetDeleteMetadataAction() *DeleteMetadataAction {
 	if c == nil {
 		return nil
 	}
-	return c.DeleteMetadata
+	return c.DeleteMetadataAction
 }
 
-func (c *CreatedTransactionActionRead) GetDrop() *DropAction {
+func (c *CreatedTransactionActionRead) GetDropAction() *DropAction {
 	if c == nil {
 		return nil
 	}
-	return c.Drop
+	return c.DropAction
 }
 
-func (c *CreatedTransactionActionRead) GetRewriteAddress() *RewriteAddressActionRead {
+func (c *CreatedTransactionActionRead) GetRewriteAddressActionRead() *RewriteAddressActionRead {
 	if c == nil {
 		return nil
 	}
-	return c.RewriteAddress
+	return c.RewriteAddressActionRead
 }
 
-func (c *CreatedTransactionActionRead) GetSetAccountMetadata() *SetAccountMetadataActionRead {
+func (c *CreatedTransactionActionRead) GetSetAccountMetadataActionRead() *SetAccountMetadataActionRead {
 	if c == nil {
 		return nil
 	}
-	return c.SetAccountMetadata
+	return c.SetAccountMetadataActionRead
 }
 
-func (c *CreatedTransactionActionRead) GetSetAccountMetadataFromAddress() *SetAccountMetadataFromAddressActionRead {
+func (c *CreatedTransactionActionRead) GetSetAccountMetadataFromAddressActionRead() *SetAccountMetadataFromAddressActionRead {
 	if c == nil {
 		return nil
 	}
-	return c.SetAccountMetadataFromAddress
+	return c.SetAccountMetadataFromAddressActionRead
 }
 
-func (c *CreatedTransactionActionRead) GetSetMetadata() *SetMetadataActionRead {
+func (c *CreatedTransactionActionRead) GetSetMetadataActionRead() *SetMetadataActionRead {
 	if c == nil {
 		return nil
 	}
-	return c.SetMetadata
+	return c.SetMetadataActionRead
 }

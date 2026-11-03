@@ -9,6 +9,10 @@ import (
 )
 
 type V3CreatePaymentRequest struct {
+	// Arbitrary key/value pairs attached to the resource
+	V3Metadata map[string]string `json:"metadata,omitempty"`
+	// Direction of a payment
+	V3PaymentTypeEnum V3PaymentTypeEnum `json:"type"`
 	// Status and amount changes to record alongside the payment
 	Adjustments []V3CreatePaymentAdjustmentRequest `json:"adjustments,omitempty"`
 	// Current amount of the payment, in the asset's smallest unit
@@ -23,16 +27,12 @@ type V3CreatePaymentRequest struct {
 	DestinationAccountID *string `json:"destinationAccountID,omitempty"`
 	// Amount the payment was created with, before any adjustment
 	InitialAmount *big.Int `json:"initialAmount"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
 	// Identifier the payment carries at the provider
 	Reference string `json:"reference"`
 	// Payment scheme or rail the payment travels over
 	Scheme string `json:"scheme"`
 	// Identifier of the account the funds leave
 	SourceAccountID *string `json:"sourceAccountID,omitempty"`
-	// Direction of a payment
-	Type V3PaymentTypeEnum `json:"type"`
 }
 
 func (v V3CreatePaymentRequest) MarshalJSON() ([]byte, error) {
@@ -44,6 +44,20 @@ func (v *V3CreatePaymentRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V3CreatePaymentRequest) GetV3Metadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.V3Metadata
+}
+
+func (v *V3CreatePaymentRequest) GetV3PaymentTypeEnum() V3PaymentTypeEnum {
+	if v == nil {
+		return V3PaymentTypeEnum("")
+	}
+	return v.V3PaymentTypeEnum
 }
 
 func (v *V3CreatePaymentRequest) GetAdjustments() []V3CreatePaymentAdjustmentRequest {
@@ -95,13 +109,6 @@ func (v *V3CreatePaymentRequest) GetInitialAmount() *big.Int {
 	return v.InitialAmount
 }
 
-func (v *V3CreatePaymentRequest) GetMetadata() map[string]string {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
-}
-
 func (v *V3CreatePaymentRequest) GetReference() string {
 	if v == nil {
 		return ""
@@ -121,13 +128,6 @@ func (v *V3CreatePaymentRequest) GetSourceAccountID() *string {
 		return nil
 	}
 	return v.SourceAccountID
-}
-
-func (v *V3CreatePaymentRequest) GetType() V3PaymentTypeEnum {
-	if v == nil {
-		return V3PaymentTypeEnum("")
-	}
-	return v.Type
 }
 
 // #region class-body-v3createpaymentrequest

@@ -15,7 +15,7 @@ import (
 )
 
 type TriggersCreateStore struct {
-	Trigger orchestration.Trigger `json:"trigger"`
+	Trigger orchestration.TriggerData `json:"trigger"`
 }
 type TriggersCreateController struct {
 	store      *TriggersCreateStore
@@ -76,7 +76,7 @@ func (c *TriggersCreateController) Run(cmd *cobra.Command, args []string) (fctl.
 		workflow = args[1]
 	)
 
-	data := &orchestration.TriggerData{
+	data := &orchestration.TriggerData1{
 		Event:      event,
 		Name:       &name,
 		WorkflowID: workflow,
@@ -100,7 +100,7 @@ func (c *TriggersCreateController) Run(cmd *cobra.Command, args []string) (fctl.
 		return nil, fmt.Errorf("reading trigger: %w", err)
 	}
 
-	c.store.Trigger = res.CreateTriggerResponse.Data
+	c.store.Trigger = res.CreateTriggerResponse.TriggerData
 
 	return c, nil
 }

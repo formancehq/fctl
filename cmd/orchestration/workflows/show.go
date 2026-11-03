@@ -65,7 +65,7 @@ func (c *WorkflowsShowController) Run(cmd *cobra.Command, args []string) (fctl.R
 		return nil, err
 	}
 
-	c.store.Workflow = response.GetWorkflowResponse.Data
+	c.store.Workflow = response.GetWorkflowResponse.Workflow
 
 	return c, nil
 }
@@ -75,8 +75,8 @@ func (c *WorkflowsShowController) Render(cmd *cobra.Command, args []string) erro
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("ID"), c.store.Workflow.ID})
 	tableData = append(tableData, []string{pterm.LightCyan("Name"), func() string {
-		if c.store.Workflow.Config.Name != nil {
-			return *c.store.Workflow.Config.Name
+		if c.store.Workflow.WorkflowConfig.Name != nil {
+			return *c.store.Workflow.WorkflowConfig.Name
 		}
 		return ""
 	}()})
@@ -93,7 +93,7 @@ func (c *WorkflowsShowController) Render(cmd *cobra.Command, args []string) erro
 	fmt.Fprintln(cmd.OutOrStdout())
 
 	fctl.Section.WithWriter(cmd.OutOrStdout()).Println("Configuration")
-	configAsBytes, err := yaml.Marshal(c.store.Workflow.Config)
+	configAsBytes, err := yaml.Marshal(c.store.Workflow.WorkflowConfig)
 	if err != nil {
 		panic(err)
 	}

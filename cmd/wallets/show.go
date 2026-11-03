@@ -77,7 +77,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("getting wallet: %w", err)
 	}
 
-	c.store.Wallet = response.GetWalletResponse.Data
+	c.store.Wallet = response.GetWalletResponse.WalletWithBalances
 
 	return c, nil
 }

@@ -4,14 +4,14 @@ package ledger
 
 // V2CreatePipelineV2CreatePipelineResponse - Created ipeline
 type V2CreatePipelineV2CreatePipelineResponse struct {
-	Data V2Pipeline `json:"data"`
+	V2PipelineConfiguration V2PipelineConfiguration `json:"data"`
 }
 
-func (v *V2CreatePipelineV2CreatePipelineResponse) GetData() V2Pipeline {
+func (v *V2CreatePipelineV2CreatePipelineResponse) GetV2PipelineConfiguration() V2PipelineConfiguration {
 	if v == nil {
-		return V2Pipeline{}
+		return V2PipelineConfiguration{}
 	}
-	return v.Data
+	return v.V2PipelineConfiguration
 }
 
 // #region class-body-v2createpipelinev2createpipelineresponse

@@ -4,14 +4,14 @@ package orchestration
 
 type V2GetWorkflowInstanceResponse struct {
 	// One run of a workflow, tracking its per-stage progress
-	Data V2WorkflowInstance `json:"data"`
+	V2WorkflowInstance V2WorkflowInstance `json:"data"`
 }
 
-func (v *V2GetWorkflowInstanceResponse) GetData() V2WorkflowInstance {
+func (v *V2GetWorkflowInstanceResponse) GetV2WorkflowInstance() V2WorkflowInstance {
 	if v == nil {
 		return V2WorkflowInstance{}
 	}
-	return v.Data
+	return v.V2WorkflowInstance
 }
 
 // #region class-body-v2getworkflowinstanceresponse

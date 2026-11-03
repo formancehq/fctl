@@ -10,7 +10,7 @@ import (
 // CreditWalletRequest - A credit to apply to a wallet
 type CreditWalletRequest struct {
 	// An amount together with the asset it is denominated in
-	Amount Monetary `json:"amount"`
+	Monetary Monetary `json:"amount"`
 	// The balance to credit
 	Balance *string `json:"balance,omitempty"`
 	// Metadata associated with the wallet.
@@ -34,11 +34,11 @@ func (c *CreditWalletRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (c *CreditWalletRequest) GetAmount() Monetary {
+func (c *CreditWalletRequest) GetMonetary() Monetary {
 	if c == nil {
 		return Monetary{}
 	}
-	return c.Amount
+	return c.Monetary
 }
 
 func (c *CreditWalletRequest) GetBalance() *string {

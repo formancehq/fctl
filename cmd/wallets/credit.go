@@ -112,7 +112,7 @@ func (c *CreditWalletController) Run(cmd *cobra.Command, args []string) (fctl.Re
 		IdempotencyKey: fctl.Ptr(fctl.GetString(cmd, c.ikFlag)),
 		ID:             walletID,
 		CreditWalletRequest: &walletsmodels.CreditWalletRequest{
-			Amount: walletsmodels.Monetary{
+			Monetary: walletsmodels.Monetary{
 				Asset:  asset,
 				Amount: amount,
 			},

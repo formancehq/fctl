@@ -10,23 +10,23 @@ import (
 // Input/output are flattened onto the tuple (not nested under a `volumes`
 // key). The empty color is the uncolored bucket and is always emitted.
 type VolumeEntry struct {
-	Asset string `json:"asset"`
+	// Arbitrary-precision unsigned BigUint value encoded as a JSON number by
+	// default, or a canonical decimal string when Formance-Bigint-As-String
+	// is enabled. The same rule applies to every response BigUint value,
+	// including nested fields, regardless of business meaning.
+	// JavaScript consumers should enable the header to avoid number rounding.
+	//
+	UnsignedMonetaryAmount UnsignedMonetaryAmount `json:"input"`
+	// Arbitrary-precision unsigned BigUint value encoded as a JSON number by
+	// default, or a canonical decimal string when Formance-Bigint-As-String
+	// is enabled. The same rule applies to every response BigUint value,
+	// including nested fields, regardless of business meaning.
+	// JavaScript consumers should enable the header to avoid number rounding.
+	//
+	UnsignedMonetaryAmount1 UnsignedMonetaryAmount `json:"output"`
+	Asset                   string                 `json:"asset"`
 	// Empty string for the uncolored bucket; always emitted.
 	Color string `json:"color"`
-	// Arbitrary-precision unsigned BigUint value encoded as a JSON number by
-	// default, or a canonical decimal string when Formance-Bigint-As-String
-	// is enabled. The same rule applies to every response BigUint value,
-	// including nested fields, regardless of business meaning.
-	// JavaScript consumers should enable the header to avoid number rounding.
-	//
-	Input UnsignedMonetaryAmount `json:"input"`
-	// Arbitrary-precision unsigned BigUint value encoded as a JSON number by
-	// default, or a canonical decimal string when Formance-Bigint-As-String
-	// is enabled. The same rule applies to every response BigUint value,
-	// including nested fields, regardless of business meaning.
-	// JavaScript consumers should enable the header to avoid number rounding.
-	//
-	Output UnsignedMonetaryAmount `json:"output"`
 }
 
 func (v VolumeEntry) MarshalJSON() ([]byte, error) {
@@ -34,10 +34,24 @@ func (v VolumeEntry) MarshalJSON() ([]byte, error) {
 }
 
 func (v *VolumeEntry) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"asset", "color", "input", "output"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"input", "output", "asset", "color"}); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (v *VolumeEntry) GetUnsignedMonetaryAmount() UnsignedMonetaryAmount {
+	if v == nil {
+		return UnsignedMonetaryAmount{}
+	}
+	return v.UnsignedMonetaryAmount
+}
+
+func (v *VolumeEntry) GetUnsignedMonetaryAmount1() UnsignedMonetaryAmount {
+	if v == nil {
+		return UnsignedMonetaryAmount{}
+	}
+	return v.UnsignedMonetaryAmount1
 }
 
 func (v *VolumeEntry) GetAsset() string {
@@ -52,18 +66,4 @@ func (v *VolumeEntry) GetColor() string {
 		return ""
 	}
 	return v.Color
-}
-
-func (v *VolumeEntry) GetInput() UnsignedMonetaryAmount {
-	if v == nil {
-		return UnsignedMonetaryAmount{}
-	}
-	return v.Input
-}
-
-func (v *VolumeEntry) GetOutput() UnsignedMonetaryAmount {
-	if v == nil {
-		return UnsignedMonetaryAmount{}
-	}
-	return v.Output
 }

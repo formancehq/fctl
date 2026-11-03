@@ -4,20 +4,20 @@ package ledgerv3
 
 type AnyVariantAction struct {
 	// Turns the entry into a fill-gap that preserves log-ID and tx-ID continuity.
-	Drop           *DropAction           `json:"drop,omitempty"`
-	RewriteAddress *RewriteAddressAction `json:"rewriteAddress,omitempty"`
+	DropAction           *DropAction           `json:"drop,omitempty"`
+	RewriteAddressAction *RewriteAddressAction `json:"rewriteAddress,omitempty"`
 }
 
-func (a *AnyVariantAction) GetDrop() *DropAction {
+func (a *AnyVariantAction) GetDropAction() *DropAction {
 	if a == nil {
 		return nil
 	}
-	return a.Drop
+	return a.DropAction
 }
 
-func (a *AnyVariantAction) GetRewriteAddress() *RewriteAddressAction {
+func (a *AnyVariantAction) GetRewriteAddressAction() *RewriteAddressAction {
 	if a == nil {
 		return nil
 	}
-	return a.RewriteAddress
+	return a.RewriteAddressAction
 }

@@ -8,6 +8,8 @@ import (
 )
 
 type TriggerOccurrence struct {
+	// One run of a workflow, tracking its per-stage progress
+	WorkflowInstance *WorkflowInstance `json:"workflowInstance,omitempty"`
 	// When the trigger fired
 	Date time.Time `json:"date"`
 	// Why the trigger failed to start a run, absent when it succeeded
@@ -16,8 +18,6 @@ type TriggerOccurrence struct {
 	Event map[string]any `json:"event"`
 	// Identifier of the trigger that fired
 	TriggerID string `json:"triggerID"`
-	// One run of a workflow, tracking its per-stage progress
-	WorkflowInstance *WorkflowInstance `json:"workflowInstance,omitempty"`
 	// Identifier of the run the trigger started, absent when it started none
 	WorkflowInstanceID *string `json:"workflowInstanceID,omitempty"`
 }
@@ -31,6 +31,13 @@ func (t *TriggerOccurrence) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (t *TriggerOccurrence) GetWorkflowInstance() *WorkflowInstance {
+	if t == nil {
+		return nil
+	}
+	return t.WorkflowInstance
 }
 
 func (t *TriggerOccurrence) GetDate() time.Time {
@@ -59,13 +66,6 @@ func (t *TriggerOccurrence) GetTriggerID() string {
 		return ""
 	}
 	return t.TriggerID
-}
-
-func (t *TriggerOccurrence) GetWorkflowInstance() *WorkflowInstance {
-	if t == nil {
-		return nil
-	}
-	return t.WorkflowInstance
 }
 
 func (t *TriggerOccurrence) GetWorkflowInstanceID() *string {

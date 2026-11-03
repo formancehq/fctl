@@ -70,7 +70,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("orders.get: empty response (status %d)", res.StatusCode)
 	}
 
-	order := toOrder(res.V3GetOrderResponse.Data)
+	order := toOrder(res.V3GetOrderResponse.V3Order)
 	c.store.Order = &order
 	return c, nil
 }

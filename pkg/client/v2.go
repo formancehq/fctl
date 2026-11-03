@@ -32,8 +32,6 @@ func newV2(rootSDK *Formance, sdkConfig config.SDKConfiguration, hooks *hooks.Ho
 }
 
 // AddMetadataOnTransaction - Set the metadata of a transaction by its ID
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) AddMetadataOnTransaction(ctx context.Context, request operations.V2AddMetadataOnTransactionRequest, opts ...operations.Option) (*operations.V2AddMetadataOnTransactionResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -99,7 +97,7 @@ func (s *V2) AddMetadataOnTransaction(ctx context.Context, request operations.V2
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -183,7 +181,7 @@ func (s *V2) AddMetadataOnTransaction(ctx context.Context, request operations.V2
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -237,8 +235,6 @@ func (s *V2) AddMetadataOnTransaction(ctx context.Context, request operations.V2
 }
 
 // AddMetadataToAccount - Add metadata to an account
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) AddMetadataToAccount(ctx context.Context, request operations.V2AddMetadataToAccountRequest, opts ...operations.Option) (*operations.V2AddMetadataToAccountResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -304,7 +300,7 @@ func (s *V2) AddMetadataToAccount(ctx context.Context, request operations.V2AddM
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -388,7 +384,7 @@ func (s *V2) AddMetadataToAccount(ctx context.Context, request operations.V2AddM
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -442,8 +438,6 @@ func (s *V2) AddMetadataToAccount(ctx context.Context, request operations.V2AddM
 }
 
 // CountAccounts - Count the accounts from a ledger
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) CountAccounts(ctx context.Context, request operations.V2CountAccountsRequest, opts ...operations.Option) (*operations.V2CountAccountsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -507,7 +501,7 @@ func (s *V2) CountAccounts(ctx context.Context, request operations.V2CountAccoun
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -591,7 +585,7 @@ func (s *V2) CountAccounts(ctx context.Context, request operations.V2CountAccoun
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -645,8 +639,6 @@ func (s *V2) CountAccounts(ctx context.Context, request operations.V2CountAccoun
 }
 
 // CountTransactions - Count the transactions from a ledger
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) CountTransactions(ctx context.Context, request operations.V2CountTransactionsRequest, opts ...operations.Option) (*operations.V2CountTransactionsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -710,7 +702,7 @@ func (s *V2) CountTransactions(ctx context.Context, request operations.V2CountTr
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -794,7 +786,7 @@ func (s *V2) CountTransactions(ctx context.Context, request operations.V2CountTr
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -848,8 +840,6 @@ func (s *V2) CountTransactions(ctx context.Context, request operations.V2CountTr
 }
 
 // CreateBulk - Bulk request
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) CreateBulk(ctx context.Context, request operations.V2CreateBulkRequest, opts ...operations.Option) (*operations.V2CreateBulkResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -913,7 +903,7 @@ func (s *V2) CreateBulk(ctx context.Context, request operations.V2CreateBulkRequ
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -997,7 +987,7 @@ func (s *V2) CreateBulk(ctx context.Context, request operations.V2CreateBulkRequ
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200", "400"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1089,7 +1079,7 @@ func (s *V2) CreateBulk(ctx context.Context, request operations.V2CreateBulkRequ
 }
 
 // CreateExporter - Create exporter
-func (s *V2) CreateExporter(ctx context.Context, request ledger.V2ExporterConfiguration, opts ...operations.Option) (*operations.V2CreateExporterResponse, error) {
+func (s *V2) CreateExporter(ctx context.Context, request ledger.V2ExporterConfiguration1, opts ...operations.Option) (*operations.V2CreateExporterResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -1228,7 +1218,7 @@ func (s *V2) CreateExporter(ctx context.Context, request ledger.V2ExporterConfig
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"201"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1299,8 +1289,6 @@ func (s *V2) CreateExporter(ctx context.Context, request ledger.V2ExporterConfig
 }
 
 // CreateLedger - Create a ledger
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) CreateLedger(ctx context.Context, request operations.V2CreateLedgerRequest, opts ...operations.Option) (*operations.V2CreateLedgerResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1360,7 +1348,7 @@ func (s *V2) CreateLedger(ctx context.Context, request operations.V2CreateLedger
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1444,7 +1432,7 @@ func (s *V2) CreateLedger(ctx context.Context, request operations.V2CreateLedger
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1635,7 +1623,7 @@ func (s *V2) CreatePipeline(ctx context.Context, request operations.V2CreatePipe
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"201"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1706,8 +1694,6 @@ func (s *V2) CreatePipeline(ctx context.Context, request operations.V2CreatePipe
 }
 
 // CreateTransaction - Create a new transaction to a ledger
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) CreateTransaction(ctx context.Context, request operations.V2CreateTransactionRequest, opts ...operations.Option) (*operations.V2CreateTransactionResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1773,7 +1759,7 @@ func (s *V2) CreateTransaction(ctx context.Context, request operations.V2CreateT
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1857,7 +1843,7 @@ func (s *V2) CreateTransaction(ctx context.Context, request operations.V2CreateT
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1931,8 +1917,6 @@ func (s *V2) CreateTransaction(ctx context.Context, request operations.V2CreateT
 
 // DeleteAccountMetadata - Delete metadata by key
 // Delete metadata by key
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) DeleteAccountMetadata(ctx context.Context, request operations.V2DeleteAccountMetadataRequest, opts ...operations.Option) (*operations.V2DeleteAccountMetadataResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1987,7 +1971,7 @@ func (s *V2) DeleteAccountMetadata(ctx context.Context, request operations.V2Del
 
 	utils.PopulateHeaders(ctx, req, request, nil)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -2071,7 +2055,7 @@ func (s *V2) DeleteAccountMetadata(ctx context.Context, request operations.V2Del
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2126,8 +2110,6 @@ func (s *V2) DeleteAccountMetadata(ctx context.Context, request operations.V2Del
 
 // DeleteBucket - Delete bucket
 // Delete a bucket by marking all ledgers in the bucket as deleted (soft delete). All ledgers in the bucket will have their deleted_at field set to the current timestamp.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) DeleteBucket(ctx context.Context, request operations.V2DeleteBucketRequest, opts ...operations.Option) (*operations.V2DeleteBucketResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -2180,7 +2162,7 @@ func (s *V2) DeleteBucket(ctx context.Context, request operations.V2DeleteBucket
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -2264,7 +2246,7 @@ func (s *V2) DeleteBucket(ctx context.Context, request operations.V2DeleteBucket
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204", "404"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2469,7 +2451,7 @@ func (s *V2) DeleteExporter(ctx context.Context, request operations.V2DeleteExpo
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2521,8 +2503,6 @@ func (s *V2) DeleteExporter(ctx context.Context, request operations.V2DeleteExpo
 }
 
 // DeleteLedgerMetadata - Delete ledger metadata by key
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) DeleteLedgerMetadata(ctx context.Context, request operations.V2DeleteLedgerMetadataRequest, opts ...operations.Option) (*operations.V2DeleteLedgerMetadataResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -2575,7 +2555,7 @@ func (s *V2) DeleteLedgerMetadata(ctx context.Context, request operations.V2Dele
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -2659,7 +2639,7 @@ func (s *V2) DeleteLedgerMetadata(ctx context.Context, request operations.V2Dele
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2843,7 +2823,7 @@ func (s *V2) DeletePipeline(ctx context.Context, request operations.V2DeletePipe
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2896,8 +2876,6 @@ func (s *V2) DeletePipeline(ctx context.Context, request operations.V2DeletePipe
 
 // DeleteTransactionMetadata - Delete metadata by key
 // Delete metadata by key
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) DeleteTransactionMetadata(ctx context.Context, request operations.V2DeleteTransactionMetadataRequest, opts ...operations.Option) (*operations.V2DeleteTransactionMetadataResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -2952,7 +2930,7 @@ func (s *V2) DeleteTransactionMetadata(ctx context.Context, request operations.V
 
 	utils.PopulateHeaders(ctx, req, request, nil)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -3036,7 +3014,7 @@ func (s *V2) DeleteTransactionMetadata(ctx context.Context, request operations.V
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3090,8 +3068,6 @@ func (s *V2) DeleteTransactionMetadata(ctx context.Context, request operations.V
 }
 
 // ExportLogs - Export logs
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) ExportLogs(ctx context.Context, request operations.V2ExportLogsRequest, opts ...operations.Option) (*operations.V2ExportLogsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -3144,7 +3120,7 @@ func (s *V2) ExportLogs(ctx context.Context, request operations.V2ExportLogsRequ
 	req.Header.Set("Accept", "application/octet-stream")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -3228,7 +3204,7 @@ func (s *V2) ExportLogs(ctx context.Context, request operations.V2ExportLogsRequ
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3291,8 +3267,6 @@ func (s *V2) ExportLogs(ctx context.Context, request operations.V2ExportLogsRequ
 }
 
 // GetAccount - Get account by its address
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) GetAccount(ctx context.Context, request operations.V2GetAccountRequest, opts ...operations.Option) (*operations.V2GetAccountResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -3351,7 +3325,7 @@ func (s *V2) GetAccount(ctx context.Context, request operations.V2GetAccountRequ
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -3435,7 +3409,7 @@ func (s *V2) GetAccount(ctx context.Context, request operations.V2GetAccountRequ
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3506,8 +3480,6 @@ func (s *V2) GetAccount(ctx context.Context, request operations.V2GetAccountRequ
 }
 
 // GetBalancesAggregated - Get the aggregated balances from selected accounts
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) GetBalancesAggregated(ctx context.Context, request operations.V2GetBalancesAggregatedRequest, opts ...operations.Option) (*operations.V2GetBalancesAggregatedResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -3573,7 +3545,7 @@ func (s *V2) GetBalancesAggregated(ctx context.Context, request operations.V2Get
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -3657,7 +3629,7 @@ func (s *V2) GetBalancesAggregated(ctx context.Context, request operations.V2Get
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3860,7 +3832,7 @@ func (s *V2) GetExporterState(ctx context.Context, request operations.V2GetExpor
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3931,8 +3903,6 @@ func (s *V2) GetExporterState(ctx context.Context, request operations.V2GetExpor
 }
 
 // GetInfo - Show server information
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) GetInfo(ctx context.Context, opts ...operations.Option) (*operations.V2GetInfoResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -3985,7 +3955,7 @@ func (s *V2) GetInfo(ctx context.Context, opts ...operations.Option) (*operation
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -4069,7 +4039,7 @@ func (s *V2) GetInfo(ctx context.Context, opts ...operations.Option) (*operation
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4161,8 +4131,6 @@ func (s *V2) GetInfo(ctx context.Context, opts ...operations.Option) (*operation
 }
 
 // GetLedger - Get a ledger
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) GetLedger(ctx context.Context, request operations.V2GetLedgerRequest, opts ...operations.Option) (*operations.V2GetLedgerResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -4215,7 +4183,7 @@ func (s *V2) GetLedger(ctx context.Context, request operations.V2GetLedgerReques
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -4299,7 +4267,7 @@ func (s *V2) GetLedger(ctx context.Context, request operations.V2GetLedgerReques
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4370,8 +4338,6 @@ func (s *V2) GetLedger(ctx context.Context, request operations.V2GetLedgerReques
 }
 
 // GetLedgerInfo - Get information about a ledger
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) GetLedgerInfo(ctx context.Context, request operations.V2GetLedgerInfoRequest, opts ...operations.Option) (*operations.V2GetLedgerInfoResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -4424,7 +4390,7 @@ func (s *V2) GetLedgerInfo(ctx context.Context, request operations.V2GetLedgerIn
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -4508,7 +4474,7 @@ func (s *V2) GetLedgerInfo(ctx context.Context, request operations.V2GetLedgerIn
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4579,8 +4545,6 @@ func (s *V2) GetLedgerInfo(ctx context.Context, request operations.V2GetLedgerIn
 }
 
 // GetMetrics - Read in memory metrics
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) GetMetrics(ctx context.Context, opts ...operations.Option) (*operations.GetMetricsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -4633,7 +4597,7 @@ func (s *V2) GetMetrics(ctx context.Context, opts ...operations.Option) (*operat
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -4717,7 +4681,7 @@ func (s *V2) GetMetrics(ctx context.Context, opts ...operations.Option) (*operat
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4920,7 +4884,7 @@ func (s *V2) GetPipelineState(ctx context.Context, request operations.V2GetPipel
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4991,8 +4955,6 @@ func (s *V2) GetPipelineState(ctx context.Context, request operations.V2GetPipel
 }
 
 // GetSchema - Get a schema for a ledger by version
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) GetSchema(ctx context.Context, request operations.V2GetSchemaRequest, opts ...operations.Option) (*operations.V2GetSchemaResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -5045,7 +5007,7 @@ func (s *V2) GetSchema(ctx context.Context, request operations.V2GetSchemaReques
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -5129,7 +5091,7 @@ func (s *V2) GetSchema(ctx context.Context, request operations.V2GetSchemaReques
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -5200,8 +5162,6 @@ func (s *V2) GetSchema(ctx context.Context, request operations.V2GetSchemaReques
 }
 
 // GetTransaction - Get transaction from a ledger by its ID
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) GetTransaction(ctx context.Context, request operations.V2GetTransactionRequest, opts ...operations.Option) (*operations.V2GetTransactionResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -5260,7 +5220,7 @@ func (s *V2) GetTransaction(ctx context.Context, request operations.V2GetTransac
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -5344,7 +5304,7 @@ func (s *V2) GetTransaction(ctx context.Context, request operations.V2GetTransac
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -5415,8 +5375,6 @@ func (s *V2) GetTransaction(ctx context.Context, request operations.V2GetTransac
 }
 
 // GetVolumesWithBalances - Get list of volumes with balances for (account/asset)
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) GetVolumesWithBalances(ctx context.Context, request operations.V2GetVolumesWithBalancesRequest, opts ...operations.Option) (*operations.V2GetVolumesWithBalancesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -5482,7 +5440,7 @@ func (s *V2) GetVolumesWithBalances(ctx context.Context, request operations.V2Ge
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -5566,7 +5524,7 @@ func (s *V2) GetVolumesWithBalances(ctx context.Context, request operations.V2Ge
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -5636,7 +5594,6 @@ func (s *V2) GetVolumesWithBalances(ctx context.Context, request operations.V2Ge
 
 }
 
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) ImportLogs(ctx context.Context, request operations.V2ImportLogsRequest, opts ...operations.Option) (*operations.V2ImportLogsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -5696,7 +5653,7 @@ func (s *V2) ImportLogs(ctx context.Context, request operations.V2ImportLogsRequ
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -5780,7 +5737,7 @@ func (s *V2) ImportLogs(ctx context.Context, request operations.V2ImportLogsRequ
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -5832,8 +5789,6 @@ func (s *V2) ImportLogs(ctx context.Context, request operations.V2ImportLogsRequ
 }
 
 // InsertSchema - Insert a schema for a ledger
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) InsertSchema(ctx context.Context, request operations.V2InsertSchemaRequest, opts ...operations.Option) (*operations.V2InsertSchemaResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -5895,7 +5850,7 @@ func (s *V2) InsertSchema(ctx context.Context, request operations.V2InsertSchema
 
 	utils.PopulateHeaders(ctx, req, request, nil)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -5979,7 +5934,7 @@ func (s *V2) InsertSchema(ctx context.Context, request operations.V2InsertSchema
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -6034,8 +5989,6 @@ func (s *V2) InsertSchema(ctx context.Context, request operations.V2InsertSchema
 
 // ListAccounts - List accounts from a ledger
 // List accounts from a ledger, sorted by address in descending order.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) ListAccounts(ctx context.Context, request operations.V2ListAccountsRequest, opts ...operations.Option) (*operations.V2ListAccountsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -6101,7 +6054,7 @@ func (s *V2) ListAccounts(ctx context.Context, request operations.V2ListAccounts
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -6185,7 +6138,7 @@ func (s *V2) ListAccounts(ctx context.Context, request operations.V2ListAccounts
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -6388,7 +6341,7 @@ func (s *V2) ListExporters(ctx context.Context, opts ...operations.Option) (*ope
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -6459,8 +6412,6 @@ func (s *V2) ListExporters(ctx context.Context, opts ...operations.Option) (*ope
 }
 
 // ListLedgers - List ledgers
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) ListLedgers(ctx context.Context, request operations.V2ListLedgersRequest, opts ...operations.Option) (*operations.V2ListLedgersResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -6524,7 +6475,7 @@ func (s *V2) ListLedgers(ctx context.Context, request operations.V2ListLedgersRe
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -6608,7 +6559,7 @@ func (s *V2) ListLedgers(ctx context.Context, request operations.V2ListLedgersRe
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -6680,8 +6631,6 @@ func (s *V2) ListLedgers(ctx context.Context, request operations.V2ListLedgersRe
 
 // ListLogs - List the logs from a ledger
 // List the logs from a ledger, sorted by ID in descending order.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) ListLogs(ctx context.Context, request operations.V2ListLogsRequest, opts ...operations.Option) (*operations.V2ListLogsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -6747,7 +6696,7 @@ func (s *V2) ListLogs(ctx context.Context, request operations.V2ListLogsRequest,
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -6831,7 +6780,7 @@ func (s *V2) ListLogs(ctx context.Context, request operations.V2ListLogsRequest,
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -7034,7 +6983,7 @@ func (s *V2) ListPipelines(ctx context.Context, request operations.V2ListPipelin
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -7105,8 +7054,6 @@ func (s *V2) ListPipelines(ctx context.Context, request operations.V2ListPipelin
 }
 
 // ListSchemas - List all schemas for a ledger
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) ListSchemas(ctx context.Context, request operations.V2ListSchemasRequest, opts ...operations.Option) (*operations.V2ListSchemasResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -7163,7 +7110,7 @@ func (s *V2) ListSchemas(ctx context.Context, request operations.V2ListSchemasRe
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -7247,7 +7194,7 @@ func (s *V2) ListSchemas(ctx context.Context, request operations.V2ListSchemasRe
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -7319,8 +7266,6 @@ func (s *V2) ListSchemas(ctx context.Context, request operations.V2ListSchemasRe
 
 // ListTransactions - List transactions from a ledger
 // List transactions from a ledger, sorted by id in descending order.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) ListTransactions(ctx context.Context, request operations.V2ListTransactionsRequest, opts ...operations.Option) (*operations.V2ListTransactionsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -7386,7 +7331,7 @@ func (s *V2) ListTransactions(ctx context.Context, request operations.V2ListTran
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -7470,7 +7415,7 @@ func (s *V2) ListTransactions(ctx context.Context, request operations.V2ListTran
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -7542,8 +7487,6 @@ func (s *V2) ListTransactions(ctx context.Context, request operations.V2ListTran
 
 // ReadStats - Get statistics from a ledger
 // Get statistics from a ledger. (aggregate metrics on accounts and transactions)
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) ReadStats(ctx context.Context, request operations.V2ReadStatsRequest, opts ...operations.Option) (*operations.V2ReadStatsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -7596,7 +7539,7 @@ func (s *V2) ReadStats(ctx context.Context, request operations.V2ReadStatsReques
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -7680,7 +7623,7 @@ func (s *V2) ReadStats(ctx context.Context, request operations.V2ReadStatsReques
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -7883,7 +7826,7 @@ func (s *V2) ResetPipeline(ctx context.Context, request operations.V2ResetPipeli
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"202"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -7936,8 +7879,6 @@ func (s *V2) ResetPipeline(ctx context.Context, request operations.V2ResetPipeli
 
 // RestoreBucket - Restore bucket
 // Restore a deleted bucket by unmarking all ledgers in the bucket as deleted. All ledgers in the bucket will have their deleted_at field set to NULL.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) RestoreBucket(ctx context.Context, request operations.V2RestoreBucketRequest, opts ...operations.Option) (*operations.V2RestoreBucketResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -7990,7 +7931,7 @@ func (s *V2) RestoreBucket(ctx context.Context, request operations.V2RestoreBuck
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -8074,7 +8015,7 @@ func (s *V2) RestoreBucket(ctx context.Context, request operations.V2RestoreBuck
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204", "404"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -8147,8 +8088,6 @@ func (s *V2) RestoreBucket(ctx context.Context, request operations.V2RestoreBuck
 }
 
 // RevertTransaction - Revert a ledger transaction by its ID
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) RevertTransaction(ctx context.Context, request operations.V2RevertTransactionRequest, opts ...operations.Option) (*operations.V2RevertTransactionResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -8214,7 +8153,7 @@ func (s *V2) RevertTransaction(ctx context.Context, request operations.V2RevertT
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -8298,7 +8237,7 @@ func (s *V2) RevertTransaction(ctx context.Context, request operations.V2RevertT
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"201"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -8372,8 +8311,6 @@ func (s *V2) RevertTransaction(ctx context.Context, request operations.V2RevertT
 
 // RunQuery - Run a query template
 // Run a query template on a ledger
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) RunQuery(ctx context.Context, request operations.V2RunQueryRequest, opts ...operations.Option) (*operations.V2RunQueryResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -8439,7 +8376,7 @@ func (s *V2) RunQuery(ctx context.Context, request operations.V2RunQueryRequest,
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -8523,7 +8460,7 @@ func (s *V2) RunQuery(ctx context.Context, request operations.V2RunQueryRequest,
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -8726,7 +8663,7 @@ func (s *V2) StartPipeline(ctx context.Context, request operations.V2StartPipeli
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"202"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -8910,7 +8847,7 @@ func (s *V2) StopPipeline(ctx context.Context, request operations.V2StopPipeline
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"202"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -8962,8 +8899,6 @@ func (s *V2) StopPipeline(ctx context.Context, request operations.V2StopPipeline
 }
 
 // UpdateExporter - Update exporter
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) UpdateExporter(ctx context.Context, request operations.V2UpdateExporterRequest, opts ...operations.Option) (*operations.V2UpdateExporterResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -9023,7 +8958,7 @@ func (s *V2) UpdateExporter(ctx context.Context, request operations.V2UpdateExpo
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -9107,7 +9042,7 @@ func (s *V2) UpdateExporter(ctx context.Context, request operations.V2UpdateExpo
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -9159,8 +9094,6 @@ func (s *V2) UpdateExporter(ctx context.Context, request operations.V2UpdateExpo
 }
 
 // UpdateLedgerMetadata - Update ledger metadata
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V2) UpdateLedgerMetadata(ctx context.Context, request operations.V2UpdateLedgerMetadataRequest, opts ...operations.Option) (*operations.V2UpdateLedgerMetadataResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -9220,7 +9153,7 @@ func (s *V2) UpdateLedgerMetadata(ctx context.Context, request operations.V2Upda
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -9304,7 +9237,7 @@ func (s *V2) UpdateLedgerMetadata(ctx context.Context, request operations.V2Upda
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err

@@ -85,7 +85,7 @@ func (c *UpdateMetadataController) Run(cmd *cobra.Command, args []string) (fctl.
 	if c.PaymentsVersion.Major >= versions.V3 {
 		request := operations.V3UpdateBankAccountMetadataRequest{
 			V3UpdateBankAccountMetadataRequest: &payments.V3UpdateBankAccountMetadataRequest{
-				Metadata: metadata,
+				V3Metadata: metadata,
 			},
 			BankAccountID: bankAccountID,
 		}
@@ -105,7 +105,7 @@ func (c *UpdateMetadataController) Run(cmd *cobra.Command, args []string) (fctl.
 
 	request := operations.UpdateBankAccountMetadataRequest{
 		UpdateBankAccountMetadataRequest: payments.UpdateBankAccountMetadataRequest{
-			Metadata: metadata,
+			BankAccountMetadata: metadata,
 		},
 		BankAccountID: bankAccountID,
 	}

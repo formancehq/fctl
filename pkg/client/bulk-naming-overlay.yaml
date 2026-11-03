@@ -1,0 +1,7 @@
+overlay: 1.0.0
+info:
+  title: Prevent inherited bulk base model name overriding variant names
+  version: 1.0.0
+actions:
+  - target: $.components.schemas.ledger_V2BaseBulkElement['x-speakeasy-name-override']
+    remove: true

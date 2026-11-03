@@ -10,22 +10,22 @@ import (
 
 // V2Transaction - A transaction recorded in the ledger, carrying its postings, metadata and both bi-temporal timestamps
 type V2Transaction struct {
+	// Volumes aggregated per account and per asset
+	V2AggregatedVolumes map[string]map[string]V2Volume `json:"preCommitVolumes,omitempty"`
+	// Volumes aggregated per account and per asset
+	V2AggregatedVolumes1 map[string]map[string]V2Volume `json:"postCommitVolumes,omitempty"`
+	// Volumes aggregated per account and per asset
+	V2AggregatedVolumes2 map[string]map[string]V2Volume `json:"preCommitEffectiveVolumes,omitempty"`
+	// Volumes aggregated per account and per asset
+	V2AggregatedVolumes3 map[string]map[string]V2Volume `json:"postCommitEffectiveVolumes,omitempty"`
+	// Arbitrary key/value pairs attached to the transaction. Transaction metadata is bi-temporal, so a point-in-time query returns it as it stood at that time
+	V2Metadata map[string]string `json:"metadata"`
 	// Unique sequential identifier for this transaction within the ledger
 	ID *big.Int `json:"id"`
 	// The request time: when the transaction was actually written to the ledger. Set by the ledger, not the caller. See [bi-temporality](https://docs.formance.com/modules/ledger/working-with/bi-temporality)
 	InsertedAt *time.Time `json:"insertedAt,omitempty"`
-	// Arbitrary key/value pairs attached to the transaction. Transaction metadata is bi-temporal, so a point-in-time query returns it as it stood at that time
-	Metadata map[string]string `json:"metadata"`
-	// Volumes aggregated per account and per asset
-	PostCommitEffectiveVolumes map[string]map[string]V2Volume `json:"postCommitEffectiveVolumes,omitempty"`
-	// Volumes aggregated per account and per asset
-	PostCommitVolumes map[string]map[string]V2Volume `json:"postCommitVolumes,omitempty"`
 	// The fund movements making up the transaction
 	Postings []V2Posting `json:"postings"`
-	// Volumes aggregated per account and per asset
-	PreCommitEffectiveVolumes map[string]map[string]V2Volume `json:"preCommitEffectiveVolumes,omitempty"`
-	// Volumes aggregated per account and per asset
-	PreCommitVolumes map[string]map[string]V2Volume `json:"preCommitVolumes,omitempty"`
 	// Optional caller-supplied identifier, unique within the ledger, used to deduplicate transactions
 	Reference *string `json:"reference,omitempty"`
 	// Indicates if the transaction has been reverted
@@ -45,10 +45,45 @@ func (v V2Transaction) MarshalJSON() ([]byte, error) {
 }
 
 func (v *V2Transaction) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"id", "metadata", "postings", "reverted", "timestamp"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"metadata", "id", "postings", "reverted", "timestamp"}); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (v *V2Transaction) GetV2AggregatedVolumes() map[string]map[string]V2Volume {
+	if v == nil {
+		return nil
+	}
+	return v.V2AggregatedVolumes
+}
+
+func (v *V2Transaction) GetV2AggregatedVolumes1() map[string]map[string]V2Volume {
+	if v == nil {
+		return nil
+	}
+	return v.V2AggregatedVolumes1
+}
+
+func (v *V2Transaction) GetV2AggregatedVolumes2() map[string]map[string]V2Volume {
+	if v == nil {
+		return nil
+	}
+	return v.V2AggregatedVolumes2
+}
+
+func (v *V2Transaction) GetV2AggregatedVolumes3() map[string]map[string]V2Volume {
+	if v == nil {
+		return nil
+	}
+	return v.V2AggregatedVolumes3
+}
+
+func (v *V2Transaction) GetV2Metadata() map[string]string {
+	if v == nil {
+		return map[string]string{}
+	}
+	return v.V2Metadata
 }
 
 func (v *V2Transaction) GetID() *big.Int {
@@ -65,46 +100,11 @@ func (v *V2Transaction) GetInsertedAt() *time.Time {
 	return v.InsertedAt
 }
 
-func (v *V2Transaction) GetMetadata() map[string]string {
-	if v == nil {
-		return map[string]string{}
-	}
-	return v.Metadata
-}
-
-func (v *V2Transaction) GetPostCommitEffectiveVolumes() map[string]map[string]V2Volume {
-	if v == nil {
-		return nil
-	}
-	return v.PostCommitEffectiveVolumes
-}
-
-func (v *V2Transaction) GetPostCommitVolumes() map[string]map[string]V2Volume {
-	if v == nil {
-		return nil
-	}
-	return v.PostCommitVolumes
-}
-
 func (v *V2Transaction) GetPostings() []V2Posting {
 	if v == nil {
 		return []V2Posting{}
 	}
 	return v.Postings
-}
-
-func (v *V2Transaction) GetPreCommitEffectiveVolumes() map[string]map[string]V2Volume {
-	if v == nil {
-		return nil
-	}
-	return v.PreCommitEffectiveVolumes
-}
-
-func (v *V2Transaction) GetPreCommitVolumes() map[string]map[string]V2Volume {
-	if v == nil {
-		return nil
-	}
-	return v.PreCommitVolumes
 }
 
 func (v *V2Transaction) GetReference() *string {

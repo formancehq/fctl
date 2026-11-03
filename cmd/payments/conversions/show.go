@@ -70,7 +70,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("conversions.get: empty response (status %d)", res.StatusCode)
 	}
 
-	conversion := toConversion(res.V3GetConversionResponse.Data)
+	conversion := toConversion(res.V3GetConversionResponse.V3Conversion)
 	c.store.Conversion = &conversion
 	return c, nil
 }

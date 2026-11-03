@@ -2,7 +2,7 @@
 
 package client
 
-// Generated from OpenAPI doc version SDK_VERSION and generator version 2.893.0
+// Generated from OpenAPI doc version SDK_VERSION and generator version 2.866.2
 
 import (
 	"bytes"
@@ -211,7 +211,7 @@ func New(opts ...SDKOption) *Formance {
 	sdk := &Formance{
 		SDKVersion: "0.0.0",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 0.0.0 2.893.0 SDK_VERSION github.com/formancehq/fctl/v3/pkg/client",
+			UserAgent:  "speakeasy-sdk/go 0.0.0 2.866.2 SDK_VERSION github.com/formancehq/fctl/v3/pkg/client",
 			ServerList: ServerList,
 			ServerVariables: []map[string]string{
 				{},
@@ -384,7 +384,7 @@ func (s *Formance) GetVersions(ctx context.Context, opts ...operations.Option) (
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err

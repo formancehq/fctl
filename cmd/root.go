@@ -156,9 +156,9 @@ func printError(code string, message string, details *string) {
 }
 
 func printV2ErrorResponse(target *ledgermodels.V2ErrorResponseError) {
-	printError(string(target.ErrorCode), target.ErrorMessage, target.Details)
+	printError(string(target.V2ErrorsEnum), target.ErrorMessage, target.Details)
 }
 
 func printErrorResponse(target *ledgermodels.ErrorResponseError) {
-	printError(string(target.ErrorCode), target.ErrorMessage, target.Details)
+	printError(string(target.ErrorsEnum), target.ErrorMessage, target.Details)
 }

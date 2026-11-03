@@ -4,14 +4,28 @@ package orchestration
 
 // Account - An account in the ledger, identified by its address
 type Account struct {
-	// The account address, a colon-separated segmented path such as users:001
-	Address string `json:"address"`
-	// Volumes per asset for a single account
-	EffectiveVolumes map[string]Volume `json:"effectiveVolumes,omitempty"`
-	// Arbitrary key/value pairs attached to the account
-	Metadata map[string]string `json:"metadata"`
 	// Volumes per asset for a single account
 	Volumes map[string]Volume `json:"volumes,omitempty"`
+	// Volumes per asset for a single account
+	Volumes1 map[string]Volume `json:"effectiveVolumes,omitempty"`
+	// The account address, a colon-separated segmented path such as users:001
+	Address string `json:"address"`
+	// Arbitrary key/value pairs attached to the account
+	Metadata map[string]string `json:"metadata"`
+}
+
+func (a *Account) GetVolumes() map[string]Volume {
+	if a == nil {
+		return nil
+	}
+	return a.Volumes
+}
+
+func (a *Account) GetVolumes1() map[string]Volume {
+	if a == nil {
+		return nil
+	}
+	return a.Volumes1
 }
 
 func (a *Account) GetAddress() string {
@@ -21,23 +35,9 @@ func (a *Account) GetAddress() string {
 	return a.Address
 }
 
-func (a *Account) GetEffectiveVolumes() map[string]Volume {
-	if a == nil {
-		return nil
-	}
-	return a.EffectiveVolumes
-}
-
 func (a *Account) GetMetadata() map[string]string {
 	if a == nil {
 		return map[string]string{}
 	}
 	return a.Metadata
-}
-
-func (a *Account) GetVolumes() map[string]Volume {
-	if a == nil {
-		return nil
-	}
-	return a.Volumes
 }

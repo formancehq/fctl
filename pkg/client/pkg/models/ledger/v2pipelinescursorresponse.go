@@ -4,16 +4,16 @@ package ledger
 
 // V2PipelinesCursorResponseCursor - Paginated cursor wrapping the list of pipelines
 type V2PipelinesCursorResponseCursor struct {
-	Data     []V2Pipeline `json:"data"`
-	HasMore  bool         `json:"hasMore"`
-	Next     *string      `json:"next,omitempty"`
-	PageSize int64        `json:"pageSize"`
-	Previous *string      `json:"previous,omitempty"`
+	Data     []V2PipelineConfiguration `json:"data"`
+	HasMore  bool                      `json:"hasMore"`
+	Next     *string                   `json:"next,omitempty"`
+	PageSize int64                     `json:"pageSize"`
+	Previous *string                   `json:"previous,omitempty"`
 }
 
-func (v *V2PipelinesCursorResponseCursor) GetData() []V2Pipeline {
+func (v *V2PipelinesCursorResponseCursor) GetData() []V2PipelineConfiguration {
 	if v == nil {
-		return []V2Pipeline{}
+		return []V2PipelineConfiguration{}
 	}
 	return v.Data
 }

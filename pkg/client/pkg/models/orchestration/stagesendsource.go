@@ -9,11 +9,11 @@ import (
 // StageSendSource - Where a send stage takes the funds from
 type StageSendSource struct {
 	// Take the funds from a ledger account
-	Account *StageSendSourceAccount `json:"account,omitempty"`
+	StageSendSourceAccount *StageSendSourceAccount `json:"account,omitempty"`
 	// Take the funds from a payment
-	Payment *StageSendSourcePayment `json:"payment,omitempty"`
+	StageSendSourcePayment *StageSendSourcePayment `json:"payment,omitempty"`
 	// Take the funds from a wallet
-	Wallet *StageSendSourceWallet `json:"wallet,omitempty"`
+	StageSendSourceWallet *StageSendSourceWallet `json:"wallet,omitempty"`
 }
 
 func (s StageSendSource) MarshalJSON() ([]byte, error) {
@@ -27,23 +27,23 @@ func (s *StageSendSource) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (s *StageSendSource) GetAccount() *StageSendSourceAccount {
+func (s *StageSendSource) GetStageSendSourceAccount() *StageSendSourceAccount {
 	if s == nil {
 		return nil
 	}
-	return s.Account
+	return s.StageSendSourceAccount
 }
 
-func (s *StageSendSource) GetPayment() *StageSendSourcePayment {
+func (s *StageSendSource) GetStageSendSourcePayment() *StageSendSourcePayment {
 	if s == nil {
 		return nil
 	}
-	return s.Payment
+	return s.StageSendSourcePayment
 }
 
-func (s *StageSendSource) GetWallet() *StageSendSourceWallet {
+func (s *StageSendSource) GetStageSendSourceWallet() *StageSendSourceWallet {
 	if s == nil {
 		return nil
 	}
-	return s.Wallet
+	return s.StageSendSourceWallet
 }

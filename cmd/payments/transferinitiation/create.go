@@ -95,7 +95,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.TransferInitiationId = response.TransferInitiationResponse.Data.ID
+	c.store.TransferInitiationId = response.TransferInitiationResponse.TransferInitiation.ID
 
 	return c, nil
 }

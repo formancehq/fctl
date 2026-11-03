@@ -15,18 +15,25 @@ type Connection struct {
 	// configuration validation against a currently published release.
 	// Once assigned, either value may be repeated but never changed or cleared.
 	//
-	Configuration ConnectionConfiguration `json:"configuration"`
+	ConnectionConfiguration ConnectionConfiguration `json:"configuration"`
+	// Last recorded service and ingestion outcomes, not live health or observation freshness. Absent when no nonempty status is stored.
+	ConnectionStatus *ConnectionStatus `json:"status,omitempty"`
 	// Instance name.
 	Name string `json:"name"`
-	// Last recorded service and ingestion outcomes, not live health or observation freshness. Absent when no nonempty status is stored.
-	Status *ConnectionStatus `json:"status,omitempty"`
 }
 
-func (c *Connection) GetConfiguration() ConnectionConfiguration {
+func (c *Connection) GetConnectionConfiguration() ConnectionConfiguration {
 	if c == nil {
 		return ConnectionConfiguration{}
 	}
-	return c.Configuration
+	return c.ConnectionConfiguration
+}
+
+func (c *Connection) GetConnectionStatus() *ConnectionStatus {
+	if c == nil {
+		return nil
+	}
+	return c.ConnectionStatus
 }
 
 func (c *Connection) GetName() string {
@@ -34,11 +41,4 @@ func (c *Connection) GetName() string {
 		return ""
 	}
 	return c.Name
-}
-
-func (c *Connection) GetStatus() *ConnectionStatus {
-	if c == nil {
-		return nil
-	}
-	return c.Status
 }

@@ -2,11 +2,13 @@
 
 package auth
 
+// ClientOptions - An OAuth2 client registered on the stack
 type ClientOptions struct {
-	// Human-readable description of the client
-	Description *string `json:"description,omitempty"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]string `json:"metadata,omitempty"`
+	// Human-readable description of the client
+	Description *string `json:"description,omitempty"`
+	ID          string  `json:"id"`
 	// Display name of the client
 	Name string `json:"name"`
 	// URIs the authorization server may redirect to after logout
@@ -16,9 +18,17 @@ type ClientOptions struct {
 	// URIs the authorization server may redirect to after a successful authorization
 	RedirectUris []string `json:"redirectUris,omitempty"`
 	// Scopes the client is allowed to request
-	Scopes []string `json:"scopes,omitempty"`
+	Scopes  []string       `json:"scopes,omitempty"`
+	Secrets []ClientSecret `json:"secrets,omitempty"`
 	// Whether the client is trusted, skipping the user consent screen
 	Trusted *bool `json:"trusted,omitempty"`
+}
+
+func (c *ClientOptions) GetMetadata() map[string]string {
+	if c == nil {
+		return nil
+	}
+	return c.Metadata
 }
 
 func (c *ClientOptions) GetDescription() *string {
@@ -28,11 +38,11 @@ func (c *ClientOptions) GetDescription() *string {
 	return c.Description
 }
 
-func (c *ClientOptions) GetMetadata() map[string]string {
+func (c *ClientOptions) GetID() string {
 	if c == nil {
-		return nil
+		return ""
 	}
-	return c.Metadata
+	return c.ID
 }
 
 func (c *ClientOptions) GetName() string {
@@ -68,6 +78,13 @@ func (c *ClientOptions) GetScopes() []string {
 		return nil
 	}
 	return c.Scopes
+}
+
+func (c *ClientOptions) GetSecrets() []ClientSecret {
+	if c == nil {
+		return nil
+	}
+	return c.Secrets
 }
 
 func (c *ClientOptions) GetTrusted() *bool {

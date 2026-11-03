@@ -9,6 +9,10 @@ import (
 )
 
 type V3PaymentAdjustment struct {
+	// Arbitrary key/value pairs attached to the resource
+	V3Metadata map[string]string `json:"metadata,omitempty"`
+	// Where a payment stands in its lifecycle
+	V3PaymentStatusEnum V3PaymentStatusEnum `json:"status"`
 	// Amount carried by this adjustment
 	Amount *big.Int `json:"amount,omitempty"`
 	// Asset the adjustment is denominated in
@@ -17,14 +21,10 @@ type V3PaymentAdjustment struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// Unique identifier of the adjustment
 	ID string `json:"id"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
 	// The provider's original payload for this adjustment
 	Raw map[string]any `json:"raw"`
 	// Identifier the adjustment carries at the provider
 	Reference string `json:"reference"`
-	// Where a payment stands in its lifecycle
-	Status V3PaymentStatusEnum `json:"status"`
 }
 
 func (v V3PaymentAdjustment) MarshalJSON() ([]byte, error) {
@@ -36,6 +36,20 @@ func (v *V3PaymentAdjustment) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V3PaymentAdjustment) GetV3Metadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.V3Metadata
+}
+
+func (v *V3PaymentAdjustment) GetV3PaymentStatusEnum() V3PaymentStatusEnum {
+	if v == nil {
+		return V3PaymentStatusEnum("")
+	}
+	return v.V3PaymentStatusEnum
 }
 
 func (v *V3PaymentAdjustment) GetAmount() *big.Int {
@@ -66,13 +80,6 @@ func (v *V3PaymentAdjustment) GetID() string {
 	return v.ID
 }
 
-func (v *V3PaymentAdjustment) GetMetadata() map[string]string {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
-}
-
 func (v *V3PaymentAdjustment) GetRaw() map[string]any {
 	if v == nil {
 		return map[string]any{}
@@ -85,13 +92,6 @@ func (v *V3PaymentAdjustment) GetReference() string {
 		return ""
 	}
 	return v.Reference
-}
-
-func (v *V3PaymentAdjustment) GetStatus() V3PaymentStatusEnum {
-	if v == nil {
-		return V3PaymentStatusEnum("")
-	}
-	return v.Status
 }
 
 // #region class-body-v3paymentadjustment

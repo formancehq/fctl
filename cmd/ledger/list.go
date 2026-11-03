@@ -71,7 +71,7 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
 	tableData := fctl.Map(c.store.Ledgers, func(ledger ledgermodels.V2Ledger) []string {
 		return []string{
-			ledger.Name, ledger.AddedAt.Format(time.RFC3339Nano), fctl.MetadataAsShortString(ledger.Metadata),
+			ledger.Name, ledger.AddedAt.Format(time.RFC3339Nano), fctl.MetadataAsShortString(ledger.V2Metadata),
 		}
 	})
 	tableData = fctl.Prepend(tableData, []string{"Name", "Created at", "Metadata"})

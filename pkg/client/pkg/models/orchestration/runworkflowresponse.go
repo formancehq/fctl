@@ -4,12 +4,12 @@ package orchestration
 
 type RunWorkflowResponse struct {
 	// One run of a workflow, tracking its per-stage progress
-	Data WorkflowInstance `json:"data"`
+	WorkflowInstance WorkflowInstance `json:"data"`
 }
 
-func (r *RunWorkflowResponse) GetData() WorkflowInstance {
+func (r *RunWorkflowResponse) GetWorkflowInstance() WorkflowInstance {
 	if r == nil {
 		return WorkflowInstance{}
 	}
-	return r.Data
+	return r.WorkflowInstance
 }

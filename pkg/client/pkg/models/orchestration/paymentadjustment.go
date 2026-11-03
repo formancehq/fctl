@@ -13,6 +13,8 @@ type PaymentAdjustmentRaw struct {
 }
 
 type PaymentAdjustment struct {
+	// Where a payment stands in its lifecycle
+	PaymentStatus PaymentStatus `json:"status"`
 	// Whether amount replaces the payment's amount rather than adding to it
 	Absolute bool `json:"absolute"`
 	// Amount carried by this adjustment
@@ -21,8 +23,6 @@ type PaymentAdjustment struct {
 	Date time.Time `json:"date"`
 	// The provider's original payload for this adjustment
 	Raw PaymentAdjustmentRaw `json:"raw"`
-	// Where a payment stands in its lifecycle
-	Status PaymentStatus `json:"status"`
 }
 
 func (p PaymentAdjustment) MarshalJSON() ([]byte, error) {
@@ -34,6 +34,13 @@ func (p *PaymentAdjustment) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (p *PaymentAdjustment) GetPaymentStatus() PaymentStatus {
+	if p == nil {
+		return PaymentStatus("")
+	}
+	return p.PaymentStatus
 }
 
 func (p *PaymentAdjustment) GetAbsolute() bool {
@@ -62,11 +69,4 @@ func (p *PaymentAdjustment) GetRaw() PaymentAdjustmentRaw {
 		return PaymentAdjustmentRaw{}
 	}
 	return p.Raw
-}
-
-func (p *PaymentAdjustment) GetStatus() PaymentStatus {
-	if p == nil {
-		return PaymentStatus("")
-	}
-	return p.Status
 }

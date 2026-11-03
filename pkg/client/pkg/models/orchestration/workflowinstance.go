@@ -9,6 +9,8 @@ import (
 
 // WorkflowInstance - One run of a workflow, tracking its per-stage progress
 type WorkflowInstance struct {
+	// A workflow definition and the stages it runs
+	Workflow *Workflow `json:"workflow,omitempty"`
 	// When the run was started
 	CreatedAt time.Time `json:"createdAt"`
 	// Why the run failed, absent when it succeeded
@@ -23,8 +25,6 @@ type WorkflowInstance struct {
 	TerminatedAt *time.Time `json:"terminatedAt,omitempty"`
 	// When the run was last updated
 	UpdatedAt time.Time `json:"updatedAt"`
-	// A workflow definition and the stages it runs
-	Workflow *Workflow `json:"workflow,omitempty"`
 	// Identifier of the workflow this run belongs to
 	WorkflowID string `json:"workflowID"`
 }
@@ -38,6 +38,13 @@ func (w *WorkflowInstance) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (w *WorkflowInstance) GetWorkflow() *Workflow {
+	if w == nil {
+		return nil
+	}
+	return w.Workflow
 }
 
 func (w *WorkflowInstance) GetCreatedAt() time.Time {
@@ -87,13 +94,6 @@ func (w *WorkflowInstance) GetUpdatedAt() time.Time {
 		return time.Time{}
 	}
 	return w.UpdatedAt
-}
-
-func (w *WorkflowInstance) GetWorkflow() *Workflow {
-	if w == nil {
-		return nil
-	}
-	return w.Workflow
 }
 
 func (w *WorkflowInstance) GetWorkflowID() string {

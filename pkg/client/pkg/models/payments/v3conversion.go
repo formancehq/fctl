@@ -14,6 +14,14 @@ import (
 // Unlike orders, conversions do not carry an adjustment history —
 // Formance records the final state only.
 type V3Conversion struct {
+	// Lifecycle of a conversion.
+	// `PENDING` — accepted by the PSP, not yet settled.
+	// `COMPLETED` — settled, terminal.
+	// `FAILED` — rejected or reverted, terminal. See `error`.
+	//
+	V3ConversionStatusEnum V3ConversionStatusEnum `json:"status"`
+	// Arbitrary key/value pairs attached to the resource
+	V3Metadata map[string]string `json:"metadata,omitempty"`
 	// ID of the Formance connector this conversion was fetched from.
 	ConnectorID string `json:"connectorID"`
 	// When the conversion was initiated on the PSP.
@@ -32,8 +40,6 @@ type V3Conversion struct {
 	FeeAsset *string `json:"feeAsset,omitempty"`
 	// Formance-assigned unique conversion ID.
 	ID string `json:"id"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
 	// Provider name of the connector (e.g. `coinbaseprime`).
 	Provider string `json:"provider"`
 	// PSP-assigned conversion reference. Unique within the connector.
@@ -44,12 +50,6 @@ type V3Conversion struct {
 	SourceAmount *big.Int `json:"sourceAmount"`
 	// Asset being converted from, in `SYMBOL/precision` form (e.g. `USD/2`).
 	SourceAsset string `json:"sourceAsset"`
-	// Lifecycle of a conversion.
-	// `PENDING` — accepted by the PSP, not yet settled.
-	// `COMPLETED` — settled, terminal.
-	// `FAILED` — rejected or reverted, terminal. See `error`.
-	//
-	Status V3ConversionStatusEnum `json:"status"`
 	// When Formance last observed a state change on the conversion.
 	UpdatedAt time.Time `json:"updatedAt"`
 }
@@ -63,6 +63,20 @@ func (v *V3Conversion) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V3Conversion) GetV3ConversionStatusEnum() V3ConversionStatusEnum {
+	if v == nil {
+		return V3ConversionStatusEnum("")
+	}
+	return v.V3ConversionStatusEnum
+}
+
+func (v *V3Conversion) GetV3Metadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.V3Metadata
 }
 
 func (v *V3Conversion) GetConnectorID() string {
@@ -128,13 +142,6 @@ func (v *V3Conversion) GetID() string {
 	return v.ID
 }
 
-func (v *V3Conversion) GetMetadata() map[string]string {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
-}
-
 func (v *V3Conversion) GetProvider() string {
 	if v == nil {
 		return ""
@@ -168,13 +175,6 @@ func (v *V3Conversion) GetSourceAsset() string {
 		return ""
 	}
 	return v.SourceAsset
-}
-
-func (v *V3Conversion) GetStatus() V3ConversionStatusEnum {
-	if v == nil {
-		return V3ConversionStatusEnum("")
-	}
-	return v.Status
 }
 
 func (v *V3Conversion) GetUpdatedAt() time.Time {

@@ -59,7 +59,7 @@ func (c *DesactivateWebhookController) Run(cmd *cobra.Command, args []string) (f
 		return nil, fmt.Errorf("deactivating config: %w", err)
 	}
 
-	c.store.Success = !response.ConfigResponse.Data.Active
+	c.store.Success = !response.ConfigResponse.WebhooksConfig.Active
 
 	return c, nil
 }

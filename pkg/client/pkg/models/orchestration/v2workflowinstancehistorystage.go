@@ -8,14 +8,16 @@ import (
 )
 
 type V2WorkflowInstanceHistoryStage struct {
+	// Arguments an activity was called with, keyed by activity name
+	V2WorkflowInstanceHistoryStageInput V2WorkflowInstanceHistoryStageInput `json:"input"`
+	// Result an activity returned, keyed by activity name
+	V2WorkflowInstanceHistoryStageOutput *V2WorkflowInstanceHistoryStageOutput `json:"output,omitempty"`
 	// Stable identifier of the activity within its workflow execution
 	ActivityID *string `json:"activityID,omitempty"`
 	// How many times the activity has been attempted
 	Attempt int64 `json:"attempt"`
 	// Why the activity failed, absent when it succeeded
 	Error *string `json:"error,omitempty"`
-	// Arguments an activity was called with, keyed by activity name
-	Input V2WorkflowInstanceHistoryStageInput `json:"input"`
 	// Error reported by the most recent failed attempt
 	LastFailure *string `json:"lastFailure,omitempty"`
 	// Application failure type of the most recent failed attempt, when available
@@ -24,8 +26,6 @@ type V2WorkflowInstanceHistoryStage struct {
 	Name string `json:"name"`
 	// When the next retry is scheduled, absent while paused, when no retry is scheduled, or once settled
 	NextExecution *time.Time `json:"nextExecution,omitempty"`
-	// Result an activity returned, keyed by activity name
-	Output *V2WorkflowInstanceHistoryStageOutput `json:"output,omitempty"`
 	// Reason recorded by Temporal for the activity pause, when available
 	PauseReason *string `json:"pauseReason,omitempty"`
 	// Whether Temporal has paused this pending activity; a pause is not a terminal failure
@@ -51,6 +51,20 @@ func (v *V2WorkflowInstanceHistoryStage) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (v *V2WorkflowInstanceHistoryStage) GetV2WorkflowInstanceHistoryStageInput() V2WorkflowInstanceHistoryStageInput {
+	if v == nil {
+		return V2WorkflowInstanceHistoryStageInput{}
+	}
+	return v.V2WorkflowInstanceHistoryStageInput
+}
+
+func (v *V2WorkflowInstanceHistoryStage) GetV2WorkflowInstanceHistoryStageOutput() *V2WorkflowInstanceHistoryStageOutput {
+	if v == nil {
+		return nil
+	}
+	return v.V2WorkflowInstanceHistoryStageOutput
+}
+
 func (v *V2WorkflowInstanceHistoryStage) GetActivityID() *string {
 	if v == nil {
 		return nil
@@ -70,13 +84,6 @@ func (v *V2WorkflowInstanceHistoryStage) GetError() *string {
 		return nil
 	}
 	return v.Error
-}
-
-func (v *V2WorkflowInstanceHistoryStage) GetInput() V2WorkflowInstanceHistoryStageInput {
-	if v == nil {
-		return V2WorkflowInstanceHistoryStageInput{}
-	}
-	return v.Input
 }
 
 func (v *V2WorkflowInstanceHistoryStage) GetLastFailure() *string {
@@ -105,13 +112,6 @@ func (v *V2WorkflowInstanceHistoryStage) GetNextExecution() *time.Time {
 		return nil
 	}
 	return v.NextExecution
-}
-
-func (v *V2WorkflowInstanceHistoryStage) GetOutput() *V2WorkflowInstanceHistoryStageOutput {
-	if v == nil {
-		return nil
-	}
-	return v.Output
 }
 
 func (v *V2WorkflowInstanceHistoryStage) GetPauseReason() *string {

@@ -8,6 +8,8 @@ import (
 )
 
 type V3PaymentServiceUserLinkAttempt struct {
+	// Where a link attempt stands, from pending through to completed on success or exited when the user abandoned the flow or the provider reported an error
+	V3OpenBankingConnectionAttemptStatusEnum V3OpenBankingConnectionAttemptStatusEnum `json:"status"`
 	// URL the user is sent back to once the provider's flow finishes
 	ClientRedirectURL string `json:"clientRedirectURL"`
 	// Identifier of the connector the user is linking to
@@ -20,8 +22,6 @@ type V3PaymentServiceUserLinkAttempt struct {
 	ID string `json:"id"`
 	// Identifier of the payment service user the attempt belongs to
 	PsuID string `json:"psuID"`
-	// Where a link attempt stands, from pending through to completed on success or exited when the user abandoned the flow or the provider reported an error
-	Status V3OpenBankingConnectionAttemptStatusEnum `json:"status"`
 }
 
 func (v V3PaymentServiceUserLinkAttempt) MarshalJSON() ([]byte, error) {
@@ -33,6 +33,13 @@ func (v *V3PaymentServiceUserLinkAttempt) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V3PaymentServiceUserLinkAttempt) GetV3OpenBankingConnectionAttemptStatusEnum() V3OpenBankingConnectionAttemptStatusEnum {
+	if v == nil {
+		return V3OpenBankingConnectionAttemptStatusEnum("")
+	}
+	return v.V3OpenBankingConnectionAttemptStatusEnum
 }
 
 func (v *V3PaymentServiceUserLinkAttempt) GetClientRedirectURL() string {
@@ -75,13 +82,6 @@ func (v *V3PaymentServiceUserLinkAttempt) GetPsuID() string {
 		return ""
 	}
 	return v.PsuID
-}
-
-func (v *V3PaymentServiceUserLinkAttempt) GetStatus() V3OpenBankingConnectionAttemptStatusEnum {
-	if v == nil {
-		return V3OpenBankingConnectionAttemptStatusEnum("")
-	}
-	return v.Status
 }
 
 // #region class-body-v3paymentserviceuserlinkattempt

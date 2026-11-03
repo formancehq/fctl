@@ -2,8 +2,8 @@
 
 package payments
 
-// V3AccountsCursorResponseCursor - Paginated cursor wrapping the list of accounts
-type V3AccountsCursorResponseCursor struct {
+// Cursor - Paginated cursor wrapping the list of accounts
+type Cursor struct {
 	Data     []V3Account `json:"data"`
 	HasMore  bool        `json:"hasMore"`
 	Next     *string     `json:"next,omitempty"`
@@ -11,52 +11,49 @@ type V3AccountsCursorResponseCursor struct {
 	Previous *string     `json:"previous,omitempty"`
 }
 
-func (v *V3AccountsCursorResponseCursor) GetData() []V3Account {
-	if v == nil {
+func (c *Cursor) GetData() []V3Account {
+	if c == nil {
 		return []V3Account{}
 	}
-	return v.Data
+	return c.Data
 }
 
-func (v *V3AccountsCursorResponseCursor) GetHasMore() bool {
-	if v == nil {
+func (c *Cursor) GetHasMore() bool {
+	if c == nil {
 		return false
 	}
-	return v.HasMore
+	return c.HasMore
 }
 
-func (v *V3AccountsCursorResponseCursor) GetNext() *string {
-	if v == nil {
+func (c *Cursor) GetNext() *string {
+	if c == nil {
 		return nil
 	}
-	return v.Next
+	return c.Next
 }
 
-func (v *V3AccountsCursorResponseCursor) GetPageSize() int64 {
-	if v == nil {
+func (c *Cursor) GetPageSize() int64 {
+	if c == nil {
 		return 0
 	}
-	return v.PageSize
+	return c.PageSize
 }
 
-func (v *V3AccountsCursorResponseCursor) GetPrevious() *string {
-	if v == nil {
+func (c *Cursor) GetPrevious() *string {
+	if c == nil {
 		return nil
 	}
-	return v.Previous
+	return c.Previous
 }
-
-// #region class-body-v3accountscursorresponsecursor
-// #endregion class-body-v3accountscursorresponsecursor
 
 type V3AccountsCursorResponse struct {
 	// Paginated cursor wrapping the list of accounts
-	Cursor V3AccountsCursorResponseCursor `json:"cursor"`
+	Cursor Cursor `json:"cursor"`
 }
 
-func (v *V3AccountsCursorResponse) GetCursor() V3AccountsCursorResponseCursor {
+func (v *V3AccountsCursorResponse) GetCursor() Cursor {
 	if v == nil {
-		return V3AccountsCursorResponseCursor{}
+		return Cursor{}
 	}
 	return v.Cursor
 }

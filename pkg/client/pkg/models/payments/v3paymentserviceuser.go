@@ -10,17 +10,17 @@ import (
 // V3PaymentServiceUser - An end user on whose behalf payments and open banking connections are made
 type V3PaymentServiceUser struct {
 	// A postal address
-	Address *V3Address `json:"address,omitempty"`
+	V3Address *V3Address `json:"address,omitempty"`
+	// How to reach a payment service user
+	V3ContactDetails *V3ContactDetails `json:"contactDetails,omitempty"`
+	// Arbitrary key/value pairs attached to the resource
+	V3Metadata map[string]string `json:"metadata,omitempty"`
 	// Bank accounts associated with the user
 	BankAccountIDs []string `json:"bankAccountIDs,omitempty"`
-	// How to reach a payment service user
-	ContactDetails *V3ContactDetails `json:"contactDetails,omitempty"`
 	// When the user was registered
 	CreatedAt time.Time `json:"createdAt"`
 	// Unique identifier of the payment service user
 	ID string `json:"id"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
 	// Full name of the payment service user
 	Name string `json:"name"`
 }
@@ -36,11 +36,25 @@ func (v *V3PaymentServiceUser) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V3PaymentServiceUser) GetAddress() *V3Address {
+func (v *V3PaymentServiceUser) GetV3Address() *V3Address {
 	if v == nil {
 		return nil
 	}
-	return v.Address
+	return v.V3Address
+}
+
+func (v *V3PaymentServiceUser) GetV3ContactDetails() *V3ContactDetails {
+	if v == nil {
+		return nil
+	}
+	return v.V3ContactDetails
+}
+
+func (v *V3PaymentServiceUser) GetV3Metadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.V3Metadata
 }
 
 func (v *V3PaymentServiceUser) GetBankAccountIDs() []string {
@@ -48,13 +62,6 @@ func (v *V3PaymentServiceUser) GetBankAccountIDs() []string {
 		return nil
 	}
 	return v.BankAccountIDs
-}
-
-func (v *V3PaymentServiceUser) GetContactDetails() *V3ContactDetails {
-	if v == nil {
-		return nil
-	}
-	return v.ContactDetails
 }
 
 func (v *V3PaymentServiceUser) GetCreatedAt() time.Time {
@@ -69,13 +76,6 @@ func (v *V3PaymentServiceUser) GetID() string {
 		return ""
 	}
 	return v.ID
-}
-
-func (v *V3PaymentServiceUser) GetMetadata() map[string]string {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
 }
 
 func (v *V3PaymentServiceUser) GetName() string {

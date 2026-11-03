@@ -4,12 +4,12 @@ package webhooks
 
 type AttemptResponse struct {
 	// A single delivery attempt made against a webhook endpoint
-	Data Attempt `json:"data"`
+	Attempt Attempt `json:"data"`
 }
 
-func (a *AttemptResponse) GetData() Attempt {
+func (a *AttemptResponse) GetAttempt() Attempt {
 	if a == nil {
 		return Attempt{}
 	}
-	return a.Data
+	return a.Attempt
 }

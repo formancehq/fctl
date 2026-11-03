@@ -9,6 +9,8 @@ import (
 
 // Delivery - An event queued for delivery to a webhook endpoint, tracking its retry state
 type Delivery struct {
+	// Current state of a delivery in its retry lifecycle
+	DeliveryStatus DeliveryStatus `json:"status"`
 	// Number of attempts made in the current retry cycle. Reset when a failed delivery is replayed
 	AttemptCount int64 `json:"attemptCount"`
 	// When a worker claimed this delivery for the attempt in flight. Cleared when a failed delivery is replayed
@@ -39,8 +41,6 @@ type Delivery struct {
 	Payload *string `json:"payload,omitempty"`
 	// Incremented each time a failed delivery is replayed, grouping attempts into retry cycles. Replaying a pending delivery leaves it unchanged
 	ReplayGeneration int64 `json:"replayGeneration"`
-	// Current state of a delivery in its retry lifecycle
-	Status DeliveryStatus `json:"status"`
 	// When the delivery was last modified
 	UpdatedAt time.Time `json:"updatedAt"`
 }
@@ -54,6 +54,13 @@ func (d *Delivery) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (d *Delivery) GetDeliveryStatus() DeliveryStatus {
+	if d == nil {
+		return DeliveryStatus("")
+	}
+	return d.DeliveryStatus
 }
 
 func (d *Delivery) GetAttemptCount() int64 {
@@ -159,13 +166,6 @@ func (d *Delivery) GetReplayGeneration() int64 {
 		return 0
 	}
 	return d.ReplayGeneration
-}
-
-func (d *Delivery) GetStatus() DeliveryStatus {
-	if d == nil {
-		return DeliveryStatus("")
-	}
-	return d.Status
 }
 
 func (d *Delivery) GetUpdatedAt() time.Time {

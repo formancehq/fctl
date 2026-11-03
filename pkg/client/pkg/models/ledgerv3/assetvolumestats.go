@@ -3,36 +3,64 @@
 package ledgerv3
 
 type AssetVolumeStats struct {
-	Asset *string `json:"asset,omitempty"`
 	// Arbitrary-precision unsigned BigUint value encoded as a JSON number by
 	// default, or a canonical decimal string when Formance-Bigint-As-String
 	// is enabled. The same rule applies to every response BigUint value,
 	// including nested fields, regardless of business meaning.
 	// JavaScript consumers should enable the header to avoid number rounding.
 	//
-	AverageVolume *UnsignedMonetaryAmount `json:"averageVolume,omitempty"`
+	UnsignedMonetaryAmount *UnsignedMonetaryAmount `json:"totalVolume,omitempty"`
 	// Arbitrary-precision unsigned BigUint value encoded as a JSON number by
 	// default, or a canonical decimal string when Formance-Bigint-As-String
 	// is enabled. The same rule applies to every response BigUint value,
 	// including nested fields, regardless of business meaning.
 	// JavaScript consumers should enable the header to avoid number rounding.
 	//
-	MaxVolume *UnsignedMonetaryAmount `json:"maxVolume,omitempty"`
+	UnsignedMonetaryAmount1 *UnsignedMonetaryAmount `json:"averageVolume,omitempty"`
 	// Arbitrary-precision unsigned BigUint value encoded as a JSON number by
 	// default, or a canonical decimal string when Formance-Bigint-As-String
 	// is enabled. The same rule applies to every response BigUint value,
 	// including nested fields, regardless of business meaning.
 	// JavaScript consumers should enable the header to avoid number rounding.
 	//
-	MinVolume *UnsignedMonetaryAmount `json:"minVolume,omitempty"`
+	UnsignedMonetaryAmount2 *UnsignedMonetaryAmount `json:"minVolume,omitempty"`
 	// Arbitrary-precision unsigned BigUint value encoded as a JSON number by
 	// default, or a canonical decimal string when Formance-Bigint-As-String
 	// is enabled. The same rule applies to every response BigUint value,
 	// including nested fields, regardless of business meaning.
 	// JavaScript consumers should enable the header to avoid number rounding.
 	//
-	TotalVolume      *UnsignedMonetaryAmount `json:"totalVolume,omitempty"`
-	TransactionCount *int64                  `json:"transactionCount,omitempty"`
+	UnsignedMonetaryAmount3 *UnsignedMonetaryAmount `json:"maxVolume,omitempty"`
+	Asset                   *string                 `json:"asset,omitempty"`
+	TransactionCount        *int64                  `json:"transactionCount,omitempty"`
+}
+
+func (a *AssetVolumeStats) GetUnsignedMonetaryAmount() *UnsignedMonetaryAmount {
+	if a == nil {
+		return nil
+	}
+	return a.UnsignedMonetaryAmount
+}
+
+func (a *AssetVolumeStats) GetUnsignedMonetaryAmount1() *UnsignedMonetaryAmount {
+	if a == nil {
+		return nil
+	}
+	return a.UnsignedMonetaryAmount1
+}
+
+func (a *AssetVolumeStats) GetUnsignedMonetaryAmount2() *UnsignedMonetaryAmount {
+	if a == nil {
+		return nil
+	}
+	return a.UnsignedMonetaryAmount2
+}
+
+func (a *AssetVolumeStats) GetUnsignedMonetaryAmount3() *UnsignedMonetaryAmount {
+	if a == nil {
+		return nil
+	}
+	return a.UnsignedMonetaryAmount3
 }
 
 func (a *AssetVolumeStats) GetAsset() *string {
@@ -40,34 +68,6 @@ func (a *AssetVolumeStats) GetAsset() *string {
 		return nil
 	}
 	return a.Asset
-}
-
-func (a *AssetVolumeStats) GetAverageVolume() *UnsignedMonetaryAmount {
-	if a == nil {
-		return nil
-	}
-	return a.AverageVolume
-}
-
-func (a *AssetVolumeStats) GetMaxVolume() *UnsignedMonetaryAmount {
-	if a == nil {
-		return nil
-	}
-	return a.MaxVolume
-}
-
-func (a *AssetVolumeStats) GetMinVolume() *UnsignedMonetaryAmount {
-	if a == nil {
-		return nil
-	}
-	return a.MinVolume
-}
-
-func (a *AssetVolumeStats) GetTotalVolume() *UnsignedMonetaryAmount {
-	if a == nil {
-		return nil
-	}
-	return a.TotalVolume
 }
 
 func (a *AssetVolumeStats) GetTransactionCount() *int64 {

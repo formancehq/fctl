@@ -64,19 +64,19 @@ func (e *LedgerInfoMode) UnmarshalJSON(data []byte) error {
 }
 
 type LedgerInfo struct {
-	AccountTypes map[string]AccountTypeInfo `json:"accountTypes,omitempty"`
-	CreatedAt    *time.Time                 `json:"createdAt,omitempty"`
+	LedgerMetadataSchema *LedgerMetadataSchema `json:"metadataSchema,omitempty"`
+	// Detached credential-safe mirror configuration returned by ledger reads
+	MirrorSourceRead *MirrorSourceRead `json:"mirrorSource,omitempty"`
+	// Sync progress for MIRROR ledgers (populated at read time)
+	MirrorSyncProgress *MirrorSyncProgress        `json:"mirrorSyncProgress,omitempty"`
+	AccountTypes       map[string]AccountTypeInfo `json:"accountTypes,omitempty"`
+	CreatedAt          *time.Time                 `json:"createdAt,omitempty"`
 	// Default enforcement for unmatched accounts; defaults to STRICT
 	DefaultEnforcementMode LedgerInfoDefaultEnforcementMode `json:"defaultEnforcementMode"`
 	// Soft deletion timestamp; omitted for active ledgers
 	DeletedAt *time.Time `json:"deletedAt,omitempty"`
 	// Enriched typed ledger metadata
-	Metadata       map[string]*MetadataValue `json:"metadata,omitempty"`
-	MetadataSchema *LedgerMetadataSchema     `json:"metadataSchema,omitempty"`
-	// Detached credential-safe mirror configuration returned by ledger reads
-	MirrorSource *MirrorSourceRead `json:"mirrorSource,omitempty"`
-	// Sync progress for MIRROR ledgers (populated at read time)
-	MirrorSyncProgress *MirrorSyncProgress `json:"mirrorSyncProgress,omitempty"`
+	Metadata map[string]*MetadataValue `json:"metadata,omitempty"`
 	// Ledger mode, including the default NORMAL value
 	Mode LedgerInfoMode `json:"mode"`
 	// Name of the ledger
@@ -92,6 +92,27 @@ func (l *LedgerInfo) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (l *LedgerInfo) GetLedgerMetadataSchema() *LedgerMetadataSchema {
+	if l == nil {
+		return nil
+	}
+	return l.LedgerMetadataSchema
+}
+
+func (l *LedgerInfo) GetMirrorSourceRead() *MirrorSourceRead {
+	if l == nil {
+		return nil
+	}
+	return l.MirrorSourceRead
+}
+
+func (l *LedgerInfo) GetMirrorSyncProgress() *MirrorSyncProgress {
+	if l == nil {
+		return nil
+	}
+	return l.MirrorSyncProgress
 }
 
 func (l *LedgerInfo) GetAccountTypes() map[string]AccountTypeInfo {
@@ -127,27 +148,6 @@ func (l *LedgerInfo) GetMetadata() map[string]*MetadataValue {
 		return nil
 	}
 	return l.Metadata
-}
-
-func (l *LedgerInfo) GetMetadataSchema() *LedgerMetadataSchema {
-	if l == nil {
-		return nil
-	}
-	return l.MetadataSchema
-}
-
-func (l *LedgerInfo) GetMirrorSource() *MirrorSourceRead {
-	if l == nil {
-		return nil
-	}
-	return l.MirrorSource
-}
-
-func (l *LedgerInfo) GetMirrorSyncProgress() *MirrorSyncProgress {
-	if l == nil {
-		return nil
-	}
-	return l.MirrorSyncProgress
 }
 
 func (l *LedgerInfo) GetMode() LedgerInfoMode {

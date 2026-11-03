@@ -4,10 +4,10 @@ package orchestration
 
 // V2Hold - Funds locked by a pending wallet debit, later either confirmed or voided
 type V2Hold struct {
+	// The counterparty of a wallet movement, either a ledger account or another wallet
+	V2Subject *V2Subject `json:"destination,omitempty"`
 	// Human-readable reason the funds were held
 	Description string `json:"description"`
-	// The counterparty of a wallet movement, either a ledger account or another wallet
-	Destination *V2Subject `json:"destination,omitempty"`
 	// The unique ID of the hold.
 	ID string `json:"id"`
 	// Metadata associated with the hold.
@@ -16,32 +16,32 @@ type V2Hold struct {
 	WalletID string `json:"walletID"`
 }
 
-func (v *V2Hold) GetDescription() string {
-	if v == nil {
-		return ""
-	}
-	return v.Description
-}
-
-func (v *V2Hold) GetDestination() *V2Subject {
+func (v *V2Hold) GetV2Subject() *V2Subject {
 	if v == nil {
 		return nil
 	}
-	return v.Destination
+	return v.V2Subject
 }
 
-func (v *V2Hold) GetDestinationAccount() *V2LedgerAccountSubject {
-	if v := v.GetDestination(); v != nil {
+func (v *V2Hold) GetV2SubjectAccount() *V2LedgerAccountSubject {
+	if v := v.GetV2Subject(); v != nil {
 		return v.V2LedgerAccountSubject
 	}
 	return nil
 }
 
-func (v *V2Hold) GetDestinationWallet() *V2WalletSubject {
-	if v := v.GetDestination(); v != nil {
+func (v *V2Hold) GetV2SubjectWallet() *V2WalletSubject {
+	if v := v.GetV2Subject(); v != nil {
 		return v.V2WalletSubject
 	}
 	return nil
+}
+
+func (v *V2Hold) GetDescription() string {
+	if v == nil {
+		return ""
+	}
+	return v.Description
 }
 
 func (v *V2Hold) GetID() string {

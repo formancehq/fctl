@@ -7,9 +7,9 @@ import (
 )
 
 type V2BulkElementDeleteMetadataData struct {
-	Key        string       `json:"key"`
-	TargetID   V2TargetID   `json:"targetId"`
-	TargetType V2TargetType `json:"targetType"`
+	V2TargetID   V2TargetID   `json:"targetId"`
+	V2TargetType V2TargetType `json:"targetType"`
+	Key          string       `json:"key"`
 }
 
 func (v V2BulkElementDeleteMetadataData) MarshalJSON() ([]byte, error) {
@@ -17,10 +17,24 @@ func (v V2BulkElementDeleteMetadataData) MarshalJSON() ([]byte, error) {
 }
 
 func (v *V2BulkElementDeleteMetadataData) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"key", "targetId", "targetType"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"targetId", "targetType", "key"}); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (v *V2BulkElementDeleteMetadataData) GetV2TargetID() V2TargetID {
+	if v == nil {
+		return V2TargetID{}
+	}
+	return v.V2TargetID
+}
+
+func (v *V2BulkElementDeleteMetadataData) GetV2TargetType() V2TargetType {
+	if v == nil {
+		return V2TargetType("")
+	}
+	return v.V2TargetType
 }
 
 func (v *V2BulkElementDeleteMetadataData) GetKey() string {
@@ -28,20 +42,6 @@ func (v *V2BulkElementDeleteMetadataData) GetKey() string {
 		return ""
 	}
 	return v.Key
-}
-
-func (v *V2BulkElementDeleteMetadataData) GetTargetID() V2TargetID {
-	if v == nil {
-		return V2TargetID{}
-	}
-	return v.TargetID
-}
-
-func (v *V2BulkElementDeleteMetadataData) GetTargetType() V2TargetType {
-	if v == nil {
-		return V2TargetType("")
-	}
-	return v.TargetType
 }
 
 // #region class-body-v2bulkelementdeletemetadatadata

@@ -22,7 +22,7 @@ func PrintWorkflowInstance(out io.Writer, w orchestration.Workflow, instance orc
 			fctl.Prepend(
 				fctl.Map(instance.Status,
 					func(src orchestration.StageStatus) []string {
-						stage := w.Config.Stages[ind]
+						stage := w.WorkflowConfig.Stages[ind]
 						var name string
 						for name = range stage {
 						}

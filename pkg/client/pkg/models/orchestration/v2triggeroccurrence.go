@@ -8,6 +8,8 @@ import (
 )
 
 type V2TriggerOccurrence struct {
+	// One run of a workflow, tracking its per-stage progress
+	V2WorkflowInstance *V2WorkflowInstance `json:"workflowInstance,omitempty"`
 	// When the trigger fired
 	Date time.Time `json:"date"`
 	// Why the trigger failed to start a run, absent when it succeeded
@@ -16,8 +18,6 @@ type V2TriggerOccurrence struct {
 	Event map[string]any `json:"event"`
 	// Identifier of the trigger that fired
 	TriggerID string `json:"triggerID"`
-	// One run of a workflow, tracking its per-stage progress
-	WorkflowInstance *V2WorkflowInstance `json:"workflowInstance,omitempty"`
 	// Identifier of the run the trigger started, absent when it started none
 	WorkflowInstanceID *string `json:"workflowInstanceID,omitempty"`
 }
@@ -31,6 +31,13 @@ func (v *V2TriggerOccurrence) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V2TriggerOccurrence) GetV2WorkflowInstance() *V2WorkflowInstance {
+	if v == nil {
+		return nil
+	}
+	return v.V2WorkflowInstance
 }
 
 func (v *V2TriggerOccurrence) GetDate() time.Time {
@@ -59,13 +66,6 @@ func (v *V2TriggerOccurrence) GetTriggerID() string {
 		return ""
 	}
 	return v.TriggerID
-}
-
-func (v *V2TriggerOccurrence) GetWorkflowInstance() *V2WorkflowInstance {
-	if v == nil {
-		return nil
-	}
-	return v.WorkflowInstance
 }
 
 func (v *V2TriggerOccurrence) GetWorkflowInstanceID() *string {

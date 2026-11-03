@@ -8,10 +8,10 @@ import (
 )
 
 type V2WorkflowInstanceHistory struct {
+	// One step of a workflow, whose shape depends on the stage type
+	V2Stage V2Stage `json:"input"`
 	// Why the stage failed, absent when it succeeded
 	Error *string `json:"error,omitempty"`
-	// One step of a workflow, whose shape depends on the stage type
-	Input V2Stage `json:"input"`
 	// Name of the stage this history entry records
 	Name string `json:"name"`
 	// When the stage started
@@ -33,18 +33,18 @@ func (v *V2WorkflowInstanceHistory) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (v *V2WorkflowInstanceHistory) GetV2Stage() V2Stage {
+	if v == nil {
+		return V2Stage{}
+	}
+	return v.V2Stage
+}
+
 func (v *V2WorkflowInstanceHistory) GetError() *string {
 	if v == nil {
 		return nil
 	}
 	return v.Error
-}
-
-func (v *V2WorkflowInstanceHistory) GetInput() V2Stage {
-	if v == nil {
-		return V2Stage{}
-	}
-	return v.Input
 }
 
 func (v *V2WorkflowInstanceHistory) GetName() string {

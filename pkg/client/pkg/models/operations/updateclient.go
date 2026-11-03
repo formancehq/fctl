@@ -8,12 +8,12 @@ import (
 )
 
 type UpdateClientRequest struct {
-	ClientOptions *auth.ClientOptions `request:"mediaType=application/json"`
+	ClientOptions *auth.ClientOptions1 `request:"mediaType=application/json"`
 	// Client ID
 	ClientID string `pathParam:"style=simple,explode=false,name=clientId"`
 }
 
-func (u *UpdateClientRequest) GetClientOptions() *auth.ClientOptions {
+func (u *UpdateClientRequest) GetClientOptions() *auth.ClientOptions1 {
 	if u == nil {
 		return nil
 	}

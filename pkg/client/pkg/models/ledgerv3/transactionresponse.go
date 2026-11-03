@@ -8,11 +8,6 @@ import (
 )
 
 type TransactionResponse struct {
-	// Transaction ID (assigned by the system)
-	ID int64 `json:"id"`
-	// When the transaction was inserted into the ledger
-	InsertedAt *time.Time                `json:"insertedAt,omitempty"`
-	Metadata   map[string]*MetadataValue `json:"metadata"`
 	// Post-commit volumes, keyed by account address. Each account maps to a
 	// flat array of per-(asset, color) volume tuples. The wire is a plain
 	// `{"addr": [{asset, color, input, output}]}` map — the proto
@@ -22,8 +17,13 @@ type TransactionResponse struct {
 	// bucket uniquely once a color dimension exists.
 	//
 	PostCommitVolumes map[string][]VolumeEntry `json:"postCommitVolumes,omitempty"`
-	Postings          []PostingResponse        `json:"postings"`
-	Reference         *string                  `json:"reference,omitempty"`
+	// Transaction ID (assigned by the system)
+	ID int64 `json:"id"`
+	// When the transaction was inserted into the ledger
+	InsertedAt *time.Time                `json:"insertedAt,omitempty"`
+	Metadata   map[string]*MetadataValue `json:"metadata"`
+	Postings   []PostingResponse         `json:"postings"`
+	Reference  *string                   `json:"reference,omitempty"`
 	// Whether this transaction has been reverted
 	Reverted bool `json:"reverted"`
 	// When the transaction was reverted (null if not reverted)
@@ -49,6 +49,13 @@ func (t *TransactionResponse) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (t *TransactionResponse) GetPostCommitVolumes() map[string][]VolumeEntry {
+	if t == nil {
+		return nil
+	}
+	return t.PostCommitVolumes
+}
+
 func (t *TransactionResponse) GetID() int64 {
 	if t == nil {
 		return 0
@@ -68,13 +75,6 @@ func (t *TransactionResponse) GetMetadata() map[string]*MetadataValue {
 		return map[string]*MetadataValue{}
 	}
 	return t.Metadata
-}
-
-func (t *TransactionResponse) GetPostCommitVolumes() map[string][]VolumeEntry {
-	if t == nil {
-		return nil
-	}
-	return t.PostCommitVolumes
 }
 
 func (t *TransactionResponse) GetPostings() []PostingResponse {

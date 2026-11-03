@@ -9,6 +9,10 @@ import (
 )
 
 type V3InitiatePaymentRequest struct {
+	// Arbitrary key/value pairs attached to the resource
+	V3Metadata map[string]string `json:"metadata,omitempty"`
+	// Kind of movement a payment initiation performs, such as a transfer or a payout
+	V3PaymentInitiationTypeEnum V3PaymentInitiationTypeEnum `json:"type"`
 	// Amount to move, in the asset's smallest unit
 	Amount *big.Int `json:"amount"`
 	// Asset the payment is denominated in
@@ -19,16 +23,12 @@ type V3InitiatePaymentRequest struct {
 	Description string `json:"description"`
 	// Identifier of the account the funds reach
 	DestinationAccountID *string `json:"destinationAccountID,omitempty"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
 	// Caller-supplied identifier for the initiation, used to deduplicate retries
 	Reference string `json:"reference"`
 	// When the payment should be executed
 	ScheduledAt time.Time `json:"scheduledAt"`
 	// Identifier of the account the funds leave
 	SourceAccountID *string `json:"sourceAccountID,omitempty"`
-	// Kind of movement a payment initiation performs, such as a transfer or a payout
-	Type V3PaymentInitiationTypeEnum `json:"type"`
 }
 
 func (v V3InitiatePaymentRequest) MarshalJSON() ([]byte, error) {
@@ -40,6 +40,20 @@ func (v *V3InitiatePaymentRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V3InitiatePaymentRequest) GetV3Metadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.V3Metadata
+}
+
+func (v *V3InitiatePaymentRequest) GetV3PaymentInitiationTypeEnum() V3PaymentInitiationTypeEnum {
+	if v == nil {
+		return V3PaymentInitiationTypeEnum("")
+	}
+	return v.V3PaymentInitiationTypeEnum
 }
 
 func (v *V3InitiatePaymentRequest) GetAmount() *big.Int {
@@ -77,13 +91,6 @@ func (v *V3InitiatePaymentRequest) GetDestinationAccountID() *string {
 	return v.DestinationAccountID
 }
 
-func (v *V3InitiatePaymentRequest) GetMetadata() map[string]string {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
-}
-
 func (v *V3InitiatePaymentRequest) GetReference() string {
 	if v == nil {
 		return ""
@@ -103,13 +110,6 @@ func (v *V3InitiatePaymentRequest) GetSourceAccountID() *string {
 		return nil
 	}
 	return v.SourceAccountID
-}
-
-func (v *V3InitiatePaymentRequest) GetType() V3PaymentInitiationTypeEnum {
-	if v == nil {
-		return V3PaymentInitiationTypeEnum("")
-	}
-	return v.Type
 }
 
 // #region class-body-v3initiatepaymentrequest

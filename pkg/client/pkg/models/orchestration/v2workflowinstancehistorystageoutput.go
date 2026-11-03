@@ -4,60 +4,60 @@ package orchestration
 
 // V2WorkflowInstanceHistoryStageOutput - Result an activity returned, keyed by activity name
 type V2WorkflowInstanceHistoryStageOutput struct {
-	// Result of the activity that writes a transaction to a ledger
-	CreateTransaction *V2ActivityCreateTransactionOutput `json:"CreateTransaction,omitempty"`
-	// Result of the activity that debits a wallet
-	DebitWallet *V2ActivityDebitWalletOutput `json:"DebitWallet,omitempty"`
 	// Result of the activity that reads a ledger account
-	GetAccount *V2ActivityGetAccountOutput `json:"GetAccount,omitempty"`
-	// Result of the activity that reads a payment
-	GetPayment *V2ActivityGetPaymentOutput `json:"GetPayment,omitempty"`
+	V2AccountResponse *V2AccountResponse `json:"GetAccount,omitempty"`
+	// Result of the activity that writes a transaction to a ledger
+	V2CreateTransactionResponse *V2CreateTransactionResponse `json:"CreateTransaction,omitempty"`
+	// Result of the activity that debits a wallet
+	V2DebitWalletResponse *V2DebitWalletResponse `json:"DebitWallet,omitempty"`
 	// Result of the activity that reads a wallet
-	GetWallet *V2ActivityGetWalletOutput `json:"GetWallet,omitempty"`
+	V2GetWalletResponse *V2GetWalletResponse `json:"GetWallet,omitempty"`
 	// A page of wallets
-	ListWallets *V2ListWalletsResponse `json:"ListWallets,omitempty"`
+	V2ListWalletsResponse *V2ListWalletsResponse `json:"ListWallets,omitempty"`
+	// Result of the activity that reads a payment
+	V2PaymentResponse *V2PaymentResponse `json:"GetPayment,omitempty"`
 }
 
-func (v *V2WorkflowInstanceHistoryStageOutput) GetCreateTransaction() *V2ActivityCreateTransactionOutput {
+func (v *V2WorkflowInstanceHistoryStageOutput) GetV2AccountResponse() *V2AccountResponse {
 	if v == nil {
 		return nil
 	}
-	return v.CreateTransaction
+	return v.V2AccountResponse
 }
 
-func (v *V2WorkflowInstanceHistoryStageOutput) GetDebitWallet() *V2ActivityDebitWalletOutput {
+func (v *V2WorkflowInstanceHistoryStageOutput) GetV2CreateTransactionResponse() *V2CreateTransactionResponse {
 	if v == nil {
 		return nil
 	}
-	return v.DebitWallet
+	return v.V2CreateTransactionResponse
 }
 
-func (v *V2WorkflowInstanceHistoryStageOutput) GetGetAccount() *V2ActivityGetAccountOutput {
+func (v *V2WorkflowInstanceHistoryStageOutput) GetV2DebitWalletResponse() *V2DebitWalletResponse {
 	if v == nil {
 		return nil
 	}
-	return v.GetAccount
+	return v.V2DebitWalletResponse
 }
 
-func (v *V2WorkflowInstanceHistoryStageOutput) GetGetPayment() *V2ActivityGetPaymentOutput {
+func (v *V2WorkflowInstanceHistoryStageOutput) GetV2GetWalletResponse() *V2GetWalletResponse {
 	if v == nil {
 		return nil
 	}
-	return v.GetPayment
+	return v.V2GetWalletResponse
 }
 
-func (v *V2WorkflowInstanceHistoryStageOutput) GetGetWallet() *V2ActivityGetWalletOutput {
+func (v *V2WorkflowInstanceHistoryStageOutput) GetV2ListWalletsResponse() *V2ListWalletsResponse {
 	if v == nil {
 		return nil
 	}
-	return v.GetWallet
+	return v.V2ListWalletsResponse
 }
 
-func (v *V2WorkflowInstanceHistoryStageOutput) GetListWallets() *V2ListWalletsResponse {
+func (v *V2WorkflowInstanceHistoryStageOutput) GetV2PaymentResponse() *V2PaymentResponse {
 	if v == nil {
 		return nil
 	}
-	return v.ListWallets
+	return v.V2PaymentResponse
 }
 
 // #region class-body-v2workflowinstancehistorystageoutput

@@ -13,7 +13,7 @@ import (
 )
 
 type ShowStore struct {
-	Client *auth.Client `json:"client,omitempty"`
+	Client *auth.ClientOptions `json:"client,omitempty"`
 }
 type ShowController struct {
 	store *ShowStore
@@ -69,7 +69,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Client = response.ReadClientResponse.Data
+	c.store.Client = response.ReadClientResponse.ClientOptions
 
 	return c, nil
 }

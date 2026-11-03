@@ -2,35 +2,69 @@
 
 package ledger
 
-// V2SchemaData - Schema data structure for ledger schemas
+import (
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
+	"time"
+)
+
+// V2SchemaData - Complete schema structure with metadata
 type V2SchemaData struct {
 	// Chart of account
-	Chart map[string]V2ChartSegment `json:"chart"`
+	V2ChartOfAccounts map[string]V2ChartSegment `json:"chart"`
 	// Query templates
-	Queries map[string]V2QueryTemplate `json:"queries,omitempty"`
+	V2QueryTemplates map[string]V2QueryTemplate `json:"queries,omitempty"`
 	// Transaction templates
-	Transactions map[string]V2TransactionTemplate `json:"transactions,omitempty"`
+	V2TransactionTemplates map[string]V2TransactionTemplate `json:"transactions,omitempty"`
+	// Schema creation timestamp
+	CreatedAt time.Time `json:"createdAt"`
+	// Schema version
+	Version string `json:"version"`
 }
 
-func (v *V2SchemaData) GetChart() map[string]V2ChartSegment {
+func (v V2SchemaData) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(v, "", false)
+}
+
+func (v *V2SchemaData) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"chart", "createdAt", "version"}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *V2SchemaData) GetV2ChartOfAccounts() map[string]V2ChartSegment {
 	if v == nil {
 		return map[string]V2ChartSegment{}
 	}
-	return v.Chart
+	return v.V2ChartOfAccounts
 }
 
-func (v *V2SchemaData) GetQueries() map[string]V2QueryTemplate {
+func (v *V2SchemaData) GetV2QueryTemplates() map[string]V2QueryTemplate {
 	if v == nil {
 		return nil
 	}
-	return v.Queries
+	return v.V2QueryTemplates
 }
 
-func (v *V2SchemaData) GetTransactions() map[string]V2TransactionTemplate {
+func (v *V2SchemaData) GetV2TransactionTemplates() map[string]V2TransactionTemplate {
 	if v == nil {
 		return nil
 	}
-	return v.Transactions
+	return v.V2TransactionTemplates
+}
+
+func (v *V2SchemaData) GetCreatedAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.CreatedAt
+}
+
+func (v *V2SchemaData) GetVersion() string {
+	if v == nil {
+		return ""
+	}
+	return v.Version
 }
 
 // #region class-body-v2schemadata

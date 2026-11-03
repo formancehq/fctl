@@ -4,14 +4,14 @@ package payments
 
 type V3UpdatePaymentMetadataRequest struct {
 	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata"`
+	V3Metadata map[string]string `json:"metadata"`
 }
 
-func (v *V3UpdatePaymentMetadataRequest) GetMetadata() map[string]string {
+func (v *V3UpdatePaymentMetadataRequest) GetV3Metadata() map[string]string {
 	if v == nil {
 		return nil
 	}
-	return v.Metadata
+	return v.V3Metadata
 }
 
 // #region class-body-v3updatepaymentmetadatarequest

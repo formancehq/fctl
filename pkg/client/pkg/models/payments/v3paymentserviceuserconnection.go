@@ -8,6 +8,10 @@ import (
 )
 
 type V3PaymentServiceUserConnection struct {
+	// Whether an open banking connection is still usable or needs the user to reconnect
+	V3ConnectionStatusEnum V3ConnectionStatusEnum `json:"status"`
+	// Arbitrary key/value pairs attached to the resource
+	V3Metadata map[string]string `json:"metadata,omitempty"`
 	// Identifier of the open banking connection at the provider
 	ConnectionID string `json:"connectionID"`
 	// Identifier of the connector holding the connection
@@ -18,10 +22,6 @@ type V3PaymentServiceUserConnection struct {
 	DataUpdatedAt time.Time `json:"dataUpdatedAt"`
 	// Why the connection is failing, absent while it is healthy
 	Error *string `json:"error,omitempty"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
-	// Whether an open banking connection is still usable or needs the user to reconnect
-	Status V3ConnectionStatusEnum `json:"status"`
 }
 
 func (v V3PaymentServiceUserConnection) MarshalJSON() ([]byte, error) {
@@ -33,6 +33,20 @@ func (v *V3PaymentServiceUserConnection) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V3PaymentServiceUserConnection) GetV3ConnectionStatusEnum() V3ConnectionStatusEnum {
+	if v == nil {
+		return V3ConnectionStatusEnum("")
+	}
+	return v.V3ConnectionStatusEnum
+}
+
+func (v *V3PaymentServiceUserConnection) GetV3Metadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.V3Metadata
 }
 
 func (v *V3PaymentServiceUserConnection) GetConnectionID() string {
@@ -68,20 +82,6 @@ func (v *V3PaymentServiceUserConnection) GetError() *string {
 		return nil
 	}
 	return v.Error
-}
-
-func (v *V3PaymentServiceUserConnection) GetMetadata() map[string]string {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
-}
-
-func (v *V3PaymentServiceUserConnection) GetStatus() V3ConnectionStatusEnum {
-	if v == nil {
-		return V3ConnectionStatusEnum("")
-	}
-	return v.Status
 }
 
 // #region class-body-v3paymentserviceuserconnection

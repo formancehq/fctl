@@ -72,7 +72,7 @@ func (c *CreateWebhookController) Run(cmd *cobra.Command, args []string) (fctl.R
 		return nil, fmt.Errorf("creating config: %w", err)
 	}
 
-	c.store.Webhook = response.ConfigResponse.Data
+	c.store.Webhook = response.ConfigResponse.WebhooksConfig
 
 	return c, nil
 }

@@ -7,9 +7,9 @@ import (
 )
 
 type Data struct {
-	Metadata   map[string]string `json:"metadata"`
-	TargetID   V2TargetID        `json:"targetId"`
-	TargetType V2TargetType      `json:"targetType"`
+	V2TargetID   V2TargetID        `json:"targetId"`
+	V2TargetType V2TargetType      `json:"targetType"`
+	Metadata     map[string]string `json:"metadata"`
 }
 
 func (d Data) MarshalJSON() ([]byte, error) {
@@ -17,10 +17,24 @@ func (d Data) MarshalJSON() ([]byte, error) {
 }
 
 func (d *Data) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &d, "", false, []string{"metadata", "targetId", "targetType"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &d, "", false, []string{"targetId", "targetType", "metadata"}); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (d *Data) GetV2TargetID() V2TargetID {
+	if d == nil {
+		return V2TargetID{}
+	}
+	return d.V2TargetID
+}
+
+func (d *Data) GetV2TargetType() V2TargetType {
+	if d == nil {
+		return V2TargetType("")
+	}
+	return d.V2TargetType
 }
 
 func (d *Data) GetMetadata() map[string]string {
@@ -28,20 +42,6 @@ func (d *Data) GetMetadata() map[string]string {
 		return map[string]string{}
 	}
 	return d.Metadata
-}
-
-func (d *Data) GetTargetID() V2TargetID {
-	if d == nil {
-		return V2TargetID{}
-	}
-	return d.TargetID
-}
-
-func (d *Data) GetTargetType() V2TargetType {
-	if d == nil {
-		return V2TargetType("")
-	}
-	return d.TargetType
 }
 
 type V2BulkElementAddMetadata struct {

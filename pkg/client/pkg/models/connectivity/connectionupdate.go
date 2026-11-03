@@ -15,12 +15,12 @@ type ConnectionUpdate struct {
 	// configuration validation against a currently published release.
 	// Once assigned, either value may be repeated but never changed or cleared.
 	//
-	Configuration ConnectionConfiguration `json:"configuration"`
+	ConnectionConfiguration ConnectionConfiguration `json:"configuration"`
 }
 
-func (c *ConnectionUpdate) GetConfiguration() ConnectionConfiguration {
+func (c *ConnectionUpdate) GetConnectionConfiguration() ConnectionConfiguration {
 	if c == nil {
 		return ConnectionConfiguration{}
 	}
-	return c.Configuration
+	return c.ConnectionConfiguration
 }

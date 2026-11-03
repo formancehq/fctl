@@ -4,14 +4,14 @@ package ledger
 
 type V2SchemasCursorResponse struct {
 	// Paginated cursor over the ledger's schemas
-	Cursor V2SchemasCursor `json:"cursor"`
+	V2SchemasCursor V2SchemasCursor `json:"cursor"`
 }
 
-func (v *V2SchemasCursorResponse) GetCursor() V2SchemasCursor {
+func (v *V2SchemasCursorResponse) GetV2SchemasCursor() V2SchemasCursor {
 	if v == nil {
 		return V2SchemasCursor{}
 	}
-	return v.Cursor
+	return v.V2SchemasCursor
 }
 
 // #region class-body-v2schemascursorresponse

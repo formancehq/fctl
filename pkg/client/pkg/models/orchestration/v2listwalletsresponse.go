@@ -2,8 +2,8 @@
 
 package orchestration
 
-// V2ListWalletsResponseCursor - Paginated cursor wrapping the list of wallets
-type V2ListWalletsResponseCursor struct {
+// V2Cursor - Paginated cursor wrapping the list of wallets
+type V2Cursor struct {
 	Data []V2Wallet `json:"data"`
 	// Whether further pages are available
 	HasMore *bool `json:"hasMore,omitempty"`
@@ -15,55 +15,55 @@ type V2ListWalletsResponseCursor struct {
 	Previous *string `json:"previous,omitempty"`
 }
 
-func (v *V2ListWalletsResponseCursor) GetData() []V2Wallet {
+func (v *V2Cursor) GetData() []V2Wallet {
 	if v == nil {
 		return []V2Wallet{}
 	}
 	return v.Data
 }
 
-func (v *V2ListWalletsResponseCursor) GetHasMore() *bool {
+func (v *V2Cursor) GetHasMore() *bool {
 	if v == nil {
 		return nil
 	}
 	return v.HasMore
 }
 
-func (v *V2ListWalletsResponseCursor) GetNext() *string {
+func (v *V2Cursor) GetNext() *string {
 	if v == nil {
 		return nil
 	}
 	return v.Next
 }
 
-func (v *V2ListWalletsResponseCursor) GetPageSize() int64 {
+func (v *V2Cursor) GetPageSize() int64 {
 	if v == nil {
 		return 0
 	}
 	return v.PageSize
 }
 
-func (v *V2ListWalletsResponseCursor) GetPrevious() *string {
+func (v *V2Cursor) GetPrevious() *string {
 	if v == nil {
 		return nil
 	}
 	return v.Previous
 }
 
-// #region class-body-v2listwalletsresponsecursor
-// #endregion class-body-v2listwalletsresponsecursor
+// #region class-body-v2cursor
+// #endregion class-body-v2cursor
 
 // V2ListWalletsResponse - A page of wallets
 type V2ListWalletsResponse struct {
 	// Paginated cursor wrapping the list of wallets
-	Cursor V2ListWalletsResponseCursor `json:"cursor"`
+	V2Cursor V2Cursor `json:"cursor"`
 }
 
-func (v *V2ListWalletsResponse) GetCursor() V2ListWalletsResponseCursor {
+func (v *V2ListWalletsResponse) GetV2Cursor() V2Cursor {
 	if v == nil {
-		return V2ListWalletsResponseCursor{}
+		return V2Cursor{}
 	}
-	return v.Cursor
+	return v.V2Cursor
 }
 
 // #region class-body-v2listwalletsresponse

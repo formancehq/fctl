@@ -16,16 +16,15 @@ const (
 )
 
 type securityTag struct {
-	Option    bool
-	Scheme    bool
-	Composite bool
-	Name      string
-	Type      string
-	SubType   string
-	Env       string
+	Option  bool
+	Scheme  bool
+	Name    string
+	Type    string
+	SubType string
+	Env     string
 }
 
-func PopulateSecurity(ctx context.Context, req *http.Request, securitySource func(context.Context) (interface{}, error), allowedFields ...string) error {
+func PopulateSecurity(ctx context.Context, req *http.Request, securitySource func(context.Context) (interface{}, error)) error {
 	if securitySource == nil {
 		return nil
 	}
@@ -50,7 +49,34 @@ func PopulateSecurity(ctx context.Context, req *http.Request, securitySource fun
 		securityValType = securityValType.Elem()
 	}
 
-	populateSecurityFields(headers, queryParams, securityStructType, securityValType, security, allowedFields)
+	for i := 0; i < securityStructType.NumField(); i++ {
+		fieldType := securityStructType.Field(i)
+		valType := securityValType.Field(i)
+
+		kind := valType.Kind()
+
+		if isNil(fieldType.Type, valType) {
+			continue
+		}
+
+		if fieldType.Type.Kind() == reflect.Pointer {
+			kind = valType.Elem().Kind()
+		}
+
+		secTag := parseSecurityTag(fieldType)
+		if secTag != nil {
+			if secTag.Option {
+				handleSecurityOption(headers, queryParams, valType.Interface())
+			} else if secTag.Scheme {
+				// Special case for basic auth which could be a flattened struct
+				if secTag.SubType == "basic" && kind != reflect.Struct {
+					parseSecurityScheme(headers, queryParams, secTag, security)
+				} else {
+					parseSecurityScheme(headers, queryParams, secTag, valType.Interface())
+				}
+			}
+		}
+	}
 
 	for key, value := range headers {
 		req.Header.Add(key, value)
@@ -63,61 +89,6 @@ func PopulateSecurity(ctx context.Context, req *http.Request, securitySource fun
 	req.URL.RawQuery = query.Encode()
 
 	return nil
-}
-
-func populateSecurityFields(headers, queryParams map[string]string, securityStructType reflect.Type, securityValType reflect.Value, security interface{}, allowedFields []string) {
-	type fieldPair struct {
-		fieldType reflect.StructField
-		valType   reflect.Value
-	}
-
-	var fields []fieldPair
-	if len(allowedFields) > 0 {
-		for _, name := range allowedFields {
-			ft, ok := securityStructType.FieldByName(name)
-			if !ok {
-				continue
-			}
-			fields = append(fields, fieldPair{ft, securityValType.FieldByName(name)})
-		}
-	} else {
-		for i := 0; i < securityStructType.NumField(); i++ {
-			fields = append(fields, fieldPair{securityStructType.Field(i), securityValType.Field(i)})
-		}
-	}
-
-	for _, f := range fields {
-		kind := f.valType.Kind()
-
-		if isNil(f.fieldType.Type, f.valType) {
-			continue
-		}
-
-		if f.fieldType.Type.Kind() == reflect.Pointer {
-			kind = f.valType.Elem().Kind()
-		}
-
-		secTag := parseSecurityTag(f.fieldType)
-		if secTag == nil {
-			continue
-		}
-
-		if secTag.Option {
-			handleSecurityOption(headers, queryParams, f.valType.Interface())
-			return
-		} else if secTag.Scheme {
-			// Special case for basic auth which could be a flattened struct
-			if secTag.SubType == "basic" && kind != reflect.Struct {
-				parseSecurityScheme(headers, queryParams, secTag, security)
-			} else {
-				parseSecurityScheme(headers, queryParams, secTag, f.valType.Interface())
-			}
-
-			if !secTag.Composite {
-				return
-			}
-		}
-	}
 }
 
 func handleSecurityOption(headers, queryParams map[string]string, option interface{}) {
@@ -133,16 +104,9 @@ func handleSecurityOption(headers, queryParams map[string]string, option interfa
 		valType := optionValType.Field(i)
 
 		secTag := parseSecurityTag(fieldType)
-		if secTag == nil || !secTag.Scheme {
-			continue
+		if secTag != nil && secTag.Scheme {
+			parseSecurityScheme(headers, queryParams, secTag, valType.Interface())
 		}
-
-		if secTag.Type == "http" && secTag.SubType == "basic" && valType.Kind() != reflect.Struct {
-			handleBasicAuthScheme(headers, optionValType.Interface())
-			return
-		}
-
-		parseSecurityScheme(headers, queryParams, secTag, valType.Interface())
 	}
 }
 
@@ -269,7 +233,6 @@ func parseSecurityTag(field reflect.StructField) *securityTag {
 
 	option := false
 	scheme := false
-	composite := false
 	name := ""
 	securityType := ""
 	securitySubType := ""
@@ -293,21 +256,20 @@ func parseSecurityTag(field reflect.StructField) *securityTag {
 			option = true
 		case "scheme":
 			scheme = true
-		case "composite":
-			composite = true
 		case "env":
 			env = parts[1]
 		}
 	}
 
+	// TODO: validate tag?
+
 	return &securityTag{
-		Option:    option,
-		Scheme:    scheme,
-		Composite: composite,
-		Name:      name,
-		Type:      securityType,
-		SubType:   securitySubType,
-		Env:       env,
+		Option:  option,
+		Scheme:  scheme,
+		Name:    name,
+		Type:    securityType,
+		SubType: securitySubType,
+		Env:     env,
 	}
 }
 

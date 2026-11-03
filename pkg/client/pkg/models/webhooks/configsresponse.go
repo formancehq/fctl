@@ -2,21 +2,21 @@
 
 package webhooks
 
-// Cursor - Paginated cursor wrapping the list of configurations
-type Cursor struct {
+// ConfigsResponseCursor - Paginated cursor wrapping the list of configurations
+type ConfigsResponseCursor struct {
 	Data []WebhooksConfig `json:"data"`
 	// Whether further pages are available
 	HasMore bool `json:"hasMore"`
 }
 
-func (c *Cursor) GetData() []WebhooksConfig {
+func (c *ConfigsResponseCursor) GetData() []WebhooksConfig {
 	if c == nil {
 		return []WebhooksConfig{}
 	}
 	return c.Data
 }
 
-func (c *Cursor) GetHasMore() bool {
+func (c *ConfigsResponseCursor) GetHasMore() bool {
 	if c == nil {
 		return false
 	}
@@ -25,12 +25,12 @@ func (c *Cursor) GetHasMore() bool {
 
 type ConfigsResponse struct {
 	// Paginated cursor wrapping the list of configurations
-	Cursor Cursor `json:"cursor"`
+	Cursor ConfigsResponseCursor `json:"cursor"`
 }
 
-func (c *ConfigsResponse) GetCursor() Cursor {
+func (c *ConfigsResponse) GetCursor() ConfigsResponseCursor {
 	if c == nil {
-		return Cursor{}
+		return ConfigsResponseCursor{}
 	}
 	return c.Cursor
 }

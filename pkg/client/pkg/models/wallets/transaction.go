@@ -8,18 +8,18 @@ import (
 )
 
 type Transaction struct {
+	// Volumes aggregated per account and per asset
+	AggregatedVolumes map[string]map[string]Volume `json:"preCommitVolumes,omitempty"`
+	// Volumes aggregated per account and per asset
+	AggregatedVolumes1 map[string]map[string]Volume `json:"postCommitVolumes,omitempty"`
 	// Unique sequential identifier for this transaction within the ledger
 	ID int64 `json:"id"`
 	// Name of the ledger the transaction was recorded in
 	Ledger *string `json:"ledger,omitempty"`
 	// Metadata associated with the wallet.
 	Metadata map[string]string `json:"metadata"`
-	// Volumes aggregated per account and per asset
-	PostCommitVolumes map[string]map[string]Volume `json:"postCommitVolumes,omitempty"`
 	// The fund movements making up the transaction
 	Postings []Posting `json:"postings"`
-	// Volumes aggregated per account and per asset
-	PreCommitVolumes map[string]map[string]Volume `json:"preCommitVolumes,omitempty"`
 	// Optional caller-supplied identifier, unique within the ledger, used to deduplicate transactions
 	Reference *string `json:"reference,omitempty"`
 	// The transaction time: when the transaction is considered to have occurred. See [bi- temporality](https://docs.formance.com/modules/ledger/working-with/bi-temporality)
@@ -35,6 +35,20 @@ func (t *Transaction) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (t *Transaction) GetAggregatedVolumes() map[string]map[string]Volume {
+	if t == nil {
+		return nil
+	}
+	return t.AggregatedVolumes
+}
+
+func (t *Transaction) GetAggregatedVolumes1() map[string]map[string]Volume {
+	if t == nil {
+		return nil
+	}
+	return t.AggregatedVolumes1
 }
 
 func (t *Transaction) GetID() int64 {
@@ -58,25 +72,11 @@ func (t *Transaction) GetMetadata() map[string]string {
 	return t.Metadata
 }
 
-func (t *Transaction) GetPostCommitVolumes() map[string]map[string]Volume {
-	if t == nil {
-		return nil
-	}
-	return t.PostCommitVolumes
-}
-
 func (t *Transaction) GetPostings() []Posting {
 	if t == nil {
 		return []Posting{}
 	}
 	return t.Postings
-}
-
-func (t *Transaction) GetPreCommitVolumes() map[string]map[string]Volume {
-	if t == nil {
-		return nil
-	}
-	return t.PreCommitVolumes
 }
 
 func (t *Transaction) GetReference() *string {

@@ -9,6 +9,8 @@ import (
 
 // V3Pool - A named group of accounts whose balances are aggregated together
 type V3Pool struct {
+	// Whether a pool holds a fixed account list or is driven by a query
+	V3PoolTypeEnum *V3PoolTypeEnum `json:"type,omitempty"`
 	// When the pool was created
 	CreatedAt time.Time `json:"createdAt"`
 	// Unique identifier of the pool
@@ -19,8 +21,6 @@ type V3Pool struct {
 	PoolAccounts []string `json:"poolAccounts"`
 	// Filter selecting the accounts a dynamic pool contains
 	Query map[string]any `json:"query,omitempty"`
-	// Whether a pool holds a fixed account list or is driven by a query
-	Type *V3PoolTypeEnum `json:"type,omitempty"`
 }
 
 func (v V3Pool) MarshalJSON() ([]byte, error) {
@@ -32,6 +32,13 @@ func (v *V3Pool) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V3Pool) GetV3PoolTypeEnum() *V3PoolTypeEnum {
+	if v == nil {
+		return nil
+	}
+	return v.V3PoolTypeEnum
 }
 
 func (v *V3Pool) GetCreatedAt() time.Time {
@@ -67,13 +74,6 @@ func (v *V3Pool) GetQuery() map[string]any {
 		return nil
 	}
 	return v.Query
-}
-
-func (v *V3Pool) GetType() *V3PoolTypeEnum {
-	if v == nil {
-		return nil
-	}
-	return v.Type
 }
 
 // #region class-body-v3pool

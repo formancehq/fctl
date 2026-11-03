@@ -4,12 +4,12 @@ package ledger
 
 type AggregateBalancesResponse struct {
 	// Balances keyed by asset
-	Data map[string]int64 `json:"data"`
+	AssetsBalances map[string]int64 `json:"data"`
 }
 
-func (a *AggregateBalancesResponse) GetData() map[string]int64 {
+func (a *AggregateBalancesResponse) GetAssetsBalances() map[string]int64 {
 	if a == nil {
 		return map[string]int64{}
 	}
-	return a.Data
+	return a.AssetsBalances
 }

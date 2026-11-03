@@ -2,11 +2,19 @@
 
 package orchestration
 
+import (
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
+	"time"
+)
+
+// V2TriggerData - A rule that starts a workflow when a matching event arrives
 type V2TriggerData struct {
+	CreatedAt time.Time `json:"createdAt"`
 	// Type of event that fires this trigger
 	Event string `json:"event"`
 	// Expression evaluated against the event. The workflow runs only when it matches
 	Filter *string `json:"filter,omitempty"`
+	ID     string  `json:"id"`
 	// Human-readable name for the trigger
 	Name *string `json:"name,omitempty"`
 	// Expressions evaluated against the event to build the workflow's input variables
@@ -15,6 +23,24 @@ type V2TriggerData struct {
 	Version *string `json:"version,omitempty"`
 	// Identifier of the workflow to run when the trigger fires
 	WorkflowID string `json:"workflowID"`
+}
+
+func (v V2TriggerData) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(v, "", false)
+}
+
+func (v *V2TriggerData) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &v, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *V2TriggerData) GetCreatedAt() time.Time {
+	if v == nil {
+		return time.Time{}
+	}
+	return v.CreatedAt
 }
 
 func (v *V2TriggerData) GetEvent() string {
@@ -29,6 +55,13 @@ func (v *V2TriggerData) GetFilter() *string {
 		return nil
 	}
 	return v.Filter
+}
+
+func (v *V2TriggerData) GetID() string {
+	if v == nil {
+		return ""
+	}
+	return v.ID
 }
 
 func (v *V2TriggerData) GetName() *string {

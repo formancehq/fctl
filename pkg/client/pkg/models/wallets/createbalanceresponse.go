@@ -4,12 +4,12 @@ package wallets
 
 type CreateBalanceResponse struct {
 	// A named balance within a wallet, optionally carrying an expiry date
-	Data Balance `json:"data"`
+	Balance Balance `json:"data"`
 }
 
-func (c *CreateBalanceResponse) GetData() Balance {
+func (c *CreateBalanceResponse) GetBalance() Balance {
 	if c == nil {
 		return Balance{}
 	}
-	return c.Data
+	return c.Balance
 }

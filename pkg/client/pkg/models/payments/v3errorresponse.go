@@ -7,10 +7,10 @@ import (
 )
 
 type V3ErrorResponse struct {
+	// Machine-readable error code identifying the failure
+	V3ErrorsEnum V3ErrorsEnum `json:"errorCode"`
 	// Optional link carrying additional context about the error
 	Details *string `json:"details,omitempty"`
-	// Machine-readable error code identifying the failure
-	ErrorCode V3ErrorsEnum `json:"errorCode"`
 	// Human-readable description of the error
 	ErrorMessage string `json:"errorMessage"`
 }

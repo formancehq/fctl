@@ -33,7 +33,7 @@ func (v *V2PostTransactionScript) GetVars() map[string]any {
 // V2PostTransaction - A transaction to write to a ledger
 type V2PostTransaction struct {
 	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata"`
+	V2Metadata map[string]string `json:"metadata"`
 	// Fund movements to apply. Mutually exclusive with script
 	Postings []V2Posting `json:"postings,omitempty"`
 	// Optional caller-supplied identifier, unique within the ledger, used to deduplicate transactions
@@ -55,11 +55,11 @@ func (v *V2PostTransaction) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2PostTransaction) GetMetadata() map[string]string {
+func (v *V2PostTransaction) GetV2Metadata() map[string]string {
 	if v == nil {
 		return map[string]string{}
 	}
-	return v.Metadata
+	return v.V2Metadata
 }
 
 func (v *V2PostTransaction) GetPostings() []V2Posting {

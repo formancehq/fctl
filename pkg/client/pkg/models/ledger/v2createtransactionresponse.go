@@ -4,14 +4,14 @@ package ledger
 
 type V2CreateTransactionResponse struct {
 	// A transaction recorded in the ledger, carrying its postings, metadata and both bi-temporal timestamps
-	Data V2Transaction `json:"data"`
+	V2Transaction V2Transaction `json:"data"`
 }
 
-func (v *V2CreateTransactionResponse) GetData() V2Transaction {
+func (v *V2CreateTransactionResponse) GetV2Transaction() V2Transaction {
 	if v == nil {
 		return V2Transaction{}
 	}
-	return v.Data
+	return v.V2Transaction
 }
 
 // #region class-body-v2createtransactionresponse

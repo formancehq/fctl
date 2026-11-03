@@ -2,50 +2,50 @@
 
 package webhooks
 
-// DeliveriesResponseCursor - Paginated cursor wrapping the list of deliveries
-type DeliveriesResponseCursor struct {
+// Cursor - Paginated cursor wrapping the list of deliveries
+type Cursor struct {
 	Data     []Delivery `json:"data"`
 	HasMore  bool       `json:"hasMore"`
 	Next     *string    `json:"next,omitempty"`
 	PageSize *int64     `json:"pageSize,omitempty"`
 }
 
-func (d *DeliveriesResponseCursor) GetData() []Delivery {
-	if d == nil {
+func (c *Cursor) GetData() []Delivery {
+	if c == nil {
 		return []Delivery{}
 	}
-	return d.Data
+	return c.Data
 }
 
-func (d *DeliveriesResponseCursor) GetHasMore() bool {
-	if d == nil {
+func (c *Cursor) GetHasMore() bool {
+	if c == nil {
 		return false
 	}
-	return d.HasMore
+	return c.HasMore
 }
 
-func (d *DeliveriesResponseCursor) GetNext() *string {
-	if d == nil {
+func (c *Cursor) GetNext() *string {
+	if c == nil {
 		return nil
 	}
-	return d.Next
+	return c.Next
 }
 
-func (d *DeliveriesResponseCursor) GetPageSize() *int64 {
-	if d == nil {
+func (c *Cursor) GetPageSize() *int64 {
+	if c == nil {
 		return nil
 	}
-	return d.PageSize
+	return c.PageSize
 }
 
 type DeliveriesResponse struct {
 	// Paginated cursor wrapping the list of deliveries
-	Cursor DeliveriesResponseCursor `json:"cursor"`
+	Cursor Cursor `json:"cursor"`
 }
 
-func (d *DeliveriesResponse) GetCursor() DeliveriesResponseCursor {
+func (d *DeliveriesResponse) GetCursor() Cursor {
 	if d == nil {
-		return DeliveriesResponseCursor{}
+		return Cursor{}
 	}
 	return d.Cursor
 }

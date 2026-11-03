@@ -5,12 +5,12 @@ package reconciliation
 // EvaluationResponse - OK
 type EvaluationResponse struct {
 	// One run of a rule, carrying its outcome and cost
-	Data Evaluation `json:"data"`
+	Evaluation Evaluation `json:"data"`
 }
 
-func (e *EvaluationResponse) GetData() Evaluation {
+func (e *EvaluationResponse) GetEvaluation() Evaluation {
 	if e == nil {
 		return Evaluation{}
 	}
-	return e.Data
+	return e.Evaluation
 }

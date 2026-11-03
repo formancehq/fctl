@@ -92,7 +92,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected response: %v", response)
 	}
 
-	c.store.Schedule = &response.V3ConnectorScheduleResponse.Data
+	c.store.Schedule = &response.V3ConnectorScheduleResponse.V3Schedule
 
 	return c, nil
 }

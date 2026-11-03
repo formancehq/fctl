@@ -5,12 +5,12 @@ package payments
 // PaymentResponse - OK
 type PaymentResponse struct {
 	// A payment observed at a provider and surfaced through a connector
-	Data Payment `json:"data"`
+	Payment Payment `json:"data"`
 }
 
-func (p *PaymentResponse) GetData() Payment {
+func (p *PaymentResponse) GetPayment() Payment {
 	if p == nil {
 		return Payment{}
 	}
-	return p.Data
+	return p.Payment
 }

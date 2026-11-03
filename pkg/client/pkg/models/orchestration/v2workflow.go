@@ -10,7 +10,7 @@ import (
 // V2Workflow - A workflow definition and the stages it runs
 type V2Workflow struct {
 	// The stages a workflow runs, in order
-	Config V2WorkflowConfig `json:"config"`
+	V2WorkflowConfig V2WorkflowConfig `json:"config"`
 	// When the workflow was created
 	CreatedAt time.Time `json:"createdAt"`
 	// Unique identifier of the workflow
@@ -30,11 +30,11 @@ func (v *V2Workflow) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2Workflow) GetConfig() V2WorkflowConfig {
+func (v *V2Workflow) GetV2WorkflowConfig() V2WorkflowConfig {
 	if v == nil {
 		return V2WorkflowConfig{}
 	}
-	return v.Config
+	return v.V2WorkflowConfig
 }
 
 func (v *V2Workflow) GetCreatedAt() time.Time {

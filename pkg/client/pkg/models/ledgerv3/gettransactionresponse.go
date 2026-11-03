@@ -3,14 +3,14 @@
 package ledgerv3
 
 type GetTransactionResponseData struct {
-	Transaction TransactionResponse `json:"transaction"`
+	TransactionResponse TransactionResponse `json:"transaction"`
 }
 
-func (g *GetTransactionResponseData) GetTransaction() TransactionResponse {
+func (g *GetTransactionResponseData) GetTransactionResponse() TransactionResponse {
 	if g == nil {
 		return TransactionResponse{}
 	}
-	return g.Transaction
+	return g.TransactionResponse
 }
 
 type GetTransactionResponse struct {

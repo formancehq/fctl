@@ -13,7 +13,7 @@ import (
 )
 
 type TriggersShowStore struct {
-	Trigger orchestration.Trigger `json:"trigger"`
+	Trigger orchestration.TriggerData `json:"trigger"`
 }
 type TriggersShowController struct {
 	store *TriggersShowStore
@@ -63,7 +63,7 @@ func (c *TriggersShowController) Run(cmd *cobra.Command, args []string) (fctl.Re
 		return nil, fmt.Errorf("reading trigger: %w", err)
 	}
 
-	c.store.Trigger = res.ReadTriggerResponse.Data
+	c.store.Trigger = res.ReadTriggerResponse.TriggerData
 
 	return c, nil
 }

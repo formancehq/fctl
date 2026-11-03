@@ -4,12 +4,12 @@ package wallets
 
 type GetBalanceResponse struct {
 	// A named balance within a wallet together with the amounts it holds per asset
-	Data BalanceWithAssets `json:"data"`
+	AssetHolder AssetHolder1 `json:"data"`
 }
 
-func (g *GetBalanceResponse) GetData() BalanceWithAssets {
+func (g *GetBalanceResponse) GetAssetHolder() AssetHolder1 {
 	if g == nil {
-		return BalanceWithAssets{}
+		return AssetHolder1{}
 	}
-	return g.Data
+	return g.AssetHolder
 }

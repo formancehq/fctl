@@ -9,6 +9,12 @@ import (
 )
 
 type PaymentRequest struct {
+	// Payment scheme or rail a payment travels over
+	PaymentScheme PaymentScheme `json:"scheme"`
+	// Where a payment stands in its lifecycle
+	PaymentStatus PaymentStatus `json:"status"`
+	// Direction of a payment
+	PaymentType PaymentType `json:"type"`
 	// Amount of the payment, in the asset's smallest unit
 	Amount *big.Int `json:"amount"`
 	// Asset the payment is denominated in
@@ -21,14 +27,8 @@ type PaymentRequest struct {
 	DestinationAccountID *string `json:"destinationAccountID,omitempty"`
 	// Identifier the payment carries at the provider
 	Reference string `json:"reference"`
-	// Payment scheme or rail a payment travels over
-	Scheme PaymentScheme `json:"scheme"`
 	// Identifier of the account the funds leave
 	SourceAccountID *string `json:"sourceAccountID,omitempty"`
-	// Where a payment stands in its lifecycle
-	Status PaymentStatus `json:"status"`
-	// Direction of a payment
-	Type PaymentType `json:"type"`
 }
 
 func (p PaymentRequest) MarshalJSON() ([]byte, error) {
@@ -40,6 +40,27 @@ func (p *PaymentRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (p *PaymentRequest) GetPaymentScheme() PaymentScheme {
+	if p == nil {
+		return PaymentScheme("")
+	}
+	return p.PaymentScheme
+}
+
+func (p *PaymentRequest) GetPaymentStatus() PaymentStatus {
+	if p == nil {
+		return PaymentStatus("")
+	}
+	return p.PaymentStatus
+}
+
+func (p *PaymentRequest) GetPaymentType() PaymentType {
+	if p == nil {
+		return PaymentType("")
+	}
+	return p.PaymentType
 }
 
 func (p *PaymentRequest) GetAmount() *big.Int {
@@ -84,30 +105,9 @@ func (p *PaymentRequest) GetReference() string {
 	return p.Reference
 }
 
-func (p *PaymentRequest) GetScheme() PaymentScheme {
-	if p == nil {
-		return PaymentScheme("")
-	}
-	return p.Scheme
-}
-
 func (p *PaymentRequest) GetSourceAccountID() *string {
 	if p == nil {
 		return nil
 	}
 	return p.SourceAccountID
-}
-
-func (p *PaymentRequest) GetStatus() PaymentStatus {
-	if p == nil {
-		return PaymentStatus("")
-	}
-	return p.Status
-}
-
-func (p *PaymentRequest) GetType() PaymentType {
-	if p == nil {
-		return PaymentType("")
-	}
-	return p.Type
 }

@@ -4,12 +4,12 @@ package wallets
 
 type GetWalletSummaryResponse struct {
 	// Aggregated funds held by a wallet, broken down by availability
-	Data WalletSummary `json:"data"`
+	WalletSummary WalletSummary `json:"data"`
 }
 
-func (g *GetWalletSummaryResponse) GetData() WalletSummary {
+func (g *GetWalletSummaryResponse) GetWalletSummary() WalletSummary {
 	if g == nil {
 		return WalletSummary{}
 	}
-	return g.Data
+	return g.WalletSummary
 }

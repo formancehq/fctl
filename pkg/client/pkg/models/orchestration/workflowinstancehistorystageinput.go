@@ -5,120 +5,120 @@ package orchestration
 // WorkflowInstanceHistoryStageInput - Arguments an activity was called with, keyed by activity name
 type WorkflowInstanceHistoryStageInput struct {
 	// Arguments for the activity that sets metadata on a ledger account
-	AddAccountMetadata *ActivityAddAccountMetadata `json:"AddAccountMetadata,omitempty"`
+	ActivityAddAccountMetadata *ActivityAddAccountMetadata `json:"AddAccountMetadata,omitempty"`
 	// Arguments for the activity that confirms a wallet hold
-	ConfirmHold *ActivityConfirmHold `json:"ConfirmHold,omitempty"`
+	ActivityConfirmHold *ActivityConfirmHold `json:"ConfirmHold,omitempty"`
 	// Arguments for the activity that writes a transaction to a ledger
-	CreateTransaction *ActivityCreateTransaction `json:"CreateTransaction,omitempty"`
-	// Arguments for the activity that initiates a transfer through a connector
-	CreateTransferInitiation *ActivityCreateTransferInitiation `json:"CreateTransferInitiation,omitempty"`
+	ActivityCreateTransaction *ActivityCreateTransaction `json:"CreateTransaction,omitempty"`
 	// Arguments for the activity that credits a wallet
-	CreditWallet *ActivityCreditWallet `json:"CreditWallet,omitempty"`
+	ActivityCreditWallet *ActivityCreditWallet `json:"CreditWallet,omitempty"`
 	// Arguments for the activity that debits a wallet
-	DebitWallet *ActivityDebitWallet `json:"DebitWallet,omitempty"`
+	ActivityDebitWallet *ActivityDebitWallet `json:"DebitWallet,omitempty"`
 	// Arguments for the activity that reads a ledger account
-	GetAccount *ActivityGetAccount `json:"GetAccount,omitempty"`
+	ActivityGetAccount *ActivityGetAccount `json:"GetAccount,omitempty"`
 	// Arguments for the activity that reads a payment
-	GetPayment *ActivityGetPayment `json:"GetPayment,omitempty"`
+	ActivityGetPayment *ActivityGetPayment `json:"GetPayment,omitempty"`
 	// Arguments for the activity that reads a wallet
-	GetWallet *ActivityGetWallet `json:"GetWallet,omitempty"`
+	ActivityGetWallet *ActivityGetWallet `json:"GetWallet,omitempty"`
 	// Arguments for the activity that lists wallets
-	ListWallets *ActivityListWallets `json:"ListWallets,omitempty"`
+	ActivityListWallets *ActivityListWallets `json:"ListWallets,omitempty"`
 	// Arguments for the activity that reverts a ledger transaction
-	RevertTransaction *ActivityRevertTransaction `json:"RevertTransaction,omitempty"`
-	// Arguments for the activity that transfers funds through Stripe
-	StripeTransfer *ActivityStripeTransfer `json:"StripeTransfer,omitempty"`
+	ActivityRevertTransaction *ActivityRevertTransaction `json:"RevertTransaction,omitempty"`
 	// Arguments for the activity that releases a wallet hold
-	VoidHold *ActivityVoidHold `json:"VoidHold,omitempty"`
+	ActivityVoidHold *ActivityVoidHold `json:"VoidHold,omitempty"`
+	// Arguments for the activity that initiates a transfer through a connector
+	CreateTransferInitiationRequest *CreateTransferInitiationRequest `json:"CreateTransferInitiation,omitempty"`
+	// Arguments for the activity that transfers funds through Stripe
+	StripeTransferRequest *StripeTransferRequest `json:"StripeTransfer,omitempty"`
 }
 
-func (w *WorkflowInstanceHistoryStageInput) GetAddAccountMetadata() *ActivityAddAccountMetadata {
+func (w *WorkflowInstanceHistoryStageInput) GetActivityAddAccountMetadata() *ActivityAddAccountMetadata {
 	if w == nil {
 		return nil
 	}
-	return w.AddAccountMetadata
+	return w.ActivityAddAccountMetadata
 }
 
-func (w *WorkflowInstanceHistoryStageInput) GetConfirmHold() *ActivityConfirmHold {
+func (w *WorkflowInstanceHistoryStageInput) GetActivityConfirmHold() *ActivityConfirmHold {
 	if w == nil {
 		return nil
 	}
-	return w.ConfirmHold
+	return w.ActivityConfirmHold
 }
 
-func (w *WorkflowInstanceHistoryStageInput) GetCreateTransaction() *ActivityCreateTransaction {
+func (w *WorkflowInstanceHistoryStageInput) GetActivityCreateTransaction() *ActivityCreateTransaction {
 	if w == nil {
 		return nil
 	}
-	return w.CreateTransaction
+	return w.ActivityCreateTransaction
 }
 
-func (w *WorkflowInstanceHistoryStageInput) GetCreateTransferInitiation() *ActivityCreateTransferInitiation {
+func (w *WorkflowInstanceHistoryStageInput) GetActivityCreditWallet() *ActivityCreditWallet {
 	if w == nil {
 		return nil
 	}
-	return w.CreateTransferInitiation
+	return w.ActivityCreditWallet
 }
 
-func (w *WorkflowInstanceHistoryStageInput) GetCreditWallet() *ActivityCreditWallet {
+func (w *WorkflowInstanceHistoryStageInput) GetActivityDebitWallet() *ActivityDebitWallet {
 	if w == nil {
 		return nil
 	}
-	return w.CreditWallet
+	return w.ActivityDebitWallet
 }
 
-func (w *WorkflowInstanceHistoryStageInput) GetDebitWallet() *ActivityDebitWallet {
+func (w *WorkflowInstanceHistoryStageInput) GetActivityGetAccount() *ActivityGetAccount {
 	if w == nil {
 		return nil
 	}
-	return w.DebitWallet
+	return w.ActivityGetAccount
 }
 
-func (w *WorkflowInstanceHistoryStageInput) GetGetAccount() *ActivityGetAccount {
+func (w *WorkflowInstanceHistoryStageInput) GetActivityGetPayment() *ActivityGetPayment {
 	if w == nil {
 		return nil
 	}
-	return w.GetAccount
+	return w.ActivityGetPayment
 }
 
-func (w *WorkflowInstanceHistoryStageInput) GetGetPayment() *ActivityGetPayment {
+func (w *WorkflowInstanceHistoryStageInput) GetActivityGetWallet() *ActivityGetWallet {
 	if w == nil {
 		return nil
 	}
-	return w.GetPayment
+	return w.ActivityGetWallet
 }
 
-func (w *WorkflowInstanceHistoryStageInput) GetGetWallet() *ActivityGetWallet {
+func (w *WorkflowInstanceHistoryStageInput) GetActivityListWallets() *ActivityListWallets {
 	if w == nil {
 		return nil
 	}
-	return w.GetWallet
+	return w.ActivityListWallets
 }
 
-func (w *WorkflowInstanceHistoryStageInput) GetListWallets() *ActivityListWallets {
+func (w *WorkflowInstanceHistoryStageInput) GetActivityRevertTransaction() *ActivityRevertTransaction {
 	if w == nil {
 		return nil
 	}
-	return w.ListWallets
+	return w.ActivityRevertTransaction
 }
 
-func (w *WorkflowInstanceHistoryStageInput) GetRevertTransaction() *ActivityRevertTransaction {
+func (w *WorkflowInstanceHistoryStageInput) GetActivityVoidHold() *ActivityVoidHold {
 	if w == nil {
 		return nil
 	}
-	return w.RevertTransaction
+	return w.ActivityVoidHold
 }
 
-func (w *WorkflowInstanceHistoryStageInput) GetStripeTransfer() *ActivityStripeTransfer {
+func (w *WorkflowInstanceHistoryStageInput) GetCreateTransferInitiationRequest() *CreateTransferInitiationRequest {
 	if w == nil {
 		return nil
 	}
-	return w.StripeTransfer
+	return w.CreateTransferInitiationRequest
 }
 
-func (w *WorkflowInstanceHistoryStageInput) GetVoidHold() *ActivityVoidHold {
+func (w *WorkflowInstanceHistoryStageInput) GetStripeTransferRequest() *StripeTransferRequest {
 	if w == nil {
 		return nil
 	}
-	return w.VoidHold
+	return w.StripeTransferRequest
 }

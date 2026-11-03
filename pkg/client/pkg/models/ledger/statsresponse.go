@@ -4,12 +4,12 @@ package ledger
 
 type StatsResponse struct {
 	// Aggregate counts for a ledger
-	Data Stats `json:"data"`
+	Stats Stats `json:"data"`
 }
 
-func (s *StatsResponse) GetData() Stats {
+func (s *StatsResponse) GetStats() Stats {
 	if s == nil {
 		return Stats{}
 	}
-	return s.Data
+	return s.Stats
 }

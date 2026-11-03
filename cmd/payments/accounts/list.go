@@ -13,7 +13,7 @@ import (
 )
 
 type ListStore struct {
-	Cursor *payments.Cursor `json:"cursor"`
+	Cursor *payments.CursorBase `json:"cursor"`
 }
 
 type ListController struct {
@@ -27,7 +27,7 @@ var _ fctl.Controller[*ListStore] = (*ListController)(nil)
 
 func NewListStore() *ListStore {
 	return &ListStore{
-		Cursor: &payments.Cursor{},
+		Cursor: &payments.CursorBase{},
 	}
 }
 
@@ -80,7 +80,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Cursor = &response.AccountsCursor.Cursor
+	c.store.Cursor = &response.AccountsCursor.CursorBase
 
 	return c, nil
 }
@@ -94,7 +94,7 @@ func (c *ListController) Render(cmd *cobra.Command, args []string) error {
 			acc.AccountName,
 			acc.DefaultAsset,
 			acc.DefaultCurrency,
-			string(acc.Type),
+			string(acc.AccountType),
 			acc.ConnectorID,
 		}
 	})

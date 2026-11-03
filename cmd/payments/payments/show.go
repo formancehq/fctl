@@ -68,7 +68,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Payment = &response.PaymentResponse.Data
+	c.store.Payment = &response.PaymentResponse.Payment
 
 	return c, nil
 }
@@ -83,16 +83,16 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 	tableData = append(tableData, []string{pterm.LightCyan("Asset"), c.store.Payment.Asset})
 	tableData = append(tableData, []string{pterm.LightCyan("Amount"), c.store.Payment.Amount.String()})
 	tableData = append(tableData, []string{pterm.LightCyan("InitialAmount"), c.store.Payment.InitialAmount.String()})
-	tableData = append(tableData, []string{pterm.LightCyan("Type"), string(c.store.Payment.Type)})
-	tableData = append(tableData, []string{pterm.LightCyan("Scheme"), string(c.store.Payment.Scheme)})
-	tableData = append(tableData, []string{pterm.LightCyan("Status"), string(c.store.Payment.Status)})
+	tableData = append(tableData, []string{pterm.LightCyan("Type"), string(c.store.Payment.PaymentType)})
+	tableData = append(tableData, []string{pterm.LightCyan("Scheme"), string(c.store.Payment.PaymentScheme)})
+	tableData = append(tableData, []string{pterm.LightCyan("Status"), string(c.store.Payment.PaymentStatus)})
 	tableData = append(tableData, []string{pterm.LightCyan("DestinationAccountID"), c.store.Payment.DestinationAccountID})
 	tableData = append(tableData, []string{pterm.LightCyan("SourceAccountID"), c.store.Payment.SourceAccountID})
 	tableData = append(tableData, []string{pterm.LightCyan("Provider"), func() string {
-		if c.store.Payment.Provider == nil {
+		if c.store.Payment.Connector == nil {
 			return ""
 		}
-		return string(*c.store.Payment.Provider)
+		return string(*c.store.Payment.Connector)
 	}()})
 
 	if err := pterm.DefaultTable.
@@ -105,7 +105,7 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 	tableData = fctl.Map(c.store.Payment.Adjustments, func(pa paymentsmodels.PaymentAdjustment) []string {
 		return []string{
 			pa.Reference,
-			string(pa.Status),
+			string(pa.PaymentStatus),
 			pa.CreatedAt.Format(time.RFC3339),
 			pa.Amount.String(),
 		}
@@ -120,5 +120,5 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return fctl.PrintMetadata(cmd.OutOrStdout(), c.store.Payment.Metadata)
+	return fctl.PrintMetadata(cmd.OutOrStdout(), c.store.Payment.PaymentMetadata)
 }

@@ -4,12 +4,12 @@ package wallets
 
 type DebitWalletResponse struct {
 	// Funds locked by a pending debit, later either confirmed or voided
-	Data Hold `json:"data"`
+	Hold Hold `json:"data"`
 }
 
-func (d *DebitWalletResponse) GetData() Hold {
+func (d *DebitWalletResponse) GetHold() Hold {
 	if d == nil {
 		return Hold{}
 	}
-	return d.Data
+	return d.Hold
 }

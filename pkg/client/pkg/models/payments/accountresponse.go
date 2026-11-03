@@ -5,12 +5,12 @@ package payments
 // AccountResponse - OK
 type AccountResponse struct {
 	// An account held at a payment provider, surfaced through a connector
-	Data Account `json:"data"`
+	Account Account `json:"data"`
 }
 
-func (a *AccountResponse) GetData() Account {
+func (a *AccountResponse) GetAccount() Account {
 	if a == nil {
 		return Account{}
 	}
-	return a.Data
+	return a.Account
 }

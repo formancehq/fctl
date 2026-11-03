@@ -9,7 +9,7 @@ import (
 )
 
 func DisplayAdyenConfig(cmd *cobra.Command, connectorConfig *payments.ConnectorConfigResponse) error {
-	config := connectorConfig.Data.AdyenConfig
+	config := connectorConfig.ConnectorConfig.AdyenConfig
 
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})

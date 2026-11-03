@@ -4,14 +4,14 @@ package payments
 
 type V3ConnectorScheduleResponse struct {
 	// A recurring job a connector runs to fetch data from its provider
-	Data V3Schedule `json:"data"`
+	V3Schedule V3Schedule `json:"data"`
 }
 
-func (v *V3ConnectorScheduleResponse) GetData() V3Schedule {
+func (v *V3ConnectorScheduleResponse) GetV3Schedule() V3Schedule {
 	if v == nil {
 		return V3Schedule{}
 	}
-	return v.Data
+	return v.V3Schedule
 }
 
 // #region class-body-v3connectorscheduleresponse

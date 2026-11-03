@@ -103,7 +103,7 @@ func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 
 	request := operations.UpdateClientRequest{
 		ClientID: args[0],
-		ClientOptions: &auth.ClientOptions{
+		ClientOptions: &auth.ClientOptions1{
 			Public:                 &public,
 			RedirectUris:           fctl.GetStringSlice(cmd, c.redirectUriFlag),
 			Description:            &description,
@@ -122,13 +122,13 @@ func (c *UpdateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Client.ID = response.CreateClientResponse.Data.ID
-	c.store.Client.Name = response.CreateClientResponse.Data.Name
-	c.store.Client.Description = fctl.StringPointerToString(response.CreateClientResponse.Data.Description)
-	c.store.Client.IsPublic = fctl.BoolPointerToString(response.CreateClientResponse.Data.Public)
-	c.store.Client.RedirectUri = strings.Join(response.CreateClientResponse.Data.RedirectUris, ",")
-	c.store.Client.PostLogoutRedirectUri = strings.Join(response.CreateClientResponse.Data.PostLogoutRedirectUris, ",")
-	c.store.Client.Scopes = response.CreateClientResponse.Data.Scopes
+	c.store.Client.ID = response.CreateClientResponse.ClientOptions.ID
+	c.store.Client.Name = response.CreateClientResponse.ClientOptions.Name
+	c.store.Client.Description = fctl.StringPointerToString(response.CreateClientResponse.ClientOptions.Description)
+	c.store.Client.IsPublic = fctl.BoolPointerToString(response.CreateClientResponse.ClientOptions.Public)
+	c.store.Client.RedirectUri = strings.Join(response.CreateClientResponse.ClientOptions.RedirectUris, ",")
+	c.store.Client.PostLogoutRedirectUri = strings.Join(response.CreateClientResponse.ClientOptions.PostLogoutRedirectUris, ",")
+	c.store.Client.Scopes = response.CreateClientResponse.ClientOptions.Scopes
 
 	return c, nil
 }

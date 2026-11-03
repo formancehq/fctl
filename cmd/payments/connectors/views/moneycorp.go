@@ -9,7 +9,7 @@ import (
 )
 
 func DisplayMoneycorpConfig(cmd *cobra.Command, connectorConfig *payments.ConnectorConfigResponse) error {
-	config := connectorConfig.Data.MoneycorpConfig
+	config := connectorConfig.ConnectorConfig.MoneycorpConfig
 
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})
@@ -33,7 +33,7 @@ func DisplayMoneycorpConfig(cmd *cobra.Command, connectorConfig *payments.Connec
 }
 
 func DisplayMoneycorpConfigV3(cmd *cobra.Command, v3Config *payments.V3GetConnectorConfigResponse) error {
-	config := v3Config.Data.V3MoneycorpConfig
+	config := v3Config.V3ConnectorConfig.V3MoneycorpConfig
 
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})

@@ -9,6 +9,8 @@ import (
 
 // AccountWithVolumesAndBalances - An account together with its volumes and net balances per asset
 type AccountWithVolumesAndBalances struct {
+	// Volumes per asset for a single account
+	Volumes map[string]Volume `json:"volumes,omitempty"`
 	// The account address, a colon-separated segmented path such as users:001
 	Address string `json:"address"`
 	// Net balance per asset, equal to input minus output
@@ -17,8 +19,6 @@ type AccountWithVolumesAndBalances struct {
 	Metadata map[string]any `json:"metadata,omitempty"`
 	// Free-form classification of the account
 	Type *string `json:"type,omitempty"`
-	// Volumes per asset for a single account
-	Volumes map[string]Volume `json:"volumes,omitempty"`
 }
 
 func (a AccountWithVolumesAndBalances) MarshalJSON() ([]byte, error) {
@@ -30,6 +30,13 @@ func (a *AccountWithVolumesAndBalances) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (a *AccountWithVolumesAndBalances) GetVolumes() map[string]Volume {
+	if a == nil {
+		return nil
+	}
+	return a.Volumes
 }
 
 func (a *AccountWithVolumesAndBalances) GetAddress() string {
@@ -58,11 +65,4 @@ func (a *AccountWithVolumesAndBalances) GetType() *string {
 		return nil
 	}
 	return a.Type
-}
-
-func (a *AccountWithVolumesAndBalances) GetVolumes() map[string]Volume {
-	if a == nil {
-		return nil
-	}
-	return a.Volumes
 }

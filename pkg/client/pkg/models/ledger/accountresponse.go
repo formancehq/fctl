@@ -4,12 +4,12 @@ package ledger
 
 type AccountResponse struct {
 	// An account together with its volumes and net balances per asset
-	Data AccountWithVolumesAndBalances `json:"data"`
+	AccountWithVolumesAndBalances AccountWithVolumesAndBalances `json:"data"`
 }
 
-func (a *AccountResponse) GetData() AccountWithVolumesAndBalances {
+func (a *AccountResponse) GetAccountWithVolumesAndBalances() AccountWithVolumesAndBalances {
 	if a == nil {
 		return AccountWithVolumesAndBalances{}
 	}
-	return a.Data
+	return a.AccountWithVolumesAndBalances
 }

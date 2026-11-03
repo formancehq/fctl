@@ -3,14 +3,28 @@
 package ledger
 
 type ScriptResponse struct {
-	// Optional link carrying additional context about the error, such as a Numscript playground URL reproducing it
-	Details *string `json:"details,omitempty"`
 	// Machine-readable error code identifying the failure
-	ErrorCode *ErrorsEnum `json:"errorCode,omitempty"`
-	// Human-readable description of the error
-	ErrorMessage *string `json:"errorMessage,omitempty"`
+	ErrorsEnum *ErrorsEnum `json:"errorCode,omitempty"`
 	// A transaction recorded in the ledger, carrying its postings and metadata
 	Transaction *Transaction `json:"transaction,omitempty"`
+	// Optional link carrying additional context about the error, such as a Numscript playground URL reproducing it
+	Details *string `json:"details,omitempty"`
+	// Human-readable description of the error
+	ErrorMessage *string `json:"errorMessage,omitempty"`
+}
+
+func (s *ScriptResponse) GetErrorsEnum() *ErrorsEnum {
+	if s == nil {
+		return nil
+	}
+	return s.ErrorsEnum
+}
+
+func (s *ScriptResponse) GetTransaction() *Transaction {
+	if s == nil {
+		return nil
+	}
+	return s.Transaction
 }
 
 func (s *ScriptResponse) GetDetails() *string {
@@ -20,23 +34,9 @@ func (s *ScriptResponse) GetDetails() *string {
 	return s.Details
 }
 
-func (s *ScriptResponse) GetErrorCode() *ErrorsEnum {
-	if s == nil {
-		return nil
-	}
-	return s.ErrorCode
-}
-
 func (s *ScriptResponse) GetErrorMessage() *string {
 	if s == nil {
 		return nil
 	}
 	return s.ErrorMessage
-}
-
-func (s *ScriptResponse) GetTransaction() *Transaction {
-	if s == nil {
-		return nil
-	}
-	return s.Transaction
 }

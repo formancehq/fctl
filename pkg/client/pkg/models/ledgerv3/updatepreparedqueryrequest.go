@@ -13,12 +13,12 @@ type UpdatePreparedQueryRequest struct {
 	//
 	//
 	// `null` represents a match-all query. An empty object and an empty or whitespace-only textual expression are invalid. Responses echo a stored non-null filter in the structured `QueryFilter` form and omit this field for match-all queries.
-	Filter *PreparedQueryFilterInput `json:"filter,omitempty"`
+	PreparedQueryFilterInput *PreparedQueryFilterInput `json:"filter,omitempty"`
 }
 
-func (u *UpdatePreparedQueryRequest) GetFilter() *PreparedQueryFilterInput {
+func (u *UpdatePreparedQueryRequest) GetPreparedQueryFilterInput() *PreparedQueryFilterInput {
 	if u == nil {
 		return nil
 	}
-	return u.Filter
+	return u.PreparedQueryFilterInput
 }

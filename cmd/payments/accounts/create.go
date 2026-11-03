@@ -95,7 +95,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.AccountID = response.AccountResponse.Data.ID
+	c.store.AccountID = response.AccountResponse.Account.ID
 
 	return c, nil
 }

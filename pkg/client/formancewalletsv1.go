@@ -32,8 +32,6 @@ func newFormanceWalletsV1(rootSDK *Formance, sdkConfig config.SDKConfiguration, 
 }
 
 // ConfirmHold - Confirm a hold
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceWalletsV1) ConfirmHold(ctx context.Context, request operations.ConfirmHoldRequest, opts ...operations.Option) (*operations.ConfirmHoldResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -95,7 +93,7 @@ func (s *FormanceWalletsV1) ConfirmHold(ctx context.Context, request operations.
 
 	utils.PopulateHeaders(ctx, req, request, nil)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -179,7 +177,7 @@ func (s *FormanceWalletsV1) ConfirmHold(ctx context.Context, request operations.
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -231,8 +229,6 @@ func (s *FormanceWalletsV1) ConfirmHold(ctx context.Context, request operations.
 }
 
 // CreateBalance - Create a balance
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceWalletsV1) CreateBalance(ctx context.Context, request operations.CreateBalanceRequest, opts ...operations.Option) (*operations.CreateBalanceResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -294,7 +290,7 @@ func (s *FormanceWalletsV1) CreateBalance(ctx context.Context, request operation
 
 	utils.PopulateHeaders(ctx, req, request, nil)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -378,7 +374,7 @@ func (s *FormanceWalletsV1) CreateBalance(ctx context.Context, request operation
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"201"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -449,8 +445,6 @@ func (s *FormanceWalletsV1) CreateBalance(ctx context.Context, request operation
 }
 
 // CreateWallet - Create a new wallet
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceWalletsV1) CreateWallet(ctx context.Context, request operations.CreateWalletRequest, opts ...operations.Option) (*operations.CreateWalletResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -512,7 +506,7 @@ func (s *FormanceWalletsV1) CreateWallet(ctx context.Context, request operations
 
 	utils.PopulateHeaders(ctx, req, request, nil)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -596,7 +590,7 @@ func (s *FormanceWalletsV1) CreateWallet(ctx context.Context, request operations
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"201"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -667,8 +661,6 @@ func (s *FormanceWalletsV1) CreateWallet(ctx context.Context, request operations
 }
 
 // CreditWallet - Credit a wallet
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceWalletsV1) CreditWallet(ctx context.Context, request operations.CreditWalletRequest, opts ...operations.Option) (*operations.CreditWalletResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -730,7 +722,7 @@ func (s *FormanceWalletsV1) CreditWallet(ctx context.Context, request operations
 
 	utils.PopulateHeaders(ctx, req, request, nil)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -814,7 +806,7 @@ func (s *FormanceWalletsV1) CreditWallet(ctx context.Context, request operations
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -866,8 +858,6 @@ func (s *FormanceWalletsV1) CreditWallet(ctx context.Context, request operations
 }
 
 // DebitWallet - Debit a wallet
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceWalletsV1) DebitWallet(ctx context.Context, request operations.DebitWalletRequest, opts ...operations.Option) (*operations.DebitWalletResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -929,7 +919,7 @@ func (s *FormanceWalletsV1) DebitWallet(ctx context.Context, request operations.
 
 	utils.PopulateHeaders(ctx, req, request, nil)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1013,7 +1003,7 @@ func (s *FormanceWalletsV1) DebitWallet(ctx context.Context, request operations.
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"201", "204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1086,8 +1076,6 @@ func (s *FormanceWalletsV1) DebitWallet(ctx context.Context, request operations.
 }
 
 // GetBalance - Get detailed balance
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceWalletsV1) GetBalance(ctx context.Context, request operations.GetBalanceRequest, opts ...operations.Option) (*operations.GetBalanceResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1140,7 +1128,7 @@ func (s *FormanceWalletsV1) GetBalance(ctx context.Context, request operations.G
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1224,7 +1212,7 @@ func (s *FormanceWalletsV1) GetBalance(ctx context.Context, request operations.G
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1295,8 +1283,6 @@ func (s *FormanceWalletsV1) GetBalance(ctx context.Context, request operations.G
 }
 
 // GetHold - Get a hold
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceWalletsV1) GetHold(ctx context.Context, request operations.GetHoldRequest, opts ...operations.Option) (*operations.GetHoldResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1349,7 +1335,7 @@ func (s *FormanceWalletsV1) GetHold(ctx context.Context, request operations.GetH
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1433,7 +1419,7 @@ func (s *FormanceWalletsV1) GetHold(ctx context.Context, request operations.GetH
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1504,8 +1490,6 @@ func (s *FormanceWalletsV1) GetHold(ctx context.Context, request operations.GetH
 }
 
 // GetHolds - Get all holds for a wallet
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceWalletsV1) GetHolds(ctx context.Context, request operations.GetHoldsRequest, opts ...operations.Option) (*operations.GetHoldsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1562,7 +1546,7 @@ func (s *FormanceWalletsV1) GetHolds(ctx context.Context, request operations.Get
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1646,7 +1630,7 @@ func (s *FormanceWalletsV1) GetHolds(ctx context.Context, request operations.Get
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1717,8 +1701,6 @@ func (s *FormanceWalletsV1) GetHolds(ctx context.Context, request operations.Get
 }
 
 // GetServerInfoWallets - Get server info
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceWalletsV1) GetServerInfoWallets(ctx context.Context, opts ...operations.Option) (*operations.GetServerInfoWalletsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1771,7 +1753,7 @@ func (s *FormanceWalletsV1) GetServerInfoWallets(ctx context.Context, opts ...op
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1855,7 +1837,7 @@ func (s *FormanceWalletsV1) GetServerInfoWallets(ctx context.Context, opts ...op
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1925,7 +1907,6 @@ func (s *FormanceWalletsV1) GetServerInfoWallets(ctx context.Context, opts ...op
 
 }
 
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceWalletsV1) GetTransactions(ctx context.Context, request operations.GetTransactionsRequest, opts ...operations.Option) (*operations.GetTransactionsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1982,7 +1963,7 @@ func (s *FormanceWalletsV1) GetTransactions(ctx context.Context, request operati
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -2066,7 +2047,7 @@ func (s *FormanceWalletsV1) GetTransactions(ctx context.Context, request operati
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2137,8 +2118,6 @@ func (s *FormanceWalletsV1) GetTransactions(ctx context.Context, request operati
 }
 
 // GetWallet - Get a wallet
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceWalletsV1) GetWallet(ctx context.Context, request operations.GetWalletRequest, opts ...operations.Option) (*operations.GetWalletResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -2191,7 +2170,7 @@ func (s *FormanceWalletsV1) GetWallet(ctx context.Context, request operations.Ge
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -2275,7 +2254,7 @@ func (s *FormanceWalletsV1) GetWallet(ctx context.Context, request operations.Ge
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200", "404"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2348,8 +2327,6 @@ func (s *FormanceWalletsV1) GetWallet(ctx context.Context, request operations.Ge
 }
 
 // GetWalletSummary - Get wallet summary
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceWalletsV1) GetWalletSummary(ctx context.Context, request operations.GetWalletSummaryRequest, opts ...operations.Option) (*operations.GetWalletSummaryResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -2402,7 +2379,7 @@ func (s *FormanceWalletsV1) GetWalletSummary(ctx context.Context, request operat
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -2486,7 +2463,7 @@ func (s *FormanceWalletsV1) GetWalletSummary(ctx context.Context, request operat
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200", "404"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2559,8 +2536,6 @@ func (s *FormanceWalletsV1) GetWalletSummary(ctx context.Context, request operat
 }
 
 // ListBalances - List balances of a wallet
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceWalletsV1) ListBalances(ctx context.Context, request operations.ListBalancesRequest, opts ...operations.Option) (*operations.ListBalancesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -2613,7 +2588,7 @@ func (s *FormanceWalletsV1) ListBalances(ctx context.Context, request operations
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -2697,7 +2672,7 @@ func (s *FormanceWalletsV1) ListBalances(ctx context.Context, request operations
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2753,8 +2728,6 @@ func (s *FormanceWalletsV1) ListBalances(ctx context.Context, request operations
 }
 
 // ListWallets - List all wallets
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceWalletsV1) ListWallets(ctx context.Context, request operations.ListWalletsRequest, opts ...operations.Option) (*operations.ListWalletsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -2811,7 +2784,7 @@ func (s *FormanceWalletsV1) ListWallets(ctx context.Context, request operations.
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -2895,7 +2868,7 @@ func (s *FormanceWalletsV1) ListWallets(ctx context.Context, request operations.
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2966,8 +2939,6 @@ func (s *FormanceWalletsV1) ListWallets(ctx context.Context, request operations.
 }
 
 // UpdateWallet - Update a wallet
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceWalletsV1) UpdateWallet(ctx context.Context, request operations.UpdateWalletRequest, opts ...operations.Option) (*operations.UpdateWalletResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -3029,7 +3000,7 @@ func (s *FormanceWalletsV1) UpdateWallet(ctx context.Context, request operations
 
 	utils.PopulateHeaders(ctx, req, request, nil)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -3113,7 +3084,7 @@ func (s *FormanceWalletsV1) UpdateWallet(ctx context.Context, request operations
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3165,8 +3136,6 @@ func (s *FormanceWalletsV1) UpdateWallet(ctx context.Context, request operations
 }
 
 // VoidHold - Cancel a hold
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceWalletsV1) VoidHold(ctx context.Context, request operations.VoidHoldRequest, opts ...operations.Option) (*operations.VoidHoldResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -3221,7 +3190,7 @@ func (s *FormanceWalletsV1) VoidHold(ctx context.Context, request operations.Voi
 
 	utils.PopulateHeaders(ctx, req, request, nil)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -3305,7 +3274,7 @@ func (s *FormanceWalletsV1) VoidHold(ctx context.Context, request operations.Voi
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err

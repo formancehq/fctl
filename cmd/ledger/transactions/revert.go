@@ -82,7 +82,7 @@ func (c *RevertController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 			return nil, err
 		}
 
-		c.store.Transaction = internal.WrapV2Transaction(response.V2CreateTransactionResponse.Data)
+		c.store.Transaction = internal.WrapV2Transaction(response.V2CreateTransactionResponse.V2Transaction)
 	} else {
 		request := operations.RevertTransactionLedgerRequest{
 			Ledger:        ledger,
@@ -95,7 +95,7 @@ func (c *RevertController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 			return nil, err
 		}
 
-		c.store.Transaction = internal.WrapV1Transaction(response.TransactionResponse.Data)
+		c.store.Transaction = internal.WrapV1Transaction(response.TransactionResponse.Transaction)
 	}
 
 	return c, nil

@@ -32,8 +32,6 @@ func newFormanceV3(rootSDK *Formance, sdkConfig config.SDKConfiguration, hooks *
 }
 
 // AddAccountToPool - Add an account to a pool
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) AddAccountToPool(ctx context.Context, request operations.V3AddAccountToPoolRequest, opts ...operations.Option) (*operations.V3AddAccountToPoolResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -86,7 +84,7 @@ func (s *FormanceV3) AddAccountToPool(ctx context.Context, request operations.V3
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -170,7 +168,7 @@ func (s *FormanceV3) AddAccountToPool(ctx context.Context, request operations.V3
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -222,8 +220,6 @@ func (s *FormanceV3) AddAccountToPool(ctx context.Context, request operations.V3
 }
 
 // AddBankAccountToPaymentServiceUser - Add a bank account to a payment service user
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) AddBankAccountToPaymentServiceUser(ctx context.Context, request operations.V3AddBankAccountToPaymentServiceUserRequest, opts ...operations.Option) (*operations.V3AddBankAccountToPaymentServiceUserResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -276,7 +272,7 @@ func (s *FormanceV3) AddBankAccountToPaymentServiceUser(ctx context.Context, req
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -360,7 +356,7 @@ func (s *FormanceV3) AddBankAccountToPaymentServiceUser(ctx context.Context, req
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -412,8 +408,6 @@ func (s *FormanceV3) AddBankAccountToPaymentServiceUser(ctx context.Context, req
 }
 
 // ApprovePaymentInitiation - Approve a payment initiation
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ApprovePaymentInitiation(ctx context.Context, request operations.V3ApprovePaymentInitiationRequest, opts ...operations.Option) (*operations.V3ApprovePaymentInitiationResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -466,7 +460,7 @@ func (s *FormanceV3) ApprovePaymentInitiation(ctx context.Context, request opera
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -550,7 +544,7 @@ func (s *FormanceV3) ApprovePaymentInitiation(ctx context.Context, request opera
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"202"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -621,8 +615,6 @@ func (s *FormanceV3) ApprovePaymentInitiation(ctx context.Context, request opera
 }
 
 // CreateAccount - Create a formance account object. This object will not be forwarded to the connector. It is only used for internal purposes.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) CreateAccount(ctx context.Context, request *payments.V3CreateAccountRequest, opts ...operations.Option) (*operations.V3CreateAccountResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -682,7 +674,7 @@ func (s *FormanceV3) CreateAccount(ctx context.Context, request *payments.V3Crea
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -766,7 +758,7 @@ func (s *FormanceV3) CreateAccount(ctx context.Context, request *payments.V3Crea
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"201"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -837,8 +829,6 @@ func (s *FormanceV3) CreateAccount(ctx context.Context, request *payments.V3Crea
 }
 
 // CreateBankAccount - Create a formance bank account object. This object will not be forwarded to the connector until you called the forwardBankAccount method.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) CreateBankAccount(ctx context.Context, request *payments.V3CreateBankAccountRequest, opts ...operations.Option) (*operations.V3CreateBankAccountResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -898,7 +888,7 @@ func (s *FormanceV3) CreateBankAccount(ctx context.Context, request *payments.V3
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -982,7 +972,7 @@ func (s *FormanceV3) CreateBankAccount(ctx context.Context, request *payments.V3
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"201"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1053,8 +1043,6 @@ func (s *FormanceV3) CreateBankAccount(ctx context.Context, request *payments.V3
 }
 
 // CreateLinkForPaymentServiceUser - Create an authentication link for a payment service user on a connector, for oauth flow
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) CreateLinkForPaymentServiceUser(ctx context.Context, request operations.V3CreateLinkForPaymentServiceUserRequest, opts ...operations.Option) (*operations.V3CreateLinkForPaymentServiceUserResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1114,7 +1102,7 @@ func (s *FormanceV3) CreateLinkForPaymentServiceUser(ctx context.Context, reques
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1198,7 +1186,7 @@ func (s *FormanceV3) CreateLinkForPaymentServiceUser(ctx context.Context, reques
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"201"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1269,8 +1257,6 @@ func (s *FormanceV3) CreateLinkForPaymentServiceUser(ctx context.Context, reques
 }
 
 // CreatePayment - Create a formance payment object. This object will not be forwarded to the connector. It is only used for internal purposes.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) CreatePayment(ctx context.Context, request *payments.V3CreatePaymentRequest, opts ...operations.Option) (*operations.V3CreatePaymentResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1330,7 +1316,7 @@ func (s *FormanceV3) CreatePayment(ctx context.Context, request *payments.V3Crea
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1414,7 +1400,7 @@ func (s *FormanceV3) CreatePayment(ctx context.Context, request *payments.V3Crea
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"201"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1485,8 +1471,6 @@ func (s *FormanceV3) CreatePayment(ctx context.Context, request *payments.V3Crea
 }
 
 // CreatePaymentServiceUser - Create a formance payment service user object
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) CreatePaymentServiceUser(ctx context.Context, request *payments.V3CreatePaymentServiceUserRequest, opts ...operations.Option) (*operations.V3CreatePaymentServiceUserResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1546,7 +1530,7 @@ func (s *FormanceV3) CreatePaymentServiceUser(ctx context.Context, request *paym
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1630,7 +1614,7 @@ func (s *FormanceV3) CreatePaymentServiceUser(ctx context.Context, request *paym
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"201"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1701,8 +1685,6 @@ func (s *FormanceV3) CreatePaymentServiceUser(ctx context.Context, request *paym
 }
 
 // CreatePool - Create a formance pool object
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) CreatePool(ctx context.Context, request *payments.V3CreatePoolRequest, opts ...operations.Option) (*operations.V3CreatePoolResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1762,7 +1744,7 @@ func (s *FormanceV3) CreatePool(ctx context.Context, request *payments.V3CreateP
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1846,7 +1828,7 @@ func (s *FormanceV3) CreatePool(ctx context.Context, request *payments.V3CreateP
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"201"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1917,8 +1899,6 @@ func (s *FormanceV3) CreatePool(ctx context.Context, request *payments.V3CreateP
 }
 
 // DeletePaymentInitiation - Delete a payment initiation by ID
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) DeletePaymentInitiation(ctx context.Context, request operations.V3DeletePaymentInitiationRequest, opts ...operations.Option) (*operations.V3DeletePaymentInitiationResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1971,7 +1951,7 @@ func (s *FormanceV3) DeletePaymentInitiation(ctx context.Context, request operat
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -2055,7 +2035,7 @@ func (s *FormanceV3) DeletePaymentInitiation(ctx context.Context, request operat
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2107,8 +2087,6 @@ func (s *FormanceV3) DeletePaymentInitiation(ctx context.Context, request operat
 }
 
 // DeletePaymentServiceUser - Delete a payment service user by ID
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) DeletePaymentServiceUser(ctx context.Context, request operations.V3DeletePaymentServiceUserRequest, opts ...operations.Option) (*operations.V3DeletePaymentServiceUserResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -2161,7 +2139,7 @@ func (s *FormanceV3) DeletePaymentServiceUser(ctx context.Context, request opera
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -2245,7 +2223,7 @@ func (s *FormanceV3) DeletePaymentServiceUser(ctx context.Context, request opera
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"202"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2316,8 +2294,6 @@ func (s *FormanceV3) DeletePaymentServiceUser(ctx context.Context, request opera
 }
 
 // DeletePaymentServiceUserConnectionFromConnectorID - Delete a connection for a payment service user on a connector
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) DeletePaymentServiceUserConnectionFromConnectorID(ctx context.Context, request operations.V3DeletePaymentServiceUserConnectionFromConnectorIDRequest, opts ...operations.Option) (*operations.V3DeletePaymentServiceUserConnectionFromConnectorIDResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -2370,7 +2346,7 @@ func (s *FormanceV3) DeletePaymentServiceUserConnectionFromConnectorID(ctx conte
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -2454,7 +2430,7 @@ func (s *FormanceV3) DeletePaymentServiceUserConnectionFromConnectorID(ctx conte
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"202"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2525,8 +2501,6 @@ func (s *FormanceV3) DeletePaymentServiceUserConnectionFromConnectorID(ctx conte
 }
 
 // DeletePaymentServiceUserConnector - Remove a payment service user from a connector, the PSU will still exist in Formance
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) DeletePaymentServiceUserConnector(ctx context.Context, request operations.V3DeletePaymentServiceUserConnectorRequest, opts ...operations.Option) (*operations.V3DeletePaymentServiceUserConnectorResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -2579,7 +2553,7 @@ func (s *FormanceV3) DeletePaymentServiceUserConnector(ctx context.Context, requ
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -2663,7 +2637,7 @@ func (s *FormanceV3) DeletePaymentServiceUserConnector(ctx context.Context, requ
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"202"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2734,8 +2708,6 @@ func (s *FormanceV3) DeletePaymentServiceUserConnector(ctx context.Context, requ
 }
 
 // DeletePool - Delete a pool by ID
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) DeletePool(ctx context.Context, request operations.V3DeletePoolRequest, opts ...operations.Option) (*operations.V3DeletePoolResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -2788,7 +2760,7 @@ func (s *FormanceV3) DeletePool(ctx context.Context, request operations.V3Delete
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -2872,7 +2844,7 @@ func (s *FormanceV3) DeletePool(ctx context.Context, request operations.V3Delete
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3063,7 +3035,7 @@ func (s *FormanceV3) ForwardBankAccount(ctx context.Context, request operations.
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"202"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3134,8 +3106,6 @@ func (s *FormanceV3) ForwardBankAccount(ctx context.Context, request operations.
 }
 
 // ForwardPaymentServiceUserBankAccount - Forward a payment service user's bank account to a connector
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ForwardPaymentServiceUserBankAccount(ctx context.Context, request operations.V3ForwardPaymentServiceUserBankAccountRequest, opts ...operations.Option) (*operations.V3ForwardPaymentServiceUserBankAccountResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -3195,7 +3165,7 @@ func (s *FormanceV3) ForwardPaymentServiceUserBankAccount(ctx context.Context, r
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -3279,7 +3249,7 @@ func (s *FormanceV3) ForwardPaymentServiceUserBankAccount(ctx context.Context, r
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"202"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3350,8 +3320,6 @@ func (s *FormanceV3) ForwardPaymentServiceUserBankAccount(ctx context.Context, r
 }
 
 // ForwardPaymentServiceUserToProvider - Register/forward a payment service user on/to a connector
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ForwardPaymentServiceUserToProvider(ctx context.Context, request operations.V3ForwardPaymentServiceUserToProviderRequest, opts ...operations.Option) (*operations.V3ForwardPaymentServiceUserToProviderResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -3404,7 +3372,7 @@ func (s *FormanceV3) ForwardPaymentServiceUserToProvider(ctx context.Context, re
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -3488,7 +3456,7 @@ func (s *FormanceV3) ForwardPaymentServiceUserToProvider(ctx context.Context, re
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3540,8 +3508,6 @@ func (s *FormanceV3) ForwardPaymentServiceUserToProvider(ctx context.Context, re
 }
 
 // GetAccount - Get an account by ID
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) GetAccount(ctx context.Context, request operations.V3GetAccountRequest, opts ...operations.Option) (*operations.V3GetAccountResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -3594,7 +3560,7 @@ func (s *FormanceV3) GetAccount(ctx context.Context, request operations.V3GetAcc
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -3678,7 +3644,7 @@ func (s *FormanceV3) GetAccount(ctx context.Context, request operations.V3GetAcc
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3749,8 +3715,6 @@ func (s *FormanceV3) GetAccount(ctx context.Context, request operations.V3GetAcc
 }
 
 // GetAccountBalances - Get account balances
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) GetAccountBalances(ctx context.Context, request operations.V3GetAccountBalancesRequest, opts ...operations.Option) (*operations.V3GetAccountBalancesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -3807,7 +3771,7 @@ func (s *FormanceV3) GetAccountBalances(ctx context.Context, request operations.
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -3891,7 +3855,7 @@ func (s *FormanceV3) GetAccountBalances(ctx context.Context, request operations.
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4094,7 +4058,7 @@ func (s *FormanceV3) GetBankAccount(ctx context.Context, request operations.V3Ge
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4166,8 +4130,6 @@ func (s *FormanceV3) GetBankAccount(ctx context.Context, request operations.V3Ge
 
 // GetConnectorCapabilities - Get the plugin capabilities of an installed connector
 // Returns the list of plugin capabilities advertised by the provider backing this installed connector (`FETCH_ACCOUNTS`, `CREATE_TRANSFER`, ...). The same values are also inlined on each row of `v3ListConnectors`; prefer that endpoint when listing multiple connectors.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) GetConnectorCapabilities(ctx context.Context, request operations.V3GetConnectorCapabilitiesRequest, opts ...operations.Option) (*operations.V3GetConnectorCapabilitiesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -4220,7 +4182,7 @@ func (s *FormanceV3) GetConnectorCapabilities(ctx context.Context, request opera
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -4304,7 +4266,7 @@ func (s *FormanceV3) GetConnectorCapabilities(ctx context.Context, request opera
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4375,8 +4337,6 @@ func (s *FormanceV3) GetConnectorCapabilities(ctx context.Context, request opera
 }
 
 // GetConnectorConfig - Get a connector configuration by ID
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) GetConnectorConfig(ctx context.Context, request operations.V3GetConnectorConfigRequest, opts ...operations.Option) (*operations.V3GetConnectorConfigResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -4429,7 +4389,7 @@ func (s *FormanceV3) GetConnectorConfig(ctx context.Context, request operations.
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -4513,7 +4473,7 @@ func (s *FormanceV3) GetConnectorConfig(ctx context.Context, request operations.
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4584,8 +4544,6 @@ func (s *FormanceV3) GetConnectorConfig(ctx context.Context, request operations.
 }
 
 // GetConnectorSchedule - Get a connector schedule by ID
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) GetConnectorSchedule(ctx context.Context, request operations.V3GetConnectorScheduleRequest, opts ...operations.Option) (*operations.V3GetConnectorScheduleResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -4638,7 +4596,7 @@ func (s *FormanceV3) GetConnectorSchedule(ctx context.Context, request operation
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -4722,7 +4680,7 @@ func (s *FormanceV3) GetConnectorSchedule(ctx context.Context, request operation
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4801,8 +4759,6 @@ func (s *FormanceV3) GetConnectorSchedule(ctx context.Context, request operation
 //
 // Returns an error via `V3ErrorResponse` when no conversion exists
 // for the given ID.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) GetConversion(ctx context.Context, request operations.V3GetConversionRequest, opts ...operations.Option) (*operations.V3GetConversionResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -4855,7 +4811,7 @@ func (s *FormanceV3) GetConversion(ctx context.Context, request operations.V3Get
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -4939,7 +4895,7 @@ func (s *FormanceV3) GetConversion(ctx context.Context, request operations.V3Get
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -5018,8 +4974,6 @@ func (s *FormanceV3) GetConversion(ctx context.Context, request operations.V3Get
 //
 // Returns an error via `V3ErrorResponse` when no order exists for the
 // given ID, or when the ID cannot be decoded.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) GetOrder(ctx context.Context, request operations.V3GetOrderRequest, opts ...operations.Option) (*operations.V3GetOrderResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -5072,7 +5026,7 @@ func (s *FormanceV3) GetOrder(ctx context.Context, request operations.V3GetOrder
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -5156,7 +5110,7 @@ func (s *FormanceV3) GetOrder(ctx context.Context, request operations.V3GetOrder
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -5227,8 +5181,6 @@ func (s *FormanceV3) GetOrder(ctx context.Context, request operations.V3GetOrder
 }
 
 // GetPayment - Get a payment by ID
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) GetPayment(ctx context.Context, request operations.V3GetPaymentRequest, opts ...operations.Option) (*operations.V3GetPaymentResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -5281,7 +5233,7 @@ func (s *FormanceV3) GetPayment(ctx context.Context, request operations.V3GetPay
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -5365,7 +5317,7 @@ func (s *FormanceV3) GetPayment(ctx context.Context, request operations.V3GetPay
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -5436,8 +5388,6 @@ func (s *FormanceV3) GetPayment(ctx context.Context, request operations.V3GetPay
 }
 
 // GetPaymentInitiation - Get a payment initiation by ID
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) GetPaymentInitiation(ctx context.Context, request operations.V3GetPaymentInitiationRequest, opts ...operations.Option) (*operations.V3GetPaymentInitiationResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -5490,7 +5440,7 @@ func (s *FormanceV3) GetPaymentInitiation(ctx context.Context, request operation
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -5574,7 +5524,7 @@ func (s *FormanceV3) GetPaymentInitiation(ctx context.Context, request operation
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -5645,8 +5595,6 @@ func (s *FormanceV3) GetPaymentInitiation(ctx context.Context, request operation
 }
 
 // GetPaymentServiceUser - Get a payment service user by ID
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) GetPaymentServiceUser(ctx context.Context, request operations.V3GetPaymentServiceUserRequest, opts ...operations.Option) (*operations.V3GetPaymentServiceUserResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -5699,7 +5647,7 @@ func (s *FormanceV3) GetPaymentServiceUser(ctx context.Context, request operatio
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -5783,7 +5731,7 @@ func (s *FormanceV3) GetPaymentServiceUser(ctx context.Context, request operatio
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -5854,8 +5802,6 @@ func (s *FormanceV3) GetPaymentServiceUser(ctx context.Context, request operatio
 }
 
 // GetPaymentServiceUserLinkAttemptFromConnectorID - Get a link attempt for a payment service user on a connector
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) GetPaymentServiceUserLinkAttemptFromConnectorID(ctx context.Context, request operations.V3GetPaymentServiceUserLinkAttemptFromConnectorIDRequest, opts ...operations.Option) (*operations.V3GetPaymentServiceUserLinkAttemptFromConnectorIDResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -5908,7 +5854,7 @@ func (s *FormanceV3) GetPaymentServiceUserLinkAttemptFromConnectorID(ctx context
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -5992,7 +5938,7 @@ func (s *FormanceV3) GetPaymentServiceUserLinkAttemptFromConnectorID(ctx context
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -6063,8 +6009,6 @@ func (s *FormanceV3) GetPaymentServiceUserLinkAttemptFromConnectorID(ctx context
 }
 
 // GetPool - Get a pool by ID
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) GetPool(ctx context.Context, request operations.V3GetPoolRequest, opts ...operations.Option) (*operations.V3GetPoolResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -6117,7 +6061,7 @@ func (s *FormanceV3) GetPool(ctx context.Context, request operations.V3GetPoolRe
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -6201,7 +6145,7 @@ func (s *FormanceV3) GetPool(ctx context.Context, request operations.V3GetPoolRe
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -6272,8 +6216,6 @@ func (s *FormanceV3) GetPool(ctx context.Context, request operations.V3GetPoolRe
 }
 
 // GetPoolBalances - Get historical pool balances from a particular point in time
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) GetPoolBalances(ctx context.Context, request operations.V3GetPoolBalancesRequest, opts ...operations.Option) (*operations.V3GetPoolBalancesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -6330,7 +6272,7 @@ func (s *FormanceV3) GetPoolBalances(ctx context.Context, request operations.V3G
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -6414,7 +6356,7 @@ func (s *FormanceV3) GetPoolBalances(ctx context.Context, request operations.V3G
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -6485,8 +6427,6 @@ func (s *FormanceV3) GetPoolBalances(ctx context.Context, request operations.V3G
 }
 
 // GetPoolBalancesLatest - Get latest pool balances
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) GetPoolBalancesLatest(ctx context.Context, request operations.V3GetPoolBalancesLatestRequest, opts ...operations.Option) (*operations.V3GetPoolBalancesLatestResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -6539,7 +6479,7 @@ func (s *FormanceV3) GetPoolBalancesLatest(ctx context.Context, request operatio
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -6623,7 +6563,7 @@ func (s *FormanceV3) GetPoolBalancesLatest(ctx context.Context, request operatio
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -6694,8 +6634,6 @@ func (s *FormanceV3) GetPoolBalancesLatest(ctx context.Context, request operatio
 }
 
 // GetTask - Get a task and its result by ID
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) GetTask(ctx context.Context, request operations.V3GetTaskRequest, opts ...operations.Option) (*operations.V3GetTaskResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -6748,7 +6686,7 @@ func (s *FormanceV3) GetTask(ctx context.Context, request operations.V3GetTaskRe
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -6832,7 +6770,7 @@ func (s *FormanceV3) GetTask(ctx context.Context, request operations.V3GetTaskRe
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -6903,8 +6841,6 @@ func (s *FormanceV3) GetTask(ctx context.Context, request operations.V3GetTaskRe
 }
 
 // InitiatePayment - Initiate a payment
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) InitiatePayment(ctx context.Context, request operations.V3InitiatePaymentRequest, opts ...operations.Option) (*operations.V3InitiatePaymentResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -6968,7 +6904,7 @@ func (s *FormanceV3) InitiatePayment(ctx context.Context, request operations.V3I
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -7052,7 +6988,7 @@ func (s *FormanceV3) InitiatePayment(ctx context.Context, request operations.V3I
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"202"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -7123,8 +7059,6 @@ func (s *FormanceV3) InitiatePayment(ctx context.Context, request operations.V3I
 }
 
 // InstallConnector - Install a connector
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) InstallConnector(ctx context.Context, request operations.V3InstallConnectorRequest, opts ...operations.Option) (*operations.V3InstallConnectorResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -7184,7 +7118,7 @@ func (s *FormanceV3) InstallConnector(ctx context.Context, request operations.V3
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -7268,7 +7202,7 @@ func (s *FormanceV3) InstallConnector(ctx context.Context, request operations.V3
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"202"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -7339,8 +7273,6 @@ func (s *FormanceV3) InstallConnector(ctx context.Context, request operations.V3
 }
 
 // ListAccounts - List all accounts
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ListAccounts(ctx context.Context, request operations.V3ListAccountsRequest, opts ...operations.Option) (*operations.V3ListAccountsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -7404,7 +7336,7 @@ func (s *FormanceV3) ListAccounts(ctx context.Context, request operations.V3List
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -7488,7 +7420,7 @@ func (s *FormanceV3) ListAccounts(ctx context.Context, request operations.V3List
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -7559,8 +7491,6 @@ func (s *FormanceV3) ListAccounts(ctx context.Context, request operations.V3List
 }
 
 // ListBankAccounts - List all bank accounts
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ListBankAccounts(ctx context.Context, request operations.V3ListBankAccountsRequest, opts ...operations.Option) (*operations.V3ListBankAccountsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -7624,7 +7554,7 @@ func (s *FormanceV3) ListBankAccounts(ctx context.Context, request operations.V3
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -7708,7 +7638,7 @@ func (s *FormanceV3) ListBankAccounts(ctx context.Context, request operations.V3
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -7780,8 +7710,6 @@ func (s *FormanceV3) ListBankAccounts(ctx context.Context, request operations.V3
 
 // ListConnectorCapabilities - List the plugin capabilities advertised by every supported provider
 // Returns the static map of provider name to the list of plugin capabilities (`FETCH_ACCOUNTS`, `CREATE_TRANSFER`, ...) compiled into this binary. The catalog is immutable for the lifetime of the process and is therefore safe to cache: the response carries a strong ETag and a `Cache-Control: public, max-age=3600, must-revalidate` directive. Stateless consumers (e.g. console) should set `If-None-Match` on subsequent requests to receive a `304 Not Modified`.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ListConnectorCapabilities(ctx context.Context, request operations.V3ListConnectorCapabilitiesRequest, opts ...operations.Option) (*operations.V3ListConnectorCapabilitiesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -7836,7 +7764,7 @@ func (s *FormanceV3) ListConnectorCapabilities(ctx context.Context, request oper
 
 	utils.PopulateHeaders(ctx, req, request, nil)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -7920,7 +7848,7 @@ func (s *FormanceV3) ListConnectorCapabilities(ctx context.Context, request oper
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200", "304"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -7997,8 +7925,6 @@ func (s *FormanceV3) ListConnectorCapabilities(ctx context.Context, request oper
 }
 
 // ListConnectorConfigs - List all connector configurations
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ListConnectorConfigs(ctx context.Context, opts ...operations.Option) (*operations.V3ListConnectorConfigsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -8051,7 +7977,7 @@ func (s *FormanceV3) ListConnectorConfigs(ctx context.Context, opts ...operation
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -8135,7 +8061,7 @@ func (s *FormanceV3) ListConnectorConfigs(ctx context.Context, opts ...operation
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -8206,8 +8132,6 @@ func (s *FormanceV3) ListConnectorConfigs(ctx context.Context, opts ...operation
 }
 
 // ListConnectorScheduleInstances - List all connector schedule instances
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ListConnectorScheduleInstances(ctx context.Context, request operations.V3ListConnectorScheduleInstancesRequest, opts ...operations.Option) (*operations.V3ListConnectorScheduleInstancesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -8264,7 +8188,7 @@ func (s *FormanceV3) ListConnectorScheduleInstances(ctx context.Context, request
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -8348,7 +8272,7 @@ func (s *FormanceV3) ListConnectorScheduleInstances(ctx context.Context, request
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -8419,8 +8343,6 @@ func (s *FormanceV3) ListConnectorScheduleInstances(ctx context.Context, request
 }
 
 // ListConnectorSchedules - List all connector schedules
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ListConnectorSchedules(ctx context.Context, request operations.V3ListConnectorSchedulesRequest, opts ...operations.Option) (*operations.V3ListConnectorSchedulesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -8484,7 +8406,7 @@ func (s *FormanceV3) ListConnectorSchedules(ctx context.Context, request operati
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -8568,7 +8490,7 @@ func (s *FormanceV3) ListConnectorSchedules(ctx context.Context, request operati
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -8639,8 +8561,6 @@ func (s *FormanceV3) ListConnectorSchedules(ctx context.Context, request operati
 }
 
 // ListConnectors - List all connectors
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ListConnectors(ctx context.Context, request operations.V3ListConnectorsRequest, opts ...operations.Option) (*operations.V3ListConnectorsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -8704,7 +8624,7 @@ func (s *FormanceV3) ListConnectors(ctx context.Context, request operations.V3Li
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -8788,7 +8708,7 @@ func (s *FormanceV3) ListConnectors(ctx context.Context, request operations.V3Li
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -8873,8 +8793,6 @@ func (s *FormanceV3) ListConnectors(ctx context.Context, request operations.V3Li
 // query builder for filtering over top-level `V3Conversion` fields
 // such as `connectorID`, `reference`, `status`, `sourceAsset`,
 // `destinationAsset`, and `createdAt`.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ListConversions(ctx context.Context, request operations.V3ListConversionsRequest, opts ...operations.Option) (*operations.V3ListConversionsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -8938,7 +8856,7 @@ func (s *FormanceV3) ListConversions(ctx context.Context, request operations.V3L
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -9022,7 +8940,7 @@ func (s *FormanceV3) ListConversions(ctx context.Context, request operations.V3L
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -9107,8 +9025,6 @@ func (s *FormanceV3) ListConversions(ctx context.Context, request operations.V3L
 // See `V3Order` for the full response shape, including the
 // `adjustments` array that captures each observed state transition on
 // the exchange.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ListOrders(ctx context.Context, request operations.V3ListOrdersRequest, opts ...operations.Option) (*operations.V3ListOrdersResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -9172,7 +9088,7 @@ func (s *FormanceV3) ListOrders(ctx context.Context, request operations.V3ListOr
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -9256,7 +9172,7 @@ func (s *FormanceV3) ListOrders(ctx context.Context, request operations.V3ListOr
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -9327,8 +9243,6 @@ func (s *FormanceV3) ListOrders(ctx context.Context, request operations.V3ListOr
 }
 
 // ListPaymentInitiationAdjustments - List all payment initiation adjustments
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ListPaymentInitiationAdjustments(ctx context.Context, request operations.V3ListPaymentInitiationAdjustmentsRequest, opts ...operations.Option) (*operations.V3ListPaymentInitiationAdjustmentsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -9392,7 +9306,7 @@ func (s *FormanceV3) ListPaymentInitiationAdjustments(ctx context.Context, reque
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -9476,7 +9390,7 @@ func (s *FormanceV3) ListPaymentInitiationAdjustments(ctx context.Context, reque
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -9547,8 +9461,6 @@ func (s *FormanceV3) ListPaymentInitiationAdjustments(ctx context.Context, reque
 }
 
 // ListPaymentInitiationRelatedPayments - List all payments related to a payment initiation
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ListPaymentInitiationRelatedPayments(ctx context.Context, request operations.V3ListPaymentInitiationRelatedPaymentsRequest, opts ...operations.Option) (*operations.V3ListPaymentInitiationRelatedPaymentsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -9612,7 +9524,7 @@ func (s *FormanceV3) ListPaymentInitiationRelatedPayments(ctx context.Context, r
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -9696,7 +9608,7 @@ func (s *FormanceV3) ListPaymentInitiationRelatedPayments(ctx context.Context, r
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -9767,8 +9679,6 @@ func (s *FormanceV3) ListPaymentInitiationRelatedPayments(ctx context.Context, r
 }
 
 // ListPaymentInitiations - List all payment initiations
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ListPaymentInitiations(ctx context.Context, request operations.V3ListPaymentInitiationsRequest, opts ...operations.Option) (*operations.V3ListPaymentInitiationsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -9832,7 +9742,7 @@ func (s *FormanceV3) ListPaymentInitiations(ctx context.Context, request operati
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -9916,7 +9826,7 @@ func (s *FormanceV3) ListPaymentInitiations(ctx context.Context, request operati
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -9987,8 +9897,6 @@ func (s *FormanceV3) ListPaymentInitiations(ctx context.Context, request operati
 }
 
 // ListPaymentServiceUserConnections - List all connections for a payment service user
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ListPaymentServiceUserConnections(ctx context.Context, request operations.V3ListPaymentServiceUserConnectionsRequest, opts ...operations.Option) (*operations.V3ListPaymentServiceUserConnectionsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -10052,7 +9960,7 @@ func (s *FormanceV3) ListPaymentServiceUserConnections(ctx context.Context, requ
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -10136,7 +10044,7 @@ func (s *FormanceV3) ListPaymentServiceUserConnections(ctx context.Context, requ
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -10207,8 +10115,6 @@ func (s *FormanceV3) ListPaymentServiceUserConnections(ctx context.Context, requ
 }
 
 // ListPaymentServiceUserConnectionsFromConnectorID - List enabled connections for a payment service user on a connector (i.e. the various banks PSUser has enabled on the connector)
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ListPaymentServiceUserConnectionsFromConnectorID(ctx context.Context, request operations.V3ListPaymentServiceUserConnectionsFromConnectorIDRequest, opts ...operations.Option) (*operations.V3ListPaymentServiceUserConnectionsFromConnectorIDResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -10272,7 +10178,7 @@ func (s *FormanceV3) ListPaymentServiceUserConnectionsFromConnectorID(ctx contex
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -10356,7 +10262,7 @@ func (s *FormanceV3) ListPaymentServiceUserConnectionsFromConnectorID(ctx contex
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -10428,8 +10334,6 @@ func (s *FormanceV3) ListPaymentServiceUserConnectionsFromConnectorID(ctx contex
 
 // ListPaymentServiceUserLinkAttemptsFromConnectorID - List all link attempts for a payment service user on a connector.
 // Allows to check if users used the link and completed the oauth flow.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ListPaymentServiceUserLinkAttemptsFromConnectorID(ctx context.Context, request operations.V3ListPaymentServiceUserLinkAttemptsFromConnectorIDRequest, opts ...operations.Option) (*operations.V3ListPaymentServiceUserLinkAttemptsFromConnectorIDResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -10493,7 +10397,7 @@ func (s *FormanceV3) ListPaymentServiceUserLinkAttemptsFromConnectorID(ctx conte
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -10577,7 +10481,7 @@ func (s *FormanceV3) ListPaymentServiceUserLinkAttemptsFromConnectorID(ctx conte
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -10648,8 +10552,6 @@ func (s *FormanceV3) ListPaymentServiceUserLinkAttemptsFromConnectorID(ctx conte
 }
 
 // ListPaymentServiceUsers - List all payment service users
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ListPaymentServiceUsers(ctx context.Context, request operations.V3ListPaymentServiceUsersRequest, opts ...operations.Option) (*operations.V3ListPaymentServiceUsersResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -10713,7 +10615,7 @@ func (s *FormanceV3) ListPaymentServiceUsers(ctx context.Context, request operat
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -10797,7 +10699,7 @@ func (s *FormanceV3) ListPaymentServiceUsers(ctx context.Context, request operat
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -10868,8 +10770,6 @@ func (s *FormanceV3) ListPaymentServiceUsers(ctx context.Context, request operat
 }
 
 // ListPayments - List all payments
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ListPayments(ctx context.Context, request operations.V3ListPaymentsRequest, opts ...operations.Option) (*operations.V3ListPaymentsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -10933,7 +10833,7 @@ func (s *FormanceV3) ListPayments(ctx context.Context, request operations.V3List
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -11017,7 +10917,7 @@ func (s *FormanceV3) ListPayments(ctx context.Context, request operations.V3List
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -11088,8 +10988,6 @@ func (s *FormanceV3) ListPayments(ctx context.Context, request operations.V3List
 }
 
 // ListPools - List all pools
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ListPools(ctx context.Context, request operations.V3ListPoolsRequest, opts ...operations.Option) (*operations.V3ListPoolsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -11153,7 +11051,7 @@ func (s *FormanceV3) ListPools(ctx context.Context, request operations.V3ListPoo
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -11237,7 +11135,7 @@ func (s *FormanceV3) ListPools(ctx context.Context, request operations.V3ListPoo
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -11308,8 +11206,6 @@ func (s *FormanceV3) ListPools(ctx context.Context, request operations.V3ListPoo
 }
 
 // RejectPaymentInitiation - Reject a payment initiation
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) RejectPaymentInitiation(ctx context.Context, request operations.V3RejectPaymentInitiationRequest, opts ...operations.Option) (*operations.V3RejectPaymentInitiationResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -11362,7 +11258,7 @@ func (s *FormanceV3) RejectPaymentInitiation(ctx context.Context, request operat
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -11446,7 +11342,7 @@ func (s *FormanceV3) RejectPaymentInitiation(ctx context.Context, request operat
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -11498,8 +11394,6 @@ func (s *FormanceV3) RejectPaymentInitiation(ctx context.Context, request operat
 }
 
 // RemoveAccountFromPool - Remove an account from a pool
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) RemoveAccountFromPool(ctx context.Context, request operations.V3RemoveAccountFromPoolRequest, opts ...operations.Option) (*operations.V3RemoveAccountFromPoolResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -11552,7 +11446,7 @@ func (s *FormanceV3) RemoveAccountFromPool(ctx context.Context, request operatio
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -11636,7 +11530,7 @@ func (s *FormanceV3) RemoveAccountFromPool(ctx context.Context, request operatio
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -11688,8 +11582,6 @@ func (s *FormanceV3) RemoveAccountFromPool(ctx context.Context, request operatio
 }
 
 // ResetConnector - Reset a connector. Be aware that this will delete all data and stop all existing tasks like payment initiations and bank account creations.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ResetConnector(ctx context.Context, request operations.V3ResetConnectorRequest, opts ...operations.Option) (*operations.V3ResetConnectorResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -11742,7 +11634,7 @@ func (s *FormanceV3) ResetConnector(ctx context.Context, request operations.V3Re
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -11826,7 +11718,7 @@ func (s *FormanceV3) ResetConnector(ctx context.Context, request operations.V3Re
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"202"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -11897,8 +11789,6 @@ func (s *FormanceV3) ResetConnector(ctx context.Context, request operations.V3Re
 }
 
 // RetryPaymentInitiation - Retry a payment initiation
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) RetryPaymentInitiation(ctx context.Context, request operations.V3RetryPaymentInitiationRequest, opts ...operations.Option) (*operations.V3RetryPaymentInitiationResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -11951,7 +11841,7 @@ func (s *FormanceV3) RetryPaymentInitiation(ctx context.Context, request operati
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -12035,7 +11925,7 @@ func (s *FormanceV3) RetryPaymentInitiation(ctx context.Context, request operati
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"202"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -12106,8 +11996,6 @@ func (s *FormanceV3) RetryPaymentInitiation(ctx context.Context, request operati
 }
 
 // ReversePaymentInitiation - Reverse a payment initiation
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) ReversePaymentInitiation(ctx context.Context, request operations.V3ReversePaymentInitiationRequest, opts ...operations.Option) (*operations.V3ReversePaymentInitiationResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -12167,7 +12055,7 @@ func (s *FormanceV3) ReversePaymentInitiation(ctx context.Context, request opera
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -12251,7 +12139,7 @@ func (s *FormanceV3) ReversePaymentInitiation(ctx context.Context, request opera
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"202"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -12322,8 +12210,6 @@ func (s *FormanceV3) ReversePaymentInitiation(ctx context.Context, request opera
 }
 
 // UninstallConnector - Uninstall a connector
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) UninstallConnector(ctx context.Context, request operations.V3UninstallConnectorRequest, opts ...operations.Option) (*operations.V3UninstallConnectorResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -12376,7 +12262,7 @@ func (s *FormanceV3) UninstallConnector(ctx context.Context, request operations.
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -12460,7 +12346,7 @@ func (s *FormanceV3) UninstallConnector(ctx context.Context, request operations.
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"202"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -12670,7 +12556,7 @@ func (s *FormanceV3) UpdateBankAccountMetadata(ctx context.Context, request oper
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -12722,8 +12608,6 @@ func (s *FormanceV3) UpdateBankAccountMetadata(ctx context.Context, request oper
 }
 
 // UpdateLinkForPaymentServiceUserOnConnector - Update/Regenerate a link for a payment service user on a connector
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) UpdateLinkForPaymentServiceUserOnConnector(ctx context.Context, request operations.V3UpdateLinkForPaymentServiceUserOnConnectorRequest, opts ...operations.Option) (*operations.V3UpdateLinkForPaymentServiceUserOnConnectorResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -12783,7 +12667,7 @@ func (s *FormanceV3) UpdateLinkForPaymentServiceUserOnConnector(ctx context.Cont
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -12867,7 +12751,7 @@ func (s *FormanceV3) UpdateLinkForPaymentServiceUserOnConnector(ctx context.Cont
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"201"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -12938,8 +12822,6 @@ func (s *FormanceV3) UpdateLinkForPaymentServiceUserOnConnector(ctx context.Cont
 }
 
 // UpdatePaymentMetadata - Update a payment's metadata
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) UpdatePaymentMetadata(ctx context.Context, request operations.V3UpdatePaymentMetadataRequest, opts ...operations.Option) (*operations.V3UpdatePaymentMetadataResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -12999,7 +12881,7 @@ func (s *FormanceV3) UpdatePaymentMetadata(ctx context.Context, request operatio
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -13083,7 +12965,7 @@ func (s *FormanceV3) UpdatePaymentMetadata(ctx context.Context, request operatio
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -13135,8 +13017,6 @@ func (s *FormanceV3) UpdatePaymentMetadata(ctx context.Context, request operatio
 }
 
 // UpdatePoolQuery - Update the query of a pool
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) UpdatePoolQuery(ctx context.Context, request operations.V3UpdatePoolQueryRequest, opts ...operations.Option) (*operations.V3UpdatePoolQueryResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -13196,7 +13076,7 @@ func (s *FormanceV3) UpdatePoolQuery(ctx context.Context, request operations.V3U
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -13280,7 +13160,7 @@ func (s *FormanceV3) UpdatePoolQuery(ctx context.Context, request operations.V3U
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -13333,8 +13213,6 @@ func (s *FormanceV3) UpdatePoolQuery(ctx context.Context, request operations.V3U
 
 // V3UpdateConnectorConfig - Update the config of a connector
 // Update connector config
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceV3) V3UpdateConnectorConfig(ctx context.Context, request operations.V3UpdateConnectorConfigRequest, opts ...operations.Option) (*operations.V3UpdateConnectorConfigResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -13394,7 +13272,7 @@ func (s *FormanceV3) V3UpdateConnectorConfig(ctx context.Context, request operat
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -13478,7 +13356,7 @@ func (s *FormanceV3) V3UpdateConnectorConfig(ctx context.Context, request operat
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err

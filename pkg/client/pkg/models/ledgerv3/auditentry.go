@@ -11,10 +11,12 @@ import (
 // one of `success` / `failure` is set. `items` is populated only by the
 // single-entry lookup, not by the list endpoint.
 type AuditEntry struct {
+	// Stable reason, subcode, and facts for a failed proposal. Presentation text is rendered when read and is not stored in the audit chain.
+	AuditFailure *AuditFailure `json:"failure,omitempty"`
+	// The inclusive log sequence range created by a successful proposal.
+	AuditSuccess *AuditSuccess `json:"success,omitempty"`
 	// Admission-time auth snapshot (protobuf JSON); absent when auth is disabled or for system proposals
 	CallerSnapshot map[string]any `json:"callerSnapshot,omitempty"`
-	// Stable reason, subcode, and facts for a failed proposal. Presentation text is rendered when read and is not stored in the audit chain.
-	Failure *AuditFailure `json:"failure,omitempty"`
 	// Hex-encoded batch integrity hash chaining audit entries
 	Hash *string `json:"hash,omitempty"`
 	// Hash algorithm version
@@ -33,8 +35,6 @@ type AuditEntry struct {
 	Sequence *int64 `json:"sequence,omitempty"`
 	// Client signature over the ApplyBatch (protobuf JSON); absent for unsigned batches
 	Signature map[string]any `json:"signature,omitempty"`
-	// The inclusive log sequence range created by a successful proposal.
-	Success *AuditSuccess `json:"success,omitempty"`
 	// Apply timestamp (RFC3339)
 	Timestamp *time.Time `json:"timestamp,omitempty"`
 }
@@ -50,18 +50,25 @@ func (a *AuditEntry) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (a *AuditEntry) GetAuditFailure() *AuditFailure {
+	if a == nil {
+		return nil
+	}
+	return a.AuditFailure
+}
+
+func (a *AuditEntry) GetAuditSuccess() *AuditSuccess {
+	if a == nil {
+		return nil
+	}
+	return a.AuditSuccess
+}
+
 func (a *AuditEntry) GetCallerSnapshot() map[string]any {
 	if a == nil {
 		return nil
 	}
 	return a.CallerSnapshot
-}
-
-func (a *AuditEntry) GetFailure() *AuditFailure {
-	if a == nil {
-		return nil
-	}
-	return a.Failure
 }
 
 func (a *AuditEntry) GetHash() *string {
@@ -125,13 +132,6 @@ func (a *AuditEntry) GetSignature() map[string]any {
 		return nil
 	}
 	return a.Signature
-}
-
-func (a *AuditEntry) GetSuccess() *AuditSuccess {
-	if a == nil {
-		return nil
-	}
-	return a.Success
 }
 
 func (a *AuditEntry) GetTimestamp() *time.Time {

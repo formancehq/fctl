@@ -10,7 +10,7 @@ import (
 // Workflow - A workflow definition and the stages it runs
 type Workflow struct {
 	// The stages a workflow runs, in order
-	Config WorkflowConfig `json:"config"`
+	WorkflowConfig WorkflowConfig `json:"config"`
 	// When the workflow was created
 	CreatedAt time.Time `json:"createdAt"`
 	// Unique identifier of the workflow
@@ -30,11 +30,11 @@ func (w *Workflow) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (w *Workflow) GetConfig() WorkflowConfig {
+func (w *Workflow) GetWorkflowConfig() WorkflowConfig {
 	if w == nil {
 		return WorkflowConfig{}
 	}
-	return w.Config
+	return w.WorkflowConfig
 }
 
 func (w *Workflow) GetCreatedAt() time.Time {

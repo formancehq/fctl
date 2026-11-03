@@ -9,7 +9,7 @@ import (
 // V2LogDataInsertedSchema - Payload for INSERTED_SCHEMA log entries. Contains the schema that was inserted into the ledger.
 type V2LogDataInsertedSchema struct {
 	// Complete schema structure with metadata
-	Schema V2Schema `json:"schema"`
+	V2SchemaData V2SchemaData `json:"schema"`
 }
 
 func (v V2LogDataInsertedSchema) MarshalJSON() ([]byte, error) {
@@ -23,11 +23,11 @@ func (v *V2LogDataInsertedSchema) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2LogDataInsertedSchema) GetSchema() V2Schema {
+func (v *V2LogDataInsertedSchema) GetV2SchemaData() V2SchemaData {
 	if v == nil {
-		return V2Schema{}
+		return V2SchemaData{}
 	}
-	return v.Schema
+	return v.V2SchemaData
 }
 
 // #region class-body-v2logdatainsertedschema

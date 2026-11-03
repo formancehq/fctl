@@ -10,6 +10,12 @@ import (
 
 // V3PaymentInitiation - A payment Formance asked a connector to execute
 type V3PaymentInitiation struct {
+	// Arbitrary key/value pairs attached to the resource
+	V3Metadata map[string]string `json:"metadata,omitempty"`
+	// Where a payment initiation stands in its lifecycle
+	V3PaymentInitiationStatusEnum V3PaymentInitiationStatusEnum `json:"status"`
+	// Kind of movement a payment initiation performs, such as a transfer or a payout
+	V3PaymentInitiationTypeEnum V3PaymentInitiationTypeEnum `json:"type"`
 	// Amount to move, in the asset's smallest unit
 	Amount *big.Int `json:"amount"`
 	// Asset the payment is denominated in
@@ -26,8 +32,6 @@ type V3PaymentInitiation struct {
 	Error *string `json:"error,omitempty"`
 	// Unique identifier of the payment initiation
 	ID string `json:"id"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
 	// Name of the payment provider behind the connector
 	Provider string `json:"provider"`
 	// Caller-supplied identifier for the initiation
@@ -36,10 +40,6 @@ type V3PaymentInitiation struct {
 	ScheduledAt time.Time `json:"scheduledAt"`
 	// Identifier of the account the funds leave
 	SourceAccountID *string `json:"sourceAccountID,omitempty"`
-	// Where a payment initiation stands in its lifecycle
-	Status V3PaymentInitiationStatusEnum `json:"status"`
-	// Kind of movement a payment initiation performs, such as a transfer or a payout
-	Type V3PaymentInitiationTypeEnum `json:"type"`
 }
 
 func (v V3PaymentInitiation) MarshalJSON() ([]byte, error) {
@@ -51,6 +51,27 @@ func (v *V3PaymentInitiation) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V3PaymentInitiation) GetV3Metadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.V3Metadata
+}
+
+func (v *V3PaymentInitiation) GetV3PaymentInitiationStatusEnum() V3PaymentInitiationStatusEnum {
+	if v == nil {
+		return V3PaymentInitiationStatusEnum("")
+	}
+	return v.V3PaymentInitiationStatusEnum
+}
+
+func (v *V3PaymentInitiation) GetV3PaymentInitiationTypeEnum() V3PaymentInitiationTypeEnum {
+	if v == nil {
+		return V3PaymentInitiationTypeEnum("")
+	}
+	return v.V3PaymentInitiationTypeEnum
 }
 
 func (v *V3PaymentInitiation) GetAmount() *big.Int {
@@ -109,13 +130,6 @@ func (v *V3PaymentInitiation) GetID() string {
 	return v.ID
 }
 
-func (v *V3PaymentInitiation) GetMetadata() map[string]string {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
-}
-
 func (v *V3PaymentInitiation) GetProvider() string {
 	if v == nil {
 		return ""
@@ -142,20 +156,6 @@ func (v *V3PaymentInitiation) GetSourceAccountID() *string {
 		return nil
 	}
 	return v.SourceAccountID
-}
-
-func (v *V3PaymentInitiation) GetStatus() V3PaymentInitiationStatusEnum {
-	if v == nil {
-		return V3PaymentInitiationStatusEnum("")
-	}
-	return v.Status
-}
-
-func (v *V3PaymentInitiation) GetType() V3PaymentInitiationTypeEnum {
-	if v == nil {
-		return V3PaymentInitiationTypeEnum("")
-	}
-	return v.Type
 }
 
 // #region class-body-v3paymentinitiation

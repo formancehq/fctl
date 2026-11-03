@@ -8,11 +8,11 @@ import (
 )
 
 type V2BulkElementRevertTransactionData struct {
-	AtEffectiveDate *bool    `json:"atEffectiveDate,omitempty"`
-	Force           *bool    `json:"force,omitempty"`
-	ID              *big.Int `json:"id"`
 	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
+	V2Metadata      map[string]string `json:"metadata,omitempty"`
+	AtEffectiveDate *bool             `json:"atEffectiveDate,omitempty"`
+	Force           *bool             `json:"force,omitempty"`
+	ID              *big.Int          `json:"id"`
 }
 
 func (v V2BulkElementRevertTransactionData) MarshalJSON() ([]byte, error) {
@@ -24,6 +24,13 @@ func (v *V2BulkElementRevertTransactionData) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V2BulkElementRevertTransactionData) GetV2Metadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.V2Metadata
 }
 
 func (v *V2BulkElementRevertTransactionData) GetAtEffectiveDate() *bool {
@@ -45,13 +52,6 @@ func (v *V2BulkElementRevertTransactionData) GetID() *big.Int {
 		return big.NewInt(0)
 	}
 	return v.ID
-}
-
-func (v *V2BulkElementRevertTransactionData) GetMetadata() map[string]string {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
 }
 
 // #region class-body-v2bulkelementreverttransactiondata

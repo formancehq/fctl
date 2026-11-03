@@ -13,7 +13,7 @@ import (
 )
 
 type ShowStore struct {
-	Balance wallets.BalanceWithAssets `json:"balance"`
+	Balance wallets.AssetHolder1 `json:"balance"`
 }
 type ShowController struct {
 	store *ShowStore
@@ -73,7 +73,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("getting balance: %w", err)
 	}
 
-	c.store.Balance = response.GetBalanceResponse.Data
+	c.store.Balance = response.GetBalanceResponse.AssetHolder
 
 	return c, nil
 }

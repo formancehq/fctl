@@ -39,7 +39,7 @@ func (e *ConnectionPatchChannel) UnmarshalJSON(data []byte) error {
 	}
 }
 
-type ConnectionPatchConfiguration struct {
+type Configuration struct {
 	Channel       *ConnectionPatchChannel `json:"channel,omitempty"`
 	Env           map[string]*string      `json:"env,omitempty"`
 	Files         map[string]*string      `json:"files,omitempty"`
@@ -49,49 +49,49 @@ type ConnectionPatchConfiguration struct {
 	Version       *string                 `json:"version,omitempty"`
 }
 
-func (c *ConnectionPatchConfiguration) GetChannel() *ConnectionPatchChannel {
+func (c *Configuration) GetChannel() *ConnectionPatchChannel {
 	if c == nil {
 		return nil
 	}
 	return c.Channel
 }
 
-func (c *ConnectionPatchConfiguration) GetEnv() map[string]*string {
+func (c *Configuration) GetEnv() map[string]*string {
 	if c == nil {
 		return nil
 	}
 	return c.Env
 }
 
-func (c *ConnectionPatchConfiguration) GetFiles() map[string]*string {
+func (c *Configuration) GetFiles() map[string]*string {
 	if c == nil {
 		return nil
 	}
 	return c.Files
 }
 
-func (c *ConnectionPatchConfiguration) GetInitialCursor() *string {
+func (c *Configuration) GetInitialCursor() *string {
 	if c == nil {
 		return nil
 	}
 	return c.InitialCursor
 }
 
-func (c *ConnectionPatchConfiguration) GetPollInterval() *string {
+func (c *Configuration) GetPollInterval() *string {
 	if c == nil {
 		return nil
 	}
 	return c.PollInterval
 }
 
-func (c *ConnectionPatchConfiguration) GetSuspend() *bool {
+func (c *Configuration) GetSuspend() *bool {
 	if c == nil {
 		return nil
 	}
 	return c.Suspend
 }
 
-func (c *ConnectionPatchConfiguration) GetVersion() *string {
+func (c *Configuration) GetVersion() *string {
 	if c == nil {
 		return nil
 	}
@@ -104,10 +104,10 @@ func (c *ConnectionPatchConfiguration) GetVersion() *string {
 // returns `400 unsupported_field`. A literal value replaces
 // its stored source. Storage references and metadata are rejected.
 type ConnectionPatch struct {
-	Configuration *ConnectionPatchConfiguration `json:"configuration,omitempty"`
+	Configuration *Configuration `json:"configuration,omitempty"`
 }
 
-func (c *ConnectionPatch) GetConfiguration() *ConnectionPatchConfiguration {
+func (c *ConnectionPatch) GetConfiguration() *Configuration {
 	if c == nil {
 		return nil
 	}

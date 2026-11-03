@@ -9,6 +9,8 @@ import (
 
 // V2Ledger - A ledger and its configuration
 type V2Ledger struct {
+	// Arbitrary key/value pairs attached to the resource
+	V2Metadata map[string]string `json:"metadata,omitempty"`
 	// When the ledger was created
 	AddedAt time.Time `json:"addedAt"`
 	// Name of the storage bucket backing the ledger
@@ -19,8 +21,6 @@ type V2Ledger struct {
 	Features map[string]string `json:"features,omitempty"`
 	// Unique sequential identifier for the ledger
 	ID *int64 `json:"id,omitempty"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
 	// Name of the ledger
 	Name string `json:"name"`
 }
@@ -34,6 +34,13 @@ func (v *V2Ledger) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V2Ledger) GetV2Metadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.V2Metadata
 }
 
 func (v *V2Ledger) GetAddedAt() time.Time {
@@ -69,13 +76,6 @@ func (v *V2Ledger) GetID() *int64 {
 		return nil
 	}
 	return v.ID
-}
-
-func (v *V2Ledger) GetMetadata() map[string]string {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
 }
 
 func (v *V2Ledger) GetName() string {

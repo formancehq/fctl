@@ -46,7 +46,9 @@ type QueryFilter struct {
 	// `{ "<field>": <value> }` — less than or equal.
 	DollarLte map[string]any `json:"$lte,omitempty"`
 	// `{ "<field>": <value> }` — exact/prefix/bool match.
-	DollarMatch map[string]any `json:"$match,omitempty"`
+	DollarMatch          map[string]any `json:"$match,omitempty"`
+	DollarOr             []QueryFilter  `json:"$or,omitempty"`
+	AdditionalProperties map[string]any `additionalProperties:"true" json:"-"`
 	// Recursive filter expression using the Formance query DSL (aligned with the v2 API). Each node is an object with **exactly one** top-level `$`-prefixed operator key.
 	//
 	// Combinators:
@@ -76,9 +78,7 @@ type QueryFilter struct {
 	// Supported fields: `metadata[<key>]`, `address`, `source`, `destination`, `reference`, `reverted` (bool), `ledger`, `id`, `timestamp`, `insertedAt`, `revertedAt`, `logId`, `date`. Not every field applies to every query target; a field that does not apply is rejected. The numeric built-ins (`id`, `timestamp`, `insertedAt`, `revertedAt`, `logId`, `date`) are **range-only** — use `$gt`/`$gte`/`$lt`/`$lte`; `$match` on them is rejected. The log-only fields (`logId`, `date`, `ledger`) are valid only when the prepared query targets `LOGS`; they are rejected on `ACCOUNTS` and `TRANSACTIONS` targets.
 	//
 	// A value is either a JSON literal or a parameter reference `{"$param": "<name>"}`, resolved at prepared-query execution time. A JSON `null` in value position is rejected. uint64 fields (`id`, `timestamp`, `insertedAt`, `revertedAt`, `logId`, `date`) are carried as decimal strings to stay lossless above 2^53. The date-semantic fields (`timestamp`, `insertedAt`, `revertedAt`, `date`) additionally accept an RFC3339 timestamp string (e.g. `{"$gte":{"date":"2023-11-14T22:13:20Z"}}`), coerced to the same Unix microseconds as the raw form; a value before the Unix epoch (1970-01-01) is rejected.
-	DollarNot            *QueryFilter   `json:"$not,omitempty"`
-	DollarOr             []QueryFilter  `json:"$or,omitempty"`
-	AdditionalProperties map[string]any `additionalProperties:"true" json:"-"`
+	QueryFilter *QueryFilter `json:"$not,omitempty"`
 }
 
 func (q QueryFilter) MarshalJSON() ([]byte, error) {
@@ -148,13 +148,6 @@ func (q *QueryFilter) GetDollarMatch() map[string]any {
 	return q.DollarMatch
 }
 
-func (q *QueryFilter) GetDollarNot() *QueryFilter {
-	if q == nil {
-		return nil
-	}
-	return q.DollarNot
-}
-
 func (q *QueryFilter) GetDollarOr() []QueryFilter {
 	if q == nil {
 		return nil
@@ -167,4 +160,11 @@ func (q *QueryFilter) GetAdditionalProperties() map[string]any {
 		return nil
 	}
 	return q.AdditionalProperties
+}
+
+func (q *QueryFilter) GetQueryFilter() *QueryFilter {
+	if q == nil {
+		return nil
+	}
+	return q.QueryFilter
 }

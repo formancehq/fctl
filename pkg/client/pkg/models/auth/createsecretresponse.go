@@ -4,12 +4,12 @@ package auth
 
 type CreateSecretResponse struct {
 	// A client secret. The full value is returned only at creation and cannot be retrieved again
-	Data *Secret `json:"data,omitempty"`
+	SecretOptions *SecretOptions1 `json:"data,omitempty"`
 }
 
-func (c *CreateSecretResponse) GetData() *Secret {
+func (c *CreateSecretResponse) GetSecretOptions() *SecretOptions1 {
 	if c == nil {
 		return nil
 	}
-	return c.Data
+	return c.SecretOptions
 }

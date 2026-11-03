@@ -67,8 +67,8 @@ func (c *ChangeSecretWebhookController) Run(cmd *cobra.Command, args []string) (
 		return nil, fmt.Errorf("changing secret: %w", err)
 	}
 
-	c.store.ID = response.ConfigResponse.Data.ID
-	c.store.Secret = response.ConfigResponse.Data.Secret
+	c.store.ID = response.ConfigResponse.WebhooksConfig.ID
+	c.store.Secret = response.ConfigResponse.WebhooksConfig.Secret
 
 	return c, nil
 }

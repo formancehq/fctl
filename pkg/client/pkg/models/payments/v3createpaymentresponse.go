@@ -4,14 +4,14 @@ package payments
 
 type V3CreatePaymentResponse struct {
 	// A payment observed at a provider and surfaced through a connector
-	Data V3Payment `json:"data"`
+	V3Payment V3Payment `json:"data"`
 }
 
-func (v *V3CreatePaymentResponse) GetData() V3Payment {
+func (v *V3CreatePaymentResponse) GetV3Payment() V3Payment {
 	if v == nil {
 		return V3Payment{}
 	}
-	return v.Data
+	return v.V3Payment
 }
 
 // #region class-body-v3createpaymentresponse

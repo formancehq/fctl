@@ -3,39 +3,39 @@
 package ledgerv3
 
 type RevertedTransactionAction struct {
-	DeleteMetadata *DeleteMetadataAction `json:"deleteMetadata,omitempty"`
+	DeleteMetadataAction *DeleteMetadataAction `json:"deleteMetadata,omitempty"`
 	// Turns the entry into a fill-gap that preserves log-ID and tx-ID continuity.
-	Drop           *DropAction           `json:"drop,omitempty"`
-	RewriteAddress *RewriteAddressAction `json:"rewriteAddress,omitempty"`
+	DropAction           *DropAction           `json:"drop,omitempty"`
+	RewriteAddressAction *RewriteAddressAction `json:"rewriteAddress,omitempty"`
 	// `value` is a literal metadata string; `value_expr` is a CEL expression typed against the current variant and evaluated at commit time (e.g. `log.reference`). Exactly one of the two should be set; if neither is set the value defaults to the empty string. Optional `type` coerces the produced string into a typed MetadataValue via the platform conversion matrix — one of "string" (default), "int64", "bool", "uint64", "int8"/"int16"/"int32", "uint8"/"uint16"/"uint32", "datetime".
 	//
-	SetMetadata *SetMetadataAction `json:"setMetadata,omitempty"`
+	SetMetadataAction *SetMetadataAction `json:"setMetadata,omitempty"`
 }
 
-func (r *RevertedTransactionAction) GetDeleteMetadata() *DeleteMetadataAction {
+func (r *RevertedTransactionAction) GetDeleteMetadataAction() *DeleteMetadataAction {
 	if r == nil {
 		return nil
 	}
-	return r.DeleteMetadata
+	return r.DeleteMetadataAction
 }
 
-func (r *RevertedTransactionAction) GetDrop() *DropAction {
+func (r *RevertedTransactionAction) GetDropAction() *DropAction {
 	if r == nil {
 		return nil
 	}
-	return r.Drop
+	return r.DropAction
 }
 
-func (r *RevertedTransactionAction) GetRewriteAddress() *RewriteAddressAction {
+func (r *RevertedTransactionAction) GetRewriteAddressAction() *RewriteAddressAction {
 	if r == nil {
 		return nil
 	}
-	return r.RewriteAddress
+	return r.RewriteAddressAction
 }
 
-func (r *RevertedTransactionAction) GetSetMetadata() *SetMetadataAction {
+func (r *RevertedTransactionAction) GetSetMetadataAction() *SetMetadataAction {
 	if r == nil {
 		return nil
 	}
-	return r.SetMetadata
+	return r.SetMetadataAction
 }

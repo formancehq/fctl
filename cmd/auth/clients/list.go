@@ -72,7 +72,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", clients.StatusCode)
 	}
 
-	c.store.Clients = fctl.Map(clients.ListClientsResponse.Data, func(o auth.Client) Client {
+	c.store.Clients = fctl.Map(clients.ListClientsResponse.Data, func(o auth.ClientOptions) Client {
 		return Client{
 			ID:   o.ID,
 			Name: o.Name,

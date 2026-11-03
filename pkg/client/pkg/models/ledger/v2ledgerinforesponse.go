@@ -4,14 +4,14 @@ package ledger
 
 type V2LedgerInfoResponse struct {
 	// Runtime information about a ledger, including the state of its storage migrations
-	Data *V2LedgerInfo `json:"data,omitempty"`
+	V2LedgerInfo *V2LedgerInfo `json:"data,omitempty"`
 }
 
-func (v *V2LedgerInfoResponse) GetData() *V2LedgerInfo {
+func (v *V2LedgerInfoResponse) GetV2LedgerInfo() *V2LedgerInfo {
 	if v == nil {
 		return nil
 	}
-	return v.Data
+	return v.V2LedgerInfo
 }
 
 // #region class-body-v2ledgerinforesponse

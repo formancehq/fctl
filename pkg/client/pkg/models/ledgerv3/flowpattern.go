@@ -40,14 +40,21 @@ func (e *Structure) UnmarshalJSON(data []byte) error {
 }
 
 type FlowPattern struct {
-	MetadataKeys []string            `json:"metadataKeys,omitempty"`
-	Postings     []NormalizedPosting `json:"postings,omitempty"`
+	TemporalStats *TemporalStats      `json:"temporal,omitempty"`
+	MetadataKeys  []string            `json:"metadataKeys,omitempty"`
+	Postings      []NormalizedPosting `json:"postings,omitempty"`
 	// Canonical flow signature (e.g. "users:{id}:main->bank:fees[USD]")
 	Signature        *string            `json:"signature,omitempty"`
 	Structure        *Structure         `json:"structure,omitempty"`
-	Temporal         *TemporalStats     `json:"temporal,omitempty"`
 	TransactionCount *int64             `json:"transactionCount,omitempty"`
 	VolumeStats      []AssetVolumeStats `json:"volumeStats,omitempty"`
+}
+
+func (f *FlowPattern) GetTemporalStats() *TemporalStats {
+	if f == nil {
+		return nil
+	}
+	return f.TemporalStats
 }
 
 func (f *FlowPattern) GetMetadataKeys() []string {
@@ -76,13 +83,6 @@ func (f *FlowPattern) GetStructure() *Structure {
 		return nil
 	}
 	return f.Structure
-}
-
-func (f *FlowPattern) GetTemporal() *TemporalStats {
-	if f == nil {
-		return nil
-	}
-	return f.Temporal
 }
 
 func (f *FlowPattern) GetTransactionCount() *int64 {

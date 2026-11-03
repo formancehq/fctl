@@ -8,8 +8,8 @@ import (
 
 type AnyVariantActionRead struct {
 	// Turns the entry into a fill-gap that preserves log-ID and tx-ID continuity.
-	Drop           *DropAction               `json:"drop,omitempty"`
-	RewriteAddress *RewriteAddressActionRead `json:"rewriteAddress,omitempty"`
+	DropAction               *DropAction               `json:"drop,omitempty"`
+	RewriteAddressActionRead *RewriteAddressActionRead `json:"rewriteAddress,omitempty"`
 }
 
 func (a AnyVariantActionRead) MarshalJSON() ([]byte, error) {
@@ -23,16 +23,16 @@ func (a *AnyVariantActionRead) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (a *AnyVariantActionRead) GetDrop() *DropAction {
+func (a *AnyVariantActionRead) GetDropAction() *DropAction {
 	if a == nil {
 		return nil
 	}
-	return a.Drop
+	return a.DropAction
 }
 
-func (a *AnyVariantActionRead) GetRewriteAddress() *RewriteAddressActionRead {
+func (a *AnyVariantActionRead) GetRewriteAddressActionRead() *RewriteAddressActionRead {
 	if a == nil {
 		return nil
 	}
-	return a.RewriteAddress
+	return a.RewriteAddressActionRead
 }

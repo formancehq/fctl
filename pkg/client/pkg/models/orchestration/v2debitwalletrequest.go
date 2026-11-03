@@ -10,13 +10,13 @@ import (
 // V2DebitWalletRequest - A debit to apply to a wallet
 type V2DebitWalletRequest struct {
 	// An amount together with the asset it is denominated in
-	Amount V2Monetary `json:"amount"`
+	V2Monetary V2Monetary `json:"amount"`
+	// The counterparty of a wallet movement, either a ledger account or another wallet
+	V2Subject *V2Subject `json:"destination,omitempty"`
 	// Names of the balances to debit from, in order. Defaults to the main balance when omitted
 	Balances []string `json:"balances,omitempty"`
 	// Human-readable reason for the debit
 	Description *string `json:"description,omitempty"`
-	// The counterparty of a wallet movement, either a ledger account or another wallet
-	Destination *V2Subject `json:"destination,omitempty"`
 	// Metadata associated with the wallet.
 	Metadata map[string]string `json:"metadata"`
 	// Set to true to create a pending hold. If false, the wallet will be debited immediately.
@@ -36,11 +36,32 @@ func (v *V2DebitWalletRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2DebitWalletRequest) GetAmount() V2Monetary {
+func (v *V2DebitWalletRequest) GetV2Monetary() V2Monetary {
 	if v == nil {
 		return V2Monetary{}
 	}
-	return v.Amount
+	return v.V2Monetary
+}
+
+func (v *V2DebitWalletRequest) GetV2Subject() *V2Subject {
+	if v == nil {
+		return nil
+	}
+	return v.V2Subject
+}
+
+func (v *V2DebitWalletRequest) GetV2SubjectAccount() *V2LedgerAccountSubject {
+	if v := v.GetV2Subject(); v != nil {
+		return v.V2LedgerAccountSubject
+	}
+	return nil
+}
+
+func (v *V2DebitWalletRequest) GetV2SubjectWallet() *V2WalletSubject {
+	if v := v.GetV2Subject(); v != nil {
+		return v.V2WalletSubject
+	}
+	return nil
 }
 
 func (v *V2DebitWalletRequest) GetBalances() []string {
@@ -55,27 +76,6 @@ func (v *V2DebitWalletRequest) GetDescription() *string {
 		return nil
 	}
 	return v.Description
-}
-
-func (v *V2DebitWalletRequest) GetDestination() *V2Subject {
-	if v == nil {
-		return nil
-	}
-	return v.Destination
-}
-
-func (v *V2DebitWalletRequest) GetDestinationAccount() *V2LedgerAccountSubject {
-	if v := v.GetDestination(); v != nil {
-		return v.V2LedgerAccountSubject
-	}
-	return nil
-}
-
-func (v *V2DebitWalletRequest) GetDestinationWallet() *V2WalletSubject {
-	if v := v.GetDestination(); v != nil {
-		return v.V2WalletSubject
-	}
-	return nil
 }
 
 func (v *V2DebitWalletRequest) GetMetadata() map[string]string {

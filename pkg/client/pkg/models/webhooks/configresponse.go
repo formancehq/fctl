@@ -4,12 +4,12 @@ package webhooks
 
 type ConfigResponse struct {
 	// A webhook endpoint together with the event types it subscribes to
-	Data WebhooksConfig `json:"data"`
+	WebhooksConfig WebhooksConfig `json:"data"`
 }
 
-func (c *ConfigResponse) GetData() WebhooksConfig {
+func (c *ConfigResponse) GetWebhooksConfig() WebhooksConfig {
 	if c == nil {
 		return WebhooksConfig{}
 	}
-	return c.Data
+	return c.WebhooksConfig
 }

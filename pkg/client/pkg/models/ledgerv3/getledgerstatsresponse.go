@@ -3,12 +3,12 @@
 package ledgerv3
 
 type GetLedgerStatsResponse struct {
-	Data LedgerStats `json:"data"`
+	LedgerStats LedgerStats `json:"data"`
 }
 
-func (g *GetLedgerStatsResponse) GetData() LedgerStats {
+func (g *GetLedgerStatsResponse) GetLedgerStats() LedgerStats {
 	if g == nil {
 		return LedgerStats{}
 	}
-	return g.Data
+	return g.LedgerStats
 }

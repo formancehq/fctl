@@ -13,10 +13,17 @@ import (
 )
 
 type V2RunQueryRequestBody struct {
-	Cursor *string `json:"cursor,omitempty"`
 	// Parameters applied when running a query template
-	Params *ledger.V2QueryParams `json:"params,omitempty"`
-	Vars   map[string]string     `json:"vars,omitempty"`
+	V2QueryParams *ledger.V2QueryParams `json:"params,omitempty"`
+	Cursor        *string               `json:"cursor,omitempty"`
+	Vars          map[string]string     `json:"vars,omitempty"`
+}
+
+func (v *V2RunQueryRequestBody) GetV2QueryParams() *ledger.V2QueryParams {
+	if v == nil {
+		return nil
+	}
+	return v.V2QueryParams
 }
 
 func (v *V2RunQueryRequestBody) GetCursor() *string {
@@ -24,13 +31,6 @@ func (v *V2RunQueryRequestBody) GetCursor() *string {
 		return nil
 	}
 	return v.Cursor
-}
-
-func (v *V2RunQueryRequestBody) GetParams() *ledger.V2QueryParams {
-	if v == nil {
-		return nil
-	}
-	return v.Params
 }
 
 func (v *V2RunQueryRequestBody) GetVars() map[string]string {

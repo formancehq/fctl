@@ -11,7 +11,7 @@ import (
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/auth"
 )
 
-func PrintClient(out io.Writer, client *auth.Client) error {
+func PrintClient(out io.Writer, client *auth.ClientOptions) error {
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("ID"), client.ID})
 	tableData = append(tableData, []string{pterm.LightCyan("Name"), client.Name})

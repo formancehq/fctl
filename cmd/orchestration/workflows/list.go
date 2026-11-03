@@ -71,8 +71,8 @@ func (c *WorkflowsListController) Run(cmd *cobra.Command, args []string) (fctl.R
 		return Workflow{
 			ID: src.ID,
 			Name: func() string {
-				if src.Config.Name != nil {
-					return *src.Config.Name
+				if src.WorkflowConfig.Name != nil {
+					return *src.WorkflowConfig.Name
 				}
 				return ""
 			}(),

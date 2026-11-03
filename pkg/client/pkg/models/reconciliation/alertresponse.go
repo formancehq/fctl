@@ -13,12 +13,12 @@ type AlertResponse struct {
 	// The full history of transitions lives in alert_event
 	// (see /alerts/{alertID}/events).
 	//
-	Data Alert `json:"data"`
+	Alert Alert `json:"data"`
 }
 
-func (a *AlertResponse) GetData() Alert {
+func (a *AlertResponse) GetAlert() Alert {
 	if a == nil {
 		return Alert{}
 	}
-	return a.Data
+	return a.Alert
 }

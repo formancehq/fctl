@@ -13,6 +13,8 @@ import (
 // `scriptReference`. Idempotency is controlled exclusively via the
 // `Idempotency-Key` HTTP header — there is no body-level key.
 type CreateTransactionRequest struct {
+	Script          *Script          `json:"script,omitempty"`
+	ScriptReference *ScriptReference `json:"scriptReference,omitempty"`
 	// Metadata for accounts involved in the transaction (supports typed values). Account addresses must be nonempty and contain only letters, digits, colons, underscores and hyphens, without empty segments. Malformed addresses are rejected before submission; competing invalid addresses select the lexicographically smallest address. Each account's map is bounded independently. Cluster policy defaults allow 128 entries per entity, 256 bytes per key, 16384 bytes per value, 65536 bytes per entity, and 1048576 bytes per request. Effective ceilings are configurable through the replicated cluster policy.
 	AccountMetadata map[string]map[string]*MetadataValue `json:"accountMetadata,omitempty"`
 	// Skip the balance check, so the transaction commits even when a source account has insufficient funds.
@@ -22,9 +24,7 @@ type CreateTransactionRequest struct {
 	// List of postings for the transaction. Mutually exclusive with `script` and `scriptReference`.
 	Postings []PostingRequest `json:"postings,omitempty"`
 	// Transaction reference
-	Reference       *string          `json:"reference,omitempty"`
-	Script          *Script          `json:"script,omitempty"`
-	ScriptReference *ScriptReference `json:"scriptReference,omitempty"`
+	Reference *string `json:"reference,omitempty"`
 	// Transaction timestamp (ISO 8601 format). If not provided, current time is used.
 	Timestamp *time.Time `json:"timestamp,omitempty"`
 }
@@ -38,6 +38,20 @@ func (c *CreateTransactionRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (c *CreateTransactionRequest) GetScript() *Script {
+	if c == nil {
+		return nil
+	}
+	return c.Script
+}
+
+func (c *CreateTransactionRequest) GetScriptReference() *ScriptReference {
+	if c == nil {
+		return nil
+	}
+	return c.ScriptReference
 }
 
 func (c *CreateTransactionRequest) GetAccountMetadata() map[string]map[string]*MetadataValue {
@@ -73,20 +87,6 @@ func (c *CreateTransactionRequest) GetReference() *string {
 		return nil
 	}
 	return c.Reference
-}
-
-func (c *CreateTransactionRequest) GetScript() *Script {
-	if c == nil {
-		return nil
-	}
-	return c.Script
-}
-
-func (c *CreateTransactionRequest) GetScriptReference() *ScriptReference {
-	if c == nil {
-		return nil
-	}
-	return c.ScriptReference
 }
 
 func (c *CreateTransactionRequest) GetTimestamp() *time.Time {

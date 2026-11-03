@@ -4,12 +4,12 @@ package ledger
 
 type LedgerInfoResponse struct {
 	// Runtime information about a ledger, including the state of its storage migrations
-	Data *LedgerInfo `json:"data,omitempty"`
+	LedgerInfo *LedgerInfo `json:"data,omitempty"`
 }
 
-func (l *LedgerInfoResponse) GetData() *LedgerInfo {
+func (l *LedgerInfoResponse) GetLedgerInfo() *LedgerInfo {
 	if l == nil {
 		return nil
 	}
-	return l.Data
+	return l.LedgerInfo
 }

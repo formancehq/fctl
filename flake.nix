@@ -69,14 +69,14 @@
         {
           stack-speakeasy = pkgs.stdenv.mkDerivation {
             pname = "stack-speakeasy";
-            version = "1.770.0";
+            version = "1.757.1";
             src = pkgs.fetchurl {
-              url = "https://github.com/speakeasy-api/speakeasy/releases/download/v1.770.0/speakeasy_${speakeasyPlatforms.${system}}.zip";
+              url = "https://github.com/speakeasy-api/speakeasy/releases/download/v1.757.1/speakeasy_${speakeasyPlatforms.${system}}.zip";
               sha256 = {
-                "x86_64-linux" = "736e56ae7e7faf81592a36ff69f41f25e8bf52b4c0e00e4ac66f876802265d8f";
-                "aarch64-linux" = "2fec38a5843d1813e64f863360cb2aca47e82b4a9e13d00b1803300b67ba96b0";
-                "x86_64-darwin" = "5de9a85514963d1f6c9183e0341f9e0bbabf34e69cdba47d4f02db6e7b62395f";
-                "aarch64-darwin" = "316706951a5948a8662192abe51e09312f795a900cb5a6f29eba030265f15eea";
+                "x86_64-linux" = "366de48d872ef9c50ec768e8884a16e5e63553028f1e0c1812e9934beb5547b6";
+                "aarch64-linux" = "91beac6ba82032cf6dc9885cefbcdd8810e6f7302eb13885d1f5b8056671a3a6";
+                "x86_64-darwin" = "d0be3ee0e0899fa00592c58e19fef0a9cb7443be82ef59564a7826fbe5cd62b4";
+                "aarch64-darwin" = "f27022c3c2d38f23fd9397bb5d566d81e55f576b0740a6d5377a244db2d15693";
               }.${system};
             };
             nativeBuildInputs = [ pkgs.unzip ];

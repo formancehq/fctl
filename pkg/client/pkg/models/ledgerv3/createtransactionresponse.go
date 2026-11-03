@@ -3,9 +3,16 @@
 package ledgerv3
 
 type CreateTransactionResponseData struct {
+	TransactionResponse *TransactionResponse `json:"transaction,omitempty"`
 	// Metadata for accounts involved in the transaction
 	AccountMetadata map[string]map[string]any `json:"accountMetadata,omitempty"`
-	Transaction     *TransactionResponse      `json:"transaction,omitempty"`
+}
+
+func (c *CreateTransactionResponseData) GetTransactionResponse() *TransactionResponse {
+	if c == nil {
+		return nil
+	}
+	return c.TransactionResponse
 }
 
 func (c *CreateTransactionResponseData) GetAccountMetadata() map[string]map[string]any {
@@ -13,13 +20,6 @@ func (c *CreateTransactionResponseData) GetAccountMetadata() map[string]map[stri
 		return nil
 	}
 	return c.AccountMetadata
-}
-
-func (c *CreateTransactionResponseData) GetTransaction() *TransactionResponse {
-	if c == nil {
-		return nil
-	}
-	return c.Transaction
 }
 
 type CreateTransactionResponse struct {

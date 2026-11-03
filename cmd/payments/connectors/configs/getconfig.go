@@ -181,7 +181,7 @@ func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (f
 			}
 
 			if provider != "" {
-				return connector.Provider == payments.Connector(strings.ToUpper(provider))
+				return connector.Connector == payments.Connector(strings.ToUpper(provider))
 			}
 
 			return true
@@ -191,12 +191,12 @@ func (c *PaymentsLoadConfigController) Run(cmd *cobra.Command, args []string) (f
 		case 0:
 			return nil, fmt.Errorf("no connectors found")
 		case 1:
-			provider = string(connectorsFiltered[0].Provider)
+			provider = string(connectorsFiltered[0].Connector)
 			connectorID = connectorsFiltered[0].ConnectorID
 		default:
 			options := make([]string, 0, len(connectorsFiltered))
 			for _, connector := range connectorsFiltered {
-				options = append(options, strings.Join([]string{"id:" + connector.ConnectorID, "provider:" + string(connector.Provider), "name:" + connector.Name, "enabled:" + fctl.BoolPointerToString(connector.Enabled)}, " "))
+				options = append(options, strings.Join([]string{"id:" + connector.ConnectorID, "provider:" + string(connector.Connector), "name:" + connector.Name, "enabled:" + fctl.BoolPointerToString(connector.Enabled)}, " "))
 			}
 			printer := pterm.DefaultInteractiveSelect.WithOptions(options)
 			selectedOption, err := printer.Show("Please select a connector")

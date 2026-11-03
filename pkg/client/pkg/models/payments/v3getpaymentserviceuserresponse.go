@@ -4,14 +4,14 @@ package payments
 
 type V3GetPaymentServiceUserResponse struct {
 	// An end user on whose behalf payments and open banking connections are made
-	Data V3PaymentServiceUser `json:"data"`
+	V3PaymentServiceUser V3PaymentServiceUser `json:"data"`
 }
 
-func (v *V3GetPaymentServiceUserResponse) GetData() V3PaymentServiceUser {
+func (v *V3GetPaymentServiceUserResponse) GetV3PaymentServiceUser() V3PaymentServiceUser {
 	if v == nil {
 		return V3PaymentServiceUser{}
 	}
-	return v.Data
+	return v.V3PaymentServiceUser
 }
 
 // #region class-body-v3getpaymentserviceuserresponse

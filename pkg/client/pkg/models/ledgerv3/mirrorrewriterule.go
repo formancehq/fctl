@@ -6,49 +6,49 @@ package ledgerv3
 type MirrorRewriteRule struct {
 	// Rule scoped to every variant. `log` is the full MirrorLogEntry — use `has(log.<variant>)` guards to read variant-specific fields.
 	//
-	AnyVariant *AnyVariantRule `json:"anyVariant,omitempty"`
+	AnyVariantRule *AnyVariantRule `json:"anyVariant,omitempty"`
 	// Rule scoped to MirrorCreatedTransaction. Inside `match`, `log` is the created-transaction proto directly (e.g. `log.metadata["k"]`).
 	//
-	CreatedTransaction  *CreatedTransactionRule  `json:"createdTransaction,omitempty"`
-	DeletedMetadata     *DeletedMetadataRule     `json:"deletedMetadata,omitempty"`
-	RevertedTransaction *RevertedTransactionRule `json:"revertedTransaction,omitempty"`
-	SavedMetadata       *SavedMetadataRule       `json:"savedMetadata,omitempty"`
-	Stop                *bool                    `json:"stop,omitempty"`
+	CreatedTransactionRule  *CreatedTransactionRule  `json:"createdTransaction,omitempty"`
+	DeletedMetadataRule     *DeletedMetadataRule     `json:"deletedMetadata,omitempty"`
+	RevertedTransactionRule *RevertedTransactionRule `json:"revertedTransaction,omitempty"`
+	SavedMetadataRule       *SavedMetadataRule       `json:"savedMetadata,omitempty"`
+	Stop                    *bool                    `json:"stop,omitempty"`
 }
 
-func (m *MirrorRewriteRule) GetAnyVariant() *AnyVariantRule {
+func (m *MirrorRewriteRule) GetAnyVariantRule() *AnyVariantRule {
 	if m == nil {
 		return nil
 	}
-	return m.AnyVariant
+	return m.AnyVariantRule
 }
 
-func (m *MirrorRewriteRule) GetCreatedTransaction() *CreatedTransactionRule {
+func (m *MirrorRewriteRule) GetCreatedTransactionRule() *CreatedTransactionRule {
 	if m == nil {
 		return nil
 	}
-	return m.CreatedTransaction
+	return m.CreatedTransactionRule
 }
 
-func (m *MirrorRewriteRule) GetDeletedMetadata() *DeletedMetadataRule {
+func (m *MirrorRewriteRule) GetDeletedMetadataRule() *DeletedMetadataRule {
 	if m == nil {
 		return nil
 	}
-	return m.DeletedMetadata
+	return m.DeletedMetadataRule
 }
 
-func (m *MirrorRewriteRule) GetRevertedTransaction() *RevertedTransactionRule {
+func (m *MirrorRewriteRule) GetRevertedTransactionRule() *RevertedTransactionRule {
 	if m == nil {
 		return nil
 	}
-	return m.RevertedTransaction
+	return m.RevertedTransactionRule
 }
 
-func (m *MirrorRewriteRule) GetSavedMetadata() *SavedMetadataRule {
+func (m *MirrorRewriteRule) GetSavedMetadataRule() *SavedMetadataRule {
 	if m == nil {
 		return nil
 	}
-	return m.SavedMetadata
+	return m.SavedMetadataRule
 }
 
 func (m *MirrorRewriteRule) GetStop() *bool {

@@ -178,10 +178,10 @@ func toConversion(cv paymentsmodels.V3Conversion) Conversion {
 		DestinationAmount:    cv.DestinationAmount,
 		Fee:                  cv.Fee,
 		FeeAsset:             cv.FeeAsset,
-		Status:               string(cv.Status),
+		Status:               string(cv.V3ConversionStatusEnum),
 		SourceAccountID:      cv.SourceAccountID,
 		DestinationAccountID: cv.DestinationAccountID,
-		Metadata:             cv.Metadata,
+		Metadata:             cv.V3Metadata,
 		Error:                cv.Error,
 	}
 }

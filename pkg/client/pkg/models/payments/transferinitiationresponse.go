@@ -5,12 +5,12 @@ package payments
 // TransferInitiationResponse - OK
 type TransferInitiationResponse struct {
 	// A transfer Formance asked a connector to execute
-	Data TransferInitiation `json:"data"`
+	TransferInitiation TransferInitiation `json:"data"`
 }
 
-func (t *TransferInitiationResponse) GetData() TransferInitiation {
+func (t *TransferInitiationResponse) GetTransferInitiation() TransferInitiation {
 	if t == nil {
 		return TransferInitiation{}
 	}
-	return t.Data
+	return t.TransferInitiation
 }

@@ -7,14 +7,14 @@ import (
 )
 
 type V2QueryTemplate struct {
+	// Parameters applied when running a query template
+	V2QueryParams *V2QueryParams `json:"params,omitempty"`
+	// The resource a query template targets
+	V2QueryResource *V2QueryResource `json:"resource,omitempty"`
 	// The filter expression the query evaluates
 	Body map[string]any `json:"body,omitempty"`
 	// Human-readable description of what the query returns
 	Description *string `json:"description,omitempty"`
-	// Parameters applied when running a query template
-	Params *V2QueryParams `json:"params,omitempty"`
-	// The resource a query template targets
-	Resource *V2QueryResource `json:"resource,omitempty"`
 	// Variables the query accepts, keyed by variable name
 	Vars map[string]V2QueryTemplateVar `json:"vars,omitempty"`
 }
@@ -30,6 +30,20 @@ func (v *V2QueryTemplate) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (v *V2QueryTemplate) GetV2QueryParams() *V2QueryParams {
+	if v == nil {
+		return nil
+	}
+	return v.V2QueryParams
+}
+
+func (v *V2QueryTemplate) GetV2QueryResource() *V2QueryResource {
+	if v == nil {
+		return nil
+	}
+	return v.V2QueryResource
+}
+
 func (v *V2QueryTemplate) GetBody() map[string]any {
 	if v == nil {
 		return nil
@@ -42,20 +56,6 @@ func (v *V2QueryTemplate) GetDescription() *string {
 		return nil
 	}
 	return v.Description
-}
-
-func (v *V2QueryTemplate) GetParams() *V2QueryParams {
-	if v == nil {
-		return nil
-	}
-	return v.Params
-}
-
-func (v *V2QueryTemplate) GetResource() *V2QueryResource {
-	if v == nil {
-		return nil
-	}
-	return v.Resource
 }
 
 func (v *V2QueryTemplate) GetVars() map[string]V2QueryTemplateVar {

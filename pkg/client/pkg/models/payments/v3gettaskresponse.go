@@ -4,14 +4,14 @@ package payments
 
 type V3GetTaskResponse struct {
 	// An asynchronous unit of work, tracking an operation that completes in the background
-	Data V3Task `json:"data"`
+	V3Task V3Task `json:"data"`
 }
 
-func (v *V3GetTaskResponse) GetData() V3Task {
+func (v *V3GetTaskResponse) GetV3Task() V3Task {
 	if v == nil {
 		return V3Task{}
 	}
-	return v.Data
+	return v.V3Task
 }
 
 // #region class-body-v3gettaskresponse

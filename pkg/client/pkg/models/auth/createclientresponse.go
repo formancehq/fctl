@@ -4,12 +4,12 @@ package auth
 
 type CreateClientResponse struct {
 	// An OAuth2 client registered on the stack
-	Data *Client `json:"data,omitempty"`
+	ClientOptions *ClientOptions `json:"data,omitempty"`
 }
 
-func (c *CreateClientResponse) GetData() *Client {
+func (c *CreateClientResponse) GetClientOptions() *ClientOptions {
 	if c == nil {
 		return nil
 	}
-	return c.Data
+	return c.ClientOptions
 }

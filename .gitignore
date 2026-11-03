@@ -12,3 +12,6 @@ coverage.*
 
 # Speakeasy SDK reference docs are not maintained in FCTL
 /pkg/client/docs/
+/pkg/client/README.md
+/pkg/client/USAGE.md
+/pkg/client/CONTRIBUTING.md

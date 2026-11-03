@@ -8,14 +8,14 @@ import (
 )
 
 type V3ReversePaymentInitiationRequest struct {
+	// Arbitrary key/value pairs attached to the resource
+	V3Metadata map[string]string `json:"metadata,omitempty"`
 	// Amount to reverse, in the asset's smallest unit
 	Amount *big.Int `json:"amount"`
 	// Asset the reversal is denominated in
 	Asset string `json:"asset"`
 	// Human-readable reason for the reversal
 	Description string `json:"description"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
 	// Caller-supplied identifier for the reversal, used to deduplicate retries
 	Reference string `json:"reference"`
 }
@@ -29,6 +29,13 @@ func (v *V3ReversePaymentInitiationRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V3ReversePaymentInitiationRequest) GetV3Metadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.V3Metadata
 }
 
 func (v *V3ReversePaymentInitiationRequest) GetAmount() *big.Int {
@@ -50,13 +57,6 @@ func (v *V3ReversePaymentInitiationRequest) GetDescription() string {
 		return ""
 	}
 	return v.Description
-}
-
-func (v *V3ReversePaymentInitiationRequest) GetMetadata() map[string]string {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
 }
 
 func (v *V3ReversePaymentInitiationRequest) GetReference() string {

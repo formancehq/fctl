@@ -176,83 +176,97 @@ func (l *ListLedgerLogsRequest) GetStartDate() *time.Time {
 
 // ListLedgerLogsResponseBody - Logs retrieved successfully
 type ListLedgerLogsResponseBody struct {
-	Data []ledgerv3.SystemLog `json:"data"`
+	// Page token of a paged list. Clients normally pass back the `next` or
+	// `previous` value of a previous response verbatim; building one by hand
+	// is supported.
+	//
+	// A token is base64url (unpadded, RFC 4648 §5) of the JSON object
+	// `{"key": <string>, "back": <bool>}`. Both fields are omitted when empty,
+	// and unknown fields are rejected. `key` is a position in the endpoint's
+	// textual form:
+	//
+	//   - transactions: decimal transaction id
+	//   - logs: decimal ledger-local log id
+	//   - audit entries: decimal audit sequence
+	//   - accounts: address
+	//   - ledgers and numscripts: name
+	//   - signing keys: key id
+	//   - prepared queries: decimal id for TRANSACTIONS and LOGS targets,
+	//     address for ACCOUNTS
+	//   - index inspection: base64url of the encoded metadata value
+	//
+	// Both directions exclude the key and return rows in the requested order
+	// (`reverse` included):
+	//
+	//   - `{"key": K}` serves the rows strictly after K;
+	//   - `{"key": K, "back": true}` serves the page that ends strictly
+	//     before K;
+	//   - `{"back": true}` serves the last page;
+	//   - an absent or empty token, or `e30` (`{}`), serves the first page.
+	//
+	// On a forward page, `next` is set when a further row follows the page,
+	// and `previous` whenever the request carried a key. On a back page,
+	// `previous` is set when a further row precedes the page, and `next`
+	// whenever the request carried a key. A first page therefore has no
+	// `previous`, and the last page requested with `{"back": true}` has no
+	// `next`. A malformed token, or a key that is not a valid position for
+	// the endpoint, is rejected with 400 `INVALID_REQUEST`.
+	//
+	PageToken *string `json:"next,omitempty"`
+	// Page token of a paged list. Clients normally pass back the `next` or
+	// `previous` value of a previous response verbatim; building one by hand
+	// is supported.
+	//
+	// A token is base64url (unpadded, RFC 4648 §5) of the JSON object
+	// `{"key": <string>, "back": <bool>}`. Both fields are omitted when empty,
+	// and unknown fields are rejected. `key` is a position in the endpoint's
+	// textual form:
+	//
+	//   - transactions: decimal transaction id
+	//   - logs: decimal ledger-local log id
+	//   - audit entries: decimal audit sequence
+	//   - accounts: address
+	//   - ledgers and numscripts: name
+	//   - signing keys: key id
+	//   - prepared queries: decimal id for TRANSACTIONS and LOGS targets,
+	//     address for ACCOUNTS
+	//   - index inspection: base64url of the encoded metadata value
+	//
+	// Both directions exclude the key and return rows in the requested order
+	// (`reverse` included):
+	//
+	//   - `{"key": K}` serves the rows strictly after K;
+	//   - `{"key": K, "back": true}` serves the page that ends strictly
+	//     before K;
+	//   - `{"back": true}` serves the last page;
+	//   - an absent or empty token, or `e30` (`{}`), serves the first page.
+	//
+	// On a forward page, `next` is set when a further row follows the page,
+	// and `previous` whenever the request carried a key. On a back page,
+	// `previous` is set when a further row precedes the page, and `next`
+	// whenever the request carried a key. A first page therefore has no
+	// `previous`, and the last page requested with `{"back": true}` has no
+	// `next`. A malformed token, or a key that is not a valid position for
+	// the endpoint, is rejected with 400 `INVALID_REQUEST`.
+	//
+	PageToken1 *string              `json:"previous,omitempty"`
+	Data       []ledgerv3.SystemLog `json:"data"`
 	// True when a following page exists; set iff `next` is.
 	HasMore bool `json:"hasMore"`
-	// Page token of a paged list. Clients normally pass back the `next` or
-	// `previous` value of a previous response verbatim; building one by hand
-	// is supported.
-	//
-	// A token is base64url (unpadded, RFC 4648 §5) of the JSON object
-	// `{"key": <string>, "back": <bool>}`. Both fields are omitted when empty,
-	// and unknown fields are rejected. `key` is a position in the endpoint's
-	// textual form:
-	//
-	//   - transactions: decimal transaction id
-	//   - logs: decimal ledger-local log id
-	//   - audit entries: decimal audit sequence
-	//   - accounts: address
-	//   - ledgers and numscripts: name
-	//   - signing keys: key id
-	//   - prepared queries: decimal id for TRANSACTIONS and LOGS targets,
-	//     address for ACCOUNTS
-	//   - index inspection: base64url of the encoded metadata value
-	//
-	// Both directions exclude the key and return rows in the requested order
-	// (`reverse` included):
-	//
-	//   - `{"key": K}` serves the rows strictly after K;
-	//   - `{"key": K, "back": true}` serves the page that ends strictly
-	//     before K;
-	//   - `{"back": true}` serves the last page;
-	//   - an absent or empty token, or `e30` (`{}`), serves the first page.
-	//
-	// On a forward page, `next` is set when a further row follows the page,
-	// and `previous` whenever the request carried a key. On a back page,
-	// `previous` is set when a further row precedes the page, and `next`
-	// whenever the request carried a key. A first page therefore has no
-	// `previous`, and the last page requested with `{"back": true}` has no
-	// `next`. A malformed token, or a key that is not a valid position for
-	// the endpoint, is rejected with 400 `INVALID_REQUEST`.
-	//
-	Next *string `json:"next,omitempty"`
-	// Page token of a paged list. Clients normally pass back the `next` or
-	// `previous` value of a previous response verbatim; building one by hand
-	// is supported.
-	//
-	// A token is base64url (unpadded, RFC 4648 §5) of the JSON object
-	// `{"key": <string>, "back": <bool>}`. Both fields are omitted when empty,
-	// and unknown fields are rejected. `key` is a position in the endpoint's
-	// textual form:
-	//
-	//   - transactions: decimal transaction id
-	//   - logs: decimal ledger-local log id
-	//   - audit entries: decimal audit sequence
-	//   - accounts: address
-	//   - ledgers and numscripts: name
-	//   - signing keys: key id
-	//   - prepared queries: decimal id for TRANSACTIONS and LOGS targets,
-	//     address for ACCOUNTS
-	//   - index inspection: base64url of the encoded metadata value
-	//
-	// Both directions exclude the key and return rows in the requested order
-	// (`reverse` included):
-	//
-	//   - `{"key": K}` serves the rows strictly after K;
-	//   - `{"key": K, "back": true}` serves the page that ends strictly
-	//     before K;
-	//   - `{"back": true}` serves the last page;
-	//   - an absent or empty token, or `e30` (`{}`), serves the first page.
-	//
-	// On a forward page, `next` is set when a further row follows the page,
-	// and `previous` whenever the request carried a key. On a back page,
-	// `previous` is set when a further row precedes the page, and `next`
-	// whenever the request carried a key. A first page therefore has no
-	// `previous`, and the last page requested with `{"back": true}` has no
-	// `next`. A malformed token, or a key that is not a valid position for
-	// the endpoint, is rejected with 400 `INVALID_REQUEST`.
-	//
-	Previous *string `json:"previous,omitempty"`
+}
+
+func (l *ListLedgerLogsResponseBody) GetPageToken() *string {
+	if l == nil {
+		return nil
+	}
+	return l.PageToken
+}
+
+func (l *ListLedgerLogsResponseBody) GetPageToken1() *string {
+	if l == nil {
+		return nil
+	}
+	return l.PageToken1
 }
 
 func (l *ListLedgerLogsResponseBody) GetData() []ledgerv3.SystemLog {
@@ -267,20 +281,6 @@ func (l *ListLedgerLogsResponseBody) GetHasMore() bool {
 		return false
 	}
 	return l.HasMore
-}
-
-func (l *ListLedgerLogsResponseBody) GetNext() *string {
-	if l == nil {
-		return nil
-	}
-	return l.Next
-}
-
-func (l *ListLedgerLogsResponseBody) GetPrevious() *string {
-	if l == nil {
-		return nil
-	}
-	return l.Previous
 }
 
 type ListLedgerLogsResponse struct {

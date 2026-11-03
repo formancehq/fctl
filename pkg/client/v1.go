@@ -32,9 +32,7 @@ func newV1(rootSDK *Formance, sdkConfig config.SDKConfiguration, hooks *hooks.Ho
 }
 
 // CreateClient - Create client
-//
-// If set, this operation will use [Security.ClientID] from the global security.
-func (s *V1) CreateClient(ctx context.Context, request *auth.ClientOptions, opts ...operations.Option) (*operations.CreateClientResponse, error) {
+func (s *V1) CreateClient(ctx context.Context, request *auth.ClientOptions1, opts ...operations.Option) (*operations.CreateClientResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -93,7 +91,7 @@ func (s *V1) CreateClient(ctx context.Context, request *auth.ClientOptions, opts
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -177,7 +175,7 @@ func (s *V1) CreateClient(ctx context.Context, request *auth.ClientOptions, opts
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"201"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -233,8 +231,6 @@ func (s *V1) CreateClient(ctx context.Context, request *auth.ClientOptions, opts
 }
 
 // CreateSecret - Add a secret to a client
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V1) CreateSecret(ctx context.Context, request operations.CreateSecretRequest, opts ...operations.Option) (*operations.CreateSecretResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -294,7 +290,7 @@ func (s *V1) CreateSecret(ctx context.Context, request operations.CreateSecretRe
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -378,7 +374,7 @@ func (s *V1) CreateSecret(ctx context.Context, request operations.CreateSecretRe
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -434,8 +430,6 @@ func (s *V1) CreateSecret(ctx context.Context, request operations.CreateSecretRe
 }
 
 // DeleteClient - Delete client
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V1) DeleteClient(ctx context.Context, request operations.DeleteClientRequest, opts ...operations.Option) (*operations.DeleteClientResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -488,7 +482,7 @@ func (s *V1) DeleteClient(ctx context.Context, request operations.DeleteClientRe
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -572,7 +566,7 @@ func (s *V1) DeleteClient(ctx context.Context, request operations.DeleteClientRe
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -609,8 +603,6 @@ func (s *V1) DeleteClient(ctx context.Context, request operations.DeleteClientRe
 }
 
 // DeleteSecret - Delete a secret from a client
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V1) DeleteSecret(ctx context.Context, request operations.DeleteSecretRequest, opts ...operations.Option) (*operations.DeleteSecretResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -663,7 +655,7 @@ func (s *V1) DeleteSecret(ctx context.Context, request operations.DeleteSecretRe
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -747,7 +739,7 @@ func (s *V1) DeleteSecret(ctx context.Context, request operations.DeleteSecretRe
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -784,8 +776,6 @@ func (s *V1) DeleteSecret(ctx context.Context, request operations.DeleteSecretRe
 }
 
 // GetOIDCWellKnowns - Retrieve OpenID connect well-knowns.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V1) GetOIDCWellKnowns(ctx context.Context, opts ...operations.Option) (*operations.GetOIDCWellKnownsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -838,7 +828,7 @@ func (s *V1) GetOIDCWellKnowns(ctx context.Context, opts ...operations.Option) (
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -922,7 +912,7 @@ func (s *V1) GetOIDCWellKnowns(ctx context.Context, opts ...operations.Option) (
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -959,8 +949,6 @@ func (s *V1) GetOIDCWellKnowns(ctx context.Context, opts ...operations.Option) (
 }
 
 // GetServerInfoAuth - Get server info
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V1) GetServerInfoAuth(ctx context.Context, opts ...operations.Option) (*operations.GetServerInfoAuthResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1013,7 +1001,7 @@ func (s *V1) GetServerInfoAuth(ctx context.Context, opts ...operations.Option) (
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1097,7 +1085,7 @@ func (s *V1) GetServerInfoAuth(ctx context.Context, opts ...operations.Option) (
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1153,8 +1141,6 @@ func (s *V1) GetServerInfoAuth(ctx context.Context, opts ...operations.Option) (
 }
 
 // ListClients - List clients
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V1) ListClients(ctx context.Context, opts ...operations.Option) (*operations.ListClientsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1207,7 +1193,7 @@ func (s *V1) ListClients(ctx context.Context, opts ...operations.Option) (*opera
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1291,7 +1277,7 @@ func (s *V1) ListClients(ctx context.Context, opts ...operations.Option) (*opera
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1348,8 +1334,6 @@ func (s *V1) ListClients(ctx context.Context, opts ...operations.Option) (*opera
 
 // ListUsers - List users
 // List users
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V1) ListUsers(ctx context.Context, opts ...operations.Option) (*operations.ListUsersResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1402,7 +1386,7 @@ func (s *V1) ListUsers(ctx context.Context, opts ...operations.Option) (*operati
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1486,7 +1470,7 @@ func (s *V1) ListUsers(ctx context.Context, opts ...operations.Option) (*operati
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1542,8 +1526,6 @@ func (s *V1) ListUsers(ctx context.Context, opts ...operations.Option) (*operati
 }
 
 // ReadClient - Read client
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V1) ReadClient(ctx context.Context, request operations.ReadClientRequest, opts ...operations.Option) (*operations.ReadClientResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1596,7 +1578,7 @@ func (s *V1) ReadClient(ctx context.Context, request operations.ReadClientReques
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1680,7 +1662,7 @@ func (s *V1) ReadClient(ctx context.Context, request operations.ReadClientReques
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1737,8 +1719,6 @@ func (s *V1) ReadClient(ctx context.Context, request operations.ReadClientReques
 
 // ReadUser - Read user
 // Read user
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V1) ReadUser(ctx context.Context, request operations.ReadUserRequest, opts ...operations.Option) (*operations.ReadUserResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1791,7 +1771,7 @@ func (s *V1) ReadUser(ctx context.Context, request operations.ReadUserRequest, o
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1875,7 +1855,7 @@ func (s *V1) ReadUser(ctx context.Context, request operations.ReadUserRequest, o
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1931,8 +1911,6 @@ func (s *V1) ReadUser(ctx context.Context, request operations.ReadUserRequest, o
 }
 
 // UpdateClient - Update client
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *V1) UpdateClient(ctx context.Context, request operations.UpdateClientRequest, opts ...operations.Option) (*operations.UpdateClientResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1992,7 +1970,7 @@ func (s *V1) UpdateClient(ctx context.Context, request operations.UpdateClientRe
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -2076,7 +2054,7 @@ func (s *V1) UpdateClient(ctx context.Context, request operations.UpdateClientRe
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err

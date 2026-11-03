@@ -101,7 +101,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Cursor = ToV3BankAccountCursor(&response.BankAccountsCursor.Cursor)
+	c.store.Cursor = ToV3BankAccountCursor(&response.BankAccountsCursor.CursorBase)
 
 	return c, nil
 }
@@ -127,7 +127,7 @@ func (c *ListController) v3list(cmd *cobra.Command, stackClient *formance.Forman
 	return c, nil
 }
 
-func ToV3BankAccountCursor(c *payments.BankAccountsCursorCursor) *payments.V3BankAccountsCursorResponseCursor {
+func ToV3BankAccountCursor(c *payments.BankAccountsCursorCursorBase) *payments.V3BankAccountsCursorResponseCursor {
 	cursor := &payments.V3BankAccountsCursorResponseCursor{
 		Data:     make([]payments.V3BankAccount, 0, len(c.Data)),
 		HasMore:  c.HasMore,

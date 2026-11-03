@@ -4,14 +4,14 @@ package orchestration
 
 type V2TestTriggerResponse struct {
 	// Result of evaluating a trigger against a sample event, without running the workflow
-	Data V2TriggerTest `json:"data"`
+	V2TriggerTest V2TriggerTest `json:"data"`
 }
 
-func (v *V2TestTriggerResponse) GetData() V2TriggerTest {
+func (v *V2TestTriggerResponse) GetV2TriggerTest() V2TriggerTest {
 	if v == nil {
 		return V2TriggerTest{}
 	}
-	return v.Data
+	return v.V2TriggerTest
 }
 
 // #region class-body-v2testtriggerresponse

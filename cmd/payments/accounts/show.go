@@ -68,7 +68,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Account = &response.AccountResponse.Data
+	c.store.Account = &response.AccountResponse.Account
 
 	return c, nil
 }
@@ -83,7 +83,7 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 	tableData = append(tableData, []string{pterm.LightCyan("DefaultAsset"), c.store.Account.DefaultAsset})
 	tableData = append(tableData, []string{pterm.LightCyan("DefaultCurrency"), c.store.Account.DefaultCurrency})
 	tableData = append(tableData, []string{pterm.LightCyan("Reference"), c.store.Account.Reference})
-	tableData = append(tableData, []string{pterm.LightCyan("Type"), string(c.store.Account.Type)})
+	tableData = append(tableData, []string{pterm.LightCyan("Type"), string(c.store.Account.AccountType)})
 
 	if err := pterm.DefaultTable.
 		WithWriter(cmd.OutOrStdout()).
@@ -92,5 +92,5 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return fctl.PrintMetadata(cmd.OutOrStdout(), c.store.Account.Metadata)
+	return fctl.PrintMetadata(cmd.OutOrStdout(), c.store.Account.AccountMetadata)
 }

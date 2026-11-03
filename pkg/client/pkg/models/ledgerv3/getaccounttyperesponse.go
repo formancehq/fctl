@@ -3,12 +3,12 @@
 package ledgerv3
 
 type GetAccountTypeResponse struct {
-	Data AccountTypeInfo `json:"data"`
+	AccountTypeInfo AccountTypeInfo `json:"data"`
 }
 
-func (g *GetAccountTypeResponse) GetData() AccountTypeInfo {
+func (g *GetAccountTypeResponse) GetAccountTypeInfo() AccountTypeInfo {
 	if g == nil {
 		return AccountTypeInfo{}
 	}
-	return g.Data
+	return g.AccountTypeInfo
 }

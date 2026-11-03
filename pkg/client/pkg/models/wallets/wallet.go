@@ -9,14 +9,14 @@ import (
 
 // Balances - The wallet's main balance, keyed by asset
 type Balances struct {
-	Main AssetHolder `json:"main"`
+	AssetHolder AssetHolder `json:"main"`
 }
 
-func (b *Balances) GetMain() AssetHolder {
+func (b *Balances) GetAssetHolder() AssetHolder {
 	if b == nil {
 		return AssetHolder{}
 	}
-	return b.Main
+	return b.AssetHolder
 }
 
 // Wallet - A wallet backed by a set of ledger accounts

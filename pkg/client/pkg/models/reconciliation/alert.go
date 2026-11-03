@@ -50,6 +50,15 @@ func (e *Status) UnmarshalJSON(data []byte) error {
 type Alert struct {
 	// Record of who acknowledged an alert and when
 	Ack *Ack `json:"ack,omitempty"`
+	// Record of how an alert was resolved and by whom
+	Resolution *Resolution `json:"resolution,omitempty"`
+	// How serious an alert is, used to route and prioritise notifications
+	Severity Severity `json:"severity"`
+	// A time-boxed, operator-initiated mute of an alert's notifications. While
+	// `until` is in the future the alert keeps failing and keeps counting
+	// against period-green — only its notifications are suppressed.
+	//
+	Snooze *Snooze `json:"snooze,omitempty"`
 	// When the alert was created
 	CreatedAt time.Time `json:"createdAt"`
 	// Data captured from the failing evaluation, explaining what broke
@@ -70,17 +79,8 @@ type Alert struct {
 	OccurrenceCount int64 `json:"occurrenceCount"`
 	// Reconciliation period this alert is scoped to ('continuous' for live-monitoring rules).
 	PeriodID string `json:"periodID"`
-	// Record of how an alert was resolved and by whom
-	Resolution *Resolution `json:"resolution,omitempty"`
 	// Identifier of the rule that raised the alert
 	RuleID string `json:"ruleID"`
-	// How serious an alert is, used to route and prioritise notifications
-	Severity Severity `json:"severity"`
-	// A time-boxed, operator-initiated mute of an alert's notifications. While
-	// `until` is in the future the alert keeps failing and keeps counting
-	// against period-green — only its notifications are suppressed.
-	//
-	Snooze *Snooze `json:"snooze,omitempty"`
 	// Where the alert stands in its open, acknowledged, resolved lifecycle
 	Status Status `json:"status"`
 	// When the alert was last modified
@@ -103,6 +103,27 @@ func (a *Alert) GetAck() *Ack {
 		return nil
 	}
 	return a.Ack
+}
+
+func (a *Alert) GetResolution() *Resolution {
+	if a == nil {
+		return nil
+	}
+	return a.Resolution
+}
+
+func (a *Alert) GetSeverity() Severity {
+	if a == nil {
+		return Severity("")
+	}
+	return a.Severity
+}
+
+func (a *Alert) GetSnooze() *Snooze {
+	if a == nil {
+		return nil
+	}
+	return a.Snooze
 }
 
 func (a *Alert) GetCreatedAt() time.Time {
@@ -175,32 +196,11 @@ func (a *Alert) GetPeriodID() string {
 	return a.PeriodID
 }
 
-func (a *Alert) GetResolution() *Resolution {
-	if a == nil {
-		return nil
-	}
-	return a.Resolution
-}
-
 func (a *Alert) GetRuleID() string {
 	if a == nil {
 		return ""
 	}
 	return a.RuleID
-}
-
-func (a *Alert) GetSeverity() Severity {
-	if a == nil {
-		return Severity("")
-	}
-	return a.Severity
-}
-
-func (a *Alert) GetSnooze() *Snooze {
-	if a == nil {
-		return nil
-	}
-	return a.Snooze
 }
 
 func (a *Alert) GetStatus() Status {

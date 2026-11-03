@@ -10,7 +10,7 @@ import (
 // V2CreditWalletRequest - A credit to apply to a wallet
 type V2CreditWalletRequest struct {
 	// An amount together with the asset it is denominated in
-	Amount V2Monetary `json:"amount"`
+	V2Monetary V2Monetary `json:"amount"`
 	// The balance to credit
 	Balance *string `json:"balance,omitempty"`
 	// Metadata associated with the wallet.
@@ -34,11 +34,11 @@ func (v *V2CreditWalletRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2CreditWalletRequest) GetAmount() V2Monetary {
+func (v *V2CreditWalletRequest) GetV2Monetary() V2Monetary {
 	if v == nil {
 		return V2Monetary{}
 	}
-	return v.Amount
+	return v.V2Monetary
 }
 
 func (v *V2CreditWalletRequest) GetBalance() *string {

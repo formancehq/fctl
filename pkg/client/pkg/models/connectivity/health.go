@@ -3,16 +3,16 @@
 package connectivity
 
 type Health struct {
-	Status HealthStatus `json:"status"`
+	HealthStatus HealthStatus `json:"status"`
 	// Semantic version of the API binary
 	Version *string `json:"version,omitempty"`
 }
 
-func (h *Health) GetStatus() HealthStatus {
+func (h *Health) GetHealthStatus() HealthStatus {
 	if h == nil {
 		return HealthStatus("")
 	}
-	return h.Status
+	return h.HealthStatus
 }
 
 func (h *Health) GetVersion() *string {

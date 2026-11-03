@@ -2,8 +2,8 @@
 
 package payments
 
-// TransferInitiationsCursorCursor - Paginated cursor wrapping the list of transfer initiations
-type TransferInitiationsCursorCursor struct {
+// TransferInitiationsCursorCursorBase - Paginated cursor wrapping the list of transfer initiations
+type TransferInitiationsCursorCursorBase struct {
 	Data []TransferInitiation `json:"data"`
 	// Whether further pages are available
 	HasMore bool `json:"hasMore"`
@@ -15,35 +15,35 @@ type TransferInitiationsCursorCursor struct {
 	Previous *string `json:"previous,omitempty"`
 }
 
-func (t *TransferInitiationsCursorCursor) GetData() []TransferInitiation {
+func (t *TransferInitiationsCursorCursorBase) GetData() []TransferInitiation {
 	if t == nil {
 		return []TransferInitiation{}
 	}
 	return t.Data
 }
 
-func (t *TransferInitiationsCursorCursor) GetHasMore() bool {
+func (t *TransferInitiationsCursorCursorBase) GetHasMore() bool {
 	if t == nil {
 		return false
 	}
 	return t.HasMore
 }
 
-func (t *TransferInitiationsCursorCursor) GetNext() *string {
+func (t *TransferInitiationsCursorCursorBase) GetNext() *string {
 	if t == nil {
 		return nil
 	}
 	return t.Next
 }
 
-func (t *TransferInitiationsCursorCursor) GetPageSize() int64 {
+func (t *TransferInitiationsCursorCursorBase) GetPageSize() int64 {
 	if t == nil {
 		return 0
 	}
 	return t.PageSize
 }
 
-func (t *TransferInitiationsCursorCursor) GetPrevious() *string {
+func (t *TransferInitiationsCursorCursorBase) GetPrevious() *string {
 	if t == nil {
 		return nil
 	}
@@ -53,12 +53,12 @@ func (t *TransferInitiationsCursorCursor) GetPrevious() *string {
 // TransferInitiationsCursor - OK
 type TransferInitiationsCursor struct {
 	// Paginated cursor wrapping the list of transfer initiations
-	Cursor TransferInitiationsCursorCursor `json:"cursor"`
+	CursorBase TransferInitiationsCursorCursorBase `json:"cursor"`
 }
 
-func (t *TransferInitiationsCursor) GetCursor() TransferInitiationsCursorCursor {
+func (t *TransferInitiationsCursor) GetCursorBase() TransferInitiationsCursorCursorBase {
 	if t == nil {
-		return TransferInitiationsCursorCursor{}
+		return TransferInitiationsCursorCursorBase{}
 	}
-	return t.Cursor
+	return t.CursorBase
 }

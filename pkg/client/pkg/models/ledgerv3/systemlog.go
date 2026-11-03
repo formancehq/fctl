@@ -7,7 +7,6 @@ import (
 )
 
 type Apply struct {
-	LedgerName *string `json:"ledgerName,omitempty"`
 	// Ledger-local log. The type selects the direct object in data, following
 	// the v2 type/data structure; data has no variant-name wrapper. New v3
 	// operations have distinct type values. Metadata remains typed, volumes
@@ -15,7 +14,15 @@ type Apply struct {
 	// the reversing transaction rather than the full original transaction.
 	// This JSON projection is not an audit replay or backup format.
 	//
-	Log *LedgerLog `json:"log,omitempty"`
+	LedgerLog  *LedgerLog `json:"log,omitempty"`
+	LedgerName *string    `json:"ledgerName,omitempty"`
+}
+
+func (a *Apply) GetLedgerLog() *LedgerLog {
+	if a == nil {
+		return nil
+	}
+	return a.LedgerLog
 }
 
 func (a *Apply) GetLedgerName() *string {
@@ -23,13 +30,6 @@ func (a *Apply) GetLedgerName() *string {
 		return nil
 	}
 	return a.LedgerName
-}
-
-func (a *Apply) GetLog() *LedgerLog {
-	if a == nil {
-		return nil
-	}
-	return a.Log
 }
 
 // Payload - Named system payload variants are preserved as supplied, including

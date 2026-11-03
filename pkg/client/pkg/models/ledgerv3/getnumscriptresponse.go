@@ -3,12 +3,12 @@
 package ledgerv3
 
 type GetNumscriptResponse struct {
-	Data NumscriptInfo `json:"data"`
+	NumscriptInfo NumscriptInfo `json:"data"`
 }
 
-func (g *GetNumscriptResponse) GetData() NumscriptInfo {
+func (g *GetNumscriptResponse) GetNumscriptInfo() NumscriptInfo {
 	if g == nil {
 		return NumscriptInfo{}
 	}
-	return g.Data
+	return g.NumscriptInfo
 }

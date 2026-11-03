@@ -9,7 +9,7 @@ import (
 )
 
 func DisplayWiseConfig(cmd *cobra.Command, connectorConfig *payments.ConnectorConfigResponse) error {
-	config := connectorConfig.Data.WiseConfig
+	config := connectorConfig.ConnectorConfig.WiseConfig
 
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})
@@ -31,7 +31,7 @@ func DisplayWiseConfig(cmd *cobra.Command, connectorConfig *payments.ConnectorCo
 }
 
 func DisplayWiseConfigV3(cmd *cobra.Command, v3Config *payments.V3GetConnectorConfigResponse) error {
-	config := v3Config.Data.V3WiseConfig
+	config := v3Config.V3ConnectorConfig.V3WiseConfig
 
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})

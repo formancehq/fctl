@@ -9,6 +9,8 @@ import (
 
 // BankAccount - A bank account registered with Formance and forwardable to connectors
 type BankAccount struct {
+	// Arbitrary key/value pairs attached to the bank account
+	BankAccountMetadata map[string]string `json:"metadata,omitempty"`
 	// Identifier of the provider-side account created by forwarding
 	AccountID *string `json:"accountID,omitempty"`
 	// Domestic account number, when the account is identified that way
@@ -23,8 +25,6 @@ type BankAccount struct {
 	Iban *string `json:"iban,omitempty"`
 	// Unique identifier of the bank account within Formance
 	ID string `json:"id"`
-	// Arbitrary key/value pairs attached to the bank account
-	Metadata map[string]string `json:"metadata,omitempty"`
 	// Human-readable name of the bank account
 	Name string `json:"name"`
 	// Name of the payment provider behind the connector
@@ -44,6 +44,13 @@ func (b *BankAccount) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (b *BankAccount) GetBankAccountMetadata() map[string]string {
+	if b == nil {
+		return nil
+	}
+	return b.BankAccountMetadata
 }
 
 func (b *BankAccount) GetAccountID() *string {
@@ -93,13 +100,6 @@ func (b *BankAccount) GetID() string {
 		return ""
 	}
 	return b.ID
-}
-
-func (b *BankAccount) GetMetadata() map[string]string {
-	if b == nil {
-		return nil
-	}
-	return b.Metadata
 }
 
 func (b *BankAccount) GetName() string {

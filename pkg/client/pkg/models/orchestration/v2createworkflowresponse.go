@@ -4,14 +4,14 @@ package orchestration
 
 type V2CreateWorkflowResponse struct {
 	// A workflow definition and the stages it runs
-	Data V2Workflow `json:"data"`
+	V2Workflow V2Workflow `json:"data"`
 }
 
-func (v *V2CreateWorkflowResponse) GetData() V2Workflow {
+func (v *V2CreateWorkflowResponse) GetV2Workflow() V2Workflow {
 	if v == nil {
 		return V2Workflow{}
 	}
-	return v.Data
+	return v.V2Workflow
 }
 
 // #region class-body-v2createworkflowresponse

@@ -4,12 +4,12 @@ package ledger
 
 type TransactionResponse struct {
 	// A transaction recorded in the ledger, carrying its postings and metadata
-	Data Transaction `json:"data"`
+	Transaction Transaction `json:"data"`
 }
 
-func (t *TransactionResponse) GetData() Transaction {
+func (t *TransactionResponse) GetTransaction() Transaction {
 	if t == nil {
 		return Transaction{}
 	}
-	return t.Data
+	return t.Transaction
 }

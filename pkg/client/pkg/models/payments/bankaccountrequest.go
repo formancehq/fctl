@@ -3,6 +3,8 @@
 package payments
 
 type BankAccountRequest struct {
+	// Arbitrary key/value pairs attached to the bank account
+	BankAccountMetadata map[string]string `json:"metadata,omitempty"`
 	// Domestic account number. Supply this or an IBAN
 	AccountNumber *string `json:"accountNumber,omitempty"`
 	// Connector to forward the bank account to on creation
@@ -11,12 +13,17 @@ type BankAccountRequest struct {
 	Country string `json:"country"`
 	// International bank account number. Supply this or an account number
 	Iban *string `json:"iban,omitempty"`
-	// Arbitrary key/value pairs attached to the bank account
-	Metadata map[string]string `json:"metadata,omitempty"`
 	// Human-readable name for the bank account
 	Name string `json:"name"`
 	// SWIFT/BIC code identifying the bank
 	SwiftBicCode *string `json:"swiftBicCode,omitempty"`
+}
+
+func (b *BankAccountRequest) GetBankAccountMetadata() map[string]string {
+	if b == nil {
+		return nil
+	}
+	return b.BankAccountMetadata
 }
 
 func (b *BankAccountRequest) GetAccountNumber() *string {
@@ -45,13 +52,6 @@ func (b *BankAccountRequest) GetIban() *string {
 		return nil
 	}
 	return b.Iban
-}
-
-func (b *BankAccountRequest) GetMetadata() map[string]string {
-	if b == nil {
-		return nil
-	}
-	return b.Metadata
 }
 
 func (b *BankAccountRequest) GetName() string {

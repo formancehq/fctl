@@ -13,7 +13,7 @@ type Connector struct {
 	// `logoSvg` is the light-theme mark; render it when `logoSvgDark` is
 	// absent (documented fallback).
 	//
-	Branding *ConnectorBranding `json:"branding,omitempty"`
+	ConnectorBranding *ConnectorBranding `json:"branding,omitempty"`
 	// Catalog (audience) this connector was discovered from; empty for hand-authored connectors
 	Catalog     *string    `json:"catalog,omitempty"`
 	CreatedAt   *time.Time `json:"createdAt,omitempty"`
@@ -43,11 +43,11 @@ func (c *Connector) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (c *Connector) GetBranding() *ConnectorBranding {
+func (c *Connector) GetConnectorBranding() *ConnectorBranding {
 	if c == nil {
 		return nil
 	}
-	return c.Branding
+	return c.ConnectorBranding
 }
 
 func (c *Connector) GetCatalog() *string {

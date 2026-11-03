@@ -5,16 +5,16 @@ package orchestration
 // ActivityDebitWallet - Arguments for the activity that debits a wallet
 type ActivityDebitWallet struct {
 	// A debit to apply to a wallet
-	Data *DebitWalletRequest `json:"data,omitempty"`
+	DebitWalletRequest *DebitWalletRequest `json:"data,omitempty"`
 	// Identifier of the wallet to debit
 	ID *string `json:"id,omitempty"`
 }
 
-func (a *ActivityDebitWallet) GetData() *DebitWalletRequest {
+func (a *ActivityDebitWallet) GetDebitWalletRequest() *DebitWalletRequest {
 	if a == nil {
 		return nil
 	}
-	return a.Data
+	return a.DebitWalletRequest
 }
 
 func (a *ActivityDebitWallet) GetID() *string {

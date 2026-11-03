@@ -9,11 +9,11 @@ import (
 )
 
 type Two struct {
-	BatchSize    *int64                   `json:"batchSize,omitempty"`
-	HTTP         *HTTPMirrorSourceRead    `json:"http,omitempty"`
-	LedgerName   string                   `json:"ledgerName"`
-	Postgres     PostgresMirrorSourceRead `json:"postgres"`
-	RewriteRules []MirrorRewriteRuleRead  `json:"rewriteRules,omitempty"`
+	HTTPMirrorSourceRead     *HTTPMirrorSourceRead    `json:"http,omitempty"`
+	PostgresMirrorSourceRead PostgresMirrorSourceRead `json:"postgres"`
+	BatchSize                *int64                   `json:"batchSize,omitempty"`
+	LedgerName               string                   `json:"ledgerName"`
+	RewriteRules             []MirrorRewriteRuleRead  `json:"rewriteRules,omitempty"`
 }
 
 func (t Two) MarshalJSON() ([]byte, error) {
@@ -21,10 +21,24 @@ func (t Two) MarshalJSON() ([]byte, error) {
 }
 
 func (t *Two) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &t, "", false, []string{"ledgerName", "postgres"}); err != nil {
+	if err := utils.UnmarshalJSON(data, &t, "", false, []string{"postgres", "ledgerName"}); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (t *Two) GetHTTPMirrorSourceRead() *HTTPMirrorSourceRead {
+	if t == nil {
+		return nil
+	}
+	return t.HTTPMirrorSourceRead
+}
+
+func (t *Two) GetPostgresMirrorSourceRead() PostgresMirrorSourceRead {
+	if t == nil {
+		return PostgresMirrorSourceRead{}
+	}
+	return t.PostgresMirrorSourceRead
 }
 
 func (t *Two) GetBatchSize() *int64 {
@@ -34,25 +48,11 @@ func (t *Two) GetBatchSize() *int64 {
 	return t.BatchSize
 }
 
-func (t *Two) GetHTTP() *HTTPMirrorSourceRead {
-	if t == nil {
-		return nil
-	}
-	return t.HTTP
-}
-
 func (t *Two) GetLedgerName() string {
 	if t == nil {
 		return ""
 	}
 	return t.LedgerName
-}
-
-func (t *Two) GetPostgres() PostgresMirrorSourceRead {
-	if t == nil {
-		return PostgresMirrorSourceRead{}
-	}
-	return t.Postgres
 }
 
 func (t *Two) GetRewriteRules() []MirrorRewriteRuleRead {
@@ -63,11 +63,11 @@ func (t *Two) GetRewriteRules() []MirrorRewriteRuleRead {
 }
 
 type One struct {
-	BatchSize    *int64                    `json:"batchSize,omitempty"`
-	HTTP         HTTPMirrorSourceRead      `json:"http"`
-	LedgerName   string                    `json:"ledgerName"`
-	Postgres     *PostgresMirrorSourceRead `json:"postgres,omitempty"`
-	RewriteRules []MirrorRewriteRuleRead   `json:"rewriteRules,omitempty"`
+	HTTPMirrorSourceRead     HTTPMirrorSourceRead      `json:"http"`
+	PostgresMirrorSourceRead *PostgresMirrorSourceRead `json:"postgres,omitempty"`
+	BatchSize                *int64                    `json:"batchSize,omitempty"`
+	LedgerName               string                    `json:"ledgerName"`
+	RewriteRules             []MirrorRewriteRuleRead   `json:"rewriteRules,omitempty"`
 }
 
 func (o One) MarshalJSON() ([]byte, error) {
@@ -81,6 +81,20 @@ func (o *One) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (o *One) GetHTTPMirrorSourceRead() HTTPMirrorSourceRead {
+	if o == nil {
+		return HTTPMirrorSourceRead{}
+	}
+	return o.HTTPMirrorSourceRead
+}
+
+func (o *One) GetPostgresMirrorSourceRead() *PostgresMirrorSourceRead {
+	if o == nil {
+		return nil
+	}
+	return o.PostgresMirrorSourceRead
+}
+
 func (o *One) GetBatchSize() *int64 {
 	if o == nil {
 		return nil
@@ -88,25 +102,11 @@ func (o *One) GetBatchSize() *int64 {
 	return o.BatchSize
 }
 
-func (o *One) GetHTTP() HTTPMirrorSourceRead {
-	if o == nil {
-		return HTTPMirrorSourceRead{}
-	}
-	return o.HTTP
-}
-
 func (o *One) GetLedgerName() string {
 	if o == nil {
 		return ""
 	}
 	return o.LedgerName
-}
-
-func (o *One) GetPostgres() *PostgresMirrorSourceRead {
-	if o == nil {
-		return nil
-	}
-	return o.Postgres
 }
 
 func (o *One) GetRewriteRules() []MirrorRewriteRuleRead {

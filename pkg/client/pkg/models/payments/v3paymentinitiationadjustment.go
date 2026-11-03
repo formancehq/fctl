@@ -9,6 +9,10 @@ import (
 )
 
 type V3PaymentInitiationAdjustment struct {
+	// Arbitrary key/value pairs attached to the resource
+	V3Metadata map[string]string `json:"metadata,omitempty"`
+	// Where a payment initiation stands in its lifecycle
+	V3PaymentInitiationStatusEnum V3PaymentInitiationStatusEnum `json:"status"`
 	// Amount carried by this adjustment
 	Amount *big.Int `json:"amount,omitempty"`
 	// Asset the adjustment is denominated in
@@ -19,10 +23,6 @@ type V3PaymentInitiationAdjustment struct {
 	Error *string `json:"error,omitempty"`
 	// Unique identifier of the adjustment
 	ID string `json:"id"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
-	// Where a payment initiation stands in its lifecycle
-	Status V3PaymentInitiationStatusEnum `json:"status"`
 }
 
 func (v V3PaymentInitiationAdjustment) MarshalJSON() ([]byte, error) {
@@ -34,6 +34,20 @@ func (v *V3PaymentInitiationAdjustment) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V3PaymentInitiationAdjustment) GetV3Metadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.V3Metadata
+}
+
+func (v *V3PaymentInitiationAdjustment) GetV3PaymentInitiationStatusEnum() V3PaymentInitiationStatusEnum {
+	if v == nil {
+		return V3PaymentInitiationStatusEnum("")
+	}
+	return v.V3PaymentInitiationStatusEnum
 }
 
 func (v *V3PaymentInitiationAdjustment) GetAmount() *big.Int {
@@ -69,20 +83,6 @@ func (v *V3PaymentInitiationAdjustment) GetID() string {
 		return ""
 	}
 	return v.ID
-}
-
-func (v *V3PaymentInitiationAdjustment) GetMetadata() map[string]string {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
-}
-
-func (v *V3PaymentInitiationAdjustment) GetStatus() V3PaymentInitiationStatusEnum {
-	if v == nil {
-		return V3PaymentInitiationStatusEnum("")
-	}
-	return v.Status
 }
 
 // #region class-body-v3paymentinitiationadjustment

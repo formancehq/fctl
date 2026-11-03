@@ -9,7 +9,7 @@ import (
 )
 
 func DisplayModulrConfig(cmd *cobra.Command, connectorConfig *payments.ConnectorConfigResponse) error {
-	config := connectorConfig.Data.ModulrConfig
+	config := connectorConfig.ConnectorConfig.ModulrConfig
 
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})
@@ -38,7 +38,7 @@ func DisplayModulrConfig(cmd *cobra.Command, connectorConfig *payments.Connector
 }
 
 func DisplayModulrConfigV3(cmd *cobra.Command, v3Config *payments.V3GetConnectorConfigResponse) error {
-	config := v3Config.Data.V3ModulrConfig
+	config := v3Config.V3ConnectorConfig.V3ModulrConfig
 
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})

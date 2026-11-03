@@ -1,6 +1,6 @@
 module github.com/formancehq/fctl/v3/pkg/client
 
-go 1.25.10
+go 1.22
 
 require (
 	github.com/stretchr/testify v1.12.1

@@ -85,7 +85,7 @@ func (c *LatestBalancesController) CallV1(context context.Context, client *forma
 	if response.StatusCode >= 300 {
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
-	c.store.Balances = &payments.PoolBalances{Balances: response.PoolBalancesLatestResponse.Data}
+	c.store.Balances = &payments.PoolBalances{Balances: response.PoolBalancesLatestResponse.PoolBalancesLatest}
 	return c, nil
 }
 
@@ -102,7 +102,7 @@ func (c *LatestBalancesController) CallV3(context context.Context, client *forma
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	v3Balances := &response.V3PoolBalancesResponse.Data
+	v3Balances := &response.V3PoolBalancesResponse.V3PoolBalances
 
 	poolBalances := make([]payments.PoolBalance, 0, len(*v3Balances))
 	for _, v3Balance := range *v3Balances {

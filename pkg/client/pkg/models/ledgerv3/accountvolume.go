@@ -3,11 +3,18 @@
 package ledgerv3
 
 type AccountVolume struct {
+	VolumesWithBalance VolumesWithBalance `json:"volumes"`
 	// Asset identifier (e.g. "USD/2")
 	Asset string `json:"asset"`
 	// Color of the bucket. Empty string is the uncolored bucket.
-	Color   string             `json:"color"`
-	Volumes VolumesWithBalance `json:"volumes"`
+	Color string `json:"color"`
+}
+
+func (a *AccountVolume) GetVolumesWithBalance() VolumesWithBalance {
+	if a == nil {
+		return VolumesWithBalance{}
+	}
+	return a.VolumesWithBalance
 }
 
 func (a *AccountVolume) GetAsset() string {
@@ -22,11 +29,4 @@ func (a *AccountVolume) GetColor() string {
 		return ""
 	}
 	return a.Color
-}
-
-func (a *AccountVolume) GetVolumes() VolumesWithBalance {
-	if a == nil {
-		return VolumesWithBalance{}
-	}
-	return a.Volumes
 }

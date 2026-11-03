@@ -8,40 +8,40 @@ type VolumesWithBalance struct {
 	// is enabled. The same rule applies to every response SignedBigInt value,
 	// including nested fields, regardless of business meaning.
 	//
-	Balance SignedMonetaryAmount `json:"balance"`
+	SignedMonetaryAmount SignedMonetaryAmount `json:"balance"`
 	// Arbitrary-precision unsigned BigUint value encoded as a JSON number by
 	// default, or a canonical decimal string when Formance-Bigint-As-String
 	// is enabled. The same rule applies to every response BigUint value,
 	// including nested fields, regardless of business meaning.
 	// JavaScript consumers should enable the header to avoid number rounding.
 	//
-	Input UnsignedMonetaryAmount `json:"input"`
+	UnsignedMonetaryAmount UnsignedMonetaryAmount `json:"input"`
 	// Arbitrary-precision unsigned BigUint value encoded as a JSON number by
 	// default, or a canonical decimal string when Formance-Bigint-As-String
 	// is enabled. The same rule applies to every response BigUint value,
 	// including nested fields, regardless of business meaning.
 	// JavaScript consumers should enable the header to avoid number rounding.
 	//
-	Output UnsignedMonetaryAmount `json:"output"`
+	UnsignedMonetaryAmount1 UnsignedMonetaryAmount `json:"output"`
 }
 
-func (v *VolumesWithBalance) GetBalance() SignedMonetaryAmount {
+func (v *VolumesWithBalance) GetSignedMonetaryAmount() SignedMonetaryAmount {
 	if v == nil {
 		return SignedMonetaryAmount{}
 	}
-	return v.Balance
+	return v.SignedMonetaryAmount
 }
 
-func (v *VolumesWithBalance) GetInput() UnsignedMonetaryAmount {
+func (v *VolumesWithBalance) GetUnsignedMonetaryAmount() UnsignedMonetaryAmount {
 	if v == nil {
 		return UnsignedMonetaryAmount{}
 	}
-	return v.Input
+	return v.UnsignedMonetaryAmount
 }
 
-func (v *VolumesWithBalance) GetOutput() UnsignedMonetaryAmount {
+func (v *VolumesWithBalance) GetUnsignedMonetaryAmount1() UnsignedMonetaryAmount {
 	if v == nil {
 		return UnsignedMonetaryAmount{}
 	}
-	return v.Output
+	return v.UnsignedMonetaryAmount1
 }

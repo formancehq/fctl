@@ -4,14 +4,14 @@ package orchestration
 
 type V2ReadTriggerResponse struct {
 	// A rule that starts a workflow when a matching event arrives
-	Data V2Trigger `json:"data"`
+	V2TriggerData V2TriggerData `json:"data"`
 }
 
-func (v *V2ReadTriggerResponse) GetData() V2Trigger {
+func (v *V2ReadTriggerResponse) GetV2TriggerData() V2TriggerData {
 	if v == nil {
-		return V2Trigger{}
+		return V2TriggerData{}
 	}
-	return v.Data
+	return v.V2TriggerData
 }
 
 // #region class-body-v2readtriggerresponse

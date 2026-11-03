@@ -13,7 +13,7 @@ type PostingRequest struct {
 	// numbers by default and strings with Formance-Bigint-As-String enabled,
 	// as do all response Uint256 values regardless of business meaning.
 	//
-	Amount PostingAmount `json:"amount"`
+	PostingAmount PostingAmount `json:"amount"`
 	// Asset identifier
 	Asset string `json:"asset"`
 	// Optional segregation key for "color of money". The empty string
@@ -40,11 +40,11 @@ func (p *PostingRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (p *PostingRequest) GetAmount() PostingAmount {
+func (p *PostingRequest) GetPostingAmount() PostingAmount {
 	if p == nil {
 		return PostingAmount{}
 	}
-	return p.Amount
+	return p.PostingAmount
 }
 
 func (p *PostingRequest) GetAsset() string {

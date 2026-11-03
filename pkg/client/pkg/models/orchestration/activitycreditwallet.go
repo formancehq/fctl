@@ -5,16 +5,16 @@ package orchestration
 // ActivityCreditWallet - Arguments for the activity that credits a wallet
 type ActivityCreditWallet struct {
 	// A credit to apply to a wallet
-	Data *CreditWalletRequest `json:"data,omitempty"`
+	CreditWalletRequest *CreditWalletRequest `json:"data,omitempty"`
 	// Identifier of the wallet to credit
 	ID *string `json:"id,omitempty"`
 }
 
-func (a *ActivityCreditWallet) GetData() *CreditWalletRequest {
+func (a *ActivityCreditWallet) GetCreditWalletRequest() *CreditWalletRequest {
 	if a == nil {
 		return nil
 	}
-	return a.Data
+	return a.CreditWalletRequest
 }
 
 func (a *ActivityCreditWallet) GetID() *string {

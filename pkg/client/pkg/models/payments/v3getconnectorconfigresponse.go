@@ -3,106 +3,106 @@
 package payments
 
 type V3GetConnectorConfigResponse struct {
-	Data V3ConnectorConfig `json:"data"`
+	V3ConnectorConfig V3ConnectorConfig `json:"data"`
 }
 
-func (v *V3GetConnectorConfigResponse) GetData() V3ConnectorConfig {
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfig() V3ConnectorConfig {
 	if v == nil {
 		return V3ConnectorConfig{}
 	}
-	return v.Data
+	return v.V3ConnectorConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataAdyen() *V3AdyenConfig {
-	return v.GetData().V3AdyenConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigAdyen() *V3AdyenConfig {
+	return v.GetV3ConnectorConfig().V3AdyenConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataAtlar() *V3AtlarConfig {
-	return v.GetData().V3AtlarConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigAtlar() *V3AtlarConfig {
+	return v.GetV3ConnectorConfig().V3AtlarConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataBankingbridge() *V3BankingbridgeConfig {
-	return v.GetData().V3BankingbridgeConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigBankingbridge() *V3BankingbridgeConfig {
+	return v.GetV3ConnectorConfig().V3BankingbridgeConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataBankingcircle() *V3BankingcircleConfig {
-	return v.GetData().V3BankingcircleConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigBankingcircle() *V3BankingcircleConfig {
+	return v.GetV3ConnectorConfig().V3BankingcircleConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataBitstamp() *V3BitstampConfig {
-	return v.GetData().V3BitstampConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigBitstamp() *V3BitstampConfig {
+	return v.GetV3ConnectorConfig().V3BitstampConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataCoinbaseprime() *V3CoinbaseprimeConfig {
-	return v.GetData().V3CoinbaseprimeConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigCoinbaseprime() *V3CoinbaseprimeConfig {
+	return v.GetV3ConnectorConfig().V3CoinbaseprimeConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataColumn() *V3ColumnConfig {
-	return v.GetData().V3ColumnConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigColumn() *V3ColumnConfig {
+	return v.GetV3ConnectorConfig().V3ColumnConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataCurrencycloud() *V3CurrencycloudConfig {
-	return v.GetData().V3CurrencycloudConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigCurrencycloud() *V3CurrencycloudConfig {
+	return v.GetV3ConnectorConfig().V3CurrencycloudConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataDummypay() *V3DummypayConfig {
-	return v.GetData().V3DummypayConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigDummypay() *V3DummypayConfig {
+	return v.GetV3ConnectorConfig().V3DummypayConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataFireblocks() *V3FireblocksConfig {
-	return v.GetData().V3FireblocksConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigFireblocks() *V3FireblocksConfig {
+	return v.GetV3ConnectorConfig().V3FireblocksConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataGeneric() *V3GenericConfig {
-	return v.GetData().V3GenericConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigGeneric() *V3GenericConfig {
+	return v.GetV3ConnectorConfig().V3GenericConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataIncrease() *V3IncreaseConfig {
-	return v.GetData().V3IncreaseConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigIncrease() *V3IncreaseConfig {
+	return v.GetV3ConnectorConfig().V3IncreaseConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataKrakenpro() *V3KrakenproConfig {
-	return v.GetData().V3KrakenproConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigKrakenpro() *V3KrakenproConfig {
+	return v.GetV3ConnectorConfig().V3KrakenproConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataMangopay() *V3MangopayConfig {
-	return v.GetData().V3MangopayConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigMangopay() *V3MangopayConfig {
+	return v.GetV3ConnectorConfig().V3MangopayConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataModulr() *V3ModulrConfig {
-	return v.GetData().V3ModulrConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigModulr() *V3ModulrConfig {
+	return v.GetV3ConnectorConfig().V3ModulrConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataMoneycorp() *V3MoneycorpConfig {
-	return v.GetData().V3MoneycorpConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigMoneycorp() *V3MoneycorpConfig {
+	return v.GetV3ConnectorConfig().V3MoneycorpConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataPlaid() *V3PlaidConfig {
-	return v.GetData().V3PlaidConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigPlaid() *V3PlaidConfig {
+	return v.GetV3ConnectorConfig().V3PlaidConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataPowens() *V3PowensConfig {
-	return v.GetData().V3PowensConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigPowens() *V3PowensConfig {
+	return v.GetV3ConnectorConfig().V3PowensConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataQonto() *V3QontoConfig {
-	return v.GetData().V3QontoConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigQonto() *V3QontoConfig {
+	return v.GetV3ConnectorConfig().V3QontoConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataRoutable() *V3RoutableConfig {
-	return v.GetData().V3RoutableConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigRoutable() *V3RoutableConfig {
+	return v.GetV3ConnectorConfig().V3RoutableConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataStripe() *V3StripeConfig {
-	return v.GetData().V3StripeConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigStripe() *V3StripeConfig {
+	return v.GetV3ConnectorConfig().V3StripeConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataTink() *V3TinkConfig {
-	return v.GetData().V3TinkConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigTink() *V3TinkConfig {
+	return v.GetV3ConnectorConfig().V3TinkConfig
 }
 
-func (v *V3GetConnectorConfigResponse) GetDataWise() *V3WiseConfig {
-	return v.GetData().V3WiseConfig
+func (v *V3GetConnectorConfigResponse) GetV3ConnectorConfigWise() *V3WiseConfig {
+	return v.GetV3ConnectorConfig().V3WiseConfig
 }
 
 // #region class-body-v3getconnectorconfigresponse

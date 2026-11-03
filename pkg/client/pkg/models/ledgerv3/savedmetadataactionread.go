@@ -7,13 +7,13 @@ import (
 )
 
 type SavedMetadataActionRead struct {
-	DeleteMetadata *DeleteMetadataAction `json:"deleteMetadata,omitempty"`
+	DeleteMetadataAction *DeleteMetadataAction `json:"deleteMetadata,omitempty"`
 	// Turns the entry into a fill-gap that preserves log-ID and tx-ID continuity.
-	Drop           *DropAction               `json:"drop,omitempty"`
-	RewriteAddress *RewriteAddressActionRead `json:"rewriteAddress,omitempty"`
+	DropAction               *DropAction               `json:"drop,omitempty"`
+	RewriteAddressActionRead *RewriteAddressActionRead `json:"rewriteAddress,omitempty"`
 	// `value` is a literal metadata string; `valueExpr` is a CEL expression typed against the current variant and evaluated at commit time (e.g. `log.reference`). Exactly one of the two should be set; if neither is set the value defaults to the empty string. Optional `type` coerces the produced string into a typed MetadataValue via the platform conversion matrix — one of "string" (default), "int64", "bool", "uint64", "int8"/"int16"/"int32", "uint8"/"uint16"/"uint32", "datetime".
 	//
-	SetMetadata *SetMetadataActionRead `json:"setMetadata,omitempty"`
+	SetMetadataActionRead *SetMetadataActionRead `json:"setMetadata,omitempty"`
 }
 
 func (s SavedMetadataActionRead) MarshalJSON() ([]byte, error) {
@@ -27,30 +27,30 @@ func (s *SavedMetadataActionRead) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (s *SavedMetadataActionRead) GetDeleteMetadata() *DeleteMetadataAction {
+func (s *SavedMetadataActionRead) GetDeleteMetadataAction() *DeleteMetadataAction {
 	if s == nil {
 		return nil
 	}
-	return s.DeleteMetadata
+	return s.DeleteMetadataAction
 }
 
-func (s *SavedMetadataActionRead) GetDrop() *DropAction {
+func (s *SavedMetadataActionRead) GetDropAction() *DropAction {
 	if s == nil {
 		return nil
 	}
-	return s.Drop
+	return s.DropAction
 }
 
-func (s *SavedMetadataActionRead) GetRewriteAddress() *RewriteAddressActionRead {
+func (s *SavedMetadataActionRead) GetRewriteAddressActionRead() *RewriteAddressActionRead {
 	if s == nil {
 		return nil
 	}
-	return s.RewriteAddress
+	return s.RewriteAddressActionRead
 }
 
-func (s *SavedMetadataActionRead) GetSetMetadata() *SetMetadataActionRead {
+func (s *SavedMetadataActionRead) GetSetMetadataActionRead() *SetMetadataActionRead {
 	if s == nil {
 		return nil
 	}
-	return s.SetMetadata
+	return s.SetMetadataActionRead
 }

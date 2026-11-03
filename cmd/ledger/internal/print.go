@@ -132,7 +132,7 @@ func (t v2Transaction) GetPostings() []ledger.Posting {
 }
 
 func (t v2Transaction) GetMetadata() map[string]string {
-	return t.V2Transaction.GetMetadata()
+	return t.V2Transaction.GetV2Metadata()
 }
 
 var _ Transaction = (*v2Transaction)(nil)
@@ -156,11 +156,11 @@ func (t v1Transaction) GetMetadata() map[string]string {
 }
 
 func (t v1Transaction) GetPreCommitVolumes() map[string]map[string]ledger.Volume {
-	return t.Transaction.GetPreCommitVolumes()
+	return t.Transaction.GetAggregatedVolumes()
 }
 
 func (t v1Transaction) GetPostCommitVolumes() map[string]map[string]ledger.Volume {
-	return t.Transaction.GetPostCommitVolumes()
+	return t.Transaction.GetAggregatedVolumes1()
 }
 
 var _ Transaction = (*v1Transaction)(nil)

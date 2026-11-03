@@ -4,12 +4,12 @@ package orchestration
 
 type ReadTriggerResponse struct {
 	// A rule that starts a workflow when a matching event arrives
-	Data Trigger `json:"data"`
+	TriggerData TriggerData `json:"data"`
 }
 
-func (r *ReadTriggerResponse) GetData() Trigger {
+func (r *ReadTriggerResponse) GetTriggerData() TriggerData {
 	if r == nil {
-		return Trigger{}
+		return TriggerData{}
 	}
-	return r.Data
+	return r.TriggerData
 }

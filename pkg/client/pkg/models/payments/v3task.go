@@ -9,6 +9,8 @@ import (
 
 // V3Task - An asynchronous unit of work, tracking an operation that completes in the background
 type V3Task struct {
+	// Where a task stands, from processing through to succeeded or failed
+	V3TaskStatusEnum V3TaskStatusEnum `json:"status"`
 	// Identifier of the connector the task runs against
 	ConnectorID *string `json:"connectorID,omitempty"`
 	// When the task was created
@@ -19,8 +21,6 @@ type V3Task struct {
 	Error *string `json:"error,omitempty"`
 	// Unique identifier of the task
 	ID string `json:"id"`
-	// Where a task stands, from processing through to succeeded or failed
-	Status V3TaskStatusEnum `json:"status"`
 	// When the task was last updated
 	UpdatedAt time.Time `json:"updatedAt"`
 }
@@ -34,6 +34,13 @@ func (v *V3Task) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V3Task) GetV3TaskStatusEnum() V3TaskStatusEnum {
+	if v == nil {
+		return V3TaskStatusEnum("")
+	}
+	return v.V3TaskStatusEnum
 }
 
 func (v *V3Task) GetConnectorID() *string {
@@ -69,13 +76,6 @@ func (v *V3Task) GetID() string {
 		return ""
 	}
 	return v.ID
-}
-
-func (v *V3Task) GetStatus() V3TaskStatusEnum {
-	if v == nil {
-		return V3TaskStatusEnum("")
-	}
-	return v.Status
 }
 
 func (v *V3Task) GetUpdatedAt() time.Time {

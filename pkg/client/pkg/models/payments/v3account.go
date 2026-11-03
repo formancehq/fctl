@@ -9,8 +9,12 @@ import (
 
 // V3Account - An account held at a payment provider, surfaced through a connector
 type V3Account struct {
+	// Whether an account is internal to the provider or belongs to an external party
+	V3AccountTypeEnum V3AccountTypeEnum `json:"type"`
 	// Summary of a connector, without its configuration
-	Connector *V3ConnectorBase `json:"connector,omitempty"`
+	V3ConnectorBase *V3ConnectorBase `json:"connector,omitempty"`
+	// Arbitrary key/value pairs attached to the resource
+	V3Metadata map[string]string `json:"metadata,omitempty"`
 	// Identifier of the connector the account belongs to
 	ConnectorID string `json:"connectorID"`
 	// When the account was created at the provider
@@ -19,8 +23,6 @@ type V3Account struct {
 	DefaultAsset *string `json:"defaultAsset,omitempty"`
 	// Unique identifier of the account within Formance
 	ID string `json:"id"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
 	// Human-readable name of the account
 	Name *string `json:"name,omitempty"`
 	// Name of the payment provider behind the connector
@@ -29,8 +31,6 @@ type V3Account struct {
 	Raw map[string]any `json:"raw"`
 	// Identifier the account carries at the provider
 	Reference string `json:"reference"`
-	// Whether an account is internal to the provider or belongs to an external party
-	Type V3AccountTypeEnum `json:"type"`
 }
 
 func (v V3Account) MarshalJSON() ([]byte, error) {
@@ -44,11 +44,25 @@ func (v *V3Account) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V3Account) GetConnector() *V3ConnectorBase {
+func (v *V3Account) GetV3AccountTypeEnum() V3AccountTypeEnum {
+	if v == nil {
+		return V3AccountTypeEnum("")
+	}
+	return v.V3AccountTypeEnum
+}
+
+func (v *V3Account) GetV3ConnectorBase() *V3ConnectorBase {
 	if v == nil {
 		return nil
 	}
-	return v.Connector
+	return v.V3ConnectorBase
+}
+
+func (v *V3Account) GetV3Metadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.V3Metadata
 }
 
 func (v *V3Account) GetConnectorID() string {
@@ -79,13 +93,6 @@ func (v *V3Account) GetID() string {
 	return v.ID
 }
 
-func (v *V3Account) GetMetadata() map[string]string {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
-}
-
 func (v *V3Account) GetName() *string {
 	if v == nil {
 		return nil
@@ -112,13 +119,6 @@ func (v *V3Account) GetReference() string {
 		return ""
 	}
 	return v.Reference
-}
-
-func (v *V3Account) GetType() V3AccountTypeEnum {
-	if v == nil {
-		return V3AccountTypeEnum("")
-	}
-	return v.Type
 }
 
 // #region class-body-v3account

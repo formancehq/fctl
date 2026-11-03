@@ -73,7 +73,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("policy not found")
 	}
 
-	c.store.Policy = response.PolicyResponse.Data
+	c.store.Policy = response.PolicyResponse.Policy
 
 	return c, nil
 }

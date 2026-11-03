@@ -3,11 +3,18 @@
 package payments
 
 type ConnectorsResponseData struct {
-	ConnectorID string `json:"connectorID"`
-	Enabled     *bool  `json:"enabled,omitempty"`
-	Name        string `json:"name"`
 	// The payment provider behind a connector
-	Provider Connector `json:"provider"`
+	Connector   Connector `json:"provider"`
+	ConnectorID string    `json:"connectorID"`
+	Enabled     *bool     `json:"enabled,omitempty"`
+	Name        string    `json:"name"`
+}
+
+func (c *ConnectorsResponseData) GetConnector() Connector {
+	if c == nil {
+		return Connector("")
+	}
+	return c.Connector
 }
 
 func (c *ConnectorsResponseData) GetConnectorID() string {
@@ -29,13 +36,6 @@ func (c *ConnectorsResponseData) GetName() string {
 		return ""
 	}
 	return c.Name
-}
-
-func (c *ConnectorsResponseData) GetProvider() Connector {
-	if c == nil {
-		return Connector("")
-	}
-	return c.Provider
 }
 
 // ConnectorsResponse - OK

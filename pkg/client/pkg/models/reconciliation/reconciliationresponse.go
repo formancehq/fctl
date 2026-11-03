@@ -5,12 +5,12 @@ package reconciliation
 // ReconciliationResponse - OK
 type ReconciliationResponse struct {
 	// One run of a policy, comparing both sides and reporting the drift between them
-	Data Reconciliation `json:"data"`
+	Reconciliation Reconciliation `json:"data"`
 }
 
-func (r *ReconciliationResponse) GetData() Reconciliation {
+func (r *ReconciliationResponse) GetReconciliation() Reconciliation {
 	if r == nil {
 		return Reconciliation{}
 	}
-	return r.Data
+	return r.Reconciliation
 }

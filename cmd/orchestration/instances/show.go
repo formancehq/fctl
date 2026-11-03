@@ -65,15 +65,15 @@ func (c *InstancesShowController) Run(cmd *cobra.Command, args []string) (fctl.R
 		return nil, fmt.Errorf("reading instance: %w", err)
 	}
 
-	c.store.WorkflowInstance = res.GetWorkflowInstanceResponse.Data
+	c.store.WorkflowInstance = res.GetWorkflowInstanceResponse.WorkflowInstance
 	response, err := stackClient.Orchestration.V1.GetWorkflow(cmd.Context(), operations.GetWorkflowRequest{
-		FlowID: res.GetWorkflowInstanceResponse.Data.WorkflowID,
+		FlowID: res.GetWorkflowInstanceResponse.WorkflowInstance.WorkflowID,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Workflow = response.GetWorkflowResponse.Data
+	c.store.Workflow = response.GetWorkflowResponse.Workflow
 
 	return c, nil
 }

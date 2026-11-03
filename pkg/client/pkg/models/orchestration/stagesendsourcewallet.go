@@ -6,7 +6,7 @@ import (
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
 )
 
-// StageSendSourceWallet - Take the funds from a wallet
+// StageSendSourceWallet - Send the funds to a wallet
 type StageSendSourceWallet struct {
 	// Name of the balance within the wallet. Defaults to the main balance when omitted
 	Balance *string `json:"balance,omitempty"`

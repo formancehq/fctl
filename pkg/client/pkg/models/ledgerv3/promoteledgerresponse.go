@@ -3,12 +3,12 @@
 package ledgerv3
 
 type PromoteLedgerResponse struct {
-	Data LedgerInfo `json:"data"`
+	LedgerInfo LedgerInfo `json:"data"`
 }
 
-func (p *PromoteLedgerResponse) GetData() LedgerInfo {
+func (p *PromoteLedgerResponse) GetLedgerInfo() LedgerInfo {
 	if p == nil {
 		return LedgerInfo{}
 	}
-	return p.Data
+	return p.LedgerInfo
 }

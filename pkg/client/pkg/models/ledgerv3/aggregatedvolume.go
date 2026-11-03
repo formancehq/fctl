@@ -7,14 +7,28 @@ package ledgerv3
 // envelope of `ExecutePreparedQueryResponse`) use this exact shape:
 // header-negotiated monetary amounts, a computed `balance`, and `color` always present.
 type AggregatedVolume struct {
-	// Asset identifier (e.g. "USD/2")
-	Asset string `json:"asset"`
 	// Arbitrary-precision SignedBigInt value encoded as a JSON number by
 	// default, or a canonical decimal string when Formance-Bigint-As-String
 	// is enabled. The same rule applies to every response SignedBigInt value,
 	// including nested fields, regardless of business meaning.
 	//
-	Balance SignedMonetaryAmount `json:"balance"`
+	SignedMonetaryAmount SignedMonetaryAmount `json:"balance"`
+	// Arbitrary-precision unsigned BigUint value encoded as a JSON number by
+	// default, or a canonical decimal string when Formance-Bigint-As-String
+	// is enabled. The same rule applies to every response BigUint value,
+	// including nested fields, regardless of business meaning.
+	// JavaScript consumers should enable the header to avoid number rounding.
+	//
+	UnsignedMonetaryAmount UnsignedMonetaryAmount `json:"input"`
+	// Arbitrary-precision unsigned BigUint value encoded as a JSON number by
+	// default, or a canonical decimal string when Formance-Bigint-As-String
+	// is enabled. The same rule applies to every response BigUint value,
+	// including nested fields, regardless of business meaning.
+	// JavaScript consumers should enable the header to avoid number rounding.
+	//
+	UnsignedMonetaryAmount1 UnsignedMonetaryAmount `json:"output"`
+	// Asset identifier (e.g. "USD/2")
+	Asset string `json:"asset"`
 	// Color of the aggregated bucket. By default the response contains
 	// one AggregatedVolume per (asset, color) tuple. With
 	// `collapseColors=true`, every colored bucket of the same
@@ -22,20 +36,27 @@ type AggregatedVolume struct {
 	// color = "".
 	//
 	Color string `json:"color"`
-	// Arbitrary-precision unsigned BigUint value encoded as a JSON number by
-	// default, or a canonical decimal string when Formance-Bigint-As-String
-	// is enabled. The same rule applies to every response BigUint value,
-	// including nested fields, regardless of business meaning.
-	// JavaScript consumers should enable the header to avoid number rounding.
-	//
-	Input UnsignedMonetaryAmount `json:"input"`
-	// Arbitrary-precision unsigned BigUint value encoded as a JSON number by
-	// default, or a canonical decimal string when Formance-Bigint-As-String
-	// is enabled. The same rule applies to every response BigUint value,
-	// including nested fields, regardless of business meaning.
-	// JavaScript consumers should enable the header to avoid number rounding.
-	//
-	Output UnsignedMonetaryAmount `json:"output"`
+}
+
+func (a *AggregatedVolume) GetSignedMonetaryAmount() SignedMonetaryAmount {
+	if a == nil {
+		return SignedMonetaryAmount{}
+	}
+	return a.SignedMonetaryAmount
+}
+
+func (a *AggregatedVolume) GetUnsignedMonetaryAmount() UnsignedMonetaryAmount {
+	if a == nil {
+		return UnsignedMonetaryAmount{}
+	}
+	return a.UnsignedMonetaryAmount
+}
+
+func (a *AggregatedVolume) GetUnsignedMonetaryAmount1() UnsignedMonetaryAmount {
+	if a == nil {
+		return UnsignedMonetaryAmount{}
+	}
+	return a.UnsignedMonetaryAmount1
 }
 
 func (a *AggregatedVolume) GetAsset() string {
@@ -45,30 +66,9 @@ func (a *AggregatedVolume) GetAsset() string {
 	return a.Asset
 }
 
-func (a *AggregatedVolume) GetBalance() SignedMonetaryAmount {
-	if a == nil {
-		return SignedMonetaryAmount{}
-	}
-	return a.Balance
-}
-
 func (a *AggregatedVolume) GetColor() string {
 	if a == nil {
 		return ""
 	}
 	return a.Color
-}
-
-func (a *AggregatedVolume) GetInput() UnsignedMonetaryAmount {
-	if a == nil {
-		return UnsignedMonetaryAmount{}
-	}
-	return a.Input
-}
-
-func (a *AggregatedVolume) GetOutput() UnsignedMonetaryAmount {
-	if a == nil {
-		return UnsignedMonetaryAmount{}
-	}
-	return a.Output
 }

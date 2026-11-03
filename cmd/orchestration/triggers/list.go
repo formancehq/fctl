@@ -13,7 +13,7 @@ import (
 )
 
 type TriggersListStore struct {
-	WorkflowTrigger []orchestration.Trigger `json:"workflowTriggers"`
+	WorkflowTrigger []orchestration.TriggerData `json:"workflowTriggers"`
 }
 type TriggersListController struct {
 	store    *TriggersListStore
@@ -85,7 +85,7 @@ func (c *TriggersListController) Render(cmd *cobra.Command, args []string) error
 		WithData(
 			fctl.Prepend(
 				fctl.Map(c.store.WorkflowTrigger,
-					func(src orchestration.Trigger) []string {
+					func(src orchestration.TriggerData) []string {
 						return []string{
 							src.ID,
 							*src.Name,

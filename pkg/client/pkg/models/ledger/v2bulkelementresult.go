@@ -9,7 +9,7 @@ import (
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
 )
 
-type V2BulkElementResultError struct {
+type SchemasV2BulkElementResultErrorV2BaseBulkElementResult struct {
 	ErrorCode        string  `json:"errorCode"`
 	ErrorDescription string  `json:"errorDescription"`
 	ErrorDetails     *string `json:"errorDetails,omitempty"`
@@ -19,212 +19,212 @@ type V2BulkElementResultError struct {
 	ResponseType string `json:"responseType"`
 }
 
-func (v V2BulkElementResultError) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(v, "", false)
+func (s SchemasV2BulkElementResultErrorV2BaseBulkElementResult) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(s, "", false)
 }
 
-func (v *V2BulkElementResultError) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"errorCode", "errorDescription", "logID", "responseType"}); err != nil {
+func (s *SchemasV2BulkElementResultErrorV2BaseBulkElementResult) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &s, "", false, []string{"errorCode", "errorDescription", "logID", "responseType"}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (v *V2BulkElementResultError) GetErrorCode() string {
-	if v == nil {
+func (s *SchemasV2BulkElementResultErrorV2BaseBulkElementResult) GetErrorCode() string {
+	if s == nil {
 		return ""
 	}
-	return v.ErrorCode
+	return s.ErrorCode
 }
 
-func (v *V2BulkElementResultError) GetErrorDescription() string {
-	if v == nil {
+func (s *SchemasV2BulkElementResultErrorV2BaseBulkElementResult) GetErrorDescription() string {
+	if s == nil {
 		return ""
 	}
-	return v.ErrorDescription
+	return s.ErrorDescription
 }
 
-func (v *V2BulkElementResultError) GetErrorDetails() *string {
-	if v == nil {
+func (s *SchemasV2BulkElementResultErrorV2BaseBulkElementResult) GetErrorDetails() *string {
+	if s == nil {
 		return nil
 	}
-	return v.ErrorDetails
+	return s.ErrorDetails
 }
 
-func (v *V2BulkElementResultError) GetLogID() int64 {
-	if v == nil {
+func (s *SchemasV2BulkElementResultErrorV2BaseBulkElementResult) GetLogID() int64 {
+	if s == nil {
 		return 0
 	}
-	return v.LogID
+	return s.LogID
 }
 
-func (v *V2BulkElementResultError) GetResponseType() string {
-	if v == nil {
+func (s *SchemasV2BulkElementResultErrorV2BaseBulkElementResult) GetResponseType() string {
+	if s == nil {
 		return ""
 	}
-	return v.ResponseType
+	return s.ResponseType
 }
 
-// #region class-body-v2bulkelementresulterror
-// #endregion class-body-v2bulkelementresulterror
+// #region class-body-schemasv2bulkelementresulterrorv2basebulkelementresult
+// #endregion class-body-schemasv2bulkelementresulterrorv2basebulkelementresult
 
-type V2BulkElementResultDeleteMetadata struct {
+type SchemasV2BulkElementResultDeleteMetadataV2BaseBulkElementResult struct {
 	// Identifier of the log entry produced by this element
 	LogID int64 `json:"logID"`
 	// The action this result corresponds to
 	ResponseType string `json:"responseType"`
 }
 
-func (v V2BulkElementResultDeleteMetadata) MarshalJSON() ([]byte, error) {
+func (s SchemasV2BulkElementResultDeleteMetadataV2BaseBulkElementResult) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(s, "", false)
+}
+
+func (s *SchemasV2BulkElementResultDeleteMetadataV2BaseBulkElementResult) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &s, "", false, []string{"logID", "responseType"}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *SchemasV2BulkElementResultDeleteMetadataV2BaseBulkElementResult) GetLogID() int64 {
+	if s == nil {
+		return 0
+	}
+	return s.LogID
+}
+
+func (s *SchemasV2BulkElementResultDeleteMetadataV2BaseBulkElementResult) GetResponseType() string {
+	if s == nil {
+		return ""
+	}
+	return s.ResponseType
+}
+
+// #region class-body-schemasv2bulkelementresultdeletemetadatav2basebulkelementresult
+// #endregion class-body-schemasv2bulkelementresultdeletemetadatav2basebulkelementresult
+
+type SchemasV2BulkElementResultRevertTransactionV2BaseBulkElementResult struct {
+	// A transaction recorded in the ledger, carrying its postings, metadata and both bi-temporal timestamps
+	V2Transaction V2Transaction `json:"data"`
+	// Identifier of the log entry produced by this element
+	LogID int64 `json:"logID"`
+	// The action this result corresponds to
+	ResponseType string `json:"responseType"`
+}
+
+func (s SchemasV2BulkElementResultRevertTransactionV2BaseBulkElementResult) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(s, "", false)
+}
+
+func (s *SchemasV2BulkElementResultRevertTransactionV2BaseBulkElementResult) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &s, "", false, []string{"data", "logID", "responseType"}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *SchemasV2BulkElementResultRevertTransactionV2BaseBulkElementResult) GetV2Transaction() V2Transaction {
+	if s == nil {
+		return V2Transaction{}
+	}
+	return s.V2Transaction
+}
+
+func (s *SchemasV2BulkElementResultRevertTransactionV2BaseBulkElementResult) GetLogID() int64 {
+	if s == nil {
+		return 0
+	}
+	return s.LogID
+}
+
+func (s *SchemasV2BulkElementResultRevertTransactionV2BaseBulkElementResult) GetResponseType() string {
+	if s == nil {
+		return ""
+	}
+	return s.ResponseType
+}
+
+// #region class-body-schemasv2bulkelementresultreverttransactionv2basebulkelementresult
+// #endregion class-body-schemasv2bulkelementresultreverttransactionv2basebulkelementresult
+
+type V2BaseBulkElementResult struct {
+	// Identifier of the log entry produced by this element
+	LogID int64 `json:"logID"`
+	// The action this result corresponds to
+	ResponseType string `json:"responseType"`
+}
+
+func (v V2BaseBulkElementResult) MarshalJSON() ([]byte, error) {
 	return utils.MarshalJSON(v, "", false)
 }
 
-func (v *V2BulkElementResultDeleteMetadata) UnmarshalJSON(data []byte) error {
+func (v *V2BaseBulkElementResult) UnmarshalJSON(data []byte) error {
 	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"logID", "responseType"}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (v *V2BulkElementResultDeleteMetadata) GetLogID() int64 {
+func (v *V2BaseBulkElementResult) GetLogID() int64 {
 	if v == nil {
 		return 0
 	}
 	return v.LogID
 }
 
-func (v *V2BulkElementResultDeleteMetadata) GetResponseType() string {
+func (v *V2BaseBulkElementResult) GetResponseType() string {
 	if v == nil {
 		return ""
 	}
 	return v.ResponseType
 }
 
-// #region class-body-v2bulkelementresultdeletemetadata
-// #endregion class-body-v2bulkelementresultdeletemetadata
+// #region class-body-v2basebulkelementresult
+// #endregion class-body-v2basebulkelementresult
 
-type V2BulkElementResultRevertTransaction struct {
+type SchemasV2BaseBulkElementResult struct {
 	// A transaction recorded in the ledger, carrying its postings, metadata and both bi-temporal timestamps
-	Data V2Transaction `json:"data"`
+	V2Transaction V2Transaction `json:"data"`
 	// Identifier of the log entry produced by this element
 	LogID int64 `json:"logID"`
 	// The action this result corresponds to
 	ResponseType string `json:"responseType"`
 }
 
-func (v V2BulkElementResultRevertTransaction) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(v, "", false)
+func (s SchemasV2BaseBulkElementResult) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(s, "", false)
 }
 
-func (v *V2BulkElementResultRevertTransaction) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"data", "logID", "responseType"}); err != nil {
+func (s *SchemasV2BaseBulkElementResult) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &s, "", false, []string{"data", "logID", "responseType"}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (v *V2BulkElementResultRevertTransaction) GetData() V2Transaction {
-	if v == nil {
+func (s *SchemasV2BaseBulkElementResult) GetV2Transaction() V2Transaction {
+	if s == nil {
 		return V2Transaction{}
 	}
-	return v.Data
+	return s.V2Transaction
 }
 
-func (v *V2BulkElementResultRevertTransaction) GetLogID() int64 {
-	if v == nil {
+func (s *SchemasV2BaseBulkElementResult) GetLogID() int64 {
+	if s == nil {
 		return 0
 	}
-	return v.LogID
+	return s.LogID
 }
 
-func (v *V2BulkElementResultRevertTransaction) GetResponseType() string {
-	if v == nil {
+func (s *SchemasV2BaseBulkElementResult) GetResponseType() string {
+	if s == nil {
 		return ""
 	}
-	return v.ResponseType
+	return s.ResponseType
 }
 
-// #region class-body-v2bulkelementresultreverttransaction
-// #endregion class-body-v2bulkelementresultreverttransaction
-
-type V2BulkElementResultAddMetadata struct {
-	// Identifier of the log entry produced by this element
-	LogID int64 `json:"logID"`
-	// The action this result corresponds to
-	ResponseType string `json:"responseType"`
-}
-
-func (v V2BulkElementResultAddMetadata) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(v, "", false)
-}
-
-func (v *V2BulkElementResultAddMetadata) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"logID", "responseType"}); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (v *V2BulkElementResultAddMetadata) GetLogID() int64 {
-	if v == nil {
-		return 0
-	}
-	return v.LogID
-}
-
-func (v *V2BulkElementResultAddMetadata) GetResponseType() string {
-	if v == nil {
-		return ""
-	}
-	return v.ResponseType
-}
-
-// #region class-body-v2bulkelementresultaddmetadata
-// #endregion class-body-v2bulkelementresultaddmetadata
-
-type V2BulkElementResultCreateTransaction struct {
-	// A transaction recorded in the ledger, carrying its postings, metadata and both bi-temporal timestamps
-	Data V2Transaction `json:"data"`
-	// Identifier of the log entry produced by this element
-	LogID int64 `json:"logID"`
-	// The action this result corresponds to
-	ResponseType string `json:"responseType"`
-}
-
-func (v V2BulkElementResultCreateTransaction) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(v, "", false)
-}
-
-func (v *V2BulkElementResultCreateTransaction) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &v, "", false, []string{"data", "logID", "responseType"}); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (v *V2BulkElementResultCreateTransaction) GetData() V2Transaction {
-	if v == nil {
-		return V2Transaction{}
-	}
-	return v.Data
-}
-
-func (v *V2BulkElementResultCreateTransaction) GetLogID() int64 {
-	if v == nil {
-		return 0
-	}
-	return v.LogID
-}
-
-func (v *V2BulkElementResultCreateTransaction) GetResponseType() string {
-	if v == nil {
-		return ""
-	}
-	return v.ResponseType
-}
-
-// #region class-body-v2bulkelementresultcreatetransaction
-// #endregion class-body-v2bulkelementresultcreatetransaction
+// #region class-body-schemasv2basebulkelementresult
+// #endregion class-body-schemasv2basebulkelementresult
 
 type V2BulkElementResultType string
 
@@ -237,72 +237,72 @@ const (
 )
 
 type V2BulkElementResult struct {
-	V2BulkElementResultCreateTransaction *V2BulkElementResultCreateTransaction `queryParam:"inline" union:"member"`
-	V2BulkElementResultAddMetadata       *V2BulkElementResultAddMetadata       `queryParam:"inline" union:"member"`
-	V2BulkElementResultRevertTransaction *V2BulkElementResultRevertTransaction `queryParam:"inline" union:"member"`
-	V2BulkElementResultDeleteMetadata    *V2BulkElementResultDeleteMetadata    `queryParam:"inline" union:"member"`
-	V2BulkElementResultError             *V2BulkElementResultError             `queryParam:"inline" union:"member"`
+	SchemasV2BaseBulkElementResult                                     *SchemasV2BaseBulkElementResult                                     `queryParam:"inline" union:"member"`
+	V2BaseBulkElementResult                                            *V2BaseBulkElementResult                                            `queryParam:"inline" union:"member"`
+	SchemasV2BulkElementResultRevertTransactionV2BaseBulkElementResult *SchemasV2BulkElementResultRevertTransactionV2BaseBulkElementResult `queryParam:"inline" union:"member"`
+	SchemasV2BulkElementResultDeleteMetadataV2BaseBulkElementResult    *SchemasV2BulkElementResultDeleteMetadataV2BaseBulkElementResult    `queryParam:"inline" union:"member"`
+	SchemasV2BulkElementResultErrorV2BaseBulkElementResult             *SchemasV2BulkElementResultErrorV2BaseBulkElementResult             `queryParam:"inline" union:"member"`
 
 	Type V2BulkElementResultType
 }
 
-func CreateV2BulkElementResultAddMetadata(addMetadata V2BulkElementResultAddMetadata) V2BulkElementResult {
+func CreateV2BulkElementResultAddMetadata(addMetadata V2BaseBulkElementResult) V2BulkElementResult {
 	typ := V2BulkElementResultTypeAddMetadata
 
 	typStr := string(typ)
 	addMetadata.ResponseType = typStr
 
 	return V2BulkElementResult{
-		V2BulkElementResultAddMetadata: &addMetadata,
-		Type:                           typ,
+		V2BaseBulkElementResult: &addMetadata,
+		Type:                    typ,
 	}
 }
 
-func CreateV2BulkElementResultCreateTransaction(createTransaction V2BulkElementResultCreateTransaction) V2BulkElementResult {
+func CreateV2BulkElementResultCreateTransaction(createTransaction SchemasV2BaseBulkElementResult) V2BulkElementResult {
 	typ := V2BulkElementResultTypeCreateTransaction
 
 	typStr := string(typ)
 	createTransaction.ResponseType = typStr
 
 	return V2BulkElementResult{
-		V2BulkElementResultCreateTransaction: &createTransaction,
-		Type:                                 typ,
+		SchemasV2BaseBulkElementResult: &createTransaction,
+		Type:                           typ,
 	}
 }
 
-func CreateV2BulkElementResultDeleteMetadata(deleteMetadata V2BulkElementResultDeleteMetadata) V2BulkElementResult {
+func CreateV2BulkElementResultDeleteMetadata(deleteMetadata SchemasV2BulkElementResultDeleteMetadataV2BaseBulkElementResult) V2BulkElementResult {
 	typ := V2BulkElementResultTypeDeleteMetadata
 
 	typStr := string(typ)
 	deleteMetadata.ResponseType = typStr
 
 	return V2BulkElementResult{
-		V2BulkElementResultDeleteMetadata: &deleteMetadata,
-		Type:                              typ,
+		SchemasV2BulkElementResultDeleteMetadataV2BaseBulkElementResult: &deleteMetadata,
+		Type: typ,
 	}
 }
 
-func CreateV2BulkElementResultError(errorT V2BulkElementResultError) V2BulkElementResult {
+func CreateV2BulkElementResultError(errorT SchemasV2BulkElementResultErrorV2BaseBulkElementResult) V2BulkElementResult {
 	typ := V2BulkElementResultTypeError
 
 	typStr := string(typ)
 	errorT.ResponseType = typStr
 
 	return V2BulkElementResult{
-		V2BulkElementResultError: &errorT,
-		Type:                     typ,
+		SchemasV2BulkElementResultErrorV2BaseBulkElementResult: &errorT,
+		Type: typ,
 	}
 }
 
-func CreateV2BulkElementResultRevertTransaction(revertTransaction V2BulkElementResultRevertTransaction) V2BulkElementResult {
+func CreateV2BulkElementResultRevertTransaction(revertTransaction SchemasV2BulkElementResultRevertTransactionV2BaseBulkElementResult) V2BulkElementResult {
 	typ := V2BulkElementResultTypeRevertTransaction
 
 	typStr := string(typ)
 	revertTransaction.ResponseType = typStr
 
 	return V2BulkElementResult{
-		V2BulkElementResultRevertTransaction: &revertTransaction,
-		Type:                                 typ,
+		SchemasV2BulkElementResultRevertTransactionV2BaseBulkElementResult: &revertTransaction,
+		Type: typ,
 	}
 }
 
@@ -319,48 +319,48 @@ func (u *V2BulkElementResult) UnmarshalJSON(data []byte) error {
 
 	switch dis.ResponseType {
 	case "ADD_METADATA":
-		v2BulkElementResultAddMetadata := new(V2BulkElementResultAddMetadata)
-		if err := utils.UnmarshalJSON(data, &v2BulkElementResultAddMetadata, "", true, nil); err != nil {
-			return fmt.Errorf("could not unmarshal `%s` into expected (ResponseType == ADD_METADATA) type V2BulkElementResultAddMetadata within V2BulkElementResult: %w", string(data), err)
+		v2BaseBulkElementResult := new(V2BaseBulkElementResult)
+		if err := utils.UnmarshalJSON(data, &v2BaseBulkElementResult, "", true, nil); err != nil {
+			return fmt.Errorf("could not unmarshal `%s` into expected (ResponseType == ADD_METADATA) type V2BaseBulkElementResult within V2BulkElementResult: %w", string(data), err)
 		}
 
-		u.V2BulkElementResultAddMetadata = v2BulkElementResultAddMetadata
+		u.V2BaseBulkElementResult = v2BaseBulkElementResult
 		u.Type = V2BulkElementResultTypeAddMetadata
 		return nil
 	case "CREATE_TRANSACTION":
-		v2BulkElementResultCreateTransaction := new(V2BulkElementResultCreateTransaction)
-		if err := utils.UnmarshalJSON(data, &v2BulkElementResultCreateTransaction, "", true, nil); err != nil {
-			return fmt.Errorf("could not unmarshal `%s` into expected (ResponseType == CREATE_TRANSACTION) type V2BulkElementResultCreateTransaction within V2BulkElementResult: %w", string(data), err)
+		schemasV2BaseBulkElementResult := new(SchemasV2BaseBulkElementResult)
+		if err := utils.UnmarshalJSON(data, &schemasV2BaseBulkElementResult, "", true, nil); err != nil {
+			return fmt.Errorf("could not unmarshal `%s` into expected (ResponseType == CREATE_TRANSACTION) type SchemasV2BaseBulkElementResult within V2BulkElementResult: %w", string(data), err)
 		}
 
-		u.V2BulkElementResultCreateTransaction = v2BulkElementResultCreateTransaction
+		u.SchemasV2BaseBulkElementResult = schemasV2BaseBulkElementResult
 		u.Type = V2BulkElementResultTypeCreateTransaction
 		return nil
 	case "DELETE_METADATA":
-		v2BulkElementResultDeleteMetadata := new(V2BulkElementResultDeleteMetadata)
-		if err := utils.UnmarshalJSON(data, &v2BulkElementResultDeleteMetadata, "", true, nil); err != nil {
-			return fmt.Errorf("could not unmarshal `%s` into expected (ResponseType == DELETE_METADATA) type V2BulkElementResultDeleteMetadata within V2BulkElementResult: %w", string(data), err)
+		schemasV2BulkElementResultDeleteMetadataV2BaseBulkElementResult := new(SchemasV2BulkElementResultDeleteMetadataV2BaseBulkElementResult)
+		if err := utils.UnmarshalJSON(data, &schemasV2BulkElementResultDeleteMetadataV2BaseBulkElementResult, "", true, nil); err != nil {
+			return fmt.Errorf("could not unmarshal `%s` into expected (ResponseType == DELETE_METADATA) type SchemasV2BulkElementResultDeleteMetadataV2BaseBulkElementResult within V2BulkElementResult: %w", string(data), err)
 		}
 
-		u.V2BulkElementResultDeleteMetadata = v2BulkElementResultDeleteMetadata
+		u.SchemasV2BulkElementResultDeleteMetadataV2BaseBulkElementResult = schemasV2BulkElementResultDeleteMetadataV2BaseBulkElementResult
 		u.Type = V2BulkElementResultTypeDeleteMetadata
 		return nil
 	case "ERROR":
-		v2BulkElementResultError := new(V2BulkElementResultError)
-		if err := utils.UnmarshalJSON(data, &v2BulkElementResultError, "", true, nil); err != nil {
-			return fmt.Errorf("could not unmarshal `%s` into expected (ResponseType == ERROR) type V2BulkElementResultError within V2BulkElementResult: %w", string(data), err)
+		schemasV2BulkElementResultErrorV2BaseBulkElementResult := new(SchemasV2BulkElementResultErrorV2BaseBulkElementResult)
+		if err := utils.UnmarshalJSON(data, &schemasV2BulkElementResultErrorV2BaseBulkElementResult, "", true, nil); err != nil {
+			return fmt.Errorf("could not unmarshal `%s` into expected (ResponseType == ERROR) type SchemasV2BulkElementResultErrorV2BaseBulkElementResult within V2BulkElementResult: %w", string(data), err)
 		}
 
-		u.V2BulkElementResultError = v2BulkElementResultError
+		u.SchemasV2BulkElementResultErrorV2BaseBulkElementResult = schemasV2BulkElementResultErrorV2BaseBulkElementResult
 		u.Type = V2BulkElementResultTypeError
 		return nil
 	case "REVERT_TRANSACTION":
-		v2BulkElementResultRevertTransaction := new(V2BulkElementResultRevertTransaction)
-		if err := utils.UnmarshalJSON(data, &v2BulkElementResultRevertTransaction, "", true, nil); err != nil {
-			return fmt.Errorf("could not unmarshal `%s` into expected (ResponseType == REVERT_TRANSACTION) type V2BulkElementResultRevertTransaction within V2BulkElementResult: %w", string(data), err)
+		schemasV2BulkElementResultRevertTransactionV2BaseBulkElementResult := new(SchemasV2BulkElementResultRevertTransactionV2BaseBulkElementResult)
+		if err := utils.UnmarshalJSON(data, &schemasV2BulkElementResultRevertTransactionV2BaseBulkElementResult, "", true, nil); err != nil {
+			return fmt.Errorf("could not unmarshal `%s` into expected (ResponseType == REVERT_TRANSACTION) type SchemasV2BulkElementResultRevertTransactionV2BaseBulkElementResult within V2BulkElementResult: %w", string(data), err)
 		}
 
-		u.V2BulkElementResultRevertTransaction = v2BulkElementResultRevertTransaction
+		u.SchemasV2BulkElementResultRevertTransactionV2BaseBulkElementResult = schemasV2BulkElementResultRevertTransactionV2BaseBulkElementResult
 		u.Type = V2BulkElementResultTypeRevertTransaction
 		return nil
 	}
@@ -369,24 +369,24 @@ func (u *V2BulkElementResult) UnmarshalJSON(data []byte) error {
 }
 
 func (u V2BulkElementResult) MarshalJSON() ([]byte, error) {
-	if u.V2BulkElementResultCreateTransaction != nil {
-		return utils.MarshalJSON(u.V2BulkElementResultCreateTransaction, "", true)
+	if u.SchemasV2BaseBulkElementResult != nil {
+		return utils.MarshalJSON(u.SchemasV2BaseBulkElementResult, "", true)
 	}
 
-	if u.V2BulkElementResultAddMetadata != nil {
-		return utils.MarshalJSON(u.V2BulkElementResultAddMetadata, "", true)
+	if u.V2BaseBulkElementResult != nil {
+		return utils.MarshalJSON(u.V2BaseBulkElementResult, "", true)
 	}
 
-	if u.V2BulkElementResultRevertTransaction != nil {
-		return utils.MarshalJSON(u.V2BulkElementResultRevertTransaction, "", true)
+	if u.SchemasV2BulkElementResultRevertTransactionV2BaseBulkElementResult != nil {
+		return utils.MarshalJSON(u.SchemasV2BulkElementResultRevertTransactionV2BaseBulkElementResult, "", true)
 	}
 
-	if u.V2BulkElementResultDeleteMetadata != nil {
-		return utils.MarshalJSON(u.V2BulkElementResultDeleteMetadata, "", true)
+	if u.SchemasV2BulkElementResultDeleteMetadataV2BaseBulkElementResult != nil {
+		return utils.MarshalJSON(u.SchemasV2BulkElementResultDeleteMetadataV2BaseBulkElementResult, "", true)
 	}
 
-	if u.V2BulkElementResultError != nil {
-		return utils.MarshalJSON(u.V2BulkElementResultError, "", true)
+	if u.SchemasV2BulkElementResultErrorV2BaseBulkElementResult != nil {
+		return utils.MarshalJSON(u.SchemasV2BulkElementResultErrorV2BaseBulkElementResult, "", true)
 	}
 
 	return nil, errors.New("could not marshal union type V2BulkElementResult: all fields are null")

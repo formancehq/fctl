@@ -4,10 +4,10 @@ package orchestration
 
 // Hold - Funds locked by a pending wallet debit, later either confirmed or voided
 type Hold struct {
+	// The counterparty of a wallet movement, either a ledger account or another wallet
+	Subject *Subject `json:"destination,omitempty"`
 	// Human-readable reason the funds were held
 	Description string `json:"description"`
-	// The counterparty of a wallet movement, either a ledger account or another wallet
-	Destination *Subject `json:"destination,omitempty"`
 	// The unique ID of the hold.
 	ID string `json:"id"`
 	// Metadata associated with the hold.
@@ -16,32 +16,32 @@ type Hold struct {
 	WalletID string `json:"walletID"`
 }
 
-func (h *Hold) GetDescription() string {
-	if h == nil {
-		return ""
-	}
-	return h.Description
-}
-
-func (h *Hold) GetDestination() *Subject {
+func (h *Hold) GetSubject() *Subject {
 	if h == nil {
 		return nil
 	}
-	return h.Destination
+	return h.Subject
 }
 
-func (h *Hold) GetDestinationAccount() *LedgerAccountSubject {
-	if v := h.GetDestination(); v != nil {
+func (h *Hold) GetSubjectAccount() *LedgerAccountSubject {
+	if v := h.GetSubject(); v != nil {
 		return v.LedgerAccountSubject
 	}
 	return nil
 }
 
-func (h *Hold) GetDestinationWallet() *WalletSubject {
-	if v := h.GetDestination(); v != nil {
+func (h *Hold) GetSubjectWallet() *WalletSubject {
+	if v := h.GetSubject(); v != nil {
 		return v.WalletSubject
 	}
 	return nil
+}
+
+func (h *Hold) GetDescription() string {
+	if h == nil {
+		return ""
+	}
+	return h.Description
 }
 
 func (h *Hold) GetID() string {

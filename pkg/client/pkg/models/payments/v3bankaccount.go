@@ -9,6 +9,8 @@ import (
 
 // V3BankAccount - A bank account registered with Formance and forwardable to connectors
 type V3BankAccount struct {
+	// Arbitrary key/value pairs attached to the resource
+	V3Metadata map[string]string `json:"metadata,omitempty"`
 	// Domestic account number, when the account is identified that way
 	AccountNumber *string `json:"accountNumber,omitempty"`
 	// Country the account is held in, as an ISO 3166-1 alpha-2 code
@@ -19,8 +21,6 @@ type V3BankAccount struct {
 	Iban *string `json:"iban,omitempty"`
 	// Unique identifier of the bank account within Formance
 	ID string `json:"id"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
 	// Human-readable name of the bank account
 	Name string `json:"name"`
 	// Provider-side accounts this bank account has been forwarded to
@@ -38,6 +38,13 @@ func (v *V3BankAccount) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V3BankAccount) GetV3Metadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.V3Metadata
 }
 
 func (v *V3BankAccount) GetAccountNumber() *string {
@@ -73,13 +80,6 @@ func (v *V3BankAccount) GetID() string {
 		return ""
 	}
 	return v.ID
-}
-
-func (v *V3BankAccount) GetMetadata() map[string]string {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
 }
 
 func (v *V3BankAccount) GetName() string {

@@ -9,13 +9,13 @@ import (
 
 type StageSend struct {
 	// An amount together with the asset it is denominated in
-	Amount *Monetary `json:"amount,omitempty"`
+	Monetary *Monetary `json:"amount,omitempty"`
 	// Where a send stage puts the funds
-	Destination *StageSendDestination `json:"destination,omitempty"`
+	StageSendDestination *StageSendDestination `json:"destination,omitempty"`
+	// Where a send stage takes the funds from
+	StageSendSource *StageSendSource `json:"source,omitempty"`
 	// Metadata to attach to the resulting transaction
 	Metadata map[string]string `json:"metadata,omitempty"`
-	// Where a send stage takes the funds from
-	Source *StageSendSource `json:"source,omitempty"`
 	// The transaction time to record on the resulting transaction. See [bi-temporality](https://docs.formance.com/modules/ledger/working-with/bi-temporality)
 	Timestamp *time.Time `json:"timestamp,omitempty"`
 }
@@ -31,18 +31,25 @@ func (s *StageSend) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (s *StageSend) GetAmount() *Monetary {
+func (s *StageSend) GetMonetary() *Monetary {
 	if s == nil {
 		return nil
 	}
-	return s.Amount
+	return s.Monetary
 }
 
-func (s *StageSend) GetDestination() *StageSendDestination {
+func (s *StageSend) GetStageSendDestination() *StageSendDestination {
 	if s == nil {
 		return nil
 	}
-	return s.Destination
+	return s.StageSendDestination
+}
+
+func (s *StageSend) GetStageSendSource() *StageSendSource {
+	if s == nil {
+		return nil
+	}
+	return s.StageSendSource
 }
 
 func (s *StageSend) GetMetadata() map[string]string {
@@ -50,13 +57,6 @@ func (s *StageSend) GetMetadata() map[string]string {
 		return nil
 	}
 	return s.Metadata
-}
-
-func (s *StageSend) GetSource() *StageSendSource {
-	if s == nil {
-		return nil
-	}
-	return s.Source
 }
 
 func (s *StageSend) GetTimestamp() *time.Time {

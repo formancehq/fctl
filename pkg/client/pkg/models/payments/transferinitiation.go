@@ -39,6 +39,8 @@ func (e *Type) UnmarshalJSON(data []byte) error {
 
 // TransferInitiation - A transfer Formance asked a connector to execute
 type TransferInitiation struct {
+	// Where a transfer initiation stands in its lifecycle
+	TransferInitiationStatus TransferInitiationStatus `json:"status"`
 	// Amount to move, in the asset's smallest unit
 	Amount *big.Int `json:"amount"`
 	// Asset the transfer is denominated in
@@ -71,8 +73,6 @@ type TransferInitiation struct {
 	ScheduledAt time.Time `json:"scheduledAt"`
 	// Identifier of the account the funds leave
 	SourceAccountID string `json:"sourceAccountID"`
-	// Where a transfer initiation stands in its lifecycle
-	Status TransferInitiationStatus `json:"status"`
 	// Whether the funds move between your accounts or out to a third party
 	Type Type `json:"type"`
 }
@@ -86,6 +86,13 @@ func (t *TransferInitiation) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (t *TransferInitiation) GetTransferInitiationStatus() TransferInitiationStatus {
+	if t == nil {
+		return TransferInitiationStatus("")
+	}
+	return t.TransferInitiationStatus
 }
 
 func (t *TransferInitiation) GetAmount() *big.Int {
@@ -198,13 +205,6 @@ func (t *TransferInitiation) GetSourceAccountID() string {
 		return ""
 	}
 	return t.SourceAccountID
-}
-
-func (t *TransferInitiation) GetStatus() TransferInitiationStatus {
-	if t == nil {
-		return TransferInitiationStatus("")
-	}
-	return t.Status
 }
 
 func (t *TransferInitiation) GetType() Type {

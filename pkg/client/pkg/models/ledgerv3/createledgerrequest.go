@@ -63,6 +63,8 @@ func (e *Mode) UnmarshalJSON(data []byte) error {
 }
 
 type CreateLedgerRequest struct {
+	// Configuration for the mirror source (required when mode is MIRROR)
+	MirrorSourceConfig *MirrorSourceConfig `json:"mirrorSource,omitempty"`
 	// Initial account types (name -> account type definition).
 	AccountTypes map[string]AddAccountTypeRequest `json:"accountTypes,omitempty"`
 	// Default chart-of-accounts enforcement for accounts that match no account type.
@@ -71,8 +73,6 @@ type CreateLedgerRequest struct {
 	InitialSchema []MetadataFieldTypeCommand `json:"initialSchema,omitempty"`
 	// Initial typed metadata, persisted atomically with creation in NORMAL and MIRROR modes. Creation requires ledger:WriteLedger, including initial metadata; later metadata saves require ledger:WriteMetadata. JSON null entries are omitted. Schema declarations govern indexing and queries, not write-time value coercion. Cluster policy defaults allow 128 entries per entity, 256 bytes per key, 16384 bytes per value, 65536 bytes per entity, and 1048576 bytes per request. Effective ceilings are configurable through the replicated cluster policy.
 	Metadata map[string]*MetadataValue `json:"metadata,omitempty"`
-	// Configuration for the mirror source (required when mode is MIRROR)
-	MirrorSource *MirrorSourceConfig `json:"mirrorSource,omitempty"`
 	// Ledger mode. MIRROR creates a read-only ledger that syncs from an external v2 source. Values are case-sensitive; any other value is rejected with 400 INVALID_REQUEST.
 	Mode *Mode `default:"NORMAL" json:"mode"`
 }
@@ -86,6 +86,13 @@ func (c *CreateLedgerRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (c *CreateLedgerRequest) GetMirrorSourceConfig() *MirrorSourceConfig {
+	if c == nil {
+		return nil
+	}
+	return c.MirrorSourceConfig
 }
 
 func (c *CreateLedgerRequest) GetAccountTypes() map[string]AddAccountTypeRequest {
@@ -114,13 +121,6 @@ func (c *CreateLedgerRequest) GetMetadata() map[string]*MetadataValue {
 		return nil
 	}
 	return c.Metadata
-}
-
-func (c *CreateLedgerRequest) GetMirrorSource() *MirrorSourceConfig {
-	if c == nil {
-		return nil
-	}
-	return c.MirrorSource
 }
 
 func (c *CreateLedgerRequest) GetMode() *Mode {

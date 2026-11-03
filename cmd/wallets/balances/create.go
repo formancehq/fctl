@@ -96,7 +96,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fmt.Errorf("creating balance: %w", err)
 	}
 
-	c.store.BalanceName = response.CreateBalanceResponse.Data.Name
+	c.store.BalanceName = response.CreateBalanceResponse.Balance.Name
 	return c, nil
 }
 

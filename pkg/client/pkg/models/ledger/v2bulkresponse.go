@@ -3,12 +3,19 @@
 package ledger
 
 type V2BulkResponse struct {
+	// Machine-readable error code identifying the failure
+	V2ErrorsEnum *V2ErrorsEnum `json:"errorCode,omitempty"`
 	// Result of each element of the bulk request, in submission order
 	Data []V2BulkElementResult `json:"data,omitempty"`
-	// Machine-readable error code identifying the failure
-	ErrorCode *V2ErrorsEnum `json:"errorCode,omitempty"`
 	// Human-readable description of the error
 	ErrorMessage *string `json:"errorMessage,omitempty"`
+}
+
+func (v *V2BulkResponse) GetV2ErrorsEnum() *V2ErrorsEnum {
+	if v == nil {
+		return nil
+	}
+	return v.V2ErrorsEnum
 }
 
 func (v *V2BulkResponse) GetData() []V2BulkElementResult {
@@ -16,13 +23,6 @@ func (v *V2BulkResponse) GetData() []V2BulkElementResult {
 		return nil
 	}
 	return v.Data
-}
-
-func (v *V2BulkResponse) GetErrorCode() *V2ErrorsEnum {
-	if v == nil {
-		return nil
-	}
-	return v.ErrorCode
 }
 
 func (v *V2BulkResponse) GetErrorMessage() *string {

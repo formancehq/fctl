@@ -69,7 +69,7 @@ func (c *TriggersTestController) Run(cmd *cobra.Command, args []string) (fctl.Re
 		return nil, fmt.Errorf("testing trigger: %w", err)
 	}
 
-	c.store.Trigger = res.V2TestTriggerResponse.Data
+	c.store.Trigger = res.V2TestTriggerResponse.V2TriggerTest
 
 	return c, nil
 }

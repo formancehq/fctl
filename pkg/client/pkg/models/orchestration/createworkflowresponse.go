@@ -4,12 +4,12 @@ package orchestration
 
 type CreateWorkflowResponse struct {
 	// A workflow definition and the stages it runs
-	Data Workflow `json:"data"`
+	Workflow Workflow `json:"data"`
 }
 
-func (c *CreateWorkflowResponse) GetData() Workflow {
+func (c *CreateWorkflowResponse) GetWorkflow() Workflow {
 	if c == nil {
 		return Workflow{}
 	}
-	return c.Data
+	return c.Workflow
 }

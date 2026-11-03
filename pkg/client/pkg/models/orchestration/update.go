@@ -8,7 +8,7 @@ import (
 
 type Update struct {
 	// Metadata to set on a ledger account
-	Account *UpdateAccount `json:"account,omitempty"`
+	UpdateAccount *UpdateAccount `json:"account,omitempty"`
 }
 
 func (u Update) MarshalJSON() ([]byte, error) {
@@ -22,9 +22,9 @@ func (u *Update) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (u *Update) GetAccount() *UpdateAccount {
+func (u *Update) GetUpdateAccount() *UpdateAccount {
 	if u == nil {
 		return nil
 	}
-	return u.Account
+	return u.UpdateAccount
 }

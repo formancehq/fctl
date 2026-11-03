@@ -8,7 +8,7 @@ import (
 )
 
 func DisplayStripeConfig(cmd *cobra.Command, connectorConfig *payments.ConnectorConfigResponse) error {
-	config := connectorConfig.Data.StripeConfig
+	config := connectorConfig.ConnectorConfig.StripeConfig
 
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})

@@ -12,7 +12,7 @@ type WalletSummary struct {
 	// Funds available to debit, keyed by asset. Covers balances with no expiry and those not yet expired
 	AvailableFunds map[string]*big.Int `json:"availableFunds"`
 	// Each balance of the wallet with its per-asset amounts
-	Balances []BalanceWithAssets `json:"balances"`
+	Balances []AssetHolder1 `json:"balances"`
 	// Funds held in balances carrying an expiry date that has not yet passed, keyed by asset
 	ExpirableFunds map[string]*big.Int `json:"expirableFunds"`
 	// Funds held in balances whose expiry date has passed, keyed by asset
@@ -39,9 +39,9 @@ func (w *WalletSummary) GetAvailableFunds() map[string]*big.Int {
 	return w.AvailableFunds
 }
 
-func (w *WalletSummary) GetBalances() []BalanceWithAssets {
+func (w *WalletSummary) GetBalances() []AssetHolder1 {
 	if w == nil {
-		return []BalanceWithAssets{}
+		return []AssetHolder1{}
 	}
 	return w.Balances
 }

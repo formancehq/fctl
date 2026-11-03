@@ -65,14 +65,14 @@ type GetAuditEntryResponseBody struct {
 	// one of `success` / `failure` is set. `items` is populated only by the
 	// single-entry lookup, not by the list endpoint.
 	//
-	Data *ledgerv3.AuditEntry `json:"data,omitempty"`
+	AuditEntry *ledgerv3.AuditEntry `json:"data,omitempty"`
 }
 
-func (g *GetAuditEntryResponseBody) GetData() *ledgerv3.AuditEntry {
+func (g *GetAuditEntryResponseBody) GetAuditEntry() *ledgerv3.AuditEntry {
 	if g == nil {
 		return nil
 	}
-	return g.Data
+	return g.AuditEntry
 }
 
 type GetAuditEntryResponse struct {

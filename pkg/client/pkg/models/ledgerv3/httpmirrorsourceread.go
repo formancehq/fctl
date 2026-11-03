@@ -7,9 +7,9 @@ import (
 )
 
 type HTTPMirrorSourceRead struct {
+	MirrorOAuthRead *MirrorOAuthRead `json:"oauth2ClientCredentials,omitempty"`
 	// Source URL with userinfo (including passwordless tokens) and query credentials masked
-	BaseURL                 *string          `json:"baseUrl,omitempty"`
-	Oauth2ClientCredentials *MirrorOAuthRead `json:"oauth2ClientCredentials,omitempty"`
+	BaseURL *string `json:"baseUrl,omitempty"`
 }
 
 func (h HTTPMirrorSourceRead) MarshalJSON() ([]byte, error) {
@@ -23,16 +23,16 @@ func (h *HTTPMirrorSourceRead) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (h *HTTPMirrorSourceRead) GetMirrorOAuthRead() *MirrorOAuthRead {
+	if h == nil {
+		return nil
+	}
+	return h.MirrorOAuthRead
+}
+
 func (h *HTTPMirrorSourceRead) GetBaseURL() *string {
 	if h == nil {
 		return nil
 	}
 	return h.BaseURL
-}
-
-func (h *HTTPMirrorSourceRead) GetOauth2ClientCredentials() *MirrorOAuthRead {
-	if h == nil {
-		return nil
-	}
-	return h.Oauth2ClientCredentials
 }

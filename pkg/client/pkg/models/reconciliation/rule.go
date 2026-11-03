@@ -42,20 +42,6 @@ type Rule struct {
 	//
 	// Deprecated: This will be removed in a future release, please migrate away from it as soon as possible.
 	Cadence *Cadence `json:"cadence,omitempty"`
-	// When the rule was created
-	CreatedAt time.Time `json:"createdAt"`
-	// Whether the rule is evaluated. Disabled rules produce no evaluations
-	Enabled bool `json:"enabled"`
-	// Representative CEL for human explanation; not the runtime program.
-	ExplanationCEL *string `json:"explanationCEL,omitempty"`
-	// Unique identifier of the rule
-	ID string `json:"id"`
-	// Arbitrary key/value pairs attached to the rule and copied onto the alerts it raises
-	Labels map[string]string `json:"labels,omitempty"`
-	// Human-readable name of the rule
-	Name string `json:"name"`
-	// Channels notified when this rule raises an alert
-	Notifications []string `json:"notifications,omitempty"`
 	// How long a reconciliation period lasts. Scopes each failing fingerprint
 	// into a period so a March break and an April break are distinct,
 	// independently-closable cases.
@@ -78,6 +64,20 @@ type Rule struct {
 	Severity Severity `json:"severity"`
 	// Which built-in check a rule applies, determining the shape of its templateSpec
 	TemplateKind TemplateKind `json:"templateKind"`
+	// When the rule was created
+	CreatedAt time.Time `json:"createdAt"`
+	// Whether the rule is evaluated. Disabled rules produce no evaluations
+	Enabled bool `json:"enabled"`
+	// Representative CEL for human explanation; not the runtime program.
+	ExplanationCEL *string `json:"explanationCEL,omitempty"`
+	// Unique identifier of the rule
+	ID string `json:"id"`
+	// Arbitrary key/value pairs attached to the rule and copied onto the alerts it raises
+	Labels map[string]string `json:"labels,omitempty"`
+	// Human-readable name of the rule
+	Name string `json:"name"`
+	// Channels notified when this rule raises an alert
+	Notifications []string `json:"notifications,omitempty"`
 	// Parameters for the chosen template, whose shape depends on templateKind
 	TemplateSpec map[string]any `json:"templateSpec"`
 	// When the rule was last modified
@@ -100,6 +100,34 @@ func (r *Rule) GetCadence() *Cadence {
 		return nil
 	}
 	return r.Cadence
+}
+
+func (r *Rule) GetPeriodType() *PeriodType {
+	if r == nil {
+		return nil
+	}
+	return r.PeriodType
+}
+
+func (r *Rule) GetSchedule() *Schedule {
+	if r == nil {
+		return nil
+	}
+	return r.Schedule
+}
+
+func (r *Rule) GetSeverity() Severity {
+	if r == nil {
+		return Severity("")
+	}
+	return r.Severity
+}
+
+func (r *Rule) GetTemplateKind() TemplateKind {
+	if r == nil {
+		return TemplateKind("")
+	}
+	return r.TemplateKind
 }
 
 func (r *Rule) GetCreatedAt() time.Time {
@@ -149,34 +177,6 @@ func (r *Rule) GetNotifications() []string {
 		return nil
 	}
 	return r.Notifications
-}
-
-func (r *Rule) GetPeriodType() *PeriodType {
-	if r == nil {
-		return nil
-	}
-	return r.PeriodType
-}
-
-func (r *Rule) GetSchedule() *Schedule {
-	if r == nil {
-		return nil
-	}
-	return r.Schedule
-}
-
-func (r *Rule) GetSeverity() Severity {
-	if r == nil {
-		return Severity("")
-	}
-	return r.Severity
-}
-
-func (r *Rule) GetTemplateKind() TemplateKind {
-	if r == nil {
-		return TemplateKind("")
-	}
-	return r.TemplateKind
 }
 
 func (r *Rule) GetTemplateSpec() map[string]any {

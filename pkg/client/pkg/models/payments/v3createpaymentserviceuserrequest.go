@@ -4,22 +4,36 @@ package payments
 
 type V3CreatePaymentServiceUserRequest struct {
 	// A postal address to record on the payment service user
-	Address *V3AddressRequest `json:"address,omitempty"`
+	V3AddressRequest *V3AddressRequest `json:"address,omitempty"`
+	// How to reach the payment service user
+	V3ContactDetailsRequest *V3ContactDetailsRequest `json:"contactDetails,omitempty"`
+	// Arbitrary key/value pairs attached to the resource
+	V3Metadata map[string]string `json:"metadata,omitempty"`
 	// Bank accounts to associate with the user
 	BankAccountIDs []string `json:"bankAccountIDs,omitempty"`
-	// How to reach the payment service user
-	ContactDetails *V3ContactDetailsRequest `json:"contactDetails,omitempty"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
 	// Full name of the payment service user
 	Name string `json:"name"`
 }
 
-func (v *V3CreatePaymentServiceUserRequest) GetAddress() *V3AddressRequest {
+func (v *V3CreatePaymentServiceUserRequest) GetV3AddressRequest() *V3AddressRequest {
 	if v == nil {
 		return nil
 	}
-	return v.Address
+	return v.V3AddressRequest
+}
+
+func (v *V3CreatePaymentServiceUserRequest) GetV3ContactDetailsRequest() *V3ContactDetailsRequest {
+	if v == nil {
+		return nil
+	}
+	return v.V3ContactDetailsRequest
+}
+
+func (v *V3CreatePaymentServiceUserRequest) GetV3Metadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.V3Metadata
 }
 
 func (v *V3CreatePaymentServiceUserRequest) GetBankAccountIDs() []string {
@@ -27,20 +41,6 @@ func (v *V3CreatePaymentServiceUserRequest) GetBankAccountIDs() []string {
 		return nil
 	}
 	return v.BankAccountIDs
-}
-
-func (v *V3CreatePaymentServiceUserRequest) GetContactDetails() *V3ContactDetailsRequest {
-	if v == nil {
-		return nil
-	}
-	return v.ContactDetails
-}
-
-func (v *V3CreatePaymentServiceUserRequest) GetMetadata() map[string]string {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
 }
 
 func (v *V3CreatePaymentServiceUserRequest) GetName() string {

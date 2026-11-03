@@ -9,7 +9,7 @@ import (
 
 type V2AggregateBalancesResponse struct {
 	// Balances keyed by asset
-	Data map[string]*big.Int `json:"data"`
+	V2AssetsBalances map[string]*big.Int `json:"data"`
 }
 
 func (v V2AggregateBalancesResponse) MarshalJSON() ([]byte, error) {
@@ -23,11 +23,11 @@ func (v *V2AggregateBalancesResponse) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2AggregateBalancesResponse) GetData() map[string]*big.Int {
+func (v *V2AggregateBalancesResponse) GetV2AssetsBalances() map[string]*big.Int {
 	if v == nil {
 		return map[string]*big.Int{}
 	}
-	return v.Data
+	return v.V2AssetsBalances
 }
 
 // #region class-body-v2aggregatebalancesresponse

@@ -4,67 +4,67 @@ package ledgerv3
 
 // CreatedTransactionAction - Exactly one field must be set.
 type CreatedTransactionAction struct {
-	DeleteAccountMetadata *DeleteAccountMetadataAction `json:"deleteAccountMetadata,omitempty"`
-	DeleteMetadata        *DeleteMetadataAction        `json:"deleteMetadata,omitempty"`
+	DeleteAccountMetadataAction *DeleteAccountMetadataAction `json:"deleteAccountMetadata,omitempty"`
+	DeleteMetadataAction        *DeleteMetadataAction        `json:"deleteMetadata,omitempty"`
 	// Turns the entry into a fill-gap that preserves log-ID and tx-ID continuity.
-	Drop           *DropAction           `json:"drop,omitempty"`
-	RewriteAddress *RewriteAddressAction `json:"rewriteAddress,omitempty"`
+	DropAction           *DropAction           `json:"drop,omitempty"`
+	RewriteAddressAction *RewriteAddressAction `json:"rewriteAddress,omitempty"`
 	// See SetMetadataAction for the literal-vs-CEL and `type` semantics.
 	//
-	SetAccountMetadata *SetAccountMetadataAction `json:"setAccountMetadata,omitempty"`
+	SetAccountMetadataAction *SetAccountMetadataAction `json:"setAccountMetadata,omitempty"`
 	// For every posting address matching `pattern`, iterate every entry in `replacements` and set accountMetadata[address][key] to the RE2 replacement of the address. Each replacement carries an optional metadata `type` token (same tokens as SetMetadataAction.type).
 	//
-	SetAccountMetadataFromAddress *SetAccountMetadataFromAddressAction `json:"setAccountMetadataFromAddress,omitempty"`
+	SetAccountMetadataFromAddressAction *SetAccountMetadataFromAddressAction `json:"setAccountMetadataFromAddress,omitempty"`
 	// `value` is a literal metadata string; `value_expr` is a CEL expression typed against the current variant and evaluated at commit time (e.g. `log.reference`). Exactly one of the two should be set; if neither is set the value defaults to the empty string. Optional `type` coerces the produced string into a typed MetadataValue via the platform conversion matrix — one of "string" (default), "int64", "bool", "uint64", "int8"/"int16"/"int32", "uint8"/"uint16"/"uint32", "datetime".
 	//
-	SetMetadata *SetMetadataAction `json:"setMetadata,omitempty"`
+	SetMetadataAction *SetMetadataAction `json:"setMetadata,omitempty"`
 }
 
-func (c *CreatedTransactionAction) GetDeleteAccountMetadata() *DeleteAccountMetadataAction {
+func (c *CreatedTransactionAction) GetDeleteAccountMetadataAction() *DeleteAccountMetadataAction {
 	if c == nil {
 		return nil
 	}
-	return c.DeleteAccountMetadata
+	return c.DeleteAccountMetadataAction
 }
 
-func (c *CreatedTransactionAction) GetDeleteMetadata() *DeleteMetadataAction {
+func (c *CreatedTransactionAction) GetDeleteMetadataAction() *DeleteMetadataAction {
 	if c == nil {
 		return nil
 	}
-	return c.DeleteMetadata
+	return c.DeleteMetadataAction
 }
 
-func (c *CreatedTransactionAction) GetDrop() *DropAction {
+func (c *CreatedTransactionAction) GetDropAction() *DropAction {
 	if c == nil {
 		return nil
 	}
-	return c.Drop
+	return c.DropAction
 }
 
-func (c *CreatedTransactionAction) GetRewriteAddress() *RewriteAddressAction {
+func (c *CreatedTransactionAction) GetRewriteAddressAction() *RewriteAddressAction {
 	if c == nil {
 		return nil
 	}
-	return c.RewriteAddress
+	return c.RewriteAddressAction
 }
 
-func (c *CreatedTransactionAction) GetSetAccountMetadata() *SetAccountMetadataAction {
+func (c *CreatedTransactionAction) GetSetAccountMetadataAction() *SetAccountMetadataAction {
 	if c == nil {
 		return nil
 	}
-	return c.SetAccountMetadata
+	return c.SetAccountMetadataAction
 }
 
-func (c *CreatedTransactionAction) GetSetAccountMetadataFromAddress() *SetAccountMetadataFromAddressAction {
+func (c *CreatedTransactionAction) GetSetAccountMetadataFromAddressAction() *SetAccountMetadataFromAddressAction {
 	if c == nil {
 		return nil
 	}
-	return c.SetAccountMetadataFromAddress
+	return c.SetAccountMetadataFromAddressAction
 }
 
-func (c *CreatedTransactionAction) GetSetMetadata() *SetMetadataAction {
+func (c *CreatedTransactionAction) GetSetMetadataAction() *SetMetadataAction {
 	if c == nil {
 		return nil
 	}
-	return c.SetMetadata
+	return c.SetMetadataAction
 }

@@ -83,7 +83,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		if response.StatusCode >= 300 {
 			return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 		}
-		c.store.BankAccount = &response.V3GetBankAccountResponse.Data
+		c.store.BankAccount = &response.V3GetBankAccountResponse.V3BankAccount
 
 		return c, nil
 	}
@@ -99,7 +99,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	bankAccount := ToV3BankAccount(&response.BankAccountResponse.Data)
+	bankAccount := ToV3BankAccount(&response.BankAccountResponse.BankAccount)
 	c.store.BankAccount = &bankAccount
 
 	return c, nil
@@ -112,7 +112,7 @@ func ToV3BankAccount(account *payments.BankAccount) payments.V3BankAccount {
 		CreatedAt:       account.CreatedAt,
 		Iban:            account.Iban,
 		ID:              account.ID,
-		Metadata:        account.Metadata,
+		V3Metadata:      account.BankAccountMetadata,
 		Name:            account.Name,
 		RelatedAccounts: make([]payments.V3BankAccountRelatedAccount, 0, len(account.RelatedAccounts)),
 		SwiftBicCode:    account.SwiftBicCode,
@@ -168,5 +168,5 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return fctl.PrintMetadata(cmd.OutOrStdout(), c.store.BankAccount.Metadata)
+	return fctl.PrintMetadata(cmd.OutOrStdout(), c.store.BankAccount.V3Metadata)
 }

@@ -9,6 +9,8 @@ import (
 )
 
 type PaymentAdjustment struct {
+	// Where a payment stands in its lifecycle
+	PaymentStatus PaymentStatus `json:"status"`
 	// Amount carried by this adjustment
 	Amount *big.Int `json:"amount"`
 	// When the adjustment occurred at the provider
@@ -17,8 +19,6 @@ type PaymentAdjustment struct {
 	Raw map[string]any `json:"raw"`
 	// Identifier the adjustment carries at the provider
 	Reference string `json:"reference"`
-	// Where a payment stands in its lifecycle
-	Status PaymentStatus `json:"status"`
 }
 
 func (p PaymentAdjustment) MarshalJSON() ([]byte, error) {
@@ -30,6 +30,13 @@ func (p *PaymentAdjustment) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (p *PaymentAdjustment) GetPaymentStatus() PaymentStatus {
+	if p == nil {
+		return PaymentStatus("")
+	}
+	return p.PaymentStatus
 }
 
 func (p *PaymentAdjustment) GetAmount() *big.Int {
@@ -58,11 +65,4 @@ func (p *PaymentAdjustment) GetReference() string {
 		return ""
 	}
 	return p.Reference
-}
-
-func (p *PaymentAdjustment) GetStatus() PaymentStatus {
-	if p == nil {
-		return PaymentStatus("")
-	}
-	return p.Status
 }

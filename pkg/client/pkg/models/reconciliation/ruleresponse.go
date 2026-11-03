@@ -5,12 +5,12 @@ package reconciliation
 // RuleResponse - OK
 type RuleResponse struct {
 	// A monitoring rule evaluated on a schedule, raising alerts when it fails
-	Data Rule `json:"data"`
+	Rule Rule `json:"data"`
 }
 
-func (r *RuleResponse) GetData() Rule {
+func (r *RuleResponse) GetRule() Rule {
 	if r == nil {
 		return Rule{}
 	}
-	return r.Data
+	return r.Rule
 }

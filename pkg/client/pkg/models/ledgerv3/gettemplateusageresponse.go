@@ -3,12 +3,12 @@
 package ledgerv3
 
 type GetTemplateUsageResponse struct {
-	Data TemplateUsage `json:"data"`
+	TemplateUsage TemplateUsage `json:"data"`
 }
 
-func (g *GetTemplateUsageResponse) GetData() TemplateUsage {
+func (g *GetTemplateUsageResponse) GetTemplateUsage() TemplateUsage {
 	if g == nil {
 		return TemplateUsage{}
 	}
-	return g.Data
+	return g.TemplateUsage
 }

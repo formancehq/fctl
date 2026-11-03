@@ -68,7 +68,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, err
 	}
 
-	c.store.Transaction = response.TransactionResponse.Data
+	c.store.Transaction = response.TransactionResponse.Transaction
 
 	return c, nil
 }

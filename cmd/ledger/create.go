@@ -93,9 +93,9 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 
 	_, err = stackClient.Ledger.V2.CreateLedger(cmd.Context(), operations.V2CreateLedgerRequest{
 		V2CreateLedgerRequest: ledgermodels.V2CreateLedgerRequest{
-			Bucket:   pointer.For(fctl.GetString(cmd, bucketNameFlag)),
-			Metadata: metadata,
-			Features: features,
+			Bucket:     pointer.For(fctl.GetString(cmd, bucketNameFlag)),
+			V2Metadata: metadata,
+			Features:   features,
 		},
 		Ledger: args[0],
 	})

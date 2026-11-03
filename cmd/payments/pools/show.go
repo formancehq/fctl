@@ -84,7 +84,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Pool = &response.PoolResponse.Data
+	c.store.Pool = &response.PoolResponse.Pool
 
 	return c, nil
 }

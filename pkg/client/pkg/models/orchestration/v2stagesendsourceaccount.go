@@ -6,7 +6,7 @@ import (
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
 )
 
-// V2StageSendSourceAccount - Take the funds from a ledger account
+// V2StageSendSourceAccount - Send the funds to a ledger account
 type V2StageSendSourceAccount struct {
 	// Enables unbounded overdraft on the throughAccount when set to true.
 	// This is useful when the throughAccount represents a liability or bridge account

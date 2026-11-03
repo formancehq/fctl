@@ -5,7 +5,7 @@ package ledger
 // V2SchemasCursor - Paginated cursor over the ledger's schemas
 type V2SchemasCursor struct {
 	// The schemas on this page
-	Data []V2Schema `json:"data"`
+	Data []V2SchemaData `json:"data"`
 	// Whether further pages are available
 	HasMore bool `json:"hasMore"`
 	// Cursor for the next page, absent on the last page
@@ -16,9 +16,9 @@ type V2SchemasCursor struct {
 	Previous *string `json:"previous,omitempty"`
 }
 
-func (v *V2SchemasCursor) GetData() []V2Schema {
+func (v *V2SchemasCursor) GetData() []V2SchemaData {
 	if v == nil {
-		return []V2Schema{}
+		return []V2SchemaData{}
 	}
 	return v.Data
 }

@@ -9,6 +9,10 @@ import (
 
 // Account - An account held at a payment provider, surfaced through a connector
 type Account struct {
+	// Arbitrary key/value pairs attached to the account
+	AccountMetadata map[string]string `json:"metadata"`
+	// Whether an account is internal to the provider or belongs to an external party
+	AccountType AccountType `json:"type"`
 	// Human-readable name of the account
 	AccountName string `json:"accountName"`
 	// Identifier of the connector the account belongs to
@@ -23,8 +27,6 @@ type Account struct {
 	DefaultCurrency string `json:"defaultCurrency"`
 	// Unique identifier of the account within Formance
 	ID string `json:"id"`
-	// Arbitrary key/value pairs attached to the account
-	Metadata map[string]string `json:"metadata"`
 	// Pools this account belongs to
 	Pools []string `json:"pools,omitempty"`
 	// Name of the payment provider behind the connector
@@ -33,8 +35,6 @@ type Account struct {
 	Raw map[string]any `json:"raw"`
 	// Identifier the account carries at the provider
 	Reference string `json:"reference"`
-	// Whether an account is internal to the provider or belongs to an external party
-	Type AccountType `json:"type"`
 }
 
 func (a Account) MarshalJSON() ([]byte, error) {
@@ -46,6 +46,20 @@ func (a *Account) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (a *Account) GetAccountMetadata() map[string]string {
+	if a == nil {
+		return nil
+	}
+	return a.AccountMetadata
+}
+
+func (a *Account) GetAccountType() AccountType {
+	if a == nil {
+		return AccountType("")
+	}
+	return a.AccountType
 }
 
 func (a *Account) GetAccountName() string {
@@ -90,13 +104,6 @@ func (a *Account) GetID() string {
 	return a.ID
 }
 
-func (a *Account) GetMetadata() map[string]string {
-	if a == nil {
-		return nil
-	}
-	return a.Metadata
-}
-
 func (a *Account) GetPools() []string {
 	if a == nil {
 		return nil
@@ -123,11 +130,4 @@ func (a *Account) GetReference() string {
 		return ""
 	}
 	return a.Reference
-}
-
-func (a *Account) GetType() AccountType {
-	if a == nil {
-		return AccountType("")
-	}
-	return a.Type
 }

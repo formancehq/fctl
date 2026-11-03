@@ -10,7 +10,7 @@ import (
 
 type V2Transaction struct {
 	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata"`
+	V2Metadata map[string]string `json:"metadata"`
 	// The fund movements making up the transaction
 	Postings []V2Posting `json:"postings"`
 	// Optional caller-supplied identifier, unique within the ledger, used to deduplicate transactions
@@ -32,11 +32,11 @@ func (v *V2Transaction) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *V2Transaction) GetMetadata() map[string]string {
+func (v *V2Transaction) GetV2Metadata() map[string]string {
 	if v == nil {
 		return map[string]string{}
 	}
-	return v.Metadata
+	return v.V2Metadata
 }
 
 func (v *V2Transaction) GetPostings() []V2Posting {

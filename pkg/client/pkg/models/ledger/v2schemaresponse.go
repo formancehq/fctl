@@ -4,14 +4,14 @@ package ledger
 
 type V2SchemaResponse struct {
 	// Complete schema structure with metadata
-	Data V2Schema `json:"data"`
+	V2SchemaData V2SchemaData `json:"data"`
 }
 
-func (v *V2SchemaResponse) GetData() V2Schema {
+func (v *V2SchemaResponse) GetV2SchemaData() V2SchemaData {
 	if v == nil {
-		return V2Schema{}
+		return V2SchemaData{}
 	}
-	return v.Data
+	return v.V2SchemaData
 }
 
 // #region class-body-v2schemaresponse

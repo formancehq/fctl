@@ -4,12 +4,12 @@ package webhooks
 
 type DeliveryResponse struct {
 	// An event queued for delivery to a webhook endpoint, tracking its retry state
-	Data Delivery `json:"data"`
+	Delivery Delivery `json:"data"`
 }
 
-func (d *DeliveryResponse) GetData() Delivery {
+func (d *DeliveryResponse) GetDelivery() Delivery {
 	if d == nil {
 		return Delivery{}
 	}
-	return d.Data
+	return d.Delivery
 }

@@ -9,7 +9,7 @@ import (
 // PaymentsErrorResponse - Error
 type PaymentsErrorResponse struct {
 	// Machine-readable error code identifying the failure
-	ErrorCode PaymentsErrorsEnum `json:"errorCode"`
+	PaymentsErrorsEnum PaymentsErrorsEnum `json:"errorCode"`
 	// Human-readable description of the error
 	ErrorMessage string `json:"errorMessage"`
 }

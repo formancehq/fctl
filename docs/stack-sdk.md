@@ -7,17 +7,9 @@ Membership and Deploy Server retain their existing separate local SDKs.
 
 ## Generation
 
-The generation workflow and Go options come from
-[formance-sdk-go at 3e294b615124f797733e3a5cf5c0e23178c5267b](https://github.com/formancehq/formance-sdk-go/tree/3e294b615124f797733e3a5cf5c0e23178c5267b).
-Use the same `speakeasy run` pipeline and Speakeasy **1.770.0**, with generator
-**2.893.0**. The local adaptations are:
+The Go generator configuration comes from [formance-sdk-go v4.0.0](https://github.com/formancehq/formance-sdk-go/tree/v4.0.0), the version previously used by FCTL. Generation uses Speakeasy **1.757.1** and Go generator **2.866.2**, matching that release's lock. The only `gen.yaml` changes set the package/module path to `github.com/formancehq/fctl/v3/pkg/client` and version to `0.0.0` for this local module.
 
-- `gen.yaml` sets the package/module path to `github.com/formancehq/fctl/v3/pkg/client`
-  and version to `0.0.0`: this checked-in module is released with FCTL, not published separately.
-- `.speakeasy/workflow.yaml` selects `stacks-source@v4.0.0-beta.1` instead of the
-  moving `LATEST_RELEASE` tag. It generates every service, without filtering paths.
-- Registry publication and code-sample publication outputs are omitted. Generation
-  must not update the upstream SDK or its registry outputs.
+The workflow selects `stacks-source@v4.0.0-beta.1` and generates every service. An OpenAPI overlay removes only `x-speakeasy-name-override` from `ledger_V2BaseBulkElement`: with the v4 naming configuration, that annotation is inherited by four bulk variants and produces duplicate Go fields. The overlay preserves their schemas and wire format. Registry and code-sample publication are omitted.
 
 The [Stack release](https://github.com/formancehq/stack/releases/tag/v4.0.0-beta.1)
 contains the corresponding public `generate.json` OpenAPI asset; its SHA-256 is
@@ -41,7 +33,7 @@ generator. Stack generation uses Go 1.25.10 for the official generator's bundled
 Staticcheck; its importer does not support the repository's Go 1.27 export format.
 FCTL builds and tests still use the repository toolchain.
 
-The generated `pkg/client/docs` reference is excluded from Git. Do not edit generated Go files. Change the source pin or generator configuration
+The generated `pkg/client/docs` reference and generated SDK README, usage and contribution guides are excluded from Git; FCTL maintains its own documentation. Do not edit generated Go files. Change the source pin or generator configuration
 and regenerate. Inspect the generated diff and locks when changing a source or
 configuration, then repeat generation and check for unexpected drift. The source
 is selected by its release tag: `--frozen-workflow-lockfile` cannot be used with

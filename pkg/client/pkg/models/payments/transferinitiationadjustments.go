@@ -8,6 +8,8 @@ import (
 )
 
 type TransferInitiationAdjustments struct {
+	// Where a transfer initiation stands in its lifecycle
+	TransferInitiationStatus TransferInitiationStatus `json:"status"`
 	// Unique identifier of the adjustment
 	AdjustmentID string `json:"adjustmentID"`
 	// When the adjustment was recorded
@@ -16,8 +18,6 @@ type TransferInitiationAdjustments struct {
 	Error *string `json:"error,omitempty"`
 	// Arbitrary key/value pairs attached to the adjustment
 	Metadata map[string]string `json:"metadata,omitempty"`
-	// Where a transfer initiation stands in its lifecycle
-	Status TransferInitiationStatus `json:"status"`
 }
 
 func (t TransferInitiationAdjustments) MarshalJSON() ([]byte, error) {
@@ -29,6 +29,13 @@ func (t *TransferInitiationAdjustments) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (t *TransferInitiationAdjustments) GetTransferInitiationStatus() TransferInitiationStatus {
+	if t == nil {
+		return TransferInitiationStatus("")
+	}
+	return t.TransferInitiationStatus
 }
 
 func (t *TransferInitiationAdjustments) GetAdjustmentID() string {
@@ -57,11 +64,4 @@ func (t *TransferInitiationAdjustments) GetMetadata() map[string]string {
 		return nil
 	}
 	return t.Metadata
-}
-
-func (t *TransferInitiationAdjustments) GetStatus() TransferInitiationStatus {
-	if t == nil {
-		return TransferInitiationStatus("")
-	}
-	return t.Status
 }

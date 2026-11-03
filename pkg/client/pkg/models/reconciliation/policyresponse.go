@@ -5,12 +5,12 @@ package reconciliation
 // PolicyResponse - OK
 type PolicyResponse struct {
 	// A reconciliation policy pairing a ledger query with a payments pool
-	Data Policy `json:"data"`
+	Policy Policy `json:"data"`
 }
 
-func (p *PolicyResponse) GetData() Policy {
+func (p *PolicyResponse) GetPolicy() Policy {
 	if p == nil {
 		return Policy{}
 	}
-	return p.Data
+	return p.Policy
 }

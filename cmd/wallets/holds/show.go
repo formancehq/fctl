@@ -12,7 +12,7 @@ import (
 )
 
 type ShowStore struct {
-	Hold wallets.ExpandedDebitHold `json:"hold"`
+	Hold wallets.Hold1 `json:"hold"`
 }
 type ShowController struct {
 	store *ShowStore
@@ -64,7 +64,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("getting hold: %w", err)
 	}
 
-	c.store.Hold = response.GetHoldResponse.Data
+	c.store.Hold = response.GetHoldResponse.Hold
 
 	return c, nil
 }

@@ -8,7 +8,7 @@ import (
 )
 
 func DisplayMangopayConfig(cmd *cobra.Command, connectorConfig *payments.ConnectorConfigResponse) error {
-	config := connectorConfig.Data.MangoPayConfig
+	config := connectorConfig.ConnectorConfig.MangoPayConfig
 
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})

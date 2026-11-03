@@ -36,14 +36,6 @@ type RuleRequest struct {
 	//
 	// Deprecated: This will be removed in a future release, please migrate away from it as soon as possible.
 	Cadence *Cadence `json:"cadence,omitempty"`
-	// Whether the rule should be evaluated. Defaults to enabled
-	Enabled *bool `json:"enabled,omitempty"`
-	// Arbitrary key/value pairs to attach to the rule and copy onto the alerts it raises
-	Labels map[string]string `json:"labels,omitempty"`
-	// Human-readable name for the rule
-	Name string `json:"name"`
-	// Channels to notify when this rule raises an alert
-	Notifications []string `json:"notifications,omitempty"`
 	// How long a reconciliation period lasts. Scopes each failing fingerprint
 	// into a period so a March break and an April break are distinct,
 	// independently-closable cases.
@@ -66,6 +58,14 @@ type RuleRequest struct {
 	Severity *Severity `json:"severity,omitempty"`
 	// Which built-in check a rule applies, determining the shape of its templateSpec
 	TemplateKind TemplateKind `json:"templateKind"`
+	// Whether the rule should be evaluated. Defaults to enabled
+	Enabled *bool `json:"enabled,omitempty"`
+	// Arbitrary key/value pairs to attach to the rule and copy onto the alerts it raises
+	Labels map[string]string `json:"labels,omitempty"`
+	// Human-readable name for the rule
+	Name string `json:"name"`
+	// Channels to notify when this rule raises an alert
+	Notifications []string `json:"notifications,omitempty"`
 	// Parameters for the chosen template, whose shape depends on templateKind
 	TemplateSpec map[string]any `json:"templateSpec"`
 }
@@ -75,34 +75,6 @@ func (r *RuleRequest) GetCadence() *Cadence {
 		return nil
 	}
 	return r.Cadence
-}
-
-func (r *RuleRequest) GetEnabled() *bool {
-	if r == nil {
-		return nil
-	}
-	return r.Enabled
-}
-
-func (r *RuleRequest) GetLabels() map[string]string {
-	if r == nil {
-		return nil
-	}
-	return r.Labels
-}
-
-func (r *RuleRequest) GetName() string {
-	if r == nil {
-		return ""
-	}
-	return r.Name
-}
-
-func (r *RuleRequest) GetNotifications() []string {
-	if r == nil {
-		return nil
-	}
-	return r.Notifications
 }
 
 func (r *RuleRequest) GetPeriodType() *PeriodType {
@@ -131,6 +103,34 @@ func (r *RuleRequest) GetTemplateKind() TemplateKind {
 		return TemplateKind("")
 	}
 	return r.TemplateKind
+}
+
+func (r *RuleRequest) GetEnabled() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Enabled
+}
+
+func (r *RuleRequest) GetLabels() map[string]string {
+	if r == nil {
+		return nil
+	}
+	return r.Labels
+}
+
+func (r *RuleRequest) GetName() string {
+	if r == nil {
+		return ""
+	}
+	return r.Name
+}
+
+func (r *RuleRequest) GetNotifications() []string {
+	if r == nil {
+		return nil
+	}
+	return r.Notifications
 }
 
 func (r *RuleRequest) GetTemplateSpec() map[string]any {

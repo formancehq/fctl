@@ -4,12 +4,12 @@ package webhooks
 
 type ReplayDeliveriesResponse struct {
 	// Outcome of a bulk replay, counting the deliveries it moved
-	Data ReplayDeliveriesResult `json:"data"`
+	ReplayDeliveriesResult ReplayDeliveriesResult `json:"data"`
 }
 
-func (r *ReplayDeliveriesResponse) GetData() ReplayDeliveriesResult {
+func (r *ReplayDeliveriesResponse) GetReplayDeliveriesResult() ReplayDeliveriesResult {
 	if r == nil {
 		return ReplayDeliveriesResult{}
 	}
-	return r.Data
+	return r.ReplayDeliveriesResult
 }

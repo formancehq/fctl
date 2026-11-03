@@ -10,6 +10,12 @@ import (
 
 // V3Payment - A payment observed at a provider and surfaced through a connector
 type V3Payment struct {
+	// Arbitrary key/value pairs attached to the resource
+	V3Metadata map[string]string `json:"metadata,omitempty"`
+	// Where a payment stands in its lifecycle
+	V3PaymentStatusEnum V3PaymentStatusEnum `json:"status"`
+	// Direction of a payment
+	V3PaymentTypeEnum V3PaymentTypeEnum `json:"type"`
 	// Successive changes to the payment's amount and status, newest first
 	Adjustments []V3PaymentAdjustment `json:"adjustments,omitempty"`
 	// Current amount of the payment after applying its adjustments
@@ -26,8 +32,6 @@ type V3Payment struct {
 	ID string `json:"id"`
 	// Amount the payment was created with, before any adjustment
 	InitialAmount *big.Int `json:"initialAmount"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
 	// Name of the payment provider behind the connector
 	Provider string `json:"provider"`
 	// Identifier the payment carries at the provider
@@ -36,10 +40,6 @@ type V3Payment struct {
 	Scheme string `json:"scheme"`
 	// Identifier of the account the funds left
 	SourceAccountID *string `json:"sourceAccountID,omitempty"`
-	// Where a payment stands in its lifecycle
-	Status V3PaymentStatusEnum `json:"status"`
-	// Direction of a payment
-	Type V3PaymentTypeEnum `json:"type"`
 }
 
 func (v V3Payment) MarshalJSON() ([]byte, error) {
@@ -51,6 +51,27 @@ func (v *V3Payment) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V3Payment) GetV3Metadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.V3Metadata
+}
+
+func (v *V3Payment) GetV3PaymentStatusEnum() V3PaymentStatusEnum {
+	if v == nil {
+		return V3PaymentStatusEnum("")
+	}
+	return v.V3PaymentStatusEnum
+}
+
+func (v *V3Payment) GetV3PaymentTypeEnum() V3PaymentTypeEnum {
+	if v == nil {
+		return V3PaymentTypeEnum("")
+	}
+	return v.V3PaymentTypeEnum
 }
 
 func (v *V3Payment) GetAdjustments() []V3PaymentAdjustment {
@@ -109,13 +130,6 @@ func (v *V3Payment) GetInitialAmount() *big.Int {
 	return v.InitialAmount
 }
 
-func (v *V3Payment) GetMetadata() map[string]string {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
-}
-
 func (v *V3Payment) GetProvider() string {
 	if v == nil {
 		return ""
@@ -142,20 +156,6 @@ func (v *V3Payment) GetSourceAccountID() *string {
 		return nil
 	}
 	return v.SourceAccountID
-}
-
-func (v *V3Payment) GetStatus() V3PaymentStatusEnum {
-	if v == nil {
-		return V3PaymentStatusEnum("")
-	}
-	return v.Status
-}
-
-func (v *V3Payment) GetType() V3PaymentTypeEnum {
-	if v == nil {
-		return V3PaymentTypeEnum("")
-	}
-	return v.Type
 }
 
 // #region class-body-v3payment

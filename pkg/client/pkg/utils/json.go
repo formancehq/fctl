@@ -348,12 +348,6 @@ func marshalValue(v interface{}, tag reflect.StructTag) (json.RawMessage, error)
 			return []byte("null"), nil
 		}
 
-		// []byte is special-cased by encoding/json to use base64 encoding.
-		// Delegate directly to avoid treating individual bytes as array elements.
-		if typ.Elem().Kind() == reflect.Uint8 {
-			return json.Marshal(val.Interface())
-		}
-
 		out := []json.RawMessage{}
 
 		for i := 0; i < val.Len(); i++ {
@@ -512,13 +506,6 @@ func unmarshalValue(value json.RawMessage, v reflect.Value, tag reflect.StructTa
 			return nil
 		}
 	case reflect.Map:
-		if implementsJSONUnmarshaler(v.Type()) {
-			if v.CanAddr() {
-				return json.Unmarshal(value, v.Addr().Interface())
-			}
-			return json.Unmarshal(value, v.Interface())
-		}
-
 		if bytes.Equal(value, []byte("null")) || !isComplexValueType(dereferenceTypePointer(typ.Elem())) {
 			if v.CanAddr() {
 				return json.Unmarshal(value, v.Addr().Interface())
@@ -553,15 +540,6 @@ func unmarshalValue(value json.RawMessage, v reflect.Value, tag reflect.StructTa
 		v.Set(m)
 		return nil
 	case reflect.Slice, reflect.Array:
-		// []byte is special-cased by encoding/json to use base64 encoding.
-		// Delegate directly to avoid treating the base64 string as a JSON array.
-		if typ.Elem().Kind() == reflect.Uint8 {
-			if v.CanAddr() {
-				return json.Unmarshal(value, v.Addr().Interface())
-			}
-			return json.Unmarshal(value, v.Interface())
-		}
-
 		var unmarshaled []json.RawMessage
 
 		if err := json.Unmarshal(value, &unmarshaled); err != nil {

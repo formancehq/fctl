@@ -9,13 +9,13 @@ import (
 
 type DebitWalletRequest struct {
 	// An amount together with the asset it is denominated in
-	Amount Monetary `json:"amount"`
+	Monetary Monetary `json:"amount"`
+	// The counterparty of a wallet movement, either a ledger account or another wallet
+	Subject *Subject `json:"destination,omitempty"`
 	// Names of the balances to debit from, in order. Defaults to the main balance when omitted
 	Balances []string `json:"balances,omitempty"`
 	// Human-readable reason for the debit
 	Description *string `json:"description,omitempty"`
-	// The counterparty of a wallet movement, either a ledger account or another wallet
-	Destination *Subject `json:"destination,omitempty"`
 	// Metadata associated with the wallet.
 	Metadata map[string]string `json:"metadata"`
 	// Set to true to create a pending hold. If false, the wallet will be debited immediately.
@@ -35,11 +35,32 @@ func (d *DebitWalletRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (d *DebitWalletRequest) GetAmount() Monetary {
+func (d *DebitWalletRequest) GetMonetary() Monetary {
 	if d == nil {
 		return Monetary{}
 	}
-	return d.Amount
+	return d.Monetary
+}
+
+func (d *DebitWalletRequest) GetSubject() *Subject {
+	if d == nil {
+		return nil
+	}
+	return d.Subject
+}
+
+func (d *DebitWalletRequest) GetSubjectAccount() *LedgerAccountSubject {
+	if v := d.GetSubject(); v != nil {
+		return v.LedgerAccountSubject
+	}
+	return nil
+}
+
+func (d *DebitWalletRequest) GetSubjectWallet() *WalletSubject {
+	if v := d.GetSubject(); v != nil {
+		return v.WalletSubject
+	}
+	return nil
 }
 
 func (d *DebitWalletRequest) GetBalances() []string {
@@ -54,27 +75,6 @@ func (d *DebitWalletRequest) GetDescription() *string {
 		return nil
 	}
 	return d.Description
-}
-
-func (d *DebitWalletRequest) GetDestination() *Subject {
-	if d == nil {
-		return nil
-	}
-	return d.Destination
-}
-
-func (d *DebitWalletRequest) GetDestinationAccount() *LedgerAccountSubject {
-	if v := d.GetDestination(); v != nil {
-		return v.LedgerAccountSubject
-	}
-	return nil
-}
-
-func (d *DebitWalletRequest) GetDestinationWallet() *WalletSubject {
-	if v := d.GetDestination(); v != nil {
-		return v.WalletSubject
-	}
-	return nil
 }
 
 func (d *DebitWalletRequest) GetMetadata() map[string]string {

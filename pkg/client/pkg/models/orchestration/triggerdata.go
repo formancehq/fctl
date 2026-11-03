@@ -2,11 +2,19 @@
 
 package orchestration
 
+import (
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
+	"time"
+)
+
+// TriggerData - A rule that starts a workflow when a matching event arrives
 type TriggerData struct {
+	CreatedAt time.Time `json:"createdAt"`
 	// Type of event that fires this trigger
 	Event string `json:"event"`
 	// Expression evaluated against the event. The workflow runs only when it matches
 	Filter *string `json:"filter,omitempty"`
+	ID     string  `json:"id"`
 	// Human-readable name for the trigger
 	Name *string `json:"name,omitempty"`
 	// Expressions evaluated against the event to build the workflow's input variables
@@ -15,6 +23,24 @@ type TriggerData struct {
 	Version *string `json:"version,omitempty"`
 	// Identifier of the workflow to run when the trigger fires
 	WorkflowID string `json:"workflowID"`
+}
+
+func (t TriggerData) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(t, "", false)
+}
+
+func (t *TriggerData) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &t, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *TriggerData) GetCreatedAt() time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return t.CreatedAt
 }
 
 func (t *TriggerData) GetEvent() string {
@@ -29,6 +55,13 @@ func (t *TriggerData) GetFilter() *string {
 		return nil
 	}
 	return t.Filter
+}
+
+func (t *TriggerData) GetID() string {
+	if t == nil {
+		return ""
+	}
+	return t.ID
 }
 
 func (t *TriggerData) GetName() *string {

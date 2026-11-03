@@ -9,18 +9,18 @@ import (
 )
 
 type V3CreatePaymentAdjustmentRequest struct {
+	// Arbitrary key/value pairs attached to the resource
+	V3Metadata map[string]string `json:"metadata,omitempty"`
+	// Where a payment stands in its lifecycle
+	V3PaymentStatusEnum V3PaymentStatusEnum `json:"status"`
 	// Amount carried by this adjustment
 	Amount *big.Int `json:"amount,omitempty"`
 	// Asset the adjustment is denominated in
 	Asset *string `json:"asset,omitempty"`
 	// When the adjustment occurred at the provider
 	CreatedAt time.Time `json:"createdAt"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
 	// Identifier the adjustment carries at the provider
 	Reference string `json:"reference"`
-	// Where a payment stands in its lifecycle
-	Status V3PaymentStatusEnum `json:"status"`
 }
 
 func (v V3CreatePaymentAdjustmentRequest) MarshalJSON() ([]byte, error) {
@@ -32,6 +32,20 @@ func (v *V3CreatePaymentAdjustmentRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V3CreatePaymentAdjustmentRequest) GetV3Metadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.V3Metadata
+}
+
+func (v *V3CreatePaymentAdjustmentRequest) GetV3PaymentStatusEnum() V3PaymentStatusEnum {
+	if v == nil {
+		return V3PaymentStatusEnum("")
+	}
+	return v.V3PaymentStatusEnum
 }
 
 func (v *V3CreatePaymentAdjustmentRequest) GetAmount() *big.Int {
@@ -55,25 +69,11 @@ func (v *V3CreatePaymentAdjustmentRequest) GetCreatedAt() time.Time {
 	return v.CreatedAt
 }
 
-func (v *V3CreatePaymentAdjustmentRequest) GetMetadata() map[string]string {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
-}
-
 func (v *V3CreatePaymentAdjustmentRequest) GetReference() string {
 	if v == nil {
 		return ""
 	}
 	return v.Reference
-}
-
-func (v *V3CreatePaymentAdjustmentRequest) GetStatus() V3PaymentStatusEnum {
-	if v == nil {
-		return V3PaymentStatusEnum("")
-	}
-	return v.Status
 }
 
 // #region class-body-v3createpaymentadjustmentrequest

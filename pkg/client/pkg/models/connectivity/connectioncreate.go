@@ -41,7 +41,7 @@ func (e *ConnectionCreateChannel) UnmarshalJSON(data []byte) error {
 	}
 }
 
-// Configuration - Tenant configuration. `env` and `files` contain literal string values,
+// ConnectionCreateConnectionConfiguration - Tenant configuration. `env` and `files` contain literal string values,
 // persisted by the service. Properties marked
 // `format: password` by the selected connector schema are stored confidentially
 // and omitted from read responses. Administrator metadata, binding
@@ -52,7 +52,7 @@ func (e *ConnectionCreateChannel) UnmarshalJSON(data []byte) error {
 // update. An imported instance missing either may assign it through PUT after complete
 // configuration validation against a currently published release.
 // Once assigned, either value may be repeated but never changed or cleared.
-type Configuration struct {
+type ConnectionCreateConnectionConfiguration struct {
 	// Maturity channel the service resolves to an exact release. Exactly
 	// one of `version` and `channel`. The last applied release is reported in `status.appliedVersion`.
 	//
@@ -82,63 +82,63 @@ type Configuration struct {
 	Version *string `json:"version,omitempty"`
 }
 
-func (c *Configuration) GetChannel() *ConnectionCreateChannel {
+func (c *ConnectionCreateConnectionConfiguration) GetChannel() *ConnectionCreateChannel {
 	if c == nil {
 		return nil
 	}
 	return c.Channel
 }
 
-func (c *Configuration) GetConnector() string {
+func (c *ConnectionCreateConnectionConfiguration) GetConnector() string {
 	if c == nil {
 		return ""
 	}
 	return c.Connector
 }
 
-func (c *Configuration) GetEnv() map[string]string {
+func (c *ConnectionCreateConnectionConfiguration) GetEnv() map[string]string {
 	if c == nil {
 		return nil
 	}
 	return c.Env
 }
 
-func (c *Configuration) GetFiles() map[string]string {
+func (c *ConnectionCreateConnectionConfiguration) GetFiles() map[string]string {
 	if c == nil {
 		return nil
 	}
 	return c.Files
 }
 
-func (c *Configuration) GetInitialCursor() *string {
+func (c *ConnectionCreateConnectionConfiguration) GetInitialCursor() *string {
 	if c == nil {
 		return nil
 	}
 	return c.InitialCursor
 }
 
-func (c *Configuration) GetLedger() string {
+func (c *ConnectionCreateConnectionConfiguration) GetLedger() string {
 	if c == nil {
 		return ""
 	}
 	return c.Ledger
 }
 
-func (c *Configuration) GetPollInterval() *string {
+func (c *ConnectionCreateConnectionConfiguration) GetPollInterval() *string {
 	if c == nil {
 		return nil
 	}
 	return c.PollInterval
 }
 
-func (c *Configuration) GetSuspend() *bool {
+func (c *ConnectionCreateConnectionConfiguration) GetSuspend() *bool {
 	if c == nil {
 		return nil
 	}
 	return c.Suspend
 }
 
-func (c *Configuration) GetVersion() *string {
+func (c *ConnectionCreateConnectionConfiguration) GetVersion() *string {
 	if c == nil {
 		return nil
 	}
@@ -146,15 +146,15 @@ func (c *Configuration) GetVersion() *string {
 }
 
 type ConnectionCreate struct {
-	Configuration Configuration `json:"configuration"`
-	Name          string        `json:"name"`
+	ConnectionConfiguration ConnectionCreateConnectionConfiguration `json:"configuration"`
+	Name                    string                                  `json:"name"`
 }
 
-func (c *ConnectionCreate) GetConfiguration() Configuration {
+func (c *ConnectionCreate) GetConnectionConfiguration() ConnectionCreateConnectionConfiguration {
 	if c == nil {
-		return Configuration{}
+		return ConnectionCreateConnectionConfiguration{}
 	}
-	return c.Configuration
+	return c.ConnectionConfiguration
 }
 
 func (c *ConnectionCreate) GetName() string {

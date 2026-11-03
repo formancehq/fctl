@@ -38,10 +38,10 @@ func (e *State) UnmarshalJSON(data []byte) error {
 
 // MirrorSyncProgress - Sync progress for MIRROR ledgers (populated at read time)
 type MirrorSyncProgress struct {
+	// Most recent mirror sync error (null if healthy)
+	MirrorSyncError *MirrorSyncError `json:"error,omitempty"`
 	// Last ingested v2 log ID
 	Cursor *big.Int `bigint:"string" json:"cursor"`
-	// Most recent mirror sync error (null if healthy)
-	Error *MirrorSyncError `json:"error,omitempty"`
 	// Number of remaining logs to sync (sourceLogCount - cursor)
 	RemainingLogs *big.Int `bigint:"string" json:"remainingLogs"`
 	// Latest known log ID in the v2 source
@@ -61,18 +61,18 @@ func (m *MirrorSyncProgress) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (m *MirrorSyncProgress) GetMirrorSyncError() *MirrorSyncError {
+	if m == nil {
+		return nil
+	}
+	return m.MirrorSyncError
+}
+
 func (m *MirrorSyncProgress) GetCursor() *big.Int {
 	if m == nil {
 		return big.NewInt(0)
 	}
 	return m.Cursor
-}
-
-func (m *MirrorSyncProgress) GetError() *MirrorSyncError {
-	if m == nil {
-		return nil
-	}
-	return m.Error
 }
 
 func (m *MirrorSyncProgress) GetRemainingLogs() *big.Int {

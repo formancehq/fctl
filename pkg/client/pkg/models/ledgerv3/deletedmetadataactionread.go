@@ -8,8 +8,8 @@ import (
 
 type DeletedMetadataActionRead struct {
 	// Turns the entry into a fill-gap that preserves log-ID and tx-ID continuity.
-	Drop           *DropAction               `json:"drop,omitempty"`
-	RewriteAddress *RewriteAddressActionRead `json:"rewriteAddress,omitempty"`
+	DropAction               *DropAction               `json:"drop,omitempty"`
+	RewriteAddressActionRead *RewriteAddressActionRead `json:"rewriteAddress,omitempty"`
 }
 
 func (d DeletedMetadataActionRead) MarshalJSON() ([]byte, error) {
@@ -23,16 +23,16 @@ func (d *DeletedMetadataActionRead) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (d *DeletedMetadataActionRead) GetDrop() *DropAction {
+func (d *DeletedMetadataActionRead) GetDropAction() *DropAction {
 	if d == nil {
 		return nil
 	}
-	return d.Drop
+	return d.DropAction
 }
 
-func (d *DeletedMetadataActionRead) GetRewriteAddress() *RewriteAddressActionRead {
+func (d *DeletedMetadataActionRead) GetRewriteAddressActionRead() *RewriteAddressActionRead {
 	if d == nil {
 		return nil
 	}
-	return d.RewriteAddress
+	return d.RewriteAddressActionRead
 }

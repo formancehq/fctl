@@ -4,14 +4,14 @@ package orchestration
 
 type V2GetWorkflowInstanceHistoryResponse struct {
 	// Per-stage history of a workflow run
-	Data []V2WorkflowInstanceHistory `json:"data"`
+	V2WorkflowInstanceHistoryList []V2WorkflowInstanceHistory `json:"data"`
 }
 
-func (v *V2GetWorkflowInstanceHistoryResponse) GetData() []V2WorkflowInstanceHistory {
+func (v *V2GetWorkflowInstanceHistoryResponse) GetV2WorkflowInstanceHistoryList() []V2WorkflowInstanceHistory {
 	if v == nil {
 		return []V2WorkflowInstanceHistory{}
 	}
-	return v.Data
+	return v.V2WorkflowInstanceHistoryList
 }
 
 // #region class-body-v2getworkflowinstancehistoryresponse

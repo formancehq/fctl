@@ -78,9 +78,9 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.SecretId = response.CreateSecretResponse.Data.ID
-	c.store.Name = response.CreateSecretResponse.Data.Name
-	c.store.Clear = response.CreateSecretResponse.Data.Clear
+	c.store.SecretId = response.CreateSecretResponse.SecretOptions.ID
+	c.store.Name = response.CreateSecretResponse.SecretOptions.Name
+	c.store.Clear = response.CreateSecretResponse.SecretOptions.Clear
 
 	return c, nil
 }

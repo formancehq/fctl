@@ -4,12 +4,12 @@ package wallets
 
 type CreateWalletResponse struct {
 	// A wallet backed by a set of ledger accounts
-	Data Wallet `json:"data"`
+	Wallet Wallet `json:"data"`
 }
 
-func (c *CreateWalletResponse) GetData() Wallet {
+func (c *CreateWalletResponse) GetWallet() Wallet {
 	if c == nil {
 		return Wallet{}
 	}
-	return c.Data
+	return c.Wallet
 }

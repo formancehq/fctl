@@ -87,7 +87,7 @@ func (c *ReconciliationController) Run(cmd *cobra.Command, args []string) (fctl.
 		return nil, fmt.Errorf("policy not found")
 	}
 
-	c.store.Reconciliation = response.ReconciliationResponse.Data
+	c.store.Reconciliation = response.ReconciliationResponse.Reconciliation
 
 	return c, nil
 }

@@ -4,14 +4,14 @@ package payments
 
 type V3GetPaymentInitiationResponse struct {
 	// A payment Formance asked a connector to execute
-	Data V3PaymentInitiation `json:"data"`
+	V3PaymentInitiation V3PaymentInitiation `json:"data"`
 }
 
-func (v *V3GetPaymentInitiationResponse) GetData() V3PaymentInitiation {
+func (v *V3GetPaymentInitiationResponse) GetV3PaymentInitiation() V3PaymentInitiation {
 	if v == nil {
 		return V3PaymentInitiation{}
 	}
-	return v.Data
+	return v.V3PaymentInitiation
 }
 
 // #region class-body-v3getpaymentinitiationresponse

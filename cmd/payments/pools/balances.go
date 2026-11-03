@@ -70,7 +70,7 @@ func (c *BalancesController) Run(cmd *cobra.Command, args []string) (fctl.Render
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Balances = &response.PoolBalancesResponse.Data
+	c.store.Balances = &response.PoolBalancesResponse.PoolBalances
 
 	return c, nil
 }

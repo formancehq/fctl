@@ -14,7 +14,7 @@ import (
 )
 
 type ListStore struct {
-	Cursor *payments.PoolsCursorCursor `json:"cursor"`
+	Cursor *payments.PoolsCursorCursorBase `json:"cursor"`
 }
 
 type ListController struct {
@@ -34,7 +34,7 @@ var _ fctl.Controller[*ListStore] = (*ListController)(nil)
 
 func NewListStore() *ListStore {
 	return &ListStore{
-		Cursor: &payments.PoolsCursorCursor{},
+		Cursor: &payments.PoolsCursorCursorBase{},
 	}
 }
 
@@ -96,7 +96,7 @@ func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Cursor = &response.PoolsCursor.Cursor
+	c.store.Cursor = &response.PoolsCursor.CursorBase
 
 	return c, nil
 }

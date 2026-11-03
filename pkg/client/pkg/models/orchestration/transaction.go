@@ -10,10 +10,10 @@ import (
 
 // Transaction - A transaction recorded in the ledger, carrying its postings and metadata
 type Transaction struct {
-	// Unique sequential identifier for this transaction within the ledger
-	ID *big.Int `json:"id"`
 	// Arbitrary key/value pairs attached to the resource
 	Metadata map[string]string `json:"metadata"`
+	// Unique sequential identifier for this transaction within the ledger
+	ID *big.Int `json:"id"`
 	// The fund movements making up the transaction
 	Postings []Posting `json:"postings"`
 	// Optional caller-supplied identifier, unique within the ledger, used to deduplicate transactions
@@ -35,18 +35,18 @@ func (t *Transaction) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (t *Transaction) GetID() *big.Int {
-	if t == nil {
-		return big.NewInt(0)
-	}
-	return t.ID
-}
-
 func (t *Transaction) GetMetadata() map[string]string {
 	if t == nil {
 		return map[string]string{}
 	}
 	return t.Metadata
+}
+
+func (t *Transaction) GetID() *big.Int {
+	if t == nil {
+		return big.NewInt(0)
+	}
+	return t.ID
 }
 
 func (t *Transaction) GetPostings() []Posting {

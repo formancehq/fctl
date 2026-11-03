@@ -3,12 +3,12 @@
 package ledgerv3
 
 type AggregateVolumesResponse struct {
-	Data AggregateVolumesData `json:"data"`
+	AggregateVolumesData AggregateVolumesData `json:"data"`
 }
 
-func (a *AggregateVolumesResponse) GetData() AggregateVolumesData {
+func (a *AggregateVolumesResponse) GetAggregateVolumesData() AggregateVolumesData {
 	if a == nil {
 		return AggregateVolumesData{}
 	}
-	return a.Data
+	return a.AggregateVolumesData
 }

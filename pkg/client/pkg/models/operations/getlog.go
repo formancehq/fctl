@@ -84,14 +84,14 @@ type GetLogResponseBody struct {
 	// inside payload.apply.log uses the flat LedgerLog contract.
 	// Non-apply system payload variants are not exhaustively described here.
 	//
-	Data ledgerv3.SystemLog `json:"data"`
+	SystemLog ledgerv3.SystemLog `json:"data"`
 }
 
-func (g *GetLogResponseBody) GetData() ledgerv3.SystemLog {
+func (g *GetLogResponseBody) GetSystemLog() ledgerv3.SystemLog {
 	if g == nil {
 		return ledgerv3.SystemLog{}
 	}
-	return g.Data
+	return g.SystemLog
 }
 
 type GetLogResponse struct {

@@ -67,7 +67,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, err
 	}
 
-	c.store.Account = &response.AccountResponse.Data
+	c.store.Account = &response.AccountResponse.AccountWithVolumesAndBalances
 
 	return c, nil
 }

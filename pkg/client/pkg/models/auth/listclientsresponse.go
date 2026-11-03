@@ -4,10 +4,10 @@ package auth
 
 type ListClientsResponse struct {
 	// The clients registered on this stack
-	Data []Client `json:"data,omitempty"`
+	Data []ClientOptions `json:"data,omitempty"`
 }
 
-func (l *ListClientsResponse) GetData() []Client {
+func (l *ListClientsResponse) GetData() []ClientOptions {
 	if l == nil {
 		return nil
 	}

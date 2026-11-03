@@ -4,12 +4,12 @@ package ledger
 
 type MappingResponse struct {
 	// Contracts constraining the balances a ledger's accounts may hold
-	Data *Mapping `json:"data,omitempty"`
+	Mapping *Mapping `json:"data,omitempty"`
 }
 
-func (m *MappingResponse) GetData() *Mapping {
+func (m *MappingResponse) GetMapping() *Mapping {
 	if m == nil {
 		return nil
 	}
-	return m.Data
+	return m.Mapping
 }

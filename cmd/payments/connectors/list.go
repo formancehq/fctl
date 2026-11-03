@@ -167,6 +167,6 @@ func V1toConnectorData(connector payments.ConnectorsResponseData) ConnectorData 
 	return ConnectorData{
 		ID:       connector.ConnectorID,
 		Name:     connector.Name,
-		Provider: string(connector.Provider),
+		Provider: string(connector.Connector),
 	}
 }

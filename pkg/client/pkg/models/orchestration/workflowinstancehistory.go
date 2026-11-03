@@ -8,10 +8,10 @@ import (
 )
 
 type WorkflowInstanceHistory struct {
+	// One step of a workflow, whose shape depends on the stage type
+	Stage Stage `json:"input"`
 	// Why the stage failed, absent when it succeeded
 	Error *string `json:"error,omitempty"`
-	// One step of a workflow, whose shape depends on the stage type
-	Input Stage `json:"input"`
 	// Name of the stage this history entry records
 	Name string `json:"name"`
 	// When the stage started
@@ -33,18 +33,18 @@ func (w *WorkflowInstanceHistory) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (w *WorkflowInstanceHistory) GetStage() Stage {
+	if w == nil {
+		return Stage{}
+	}
+	return w.Stage
+}
+
 func (w *WorkflowInstanceHistory) GetError() *string {
 	if w == nil {
 		return nil
 	}
 	return w.Error
-}
-
-func (w *WorkflowInstanceHistory) GetInput() Stage {
-	if w == nil {
-		return Stage{}
-	}
-	return w.Input
 }
 
 func (w *WorkflowInstanceHistory) GetName() string {

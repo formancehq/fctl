@@ -32,8 +32,6 @@ func newFormanceReconciliationV1(rootSDK *Formance, sdkConfig config.SDKConfigur
 }
 
 // AcceptAlert - Accept an alert (accepted_by_business)
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) AcceptAlert(ctx context.Context, request operations.AcceptAlertRequest, opts ...operations.Option) (*operations.AcceptAlertResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -93,7 +91,7 @@ func (s *FormanceReconciliationV1) AcceptAlert(ctx context.Context, request oper
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -177,7 +175,7 @@ func (s *FormanceReconciliationV1) AcceptAlert(ctx context.Context, request oper
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -248,8 +246,6 @@ func (s *FormanceReconciliationV1) AcceptAlert(ctx context.Context, request oper
 }
 
 // AckAlert - Acknowledge an alert
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) AckAlert(ctx context.Context, request operations.AckAlertRequest, opts ...operations.Option) (*operations.AckAlertResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -309,7 +305,7 @@ func (s *FormanceReconciliationV1) AckAlert(ctx context.Context, request operati
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -393,7 +389,7 @@ func (s *FormanceReconciliationV1) AckAlert(ctx context.Context, request operati
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -465,8 +461,6 @@ func (s *FormanceReconciliationV1) AckAlert(ctx context.Context, request operati
 
 // CreatePolicy - Create a policy
 // Create a policy
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) CreatePolicy(ctx context.Context, request reconciliation.PolicyRequest, opts ...operations.Option) (*operations.CreatePolicyResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -526,7 +520,7 @@ func (s *FormanceReconciliationV1) CreatePolicy(ctx context.Context, request rec
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -610,7 +604,7 @@ func (s *FormanceReconciliationV1) CreatePolicy(ctx context.Context, request rec
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"201"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -681,8 +675,6 @@ func (s *FormanceReconciliationV1) CreatePolicy(ctx context.Context, request rec
 }
 
 // CreateRule - Create a rule
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) CreateRule(ctx context.Context, request reconciliation.RuleRequest, opts ...operations.Option) (*operations.CreateRuleResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -742,7 +734,7 @@ func (s *FormanceReconciliationV1) CreateRule(ctx context.Context, request recon
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -826,7 +818,7 @@ func (s *FormanceReconciliationV1) CreateRule(ctx context.Context, request recon
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"201"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -898,8 +890,6 @@ func (s *FormanceReconciliationV1) CreateRule(ctx context.Context, request recon
 
 // DeletePolicy - Delete a policy
 // Delete a policy by its id.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) DeletePolicy(ctx context.Context, request operations.DeletePolicyRequest, opts ...operations.Option) (*operations.DeletePolicyResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -952,7 +942,7 @@ func (s *FormanceReconciliationV1) DeletePolicy(ctx context.Context, request ope
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1036,7 +1026,7 @@ func (s *FormanceReconciliationV1) DeletePolicy(ctx context.Context, request ope
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1088,8 +1078,6 @@ func (s *FormanceReconciliationV1) DeletePolicy(ctx context.Context, request ope
 }
 
 // DeleteRule - Delete a rule (cascades to evaluations + alerts + alert events)
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) DeleteRule(ctx context.Context, request operations.DeleteRuleRequest, opts ...operations.Option) (*operations.DeleteRuleResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1142,7 +1130,7 @@ func (s *FormanceReconciliationV1) DeleteRule(ctx context.Context, request opera
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1226,7 +1214,7 @@ func (s *FormanceReconciliationV1) DeleteRule(ctx context.Context, request opera
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"204"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1278,8 +1266,6 @@ func (s *FormanceReconciliationV1) DeleteRule(ctx context.Context, request opera
 }
 
 // EvaluateRule - Evaluate a rule now
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) EvaluateRule(ctx context.Context, request operations.EvaluateRuleRequest, opts ...operations.Option) (*operations.EvaluateRuleResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1339,7 +1325,7 @@ func (s *FormanceReconciliationV1) EvaluateRule(ctx context.Context, request ope
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1423,7 +1409,7 @@ func (s *FormanceReconciliationV1) EvaluateRule(ctx context.Context, request ope
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200", "409"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1515,8 +1501,6 @@ func (s *FormanceReconciliationV1) EvaluateRule(ctx context.Context, request ope
 }
 
 // GetAlert - Get an alert
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) GetAlert(ctx context.Context, request operations.GetAlertRequest, opts ...operations.Option) (*operations.GetAlertResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1569,7 +1553,7 @@ func (s *FormanceReconciliationV1) GetAlert(ctx context.Context, request operati
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1653,7 +1637,7 @@ func (s *FormanceReconciliationV1) GetAlert(ctx context.Context, request operati
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1724,8 +1708,6 @@ func (s *FormanceReconciliationV1) GetAlert(ctx context.Context, request operati
 }
 
 // GetEvaluation - Get an evaluation
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) GetEvaluation(ctx context.Context, request operations.GetEvaluationRequest, opts ...operations.Option) (*operations.GetEvaluationResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1778,7 +1760,7 @@ func (s *FormanceReconciliationV1) GetEvaluation(ctx context.Context, request op
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -1862,7 +1844,7 @@ func (s *FormanceReconciliationV1) GetEvaluation(ctx context.Context, request op
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1933,8 +1915,6 @@ func (s *FormanceReconciliationV1) GetEvaluation(ctx context.Context, request op
 }
 
 // GetPolicy - Get a policy
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) GetPolicy(ctx context.Context, request operations.GetPolicyRequest, opts ...operations.Option) (*operations.GetPolicyResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1987,7 +1967,7 @@ func (s *FormanceReconciliationV1) GetPolicy(ctx context.Context, request operat
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -2071,7 +2051,7 @@ func (s *FormanceReconciliationV1) GetPolicy(ctx context.Context, request operat
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2142,8 +2122,6 @@ func (s *FormanceReconciliationV1) GetPolicy(ctx context.Context, request operat
 }
 
 // GetReconciliation - Get a reconciliation
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) GetReconciliation(ctx context.Context, request operations.GetReconciliationRequest, opts ...operations.Option) (*operations.GetReconciliationResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -2196,7 +2174,7 @@ func (s *FormanceReconciliationV1) GetReconciliation(ctx context.Context, reques
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -2280,7 +2258,7 @@ func (s *FormanceReconciliationV1) GetReconciliation(ctx context.Context, reques
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2351,8 +2329,6 @@ func (s *FormanceReconciliationV1) GetReconciliation(ctx context.Context, reques
 }
 
 // GetRule - Get a rule
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) GetRule(ctx context.Context, request operations.GetRuleRequest, opts ...operations.Option) (*operations.GetRuleResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -2405,7 +2381,7 @@ func (s *FormanceReconciliationV1) GetRule(ctx context.Context, request operatio
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -2489,7 +2465,7 @@ func (s *FormanceReconciliationV1) GetRule(ctx context.Context, request operatio
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2560,8 +2536,6 @@ func (s *FormanceReconciliationV1) GetRule(ctx context.Context, request operatio
 }
 
 // GetServerInfoReconciliation - Get server info
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) GetServerInfoReconciliation(ctx context.Context, opts ...operations.Option) (*operations.GetServerInfoReconciliationResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -2614,7 +2588,7 @@ func (s *FormanceReconciliationV1) GetServerInfoReconciliation(ctx context.Conte
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -2698,7 +2672,7 @@ func (s *FormanceReconciliationV1) GetServerInfoReconciliation(ctx context.Conte
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2774,8 +2748,6 @@ func (s *FormanceReconciliationV1) GetServerInfoReconciliation(ctx context.Conte
 // events are never modified or deleted. Ordered most-recent-first and
 // cursor-paginated: a long-lived alert's timeline is unbounded (one row per
 // failing evaluation), so callers must page through it.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) ListAlertEvents(ctx context.Context, request operations.ListAlertEventsRequest, opts ...operations.Option) (*operations.ListAlertEventsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -2832,7 +2804,7 @@ func (s *FormanceReconciliationV1) ListAlertEvents(ctx context.Context, request 
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -2916,7 +2888,7 @@ func (s *FormanceReconciliationV1) ListAlertEvents(ctx context.Context, request 
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2987,8 +2959,6 @@ func (s *FormanceReconciliationV1) ListAlertEvents(ctx context.Context, request 
 }
 
 // ListAlerts - List alerts
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) ListAlerts(ctx context.Context, request operations.ListAlertsRequest, opts ...operations.Option) (*operations.ListAlertsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -3052,7 +3022,7 @@ func (s *FormanceReconciliationV1) ListAlerts(ctx context.Context, request opera
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -3136,7 +3106,7 @@ func (s *FormanceReconciliationV1) ListAlerts(ctx context.Context, request opera
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3207,8 +3177,6 @@ func (s *FormanceReconciliationV1) ListAlerts(ctx context.Context, request opera
 }
 
 // ListEvaluations - List evaluations
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) ListEvaluations(ctx context.Context, request operations.ListEvaluationsRequest, opts ...operations.Option) (*operations.ListEvaluationsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -3272,7 +3240,7 @@ func (s *FormanceReconciliationV1) ListEvaluations(ctx context.Context, request 
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -3356,7 +3324,7 @@ func (s *FormanceReconciliationV1) ListEvaluations(ctx context.Context, request 
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3427,8 +3395,6 @@ func (s *FormanceReconciliationV1) ListEvaluations(ctx context.Context, request 
 }
 
 // ListPolicies - List policies
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) ListPolicies(ctx context.Context, request operations.ListPoliciesRequest, opts ...operations.Option) (*operations.ListPoliciesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -3492,7 +3458,7 @@ func (s *FormanceReconciliationV1) ListPolicies(ctx context.Context, request ope
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -3576,7 +3542,7 @@ func (s *FormanceReconciliationV1) ListPolicies(ctx context.Context, request ope
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3647,8 +3613,6 @@ func (s *FormanceReconciliationV1) ListPolicies(ctx context.Context, request ope
 }
 
 // ListReconciliations - List reconciliations
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) ListReconciliations(ctx context.Context, request operations.ListReconciliationsRequest, opts ...operations.Option) (*operations.ListReconciliationsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -3712,7 +3676,7 @@ func (s *FormanceReconciliationV1) ListReconciliations(ctx context.Context, requ
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -3796,7 +3760,7 @@ func (s *FormanceReconciliationV1) ListReconciliations(ctx context.Context, requ
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3867,8 +3831,6 @@ func (s *FormanceReconciliationV1) ListReconciliations(ctx context.Context, requ
 }
 
 // ListRules - List rules
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) ListRules(ctx context.Context, request operations.ListRulesRequest, opts ...operations.Option) (*operations.ListRulesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -3932,7 +3894,7 @@ func (s *FormanceReconciliationV1) ListRules(ctx context.Context, request operat
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -4016,7 +3978,7 @@ func (s *FormanceReconciliationV1) ListRules(ctx context.Context, request operat
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4087,8 +4049,6 @@ func (s *FormanceReconciliationV1) ListRules(ctx context.Context, request operat
 }
 
 // PatchRule - Patch a rule (partial update)
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) PatchRule(ctx context.Context, request operations.PatchRuleRequest, opts ...operations.Option) (*operations.PatchRuleResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -4148,7 +4108,7 @@ func (s *FormanceReconciliationV1) PatchRule(ctx context.Context, request operat
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -4232,7 +4192,7 @@ func (s *FormanceReconciliationV1) PatchRule(ctx context.Context, request operat
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4304,8 +4264,6 @@ func (s *FormanceReconciliationV1) PatchRule(ctx context.Context, request operat
 
 // Reconcile using a policy
 // Reconcile using a policy
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) Reconcile(ctx context.Context, request operations.ReconcileRequest, opts ...operations.Option) (*operations.ReconcileResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -4365,7 +4323,7 @@ func (s *FormanceReconciliationV1) Reconcile(ctx context.Context, request operat
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -4449,7 +4407,7 @@ func (s *FormanceReconciliationV1) Reconcile(ctx context.Context, request operat
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4520,8 +4478,6 @@ func (s *FormanceReconciliationV1) Reconcile(ctx context.Context, request operat
 }
 
 // ResolveAlert - Resolve an alert (fixed_by_booking)
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) ResolveAlert(ctx context.Context, request operations.ResolveAlertRequest, opts ...operations.Option) (*operations.ResolveAlertResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -4581,7 +4537,7 @@ func (s *FormanceReconciliationV1) ResolveAlert(ctx context.Context, request ope
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -4665,7 +4621,7 @@ func (s *FormanceReconciliationV1) ResolveAlert(ctx context.Context, request ope
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4742,8 +4698,6 @@ func (s *FormanceReconciliationV1) ResolveAlert(ctx context.Context, request ope
 // The first failing evaluation at or after `until` clears the snooze and
 // notifies once. Re-snoozing overwrites the window. Rejects RESOLVED
 // alerts and a non-future `until`.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) SnoozeAlert(ctx context.Context, request operations.SnoozeAlertRequest, opts ...operations.Option) (*operations.SnoozeAlertResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -4803,7 +4757,7 @@ func (s *FormanceReconciliationV1) SnoozeAlert(ctx context.Context, request oper
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -4887,7 +4841,7 @@ func (s *FormanceReconciliationV1) SnoozeAlert(ctx context.Context, request oper
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4960,8 +4914,6 @@ func (s *FormanceReconciliationV1) SnoozeAlert(ctx context.Context, request oper
 // UnsnoozeAlert - Lift a snooze early
 // Clears an active snooze before its window elapses. Idempotent —
 // unsnoozing an alert that is not snoozed returns it unchanged.
-//
-// If set, this operation will use [Security.ClientID] from the global security.
 func (s *FormanceReconciliationV1) UnsnoozeAlert(ctx context.Context, request operations.UnsnoozeAlertRequest, opts ...operations.Option) (*operations.UnsnoozeAlertResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -5021,7 +4973,7 @@ func (s *FormanceReconciliationV1) UnsnoozeAlert(ctx context.Context, request op
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "ClientID"); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
 		return nil, err
 	}
 
@@ -5105,7 +5057,7 @@ func (s *FormanceReconciliationV1) UnsnoozeAlert(ctx context.Context, request op
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if !utils.MatchStatusCodes([]string{"200"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err

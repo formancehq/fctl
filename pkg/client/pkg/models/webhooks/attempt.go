@@ -10,7 +10,7 @@ import (
 // Attempt - A single delivery attempt made against a webhook endpoint
 type Attempt struct {
 	// A webhook endpoint together with the event types it subscribes to
-	Config WebhooksConfig `json:"config"`
+	WebhooksConfig WebhooksConfig `json:"config"`
 	// When the attempt was created
 	CreatedAt time.Time `json:"createdAt"`
 	// Unique identifier of the attempt
@@ -42,11 +42,11 @@ func (a *Attempt) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (a *Attempt) GetConfig() WebhooksConfig {
+func (a *Attempt) GetWebhooksConfig() WebhooksConfig {
 	if a == nil {
 		return WebhooksConfig{}
 	}
-	return a.Config
+	return a.WebhooksConfig
 }
 
 func (a *Attempt) GetCreatedAt() time.Time {

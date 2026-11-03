@@ -13,8 +13,8 @@ type PostingResponse struct {
 	// numbers by default and strings with Formance-Bigint-As-String enabled,
 	// as do all response Uint256 values regardless of business meaning.
 	//
-	Amount PostingAmount `json:"amount"`
-	Asset  string        `json:"asset"`
+	PostingAmount PostingAmount `json:"amount"`
+	Asset         string        `json:"asset"`
 	// Segregation key for "color of money". The empty string means the
 	// uncolored bucket. Always present on responses (never omitted); two
 	// postings on the same (account, asset) but different colors operate
@@ -36,11 +36,11 @@ func (p *PostingResponse) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (p *PostingResponse) GetAmount() PostingAmount {
+func (p *PostingResponse) GetPostingAmount() PostingAmount {
 	if p == nil {
 		return PostingAmount{}
 	}
-	return p.Amount
+	return p.PostingAmount
 }
 
 func (p *PostingResponse) GetAsset() string {

@@ -3,12 +3,12 @@
 package ledgerv3
 
 type RevertedTransactionResponse struct {
-	Data RevertedTransaction `json:"data"`
+	RevertedTransaction RevertedTransaction `json:"data"`
 }
 
-func (r *RevertedTransactionResponse) GetData() RevertedTransaction {
+func (r *RevertedTransactionResponse) GetRevertedTransaction() RevertedTransaction {
 	if r == nil {
 		return RevertedTransaction{}
 	}
-	return r.Data
+	return r.RevertedTransaction
 }

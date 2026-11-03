@@ -9,14 +9,14 @@ import (
 
 // WalletWithBalancesBalances - Aggregated funds held by the wallet, keyed by asset
 type WalletWithBalancesBalances struct {
-	Main AssetHolder `json:"main"`
+	AssetHolder AssetHolder `json:"main"`
 }
 
-func (w *WalletWithBalancesBalances) GetMain() AssetHolder {
+func (w *WalletWithBalancesBalances) GetAssetHolder() AssetHolder {
 	if w == nil {
 		return AssetHolder{}
 	}
-	return w.Main
+	return w.AssetHolder
 }
 
 // WalletWithBalances - A wallet together with the funds it currently holds

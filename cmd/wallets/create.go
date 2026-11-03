@@ -85,7 +85,7 @@ func (c *CreateController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fmt.Errorf("creating wallet: %w", err)
 	}
 
-	c.store.WalletID = response.CreateWalletResponse.Data.ID
+	c.store.WalletID = response.CreateWalletResponse.Wallet.ID
 
 	return c, nil
 }

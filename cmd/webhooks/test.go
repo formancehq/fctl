@@ -49,7 +49,7 @@ func (c *TestWebhookController) Run(cmd *cobra.Command, args []string) (fctl.Ren
 	if response.AttemptResponse == nil {
 		return nil, fmt.Errorf("testing config: empty response")
 	}
-	c.store.Attempt = response.AttemptResponse.Data
+	c.store.Attempt = response.AttemptResponse.Attempt
 	return c, nil
 }
 

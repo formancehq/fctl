@@ -5,12 +5,12 @@ package payments
 // BankAccountResponse - OK
 type BankAccountResponse struct {
 	// A bank account registered with Formance and forwardable to connectors
-	Data BankAccount `json:"data"`
+	BankAccount BankAccount `json:"data"`
 }
 
-func (b *BankAccountResponse) GetData() BankAccount {
+func (b *BankAccountResponse) GetBankAccount() BankAccount {
 	if b == nil {
 		return BankAccount{}
 	}
-	return b.Data
+	return b.BankAccount
 }

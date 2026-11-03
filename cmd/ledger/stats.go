@@ -65,7 +65,7 @@ func (c *StatsController) Run(cmd *cobra.Command, args []string) (fctl.Renderabl
 		return nil, err
 	}
 
-	c.store.Stats = response.StatsResponse.Data
+	c.store.Stats = response.StatsResponse.Stats
 
 	return c, nil
 }

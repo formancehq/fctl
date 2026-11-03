@@ -83,7 +83,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
 	}
 
-	c.store.Task = &response.V3GetTaskResponse.Data
+	c.store.Task = &response.V3GetTaskResponse.V3Task
 
 	return c, nil
 }
@@ -112,7 +112,7 @@ func (c *ShowController) Render(cmd *cobra.Command, args []string) error {
 	tableData = append(tableData, []string{pterm.LightCyan("CreatedObjectID"), createdObjectID})
 	tableData = append(tableData, []string{pterm.LightCyan("CreatedAt"), c.store.Task.CreatedAt.String()})
 	tableData = append(tableData, []string{pterm.LightCyan("Error"), errStr})
-	tableData = append(tableData, []string{pterm.LightCyan("Status"), string(c.store.Task.Status)})
+	tableData = append(tableData, []string{pterm.LightCyan("Status"), string(c.store.Task.V3TaskStatusEnum)})
 	tableData = append(tableData, []string{pterm.LightCyan("UpdatedAt"), c.store.Task.UpdatedAt.String()})
 
 	if err := pterm.DefaultTable.

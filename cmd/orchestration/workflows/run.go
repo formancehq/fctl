@@ -87,7 +87,7 @@ func (c *WorkflowsRunController) Run(cmd *cobra.Command, args []string) (fctl.Re
 	}
 
 	c.wait = wait
-	c.store.WorkflowInstance = response.RunWorkflowResponse.Data
+	c.store.WorkflowInstance = response.RunWorkflowResponse.WorkflowInstance
 	return c, nil
 }
 
@@ -111,7 +111,7 @@ func (c *WorkflowsRunController) Render(cmd *cobra.Command, args []string) error
 			panic(err)
 		}
 
-		return internal.PrintWorkflowInstance(cmd.OutOrStdout(), w.GetWorkflowResponse.Data, c.store.WorkflowInstance)
+		return internal.PrintWorkflowInstance(cmd.OutOrStdout(), w.GetWorkflowResponse.Workflow, c.store.WorkflowInstance)
 	}
 	return nil
 }

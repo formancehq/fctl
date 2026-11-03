@@ -2,8 +2,8 @@
 
 package orchestration
 
-// Cursor - Paginated cursor wrapping the list of wallets
-type Cursor struct {
+// ListWalletsResponseCursor - Paginated cursor wrapping the list of wallets
+type ListWalletsResponseCursor struct {
 	Data []Wallet `json:"data"`
 	// Whether further pages are available
 	HasMore *bool `json:"hasMore,omitempty"`
@@ -15,50 +15,50 @@ type Cursor struct {
 	Previous *string `json:"previous,omitempty"`
 }
 
-func (c *Cursor) GetData() []Wallet {
-	if c == nil {
+func (l *ListWalletsResponseCursor) GetData() []Wallet {
+	if l == nil {
 		return []Wallet{}
 	}
-	return c.Data
+	return l.Data
 }
 
-func (c *Cursor) GetHasMore() *bool {
-	if c == nil {
+func (l *ListWalletsResponseCursor) GetHasMore() *bool {
+	if l == nil {
 		return nil
 	}
-	return c.HasMore
+	return l.HasMore
 }
 
-func (c *Cursor) GetNext() *string {
-	if c == nil {
+func (l *ListWalletsResponseCursor) GetNext() *string {
+	if l == nil {
 		return nil
 	}
-	return c.Next
+	return l.Next
 }
 
-func (c *Cursor) GetPageSize() int64 {
-	if c == nil {
+func (l *ListWalletsResponseCursor) GetPageSize() int64 {
+	if l == nil {
 		return 0
 	}
-	return c.PageSize
+	return l.PageSize
 }
 
-func (c *Cursor) GetPrevious() *string {
-	if c == nil {
+func (l *ListWalletsResponseCursor) GetPrevious() *string {
+	if l == nil {
 		return nil
 	}
-	return c.Previous
+	return l.Previous
 }
 
 // ListWalletsResponse - A page of wallets
 type ListWalletsResponse struct {
 	// Paginated cursor wrapping the list of wallets
-	Cursor Cursor `json:"cursor"`
+	Cursor ListWalletsResponseCursor `json:"cursor"`
 }
 
-func (l *ListWalletsResponse) GetCursor() Cursor {
+func (l *ListWalletsResponse) GetCursor() ListWalletsResponseCursor {
 	if l == nil {
-		return Cursor{}
+		return ListWalletsResponseCursor{}
 	}
 	return l.Cursor
 }

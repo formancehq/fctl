@@ -50,18 +50,18 @@ func (v *V2PostTransactionScript) GetVars() map[string]string {
 // #endregion class-body-v2posttransactionscript
 
 type V2PostTransaction struct {
+	// The numscript runtime used to execute the script. Uses "machine" by default, unless the "--experimental-numscript-interpreter" feature flag is passed.
+	Runtime *Runtime `json:"runtime,omitempty"`
+	// Arbitrary key/value pairs attached to the resource
+	V2Metadata map[string]string `json:"metadata"`
 	// Metadata to set on the accounts involved in the transaction, keyed by account address
 	AccountMetadata map[string]map[string]string `json:"accountMetadata,omitempty"`
 	// When true, lets source accounts overdraft without bound, bypassing the balance check. Applies to the postings form only
 	Force *bool `json:"force,omitempty"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata"`
 	// Fund movements to apply. Mutually exclusive with script and template
 	Postings []V2Posting `json:"postings,omitempty"`
 	// Optional caller-supplied identifier, unique within the ledger, used to deduplicate transactions
 	Reference *string `json:"reference,omitempty"`
-	// The numscript runtime used to execute the script. Uses "machine" by default, unless the "--experimental-numscript-interpreter" feature flag is passed.
-	Runtime *Runtime `json:"runtime,omitempty"`
 	// A Numscript program executed to produce the postings. Mutually exclusive with postings
 	Script *V2PostTransactionScript `json:"script,omitempty"`
 	// The transaction time to record, letting you backdate or postdate the transaction. Defaults to current machine time if omitted. See [bi-temporality](https://docs.formance.com/modules/ledger/working-with/bi-temporality)
@@ -79,6 +79,20 @@ func (v *V2PostTransaction) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (v *V2PostTransaction) GetRuntime() *Runtime {
+	if v == nil {
+		return nil
+	}
+	return v.Runtime
+}
+
+func (v *V2PostTransaction) GetV2Metadata() map[string]string {
+	if v == nil {
+		return map[string]string{}
+	}
+	return v.V2Metadata
+}
+
 func (v *V2PostTransaction) GetAccountMetadata() map[string]map[string]string {
 	if v == nil {
 		return nil
@@ -93,13 +107,6 @@ func (v *V2PostTransaction) GetForce() *bool {
 	return v.Force
 }
 
-func (v *V2PostTransaction) GetMetadata() map[string]string {
-	if v == nil {
-		return map[string]string{}
-	}
-	return v.Metadata
-}
-
 func (v *V2PostTransaction) GetPostings() []V2Posting {
 	if v == nil {
 		return nil
@@ -112,13 +119,6 @@ func (v *V2PostTransaction) GetReference() *string {
 		return nil
 	}
 	return v.Reference
-}
-
-func (v *V2PostTransaction) GetRuntime() *Runtime {
-	if v == nil {
-		return nil
-	}
-	return v.Runtime
 }
 
 func (v *V2PostTransaction) GetScript() *V2PostTransactionScript {

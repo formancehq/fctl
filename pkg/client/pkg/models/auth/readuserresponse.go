@@ -4,12 +4,12 @@ package auth
 
 type ReadUserResponse struct {
 	// A user known to the stack's identity provider
-	Data *User `json:"data,omitempty"`
+	User *User `json:"data,omitempty"`
 }
 
-func (r *ReadUserResponse) GetData() *User {
+func (r *ReadUserResponse) GetUser() *User {
 	if r == nil {
 		return nil
 	}
-	return r.Data
+	return r.User
 }

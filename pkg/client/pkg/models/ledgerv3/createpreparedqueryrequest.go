@@ -48,18 +48,18 @@ type CreatePreparedQueryRequest struct {
 	//
 	//
 	// `null` represents a match-all query. An empty object and an empty or whitespace-only textual expression are invalid. Responses echo a stored non-null filter in the structured `QueryFilter` form and omit this field for match-all queries.
-	Filter *PreparedQueryFilterInput `json:"filter,omitempty"`
+	PreparedQueryFilterInput *PreparedQueryFilterInput `json:"filter,omitempty"`
 	// Unique name for the prepared query
 	Name string `json:"name"`
 	// Target entity type. `LOGS` queries return log entries; the log-only filter fields (`logId`, `date`, `ledger`) are valid only when the target is `LOGS`.
 	Target Target `json:"target"`
 }
 
-func (c *CreatePreparedQueryRequest) GetFilter() *PreparedQueryFilterInput {
+func (c *CreatePreparedQueryRequest) GetPreparedQueryFilterInput() *PreparedQueryFilterInput {
 	if c == nil {
 		return nil
 	}
-	return c.Filter
+	return c.PreparedQueryFilterInput
 }
 
 func (c *CreatePreparedQueryRequest) GetName() string {

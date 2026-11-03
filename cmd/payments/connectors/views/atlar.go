@@ -9,7 +9,7 @@ import (
 )
 
 func DisplayAtlarConfig(cmd *cobra.Command, connectorConfig *payments.ConnectorConfigResponse) error {
-	config := connectorConfig.Data.AtlarConfig
+	config := connectorConfig.ConnectorConfig.AtlarConfig
 
 	tableData := pterm.TableData{}
 	tableData = append(tableData, []string{pterm.LightCyan("Name:"), config.Name})

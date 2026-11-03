@@ -8,6 +8,10 @@ import (
 )
 
 type V3CreateAccountRequest struct {
+	// Whether an account is internal to the provider or belongs to an external party
+	V3AccountTypeEnum V3AccountTypeEnum `json:"type"`
+	// Arbitrary key/value pairs attached to the resource
+	V3Metadata map[string]string `json:"metadata,omitempty"`
 	// Human-readable name of the account
 	AccountName string `json:"accountName"`
 	// Identifier of the connector the account belongs to
@@ -16,12 +20,8 @@ type V3CreateAccountRequest struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// Asset the account is denominated in by default
 	DefaultAsset *string `json:"defaultAsset,omitempty"`
-	// Arbitrary key/value pairs attached to the resource
-	Metadata map[string]string `json:"metadata,omitempty"`
 	// Identifier the account carries at the provider
 	Reference string `json:"reference"`
-	// Whether an account is internal to the provider or belongs to an external party
-	Type V3AccountTypeEnum `json:"type"`
 }
 
 func (v V3CreateAccountRequest) MarshalJSON() ([]byte, error) {
@@ -33,6 +33,20 @@ func (v *V3CreateAccountRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (v *V3CreateAccountRequest) GetV3AccountTypeEnum() V3AccountTypeEnum {
+	if v == nil {
+		return V3AccountTypeEnum("")
+	}
+	return v.V3AccountTypeEnum
+}
+
+func (v *V3CreateAccountRequest) GetV3Metadata() map[string]string {
+	if v == nil {
+		return nil
+	}
+	return v.V3Metadata
 }
 
 func (v *V3CreateAccountRequest) GetAccountName() string {
@@ -63,25 +77,11 @@ func (v *V3CreateAccountRequest) GetDefaultAsset() *string {
 	return v.DefaultAsset
 }
 
-func (v *V3CreateAccountRequest) GetMetadata() map[string]string {
-	if v == nil {
-		return nil
-	}
-	return v.Metadata
-}
-
 func (v *V3CreateAccountRequest) GetReference() string {
 	if v == nil {
 		return ""
 	}
 	return v.Reference
-}
-
-func (v *V3CreateAccountRequest) GetType() V3AccountTypeEnum {
-	if v == nil {
-		return V3AccountTypeEnum("")
-	}
-	return v.Type
 }
 
 // #region class-body-v3createaccountrequest

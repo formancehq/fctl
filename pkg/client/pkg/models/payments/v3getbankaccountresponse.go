@@ -4,14 +4,14 @@ package payments
 
 type V3GetBankAccountResponse struct {
 	// A bank account registered with Formance and forwardable to connectors
-	Data V3BankAccount `json:"data"`
+	V3BankAccount V3BankAccount `json:"data"`
 }
 
-func (v *V3GetBankAccountResponse) GetData() V3BankAccount {
+func (v *V3GetBankAccountResponse) GetV3BankAccount() V3BankAccount {
 	if v == nil {
 		return V3BankAccount{}
 	}
-	return v.Data
+	return v.V3BankAccount
 }
 
 // #region class-body-v3getbankaccountresponse
