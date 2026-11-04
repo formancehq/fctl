@@ -1,0 +1,76 @@
+package connectors
+
+import (
+	"bytes"
+	"context"
+
+	"github.com/spf13/cobra"
+
+	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
+	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
+	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+)
+
+type connectorClientMock struct {
+	connectivityclient.Client
+	list         func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error)
+	facets       func(context.Context, string) (*connectivity.FacetDistribution, error)
+	get          func(context.Context, string) (*connectivity.Connector, error)
+	listVersions func(context.Context, string, connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error)
+	getVersion   func(context.Context, string, string) (*connectivity.ConnectorVersion, error)
+}
+
+func (m connectorClientMock) ListConnectors(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
+	return m.list(ctx, options)
+}
+
+func (m connectorClientMock) GetConnectorFacets(ctx context.Context, query string) (*connectivity.FacetDistribution, error) {
+	return m.facets(ctx, query)
+}
+
+func (m connectorClientMock) GetConnector(ctx context.Context, name string) (*connectivity.Connector, error) {
+	return m.get(ctx, name)
+}
+
+func (m connectorClientMock) ListConnectorVersions(ctx context.Context, connector string, options connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
+	if m.listVersions == nil {
+		return &connectivityclient.ConnectorVersionList{Items: []connectivity.ConnectorVersionSummary{}}, nil
+	}
+	return m.listVersions(ctx, connector, options)
+}
+
+func (m connectorClientMock) GetConnectorVersion(ctx context.Context, connector, version string) (*connectivity.ConnectorVersion, error) {
+	if m.getVersion == nil {
+		return &connectivity.ConnectorVersion{Version: version}, nil
+	}
+	return m.getVersion(ctx, connector, version)
+}
+
+func connectorFixture(name string) connectivity.Connector {
+	return connectivity.Connector{
+		Name:              name,
+		DisplayName:       fctl.Ptr("Connector display name"),
+		Description:       fctl.Ptr("Connector description"),
+		Catalog:           fctl.Ptr("public"),
+		Tags:              []string{"payments", "webhooks"},
+		Tagline:           fctl.Ptr("Payments infrastructure"),
+		LatestVersion:     fctl.Ptr("2.0.0"),
+		ConnectorBranding: &connectivity.ConnectorBranding{DisplayName: fctl.Ptr("Brand display name")},
+	}
+}
+
+func factoryReturning(client connectivityclient.Client) connectivityinternal.ClientFactory {
+	return func(*cobra.Command) (connectivityclient.Client, error) {
+		return client, nil
+	}
+}
+
+func executeCommand(command *cobra.Command, args ...string) (string, error) {
+	var output bytes.Buffer
+	command.SetOut(&output)
+	command.SetErr(&output)
+	command.SetArgs(args)
+	err := command.Execute()
+	return output.String(), err
+}

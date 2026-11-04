@@ -1,0 +1,159 @@
+package connections
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
+	"strings"
+
+	xmodsemver "golang.org/x/mod/semver"
+
+	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
+	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+)
+
+const (
+	versionResolvePageSize = int32(100)
+	versionResolveMaxPages = 100
+)
+
+// resolveConnectorVersion returns the ConnectorVersion whose configSchema governs
+// the configuration being assembled: the requested pin (or channel alias) when
+// there is one, the server-resolved stable head otherwise. This mirrors an
+// unselected install, whose API write persists the stable selector.
+func resolveConnectorVersion(ctx context.Context, client connectivityclient.Client, connector, pinned string) (*connectivity.ConnectorVersion, error) {
+	if connector == "" {
+		return nil, fmt.Errorf("connector name is required")
+	}
+	if pinned == "" {
+		pinned = "stable"
+	}
+	version, err := client.GetConnectorVersion(ctx, connector, pinned)
+	var apiErr *connectivityclient.APIError
+	if (pinned == "stable" || pinned == connectivityclient.VersionAliasLatest) && errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusNotFound {
+		return nil, fmt.Errorf("connectivity connector %q has no published version: %w", connector, err)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if version == nil {
+		return nil, fmt.Errorf("get connectivity connector %q version %q: empty response", connector, pinned)
+	}
+	return version, nil
+}
+
+// The connector is immutable; the last applied version is the channel floor.
+func appliedChannelFloor(instance *connectivityclient.Connection) string {
+	if instance == nil || instance.Status == nil {
+		return ""
+	}
+	return stringValue(instance.Status.AppliedVersion)
+}
+
+// resolveChannelVersion mirrors the operator resolver for the schema selected
+// during a channel-tracked configure. It reads every version page because the
+// selected channel head is not necessarily present on the first page.
+func resolveChannelVersion(ctx context.Context, client connectivityclient.Client, connector, channel, running string) (*connectivity.ConnectorVersion, error) {
+	versions, err := connectivityinternal.CollectPages(versionResolvePageSize, versionResolveMaxPages,
+		func(options connectivityclient.ListOptions) ([]connectivity.ConnectorVersionSummary, bool, string, error) {
+			page, err := client.ListConnectorVersions(ctx, connector, options)
+			if err != nil {
+				return nil, false, "", err
+			}
+			if page == nil {
+				return nil, false, "", fmt.Errorf("list connectivity connector %q versions: empty response", connector)
+			}
+			return page.Items, page.HasMore, page.Next, nil
+		})
+	if err != nil {
+		return nil, err
+	}
+	candidates := make([]string, 0, len(versions))
+	for _, version := range versions {
+		candidates = append(candidates, version.Version)
+	}
+	selected, err := selectChannelVersion(candidates, channel, running)
+	if err != nil {
+		return nil, fmt.Errorf("resolve connectivity connector %q channel %q: %w", connector, channel, err)
+	}
+	return resolveConnectorVersion(ctx, client, connector, selected)
+}
+
+func selectChannelVersion(versions []string, channel, running string) (string, error) {
+	allowed, ok := channelPrereleases[channel]
+	if !ok {
+		return "", fmt.Errorf("unsupported channel %q", channel)
+	}
+	if running != "" && !isStrictSemver(running) {
+		running = ""
+	}
+	seen := make(map[string]struct{})
+	// The API rejects duplicate exact SemVer strings before channel filtering.
+	// Distinct spellings with equal precedence use the server's lexical tie-break.
+	for _, version := range versions {
+		if !isStrictSemver(version) {
+			continue
+		}
+		if _, exists := seen[version]; exists {
+			return "", fmt.Errorf("multiple ConnectorVersions found for version %q", version)
+		}
+		seen[version] = struct{}{}
+	}
+	chosen := ""
+	for _, version := range versions {
+		if !isStrictSemver(version) {
+			continue
+		}
+		if !channelAdmits(version, allowed) || (running != "" && (xmodsemver.Major(normalizeSemver(version)) != xmodsemver.Major(normalizeSemver(running)) || compareSemver(version, running) < 0)) {
+			continue
+		}
+		if chosen == "" || compareSemver(version, chosen) > 0 {
+			chosen = version
+		}
+	}
+	if chosen == "" {
+		return "", fmt.Errorf("no candidate version satisfies channel %q", channel)
+	}
+	return chosen, nil
+}
+
+var channelPrereleases = map[string]map[string]struct{}{
+	"stable": {},
+	"rc":     {"rc": {}},
+	"beta":   {"rc": {}, "beta": {}},
+	"alpha":  {"rc": {}, "beta": {}, "alpha": {}},
+}
+
+func channelAdmits(version string, allowed map[string]struct{}) bool {
+	prerelease := strings.TrimPrefix(xmodsemver.Prerelease(normalizeSemver(version)), "-")
+	if prerelease == "" {
+		return true
+	}
+	identifier, _, _ := strings.Cut(prerelease, ".")
+	_, ok := allowed[identifier]
+	return ok
+}
+
+func isStrictSemver(version string) bool {
+	core := strings.TrimPrefix(version, "v")
+	if suffix := strings.IndexAny(core, "-+"); suffix >= 0 {
+		core = core[:suffix]
+	}
+	return len(strings.Split(core, ".")) == 3 && xmodsemver.IsValid(normalizeSemver(version))
+}
+
+func normalizeSemver(version string) string {
+	if strings.HasPrefix(version, "v") {
+		return version
+	}
+	return "v" + version
+}
+
+func compareSemver(left, right string) int {
+	if result := xmodsemver.Compare(normalizeSemver(left), normalizeSemver(right)); result != 0 {
+		return result
+	}
+	return strings.Compare(left, right)
+}
