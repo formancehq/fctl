@@ -8,6 +8,7 @@ import (
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
@@ -16,29 +17,27 @@ type UninstallStore struct {
 }
 
 type UninstallController struct {
-	factory connectivityinternal.ClientFactory
 	approve approvalFunc
 	store   *UninstallStore
 }
 
 var _ fctl.Controller[*UninstallStore] = (*UninstallController)(nil)
 
-func NewUninstallController(factory connectivityinternal.ClientFactory) *UninstallController {
+func NewUninstallController() *UninstallController {
 	return &UninstallController{
-		factory: factory,
 		approve: fctl.CheckStackApprobation,
 		store:   &UninstallStore{},
 	}
 }
 
-func NewUninstallCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
-	controller := NewUninstallController(factory)
+func NewUninstallCommand() *cobra.Command {
+	controller := NewUninstallController()
 	return fctl.NewCommand(
 		"uninstall <connection>",
 		fctl.WithAliases("delete", "remove", "rm", "u"),
 		fctl.WithShortDescription("Uninstall a Connectivity connection"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithValidArgsFunction(CompleteConnectionNames(factory)),
+		fctl.WithValidArgsFunction(CompleteConnectionNames()),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*UninstallStore](controller),
 	)
@@ -49,13 +48,18 @@ func (c *UninstallController) GetStore() *UninstallStore {
 }
 
 func (c *UninstallController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	if c.factory == nil {
-		return nil, fmt.Errorf("connectivity client factory is required")
-	}
-	client, err := c.factory(cmd)
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
+	client, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+	return c.run(cmd, args, client.Connectivity.V1)
+}
+
+func (c *UninstallController) run(cmd *cobra.Command, args []string, client *sdk.FormanceV1) (fctl.Renderable, error) {
 	name := args[0]
 	if !c.approve(cmd, "You are about to uninstall Connectivity connection %q", name) {
 		return nil, fctl.ErrMissingApproval

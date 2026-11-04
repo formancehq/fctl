@@ -10,18 +10,18 @@ import (
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	formance "github.com/formancehq/fctl/v3/pkg/client"
 	connectivitymodel "github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 )
 
 type StatusController struct {
-	factory connectivityinternal.ClientFactory
-	store   *connectivitymodel.Info
+	store *connectivitymodel.Info
 }
 
 var _ fctl.Controller[*connectivitymodel.Info] = (*StatusController)(nil)
 
-func NewStatusCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
-	controller := &StatusController{factory: factory, store: &connectivitymodel.Info{}}
+func NewStatusCommand() *cobra.Command {
+	controller := &StatusController{store: &connectivitymodel.Info{}}
 	return fctl.NewCommand("status",
 		fctl.WithShortDescription("Show Connectivity service build information"),
 		fctl.WithArgs(cobra.NoArgs),
@@ -32,16 +32,18 @@ func NewStatusCommand(factory connectivityinternal.ClientFactory) *cobra.Command
 func (c *StatusController) GetStore() *connectivitymodel.Info { return c.store }
 
 func (c *StatusController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
-	if c.factory == nil {
-		return nil, fmt.Errorf("connectivity client factory is required")
-	}
-	client, err := c.factory(cmd)
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
-	if client == nil {
-		return nil, fmt.Errorf("connectivity client is required")
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
 	}
+	return c.run(cmd, stackClient.Connectivity.V1)
+}
+
+func (c *StatusController) run(cmd *cobra.Command, client *formance.FormanceV1) (fctl.Renderable, error) {
 	response, err := client.ConnectivityInfo(cmd.Context())
 	if err != nil {
 		return nil, err

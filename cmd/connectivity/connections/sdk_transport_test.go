@@ -8,8 +8,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 )
 
 func TestConfigureUsesSDKRouteAndPreservesMergePatchIntent(t *testing.T) {
@@ -32,7 +30,7 @@ func TestConfigureUsesSDKRouteAndPreservesMergePatchIntent(t *testing.T) {
 			versionJSON, err := json.Marshal(versionWithOptionalSchema())
 			require.NoError(t, err)
 			var methods []string
-			api := connectivityinternal.NewAPI("https://stack.example.test/prefix", &http.Client{Transport: connectionRoundTripper(func(r *http.Request) (*http.Response, error) {
+			api := transportSDK("https://stack.example.test/prefix", &http.Client{Transport: connectionRoundTripper(func(r *http.Request) (*http.Response, error) {
 				require.Equal(t, "stack.example.test", r.URL.Host)
 				if strings.Contains(r.URL.Path, "/connectors/") {
 					require.Equal(t, http.MethodGet, r.Method)
@@ -50,7 +48,7 @@ func TestConfigureUsesSDKRouteAndPreservesMergePatchIntent(t *testing.T) {
 				return jsonHTTPResponse(r, http.StatusOK, string(instanceJSON)), nil
 			})})
 			args := append([]string{"source/name?x", "--confirm"}, tt.flags...)
-			_, err = executeCommand(NewConfigureCommand(factoryReturning(api), mockReadFile(map[string]string{"config.yaml": tt.config}), nil), args...)
+			_, err = executeCommand(testNewConfigureCommand(factoryWithSDK(api), mockReadFile(map[string]string{"config.yaml": tt.config}), nil), args...)
 			require.NoError(t, err)
 			require.Equal(t, []string{http.MethodGet, http.MethodPatch}, methods)
 		})
@@ -68,14 +66,14 @@ func TestConnectionCommandsHandleSDKErrorsAndEmptySuccess(t *testing.T) {
 		{name: "empty success", status: 200, body: `null`, want: "empty response"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			api := connectivityinternal.NewAPI("https://stack.example.test", &http.Client{Transport: connectionRoundTripper(func(r *http.Request) (*http.Response, error) {
+			api := transportSDK("https://stack.example.test", &http.Client{Transport: connectionRoundTripper(func(r *http.Request) (*http.Response, error) {
 				response := jsonHTTPResponse(r, tt.status, tt.body)
 				if tt.name == "untyped error" {
 					response.Header.Set("Content-Type", "text/plain")
 				}
 				return response, nil
 			})})
-			_, err := executeCommand(NewShowCommand(factoryReturning(api)), "example")
+			_, err := executeCommand(testNewShowCommand(factoryWithSDK(api)), "example")
 			require.ErrorContains(t, err, tt.want)
 		})
 	}
@@ -87,14 +85,14 @@ func jsonHTTPResponse(request *http.Request, status int, body string) *http.Resp
 
 func TestListConnectionsRejectsMissingSDKCursorData(t *testing.T) {
 	for _, body := range []string{`null`, `{}`, `{"cursor":{"data":null}}`} {
-		api := connectivityinternal.NewAPI("https://stack.example.test", &http.Client{Transport: connectionRoundTripper(func(r *http.Request) (*http.Response, error) { return jsonHTTPResponse(r, http.StatusOK, body), nil })})
-		_, err := executeCommand(NewListCommand(factoryReturning(api)))
+		api := transportSDK("https://stack.example.test", &http.Client{Transport: connectionRoundTripper(func(r *http.Request) (*http.Response, error) { return jsonHTTPResponse(r, http.StatusOK, body), nil })})
+		_, err := executeCommand(testNewListCommand(factoryWithSDK(api)))
 		require.ErrorContains(t, err, "empty response")
 	}
-	api := connectivityinternal.NewAPI("https://stack.example.test", &http.Client{Transport: connectionRoundTripper(func(r *http.Request) (*http.Response, error) {
+	api := transportSDK("https://stack.example.test", &http.Client{Transport: connectionRoundTripper(func(r *http.Request) (*http.Response, error) {
 		return jsonHTTPResponse(r, http.StatusOK, `{"cursor":{"data":[],"pageSize":15,"hasMore":false}}`), nil
 	})})
-	_, err := executeCommand(NewListCommand(factoryReturning(api)))
+	_, err := executeCommand(testNewListCommand(factoryWithSDK(api)))
 	require.NoError(t, err)
 }
 
@@ -106,14 +104,14 @@ func TestSuspensionCommandsRejectEmptySDKSuccess(t *testing.T) {
 		}
 		for _, body := range []string{`null`, `{}`, `{"configuration":{}}`} {
 			t.Run(action+"/"+body, func(t *testing.T) {
-				api := connectivityinternal.NewAPI("https://stack.example.test", &http.Client{Transport: connectionRoundTripper(func(r *http.Request) (*http.Response, error) {
+				api := transportSDK("https://stack.example.test", &http.Client{Transport: connectionRoundTripper(func(r *http.Request) (*http.Response, error) {
 					require.Equal(t, http.MethodPatch, r.Method)
 					require.Equal(t, "/api/connectivity/connections/example", r.URL.Path)
 					return jsonHTTPResponse(r, http.StatusOK, body), nil
 				})})
-				command := NewUnsuspendCommand(factoryReturning(api))
+				command := testNewUnsuspendCommand(factoryWithSDK(api))
 				if suspend {
-					command = NewSuspendCommand(factoryReturning(api))
+					command = testNewSuspendCommand(factoryWithSDK(api))
 				}
 				output, err := executeCommand(command, "example", "--confirm")
 				require.ErrorContains(t, err, "empty response")

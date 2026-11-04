@@ -11,6 +11,7 @@ import (
 	"github.com/formancehq/fctl/v3/cmd/connectivity/connectors"
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 )
 
@@ -32,7 +33,6 @@ type InstallStore struct {
 type approvalFunc func(*cobra.Command, string, ...any) bool
 
 type InstallController struct {
-	factory connectivityinternal.ClientFactory
 	read    configuration.ReadFileFunc
 	approve approvalFunc
 	store   *InstallStore
@@ -40,23 +40,22 @@ type InstallController struct {
 
 var _ fctl.Controller[*InstallStore] = (*InstallController)(nil)
 
-func NewInstallController(factory connectivityinternal.ClientFactory, read configuration.ReadFileFunc) *InstallController {
+func NewInstallController(read configuration.ReadFileFunc) *InstallController {
 	return &InstallController{
-		factory: factory,
 		read:    read,
 		approve: fctl.CheckStackApprobation,
 		store:   &InstallStore{},
 	}
 }
 
-func NewInstallCommand(factory connectivityinternal.ClientFactory, read configuration.ReadFileFunc, paths PathCompleter) *cobra.Command {
-	controller := NewInstallController(factory, read)
+func NewInstallCommand(read configuration.ReadFileFunc, paths PathCompleter) *cobra.Command {
+	controller := NewInstallController(read)
 	command := fctl.NewCommand(
 		"install <connector>",
 		fctl.WithAliases("create", "in"),
 		fctl.WithShortDescription("Install a Connectivity connection"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithValidArgsFunction(connectors.CompleteConnectorNames(factory)),
+		fctl.WithValidArgsFunction(connectors.CompleteConnectorNames()),
 		fctl.WithStringFlag(nameFlag, "", "Connection name (defaults to the connector name)"),
 		fctl.WithStringFlag(ledgerFlag, "", "Ledger name"),
 		fctl.WithStringFlag(versionFlag, "", "Connector version"),
@@ -72,13 +71,13 @@ func NewInstallCommand(factory connectivityinternal.ClientFactory, read configur
 	if err := command.MarkFlagRequired(ledgerFlag); err != nil {
 		panic(err)
 	}
-	if err := command.RegisterFlagCompletionFunc(versionFlag, CompleteVersions(factory, installConnectorArgument)); err != nil {
+	if err := command.RegisterFlagCompletionFunc(versionFlag, CompleteVersions(installConnectorArgument)); err != nil {
 		panic(err)
 	}
-	if err := command.RegisterFlagCompletionFunc(channelFlag, connectivityinternal.CompleteChannels(factory)); err != nil {
+	if err := command.RegisterFlagCompletionFunc(channelFlag, connectivityinternal.CompleteChannels()); err != nil {
 		panic(err)
 	}
-	if err := command.RegisterFlagCompletionFunc(setFlag, CompleteSetValues(factory, resolveInstallConnectorVersion, paths)); err != nil {
+	if err := command.RegisterFlagCompletionFunc(setFlag, CompleteSetValues(resolveInstallConnectorVersion, paths)); err != nil {
 		panic(err)
 	}
 	return command
@@ -91,7 +90,7 @@ func installConnectorArgument(_ *cobra.Command, args []string) string {
 	return args[0]
 }
 
-func resolveInstallConnectorVersion(ctx context.Context, client connectivityinternal.API, cmd *cobra.Command, args []string) (*connectivity.ConnectorVersion, error) {
+func resolveInstallConnectorVersion(ctx context.Context, client *sdk.FormanceV1, cmd *cobra.Command, args []string) (*connectivity.ConnectorVersion, error) {
 	if err := validateSelectors(cmd); err != nil {
 		return nil, err
 	}
@@ -122,19 +121,34 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 	if err := validateSelectors(cmd); err != nil {
 		return nil, err
 	}
+	if _, err := initialCursor(cmd); err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(fctl.GetString(cmd, ledgerFlag)) == "" {
+		return nil, fmt.Errorf("--ledger cannot be empty")
+	}
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
+	if err != nil {
+		return nil, err
+	}
+	client, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+	return c.run(cmd, args, client.Connectivity.V1)
+}
+
+func (c *InstallController) run(cmd *cobra.Command, args []string, client *sdk.FormanceV1) (fctl.Renderable, error) {
+	if err := validateSelectors(cmd); err != nil {
+		return nil, err
+	}
 	cursor, err := initialCursor(cmd)
 	if err != nil {
 		return nil, err
 	}
 	if strings.TrimSpace(fctl.GetString(cmd, ledgerFlag)) == "" {
 		return nil, fmt.Errorf("--ledger cannot be empty")
-	}
-	if c.factory == nil {
-		return nil, fmt.Errorf("connectivity client factory is required")
-	}
-	client, err := c.factory(cmd)
-	if err != nil {
-		return nil, err
 	}
 
 	connectorName := args[0]

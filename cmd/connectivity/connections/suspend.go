@@ -8,6 +8,7 @@ import (
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
@@ -18,7 +19,6 @@ type SuspensionStore struct {
 }
 
 type SuspensionController struct {
-	factory connectivityinternal.ClientFactory
 	approve approvalFunc
 	store   *SuspensionStore
 	suspend bool
@@ -26,30 +26,29 @@ type SuspensionController struct {
 
 var _ fctl.Controller[*SuspensionStore] = (*SuspensionController)(nil)
 
-func NewSuspensionController(factory connectivityinternal.ClientFactory, suspend bool) *SuspensionController {
+func NewSuspensionController(suspend bool) *SuspensionController {
 	return &SuspensionController{
-		factory: factory,
 		approve: fctl.CheckStackApprobation,
 		store:   &SuspensionStore{},
 		suspend: suspend,
 	}
 }
 
-func NewSuspendCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
-	return newSuspensionCommand(factory, "suspend", "Suspend a Connectivity connection", true)
+func NewSuspendCommand() *cobra.Command {
+	return newSuspensionCommand("suspend", "Suspend a Connectivity connection", true)
 }
 
-func NewUnsuspendCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
-	return newSuspensionCommand(factory, "unsuspend", "Resume a Connectivity connection", false)
+func NewUnsuspendCommand() *cobra.Command {
+	return newSuspensionCommand("unsuspend", "Resume a Connectivity connection", false)
 }
 
-func newSuspensionCommand(factory connectivityinternal.ClientFactory, name, description string, suspend bool) *cobra.Command {
-	controller := NewSuspensionController(factory, suspend)
+func newSuspensionCommand(name, description string, suspend bool) *cobra.Command {
+	controller := NewSuspensionController(suspend)
 	return fctl.NewCommand(
 		name+" <connection>",
 		fctl.WithShortDescription(description),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithValidArgsFunction(CompleteConnectionNames(factory)),
+		fctl.WithValidArgsFunction(CompleteConnectionNames()),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*SuspensionStore](controller),
 	)
@@ -60,13 +59,18 @@ func (c *SuspensionController) GetStore() *SuspensionStore {
 }
 
 func (c *SuspensionController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	if c.factory == nil {
-		return nil, fmt.Errorf("connectivity client factory is required")
-	}
-	client, err := c.factory(cmd)
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
+	client, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+	return c.run(cmd, args, client.Connectivity.V1)
+}
+
+func (c *SuspensionController) run(cmd *cobra.Command, args []string, client *sdk.FormanceV1) (fctl.Renderable, error) {
 	name := args[0]
 	action := "suspend"
 	if !c.suspend {

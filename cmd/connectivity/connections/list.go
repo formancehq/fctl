@@ -9,6 +9,7 @@ import (
 	"github.com/formancehq/fctl/v3/cmd/connectivity/connectors"
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
@@ -21,21 +22,19 @@ type ListStore struct {
 }
 
 type ListController struct {
-	factory connectivityinternal.ClientFactory
-	store   *ListStore
+	store *ListStore
 }
 
 var _ fctl.Controller[*ListStore] = (*ListController)(nil)
 
-func NewListController(factory connectivityinternal.ClientFactory) *ListController {
+func NewListController() *ListController {
 	return &ListController{
-		factory: factory,
-		store:   &ListStore{Connections: []connectivity.Connection{}},
+		store: &ListStore{Connections: []connectivity.Connection{}},
 	}
 }
 
-func NewListCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
-	controller := NewListController(factory)
+func NewListCommand() *cobra.Command {
+	controller := NewListController()
 	command := fctl.NewCommand(
 		"list",
 		fctl.WithAliases("ls", "l"),
@@ -48,12 +47,12 @@ func NewListCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
 		fctl.WithCursorFlag(),
 		fctl.WithController[*ListStore](controller),
 	)
-	if err := command.RegisterFlagCompletionFunc(connectorFlag, connectors.CompleteConnectorNames(factory)); err != nil {
+	if err := command.RegisterFlagCompletionFunc(connectorFlag, connectors.CompleteConnectorNames()); err != nil {
 		panic(err)
 	}
 	if err := command.RegisterFlagCompletionFunc(
 		connectivityinternal.FilterFlag,
-		connectivityinternal.CompleteFilterExpressions(factory, connectivityinternal.ResourceConnections),
+		connectivityinternal.CompleteFilterExpressions(connectivityinternal.ResourceConnections),
 	); err != nil {
 		panic(err)
 	}
@@ -64,14 +63,19 @@ func (c *ListController) GetStore() *ListStore {
 	return c.store
 }
 
-func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
-	if c.factory == nil {
-		return nil, fmt.Errorf("connectivity client factory is required")
-	}
-	client, err := c.factory(cmd)
+func (c *ListController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
+	client, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+	return c.run(cmd, args, client.Connectivity.V1)
+}
+
+func (c *ListController) run(cmd *cobra.Command, args []string, client *sdk.FormanceV1) (fctl.Renderable, error) {
 	pageSize, err := fctl.GetPageSize(cmd)
 	if err != nil {
 		return nil, err

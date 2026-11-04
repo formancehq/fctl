@@ -13,8 +13,8 @@ import (
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
-	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type configureClientMock struct {
@@ -22,29 +22,6 @@ type configureClientMock struct {
 	listInstances func(context.Context, connectivityinternal.ListOptions) (*testConnectionList, error)
 	getInstance   func(context.Context, string) (*connectivity.Connection, error)
 	patch         func(context.Context, string, map[string]any) (*connectivity.Connection, error)
-}
-
-func (m configureClientMock) ListConnections(ctx context.Context, request operations.ListConnectionsRequest, security *operations.ListConnectionsSecurity, opts ...operations.Option) (*operations.ListConnectionsResponse, error) {
-	data, err := m.listInstances(ctx, listOptions(request.PageSize, request.Cursor, request.Query))
-	response := &operations.ListConnectionsResponse{StatusCode: 200}
-	if data != nil {
-		response.ConnectionCursor = &connectivity.ConnectionCursor{Cursor: connectivity.Cursor{Data: data.Items, HasMore: data.HasMore, Next: connectivityinternal.OptionalString(data.Next), PageSize: int(data.PageSize)}}
-	}
-	return response, err
-}
-
-func (m configureClientMock) GetConnection(ctx context.Context, request operations.GetConnectionRequest, security *operations.GetConnectionSecurity, opts ...operations.Option) (*operations.GetConnectionResponse, error) {
-	data, err := m.getInstance(ctx, request.Name)
-	return &operations.GetConnectionResponse{StatusCode: 200, Connection: data}, err
-}
-
-func (m configureClientMock) PatchConnection(ctx context.Context, request operations.PatchConnectionRequest, security *operations.PatchConnectionSecurity, opts ...operations.Option) (*operations.PatchConnectionResponse, error) {
-	patch, err := sdkPatchBody(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-	data, err := m.patch(ctx, request.Name, patch)
-	return &operations.PatchConnectionResponse{StatusCode: 200, Connection: data}, err
 }
 
 func TestConfigureBuildsNestedPatchFromCurrentConfigAndChangedScalars(t *testing.T) {
@@ -75,7 +52,7 @@ func TestConfigureBuildsNestedPatchFromCurrentConfigAndChangedScalars(t *testing
 	}
 
 	output, err := executeCommand(
-		NewConfigureCommand(factoryReturning(client), mockReadFile(map[string]string{"new": "changed"}), mockPathCompleter(nil)),
+		testNewConfigureCommand(factoryReturning(client), mockReadFile(map[string]string{"new": "changed"}), mockPathCompleter(nil)),
 		"stripe-eu", "--set=/etc/a=@new", "--version=3.0.0",
 		"--poll-interval=15s", "--confirm",
 	)
@@ -118,7 +95,7 @@ func TestConfigureWithoutVersionFlagUsesTheInstancePin(t *testing.T) {
 	}
 
 	_, err := executeCommand(
-		NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)),
+		testNewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)),
 		"stripe-eu", "--set=/etc/a=kept", "--confirm",
 	)
 
@@ -138,7 +115,7 @@ func TestConfigureRequiresStoredOrExplicitSelector(t *testing.T) {
 			return nil, nil
 		},
 	}
-	_, err := executeCommand(NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "stripe-eu", "--set=/etc/a=kept", "--confirm")
+	_, err := executeCommand(testNewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "stripe-eu", "--set=/etc/a=kept", "--confirm")
 	require.ErrorContains(t, err, "no version/channel selector")
 }
 
@@ -148,7 +125,7 @@ func TestConfigureRequiresUnambiguousStoredSelector(t *testing.T) {
 	client := configureClientMock{
 		getInstance: func(context.Context, string) (*connectivity.Connection, error) { return &current, nil },
 	}
-	_, err := executeCommand(NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "stripe-eu", "--set=/etc/a=kept", "--confirm")
+	_, err := executeCommand(testNewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "stripe-eu", "--set=/etc/a=kept", "--confirm")
 	require.ErrorContains(t, err, "conflicting version/channel selectors")
 }
 
@@ -192,7 +169,7 @@ func TestConfigureChannelTracksTheResolvedSameMajorHeadAcrossPages(t *testing.T)
 	}
 
 	_, err := executeCommand(
-		NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)),
+		testNewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)),
 		"stripe-eu", "--channel=stable", "--set=/etc/a=kept", "--confirm",
 	)
 
@@ -218,7 +195,7 @@ func TestConfigureChannelUsesAppliedVersionForImmutableConnector(t *testing.T) {
 			patched = true
 			return &current, nil
 		}}
-		_, err := executeCommand(NewConfigureCommand(factoryReturning(client), nil, nil), "stripe-eu", "--channel=stable", "--set=/etc/a=kept", "--confirm")
+		_, err := executeCommand(testNewConfigureCommand(factoryReturning(client), nil, nil), "stripe-eu", "--channel=stable", "--set=/etc/a=kept", "--confirm")
 		if applied != nil {
 			require.ErrorContains(t, err, "no candidate version satisfies channel")
 			require.False(t, patched)
@@ -241,7 +218,7 @@ func TestConfigureOmitsUnchangedScalarsAndStoresCompleteReturnedInstance(t *test
 			return &returned, nil
 		},
 	}
-	command := NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil))
+	command := testNewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil))
 	command.Flags().String(fctl.OutputFlag, "plain", "")
 
 	output, err := executeCommand(command, "stripe-eu", "--poll-interval=30s", "--confirm", "--output=json")
@@ -266,7 +243,7 @@ func TestConfigureRejectsNoChangesWithoutPatch(t *testing.T) {
 		},
 	}
 
-	_, err := executeCommand(NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "stripe-eu", "--confirm")
+	_, err := executeCommand(testNewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "stripe-eu", "--confirm")
 
 	require.EqualError(t, err, "no configuration changes requested")
 	require.False(t, patched)
@@ -282,12 +259,13 @@ func TestConfigureConfirmationRejectionPreventsPatch(t *testing.T) {
 			return nil, errors.New("PatchConnection must not be called")
 		},
 	}
-	controller := NewConfigureController(factoryReturning(client), mockReadFile(nil))
+	controller := NewConfigureController(mockReadFile(nil))
 	controller.approve = func(*cobra.Command, string, ...any) bool { return false }
-	command := NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil))
+	command := testNewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil))
 	require.NoError(t, command.ParseFlags([]string{"--poll-interval=30s"}))
 
-	_, err := controller.Run(command, []string{"stripe-eu"})
+	command.SetContext(context.Background())
+	_, err := controller.run(command, []string{"stripe-eu"}, mockSDK(client))
 
 	require.ErrorIs(t, err, fctl.ErrMissingApproval)
 	require.False(t, patched)
@@ -310,7 +288,7 @@ func TestConfigureValidationAndArgumentsPreventPatch(t *testing.T) {
 			},
 		}
 
-		_, err := executeCommand(NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "stripe-eu", "--set=UNKNOWN=value", "--confirm")
+		_, err := executeCommand(testNewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "stripe-eu", "--set=UNKNOWN=value", "--confirm")
 
 		require.ErrorContains(t, err, "unknown configuration keys: UNKNOWN")
 		require.False(t, patched)
@@ -318,11 +296,11 @@ func TestConfigureValidationAndArgumentsPreventPatch(t *testing.T) {
 
 	t.Run("invalid arguments", func(t *testing.T) {
 		usedFactory := false
-		factory := func(*cobra.Command) (connectivityinternal.API, error) {
+		factory := func(*cobra.Command) (*sdk.FormanceV1, error) {
 			usedFactory = true
 			return nil, errors.New("factory must not be used")
 		}
-		command := NewConfigureCommand(factory, mockReadFile(nil), mockPathCompleter(nil))
+		command := testNewConfigureCommand(factory, mockReadFile(nil), mockPathCompleter(nil))
 
 		_, err := executeCommand(command, "stripe-eu", "extra", "--poll-interval=30s", "--confirm")
 
@@ -397,7 +375,7 @@ func TestConfigurePreservesGetAndPatchAPIErrorsAndRejectsEmptyResponses(t *testi
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			args := append([]string{"stripe-eu", "--poll-interval=30s", "--confirm"}, test.args...)
-			_, err := executeCommand(NewConfigureCommand(factoryReturning(test.client), mockReadFile(nil), mockPathCompleter(nil)), args...)
+			_, err := executeCommand(testNewConfigureCommand(factoryReturning(test.client), mockReadFile(nil), mockPathCompleter(nil)), args...)
 			require.Error(t, err)
 			if test.want != nil {
 				require.ErrorIs(t, err, test.want)
@@ -418,32 +396,32 @@ func TestConfigureRegistersAliasesRootAndCompletions(t *testing.T) {
 			return &testConnectionList{Items: []connectivity.Connection{current}}, nil
 		},
 		getInstance: func(ctx context.Context, name string) (*connectivity.Connection, error) {
-			require.True(t, connectivityinternal.IsNonInteractive(ctx))
+			require.True(t, hasTwoSecondDeadline(ctx))
 			require.Equal(t, "stripe-eu", name)
 			return &current, nil
 		},
 		connectorVersions: connectorVersions{
 			listVersions: func(ctx context.Context, name string, _ connectivityinternal.ListOptions) (*testConnectorVersionList, error) {
-				require.True(t, connectivityinternal.IsNonInteractive(ctx))
+				require.True(t, hasTwoSecondDeadline(ctx))
 				require.Equal(t, "stripe", name)
 				return versionListFixture(), nil
 			},
 			getVersion: func(ctx context.Context, name, _ string) (*connectivity.ConnectorVersion, error) {
-				require.True(t, connectivityinternal.IsNonInteractive(ctx))
+				require.True(t, hasTwoSecondDeadline(ctx))
 				require.Equal(t, "stripe", name)
 				return versionWithFileSchema(), nil
 			},
 		},
 	}
-	factory := func(cmd *cobra.Command) (connectivityinternal.API, error) {
-		require.True(t, connectivityinternal.IsNonInteractive(cmd.Context()))
-		return client, nil
+	factory := func(cmd *cobra.Command) (*sdk.FormanceV1, error) {
+		require.True(t, hasTwoSecondDeadline(cmd.Context()))
+		return mockSDK(client), nil
 	}
 	paths := func(prefix string) ([]string, error) {
 		pathPrefix = prefix
 		return []string{"fixtures/token.txt"}, nil
 	}
-	command := NewConfigureCommand(factory, mockReadFile(nil), paths)
+	command := testNewConfigureCommand(factory, mockReadFile(nil), paths)
 
 	require.Equal(t, "configure <connection>", command.Use)
 	require.Equal(t, []string{"update", "c"}, command.Aliases)
@@ -456,12 +434,16 @@ func TestConfigureRegistersAliasesRootAndCompletions(t *testing.T) {
 
 	versionCompletion, ok := command.GetFlagCompletionFunc(versionFlag)
 	require.True(t, ok)
+	require.NotNil(t, versionCompletion)
+	versionCompletion = testcompleteVersions(factory, resolveConfigureConnector)
 	versions, directive := versionCompletion(command, []string{"stripe-eu"}, "2")
 	require.Equal(t, []string{"2.0.0"}, versions)
 	require.Equal(t, cobra.ShellCompDirectiveNoFileComp, directive)
 
 	setCompletion, ok := command.GetFlagCompletionFunc(setFlag)
 	require.True(t, ok)
+	require.NotNil(t, setCompletion)
+	setCompletion = testCompleteSetValues(factory, resolveConfigureConnectorVersion, paths)
 	sets, directive := setCompletion(command, []string{"stripe-eu"}, "/etc")
 	require.Equal(t, []string{"/etc/a=\tPrimary config", "/etc/b=\tfile configuration"}, sets)
 	require.Equal(t, cobra.ShellCompDirectiveNoFileComp|cobra.ShellCompDirectiveNoSpace, directive)
@@ -475,7 +457,7 @@ func TestConfigureRegistersAliasesRootAndCompletions(t *testing.T) {
 	require.False(t, configRegistered)
 	require.False(t, envFileRegistered)
 
-	root := NewCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
+	root := testNewCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
 	child, _, err := root.Find([]string{"configure"})
 	require.NoError(t, err)
 	require.Equal(t, "configure", child.Name())
@@ -483,7 +465,7 @@ func TestConfigureRegistersAliasesRootAndCompletions(t *testing.T) {
 }
 
 func TestConfigureDoesNotExposeUnsupportedStartSequence(t *testing.T) {
-	command := NewConfigureCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
+	command := testNewConfigureCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
 
 	require.Nil(t, command.Flags().Lookup("start-sequence"))
 }
@@ -492,11 +474,11 @@ func TestConfigureRejectsBindingFlagsBeforeClientUse(t *testing.T) {
 	for _, flag := range []string{"connector", "ledger"} {
 		t.Run(flag, func(t *testing.T) {
 			usedFactory := false
-			factory := func(*cobra.Command) (connectivityinternal.API, error) {
+			factory := func(*cobra.Command) (*sdk.FormanceV1, error) {
 				usedFactory = true
 				return nil, errors.New("client must not be used")
 			}
-			command := NewConfigureCommand(factory, mockReadFile(nil), mockPathCompleter(nil))
+			command := testNewConfigureCommand(factory, mockReadFile(nil), mockPathCompleter(nil))
 			require.Nil(t, command.Flags().Lookup(flag))
 			_, err := executeCommand(command, "stripe-eu", "--"+flag+"=main", "--confirm")
 			require.ErrorContains(t, err, "unknown flag: --"+flag)

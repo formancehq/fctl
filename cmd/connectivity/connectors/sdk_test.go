@@ -21,9 +21,9 @@ func (f connectorRoundTripper) RoundTrip(request *http.Request) (*http.Response,
 	return f(request)
 }
 
-func sdkFactory(transport connectorRoundTripper) connectivityinternal.ClientFactory {
+func sdkWithTransport(transport connectorRoundTripper) *formance.FormanceV1 {
 	sdk := formance.New(formance.WithServerURL("https://stack.example.test"), formance.WithClient(&http.Client{Transport: transport}))
-	return factoryReturning(sdk.Connectivity.V1)
+	return sdk.Connectivity.V1
 }
 
 func connectorResponse(status int, body string) *http.Response {
@@ -33,23 +33,23 @@ func connectorResponse(status int, body string) *http.Response {
 func TestConnectorCommandsUseGeneratedSDK(t *testing.T) {
 	for _, test := range []struct {
 		name    string
-		command func(connectivityinternal.ClientFactory) *cobra.Command
+		command func(*formance.FormanceV1) *cobra.Command
 		path    string
 		body    string
 		want    string
 	}{
-		{"list", NewListCommand, "/api/connectivity/connectors", `{"cursor":{"data":[{"name":"stripe"}],"pageSize":15,"hasMore":false}}`, "stripe"},
-		{"facets", NewFacetsCommand, "/api/connectivity/connectors/_facets", `{"total":1,"facets":{"catalog":{"ee":1}}}`, "catalog"},
+		{"list", testNewListCommand, "/api/connectivity/connectors", `{"cursor":{"data":[{"name":"stripe"}],"pageSize":15,"hasMore":false}}`, "stripe"},
+		{"facets", testNewFacetsCommand, "/api/connectivity/connectors/_facets", `{"total":1,"facets":{"catalog":{"ee":1}}}`, "catalog"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			factory := sdkFactory(func(request *http.Request) (*http.Response, error) {
+			client := sdkWithTransport(func(request *http.Request) (*http.Response, error) {
 				require.Equal(t, http.MethodGet, request.Method)
 				require.Equal(t, test.path, request.URL.Path)
 				require.JSONEq(t, `{"$match":{"catalog":"ee"}}`, request.URL.Query().Get("query"))
 				require.False(t, request.URL.Query().Has("cursor"))
 				return connectorResponse(200, test.body), nil
 			})
-			output, err := executeCommand(test.command(factory), "--filter", "catalog=ee")
+			output, err := executeCommand(test.command(client), "--filter", "catalog=ee")
 			require.NoError(t, err)
 			require.Contains(t, output, test.want)
 		})
@@ -57,14 +57,14 @@ func TestConnectorCommandsUseGeneratedSDK(t *testing.T) {
 }
 
 func TestConnectorCommandsRejectGeneratedErrorEnvelopes(t *testing.T) {
-	for _, constructor := range []func(connectivityinternal.ClientFactory) *cobra.Command{NewListCommand, NewFacetsCommand, NewShowCommand} {
+	for _, constructor := range []func(*formance.FormanceV1) *cobra.Command{testNewListCommand, testNewFacetsCommand, testNewShowCommand} {
 		command := constructor(nil)
 		t.Run(command.Name(), func(t *testing.T) {
 			for _, status := range []int{http.StatusUnauthorized, http.StatusBadRequest} {
-				factory := sdkFactory(func(*http.Request) (*http.Response, error) {
+				client := sdkWithTransport(func(*http.Request) (*http.Response, error) {
 					return connectorResponse(status, `{"code":"invalid_query","message":"invalid filter"}`), nil
 				})
-				command := constructor(factory)
+				command := constructor(client)
 				command.Flags().String(fctl.OutputFlag, "json", "")
 				command.SilenceUsage = true
 				command.SilenceErrors = true
@@ -89,7 +89,7 @@ func TestConnectorCommandsRejectGeneratedErrorEnvelopes(t *testing.T) {
 
 func TestShowConnectorHandlesGeneratedLatestNotFound(t *testing.T) {
 	calls := 0
-	factory := sdkFactory(func(request *http.Request) (*http.Response, error) {
+	client := sdkWithTransport(func(request *http.Request) (*http.Response, error) {
 		calls++
 		switch request.URL.Path {
 		case "/api/connectivity/connectors/stripe":
@@ -103,7 +103,7 @@ func TestShowConnectorHandlesGeneratedLatestNotFound(t *testing.T) {
 			return nil, nil
 		}
 	})
-	output, err := executeCommand(NewShowCommand(factory), "stripe")
+	output, err := executeCommand(testNewShowCommand(client), "stripe")
 	require.NoError(t, err)
 	require.Equal(t, 3, calls)
 	require.Contains(t, output, "No published version.")
@@ -111,7 +111,7 @@ func TestShowConnectorHandlesGeneratedLatestNotFound(t *testing.T) {
 
 func TestShowConnectorEscapesNameAsOnePathSegment(t *testing.T) {
 	paths := []string{}
-	factory := sdkFactory(func(request *http.Request) (*http.Response, error) {
+	client := sdkWithTransport(func(request *http.Request) (*http.Response, error) {
 		paths = append(paths, request.URL.EscapedPath())
 		require.Empty(t, request.URL.Query().Get("c"))
 		body := `{"name":"a/b?c#d"}`
@@ -120,43 +120,43 @@ func TestShowConnectorEscapesNameAsOnePathSegment(t *testing.T) {
 		}
 		return connectorResponse(200, body), nil
 	})
-	_, err := executeCommand(NewShowCommand(factory), "a/b?c#d")
+	_, err := executeCommand(testNewShowCommand(client), "a/b?c#d")
 	require.NoError(t, err)
 	require.Equal(t, []string{"/api/connectivity/connectors/a%2Fb%3Fc%23d", "/api/connectivity/connectors/a%2Fb%3Fc%23d/versions"}, paths)
 }
 
 func TestConnectorSDKErrorPreservesResponseBody(t *testing.T) {
-	factory := sdkFactory(func(*http.Request) (*http.Response, error) {
+	client := sdkWithTransport(func(*http.Request) (*http.Response, error) {
 		response := connectorResponse(http.StatusBadGateway, "upstream diagnostic")
 		response.Header.Set("Content-Type", "text/plain")
 		return response, nil
 	})
-	_, err := executeCommand(NewListCommand(factory))
+	_, err := executeCommand(testNewListCommand(client))
 	require.ErrorContains(t, err, "upstream diagnostic")
 }
 
 func TestConnectorCommandsValidateGeneratedSuccessPayloads(t *testing.T) {
 	for _, test := range []struct {
 		name        string
-		constructor func(connectivityinternal.ClientFactory) *cobra.Command
+		constructor func(*formance.FormanceV1) *cobra.Command
 		bodies      []string
 		emptyBody   string
 		wantError   string
 	}{
-		{"list", NewListCommand, []string{`{}`, `{"cursor":null}`, `{"cursor":{}}`, `{"cursor":{"data":null}}`}, `{"cursor":{"data":[],"hasMore":false,"pageSize":15}}`, "cursor.data must be an array"},
-		{"show", NewShowCommand, []string{`{}`, `{"cursor":null}`, `{"cursor":{}}`, `{"cursor":{"data":null}}`}, `{"cursor":{"data":[],"hasMore":false,"pageSize":100}}`, "cursor.data must be an array"},
-		{"facets", NewFacetsCommand, []string{`{}`, `{"total":0}`, `{"total":0,"facets":null}`}, `{"total":0,"facets":{}}`, "facets must be an object"},
+		{"list", testNewListCommand, []string{`{}`, `{"cursor":null}`, `{"cursor":{}}`, `{"cursor":{"data":null}}`}, `{"cursor":{"data":[],"hasMore":false,"pageSize":15}}`, "cursor.data must be an array"},
+		{"show", testNewShowCommand, []string{`{}`, `{"cursor":null}`, `{"cursor":{}}`, `{"cursor":{"data":null}}`}, `{"cursor":{"data":[],"hasMore":false,"pageSize":100}}`, "cursor.data must be an array"},
+		{"facets", testNewFacetsCommand, []string{`{}`, `{"total":0}`, `{"total":0,"facets":null}`}, `{"total":0,"facets":{}}`, "facets must be an object"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			for _, body := range append(test.bodies, test.emptyBody) {
 				t.Run(body, func(t *testing.T) {
-					factory := sdkFactory(func(request *http.Request) (*http.Response, error) {
+					client := sdkWithTransport(func(request *http.Request) (*http.Response, error) {
 						if test.name == "show" && request.URL.Path == "/api/connectivity/connectors/stripe" {
 							return connectorResponse(200, `{"name":"stripe"}`), nil
 						}
 						return connectorResponse(200, body), nil
 					})
-					command := test.constructor(factory)
+					command := test.constructor(client)
 					command.Flags().String(fctl.OutputFlag, "json", "")
 					command.SilenceUsage = true
 					command.SilenceErrors = true

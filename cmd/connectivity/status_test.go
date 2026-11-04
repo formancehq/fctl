@@ -3,7 +3,6 @@ package connectivity
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -17,27 +16,20 @@ import (
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	formance "github.com/formancehq/fctl/v3/pkg/client"
 	connectivitymodel "github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
-	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
-
-type statusClientMock struct {
-	connectivityinternal.API
-	getInfo func(context.Context) (*connectivitymodel.Info, error)
-}
-
-func (m statusClientMock) ConnectivityInfo(ctx context.Context, _ ...operations.Option) (*operations.ConnectivityInfoResponse, error) {
-	info, err := m.getInfo(ctx)
-	body, marshalErr := json.Marshal(info)
-	if marshalErr != nil {
-		return nil, marshalErr
-	}
-	return &operations.ConnectivityInfoResponse{StatusCode: 200, Info: info, RawResponse: &http.Response{Body: io.NopCloser(bytes.NewReader(body))}}, err
-}
 
 type statusContextKey struct{}
 
-func executeStatus(ctx context.Context, factory connectivityinternal.ClientFactory, args ...string) (string, error) {
-	command := NewStatusCommand(factory)
+func executeStatus(ctx context.Context, client *formance.FormanceV1, args ...string) (string, error) {
+	command := NewStatusCommand()
+	controller := &StatusController{store: &connectivitymodel.Info{}}
+	command.RunE = func(cmd *cobra.Command, args []string) error {
+		renderable, err := controller.run(cmd, client)
+		if err != nil {
+			return err
+		}
+		return fctl.WithRender(cmd, args, controller, renderable)
+	}
 	command.Flags().String(fctl.OutputFlag, "plain", "")
 	command.SilenceErrors = true
 	command.SilenceUsage = true
@@ -54,15 +46,12 @@ func TestStatusShowsBuildInformationInPlainAndFlatJSON(t *testing.T) {
 		t.Run(format, func(t *testing.T) {
 			calls := 0
 			ctx := context.WithValue(t.Context(), statusContextKey{}, "status caller")
-			factory := func(cmd *cobra.Command) (connectivityinternal.API, error) {
-				require.Same(t, ctx, cmd.Context())
-				return statusClientMock{getInfo: func(got context.Context) (*connectivitymodel.Info, error) {
-					calls++
-					require.Same(t, ctx, got)
-					return &connectivitymodel.Info{Version: "v1.2.3", Commit: "abc123", BuildDate: "2026-10-28T22:29:14Z"}, nil
-				}}, nil
-			}
-			out, err := executeStatus(ctx, factory, "--output", format)
+			sdk := formance.New(formance.WithServerURL("https://stack.example.test"), formance.WithClient(&http.Client{Transport: statusRoundTripper(func(request *http.Request) (*http.Response, error) {
+				calls++
+				require.Equal(t, "status caller", request.Context().Value(statusContextKey{}))
+				return &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"version":"v1.2.3","commit":"abc123","buildDate":"2026-10-28T22:29:14Z"}`))}, nil
+			})}))
+			out, err := executeStatus(ctx, sdk.Connectivity.V1, "--output", format)
 			require.NoError(t, err)
 			require.Equal(t, 1, calls)
 			if format == "json" {
@@ -74,32 +63,30 @@ func TestStatusShowsBuildInformationInPlainAndFlatJSON(t *testing.T) {
 	}
 }
 
-func TestStatusReturnsFactoryAPINilClientAndEmptyResponseErrors(t *testing.T) {
-	apiErr := &connectivityinternal.APIError{StatusCode: 401, Message: "Unauthorized"}
-	for _, tt := range []struct {
-		name    string
-		factory connectivityinternal.ClientFactory
-		want    string
+func TestStatusReturnsTransportAndEmptyResponseErrors(t *testing.T) {
+	transportErr := errors.New("upstream unavailable")
+	for _, test := range []struct {
+		name         string
+		body         string
+		transportErr error
+		want         string
 	}{
-		{"missing factory", nil, "factory is required"},
-		{"factory", func(*cobra.Command) (connectivityinternal.API, error) {
-			return nil, errors.New("authentication failed")
-		}, "authentication failed"},
-		{"missing client", func(*cobra.Command) (connectivityinternal.API, error) { return nil, nil }, "client is required"},
-		{"API", func(*cobra.Command) (connectivityinternal.API, error) {
-			return statusClientMock{getInfo: func(context.Context) (*connectivitymodel.Info, error) { return nil, apiErr }}, nil
-		}, "Unauthorized"},
-		{"empty response", func(*cobra.Command) (connectivityinternal.API, error) {
-			return statusClientMock{getInfo: func(context.Context) (*connectivitymodel.Info, error) { return nil, nil }}, nil
-		}, "empty response"},
+		{"transport", "", transportErr, "upstream unavailable"},
+		{"empty response", "", nil, "unexpected end of JSON input"},
 	} {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			for _, format := range []string{"plain", "json"} {
-				out, err := executeStatus(t.Context(), tt.factory, "--output", format)
-				require.ErrorContains(t, err, tt.want)
+				sdk := formance.New(formance.WithServerURL("https://stack.example.test"), formance.WithClient(&http.Client{Transport: statusRoundTripper(func(*http.Request) (*http.Response, error) {
+					if test.transportErr != nil {
+						return nil, test.transportErr
+					}
+					return &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(test.body))}, nil
+				})}))
+				out, err := executeStatus(t.Context(), sdk.Connectivity.V1, "--output", format)
+				require.ErrorContains(t, err, test.want)
 				require.Empty(t, out)
-				if tt.name == "API" {
-					require.ErrorIs(t, err, apiErr)
+				if test.transportErr != nil {
+					require.ErrorIs(t, err, test.transportErr)
 				}
 			}
 		})
@@ -107,12 +94,15 @@ func TestStatusReturnsFactoryAPINilClientAndEmptyResponseErrors(t *testing.T) {
 }
 
 func TestStatusRejectsPositionalArgumentsBeforeAuthentication(t *testing.T) {
-	called := false
-	factory := func(*cobra.Command) (connectivityinternal.API, error) { called = true; return nil, nil }
-	out, err := executeStatus(t.Context(), factory, "extra")
-	require.Error(t, err)
-	require.False(t, called)
-	require.Empty(t, out)
+	command := NewStatusCommand()
+	command.SetArgs([]string{"extra"})
+	command.SilenceErrors = true
+	command.SilenceUsage = true
+	var out bytes.Buffer
+	command.SetOut(&out)
+	command.SetErr(io.Discard)
+	require.ErrorContains(t, command.Execute(), "unknown command")
+	require.Empty(t, out.String())
 }
 
 type statusRoundTripper func(*http.Request) (*http.Response, error)
@@ -132,8 +122,7 @@ func TestStatusUsesGeneratedSDKAndRejectsErrorEnvelope(t *testing.T) {
 			}
 			return &http.Response{StatusCode: status, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(body))}, nil
 		})}))
-		factory := func(*cobra.Command) (connectivityinternal.API, error) { return sdk.Connectivity.V1, nil }
-		out, err := executeStatus(t.Context(), factory, "--output", "json")
+		out, err := executeStatus(t.Context(), sdk.Connectivity.V1, "--output", "json")
 		if status == http.StatusOK {
 			require.NoError(t, err)
 			require.JSONEq(t, `{"data":{"version":"v1","commit":"abc","buildDate":"today"}}`, out)
@@ -173,8 +162,7 @@ func TestStatusRequiresStringBuildFieldsAndRetainsResponseBody(t *testing.T) {
 					rawResponse = &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(test.body))}
 					return rawResponse, nil
 				})}))
-				factory := func(*cobra.Command) (connectivityinternal.API, error) { return sdk.Connectivity.V1, nil }
-				out, err := executeStatus(t.Context(), factory, "--output", format)
+				out, err := executeStatus(t.Context(), sdk.Connectivity.V1, "--output", format)
 				if test.valid {
 					require.NoError(t, err)
 					require.NotEmpty(t, out)

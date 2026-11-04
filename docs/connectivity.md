@@ -50,7 +50,7 @@ The command tree lives entirely under `cmd/connectivity`: `connectors` owns
 catalogue commands, `connections` owns lifecycle commands, and
 `connections/configuration` owns configuration grouping and schema-aware input
 parsing. Commands call the generated Stack SDK in `pkg/client` directly.
-`internal` provides the client factory and the merge-patch body adaptation.
+`internal` holds completion helpers and the merge-patch body adaptation.
 
 ## Service build information
 
@@ -139,7 +139,7 @@ Configuration values are literals. Kubernetes Secret/ConfigMap references,
 structured `{value: ...}` entries, file lists and file modes are unsupported.
 Supply contents through a local configuration file, dotenv file or
 `--set KEY=@path`.
-Plain connection output lists configuration keys without values.
+Plain connection output displays configuration values returned by the API.
 
 Malformed YAML/JSON diagnostics identify the input file, report line numbers
 when available, and describe the expected structure without echoing input

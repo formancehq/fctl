@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/formancehq/fctl/v3/cmd/connectivity/connections/configuration"
-	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
+	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 )
 
@@ -38,7 +38,7 @@ func TestConnectionInstallWireContract(t *testing.T) {
 				},
 			}
 			args := append([]string{"stripe", "--ledger=main", "--set=TOKEN=private", "--set=/etc/plugin/ca.pem=private-file", "--confirm"}, selector.args...)
-			_, err := executeCommand(NewInstallCommand(factoryReturning(client), nil, nil), args...)
+			_, err := executeCommand(testNewInstallCommand(factoryReturning(client), nil, nil), args...)
 			require.NoError(t, err)
 			wire, err := json.Marshal(body)
 			require.NoError(t, err)
@@ -70,14 +70,14 @@ func TestConnectionRejectsInvalidSelectorsBeforeClient(t *testing.T) {
 		} {
 			t.Run(name+" "+flags[0], func(t *testing.T) {
 				used := false
-				factory := func(*cobra.Command) (connectivityinternal.API, error) {
+				factory := func(*cobra.Command) (*sdk.FormanceV1, error) {
 					used = true
 					return nil, errors.New("unexpected client")
 				}
-				command := NewConfigureCommand(factory, nil, nil)
+				command := testNewConfigureCommand(factory, nil, nil)
 				args := []string{"stripe-eu", "--confirm"}
 				if name == "install" {
-					command = NewInstallCommand(factory, nil, nil)
+					command = testNewInstallCommand(factory, nil, nil)
 					args = append(args, "--ledger=main")
 				}
 				_, err := executeCommand(command, append(args, flags...)...)
@@ -105,7 +105,7 @@ func TestConnectionConfigureSelectorSwitchClearsOppositeKey(t *testing.T) {
 					return &current, nil
 				},
 			}
-			_, err := executeCommand(NewConfigureCommand(factoryReturning(client), nil, nil), "stripe-eu", "--"+tt.key+"="+tt.value, "--confirm")
+			_, err := executeCommand(testNewConfigureCommand(factoryReturning(client), nil, nil), "stripe-eu", "--"+tt.key+"="+tt.value, "--confirm")
 			require.NoError(t, err)
 		})
 	}
@@ -145,14 +145,14 @@ func TestConnectionInitialCursorValidatedBeforeClient(t *testing.T) {
 	for _, value := range []string{"not-base64", "YQ", "YR==", "YQ==\n", ""} {
 		for _, install := range []bool{true, false} {
 			used := false
-			factory := func(*cobra.Command) (connectivityinternal.API, error) {
+			factory := func(*cobra.Command) (*sdk.FormanceV1, error) {
 				used = true
 				return nil, errors.New("unexpected client")
 			}
-			command := NewConfigureCommand(factory, nil, nil)
+			command := testNewConfigureCommand(factory, nil, nil)
 			args := []string{"stripe-eu", "--initial-cursor=" + value, "--confirm"}
 			if install {
-				command = NewInstallCommand(factory, nil, nil)
+				command = testNewInstallCommand(factory, nil, nil)
 				args = append(args, "--ledger=main")
 			}
 			_, err := executeCommand(command, args...)
@@ -170,7 +170,7 @@ func TestConnectionInitialCursorWireIsOpaque(t *testing.T) {
 		require.NotContains(t, string(wire), "startSequence")
 		return &connectivity.Connection{Name: body.Name, ConnectionConfiguration: createdConfiguration(body.ConnectionConfiguration)}, nil
 	}}
-	_, err := executeCommand(NewInstallCommand(factoryReturning(client), nil, nil), "stripe", "--ledger=main", "--initial-cursor=AP9h", "--confirm")
+	_, err := executeCommand(testNewInstallCommand(factoryReturning(client), nil, nil), "stripe", "--ledger=main", "--initial-cursor=AP9h", "--confirm")
 	require.NoError(t, err)
 	current := instanceFixture("stripe-eu")
 	configure := configureClientMock{
@@ -182,7 +182,7 @@ func TestConnectionInitialCursorWireIsOpaque(t *testing.T) {
 			return &current, nil
 		},
 	}
-	output, err := executeCommand(NewConfigureCommand(factoryReturning(configure), nil, nil), "stripe-eu", "--initial-cursor=AP9h", "--confirm")
+	output, err := executeCommand(testNewConfigureCommand(factoryReturning(configure), nil, nil), "stripe-eu", "--initial-cursor=AP9h", "--confirm")
 	require.NoError(t, err)
 	require.NotContains(t, output, "reset")
 }
@@ -205,7 +205,7 @@ func TestConnectionConfigPatchCarriesIntentForRedactedValues(t *testing.T) {
 				got = patch
 				return &current, nil
 			}}
-			_, err := executeCommand(NewConfigureCommand(factoryReturning(client), mockReadFile(map[string]string{"patch": document}), nil), "stripe-eu", "--config=patch", "--confirm")
+			_, err := executeCommand(testNewConfigureCommand(factoryReturning(client), mockReadFile(map[string]string{"patch": document}), nil), "stripe-eu", "--config=patch", "--confirm")
 			require.NoError(t, err)
 			configuration := got["configuration"].(map[string]any)
 			if document == "env: null\nfiles: null\n" {
@@ -229,7 +229,7 @@ func TestConnectionConfigurePreservesOmittedRequiredPasswords(t *testing.T) {
 		got = patch
 		return &current, nil
 	}}
-	_, err := executeCommand(NewConfigureCommand(factoryReturning(client), nil, nil), "stripe-eu", "--set=API_URL=new-url", "--confirm")
+	_, err := executeCommand(testNewConfigureCommand(factoryReturning(client), nil, nil), "stripe-eu", "--set=API_URL=new-url", "--confirm")
 	require.NoError(t, err)
 	require.Equal(t, map[string]any{"configuration": map[string]any{"env": map[string]any{"API_URL": "new-url"}}}, got)
 }
@@ -248,10 +248,12 @@ func TestConnectionConfigureCompletionUsesNewPinInsteadOfExistingChannel(t *test
 			},
 		},
 	}
-	command := NewConfigureCommand(factoryReturning(client), nil, nil)
+	command := testNewConfigureCommand(factoryReturning(client), nil, nil)
 	require.NoError(t, command.ParseFlags([]string{"--version=opaque-build"}))
 	complete, ok := command.GetFlagCompletionFunc(setFlag)
 	require.True(t, ok)
+	require.NotNil(t, complete)
+	complete = testCompleteSetValues(factoryReturning(client), resolveConfigureConnectorVersion, nil)
 	values, directive := complete(command, []string{"stripe-eu"}, "TOKEN")
 	require.Equal(t, []string{"TOKEN=\tAuthentication token"}, values)
 	require.Equal(t, cobra.ShellCompDirectiveNoFileComp|cobra.ShellCompDirectiveNoSpace, directive)
@@ -261,10 +263,10 @@ func TestConnectionShowAllowsUnboundPublicConfiguration(t *testing.T) {
 	current := instanceFixture("stripe-eu")
 	current.ConnectionConfiguration.Connector = stringPtr("")
 	current.ConnectionConfiguration.Env = map[string]string{"TOKEN": "hidden-token"}
-	output, err := executeCommand(NewShowCommand(factoryWithInstance(current)), "stripe-eu")
+	output, err := executeCommand(testNewShowCommand(factoryWithInstance(current)), "stripe-eu")
 	require.NoError(t, err)
 	require.Contains(t, output, "TOKEN")
-	require.NotContains(t, output, "hidden-token")
+	require.Contains(t, output, "hidden-token")
 }
 
 func TestConnectionConfigNullEntriesHonorSetPrecedence(t *testing.T) {

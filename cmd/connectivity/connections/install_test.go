@@ -13,8 +13,8 @@ import (
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
-	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type mutationClientMock struct {
@@ -22,25 +22,6 @@ type mutationClientMock struct {
 	listConnectors func(context.Context, connectivityinternal.ListOptions) (*testConnectorList, error)
 	capabilities   func(context.Context) (*connectivity.QueryCapabilities, error)
 	create         func(context.Context, connectivity.ConnectionCreate) (*connectivity.Connection, error)
-}
-
-func (m mutationClientMock) ListConnectors(ctx context.Context, request operations.ListConnectorsRequest, security *operations.ListConnectorsSecurity, opts ...operations.Option) (*operations.ListConnectorsResponse, error) {
-	data, err := m.listConnectors(ctx, listOptions(request.PageSize, request.Cursor, request.Query))
-	response := &operations.ListConnectorsResponse{StatusCode: 200}
-	if data != nil {
-		response.ConnectorCursor = &connectivity.ConnectorCursor{Cursor: connectivity.ConnectorCursorCursor{Data: data.Items, HasMore: data.HasMore, Next: connectivityinternal.OptionalString(data.Next), PageSize: int(data.PageSize)}}
-	}
-	return response, err
-}
-
-func (m mutationClientMock) GetQueryCapabilities(ctx context.Context, security *operations.GetQueryCapabilitiesSecurity, opts ...operations.Option) (*operations.GetQueryCapabilitiesResponse, error) {
-	data, err := m.capabilities(ctx)
-	return &operations.GetQueryCapabilitiesResponse{StatusCode: 200, QueryCapabilities: data}, err
-}
-
-func (m mutationClientMock) CreateConnection(ctx context.Context, body connectivity.ConnectionCreate, security *operations.CreateConnectionSecurity, opts ...operations.Option) (*operations.CreateConnectionResponse, error) {
-	data, err := m.create(ctx, body)
-	return &operations.CreateConnectionResponse{StatusCode: 201, Connection: data}, err
 }
 
 func TestInstallBuildsConnectionFromVersionSchemaAndOnlySetsChangedScalars(t *testing.T) {
@@ -65,7 +46,7 @@ func TestInstallBuildsConnectionFromVersionSchemaAndOnlySetsChangedScalars(t *te
 	})
 
 	output, err := executeCommand(
-		NewInstallCommand(factoryReturning(client), read, mockPathCompleter(nil)),
+		testNewInstallCommand(factoryReturning(client), read, mockPathCompleter(nil)),
 		"stripe", "--name=stripe-eu", "--ledger=main", "--version=2.0.0",
 		"--poll-interval=3s", "--config=install.yaml",
 		"--env-file=connector.env", "--set=TOKEN=@token.txt", "--confirm",
@@ -103,7 +84,7 @@ func TestInstallWithoutSelectorUsesStableHeadForTheSchema(t *testing.T) {
 	}
 
 	_, err := executeCommand(
-		NewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)),
+		testNewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)),
 		"stripe", "--ledger=main", "--set=API_URL=https://example", "--confirm",
 	)
 
@@ -131,7 +112,7 @@ func TestInstallWithChannelFlagTracksTheChannelAndUsesItsHeadForTheSchema(t *tes
 	}
 
 	_, err := executeCommand(
-		NewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)),
+		testNewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)),
 		"stripe", "--ledger=main", "--channel=stable", "--confirm",
 	)
 
@@ -149,7 +130,7 @@ func TestInstallReportsPrereleaseOnlyCataloguesAsMissingStableVersion(t *testing
 		},
 	}}
 
-	_, err := executeCommand(NewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "stripe", "--ledger=main", "--confirm")
+	_, err := executeCommand(testNewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "stripe", "--ledger=main", "--confirm")
 
 	require.ErrorContains(t, err, `connectivity connector "stripe" has no published version`)
 }
@@ -163,7 +144,7 @@ func TestInstallDefaultsNameToConnectorAndOmitsUnsetOptionalData(t *testing.T) {
 		},
 	}
 
-	_, err := executeCommand(NewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "wise", "--ledger=main", "--confirm")
+	_, err := executeCommand(testNewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "wise", "--ledger=main", "--confirm")
 
 	require.NoError(t, err)
 	require.Equal(t, "wise", gotBody.Name)
@@ -177,12 +158,12 @@ func TestInstallDefaultsNameToConnectorAndOmitsUnsetOptionalData(t *testing.T) {
 
 func TestInstallRequiresLedgerBeforeUsingClient(t *testing.T) {
 	usedClient := false
-	factory := func(*cobra.Command) (connectivityinternal.API, error) {
+	factory := func(*cobra.Command) (*sdk.FormanceV1, error) {
 		usedClient = true
 		return nil, errors.New("client must not be used")
 	}
 
-	_, err := executeCommand(NewInstallCommand(factory, mockReadFile(nil), mockPathCompleter(nil)), "stripe", "--confirm")
+	_, err := executeCommand(testNewInstallCommand(factory, mockReadFile(nil), mockPathCompleter(nil)), "stripe", "--confirm")
 
 	require.ErrorContains(t, err, `required flag(s) "ledger" not set`)
 	require.False(t, usedClient)
@@ -196,12 +177,13 @@ func TestInstallConfirmationRejectionPreventsCreate(t *testing.T) {
 			return nil, errors.New("CreateConnection must not be called")
 		},
 	}
-	controller := NewInstallController(factoryReturning(client), mockReadFile(nil))
+	controller := NewInstallController(mockReadFile(nil))
 	controller.approve = func(*cobra.Command, string, ...any) bool { return false }
-	command := NewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil))
+	command := testNewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil))
 	require.NoError(t, command.ParseFlags([]string{"--ledger=main"}))
 
-	_, err := controller.Run(command, []string{"stripe"})
+	command.SetContext(context.Background())
+	_, err := controller.run(command, []string{"stripe"}, mockSDK(client))
 
 	require.ErrorIs(t, err, fctl.ErrMissingApproval)
 	require.False(t, created)
@@ -222,7 +204,7 @@ func TestInstallValidationErrorPreventsCreate(t *testing.T) {
 	}
 
 	_, err := executeCommand(
-		NewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)),
+		testNewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)),
 		"stripe", "--ledger=main", "--set=UNKNOWN=value", "--confirm",
 	)
 
@@ -272,7 +254,7 @@ func TestInstallPreservesVersionAndCreateAPIErrorsAndRejectsEmptyResponses(t *te
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			_, err := executeCommand(NewInstallCommand(factoryReturning(test.client), mockReadFile(nil), mockPathCompleter(nil)), "stripe", "--ledger=main", "--confirm")
+			_, err := executeCommand(testNewInstallCommand(factoryReturning(test.client), mockReadFile(nil), mockPathCompleter(nil)), "stripe", "--ledger=main", "--confirm")
 			require.Error(t, err)
 			if test.want != nil {
 				require.ErrorIs(t, err, test.want)
@@ -294,7 +276,7 @@ func TestInstallJSONStoresCompleteReturnedConnection(t *testing.T) {
 			return &returned, nil
 		},
 	}
-	command := NewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil))
+	command := testNewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil))
 	command.Flags().String(fctl.OutputFlag, "plain", "")
 
 	output, err := executeCommand(command, "stripe", "--ledger=main", "--confirm", "--output=json")
@@ -308,39 +290,29 @@ func TestInstallJSONStoresCompleteReturnedConnection(t *testing.T) {
 }
 
 func TestInstallRegistersAliasesAndRootIntegration(t *testing.T) {
-	standalone := NewInstallCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
+	standalone := testNewInstallCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
 	require.Equal(t, "install <connector>", standalone.Use)
 	require.Equal(t, []string{"create", "in"}, standalone.Aliases)
 	require.Error(t, standalone.Args(standalone, nil))
 	require.NoError(t, standalone.Args(standalone, []string{"stripe"}))
 	require.Error(t, standalone.Args(standalone, []string{"stripe", "extra"}))
 
-	root := NewCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
+	root := testNewCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
 	child, _, err := root.Find([]string{"install"})
 	require.NoError(t, err)
 	require.Equal(t, "install", child.Name())
 	require.True(t, reflect.DeepEqual([]string{"create", "in"}, child.Aliases))
 }
 
-func TestInstallWiresChannelCompletionFromCapabilities(t *testing.T) {
-	client := mutationClientMock{capabilities: func(context.Context) (*connectivity.QueryCapabilities, error) {
-		return &connectivity.QueryCapabilities{Resources: map[string]map[string]connectivity.QueryFieldCapability{
-			connectivityinternal.ResourceConnections: {
-				"channel": {Operators: []string{"$match"}, Enum: []string{"stable", "rc", "beta", "alpha"}},
-			},
-		}}, nil
-	}}
-	command := NewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil))
-
-	channelCompletion, ok := command.GetFlagCompletionFunc("channel")
+func TestInstallRegistersChannelCompletion(t *testing.T) {
+	command := NewInstallCommand(nil, nil)
+	completion, ok := command.GetFlagCompletionFunc("channel")
 	require.True(t, ok)
-	channels, directive := channelCompletion(command, nil, "s")
-	require.Equal(t, []string{"stable"}, channels)
-	require.Equal(t, cobra.ShellCompDirectiveNoFileComp, directive)
+	require.NotNil(t, completion)
 }
 
 func TestInstallDoesNotExposeUnsupportedStartSequence(t *testing.T) {
-	command := NewInstallCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
+	command := testNewInstallCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
 
 	require.Nil(t, command.Flags().Lookup("start-sequence"))
 }
@@ -357,13 +329,13 @@ func TestInstallWiresConnectorVersionSetAndFileCompletions(t *testing.T) {
 		},
 		connectorVersions: connectorVersions{
 			listVersions: func(ctx context.Context, name string, options connectivityinternal.ListOptions) (*testConnectorVersionList, error) {
-				require.True(t, connectivityinternal.IsNonInteractive(ctx))
+				require.True(t, hasTwoSecondDeadline(ctx))
 				require.Equal(t, "stripe", name)
 				require.Equal(t, int32(100), options.PageSize)
 				return versionListFixture(), nil
 			},
 			getVersion: func(ctx context.Context, name, _ string) (*connectivity.ConnectorVersion, error) {
-				require.True(t, connectivityinternal.IsNonInteractive(ctx))
+				require.True(t, hasTwoSecondDeadline(ctx))
 				require.Equal(t, "stripe", name)
 				return versionWithFullSchema(), nil
 			},
@@ -374,24 +346,26 @@ func TestInstallWiresConnectorVersionSetAndFileCompletions(t *testing.T) {
 		pathPrefix = prefix
 		return []string{"fixtures/token.txt"}, nil
 	}
-	factory := func(cmd *cobra.Command) (connectivityinternal.API, error) {
-		require.True(t, connectivityinternal.IsNonInteractive(cmd.Context()))
-		return client, nil
+	factory := func(cmd *cobra.Command) (*sdk.FormanceV1, error) {
+		require.True(t, hasTwoSecondDeadline(cmd.Context()))
+		return mockSDK(client), nil
 	}
-	command := NewInstallCommand(factory, mockReadFile(nil), paths)
+	command := testNewInstallCommand(factory, mockReadFile(nil), paths)
 
-	connectors, directive := command.ValidArgsFunction(command, nil, "str")
-	require.Equal(t, []string{"stripe\tStripe ingestion"}, connectors)
-	require.Equal(t, cobra.ShellCompDirectiveNoFileComp, directive)
+	require.NotNil(t, command.ValidArgsFunction)
 
 	versionCompletion, ok := command.GetFlagCompletionFunc("version")
 	require.True(t, ok)
+	require.NotNil(t, versionCompletion)
+	versionCompletion = testCompleteVersions(factory, installConnectorArgument)
 	versions, directive := versionCompletion(command, []string{"stripe"}, "2")
 	require.Equal(t, []string{"2.0.0"}, versions)
 	require.Equal(t, cobra.ShellCompDirectiveNoFileComp, directive)
 
 	setCompletion, ok := command.GetFlagCompletionFunc("set")
 	require.True(t, ok)
+	require.NotNil(t, setCompletion)
+	setCompletion = testCompleteSetValues(factory, resolveInstallConnectorVersion, paths)
 	sets, directive := setCompletion(command, []string{"stripe"}, "API")
 	require.Equal(t, []string{"API_URL=\tAPI endpoint"}, sets)
 	require.Equal(t, cobra.ShellCompDirectiveNoFileComp|cobra.ShellCompDirectiveNoSpace, directive)

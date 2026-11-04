@@ -24,7 +24,7 @@ func TestConfigurationTreePreservesUpdateAndLegacyRoutes(t *testing.T) {
 					return &current, nil
 				},
 			}
-			command := NewCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil))
+			command := testNewCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil))
 			args := append(append([]string{}, path...), "update", "--poll-interval=15s", "--confirm")
 			output, err := executeCommand(command, args...)
 			require.NoError(t, err)
@@ -35,7 +35,7 @@ func TestConfigurationTreePreservesUpdateAndLegacyRoutes(t *testing.T) {
 }
 
 func TestConfigurationGroupShowsHelpWithoutAuthenticating(t *testing.T) {
-	command := NewCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
+	command := testNewCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
 	output, err := executeCommand(command, "config")
 	require.NoError(t, err)
 	require.Contains(t, output, "update")

@@ -10,13 +10,14 @@ import (
 	"github.com/spf13/cobra"
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
+	formance "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 )
 
 func TestCompleteConnectorNamesUsesBoundedCatalogQueryAndReturnsPrefixMatchesWithDescriptions(t *testing.T) {
 	var gotOptions connectivityinternal.ListOptions
 	var remaining time.Duration
-	client := connectorClientMock{list: func(ctx context.Context, options connectivityinternal.ListOptions) (*connectorPage, error) {
+	client := connectorTransportMock{list: func(ctx context.Context, options connectivityinternal.ListOptions) (*connectorPage, error) {
 		gotOptions = options
 		deadline, ok := ctx.Deadline()
 		if !ok {
@@ -28,13 +29,11 @@ func TestCompleteConnectorNamesUsesBoundedCatalogQueryAndReturnsPrefixMatchesWit
 		}}, nil
 	}}
 
-	completion := CompleteConnectorNames(func(cmd *cobra.Command) (connectivityinternal.API, error) {
-		if !connectivityinternal.IsNonInteractive(cmd.Context()) {
-			t.Fatal("completion factory context is interactive")
-		}
-		return client, nil
-	})
-	candidates, directive := completion(&cobra.Command{}, nil, "al")
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	command := &cobra.Command{}
+	command.SetContext(ctx)
+	candidates, directive := testCompleteConnectorNames(sdkFor(client))(command, nil, "al")
 
 	if !reflect.DeepEqual(gotOptions, connectivityinternal.ListOptions{PageSize: 100}) {
 		t.Fatalf("ListConnectors options = %#v, want page size 100", gotOptions)
@@ -52,7 +51,7 @@ func TestCompleteConnectorNamesUsesBoundedCatalogQueryAndReturnsPrefixMatchesWit
 
 func TestCompleteConnectorNamesFollowsCursorPagination(t *testing.T) {
 	var gotCursors []string
-	client := connectorClientMock{list: func(_ context.Context, options connectivityinternal.ListOptions) (*connectorPage, error) {
+	client := connectorTransportMock{list: func(_ context.Context, options connectivityinternal.ListOptions) (*connectorPage, error) {
 		gotCursors = append(gotCursors, options.Cursor)
 		if options.Cursor == "" {
 			return &connectorPage{
@@ -64,7 +63,7 @@ func TestCompleteConnectorNamesFollowsCursorPagination(t *testing.T) {
 		return &connectorPage{Items: []connectivity.Connector{connectorFixture("alpine")}}, nil
 	}}
 
-	candidates, _ := CompleteConnectorNames(factoryReturning(client))(&cobra.Command{}, nil, "al")
+	candidates, _ := testCompleteConnectorNames(sdkFor(client))(&cobra.Command{}, nil, "al")
 
 	if !reflect.DeepEqual(gotCursors, []string{"", "page-two"}) {
 		t.Fatalf("list cursors = %#v, want the continuation to be followed", gotCursors)
@@ -75,26 +74,20 @@ func TestCompleteConnectorNamesFollowsCursorPagination(t *testing.T) {
 	}
 }
 
-func TestCompleteConnectorNamesReturnsSilentlyOnFactoryAPIAndTimeoutErrors(t *testing.T) {
+func TestCompleteConnectorNamesReturnsSilentlyOnTransportAndTimeoutErrors(t *testing.T) {
 	tests := map[string]struct {
 		command *cobra.Command
-		factory func(*cobra.Command) (connectivityinternal.API, error)
+		client  *formance.FormanceV1
 	}{
-		"authentication": {
-			command: &cobra.Command{},
-			factory: func(*cobra.Command) (connectivityinternal.API, error) {
-				return nil, errors.New("not authenticated")
-			},
-		},
 		"API": {
 			command: &cobra.Command{},
-			factory: factoryReturning(connectorClientMock{list: func(context.Context, connectivityinternal.ListOptions) (*connectorPage, error) {
+			client: sdkFor(connectorTransportMock{list: func(context.Context, connectivityinternal.ListOptions) (*connectorPage, error) {
 				return nil, errors.New("unsupported deployment")
 			}}),
 		},
 		"timeout": {
 			command: commandWithExpiredContext(),
-			factory: factoryReturning(connectorClientMock{list: func(ctx context.Context, _ connectivityinternal.ListOptions) (*connectorPage, error) {
+			client: sdkFor(connectorTransportMock{list: func(ctx context.Context, _ connectivityinternal.ListOptions) (*connectorPage, error) {
 				<-ctx.Done()
 				return nil, ctx.Err()
 			}}),
@@ -103,7 +96,7 @@ func TestCompleteConnectorNamesReturnsSilentlyOnFactoryAPIAndTimeoutErrors(t *te
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			candidates, directive := CompleteConnectorNames(test.factory)(test.command, nil, "")
+			candidates, directive := testCompleteConnectorNames(test.client)(test.command, nil, "")
 			if len(candidates) != 0 {
 				t.Fatalf("candidates = %#v, want none", candidates)
 			}
@@ -123,12 +116,12 @@ func commandWithExpiredContext() *cobra.Command {
 }
 
 func TestCompleteConnectorNamesUsesFlatNameAndOptionalDescription(t *testing.T) {
-	client := connectorClientMock{list: func(context.Context, connectivityinternal.ListOptions) (*connectorPage, error) {
+	client := connectorTransportMock{list: func(context.Context, connectivityinternal.ListOptions) (*connectorPage, error) {
 		return &connectorPage{Items: []connectivity.Connector{
 			{Name: "stripe"}, {Name: ""}, {Name: "wise"},
 		}}, nil
 	}}
-	candidates, directive := CompleteConnectorNames(factoryReturning(client))(&cobra.Command{}, nil, "")
+	candidates, directive := testCompleteConnectorNames(sdkFor(client))(&cobra.Command{}, nil, "")
 	if !reflect.DeepEqual(candidates, []string{"stripe", "wise"}) {
 		t.Fatalf("flat connector candidates = %#v", candidates)
 	}

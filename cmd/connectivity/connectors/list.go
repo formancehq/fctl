@@ -9,6 +9,7 @@ import (
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	formance "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
@@ -19,21 +20,19 @@ type ListStore struct {
 }
 
 type ListController struct {
-	factory connectivityinternal.ClientFactory
-	store   *ListStore
+	store *ListStore
 }
 
 var _ fctl.Controller[*ListStore] = (*ListController)(nil)
 
-func NewListController(factory connectivityinternal.ClientFactory) *ListController {
+func NewListController() *ListController {
 	return &ListController{
-		factory: factory,
-		store:   &ListStore{Connectors: []connectivity.Connector{}},
+		store: &ListStore{Connectors: []connectivity.Connector{}},
 	}
 }
 
-func NewListCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
-	controller := NewListController(factory)
+func NewListCommand() *cobra.Command {
+	controller := NewListController()
 	command := fctl.NewCommand(
 		"list",
 		fctl.WithAliases("ls", "l"),
@@ -47,7 +46,7 @@ func NewListCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
 	)
 	if err := command.RegisterFlagCompletionFunc(
 		connectivityinternal.FilterFlag,
-		connectivityinternal.CompleteFilterExpressions(factory, connectivityinternal.ResourceConnectors),
+		connectivityinternal.CompleteFilterExpressions(connectivityinternal.ResourceConnectors),
 	); err != nil {
 		panic(err)
 	}
@@ -59,13 +58,18 @@ func (c *ListController) GetStore() *ListStore {
 }
 
 func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
-	if c.factory == nil {
-		return nil, fmt.Errorf("connectivity client factory is required")
-	}
-	client, err := c.factory(cmd)
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+	return c.run(cmd, nil, stackClient.Connectivity.V1)
+}
+
+func (c *ListController) run(cmd *cobra.Command, _ []string, client *formance.FormanceV1) (fctl.Renderable, error) {
 	pageSize, err := fctl.GetPageSize(cmd)
 	if err != nil {
 		return nil, err

@@ -11,6 +11,7 @@ import (
 	xmodsemver "golang.org/x/mod/semver"
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
+	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
@@ -24,7 +25,7 @@ const (
 // the configuration being assembled: the requested pin (or channel alias) when
 // there is one, the server-resolved stable head otherwise. This mirrors an
 // unselected install, whose API write persists the stable selector.
-func resolveConnectorVersion(ctx context.Context, client connectivityinternal.API, connector, pinned string) (*connectivity.ConnectorVersion, error) {
+func resolveConnectorVersion(ctx context.Context, client *sdk.FormanceV1, connector, pinned string) (*connectivity.ConnectorVersion, error) {
 	if connector == "" {
 		return nil, fmt.Errorf("connector name is required")
 	}
@@ -46,7 +47,7 @@ func resolveConnectorVersion(ctx context.Context, client connectivityinternal.AP
 	if err != nil {
 		return nil, err
 	}
-	if version == nil {
+	if version == nil || version.Version == "" {
 		return nil, fmt.Errorf("get connectivity connector %q version %q: empty response", connector, pinned)
 	}
 	return version, nil
@@ -63,7 +64,7 @@ func appliedChannelFloor(instance *connectivity.Connection) string {
 // resolveChannelVersion mirrors the operator resolver for the schema selected
 // during a channel-tracked configure. It reads every version page because the
 // selected channel head is not necessarily present on the first page.
-func resolveChannelVersion(ctx context.Context, client connectivityinternal.API, connector, channel, running string) (*connectivity.ConnectorVersion, error) {
+func resolveChannelVersion(ctx context.Context, client *sdk.FormanceV1, connector, channel, running string) (*connectivity.ConnectorVersion, error) {
 	versions, err := connectivityinternal.CollectPages(versionResolvePageSize, versionResolveMaxPages,
 		func(options connectivityinternal.ListOptions) ([]connectivity.ConnectorVersionSummary, bool, string, error) {
 			response, err := client.ListConnectorVersions(ctx, operations.ListConnectorVersionsRequest{Name: url.PathEscape(connector), Cursor: connectivityinternal.OptionalString(options.Cursor), PageSize: ptr(int(options.PageSize)), Query: connectivityinternal.OptionalString(options.Query)}, nil)

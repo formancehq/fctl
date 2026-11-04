@@ -11,6 +11,7 @@ import (
 	"github.com/formancehq/fctl/v3/cmd/connectivity/connections/configuration"
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
@@ -20,7 +21,6 @@ type ConfigureStore struct {
 }
 
 type ConfigureController struct {
-	factory connectivityinternal.ClientFactory
 	read    configuration.ReadFileFunc
 	approve approvalFunc
 	store   *ConfigureStore
@@ -28,23 +28,22 @@ type ConfigureController struct {
 
 var _ fctl.Controller[*ConfigureStore] = (*ConfigureController)(nil)
 
-func NewConfigureController(factory connectivityinternal.ClientFactory, read configuration.ReadFileFunc) *ConfigureController {
+func NewConfigureController(read configuration.ReadFileFunc) *ConfigureController {
 	return &ConfigureController{
-		factory: factory,
 		read:    read,
 		approve: fctl.CheckStackApprobation,
 		store:   &ConfigureStore{},
 	}
 }
 
-func NewConfigureCommand(factory connectivityinternal.ClientFactory, read configuration.ReadFileFunc, paths PathCompleter) *cobra.Command {
-	controller := NewConfigureController(factory, read)
+func NewConfigureCommand(read configuration.ReadFileFunc, paths PathCompleter) *cobra.Command {
+	controller := NewConfigureController(read)
 	command := fctl.NewCommand(
 		"configure <connection>",
 		fctl.WithAliases("update", "c"),
 		fctl.WithShortDescription("Configure a Connectivity connection"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithValidArgsFunction(CompleteConnectionNames(factory)),
+		fctl.WithValidArgsFunction(CompleteConnectionNames()),
 		fctl.WithStringFlag(versionFlag, "", "Connector version"),
 		fctl.WithStringFlag(channelFlag, "", "Maturity channel to track (stable, rc, beta, alpha) when no version is pinned"),
 		fctl.WithStringFlag(initialCursorFlag, "", "Initial ingestion cursor as base64 (opaque; does not reset a running cursor)"),
@@ -55,19 +54,19 @@ func NewConfigureCommand(factory connectivityinternal.ClientFactory, read config
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*ConfigureStore](controller),
 	)
-	if err := command.RegisterFlagCompletionFunc(versionFlag, completeVersions(factory, resolveConfigureConnector)); err != nil {
+	if err := command.RegisterFlagCompletionFunc(versionFlag, completeVersions(resolveConfigureConnector)); err != nil {
 		panic(err)
 	}
-	if err := command.RegisterFlagCompletionFunc(channelFlag, connectivityinternal.CompleteChannels(factory)); err != nil {
+	if err := command.RegisterFlagCompletionFunc(channelFlag, connectivityinternal.CompleteChannels()); err != nil {
 		panic(err)
 	}
-	if err := command.RegisterFlagCompletionFunc(setFlag, CompleteSetValues(factory, resolveConfigureConnectorVersion, paths)); err != nil {
+	if err := command.RegisterFlagCompletionFunc(setFlag, CompleteSetValues(resolveConfigureConnectorVersion, paths)); err != nil {
 		panic(err)
 	}
 	return command
 }
 
-func resolveConfigureConnector(ctx context.Context, client connectivityinternal.API, _ *cobra.Command, args []string) (string, error) {
+func resolveConfigureConnector(ctx context.Context, client *sdk.FormanceV1, _ *cobra.Command, args []string) (string, error) {
 	if len(args) == 0 {
 		return "", nil
 	}
@@ -85,7 +84,7 @@ func resolveConfigureConnector(ctx context.Context, client connectivityinternal.
 	return stringValue(instance.ConnectionConfiguration.Connector), nil
 }
 
-func resolveConfigureConnectorVersion(ctx context.Context, client connectivityinternal.API, cmd *cobra.Command, args []string) (*connectivity.ConnectorVersion, error) {
+func resolveConfigureConnectorVersion(ctx context.Context, client *sdk.FormanceV1, cmd *cobra.Command, args []string) (*connectivity.ConnectorVersion, error) {
 	if err := validateSelectors(cmd); err != nil {
 		return nil, err
 	}
@@ -148,14 +147,26 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 	if err := validateSelectors(cmd); err != nil {
 		return nil, err
 	}
-	cursor, err := initialCursor(cmd)
+	if _, err := initialCursor(cmd); err != nil {
+		return nil, err
+	}
+
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
-	if c.factory == nil {
-		return nil, fmt.Errorf("connectivity client factory is required")
+	clients, err := fctl.NewStackClientsFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
 	}
-	client, err := c.factory(cmd)
+	return c.run(cmd, args, connectivityinternal.PatchAPI(clients))
+}
+
+func (c *ConfigureController) run(cmd *cobra.Command, args []string, client *sdk.FormanceV1) (fctl.Renderable, error) {
+	if err := validateSelectors(cmd); err != nil {
+		return nil, err
+	}
+	cursor, err := initialCursor(cmd)
 	if err != nil {
 		return nil, err
 	}

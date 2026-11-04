@@ -10,10 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/spf13/cobra"
-
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	formance "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 )
 
@@ -30,7 +29,7 @@ func TestShowConnectorRendersPublicFieldsVersionsAndLatestVersionSchema(t *testi
 	connector.CreatedAt = &created
 
 	var gotVersion string
-	client := connectorClientMock{
+	client := connectorTransportMock{
 		get: func(_ context.Context, name string) (*connectivity.Connector, error) {
 			if name != "stripe" {
 				t.Fatalf("GetConnector name = %q, want stripe", name)
@@ -65,7 +64,7 @@ func TestShowConnectorRendersPublicFieldsVersionsAndLatestVersionSchema(t *testi
 			}, nil
 		},
 	}
-	command := NewShowCommand(factoryReturning(client))
+	command := testNewShowCommand(sdkFor(client))
 	output, err := executeCommand(command, "stripe")
 	if err != nil {
 		t.Fatalf("execute show command: %v", err)
@@ -97,7 +96,7 @@ func TestShowConnectorRendersPublicFieldsVersionsAndLatestVersionSchema(t *testi
 func TestShowConnectorFollowsVersionPagination(t *testing.T) {
 	connector := connectorFixture("stripe")
 	var gotCursors []string
-	client := connectorClientMock{
+	client := connectorTransportMock{
 		get: func(context.Context, string) (*connectivity.Connector, error) {
 			return &connector, nil
 		},
@@ -116,7 +115,7 @@ func TestShowConnectorFollowsVersionPagination(t *testing.T) {
 		},
 	}
 
-	output, err := executeCommand(NewShowCommand(factoryReturning(client)), "stripe")
+	output, err := executeCommand(testNewShowCommand(sdkFor(client)), "stripe")
 	if err != nil {
 		t.Fatalf("execute show command: %v", err)
 	}
@@ -133,7 +132,7 @@ func TestShowConnectorFollowsVersionPagination(t *testing.T) {
 
 func TestShowConnectorWithoutVersionsReportsNoPublishedVersion(t *testing.T) {
 	connector := connectorFixture("fresh")
-	client := connectorClientMock{
+	client := connectorTransportMock{
 		get: func(context.Context, string) (*connectivity.Connector, error) {
 			return &connector, nil
 		},
@@ -146,7 +145,7 @@ func TestShowConnectorWithoutVersionsReportsNoPublishedVersion(t *testing.T) {
 		},
 	}
 
-	output, err := executeCommand(NewShowCommand(factoryReturning(client)), "fresh")
+	output, err := executeCommand(testNewShowCommand(sdkFor(client)), "fresh")
 	if err != nil {
 		t.Fatalf("execute show command: %v", err)
 	}
@@ -159,7 +158,7 @@ func TestShowConnectorWithoutVersionsReportsNoPublishedVersion(t *testing.T) {
 // versions answer 404, which show degrades to the no-version notice.
 func TestShowConnectorTreatsUnresolvableLatestAsNoPublishedVersion(t *testing.T) {
 	connector := connectorFixture("pending")
-	client := connectorClientMock{
+	client := connectorTransportMock{
 		get: func(context.Context, string) (*connectivity.Connector, error) {
 			return &connector, nil
 		},
@@ -171,7 +170,7 @@ func TestShowConnectorTreatsUnresolvableLatestAsNoPublishedVersion(t *testing.T)
 		},
 	}
 
-	output, err := executeCommand(NewShowCommand(factoryReturning(client)), "pending")
+	output, err := executeCommand(testNewShowCommand(sdkFor(client)), "pending")
 	if err != nil {
 		t.Fatalf("execute show command: %v", err)
 	}
@@ -186,7 +185,7 @@ func TestShowConnectorJSONPreservesCompleteModel(t *testing.T) {
 		Version:      "2.0.0",
 		ConfigSchema: map[string]any{"type": "object"},
 	}
-	client := connectorClientMock{
+	client := connectorTransportMock{
 		get: func(context.Context, string) (*connectivity.Connector, error) {
 			return &connector, nil
 		},
@@ -198,7 +197,7 @@ func TestShowConnectorJSONPreservesCompleteModel(t *testing.T) {
 		},
 	}
 
-	command := NewShowCommand(factoryReturning(client))
+	command := testNewShowCommand(sdkFor(client))
 	command.Flags().String(fctl.OutputFlag, "plain", "")
 	output, err := executeCommand(command, "--output", "json", "stripe")
 	if err != nil {
@@ -222,31 +221,25 @@ func TestShowConnectorJSONPreservesCompleteModel(t *testing.T) {
 	}
 }
 
-func TestShowConnectorReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
+func TestShowConnectorReturnsTransportAndEmptyResponseErrors(t *testing.T) {
 	tests := map[string]struct {
-		factory func(*cobra.Command) (connectivityinternal.API, error)
-		want    string
+		client *formance.FormanceV1
+		want   string
 	}{
-		"factory": {
-			factory: func(*cobra.Command) (connectivityinternal.API, error) {
-				return nil, errors.New("authentication failed")
-			},
-			want: "authentication failed",
-		},
 		"API": {
-			factory: factoryReturning(connectorClientMock{get: func(context.Context, string) (*connectivity.Connector, error) {
+			client: sdkFor(connectorTransportMock{get: func(context.Context, string) (*connectivity.Connector, error) {
 				return nil, errors.New("connector unavailable")
 			}}),
 			want: "connector unavailable",
 		},
 		"empty response": {
-			factory: factoryReturning(connectorClientMock{get: func(context.Context, string) (*connectivity.Connector, error) {
+			client: sdkFor(connectorTransportMock{get: func(context.Context, string) (*connectivity.Connector, error) {
 				return nil, nil
 			}}),
-			want: "empty response",
+			want: "unexpected end of JSON input",
 		},
 		"version list API": {
-			factory: factoryReturning(connectorClientMock{
+			client: sdkFor(connectorTransportMock{
 				get: func(context.Context, string) (*connectivity.Connector, error) {
 					connector := connectorFixture("stripe")
 					return &connector, nil
@@ -258,7 +251,7 @@ func TestShowConnectorReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
 			want: "catalog unavailable",
 		},
 		"latest version API": {
-			factory: factoryReturning(connectorClientMock{
+			client: sdkFor(connectorTransportMock{
 				get: func(context.Context, string) (*connectivity.Connector, error) {
 					connector := connectorFixture("stripe")
 					return &connector, nil
@@ -276,7 +269,7 @@ func TestShowConnectorReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			_, err := executeCommand(NewShowCommand(test.factory), "stripe")
+			_, err := executeCommand(testNewShowCommand(test.client), "stripe")
 			if err == nil || !strings.Contains(err.Error(), test.want) {
 				t.Fatalf("error = %v, want one containing %q", err, test.want)
 			}

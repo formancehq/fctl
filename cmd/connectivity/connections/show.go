@@ -13,6 +13,7 @@ import (
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
@@ -22,24 +23,23 @@ type ShowStore struct {
 }
 
 type ShowController struct {
-	factory connectivityinternal.ClientFactory
-	store   *ShowStore
+	store *ShowStore
 }
 
 var _ fctl.Controller[*ShowStore] = (*ShowController)(nil)
 
-func NewShowController(factory connectivityinternal.ClientFactory) *ShowController {
-	return &ShowController{factory: factory, store: &ShowStore{}}
+func NewShowController() *ShowController {
+	return &ShowController{store: &ShowStore{}}
 }
 
-func NewShowCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
-	controller := NewShowController(factory)
+func NewShowCommand() *cobra.Command {
+	controller := NewShowController()
 	return fctl.NewCommand(
 		"show <connection>",
 		fctl.WithAliases("get", "g", "sh", "s"),
 		fctl.WithShortDescription("Show a Connectivity connection"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithValidArgsFunction(CompleteConnectionNames(factory)),
+		fctl.WithValidArgsFunction(CompleteConnectionNames()),
 		fctl.WithController[*ShowStore](controller),
 	)
 }
@@ -49,13 +49,18 @@ func (c *ShowController) GetStore() *ShowStore {
 }
 
 func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	if c.factory == nil {
-		return nil, fmt.Errorf("connectivity client factory is required")
-	}
-	client, err := c.factory(cmd)
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
+	client, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+	return c.run(cmd, args, client.Connectivity.V1)
+}
+
+func (c *ShowController) run(cmd *cobra.Command, args []string, client *sdk.FormanceV1) (fctl.Renderable, error) {
 	response, err := client.GetConnection(cmd.Context(), operations.GetConnectionRequest{Name: url.PathEscape(args[0])}, nil)
 	if err == nil && response != nil {
 		err = connectivityinternal.ResponseError(response.StatusCode, response.Error)
@@ -101,7 +106,7 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 		_, err := fmt.Fprintln(out, "No configuration entries.")
 		return err
 	}
-	rows = fctl.Prepend(rows, []string{"Key", "Kind", "Source"})
+	rows = fctl.Prepend(rows, []string{"Key", "Kind", "Source", "Value"})
 	return pterm.DefaultTable.WithHasHeader().WithWriter(out).WithData(rows).Render()
 }
 
@@ -115,11 +120,11 @@ func configRows(config *connectivity.ConnectionConfiguration) [][]string {
 		return nil
 	}
 	rows := make([][]string, 0, len(config.Env)+len(config.Files))
-	for key := range config.Env {
-		rows = append(rows, []string{key, "environment", "literal"})
+	for key, value := range config.Env {
+		rows = append(rows, []string{key, "environment", "literal", value})
 	}
-	for key := range config.Files {
-		rows = append(rows, []string{key, "file", "literal"})
+	for key, value := range config.Files {
+		rows = append(rows, []string{key, "file", "literal", value})
 	}
 	sort.Slice(rows, func(i, j int) bool { return rows[i][0] < rows[j][0] })
 	return rows

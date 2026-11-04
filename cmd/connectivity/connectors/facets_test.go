@@ -8,10 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/spf13/cobra"
-
-	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	formance "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 )
 
@@ -24,12 +22,12 @@ func facetDistributionFixture() *connectivity.FacetDistribution {
 
 func TestFacetsRendersTotalAndSortedDistribution(t *testing.T) {
 	var gotQuery string
-	client := connectorClientMock{facets: func(_ context.Context, query string) (*connectivity.FacetDistribution, error) {
+	client := connectorTransportMock{facets: func(_ context.Context, query string) (*connectivity.FacetDistribution, error) {
 		gotQuery = query
 		return facetDistributionFixture(), nil
 	}}
 
-	output, err := executeCommand(NewFacetsCommand(factoryReturning(client)), "--filter", "catalog=ee")
+	output, err := executeCommand(testNewFacetsCommand(sdkFor(client)), "--filter", "catalog=ee")
 	if err != nil {
 		t.Fatalf("execute facets command: %v", err)
 	}
@@ -54,11 +52,11 @@ func TestFacetsRendersTotalAndSortedDistribution(t *testing.T) {
 }
 
 func TestFacetsJSONPreservesCompleteDistribution(t *testing.T) {
-	client := connectorClientMock{facets: func(context.Context, string) (*connectivity.FacetDistribution, error) {
+	client := connectorTransportMock{facets: func(context.Context, string) (*connectivity.FacetDistribution, error) {
 		return facetDistributionFixture(), nil
 	}}
 
-	command := NewFacetsCommand(factoryReturning(client))
+	command := testNewFacetsCommand(sdkFor(client))
 	command.Flags().String(fctl.OutputFlag, "plain", "")
 	output, err := executeCommand(command, "--output", "json")
 	if err != nil {
@@ -76,34 +74,28 @@ func TestFacetsJSONPreservesCompleteDistribution(t *testing.T) {
 	}
 }
 
-func TestFacetsReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
+func TestFacetsReturnsTransportAndEmptyResponseErrors(t *testing.T) {
 	tests := map[string]struct {
-		factory func(*cobra.Command) (connectivityinternal.API, error)
-		want    string
+		client *formance.FormanceV1
+		want   string
 	}{
-		"factory": {
-			factory: func(*cobra.Command) (connectivityinternal.API, error) {
-				return nil, errors.New("authentication failed")
-			},
-			want: "authentication failed",
-		},
 		"API": {
-			factory: factoryReturning(connectorClientMock{facets: func(context.Context, string) (*connectivity.FacetDistribution, error) {
+			client: sdkFor(connectorTransportMock{facets: func(context.Context, string) (*connectivity.FacetDistribution, error) {
 				return nil, errors.New("catalog unavailable")
 			}}),
 			want: "catalog unavailable",
 		},
 		"empty response": {
-			factory: factoryReturning(connectorClientMock{facets: func(context.Context, string) (*connectivity.FacetDistribution, error) {
+			client: sdkFor(connectorTransportMock{facets: func(context.Context, string) (*connectivity.FacetDistribution, error) {
 				return nil, nil
 			}}),
-			want: "empty response",
+			want: "unexpected end of JSON input",
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			_, err := executeCommand(NewFacetsCommand(test.factory))
+			_, err := executeCommand(testNewFacetsCommand(test.client))
 			if err == nil || !strings.Contains(err.Error(), test.want) {
 				t.Fatalf("error = %v, want one containing %q", err, test.want)
 			}

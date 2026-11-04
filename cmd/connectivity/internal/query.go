@@ -111,3 +111,10 @@ func splitFilter(filter string) (key, value, operator string) {
 	}
 	return "", "", ""
 }
+
+func OptionalString(value string) *string {
+	if value == "" {
+		return nil
+	}
+	return &value
+}

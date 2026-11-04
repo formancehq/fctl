@@ -3,17 +3,21 @@ package connectors
 import (
 	"bytes"
 	"context"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	formance "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
-	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
-type connectorClientMock struct {
-	connectivityinternal.API
+type connectorTransportMock struct {
 	list         func(context.Context, connectivityinternal.ListOptions) (*connectorPage, error)
 	facets       func(context.Context, string) (*connectivity.FacetDistribution, error)
 	get          func(context.Context, string) (*connectivity.Connector, error)
@@ -35,51 +39,71 @@ type connectorVersionPage struct {
 	Next     string
 }
 
-func (m connectorClientMock) ListConnectors(ctx context.Context, request operations.ListConnectorsRequest, _ *operations.ListConnectorsSecurity, _ ...operations.Option) (*operations.ListConnectorsResponse, error) {
-	page, err := m.list(ctx, mockListOptions(request.PageSize, request.Cursor, request.Query))
-	if err != nil || page == nil {
+func (m connectorTransportMock) RoundTrip(request *http.Request) (*http.Response, error) {
+	ctx := request.Context()
+	query := request.URL.Query()
+	pageSize, _ := strconv.ParseInt(query.Get("pageSize"), 10, 32)
+	options := connectivityinternal.ListOptions{PageSize: int32(pageSize), Cursor: query.Get("cursor"), Query: query.Get("query")}
+	path := strings.TrimPrefix(request.URL.Path, "/api/connectivity/connectors")
+	var data any
+	var err error
+	switch {
+	case path == "":
+		var page *connectorPage
+		page, err = m.list(ctx, options)
+		if page != nil {
+			data = connectivity.ConnectorCursor{Cursor: connectivity.ConnectorCursorCursor{Data: page.Items, PageSize: int(page.PageSize), HasMore: page.HasMore, Next: connectivityinternal.OptionalString(page.Next)}}
+		}
+	case path == "/_facets":
+		var facets *connectivity.FacetDistribution
+		facets, err = m.facets(ctx, options.Query)
+		if facets != nil {
+			data = facets
+		}
+	case strings.HasSuffix(path, "/versions"):
+		name := strings.TrimSuffix(strings.TrimPrefix(path, "/"), "/versions")
+		page := &connectorVersionPage{Items: []connectivity.ConnectorVersionSummary{}}
+		if m.listVersions != nil {
+			page, err = m.listVersions(ctx, name, options)
+		}
+		if page != nil {
+			data = connectivity.ConnectorVersionCursor{Cursor: connectivity.ConnectorVersionCursorCursor{Data: page.Items, PageSize: int(page.PageSize), HasMore: page.HasMore, Next: connectivityinternal.OptionalString(page.Next)}}
+		}
+	case strings.Contains(path, "/versions/"):
+		parts := strings.SplitN(strings.TrimPrefix(path, "/"), "/versions/", 2)
+		version := &connectivity.ConnectorVersion{Version: parts[1]}
+		if m.getVersion != nil {
+			version, err = m.getVersion(ctx, parts[0], parts[1])
+		}
+		if version != nil {
+			data = version
+		}
+	default:
+		var connector *connectivity.Connector
+		connector, err = m.get(ctx, strings.TrimPrefix(path, "/"))
+		if connector != nil {
+			data = connector
+		}
+	}
+	var apiErr *connectivityinternal.APIError
+	if errors.As(err, &apiErr) {
+		body, marshalErr := json.Marshal(connectivity.Error{Code: apiErr.Code, Message: apiErr.Message, Details: apiErr.Details})
+		if marshalErr != nil {
+			return nil, marshalErr
+		}
+		return connectorResponse(apiErr.StatusCode, string(body)), nil
+	}
+	if err != nil {
 		return nil, err
 	}
-	return &operations.ListConnectorsResponse{StatusCode: 200, ConnectorCursor: &connectivity.ConnectorCursor{Cursor: connectivity.ConnectorCursorCursor{Data: page.Items, PageSize: int(page.PageSize), HasMore: page.HasMore, Next: connectivityinternal.OptionalString(page.Next)}}}, nil
-}
-
-func (m connectorClientMock) GetConnectorFacets(ctx context.Context, request operations.GetConnectorFacetsRequest, _ *operations.GetConnectorFacetsSecurity, _ ...operations.Option) (*operations.GetConnectorFacetsResponse, error) {
-	facets, err := m.facets(ctx, stringValue(request.Query))
-	return &operations.GetConnectorFacetsResponse{StatusCode: 200, FacetDistribution: facets}, err
-}
-
-func (m connectorClientMock) GetConnector(ctx context.Context, request operations.GetConnectorRequest, _ *operations.GetConnectorSecurity, _ ...operations.Option) (*operations.GetConnectorResponse, error) {
-	connector, err := m.get(ctx, request.Name)
-	return &operations.GetConnectorResponse{StatusCode: 200, Connector: connector}, err
-}
-
-func (m connectorClientMock) ListConnectorVersions(ctx context.Context, request operations.ListConnectorVersionsRequest, _ *operations.ListConnectorVersionsSecurity, _ ...operations.Option) (*operations.ListConnectorVersionsResponse, error) {
-	page := &connectorVersionPage{Items: []connectivity.ConnectorVersionSummary{}}
-	var err error
-	if m.listVersions != nil {
-		page, err = m.listVersions(ctx, request.Name, mockListOptions(request.PageSize, request.Cursor, request.Query))
+	if data == nil {
+		return connectorResponse(http.StatusOK, ""), nil
 	}
-	if err != nil || page == nil {
+	body, err := json.Marshal(data)
+	if err != nil {
 		return nil, err
 	}
-	return &operations.ListConnectorVersionsResponse{StatusCode: 200, ConnectorVersionCursor: &connectivity.ConnectorVersionCursor{Cursor: connectivity.ConnectorVersionCursorCursor{Data: page.Items, PageSize: int(page.PageSize), HasMore: page.HasMore, Next: connectivityinternal.OptionalString(page.Next)}}}, nil
-}
-
-func (m connectorClientMock) GetConnectorVersion(ctx context.Context, request operations.GetConnectorVersionRequest, _ *operations.GetConnectorVersionSecurity, _ ...operations.Option) (*operations.GetConnectorVersionResponse, error) {
-	version := &connectivity.ConnectorVersion{Version: request.Version}
-	var err error
-	if m.getVersion != nil {
-		version, err = m.getVersion(ctx, request.Name, request.Version)
-	}
-	return &operations.GetConnectorVersionResponse{StatusCode: 200, ConnectorVersion: version}, err
-}
-
-func mockListOptions(pageSize *int, cursor, query *string) connectivityinternal.ListOptions {
-	options := connectivityinternal.ListOptions{Cursor: stringValue(cursor), Query: stringValue(query)}
-	if pageSize != nil {
-		options.PageSize = int32(*pageSize)
-	}
-	return options
+	return connectorResponse(http.StatusOK, string(body)), nil
 }
 
 func connectorFixture(name string) connectivity.Connector {
@@ -95,9 +119,55 @@ func connectorFixture(name string) connectivity.Connector {
 	}
 }
 
-func factoryReturning(client connectivityinternal.API) connectivityinternal.ClientFactory {
-	return func(*cobra.Command) (connectivityinternal.API, error) {
-		return client, nil
+func sdkFor(transport connectorTransportMock) *formance.FormanceV1 {
+	return formance.New(formance.WithServerURL("https://stack.example.test"), formance.WithClient(&http.Client{Transport: transport})).Connectivity.V1
+}
+
+func testNewListCommand(client *formance.FormanceV1) *cobra.Command {
+	controller := NewListController()
+	command := NewListCommand()
+	command.RunE = func(cmd *cobra.Command, args []string) error {
+		renderable, err := controller.run(cmd, args, client)
+		if err != nil {
+			return err
+		}
+		return fctl.WithRender(cmd, args, controller, renderable)
+	}
+	return command
+}
+
+func testNewShowCommand(client *formance.FormanceV1) *cobra.Command {
+	controller := NewShowController()
+	command := NewShowCommand()
+	command.RunE = func(cmd *cobra.Command, args []string) error {
+		renderable, err := controller.run(cmd, args, client)
+		if err != nil {
+			return err
+		}
+		return fctl.WithRender(cmd, args, controller, renderable)
+	}
+	return command
+}
+
+func testNewFacetsCommand(client *formance.FormanceV1) *cobra.Command {
+	controller := NewFacetsController()
+	command := NewFacetsCommand()
+	command.RunE = func(cmd *cobra.Command, args []string) error {
+		renderable, err := controller.run(cmd, args, client)
+		if err != nil {
+			return err
+		}
+		return fctl.WithRender(cmd, args, controller, renderable)
+	}
+	return command
+}
+
+func testCompleteConnectorNames(client *formance.FormanceV1) cobra.CompletionFunc {
+	return func(cmd *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if cmd.Context() == nil {
+			cmd.SetContext(context.Background())
+		}
+		return completeConnectorNames(cmd, client, toComplete)
 	}
 }
 

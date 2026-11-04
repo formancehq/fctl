@@ -10,22 +10,13 @@ import (
 	"github.com/spf13/cobra"
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
+	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
-	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type completionClientMock struct {
 	connectorVersions
 	listInstances func(context.Context, connectivityinternal.ListOptions) (*testConnectionList, error)
-}
-
-func (m completionClientMock) ListConnections(ctx context.Context, request operations.ListConnectionsRequest, security *operations.ListConnectionsSecurity, opts ...operations.Option) (*operations.ListConnectionsResponse, error) {
-	data, err := m.listInstances(ctx, listOptions(request.PageSize, request.Cursor, request.Query))
-	response := &operations.ListConnectionsResponse{StatusCode: 200}
-	if data != nil {
-		response.ConnectionCursor = &connectivity.ConnectionCursor{Cursor: connectivity.Cursor{Data: data.Items, HasMore: data.HasMore, Next: connectivityinternal.OptionalString(data.Next), PageSize: int(data.PageSize)}}
-	}
-	return response, err
 }
 
 func TestCompleteConnectionNamesUsesBoundedNonInteractiveQueryAndReturnsSortedPrefixMatchesWithDescriptions(t *testing.T) {
@@ -48,11 +39,11 @@ func TestCompleteConnectionNamesUsesBoundedNonInteractiveQueryAndReturnsSortedPr
 			instanceFixture("beta"), alpine, alpha,
 		}}, nil
 	}}
-	completion := CompleteConnectionNames(func(cmd *cobra.Command) (connectivityinternal.API, error) {
-		if !connectivityinternal.IsNonInteractive(cmd.Context()) {
+	completion := testCompleteConnectionNames(func(cmd *cobra.Command) (*sdk.FormanceV1, error) {
+		if !hasTwoSecondDeadline(cmd.Context()) {
 			t.Fatal("completion factory context is interactive")
 		}
-		return client, nil
+		return mockSDK(client), nil
 	})
 
 	candidates, directive := completion(&cobra.Command{}, nil, "al")
@@ -90,11 +81,11 @@ func TestCompleteVersionsUsesSelectedConnectorAndReturnsSortedPrefixMatchesWithD
 			}}, nil
 		},
 	}}
-	completion := CompleteVersions(func(cmd *cobra.Command) (connectivityinternal.API, error) {
-		if !connectivityinternal.IsNonInteractive(cmd.Context()) {
+	completion := testCompleteVersions(func(cmd *cobra.Command) (*sdk.FormanceV1, error) {
+		if !hasTwoSecondDeadline(cmd.Context()) {
 			t.Fatal("version completion factory context is interactive")
 		}
-		return client, nil
+		return mockSDK(client), nil
 	}, func(_ *cobra.Command, args []string) string {
 		return args[0]
 	})
@@ -114,17 +105,17 @@ func TestCompleteVersionsUsesSelectedConnectorAndReturnsSortedPrefixMatchesWithD
 }
 
 func TestCompleteSetValuesPrioritizesRequiredKeysDescribesAndOmitsSuppliedKeys(t *testing.T) {
-	var resolvedClient connectivityinternal.API
-	client := &completionClientMock{}
-	resolveVersion := func(ctx context.Context, got connectivityinternal.API, _ *cobra.Command, _ []string) (*connectivity.ConnectorVersion, error) {
-		if !connectivityinternal.IsNonInteractive(ctx) || !hasTwoSecondDeadline(ctx) {
-			t.Fatal("set completion resolver context must be non-interactive with a two-second deadline")
+	var resolvedClient *sdk.FormanceV1
+	client := mockSDK(&completionClientMock{})
+	resolveVersion := func(ctx context.Context, got *sdk.FormanceV1, _ *cobra.Command, _ []string) (*connectivity.ConnectorVersion, error) {
+		if !hasTwoSecondDeadline(ctx) {
+			t.Fatal("set completion resolver context must have a two-second deadline")
 		}
 		resolvedClient = got
 		return versionWithFullSchema(), nil
 	}
-	completion := CompleteSetValues(func(cmd *cobra.Command) (connectivityinternal.API, error) {
-		if !connectivityinternal.IsNonInteractive(cmd.Context()) {
+	completion := testCompleteSetValues(func(cmd *cobra.Command) (*sdk.FormanceV1, error) {
+		if !hasTwoSecondDeadline(cmd.Context()) {
 			t.Fatal("set completion factory context is interactive")
 		}
 		return client, nil
@@ -161,7 +152,7 @@ func TestCompleteSetValuesPreservesKeyAtPrefixForInjectedPathCandidates(t *testi
 		gotPrefix = prefix
 		return []string{"fixtures/alpha/", "fixtures/api-key.txt"}, nil
 	}
-	completion := CompleteSetValues(nil, nil, paths)
+	completion := testCompleteSetValues(nil, nil, paths)
 
 	candidates, directive := completion(&cobra.Command{}, nil, "API_KEY=@fixtures/a")
 
@@ -195,16 +186,16 @@ func TestCompleteFunctionsReturnSilentlyOnFactoryAPIResolverPathAndTimeoutErrors
 		prefix     string
 	}{
 		"instance authentication": {
-			completion: CompleteConnectionNames(func(*cobra.Command) (connectivityinternal.API, error) { return nil, errors.New("not authenticated") }),
+			completion: testCompleteConnectionNames(func(*cobra.Command) (*sdk.FormanceV1, error) { return nil, errors.New("not authenticated") }),
 			command:    &cobra.Command{},
 		},
 		"instance nil client": {
-			completion: CompleteConnectionNames(func(*cobra.Command) (connectivityinternal.API, error) { return nil, nil }),
+			completion: testCompleteConnectionNames(func(*cobra.Command) (*sdk.FormanceV1, error) { return nil, nil }),
 			command:    &cobra.Command{},
 		},
-		"instance API": {completion: CompleteConnectionNames(factoryReturning(apiErrorClient)), command: &cobra.Command{}},
+		"instance API": {completion: testCompleteConnectionNames(factoryReturning(apiErrorClient)), command: &cobra.Command{}},
 		"instance pagination": {
-			completion: CompleteConnectionNames(factoryReturning(completionClientMock{listInstances: func(_ context.Context, options connectivityinternal.ListOptions) (*testConnectionList, error) {
+			completion: testCompleteConnectionNames(factoryReturning(completionClientMock{listInstances: func(_ context.Context, options connectivityinternal.ListOptions) (*testConnectionList, error) {
 				if options.Cursor != "" {
 					return nil, errors.New("second page unavailable")
 				}
@@ -213,22 +204,22 @@ func TestCompleteFunctionsReturnSilentlyOnFactoryAPIResolverPathAndTimeoutErrors
 			command: &cobra.Command{},
 		},
 		"instance timeout": {
-			completion: CompleteConnectionNames(factoryReturning(completionClientMock{listInstances: func(ctx context.Context, _ connectivityinternal.ListOptions) (*testConnectionList, error) {
+			completion: testCompleteConnectionNames(factoryReturning(completionClientMock{listInstances: func(ctx context.Context, _ connectivityinternal.ListOptions) (*testConnectionList, error) {
 				<-ctx.Done()
 				return nil, ctx.Err()
 			}})),
 			command: commandWithExpiredContext(),
 		},
-		"version empty connector": {completion: CompleteVersions(factoryReturning(apiErrorClient), func(*cobra.Command, []string) string { return "" }), command: &cobra.Command{}},
-		"version API":             {completion: CompleteVersions(factoryReturning(apiErrorClient), func(*cobra.Command, []string) string { return "stripe" }), command: &cobra.Command{}},
+		"version empty connector": {completion: testCompleteVersions(factoryReturning(apiErrorClient), func(*cobra.Command, []string) string { return "" }), command: &cobra.Command{}},
+		"version API":             {completion: testCompleteVersions(factoryReturning(apiErrorClient), func(*cobra.Command, []string) string { return "stripe" }), command: &cobra.Command{}},
 		"set resolver": {
-			completion: CompleteSetValues(factoryReturning(completionClientMock{}), func(context.Context, connectivityinternal.API, *cobra.Command, []string) (*connectivity.ConnectorVersion, error) {
+			completion: testCompleteSetValues(factoryReturning(completionClientMock{}), func(context.Context, *sdk.FormanceV1, *cobra.Command, []string) (*connectivity.ConnectorVersion, error) {
 				return nil, errors.New("cannot resolve connector version")
 			}, mockPathCompleter(nil)),
 			command: &cobra.Command{},
 		},
 		"path": {
-			completion: CompleteSetValues(nil, nil, func(string) ([]string, error) { return nil, errors.New("cannot read directory") }),
+			completion: testCompleteSetValues(nil, nil, func(string) ([]string, error) { return nil, errors.New("cannot read directory") }),
 			command:    &cobra.Command{},
 			prefix:     "API_KEY=@fixtures/a",
 		},
@@ -251,13 +242,13 @@ func TestCompletionClientCopyDoesNotMutateOriginalCommandContext(t *testing.T) {
 	originalContext := context.WithValue(context.Background(), struct{}{}, "original")
 	command := &cobra.Command{}
 	command.SetContext(originalContext)
-	completion := CompleteConnectionNames(func(cmd *cobra.Command) (connectivityinternal.API, error) {
-		if !connectivityinternal.IsNonInteractive(cmd.Context()) {
-			t.Fatal("copied completion command must be non-interactive")
+	completion := testCompleteConnectionNames(func(cmd *cobra.Command) (*sdk.FormanceV1, error) {
+		if !hasTwoSecondDeadline(cmd.Context()) {
+			t.Fatal("copied completion command must have a two-second deadline")
 		}
-		return completionClientMock{listInstances: func(context.Context, connectivityinternal.ListOptions) (*testConnectionList, error) {
+		return mockSDK(&completionClientMock{listInstances: func(context.Context, connectivityinternal.ListOptions) (*testConnectionList, error) {
 			return &testConnectionList{}, nil
-		}}, nil
+		}}), nil
 	})
 
 	_, _ = completion(command, nil, "")
@@ -265,8 +256,8 @@ func TestCompletionClientCopyDoesNotMutateOriginalCommandContext(t *testing.T) {
 	if command.Context() != originalContext {
 		t.Fatal("completion mutated the original command context")
 	}
-	if connectivityinternal.IsNonInteractive(command.Context()) {
-		t.Fatal("original command context became non-interactive")
+	if hasTwoSecondDeadline(command.Context()) {
+		t.Fatal("original command context acquired a completion deadline")
 	}
 }
 

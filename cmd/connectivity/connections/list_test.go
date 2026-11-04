@@ -13,22 +13,12 @@ import (
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
-	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type listInstanceClientMock struct {
-	connectivityinternal.API
 	list func(context.Context, connectivityinternal.ListOptions) (*testConnectionList, error)
-}
-
-func (m listInstanceClientMock) ListConnections(ctx context.Context, request operations.ListConnectionsRequest, security *operations.ListConnectionsSecurity, opts ...operations.Option) (*operations.ListConnectionsResponse, error) {
-	data, err := m.list(ctx, listOptions(request.PageSize, request.Cursor, request.Query))
-	response := &operations.ListConnectionsResponse{StatusCode: 200}
-	if data != nil {
-		response.ConnectionCursor = &connectivity.ConnectionCursor{Cursor: connectivity.Cursor{Data: data.Items, HasMore: data.HasMore, Next: connectivityinternal.OptionalString(data.Next), PageSize: int(data.PageSize)}}
-	}
-	return response, err
 }
 
 func TestListConnectionsPassesFiltersAndPaginationAndRendersApprovedColumns(t *testing.T) {
@@ -47,7 +37,7 @@ func TestListConnectionsPassesFiltersAndPaginationAndRendersApprovedColumns(t *t
 		}, nil
 	}}
 
-	output, err := executeCommand(NewListCommand(factoryReturning(client)), "--connector", "stripe", "--page-size", "7", "--cursor", "current-page")
+	output, err := executeCommand(testNewListCommand(factoryReturning(client)), "--connector", "stripe", "--page-size", "7", "--cursor", "current-page")
 
 	require.NoError(t, err)
 	wantOptions := connectivityinternal.ListOptions{
@@ -72,7 +62,7 @@ func TestListConnectionsConjoinsConnectorAndFilterExpressions(t *testing.T) {
 		return &testConnectionList{Items: []connectivity.Connection{}}, nil
 	}}
 
-	_, err := executeCommand(NewListCommand(factoryReturning(client)), "--filter", "lifecycle=active", "--connector", "stripe")
+	_, err := executeCommand(testNewListCommand(factoryReturning(client)), "--filter", "lifecycle=active", "--connector", "stripe")
 
 	require.NoError(t, err)
 	want := `{"$and":[{"$match":{"lifecycle":"active"}},{"$match":{"connector":"stripe"}}]}`
@@ -87,7 +77,7 @@ func TestListConnectionsPassesRawQueryThrough(t *testing.T) {
 	}}
 	raw := `{"$exists":{"channel":true}}`
 
-	_, err := executeCommand(NewListCommand(factoryReturning(client)), "--query", raw)
+	_, err := executeCommand(testNewListCommand(factoryReturning(client)), "--query", raw)
 
 	require.NoError(t, err)
 	require.Equal(t, raw, gotOptions.Query)
@@ -99,14 +89,14 @@ func TestListConnectionsRejectsRawQueryCombinedWithSugarFlags(t *testing.T) {
 		return nil, nil
 	}}
 
-	_, err := executeCommand(NewListCommand(factoryReturning(client)), "--query", `{"$match":{"lifecycle":"active"}}`, "--connector", "stripe")
+	_, err := executeCommand(testNewListCommand(factoryReturning(client)), "--query", `{"$match":{"lifecycle":"active"}}`, "--connector", "stripe")
 
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "--query cannot be combined with --filter")
 }
 
 func TestListConnectionsWiresFilterAndConnectorCompletions(t *testing.T) {
-	command := NewListCommand(factoryReturning(listInstanceClientMock{}))
+	command := testNewListCommand(factoryReturning(listInstanceClientMock{}))
 
 	_, filterRegistered := command.GetFlagCompletionFunc("filter")
 	require.True(t, filterRegistered, "--filter must complete from /_query/capabilities")
@@ -122,7 +112,7 @@ func TestListConnectionsJSONPreservesCompleteModelsAndContinuation(t *testing.T)
 	client := listInstanceClientMock{list: func(context.Context, connectivityinternal.ListOptions) (*testConnectionList, error) {
 		return &testConnectionList{Items: []connectivity.Connection{instance}, PageSize: 4, HasMore: true, Next: "next-page"}, nil
 	}}
-	command := NewListCommand(factoryReturning(client))
+	command := testNewListCommand(factoryReturning(client))
 	command.Flags().String(fctl.OutputFlag, "plain", "")
 
 	output, err := executeCommand(command, "--output", "json", "--page-size", "4")
@@ -140,7 +130,7 @@ func TestListConnectionsJSONPreservesCompleteModelsAndContinuation(t *testing.T)
 }
 
 func TestConnectionRootRegistersReadCommandsAndAliases(t *testing.T) {
-	command := NewCommand(factoryReturning(listInstanceClientMock{}), mockReadFile(nil), mockPathCompleter(nil))
+	command := testNewCommand(factoryReturning(listInstanceClientMock{}), mockReadFile(nil), mockPathCompleter(nil))
 
 	require.Equal(t, "connections", command.Use)
 	require.Equal(t, []string{"connection"}, command.Aliases)
@@ -156,18 +146,11 @@ func TestConnectionRootRegistersReadCommandsAndAliases(t *testing.T) {
 	}
 }
 
-func TestListConnectionsReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
+func TestListConnectionsReturnsAPIAndEmptyResponseErrors(t *testing.T) {
 	tests := map[string]struct {
-		factory func(*cobra.Command) (connectivityinternal.API, error)
+		factory func(*cobra.Command) (*sdk.FormanceV1, error)
 		want    string
 	}{
-		"missing factory": {factory: nil, want: "factory is required"},
-		"factory": {
-			factory: func(*cobra.Command) (connectivityinternal.API, error) {
-				return nil, errors.New("authentication failed")
-			},
-			want: "authentication failed",
-		},
 		"API": {
 			factory: factoryReturning(listInstanceClientMock{list: func(context.Context, connectivityinternal.ListOptions) (*testConnectionList, error) {
 				return nil, errors.New("connections unavailable")
@@ -184,7 +167,7 @@ func TestListConnectionsReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			_, err := executeCommand(NewListCommand(test.factory))
+			_, err := executeCommand(testNewListCommand(test.factory))
 			require.Error(t, err)
 			require.True(t, strings.Contains(err.Error(), test.want), "error = %v", err)
 		})

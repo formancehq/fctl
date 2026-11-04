@@ -14,6 +14,7 @@ import (
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	formance "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
@@ -31,27 +32,25 @@ type ShowStore struct {
 }
 
 type ShowController struct {
-	factory connectivityinternal.ClientFactory
-	store   *ShowStore
+	store *ShowStore
 }
 
 var _ fctl.Controller[*ShowStore] = (*ShowController)(nil)
 
-func NewShowController(factory connectivityinternal.ClientFactory) *ShowController {
+func NewShowController() *ShowController {
 	return &ShowController{
-		factory: factory,
-		store:   &ShowStore{Versions: []connectivity.ConnectorVersionSummary{}},
+		store: &ShowStore{Versions: []connectivity.ConnectorVersionSummary{}},
 	}
 }
 
-func NewShowCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
-	controller := NewShowController(factory)
+func NewShowCommand() *cobra.Command {
+	controller := NewShowController()
 	return fctl.NewCommand(
 		"show <connector>",
 		fctl.WithAliases("get", "g", "sh", "s"),
 		fctl.WithShortDescription("Show a Connectivity connector"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
-		fctl.WithValidArgsFunction(CompleteConnectorNames(factory)),
+		fctl.WithValidArgsFunction(CompleteConnectorNames()),
 		fctl.WithController[*ShowStore](controller),
 	)
 }
@@ -61,13 +60,18 @@ func (c *ShowController) GetStore() *ShowStore {
 }
 
 func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable, error) {
-	if c.factory == nil {
-		return nil, fmt.Errorf("connectivity client factory is required")
-	}
-	client, err := c.factory(cmd)
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+	return c.run(cmd, args, stackClient.Connectivity.V1)
+}
+
+func (c *ShowController) run(cmd *cobra.Command, args []string, client *formance.FormanceV1) (fctl.Renderable, error) {
 	name := args[0]
 	response, err := client.GetConnector(cmd.Context(), operations.GetConnectorRequest{Name: url.PathEscape(name)}, nil)
 	if err != nil {

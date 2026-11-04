@@ -10,6 +10,7 @@ import (
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	formance "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
@@ -19,21 +20,19 @@ type FacetsStore struct {
 }
 
 type FacetsController struct {
-	factory connectivityinternal.ClientFactory
-	store   *FacetsStore
+	store *FacetsStore
 }
 
 var _ fctl.Controller[*FacetsStore] = (*FacetsController)(nil)
 
-func NewFacetsController(factory connectivityinternal.ClientFactory) *FacetsController {
+func NewFacetsController() *FacetsController {
 	return &FacetsController{
-		factory: factory,
-		store:   &FacetsStore{Facets: map[string]map[string]int64{}},
+		store: &FacetsStore{Facets: map[string]map[string]int64{}},
 	}
 }
 
-func NewFacetsCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
-	controller := NewFacetsController(factory)
+func NewFacetsCommand() *cobra.Command {
+	controller := NewFacetsController()
 	command := fctl.NewCommand(
 		"facets",
 		fctl.WithAliases("facet", "f"),
@@ -45,7 +44,7 @@ func NewFacetsCommand(factory connectivityinternal.ClientFactory) *cobra.Command
 	)
 	if err := command.RegisterFlagCompletionFunc(
 		connectivityinternal.FilterFlag,
-		connectivityinternal.CompleteFilterExpressions(factory, connectivityinternal.ResourceConnectors),
+		connectivityinternal.CompleteFilterExpressions(connectivityinternal.ResourceConnectors),
 	); err != nil {
 		panic(err)
 	}
@@ -57,13 +56,18 @@ func (c *FacetsController) GetStore() *FacetsStore {
 }
 
 func (c *FacetsController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
-	if c.factory == nil {
-		return nil, fmt.Errorf("connectivity client factory is required")
-	}
-	client, err := c.factory(cmd)
+	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
 	}
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	if err != nil {
+		return nil, err
+	}
+	return c.run(cmd, nil, stackClient.Connectivity.V1)
+}
+
+func (c *FacetsController) run(cmd *cobra.Command, _ []string, client *formance.FormanceV1) (fctl.Renderable, error) {
 	query, err := connectivityinternal.GetListQuery(cmd)
 	if err != nil {
 		return nil, err

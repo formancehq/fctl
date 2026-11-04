@@ -11,43 +11,24 @@ import (
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
-	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type suspensionClientMock struct {
-	connectivityinternal.API
 	listInstances func(context.Context, connectivityinternal.ListOptions) (*testConnectionList, error)
 	patch         func(context.Context, string, map[string]any) (*connectivity.Connection, error)
-}
-
-func (m suspensionClientMock) ListConnections(ctx context.Context, request operations.ListConnectionsRequest, security *operations.ListConnectionsSecurity, opts ...operations.Option) (*operations.ListConnectionsResponse, error) {
-	data, err := m.listInstances(ctx, listOptions(request.PageSize, request.Cursor, request.Query))
-	response := &operations.ListConnectionsResponse{StatusCode: 200}
-	if data != nil {
-		response.ConnectionCursor = &connectivity.ConnectionCursor{Cursor: connectivity.Cursor{Data: data.Items, HasMore: data.HasMore, Next: connectivityinternal.OptionalString(data.Next), PageSize: int(data.PageSize)}}
-	}
-	return response, err
-}
-
-func (m suspensionClientMock) PatchConnection(ctx context.Context, request operations.PatchConnectionRequest, security *operations.PatchConnectionSecurity, opts ...operations.Option) (*operations.PatchConnectionResponse, error) {
-	patch, err := sdkPatchBody(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-	data, err := m.patch(ctx, request.Name, patch)
-	return &operations.PatchConnectionResponse{StatusCode: 200, Connection: data}, err
 }
 
 func TestSuspensionCommandsPatchOnlyDesiredBooleanAndTreatAlreadyConvergedResponseAsSuccess(t *testing.T) {
 	tests := []struct {
 		name       string
-		command    func(connectivityinternal.ClientFactory) *cobra.Command
+		command    func(testSDKFactory) *cobra.Command
 		suspend    bool
 		wantOutput string
 	}{
-		{name: "suspend", command: NewSuspendCommand, suspend: true, wantOutput: `Connection "stripe-eu" suspension requested.`},
-		{name: "unsuspend", command: NewUnsuspendCommand, suspend: false, wantOutput: `Connection "stripe-eu" resumption requested.`},
+		{name: "suspend", command: testNewSuspendCommand, suspend: true, wantOutput: `Connection "stripe-eu" suspension requested.`},
+		{name: "unsuspend", command: testNewUnsuspendCommand, suspend: false, wantOutput: `Connection "stripe-eu" resumption requested.`},
 	}
 
 	for _, test := range tests {
@@ -77,10 +58,10 @@ func TestSuspensionCommandConfirmationRejectionMakesNoPatch(t *testing.T) {
 		patchCalls++
 		return nil, errors.New("PatchConnection must not be called")
 	}}
-	controller := NewSuspensionController(factoryReturning(client), true)
+	controller := NewSuspensionController(true)
 	controller.approve = func(*cobra.Command, string, ...any) bool { return false }
 
-	_, err := controller.Run(&cobra.Command{}, []string{"stripe-eu"})
+	_, err := controller.run(&cobra.Command{}, []string{"stripe-eu"}, mockSDK(client))
 
 	require.ErrorIs(t, err, fctl.ErrMissingApproval)
 	require.Zero(t, patchCalls)
@@ -92,7 +73,7 @@ func TestSuspensionCommandsPreserveAPIError(t *testing.T) {
 		return nil, apiError
 	}}
 
-	for _, command := range []func(connectivityinternal.ClientFactory) *cobra.Command{NewSuspendCommand, NewUnsuspendCommand} {
+	for _, command := range []func(testSDKFactory) *cobra.Command{testNewSuspendCommand, testNewUnsuspendCommand} {
 		_, err := executeCommand(command(factoryReturning(client)), "stripe-eu", "--confirm")
 		require.ErrorIs(t, err, apiError)
 	}
@@ -100,12 +81,12 @@ func TestSuspensionCommandsPreserveAPIError(t *testing.T) {
 
 func TestSuspensionCommandsRejectInvalidArgumentsBeforeUsingClient(t *testing.T) {
 	usedFactory := false
-	factory := func(*cobra.Command) (connectivityinternal.API, error) {
+	factory := func(*cobra.Command) (*sdk.FormanceV1, error) {
 		usedFactory = true
 		return nil, errors.New("factory must not be used")
 	}
 
-	for _, command := range []func(connectivityinternal.ClientFactory) *cobra.Command{NewSuspendCommand, NewUnsuspendCommand} {
+	for _, command := range []func(testSDKFactory) *cobra.Command{testNewSuspendCommand, testNewUnsuspendCommand} {
 		_, err := executeCommand(command(factory), "stripe-eu", "extra", "--confirm")
 		require.Error(t, err)
 	}
@@ -115,17 +96,17 @@ func TestSuspensionCommandsRejectInvalidArgumentsBeforeUsingClient(t *testing.T)
 func TestSuspensionCommandsRegisterConfirmationCompletionAndRootChildren(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
 	client := suspensionClientMock{listInstances: func(ctx context.Context, options connectivityinternal.ListOptions) (*testConnectionList, error) {
-		require.True(t, connectivityinternal.IsNonInteractive(ctx))
+		require.True(t, hasTwoSecondDeadline(ctx))
 		require.Equal(t, connectivityinternal.ListOptions{PageSize: 100}, options)
 		return &testConnectionList{Items: []connectivity.Connection{instance}}, nil
 	}}
 
 	for _, test := range []struct {
 		name    string
-		command func(connectivityinternal.ClientFactory) *cobra.Command
+		command func(testSDKFactory) *cobra.Command
 	}{
-		{name: "suspend", command: NewSuspendCommand},
-		{name: "unsuspend", command: NewUnsuspendCommand},
+		{name: "suspend", command: testNewSuspendCommand},
+		{name: "unsuspend", command: testNewUnsuspendCommand},
 	} {
 		command := test.command(factoryReturning(client))
 		require.Equal(t, test.name+" <connection>", command.Use)
@@ -138,7 +119,7 @@ func TestSuspensionCommandsRegisterConfirmationCompletionAndRootChildren(t *test
 		require.Equal(t, cobra.ShellCompDirectiveNoFileComp, directive)
 	}
 
-	root := NewCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
+	root := testNewCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
 	for _, name := range []string{"suspend", "unsuspend"} {
 		child, _, err := root.Find([]string{name})
 		require.NoError(t, err)

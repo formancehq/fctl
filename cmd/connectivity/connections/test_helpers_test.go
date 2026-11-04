@@ -5,53 +5,31 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/v3/cmd/connectivity/connections/configuration"
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
+	fctl "github.com/formancehq/fctl/v3/pkg"
+	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
-	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 func stringPtr(value string) *string {
 	return &value
 }
 
-// connectorVersions serves the catalog half of the client interface so command
-// mocks only spell out the calls their own test exercises. The zero value
+// connectorVersions serves catalog HTTP responses so command fixtures only
+// spell out the calls their own test exercises. The zero value
 // publishes two versions whose newest carries no schema, which is what a test
 // that does not care about configuration wants.
 type connectorVersions struct {
-	connectivityinternal.API
 	listVersions func(context.Context, string, connectivityinternal.ListOptions) (*testConnectorVersionList, error)
 	getVersion   func(context.Context, string, string) (*connectivity.ConnectorVersion, error)
-}
-
-func (v connectorVersions) ListConnectorVersions(ctx context.Context, request operations.ListConnectorVersionsRequest, security *operations.ListConnectorVersionsSecurity, opts ...operations.Option) (*operations.ListConnectorVersionsResponse, error) {
-	var data *testConnectorVersionList
-	var err error
-	if v.listVersions == nil {
-		data = versionListFixture()
-	} else {
-		data, err = v.listVersions(ctx, request.Name, listOptions(request.PageSize, request.Cursor, request.Query))
-	}
-	response := &operations.ListConnectorVersionsResponse{StatusCode: 200}
-	if data != nil {
-		response.ConnectorVersionCursor = &connectivity.ConnectorVersionCursor{Cursor: connectivity.ConnectorVersionCursorCursor{Data: data.Items, HasMore: data.HasMore, Next: connectivityinternal.OptionalString(data.Next), PageSize: int(data.PageSize)}}
-	}
-	return response, err
-}
-
-func (v connectorVersions) GetConnectorVersion(ctx context.Context, request operations.GetConnectorVersionRequest, security *operations.GetConnectorVersionSecurity, opts ...operations.Option) (*operations.GetConnectorVersionResponse, error) {
-	if v.getVersion == nil {
-		return &operations.GetConnectorVersionResponse{StatusCode: 200, ConnectorVersion: &connectivity.ConnectorVersion{Version: request.Version}}, nil
-	}
-	data, err := v.getVersion(ctx, request.Name, request.Version)
-	return &operations.GetConnectorVersionResponse{StatusCode: 200, ConnectorVersion: data}, err
 }
 
 func versionListFixture() *testConnectorVersionList {
@@ -73,13 +51,7 @@ func instanceWithTwoFiles() *connectivity.Connection {
 	return &instance
 }
 
-func factoryReturning(client connectivityinternal.API) connectivityinternal.ClientFactory {
-	return func(*cobra.Command) (connectivityinternal.API, error) {
-		return client, nil
-	}
-}
-
-func factoryWithInstance(instance connectivity.Connection) connectivityinternal.ClientFactory {
+func factoryWithInstance(instance connectivity.Connection) testSDKFactory {
 	return factoryReturning(showInstanceClientMock{get: func(_ context.Context, _ string) (*connectivity.Connection, error) {
 		return &instance, nil
 	}})
@@ -217,13 +189,6 @@ type testConnectorVersionList struct {
 	Next     string
 }
 
-func listOptions(size *int, cursor, query *string) connectivityinternal.ListOptions {
-	options := connectivityinternal.ListOptions{Cursor: stringValue(cursor), Query: stringValue(query)}
-	if size != nil {
-		options.PageSize = int32(*size)
-	}
-	return options
-}
 func createdConfiguration(in connectivity.ConnectionCreateConnectionConfiguration) connectivity.ConnectionConfiguration {
 	out := connectivity.ConnectionConfiguration{Connector: &in.Connector, Ledger: &in.Ledger, Env: in.Env, Files: in.Files, Version: in.Version, InitialCursor: in.InitialCursor, PollInterval: in.PollInterval, Suspend: in.Suspend}
 	if in.Channel != nil {
@@ -237,14 +202,143 @@ type connectionRoundTripper func(*http.Request) (*http.Response, error)
 func (f connectionRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
 	return f(request)
 }
-func sdkPatchBody(ctx context.Context, request operations.PatchConnectionRequest) (map[string]any, error) {
-	var body map[string]any
-	api := connectivityinternal.NewAPI("https://stack.example.test", &http.Client{Transport: connectionRoundTripper(func(r *http.Request) (*http.Response, error) {
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			return nil, err
+
+type testSDKFactory func(*cobra.Command) (*sdk.FormanceV1, error)
+
+func transportSDK(uri string, client *http.Client) *sdk.FormanceV1 {
+	return connectivityinternal.PatchAPI(&fctl.StackClients{URI: uri, HTTPClient: client})
+}
+func mockSDK(transport http.RoundTripper) *sdk.FormanceV1 {
+	return transportSDK("https://stack.example.test", &http.Client{Transport: transport})
+}
+func factoryReturning(transport http.RoundTripper) testSDKFactory {
+	return factoryWithSDK(mockSDK(transport))
+}
+func factoryWithSDK(client *sdk.FormanceV1) testSDKFactory {
+	return func(*cobra.Command) (*sdk.FormanceV1, error) { return client, nil }
+}
+func requestOptions(r *http.Request) connectivityinternal.ListOptions {
+	size, _ := strconv.ParseInt(r.URL.Query().Get("pageSize"), 10, 32)
+	return connectivityinternal.ListOptions{PageSize: int32(size), Cursor: r.URL.Query().Get("cursor"), Query: r.URL.Query().Get("query")}
+}
+func mockHTTPResponse(r *http.Request, status int, data any, err error) (*http.Response, error) {
+	if err != nil {
+		return nil, err
+	}
+	body, err := json.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+	return jsonHTTPResponse(r, status, string(body)), nil
+}
+func mockConnectionPage(r *http.Request, data *testConnectionList, err error) (*http.Response, error) {
+	if data == nil {
+		return mockHTTPResponse(r, 200, nil, err)
+	}
+	return mockHTTPResponse(r, 200, connectivity.ConnectionCursor{Cursor: connectivity.Cursor{Data: data.Items, HasMore: data.HasMore, Next: connectivityinternal.OptionalString(data.Next), PageSize: int(data.PageSize)}}, err)
+}
+func (v connectorVersions) RoundTrip(r *http.Request) (*http.Response, error) {
+	prefix := "/api/connectivity/connectors/"
+	suffix := strings.TrimPrefix(r.URL.EscapedPath(), prefix)
+	parts := strings.SplitN(suffix, "/versions", 2)
+	if len(parts) != 2 || r.Method != http.MethodGet {
+		return nil, fmt.Errorf("unexpected request %s %s", r.Method, r.URL)
+	}
+	name, _ := url.PathUnescape(parts[0])
+	if parts[1] == "" {
+		data := versionListFixture()
+		var err error
+		if v.listVersions != nil {
+			data, err = v.listVersions(r.Context(), name, requestOptions(r))
 		}
-		return &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": {"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"name":"fixture","configuration":{}}`)), Request: r}, nil
-	})})
-	_, err := api.PatchConnection(ctx, request, nil)
-	return body, err
+		if data == nil {
+			return mockHTTPResponse(r, 200, nil, err)
+		}
+		return mockHTTPResponse(r, 200, connectivity.ConnectorVersionCursor{Cursor: connectivity.ConnectorVersionCursorCursor{Data: data.Items, HasMore: data.HasMore, Next: connectivityinternal.OptionalString(data.Next), PageSize: int(data.PageSize)}}, err)
+	}
+	version, _ := url.PathUnescape(strings.TrimPrefix(parts[1], "/"))
+	data := &connectivity.ConnectorVersion{Version: version}
+	var err error
+	if v.getVersion != nil {
+		data, err = v.getVersion(r.Context(), name, version)
+	}
+	return mockHTTPResponse(r, 200, data, err)
+}
+func requestConnectionName(r *http.Request) string {
+	return strings.TrimPrefix(r.URL.Path, "/api/connectivity/connections/")
+}
+func (m listInstanceClientMock) RoundTrip(r *http.Request) (*http.Response, error) {
+	data, err := m.list(r.Context(), requestOptions(r))
+	return mockConnectionPage(r, data, err)
+}
+func (m showInstanceClientMock) RoundTrip(r *http.Request) (*http.Response, error) {
+	data, err := m.get(r.Context(), requestConnectionName(r))
+	return mockHTTPResponse(r, 200, data, err)
+}
+func (m completionClientMock) RoundTrip(r *http.Request) (*http.Response, error) {
+	if r.URL.Path == "/api/connectivity/connections" {
+		data, err := m.listInstances(r.Context(), requestOptions(r))
+		return mockConnectionPage(r, data, err)
+	}
+	return m.connectorVersions.RoundTrip(r)
+}
+func (m configureClientMock) RoundTrip(r *http.Request) (*http.Response, error) {
+	if strings.Contains(r.URL.Path, "/connectors/") {
+		return m.connectorVersions.RoundTrip(r)
+	}
+	if r.URL.Path == "/api/connectivity/connections" {
+		data, err := m.listInstances(r.Context(), requestOptions(r))
+		return mockConnectionPage(r, data, err)
+	}
+	if r.Method == http.MethodGet {
+		data, err := m.getInstance(r.Context(), requestConnectionName(r))
+		return mockHTTPResponse(r, 200, data, err)
+	}
+	var patch map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {
+		return nil, err
+	}
+	data, err := m.patch(r.Context(), requestConnectionName(r), patch)
+	return mockHTTPResponse(r, 200, data, err)
+}
+func (m suspensionClientMock) RoundTrip(r *http.Request) (*http.Response, error) {
+	if r.Method == http.MethodGet {
+		data, err := m.listInstances(r.Context(), requestOptions(r))
+		return mockConnectionPage(r, data, err)
+	}
+	var patch map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {
+		return nil, err
+	}
+	data, err := m.patch(r.Context(), requestConnectionName(r), patch)
+	return mockHTTPResponse(r, 200, data, err)
+}
+func (m uninstallClientMock) RoundTrip(r *http.Request) (*http.Response, error) {
+	if r.Method == http.MethodGet {
+		data, err := m.listInstances(r.Context(), requestOptions(r))
+		return mockConnectionPage(r, data, err)
+	}
+	return mockHTTPResponse(r, 204, nil, m.delete(r.Context(), requestConnectionName(r)))
+}
+func (m mutationClientMock) RoundTrip(r *http.Request) (*http.Response, error) {
+	if strings.Contains(r.URL.Path, "/versions") {
+		return m.connectorVersions.RoundTrip(r)
+	}
+	if strings.HasSuffix(r.URL.Path, "/_query/capabilities") {
+		data, err := m.capabilities(r.Context())
+		return mockHTTPResponse(r, 200, data, err)
+	}
+	if r.Method == http.MethodGet {
+		data, err := m.listConnectors(r.Context(), requestOptions(r))
+		if data == nil {
+			return mockHTTPResponse(r, 200, nil, err)
+		}
+		return mockHTTPResponse(r, 200, connectivity.ConnectorCursor{Cursor: connectivity.ConnectorCursorCursor{Data: data.Items, HasMore: data.HasMore, Next: connectivityinternal.OptionalString(data.Next), PageSize: int(data.PageSize)}}, err)
+	}
+	var body connectivity.ConnectionCreate
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		return nil, err
+	}
+	data, err := m.create(r.Context(), body)
+	return mockHTTPResponse(r, 201, data, err)
 }
