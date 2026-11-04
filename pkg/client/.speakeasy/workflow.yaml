@@ -3,7 +3,7 @@ speakeasyVersion: 1.757.1
 sources:
   stacks-source:
     inputs:
-      - location: registry.speakeasyapi.dev/formance/formance/stacks-source@v4.0.0-beta.1
+      - location: registry.speakeasyapi.dev/formance/formance/stacks-source@v4.0.0-beta.2
     overlays:
       - location: ./bulk-naming-overlay.yaml
 targets:

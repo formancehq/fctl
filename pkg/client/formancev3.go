@@ -3508,7 +3508,7 @@ func (s *FormanceV3) ForwardPaymentServiceUserToProvider(ctx context.Context, re
 }
 
 // GetAccount - Get an account by ID
-func (s *FormanceV3) GetAccount(ctx context.Context, request operations.V3GetAccountRequest, opts ...operations.Option) (*operations.V3GetAccountResponse, error) {
+func (s *FormanceV3) GetAccount(ctx context.Context, request operations.V3GetAccountPaymentsRequest, opts ...operations.Option) (*operations.V3GetAccountPaymentsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -3537,7 +3537,7 @@ func (s *FormanceV3) GetAccount(ctx context.Context, request operations.V3GetAcc
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "v3GetAccount",
+		OperationID:      "v3GetAccount_payments",
 		OAuth2Scopes:     []string{"payments:read"},
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
@@ -3659,7 +3659,7 @@ func (s *FormanceV3) GetAccount(ctx context.Context, request operations.V3GetAcc
 		}
 	}
 
-	res := &operations.V3GetAccountResponse{
+	res := &operations.V3GetAccountPaymentsResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -7273,7 +7273,7 @@ func (s *FormanceV3) InstallConnector(ctx context.Context, request operations.V3
 }
 
 // ListAccounts - List all accounts
-func (s *FormanceV3) ListAccounts(ctx context.Context, request operations.V3ListAccountsRequest, opts ...operations.Option) (*operations.V3ListAccountsResponse, error) {
+func (s *FormanceV3) ListAccounts(ctx context.Context, request operations.V3ListAccountsPaymentsRequest, opts ...operations.Option) (*operations.V3ListAccountsPaymentsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -7302,7 +7302,7 @@ func (s *FormanceV3) ListAccounts(ctx context.Context, request operations.V3List
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "v3ListAccounts",
+		OperationID:      "v3ListAccounts_payments",
 		OAuth2Scopes:     []string{"payments:read"},
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
@@ -7435,7 +7435,7 @@ func (s *FormanceV3) ListAccounts(ctx context.Context, request operations.V3List
 		}
 	}
 
-	res := &operations.V3ListAccountsResponse{
+	res := &operations.V3ListAccountsPaymentsResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,

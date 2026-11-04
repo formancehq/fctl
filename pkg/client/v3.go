@@ -34,7 +34,7 @@ func newV3(rootSDK *Formance, sdkConfig config.SDKConfiguration, hooks *hooks.Ho
 // AddAccountType - Add an account type
 // Adds a new account type to a ledger's chart of accounts. Account types define
 // address patterns for account validation. Requires `ledger:WriteMetadata` scope.
-func (s *V3) AddAccountType(ctx context.Context, request operations.AddAccountTypeRequest, security *operations.AddAccountTypeSecurity, opts ...operations.Option) (*operations.AddAccountTypeResponse, error) {
+func (s *V3) AddAccountType(ctx context.Context, request operations.V3AddAccountTypeRequest, security *operations.V3AddAccountTypeSecurity, opts ...operations.Option) (*operations.V3AddAccountTypeResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -64,7 +64,7 @@ func (s *V3) AddAccountType(ctx context.Context, request operations.AddAccountTy
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "addAccountType",
+		OperationID:      "v3AddAccountType",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -198,7 +198,7 @@ func (s *V3) AddAccountType(ctx context.Context, request operations.AddAccountTy
 		}
 	}
 
-	res := &operations.AddAccountTypeResponse{
+	res := &operations.V3AddAccountTypeResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -355,7 +355,7 @@ func (s *V3) AddAccountType(ctx context.Context, request operations.AddAccountTy
 // Supports filtering accounts with the generic `filter` parameter, grouping by account prefixes,
 // and max-precision merging.
 // Requires `ledger:ReadAccount` scope.
-func (s *V3) AggregateVolumes(ctx context.Context, request operations.AggregateVolumesRequest, security *operations.AggregateVolumesSecurity, opts ...operations.Option) (*operations.AggregateVolumesResponse, error) {
+func (s *V3) AggregateVolumes(ctx context.Context, request operations.V3AggregateVolumesRequest, security *operations.V3AggregateVolumesSecurity, opts ...operations.Option) (*operations.V3AggregateVolumesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -385,7 +385,7 @@ func (s *V3) AggregateVolumes(ctx context.Context, request operations.AggregateV
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "aggregateVolumes",
+		OperationID:      "v3AggregateVolumes",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -518,7 +518,7 @@ func (s *V3) AggregateVolumes(ctx context.Context, request operations.AggregateV
 		}
 	}
 
-	res := &operations.AggregateVolumesResponse{
+	res := &operations.V3AggregateVolumesResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -691,7 +691,7 @@ func (s *V3) AggregateVolumes(ctx context.Context, request operations.AggregateV
 // Scans all accounts in a ledger, discovers address patterns, and returns a
 // suggested Chart of Accounts. Useful after a mirror import to understand
 // account structure. Requires `ledger:read` scope.
-func (s *V3) AnalyzeAccounts(ctx context.Context, request operations.AnalyzeAccountsRequest, security *operations.AnalyzeAccountsSecurity, opts ...operations.Option) (*operations.AnalyzeAccountsResponse, error) {
+func (s *V3) AnalyzeAccounts(ctx context.Context, request operations.V3AnalyzeAccountsRequest, security *operations.V3AnalyzeAccountsSecurity, opts ...operations.Option) (*operations.V3AnalyzeAccountsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -721,7 +721,7 @@ func (s *V3) AnalyzeAccounts(ctx context.Context, request operations.AnalyzeAcco
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "analyzeAccounts",
+		OperationID:      "v3AnalyzeAccounts",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -854,7 +854,7 @@ func (s *V3) AnalyzeAccounts(ctx context.Context, request operations.AnalyzeAcco
 		}
 	}
 
-	res := &operations.AnalyzeAccountsResponse{
+	res := &operations.V3AnalyzeAccountsResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -1023,7 +1023,7 @@ func (s *V3) AnalyzeAccounts(ctx context.Context, request operations.AnalyzeAcco
 
 // AnalyzeNumscript - Analyze Numscript source
 // Validates Numscript v1 and returns the external input schema without reading or changing ledger state. Recognized source failures are returned as diagnostics with an empty input list. Sources over 64 KiB or with more than 32 block-comment open markers receive a syntax diagnostic; internal failures return a server error.
-func (s *V3) AnalyzeNumscript(ctx context.Context, request ledgerv3.AnalyzeNumscriptRequest, security *operations.AnalyzeNumscriptSecurity, opts ...operations.Option) (*operations.AnalyzeNumscriptResponse, error) {
+func (s *V3) AnalyzeNumscript(ctx context.Context, request ledgerv3.AnalyzeNumscriptRequest, security *operations.V3AnalyzeNumscriptSecurity, opts ...operations.Option) (*operations.V3AnalyzeNumscriptResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -1053,7 +1053,7 @@ func (s *V3) AnalyzeNumscript(ctx context.Context, request ledgerv3.AnalyzeNumsc
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "analyzeNumscript",
+		OperationID:      "v3AnalyzeNumscript",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -1187,7 +1187,7 @@ func (s *V3) AnalyzeNumscript(ctx context.Context, request ledgerv3.AnalyzeNumsc
 		}
 	}
 
-	res := &operations.AnalyzeNumscriptResponse{
+	res := &operations.V3AnalyzeNumscriptResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -1333,7 +1333,7 @@ func (s *V3) AnalyzeNumscript(ctx context.Context, request ledgerv3.AnalyzeNumsc
 // Scans all transactions in a ledger, discovers flow patterns by normalizing
 // account addresses, and returns statistics per flow type including temporal
 // distribution and volume metrics. Requires `ledger:read` scope.
-func (s *V3) AnalyzeTransactions(ctx context.Context, request operations.AnalyzeTransactionsRequest, security *operations.AnalyzeTransactionsSecurity, opts ...operations.Option) (*operations.AnalyzeTransactionsResponse, error) {
+func (s *V3) AnalyzeTransactions(ctx context.Context, request operations.V3AnalyzeTransactionsRequest, security *operations.V3AnalyzeTransactionsSecurity, opts ...operations.Option) (*operations.V3AnalyzeTransactionsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -1363,7 +1363,7 @@ func (s *V3) AnalyzeTransactions(ctx context.Context, request operations.Analyze
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "analyzeTransactions",
+		OperationID:      "v3AnalyzeTransactions",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -1496,7 +1496,7 @@ func (s *V3) AnalyzeTransactions(ctx context.Context, request operations.Analyze
 		}
 	}
 
-	res := &operations.AnalyzeTransactionsResponse{
+	res := &operations.V3AnalyzeTransactionsResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -1714,7 +1714,7 @@ func (s *V3) AnalyzeTransactions(ctx context.Context, request operations.Analyze
 //     - Aborted elements (`context.Canceled` from the sequential
 //     runner after a prior failure): contribute nothing — the
 //     originating error drives the rollup.
-func (s *V3) BulkOperations(ctx context.Context, request operations.BulkOperationsRequest, security *operations.BulkOperationsSecurity, opts ...operations.Option) (*operations.BulkOperationsResponse, error) {
+func (s *V3) BulkOperations(ctx context.Context, request operations.V3BulkOperationsRequest, security *operations.V3BulkOperationsSecurity, opts ...operations.Option) (*operations.V3BulkOperationsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -1744,7 +1744,7 @@ func (s *V3) BulkOperations(ctx context.Context, request operations.BulkOperatio
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "bulkOperations",
+		OperationID:      "v3BulkOperations",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -1884,7 +1884,7 @@ func (s *V3) BulkOperations(ctx context.Context, request operations.BulkOperatio
 		}
 	}
 
-	res := &operations.BulkOperationsResponse{
+	res := &operations.V3BulkOperationsResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -2077,7 +2077,7 @@ func (s *V3) BulkOperations(ctx context.Context, request operations.BulkOperatio
 // probes should target `/readyz` instead — this endpoint MUST NOT gate
 // StatefulSet ordering, otherwise the cluster cannot recover from a
 // full-kill cold start.
-func (s *V3) Clusterz(ctx context.Context, security *operations.ClusterzSecurity, opts ...operations.Option) (*operations.ClusterzResponse, error) {
+func (s *V3) Clusterz(ctx context.Context, security *operations.V3ClusterzSecurity, opts ...operations.Option) (*operations.V3ClusterzResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -2106,7 +2106,7 @@ func (s *V3) Clusterz(ctx context.Context, security *operations.ClusterzSecurity
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "clusterz",
+		OperationID:      "v3Clusterz",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -2228,7 +2228,7 @@ func (s *V3) Clusterz(ctx context.Context, security *operations.ClusterzSecurity
 		}
 	}
 
-	res := &operations.ClusterzResponse{
+	res := &operations.V3ClusterzResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -2300,7 +2300,7 @@ func (s *V3) Clusterz(ctx context.Context, security *operations.ClusterzSecurity
 // The request body carries the target `IndexID` in
 // canonical form (see `DELETE /v3/{ledgerName}/indexes/{canonicalId}`
 // for the format). Requires `ledger:WriteLedger` scope.
-func (s *V3) CreateIndex(ctx context.Context, request operations.CreateIndexRequest, security *operations.CreateIndexSecurity, opts ...operations.Option) (*operations.CreateIndexResponse, error) {
+func (s *V3) CreateIndex(ctx context.Context, request operations.V3CreateIndexRequest, security *operations.V3CreateIndexSecurity, opts ...operations.Option) (*operations.V3CreateIndexResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -2330,7 +2330,7 @@ func (s *V3) CreateIndex(ctx context.Context, request operations.CreateIndexRequ
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "createIndex",
+		OperationID:      "v3CreateIndex",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -2466,7 +2466,7 @@ func (s *V3) CreateIndex(ctx context.Context, request operations.CreateIndexRequ
 		}
 	}
 
-	res := &operations.CreateIndexResponse{
+	res := &operations.V3CreateIndexResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -2644,7 +2644,7 @@ func (s *V3) CreateIndex(ctx context.Context, request operations.CreateIndexRequ
 // named `_` would be unreachable over REST. Creating it is rejected with a
 // validation error. The exact name `_system` is also reserved for system
 // events and rejected. Other underscore-prefixed names remain valid.
-func (s *V3) CreateLedger(ctx context.Context, request operations.CreateLedgerRequest, security *operations.CreateLedgerSecurity, opts ...operations.Option) (*operations.CreateLedgerResponse, error) {
+func (s *V3) CreateLedger(ctx context.Context, request operations.V3CreateLedgerRequest, security *operations.V3CreateLedgerSecurity, opts ...operations.Option) (*operations.V3CreateLedgerResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -2674,7 +2674,7 @@ func (s *V3) CreateLedger(ctx context.Context, request operations.CreateLedgerRe
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "createLedger",
+		OperationID:      "v3CreateLedger",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -2810,7 +2810,7 @@ func (s *V3) CreateLedger(ctx context.Context, request operations.CreateLedgerRe
 		}
 	}
 
-	res := &operations.CreateLedgerResponse{
+	res := &operations.V3CreateLedgerResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -2982,7 +2982,7 @@ func (s *V3) CreateLedger(ctx context.Context, request operations.CreateLedgerRe
 // CreatePreparedQuery - Create a prepared query
 // Creates a new prepared query for a ledger. A prepared query defines a reusable
 // filter that can be executed later with parameter substitution. Requires `ledger:WriteQuery` scope.
-func (s *V3) CreatePreparedQuery(ctx context.Context, request operations.CreatePreparedQueryRequest, security *operations.CreatePreparedQuerySecurity, opts ...operations.Option) (*operations.CreatePreparedQueryResponse, error) {
+func (s *V3) CreatePreparedQuery(ctx context.Context, request operations.V3CreatePreparedQueryRequest, security *operations.V3CreatePreparedQuerySecurity, opts ...operations.Option) (*operations.V3CreatePreparedQueryResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -3012,7 +3012,7 @@ func (s *V3) CreatePreparedQuery(ctx context.Context, request operations.CreateP
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "createPreparedQuery",
+		OperationID:      "v3CreatePreparedQuery",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -3148,7 +3148,7 @@ func (s *V3) CreatePreparedQuery(ctx context.Context, request operations.CreateP
 		}
 	}
 
-	res := &operations.CreatePreparedQueryResponse{
+	res := &operations.V3CreatePreparedQueryResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -3300,9 +3300,9 @@ func (s *V3) CreatePreparedQuery(ctx context.Context, request operations.CreateP
 
 }
 
-// CreateTransactionLedgerV3 - Create a new transaction
+// CreateTransaction - Create a new transaction
 // Creates a new transaction in the specified ledger with the specified postings. Requires `ledger:write` scope.
-func (s *V3) CreateTransactionLedgerV3(ctx context.Context, request operations.CreateTransactionLedgerV3Request, security *operations.CreateTransactionLedgerV3Security, opts ...operations.Option) (*operations.CreateTransactionLedgerV3Response, error) {
+func (s *V3) CreateTransaction(ctx context.Context, request operations.V3CreateTransactionRequest, security *operations.V3CreateTransactionSecurity, opts ...operations.Option) (*operations.V3CreateTransactionResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -3332,7 +3332,7 @@ func (s *V3) CreateTransactionLedgerV3(ctx context.Context, request operations.C
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "createTransaction_ledgerV3",
+		OperationID:      "v3CreateTransaction",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -3468,7 +3468,7 @@ func (s *V3) CreateTransactionLedgerV3(ctx context.Context, request operations.C
 		}
 	}
 
-	res := &operations.CreateTransactionLedgerV3Response{
+	res := &operations.V3CreateTransactionResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -3641,7 +3641,7 @@ func (s *V3) CreateTransactionLedgerV3(ctx context.Context, request operations.C
 
 // DeleteAccountMetadata - Delete account metadata
 // Deletes a metadata key for a specific account in the ledger. Requires `ledger:WriteMetadata` scope (included in the default `ledger:write` mapping).
-func (s *V3) DeleteAccountMetadata(ctx context.Context, request operations.DeleteAccountMetadataRequest, security *operations.DeleteAccountMetadataSecurity, opts ...operations.Option) (*operations.DeleteAccountMetadataResponse, error) {
+func (s *V3) DeleteAccountMetadata(ctx context.Context, request operations.V3DeleteAccountMetadataRequest, security *operations.V3DeleteAccountMetadataSecurity, opts ...operations.Option) (*operations.V3DeleteAccountMetadataResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -3671,7 +3671,7 @@ func (s *V3) DeleteAccountMetadata(ctx context.Context, request operations.Delet
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "deleteAccountMetadata",
+		OperationID:      "v3DeleteAccountMetadata",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -3800,7 +3800,7 @@ func (s *V3) DeleteAccountMetadata(ctx context.Context, request operations.Delet
 		}
 	}
 
-	res := &operations.DeleteAccountMetadataResponse{
+	res := &operations.V3DeleteAccountMetadataResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -3954,7 +3954,7 @@ func (s *V3) DeleteAccountMetadata(ctx context.Context, request operations.Delet
 
 // DeleteLedger - Delete a ledger
 // Deletes a ledger by its name. This operation removes the ledger and its associated Raft group from the cluster. Requires `ledger:write` scope.
-func (s *V3) DeleteLedger(ctx context.Context, request operations.DeleteLedgerRequest, security *operations.DeleteLedgerSecurity, opts ...operations.Option) (*operations.DeleteLedgerResponse, error) {
+func (s *V3) DeleteLedger(ctx context.Context, request operations.V3DeleteLedgerRequest, security *operations.V3DeleteLedgerSecurity, opts ...operations.Option) (*operations.V3DeleteLedgerResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -3984,7 +3984,7 @@ func (s *V3) DeleteLedger(ctx context.Context, request operations.DeleteLedgerRe
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "deleteLedger",
+		OperationID:      "v3DeleteLedger",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -4113,7 +4113,7 @@ func (s *V3) DeleteLedger(ctx context.Context, request operations.DeleteLedgerRe
 		}
 	}
 
-	res := &operations.DeleteLedgerResponse{
+	res := &operations.V3DeleteLedgerResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -4267,7 +4267,7 @@ func (s *V3) DeleteLedger(ctx context.Context, request operations.DeleteLedgerRe
 
 // DeleteLedgerMetadata - Delete ledger metadata
 // Deletes a metadata key from the ledger. Requires `ledger:WriteMetadata` scope (included in the default `ledger:write` mapping).
-func (s *V3) DeleteLedgerMetadata(ctx context.Context, request operations.DeleteLedgerMetadataRequest, security *operations.DeleteLedgerMetadataSecurity, opts ...operations.Option) (*operations.DeleteLedgerMetadataResponse, error) {
+func (s *V3) DeleteLedgerMetadata(ctx context.Context, request operations.V3DeleteLedgerMetadataRequest, security *operations.V3DeleteLedgerMetadataSecurity, opts ...operations.Option) (*operations.V3DeleteLedgerMetadataResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -4297,7 +4297,7 @@ func (s *V3) DeleteLedgerMetadata(ctx context.Context, request operations.Delete
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "deleteLedgerMetadata",
+		OperationID:      "v3DeleteLedgerMetadata",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -4426,7 +4426,7 @@ func (s *V3) DeleteLedgerMetadata(ctx context.Context, request operations.Delete
 		}
 	}
 
-	res := &operations.DeleteLedgerMetadataResponse{
+	res := &operations.V3DeleteLedgerMetadataResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -4580,7 +4580,7 @@ func (s *V3) DeleteLedgerMetadata(ctx context.Context, request operations.Delete
 
 // DeletePreparedQuery - Delete a prepared query
 // Deletes a prepared query from a ledger. Requires `ledger:WriteQuery` scope.
-func (s *V3) DeletePreparedQuery(ctx context.Context, request operations.DeletePreparedQueryRequest, security *operations.DeletePreparedQuerySecurity, opts ...operations.Option) (*operations.DeletePreparedQueryResponse, error) {
+func (s *V3) DeletePreparedQuery(ctx context.Context, request operations.V3DeletePreparedQueryRequest, security *operations.V3DeletePreparedQuerySecurity, opts ...operations.Option) (*operations.V3DeletePreparedQueryResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -4610,7 +4610,7 @@ func (s *V3) DeletePreparedQuery(ctx context.Context, request operations.DeleteP
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "deletePreparedQuery",
+		OperationID:      "v3DeletePreparedQuery",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -4737,7 +4737,7 @@ func (s *V3) DeletePreparedQuery(ctx context.Context, request operations.DeleteP
 		}
 	}
 
-	res := &operations.DeletePreparedQueryResponse{
+	res := &operations.V3DeletePreparedQueryResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -4891,7 +4891,7 @@ func (s *V3) DeletePreparedQuery(ctx context.Context, request operations.DeleteP
 
 // DeleteTransactionMetadata - Delete transaction metadata
 // Deletes a metadata key for a specific transaction in the ledger. Requires `ledger:WriteMetadata` scope (included in the default `ledger:write` mapping).
-func (s *V3) DeleteTransactionMetadata(ctx context.Context, request operations.DeleteTransactionMetadataRequest, security *operations.DeleteTransactionMetadataSecurity, opts ...operations.Option) (*operations.DeleteTransactionMetadataResponse, error) {
+func (s *V3) DeleteTransactionMetadata(ctx context.Context, request operations.V3DeleteTransactionMetadataRequest, security *operations.V3DeleteTransactionMetadataSecurity, opts ...operations.Option) (*operations.V3DeleteTransactionMetadataResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -4921,7 +4921,7 @@ func (s *V3) DeleteTransactionMetadata(ctx context.Context, request operations.D
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "deleteTransactionMetadata",
+		OperationID:      "v3DeleteTransactionMetadata",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -5050,7 +5050,7 @@ func (s *V3) DeleteTransactionMetadata(ctx context.Context, request operations.D
 		}
 	}
 
-	res := &operations.DeleteTransactionMetadataResponse{
+	res := &operations.V3DeleteTransactionMetadataResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -5213,7 +5213,7 @@ func (s *V3) DeleteTransactionMetadata(ctx context.Context, request operations.D
 // mistyped canonical id is therefore not reported; read the index with
 // `GET /v3/{ledgerName}/indexes/{canonicalId}` first when the caller must
 // know that it exists. `404` means that the ledger does not exist.
-func (s *V3) DropIndex(ctx context.Context, request operations.DropIndexRequest, security *operations.DropIndexSecurity, opts ...operations.Option) (*operations.DropIndexResponse, error) {
+func (s *V3) DropIndex(ctx context.Context, request operations.V3DropIndexRequest, security *operations.V3DropIndexSecurity, opts ...operations.Option) (*operations.V3DropIndexResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -5243,7 +5243,7 @@ func (s *V3) DropIndex(ctx context.Context, request operations.DropIndexRequest,
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "dropIndex",
+		OperationID:      "v3DropIndex",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -5372,7 +5372,7 @@ func (s *V3) DropIndex(ctx context.Context, request operations.DropIndexRequest,
 		}
 	}
 
-	res := &operations.DropIndexResponse{
+	res := &operations.V3DropIndexResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -5529,7 +5529,7 @@ func (s *V3) DropIndex(ctx context.Context, request operations.DropIndexRequest,
 // AGGREGATE_VOLUMES ignores pageSize and aggregates all matching accounts. Also
 // accepts pageSize, cursor and reverse as query parameters. Supplied pageSize and
 // reverse values, and nonempty cursor values, override the body. Requires `ledger:ReadQuery` scope.
-func (s *V3) ExecutePreparedQuery(ctx context.Context, request operations.ExecutePreparedQueryRequest, security *operations.ExecutePreparedQuerySecurity, opts ...operations.Option) (*operations.ExecutePreparedQueryResponse, error) {
+func (s *V3) ExecutePreparedQuery(ctx context.Context, request operations.V3ExecutePreparedQueryRequest, security *operations.V3ExecutePreparedQuerySecurity, opts ...operations.Option) (*operations.V3ExecutePreparedQueryResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -5559,7 +5559,7 @@ func (s *V3) ExecutePreparedQuery(ctx context.Context, request operations.Execut
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "executePreparedQuery",
+		OperationID:      "v3ExecutePreparedQuery",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -5699,7 +5699,7 @@ func (s *V3) ExecutePreparedQuery(ctx context.Context, request operations.Execut
 		}
 	}
 
-	res := &operations.ExecutePreparedQueryResponse{
+	res := &operations.V3ExecutePreparedQueryResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -5868,337 +5868,9 @@ func (s *V3) ExecutePreparedQuery(ctx context.Context, request operations.Execut
 
 }
 
-// GetAccountType - Get an account type
-// Retrieves a specific account type by name from a ledger. Requires `ledger:ReadAccount` scope.
-func (s *V3) GetAccountType(ctx context.Context, request operations.GetAccountTypeRequest, security *operations.GetAccountTypeSecurity, opts ...operations.Option) (*operations.GetAccountTypeResponse, error) {
-	o := operations.Options{}
-	supportedOptions := []string{
-		operations.SupportedOptionRetries,
-		operations.SupportedOptionTimeout,
-		operations.SupportedOptionAcceptHeaderOverride,
-	}
-
-	for _, opt := range opts {
-		if err := opt(&o, supportedOptions...); err != nil {
-			return nil, fmt.Errorf("error applying option: %w", err)
-		}
-	}
-
-	var baseURL string
-	if o.ServerURL == nil {
-		baseURL = utils.ReplaceParameters(s.sdkConfiguration.GetServerDetails())
-	} else {
-		baseURL = *o.ServerURL
-	}
-	opURL, err := utils.GenerateURL(ctx, baseURL, "/api/ledger/v3/{ledgerName}/account-types/{typeName}", request, nil)
-	if err != nil {
-		return nil, fmt.Errorf("error generating URL: %w", err)
-	}
-
-	hookCtx := hooks.HookContext{
-		SDK:              s.rootSDK,
-		SDKConfiguration: s.sdkConfiguration,
-		BaseURL:          baseURL,
-		Context:          ctx,
-		OperationID:      "getAccountType",
-		OAuth2Scopes:     nil,
-		SecuritySource:   utils.AsSecuritySource(security),
-	}
-
-	timeout := o.Timeout
-	if timeout == nil {
-		timeout = s.sdkConfiguration.Timeout
-	}
-
-	if timeout != nil {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *timeout)
-		defer cancel()
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "GET", opURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("error creating request: %w", err)
-	}
-	if o.AcceptHeaderOverride != nil {
-		req.Header.Set("Accept", string(*o.AcceptHeaderOverride))
-	} else {
-		req.Header.Set("Accept", "application/json;q=1, text/plain;q=0")
-	}
-
-	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
-
-	utils.PopulateHeaders(ctx, req, request, nil)
-
-	if err := utils.PopulateSecurity(ctx, req, utils.AsSecuritySource(security)); err != nil {
-		return nil, err
-	}
-
-	for k, v := range o.SetHeaders {
-		req.Header.Set(k, v)
-	}
-
-	globalRetryConfig := s.sdkConfiguration.RetryConfig
-	retryConfig := o.Retries
-	if retryConfig == nil {
-		if globalRetryConfig != nil {
-			retryConfig = globalRetryConfig
-		}
-	}
-
-	var httpRes *http.Response
-	if retryConfig != nil {
-		httpRes, err = utils.Retry(ctx, utils.Retries{
-			Config: retryConfig,
-			StatusCodes: []string{
-				"429",
-				"500",
-				"502",
-				"503",
-				"504",
-			},
-		}, func() (*http.Response, error) {
-			if req.Body != nil && req.Body != http.NoBody && req.GetBody != nil {
-				copyBody, err := req.GetBody()
-
-				if err != nil {
-					return nil, err
-				}
-
-				req.Body = copyBody
-			}
-
-			req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
-			if err != nil {
-				if retry.IsPermanentError(err) || retry.IsTemporaryError(err) {
-					return nil, err
-				}
-
-				return nil, retry.Permanent(err)
-			}
-
-			httpRes, err := s.sdkConfiguration.Client.Do(req)
-			if err != nil || httpRes == nil {
-				if err != nil {
-					err = fmt.Errorf("error sending request: %w", err)
-				} else {
-					err = fmt.Errorf("error sending request: no response")
-				}
-
-				_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
-			}
-			return httpRes, err
-		})
-
-		if err != nil {
-			return nil, err
-		} else {
-			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
-			if err != nil {
-				return nil, err
-			}
-		}
-	} else {
-		req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
-		if err != nil {
-			return nil, err
-		}
-
-		httpRes, err = s.sdkConfiguration.Client.Do(req)
-		if err != nil || httpRes == nil {
-			if err != nil {
-				err = fmt.Errorf("error sending request: %w", err)
-			} else {
-				err = fmt.Errorf("error sending request: no response")
-			}
-
-			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
-			return nil, err
-		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
-			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
-			if err != nil {
-				return nil, err
-			} else if _httpRes != nil {
-				httpRes = _httpRes
-			}
-		} else {
-			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	res := &operations.GetAccountTypeResponse{
-		StatusCode:  httpRes.StatusCode,
-		ContentType: httpRes.Header.Get("Content-Type"),
-		RawResponse: httpRes,
-	}
-
-	switch {
-	case httpRes.StatusCode == 200:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out ledgerv3.GetAccountTypeResponse
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
-			}
-
-			res.GetAccountTypeResponse = &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
-	case httpRes.StatusCode == 401:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out ledgerv3.ErrorResponse
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
-			}
-
-			res.ErrorResponse = &out
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `text/plain`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			out := string(rawBody)
-			res.Unauthorized = &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
-	case httpRes.StatusCode == 403:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out ledgerv3.ErrorResponse
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
-			}
-
-			res.ErrorResponse = &out
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `text/plain`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			out := string(rawBody)
-			res.Forbidden = &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
-	case httpRes.StatusCode == 400:
-		fallthrough
-	case httpRes.StatusCode == 404:
-		fallthrough
-	case httpRes.StatusCode == 405:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out ledgerv3.ErrorResponse
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
-			}
-
-			res.ErrorResponse = &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
-	case httpRes.StatusCode == 500:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out ledgerv3.ErrorResponse
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
-			}
-
-			res.ErrorResponse = &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
-	case httpRes.StatusCode == 503:
-		res.Headers = httpRes.Header
-
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out ledgerv3.ErrorResponse
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
-			}
-
-			res.ErrorResponse = &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
-	default:
-		rawBody, err := utils.ConsumeRawBody(httpRes)
-		if err != nil {
-			return nil, err
-		}
-		return nil, sdkerrors.NewSDKError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
-	}
-
-	return res, nil
-
-}
-
-// GetAccountLedgerV3 - Get an account
+// GetAccount - Get an account
 // Retrieves account information including metadata for a specific account address. Requires `ledger:read` scope.
-func (s *V3) GetAccountLedgerV3(ctx context.Context, request operations.GetAccountLedgerV3Request, security *operations.GetAccountLedgerV3Security, opts ...operations.Option) (*operations.GetAccountLedgerV3Response, error) {
+func (s *V3) GetAccount(ctx context.Context, request operations.V3GetAccountLedgerV3Request, security *operations.V3GetAccountLedgerV3Security, opts ...operations.Option) (*operations.V3GetAccountLedgerV3Response, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -6228,7 +5900,7 @@ func (s *V3) GetAccountLedgerV3(ctx context.Context, request operations.GetAccou
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "getAccount_ledgerV3",
+		OperationID:      "v3GetAccount_ledgerV3",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -6361,7 +6033,7 @@ func (s *V3) GetAccountLedgerV3(ctx context.Context, request operations.GetAccou
 		}
 	}
 
-	res := &operations.GetAccountLedgerV3Response{
+	res := &operations.V3GetAccountLedgerV3Response{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -6528,11 +6200,9 @@ func (s *V3) GetAccountLedgerV3(ctx context.Context, request operations.GetAccou
 
 }
 
-// GetAuditEntry - Get an audit entry
-// Returns a single audit entry by its global sequence, with per-order
-// `items` populated (the list endpoint omits `items` for compactness).
-// Requires `ledger:ReadAudit` scope.
-func (s *V3) GetAuditEntry(ctx context.Context, request operations.GetAuditEntryRequest, security *operations.GetAuditEntrySecurity, opts ...operations.Option) (*operations.GetAuditEntryResponse, error) {
+// GetAccountType - Get an account type
+// Retrieves a specific account type by name from a ledger. Requires `ledger:ReadAccount` scope.
+func (s *V3) GetAccountType(ctx context.Context, request operations.V3GetAccountTypeRequest, security *operations.V3GetAccountTypeSecurity, opts ...operations.Option) (*operations.V3GetAccountTypeResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -6552,7 +6222,7 @@ func (s *V3) GetAuditEntry(ctx context.Context, request operations.GetAuditEntry
 	} else {
 		baseURL = *o.ServerURL
 	}
-	opURL, err := utils.GenerateURL(ctx, baseURL, "/api/ledger/v3/_/audit-entries/{sequence}", request, nil)
+	opURL, err := utils.GenerateURL(ctx, baseURL, "/api/ledger/v3/{ledgerName}/account-types/{typeName}", request, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error generating URL: %w", err)
 	}
@@ -6562,7 +6232,7 @@ func (s *V3) GetAuditEntry(ctx context.Context, request operations.GetAuditEntry
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "getAuditEntry",
+		OperationID:      "v3GetAccountType",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -6691,7 +6361,7 @@ func (s *V3) GetAuditEntry(ctx context.Context, request operations.GetAuditEntry
 		}
 	}
 
-	res := &operations.GetAuditEntryResponse{
+	res := &operations.V3GetAccountTypeResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -6706,7 +6376,337 @@ func (s *V3) GetAuditEntry(ctx context.Context, request operations.GetAuditEntry
 				return nil, err
 			}
 
-			var out operations.GetAuditEntryResponseBody
+			var out ledgerv3.GetAccountTypeResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.GetAccountTypeResponse = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 401:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out ledgerv3.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.ErrorResponse = &out
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `text/plain`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			out := string(rawBody)
+			res.Unauthorized = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 403:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out ledgerv3.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.ErrorResponse = &out
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `text/plain`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			out := string(rawBody)
+			res.Forbidden = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 400:
+		fallthrough
+	case httpRes.StatusCode == 404:
+		fallthrough
+	case httpRes.StatusCode == 405:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out ledgerv3.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.ErrorResponse = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 500:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out ledgerv3.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.ErrorResponse = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 503:
+		res.Headers = httpRes.Header
+
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out ledgerv3.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.ErrorResponse = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	default:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, sdkerrors.NewSDKError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	}
+
+	return res, nil
+
+}
+
+// GetAuditEntry - Get an audit entry
+// Returns a single audit entry by its global sequence, with per-order
+// `items` populated (the list endpoint omits `items` for compactness).
+// Requires `ledger:ReadAudit` scope.
+func (s *V3) GetAuditEntry(ctx context.Context, request operations.V3GetAuditEntryRequest, security *operations.V3GetAuditEntrySecurity, opts ...operations.Option) (*operations.V3GetAuditEntryResponse, error) {
+	o := operations.Options{}
+	supportedOptions := []string{
+		operations.SupportedOptionRetries,
+		operations.SupportedOptionTimeout,
+		operations.SupportedOptionAcceptHeaderOverride,
+	}
+
+	for _, opt := range opts {
+		if err := opt(&o, supportedOptions...); err != nil {
+			return nil, fmt.Errorf("error applying option: %w", err)
+		}
+	}
+
+	var baseURL string
+	if o.ServerURL == nil {
+		baseURL = utils.ReplaceParameters(s.sdkConfiguration.GetServerDetails())
+	} else {
+		baseURL = *o.ServerURL
+	}
+	opURL, err := utils.GenerateURL(ctx, baseURL, "/api/ledger/v3/_/audit-entries/{sequence}", request, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error generating URL: %w", err)
+	}
+
+	hookCtx := hooks.HookContext{
+		SDK:              s.rootSDK,
+		SDKConfiguration: s.sdkConfiguration,
+		BaseURL:          baseURL,
+		Context:          ctx,
+		OperationID:      "v3GetAuditEntry",
+		OAuth2Scopes:     nil,
+		SecuritySource:   utils.AsSecuritySource(security),
+	}
+
+	timeout := o.Timeout
+	if timeout == nil {
+		timeout = s.sdkConfiguration.Timeout
+	}
+
+	if timeout != nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, *timeout)
+		defer cancel()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", opURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+	if o.AcceptHeaderOverride != nil {
+		req.Header.Set("Accept", string(*o.AcceptHeaderOverride))
+	} else {
+		req.Header.Set("Accept", "application/json;q=1, text/plain;q=0")
+	}
+
+	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+
+	utils.PopulateHeaders(ctx, req, request, nil)
+
+	if err := utils.PopulateSecurity(ctx, req, utils.AsSecuritySource(security)); err != nil {
+		return nil, err
+	}
+
+	for k, v := range o.SetHeaders {
+		req.Header.Set(k, v)
+	}
+
+	globalRetryConfig := s.sdkConfiguration.RetryConfig
+	retryConfig := o.Retries
+	if retryConfig == nil {
+		if globalRetryConfig != nil {
+			retryConfig = globalRetryConfig
+		}
+	}
+
+	var httpRes *http.Response
+	if retryConfig != nil {
+		httpRes, err = utils.Retry(ctx, utils.Retries{
+			Config: retryConfig,
+			StatusCodes: []string{
+				"429",
+				"500",
+				"502",
+				"503",
+				"504",
+			},
+		}, func() (*http.Response, error) {
+			if req.Body != nil && req.Body != http.NoBody && req.GetBody != nil {
+				copyBody, err := req.GetBody()
+
+				if err != nil {
+					return nil, err
+				}
+
+				req.Body = copyBody
+			}
+
+			req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+			if err != nil {
+				if retry.IsPermanentError(err) || retry.IsTemporaryError(err) {
+					return nil, err
+				}
+
+				return nil, retry.Permanent(err)
+			}
+
+			httpRes, err := s.sdkConfiguration.Client.Do(req)
+			if err != nil || httpRes == nil {
+				if err != nil {
+					err = fmt.Errorf("error sending request: %w", err)
+				} else {
+					err = fmt.Errorf("error sending request: no response")
+				}
+
+				_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			}
+			return httpRes, err
+		})
+
+		if err != nil {
+			return nil, err
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+		if err != nil {
+			return nil, err
+		}
+
+		httpRes, err = s.sdkConfiguration.Client.Do(req)
+		if err != nil || httpRes == nil {
+			if err != nil {
+				err = fmt.Errorf("error sending request: %w", err)
+			} else {
+				err = fmt.Errorf("error sending request: no response")
+			}
+
+			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			return nil, err
+		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
+			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
+			if err != nil {
+				return nil, err
+			} else if _httpRes != nil {
+				httpRes = _httpRes
+			}
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	res := &operations.V3GetAuditEntryResponse{
+		StatusCode:  httpRes.StatusCode,
+		ContentType: httpRes.Header.Get("Content-Type"),
+		RawResponse: httpRes,
+	}
+
+	switch {
+	case httpRes.StatusCode == 200:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out operations.V3GetAuditEntryResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
@@ -6865,7 +6865,7 @@ func (s *V3) GetAuditEntry(ctx context.Context, request operations.GetAuditEntry
 // keyspaces are distinct so a bucket-scoped lookup with the same
 // canonical will NotFound if only the ledger-scoped entry exists.
 // Requires `ledger:ReadOps` scope.
-func (s *V3) GetBucketIndex(ctx context.Context, request operations.GetBucketIndexRequest, security *operations.GetBucketIndexSecurity, opts ...operations.Option) (*operations.GetBucketIndexResponse, error) {
+func (s *V3) GetBucketIndex(ctx context.Context, request operations.V3GetBucketIndexRequest, security *operations.V3GetBucketIndexSecurity, opts ...operations.Option) (*operations.V3GetBucketIndexResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -6895,7 +6895,7 @@ func (s *V3) GetBucketIndex(ctx context.Context, request operations.GetBucketInd
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "getBucketIndex",
+		OperationID:      "v3GetBucketIndex",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -7024,7 +7024,7 @@ func (s *V3) GetBucketIndex(ctx context.Context, request operations.GetBucketInd
 		}
 	}
 
-	res := &operations.GetBucketIndexResponse{
+	res := &operations.V3GetBucketIndexResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -7039,7 +7039,7 @@ func (s *V3) GetBucketIndex(ctx context.Context, request operations.GetBucketInd
 				return nil, err
 			}
 
-			var out operations.GetBucketIndexResponseBody
+			var out operations.V3GetBucketIndexResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
@@ -7170,7 +7170,7 @@ func (s *V3) GetBucketIndex(ctx context.Context, request operations.GetBucketInd
 // Returns the `IndexEntry` (registry entry + backfill cursor +
 // per-replica IndexVersionState) for a bucket-scoped index.
 // Requires `ledger:ReadOps` scope.
-func (s *V3) GetBucketIndexEntryStatus(ctx context.Context, request operations.GetBucketIndexEntryStatusRequest, security *operations.GetBucketIndexEntryStatusSecurity, opts ...operations.Option) (*operations.GetBucketIndexEntryStatusResponse, error) {
+func (s *V3) GetBucketIndexEntryStatus(ctx context.Context, request operations.V3GetBucketIndexEntryStatusRequest, security *operations.V3GetBucketIndexEntryStatusSecurity, opts ...operations.Option) (*operations.V3GetBucketIndexEntryStatusResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -7200,7 +7200,7 @@ func (s *V3) GetBucketIndexEntryStatus(ctx context.Context, request operations.G
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "getBucketIndexEntryStatus",
+		OperationID:      "v3GetBucketIndexEntryStatus",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -7329,7 +7329,7 @@ func (s *V3) GetBucketIndexEntryStatus(ctx context.Context, request operations.G
 		}
 	}
 
-	res := &operations.GetBucketIndexEntryStatusResponse{
+	res := &operations.V3GetBucketIndexEntryStatusResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -7344,7 +7344,7 @@ func (s *V3) GetBucketIndexEntryStatus(ctx context.Context, request operations.G
 				return nil, err
 			}
 
-			var out operations.GetBucketIndexEntryStatusResponseBody
+			var out operations.V3GetBucketIndexEntryStatusResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
@@ -7474,7 +7474,7 @@ func (s *V3) GetBucketIndexEntryStatus(ctx context.Context, request operations.G
 // GetEventsSinks - List configured event sinks
 // Returns every event sink configured on the cluster. Requires
 // `ledger:ReadOps` scope.
-func (s *V3) GetEventsSinks(ctx context.Context, request operations.GetEventsSinksRequest, security *operations.GetEventsSinksSecurity, opts ...operations.Option) (*operations.GetEventsSinksResponse, error) {
+func (s *V3) GetEventsSinks(ctx context.Context, request operations.V3GetEventsSinksRequest, security *operations.V3GetEventsSinksSecurity, opts ...operations.Option) (*operations.V3GetEventsSinksResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -7504,7 +7504,7 @@ func (s *V3) GetEventsSinks(ctx context.Context, request operations.GetEventsSin
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "getEventsSinks",
+		OperationID:      "v3GetEventsSinks",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -7633,7 +7633,7 @@ func (s *V3) GetEventsSinks(ctx context.Context, request operations.GetEventsSin
 		}
 	}
 
-	res := &operations.GetEventsSinksResponse{
+	res := &operations.V3GetEventsSinksResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -7648,7 +7648,7 @@ func (s *V3) GetEventsSinks(ctx context.Context, request operations.GetEventsSin
 				return nil, err
 			}
 
-			var out operations.GetEventsSinksResponseBody
+			var out operations.V3GetEventsSinksResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
@@ -7777,7 +7777,7 @@ func (s *V3) GetEventsSinks(ctx context.Context, request operations.GetEventsSin
 // Returns the `Index` registry entry (id, ledger, createdAt,
 // forwardEncodingVersion) for a single index, serialized in
 // protobuf-JSON camelCase. Requires `ledger:ReadLedger` scope.
-func (s *V3) GetIndex(ctx context.Context, request operations.GetIndexRequest, security *operations.GetIndexSecurity, opts ...operations.Option) (*operations.GetIndexResponse, error) {
+func (s *V3) GetIndex(ctx context.Context, request operations.V3GetIndexRequest, security *operations.V3GetIndexSecurity, opts ...operations.Option) (*operations.V3GetIndexResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -7807,7 +7807,7 @@ func (s *V3) GetIndex(ctx context.Context, request operations.GetIndexRequest, s
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "getIndex",
+		OperationID:      "v3GetIndex",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -7936,7 +7936,7 @@ func (s *V3) GetIndex(ctx context.Context, request operations.GetIndexRequest, s
 		}
 	}
 
-	res := &operations.GetIndexResponse{
+	res := &operations.V3GetIndexResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -7951,7 +7951,7 @@ func (s *V3) GetIndex(ctx context.Context, request operations.GetIndexRequest, s
 				return nil, err
 			}
 
-			var out operations.GetIndexResponseBody
+			var out operations.V3GetIndexResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
@@ -8084,7 +8084,7 @@ func (s *V3) GetIndex(ctx context.Context, request operations.GetIndexRequest, s
 // IndexVersionState (current + pending version). Use this to poll
 // for backfill completion after a `POST /v3/{ledgerName}/indexes`.
 // Requires `ledger:ReadLedger` scope.
-func (s *V3) GetIndexEntryStatus(ctx context.Context, request operations.GetIndexEntryStatusRequest, security *operations.GetIndexEntryStatusSecurity, opts ...operations.Option) (*operations.GetIndexEntryStatusResponse, error) {
+func (s *V3) GetIndexEntryStatus(ctx context.Context, request operations.V3GetIndexEntryStatusRequest, security *operations.V3GetIndexEntryStatusSecurity, opts ...operations.Option) (*operations.V3GetIndexEntryStatusResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -8114,7 +8114,7 @@ func (s *V3) GetIndexEntryStatus(ctx context.Context, request operations.GetInde
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "getIndexEntryStatus",
+		OperationID:      "v3GetIndexEntryStatus",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -8243,7 +8243,7 @@ func (s *V3) GetIndexEntryStatus(ctx context.Context, request operations.GetInde
 		}
 	}
 
-	res := &operations.GetIndexEntryStatusResponse{
+	res := &operations.V3GetIndexEntryStatusResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -8258,7 +8258,7 @@ func (s *V3) GetIndexEntryStatus(ctx context.Context, request operations.GetInde
 				return nil, err
 			}
 
-			var out operations.GetIndexEntryStatusResponseBody
+			var out operations.V3GetIndexEntryStatusResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
@@ -8392,7 +8392,7 @@ func (s *V3) GetIndexEntryStatus(ctx context.Context, request operations.GetInde
 // The optional `ledger` query parameter narrows the per-index entries to
 // a single ledger; the aggregated counters always cover the bucket.
 // Requires `ledger:ReadOps` scope.
-func (s *V3) GetIndexStatus(ctx context.Context, request operations.GetIndexStatusRequest, security *operations.GetIndexStatusSecurity, opts ...operations.Option) (*operations.GetIndexStatusResponse, error) {
+func (s *V3) GetIndexStatus(ctx context.Context, request operations.V3GetIndexStatusRequest, security *operations.V3GetIndexStatusSecurity, opts ...operations.Option) (*operations.V3GetIndexStatusResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -8422,7 +8422,7 @@ func (s *V3) GetIndexStatus(ctx context.Context, request operations.GetIndexStat
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "getIndexStatus",
+		OperationID:      "v3GetIndexStatus",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -8555,7 +8555,7 @@ func (s *V3) GetIndexStatus(ctx context.Context, request operations.GetIndexStat
 		}
 	}
 
-	res := &operations.GetIndexStatusResponse{
+	res := &operations.V3GetIndexStatusResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -8570,7 +8570,7 @@ func (s *V3) GetIndexStatus(ctx context.Context, request operations.GetIndexStat
 				return nil, err
 			}
 
-			var out operations.GetIndexStatusResponseBody
+			var out operations.V3GetIndexStatusResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
@@ -8697,7 +8697,7 @@ func (s *V3) GetIndexStatus(ctx context.Context, request operations.GetIndexStat
 
 // GetLedger - Get a ledger
 // Retrieves a ledger by its name. Requires `ledger:read` scope.
-func (s *V3) GetLedger(ctx context.Context, request operations.GetLedgerRequest, security *operations.GetLedgerSecurity, opts ...operations.Option) (*operations.GetLedgerResponse, error) {
+func (s *V3) GetLedger(ctx context.Context, request operations.V3GetLedgerRequest, security *operations.V3GetLedgerSecurity, opts ...operations.Option) (*operations.V3GetLedgerResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -8727,7 +8727,7 @@ func (s *V3) GetLedger(ctx context.Context, request operations.GetLedgerRequest,
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "getLedger",
+		OperationID:      "v3GetLedger",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -8856,7 +8856,7 @@ func (s *V3) GetLedger(ctx context.Context, request operations.GetLedgerRequest,
 		}
 	}
 
-	res := &operations.GetLedgerResponse{
+	res := &operations.V3GetLedgerResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -9025,7 +9025,7 @@ func (s *V3) GetLedger(ctx context.Context, request operations.GetLedgerRequest,
 
 // GetLedgerStats - Get ledger statistics
 // Returns aggregate usage statistics (transaction, volume, reference, posting, log, revert and Numscript-execution counts, plus ephemeral-evicted and transient-used volume tallies) for a ledger. Requires `ledger:read` scope. On live reads, `transactionCount` and `logCount` are FSM-backed. The seven usage-derived counters (`postingCount`, `revertCount`, `numscriptExecutionCount`, `referenceCount`, `ephemeralEvictedCount`, `transientUsedCount`, `volumeCount`) are materialised asynchronously in the serving replica's usagestore and may lag committed state even after the request's ReadIndex barrier. Note: for checkpoint-scoped (historical) reads, only `transactionCount` and `logCount` are checkpoint-consistent; the usage-derived counters (`postingCount`, `revertCount`, `numscriptExecutionCount`, `referenceCount`, `ephemeralEvictedCount`, `transientUsedCount`, `volumeCount`) are sourced from the live usagestore projection, which is not checkpoint-aware, and are returned as `0` at a checkpoint rather than a live value — treat `0` on a checkpoint read as "not available at this checkpoint".
-func (s *V3) GetLedgerStats(ctx context.Context, request operations.GetLedgerStatsRequest, security *operations.GetLedgerStatsSecurity, opts ...operations.Option) (*operations.GetLedgerStatsResponse, error) {
+func (s *V3) GetLedgerStats(ctx context.Context, request operations.V3GetLedgerStatsRequest, security *operations.V3GetLedgerStatsSecurity, opts ...operations.Option) (*operations.V3GetLedgerStatsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -9055,7 +9055,7 @@ func (s *V3) GetLedgerStats(ctx context.Context, request operations.GetLedgerSta
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "getLedgerStats",
+		OperationID:      "v3GetLedgerStats",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -9184,7 +9184,7 @@ func (s *V3) GetLedgerStats(ctx context.Context, request operations.GetLedgerSta
 		}
 	}
 
-	res := &operations.GetLedgerStatsResponse{
+	res := &operations.V3GetLedgerStatsResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -9354,7 +9354,7 @@ func (s *V3) GetLedgerStats(ctx context.Context, request operations.GetLedgerSta
 // GetLog - Get a single system log by bucket-wide sequence
 // Returns the system log entry with the given bucket-wide sequence number.
 // Requires `ledger:ReadOps` scope.
-func (s *V3) GetLog(ctx context.Context, request operations.GetLogRequest, security *operations.GetLogSecurity, opts ...operations.Option) (*operations.GetLogResponse, error) {
+func (s *V3) GetLog(ctx context.Context, request operations.V3GetLogRequest, security *operations.V3GetLogSecurity, opts ...operations.Option) (*operations.V3GetLogResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -9384,7 +9384,7 @@ func (s *V3) GetLog(ctx context.Context, request operations.GetLogRequest, secur
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "getLog",
+		OperationID:      "v3GetLog",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -9513,7 +9513,7 @@ func (s *V3) GetLog(ctx context.Context, request operations.GetLogRequest, secur
 		}
 	}
 
-	res := &operations.GetLogResponse{
+	res := &operations.V3GetLogResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -9528,7 +9528,7 @@ func (s *V3) GetLog(ctx context.Context, request operations.GetLogRequest, secur
 				return nil, err
 			}
 
-			var out operations.GetLogResponseBody
+			var out operations.V3GetLogResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
@@ -9657,7 +9657,7 @@ func (s *V3) GetLog(ctx context.Context, request operations.GetLogRequest, secur
 
 // GetMetadataSchemaStatus - Get metadata schema
 // Returns the declared type of every metadata field on a ledger. Requires `ledger:read` scope.
-func (s *V3) GetMetadataSchemaStatus(ctx context.Context, request operations.GetMetadataSchemaStatusRequest, security *operations.GetMetadataSchemaStatusSecurity, opts ...operations.Option) (*operations.GetMetadataSchemaStatusResponse, error) {
+func (s *V3) GetMetadataSchemaStatus(ctx context.Context, request operations.V3GetMetadataSchemaStatusRequest, security *operations.V3GetMetadataSchemaStatusSecurity, opts ...operations.Option) (*operations.V3GetMetadataSchemaStatusResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -9687,7 +9687,7 @@ func (s *V3) GetMetadataSchemaStatus(ctx context.Context, request operations.Get
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "getMetadataSchemaStatus",
+		OperationID:      "v3GetMetadataSchemaStatus",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -9816,7 +9816,7 @@ func (s *V3) GetMetadataSchemaStatus(ctx context.Context, request operations.Get
 		}
 	}
 
-	res := &operations.GetMetadataSchemaStatusResponse{
+	res := &operations.V3GetMetadataSchemaStatusResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -9986,7 +9986,7 @@ func (s *V3) GetMetadataSchemaStatus(ctx context.Context, request operations.Get
 // GetNumscript - Get a numscript
 // Retrieves a numscript by name from a ledger. Use the `version` query parameter to get a specific
 // semver version. If omitted or empty, the latest version is returned.
-func (s *V3) GetNumscript(ctx context.Context, request operations.GetNumscriptRequest, security *operations.GetNumscriptSecurity, opts ...operations.Option) (*operations.GetNumscriptResponse, error) {
+func (s *V3) GetNumscript(ctx context.Context, request operations.V3GetNumscriptRequest, security *operations.V3GetNumscriptSecurity, opts ...operations.Option) (*operations.V3GetNumscriptResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -10016,7 +10016,7 @@ func (s *V3) GetNumscript(ctx context.Context, request operations.GetNumscriptRe
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "getNumscript",
+		OperationID:      "v3GetNumscript",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -10149,7 +10149,7 @@ func (s *V3) GetNumscript(ctx context.Context, request operations.GetNumscriptRe
 		}
 	}
 
-	res := &operations.GetNumscriptResponse{
+	res := &operations.V3GetNumscriptResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -10321,7 +10321,7 @@ func (s *V3) GetNumscript(ctx context.Context, request operations.GetNumscriptRe
 // materialised asynchronously by the `usagebuilder` subsystem from the FSM audit chain and may
 // lag the live FSM while the worker drains pending batches. A never-invoked template returns a
 // zero-valued response (not 404), so clients handle "never used" uniformly.
-func (s *V3) GetNumscriptUsage(ctx context.Context, request operations.GetNumscriptUsageRequest, security *operations.GetNumscriptUsageSecurity, opts ...operations.Option) (*operations.GetNumscriptUsageResponse, error) {
+func (s *V3) GetNumscriptUsage(ctx context.Context, request operations.V3GetNumscriptUsageRequest, security *operations.V3GetNumscriptUsageSecurity, opts ...operations.Option) (*operations.V3GetNumscriptUsageResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -10351,7 +10351,7 @@ func (s *V3) GetNumscriptUsage(ctx context.Context, request operations.GetNumscr
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "getNumscriptUsage",
+		OperationID:      "v3GetNumscriptUsage",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -10480,7 +10480,7 @@ func (s *V3) GetNumscriptUsage(ctx context.Context, request operations.GetNumscr
 		}
 	}
 
-	res := &operations.GetNumscriptUsageResponse{
+	res := &operations.V3GetNumscriptUsageResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -10647,9 +10647,9 @@ func (s *V3) GetNumscriptUsage(ctx context.Context, request operations.GetNumscr
 
 }
 
-// GetTransactionLedgerV3 - Get a transaction
+// GetTransaction - Get a transaction
 // Retrieves a transaction by its ID from the specified ledger. Requires `ledger:read` scope.
-func (s *V3) GetTransactionLedgerV3(ctx context.Context, request operations.GetTransactionLedgerV3Request, security *operations.GetTransactionLedgerV3Security, opts ...operations.Option) (*operations.GetTransactionLedgerV3Response, error) {
+func (s *V3) GetTransaction(ctx context.Context, request operations.V3GetTransactionRequest, security *operations.V3GetTransactionSecurity, opts ...operations.Option) (*operations.V3GetTransactionResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -10679,7 +10679,7 @@ func (s *V3) GetTransactionLedgerV3(ctx context.Context, request operations.GetT
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "getTransaction_ledgerV3",
+		OperationID:      "v3GetTransaction",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -10808,7 +10808,7 @@ func (s *V3) GetTransactionLedgerV3(ctx context.Context, request operations.GetT
 		}
 	}
 
-	res := &operations.GetTransactionLedgerV3Response{
+	res := &operations.V3GetTransactionResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -10977,7 +10977,7 @@ func (s *V3) GetTransactionLedgerV3(ctx context.Context, request operations.GetT
 
 // Health check
 // Returns the health status of the node. Returns 503 if the node is not connected to the cluster.
-func (s *V3) Health(ctx context.Context, security *operations.HealthSecurity, opts ...operations.Option) (*operations.HealthResponse, error) {
+func (s *V3) Health(ctx context.Context, security *operations.V3HealthSecurity, opts ...operations.Option) (*operations.V3HealthResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -11006,7 +11006,7 @@ func (s *V3) Health(ctx context.Context, security *operations.HealthSecurity, op
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "health",
+		OperationID:      "v3Health",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -11128,7 +11128,7 @@ func (s *V3) Health(ctx context.Context, security *operations.HealthSecurity, op
 		}
 	}
 
-	res := &operations.HealthResponse{
+	res := &operations.V3HealthResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -11193,7 +11193,7 @@ func (s *V3) Health(ctx context.Context, security *operations.HealthSecurity, op
 
 // Info - Get server build information
 // Returns the server build metadata (version, commit, build date, Go runtime version). Unauthenticated.
-func (s *V3) Info(ctx context.Context, security *operations.InfoSecurity, opts ...operations.Option) (*operations.InfoResponse, error) {
+func (s *V3) Info(ctx context.Context, security *operations.V3InfoSecurity, opts ...operations.Option) (*operations.V3InfoResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -11222,7 +11222,7 @@ func (s *V3) Info(ctx context.Context, security *operations.InfoSecurity, opts .
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "info",
+		OperationID:      "v3Info",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -11344,7 +11344,7 @@ func (s *V3) Info(ctx context.Context, security *operations.InfoSecurity, opts .
 		}
 	}
 
-	res := &operations.InfoResponse{
+	res := &operations.V3InfoResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -11389,7 +11389,7 @@ func (s *V3) Info(ctx context.Context, security *operations.InfoSecurity, opts .
 // or a summary (cardinality, min/max, existence counts). The index must be
 // in READY state. Only metadata indexes are inspectable (builtin indexes
 // return 400). Requires `ledger:read` scope.
-func (s *V3) InspectIndex(ctx context.Context, request operations.InspectIndexRequest, security *operations.InspectIndexSecurity, opts ...operations.Option) (*operations.InspectIndexResponse, error) {
+func (s *V3) InspectIndex(ctx context.Context, request operations.V3InspectIndexRequest, security *operations.V3InspectIndexSecurity, opts ...operations.Option) (*operations.V3InspectIndexResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -11419,7 +11419,7 @@ func (s *V3) InspectIndex(ctx context.Context, request operations.InspectIndexRe
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "inspectIndex",
+		OperationID:      "v3InspectIndex",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -11552,7 +11552,7 @@ func (s *V3) InspectIndex(ctx context.Context, request operations.InspectIndexRe
 		}
 	}
 
-	res := &operations.InspectIndexResponse{
+	res := &operations.V3InspectIndexResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -11567,7 +11567,7 @@ func (s *V3) InspectIndex(ctx context.Context, request operations.InspectIndexRe
 				return nil, err
 			}
 
-			var out operations.InspectIndexResponseBody
+			var out operations.V3InspectIndexResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
@@ -11722,7 +11722,7 @@ func (s *V3) InspectIndex(ctx context.Context, request operations.InspectIndexRe
 // ListAccountTypes - List account types
 // Returns all account types defined on a ledger, sorted by name.
 // Requires `ledger:ReadAccount` scope.
-func (s *V3) ListAccountTypes(ctx context.Context, request operations.ListAccountTypesRequest, security *operations.ListAccountTypesSecurity, opts ...operations.Option) (*operations.ListAccountTypesResponse, error) {
+func (s *V3) ListAccountTypes(ctx context.Context, request operations.V3ListAccountTypesRequest, security *operations.V3ListAccountTypesSecurity, opts ...operations.Option) (*operations.V3ListAccountTypesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -11752,7 +11752,7 @@ func (s *V3) ListAccountTypes(ctx context.Context, request operations.ListAccoun
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "listAccountTypes",
+		OperationID:      "v3ListAccountTypes",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -11881,7 +11881,7 @@ func (s *V3) ListAccountTypes(ctx context.Context, request operations.ListAccoun
 		}
 	}
 
-	res := &operations.ListAccountTypesResponse{
+	res := &operations.V3ListAccountTypesResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -12048,12 +12048,12 @@ func (s *V3) ListAccountTypes(ctx context.Context, request operations.ListAccoun
 
 }
 
-// ListAccountsLedgerV3 - List accounts
+// ListAccounts - List accounts
 // Lists accounts in a ledger in alphabetical order with cursor
 // pagination and an optional generic `filter` (e.g. address-prefix
 // selection via `filter=address ^= "users:"`). Requires `ledger:read`
 // scope.
-func (s *V3) ListAccountsLedgerV3(ctx context.Context, request operations.ListAccountsLedgerV3Request, security *operations.ListAccountsLedgerV3Security, opts ...operations.Option) (*operations.ListAccountsLedgerV3Response, error) {
+func (s *V3) ListAccounts(ctx context.Context, request operations.V3ListAccountsLedgerV3Request, security *operations.V3ListAccountsLedgerV3Security, opts ...operations.Option) (*operations.V3ListAccountsLedgerV3Response, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -12083,7 +12083,7 @@ func (s *V3) ListAccountsLedgerV3(ctx context.Context, request operations.ListAc
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "listAccounts_ledgerV3",
+		OperationID:      "v3ListAccounts_ledgerV3",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -12216,7 +12216,7 @@ func (s *V3) ListAccountsLedgerV3(ctx context.Context, request operations.ListAc
 		}
 	}
 
-	res := &operations.ListAccountsLedgerV3Response{
+	res := &operations.V3ListAccountsLedgerV3Response{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -12233,7 +12233,7 @@ func (s *V3) ListAccountsLedgerV3(ctx context.Context, request operations.ListAc
 				return nil, err
 			}
 
-			var out operations.ListAccountsLedgerV3ResponseBody
+			var out operations.V3ListAccountsLedgerV3ResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
@@ -12388,7 +12388,7 @@ func (s *V3) ListAccountsLedgerV3(ctx context.Context, request operations.ListAc
 // ListAllLedgers - List all ledgers
 // Lists the ledgers in the cluster, paged by name (ascending unless
 // `reverse=true`). Requires `ledger:read` scope.
-func (s *V3) ListAllLedgers(ctx context.Context, request operations.ListAllLedgersRequest, security *operations.ListAllLedgersSecurity, opts ...operations.Option) (*operations.ListAllLedgersResponse, error) {
+func (s *V3) ListAllLedgers(ctx context.Context, request operations.V3ListAllLedgersRequest, security *operations.V3ListAllLedgersSecurity, opts ...operations.Option) (*operations.V3ListAllLedgersResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -12418,7 +12418,7 @@ func (s *V3) ListAllLedgers(ctx context.Context, request operations.ListAllLedge
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "listAllLedgers",
+		OperationID:      "v3ListAllLedgers",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -12551,7 +12551,7 @@ func (s *V3) ListAllLedgers(ctx context.Context, request operations.ListAllLedge
 		}
 	}
 
-	res := &operations.ListAllLedgersResponse{
+	res := &operations.V3ListAllLedgersResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -12732,7 +12732,7 @@ func (s *V3) ListAllLedgers(ctx context.Context, request operations.ListAllLedge
 // waiting for the audit projection.
 //
 // Requires `ledger:ReadAudit` scope.
-func (s *V3) ListAuditEntries(ctx context.Context, request operations.ListAuditEntriesRequest, security *operations.ListAuditEntriesSecurity, opts ...operations.Option) (*operations.ListAuditEntriesResponse, error) {
+func (s *V3) ListAuditEntries(ctx context.Context, request operations.V3ListAuditEntriesRequest, security *operations.V3ListAuditEntriesSecurity, opts ...operations.Option) (*operations.V3ListAuditEntriesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -12762,7 +12762,7 @@ func (s *V3) ListAuditEntries(ctx context.Context, request operations.ListAuditE
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "listAuditEntries",
+		OperationID:      "v3ListAuditEntries",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -12895,7 +12895,7 @@ func (s *V3) ListAuditEntries(ctx context.Context, request operations.ListAuditE
 		}
 	}
 
-	res := &operations.ListAuditEntriesResponse{
+	res := &operations.V3ListAuditEntriesResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -12910,7 +12910,7 @@ func (s *V3) ListAuditEntries(ctx context.Context, request operations.ListAuditE
 				return nil, err
 			}
 
-			var out operations.ListAuditEntriesResponseBody
+			var out operations.V3ListAuditEntriesResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
@@ -13068,7 +13068,7 @@ func (s *V3) ListAuditEntries(ctx context.Context, request operations.ListAuditE
 // bucket-scoped entries (empty ledger, e.g. audit indexes). Use
 // `GET /v3/{ledgerName}/indexes` for the per-ledger view. Requires
 // `ledger:ReadOps` scope.
-func (s *V3) ListBucketIndexes(ctx context.Context, request operations.ListBucketIndexesRequest, security *operations.ListBucketIndexesSecurity, opts ...operations.Option) (*operations.ListBucketIndexesResponse, error) {
+func (s *V3) ListBucketIndexes(ctx context.Context, request operations.V3ListBucketIndexesRequest, security *operations.V3ListBucketIndexesSecurity, opts ...operations.Option) (*operations.V3ListBucketIndexesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -13098,7 +13098,7 @@ func (s *V3) ListBucketIndexes(ctx context.Context, request operations.ListBucke
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "listBucketIndexes",
+		OperationID:      "v3ListBucketIndexes",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -13231,7 +13231,7 @@ func (s *V3) ListBucketIndexes(ctx context.Context, request operations.ListBucke
 		}
 	}
 
-	res := &operations.ListBucketIndexesResponse{
+	res := &operations.V3ListBucketIndexesResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -13246,7 +13246,7 @@ func (s *V3) ListBucketIndexes(ctx context.Context, request operations.ListBucke
 				return nil, err
 			}
 
-			var out operations.ListBucketIndexesResponseBody
+			var out operations.V3ListBucketIndexesResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
@@ -13374,7 +13374,7 @@ func (s *V3) ListBucketIndexes(ctx context.Context, request operations.ListBucke
 // ListLedgerIndexes - List indexes for a ledger
 // Streams the indexes registered on a specific ledger. Requires
 // `ledger:ReadLedger` scope.
-func (s *V3) ListLedgerIndexes(ctx context.Context, request operations.ListLedgerIndexesRequest, security *operations.ListLedgerIndexesSecurity, opts ...operations.Option) (*operations.ListLedgerIndexesResponse, error) {
+func (s *V3) ListLedgerIndexes(ctx context.Context, request operations.V3ListLedgerIndexesRequest, security *operations.V3ListLedgerIndexesSecurity, opts ...operations.Option) (*operations.V3ListLedgerIndexesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -13404,7 +13404,7 @@ func (s *V3) ListLedgerIndexes(ctx context.Context, request operations.ListLedge
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "listLedgerIndexes",
+		OperationID:      "v3ListLedgerIndexes",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -13533,7 +13533,7 @@ func (s *V3) ListLedgerIndexes(ctx context.Context, request operations.ListLedge
 		}
 	}
 
-	res := &operations.ListLedgerIndexesResponse{
+	res := &operations.V3ListLedgerIndexesResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -13548,7 +13548,7 @@ func (s *V3) ListLedgerIndexes(ctx context.Context, request operations.ListLedge
 				return nil, err
 			}
 
-			var out operations.ListLedgerIndexesResponseBody
+			var out operations.V3ListLedgerIndexesResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
@@ -13680,7 +13680,7 @@ func (s *V3) ListLedgerIndexes(ctx context.Context, request operations.ListLedge
 // (ascending unless `reverse=true`).
 // Requires the builtin `LOG` index to be enabled on the ledger via `CreateIndex`.
 // Requires `ledger:read` scope.
-func (s *V3) ListLedgerLogs(ctx context.Context, request operations.ListLedgerLogsRequest, security *operations.ListLedgerLogsSecurity, opts ...operations.Option) (*operations.ListLedgerLogsResponse, error) {
+func (s *V3) ListLedgerLogs(ctx context.Context, request operations.V3ListLedgerLogsRequest, security *operations.V3ListLedgerLogsSecurity, opts ...operations.Option) (*operations.V3ListLedgerLogsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -13710,7 +13710,7 @@ func (s *V3) ListLedgerLogs(ctx context.Context, request operations.ListLedgerLo
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "listLedgerLogs",
+		OperationID:      "v3ListLedgerLogs",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -13843,7 +13843,7 @@ func (s *V3) ListLedgerLogs(ctx context.Context, request operations.ListLedgerLo
 		}
 	}
 
-	res := &operations.ListLedgerLogsResponse{
+	res := &operations.V3ListLedgerLogsResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -13858,7 +13858,7 @@ func (s *V3) ListLedgerLogs(ctx context.Context, request operations.ListLedgerLo
 				return nil, err
 			}
 
-			var out operations.ListLedgerLogsResponseBody
+			var out operations.V3ListLedgerLogsResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
@@ -14025,7 +14025,7 @@ func (s *V3) ListLedgerLogs(ctx context.Context, request operations.ListLedgerLo
 // gRPC API, it does not accept the `checkpointId` option to pin the read
 // to a specific historical snapshot — use gRPC for checkpoint-pinned
 // reads. (Tracked follow-up, same carve-out as the audit reads.)
-func (s *V3) ListLedgerTransactions(ctx context.Context, request operations.ListLedgerTransactionsRequest, security *operations.ListLedgerTransactionsSecurity, opts ...operations.Option) (*operations.ListLedgerTransactionsResponse, error) {
+func (s *V3) ListLedgerTransactions(ctx context.Context, request operations.V3ListLedgerTransactionsRequest, security *operations.V3ListLedgerTransactionsSecurity, opts ...operations.Option) (*operations.V3ListLedgerTransactionsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -14055,7 +14055,7 @@ func (s *V3) ListLedgerTransactions(ctx context.Context, request operations.List
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "listLedgerTransactions",
+		OperationID:      "v3ListLedgerTransactions",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -14188,7 +14188,7 @@ func (s *V3) ListLedgerTransactions(ctx context.Context, request operations.List
 		}
 	}
 
-	res := &operations.ListLedgerTransactionsResponse{
+	res := &operations.V3ListLedgerTransactionsResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -14205,7 +14205,7 @@ func (s *V3) ListLedgerTransactions(ctx context.Context, request operations.List
 				return nil, err
 			}
 
-			var out operations.ListLedgerTransactionsResponseBody
+			var out operations.V3ListLedgerTransactionsResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
@@ -14360,7 +14360,7 @@ func (s *V3) ListLedgerTransactions(ctx context.Context, request operations.List
 // ListNumscriptVersions - List numscript versions
 // Returns the numscript's history: its current latest (greatest stored
 // semver) and every stored version, highest-first.
-func (s *V3) ListNumscriptVersions(ctx context.Context, request operations.ListNumscriptVersionsRequest, security *operations.ListNumscriptVersionsSecurity, opts ...operations.Option) (*operations.ListNumscriptVersionsResponse, error) {
+func (s *V3) ListNumscriptVersions(ctx context.Context, request operations.V3ListNumscriptVersionsRequest, security *operations.V3ListNumscriptVersionsSecurity, opts ...operations.Option) (*operations.V3ListNumscriptVersionsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -14390,7 +14390,7 @@ func (s *V3) ListNumscriptVersions(ctx context.Context, request operations.ListN
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "listNumscriptVersions",
+		OperationID:      "v3ListNumscriptVersions",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -14519,7 +14519,7 @@ func (s *V3) ListNumscriptVersions(ctx context.Context, request operations.ListN
 		}
 	}
 
-	res := &operations.ListNumscriptVersionsResponse{
+	res := &operations.V3ListNumscriptVersionsResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -14689,7 +14689,7 @@ func (s *V3) ListNumscriptVersions(ctx context.Context, request operations.ListN
 // ListNumscripts - List all numscripts
 // Lists every numscript of a ledger at its greatest stored version, paged
 // by name (ascending unless `reverse=true`).
-func (s *V3) ListNumscripts(ctx context.Context, request operations.ListNumscriptsRequest, security *operations.ListNumscriptsSecurity, opts ...operations.Option) (*operations.ListNumscriptsResponse, error) {
+func (s *V3) ListNumscripts(ctx context.Context, request operations.V3ListNumscriptsRequest, security *operations.V3ListNumscriptsSecurity, opts ...operations.Option) (*operations.V3ListNumscriptsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -14719,7 +14719,7 @@ func (s *V3) ListNumscripts(ctx context.Context, request operations.ListNumscrip
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "listNumscripts",
+		OperationID:      "v3ListNumscripts",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -14852,7 +14852,7 @@ func (s *V3) ListNumscripts(ctx context.Context, request operations.ListNumscrip
 		}
 	}
 
-	res := &operations.ListNumscriptsResponse{
+	res := &operations.V3ListNumscriptsResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -15021,7 +15021,7 @@ func (s *V3) ListNumscripts(ctx context.Context, request operations.ListNumscrip
 
 // ListPreparedQueries - List prepared queries
 // Returns a list of all prepared queries for a ledger. Requires `ledger:ReadQuery` scope.
-func (s *V3) ListPreparedQueries(ctx context.Context, request operations.ListPreparedQueriesRequest, security *operations.ListPreparedQueriesSecurity, opts ...operations.Option) (*operations.ListPreparedQueriesResponse, error) {
+func (s *V3) ListPreparedQueries(ctx context.Context, request operations.V3ListPreparedQueriesRequest, security *operations.V3ListPreparedQueriesSecurity, opts ...operations.Option) (*operations.V3ListPreparedQueriesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -15051,7 +15051,7 @@ func (s *V3) ListPreparedQueries(ctx context.Context, request operations.ListPre
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "listPreparedQueries",
+		OperationID:      "v3ListPreparedQueries",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -15180,7 +15180,7 @@ func (s *V3) ListPreparedQueries(ctx context.Context, request operations.ListPre
 		}
 	}
 
-	res := &operations.ListPreparedQueriesResponse{
+	res := &operations.V3ListPreparedQueriesResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -15354,7 +15354,7 @@ func (s *V3) ListPreparedQueries(ctx context.Context, request operations.ListPre
 // This route performs a live read, linearizable by default.
 // `X-Consistency: stale` reads the receiving node's local state, which
 // may lag the leader. Signing-key reads are live-only on both transports.
-func (s *V3) ListSigningKeys(ctx context.Context, request operations.ListSigningKeysRequest, security *operations.ListSigningKeysSecurity, opts ...operations.Option) (*operations.ListSigningKeysResponse, error) {
+func (s *V3) ListSigningKeys(ctx context.Context, request operations.V3ListSigningKeysRequest, security *operations.V3ListSigningKeysSecurity, opts ...operations.Option) (*operations.V3ListSigningKeysResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -15384,7 +15384,7 @@ func (s *V3) ListSigningKeys(ctx context.Context, request operations.ListSigning
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "listSigningKeys",
+		OperationID:      "v3ListSigningKeys",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -15517,7 +15517,7 @@ func (s *V3) ListSigningKeys(ctx context.Context, request operations.ListSigning
 		}
 	}
 
-	res := &operations.ListSigningKeysResponse{
+	res := &operations.V3ListSigningKeysResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -15532,7 +15532,7 @@ func (s *V3) ListSigningKeys(ctx context.Context, request operations.ListSigning
 				return nil, err
 			}
 
-			var out operations.ListSigningKeysResponseBody
+			var out operations.V3ListSigningKeysResponseBody
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
@@ -15659,7 +15659,7 @@ func (s *V3) ListSigningKeys(ctx context.Context, request operations.ListSigning
 
 // Livez - Liveness probe
 // Returns 200 as long as the process is alive. Suitable for Kubernetes liveness probes.
-func (s *V3) Livez(ctx context.Context, security *operations.LivezSecurity, opts ...operations.Option) (*operations.LivezResponse, error) {
+func (s *V3) Livez(ctx context.Context, security *operations.V3LivezSecurity, opts ...operations.Option) (*operations.V3LivezResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -15688,7 +15688,7 @@ func (s *V3) Livez(ctx context.Context, security *operations.LivezSecurity, opts
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "livez",
+		OperationID:      "v3Livez",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -15810,7 +15810,7 @@ func (s *V3) Livez(ctx context.Context, security *operations.LivezSecurity, opts
 		}
 	}
 
-	res := &operations.LivezResponse{
+	res := &operations.V3LivezResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -15853,7 +15853,7 @@ func (s *V3) Livez(ctx context.Context, security *operations.LivezSecurity, opts
 // PromoteLedger - Promote a mirror ledger
 // Promotes a mirror-mode ledger to normal mode. After promotion, the mirror sync
 // worker is stopped and the ledger accepts direct write operations. Requires `ledger:write` scope.
-func (s *V3) PromoteLedger(ctx context.Context, request operations.PromoteLedgerRequest, security *operations.PromoteLedgerSecurity, opts ...operations.Option) (*operations.PromoteLedgerResponse, error) {
+func (s *V3) PromoteLedger(ctx context.Context, request operations.V3PromoteLedgerRequest, security *operations.V3PromoteLedgerSecurity, opts ...operations.Option) (*operations.V3PromoteLedgerResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -15883,7 +15883,7 @@ func (s *V3) PromoteLedger(ctx context.Context, request operations.PromoteLedger
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "promoteLedger",
+		OperationID:      "v3PromoteLedger",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -16010,7 +16010,7 @@ func (s *V3) PromoteLedger(ctx context.Context, request operations.PromoteLedger
 		}
 	}
 
-	res := &operations.PromoteLedgerResponse{
+	res := &operations.V3PromoteLedgerResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -16188,7 +16188,7 @@ func (s *V3) PromoteLedger(ctx context.Context, request operations.PromoteLedger
 // peer pods can be brought up during a cold start where quorum cannot
 // form until they exist. Use `/clusterz` for the stricter
 // cluster-availability signal.
-func (s *V3) Readyz(ctx context.Context, security *operations.ReadyzSecurity, opts ...operations.Option) (*operations.ReadyzResponse, error) {
+func (s *V3) Readyz(ctx context.Context, security *operations.V3ReadyzSecurity, opts ...operations.Option) (*operations.V3ReadyzResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -16217,7 +16217,7 @@ func (s *V3) Readyz(ctx context.Context, security *operations.ReadyzSecurity, op
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "readyz",
+		OperationID:      "v3Readyz",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -16339,7 +16339,7 @@ func (s *V3) Readyz(ctx context.Context, security *operations.ReadyzSecurity, op
 		}
 	}
 
-	res := &operations.ReadyzResponse{
+	res := &operations.V3ReadyzResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -16404,7 +16404,7 @@ func (s *V3) Readyz(ctx context.Context, security *operations.ReadyzSecurity, op
 
 // RemoveAccountType - Remove an account type
 // Removes an account type from a ledger's chart of accounts. Requires `ledger:WriteMetadata` scope.
-func (s *V3) RemoveAccountType(ctx context.Context, request operations.RemoveAccountTypeRequest, security *operations.RemoveAccountTypeSecurity, opts ...operations.Option) (*operations.RemoveAccountTypeResponse, error) {
+func (s *V3) RemoveAccountType(ctx context.Context, request operations.V3RemoveAccountTypeRequest, security *operations.V3RemoveAccountTypeSecurity, opts ...operations.Option) (*operations.V3RemoveAccountTypeResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -16434,7 +16434,7 @@ func (s *V3) RemoveAccountType(ctx context.Context, request operations.RemoveAcc
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "removeAccountType",
+		OperationID:      "v3RemoveAccountType",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -16561,7 +16561,7 @@ func (s *V3) RemoveAccountType(ctx context.Context, request operations.RemoveAcc
 		}
 	}
 
-	res := &operations.RemoveAccountTypeResponse{
+	res := &operations.V3RemoveAccountTypeResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -16721,7 +16721,7 @@ func (s *V3) RemoveAccountType(ctx context.Context, request operations.RemoveAcc
 // A missing sink returns `SINK_NOT_FOUND` (404). Malformed query encoding
 // or repeated controllerId parameters return `INVALID_REQUEST` (400)
 // before Apply, instead of becoming unconditional removal.
-func (s *V3) RemoveEventsSink(ctx context.Context, request operations.RemoveEventsSinkRequest, security *operations.RemoveEventsSinkSecurity, opts ...operations.Option) (*operations.RemoveEventsSinkResponse, error) {
+func (s *V3) RemoveEventsSink(ctx context.Context, request operations.V3RemoveEventsSinkRequest, security *operations.V3RemoveEventsSinkSecurity, opts ...operations.Option) (*operations.V3RemoveEventsSinkResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -16751,7 +16751,7 @@ func (s *V3) RemoveEventsSink(ctx context.Context, request operations.RemoveEven
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "removeEventsSink",
+		OperationID:      "v3RemoveEventsSink",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -16884,7 +16884,7 @@ func (s *V3) RemoveEventsSink(ctx context.Context, request operations.RemoveEven
 		}
 	}
 
-	res := &operations.RemoveEventsSinkResponse{
+	res := &operations.V3RemoveEventsSinkResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -17037,7 +17037,7 @@ func (s *V3) RemoveEventsSink(ctx context.Context, request operations.RemoveEven
 // RemoveMetadataFieldType - Remove metadata field type
 // Removes the type declaration for a metadata key on a ledger.
 // Existing metadata values remain unchanged and any attached index is dropped. Requires `ledger:WriteMetadata` scope (included in the default `ledger:write` mapping).
-func (s *V3) RemoveMetadataFieldType(ctx context.Context, request operations.RemoveMetadataFieldTypeRequest, security *operations.RemoveMetadataFieldTypeSecurity, opts ...operations.Option) (*operations.RemoveMetadataFieldTypeResponse, error) {
+func (s *V3) RemoveMetadataFieldType(ctx context.Context, request operations.V3RemoveMetadataFieldTypeRequest, security *operations.V3RemoveMetadataFieldTypeSecurity, opts ...operations.Option) (*operations.V3RemoveMetadataFieldTypeResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -17067,7 +17067,7 @@ func (s *V3) RemoveMetadataFieldType(ctx context.Context, request operations.Rem
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "removeMetadataFieldType",
+		OperationID:      "v3RemoveMetadataFieldType",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -17194,7 +17194,7 @@ func (s *V3) RemoveMetadataFieldType(ctx context.Context, request operations.Rem
 		}
 	}
 
-	res := &operations.RemoveMetadataFieldTypeResponse{
+	res := &operations.V3RemoveMetadataFieldTypeResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -17346,7 +17346,7 @@ func (s *V3) RemoveMetadataFieldType(ctx context.Context, request operations.Rem
 
 }
 
-// RevertTransactionLedgerV3 - Revert a transaction
+// RevertTransaction - Revert a transaction
 // Reverts a transaction by creating a reverse transaction that undoes its effects. Requires `ledger:write` scope.
 // The body is optional; an absent or empty body uses default options. Supplied
 // options and metadata are decoded for both known-length and HTTP/1.1 chunked
@@ -17355,7 +17355,7 @@ func (s *V3) RemoveMetadataFieldType(ctx context.Context, request operations.Rem
 // or a non-object `metadata`) return 400 before applying the revert. A JSON
 // `null` option uses its default. The complete body, including trailing
 // whitespace, counts towards the 4 MiB limit; exceeding it returns 413.
-func (s *V3) RevertTransactionLedgerV3(ctx context.Context, request operations.RevertTransactionLedgerV3Request, security *operations.RevertTransactionLedgerV3Security, opts ...operations.Option) (*operations.RevertTransactionLedgerV3Response, error) {
+func (s *V3) RevertTransaction(ctx context.Context, request operations.V3RevertTransactionRequest, security *operations.V3RevertTransactionSecurity, opts ...operations.Option) (*operations.V3RevertTransactionResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -17385,7 +17385,7 @@ func (s *V3) RevertTransactionLedgerV3(ctx context.Context, request operations.R
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "revertTransaction_ledgerV3",
+		OperationID:      "v3RevertTransaction",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -17521,7 +17521,7 @@ func (s *V3) RevertTransactionLedgerV3(ctx context.Context, request operations.R
 		}
 	}
 
-	res := &operations.RevertTransactionLedgerV3Response{
+	res := &operations.V3RevertTransactionResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -17696,7 +17696,7 @@ func (s *V3) RevertTransactionLedgerV3(ctx context.Context, request operations.R
 
 // SaveAccountMetadata - Save account metadata
 // Saves metadata for a specific account in the ledger. Requires `ledger:WriteMetadata` scope (included in the default `ledger:write` mapping).
-func (s *V3) SaveAccountMetadata(ctx context.Context, request operations.SaveAccountMetadataRequest, security *operations.SaveAccountMetadataSecurity, opts ...operations.Option) (*operations.SaveAccountMetadataResponse, error) {
+func (s *V3) SaveAccountMetadata(ctx context.Context, request operations.V3SaveAccountMetadataRequest, security *operations.V3SaveAccountMetadataSecurity, opts ...operations.Option) (*operations.V3SaveAccountMetadataResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -17726,7 +17726,7 @@ func (s *V3) SaveAccountMetadata(ctx context.Context, request operations.SaveAcc
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "saveAccountMetadata",
+		OperationID:      "v3SaveAccountMetadata",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -17862,7 +17862,7 @@ func (s *V3) SaveAccountMetadata(ctx context.Context, request operations.SaveAcc
 		}
 	}
 
-	res := &operations.SaveAccountMetadataResponse{
+	res := &operations.V3SaveAccountMetadataResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -18016,7 +18016,7 @@ func (s *V3) SaveAccountMetadata(ctx context.Context, request operations.SaveAcc
 
 // SaveLedgerMetadata - Save ledger metadata
 // Saves metadata key-value pairs on the ledger itself. Requires `ledger:WriteMetadata`; `ledger:write` grants it under the default scope mapping. Custom scope mappings can differ.
-func (s *V3) SaveLedgerMetadata(ctx context.Context, request operations.SaveLedgerMetadataRequest, security *operations.SaveLedgerMetadataSecurity, opts ...operations.Option) (*operations.SaveLedgerMetadataResponse, error) {
+func (s *V3) SaveLedgerMetadata(ctx context.Context, request operations.V3SaveLedgerMetadataRequest, security *operations.V3SaveLedgerMetadataSecurity, opts ...operations.Option) (*operations.V3SaveLedgerMetadataResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -18046,7 +18046,7 @@ func (s *V3) SaveLedgerMetadata(ctx context.Context, request operations.SaveLedg
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "saveLedgerMetadata",
+		OperationID:      "v3SaveLedgerMetadata",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -18182,7 +18182,7 @@ func (s *V3) SaveLedgerMetadata(ctx context.Context, request operations.SaveLedg
 		}
 	}
 
-	res := &operations.SaveLedgerMetadataResponse{
+	res := &operations.V3SaveLedgerMetadataResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -18339,7 +18339,7 @@ func (s *V3) SaveLedgerMetadata(ctx context.Context, request operations.SaveLedg
 // field must be an explicit full semver (e.g. "1.0.0"); it creates a new
 // version and fails if that version already exists. The per-name latest is
 // always the greatest stored semver.
-func (s *V3) SaveNumscript(ctx context.Context, request operations.SaveNumscriptRequest, security *operations.SaveNumscriptSecurity, opts ...operations.Option) (*operations.SaveNumscriptResponse, error) {
+func (s *V3) SaveNumscript(ctx context.Context, request operations.V3SaveNumscriptRequest, security *operations.V3SaveNumscriptSecurity, opts ...operations.Option) (*operations.V3SaveNumscriptResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -18369,7 +18369,7 @@ func (s *V3) SaveNumscript(ctx context.Context, request operations.SaveNumscript
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "saveNumscript",
+		OperationID:      "v3SaveNumscript",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -18503,7 +18503,7 @@ func (s *V3) SaveNumscript(ctx context.Context, request operations.SaveNumscript
 		}
 	}
 
-	res := &operations.SaveNumscriptResponse{
+	res := &operations.V3SaveNumscriptResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -18674,7 +18674,7 @@ func (s *V3) SaveNumscript(ctx context.Context, request operations.SaveNumscript
 
 // SaveTransactionMetadata - Save transaction metadata
 // Saves metadata for a specific transaction in the ledger. Requires `ledger:WriteMetadata` scope (included in the default `ledger:write` mapping).
-func (s *V3) SaveTransactionMetadata(ctx context.Context, request operations.SaveTransactionMetadataRequest, security *operations.SaveTransactionMetadataSecurity, opts ...operations.Option) (*operations.SaveTransactionMetadataResponse, error) {
+func (s *V3) SaveTransactionMetadata(ctx context.Context, request operations.V3SaveTransactionMetadataRequest, security *operations.V3SaveTransactionMetadataSecurity, opts ...operations.Option) (*operations.V3SaveTransactionMetadataResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -18704,7 +18704,7 @@ func (s *V3) SaveTransactionMetadata(ctx context.Context, request operations.Sav
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "saveTransactionMetadata",
+		OperationID:      "v3SaveTransactionMetadata",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -18840,7 +18840,7 @@ func (s *V3) SaveTransactionMetadata(ctx context.Context, request operations.Sav
 		}
 	}
 
-	res := &operations.SaveTransactionMetadataResponse{
+	res := &operations.V3SaveTransactionMetadataResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -18998,7 +18998,7 @@ func (s *V3) SaveTransactionMetadata(ctx context.Context, request operations.Sav
 // unmatched account with `400 ACCOUNT_NOT_MATCHING_TYPE`. AUDIT accepts the
 // order and does not report the unmatched account: the response carries no
 // warning. Requires `ledger:WriteMetadata` scope.
-func (s *V3) SetDefaultEnforcementMode(ctx context.Context, request operations.SetDefaultEnforcementModeRequest, security *operations.SetDefaultEnforcementModeSecurity, opts ...operations.Option) (*operations.SetDefaultEnforcementModeResponse, error) {
+func (s *V3) SetDefaultEnforcementMode(ctx context.Context, request operations.V3SetDefaultEnforcementModeRequest, security *operations.V3SetDefaultEnforcementModeSecurity, opts ...operations.Option) (*operations.V3SetDefaultEnforcementModeResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -19028,7 +19028,7 @@ func (s *V3) SetDefaultEnforcementMode(ctx context.Context, request operations.S
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "setDefaultEnforcementMode",
+		OperationID:      "v3SetDefaultEnforcementMode",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -19162,7 +19162,7 @@ func (s *V3) SetDefaultEnforcementMode(ctx context.Context, request operations.S
 		}
 	}
 
-	res := &operations.SetDefaultEnforcementModeResponse{
+	res := &operations.V3SetDefaultEnforcementModeResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -19318,7 +19318,7 @@ func (s *V3) SetDefaultEnforcementMode(ctx context.Context, request operations.S
 // Declares or changes the type used to encode a metadata key in an attached query index.
 // Metadata values are neither validated nor converted by this declaration, and existing primary values remain unchanged.
 // Any attached index is rewritten asynchronously. Requires `ledger:WriteMetadata` scope (included in the default `ledger:write` mapping).
-func (s *V3) SetMetadataFieldType(ctx context.Context, request operations.SetMetadataFieldTypeRequest, security *operations.SetMetadataFieldTypeSecurity, opts ...operations.Option) (*operations.SetMetadataFieldTypeResponse, error) {
+func (s *V3) SetMetadataFieldType(ctx context.Context, request operations.V3SetMetadataFieldTypeRequest, security *operations.V3SetMetadataFieldTypeSecurity, opts ...operations.Option) (*operations.V3SetMetadataFieldTypeResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -19348,7 +19348,7 @@ func (s *V3) SetMetadataFieldType(ctx context.Context, request operations.SetMet
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "setMetadataFieldType",
+		OperationID:      "v3SetMetadataFieldType",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -19482,7 +19482,7 @@ func (s *V3) SetMetadataFieldType(ctx context.Context, request operations.SetMet
 		}
 	}
 
-	res := &operations.SetMetadataFieldTypeResponse{
+	res := &operations.V3SetMetadataFieldTypeResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -19636,7 +19636,7 @@ func (s *V3) SetMetadataFieldType(ctx context.Context, request operations.SetMet
 
 // UpdatePreparedQuery - Update a prepared query
 // Updates the filter of an existing prepared query. Requires `ledger:WriteQuery` scope.
-func (s *V3) UpdatePreparedQuery(ctx context.Context, request operations.UpdatePreparedQueryRequest, security *operations.UpdatePreparedQuerySecurity, opts ...operations.Option) (*operations.UpdatePreparedQueryResponse, error) {
+func (s *V3) UpdatePreparedQuery(ctx context.Context, request operations.V3UpdatePreparedQueryRequest, security *operations.V3UpdatePreparedQuerySecurity, opts ...operations.Option) (*operations.V3UpdatePreparedQueryResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -19666,7 +19666,7 @@ func (s *V3) UpdatePreparedQuery(ctx context.Context, request operations.UpdateP
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "updatePreparedQuery",
+		OperationID:      "v3UpdatePreparedQuery",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
@@ -19800,7 +19800,7 @@ func (s *V3) UpdatePreparedQuery(ctx context.Context, request operations.UpdateP
 		}
 	}
 
-	res := &operations.UpdatePreparedQueryResponse{
+	res := &operations.V3UpdatePreparedQueryResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,

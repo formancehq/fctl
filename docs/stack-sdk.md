@@ -9,11 +9,11 @@ Membership and Deploy Server retain their existing separate local SDKs.
 
 The Go generator configuration comes from [formance-sdk-go v4.0.0](https://github.com/formancehq/formance-sdk-go/tree/v4.0.0), the version previously used by FCTL. Generation uses Speakeasy **1.757.1** and Go generator **2.866.2**, matching that release's lock. The only `gen.yaml` changes set the package/module path to `github.com/formancehq/fctl/v3/pkg/client` and version to `0.0.0` for this local module.
 
-The workflow selects `stacks-source@v4.0.0-beta.1` and generates every service. An OpenAPI overlay removes only `x-speakeasy-name-override` from `ledger_V2BaseBulkElement`: with the v4 naming configuration, that annotation is inherited by four bulk variants and produces duplicate Go fields. The overlay preserves their schemas and wire format. Registry and code-sample publication are omitted.
+The workflow selects `stacks-source@v4.0.0-beta.2` and generates every service. An OpenAPI overlay removes only `x-speakeasy-name-override` from `ledger_V2BaseBulkElement`: with the v4 naming configuration, that annotation is inherited by four bulk variants and produces duplicate Go fields. The overlay preserves their schemas and wire format. Registry and code-sample publication are omitted.
 
-The [Stack release](https://github.com/formancehq/stack/releases/tag/v4.0.0-beta.1)
+The [Stack release](https://github.com/formancehq/stack/releases/tag/v4.0.0-beta.2)
 contains the corresponding public `generate.json` OpenAPI asset; its SHA-256 is
-`5a4570a8cbb926d532b1f5ec332c17e67833a5340248171b5345408f8dc4e039`.
+`078de9a671be533364d1042ec39632011c8abc6367fb559cbeebcfe234035740`.
 The workflow and generation locks record the generator, options and document
 checksum. Review source/tag and generated changes together when upgrading.
 

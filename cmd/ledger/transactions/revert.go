@@ -84,13 +84,13 @@ func (c *RevertController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 
 		c.store.Transaction = internal.WrapV2Transaction(response.V2CreateTransactionResponse.V2Transaction)
 	} else {
-		request := operations.RevertTransactionLedgerRequest{
+		request := operations.RevertTransactionRequest{
 			Ledger:        ledger,
 			Txid:          txId,
 			DisableChecks: &force,
 		}
 
-		response, err := stackClient.Ledger.V1.RevertTransactionLedger(cmd.Context(), request)
+		response, err := stackClient.Ledger.V1.RevertTransaction(cmd.Context(), request)
 		if err != nil {
 			return nil, err
 		}

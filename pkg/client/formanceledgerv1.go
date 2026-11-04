@@ -1026,8 +1026,8 @@ func (s *FormanceLedgerV1) CountTransactions(ctx context.Context, request operat
 
 }
 
-// CreateTransactionLedger - Create a new transaction to a ledger
-func (s *FormanceLedgerV1) CreateTransactionLedger(ctx context.Context, request operations.CreateTransactionLedgerRequest, opts ...operations.Option) (*operations.CreateTransactionLedgerResponse, error) {
+// CreateTransaction - Create a new transaction to a ledger
+func (s *FormanceLedgerV1) CreateTransaction(ctx context.Context, request operations.CreateTransactionRequest, opts ...operations.Option) (*operations.CreateTransactionResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -1056,7 +1056,7 @@ func (s *FormanceLedgerV1) CreateTransactionLedger(ctx context.Context, request 
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "createTransaction_ledger",
+		OperationID:      "createTransaction",
 		OAuth2Scopes:     []string{"ledger:write"},
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
@@ -1189,7 +1189,7 @@ func (s *FormanceLedgerV1) CreateTransactionLedger(ctx context.Context, request 
 		}
 	}
 
-	res := &operations.CreateTransactionLedgerResponse{
+	res := &operations.CreateTransactionResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -2289,8 +2289,8 @@ func (s *FormanceLedgerV1) GetMapping(ctx context.Context, request operations.Ge
 
 }
 
-// GetTransactionLedger - Get transaction from a ledger by its ID
-func (s *FormanceLedgerV1) GetTransactionLedger(ctx context.Context, request operations.GetTransactionLedgerRequest, opts ...operations.Option) (*operations.GetTransactionLedgerResponse, error) {
+// GetTransaction - Get transaction from a ledger by its ID
+func (s *FormanceLedgerV1) GetTransaction(ctx context.Context, request operations.GetTransactionRequest, opts ...operations.Option) (*operations.GetTransactionResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -2319,7 +2319,7 @@ func (s *FormanceLedgerV1) GetTransactionLedger(ctx context.Context, request ope
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "getTransaction_ledger",
+		OperationID:      "getTransaction",
 		OAuth2Scopes:     []string{"ledger:read"},
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
@@ -2441,7 +2441,7 @@ func (s *FormanceLedgerV1) GetTransactionLedger(ctx context.Context, request ope
 		}
 	}
 
-	res := &operations.GetTransactionLedgerResponse{
+	res := &operations.GetTransactionResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,
@@ -3361,8 +3361,8 @@ func (s *FormanceLedgerV1) ReadStats(ctx context.Context, request operations.Rea
 
 }
 
-// RevertTransactionLedger - Revert a ledger transaction by its ID
-func (s *FormanceLedgerV1) RevertTransactionLedger(ctx context.Context, request operations.RevertTransactionLedgerRequest, opts ...operations.Option) (*operations.RevertTransactionLedgerResponse, error) {
+// RevertTransaction - Revert a ledger transaction by its ID
+func (s *FormanceLedgerV1) RevertTransaction(ctx context.Context, request operations.RevertTransactionRequest, opts ...operations.Option) (*operations.RevertTransactionResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -3391,7 +3391,7 @@ func (s *FormanceLedgerV1) RevertTransactionLedger(ctx context.Context, request 
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "revertTransaction_ledger",
+		OperationID:      "revertTransaction",
 		OAuth2Scopes:     []string{"ledger:write"},
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
@@ -3517,7 +3517,7 @@ func (s *FormanceLedgerV1) RevertTransactionLedger(ctx context.Context, request 
 		}
 	}
 
-	res := &operations.RevertTransactionLedgerResponse{
+	res := &operations.RevertTransactionResponse{
 		StatusCode:  httpRes.StatusCode,
 		ContentType: httpRes.Header.Get("Content-Type"),
 		RawResponse: httpRes,

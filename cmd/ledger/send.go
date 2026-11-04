@@ -95,7 +95,7 @@ func (c *SendController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 
 	reference := fctl.GetString(cmd, c.referenceFlag)
 
-	response, err := stackClient.Ledger.V1.CreateTransactionLedger(cmd.Context(), operations.CreateTransactionLedgerRequest{
+	response, err := stackClient.Ledger.V1.CreateTransaction(cmd.Context(), operations.CreateTransactionRequest{
 		PostTransaction: ledgermodels.PostTransaction{
 			Metadata: collectionutils.ConvertMap(metadata, collectionutils.ToAny[string]),
 			Postings: []ledgermodels.Posting{
