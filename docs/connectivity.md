@@ -139,9 +139,7 @@ Configuration values are literals. Kubernetes Secret/ConfigMap references,
 structured `{value: ...}` entries, file lists and file modes are unsupported.
 Supply contents through a local configuration file, dotenv file or
 `--set KEY=@path`.
-Plain connection output lists configuration keys without values. Debug output
-masks literal environment and file contents. Avoid putting confidential literals
-directly in shell history.
+Plain connection output lists configuration keys without values.
 
 Malformed YAML/JSON diagnostics identify the input file, report line numbers
 when available, and describe the expected structure without echoing input
