@@ -5,13 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	xmodsemver "golang.org/x/mod/semver"
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 const (
@@ -23,16 +24,23 @@ const (
 // the configuration being assembled: the requested pin (or channel alias) when
 // there is one, the server-resolved stable head otherwise. This mirrors an
 // unselected install, whose API write persists the stable selector.
-func resolveConnectorVersion(ctx context.Context, client connectivityclient.Client, connector, pinned string) (*connectivity.ConnectorVersion, error) {
+func resolveConnectorVersion(ctx context.Context, client connectivityinternal.API, connector, pinned string) (*connectivity.ConnectorVersion, error) {
 	if connector == "" {
 		return nil, fmt.Errorf("connector name is required")
 	}
 	if pinned == "" {
 		pinned = "stable"
 	}
-	version, err := client.GetConnectorVersion(ctx, connector, pinned)
-	var apiErr *connectivityclient.APIError
-	if (pinned == "stable" || pinned == connectivityclient.VersionAliasLatest) && errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusNotFound {
+	response, err := client.GetConnectorVersion(ctx, operations.GetConnectorVersionRequest{Name: url.PathEscape(connector), Version: url.PathEscape(pinned)}, nil)
+	if err == nil && response != nil {
+		err = connectivityinternal.ResponseError(response.StatusCode, response.Error)
+	}
+	var version *connectivity.ConnectorVersion
+	if response != nil {
+		version = response.ConnectorVersion
+	}
+	var apiErr *connectivityinternal.APIError
+	if (pinned == "stable" || pinned == connectivityinternal.VersionAliasLatest) && errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusNotFound {
 		return nil, fmt.Errorf("connectivity connector %q has no published version: %w", connector, err)
 	}
 	if err != nil {
@@ -45,27 +53,34 @@ func resolveConnectorVersion(ctx context.Context, client connectivityclient.Clie
 }
 
 // The connector is immutable; the last applied version is the channel floor.
-func appliedChannelFloor(instance *connectivityclient.Connection) string {
-	if instance == nil || instance.Status == nil {
+func appliedChannelFloor(instance *connectivity.Connection) string {
+	if instance == nil || instance.ConnectionStatus == nil {
 		return ""
 	}
-	return stringValue(instance.Status.AppliedVersion)
+	return stringValue(instance.ConnectionStatus.AppliedVersion)
 }
 
 // resolveChannelVersion mirrors the operator resolver for the schema selected
 // during a channel-tracked configure. It reads every version page because the
 // selected channel head is not necessarily present on the first page.
-func resolveChannelVersion(ctx context.Context, client connectivityclient.Client, connector, channel, running string) (*connectivity.ConnectorVersion, error) {
+func resolveChannelVersion(ctx context.Context, client connectivityinternal.API, connector, channel, running string) (*connectivity.ConnectorVersion, error) {
 	versions, err := connectivityinternal.CollectPages(versionResolvePageSize, versionResolveMaxPages,
-		func(options connectivityclient.ListOptions) ([]connectivity.ConnectorVersionSummary, bool, string, error) {
-			page, err := client.ListConnectorVersions(ctx, connector, options)
+		func(options connectivityinternal.ListOptions) ([]connectivity.ConnectorVersionSummary, bool, string, error) {
+			response, err := client.ListConnectorVersions(ctx, operations.ListConnectorVersionsRequest{Name: url.PathEscape(connector), Cursor: connectivityinternal.OptionalString(options.Cursor), PageSize: ptr(int(options.PageSize)), Query: connectivityinternal.OptionalString(options.Query)}, nil)
+			if err == nil && response != nil {
+				err = connectivityinternal.ResponseError(response.StatusCode, response.Error)
+			}
+			var page *connectivity.ConnectorVersionCursor
+			if response != nil {
+				page = response.ConnectorVersionCursor
+			}
 			if err != nil {
 				return nil, false, "", err
 			}
 			if page == nil {
 				return nil, false, "", fmt.Errorf("list connectivity connector %q versions: empty response", connector)
 			}
-			return page.Items, page.HasMore, page.Next, nil
+			return page.Cursor.Data, page.Cursor.HasMore, stringValue(page.Cursor.Next), nil
 		})
 	if err != nil {
 		return nil, err

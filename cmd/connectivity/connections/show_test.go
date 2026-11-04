@@ -10,23 +10,26 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
+	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type showInstanceClientMock struct {
-	connectivityclient.Client
-	get func(context.Context, string) (*connectivityclient.Connection, error)
+	connectivityinternal.API
+	get func(context.Context, string) (*connectivity.Connection, error)
 }
 
-func (m showInstanceClientMock) GetConnection(ctx context.Context, name string) (*connectivityclient.Connection, error) {
-	return m.get(ctx, name)
+func (m showInstanceClientMock) GetConnection(ctx context.Context, request operations.GetConnectionRequest, security *operations.GetConnectionSecurity, opts ...operations.Option) (*operations.GetConnectionResponse, error) {
+	data, err := m.get(ctx, request.Name)
+	return &operations.GetConnectionResponse{StatusCode: 200, Connection: data}, err
 }
 
 func TestShowRendersPortableStatusAndHidesConfigurationValues(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
-	instance.Configuration.Env = map[string]string{"TOKEN": "must-not-leak"}
-	instance.Configuration.Files = map[string]string{"/etc/plugin/config.yaml": "also-must-not-leak"}
+	instance.ConnectionConfiguration.Env = map[string]string{"TOKEN": "must-not-leak"}
+	instance.ConnectionConfiguration.Files = map[string]string{"/etc/plugin/config.yaml": "also-must-not-leak"}
 	output, err := executeCommand(NewShowCommand(factoryWithInstance(instance)), "stripe-eu")
 	require.NoError(t, err)
 	for _, value := range []string{"stripe-eu", "stripe", "main", "Desired Configuration", "Applied Version", "2.0.0", "active", "running", "42", "Last Error (may be historical)", "source temporarily unavailable", "TOKEN", "/etc/plugin/config.yaml", "literal"} {
@@ -39,7 +42,7 @@ func TestShowRendersPortableStatusAndHidesConfigurationValues(t *testing.T) {
 
 func TestShowPlainOutputNeverPrintsInlineConfigValues(t *testing.T) {
 	instance := instanceWithTwoFiles()
-	instance.Configuration.Env = map[string]string{
+	instance.ConnectionConfiguration.Env = map[string]string{
 		"API_KEY": "must-not-leak",
 	}
 	command := NewShowCommand(factoryWithInstance(*instance))
@@ -55,7 +58,7 @@ func TestShowPlainOutputNeverPrintsInlineConfigValues(t *testing.T) {
 
 func TestShowPlainOutputOmitsUnsupportedStartSequence(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
-	instance.Configuration.InitialCursor = []byte("opaque-initial-cursor")
+	instance.ConnectionConfiguration.InitialCursor = stringPtr("b3BhcXVlLWluaXRpYWwtY3Vyc29y")
 
 	output, err := executeCommand(NewShowCommand(factoryWithInstance(instance)), "stripe-eu")
 
@@ -66,7 +69,7 @@ func TestShowPlainOutputOmitsUnsupportedStartSequence(t *testing.T) {
 
 func TestShowConnectionJSONPreservesCompleteModel(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
-	setInstanceConfig(&instance, &connectivityclient.ConnectionConfig{Env: map[string]string{
+	setInstanceConfig(&instance, &connectivity.ConnectionConfiguration{Env: map[string]string{
 		"API_KEY": "json-keeps-full-model",
 	}})
 	command := NewShowCommand(factoryWithInstance(instance))
@@ -84,7 +87,7 @@ func TestShowConnectionJSONPreservesCompleteModel(t *testing.T) {
 
 func TestShowConnectionHandlesMissingStatusAndConfig(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
-	instance.Status = nil
+	instance.ConnectionStatus = nil
 	setInstanceConfig(&instance, nil)
 
 	output, err := executeCommand(NewShowCommand(factoryWithInstance(instance)), "stripe-eu")
@@ -95,8 +98,8 @@ func TestShowConnectionHandlesMissingStatusAndConfig(t *testing.T) {
 
 func TestShowConnectionRendersSuspensionAndOrderedProvenance(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
-	instance.Configuration.Suspend = fctl.Ptr(true)
-	instance.Status.SuspendedBy = []connectivityclient.SuspensionSource{
+	instance.ConnectionConfiguration.Suspend = fctl.Ptr(true)
+	instance.ConnectionStatus.SuspendedBy = []connectivity.SuspensionSource{
 		{Source: "request", Name: "stripe-eu"},
 		{Source: "policy", Name: "maintenance"},
 	}
@@ -113,24 +116,24 @@ func TestShowConnectionRendersSuspensionAndOrderedProvenance(t *testing.T) {
 
 func TestShowConnectionReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
 	tests := map[string]struct {
-		factory func(*cobra.Command) (connectivityclient.Client, error)
+		factory func(*cobra.Command) (connectivityinternal.API, error)
 		want    string
 	}{
 		"missing factory": {factory: nil, want: "factory is required"},
 		"factory": {
-			factory: func(*cobra.Command) (connectivityclient.Client, error) {
+			factory: func(*cobra.Command) (connectivityinternal.API, error) {
 				return nil, errors.New("authentication failed")
 			},
 			want: "authentication failed",
 		},
 		"API": {
-			factory: factoryReturning(showInstanceClientMock{get: func(context.Context, string) (*connectivityclient.Connection, error) {
+			factory: factoryReturning(showInstanceClientMock{get: func(context.Context, string) (*connectivity.Connection, error) {
 				return nil, errors.New("connection unavailable")
 			}}),
 			want: "connection unavailable",
 		},
 		"empty response": {
-			factory: factoryReturning(showInstanceClientMock{get: func(context.Context, string) (*connectivityclient.Connection, error) {
+			factory: factoryReturning(showInstanceClientMock{get: func(context.Context, string) (*connectivity.Connection, error) {
 				return nil, nil
 			}}),
 			want: "empty response",
@@ -149,22 +152,22 @@ func TestShowConnectionReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
 func TestShowRecordedErrorsDoNotTurnSuccessfulReadIntoFailure(t *testing.T) {
 	for _, state := range []string{"running", "error", "failed", "finished", "unknown"} {
 		instance := instanceFixture("stripe-eu")
-		instance.Status.Ingestion.State = stringPtr(state)
-		instance.Status.Ingestion.Progress = &connectivityclient.IngestionProgress{Current: 0}
-		instance.Status.Error = &connectivityclient.StatusError{Code: "failure_unknown", Message: "Failure provenance unavailable"}
+		instance.ConnectionStatus.IngestionStatus.State = ptr(connectivity.State(state))
+		instance.ConnectionStatus.IngestionStatus.IngestionProgress = &connectivity.IngestionProgress{Current: 0}
+		instance.ConnectionStatus.StatusError = &connectivity.StatusError{Code: "failure_unknown", Message: "Failure provenance unavailable"}
 		output, err := executeCommand(NewShowCommand(factoryWithInstance(instance)), "stripe-eu")
 		require.NoError(t, err)
 		require.Contains(t, output, "Last Error (may be historical)")
 		require.Contains(t, output, "source temporarily unavailable")
 		require.Contains(t, output, "failure_unknown")
-		require.Equal(t, "0", ingestionProgress(instance.Status))
-		instance.Status.Ingestion.Progress = nil
-		require.Empty(t, ingestionProgress(instance.Status))
+		require.Equal(t, "0", ingestionProgress(instance.ConnectionStatus))
+		instance.ConnectionStatus.IngestionStatus.IngestionProgress = nil
+		require.Empty(t, ingestionProgress(instance.ConnectionStatus))
 	}
 }
 
 func TestShowImportedConnectionJSONPreservesAbsentIdentities(t *testing.T) {
-	instance := connectivityclient.Connection{Name: "imported"}
+	instance := connectivity.Connection{Name: "imported"}
 	command := NewShowCommand(factoryWithInstance(instance))
 	command.Flags().String(fctl.OutputFlag, "plain", "")
 	output, err := executeCommand(command, "imported", "--output=json")

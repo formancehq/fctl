@@ -12,13 +12,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
+	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 )
 
-func versionsFixture() *connectivityclient.ConnectorVersionList {
-	return &connectivityclient.ConnectorVersionList{Items: []connectivity.ConnectorVersionSummary{
+func versionsFixture() *connectorVersionPage {
+	return &connectorVersionPage{Items: []connectivity.ConnectorVersionSummary{
 		{Version: "1.0.0", Digest: fctl.Ptr("sha256:one")},
 		{Version: "2.0.0"},
 	}}
@@ -37,7 +37,7 @@ func TestShowConnectorRendersPublicFieldsVersionsAndLatestVersionSchema(t *testi
 			}
 			return &connector, nil
 		},
-		listVersions: func(_ context.Context, name string, options connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
+		listVersions: func(_ context.Context, name string, options connectivityinternal.ListOptions) (*connectorVersionPage, error) {
 			if name != "stripe" {
 				t.Fatalf("ListConnectorVersions name = %q, want stripe", name)
 			}
@@ -71,7 +71,7 @@ func TestShowConnectorRendersPublicFieldsVersionsAndLatestVersionSchema(t *testi
 		t.Fatalf("execute show command: %v", err)
 	}
 
-	if gotVersion != connectivityclient.VersionAliasLatest {
+	if gotVersion != connectivityinternal.VersionAliasLatest {
 		t.Fatalf("GetConnectorVersion version = %q, want the server-resolved latest alias", gotVersion)
 	}
 	for _, expected := range []string{
@@ -101,16 +101,16 @@ func TestShowConnectorFollowsVersionPagination(t *testing.T) {
 		get: func(context.Context, string) (*connectivity.Connector, error) {
 			return &connector, nil
 		},
-		listVersions: func(_ context.Context, _ string, options connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
+		listVersions: func(_ context.Context, _ string, options connectivityinternal.ListOptions) (*connectorVersionPage, error) {
 			gotCursors = append(gotCursors, options.Cursor)
 			if options.Cursor == "" {
-				return &connectivityclient.ConnectorVersionList{
+				return &connectorVersionPage{
 					Items:   []connectivity.ConnectorVersionSummary{{Version: "1.0.0"}},
 					HasMore: true,
 					Next:    "page-two",
 				}, nil
 			}
-			return &connectivityclient.ConnectorVersionList{
+			return &connectorVersionPage{
 				Items: []connectivity.ConnectorVersionSummary{{Version: "2.0.0"}},
 			}, nil
 		},
@@ -137,8 +137,8 @@ func TestShowConnectorWithoutVersionsReportsNoPublishedVersion(t *testing.T) {
 		get: func(context.Context, string) (*connectivity.Connector, error) {
 			return &connector, nil
 		},
-		listVersions: func(context.Context, string, connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
-			return &connectivityclient.ConnectorVersionList{Items: []connectivity.ConnectorVersionSummary{}}, nil
+		listVersions: func(context.Context, string, connectivityinternal.ListOptions) (*connectorVersionPage, error) {
+			return &connectorVersionPage{Items: []connectivity.ConnectorVersionSummary{}}, nil
 		},
 		getVersion: func(context.Context, string, string) (*connectivity.ConnectorVersion, error) {
 			t.Fatal("GetConnectorVersion must not run without a published version")
@@ -163,11 +163,11 @@ func TestShowConnectorTreatsUnresolvableLatestAsNoPublishedVersion(t *testing.T)
 		get: func(context.Context, string) (*connectivity.Connector, error) {
 			return &connector, nil
 		},
-		listVersions: func(context.Context, string, connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
+		listVersions: func(context.Context, string, connectivityinternal.ListOptions) (*connectorVersionPage, error) {
 			return versionsFixture(), nil
 		},
 		getVersion: func(context.Context, string, string) (*connectivity.ConnectorVersion, error) {
-			return nil, &connectivityclient.APIError{StatusCode: http.StatusNotFound, Code: "channel_empty"}
+			return nil, &connectivityinternal.APIError{StatusCode: http.StatusNotFound, Code: "channel_empty"}
 		},
 	}
 
@@ -190,7 +190,7 @@ func TestShowConnectorJSONPreservesCompleteModel(t *testing.T) {
 		get: func(context.Context, string) (*connectivity.Connector, error) {
 			return &connector, nil
 		},
-		listVersions: func(context.Context, string, connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
+		listVersions: func(context.Context, string, connectivityinternal.ListOptions) (*connectorVersionPage, error) {
 			return versionsFixture(), nil
 		},
 		getVersion: func(context.Context, string, string) (*connectivity.ConnectorVersion, error) {
@@ -224,11 +224,11 @@ func TestShowConnectorJSONPreservesCompleteModel(t *testing.T) {
 
 func TestShowConnectorReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
 	tests := map[string]struct {
-		factory func(*cobra.Command) (connectivityclient.Client, error)
+		factory func(*cobra.Command) (connectivityinternal.API, error)
 		want    string
 	}{
 		"factory": {
-			factory: func(*cobra.Command) (connectivityclient.Client, error) {
+			factory: func(*cobra.Command) (connectivityinternal.API, error) {
 				return nil, errors.New("authentication failed")
 			},
 			want: "authentication failed",
@@ -251,7 +251,7 @@ func TestShowConnectorReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
 					connector := connectorFixture("stripe")
 					return &connector, nil
 				},
-				listVersions: func(context.Context, string, connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
+				listVersions: func(context.Context, string, connectivityinternal.ListOptions) (*connectorVersionPage, error) {
 					return nil, errors.New("catalog unavailable")
 				},
 			}),
@@ -263,7 +263,7 @@ func TestShowConnectorReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
 					connector := connectorFixture("stripe")
 					return &connector, nil
 				},
-				listVersions: func(context.Context, string, connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
+				listVersions: func(context.Context, string, connectivityinternal.ListOptions) (*connectorVersionPage, error) {
 					return versionsFixture(), nil
 				},
 				getVersion: func(context.Context, string, string) (*connectivity.ConnectorVersion, error) {

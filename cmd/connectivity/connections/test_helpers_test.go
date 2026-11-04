@@ -3,14 +3,18 @@ package connections
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/v3/cmd/connectivity/connections/configuration"
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 func stringPtr(value string) *string {
@@ -22,52 +26,61 @@ func stringPtr(value string) *string {
 // publishes two versions whose newest carries no schema, which is what a test
 // that does not care about configuration wants.
 type connectorVersions struct {
-	connectivityclient.Client
-	listVersions func(context.Context, string, connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error)
+	connectivityinternal.API
+	listVersions func(context.Context, string, connectivityinternal.ListOptions) (*testConnectorVersionList, error)
 	getVersion   func(context.Context, string, string) (*connectivity.ConnectorVersion, error)
 }
 
-func (v connectorVersions) ListConnectorVersions(ctx context.Context, connector string, options connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
+func (v connectorVersions) ListConnectorVersions(ctx context.Context, request operations.ListConnectorVersionsRequest, security *operations.ListConnectorVersionsSecurity, opts ...operations.Option) (*operations.ListConnectorVersionsResponse, error) {
+	var data *testConnectorVersionList
+	var err error
 	if v.listVersions == nil {
-		return versionListFixture(), nil
+		data = versionListFixture()
+	} else {
+		data, err = v.listVersions(ctx, request.Name, listOptions(request.PageSize, request.Cursor, request.Query))
 	}
-	return v.listVersions(ctx, connector, options)
+	response := &operations.ListConnectorVersionsResponse{StatusCode: 200}
+	if data != nil {
+		response.ConnectorVersionCursor = &connectivity.ConnectorVersionCursor{Cursor: connectivity.ConnectorVersionCursorCursor{Data: data.Items, HasMore: data.HasMore, Next: connectivityinternal.OptionalString(data.Next), PageSize: int(data.PageSize)}}
+	}
+	return response, err
 }
 
-func (v connectorVersions) GetConnectorVersion(ctx context.Context, connector, version string) (*connectivity.ConnectorVersion, error) {
+func (v connectorVersions) GetConnectorVersion(ctx context.Context, request operations.GetConnectorVersionRequest, security *operations.GetConnectorVersionSecurity, opts ...operations.Option) (*operations.GetConnectorVersionResponse, error) {
 	if v.getVersion == nil {
-		return &connectivity.ConnectorVersion{Version: version}, nil
+		return &operations.GetConnectorVersionResponse{StatusCode: 200, ConnectorVersion: &connectivity.ConnectorVersion{Version: request.Version}}, nil
 	}
-	return v.getVersion(ctx, connector, version)
+	data, err := v.getVersion(ctx, request.Name, request.Version)
+	return &operations.GetConnectorVersionResponse{StatusCode: 200, ConnectorVersion: data}, err
 }
 
-func versionListFixture() *connectivityclient.ConnectorVersionList {
-	return &connectivityclient.ConnectorVersionList{Items: []connectivity.ConnectorVersionSummary{
+func versionListFixture() *testConnectorVersionList {
+	return &testConnectorVersionList{Items: []connectivity.ConnectorVersionSummary{
 		{Version: "1.0.0"},
 		{Version: "2.0.0"},
 	}}
 }
 
-func instanceFixture(name string) connectivityclient.Connection {
-	return connectivityclient.Connection{Name: name,
-		Configuration: connectivityclient.ConnectionConfiguration{Connector: "stripe", Version: stringPtr("2.0.0"), Ledger: stringPtr("main"), PollInterval: stringPtr("5s"), InitialCursor: []byte{0, 255, 97}},
-		Status:        &connectivityclient.ConnectionStatus{Lifecycle: "active", AppliedVersion: stringPtr("2.0.0"), Ingestion: &connectivityclient.IngestionStatus{State: stringPtr("running"), Progress: &connectivityclient.IngestionProgress{Current: 42}, LastError: stringPtr("source temporarily unavailable")}},
+func instanceFixture(name string) connectivity.Connection {
+	return connectivity.Connection{Name: name,
+		ConnectionConfiguration: connectivity.ConnectionConfiguration{Connector: stringPtr("stripe"), Version: stringPtr("2.0.0"), Ledger: stringPtr("main"), PollInterval: stringPtr("5s"), InitialCursor: stringPtr("AP9h")},
+		ConnectionStatus:        &connectivity.ConnectionStatus{Lifecycle: "active", AppliedVersion: stringPtr("2.0.0"), IngestionStatus: &connectivity.IngestionStatus{State: ptr(connectivity.State("running")), IngestionProgress: &connectivity.IngestionProgress{Current: 42}, LastError: stringPtr("source temporarily unavailable")}},
 	}
 }
-func instanceWithTwoFiles() *connectivityclient.Connection {
+func instanceWithTwoFiles() *connectivity.Connection {
 	instance := instanceFixture("stripe-eu")
-	instance.Configuration.Files = map[string]string{"/etc/plugin/config.yaml": "private config", "/etc/plugin/ca.pem": "private ca"}
+	instance.ConnectionConfiguration.Files = map[string]string{"/etc/plugin/config.yaml": "private config", "/etc/plugin/ca.pem": "private ca"}
 	return &instance
 }
 
-func factoryReturning(client connectivityclient.Client) connectivityinternal.ClientFactory {
-	return func(*cobra.Command) (connectivityclient.Client, error) {
+func factoryReturning(client connectivityinternal.API) connectivityinternal.ClientFactory {
+	return func(*cobra.Command) (connectivityinternal.API, error) {
 		return client, nil
 	}
 }
 
-func factoryWithInstance(instance connectivityclient.Connection) connectivityinternal.ClientFactory {
-	return factoryReturning(showInstanceClientMock{get: func(_ context.Context, _ string) (*connectivityclient.Connection, error) {
+func factoryWithInstance(instance connectivity.Connection) connectivityinternal.ClientFactory {
+	return factoryReturning(showInstanceClientMock{get: func(_ context.Context, _ string) (*connectivity.Connection, error) {
 		return &instance, nil
 	}})
 }
@@ -175,10 +188,63 @@ func fullConfigSchema(requiredEnv, requiredFiles []any) map[string]any {
 	}
 }
 
-func setInstanceConfig(instance *connectivityclient.Connection, config *connectivityclient.ConnectionConfig) {
+func setInstanceConfig(instance *connectivity.Connection, config *connectivity.ConnectionConfiguration) {
 	if config == nil {
-		instance.Configuration.Env, instance.Configuration.Files = nil, nil
+		instance.ConnectionConfiguration.Env, instance.ConnectionConfiguration.Files = nil, nil
 		return
 	}
-	instance.Configuration.Env, instance.Configuration.Files = config.Env, config.Files
+	instance.ConnectionConfiguration.Env, instance.ConnectionConfiguration.Files = config.Env, config.Files
+}
+
+// These fixture pages keep command tests focused on pagination behavior; the
+// mocks above return the generated SDK response envelopes.
+type testConnectionList struct {
+	Items    []connectivity.Connection
+	PageSize int32
+	HasMore  bool
+	Next     string
+}
+type testConnectorList struct {
+	Items    []connectivity.Connector
+	PageSize int32
+	HasMore  bool
+	Next     string
+}
+type testConnectorVersionList struct {
+	Items    []connectivity.ConnectorVersionSummary
+	PageSize int32
+	HasMore  bool
+	Next     string
+}
+
+func listOptions(size *int, cursor, query *string) connectivityinternal.ListOptions {
+	options := connectivityinternal.ListOptions{Cursor: stringValue(cursor), Query: stringValue(query)}
+	if size != nil {
+		options.PageSize = int32(*size)
+	}
+	return options
+}
+func createdConfiguration(in connectivity.ConnectionCreateConnectionConfiguration) connectivity.ConnectionConfiguration {
+	out := connectivity.ConnectionConfiguration{Connector: &in.Connector, Ledger: &in.Ledger, Env: in.Env, Files: in.Files, Version: in.Version, InitialCursor: in.InitialCursor, PollInterval: in.PollInterval, Suspend: in.Suspend}
+	if in.Channel != nil {
+		out.Channel = ptr(connectivity.Channel(*in.Channel))
+	}
+	return out
+}
+
+type connectionRoundTripper func(*http.Request) (*http.Response, error)
+
+func (f connectionRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
+	return f(request)
+}
+func sdkPatchBody(ctx context.Context, request operations.PatchConnectionRequest) (map[string]any, error) {
+	var body map[string]any
+	api := connectivityinternal.NewAPI("https://stack.example.test", &http.Client{Transport: connectionRoundTripper(func(r *http.Request) (*http.Response, error) {
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			return nil, err
+		}
+		return &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": {"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"name":"fixture","configuration":{}}`)), Request: r}, nil
+	})})
+	_, err := api.PatchConnection(ctx, request, nil)
+	return body, err
 }

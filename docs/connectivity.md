@@ -49,8 +49,8 @@ JSON envelope keys and the current HTTP field names.
 The command tree lives entirely under `cmd/connectivity`: `connectors` owns
 catalogue commands, `connections` owns lifecycle commands, and
 `connections/configuration` owns configuration grouping and schema-aware input
-parsing. `internal/client` adapts the generated Stack SDK to CLI validation and
-output models; transport generation remains in `pkg/client`.
+parsing. Commands call the generated Stack SDK in `pkg/client` directly.
+`internal` provides the client factory and the merge-patch body adaptation.
 
 ## Service build information
 

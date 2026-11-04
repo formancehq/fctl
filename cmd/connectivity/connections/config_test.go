@@ -9,7 +9,6 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/formancehq/fctl/v3/cmd/connectivity/connections/configuration"
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 )
 
@@ -382,7 +381,7 @@ func TestBuildConfigDecodeErrorsRetainLineNumbers(t *testing.T) {
 }
 
 func TestBuildConfigureConfigPreservesUntouchedFiles(t *testing.T) {
-	current := &connectivityclient.ConnectionConfig{Files: map[string]string{"/etc/a": "a", "/etc/b": "b"}}
+	current := &connectivity.ConnectionConfiguration{Files: map[string]string{"/etc/a": "a", "/etc/b": "b"}}
 	got, err := configuration.BuildConfigureConfig(&cobra.Command{}, versionWithFileSchema(), current, configuration.InputOptions{SetValues: []string{"/etc/a=@new"}}, mapReadFile(map[string]string{"new": "changed"}))
 	require.NoError(t, err)
 	require.Equal(t, map[string]string{"/etc/a": "changed", "/etc/b": "b"}, got.Files)
@@ -398,7 +397,7 @@ func TestBuildInstallConfigRejectsStructuredFileWithoutPath(t *testing.T) {
 }
 
 func TestBuildConfigureConfigDeepCopiesCurrentConfiguration(t *testing.T) {
-	current := &connectivityclient.ConnectionConfig{
+	current := &connectivity.ConnectionConfiguration{
 		Env: map[string]string{
 			"API_URL": "https://current.example",
 		},
@@ -433,7 +432,7 @@ func TestConfigurationReadErrorsDoNotEchoSecretContents(t *testing.T) {
 }
 
 func TestConfigureEmptyMapsPreserveReadbackAndSendNoDeletions(t *testing.T) {
-	current := &connectivityclient.ConnectionConfig{Env: map[string]string{"API_URL": "kept"}, Files: map[string]string{"/etc/plugin/config.yaml": "kept-file"}}
+	current := &connectivity.ConnectionConfiguration{Env: map[string]string{"API_URL": "kept"}, Files: map[string]string{"/etc/plugin/config.yaml": "kept-file"}}
 	patch := map[string]any{}
 	got, err := configuration.BuildConfigureConfig(&cobra.Command{}, versionWithOptionalSchema(), current, configuration.InputOptions{ConfigFile: "patch", Patch: patch}, mapReadFile(map[string]string{"patch": "env: {}\nfiles: {}\n"}))
 	require.NoError(t, err)

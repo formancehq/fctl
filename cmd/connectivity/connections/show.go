@@ -3,6 +3,7 @@ package connections
 import (
 	"fmt"
 	"io"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -11,12 +12,13 @@ import (
 	"github.com/spf13/cobra"
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type ShowStore struct {
-	Connection connectivityclient.Connection `json:"connection"`
+	Connection connectivity.Connection `json:"connection"`
 }
 
 type ShowController struct {
@@ -54,11 +56,18 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	if err != nil {
 		return nil, err
 	}
-	instance, err := client.GetConnection(cmd.Context(), args[0])
+	response, err := client.GetConnection(cmd.Context(), operations.GetConnectionRequest{Name: url.PathEscape(args[0])}, nil)
+	if err == nil && response != nil {
+		err = connectivityinternal.ResponseError(response.StatusCode, response.Error)
+	}
+	var instance *connectivity.Connection
+	if response != nil {
+		instance = response.Connection
+	}
 	if err != nil {
 		return nil, err
 	}
-	if instance == nil {
+	if instance == nil || instance.Name == "" {
 		return nil, fmt.Errorf("show connectivity connection %q: empty response", args[0])
 	}
 	c.store.Connection = *instance
@@ -72,22 +81,22 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 	if err := renderInstanceSection(out, "Desired Configuration", pterm.TableData{
-		{"Connector", instance.Configuration.Connector}, {"Version", stringValue(instance.Configuration.Version)},
-		{"Channel", stringValue(instance.Configuration.Channel)}, {"Ledger", stringValue(instance.Configuration.Ledger)},
-		{"Poll Interval", stringValue(instance.Configuration.PollInterval)}, {"Suspend", boolValue(instance.Configuration.Suspend)},
+		{"Connector", stringValue(instance.ConnectionConfiguration.Connector)}, {"Version", stringValue(instance.ConnectionConfiguration.Version)},
+		{"Channel", enumStringValue(instance.ConnectionConfiguration.Channel)}, {"Ledger", stringValue(instance.ConnectionConfiguration.Ledger)},
+		{"Poll Interval", stringValue(instance.ConnectionConfiguration.PollInterval)}, {"Suspend", boolValue(instance.ConnectionConfiguration.Suspend)},
 	}); err != nil {
 		return err
 	}
 	if err := renderInstanceSection(out, "Last Recorded Status", pterm.TableData{
-		{"Lifecycle", lifecycleValue(instance.Status)}, {"Applied Version", appliedChannelFloor(&instance)},
-		{"Ingestion State", ingestionState(instance.Status)}, {"Progress Current", ingestionProgress(instance.Status)},
-		{"Last Error (may be historical)", ingestionLastError(instance.Status)},
-		{"Service Error", serviceError(instance.Status)}, {"Suspended by", instanceSuspensionSources(instance.Status)},
+		{"Lifecycle", lifecycleValue(instance.ConnectionStatus)}, {"Applied Version", appliedChannelFloor(&instance)},
+		{"Ingestion State", ingestionState(instance.ConnectionStatus)}, {"Progress Current", ingestionProgress(instance.ConnectionStatus)},
+		{"Last Error (may be historical)", ingestionLastError(instance.ConnectionStatus)},
+		{"Service Error", serviceError(instance.ConnectionStatus)}, {"Suspended by", instanceSuspensionSources(instance.ConnectionStatus)},
 	}); err != nil {
 		return err
 	}
 	fctl.Section.WithWriter(out).Println("Configuration")
-	rows := configRows(instance.Configuration.Configuration())
+	rows := configRows(&instance.ConnectionConfiguration)
 	if len(rows) == 0 {
 		_, err := fmt.Fprintln(out, "No configuration entries.")
 		return err
@@ -101,7 +110,7 @@ func renderInstanceSection(out io.Writer, title string, data pterm.TableData) er
 	return pterm.DefaultTable.WithWriter(out).WithData(data).Render()
 }
 
-func configRows(config *connectivityclient.ConnectionConfig) [][]string {
+func configRows(config *connectivity.ConnectionConfiguration) [][]string {
 	if config == nil {
 		return nil
 	}
@@ -122,43 +131,43 @@ func boolValue(value *bool) string {
 	}
 	return strconv.FormatBool(*value)
 }
-func instanceSuspensionSources(status *connectivityclient.ConnectionStatus) string {
+func instanceSuspensionSources(status *connectivity.ConnectionStatus) string {
 	if status == nil {
 		return ""
 	}
 	entries := make([]string, 0, len(status.SuspendedBy))
 	for _, source := range status.SuspendedBy {
-		entries = append(entries, strings.Join(nonEmptyStrings(source.Source, source.Name), "/"))
+		entries = append(entries, strings.Join(nonEmptyStrings(string(source.Source), source.Name), "/"))
 	}
 	return strings.Join(entries, ", ")
 }
-func lifecycleValue(status *connectivityclient.ConnectionStatus) string {
+func lifecycleValue(status *connectivity.ConnectionStatus) string {
 	if status == nil {
 		return ""
 	}
-	return status.Lifecycle
+	return string(status.Lifecycle)
 }
-func ingestionState(status *connectivityclient.ConnectionStatus) string {
-	if status == nil || status.Ingestion == nil {
+func ingestionState(status *connectivity.ConnectionStatus) string {
+	if status == nil || status.IngestionStatus == nil {
 		return ""
 	}
-	return stringValue(status.Ingestion.State)
+	return enumStringValue(status.IngestionStatus.State)
 }
-func ingestionProgress(status *connectivityclient.ConnectionStatus) string {
-	if status == nil || status.Ingestion == nil || status.Ingestion.Progress == nil {
+func ingestionProgress(status *connectivity.ConnectionStatus) string {
+	if status == nil || status.IngestionStatus == nil || status.IngestionStatus.IngestionProgress == nil {
 		return ""
 	}
-	return strconv.FormatInt(status.Ingestion.Progress.Current, 10)
+	return strconv.FormatInt(status.IngestionStatus.IngestionProgress.Current, 10)
 }
-func ingestionLastError(status *connectivityclient.ConnectionStatus) string {
-	if status == nil || status.Ingestion == nil {
+func ingestionLastError(status *connectivity.ConnectionStatus) string {
+	if status == nil || status.IngestionStatus == nil {
 		return ""
 	}
-	return stringValue(status.Ingestion.LastError)
+	return stringValue(status.IngestionStatus.LastError)
 }
-func serviceError(status *connectivityclient.ConnectionStatus) string {
-	if status == nil || status.Error == nil {
+func serviceError(status *connectivity.ConnectionStatus) string {
+	if status == nil || status.StatusError == nil {
 		return ""
 	}
-	return status.Error.Code + ": " + status.Error.Message
+	return string(status.StatusError.Code) + ": " + status.StatusError.Message
 }

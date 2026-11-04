@@ -8,37 +8,68 @@ import (
 
 	"github.com/spf13/cobra"
 
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type filterCompletionClientMock struct {
-	connectivityclient.Client
+	API
 	capabilities   func(context.Context) (*connectivity.QueryCapabilities, error)
 	facets         func(context.Context, string) (*connectivity.FacetDistribution, error)
-	listConnectors func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error)
+	listConnectors func(context.Context, ListOptions) (*testConnectorList, error)
 }
 
-func (m filterCompletionClientMock) GetQueryCapabilities(ctx context.Context) (*connectivity.QueryCapabilities, error) {
-	return m.capabilities(ctx)
+type testConnectorList struct {
+	Items    []connectivity.Connector
+	PageSize int32
+	HasMore  bool
+	Next     string
 }
 
-func (m filterCompletionClientMock) GetConnectorFacets(ctx context.Context, query string) (*connectivity.FacetDistribution, error) {
-	return m.facets(ctx, query)
+func (m filterCompletionClientMock) GetQueryCapabilities(ctx context.Context, _ *operations.GetQueryCapabilitiesSecurity, _ ...operations.Option) (*operations.GetQueryCapabilitiesResponse, error) {
+	v, err := m.capabilities(ctx)
+	if v == nil || err != nil {
+		return nil, err
+	}
+	return &operations.GetQueryCapabilitiesResponse{StatusCode: 200, QueryCapabilities: v}, nil
 }
-
-func (m filterCompletionClientMock) ListConnectors(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
-	return m.listConnectors(ctx, options)
+func (m filterCompletionClientMock) GetConnectorFacets(ctx context.Context, req operations.GetConnectorFacetsRequest, _ *operations.GetConnectorFacetsSecurity, _ ...operations.Option) (*operations.GetConnectorFacetsResponse, error) {
+	query := ""
+	if req.Query != nil {
+		query = *req.Query
+	}
+	v, err := m.facets(ctx, query)
+	if v == nil || err != nil {
+		return nil, err
+	}
+	return &operations.GetConnectorFacetsResponse{StatusCode: 200, FacetDistribution: v}, nil
+}
+func (m filterCompletionClientMock) ListConnectors(ctx context.Context, req operations.ListConnectorsRequest, _ *operations.ListConnectorsSecurity, _ ...operations.Option) (*operations.ListConnectorsResponse, error) {
+	options := ListOptions{}
+	if req.PageSize != nil {
+		options.PageSize = int32(*req.PageSize)
+	}
+	if req.Cursor != nil {
+		options.Cursor = *req.Cursor
+	}
+	if req.Query != nil {
+		options.Query = *req.Query
+	}
+	v, err := m.listConnectors(ctx, options)
+	if v == nil || err != nil {
+		return nil, err
+	}
+	return &operations.ListConnectorsResponse{StatusCode: 200, ConnectorCursor: &connectivity.ConnectorCursor{Cursor: connectivity.ConnectorCursorCursor{Data: v.Items, PageSize: int(v.PageSize), HasMore: v.HasMore, Next: OptionalString(v.Next)}}}, nil
 }
 
 func capabilitiesFixture() *connectivity.QueryCapabilities {
 	return &connectivity.QueryCapabilities{Resources: map[string]map[string]connectivity.QueryFieldCapability{
-		connectivityclient.ResourceConnectors: {
+		ResourceConnectors: {
 			"catalog": {Operators: []string{"$match", "$in", "$exists"}},
 			"name":    {Operators: []string{"$match", "$in", "$like"}},
 			"tags":    {Operators: []string{"$match", "$in", "$exists"}},
 		},
-		connectivityclient.ResourceConnections: {
+		ResourceConnections: {
 			"channel":        {Operators: []string{"$match", "$in", "$exists"}, Enum: []string{"stable", "rc", "beta", "alpha"}},
 			"connector":      {Operators: []string{"$match", "$in"}},
 			"lifecycle":      {Operators: []string{"$match", "$in", "$exists"}, Enum: []string{"pending", "active", "suspended", "completed", "failed", "unknown"}},
@@ -47,9 +78,9 @@ func capabilitiesFixture() *connectivity.QueryCapabilities {
 	}}
 }
 
-func filterFactory(t *testing.T, client connectivityclient.Client) ClientFactory {
+func filterFactory(t *testing.T, client API) ClientFactory {
 	t.Helper()
-	return func(cmd *cobra.Command) (connectivityclient.Client, error) {
+	return func(cmd *cobra.Command) (API, error) {
 		if !IsNonInteractive(cmd.Context()) {
 			t.Fatal("filter completion factory context is interactive")
 		}
@@ -64,7 +95,7 @@ func TestCompleteFilterExpressionsOffersCapabilityKeysWithOperators(t *testing.T
 	client := filterCompletionClientMock{capabilities: func(context.Context) (*connectivity.QueryCapabilities, error) {
 		return capabilitiesFixture(), nil
 	}}
-	completion := CompleteFilterExpressions(filterFactory(t, client), connectivityclient.ResourceConnectors)
+	completion := CompleteFilterExpressions(filterFactory(t, client), ResourceConnectors)
 
 	candidates, directive := completion(&cobra.Command{}, nil, "")
 
@@ -85,7 +116,7 @@ func TestCompleteFilterExpressionsFiltersKeysByPrefix(t *testing.T) {
 	client := filterCompletionClientMock{capabilities: func(context.Context) (*connectivity.QueryCapabilities, error) {
 		return capabilitiesFixture(), nil
 	}}
-	completion := CompleteFilterExpressions(filterFactory(t, client), connectivityclient.ResourceConnectors)
+	completion := CompleteFilterExpressions(filterFactory(t, client), ResourceConnectors)
 
 	candidates, _ := completion(&cobra.Command{}, nil, "na")
 
@@ -99,7 +130,7 @@ func TestCompleteFilterExpressionsCompletesEnumValuesForTypedOperator(t *testing
 	client := filterCompletionClientMock{capabilities: func(context.Context) (*connectivity.QueryCapabilities, error) {
 		return capabilitiesFixture(), nil
 	}}
-	completion := CompleteFilterExpressions(filterFactory(t, client), connectivityclient.ResourceConnections)
+	completion := CompleteFilterExpressions(filterFactory(t, client), ResourceConnections)
 
 	equals, directive := completion(&cobra.Command{}, nil, "channel=st")
 	negated, _ := completion(&cobra.Command{}, nil, "channel!=r")
@@ -127,7 +158,7 @@ func TestCompleteFilterExpressionsCompletesTagValuesFromFacetDistribution(t *tes
 			}}, nil
 		},
 	}
-	completion := CompleteFilterExpressions(filterFactory(t, client), connectivityclient.ResourceConnectors)
+	completion := CompleteFilterExpressions(filterFactory(t, client), ResourceConnectors)
 
 	all, _ := completion(&cobra.Command{}, nil, "tags=")
 	scoped, _ := completion(&cobra.Command{}, nil, "tags=provider:")
@@ -157,17 +188,17 @@ func TestCompleteFilterExpressionsCompletesConnectorNamesForInstanceConnectorKey
 		capabilities: func(context.Context) (*connectivity.QueryCapabilities, error) {
 			return capabilitiesFixture(), nil
 		},
-		listConnectors: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
+		listConnectors: func(_ context.Context, options ListOptions) (*testConnectorList, error) {
 			if options.PageSize != 100 {
 				t.Fatalf("ListConnectors page size = %d, want 100", options.PageSize)
 			}
-			return &connectivityclient.ConnectorList{Items: []connectivity.Connector{
+			return &testConnectorList{Items: []connectivity.Connector{
 				{Name: wise},
 				{Name: stripe, DisplayName: &displayName},
 			}}, nil
 		},
 	}
-	completion := CompleteFilterExpressions(filterFactory(t, client), connectivityclient.ResourceConnections)
+	completion := CompleteFilterExpressions(filterFactory(t, client), ResourceConnections)
 
 	candidates, _ := completion(&cobra.Command{}, nil, "connector=")
 
@@ -183,12 +214,12 @@ func TestCompleteFilterExpressionsDrainsBoundedConnectorPages(t *testing.T) {
 		capabilities: func(context.Context) (*connectivity.QueryCapabilities, error) {
 			return capabilitiesFixture(), nil
 		},
-		listConnectors: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
+		listConnectors: func(_ context.Context, options ListOptions) (*testConnectorList, error) {
 			switch options.Cursor {
 			case "":
-				return &connectivityclient.ConnectorList{Items: []connectivity.Connector{{Name: first}}, HasMore: true, Next: "second"}, nil
+				return &testConnectorList{Items: []connectivity.Connector{{Name: first}}, HasMore: true, Next: "second"}, nil
 			case "second":
-				return &connectivityclient.ConnectorList{Items: []connectivity.Connector{{Name: second}}}, nil
+				return &testConnectorList{Items: []connectivity.Connector{{Name: second}}}, nil
 			default:
 				t.Fatalf("unexpected connector cursor %q", options.Cursor)
 				return nil, nil
@@ -196,7 +227,7 @@ func TestCompleteFilterExpressionsDrainsBoundedConnectorPages(t *testing.T) {
 		},
 	}
 
-	candidates, _ := CompleteFilterExpressions(filterFactory(t, client), connectivityclient.ResourceConnections)(&cobra.Command{}, nil, "connector=")
+	candidates, _ := CompleteFilterExpressions(filterFactory(t, client), ResourceConnections)(&cobra.Command{}, nil, "connector=")
 
 	if want := []string{"connector=adyen", "connector=stripe"}; !reflect.DeepEqual(candidates, want) {
 		t.Fatalf("candidates = %#v, want %#v", candidates, want)
@@ -224,7 +255,7 @@ func TestCompleteChannelsServesTheCapabilityEnum(t *testing.T) {
 }
 
 func TestCompleteChannelsReturnsSilentlyWhenCapabilitiesFail(t *testing.T) {
-	completion := CompleteChannels(func(*cobra.Command) (connectivityclient.Client, error) {
+	completion := CompleteChannels(func(*cobra.Command) (API, error) {
 		return filterCompletionClientMock{capabilities: func(context.Context) (*connectivity.QueryCapabilities, error) {
 			return nil, errors.New("unsupported deployment")
 		}}, nil
@@ -247,22 +278,22 @@ func TestCompleteFilterExpressionsReturnsSilentlyWhenLookupsFail(t *testing.T) {
 		prefix   string
 	}{
 		"factory error": {
-			factory:  func(*cobra.Command) (connectivityclient.Client, error) { return nil, errors.New("not authenticated") },
-			resource: connectivityclient.ResourceConnectors,
+			factory:  func(*cobra.Command) (API, error) { return nil, errors.New("not authenticated") },
+			resource: ResourceConnectors,
 		},
 		"nil factory": {
-			resource: connectivityclient.ResourceConnectors,
+			resource: ResourceConnectors,
 		},
 		"capabilities error": {
-			factory: func(*cobra.Command) (connectivityclient.Client, error) {
+			factory: func(*cobra.Command) (API, error) {
 				return filterCompletionClientMock{capabilities: func(context.Context) (*connectivity.QueryCapabilities, error) {
 					return nil, errors.New("unsupported deployment")
 				}}, nil
 			},
-			resource: connectivityclient.ResourceConnectors,
+			resource: ResourceConnectors,
 		},
 		"unknown resource": {
-			factory: func(*cobra.Command) (connectivityclient.Client, error) {
+			factory: func(*cobra.Command) (API, error) {
 				return filterCompletionClientMock{capabilities: func(context.Context) (*connectivity.QueryCapabilities, error) {
 					return capabilitiesFixture(), nil
 				}}, nil
@@ -270,16 +301,16 @@ func TestCompleteFilterExpressionsReturnsSilentlyWhenLookupsFail(t *testing.T) {
 			resource: "unknown",
 		},
 		"value for unknown key": {
-			factory: func(*cobra.Command) (connectivityclient.Client, error) {
+			factory: func(*cobra.Command) (API, error) {
 				return filterCompletionClientMock{capabilities: func(context.Context) (*connectivity.QueryCapabilities, error) {
 					return capabilitiesFixture(), nil
 				}}, nil
 			},
-			resource: connectivityclient.ResourceConnectors,
+			resource: ResourceConnectors,
 			prefix:   "nope=",
 		},
 		"facets error": {
-			factory: func(*cobra.Command) (connectivityclient.Client, error) {
+			factory: func(*cobra.Command) (API, error) {
 				return filterCompletionClientMock{
 					capabilities: func(context.Context) (*connectivity.QueryCapabilities, error) {
 						return capabilitiesFixture(), nil
@@ -289,7 +320,7 @@ func TestCompleteFilterExpressionsReturnsSilentlyWhenLookupsFail(t *testing.T) {
 					},
 				}, nil
 			},
-			resource: connectivityclient.ResourceConnectors,
+			resource: ResourceConnectors,
 			prefix:   "tags=",
 		},
 	}
@@ -314,7 +345,7 @@ func TestCompleteInstanceFiltersUsePublicCapabilityNamesWithoutAliases(t *testin
 	client := filterCompletionClientMock{capabilities: func(context.Context) (*connectivity.QueryCapabilities, error) {
 		return capabilitiesFixture(), nil
 	}}
-	completion := CompleteFilterExpressions(filterFactory(t, client), connectivityclient.ResourceConnections)
+	completion := CompleteFilterExpressions(filterFactory(t, client), ResourceConnections)
 	keys, _ := completion(&cobra.Command{}, nil, "")
 	want := []string{
 		"appliedVersion=\toperators: $match, $in, $exists, $gt, $gte, $lt, $lte",

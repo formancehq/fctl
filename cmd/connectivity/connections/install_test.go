@@ -12,33 +12,40 @@ import (
 	"github.com/stretchr/testify/require"
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type mutationClientMock struct {
 	connectorVersions
-	listConnectors func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error)
+	listConnectors func(context.Context, connectivityinternal.ListOptions) (*testConnectorList, error)
 	capabilities   func(context.Context) (*connectivity.QueryCapabilities, error)
-	create         func(context.Context, connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error)
+	create         func(context.Context, connectivity.ConnectionCreate) (*connectivity.Connection, error)
 }
 
-func (m mutationClientMock) ListConnectors(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
-	return m.listConnectors(ctx, options)
+func (m mutationClientMock) ListConnectors(ctx context.Context, request operations.ListConnectorsRequest, security *operations.ListConnectorsSecurity, opts ...operations.Option) (*operations.ListConnectorsResponse, error) {
+	data, err := m.listConnectors(ctx, listOptions(request.PageSize, request.Cursor, request.Query))
+	response := &operations.ListConnectorsResponse{StatusCode: 200}
+	if data != nil {
+		response.ConnectorCursor = &connectivity.ConnectorCursor{Cursor: connectivity.ConnectorCursorCursor{Data: data.Items, HasMore: data.HasMore, Next: connectivityinternal.OptionalString(data.Next), PageSize: int(data.PageSize)}}
+	}
+	return response, err
 }
 
-func (m mutationClientMock) GetQueryCapabilities(ctx context.Context) (*connectivity.QueryCapabilities, error) {
-	return m.capabilities(ctx)
+func (m mutationClientMock) GetQueryCapabilities(ctx context.Context, security *operations.GetQueryCapabilitiesSecurity, opts ...operations.Option) (*operations.GetQueryCapabilitiesResponse, error) {
+	data, err := m.capabilities(ctx)
+	return &operations.GetQueryCapabilitiesResponse{StatusCode: 200, QueryCapabilities: data}, err
 }
 
-func (m mutationClientMock) CreateConnection(ctx context.Context, body connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
-	return m.create(ctx, body)
+func (m mutationClientMock) CreateConnection(ctx context.Context, body connectivity.ConnectionCreate, security *operations.CreateConnectionSecurity, opts ...operations.Option) (*operations.CreateConnectionResponse, error) {
+	data, err := m.create(ctx, body)
+	return &operations.CreateConnectionResponse{StatusCode: 201, Connection: data}, err
 }
 
 func TestInstallBuildsConnectionFromVersionSchemaAndOnlySetsChangedScalars(t *testing.T) {
 	var gotConnector, gotVersion string
-	var gotBody connectivityclient.ConnectionCreate
+	var gotBody connectivity.ConnectionCreate
 	client := mutationClientMock{
 		connectorVersions: connectorVersions{
 			getVersion: func(_ context.Context, connector, version string) (*connectivity.ConnectorVersion, error) {
@@ -46,9 +53,9 @@ func TestInstallBuildsConnectionFromVersionSchemaAndOnlySetsChangedScalars(t *te
 				return versionWithOptionalSchema(), nil
 			},
 		},
-		create: func(_ context.Context, body connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
+		create: func(_ context.Context, body connectivity.ConnectionCreate) (*connectivity.Connection, error) {
 			gotBody = body
-			return &connectivityclient.Connection{Name: body.Name, Configuration: body.Configuration}, nil
+			return &connectivity.Connection{Name: body.Name, ConnectionConfiguration: createdConfiguration(body.ConnectionConfiguration)}, nil
 		},
 	}
 	read := mockReadFile(map[string]string{
@@ -68,20 +75,20 @@ func TestInstallBuildsConnectionFromVersionSchemaAndOnlySetsChangedScalars(t *te
 	require.Equal(t, "stripe", gotConnector)
 	require.Equal(t, "2.0.0", gotVersion, "the pinned version supplies the config schema")
 	require.Equal(t, "stripe-eu", gotBody.Name)
-	require.Equal(t, "stripe", gotBody.Configuration.ConnectorName())
-	require.Equal(t, stringPtr("main"), gotBody.Configuration.Ledger)
-	require.Equal(t, "2.0.0", *gotBody.Configuration.Version)
-	require.Equal(t, "3s", *gotBody.Configuration.PollInterval)
-	require.Equal(t, "https://config.example", gotBody.Configuration.Env["API_URL"])
-	require.Equal(t, "file-token", gotBody.Configuration.Env["TOKEN"])
-	require.Equal(t, "45s", gotBody.Configuration.Env["TIMEOUT"])
-	require.Empty(t, gotBody.Configuration.Files)
+	require.Equal(t, "stripe", gotBody.ConnectionConfiguration.Connector)
+	require.Equal(t, "main", gotBody.ConnectionConfiguration.Ledger)
+	require.Equal(t, "2.0.0", *gotBody.ConnectionConfiguration.Version)
+	require.Equal(t, "3s", *gotBody.ConnectionConfiguration.PollInterval)
+	require.Equal(t, "https://config.example", gotBody.ConnectionConfiguration.Env["API_URL"])
+	require.Equal(t, "file-token", gotBody.ConnectionConfiguration.Env["TOKEN"])
+	require.Equal(t, "45s", gotBody.ConnectionConfiguration.Env["TIMEOUT"])
+	require.Empty(t, gotBody.ConnectionConfiguration.Files)
 	require.Equal(t, `Connection "stripe-eu" installed with connector "stripe" for ledger "main".`, strings.TrimSpace(output))
 }
 
 func TestInstallWithoutSelectorUsesStableHeadForTheSchema(t *testing.T) {
 	var gotVersion string
-	var gotBody connectivityclient.ConnectionCreate
+	var gotBody connectivity.ConnectionCreate
 	client := mutationClientMock{
 		connectorVersions: connectorVersions{
 			getVersion: func(_ context.Context, _, version string) (*connectivity.ConnectorVersion, error) {
@@ -89,9 +96,9 @@ func TestInstallWithoutSelectorUsesStableHeadForTheSchema(t *testing.T) {
 				return versionWithOptionalSchema(), nil
 			},
 		},
-		create: func(_ context.Context, body connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
+		create: func(_ context.Context, body connectivity.ConnectionCreate) (*connectivity.Connection, error) {
 			gotBody = body
-			return &connectivityclient.Connection{Name: body.Name, Configuration: body.Configuration}, nil
+			return &connectivity.Connection{Name: body.Name, ConnectionConfiguration: createdConfiguration(body.ConnectionConfiguration)}, nil
 		},
 	}
 
@@ -103,13 +110,13 @@ func TestInstallWithoutSelectorUsesStableHeadForTheSchema(t *testing.T) {
 	require.NoError(t, err)
 	// The default stable schema and the explicit wire selector must agree.
 	require.Equal(t, "stable", gotVersion)
-	require.Nil(t, gotBody.Configuration.Version)
-	require.Equal(t, "stable", *gotBody.Configuration.Channel, "the CLI sends its default explicitly")
+	require.Nil(t, gotBody.ConnectionConfiguration.Version)
+	require.Equal(t, "stable", string(*gotBody.ConnectionConfiguration.Channel), "the CLI sends its default explicitly")
 }
 
 func TestInstallWithChannelFlagTracksTheChannelAndUsesItsHeadForTheSchema(t *testing.T) {
 	var gotVersion string
-	var gotBody connectivityclient.ConnectionCreate
+	var gotBody connectivity.ConnectionCreate
 	client := mutationClientMock{
 		connectorVersions: connectorVersions{
 			getVersion: func(_ context.Context, _, version string) (*connectivity.ConnectorVersion, error) {
@@ -117,9 +124,9 @@ func TestInstallWithChannelFlagTracksTheChannelAndUsesItsHeadForTheSchema(t *tes
 				return versionWithOptionalSchema(), nil
 			},
 		},
-		create: func(_ context.Context, body connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
+		create: func(_ context.Context, body connectivity.ConnectionCreate) (*connectivity.Connection, error) {
 			gotBody = body
-			return &connectivityclient.Connection{Name: body.Name, Configuration: body.Configuration}, nil
+			return &connectivity.Connection{Name: body.Name, ConnectionConfiguration: createdConfiguration(body.ConnectionConfiguration)}, nil
 		},
 	}
 
@@ -130,15 +137,15 @@ func TestInstallWithChannelFlagTracksTheChannelAndUsesItsHeadForTheSchema(t *tes
 
 	require.NoError(t, err)
 	require.Equal(t, "stable", gotVersion, "the channel alias resolves the schema exactly as installation will")
-	require.NotNil(t, gotBody.Configuration.Channel)
-	require.Equal(t, "stable", *gotBody.Configuration.Channel)
-	require.Nil(t, gotBody.Configuration.Version)
+	require.NotNil(t, gotBody.ConnectionConfiguration.Channel)
+	require.Equal(t, "stable", string(*gotBody.ConnectionConfiguration.Channel))
+	require.Nil(t, gotBody.ConnectionConfiguration.Version)
 }
 
 func TestInstallReportsPrereleaseOnlyCataloguesAsMissingStableVersion(t *testing.T) {
 	client := mutationClientMock{connectorVersions: connectorVersions{
 		getVersion: func(context.Context, string, string) (*connectivity.ConnectorVersion, error) {
-			return nil, &connectivityclient.APIError{StatusCode: 404, Code: "channel_empty", Message: "only v2.0.0-beta.1 is published"}
+			return nil, &connectivityinternal.APIError{StatusCode: 404, Code: "channel_empty", Message: "only v2.0.0-beta.1 is published"}
 		},
 	}}
 
@@ -148,11 +155,11 @@ func TestInstallReportsPrereleaseOnlyCataloguesAsMissingStableVersion(t *testing
 }
 
 func TestInstallDefaultsNameToConnectorAndOmitsUnsetOptionalData(t *testing.T) {
-	var gotBody connectivityclient.ConnectionCreate
+	var gotBody connectivity.ConnectionCreate
 	client := mutationClientMock{
-		create: func(_ context.Context, body connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
+		create: func(_ context.Context, body connectivity.ConnectionCreate) (*connectivity.Connection, error) {
 			gotBody = body
-			return &connectivityclient.Connection{Name: body.Name, Configuration: body.Configuration}, nil
+			return &connectivity.Connection{Name: body.Name, ConnectionConfiguration: createdConfiguration(body.ConnectionConfiguration)}, nil
 		},
 	}
 
@@ -160,17 +167,17 @@ func TestInstallDefaultsNameToConnectorAndOmitsUnsetOptionalData(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, "wise", gotBody.Name)
-	require.Nil(t, gotBody.Configuration.Version)
-	require.Equal(t, "stable", *gotBody.Configuration.Channel)
-	require.Nil(t, gotBody.Configuration.InitialCursor)
-	require.Nil(t, gotBody.Configuration.PollInterval)
-	require.Empty(t, gotBody.Configuration.Env)
-	require.Empty(t, gotBody.Configuration.Files)
+	require.Nil(t, gotBody.ConnectionConfiguration.Version)
+	require.Equal(t, "stable", string(*gotBody.ConnectionConfiguration.Channel))
+	require.Nil(t, gotBody.ConnectionConfiguration.InitialCursor)
+	require.Nil(t, gotBody.ConnectionConfiguration.PollInterval)
+	require.Empty(t, gotBody.ConnectionConfiguration.Env)
+	require.Empty(t, gotBody.ConnectionConfiguration.Files)
 }
 
 func TestInstallRequiresLedgerBeforeUsingClient(t *testing.T) {
 	usedClient := false
-	factory := func(*cobra.Command) (connectivityclient.Client, error) {
+	factory := func(*cobra.Command) (connectivityinternal.API, error) {
 		usedClient = true
 		return nil, errors.New("client must not be used")
 	}
@@ -184,7 +191,7 @@ func TestInstallRequiresLedgerBeforeUsingClient(t *testing.T) {
 func TestInstallConfirmationRejectionPreventsCreate(t *testing.T) {
 	created := false
 	client := mutationClientMock{
-		create: func(context.Context, connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
+		create: func(context.Context, connectivity.ConnectionCreate) (*connectivity.Connection, error) {
 			created = true
 			return nil, errors.New("CreateConnection must not be called")
 		},
@@ -208,7 +215,7 @@ func TestInstallValidationErrorPreventsCreate(t *testing.T) {
 				return versionWithOptionalSchema(), nil
 			},
 		},
-		create: func(context.Context, connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
+		create: func(context.Context, connectivity.ConnectionCreate) (*connectivity.Connection, error) {
 			created = true
 			return nil, errors.New("CreateConnection must not be called")
 		},
@@ -224,8 +231,8 @@ func TestInstallValidationErrorPreventsCreate(t *testing.T) {
 }
 
 func TestInstallPreservesVersionAndCreateAPIErrorsAndRejectsEmptyResponses(t *testing.T) {
-	versionError := &connectivityclient.APIError{StatusCode: 404, Code: "CONNECTOR_NOT_FOUND", Message: "missing"}
-	createError := &connectivityclient.APIError{StatusCode: 409, Code: "CONNECTORINSTANCE_EXISTS", Message: "duplicate"}
+	versionError := &connectivityinternal.APIError{StatusCode: 404, Code: "CONNECTOR_NOT_FOUND", Message: "missing"}
+	createError := &connectivityinternal.APIError{StatusCode: 409, Code: "CONNECTORINSTANCE_EXISTS", Message: "duplicate"}
 	tests := map[string]struct {
 		client mutationClientMock
 		want   error
@@ -247,7 +254,7 @@ func TestInstallPreservesVersionAndCreateAPIErrorsAndRejectsEmptyResponses(t *te
 		},
 		"create API": {
 			client: mutationClientMock{
-				create: func(context.Context, connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
+				create: func(context.Context, connectivity.ConnectionCreate) (*connectivity.Connection, error) {
 					return nil, createError
 				},
 			},
@@ -255,7 +262,7 @@ func TestInstallPreservesVersionAndCreateAPIErrorsAndRejectsEmptyResponses(t *te
 		},
 		"empty create": {
 			client: mutationClientMock{
-				create: func(context.Context, connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
+				create: func(context.Context, connectivity.ConnectionCreate) (*connectivity.Connection, error) {
 					return nil, nil
 				},
 			},
@@ -279,11 +286,11 @@ func TestInstallPreservesVersionAndCreateAPIErrorsAndRejectsEmptyResponses(t *te
 
 func TestInstallJSONStoresCompleteReturnedConnection(t *testing.T) {
 	returned := instanceFixture("stripe-eu")
-	setInstanceConfig(&returned, &connectivityclient.ConnectionConfig{Env: map[string]string{
+	setInstanceConfig(&returned, &connectivity.ConnectionConfiguration{Env: map[string]string{
 		"TOKEN": "preserved-in-json",
 	}})
 	client := mutationClientMock{
-		create: func(context.Context, connectivityclient.ConnectionCreate) (*connectivityclient.Connection, error) {
+		create: func(context.Context, connectivity.ConnectionCreate) (*connectivity.Connection, error) {
 			return &returned, nil
 		},
 	}
@@ -318,7 +325,7 @@ func TestInstallRegistersAliasesAndRootIntegration(t *testing.T) {
 func TestInstallWiresChannelCompletionFromCapabilities(t *testing.T) {
 	client := mutationClientMock{capabilities: func(context.Context) (*connectivity.QueryCapabilities, error) {
 		return &connectivity.QueryCapabilities{Resources: map[string]map[string]connectivity.QueryFieldCapability{
-			connectivityclient.ResourceConnections: {
+			connectivityinternal.ResourceConnections: {
 				"channel": {Operators: []string{"$match"}, Enum: []string{"stable", "rc", "beta", "alpha"}},
 			},
 		}}, nil
@@ -344,12 +351,12 @@ func TestInstallWiresConnectorVersionSetAndFileCompletions(t *testing.T) {
 		Description: stringPtr("Stripe ingestion"),
 	}
 	client := mutationClientMock{
-		listConnectors: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
-			require.Equal(t, connectivityclient.ListOptions{PageSize: 100}, options)
-			return &connectivityclient.ConnectorList{Items: []connectivity.Connector{connector}}, nil
+		listConnectors: func(_ context.Context, options connectivityinternal.ListOptions) (*testConnectorList, error) {
+			require.Equal(t, connectivityinternal.ListOptions{PageSize: 100}, options)
+			return &testConnectorList{Items: []connectivity.Connector{connector}}, nil
 		},
 		connectorVersions: connectorVersions{
-			listVersions: func(ctx context.Context, name string, options connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
+			listVersions: func(ctx context.Context, name string, options connectivityinternal.ListOptions) (*testConnectorVersionList, error) {
 				require.True(t, connectivityinternal.IsNonInteractive(ctx))
 				require.Equal(t, "stripe", name)
 				require.Equal(t, int32(100), options.PageSize)
@@ -367,7 +374,7 @@ func TestInstallWiresConnectorVersionSetAndFileCompletions(t *testing.T) {
 		pathPrefix = prefix
 		return []string{"fixtures/token.txt"}, nil
 	}
-	factory := func(cmd *cobra.Command) (connectivityclient.Client, error) {
+	factory := func(cmd *cobra.Command) (connectivityinternal.API, error) {
 		require.True(t, connectivityinternal.IsNonInteractive(cmd.Context()))
 		return client, nil
 	}

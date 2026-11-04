@@ -5,33 +5,31 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
 )
 
 func TestCollectPagesRejectsDishonestCursorEnvelopes(t *testing.T) {
 	tests := map[string]struct {
 		maxPages int
-		fetch    func(connectivityclient.ListOptions) ([]string, bool, string, error)
+		fetch    func(ListOptions) ([]string, bool, string, error)
 		want     string
 	}{
 		"has more without next cursor": {
 			maxPages: 2,
-			fetch: func(connectivityclient.ListOptions) ([]string, bool, string, error) {
+			fetch: func(ListOptions) ([]string, bool, string, error) {
 				return []string{"one"}, true, "", nil
 			},
 			want: "hasMore",
 		},
 		"repeated cursor": {
 			maxPages: 3,
-			fetch: func(options connectivityclient.ListOptions) ([]string, bool, string, error) {
+			fetch: func(options ListOptions) ([]string, bool, string, error) {
 				return []string{options.Cursor}, true, "again", nil
 			},
 			want: "repeated",
 		},
 		"bounded before final page": {
 			maxPages: 1,
-			fetch: func(connectivityclient.ListOptions) ([]string, bool, string, error) {
+			fetch: func(ListOptions) ([]string, bool, string, error) {
 				return []string{"one"}, true, "next", nil
 			},
 			want: "maximum",
@@ -49,7 +47,7 @@ func TestCollectPagesRejectsDishonestCursorEnvelopes(t *testing.T) {
 }
 
 func TestCollectPagesBoundedReturnsUsefulCompletionPrefix(t *testing.T) {
-	items, err := CollectPagesBounded(100, 1, func(options connectivityclient.ListOptions) ([]string, bool, string, error) {
+	items, err := CollectPagesBounded(100, 1, func(options ListOptions) ([]string, bool, string, error) {
 		return []string{options.Cursor + "candidate"}, true, "later", nil
 	})
 

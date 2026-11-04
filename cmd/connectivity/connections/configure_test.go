@@ -12,41 +12,52 @@ import (
 	"github.com/stretchr/testify/require"
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type configureClientMock struct {
 	connectorVersions
-	listInstances func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectionList, error)
-	getInstance   func(context.Context, string) (*connectivityclient.Connection, error)
-	patch         func(context.Context, string, connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error)
+	listInstances func(context.Context, connectivityinternal.ListOptions) (*testConnectionList, error)
+	getInstance   func(context.Context, string) (*connectivity.Connection, error)
+	patch         func(context.Context, string, map[string]any) (*connectivity.Connection, error)
 }
 
-func (m configureClientMock) ListConnections(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectionList, error) {
-	return m.listInstances(ctx, options)
+func (m configureClientMock) ListConnections(ctx context.Context, request operations.ListConnectionsRequest, security *operations.ListConnectionsSecurity, opts ...operations.Option) (*operations.ListConnectionsResponse, error) {
+	data, err := m.listInstances(ctx, listOptions(request.PageSize, request.Cursor, request.Query))
+	response := &operations.ListConnectionsResponse{StatusCode: 200}
+	if data != nil {
+		response.ConnectionCursor = &connectivity.ConnectionCursor{Cursor: connectivity.Cursor{Data: data.Items, HasMore: data.HasMore, Next: connectivityinternal.OptionalString(data.Next), PageSize: int(data.PageSize)}}
+	}
+	return response, err
 }
 
-func (m configureClientMock) GetConnection(ctx context.Context, name string) (*connectivityclient.Connection, error) {
-	return m.getInstance(ctx, name)
+func (m configureClientMock) GetConnection(ctx context.Context, request operations.GetConnectionRequest, security *operations.GetConnectionSecurity, opts ...operations.Option) (*operations.GetConnectionResponse, error) {
+	data, err := m.getInstance(ctx, request.Name)
+	return &operations.GetConnectionResponse{StatusCode: 200, Connection: data}, err
 }
 
-func (m configureClientMock) PatchConnection(ctx context.Context, name string, patch connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
-	return m.patch(ctx, name, patch)
+func (m configureClientMock) PatchConnection(ctx context.Context, request operations.PatchConnectionRequest, security *operations.PatchConnectionSecurity, opts ...operations.Option) (*operations.PatchConnectionResponse, error) {
+	patch, err := sdkPatchBody(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	data, err := m.patch(ctx, request.Name, patch)
+	return &operations.PatchConnectionResponse{StatusCode: 200, Connection: data}, err
 }
 
 func TestConfigureBuildsNestedPatchFromCurrentConfigAndChangedScalars(t *testing.T) {
 	current := instanceFixture("stripe-eu")
-	setInstanceConfig(&current, &connectivityclient.ConnectionConfig{
+	setInstanceConfig(&current, &connectivity.ConnectionConfiguration{
 		Env:   map[string]string{"API_URL": "https://current.example"},
 		Files: map[string]string{"/etc/a": "old", "/etc/b": "kept"},
 	})
 	returned := instanceFixture("stripe-eu")
 	var order []string
-	var gotPatch connectivityclient.ConnectionPatch
+	var gotPatch map[string]any
 	client := configureClientMock{
-		getInstance: func(_ context.Context, name string) (*connectivityclient.Connection, error) {
+		getInstance: func(_ context.Context, name string) (*connectivity.Connection, error) {
 			order = append(order, "instance:"+name)
 			return &current, nil
 		},
@@ -56,7 +67,7 @@ func TestConfigureBuildsNestedPatchFromCurrentConfigAndChangedScalars(t *testing
 				return versionWithFileSchema(), nil
 			},
 		},
-		patch: func(_ context.Context, name string, patch connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
+		patch: func(_ context.Context, name string, patch map[string]any) (*connectivity.Connection, error) {
 			order = append(order, "patch:"+name)
 			gotPatch = patch
 			return &returned, nil
@@ -90,18 +101,18 @@ func TestConfigureBuildsNestedPatchFromCurrentConfigAndChangedScalars(t *testing
 
 func TestConfigureWithoutVersionFlagUsesTheInstancePin(t *testing.T) {
 	current := instanceFixture("stripe-eu")
-	current.Configuration.Version = stringPtr("1.4.2")
-	setInstanceConfig(&current, &connectivityclient.ConnectionConfig{})
+	current.ConnectionConfiguration.Version = stringPtr("1.4.2")
+	setInstanceConfig(&current, &connectivity.ConnectionConfiguration{})
 	var gotVersion string
 	client := configureClientMock{
-		getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
+		getInstance: func(context.Context, string) (*connectivity.Connection, error) { return &current, nil },
 		connectorVersions: connectorVersions{
 			getVersion: func(_ context.Context, _, version string) (*connectivity.ConnectorVersion, error) {
 				gotVersion = version
 				return versionWithFileSchema(), nil
 			},
 		},
-		patch: func(context.Context, string, connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
+		patch: func(context.Context, string, map[string]any) (*connectivity.Connection, error) {
 			return &current, nil
 		},
 	}
@@ -117,12 +128,12 @@ func TestConfigureWithoutVersionFlagUsesTheInstancePin(t *testing.T) {
 
 func TestConfigureRequiresStoredOrExplicitSelector(t *testing.T) {
 	current := instanceFixture("stripe-eu")
-	current.Configuration.Version = nil
-	current.Configuration.Channel = nil
-	current.Status.AppliedVersion = stringPtr("1.9.9")
+	current.ConnectionConfiguration.Version = nil
+	current.ConnectionConfiguration.Channel = nil
+	current.ConnectionStatus.AppliedVersion = stringPtr("1.9.9")
 	client := configureClientMock{
-		getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
-		patch: func(context.Context, string, connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
+		getInstance: func(context.Context, string) (*connectivity.Connection, error) { return &current, nil },
+		patch: func(context.Context, string, map[string]any) (*connectivity.Connection, error) {
 			t.Fatal("missing selector must not patch")
 			return nil, nil
 		},
@@ -133,9 +144,9 @@ func TestConfigureRequiresStoredOrExplicitSelector(t *testing.T) {
 
 func TestConfigureRequiresUnambiguousStoredSelector(t *testing.T) {
 	current := instanceFixture("stripe-eu")
-	current.Configuration.Channel = stringPtr("stable")
+	current.ConnectionConfiguration.Channel = ptr(connectivity.Channel("stable"))
 	client := configureClientMock{
-		getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
+		getInstance: func(context.Context, string) (*connectivity.Connection, error) { return &current, nil },
 	}
 	_, err := executeCommand(NewConfigureCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "stripe-eu", "--set=/etc/a=kept", "--confirm")
 	require.ErrorContains(t, err, "conflicting version/channel selectors")
@@ -143,24 +154,24 @@ func TestConfigureRequiresUnambiguousStoredSelector(t *testing.T) {
 
 func TestConfigureChannelTracksTheResolvedSameMajorHeadAcrossPages(t *testing.T) {
 	current := instanceFixture("stripe-eu")
-	current.Configuration.Version = stringPtr("v1.0.0")
-	current.Configuration.Channel = stringPtr("stable")
-	current.Status.AppliedVersion = stringPtr("v1.0.0")
-	setInstanceConfig(&current, &connectivityclient.ConnectionConfig{})
+	current.ConnectionConfiguration.Version = stringPtr("v1.0.0")
+	current.ConnectionConfiguration.Channel = ptr(connectivity.Channel("stable"))
+	current.ConnectionStatus.AppliedVersion = stringPtr("v1.0.0")
+	setInstanceConfig(&current, &connectivity.ConnectionConfiguration{})
 	var gotVersion string
-	var gotPatch connectivityclient.ConnectionPatch
+	var gotPatch map[string]any
 	client := configureClientMock{
-		getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
+		getInstance: func(context.Context, string) (*connectivity.Connection, error) { return &current, nil },
 		connectorVersions: connectorVersions{
-			listVersions: func(_ context.Context, _ string, options connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
+			listVersions: func(_ context.Context, _ string, options connectivityinternal.ListOptions) (*testConnectorVersionList, error) {
 				switch options.Cursor {
 				case "":
-					return &connectivityclient.ConnectorVersionList{Items: []connectivity.ConnectorVersionSummary{
+					return &testConnectorVersionList{Items: []connectivity.ConnectorVersionSummary{
 						{Version: "v1.1.0"},
 						{Version: "v1.2.0-beta.1"},
 					}, HasMore: true, Next: "second"}, nil
 				case "second":
-					return &connectivityclient.ConnectorVersionList{Items: []connectivity.ConnectorVersionSummary{
+					return &testConnectorVersionList{Items: []connectivity.ConnectorVersionSummary{
 						{Version: "v1.3.0"},
 						{Version: "v2.0.0"},
 					}}, nil
@@ -174,7 +185,7 @@ func TestConfigureChannelTracksTheResolvedSameMajorHeadAcrossPages(t *testing.T)
 				return versionWithFileSchema(), nil
 			},
 		},
-		patch: func(_ context.Context, _ string, patch connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
+		patch: func(_ context.Context, _ string, patch map[string]any) (*connectivity.Connection, error) {
 			gotPatch = patch
 			return &current, nil
 		},
@@ -196,14 +207,14 @@ func TestConfigureChannelTracksTheResolvedSameMajorHeadAcrossPages(t *testing.T)
 func TestConfigureChannelUsesAppliedVersionForImmutableConnector(t *testing.T) {
 	for _, applied := range []*string{stringPtr("v1.2.0"), nil} {
 		current := instanceFixture("stripe-eu")
-		current.Configuration.Version = stringPtr("v1.0.0")
-		current.Status.AppliedVersion = applied
+		current.ConnectionConfiguration.Version = stringPtr("v1.0.0")
+		current.ConnectionStatus.AppliedVersion = applied
 		patched := false
-		client := configureClientMock{getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil }, connectorVersions: connectorVersions{listVersions: func(context.Context, string, connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
-			return &connectivityclient.ConnectorVersionList{Items: []connectivity.ConnectorVersionSummary{{Version: "v1.1.0"}}}, nil
+		client := configureClientMock{getInstance: func(context.Context, string) (*connectivity.Connection, error) { return &current, nil }, connectorVersions: connectorVersions{listVersions: func(context.Context, string, connectivityinternal.ListOptions) (*testConnectorVersionList, error) {
+			return &testConnectorVersionList{Items: []connectivity.ConnectorVersionSummary{{Version: "v1.1.0"}}}, nil
 		}, getVersion: func(context.Context, string, string) (*connectivity.ConnectorVersion, error) {
 			return versionWithFileSchema(), nil
-		}}, patch: func(context.Context, string, connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
+		}}, patch: func(context.Context, string, map[string]any) (*connectivity.Connection, error) {
 			patched = true
 			return &current, nil
 		}}
@@ -220,12 +231,12 @@ func TestConfigureChannelUsesAppliedVersionForImmutableConnector(t *testing.T) {
 
 func TestConfigureOmitsUnchangedScalarsAndStoresCompleteReturnedInstance(t *testing.T) {
 	current := instanceFixture("stripe-eu")
-	setInstanceConfig(&current, &connectivityclient.ConnectionConfig{})
+	setInstanceConfig(&current, &connectivity.ConnectionConfiguration{})
 	returned := instanceFixture("stripe-eu")
-	var gotPatch connectivityclient.ConnectionPatch
+	var gotPatch map[string]any
 	client := configureClientMock{
-		getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
-		patch: func(_ context.Context, _ string, patch connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
+		getInstance: func(context.Context, string) (*connectivity.Connection, error) { return &current, nil },
+		patch: func(_ context.Context, _ string, patch map[string]any) (*connectivity.Connection, error) {
 			gotPatch = patch
 			return &returned, nil
 		},
@@ -236,7 +247,7 @@ func TestConfigureOmitsUnchangedScalarsAndStoresCompleteReturnedInstance(t *test
 	output, err := executeCommand(command, "stripe-eu", "--poll-interval=30s", "--confirm", "--output=json")
 
 	require.NoError(t, err)
-	require.Equal(t, connectivityclient.ConnectionPatch{"configuration": map[string]any{"pollInterval": "30s"}}, gotPatch)
+	require.Equal(t, map[string]any{"configuration": map[string]any{"pollInterval": "30s"}}, gotPatch)
 	var envelope struct {
 		Data ConfigureStore `json:"data"`
 	}
@@ -248,8 +259,8 @@ func TestConfigureRejectsNoChangesWithoutPatch(t *testing.T) {
 	current := instanceFixture("stripe-eu")
 	patched := false
 	client := configureClientMock{
-		getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
-		patch: func(context.Context, string, connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
+		getInstance: func(context.Context, string) (*connectivity.Connection, error) { return &current, nil },
+		patch: func(context.Context, string, map[string]any) (*connectivity.Connection, error) {
 			patched = true
 			return nil, errors.New("PatchConnection must not be called")
 		},
@@ -265,8 +276,8 @@ func TestConfigureConfirmationRejectionPreventsPatch(t *testing.T) {
 	current := instanceFixture("stripe-eu")
 	patched := false
 	client := configureClientMock{
-		getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
-		patch: func(context.Context, string, connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
+		getInstance: func(context.Context, string) (*connectivity.Connection, error) { return &current, nil },
+		patch: func(context.Context, string, map[string]any) (*connectivity.Connection, error) {
 			patched = true
 			return nil, errors.New("PatchConnection must not be called")
 		},
@@ -287,13 +298,13 @@ func TestConfigureValidationAndArgumentsPreventPatch(t *testing.T) {
 		current := instanceFixture("stripe-eu")
 		patched := false
 		client := configureClientMock{
-			getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
+			getInstance: func(context.Context, string) (*connectivity.Connection, error) { return &current, nil },
 			connectorVersions: connectorVersions{
 				getVersion: func(context.Context, string, string) (*connectivity.ConnectorVersion, error) {
 					return versionWithFileSchema(), nil
 				},
 			},
-			patch: func(context.Context, string, connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
+			patch: func(context.Context, string, map[string]any) (*connectivity.Connection, error) {
 				patched = true
 				return nil, errors.New("PatchConnection must not be called")
 			},
@@ -307,7 +318,7 @@ func TestConfigureValidationAndArgumentsPreventPatch(t *testing.T) {
 
 	t.Run("invalid arguments", func(t *testing.T) {
 		usedFactory := false
-		factory := func(*cobra.Command) (connectivityclient.Client, error) {
+		factory := func(*cobra.Command) (connectivityinternal.API, error) {
 			usedFactory = true
 			return nil, errors.New("factory must not be used")
 		}
@@ -321,9 +332,9 @@ func TestConfigureValidationAndArgumentsPreventPatch(t *testing.T) {
 }
 
 func TestConfigurePreservesGetAndPatchAPIErrorsAndRejectsEmptyResponses(t *testing.T) {
-	instanceError := &connectivityclient.APIError{StatusCode: 404, Code: "CONNECTORINSTANCE_NOT_FOUND", Message: "missing"}
-	versionError := &connectivityclient.APIError{StatusCode: 404, Code: "CONNECTORVERSION_NOT_FOUND", Message: "missing"}
-	patchError := &connectivityclient.APIError{StatusCode: 409, Code: "CONFLICT", Message: "stale"}
+	instanceError := &connectivityinternal.APIError{StatusCode: 404, Code: "CONNECTORINSTANCE_NOT_FOUND", Message: "missing"}
+	versionError := &connectivityinternal.APIError{StatusCode: 404, Code: "CONNECTORVERSION_NOT_FOUND", Message: "missing"}
+	patchError := &connectivityinternal.APIError{StatusCode: 409, Code: "CONFLICT", Message: "stale"}
 	current := instanceFixture("stripe-eu")
 	tests := map[string]struct {
 		client configureClientMock
@@ -332,18 +343,18 @@ func TestConfigurePreservesGetAndPatchAPIErrorsAndRejectsEmptyResponses(t *testi
 		text   string
 	}{
 		"instance API": {
-			client: configureClientMock{getInstance: func(context.Context, string) (*connectivityclient.Connection, error) {
+			client: configureClientMock{getInstance: func(context.Context, string) (*connectivity.Connection, error) {
 				return nil, instanceError
 			}},
 			want: instanceError,
 		},
 		"empty instance": {
-			client: configureClientMock{getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return nil, nil }},
+			client: configureClientMock{getInstance: func(context.Context, string) (*connectivity.Connection, error) { return nil, nil }},
 			text:   "empty response",
 		},
 		"version API": {
 			client: configureClientMock{
-				getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
+				getInstance: func(context.Context, string) (*connectivity.Connection, error) { return &current, nil },
 				connectorVersions: connectorVersions{
 					getVersion: func(context.Context, string, string) (*connectivity.ConnectorVersion, error) {
 						return nil, versionError
@@ -355,7 +366,7 @@ func TestConfigurePreservesGetAndPatchAPIErrorsAndRejectsEmptyResponses(t *testi
 		},
 		"empty version": {
 			client: configureClientMock{
-				getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
+				getInstance: func(context.Context, string) (*connectivity.Connection, error) { return &current, nil },
 				connectorVersions: connectorVersions{
 					getVersion: func(context.Context, string, string) (*connectivity.ConnectorVersion, error) { return nil, nil },
 				},
@@ -365,8 +376,8 @@ func TestConfigurePreservesGetAndPatchAPIErrorsAndRejectsEmptyResponses(t *testi
 		},
 		"patch API": {
 			client: configureClientMock{
-				getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
-				patch: func(context.Context, string, connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
+				getInstance: func(context.Context, string) (*connectivity.Connection, error) { return &current, nil },
+				patch: func(context.Context, string, map[string]any) (*connectivity.Connection, error) {
 					return nil, patchError
 				},
 			},
@@ -374,8 +385,8 @@ func TestConfigurePreservesGetAndPatchAPIErrorsAndRejectsEmptyResponses(t *testi
 		},
 		"empty patch": {
 			client: configureClientMock{
-				getInstance: func(context.Context, string) (*connectivityclient.Connection, error) { return &current, nil },
-				patch: func(context.Context, string, connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
+				getInstance: func(context.Context, string) (*connectivity.Connection, error) { return &current, nil },
+				patch: func(context.Context, string, map[string]any) (*connectivity.Connection, error) {
 					return nil, nil
 				},
 			},
@@ -402,17 +413,17 @@ func TestConfigureRegistersAliasesRootAndCompletions(t *testing.T) {
 	current := instanceFixture("stripe-eu")
 	var pathPrefix string
 	client := configureClientMock{
-		listInstances: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectionList, error) {
-			require.Equal(t, connectivityclient.ListOptions{PageSize: 100}, options)
-			return &connectivityclient.ConnectionList{Items: []connectivityclient.Connection{current}}, nil
+		listInstances: func(_ context.Context, options connectivityinternal.ListOptions) (*testConnectionList, error) {
+			require.Equal(t, connectivityinternal.ListOptions{PageSize: 100}, options)
+			return &testConnectionList{Items: []connectivity.Connection{current}}, nil
 		},
-		getInstance: func(ctx context.Context, name string) (*connectivityclient.Connection, error) {
+		getInstance: func(ctx context.Context, name string) (*connectivity.Connection, error) {
 			require.True(t, connectivityinternal.IsNonInteractive(ctx))
 			require.Equal(t, "stripe-eu", name)
 			return &current, nil
 		},
 		connectorVersions: connectorVersions{
-			listVersions: func(ctx context.Context, name string, _ connectivityclient.ListOptions) (*connectivityclient.ConnectorVersionList, error) {
+			listVersions: func(ctx context.Context, name string, _ connectivityinternal.ListOptions) (*testConnectorVersionList, error) {
 				require.True(t, connectivityinternal.IsNonInteractive(ctx))
 				require.Equal(t, "stripe", name)
 				return versionListFixture(), nil
@@ -424,7 +435,7 @@ func TestConfigureRegistersAliasesRootAndCompletions(t *testing.T) {
 			},
 		},
 	}
-	factory := func(cmd *cobra.Command) (connectivityclient.Client, error) {
+	factory := func(cmd *cobra.Command) (connectivityinternal.API, error) {
 		require.True(t, connectivityinternal.IsNonInteractive(cmd.Context()))
 		return client, nil
 	}
@@ -481,7 +492,7 @@ func TestConfigureRejectsBindingFlagsBeforeClientUse(t *testing.T) {
 	for _, flag := range []string{"connector", "ledger"} {
 		t.Run(flag, func(t *testing.T) {
 			usedFactory := false
-			factory := func(*cobra.Command) (connectivityclient.Client, error) {
+			factory := func(*cobra.Command) (connectivityinternal.API, error) {
 				usedFactory = true
 				return nil, errors.New("client must not be used")
 			}

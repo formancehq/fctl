@@ -10,16 +10,16 @@ import (
 
 	"github.com/spf13/cobra"
 
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
+	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 )
 
 func TestListConnectorsPassesPaginationAndRendersApprovedColumnsAndContinuation(t *testing.T) {
-	var gotOptions connectivityclient.ListOptions
-	client := connectorClientMock{list: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
+	var gotOptions connectivityinternal.ListOptions
+	client := connectorClientMock{list: func(_ context.Context, options connectivityinternal.ListOptions) (*connectorPage, error) {
 		gotOptions = options
-		return &connectivityclient.ConnectorList{
+		return &connectorPage{
 			Items:    []connectivity.Connector{connectorFixture("stripe")},
 			PageSize: 7,
 			HasMore:  true,
@@ -33,7 +33,7 @@ func TestListConnectorsPassesPaginationAndRendersApprovedColumnsAndContinuation(
 		t.Fatalf("execute list command: %v", err)
 	}
 
-	wantOptions := connectivityclient.ListOptions{PageSize: 7, Cursor: "current-page"}
+	wantOptions := connectivityinternal.ListOptions{PageSize: 7, Cursor: "current-page"}
 	if !reflect.DeepEqual(gotOptions, wantOptions) {
 		t.Fatalf("ListConnectors options = %#v, want %#v", gotOptions, wantOptions)
 	}
@@ -56,10 +56,10 @@ func TestListConnectorsPassesPaginationAndRendersApprovedColumnsAndContinuation(
 }
 
 func TestListConnectorsBuildsQueryFromFilterFlags(t *testing.T) {
-	var gotOptions connectivityclient.ListOptions
-	client := connectorClientMock{list: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
+	var gotOptions connectivityinternal.ListOptions
+	client := connectorClientMock{list: func(_ context.Context, options connectivityinternal.ListOptions) (*connectorPage, error) {
 		gotOptions = options
-		return &connectivityclient.ConnectorList{Items: []connectivity.Connector{}}, nil
+		return &connectorPage{Items: []connectivity.Connector{}}, nil
 	}}
 
 	_, err := executeCommand(NewListCommand(factoryReturning(client)), "--filter", "catalog=ee", "--filter", "name=stripe")
@@ -74,10 +74,10 @@ func TestListConnectorsBuildsQueryFromFilterFlags(t *testing.T) {
 }
 
 func TestListConnectorsPassesRawQueryThrough(t *testing.T) {
-	var gotOptions connectivityclient.ListOptions
-	client := connectorClientMock{list: func(_ context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
+	var gotOptions connectivityinternal.ListOptions
+	client := connectorClientMock{list: func(_ context.Context, options connectivityinternal.ListOptions) (*connectorPage, error) {
 		gotOptions = options
-		return &connectivityclient.ConnectorList{Items: []connectivity.Connector{}}, nil
+		return &connectorPage{Items: []connectivity.Connector{}}, nil
 	}}
 	raw := `{"$exists":{"catalog":false}}`
 
@@ -92,7 +92,7 @@ func TestListConnectorsPassesRawQueryThrough(t *testing.T) {
 }
 
 func TestListConnectorsRejectsCombinedQueryAndFilter(t *testing.T) {
-	client := connectorClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
+	client := connectorClientMock{list: func(context.Context, connectivityinternal.ListOptions) (*connectorPage, error) {
 		t.Fatal("ListConnectors must not run with conflicting flags")
 		return nil, nil
 	}}
@@ -107,8 +107,8 @@ func TestListConnectorsRejectsCombinedQueryAndFilter(t *testing.T) {
 func TestListConnectorsJSONPreservesCompleteModelsAndContinuation(t *testing.T) {
 	connector := connectorFixture("stripe")
 	connector.ConnectorBranding.AccentColor = fctl.Ptr("#123456")
-	client := connectorClientMock{list: func(_ context.Context, _ connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
-		return &connectivityclient.ConnectorList{Items: []connectivity.Connector{connector}, PageSize: 4, HasMore: true, Next: "next-page"}, nil
+	client := connectorClientMock{list: func(_ context.Context, _ connectivityinternal.ListOptions) (*connectorPage, error) {
+		return &connectorPage{Items: []connectivity.Connector{connector}, PageSize: 4, HasMore: true, Next: "next-page"}, nil
 	}}
 
 	command := NewListCommand(factoryReturning(client))
@@ -156,23 +156,23 @@ func TestConnectorRootRegistersApprovedCommandsAndAliases(t *testing.T) {
 
 func TestListConnectorsReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
 	tests := map[string]struct {
-		factory func(*cobra.Command) (connectivityclient.Client, error)
+		factory func(*cobra.Command) (connectivityinternal.API, error)
 		want    string
 	}{
 		"factory": {
-			factory: func(*cobra.Command) (connectivityclient.Client, error) {
+			factory: func(*cobra.Command) (connectivityinternal.API, error) {
 				return nil, errors.New("authentication failed")
 			},
 			want: "authentication failed",
 		},
 		"API": {
-			factory: factoryReturning(connectorClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
+			factory: factoryReturning(connectorClientMock{list: func(context.Context, connectivityinternal.ListOptions) (*connectorPage, error) {
 				return nil, errors.New("catalog unavailable")
 			}}),
 			want: "catalog unavailable",
 		},
 		"empty response": {
-			factory: factoryReturning(connectorClientMock{list: func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectorList, error) {
+			factory: factoryReturning(connectorClientMock{list: func(context.Context, connectivityinternal.ListOptions) (*connectorPage, error) {
 				return nil, nil
 			}}),
 			want: "empty response",

@@ -11,22 +11,29 @@ import (
 	"github.com/stretchr/testify/require"
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type uninstallClientMock struct {
-	connectivityclient.Client
-	listInstances func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectionList, error)
+	connectivityinternal.API
+	listInstances func(context.Context, connectivityinternal.ListOptions) (*testConnectionList, error)
 	delete        func(context.Context, string) error
 }
 
-func (m uninstallClientMock) ListConnections(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectionList, error) {
-	return m.listInstances(ctx, options)
+func (m uninstallClientMock) ListConnections(ctx context.Context, request operations.ListConnectionsRequest, security *operations.ListConnectionsSecurity, opts ...operations.Option) (*operations.ListConnectionsResponse, error) {
+	data, err := m.listInstances(ctx, listOptions(request.PageSize, request.Cursor, request.Query))
+	response := &operations.ListConnectionsResponse{StatusCode: 200}
+	if data != nil {
+		response.ConnectionCursor = &connectivity.ConnectionCursor{Cursor: connectivity.Cursor{Data: data.Items, HasMore: data.HasMore, Next: connectivityinternal.OptionalString(data.Next), PageSize: int(data.PageSize)}}
+	}
+	return response, err
 }
 
-func (m uninstallClientMock) DeleteConnection(ctx context.Context, name string) error {
-	return m.delete(ctx, name)
+func (m uninstallClientMock) DeleteConnection(ctx context.Context, request operations.DeleteConnectionRequest, security *operations.DeleteConnectionSecurity, opts ...operations.Option) (*operations.DeleteConnectionResponse, error) {
+	err := m.delete(ctx, request.Name)
+	return &operations.DeleteConnectionResponse{StatusCode: 204}, err
 }
 
 func TestUninstallDeletesConfirmedConnectionAndRendersSuccess(t *testing.T) {
@@ -59,7 +66,7 @@ func TestUninstallConfirmationRejectionPreventsDelete(t *testing.T) {
 }
 
 func TestUninstallPreservesDeleteAPIError(t *testing.T) {
-	apiError := &connectivityclient.APIError{StatusCode: 404, Code: "CONNECTORINSTANCE_NOT_FOUND", Message: "missing"}
+	apiError := &connectivityinternal.APIError{StatusCode: 404, Code: "CONNECTORINSTANCE_NOT_FOUND", Message: "missing"}
 	client := uninstallClientMock{delete: func(context.Context, string) error { return apiError }}
 
 	_, err := executeCommand(NewUninstallCommand(factoryReturning(client)), "stripe-eu", "--confirm")
@@ -70,10 +77,10 @@ func TestUninstallPreservesDeleteAPIError(t *testing.T) {
 func TestUninstallRegistersAliasesRootAndConnectionCompletion(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
 	client := uninstallClientMock{
-		listInstances: func(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectionList, error) {
+		listInstances: func(ctx context.Context, options connectivityinternal.ListOptions) (*testConnectionList, error) {
 			require.True(t, connectivityinternal.IsNonInteractive(ctx))
-			require.Equal(t, connectivityclient.ListOptions{PageSize: 100}, options)
-			return &connectivityclient.ConnectionList{Items: []connectivityclient.Connection{instance}}, nil
+			require.Equal(t, connectivityinternal.ListOptions{PageSize: 100}, options)
+			return &testConnectionList{Items: []connectivity.Connection{instance}}, nil
 		},
 	}
 	command := NewUninstallCommand(factoryReturning(client))
@@ -96,7 +103,7 @@ func TestUninstallRegistersAliasesRootAndConnectionCompletion(t *testing.T) {
 
 func TestUninstallInvalidArgumentsDoNotDelete(t *testing.T) {
 	usedFactory := false
-	factory := func(*cobra.Command) (connectivityclient.Client, error) {
+	factory := func(*cobra.Command) (connectivityinternal.API, error) {
 		usedFactory = true
 		return nil, errors.New("factory must not be used")
 	}

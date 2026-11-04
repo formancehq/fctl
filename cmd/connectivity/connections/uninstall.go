@@ -2,11 +2,13 @@ package connections
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/spf13/cobra"
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type UninstallStore struct {
@@ -58,7 +60,14 @@ func (c *UninstallController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 	if !c.approve(cmd, "You are about to uninstall Connectivity connection %q", name) {
 		return nil, fctl.ErrMissingApproval
 	}
-	if err := client.DeleteConnection(cmd.Context(), name); err != nil {
+	response, err := client.DeleteConnection(cmd.Context(), operations.DeleteConnectionRequest{Name: url.PathEscape(name)}, nil)
+	if err != nil {
+		return nil, err
+	}
+	if response == nil {
+		return nil, fmt.Errorf("delete connectivity connection %q: empty response", name)
+	}
+	if err := connectivityinternal.ResponseError(response.StatusCode, response.Error); err != nil {
 		return nil, err
 	}
 	c.store.Name = name

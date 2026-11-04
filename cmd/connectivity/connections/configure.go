@@ -2,19 +2,21 @@ package connections
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/url"
 
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/v3/cmd/connectivity/connections/configuration"
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type ConfigureStore struct {
-	Connection connectivityclient.Connection `json:"connection"`
+	Connection connectivity.Connection `json:"connection"`
 }
 
 type ConfigureController struct {
@@ -65,29 +67,43 @@ func NewConfigureCommand(factory connectivityinternal.ClientFactory, read config
 	return command
 }
 
-func resolveConfigureConnector(ctx context.Context, client connectivityclient.Client, _ *cobra.Command, args []string) (string, error) {
+func resolveConfigureConnector(ctx context.Context, client connectivityinternal.API, _ *cobra.Command, args []string) (string, error) {
 	if len(args) == 0 {
 		return "", nil
 	}
-	instance, err := client.GetConnection(ctx, args[0])
-	if err != nil || instance == nil {
+	response, err := client.GetConnection(ctx, operations.GetConnectionRequest{Name: url.PathEscape(args[0])}, nil)
+	if err == nil && response != nil {
+		err = connectivityinternal.ResponseError(response.StatusCode, response.Error)
+	}
+	var instance *connectivity.Connection
+	if response != nil {
+		instance = response.Connection
+	}
+	if err != nil || instance == nil || instance.Name == "" {
 		return "", err
 	}
-	return instance.Configuration.ConnectorName(), nil
+	return stringValue(instance.ConnectionConfiguration.Connector), nil
 }
 
-func resolveConfigureConnectorVersion(ctx context.Context, client connectivityclient.Client, cmd *cobra.Command, args []string) (*connectivity.ConnectorVersion, error) {
+func resolveConfigureConnectorVersion(ctx context.Context, client connectivityinternal.API, cmd *cobra.Command, args []string) (*connectivity.ConnectorVersion, error) {
 	if err := validateSelectors(cmd); err != nil {
 		return nil, err
 	}
 	if len(args) == 0 {
 		return nil, nil
 	}
-	instance, err := client.GetConnection(ctx, args[0])
-	if err != nil || instance == nil {
+	response, err := client.GetConnection(ctx, operations.GetConnectionRequest{Name: url.PathEscape(args[0])}, nil)
+	if err == nil && response != nil {
+		err = connectivityinternal.ResponseError(response.StatusCode, response.Error)
+	}
+	var instance *connectivity.Connection
+	if response != nil {
+		instance = response.Connection
+	}
+	if err != nil || instance == nil || instance.Name == "" {
 		return nil, err
 	}
-	connector := instance.Configuration.ConnectorName()
+	connector := stringValue(instance.ConnectionConfiguration.Connector)
 	pinned, channel, err := configureVersionSelector(cmd, instance)
 	if err != nil {
 		return nil, err
@@ -98,13 +114,13 @@ func resolveConfigureConnectorVersion(ctx context.Context, client connectivitycl
 	return resolveConnectorVersion(ctx, client, connector, pinned)
 }
 
-func configureVersionSelector(cmd *cobra.Command, instance *connectivityclient.Connection) (string, string, error) {
+func configureVersionSelector(cmd *cobra.Command, instance *connectivity.Connection) (string, string, error) {
 	pinned, channel := "", ""
-	if instance != nil && instance.Configuration.Version != nil && *instance.Configuration.Version != "" {
-		pinned = *instance.Configuration.Version
+	if instance != nil && instance.ConnectionConfiguration.Version != nil && *instance.ConnectionConfiguration.Version != "" {
+		pinned = *instance.ConnectionConfiguration.Version
 	}
-	if instance != nil && instance.Configuration.Channel != nil && *instance.Configuration.Channel != "" {
-		channel = *instance.Configuration.Channel
+	if instance != nil && instance.ConnectionConfiguration.Channel != nil && *instance.ConnectionConfiguration.Channel != "" {
+		channel = string(*instance.ConnectionConfiguration.Channel)
 	}
 	if cmd.Flags().Changed(versionFlag) {
 		return fctl.GetString(cmd, versionFlag), "", nil
@@ -145,15 +161,22 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 	}
 
 	name := args[0]
-	instance, err := client.GetConnection(cmd.Context(), name)
+	response, err := client.GetConnection(cmd.Context(), operations.GetConnectionRequest{Name: url.PathEscape(name)}, nil)
+	if err == nil && response != nil {
+		err = connectivityinternal.ResponseError(response.StatusCode, response.Error)
+	}
+	var instance *connectivity.Connection
+	if response != nil {
+		instance = response.Connection
+	}
 	if err != nil {
 		return nil, err
 	}
-	if instance == nil {
+	if instance == nil || instance.Name == "" {
 		return nil, fmt.Errorf("configure connectivity connection %q: empty response", name)
 	}
 
-	connector := instance.Configuration.ConnectorName()
+	connector := stringValue(instance.ConnectionConfiguration.Connector)
 	specPatch := map[string]any{}
 	configChanged := cmd.Flags().Changed(configFlag) || cmd.Flags().Changed(envFileFlag) || cmd.Flags().Changed(setFlag)
 	if configChanged {
@@ -179,7 +202,7 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 			return nil, err
 		}
 		intent := map[string]any{}
-		_, err = configuration.BuildConfigureConfig(cmd, version, instance.Configuration.Configuration(), configuration.InputOptions{
+		_, err = configuration.BuildConfigureConfig(cmd, version, &instance.ConnectionConfiguration, configuration.InputOptions{
 			Patch:      intent,
 			ConfigFile: fctl.GetString(cmd, configFlag),
 			EnvFiles:   envFiles,
@@ -214,11 +237,22 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 		return nil, fctl.ErrMissingApproval
 	}
 
-	updated, err := client.PatchConnection(cmd.Context(), name, connectivityclient.ConnectionPatch{"configuration": specPatch})
+	body, err := json.Marshal(map[string]any{"configuration": specPatch})
 	if err != nil {
 		return nil, err
 	}
-	if updated == nil {
+	responsePatch, err := client.PatchConnection(connectivityinternal.WithPatchBody(cmd.Context(), body), operations.PatchConnectionRequest{Name: url.PathEscape(name)}, nil)
+	if err == nil && responsePatch != nil {
+		err = connectivityinternal.ResponseError(responsePatch.StatusCode, responsePatch.Error)
+	}
+	var updated *connectivity.Connection
+	if responsePatch != nil {
+		updated = responsePatch.Connection
+	}
+	if err != nil {
+		return nil, err
+	}
+	if updated == nil || updated.Name == "" {
 		return nil, fmt.Errorf("configure connectivity connection %q: empty response", name)
 	}
 	c.store.Connection = *updated

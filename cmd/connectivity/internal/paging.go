@@ -2,30 +2,28 @@ package internal
 
 import (
 	"fmt"
-
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
 )
 
 // CollectPages drains a cursor-paginated list endpoint, following
 // `cursor.next` until the server reports the last page. A user-facing read
 // must never render an unmarked prefix, so malformed and truncated cursors are
 // reported as errors.
-func CollectPages[T any](pageSize int32, maxPages int, fetch func(connectivityclient.ListOptions) ([]T, bool, string, error)) ([]T, error) {
+func CollectPages[T any](pageSize int32, maxPages int, fetch func(ListOptions) ([]T, bool, string, error)) ([]T, error) {
 	return collectPages(pageSize, maxPages, false, fetch)
 }
 
 // CollectPagesBounded is for best-effort shell completion. It returns the
 // useful prefix at the intentional page bound, while retaining validation of
 // malformed cursors before that bound.
-func CollectPagesBounded[T any](pageSize int32, maxPages int, fetch func(connectivityclient.ListOptions) ([]T, bool, string, error)) ([]T, error) {
+func CollectPagesBounded[T any](pageSize int32, maxPages int, fetch func(ListOptions) ([]T, bool, string, error)) ([]T, error) {
 	return collectPages(pageSize, maxPages, true, fetch)
 }
 
-func collectPages[T any](pageSize int32, maxPages int, allowTruncation bool, fetch func(connectivityclient.ListOptions) ([]T, bool, string, error)) ([]T, error) {
+func collectPages[T any](pageSize int32, maxPages int, allowTruncation bool, fetch func(ListOptions) ([]T, bool, string, error)) ([]T, error) {
 	if maxPages <= 0 {
 		return nil, fmt.Errorf("pagination maximum pages must be positive")
 	}
-	options := connectivityclient.ListOptions{PageSize: pageSize}
+	options := ListOptions{PageSize: pageSize}
 	items := make([]T, 0)
 	seen := make(map[string]struct{})
 	for page := 0; page < maxPages; page++ {

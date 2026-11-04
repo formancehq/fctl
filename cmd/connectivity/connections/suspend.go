@@ -2,12 +2,14 @@ package connections
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/spf13/cobra"
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type SuspensionStore struct {
@@ -73,11 +75,18 @@ func (c *SuspensionController) Run(cmd *cobra.Command, args []string) (fctl.Rend
 	if !c.approve(cmd, "You are about to %s Connectivity connection %q", action, name) {
 		return nil, fctl.ErrMissingApproval
 	}
-	_, err = client.PatchConnection(cmd.Context(), name, connectivityclient.ConnectionPatch{
-		"configuration": map[string]any{"suspend": c.suspend},
-	})
+	response, err := client.PatchConnection(cmd.Context(), operations.PatchConnectionRequest{Name: url.PathEscape(name), ConnectionPatch: connectivity.ConnectionPatch{Configuration: &connectivity.Configuration{Suspend: &c.suspend}}}, nil)
 	if err != nil {
 		return nil, err
+	}
+	if response == nil {
+		return nil, fmt.Errorf("suspend connectivity connection %q: empty response", name)
+	}
+	if err := connectivityinternal.ResponseError(response.StatusCode, response.Error); err != nil {
+		return nil, err
+	}
+	if response.Connection == nil || response.Connection.Name == "" {
+		return nil, fmt.Errorf("suspend connectivity connection %q: empty response", name)
 	}
 	c.store.Name = name
 	c.store.Suspend = c.suspend

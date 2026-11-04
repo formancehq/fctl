@@ -8,9 +8,9 @@ import (
 	"github.com/spf13/cobra"
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type ListStore struct {
@@ -47,7 +47,7 @@ func NewListCommand(factory connectivityinternal.ClientFactory) *cobra.Command {
 	)
 	if err := command.RegisterFlagCompletionFunc(
 		connectivityinternal.FilterFlag,
-		connectivityinternal.CompleteFilterExpressions(factory, connectivityclient.ResourceConnectors),
+		connectivityinternal.CompleteFilterExpressions(factory, connectivityinternal.ResourceConnectors),
 	); err != nil {
 		panic(err)
 	}
@@ -79,11 +79,11 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 		return nil, err
 	}
 
-	response, err := client.ListConnectors(cmd.Context(), connectivityclient.ListOptions{
-		PageSize: pageSize,
-		Cursor:   cursor,
-		Query:    query,
-	})
+	response, err := client.ListConnectors(cmd.Context(), operations.ListConnectorsRequest{
+		PageSize: fctl.Ptr(int(pageSize)),
+		Cursor:   connectivityinternal.OptionalString(cursor),
+		Query:    connectivityinternal.OptionalString(query),
+	}, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -91,17 +91,23 @@ func (c *ListController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, e
 		return nil, fmt.Errorf("list connectivity connectors: empty response")
 	}
 
-	c.store.Connectors = response.Items
-	c.store.Cursor = cursorFromList(response.PageSize, response.HasMore, response.Next)
+	if err := connectivityinternal.ResponseError(response.StatusCode, response.Error); err != nil {
+		return nil, err
+	}
+	if response.ConnectorCursor == nil {
+		return nil, fmt.Errorf("list connectivity connectors: empty response")
+	}
+	page := response.ConnectorCursor.Cursor
+	if page.Data == nil {
+		return nil, fmt.Errorf("list connectivity connectors: cursor.data must be an array")
+	}
+	c.store.Connectors = page.Data
+	c.store.Cursor = cursorFromList(page.PageSize, page.HasMore, page.Next)
 	return c, nil
 }
 
-func cursorFromList(pageSize int32, hasMore bool, next string) fctl.Cursor {
-	cursor := fctl.Cursor{PageSize: int64(pageSize), HasMore: hasMore}
-	if next != "" {
-		cursor.Next = fctl.Ptr(next)
-	}
-	return cursor
+func cursorFromList(pageSize int, hasMore bool, next *string) fctl.Cursor {
+	return fctl.Cursor{PageSize: int64(pageSize), HasMore: hasMore, Next: connectivityinternal.OptionalString(stringValue(next))}
 }
 
 func (c *ListController) Render(cmd *cobra.Command, _ []string) error {

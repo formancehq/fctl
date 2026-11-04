@@ -10,22 +10,33 @@ import (
 	"github.com/stretchr/testify/require"
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type suspensionClientMock struct {
-	connectivityclient.Client
-	listInstances func(context.Context, connectivityclient.ListOptions) (*connectivityclient.ConnectionList, error)
-	patch         func(context.Context, string, connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error)
+	connectivityinternal.API
+	listInstances func(context.Context, connectivityinternal.ListOptions) (*testConnectionList, error)
+	patch         func(context.Context, string, map[string]any) (*connectivity.Connection, error)
 }
 
-func (m suspensionClientMock) ListConnections(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectionList, error) {
-	return m.listInstances(ctx, options)
+func (m suspensionClientMock) ListConnections(ctx context.Context, request operations.ListConnectionsRequest, security *operations.ListConnectionsSecurity, opts ...operations.Option) (*operations.ListConnectionsResponse, error) {
+	data, err := m.listInstances(ctx, listOptions(request.PageSize, request.Cursor, request.Query))
+	response := &operations.ListConnectionsResponse{StatusCode: 200}
+	if data != nil {
+		response.ConnectionCursor = &connectivity.ConnectionCursor{Cursor: connectivity.Cursor{Data: data.Items, HasMore: data.HasMore, Next: connectivityinternal.OptionalString(data.Next), PageSize: int(data.PageSize)}}
+	}
+	return response, err
 }
 
-func (m suspensionClientMock) PatchConnection(ctx context.Context, name string, patch connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
-	return m.patch(ctx, name, patch)
+func (m suspensionClientMock) PatchConnection(ctx context.Context, request operations.PatchConnectionRequest, security *operations.PatchConnectionSecurity, opts ...operations.Option) (*operations.PatchConnectionResponse, error) {
+	patch, err := sdkPatchBody(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	data, err := m.patch(ctx, request.Name, patch)
+	return &operations.PatchConnectionResponse{StatusCode: 200, Connection: data}, err
 }
 
 func TestSuspensionCommandsPatchOnlyDesiredBooleanAndTreatAlreadyConvergedResponseAsSuccess(t *testing.T) {
@@ -42,12 +53,12 @@ func TestSuspensionCommandsPatchOnlyDesiredBooleanAndTreatAlreadyConvergedRespon
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			calls := 0
-			client := suspensionClientMock{patch: func(_ context.Context, name string, patch connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
+			client := suspensionClientMock{patch: func(_ context.Context, name string, patch map[string]any) (*connectivity.Connection, error) {
 				calls++
 				require.Equal(t, "stripe-eu", name)
-				require.Equal(t, connectivityclient.ConnectionPatch{"configuration": map[string]any{"suspend": test.suspend}}, patch)
+				require.Equal(t, map[string]any{"configuration": map[string]any{"suspend": test.suspend}}, patch)
 				instance := instanceFixture(name)
-				instance.Configuration.Suspend = fctl.Ptr(test.suspend)
+				instance.ConnectionConfiguration.Suspend = fctl.Ptr(test.suspend)
 				return &instance, nil
 			}}
 
@@ -62,7 +73,7 @@ func TestSuspensionCommandsPatchOnlyDesiredBooleanAndTreatAlreadyConvergedRespon
 
 func TestSuspensionCommandConfirmationRejectionMakesNoPatch(t *testing.T) {
 	patchCalls := 0
-	client := suspensionClientMock{patch: func(context.Context, string, connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
+	client := suspensionClientMock{patch: func(context.Context, string, map[string]any) (*connectivity.Connection, error) {
 		patchCalls++
 		return nil, errors.New("PatchConnection must not be called")
 	}}
@@ -76,8 +87,8 @@ func TestSuspensionCommandConfirmationRejectionMakesNoPatch(t *testing.T) {
 }
 
 func TestSuspensionCommandsPreserveAPIError(t *testing.T) {
-	apiError := &connectivityclient.APIError{StatusCode: 409, Code: "CONFLICT", Message: "stale"}
-	client := suspensionClientMock{patch: func(context.Context, string, connectivityclient.ConnectionPatch) (*connectivityclient.Connection, error) {
+	apiError := &connectivityinternal.APIError{StatusCode: 409, Code: "CONFLICT", Message: "stale"}
+	client := suspensionClientMock{patch: func(context.Context, string, map[string]any) (*connectivity.Connection, error) {
 		return nil, apiError
 	}}
 
@@ -89,7 +100,7 @@ func TestSuspensionCommandsPreserveAPIError(t *testing.T) {
 
 func TestSuspensionCommandsRejectInvalidArgumentsBeforeUsingClient(t *testing.T) {
 	usedFactory := false
-	factory := func(*cobra.Command) (connectivityclient.Client, error) {
+	factory := func(*cobra.Command) (connectivityinternal.API, error) {
 		usedFactory = true
 		return nil, errors.New("factory must not be used")
 	}
@@ -103,10 +114,10 @@ func TestSuspensionCommandsRejectInvalidArgumentsBeforeUsingClient(t *testing.T)
 
 func TestSuspensionCommandsRegisterConfirmationCompletionAndRootChildren(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
-	client := suspensionClientMock{listInstances: func(ctx context.Context, options connectivityclient.ListOptions) (*connectivityclient.ConnectionList, error) {
+	client := suspensionClientMock{listInstances: func(ctx context.Context, options connectivityinternal.ListOptions) (*testConnectionList, error) {
 		require.True(t, connectivityinternal.IsNonInteractive(ctx))
-		require.Equal(t, connectivityclient.ListOptions{PageSize: 100}, options)
-		return &connectivityclient.ConnectionList{Items: []connectivityclient.Connection{instance}}, nil
+		require.Equal(t, connectivityinternal.ListOptions{PageSize: 100}, options)
+		return &testConnectionList{Items: []connectivity.Connection{instance}}, nil
 	}}
 
 	for _, test := range []struct {

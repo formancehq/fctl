@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
+	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 )
@@ -78,11 +78,11 @@ func TestFacetsJSONPreservesCompleteDistribution(t *testing.T) {
 
 func TestFacetsReturnsFactoryAPIAndEmptyResponseErrors(t *testing.T) {
 	tests := map[string]struct {
-		factory func(*cobra.Command) (connectivityclient.Client, error)
+		factory func(*cobra.Command) (connectivityinternal.API, error)
 		want    string
 	}{
 		"factory": {
-			factory: func(*cobra.Command) (connectivityclient.Client, error) {
+			factory: func(*cobra.Command) (connectivityinternal.API, error) {
 				return nil, errors.New("authentication failed")
 			},
 			want: "authentication failed",

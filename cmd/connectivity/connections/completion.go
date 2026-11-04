@@ -2,6 +2,7 @@ package connections
 
 import (
 	"context"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -11,8 +12,8 @@ import (
 
 	"github.com/formancehq/fctl/v3/cmd/connectivity/connections/configuration"
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 const instanceCompletionMaxPages = 5
@@ -20,11 +21,11 @@ const instanceCompletionMaxPages = 5
 type PathCompleter func(prefix string) ([]string, error)
 
 // ConnectorResolver names the Connector a command is operating on.
-type ConnectorResolver func(context.Context, connectivityclient.Client, *cobra.Command, []string) (string, error)
+type ConnectorResolver func(context.Context, connectivityinternal.API, *cobra.Command, []string) (string, error)
 
 // ConnectorVersionResolver resolves the ConnectorVersion whose configSchema
 // drives value completion for a command.
-type ConnectorVersionResolver func(context.Context, connectivityclient.Client, *cobra.Command, []string) (*connectivity.ConnectorVersion, error)
+type ConnectorVersionResolver func(context.Context, connectivityinternal.API, *cobra.Command, []string) (*connectivity.ConnectorVersion, error)
 
 func CompleteConnectionNames(factory connectivityinternal.ClientFactory) cobra.CompletionFunc {
 	return func(cmd *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -35,12 +36,19 @@ func CompleteConnectionNames(factory connectivityinternal.ClientFactory) cobra.C
 		defer cancel()
 
 		instances, err := connectivityinternal.CollectPagesBounded(connectivityinternal.CompletionPageSize, instanceCompletionMaxPages,
-			func(options connectivityclient.ListOptions) ([]connectivityclient.Connection, bool, string, error) {
-				page, err := client.ListConnections(completionCommand.Context(), options)
+			func(options connectivityinternal.ListOptions) ([]connectivity.Connection, bool, string, error) {
+				response, err := client.ListConnections(completionCommand.Context(), operations.ListConnectionsRequest{Cursor: connectivityinternal.OptionalString(options.Cursor), PageSize: ptr(int(options.PageSize)), Query: connectivityinternal.OptionalString(options.Query)}, nil)
+				if err == nil && response != nil {
+					err = connectivityinternal.ResponseError(response.StatusCode, response.Error)
+				}
+				var page *connectivity.ConnectionCursor
+				if response != nil {
+					page = response.ConnectionCursor
+				}
 				if err != nil || page == nil {
 					return nil, false, "", err
 				}
-				return page.Items, page.HasMore, page.Next, nil
+				return page.Cursor.Data, page.Cursor.HasMore, stringValue(page.Cursor.Next), nil
 			})
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
@@ -52,7 +60,7 @@ func CompleteConnectionNames(factory connectivityinternal.ClientFactory) cobra.C
 			if name == "" || !strings.HasPrefix(name, toComplete) {
 				continue
 			}
-			description := strings.Join(nonEmptyStrings(instance.Configuration.ConnectorName(), stringValue(instance.Configuration.Ledger)), " · ")
+			description := strings.Join(nonEmptyStrings(stringValue(instance.ConnectionConfiguration.Connector), stringValue(instance.ConnectionConfiguration.Ledger)), " · ")
 			if description != "" {
 				name += "\t" + description
 			}
@@ -64,7 +72,7 @@ func CompleteConnectionNames(factory connectivityinternal.ClientFactory) cobra.C
 }
 
 func CompleteVersions(factory connectivityinternal.ClientFactory, connectorArg func(*cobra.Command, []string) string) cobra.CompletionFunc {
-	return completeVersions(factory, func(_ context.Context, _ connectivityclient.Client, cmd *cobra.Command, args []string) (string, error) {
+	return completeVersions(factory, func(_ context.Context, _ connectivityinternal.API, cmd *cobra.Command, args []string) (string, error) {
 		if connectorArg == nil {
 			return "", nil
 		}
@@ -88,12 +96,19 @@ func completeVersions(factory connectivityinternal.ClientFactory, resolveConnect
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 		versions, err := connectivityinternal.CollectPagesBounded(connectivityinternal.CompletionPageSize, instanceCompletionMaxPages,
-			func(options connectivityclient.ListOptions) ([]connectivity.ConnectorVersionSummary, bool, string, error) {
-				page, err := client.ListConnectorVersions(completionCommand.Context(), connector, options)
+			func(options connectivityinternal.ListOptions) ([]connectivity.ConnectorVersionSummary, bool, string, error) {
+				response, err := client.ListConnectorVersions(completionCommand.Context(), operations.ListConnectorVersionsRequest{Name: url.PathEscape(connector), Cursor: connectivityinternal.OptionalString(options.Cursor), PageSize: ptr(int(options.PageSize)), Query: connectivityinternal.OptionalString(options.Query)}, nil)
+				if err == nil && response != nil {
+					err = connectivityinternal.ResponseError(response.StatusCode, response.Error)
+				}
+				var page *connectivity.ConnectorVersionCursor
+				if response != nil {
+					page = response.ConnectorVersionCursor
+				}
 				if err != nil || page == nil {
 					return nil, false, "", err
 				}
-				return page.Items, page.HasMore, page.Next, nil
+				return page.Cursor.Data, page.Cursor.HasMore, stringValue(page.Cursor.Next), nil
 			})
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp

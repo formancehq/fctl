@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -12,9 +13,10 @@ import (
 	"github.com/spf13/cobra"
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
 const (
@@ -67,25 +69,46 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 		return nil, err
 	}
 	name := args[0]
-	connector, err := client.GetConnector(cmd.Context(), name)
+	response, err := client.GetConnector(cmd.Context(), operations.GetConnectorRequest{Name: url.PathEscape(name)}, nil)
 	if err != nil {
 		return nil, err
 	}
-	if connector == nil {
+	if response == nil {
 		return nil, fmt.Errorf("show connectivity connector %q: empty response", name)
 	}
-	c.store.Connector = *connector
+	if err := connectivityinternal.ResponseError(response.StatusCode, response.Error); err != nil {
+		return nil, err
+	}
+	if response.Connector == nil {
+		return nil, fmt.Errorf("show connectivity connector %q: empty response", name)
+	}
+	c.store.Connector = *response.Connector
 
 	versions, err := connectivityinternal.CollectPages(showVersionsPageSize, showVersionsMaxPages,
-		func(options connectivityclient.ListOptions) ([]connectivity.ConnectorVersionSummary, bool, string, error) {
-			page, err := client.ListConnectorVersions(cmd.Context(), name, options)
+		func(options connectivityinternal.ListOptions) ([]connectivity.ConnectorVersionSummary, bool, string, error) {
+			response, err := client.ListConnectorVersions(cmd.Context(), operations.ListConnectorVersionsRequest{
+				Name:     url.PathEscape(name),
+				PageSize: fctl.Ptr(int(options.PageSize)),
+				Cursor:   connectivityinternal.OptionalString(options.Cursor),
+				Query:    connectivityinternal.OptionalString(options.Query),
+			}, nil)
 			if err != nil {
 				return nil, false, "", err
 			}
-			if page == nil {
+			if response == nil {
 				return nil, false, "", fmt.Errorf("show connectivity connector %q: empty version list response", name)
 			}
-			return page.Items, page.HasMore, page.Next, nil
+			if err := connectivityinternal.ResponseError(response.StatusCode, response.Error); err != nil {
+				return nil, false, "", err
+			}
+			if response.ConnectorVersionCursor == nil {
+				return nil, false, "", fmt.Errorf("show connectivity connector %q: empty version list response", name)
+			}
+			page := response.ConnectorVersionCursor.Cursor
+			if page.Data == nil {
+				return nil, false, "", fmt.Errorf("show connectivity connector %q: version cursor.data must be an array", name)
+			}
+			return page.Data, page.HasMore, stringValue(page.Next), nil
 		})
 	if err != nil {
 		return nil, err
@@ -95,16 +118,21 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 	// The server resolves the `latest` alias to the newest Validated version;
 	// published-but-unresolvable catalogues degrade to the no-version notice.
 	if len(versions) > 0 {
-		version, err := client.GetConnectorVersion(cmd.Context(), name, connectivityclient.VersionAliasLatest)
-		var apiErr *connectivityclient.APIError
+		response, err := client.GetConnectorVersion(cmd.Context(), operations.GetConnectorVersionRequest{Name: url.PathEscape(name), Version: connectivityinternal.VersionAliasLatest}, nil)
+		if err == nil && response != nil {
+			err = connectivityinternal.ResponseError(response.StatusCode, response.Error)
+		}
+		var apiErr *connectivityinternal.APIError
+		var sdkErr *sdkerrors.SDKError
 		switch {
 		case errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusNotFound:
+		case errors.As(err, &sdkErr) && sdkErr.StatusCode == http.StatusNotFound:
 		case err != nil:
 			return nil, err
-		case version == nil:
+		case response == nil || response.ConnectorVersion == nil:
 			return nil, fmt.Errorf("show connectivity connector %q: empty latest version response", name)
 		default:
-			c.store.Version = version
+			c.store.Version = response.ConnectorVersion
 		}
 	}
 	return c, nil

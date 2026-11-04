@@ -10,7 +10,6 @@ import (
 	"github.com/formancehq/fctl/v3/cmd/connectivity/connections/configuration"
 	"github.com/formancehq/fctl/v3/cmd/connectivity/connectors"
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 )
@@ -27,7 +26,7 @@ const (
 )
 
 type InstallStore struct {
-	Connection connectivityclient.Connection `json:"connection"`
+	Connection connectivity.Connection `json:"connection"`
 }
 
 type approvalFunc func(*cobra.Command, string, ...any) bool
@@ -92,7 +91,7 @@ func installConnectorArgument(_ *cobra.Command, args []string) string {
 	return args[0]
 }
 
-func resolveInstallConnectorVersion(ctx context.Context, client connectivityclient.Client, cmd *cobra.Command, args []string) (*connectivity.ConnectorVersion, error) {
+func resolveInstallConnectorVersion(ctx context.Context, client connectivityinternal.API, cmd *cobra.Command, args []string) (*connectivity.ConnectorVersion, error) {
 	if err := validateSelectors(cmd); err != nil {
 		return nil, err
 	}
@@ -169,9 +168,9 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		name = connectorName
 	}
 	ledger := fctl.GetString(cmd, ledgerFlag)
-	spec := connectivityclient.ConnectionConfiguration{
+	spec := connectivity.ConnectionCreateConnectionConfiguration{
 		Connector:     connectorName,
-		Ledger:        &ledger,
+		Ledger:        ledger,
 		InitialCursor: cursor,
 	}
 	if config != nil {
@@ -185,7 +184,7 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 		spec.Version = fctl.Ptr(value)
 	}
 	if spec.Version == nil {
-		spec.Channel = fctl.Ptr(installVersionSelector(cmd))
+		spec.Channel = fctl.Ptr(connectivity.ConnectionCreateChannel(installVersionSelector(cmd)))
 	}
 	if cmd.Flags().Changed(pollIntervalFlag) {
 		value, err := cmd.Flags().GetString(pollIntervalFlag)
@@ -198,18 +197,25 @@ func (c *InstallController) Run(cmd *cobra.Command, args []string) (fctl.Rendera
 	if !c.approve(cmd, "You are about to install Connectivity connection %q", name) {
 		return nil, fctl.ErrMissingApproval
 	}
-	instance, err := client.CreateConnection(cmd.Context(), connectivityclient.ConnectionCreate{Name: name, Configuration: spec})
+	response, err := client.CreateConnection(cmd.Context(), connectivity.ConnectionCreate{Name: name, ConnectionConfiguration: spec}, nil)
+	if err == nil && response != nil {
+		err = connectivityinternal.ResponseError(response.StatusCode, response.Error)
+	}
+	var instance *connectivity.Connection
+	if response != nil {
+		instance = response.Connection
+	}
 	if err != nil {
 		return nil, err
 	}
-	if instance == nil {
+	if instance == nil || instance.Name == "" {
 		return nil, fmt.Errorf("install connectivity connection %q: empty response", name)
 	}
 	c.store.Connection = *instance
 	return c, nil
 }
 
-func configHasData(config *connectivityclient.ConnectionConfig) bool {
+func configHasData(config *connectivity.ConnectionConfiguration) bool {
 	return config != nil && (len(config.Env) > 0 || len(config.Files) > 0)
 }
 
@@ -219,8 +225,8 @@ func (c *InstallController) Render(cmd *cobra.Command, _ []string) error {
 		cmd.OutOrStdout(),
 		"Connection %q installed with connector %q for ledger %q.\n",
 		instance.Name,
-		instance.Configuration.ConnectorName(),
-		stringValue(instance.Configuration.Ledger),
+		stringValue(instance.ConnectionConfiguration.Connector),
+		stringValue(instance.ConnectionConfiguration.Ledger),
 	)
 	return err
 }

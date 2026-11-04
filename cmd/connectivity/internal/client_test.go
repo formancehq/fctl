@@ -3,18 +3,23 @@ package internal
 import (
 	"bytes"
 	"context"
+	"io"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+	"github.com/stretchr/testify/require"
 
 	"github.com/formancehq/go-libs/v4/oidc"
 	oidcclient "github.com/formancehq/go-libs/v4/oidc/client"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 func TestClientFactoryNonInteractiveModeRejectsUnusableTokensBeforeAuthentication(t *testing.T) {
@@ -136,4 +141,77 @@ func accessTokenExpiringAt(expiration time.Time) *fctl.AccessToken {
 	return &fctl.AccessToken{TokenWithClaims: fctl.TokenWithClaims[fctl.AccessTokenClaims]{
 		Claims: fctl.AccessTokenClaims{TokenClaims: oidc.TokenClaims{Expiration: oidc.Time(expiration.Unix())}},
 	}}
+}
+
+func TestSDKPatchPreservesExplicitMergePatchBody(t *testing.T) {
+	var received []byte
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, http.MethodPatch, r.Method)
+		require.Equal(t, "/proxy/api/connectivity/connections/stripe", r.URL.Path)
+		require.Equal(t, "application/merge-patch+json", r.Header.Get("Content-Type"))
+		var err error
+		received, err = io.ReadAll(r.Body)
+		require.NoError(t, err)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{"name":"stripe","configuration":{}}`)
+	}))
+	defer server.Close()
+	body := []byte(`{"configuration":{"channel":null,"env":{"KEY":null},"files":{}}}`)
+	ctx := WithPatchBody(t.Context(), body)
+	response, err := NewAPI(server.URL+"/proxy", server.Client()).PatchConnection(ctx, operations.PatchConnectionRequest{Name: "stripe"}, nil)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, response.StatusCode)
+	require.JSONEq(t, string(body), string(received))
+}
+
+func TestSDKResponseError(t *testing.T) {
+	require.NoError(t, ResponseError(http.StatusNoContent, nil))
+	err := ResponseError(http.StatusUnauthorized, nil)
+	var apiErr *APIError
+	require.ErrorAs(t, err, &apiErr)
+	require.Equal(t, http.StatusUnauthorized, apiErr.StatusCode)
+	require.Equal(t, "Unauthorized", apiErr.Message)
+	err = ResponseError(http.StatusBadRequest, &connectivity.Error{Code: "invalid", Message: "bad", Details: map[string]any{"field": "name"}})
+	require.ErrorAs(t, err, &apiErr)
+	require.Equal(t, "invalid", apiErr.Code)
+	require.Equal(t, map[string]any{"field": "name"}, apiErr.Details)
+}
+
+func TestSDKListConnectionsTransmitsQueryAndCursor(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, http.MethodGet, r.Method)
+		require.Equal(t, "/api/connectivity/connections", r.URL.Path)
+		require.Equal(t, "next page", r.URL.Query().Get("cursor"))
+		require.Equal(t, "2", r.URL.Query().Get("pageSize"))
+		require.Equal(t, `{"$match":{"connector":"stripe"}}`, r.URL.Query().Get("query"))
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{"cursor":{"pageSize":2,"hasMore":true,"next":"next-token","data":[{"name":"stripe","configuration":{}}]}}`)
+	}))
+	defer server.Close()
+	size := 2
+	resp, err := NewAPI(server.URL, server.Client()).ListConnections(t.Context(), operations.ListConnectionsRequest{
+		Cursor: OptionalString("next page"), PageSize: &size, Query: OptionalString(`{"$match":{"connector":"stripe"}}`),
+	}, nil)
+	require.NoError(t, err)
+	require.NoError(t, ResponseError(resp.StatusCode, resp.Error))
+	require.NotNil(t, resp.ConnectionCursor)
+	require.True(t, resp.ConnectionCursor.Cursor.HasMore)
+	require.Equal(t, "next-token", *resp.ConnectionCursor.Cursor.Next)
+	require.Equal(t, "stripe", resp.ConnectionCursor.Cursor.Data[0].Name)
+}
+
+func TestSDKStructuredErrorUsesResponseStatusAndCode(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = io.WriteString(w, `{"code":"invalid_query","message":"bad query","details":{"field":"query"}}`)
+	}))
+	defer server.Close()
+	resp, err := NewAPI(server.URL, server.Client()).ListConnections(t.Context(), operations.ListConnectionsRequest{}, nil)
+	require.NoError(t, err)
+	var apiErr *APIError
+	require.ErrorAs(t, ResponseError(resp.StatusCode, resp.Error), &apiErr)
+	require.Equal(t, http.StatusBadRequest, apiErr.StatusCode)
+	require.Equal(t, "invalid_query", apiErr.Code)
+	require.Equal(t, map[string]any{"field": "query"}, apiErr.Details)
 }

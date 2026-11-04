@@ -9,8 +9,8 @@ import (
 	"github.com/spf13/cobra"
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type FacetsStore struct {
@@ -45,7 +45,7 @@ func NewFacetsCommand(factory connectivityinternal.ClientFactory) *cobra.Command
 	)
 	if err := command.RegisterFlagCompletionFunc(
 		connectivityinternal.FilterFlag,
-		connectivityinternal.CompleteFilterExpressions(factory, connectivityclient.ResourceConnectors),
+		connectivityinternal.CompleteFilterExpressions(factory, connectivityinternal.ResourceConnectors),
 	); err != nil {
 		panic(err)
 	}
@@ -69,7 +69,7 @@ func (c *FacetsController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable,
 		return nil, err
 	}
 
-	response, err := client.GetConnectorFacets(cmd.Context(), query)
+	response, err := client.GetConnectorFacets(cmd.Context(), operations.GetConnectorFacetsRequest{Query: connectivityinternal.OptionalString(query)}, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -77,8 +77,17 @@ func (c *FacetsController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable,
 		return nil, fmt.Errorf("get connectivity connector facets: empty response")
 	}
 
-	c.store.Total = response.Total
-	c.store.Facets = response.Facets
+	if err := connectivityinternal.ResponseError(response.StatusCode, response.Error); err != nil {
+		return nil, err
+	}
+	if response.FacetDistribution == nil {
+		return nil, fmt.Errorf("get connectivity connector facets: empty response")
+	}
+	if response.FacetDistribution.Facets == nil {
+		return nil, fmt.Errorf("get connectivity connector facets: facets must be an object")
+	}
+	c.store.Total = response.FacetDistribution.Total
+	c.store.Facets = response.FacetDistribution.Facets
 	return c, nil
 }
 

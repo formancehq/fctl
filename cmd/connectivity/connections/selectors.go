@@ -29,7 +29,7 @@ func validateSelectors(cmd *cobra.Command) error {
 	return nil
 }
 
-func initialCursor(cmd *cobra.Command) ([]byte, error) {
+func initialCursor(cmd *cobra.Command) (*string, error) {
 	if !cmd.Flags().Changed(initialCursorFlag) {
 		return nil, nil
 	}
@@ -38,5 +38,5 @@ func initialCursor(cmd *cobra.Command) ([]byte, error) {
 	if err != nil || raw == "" || base64.StdEncoding.EncodeToString(decoded) != raw {
 		return nil, fmt.Errorf("--initial-cursor must be non-empty canonical base64")
 	}
-	return decoded, nil
+	return &raw, nil
 }

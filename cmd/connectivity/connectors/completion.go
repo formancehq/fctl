@@ -1,14 +1,16 @@
 package connectors
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 const connectorCompletionMaxPages = 5
@@ -22,12 +24,25 @@ func CompleteConnectorNames(factory connectivityinternal.ClientFactory) cobra.Co
 		defer cancel()
 
 		connectors, err := connectivityinternal.CollectPagesBounded(connectivityinternal.CompletionPageSize, connectorCompletionMaxPages,
-			func(options connectivityclient.ListOptions) ([]connectivity.Connector, bool, string, error) {
-				page, err := client.ListConnectors(completionCommand.Context(), options)
-				if err != nil || page == nil {
+			func(options connectivityinternal.ListOptions) ([]connectivity.Connector, bool, string, error) {
+				response, err := client.ListConnectors(completionCommand.Context(), operations.ListConnectorsRequest{PageSize: fctl.Ptr(int(options.PageSize)), Cursor: connectivityinternal.OptionalString(options.Cursor)}, nil)
+				if err != nil {
 					return nil, false, "", err
 				}
-				return page.Items, page.HasMore, page.Next, nil
+				if response == nil {
+					return nil, false, "", fmt.Errorf("empty connector list response")
+				}
+				if err := connectivityinternal.ResponseError(response.StatusCode, response.Error); err != nil {
+					return nil, false, "", err
+				}
+				if response.ConnectorCursor == nil {
+					return nil, false, "", fmt.Errorf("empty connector list response")
+				}
+				page := response.ConnectorCursor.Cursor
+				if page.Data == nil {
+					return nil, false, "", fmt.Errorf("connector cursor.data must be an array")
+				}
+				return page.Data, page.HasMore, stringValue(page.Next), nil
 			})
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp

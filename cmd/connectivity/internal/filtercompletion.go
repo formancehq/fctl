@@ -9,8 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	connectivityclient "github.com/formancehq/fctl/v3/cmd/connectivity/internal/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 const (
@@ -22,7 +22,7 @@ const (
 // CompletionClient builds a non-interactive, deadline-bounded client for
 // shell completion callbacks, on a copy of the command so the original
 // context is left untouched.
-func CompletionClient(cmd *cobra.Command, factory ClientFactory) (connectivityclient.Client, *cobra.Command, context.CancelFunc, bool) {
+func CompletionClient(cmd *cobra.Command, factory ClientFactory) (API, *cobra.Command, context.CancelFunc, bool) {
 	if factory == nil {
 		return nil, nil, func() {}, false
 	}
@@ -55,11 +55,11 @@ func CompleteFilterExpressions(factory ClientFactory, resource string) cobra.Com
 		defer cancel()
 		ctx := completionCommand.Context()
 
-		capabilities, err := client.GetQueryCapabilities(ctx)
-		if err != nil || capabilities == nil {
+		capabilities, err := client.GetQueryCapabilities(ctx, nil)
+		if err != nil || capabilities == nil || ResponseError(capabilities.StatusCode, capabilities.Error) != nil || capabilities.QueryCapabilities == nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		fields, ok := capabilities.Resources[resource]
+		fields, ok := capabilities.QueryCapabilities.Resources[resource]
 		if !ok {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
@@ -100,11 +100,11 @@ func CompleteChannels(factory ClientFactory) cobra.CompletionFunc {
 		}
 		defer cancel()
 
-		capabilities, err := client.GetQueryCapabilities(completionCommand.Context())
-		if err != nil || capabilities == nil {
+		capabilities, err := client.GetQueryCapabilities(completionCommand.Context(), nil)
+		if err != nil || capabilities == nil || ResponseError(capabilities.StatusCode, capabilities.Error) != nil || capabilities.QueryCapabilities == nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		channels := capabilities.Resources[connectivityclient.ResourceConnections]["channel"].Enum
+		channels := capabilities.QueryCapabilities.Resources[ResourceConnections]["channel"].Enum
 		candidates := make([]string, 0, len(channels))
 		for _, channel := range channels {
 			if strings.HasPrefix(channel, toComplete) {
@@ -137,7 +137,7 @@ type filterValue struct {
 	description string
 }
 
-func filterValueCandidates(ctx context.Context, client connectivityclient.Client, resource, key string, capability connectivity.QueryFieldCapability) []filterValue {
+func filterValueCandidates(ctx context.Context, client API, resource, key string, capability connectivity.QueryFieldCapability) []filterValue {
 	if len(capability.Enum) > 0 {
 		values := make([]filterValue, 0, len(capability.Enum))
 		for _, value := range capability.Enum {
@@ -146,21 +146,21 @@ func filterValueCandidates(ctx context.Context, client connectivityclient.Client
 		return values
 	}
 	switch {
-	case resource == connectivityclient.ResourceConnectors && key == "tags":
+	case resource == ResourceConnectors && key == "tags":
 		return facetFilterValues(ctx, client)
-	case resource == connectivityclient.ResourceConnections && key == "connector":
+	case resource == ResourceConnections && key == "connector":
 		return connectorFilterValues(ctx, client)
 	}
 	return nil
 }
 
-func facetFilterValues(ctx context.Context, client connectivityclient.Client) []filterValue {
-	facets, err := client.GetConnectorFacets(ctx, "")
-	if err != nil || facets == nil {
+func facetFilterValues(ctx context.Context, client API) []filterValue {
+	facets, err := client.GetConnectorFacets(ctx, operations.GetConnectorFacetsRequest{}, nil)
+	if err != nil || facets == nil || ResponseError(facets.StatusCode, facets.Error) != nil || facets.FacetDistribution == nil {
 		return nil
 	}
 	values := make([]filterValue, 0)
-	for facet, counts := range facets.Facets {
+	for facet, counts := range facets.FacetDistribution.Facets {
 		for value, count := range counts {
 			plural := "s"
 			if count == 1 {
@@ -175,17 +175,29 @@ func facetFilterValues(ctx context.Context, client connectivityclient.Client) []
 	return values
 }
 
-func connectorFilterValues(ctx context.Context, client connectivityclient.Client) []filterValue {
+func connectorFilterValues(ctx context.Context, client API) []filterValue {
 	connectors, err := CollectPagesBounded(CompletionPageSize, CompletionMaxPages,
-		func(options connectivityclient.ListOptions) ([]connectivity.Connector, bool, string, error) {
-			page, err := client.ListConnectors(ctx, options)
+		func(options ListOptions) ([]connectivity.Connector, bool, string, error) {
+			size := int(options.PageSize)
+			page, err := client.ListConnectors(ctx, operations.ListConnectorsRequest{PageSize: &size, Cursor: OptionalString(options.Cursor), Query: OptionalString(options.Query)}, nil)
 			if err != nil {
 				return nil, false, "", err
 			}
-			if page == nil {
+			if page == nil || page.ConnectorCursor == nil {
 				return nil, false, "", fmt.Errorf("empty connector completion response")
 			}
-			return page.Items, page.HasMore, page.Next, nil
+			if err := ResponseError(page.StatusCode, page.Error); err != nil {
+				return nil, false, "", err
+			}
+			cursor := page.ConnectorCursor.Cursor
+			if cursor.Data == nil {
+				return nil, false, "", fmt.Errorf("empty connector completion page")
+			}
+			next := ""
+			if cursor.Next != nil {
+				next = *cursor.Next
+			}
+			return cursor.Data, cursor.HasMore, next, nil
 		})
 	if err != nil {
 		return nil
