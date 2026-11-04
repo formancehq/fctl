@@ -213,7 +213,7 @@ func (c *InstallController) run(cmd *cobra.Command, args []string, client *sdk.F
 	}
 	response, err := client.CreateConnection(cmd.Context(), connectivity.ConnectionCreate{Name: name, ConnectionConfiguration: spec}, nil)
 	if err == nil && response != nil {
-		err = connectivityinternal.ResponseError(response.StatusCode, response.Error)
+		err = connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse)
 	}
 	var instance *connectivity.Connection
 	if response != nil {

@@ -14,6 +14,7 @@ import (
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	formance "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
 func versionsFixture() *connectorVersionPage {
@@ -166,7 +167,7 @@ func TestShowConnectorTreatsUnresolvableLatestAsNoPublishedVersion(t *testing.T)
 			return versionsFixture(), nil
 		},
 		getVersion: func(context.Context, string, string) (*connectivity.ConnectorVersion, error) {
-			return nil, &connectivityinternal.APIError{StatusCode: http.StatusNotFound, Code: "channel_empty"}
+			return nil, &sdkerrors.SDKError{StatusCode: http.StatusNotFound, Body: `{"code":"channel_empty","message":"No validated version"}`}
 		},
 	}
 

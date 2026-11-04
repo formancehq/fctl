@@ -10,8 +10,8 @@ import (
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	sdk "github.com/formancehq/fctl/v3/pkg/client"
-	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
 func TestSDKPatchPreservesExplicitMergePatchBody(t *testing.T) {
@@ -36,16 +36,13 @@ func TestSDKPatchPreservesExplicitMergePatchBody(t *testing.T) {
 }
 
 func TestSDKResponseError(t *testing.T) {
-	require.NoError(t, ResponseError(http.StatusNoContent, nil))
-	err := ResponseError(http.StatusUnauthorized, nil)
-	var apiErr *APIError
+	require.NoError(t, ResponseError(http.StatusNoContent, nil, nil))
+	err := ResponseError(http.StatusUnauthorized, nil, nil)
+	var apiErr *sdkerrors.SDKError
 	require.ErrorAs(t, err, &apiErr)
 	require.Equal(t, http.StatusUnauthorized, apiErr.StatusCode)
 	require.Equal(t, "Unauthorized", apiErr.Message)
-	err = ResponseError(http.StatusBadRequest, &connectivity.Error{Code: "invalid", Message: "bad", Details: map[string]any{"field": "name"}})
-	require.ErrorAs(t, err, &apiErr)
-	require.Equal(t, "invalid", apiErr.Code)
-	require.Equal(t, map[string]any{"field": "name"}, apiErr.Details)
+	require.Empty(t, apiErr.Body)
 }
 
 func TestSDKListConnectionsTransmitsQueryAndCursor(t *testing.T) {
@@ -64,7 +61,7 @@ func TestSDKListConnectionsTransmitsQueryAndCursor(t *testing.T) {
 		Cursor: OptionalString("next page"), PageSize: &size, Query: OptionalString(`{"$match":{"connector":"stripe"}}`),
 	}, nil)
 	require.NoError(t, err)
-	require.NoError(t, ResponseError(resp.StatusCode, resp.Error))
+	require.NoError(t, ResponseError(resp.StatusCode, resp.Error, resp.RawResponse))
 	require.NotNil(t, resp.ConnectionCursor)
 	require.True(t, resp.ConnectionCursor.Cursor.HasMore)
 	require.Equal(t, "next-token", *resp.ConnectionCursor.Cursor.Next)
@@ -75,14 +72,17 @@ func TestSDKStructuredErrorUsesResponseStatusAndCode(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = io.WriteString(w, `{"code":"invalid_query","message":"bad query","details":{"field":"query"}}`)
+		_, _ = io.WriteString(w, `{"code":"invalid_query","message":"bad query","details":{"field":"query"},"unknown":9007199254740993}`)
 	}))
 	defer server.Close()
 	resp, err := sdk.New(sdk.WithServerURL(server.URL), sdk.WithClient(server.Client())).Connectivity.V1.ListConnections(t.Context(), operations.ListConnectionsRequest{}, nil)
 	require.NoError(t, err)
-	var apiErr *APIError
-	require.ErrorAs(t, ResponseError(resp.StatusCode, resp.Error), &apiErr)
+	var apiErr *sdkerrors.SDKError
+	require.ErrorAs(t, ResponseError(resp.StatusCode, resp.Error, resp.RawResponse), &apiErr)
 	require.Equal(t, http.StatusBadRequest, apiErr.StatusCode)
-	require.Equal(t, "invalid_query", apiErr.Code)
-	require.Equal(t, map[string]any{"field": "query"}, apiErr.Details)
+	require.Equal(t, `{"code":"invalid_query","message":"bad query","details":{"field":"query"},"unknown":9007199254740993}`, apiErr.Body)
+	require.Same(t, resp.RawResponse, apiErr.RawResponse)
+	raw, err := io.ReadAll(resp.RawResponse.Body)
+	require.NoError(t, err)
+	require.Equal(t, apiErr.Body, string(raw))
 }

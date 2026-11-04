@@ -86,7 +86,7 @@ func (c *SuspensionController) run(cmd *cobra.Command, args []string, client *sd
 	if response == nil {
 		return nil, fmt.Errorf("suspend connectivity connection %q: empty response", name)
 	}
-	if err := connectivityinternal.ResponseError(response.StatusCode, response.Error); err != nil {
+	if err := connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse); err != nil {
 		return nil, err
 	}
 	if response.Connection == nil || response.Connection.Name == "" {

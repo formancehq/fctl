@@ -14,6 +14,7 @@ import (
 	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
 const (
@@ -34,13 +35,13 @@ func resolveConnectorVersion(ctx context.Context, client *sdk.FormanceV1, connec
 	}
 	response, err := client.GetConnectorVersion(ctx, operations.GetConnectorVersionRequest{Name: url.PathEscape(connector), Version: url.PathEscape(pinned)}, nil)
 	if err == nil && response != nil {
-		err = connectivityinternal.ResponseError(response.StatusCode, response.Error)
+		err = connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse)
 	}
 	var version *connectivity.ConnectorVersion
 	if response != nil {
 		version = response.ConnectorVersion
 	}
-	var apiErr *connectivityinternal.APIError
+	var apiErr *sdkerrors.SDKError
 	if (pinned == "stable" || pinned == connectivityinternal.VersionAliasLatest) && errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusNotFound {
 		return nil, fmt.Errorf("connectivity connector %q has no published version: %w", connector, err)
 	}
@@ -69,7 +70,7 @@ func resolveChannelVersion(ctx context.Context, client *sdk.FormanceV1, connecto
 		func(options connectivityinternal.ListOptions) ([]connectivity.ConnectorVersionSummary, bool, string, error) {
 			response, err := client.ListConnectorVersions(ctx, operations.ListConnectorVersionsRequest{Name: url.PathEscape(connector), Cursor: connectivityinternal.OptionalString(options.Cursor), PageSize: ptr(int(options.PageSize)), Query: connectivityinternal.OptionalString(options.Query)}, nil)
 			if err == nil && response != nil {
-				err = connectivityinternal.ResponseError(response.StatusCode, response.Error)
+				err = connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse)
 			}
 			var page *connectivity.ConnectorVersionCursor
 			if response != nil {

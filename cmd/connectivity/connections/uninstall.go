@@ -71,7 +71,7 @@ func (c *UninstallController) run(cmd *cobra.Command, args []string, client *sdk
 	if response == nil {
 		return nil, fmt.Errorf("delete connectivity connection %q: empty response", name)
 	}
-	if err := connectivityinternal.ResponseError(response.StatusCode, response.Error); err != nil {
+	if err := connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse); err != nil {
 		return nil, err
 	}
 	c.store.Name = name

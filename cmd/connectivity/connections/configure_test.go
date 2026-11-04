@@ -15,6 +15,7 @@ import (
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
 type configureClientMock struct {
@@ -310,9 +311,9 @@ func TestConfigureValidationAndArgumentsPreventPatch(t *testing.T) {
 }
 
 func TestConfigurePreservesGetAndPatchAPIErrorsAndRejectsEmptyResponses(t *testing.T) {
-	instanceError := &connectivityinternal.APIError{StatusCode: 404, Code: "CONNECTORINSTANCE_NOT_FOUND", Message: "missing"}
-	versionError := &connectivityinternal.APIError{StatusCode: 404, Code: "CONNECTORVERSION_NOT_FOUND", Message: "missing"}
-	patchError := &connectivityinternal.APIError{StatusCode: 409, Code: "CONFLICT", Message: "stale"}
+	instanceError := sdkerrors.NewSDKError("API error occurred", 404, `{"code":"CONNECTORINSTANCE_NOT_FOUND","message":"missing"}`, nil)
+	versionError := sdkerrors.NewSDKError("API error occurred", 404, `{"code":"CONNECTORVERSION_NOT_FOUND","message":"missing"}`, nil)
+	patchError := sdkerrors.NewSDKError("API error occurred", 409, `{"code":"CONFLICT","message":"stale"}`, nil)
 	current := instanceFixture("stripe-eu")
 	tests := map[string]struct {
 		client configureClientMock

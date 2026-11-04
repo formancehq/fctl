@@ -1,6 +1,7 @@
 package connections
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -8,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
 func TestConfigureUsesSDKRouteAndPreservesMergePatchIntent(t *testing.T) {
@@ -75,6 +78,13 @@ func TestConnectionCommandsHandleSDKErrorsAndEmptySuccess(t *testing.T) {
 			})})
 			_, err := executeCommand(testNewShowCommand(factoryWithSDK(api)), "example")
 			require.ErrorContains(t, err, tt.want)
+			if tt.status >= 400 {
+				var sdkError *sdkerrors.SDKError
+				require.ErrorAs(t, err, &sdkError)
+				require.Equal(t, tt.status, sdkError.StatusCode)
+				require.NotNil(t, sdkError.RawResponse)
+				require.JSONEq(t, tt.body, sdkError.Body)
+			}
 		})
 	}
 }
@@ -118,5 +128,27 @@ func TestSuspensionCommandsRejectEmptySDKSuccess(t *testing.T) {
 				require.NotContains(t, output, "requested.")
 			})
 		}
+	}
+}
+
+func TestResolveConnectorVersionPreservesSDKNotFound(t *testing.T) {
+	const body = `{"code":"channel_empty","message":"no stable release","details":{"available":"v2.0.0-beta.1"}}`
+	for _, version := range []string{"stable", "latest", "v1.0.0"} {
+		t.Run(version, func(t *testing.T) {
+			api := transportSDK("https://stack.example.test", &http.Client{Transport: connectionRoundTripper(func(r *http.Request) (*http.Response, error) {
+				return jsonHTTPResponse(r, http.StatusNotFound, body), nil
+			})})
+			_, err := resolveConnectorVersion(context.Background(), api, "stripe", version)
+			var sdkError *sdkerrors.SDKError
+			require.ErrorAs(t, err, &sdkError)
+			require.Equal(t, http.StatusNotFound, sdkError.StatusCode)
+			require.Equal(t, body, sdkError.Body)
+			require.NotNil(t, sdkError.RawResponse)
+			if version == "stable" || version == "latest" {
+				require.ErrorContains(t, err, `connectivity connector "stripe" has no published version`)
+			} else {
+				require.Same(t, sdkError, err)
+			}
+		})
 	}
 }

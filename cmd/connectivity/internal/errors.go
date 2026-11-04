@@ -1,31 +1,41 @@
 package internal
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
-type APIError struct {
-	StatusCode int
-	Code       string
-	Message    string
-	Details    map[string]any
-}
-
-func (e *APIError) Error() string {
-	return fmt.Sprintf("connectivity API error: status %d, code %s: %s", e.StatusCode, e.Code, e.Message)
-}
-func ResponseError(status int, apiError *connectivity.Error) error {
+// ResponseError converts an SDK error envelope into the SDK's error type.
+func ResponseError(status int, apiError *connectivity.Error, rawResponse *http.Response) error {
 	if status >= 200 && status < 300 {
 		return nil
 	}
-	e := &APIError{StatusCode: status, Message: http.StatusText(status)}
-	if apiError != nil {
-		e.Code = apiError.Code
-		e.Message = apiError.Message
-		e.Details = apiError.Details
+	var body []byte
+	if rawResponse != nil && rawResponse.Body != nil {
+		var err error
+		original := rawResponse.Body
+		body, err = io.ReadAll(original)
+		if err != nil {
+			rawResponse.Body = struct {
+				io.Reader
+				io.Closer
+			}{Reader: io.MultiReader(bytes.NewReader(body), original), Closer: original}
+			return fmt.Errorf("read SDK error response: %w", err)
+		}
+		_ = original.Close()
+		rawResponse.Body = io.NopCloser(bytes.NewReader(body))
+	} else if apiError != nil {
+		var err error
+		body, err = json.Marshal(apiError)
+		if err != nil {
+			return fmt.Errorf("encode SDK error response: %w", err)
+		}
 	}
-	return e
+	return sdkerrors.NewSDKError(http.StatusText(status), status, string(body), rawResponse)
 }

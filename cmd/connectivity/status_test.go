@@ -12,10 +12,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 
-	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	formance "github.com/formancehq/fctl/v3/pkg/client"
 	connectivitymodel "github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
 type statusContextKey struct{}
@@ -113,6 +113,7 @@ func (f statusRoundTripper) RoundTrip(request *http.Request) (*http.Response, er
 
 func TestStatusUsesGeneratedSDKAndRejectsErrorEnvelope(t *testing.T) {
 	for _, status := range []int{http.StatusOK, http.StatusBadRequest, http.StatusUnauthorized} {
+		var rawResponse *http.Response
 		sdk := formance.New(formance.WithServerURL("https://stack.example.test"), formance.WithClient(&http.Client{Transport: statusRoundTripper(func(request *http.Request) (*http.Response, error) {
 			require.Equal(t, http.MethodGet, request.Method)
 			require.Equal(t, "/api/connectivity/_info", request.URL.Path)
@@ -120,7 +121,8 @@ func TestStatusUsesGeneratedSDKAndRejectsErrorEnvelope(t *testing.T) {
 			if status == http.StatusOK {
 				body = `{"version":"v1","commit":"abc","buildDate":"today"}`
 			}
-			return &http.Response{StatusCode: status, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(body))}, nil
+			rawResponse = &http.Response{StatusCode: status, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(body))}
+			return rawResponse, nil
 		})}))
 		out, err := executeStatus(t.Context(), sdk.Connectivity.V1, "--output", "json")
 		if status == http.StatusOK {
@@ -128,9 +130,13 @@ func TestStatusUsesGeneratedSDKAndRejectsErrorEnvelope(t *testing.T) {
 			require.JSONEq(t, `{"data":{"version":"v1","commit":"abc","buildDate":"today"}}`, out)
 		} else {
 			require.Error(t, err)
-			var apiErr *connectivityinternal.APIError
+			var apiErr *sdkerrors.SDKError
 			require.ErrorAs(t, err, &apiErr)
 			require.Equal(t, status, apiErr.StatusCode)
+			require.Same(t, rawResponse, apiErr.RawResponse)
+			if status == http.StatusBadRequest {
+				require.JSONEq(t, `{"code":"unavailable","message":"service unavailable"}`, apiErr.Body)
+			}
 			require.Empty(t, out)
 		}
 	}

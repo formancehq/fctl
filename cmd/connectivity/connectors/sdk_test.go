@@ -10,9 +10,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 
-	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	formance "github.com/formancehq/fctl/v3/pkg/client"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
 type connectorRoundTripper func(*http.Request) (*http.Response, error)
@@ -61,8 +61,10 @@ func TestConnectorCommandsRejectGeneratedErrorEnvelopes(t *testing.T) {
 		command := constructor(nil)
 		t.Run(command.Name(), func(t *testing.T) {
 			for _, status := range []int{http.StatusUnauthorized, http.StatusBadRequest} {
+				var rawResponse *http.Response
 				client := sdkWithTransport(func(*http.Request) (*http.Response, error) {
-					return connectorResponse(status, `{"code":"invalid_query","message":"invalid filter"}`), nil
+					rawResponse = connectorResponse(status, `{"code":"invalid_query","message":"invalid filter"}`)
+					return rawResponse, nil
 				})
 				command := constructor(client)
 				command.Flags().String(fctl.OutputFlag, "json", "")
@@ -78,9 +80,13 @@ func TestConnectorCommandsRejectGeneratedErrorEnvelopes(t *testing.T) {
 				command.SetArgs(args)
 				err := command.Execute()
 				require.Error(t, err)
-				var apiErr *connectivityinternal.APIError
+				var apiErr *sdkerrors.SDKError
 				require.ErrorAs(t, err, &apiErr)
 				require.Equal(t, status, apiErr.StatusCode)
+				require.Same(t, rawResponse, apiErr.RawResponse)
+				if status == http.StatusBadRequest {
+					require.JSONEq(t, `{"code":"invalid_query","message":"invalid filter"}`, apiErr.Body)
+				}
 				require.Empty(t, out.String())
 			}
 		})

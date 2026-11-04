@@ -63,7 +63,7 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 func (c *ShowController) run(cmd *cobra.Command, args []string, client *sdk.FormanceV1) (fctl.Renderable, error) {
 	response, err := client.GetConnection(cmd.Context(), operations.GetConnectionRequest{Name: url.PathEscape(args[0])}, nil)
 	if err == nil && response != nil {
-		err = connectivityinternal.ResponseError(response.StatusCode, response.Error)
+		err = connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse)
 	}
 	var instance *connectivity.Connection
 	if response != nil {

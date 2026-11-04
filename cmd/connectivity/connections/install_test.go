@@ -15,6 +15,7 @@ import (
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
 type mutationClientMock struct {
@@ -126,7 +127,7 @@ func TestInstallWithChannelFlagTracksTheChannelAndUsesItsHeadForTheSchema(t *tes
 func TestInstallReportsPrereleaseOnlyCataloguesAsMissingStableVersion(t *testing.T) {
 	client := mutationClientMock{connectorVersions: connectorVersions{
 		getVersion: func(context.Context, string, string) (*connectivity.ConnectorVersion, error) {
-			return nil, &connectivityinternal.APIError{StatusCode: 404, Code: "channel_empty", Message: "only v2.0.0-beta.1 is published"}
+			return nil, sdkerrors.NewSDKError("API error occurred", 404, `{"code":"channel_empty","message":"only v2.0.0-beta.1 is published"}`, nil)
 		},
 	}}
 
@@ -213,8 +214,8 @@ func TestInstallValidationErrorPreventsCreate(t *testing.T) {
 }
 
 func TestInstallPreservesVersionAndCreateAPIErrorsAndRejectsEmptyResponses(t *testing.T) {
-	versionError := &connectivityinternal.APIError{StatusCode: 404, Code: "CONNECTOR_NOT_FOUND", Message: "missing"}
-	createError := &connectivityinternal.APIError{StatusCode: 409, Code: "CONNECTORINSTANCE_EXISTS", Message: "duplicate"}
+	versionError := sdkerrors.NewSDKError("API error occurred", 404, `{"code":"CONNECTOR_NOT_FOUND","message":"missing"}`, nil)
+	createError := sdkerrors.NewSDKError("API error occurred", 409, `{"code":"CONNECTORINSTANCE_EXISTS","message":"duplicate"}`, nil)
 	tests := map[string]struct {
 		client mutationClientMock
 		want   error

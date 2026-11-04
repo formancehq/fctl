@@ -72,7 +72,7 @@ func resolveConfigureConnector(ctx context.Context, client *sdk.FormanceV1, _ *c
 	}
 	response, err := client.GetConnection(ctx, operations.GetConnectionRequest{Name: url.PathEscape(args[0])}, nil)
 	if err == nil && response != nil {
-		err = connectivityinternal.ResponseError(response.StatusCode, response.Error)
+		err = connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse)
 	}
 	var instance *connectivity.Connection
 	if response != nil {
@@ -93,7 +93,7 @@ func resolveConfigureConnectorVersion(ctx context.Context, client *sdk.FormanceV
 	}
 	response, err := client.GetConnection(ctx, operations.GetConnectionRequest{Name: url.PathEscape(args[0])}, nil)
 	if err == nil && response != nil {
-		err = connectivityinternal.ResponseError(response.StatusCode, response.Error)
+		err = connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse)
 	}
 	var instance *connectivity.Connection
 	if response != nil {
@@ -174,7 +174,7 @@ func (c *ConfigureController) run(cmd *cobra.Command, args []string, client *sdk
 	name := args[0]
 	response, err := client.GetConnection(cmd.Context(), operations.GetConnectionRequest{Name: url.PathEscape(name)}, nil)
 	if err == nil && response != nil {
-		err = connectivityinternal.ResponseError(response.StatusCode, response.Error)
+		err = connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse)
 	}
 	var instance *connectivity.Connection
 	if response != nil {
@@ -254,7 +254,7 @@ func (c *ConfigureController) run(cmd *cobra.Command, args []string, client *sdk
 	}
 	responsePatch, err := client.PatchConnection(connectivityinternal.WithPatchBody(cmd.Context(), body), operations.PatchConnectionRequest{Name: url.PathEscape(name)}, nil)
 	if err == nil && responsePatch != nil {
-		err = connectivityinternal.ResponseError(responsePatch.StatusCode, responsePatch.Error)
+		err = connectivityinternal.ResponseError(responsePatch.StatusCode, responsePatch.Error, responsePatch.RawResponse)
 	}
 	var updated *connectivity.Connection
 	if responsePatch != nil {

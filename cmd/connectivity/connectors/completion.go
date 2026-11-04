@@ -39,7 +39,7 @@ func completeConnectorNames(completionCommand *cobra.Command, client *formance.F
 			if response == nil {
 				return nil, false, "", fmt.Errorf("empty connector list response")
 			}
-			if err := connectivityinternal.ResponseError(response.StatusCode, response.Error); err != nil {
+			if err := connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse); err != nil {
 				return nil, false, "", err
 			}
 			if response.ConnectorCursor == nil {

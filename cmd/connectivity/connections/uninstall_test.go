@@ -14,6 +14,7 @@ import (
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
 type uninstallClientMock struct {
@@ -51,7 +52,7 @@ func TestUninstallConfirmationRejectionPreventsDelete(t *testing.T) {
 }
 
 func TestUninstallPreservesDeleteAPIError(t *testing.T) {
-	apiError := &connectivityinternal.APIError{StatusCode: 404, Code: "CONNECTORINSTANCE_NOT_FOUND", Message: "missing"}
+	apiError := sdkerrors.NewSDKError("API error occurred", 404, `{"code":"CONNECTORINSTANCE_NOT_FOUND","message":"missing"}`, nil)
 	client := uninstallClientMock{delete: func(context.Context, string) error { return apiError }}
 
 	_, err := executeCommand(testNewUninstallCommand(factoryReturning(client)), "stripe-eu", "--confirm")

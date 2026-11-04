@@ -15,6 +15,7 @@ import (
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	formance "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
 type connectorTransportMock struct {
@@ -85,13 +86,9 @@ func (m connectorTransportMock) RoundTrip(request *http.Request) (*http.Response
 			data = connector
 		}
 	}
-	var apiErr *connectivityinternal.APIError
+	var apiErr *sdkerrors.SDKError
 	if errors.As(err, &apiErr) {
-		body, marshalErr := json.Marshal(connectivity.Error{Code: apiErr.Code, Message: apiErr.Message, Details: apiErr.Details})
-		if marshalErr != nil {
-			return nil, marshalErr
-		}
-		return connectorResponse(apiErr.StatusCode, string(body)), nil
+		return connectorResponse(apiErr.StatusCode, apiErr.Body), nil
 	}
 	if err != nil {
 		return nil, err

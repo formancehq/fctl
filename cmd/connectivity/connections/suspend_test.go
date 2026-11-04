@@ -13,6 +13,7 @@ import (
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
 type suspensionClientMock struct {
@@ -68,7 +69,7 @@ func TestSuspensionCommandConfirmationRejectionMakesNoPatch(t *testing.T) {
 }
 
 func TestSuspensionCommandsPreserveAPIError(t *testing.T) {
-	apiError := &connectivityinternal.APIError{StatusCode: 409, Code: "CONFLICT", Message: "stale"}
+	apiError := sdkerrors.NewSDKError("API error occurred", 409, `{"code":"CONFLICT","message":"stale"}`, nil)
 	client := suspensionClientMock{patch: func(context.Context, string, map[string]any) (*connectivity.Connection, error) {
 		return nil, apiError
 	}}

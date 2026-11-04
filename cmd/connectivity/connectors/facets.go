@@ -81,7 +81,7 @@ func (c *FacetsController) run(cmd *cobra.Command, _ []string, client *formance.
 		return nil, fmt.Errorf("get connectivity connector facets: empty response")
 	}
 
-	if err := connectivityinternal.ResponseError(response.StatusCode, response.Error); err != nil {
+	if err := connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse); err != nil {
 		return nil, err
 	}
 	if response.FacetDistribution == nil {
