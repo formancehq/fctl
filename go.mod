@@ -9,7 +9,6 @@ require (
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/formancehq/fctl/internal/deployserverclient/v3 v3.1.1
 	github.com/formancehq/fctl/internal/membershipclient/v3 v3.1.1
-<<<<<<< HEAD
 	github.com/formancehq/fctl/v3/pkg/client v0.0.0
 	github.com/formancehq/fctl/v3/pkg/pluginsdk v0.0.0
 	github.com/formancehq/formance-sdk-go/v4 v4.0.0
