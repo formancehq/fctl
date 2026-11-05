@@ -9,6 +9,77 @@ import (
 	"time"
 )
 
+// QueryTemplatePlainParams - Parameters without a nested resource; the parent query selects the resource. groupBy and insertionDate apply only to volumes.
+type QueryTemplatePlainParams struct {
+	EndTime       *time.Time `json:"endTime,omitempty"`
+	Expand        []string   `json:"expand,omitempty"`
+	GroupBy       *int64     `json:"groupBy,omitempty"`
+	InsertionDate *bool      `json:"insertionDate,omitempty"`
+	PageSize      *int64     `json:"pageSize,omitempty"`
+	Sort          *string    `json:"sort,omitempty"`
+	StartTime     *time.Time `json:"startTime,omitempty"`
+}
+
+func (q QueryTemplatePlainParams) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(q, "", false)
+}
+
+func (q *QueryTemplatePlainParams) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &q, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (q *QueryTemplatePlainParams) GetEndTime() *time.Time {
+	if q == nil {
+		return nil
+	}
+	return q.EndTime
+}
+
+func (q *QueryTemplatePlainParams) GetExpand() []string {
+	if q == nil {
+		return nil
+	}
+	return q.Expand
+}
+
+func (q *QueryTemplatePlainParams) GetGroupBy() *int64 {
+	if q == nil {
+		return nil
+	}
+	return q.GroupBy
+}
+
+func (q *QueryTemplatePlainParams) GetInsertionDate() *bool {
+	if q == nil {
+		return nil
+	}
+	return q.InsertionDate
+}
+
+func (q *QueryTemplatePlainParams) GetPageSize() *int64 {
+	if q == nil {
+		return nil
+	}
+	return q.PageSize
+}
+
+func (q *QueryTemplatePlainParams) GetSort() *string {
+	if q == nil {
+		return nil
+	}
+	return q.Sort
+}
+
+func (q *QueryTemplatePlainParams) GetStartTime() *time.Time {
+	if q == nil {
+		return nil
+	}
+	return q.StartTime
+}
+
 type QueryTemplateVolumeParams struct {
 	// Parameter used in pagination requests. Maximum page size is set to 15.
 	// Set to the value of next for the next page of results.
@@ -320,6 +391,7 @@ const (
 	V2QueryParamsTypeQueryTemplateTransactionParams V2QueryParamsType = "QueryTemplateTransactionParams"
 	V2QueryParamsTypeQueryTemplateLogParams         V2QueryParamsType = "QueryTemplateLogParams"
 	V2QueryParamsTypeQueryTemplateVolumeParams      V2QueryParamsType = "QueryTemplateVolumeParams"
+	V2QueryParamsTypeQueryTemplatePlainParams       V2QueryParamsType = "QueryTemplatePlainParams"
 )
 
 // V2QueryParams - Parameters applied when running a query template
@@ -328,6 +400,7 @@ type V2QueryParams struct {
 	QueryTemplateTransactionParams *QueryTemplateTransactionParams `queryParam:"inline" union:"member"`
 	QueryTemplateLogParams         *QueryTemplateLogParams         `queryParam:"inline" union:"member"`
 	QueryTemplateVolumeParams      *QueryTemplateVolumeParams      `queryParam:"inline" union:"member"`
+	QueryTemplatePlainParams       *QueryTemplatePlainParams       `queryParam:"inline" union:"member"`
 
 	Type V2QueryParamsType
 }
@@ -368,6 +441,15 @@ func CreateV2QueryParamsQueryTemplateVolumeParams(queryTemplateVolumeParams Quer
 	}
 }
 
+func CreateV2QueryParamsQueryTemplatePlainParams(queryTemplatePlainParams QueryTemplatePlainParams) V2QueryParams {
+	typ := V2QueryParamsTypeQueryTemplatePlainParams
+
+	return V2QueryParams{
+		QueryTemplatePlainParams: &queryTemplatePlainParams,
+		Type:                     typ,
+	}
+}
+
 func (u *V2QueryParams) UnmarshalJSON(data []byte) error {
 
 	var queryTemplateAccountParams QueryTemplateAccountParams = QueryTemplateAccountParams{}
@@ -398,6 +480,13 @@ func (u *V2QueryParams) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
+	var queryTemplatePlainParams QueryTemplatePlainParams = QueryTemplatePlainParams{}
+	if err := utils.UnmarshalJSON(data, &queryTemplatePlainParams, "", true, nil); err == nil {
+		u.QueryTemplatePlainParams = &queryTemplatePlainParams
+		u.Type = V2QueryParamsTypeQueryTemplatePlainParams
+		return nil
+	}
+
 	return fmt.Errorf("could not unmarshal `%s` into any supported union types for V2QueryParams", string(data))
 }
 
@@ -416,6 +505,10 @@ func (u V2QueryParams) MarshalJSON() ([]byte, error) {
 
 	if u.QueryTemplateVolumeParams != nil {
 		return utils.MarshalJSON(u.QueryTemplateVolumeParams, "", true)
+	}
+
+	if u.QueryTemplatePlainParams != nil {
+		return utils.MarshalJSON(u.QueryTemplatePlainParams, "", true)
 	}
 
 	return nil, errors.New("could not marshal union type V2QueryParams: all fields are null")

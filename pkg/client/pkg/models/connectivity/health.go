@@ -3,21 +3,13 @@
 package connectivity
 
 type Health struct {
-	HealthStatus HealthStatus `json:"status"`
-	// Semantic version of the API binary
-	Version *string `json:"version,omitempty"`
+	// OK when storage is ready, otherwise storage unavailable
+	Storage string `json:"storage"`
 }
 
-func (h *Health) GetHealthStatus() HealthStatus {
+func (h *Health) GetStorage() string {
 	if h == nil {
-		return HealthStatus("")
+		return ""
 	}
-	return h.HealthStatus
-}
-
-func (h *Health) GetVersion() *string {
-	if h == nil {
-		return nil
-	}
-	return h.Version
+	return h.Storage
 }

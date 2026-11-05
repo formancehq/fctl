@@ -122,3 +122,27 @@ func TestGetSchemaRejectsUnexpectedContentType(t *testing.T) {
 	_, err := getSchema(context.Background(), clients, operations.V2GetSchemaRequest{Ledger: "default", Version: "v1"})
 	require.Error(t, err)
 }
+
+func TestSchemaAdapterPreservesLegacyTimeBounds(t *testing.T) {
+	const input = `{"chart":{},"queries":{"accounts":{"resource":"accounts","params":{"resource":"accounts","pageSize":15,"startTime":"2026-01-01T00:00:00Z","endTime":"2026-01-02T00:00:00Z"}}}}`
+	const fixture = `{"version":"v1","createdAt":"2026-01-01T00:00:00Z","chart":{},"queries":{"accounts":{"resource":"accounts","params":{"resource":"accounts","pageSize":15,"startTime":"2026-01-01T00:00:00Z","endTime":"2026-01-02T00:00:00Z"}}}}`
+	clients := schemaClients(func(r *http.Request) (*http.Response, error) {
+		require.Equal(t, "/api/ledger/v2/default/schemas/v1", r.URL.Path)
+		if r.Method == http.MethodPost {
+			body, err := io.ReadAll(r.Body)
+			require.NoError(t, err)
+			require.JSONEq(t, input, string(body))
+			return schemaResponse(http.StatusNoContent, ""), nil
+		}
+		require.Equal(t, http.MethodGet, r.Method)
+		return schemaResponse(http.StatusOK, `{"data":`+fixture+`}`), nil
+	})
+	var data SchemaData
+	require.NoError(t, json.Unmarshal([]byte(input), &data))
+	require.NoError(t, insertSchema(t.Context(), clients, operations.V2InsertSchemaRequest{Ledger: "default", Version: "v1"}, &data))
+	got, err := getSchema(t.Context(), clients, operations.V2GetSchemaRequest{Ledger: "default", Version: "v1"})
+	require.NoError(t, err)
+	actual, err := json.Marshal(got)
+	require.NoError(t, err)
+	require.JSONEq(t, fixture, string(actual))
+}

@@ -4,29 +4,30 @@ package connectivity
 
 // Error - Request or server error. The HTTP status and code identify the failure.
 type Error struct {
+	// Additional details; when structured, this string contains a JSON object.
+	Details *string `json:"details,omitempty"`
 	// Machine-readable error code (e.g. `not_found`, `unauthorized`, `connector_missing`)
-	Code    string         `json:"code"`
-	Details map[string]any `json:"details,omitempty"`
-	Message string         `json:"message"`
+	ErrorCode    *string `json:"errorCode,omitempty"`
+	ErrorMessage *string `json:"errorMessage,omitempty"`
 }
 
-func (e *Error) GetCode() string {
-	if e == nil {
-		return ""
-	}
-	return e.Code
-}
-
-func (e *Error) GetDetails() map[string]any {
+func (e *Error) GetDetails() *string {
 	if e == nil {
 		return nil
 	}
 	return e.Details
 }
 
-func (e *Error) GetMessage() string {
+func (e *Error) GetErrorCode() *string {
 	if e == nil {
-		return ""
+		return nil
 	}
-	return e.Message
+	return e.ErrorCode
+}
+
+func (e *Error) GetErrorMessage() *string {
+	if e == nil {
+		return nil
+	}
+	return e.ErrorMessage
 }

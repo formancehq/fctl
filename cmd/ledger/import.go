@@ -3,14 +3,11 @@ package ledger
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"math/big"
-	"mime"
-	"net/http"
 	"os"
 	"path/filepath"
 
@@ -20,7 +17,6 @@ import (
 	"github.com/formancehq/go-libs/v4/pointer"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
-	formance "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
@@ -67,7 +63,7 @@ func (c *ImportController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
-	clients, err := fctl.NewStackClientsFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
 	if err != nil {
 		return nil, err
 	}
@@ -78,9 +74,15 @@ func (c *ImportController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 	if resumeFromLastLog {
-		lastID, err = lastImportLogID(cmd.Context(), clients, args[0])
+		logs, err := stackClient.Ledger.V2.ListLogs(cmd.Context(), operations.V2ListLogsRequest{
+			Ledger:   args[0],
+			PageSize: pointer.For[int64](1),
+		})
 		if err != nil {
 			return nil, err
+		}
+		if len(logs.V2LogsCursorResponse.Cursor.Data) > 0 {
+			lastID = logs.V2LogsCursorResponse.Cursor.Data[0].ID
 		}
 	}
 
@@ -121,7 +123,7 @@ func (c *ImportController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 	err = importLogs(f, importBlockSize, func(n int) {
 		progressBar.Add(n)
 	}, func(buffer *bytes.Buffer) error {
-		_, err := clients.SDK.Ledger.V2.ImportLogs(cmd.Context(), operations.V2ImportLogsRequest{
+		_, err := stackClient.Ledger.V2.ImportLogs(cmd.Context(), operations.V2ImportLogsRequest{
 			Ledger:              args[0],
 			V2ImportLogsRequest: buffer,
 		})
@@ -132,83 +134,6 @@ func (c *ImportController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 	}
 
 	return c, nil
-}
-
-// Resume only needs the ID. Keep the original response because generated log
-// decoding rejects schema query params that do not repeat their resource field.
-func lastImportLogID(ctx context.Context, clients *fctl.StackClients, ledgerName string) (*big.Int, error) {
-	transport := &importLogTransport{client: clients.HTTPClient}
-	sdk := formance.New(formance.WithServerURL(clients.URI), formance.WithClient(transport))
-	logs, sdkErr := sdk.Ledger.V2.ListLogs(ctx, operations.V2ListLogsRequest{
-		Ledger:   ledgerName,
-		PageSize: pointer.For[int64](1),
-	})
-	if transport.readErr != nil {
-		return nil, fmt.Errorf("read latest ledger log: %w", transport.readErr)
-	}
-	if sdkErr == nil && logs != nil && logs.V2LogsCursorResponse != nil {
-		data := logs.V2LogsCursorResponse.Cursor.Data
-		if data != nil && len(data) == 0 {
-			return big.NewInt(-1), nil
-		}
-		if len(data) > 0 && data[0].ID != nil {
-			return data[0].ID, nil
-		}
-	}
-	if transport.response == nil || transport.response.StatusCode != http.StatusOK {
-		if sdkErr != nil {
-			return nil, sdkErr
-		}
-		return nil, fmt.Errorf("unexpected response while reading latest ledger log")
-	}
-	contentType, _, _ := mime.ParseMediaType(transport.response.Header.Get("Content-Type"))
-	if contentType != "application/json" {
-		if sdkErr != nil {
-			return nil, sdkErr
-		}
-		return nil, fmt.Errorf("unexpected latest ledger log content type %q", contentType)
-	}
-	var response struct {
-		Cursor *struct {
-			Data []struct {
-				ID *big.Int `json:"id"`
-			} `json:"data"`
-		} `json:"cursor"`
-	}
-	if err := json.Unmarshal(transport.body, &response); err != nil {
-		return nil, fmt.Errorf("decode latest ledger log: %w", err)
-	}
-	if response.Cursor == nil || response.Cursor.Data == nil {
-		return nil, fmt.Errorf("decode latest ledger log: cursor.data must be an array")
-	}
-	if len(response.Cursor.Data) == 0 {
-		return big.NewInt(-1), nil
-	}
-	if response.Cursor.Data[0].ID == nil {
-		return nil, fmt.Errorf("decode latest ledger log: id must be an integer")
-	}
-	return response.Cursor.Data[0].ID, nil
-}
-
-type importLogTransport struct {
-	client   *http.Client
-	response *http.Response
-	body     []byte
-	readErr  error
-}
-
-func (t *importLogTransport) Do(request *http.Request) (*http.Response, error) {
-	response, err := t.client.Do(request)
-	if err != nil {
-		return response, err
-	}
-	t.response = response
-	if response.StatusCode == http.StatusOK {
-		t.body, t.readErr = io.ReadAll(response.Body)
-		_ = response.Body.Close()
-		response.Body = io.NopCloser(bytes.NewReader(t.body))
-	}
-	return response, nil
 }
 
 func (c *ImportController) Render(cmd *cobra.Command, _ []string) error {

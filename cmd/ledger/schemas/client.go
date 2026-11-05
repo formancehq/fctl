@@ -16,8 +16,8 @@ import (
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
-// QueryTemplate keeps params opaque: Ledger stores the resource discriminator on
-// the query, whereas the generated SDK incorrectly requires it inside params.
+// QueryTemplate keeps params opaque because legacy SDK union members silently
+// drop time bounds when params includes a redundant resource field.
 type QueryTemplate struct {
 	Description *string                              `json:"description,omitempty"`
 	Resource    *ledger.V2QueryResource              `json:"resource,omitempty"`

@@ -1,23 +1,32 @@
 # Local Stack SDK
 
 FCTL uses the complete generated Stack SDK in `pkg/client`. The root module
-replaces `github.com/formancehq/fctl/v3/pkg/client` with that directory. Building
-FCTL no longer downloads `formance-sdk-go/v4` or the private Connectivity SDK.
-Membership and Deploy Server retain their existing separate local SDKs.
+replaces `github.com/formancehq/fctl/v3/pkg/client` with that directory.
+Membership and Deploy Server retain their separate local SDKs.
 
-## Generation
+## Source and generation
 
-The Go generator configuration comes from [formance-sdk-go v4.0.0](https://github.com/formancehq/formance-sdk-go/tree/v4.0.0), the version previously used by FCTL. Generation uses Speakeasy **1.757.1** and Go generator **2.866.2**, matching that release's lock. The only `gen.yaml` changes set the package/module path to `github.com/formancehq/fctl/v3/pkg/client` and version to `0.0.0` for this local module.
+The workflow reads the committed `openapi/stack.json` snapshot. It was composed
+from Stack `2615a186` after #2017, with these moving inputs resolved at generation:
 
-The workflow selects `stacks-source@v4.0.0-beta.2` and generates every service. An OpenAPI overlay removes only `x-speakeasy-name-override` from `ledger_V2BaseBulkElement`: with the v4 naming configuration, that annotation is inherited by four bulk variants and produces duplicate Go fields. The overlay preserves their schemas and wire format. Registry and code-sample publication are omitted.
+| Component | Source revision |
+| --- | --- |
+| Ledger v2 (`release/v2.4`) | `275962012684950622efbe0875eb02dbdd323b5c` |
+| Ledger v3 (`main`) | `c523c431b3ce6fd4070e8d7293e961be8dfa6749` |
+| Connectivity (`main`) | `6c6f971e3f638a009a9ee4446d1daad3a9ec1c8f` |
 
-The [Stack release](https://github.com/formancehq/stack/releases/tag/v4.0.0-beta.2)
-contains the corresponding public `generate.json` OpenAPI asset; its SHA-256 is
-`078de9a671be533364d1042ec39632011c8abc6367fb559cbeebcfe234035740`.
-The workflow and generation locks record the generator, options and document
-checksum. Review source/tag and generated changes together when upgrading.
+Other component versions come from that Stack revision's `Justfile`.
+The snapshot SHA-256 is
+`e18983308bfe4d5387090c67522d414fba76c81da91103673c3a64f94fcc6a46`.
+It includes Connectivity's `errorCode`/`errorMessage`, string `details`, and
+raw connection `status.lastError`. Ledger #2501 is not included.
 
-From the repository root:
+Generation uses Speakeasy **1.757.1** and Go generator **2.866.2**, matching
+`formance-sdk-go v4.0.0`. Its Go options are preserved, including
+`nameOverrideFeb2026: false`; the local module identity and version differ.
+The bulk naming overlay removes `x-speakeasy-name-override` from
+`ledger_V2BaseBulkElement` to avoid duplicate generated union fields. It changes
+naming only. Registry and code-sample publication outputs are omitted.
 
 ```sh
 nix develop --command just generate-stack-client
@@ -25,35 +34,41 @@ nix develop --command just tests
 nix develop --command just pre-commit
 ```
 
-Generation requires existing Speakeasy authentication, as for the other local
-SDKs. Ordinary builds and tests use the checked-in code and need no Speakeasy
-credentials or access to the private Connectivity repository. The dedicated
-`stack-speakeasy` Nix package keeps Membership/Deploy Server on their own pinned
-generator. Stack generation uses Go 1.25.10 for the official generator's bundled
-Staticcheck; its importer does not support the repository's Go 1.27 export format.
-FCTL builds and tests still use the repository toolchain.
+Ordinary builds/tests use checked-in code. Generation requires existing
+Speakeasy authentication. The `stack-speakeasy` Nix package isolates the Stack
+pin from Membership/Deploy Server. Stack generation uses Go 1.25.10 for the
+bundled Staticcheck; FCTL uses its repository toolchain.
 
-The generated `pkg/client/docs` reference and generated SDK README, usage and contribution guides are excluded from Git; FCTL maintains its own documentation. Do not edit generated Go files. Change the source pin or generator configuration
-and regenerate. Inspect the generated diff and locks when changing a source or
-configuration, then repeat generation and check for unexpected drift. The source
-is selected by its release tag: `--frozen-workflow-lockfile` cannot be used with
-`--skip-upload-spec`, which intentionally leaves no uploaded source reference.
-`just tests` covers both the CLI and the nested SDK module; the existing CI Test
-job invokes that recipe. `just pre-commit` includes SDK regeneration.
+To refresh the source, generate `releases/build/generate.json` in an isolated
+checkout of the intended Stack revision, review its resolved component inputs,
+and replace `openapi/stack.json`. Update the revisions and checksum above,
+regenerate, inspect the SDK/lock diff, and repeat generation to check drift.
+The current Stack validator still assumes every V2 query-params union member
+has a resource constant and rejects the valid plain-params member. This upstream
+gate failure must be assessed separately; SDK generation/tests do not qualify
+Stack for release.
 
-## Consumer contracts
+Do not edit generated Go files. Generated SDK reference docs and usage guides
+are ignored; FCTL maintains this document. `just tests` covers both the CLI and
+nested SDK. `just pre-commit` includes regeneration. `--skip-upload-spec` keeps
+generation local and cannot be combined with a frozen workflow lock.
 
-The Stack SDK owns routes, operation models and transport serialization.
-The other services retain their command hierarchy. Their callers use the current
-SDK property names (`data`, `cursor`, `metadata`, and typed union members) while
-retaining FCTL's output envelopes. Ledger `server-infos` now calls the SDK's
-current discovery route `/api/ledger/_/info`, returning the same CLI `server` and
-`version` fields. Servers exposing only the former `/api/ledger/_info` route need
-an upgrade before that command can be used; no legacy route fallback is provided.
-Ledger schema commands preserve query parameters accepted by Ledger even when
-the generated union expects an additional nested discriminator.
-Payments raw provider objects now retain their fields in JSON output; the old SDK
-decoded these objects as empty structs.
-The generated Ledger v3 surface does not by itself add Ledger v3 CLI commands.
+## Consumer contracts and limits
 
-Local transport tests do not establish a supported live-server version matrix.
+Ledger `server-infos` retains the original `/api/ledger/_info` route and `data`
+envelope through `Ledger.V1.GetInfo`. Import resume reads the latest log ID
+through the SDK without a response-body fallback. Contract tests cover schema
+logs, IDs above 2^53, the four plain query-param resources, and both info models.
+
+Ledger schema commands retain a raw-params adapter. The selected v2 contract
+accepts plain params, but legacy union members still silently discard time
+bounds when a redundant nested `params.resource` is present. The adapter
+preserves those existing inputs and returned values; its regression test covers
+both insert and get. It remains necessary with the selected source.
+
+Payments raw provider objects retain their fields in JSON output, but generic
+JSON numbers use `float64` and are not lossless above 2^53. Compatibility with
+historical Payments connector configs and Wallets servers is not established by
+local model tests. The generated Ledger v3 surface adds no v3 CLI commands.
+
+Local transport tests do not establish a live-server compatibility matrix.

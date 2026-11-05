@@ -2,7 +2,7 @@
 
 package client
 
-// Generated from OpenAPI doc version SDK_VERSION and generator version 2.866.2
+// Generated from OpenAPI doc version v0.0.0 and generator version 2.866.2
 
 import (
 	"bytes"
@@ -211,7 +211,7 @@ func New(opts ...SDKOption) *Formance {
 	sdk := &Formance{
 		SDKVersion: "0.0.0",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 0.0.0 2.866.2 SDK_VERSION github.com/formancehq/fctl/v3/pkg/client",
+			UserAgent:  "speakeasy-sdk/go 0.0.0 2.866.2 v0.0.0 github.com/formancehq/fctl/v3/pkg/client",
 			ServerList: ServerList,
 			ServerVariables: []map[string]string{
 				{},

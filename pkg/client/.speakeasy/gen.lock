@@ -1,16 +1,16 @@
 lockVersion: 2.0.0
 id: 29bef3b2-6e86-47e0-853d-3a70ae387eb8
 management:
-  docChecksum: 69984749152a25a24e00c5176b7796f5
-  docVersion: SDK_VERSION
+  docChecksum: b862f307ede34a49c35228a4d8a7d824
+  docVersion: v0.0.0
   speakeasyVersion: 1.757.1
   generationVersion: 2.866.2
   releaseVersion: 0.0.0
   configChecksum: d074dd20fdd6d5391e25b9bfa46145bf
 persistentEdits:
-  generation_id: 2d1c0732-de39-4d5a-9b4a-def887edccc3
-  pristine_commit_hash: c8ce122567c9cb16e7c3500e8549b5cd94c45d5e
-  pristine_tree_hash: fc307fc22db3eb9cb3e398d049cdf89b849457d0
+  generation_id: fa355272-85a3-4e71-84bf-65fc2cc1c43a
+  pristine_commit_hash: 2010860d9527e770a077b57fd1b76127c84674e2
+  pristine_tree_hash: bed05e5f1b7fc501381fb8deaf278a0122e03132
 features:
   go:
     acceptHeaders: 2.81.2
@@ -113,10 +113,6 @@ trackedFiles:
     id: 6c86c3f5686f
     last_write_checksum: sha1:b051f092e358b0acc2a0b023c06b1dec985209eb
     pristine_git_object: 3f0c3ac8574f35e05c373abb34699f647ece96d8
-  docs/pkg/models/connectivity/code.md:
-    id: 5f4ae33c0a48
-    last_write_checksum: sha1:757cd50375a02ff9584e8a8632913a57abd650a6
-    pristine_git_object: 99e3639d7c1bff148cfcb37ed6b8333fea597822
   docs/pkg/models/connectivity/configuration.md:
     id: 073da615497d
     last_write_checksum: sha1:19c74ff31d42a6139f4357fd1bedf99285e60b65
@@ -155,8 +151,8 @@ trackedFiles:
     pristine_git_object: 6b9a86c51ed7c2f21a889d142e75d80cca1cd44e
   docs/pkg/models/connectivity/connectionstatus.md:
     id: 0f6236525972
-    last_write_checksum: sha1:943298388d274c965b39e901dd3fc3e914da25af
-    pristine_git_object: e7ba15429259122207e5a59e4cfe1bb67b53948d
+    last_write_checksum: sha1:f71423348b7b036c7fa6fadf6224b91e1ab218a8
+    pristine_git_object: 0fae2306267053cdc19fae9c86075f3f32255956
   docs/pkg/models/connectivity/connectionupdate.md:
     id: acb56743b8d7
     last_write_checksum: sha1:5ccb41c3d1932ddd67e38371a950caa239c9df8d
@@ -199,20 +195,16 @@ trackedFiles:
     pristine_git_object: 685086156aa23ed8cbaf7fb119544d78171db846
   docs/pkg/models/connectivity/error.md:
     id: eec59f3b88e6
-    last_write_checksum: sha1:4f73152a61adea945ad794b868e8a8c47ffa47a1
-    pristine_git_object: 7372ddc0a94aefd30d4600e916452fb16b9ce09a
+    last_write_checksum: sha1:e6f283632b3fe63786e8181bede474c742f99c1f
+    pristine_git_object: d80cdb1375569b19130c4dfb35d568dd59d8b9ca
   docs/pkg/models/connectivity/facetdistribution.md:
     id: 07eae1291056
     last_write_checksum: sha1:2a4cf55206153e1b33e6368b77037a8d6969529a
     pristine_git_object: a7307a0345f7a9ae09c4bfd299439ecd4b9ba089
   docs/pkg/models/connectivity/health.md:
     id: 692ba01f330b
-    last_write_checksum: sha1:b58e1565a9cea5a3a4809e6bb760fa4e1c3127b7
-    pristine_git_object: 3ecef33e28f0a5a8b75cb565537fb020e74e4295
-  docs/pkg/models/connectivity/healthstatus.md:
-    id: a07dacb2df1f
-    last_write_checksum: sha1:37ccd345d6aee5398adc10bd7cf9838c0c8f10e1
-    pristine_git_object: 21514abba9853975145b34d86525be30b0d31edf
+    last_write_checksum: sha1:348fd722e4510546ccede47a99858dc5eadee5be
+    pristine_git_object: 394b1941caefbcd53fd8e2622b9d85ace964f97d
   docs/pkg/models/connectivity/info.md:
     id: 01bc9b9a4021
     last_write_checksum: sha1:ef09f23836a164fa1f417ec7be94930c80958fce
@@ -223,8 +215,8 @@ trackedFiles:
     pristine_git_object: 180b2e5839533f0aaa2cdc6a92b0c9b36eb777ab
   docs/pkg/models/connectivity/ingestionstatus.md:
     id: 0220793c8d12
-    last_write_checksum: sha1:43fddffebde250cd31f5e624269b52b576ef185b
-    pristine_git_object: f71a33b0aa9d5c0a88ea9d70b85a028997f456b1
+    last_write_checksum: sha1:9d45e0c423e79c606b22a7862294e278b7294ff2
+    pristine_git_object: 465065e1b018ee3e9a87f4cb43b09a45b13cd547
   docs/pkg/models/connectivity/lifecycle.md:
     id: ff307fd339dd
     last_write_checksum: sha1:8e3011f7ae30e73c063975af409f4365812d6729
@@ -245,10 +237,6 @@ trackedFiles:
     id: e305a1838787
     last_write_checksum: sha1:1c21b820594c5976ac23efbf5ba854b63c1a316a
     pristine_git_object: f80b704c7876a21f47df391a47910b58ed017c51
-  docs/pkg/models/connectivity/statuserror.md:
-    id: 6a58a3d067e6
-    last_write_checksum: sha1:a27b29df9bb6a7f6481db942713e4b6933eaaa32
-    pristine_git_object: 1f6611404350f15b3ff6ecbcee31f33b5bee1e2f
   docs/pkg/models/connectivity/suspensionsource.md:
     id: 94935e25899b
     last_write_checksum: sha1:39e8c0816e0aa98de2e25b8265b12720c6a45707
@@ -289,6 +277,18 @@ trackedFiles:
     id: d6bc2a0d7459
     last_write_checksum: sha1:51d61b68ac3f590abdbb5883a541b40e3f8f7212
     pristine_git_object: 194ad9e6494878ffc49e210c0a0599a1e88f23af
+  docs/pkg/models/ledger/config.md:
+    id: 03f312fff183
+    last_write_checksum: sha1:3e4b8e5efd8c907b49b50d9b9230a2c74fd75262
+    pristine_git_object: e531f72534e54f921c9b7659d75a9d93f1a3bb8c
+  docs/pkg/models/ledger/configinfo.md:
+    id: 62d54597af18
+    last_write_checksum: sha1:62177eef4ca6280bba72e19491c08918043ee333
+    pristine_git_object: 1a2fccf4de8235065b645530e35cf603e59b712a
+  docs/pkg/models/ledger/configinforesponse.md:
+    id: e530ce8d9c50
+    last_write_checksum: sha1:472927e8f0c6264e23258c3aaa2e7cc447c18f26
+    pristine_git_object: 70f54999a8b5c1e6bf931bdea37056065d8ecabc
   docs/pkg/models/ledger/contract.md:
     id: ae3d43b87ba1
     last_write_checksum: sha1:921736a2ea94fa6da760c43608dc5b99f28dc948
@@ -329,6 +329,10 @@ trackedFiles:
     id: 75259737fb4d
     last_write_checksum: sha1:d95782a422280600a77889c7158cc27aa07ed9db
     pristine_git_object: 07e26992dddab9194e468dd2d5a125a6feabc90c
+  docs/pkg/models/ledger/ledgerstorage.md:
+    id: 2d9463e56b80
+    last_write_checksum: sha1:57ccbcf32b725759cbbf2a6418df16cefba2b41f
+    pristine_git_object: 881edf8c2124ce209aa5897713ab411922249278
   docs/pkg/models/ledger/log.md:
     id: 118f5efa4416
     last_write_checksum: sha1:ba931bae7dd2e0f740357e65c5df56ef47cd74ad
@@ -373,6 +377,10 @@ trackedFiles:
     id: 46b7ae90518e
     last_write_checksum: sha1:ad1f07dc64b947f926521f60f69cb0a6370dca47
     pristine_git_object: 8443e66172844a39bfd5e8873fa42b2198d1aa1f
+  docs/pkg/models/ledger/querytemplateplainparams.md:
+    id: 64ec84696bb8
+    last_write_checksum: sha1:8f4484adccb2bcc998907e469844ffa144b0da3d
+    pristine_git_object: 348a8184c412befcac8e56d3ef2dec0463374ad9
   docs/pkg/models/ledger/querytemplatetransactionparams.md:
     id: 0c84b82cf9b4
     last_write_checksum: sha1:4e7280f8f078bec0eed97ab5a719737694e6a6b0
@@ -727,8 +735,8 @@ trackedFiles:
     pristine_git_object: 7a5b343603480fe2e0e80c68ae224bc5d757ae8b
   docs/pkg/models/ledger/v2queryparams.md:
     id: c27a3d2b1012
-    last_write_checksum: sha1:df5922206c9d159ee38f7b3a9010eef8b7917920
-    pristine_git_object: d7430cf0c0827a9aca7ccea12d98de010cfc4525
+    last_write_checksum: sha1:7492a8699b93a0c29667de8c8259611e1d88d5ca
+    pristine_git_object: a094d0c88e99ad418c0843a65282dc87d73859e9
   docs/pkg/models/ledger/v2queryresource.md:
     id: aa1946705610
     last_write_checksum: sha1:955458406c4413c46203190ab7b59a7d6d785556
@@ -1647,8 +1655,8 @@ trackedFiles:
     pristine_git_object: 65bbac2e4395c1a69910265da81ef931359cb85c
   docs/pkg/models/operations/connectivityinforesponse.md:
     id: 084b435ef6e9
-    last_write_checksum: sha1:38e050449d5ef6766b24e97e29ab257f12960a46
-    pristine_git_object: 98c6102e54c62bba9f0dd09df75d926b35ac53d8
+    last_write_checksum: sha1:d0cb7e00df018c2cbdd2b457ed69088bd63d5016
+    pristine_git_object: 9afbec9ca07e72b37e166411de53e18be4fadf02
   docs/pkg/models/operations/connectorstransferrequest.md:
     id: cf97597d2622
     last_write_checksum: sha1:bfe3322dd09810913ab42d1c60b84157cd5d04ec
@@ -1695,8 +1703,8 @@ trackedFiles:
     pristine_git_object: 1830c0777fe9a1bc888a92d3b316cd6cbedf7163
   docs/pkg/models/operations/createconnectionresponse.md:
     id: ca71367586fb
-    last_write_checksum: sha1:e2af4392b0d95bfb86b74ad656c6ded582ae20d7
-    pristine_git_object: e989923cdabf76171d6a721af3c563ad2ec000f0
+    last_write_checksum: sha1:9f495940ef284485cf9c3af93c9702441823937b
+    pristine_git_object: 77e10f9be6666db3bff20f3e7dce80ff3644aaeb
   docs/pkg/models/operations/createconnectionsecurity.md:
     id: 1318c9795be4
     last_write_checksum: sha1:6441863449ae6015c3266369bbe4e5d31ef6984b
@@ -1811,8 +1819,8 @@ trackedFiles:
     pristine_git_object: 3d6955e4d4c1cb526d221af77a0f77edf0ab5447
   docs/pkg/models/operations/deleteconnectionresponse.md:
     id: be26ce34eed5
-    last_write_checksum: sha1:cd14a462abd376944549bcdecf1b4e17adb192ce
-    pristine_git_object: 04f868e31d733268a1fa1f47ea76ae99265a5fb8
+    last_write_checksum: sha1:c063bd65a8f803a9e9c8be4abeb6a7a6e9d59c35
+    pristine_git_object: 71ca391b0fa2d9ee3c825b9ac876850816b44723
   docs/pkg/models/operations/deleteconnectionsecurity.md:
     id: 1285202b32bb
     last_write_checksum: sha1:5af5f94d00ba27789c4835d57b4296cbcd19725b
@@ -1959,8 +1967,8 @@ trackedFiles:
     pristine_git_object: ddb6deee3c858214438679ad3222ddcb942a38fb
   docs/pkg/models/operations/getconnectionresponse.md:
     id: e5db8f812a16
-    last_write_checksum: sha1:181222bfe9f8bfa916feee8c796d0b93ba6b50b6
-    pristine_git_object: 40d8b249c24eca6d6ff218933d53240b8cf99584
+    last_write_checksum: sha1:340bbbf8a35590418aa4f7ca9c10ab68918f3303
+    pristine_git_object: e73d25089dd9f31c316ae8acf2b2ebeb8c99cd30
   docs/pkg/models/operations/getconnectionsecurity.md:
     id: 7bf8e9c3d4d4
     last_write_checksum: sha1:9d8a8503cbdb538a17e633fcacea6b63662cadd6
@@ -1971,8 +1979,8 @@ trackedFiles:
     pristine_git_object: a88ee3f3f15c07284b52ac294b2bb1bdcc845aa8
   docs/pkg/models/operations/getconnectorfacetsresponse.md:
     id: 8142452dac3d
-    last_write_checksum: sha1:c7c1c5816c98a7be2d7032a35ea93ead2cb08d96
-    pristine_git_object: 5b83e91ac083573bfa788a575b779ff8f0a783d5
+    last_write_checksum: sha1:727f9c9ab41e375369779dec31a0b165f025d670
+    pristine_git_object: 7296362a4ab90830a63dae1567e03aeab7f5bca6
   docs/pkg/models/operations/getconnectorfacetssecurity.md:
     id: 655b1fc9c1cd
     last_write_checksum: sha1:108f63997fd83a89aea9e9952d2c286f6d5da182
@@ -1983,8 +1991,8 @@ trackedFiles:
     pristine_git_object: 3008e7825eb7cf0453701f276eff0b8f58be7a25
   docs/pkg/models/operations/getconnectorresponse.md:
     id: 23cb168b4f3b
-    last_write_checksum: sha1:f4ad69a15cf76d404bd32615890bdf2233f64ab9
-    pristine_git_object: 32b079c0ef64c86d1b302128e632a956e3d7a6d5
+    last_write_checksum: sha1:bf8d85b0dce22be8db6f3054e6882cb6c64d1fea
+    pristine_git_object: 50ddc8e89d9cf155512f2d828429f23e4f05329b
   docs/pkg/models/operations/getconnectorsecurity.md:
     id: af06a2929f1f
     last_write_checksum: sha1:fb433fd1d8434f2839b6651d06f5e508f6dc6cce
@@ -2011,8 +2019,8 @@ trackedFiles:
     pristine_git_object: a68e9fe0d662b3328a2b84d4b9c46b1ab9b23c15
   docs/pkg/models/operations/getconnectorversionresponse.md:
     id: 79d3cb07a220
-    last_write_checksum: sha1:9a6573511be5b2c228bac48899c13ab9dedbb70b
-    pristine_git_object: 40dff21abfa505cfba0b3fdf69cda021eba0929b
+    last_write_checksum: sha1:62e2482f155d278bdac7141b593e6cfe382570c0
+    pristine_git_object: 148e31d817813cbbe8b3284569686396f9feab6c
   docs/pkg/models/operations/getconnectorversionsecurity.md:
     id: 052ede8fb07e
     last_write_checksum: sha1:d36ac4d3bddd8d4cfe442d1d4b31d7da7c81c17e
@@ -2065,6 +2073,10 @@ trackedFiles:
     id: 2d9d3ab31bcb
     last_write_checksum: sha1:d2a8c2fa0246e73ba02439ba47271cb69813a80b
     pristine_git_object: d3852480a6db135b1e5620b37fbb7724082123ef
+  docs/pkg/models/operations/getinforesponse.md:
+    id: bec1f4ca26a4
+    last_write_checksum: sha1:729b9382b811e8731e25d21de80cc4c6c1f48e52
+    pristine_git_object: 1ad449863cacfee87612a0ea3c304f40346cc3f8
   docs/pkg/models/operations/getinstancehistoryrequest.md:
     id: 71efd4edfe21
     last_write_checksum: sha1:af6dc03c0a4a30566a1a18cde5ba38aab6eb628b
@@ -2163,8 +2175,8 @@ trackedFiles:
     pristine_git_object: e9f7b4bf06095ebd0322e843ffb15479b98d5355
   docs/pkg/models/operations/getquerycapabilitiesresponse.md:
     id: 1c601521f49a
-    last_write_checksum: sha1:a245f1ad6e660ed336bf90124b67452a869f2b80
-    pristine_git_object: 6432e84c8eea3f1046e2e4ca274e48dabf72db55
+    last_write_checksum: sha1:3cb63e9f08f55edc78ff04884d7a3608f5421703
+    pristine_git_object: a50ea9038b26056680a1ab14d59c61c625a934ee
   docs/pkg/models/operations/getquerycapabilitiessecurity.md:
     id: ae07899115be
     last_write_checksum: sha1:17db757d3b8a06861c42bb3a47e3b2eb4fc03c2e
@@ -2259,8 +2271,8 @@ trackedFiles:
     pristine_git_object: 8f0db45ddf59388e7c6e43e292596eaaf3c241cc
   docs/pkg/models/operations/healthcheckresponse.md:
     id: 67552dd4c864
-    last_write_checksum: sha1:b416dcbf09a804084dfb2b88f549d61f5f34beb4
-    pristine_git_object: 48e7290d52d3d02a33e47f3032e3648521044cdc
+    last_write_checksum: sha1:7a7d3820671696219d674ac410ffddf601286dc1
+    pristine_git_object: a8052345f117b671052ca2ea3c8b3ca1c9fa8719
   docs/pkg/models/operations/insertconfigresponse.md:
     id: d483c41592d7
     last_write_checksum: sha1:9aa1c0608158afe17518358c693f319038b0bc55
@@ -2339,8 +2351,8 @@ trackedFiles:
     pristine_git_object: a6c8f120cb33e6b8a8114f0d971e5c3fba310861
   docs/pkg/models/operations/listconnectionsresponse.md:
     id: 373519b79b44
-    last_write_checksum: sha1:d91cb2ba13ca1987527c94dfe4a5590cea7561b4
-    pristine_git_object: 7dfa80a75c7a2fb91dcbb91e9cf8b2ade2fb30f3
+    last_write_checksum: sha1:abca2608cc0a90ec8be2fe004ad48222a1bb5f51
+    pristine_git_object: 23f4b9e7aeb02002745c79c4cc02dbff3979a05c
   docs/pkg/models/operations/listconnectionssecurity.md:
     id: 480a0db200aa
     last_write_checksum: sha1:e48ac9126584505d26af749ab8f033e50d6720cb
@@ -2351,8 +2363,8 @@ trackedFiles:
     pristine_git_object: e507c184467f43fbdc09fc4313cf45068658da2c
   docs/pkg/models/operations/listconnectorsresponse.md:
     id: bc3a222cef95
-    last_write_checksum: sha1:5cad3f21bb1d9600d7d96d4ec81560ba972ae991
-    pristine_git_object: 6dfa12aedc9411703eb21320717a2904c3d682f5
+    last_write_checksum: sha1:5734d80682ae1cbf36a4acadcff34e68746a62d0
+    pristine_git_object: dc67582b022c1211baff18dd2cd97db2bceefd99
   docs/pkg/models/operations/listconnectorssecurity.md:
     id: f51cc6c5bb54
     last_write_checksum: sha1:ccb3cfb7dcef6cfda8a6cfe557e227b693d4c2c3
@@ -2379,8 +2391,8 @@ trackedFiles:
     pristine_git_object: ff42e956a073e0e54a80b0d15d9da2e93c4bf882
   docs/pkg/models/operations/listconnectorversionsresponse.md:
     id: 0ebeaf467a8f
-    last_write_checksum: sha1:943213acad0fa2fe91c550c0326e342093f2aef3
-    pristine_git_object: 9588fdb5fba0112fc906fd86881131376dda6c8d
+    last_write_checksum: sha1:de35f1b34574a118da3c1894c57df4cabfe4d810
+    pristine_git_object: bcb2d3c8176ba47b659405a18767d26e9bcfe623
   docs/pkg/models/operations/listconnectorversionssecurity.md:
     id: 050c743bb9a4
     last_write_checksum: sha1:7ab44c72e675dcbbdf4bdeed8904e419fdad1d6e
@@ -2519,8 +2531,8 @@ trackedFiles:
     pristine_git_object: 21d26e1c56e95273edb7cd34343c013d7f07b6df
   docs/pkg/models/operations/patchconnectionresponse.md:
     id: cdfe92fac6fb
-    last_write_checksum: sha1:07e2d393d4d4a3173f4ad1532340cb047d0fed03
-    pristine_git_object: 9ec7fc7ea2948aea81362d39e60fe4dcb9e0c513
+    last_write_checksum: sha1:b83d71c245c32dd0c8267e12210ade5b79909e29
+    pristine_git_object: 11122e364d1020526047a48617eca44f53d12d15
   docs/pkg/models/operations/patchconnectionsecurity.md:
     id: 70bad1d8cc19
     last_write_checksum: sha1:6a86d21a07d0bfea984e3cfea54690511db0d997
@@ -2607,8 +2619,8 @@ trackedFiles:
     pristine_git_object: b29a7a409cad238a762312f4571017b9548c80d0
   docs/pkg/models/operations/replaceconnectionresponse.md:
     id: e8ebf814609c
-    last_write_checksum: sha1:aeb0da02fe5531c6b78c511b9845e11e8b7316c0
-    pristine_git_object: b90d51a729d7444fe75dbd27008f5e86bfcbeb80
+    last_write_checksum: sha1:7c6e4900b4ca381b9831b45b8492a3db8ae1be97
+    pristine_git_object: 7458a011fce05776302487f49204bbf066f35b79
   docs/pkg/models/operations/replaceconnectionsecurity.md:
     id: ec02d0789d88
     last_write_checksum: sha1:bd114d2772428c708b2cf34ec929f3dc33f546de
@@ -6831,8 +6843,8 @@ trackedFiles:
     pristine_git_object: b6d3ca33b6e92c1715dc1e2ea737a46037ea85df
   docs/sdks/formanceledgerv1/README.md:
     id: ebfc6945e4cd
-    last_write_checksum: sha1:275e2fa018f417d904fe7376e263fedd4d0acf25
-    pristine_git_object: 16fc8ebdf28416726190a7c78991fd9fa61caa1c
+    last_write_checksum: sha1:220b6f39699992c9340ee1b5cffe8da47dec6f46
+    pristine_git_object: b34b12d2b778801ac5cecedd4825966f7381632c
   docs/sdks/formanceorchestrationv1/README.md:
     id: 0c80ae47e3a3
     last_write_checksum: sha1:6b7ed22cc8b740c489e4bd3dd5f3dd7ea3198663
@@ -6875,16 +6887,16 @@ trackedFiles:
     pristine_git_object: d4e03cd368da5d7ad82f022822f864e37375d083
   docs/sdks/v3/README.md:
     id: ee683463fcdd
-    last_write_checksum: sha1:fde56f755e329ce52276a3db9a73fac0996d987d
-    pristine_git_object: 5e4d402fa53c583be471ee387da1f90c3ce77c5a
+    last_write_checksum: sha1:f93478e210eec3a0cdf7aaa3c8a18e21f1e4b6d6
+    pristine_git_object: d7b6140eed1a4fbebe3185b6777a3d5a4bfa4790
   formance.go:
     id: 6a39aafd73d7
-    last_write_checksum: sha1:f1b9b1858682c35f0f61004d13b456f9ed77242f
-    pristine_git_object: f06a5bcb0f825c0d335b9562938c9ae1716eaa18
+    last_write_checksum: sha1:fdc6b37e084675292f351355c717fcaabb77c5d1
+    pristine_git_object: 1b25d684985ef4f3e6e09441b21d09e54a147158
   formanceledgerv1.go:
     id: 5d4e019bc45c
-    last_write_checksum: sha1:b10fe70330033033ea931686f5cbc59551324366
-    pristine_git_object: e46a583b8f1f10458a5adbf294bdfa2426c7ef49
+    last_write_checksum: sha1:7eb76ff85af8ba43aad295e4008a5620c0a5ffbe
+    pristine_git_object: 068277098b7f7d64cff752f91d010a6583c228d2
   formanceorchestrationv1.go:
     id: 365c44e3de9c
     last_write_checksum: sha1:8a9aceb92631b573fe3924b39f1dd4e0abb89b51
@@ -6899,8 +6911,8 @@ trackedFiles:
     pristine_git_object: b703ac4f2f880ccab10f5dd6d36da7160f51b229
   formancev1.go:
     id: 7664b04bd552
-    last_write_checksum: sha1:8b82b79dbc2ec28e23343b36a7b71fd722650cb4
-    pristine_git_object: ce3679654924252a83387e4f39f24fca3aed2ea1
+    last_write_checksum: sha1:43d664f0f581a9564fe4996476f43e7a8170b015
+    pristine_git_object: 0e22e234bf121455f3841ec75318a89c6fc92d01
   formancev2.go:
     id: 3d8db8227af5
     last_write_checksum: sha1:2f59f22bcf72b9583920e6ca47e9a0cbf7d13e62
@@ -6935,8 +6947,8 @@ trackedFiles:
     pristine_git_object: 3c913664665e45d4894920ab85d4d8c1e7a93f61
   ledger.go:
     id: e226c62c261a
-    last_write_checksum: sha1:7d6262e209451504b18b6798e1edc2d758ec485a
-    pristine_git_object: 34a79c9eec7cf0ea83e68a72af4010cb1be4587a
+    last_write_checksum: sha1:f1fb19cf1e85f43ad481fa9ae335fff1bcc44730
+    pristine_git_object: 3836f82b0edbeed80b8bfcc2de2dac373c856cfa
   orchestration.go:
     id: cf2fc2a134b4
     last_write_checksum: sha1:63300fe81e96b40f66a8b12120038e268bd1bb0b
@@ -7019,8 +7031,8 @@ trackedFiles:
     pristine_git_object: defea1bfbda9b788c8c51b451d6b707528b17234
   pkg/models/connectivity/connectionstatus.go:
     id: aaf1a41190e6
-    last_write_checksum: sha1:fe24233c61f46da33a4043b7c63b96f119d47a0c
-    pristine_git_object: 562bfbcc5cbd4097563506fb2b0a860d96c6c198
+    last_write_checksum: sha1:53062f98da862150daedc2c1c58f0b218bcbea04
+    pristine_git_object: 557352a2f3d897fc783bc02d120268a2bc13d569
   pkg/models/connectivity/connectionupdate.go:
     id: 4cbc65e5d9a0
     last_write_checksum: sha1:e47e9e1fff3dc3e61287f53d78b1cbc1bf10d36e
@@ -7051,20 +7063,16 @@ trackedFiles:
     pristine_git_object: 6ee8f618433ca59167fbf32099fbc8cbbeb88230
   pkg/models/connectivity/error.go:
     id: 74e7d742ce5d
-    last_write_checksum: sha1:9c02a3847547a27b8ed86b0643953fdbfb0cdc61
-    pristine_git_object: 6874fbcc4037d94b3697972e48e90d559c84baaf
+    last_write_checksum: sha1:9cf68bde301a700974874f62bcbb6bf53c539f10
+    pristine_git_object: 5654b2aa2944104833d10720dd56907aa48c0450
   pkg/models/connectivity/facetdistribution.go:
     id: b227c938117f
     last_write_checksum: sha1:51d012d1905edebaae5a3bcd37a3b78ca668f980
     pristine_git_object: 4a81fece7869a2fe74ee68288552668dae3dfa90
   pkg/models/connectivity/health.go:
     id: 7995eec233b6
-    last_write_checksum: sha1:968c76f19f94b6b3bed1a921c04c04965972b87f
-    pristine_git_object: 93e7afe58a7b40c82e84dcf580507ce58ff36905
-  pkg/models/connectivity/healthstatus.go:
-    id: 15fbf6559b81
-    last_write_checksum: sha1:b9c29d5fc3e8eec5fd861ca1e0116d59d30e46a3
-    pristine_git_object: 490d70affb9a8f927ab3b831bc2df0a6558c1e65
+    last_write_checksum: sha1:be3b96bf98322f28af68c7dfa40707ca76a31492
+    pristine_git_object: 4e03b5feaf668147b046e923f594997d6813413f
   pkg/models/connectivity/info.go:
     id: "545411910676"
     last_write_checksum: sha1:5f9fe1ba18e50ba9ffa3acc913ee6989f8ad011d
@@ -7075,8 +7083,8 @@ trackedFiles:
     pristine_git_object: 98a9d908ab9fa436357e3cf81ac8e35593f7ad75
   pkg/models/connectivity/ingestionstatus.go:
     id: 7f190cd3c148
-    last_write_checksum: sha1:af85fe00c251ed35a36e088ba64c9a297a30d88c
-    pristine_git_object: 67909d5c52c9b0f526720563d3f089a1efe570ba
+    last_write_checksum: sha1:aa6e7fac132022ab3c4c98a42d9642102d3d94a3
+    pristine_git_object: 91fdf417417bbfcdcb49a9576620befe99bb7d3b
   pkg/models/connectivity/querycapabilities.go:
     id: 0390e65a911d
     last_write_checksum: sha1:92455b18cc5ac975ed21902d862ff18a1304f3d5
@@ -7085,10 +7093,6 @@ trackedFiles:
     id: 625b5aab8dce
     last_write_checksum: sha1:60111da652edbddf86975be479d3a2226c61384f
     pristine_git_object: 0179dc40508f2c6f31f12483958d6a6eac87a718
-  pkg/models/connectivity/statuserror.go:
-    id: a092765683b8
-    last_write_checksum: sha1:ceba0cb7906ff01aa8aceb3769ccfd2cac354a5e
-    pristine_git_object: 963ac8f8a61425d308f7227e3c145ab2d7af4c7c
   pkg/models/connectivity/suspensionsource.go:
     id: 76b24ad562b2
     last_write_checksum: sha1:937d8075d6c410d4317aed71bdb97a0748a74b6f
@@ -7125,6 +7129,18 @@ trackedFiles:
     id: c485a9dd08e9
     last_write_checksum: sha1:b61019dcec322b10ef1c7b84c74fe623f332754f
     pristine_git_object: 64004bc217ce4914d549391c904991c9139615ca
+  pkg/models/ledger/config.go:
+    id: c5580af3f7c6
+    last_write_checksum: sha1:ba599fb4f7269ad5a5489d4dde031157e7b4f9aa
+    pristine_git_object: 3f705eabdeed4e06e1e88ad9ea02b56dfd45f0a9
+  pkg/models/ledger/configinfo.go:
+    id: e42acee52a86
+    last_write_checksum: sha1:bde8afc3a367d2d574accc19ac30d3cb59c5cd5e
+    pristine_git_object: 1d3762f84ba1f8d474fd85c4ac1630c46ff5d7df
+  pkg/models/ledger/configinforesponse.go:
+    id: 733f5c88da0e
+    last_write_checksum: sha1:6cacbdf440074ad280c0d2b212f52ebb89855dac
+    pristine_git_object: a0479c45d62dd043a7900f6db6554fe7e1f2e5a0
   pkg/models/ledger/contract.go:
     id: 3077d2948b9d
     last_write_checksum: sha1:f03f20c634500e1ef4e1b79df6c7843a75f41913
@@ -7149,6 +7165,10 @@ trackedFiles:
     id: 0e88f442f9f1
     last_write_checksum: sha1:8453e176d219108d388f546eb05ab2c4be07d394
     pristine_git_object: bfffcb531e9ffe8cf33e0b6570f2221e336e9ede
+  pkg/models/ledger/ledgerstorage.go:
+    id: dac05b43efe4
+    last_write_checksum: sha1:0ab47abea58e641937a6059210059b7e4849ab0d
+    pristine_git_object: a8447583db153a874547da02dcdc60ac09154f2c
   pkg/models/ledger/log.go:
     id: 096e98c3de8b
     last_write_checksum: sha1:38d866e34370314bd28a0f8b1b917ac0296af69e
@@ -7411,8 +7431,8 @@ trackedFiles:
     pristine_git_object: bcc7c6f2f4a5c34826fc187aaac9f0d1170fffd9
   pkg/models/ledger/v2queryparams.go:
     id: 1f3ced9762e7
-    last_write_checksum: sha1:5b0715a2def20f1c2ebe38a9dbcda79fa71d8255
-    pristine_git_object: 89aae7ab7ae22165031860aa6ded4791adf8c62a
+    last_write_checksum: sha1:45af2c5be91a381e66cc089853ccf06a47074e78
+    pristine_git_object: fc2e22f7c182b3076d8a270dae3194f1530c36a7
   pkg/models/ledger/v2queryresource.go:
     id: a42d11d17dc4
     last_write_checksum: sha1:a370e2f5a83a00ef5a5b9ef38fa5e4e90e2e5b00
@@ -8297,6 +8317,10 @@ trackedFiles:
     id: d1fd3363d415
     last_write_checksum: sha1:db8826070e65320f24b1ae7f4407b99950917269
     pristine_git_object: b3995aa29ffb802232d54ca1f6d516c1c57ee88c
+  pkg/models/operations/getinfo.go:
+    id: 5deed305705b
+    last_write_checksum: sha1:66832e4b31455dac4779ab9bde8a4ae6e390dcc9
+    pristine_git_object: b96000f6cba8d35ad417e81ff29f171449cc89d8
   pkg/models/operations/getinstance.go:
     id: 5b57545a1b43
     last_write_checksum: sha1:3a950b0f7643817a76dbfc5a04949daadc5a0338
@@ -15493,27 +15517,29 @@ examples:
         "200":
           application/json: {"resources": {"key": {"key": {"operators": ["<value 1>", "<value 2>", "<value 3>"]}}}}
         4XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
         5XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
   healthcheck:
     speakeasy-default-healthcheck:
       responses:
         "200":
-          application/json: {"status": "ok"}
+          application/json: {"storage": "<value>"}
         4XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
         5XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
+        "500":
+          application/json: {"storage": "<value>"}
   connectivityInfo:
     speakeasy-default-connectivity-info:
       responses:
         "200":
           application/json: {"buildDate": "<value>", "commit": "<value>", "version": "<value>"}
         4XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
         5XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
   listConnectors:
     speakeasy-default-list-connectors:
       parameters:
@@ -15523,18 +15549,18 @@ examples:
         "200":
           application/json: {"cursor": {"data": [], "hasMore": false, "pageSize": 161258}}
         4XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
         5XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
   getConnectorFacets:
     speakeasy-default-get-connector-facets:
       responses:
         "200":
           application/json: {"facets": {"key": {"key": 257405}, "key1": {}}, "total": 745501}
         4XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
         5XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
   getConnector:
     speakeasy-default-get-connector:
       parameters:
@@ -15544,9 +15570,9 @@ examples:
         "200":
           application/json: {"name": "<value>"}
         4XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
         5XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
   listConnectorVersions:
     speakeasy-default-list-connector-versions:
       parameters:
@@ -15558,9 +15584,9 @@ examples:
         "200":
           application/json: {"cursor": {"data": [{"version": "<value>"}], "hasMore": false, "pageSize": 849874}}
         4XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
         5XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
   getConnectorVersion:
     speakeasy-default-get-connector-version:
       parameters:
@@ -15571,9 +15597,9 @@ examples:
         "200":
           application/json: {"version": "<value>"}
         4XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
         5XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
   listConnections:
     speakeasy-default-list-connections:
       parameters:
@@ -15583,9 +15609,9 @@ examples:
         "200":
           application/json: {"cursor": {"data": [{"configuration": {}, "name": "<value>"}], "hasMore": false, "pageSize": 989363}}
         4XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
         5XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
   createConnection:
     channel:
       requestBody:
@@ -15594,9 +15620,9 @@ examples:
         "201":
           application/json: {"configuration": {}, "name": "<value>"}
         4XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
         5XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
     version:
       requestBody:
         application/json: {"configuration": {"connector": "bitcoin", "env": {"RPC_URL": "http://bitcoind:8332"}, "files": {"/etc/bitcoin/ca.pem": "<PEM certificate content>"}, "initialCursor": "AAAAAAAAA+g=", "ledger": "btc", "version": "v1.4.2"}, "name": "bitcoin-main"}
@@ -15604,9 +15630,9 @@ examples:
         "201":
           application/json: {"configuration": {}, "name": "<value>"}
         4XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
         5XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
     speakeasy-default-create-connection:
       requestBody:
         application/json: {"configuration": {"connector": "<value>", "ledger": "<value>"}, "name": "<value>"}
@@ -15614,9 +15640,9 @@ examples:
         "201":
           application/json: {"configuration": {}, "name": "<value>"}
         4XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
         5XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
   getConnection:
     speakeasy-default-get-connection:
       parameters:
@@ -15626,9 +15652,9 @@ examples:
         "200":
           application/json: {"configuration": {}, "name": "<value>"}
         4XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
         5XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
   replaceConnection:
     speakeasy-default-replace-connection:
       parameters:
@@ -15640,9 +15666,9 @@ examples:
         "200":
           application/json: {"configuration": {}, "name": "<value>"}
         4XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
         5XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
   patchConnection:
     suspend:
       parameters:
@@ -15654,9 +15680,9 @@ examples:
         "200":
           application/json: {"configuration": {}, "name": "<value>"}
         4XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
         5XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
     switchToChannel:
       parameters:
         path:
@@ -15667,9 +15693,9 @@ examples:
         "200":
           application/json: {"configuration": {}, "name": "<value>"}
         4XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
         5XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
     rotatePassword:
       parameters:
         path:
@@ -15680,9 +15706,9 @@ examples:
         "200":
           application/json: {"configuration": {}, "name": "<value>"}
         4XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
         5XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
     speakeasy-default-patch-connection:
       parameters:
         path:
@@ -15693,9 +15719,9 @@ examples:
         "200":
           application/json: {"configuration": {}, "name": "<value>"}
         4XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
         5XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
   deleteConnection:
     speakeasy-default-delete-connection:
       parameters:
@@ -15703,9 +15729,9 @@ examples:
           name: "<value>"
       responses:
         4XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
         5XX:
-          application/json: {"code": "<value>", "message": "<value>"}
+          application/json: {"errorCode": "example_code", "errorMessage": "Example error message"}
   v3AddAccountType:
     speakeasy-default-v3-add-account-type:
       parameters:
@@ -17059,5 +17085,12 @@ examples:
           application/json: {"cursor": {"data": [{"type": "UNKNOWN", "connectorID": "<value>", "createdAt": "2026-10-16T12:48:27.532Z", "id": "<id>", "provider": "<value>", "raw": {"key": "<value>", "key1": "<value>", "key2": "<value>"}, "reference": "<value>"}], "hasMore": false, "next": "", "pageSize": 15, "previous": "YXVsdCBhbmQgYSBtYXhpbXVtIG1heF9yZXN1bHRzLol="}}
         default:
           application/json: {"errorCode": "VALIDATION", "errorMessage": "[VALIDATION] missing required config field: pollingPeriod"}
+  getInfo:
+    speakeasy-default-get-info:
+      responses:
+        "200":
+          application/json: {"data": {"config": {"storage": {"driver": "<value>", "ledgers": ["<value 1>"]}}, "server": "<value>", "version": "<value>"}}
+        default:
+          application/json: {"errorCode": "INSUFFICIENT_FUND", "details": "https://play.numscript.org/?payload=eyJlcnJvciI6ImFjY291bnQgaGFkIGluc3VmZmljaWVudCBmdW5kcyJ9", "errorMessage": "[INSUFFICIENT_FUND] account had insufficient funds"}
 examplesVersion: 1.0.2
 generatedTests: {}
