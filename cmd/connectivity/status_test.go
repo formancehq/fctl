@@ -117,7 +117,7 @@ func TestStatusUsesGeneratedSDKAndRejectsErrorEnvelope(t *testing.T) {
 		sdk := formance.New(formance.WithServerURL("https://stack.example.test"), formance.WithClient(&http.Client{Transport: statusRoundTripper(func(request *http.Request) (*http.Response, error) {
 			require.Equal(t, http.MethodGet, request.Method)
 			require.Equal(t, "/api/connectivity/_info", request.URL.Path)
-			body := `{"code":"unavailable","message":"service unavailable"}`
+			body := `{"errorCode":"unavailable","errorMessage":"service unavailable"}`
 			if status == http.StatusOK {
 				body = `{"version":"v1","commit":"abc","buildDate":"today"}`
 			}
@@ -135,7 +135,7 @@ func TestStatusUsesGeneratedSDKAndRejectsErrorEnvelope(t *testing.T) {
 			require.Equal(t, status, apiErr.StatusCode)
 			require.Same(t, rawResponse, apiErr.RawResponse)
 			if status == http.StatusBadRequest {
-				require.JSONEq(t, `{"code":"unavailable","message":"service unavailable"}`, apiErr.Body)
+				require.JSONEq(t, `{"errorCode":"unavailable","errorMessage":"service unavailable"}`, apiErr.Body)
 			}
 			require.Empty(t, out)
 		}

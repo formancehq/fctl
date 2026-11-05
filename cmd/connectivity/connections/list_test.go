@@ -173,3 +173,18 @@ func TestListConnectionsReturnsAPIAndEmptyResponseErrors(t *testing.T) {
 		})
 	}
 }
+
+func TestListRendersRawLastErrorWithoutIngestion(t *testing.T) {
+	const rawError = `{"errorCode":"provider_failed","details":"still historical"}`
+	instance := instanceFixture("stripe-eu")
+	instance.ConnectionStatus.IngestionStatus = nil
+	instance.ConnectionStatus.LastError = stringPtr(rawError)
+	client := listInstanceClientMock{list: func(context.Context, connectivityinternal.ListOptions) (*testConnectionList, error) {
+		return &testConnectionList{Items: []connectivity.Connection{instance}}, nil
+	}}
+	output, err := executeCommand(testNewListCommand(factoryReturning(client)))
+	require.NoError(t, err)
+	require.Contains(t, output, "Last Error (may be historical)")
+	require.Contains(t, output, rawError)
+	require.NotContains(t, output, "Service Error")
+}

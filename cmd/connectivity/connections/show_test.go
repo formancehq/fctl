@@ -142,12 +142,10 @@ func TestShowRecordedErrorsDoNotTurnSuccessfulReadIntoFailure(t *testing.T) {
 		instance := instanceFixture("stripe-eu")
 		instance.ConnectionStatus.IngestionStatus.State = ptr(connectivity.State(state))
 		instance.ConnectionStatus.IngestionStatus.IngestionProgress = &connectivity.IngestionProgress{Current: 0}
-		instance.ConnectionStatus.StatusError = &connectivity.StatusError{Code: "failure_unknown", Message: "Failure provenance unavailable"}
 		output, err := executeCommand(testNewShowCommand(factoryWithInstance(instance)), "stripe-eu")
 		require.NoError(t, err)
 		require.Contains(t, output, "Last Error (may be historical)")
 		require.Contains(t, output, "source temporarily unavailable")
-		require.Contains(t, output, "failure_unknown")
 		require.Equal(t, "0", ingestionProgress(instance.ConnectionStatus))
 		instance.ConnectionStatus.IngestionStatus.IngestionProgress = nil
 		require.Empty(t, ingestionProgress(instance.ConnectionStatus))
@@ -164,4 +162,26 @@ func TestShowImportedConnectionJSONPreservesAbsentIdentities(t *testing.T) {
 	output, err = executeCommand(testNewShowCommand(factoryWithInstance(instance)), "imported")
 	require.NoError(t, err)
 	require.NotContains(t, output, "%!", "absent identity must be safe to render")
+}
+
+func TestShowRawLastErrorWithoutIngestion(t *testing.T) {
+	const rawError = `{"errorCode":"provider_failed","details":{"request":9007199254740993}}`
+	instance := instanceFixture("stripe-eu")
+	instance.ConnectionStatus.IngestionStatus = nil
+	instance.ConnectionStatus.LastError = stringPtr(rawError)
+	output, err := executeCommand(testNewShowCommand(factoryWithInstance(instance)), "stripe-eu")
+	require.NoError(t, err)
+	require.Contains(t, output, "Last Error (may be historical)")
+	require.Contains(t, output, rawError)
+	require.NotContains(t, output, "Service Error")
+	command := testNewShowCommand(factoryWithInstance(instance))
+	command.Flags().String(fctl.OutputFlag, "plain", "")
+	output, err = executeCommand(command, "stripe-eu", "--output=json")
+	require.NoError(t, err)
+	var envelope struct {
+		Data ShowStore `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(output), &envelope))
+	require.Nil(t, envelope.Data.Connection.ConnectionStatus.IngestionStatus)
+	require.Equal(t, rawError, *envelope.Data.Connection.ConnectionStatus.LastError)
 }

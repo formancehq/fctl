@@ -52,7 +52,7 @@ func TestUninstallConfirmationRejectionPreventsDelete(t *testing.T) {
 }
 
 func TestUninstallPreservesDeleteAPIError(t *testing.T) {
-	apiError := sdkerrors.NewSDKError("API error occurred", 404, `{"code":"CONNECTORINSTANCE_NOT_FOUND","message":"missing"}`, nil)
+	apiError := sdkerrors.NewSDKError("API error occurred", 404, `{"errorCode":"CONNECTORINSTANCE_NOT_FOUND","errorMessage":"missing"}`, nil)
 	client := uninstallClientMock{delete: func(context.Context, string) error { return apiError }}
 
 	_, err := executeCommand(testNewUninstallCommand(factoryReturning(client)), "stripe-eu", "--confirm")

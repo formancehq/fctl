@@ -42,7 +42,7 @@ func versionListFixture() *testConnectorVersionList {
 func instanceFixture(name string) connectivity.Connection {
 	return connectivity.Connection{Name: name,
 		ConnectionConfiguration: connectivity.ConnectionConfiguration{Connector: stringPtr("stripe"), Version: stringPtr("2.0.0"), Ledger: stringPtr("main"), PollInterval: stringPtr("5s"), InitialCursor: stringPtr("AP9h")},
-		ConnectionStatus:        &connectivity.ConnectionStatus{Lifecycle: "active", AppliedVersion: stringPtr("2.0.0"), IngestionStatus: &connectivity.IngestionStatus{State: ptr(connectivity.State("running")), IngestionProgress: &connectivity.IngestionProgress{Current: 42}, LastError: stringPtr("source temporarily unavailable")}},
+		ConnectionStatus:        &connectivity.ConnectionStatus{Lifecycle: "active", LastError: stringPtr("source temporarily unavailable"), AppliedVersion: stringPtr("2.0.0"), IngestionStatus: &connectivity.IngestionStatus{State: ptr(connectivity.State("running")), IngestionProgress: &connectivity.IngestionProgress{Current: 42}}},
 	}
 }
 func instanceWithTwoFiles() *connectivity.Connection {

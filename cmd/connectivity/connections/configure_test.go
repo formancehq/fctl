@@ -311,9 +311,9 @@ func TestConfigureValidationAndArgumentsPreventPatch(t *testing.T) {
 }
 
 func TestConfigurePreservesGetAndPatchAPIErrorsAndRejectsEmptyResponses(t *testing.T) {
-	instanceError := sdkerrors.NewSDKError("API error occurred", 404, `{"code":"CONNECTORINSTANCE_NOT_FOUND","message":"missing"}`, nil)
-	versionError := sdkerrors.NewSDKError("API error occurred", 404, `{"code":"CONNECTORVERSION_NOT_FOUND","message":"missing"}`, nil)
-	patchError := sdkerrors.NewSDKError("API error occurred", 409, `{"code":"CONFLICT","message":"stale"}`, nil)
+	instanceError := sdkerrors.NewSDKError("API error occurred", 404, `{"errorCode":"CONNECTORINSTANCE_NOT_FOUND","errorMessage":"missing"}`, nil)
+	versionError := sdkerrors.NewSDKError("API error occurred", 404, `{"errorCode":"CONNECTORVERSION_NOT_FOUND","errorMessage":"missing"}`, nil)
+	patchError := sdkerrors.NewSDKError("API error occurred", 409, `{"errorCode":"CONFLICT","errorMessage":"stale"}`, nil)
 	current := instanceFixture("stripe-eu")
 	tests := map[string]struct {
 		client configureClientMock

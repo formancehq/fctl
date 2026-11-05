@@ -95,8 +95,8 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 	if err := renderInstanceSection(out, "Last Recorded Status", pterm.TableData{
 		{"Lifecycle", lifecycleValue(instance.ConnectionStatus)}, {"Applied Version", appliedChannelFloor(&instance)},
 		{"Ingestion State", ingestionState(instance.ConnectionStatus)}, {"Progress Current", ingestionProgress(instance.ConnectionStatus)},
-		{"Last Error (may be historical)", ingestionLastError(instance.ConnectionStatus)},
-		{"Service Error", serviceError(instance.ConnectionStatus)}, {"Suspended by", instanceSuspensionSources(instance.ConnectionStatus)},
+		{"Last Error (may be historical)", connectionLastError(instance.ConnectionStatus)},
+		{"Suspended by", instanceSuspensionSources(instance.ConnectionStatus)},
 	}); err != nil {
 		return err
 	}
@@ -164,15 +164,9 @@ func ingestionProgress(status *connectivity.ConnectionStatus) string {
 	}
 	return strconv.FormatInt(status.IngestionStatus.IngestionProgress.Current, 10)
 }
-func ingestionLastError(status *connectivity.ConnectionStatus) string {
-	if status == nil || status.IngestionStatus == nil {
+func connectionLastError(status *connectivity.ConnectionStatus) string {
+	if status == nil {
 		return ""
 	}
-	return stringValue(status.IngestionStatus.LastError)
-}
-func serviceError(status *connectivity.ConnectionStatus) string {
-	if status == nil || status.StatusError == nil {
-		return ""
-	}
-	return string(status.StatusError.Code) + ": " + status.StatusError.Message
+	return stringValue(status.LastError)
 }

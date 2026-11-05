@@ -69,7 +69,7 @@ func TestSuspensionCommandConfirmationRejectionMakesNoPatch(t *testing.T) {
 }
 
 func TestSuspensionCommandsPreserveAPIError(t *testing.T) {
-	apiError := sdkerrors.NewSDKError("API error occurred", 409, `{"code":"CONFLICT","message":"stale"}`, nil)
+	apiError := sdkerrors.NewSDKError("API error occurred", 409, `{"errorCode":"CONFLICT","errorMessage":"stale"}`, nil)
 	client := suspensionClientMock{patch: func(context.Context, string, map[string]any) (*connectivity.Connection, error) {
 		return nil, apiError
 	}}

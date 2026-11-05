@@ -217,11 +217,16 @@ configuration are not part of the tenant response.
 Lifecycle is the last recorded verdict (`pending`, `active`, `suspended`,
 `completed`, `failed`, or `unknown`), not a live health probe.
 `status.ingestion.progress.current` is the recorded ingestion progress.
-`status.ingestion.lastError` is the last recorded ingestion error and may be
-historical after recovery; `connections show` does not fail merely because it
-is populated. A recorded service error has a controlled `code` and `message`.
+`status.lastError` is the raw last recorded worker or connector error. It may be
+historical after recovery and can be present without ingestion status. Show and
+list preserve this text without interpreting JSON-looking content; a successful
+read does not fail merely because the recorded error is populated.
 Suspension sources identify a tenant request or a Policy by name.
 
 Authentication failures, including insufficient scope, may return `401`
 without a JSON body. Check the selected profile and its permissions instead
 of assuming every `401` means an expired session.
+
+API error responses use `errorCode` and `errorMessage`; optional `details` is a
+string, which may itself contain a JSON object. FCTL preserves the response body
+and HTTP status in SDK errors instead of interpreting provider-specific content.

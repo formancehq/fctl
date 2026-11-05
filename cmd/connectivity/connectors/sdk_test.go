@@ -63,7 +63,7 @@ func TestConnectorCommandsRejectGeneratedErrorEnvelopes(t *testing.T) {
 			for _, status := range []int{http.StatusUnauthorized, http.StatusBadRequest} {
 				var rawResponse *http.Response
 				client := sdkWithTransport(func(*http.Request) (*http.Response, error) {
-					rawResponse = connectorResponse(status, `{"code":"invalid_query","message":"invalid filter"}`)
+					rawResponse = connectorResponse(status, `{"errorCode":"invalid_query","errorMessage":"invalid filter"}`)
 					return rawResponse, nil
 				})
 				command := constructor(client)
@@ -85,7 +85,7 @@ func TestConnectorCommandsRejectGeneratedErrorEnvelopes(t *testing.T) {
 				require.Equal(t, status, apiErr.StatusCode)
 				require.Same(t, rawResponse, apiErr.RawResponse)
 				if status == http.StatusBadRequest {
-					require.JSONEq(t, `{"code":"invalid_query","message":"invalid filter"}`, apiErr.Body)
+					require.JSONEq(t, `{"errorCode":"invalid_query","errorMessage":"invalid filter"}`, apiErr.Body)
 				}
 				require.Empty(t, out.String())
 			}
@@ -103,7 +103,7 @@ func TestShowConnectorHandlesGeneratedLatestNotFound(t *testing.T) {
 		case "/api/connectivity/connectors/stripe/versions":
 			return connectorResponse(200, `{"cursor":{"data":[{"version":"1.0.0"}],"hasMore":false,"pageSize":100}}`), nil
 		case "/api/connectivity/connectors/stripe/versions/latest":
-			return connectorResponse(404, `{"code":"channel_empty","message":"No validated version"}`), nil
+			return connectorResponse(404, `{"errorCode":"channel_empty","errorMessage":"No validated version"}`), nil
 		default:
 			t.Fatalf("unexpected SDK route %s", request.URL.Path)
 			return nil, nil

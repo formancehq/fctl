@@ -64,7 +64,7 @@ func TestConnectionCommandsHandleSDKErrorsAndEmptySuccess(t *testing.T) {
 		status     int
 		body, want string
 	}{
-		{name: "typed error", status: 404, body: `{"code":"not_found","message":"fixture missing"}`, want: "fixture missing"},
+		{name: "typed error", status: 404, body: `{"errorCode":"not_found","errorMessage":"fixture missing"}`, want: "fixture missing"},
 		{name: "untyped error", status: 502, body: `{"diagnostic":"fixture detail"}`, want: "fixture detail"},
 		{name: "empty success", status: 200, body: `null`, want: "empty response"},
 	} {
@@ -132,7 +132,7 @@ func TestSuspensionCommandsRejectEmptySDKSuccess(t *testing.T) {
 }
 
 func TestResolveConnectorVersionPreservesSDKNotFound(t *testing.T) {
-	const body = `{"code":"channel_empty","message":"no stable release","details":{"available":"v2.0.0-beta.1"}}`
+	const body = `{"errorCode":"channel_empty","errorMessage":"no stable release","details":"{\"available\":\"v2.0.0-beta.1\"}"}`
 	for _, version := range []string{"stable", "latest", "v1.0.0"} {
 		t.Run(version, func(t *testing.T) {
 			api := transportSDK("https://stack.example.test", &http.Client{Transport: connectionRoundTripper(func(r *http.Request) (*http.Response, error) {

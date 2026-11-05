@@ -167,7 +167,7 @@ func TestShowConnectorTreatsUnresolvableLatestAsNoPublishedVersion(t *testing.T)
 			return versionsFixture(), nil
 		},
 		getVersion: func(context.Context, string, string) (*connectivity.ConnectorVersion, error) {
-			return nil, &sdkerrors.SDKError{StatusCode: http.StatusNotFound, Body: `{"code":"channel_empty","message":"No validated version"}`}
+			return nil, &sdkerrors.SDKError{StatusCode: http.StatusNotFound, Body: `{"errorCode":"channel_empty","errorMessage":"No validated version"}`}
 		},
 	}
 
