@@ -36,7 +36,7 @@ func PluginsConfigPath(configDir string) string {
 // LoadPluginsConfig reads the plugins.json configuration file.
 func LoadPluginsConfig(configDir string) (*PluginsConfig, error) {
 	path := PluginsConfigPath(configDir)
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- path is under the user's explicit fctl configuration directory
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &PluginsConfig{}, nil

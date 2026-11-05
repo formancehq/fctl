@@ -22,10 +22,10 @@ type RegistrySchema struct {
 
 // RegistryPlugin describes a single plugin in the registry.
 type RegistryPlugin struct {
-	Description string                            `json:"description"`
-	Repo        string                            `json:"repo"`
-	Latest      string                            `json:"latest"`
-	Versions    map[string]RegistryPluginVersion   `json:"versions"`
+	Description string                           `json:"description"`
+	Repo        string                           `json:"repo"`
+	Latest      string                           `json:"latest"`
+	Versions    map[string]RegistryPluginVersion `json:"versions"`
 }
 
 // RegistryPluginVersion describes a specific version of a plugin.
@@ -82,15 +82,15 @@ func (r *RegistryClient) DownloadBinary(binaryURL, destPath string) error {
 		return fmt.Errorf("download returned status %d", resp.StatusCode)
 	}
 
-	if err := os.MkdirAll(filepath.Dir(destPath), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(destPath), 0o700); err != nil {
 		return fmt.Errorf("failed to create plugin directory: %w", err)
 	}
 
-	out, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o755)
+	out, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o700) // #nosec G304 -- destPath is the caller-selected plugin installation path
 	if err != nil {
 		return fmt.Errorf("failed to create plugin file: %w", err)
 	}
-	defer out.Close()
+	defer func() { _ = out.Close() }()
 
 	if _, err := io.Copy(out, resp.Body); err != nil {
 		return fmt.Errorf("failed to write plugin file: %w", err)
