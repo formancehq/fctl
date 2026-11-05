@@ -86,7 +86,7 @@ func (r *RegistryClient) DownloadBinary(binaryURL, destPath string) error {
 		return fmt.Errorf("failed to create plugin directory: %w", err)
 	}
 
-	out, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o700) // #nosec G304 -- destPath is the caller-selected plugin installation path
+	out, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600) // #nosec G304 -- destPath is the caller-selected plugin installation path
 	if err != nil {
 		return fmt.Errorf("failed to create plugin file: %w", err)
 	}
