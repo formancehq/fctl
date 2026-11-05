@@ -9,9 +9,11 @@ require (
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/formancehq/fctl/internal/deployserverclient/v3 v3.1.1
 	github.com/formancehq/fctl/internal/membershipclient/v3 v3.1.1
+<<<<<<< HEAD
 	github.com/formancehq/fctl/v3/pkg/client v0.0.0
-	github.com/formancehq/fctl/v3/pkg/pluginsdk v3.1.1
+	github.com/formancehq/fctl/v3/pkg/pluginsdk v0.0.0
 	github.com/formancehq/formance-sdk-go/v4 v4.0.0
+	github.com/formancehq/go-libs/v3 v3.6.3
 	github.com/formancehq/go-libs/v4 v4.1.1
 	github.com/go-jose/go-jose/v4 v4.1.6
 	github.com/hashicorp/go-plugin v1.7.0
@@ -21,6 +23,7 @@ require (
 	github.com/pterm/pterm v0.12.83
 	github.com/segmentio/ksuid v1.0.4
 	github.com/spf13/cobra v1.10.2
+	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.12.1
 	github.com/zitadel/oidc/v2 v2.12.2
 	golang.org/x/mod v0.40.0
@@ -53,11 +56,13 @@ require (
 	github.com/go-chi/chi/v5 v5.4.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gookit/color v1.6.0 // indirect
 	github.com/gorilla/schema v1.4.1 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
+	github.com/hashicorp/yamux v0.1.2 // indirect
 	github.com/hokaccha/go-prettyjson v0.0.0-20211117102719-0474bc63780f // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/invopop/jsonschema v0.13.0 // indirect
@@ -70,12 +75,12 @@ require (
 	github.com/mattn/go-runewidth v0.0.21 // indirect
 	github.com/mattn/go-tty v0.0.7 // indirect
 	github.com/muhlemmer/gu v0.3.1 // indirect
+	github.com/oklog/run v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/pkg/term v1.2.0-beta.2 // indirect
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
-	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/uptrace/bun v1.2.18 // indirect
 	github.com/uptrace/opentelemetry-go-extra/otellogrus v0.3.2 // indirect
@@ -97,9 +102,13 @@ require (
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.56.0 // indirect
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
+	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/term v0.45.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
+	google.golang.org/grpc v1.74.2 // indirect
+	google.golang.org/protobuf v1.36.8 // indirect
 	gopkg.in/go-jose/go-jose.v2 v2.6.3 // indirect
 )
