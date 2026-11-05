@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/formancehq/fctl/v3/pkg/pluginsdk"
 	goplugin "github.com/hashicorp/go-plugin"
+
+	"github.com/formancehq/fctl/v3/pkg/pluginsdk"
 )
 
 // LoadedPlugin represents a plugin that has been loaded and is ready to use.

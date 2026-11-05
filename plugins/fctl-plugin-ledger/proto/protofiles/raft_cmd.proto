@@ -1,5 +1,4 @@
 syntax = "proto3";
-
 package raft;
 
 option go_package = "github.com/formancehq/fctl-plugin-ledger/proto/raftcmdpb";
