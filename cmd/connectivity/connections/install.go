@@ -67,10 +67,10 @@ func NewInstallCommand(read configuration.ReadFileFunc, paths PathCompleter) *co
 		fctl.WithStringArrayFlag(setFlag, nil, "Configuration value KEY=VALUE (repeatable)"),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*InstallStore](controller),
-		connectivityinternal.WithRequiredFlag(ledgerFlag),
-		connectivityinternal.WithFlagCompletion(versionFlag, CompleteVersions(installConnectorArgument)),
-		connectivityinternal.WithFlagCompletion(channelFlag, connectivityinternal.CompleteChannels()),
-		connectivityinternal.WithFlagCompletion(setFlag, CompleteSetValues(resolveInstallConnectorVersion, paths)),
+		fctl.WithRequiredFlag(ledgerFlag),
+		fctl.WithFlagCompletion(versionFlag, CompleteVersions(installConnectorArgument)),
+		fctl.WithFlagCompletion(channelFlag, connectivityinternal.CompleteChannels()),
+		fctl.WithFlagCompletion(setFlag, CompleteSetValues(resolveInstallConnectorVersion, paths)),
 	)
 }
 

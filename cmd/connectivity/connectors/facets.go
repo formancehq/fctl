@@ -41,7 +41,7 @@ func NewFacetsCommand() *cobra.Command {
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		connectivityinternal.WithListQueryFlags(),
 		fctl.WithController[*FacetsStore](controller),
-		connectivityinternal.WithFlagCompletion(connectivityinternal.FilterFlag, connectivityinternal.CompleteFilterExpressions(connectivityinternal.ResourceConnectors)),
+		fctl.WithFlagCompletion(connectivityinternal.FilterFlag, connectivityinternal.CompleteFilterExpressions(connectivityinternal.ResourceConnectors)),
 	)
 }
 

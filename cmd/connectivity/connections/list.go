@@ -46,8 +46,8 @@ func NewListCommand() *cobra.Command {
 		fctl.WithPageSizeFlag(),
 		fctl.WithCursorFlag(),
 		fctl.WithController[*ListStore](controller),
-		connectivityinternal.WithFlagCompletion(connectorFlag, connectors.CompleteConnectorNames()),
-		connectivityinternal.WithFlagCompletion(connectivityinternal.FilterFlag, connectivityinternal.CompleteFilterExpressions(connectivityinternal.ResourceConnections)),
+		fctl.WithFlagCompletion(connectorFlag, connectors.CompleteConnectorNames()),
+		fctl.WithFlagCompletion(connectivityinternal.FilterFlag, connectivityinternal.CompleteFilterExpressions(connectivityinternal.ResourceConnections)),
 	)
 }
 

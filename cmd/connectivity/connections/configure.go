@@ -53,9 +53,9 @@ func NewConfigureCommand(read configuration.ReadFileFunc, paths PathCompleter) *
 		fctl.WithStringArrayFlag(setFlag, nil, "Configuration value KEY=VALUE (repeatable)"),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*ConfigureStore](controller),
-		connectivityinternal.WithFlagCompletion(versionFlag, completeVersions(resolveConfigureConnector)),
-		connectivityinternal.WithFlagCompletion(channelFlag, connectivityinternal.CompleteChannels()),
-		connectivityinternal.WithFlagCompletion(setFlag, CompleteSetValues(resolveConfigureConnectorVersion, paths)),
+		fctl.WithFlagCompletion(versionFlag, completeVersions(resolveConfigureConnector)),
+		fctl.WithFlagCompletion(channelFlag, connectivityinternal.CompleteChannels()),
+		fctl.WithFlagCompletion(setFlag, CompleteSetValues(resolveConfigureConnectorVersion, paths)),
 	)
 }
 
