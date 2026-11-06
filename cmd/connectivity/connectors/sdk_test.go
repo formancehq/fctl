@@ -220,7 +220,7 @@ func TestShowConnectorWithoutLatestVersionDoesNotInventAlias(t *testing.T) {
 			output, err := executeCommand(testNewShowCommand(client), "stripe")
 			require.NoError(t, err)
 			require.Equal(t, 2, calls)
-			require.Contains(t, output, "1.0.0")
+			require.Regexp(t, `Available Versions[^\n]*\b1\b`, output)
 			require.Contains(t, output, "No latest version schema available.")
 			require.NotContains(t, output, "No published version.")
 		})

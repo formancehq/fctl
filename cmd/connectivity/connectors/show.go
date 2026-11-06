@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -132,20 +133,10 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 		{pterm.LightCyan("Tags"), strings.Join(connector.Tags, ", ")},
 		{pterm.LightCyan("Tagline"), fctl.StringPointerToString(connector.Tagline)},
 		{pterm.LightCyan("Latest Version"), fctl.StringPointerToString(connector.LatestVersion)},
+		{pterm.LightCyan("Available Versions"), strconv.Itoa(len(c.store.Versions))},
 	}
 	if err := pterm.DefaultTable.WithWriter(out).WithData(information).Render(); err != nil {
 		return err
-	}
-
-	if len(c.store.Versions) > 0 {
-		fctl.Section.WithWriter(out).Println("Versions")
-		versions := fctl.Map(c.store.Versions, func(version connectivity.ConnectorVersionSummary) []string {
-			return []string{version.Version, fctl.StringPointerToString(version.Digest), timeValue(version.ReleaseDate)}
-		})
-		versions = fctl.Prepend(versions, []string{"Version", "Digest", "Released"})
-		if err := pterm.DefaultTable.WithHasHeader().WithWriter(out).WithData(versions).Render(); err != nil {
-			return err
-		}
 	}
 
 	if c.store.Version == nil {

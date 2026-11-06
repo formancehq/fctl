@@ -214,7 +214,9 @@ The flat Connector response keeps its name, branding, tagline, tags and `latestV
 projected by the API for catalogue display. `connectors show` fetches the schema
 using that exact `latestVersion`; it does not resolve a `latest` alias or infer
 a version from the list. If the field is absent or empty, it skips the schema
-request and still displays the available version summaries. These describe the version
+request and still displays the number of available versions. Plain output shows
+this count instead of the full version history, digests and optional release
+dates; JSON output retains all version summaries. These describe the version
 selected for the catalogue card, not necessarily the version installed by a
 connection. Full `additionalMetadata` remains available in version detail;
 version lists contain summaries. Repository credentials and administrator

@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	formance "github.com/formancehq/fctl/v3/pkg/client"
@@ -24,7 +26,7 @@ func versionsFixture() *connectorVersionPage {
 	}}
 }
 
-func TestShowConnectorRendersPublicFieldsVersionsAndLatestVersionSchema(t *testing.T) {
+func TestShowConnectorRendersPublicFieldsVersionCountAndLatestVersionSchema(t *testing.T) {
 	created := time.Date(2026, time.August, 7, 10, 30, 0, 0, time.UTC)
 	connector := connectorFixture("stripe")
 	connector.CreatedAt = &created
@@ -79,7 +81,7 @@ func TestShowConnectorRendersPublicFieldsVersionsAndLatestVersionSchema(t *testi
 		"Connector display name", "Connector description", "public",
 		"payments, webhooks", "Payments infrastructure",
 		"Latest Version", "2.0.0",
-		"1.0.0", "sha256:one",
+		"Available Versions",
 		"Configuration Schema (2.0.0)", "API_KEY", "environment", "required", "password", "API credential",
 		"/etc/connector.yaml", "file", "Connector settings",
 	} {
@@ -87,7 +89,7 @@ func TestShowConnectorRendersPublicFieldsVersionsAndLatestVersionSchema(t *testi
 			t.Errorf("plain output missing %q:\n%s", expected, output)
 		}
 	}
-	for _, absent := range []string{"Namespace", "Resource Version", "UID", "Labels", "Annotations", "Image", "Phase", "Status Message"} {
+	for _, absent := range []string{"Digest", "Released", "sha256:one", "Namespace", "Resource Version", "UID", "Labels", "Annotations", "Image", "Phase", "Status Message"} {
 		if strings.Contains(output, absent) {
 			t.Errorf("public output must not include %q:\n%s", absent, output)
 		}
@@ -124,11 +126,8 @@ func TestShowConnectorFollowsVersionPagination(t *testing.T) {
 	if !reflect.DeepEqual(gotCursors, []string{"", "page-two"}) {
 		t.Fatalf("version list cursors = %#v, want the continuation to be followed", gotCursors)
 	}
-	for _, expected := range []string{"1.0.0", "2.0.0"} {
-		if !strings.Contains(output, expected) {
-			t.Errorf("output missing version %q:\n%s", expected, output)
-		}
-	}
+	require.Regexp(t, `Available Versions[^\n]*\b2\b`, output)
+
 }
 
 func TestShowConnectorWithoutVersionsReportsNoPublishedVersion(t *testing.T) {
