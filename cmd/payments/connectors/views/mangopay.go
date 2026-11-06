@@ -4,7 +4,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/payments"
 )
 
 func DisplayMangopayConfig(cmd *cobra.Command, connectorConfig *payments.ConnectorConfigResponse) error {

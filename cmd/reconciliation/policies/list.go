@@ -8,14 +8,13 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/reconciliation"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/reconciliation"
 )
 
 type ListStore struct {
-	Cursor *reconciliation.Cursor `json:"cursor"`
+	Cursor *reconciliation.PoliciesCursorResponseCursor `json:"cursor"`
 }
 
 type ListController struct {
@@ -29,7 +28,7 @@ var _ fctl.Controller[*ListStore] = (*ListController)(nil)
 
 func NewListStore() *ListStore {
 	return &ListStore{
-		Cursor: &reconciliation.Cursor{},
+		Cursor: &reconciliation.PoliciesCursorResponseCursor{},
 	}
 }
 

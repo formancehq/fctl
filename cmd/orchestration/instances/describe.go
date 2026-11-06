@@ -8,11 +8,10 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	formance "github.com/formancehq/formance-sdk-go/v4"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/orchestration"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	formance "github.com/formancehq/fctl/v3/pkg/client"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/orchestration"
 )
 
 type InstancesDescribeStore struct {

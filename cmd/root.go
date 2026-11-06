@@ -13,7 +13,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/formancehq/fctl/internal/membershipclient/v3/models/apierrors"
-	ledgermodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/ledger"
 	"github.com/formancehq/go-libs/v4/api"
 	"github.com/formancehq/go-libs/v4/logging"
 
@@ -31,6 +30,7 @@ import (
 	"github.com/formancehq/fctl/v3/cmd/wallets"
 	"github.com/formancehq/fctl/v3/cmd/webhooks"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	ledgermodels "github.com/formancehq/fctl/v3/pkg/client/pkg/models/ledger"
 )
 
 func init() {

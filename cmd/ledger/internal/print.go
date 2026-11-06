@@ -9,10 +9,10 @@ import (
 
 	"github.com/pterm/pterm"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/ledger"
 	"github.com/formancehq/go-libs/v4/collectionutils"
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/ledger"
 )
 
 func printCommonInformation(

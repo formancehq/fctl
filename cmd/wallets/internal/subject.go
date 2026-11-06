@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	formance "github.com/formancehq/formance-sdk-go/v4"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/wallets"
+	formance "github.com/formancehq/fctl/v3/pkg/client"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/wallets"
 )
 
 func ParseSubject(subject string, cmd *cobra.Command, client *formance.Formance) (*wallets.Subject, error) {
@@ -33,13 +33,13 @@ func ParseSubject(subject string, cmd *cobra.Command, client *formance.Formance)
 		default:
 			return nil, errors.New("malformed wallet source definition")
 		}
-		subject := wallets.CreateSubjectWalletSubject(wallets.WalletSubject{
+		subject := wallets.CreateSubjectWallet(wallets.WalletSubject{
 			Identifier: walletID,
 			Balance:    &balance,
 		})
 		return &subject, nil
 	case strings.HasPrefix(subject, "account="):
-		subject := wallets.CreateSubjectLedgerAccountSubject(wallets.LedgerAccountSubject{
+		subject := wallets.CreateSubjectAccount(wallets.LedgerAccountSubject{
 			Identifier: strings.TrimPrefix(subject, "account="),
 		})
 		return &subject, nil

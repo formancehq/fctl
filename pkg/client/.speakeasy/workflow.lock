@@ -1,0 +1,18 @@
+speakeasyVersion: 1.757.1
+sources: {}
+targets:
+    formance-sdk-go:
+        source: stacks-source
+workflow:
+    workflowVersion: 1.0.0
+    speakeasyVersion: 1.757.1
+    sources:
+        stacks-source:
+            inputs:
+                - location: https://github.com/formancehq/stack/releases/download/v4.0.0-beta.3/generate.json
+            overlays:
+                - location: ./bulk-naming-overlay.yaml
+    targets:
+        formance-sdk-go:
+            target: go
+            source: stacks-source

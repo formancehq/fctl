@@ -6,12 +6,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	ledgermodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/ledger"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
 	"github.com/formancehq/go-libs/v4/collectionutils"
 
 	"github.com/formancehq/fctl/v3/cmd/ledger/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	ledgermodels "github.com/formancehq/fctl/v3/pkg/client/pkg/models/ledger"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type SendStore struct {

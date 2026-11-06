@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	paymentsmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
+	paymentsmodels "github.com/formancehq/fctl/v3/pkg/client/pkg/models/payments"
 )
 
 func TestBuildQuery(t *testing.T) {

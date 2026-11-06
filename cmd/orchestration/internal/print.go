@@ -7,9 +7,8 @@ import (
 
 	"github.com/pterm/pterm"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/orchestration"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/orchestration"
 )
 
 func PrintWorkflowInstance(out io.Writer, w orchestration.Workflow, instance orchestration.WorkflowInstance) error {

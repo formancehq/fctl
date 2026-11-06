@@ -6,10 +6,9 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	ledgermodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/ledger"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	ledgermodels "github.com/formancehq/fctl/v3/pkg/client/pkg/models/ledger"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type ListStore struct {

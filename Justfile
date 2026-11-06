@@ -3,7 +3,7 @@ set dotenv-load
 default:
   @just --list
 
-pre-commit: tidy generate lint
+pre-commit: generate lint
 pc: pre-commit completions
 
 lint:
@@ -12,9 +12,13 @@ lint:
 tidy:
     go mod tidy
 
-generate: generate-deploy-server-client generate-membership-client
+generate: generate-deploy-server-client generate-membership-client generate-stack-client tidy
     @go generate ./...
 g: generate
+
+[group('generate')]
+generate-stack-client:
+    @cd pkg/client && GOTOOLCHAIN=go1.25.10 nix run ../..#stack-speakeasy -- run --target formance-sdk-go --minimal --skip-upload-spec --skip-versioning --auto-yes --output console
 
 [group('generate')]
 generate-deploy-server-client:
@@ -29,6 +33,7 @@ install:
 
 tests:
     go test ./...
+    cd pkg/client && go test ./...
 
 release-local:
     @goreleaser release --nightly --skip=publish --clean

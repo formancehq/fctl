@@ -8,10 +8,9 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	webhooksmodels "github.com/formancehq/formance-sdk-go/v4/pkg/models/webhooks"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	webhooksmodels "github.com/formancehq/fctl/v3/pkg/client/pkg/models/webhooks"
 )
 
 type ListWebhookStore struct {

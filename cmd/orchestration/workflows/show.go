@@ -8,10 +8,9 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/operations"
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/orchestration"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/orchestration"
 )
 
 type WorkflowsShowStore struct {

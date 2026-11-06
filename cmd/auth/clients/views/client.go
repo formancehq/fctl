@@ -7,9 +7,8 @@ import (
 
 	"github.com/pterm/pterm"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/auth"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/auth"
 )
 
 func PrintClient(out io.Writer, client *auth.ClientOptions) error {

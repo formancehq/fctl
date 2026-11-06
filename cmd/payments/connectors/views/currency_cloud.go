@@ -4,9 +4,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
-	"github.com/formancehq/formance-sdk-go/v4/pkg/models/payments"
-
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/payments"
 )
 
 func DisplayCurrencyCloudConfig(cmd *cobra.Command, connectorConfig *payments.ConnectorConfigResponse) error {

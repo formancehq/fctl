@@ -75,6 +75,10 @@ Configuration is stored in `~/.formance/fctl.config` by default. You can specify
 - `--insecure-tls`: Allow insecure TLS connections
 - `--telemetry`: Enable telemetry
 
+## Development
+
+See [local Stack SDK generation](docs/stack-sdk.md) for generation and validation.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
