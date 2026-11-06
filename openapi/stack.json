@@ -19063,6 +19063,9 @@
           "5XX": {
             "$ref": "#/components/responses/connectivity_Error"
           }
+        },
+        "x-speakeasy-errors": {
+          "statusCodes": ["4XX", "5XX"]
         }
       }
     },
@@ -19102,6 +19105,9 @@
           "5XX": {
             "$ref": "#/components/responses/connectivity_Error"
           }
+        },
+        "x-speakeasy-errors": {
+          "statusCodes": ["4XX", "5XX"]
         }
       }
     },
@@ -19131,6 +19137,9 @@
           "5XX": {
             "$ref": "#/components/responses/connectivity_Error"
           }
+        },
+        "x-speakeasy-errors": {
+          "statusCodes": ["4XX", "5XX"]
         }
       }
     },
@@ -19179,6 +19188,9 @@
           "5XX": {
             "$ref": "#/components/responses/connectivity_Error"
           }
+        },
+        "x-speakeasy-errors": {
+          "statusCodes": ["4XX", "5XX"]
         }
       }
     },
@@ -19221,6 +19233,9 @@
           "5XX": {
             "$ref": "#/components/responses/connectivity_Error"
           }
+        },
+        "x-speakeasy-errors": {
+          "statusCodes": ["4XX", "5XX"]
         }
       }
     },
@@ -19257,6 +19272,9 @@
           "5XX": {
             "$ref": "#/components/responses/connectivity_Error"
           }
+        },
+        "x-speakeasy-errors": {
+          "statusCodes": ["4XX", "5XX"]
         }
       },
       "parameters": [
@@ -19310,6 +19328,9 @@
           "5XX": {
             "$ref": "#/components/responses/connectivity_Error"
           }
+        },
+        "x-speakeasy-errors": {
+          "statusCodes": ["4XX", "5XX"]
         }
       },
       "parameters": [
@@ -19351,6 +19372,9 @@
           "5XX": {
             "$ref": "#/components/responses/connectivity_Error"
           }
+        },
+        "x-speakeasy-errors": {
+          "statusCodes": ["4XX", "5XX"]
         }
       },
       "parameters": [
@@ -19406,6 +19430,9 @@
           "5XX": {
             "$ref": "#/components/responses/connectivity_Error"
           }
+        },
+        "x-speakeasy-errors": {
+          "statusCodes": ["4XX", "5XX"]
         }
       },
       "post": {
@@ -19487,6 +19514,9 @@
           "5XX": {
             "$ref": "#/components/responses/connectivity_Error"
           }
+        },
+        "x-speakeasy-errors": {
+          "statusCodes": ["4XX", "5XX"]
         }
       }
     },
@@ -19523,6 +19553,9 @@
           "5XX": {
             "$ref": "#/components/responses/connectivity_Error"
           }
+        },
+        "x-speakeasy-errors": {
+          "statusCodes": ["4XX", "5XX"]
         }
       },
       "put": {
@@ -19569,6 +19602,9 @@
           "5XX": {
             "$ref": "#/components/responses/connectivity_Error"
           }
+        },
+        "x-speakeasy-errors": {
+          "statusCodes": ["4XX", "5XX"]
         }
       },
       "patch": {
@@ -19639,6 +19675,9 @@
           "5XX": {
             "$ref": "#/components/responses/connectivity_Error"
           }
+        },
+        "x-speakeasy-errors": {
+          "statusCodes": ["4XX", "5XX"]
         }
       },
       "delete": {
@@ -19666,6 +19705,9 @@
           "5XX": {
             "$ref": "#/components/responses/connectivity_Error"
           }
+        },
+        "x-speakeasy-errors": {
+          "statusCodes": ["4XX", "5XX"]
         }
       },
       "parameters": [

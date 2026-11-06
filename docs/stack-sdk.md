@@ -7,17 +7,17 @@ Membership and Deploy Server retain their separate local SDKs.
 ## Source and generation
 
 The workflow reads the committed `openapi/stack.json` snapshot. It was composed
-from Stack `2615a186` after #2017, with these moving inputs resolved at generation:
+from Stack `072263e3` (the local #2018 candidate), with these inputs resolved at generation:
 
 | Component | Source revision |
 | --- | --- |
 | Ledger v2 (`release/v2.4`) | `f77eb05b129038c21071806c0f90af03bdc0e369` |
 | Ledger v3 (`main`) | `8e30edf29e2586aefaeed7e0bc871936e5978bb7` |
-| Connectivity (`main`) | `d518138f22139e4fe633465ce7632c3f22150461` |
+| Connectivity (#526) | `9cbe55bdd0b00817f0bfaba3f8e07bdab256ffd0` |
 
 Other component versions come from that Stack revision's `Justfile`.
 The snapshot SHA-256 is
-`7fd1f9a8abd11f018ed05008e64aa9c105dfa70821c9f41a96b8171921559dca`.
+`7f4f4b0cab4c67380ffd56b5c8dc23db0a984890185846012d3e90b3358b1df1`.
 It includes Connectivity's `errorCode`/`errorMessage`, string `details`, and
 raw connection `status.lastError`. Ledger v2 includes the corrected query-template
 contract from #2501: templates discriminate on their own `resource`, with flat
@@ -29,6 +29,14 @@ Generation uses Speakeasy **1.757.1** and Go generator **2.866.2**, matching
 The bulk naming overlay removes `x-speakeasy-name-override` from
 `ledger_V2BaseBulkElement` to avoid duplicate generated union fields. It changes
 naming only. Registry and code-sample publication outputs are omitted.
+
+The Connectivity error overlay omits error-body schemas from SDK generation only,
+including the health probe’s explicit 500 response. The canonical OpenAPI snapshot
+still documents their JSON bodies. Combined with per-operation `4XX`/`5XX` error
+classification, this generates `sdkerrors.SDKError` for Connectivity HTTP failures,
+preserving status, body bytes and the raw response. Commands return these errors
+directly; no response-error converter is needed. Other components retain their
+existing typed errors and generator settings.
 
 ```sh
 nix develop --command just generate-stack-client

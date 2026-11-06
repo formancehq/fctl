@@ -44,8 +44,6 @@ type PatchConnectionResponse struct {
 	Connection *connectivity.Connection
 	// HTTP response content type for this operation
 	ContentType string
-	// Request or server error. The HTTP status and code identify the failure.
-	Error *connectivity.Error
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
@@ -64,13 +62,6 @@ func (p *PatchConnectionResponse) GetContentType() string {
 		return ""
 	}
 	return p.ContentType
-}
-
-func (p *PatchConnectionResponse) GetError() *connectivity.Error {
-	if p == nil {
-		return nil
-	}
-	return p.Error
 }
 
 func (p *PatchConnectionResponse) GetStatusCode() int {

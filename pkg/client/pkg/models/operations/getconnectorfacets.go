@@ -45,8 +45,6 @@ func (g *GetConnectorFacetsRequest) GetQuery() *string {
 type GetConnectorFacetsResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
-	// Request or server error. The HTTP status and code identify the failure.
-	Error *connectivity.Error
 	// OK
 	FacetDistribution *connectivity.FacetDistribution
 	// HTTP response status code for this operation
@@ -60,13 +58,6 @@ func (g *GetConnectorFacetsResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
-}
-
-func (g *GetConnectorFacetsResponse) GetError() *connectivity.Error {
-	if g == nil {
-		return nil
-	}
-	return g.Error
 }
 
 func (g *GetConnectorFacetsResponse) GetFacetDistribution() *connectivity.FacetDistribution {

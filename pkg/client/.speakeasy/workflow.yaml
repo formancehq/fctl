@@ -6,6 +6,7 @@ sources:
       - location: ../../openapi/stack.json
     overlays:
       - location: ./bulk-naming-overlay.yaml
+      - location: ./connectivity-sdk-errors-overlay.yaml
 targets:
   formance-sdk-go:
     target: go

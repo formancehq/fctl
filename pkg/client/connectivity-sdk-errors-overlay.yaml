@@ -1,0 +1,9 @@
+overlay: 1.0.0
+info:
+  title: Return Connectivity HTTP failures as standard SDK errors
+  version: 1.0.0
+actions:
+  - target: $.components.responses.connectivity_Error.content
+    remove: true
+  - target: $.paths['/api/connectivity/_healthcheck'].get.responses['500'].content
+    remove: true
