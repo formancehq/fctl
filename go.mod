@@ -11,7 +11,6 @@ require (
 	github.com/formancehq/fctl/internal/membershipclient/v3 v3.1.1
 	github.com/formancehq/fctl/v3/pkg/client v0.0.0
 	github.com/formancehq/fctl/v3/pkg/pluginsdk v0.0.0
-	github.com/formancehq/formance-sdk-go/v4 v4.0.0
 	github.com/formancehq/go-libs/v3 v3.6.3
 	github.com/formancehq/go-libs/v4 v4.1.1
 	github.com/go-jose/go-jose/v4 v4.1.6
