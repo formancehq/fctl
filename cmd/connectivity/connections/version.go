@@ -9,6 +9,7 @@ import (
 	xmodsemver "golang.org/x/mod/semver"
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
@@ -49,7 +50,7 @@ func appliedChannelFloor(instance *connectivity.Connection) string {
 	if instance == nil || instance.ConnectionStatus == nil {
 		return ""
 	}
-	return stringValue(instance.ConnectionStatus.AppliedVersion)
+	return fctl.StringPointerToString(instance.ConnectionStatus.AppliedVersion)
 }
 
 // resolveChannelVersion mirrors the operator resolver for the schema selected
@@ -69,7 +70,7 @@ func resolveChannelVersion(ctx context.Context, client *sdk.FormanceV1, connecto
 			if page == nil {
 				return nil, false, "", fmt.Errorf("list connectivity connector %q versions: empty response", connector)
 			}
-			return page.Cursor.Data, page.Cursor.HasMore, stringValue(page.Cursor.Next), nil
+			return page.Cursor.Data, page.Cursor.HasMore, fctl.StringPointerToString(page.Cursor.Next), nil
 		})
 	if err != nil {
 		return nil, err

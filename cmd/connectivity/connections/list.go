@@ -114,8 +114,8 @@ func (c *ListController) run(cmd *cobra.Command, args []string, client *sdk.Form
 
 func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
 	rows := fctl.Map(c.store.Connections, func(instance connectivity.Connection) []string {
-		return []string{instance.Name, stringValue(instance.ConnectionConfiguration.Connector), stringValue(instance.ConnectionConfiguration.Version),
-			enumStringValue(instance.ConnectionConfiguration.Channel), appliedChannelFloor(&instance), stringValue(instance.ConnectionConfiguration.Ledger),
+		return []string{instance.Name, fctl.StringPointerToString(instance.ConnectionConfiguration.Connector), fctl.StringPointerToString(instance.ConnectionConfiguration.Version),
+			enumStringValue(instance.ConnectionConfiguration.Channel), appliedChannelFloor(&instance), fctl.StringPointerToString(instance.ConnectionConfiguration.Ledger),
 			lifecycleValue(instance.ConnectionStatus), ingestionState(instance.ConnectionStatus), ingestionProgress(instance.ConnectionStatus),
 			connectionLastError(instance.ConnectionStatus)}
 	})
@@ -128,13 +128,6 @@ func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 	return fctl.RenderCursor(cmd.OutOrStdout(), c.store.Cursor)
-}
-
-func stringValue(value *string) string {
-	if value == nil {
-		return ""
-	}
-	return *value
 }
 
 func enumStringValue[T ~string](value *T) string {

@@ -12,6 +12,7 @@ import (
 
 	"github.com/formancehq/fctl/v3/cmd/connectivity/connections/configuration"
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
@@ -51,7 +52,7 @@ func completeConnectionNamesWithClient(client *sdk.FormanceV1, completionCommand
 			if err != nil || page == nil {
 				return nil, false, "", err
 			}
-			return page.Cursor.Data, page.Cursor.HasMore, stringValue(page.Cursor.Next), nil
+			return page.Cursor.Data, page.Cursor.HasMore, fctl.StringPointerToString(page.Cursor.Next), nil
 		})
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveNoFileComp
@@ -63,7 +64,7 @@ func completeConnectionNamesWithClient(client *sdk.FormanceV1, completionCommand
 		if name == "" || !strings.HasPrefix(name, toComplete) {
 			continue
 		}
-		description := strings.Join(nonEmptyStrings(stringValue(instance.ConnectionConfiguration.Connector), stringValue(instance.ConnectionConfiguration.Ledger)), " · ")
+		description := strings.Join(nonEmptyStrings(fctl.StringPointerToString(instance.ConnectionConfiguration.Connector), fctl.StringPointerToString(instance.ConnectionConfiguration.Ledger)), " · ")
 		if description != "" {
 			name += "\t" + description
 		}
@@ -116,7 +117,7 @@ func completeVersionsWithClient(client *sdk.FormanceV1, completionCommand *cobra
 			if err != nil || page == nil {
 				return nil, false, "", err
 			}
-			return page.Cursor.Data, page.Cursor.HasMore, stringValue(page.Cursor.Next), nil
+			return page.Cursor.Data, page.Cursor.HasMore, fctl.StringPointerToString(page.Cursor.Next), nil
 		})
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveNoFileComp
@@ -127,7 +128,7 @@ func completeVersionsWithClient(client *sdk.FormanceV1, completionCommand *cobra
 			continue
 		}
 		candidate := version.Version
-		description := stringValue(version.Digest)
+		description := fctl.StringPointerToString(version.Digest)
 		if description != "" {
 			candidate += "\t" + description
 		}

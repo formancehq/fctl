@@ -46,7 +46,7 @@ func completeConnectorNames(completionCommand *cobra.Command, client *formance.F
 			if page.Data == nil {
 				return nil, false, "", fmt.Errorf("connector cursor.data must be an array")
 			}
-			return page.Data, page.HasMore, stringValue(page.Next), nil
+			return page.Data, page.HasMore, fctl.StringPointerToString(page.Next), nil
 		})
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveNoFileComp
@@ -58,7 +58,7 @@ func completeConnectorNames(completionCommand *cobra.Command, client *formance.F
 		if name == "" || !strings.HasPrefix(name, toComplete) {
 			continue
 		}
-		if description := stringValue(connector.Description); description != "" {
+		if description := fctl.StringPointerToString(connector.Description); description != "" {
 			name += "\t" + description
 		}
 		candidates = append(candidates, name)

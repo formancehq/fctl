@@ -102,14 +102,14 @@ func (c *ListController) run(cmd *cobra.Command, _ []string, client *formance.Fo
 }
 
 func cursorFromList(pageSize int, hasMore bool, next *string) fctl.Cursor {
-	return fctl.Cursor{PageSize: int64(pageSize), HasMore: hasMore, Next: connectivityinternal.OptionalString(stringValue(next))}
+	return fctl.Cursor{PageSize: int64(pageSize), HasMore: hasMore, Next: connectivityinternal.OptionalString(fctl.StringPointerToString(next))}
 }
 
 func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
 	rows := fctl.Map(c.store.Connectors, func(connector connectivity.Connector) []string {
 		return []string{
 			connector.Name,
-			stringValue(connector.DisplayName),
+			fctl.StringPointerToString(connector.DisplayName),
 			strings.Join(connector.Tags, ", "),
 		}
 	})
@@ -125,11 +125,4 @@ func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 	return fctl.RenderCursor(cmd.OutOrStdout(), c.store.Cursor)
-}
-
-func stringValue(value *string) string {
-	if value == nil {
-		return ""
-	}
-	return *value
 }

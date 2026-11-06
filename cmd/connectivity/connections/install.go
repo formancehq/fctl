@@ -2,6 +2,7 @@ package connections
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"strings"
 
@@ -16,14 +17,15 @@ import (
 )
 
 const (
-	nameFlag         = "name"
-	ledgerFlag       = "ledger"
-	versionFlag      = "version"
-	channelFlag      = "channel"
-	pollIntervalFlag = "poll-interval"
-	configFlag       = "config"
-	envFileFlag      = "env-file"
-	setFlag          = "set"
+	initialCursorFlag = "initial-cursor"
+	nameFlag          = "name"
+	ledgerFlag        = "ledger"
+	versionFlag       = "version"
+	channelFlag       = "channel"
+	pollIntervalFlag  = "poll-interval"
+	configFlag        = "config"
+	envFileFlag       = "env-file"
+	setFlag           = "set"
 )
 
 type InstallStore struct {
@@ -72,6 +74,35 @@ func NewInstallCommand(read configuration.ReadFileFunc, paths PathCompleter) *co
 		fctl.WithFlagCompletion(channelFlag, connectivityinternal.CompleteChannels()),
 		fctl.WithFlagCompletion(setFlag, CompleteSetValues(resolveInstallConnectorVersion, paths)),
 	)
+}
+
+func validateSelectors(cmd *cobra.Command) error {
+	if cmd.Flags().Changed(versionFlag) && cmd.Flags().Changed(channelFlag) {
+		return fmt.Errorf("--version and --channel are mutually exclusive; select exactly one")
+	}
+	for _, flag := range []string{versionFlag, channelFlag} {
+		if cmd.Flags().Changed(flag) && strings.TrimSpace(fctl.GetString(cmd, flag)) == "" {
+			return fmt.Errorf("--%s cannot be empty", flag)
+		}
+	}
+	if cmd.Flags().Changed(channelFlag) {
+		if _, ok := channelPrereleases[fctl.GetString(cmd, channelFlag)]; !ok {
+			return fmt.Errorf("unsupported --channel; use stable, rc, beta, or alpha")
+		}
+	}
+	return nil
+}
+
+func initialCursor(cmd *cobra.Command) (*string, error) {
+	if !cmd.Flags().Changed(initialCursorFlag) {
+		return nil, nil
+	}
+	raw := fctl.GetString(cmd, initialCursorFlag)
+	decoded, err := base64.StdEncoding.Strict().DecodeString(raw)
+	if err != nil || raw == "" || base64.StdEncoding.EncodeToString(decoded) != raw {
+		return nil, fmt.Errorf("--initial-cursor must be non-empty canonical base64")
+	}
+	return &raw, nil
 }
 
 func installConnectorArgument(_ *cobra.Command, args []string) string {
@@ -227,8 +258,8 @@ func (c *InstallController) Render(cmd *cobra.Command, _ []string) error {
 		cmd.OutOrStdout(),
 		"Connection %q installed with connector %q for ledger %q.\n",
 		instance.Name,
-		stringValue(instance.ConnectionConfiguration.Connector),
-		stringValue(instance.ConnectionConfiguration.Ledger),
+		fctl.StringPointerToString(instance.ConnectionConfiguration.Connector),
+		fctl.StringPointerToString(instance.ConnectionConfiguration.Ledger),
 	)
 	return err
 }

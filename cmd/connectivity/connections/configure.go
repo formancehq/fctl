@@ -71,7 +71,7 @@ func resolveConfigureConnector(ctx context.Context, client *sdk.FormanceV1, _ *c
 	if err != nil || instance == nil || instance.Name == "" {
 		return "", err
 	}
-	return stringValue(instance.ConnectionConfiguration.Connector), nil
+	return fctl.StringPointerToString(instance.ConnectionConfiguration.Connector), nil
 }
 
 func resolveConfigureConnectorVersion(ctx context.Context, client *sdk.FormanceV1, cmd *cobra.Command, args []string) (*connectivity.ConnectorVersion, error) {
@@ -89,7 +89,7 @@ func resolveConfigureConnectorVersion(ctx context.Context, client *sdk.FormanceV
 	if err != nil || instance == nil || instance.Name == "" {
 		return nil, err
 	}
-	connector := stringValue(instance.ConnectionConfiguration.Connector)
+	connector := fctl.StringPointerToString(instance.ConnectionConfiguration.Connector)
 	pinned, channel, err := configureVersionSelector(cmd, instance)
 	if err != nil {
 		return nil, err
@@ -171,7 +171,7 @@ func (c *ConfigureController) run(cmd *cobra.Command, args []string, client *sdk
 		return nil, fmt.Errorf("configure connectivity connection %q: empty response", name)
 	}
 
-	connector := stringValue(instance.ConnectionConfiguration.Connector)
+	connector := fctl.StringPointerToString(instance.ConnectionConfiguration.Connector)
 	specPatch := map[string]any{}
 	configChanged := cmd.Flags().Changed(configFlag) || cmd.Flags().Changed(envFileFlag) || cmd.Flags().Changed(setFlag)
 	if configChanged {

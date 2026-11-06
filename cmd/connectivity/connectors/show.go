@@ -103,7 +103,7 @@ func (c *ShowController) run(cmd *cobra.Command, args []string, client *formance
 			if page.Data == nil {
 				return nil, false, "", fmt.Errorf("show connectivity connector %q: version cursor.data must be an array", name)
 			}
-			return page.Data, page.HasMore, stringValue(page.Next), nil
+			return page.Data, page.HasMore, fctl.StringPointerToString(page.Next), nil
 		})
 	if err != nil {
 		return nil, err
@@ -132,12 +132,12 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 	information := pterm.TableData{
 		{pterm.LightCyan("Name"), connector.Name},
 		{pterm.LightCyan("Created At"), timeValue(connector.CreatedAt)},
-		{pterm.LightCyan("Display Name"), stringValue(connector.DisplayName)},
-		{pterm.LightCyan("Description"), stringValue(connector.Description)},
-		{pterm.LightCyan("Catalog"), stringValue(connector.Catalog)},
+		{pterm.LightCyan("Display Name"), fctl.StringPointerToString(connector.DisplayName)},
+		{pterm.LightCyan("Description"), fctl.StringPointerToString(connector.Description)},
+		{pterm.LightCyan("Catalog"), fctl.StringPointerToString(connector.Catalog)},
 		{pterm.LightCyan("Tags"), strings.Join(connector.Tags, ", ")},
-		{pterm.LightCyan("Tagline"), stringValue(connector.Tagline)},
-		{pterm.LightCyan("Latest Version"), stringValue(connector.LatestVersion)},
+		{pterm.LightCyan("Tagline"), fctl.StringPointerToString(connector.Tagline)},
+		{pterm.LightCyan("Latest Version"), fctl.StringPointerToString(connector.LatestVersion)},
 	}
 	if err := pterm.DefaultTable.WithWriter(out).WithData(information).Render(); err != nil {
 		return err
@@ -146,7 +146,7 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 	if len(c.store.Versions) > 0 {
 		fctl.Section.WithWriter(out).Println("Versions")
 		versions := fctl.Map(c.store.Versions, func(version connectivity.ConnectorVersionSummary) []string {
-			return []string{version.Version, stringValue(version.Digest), timeValue(version.ReleaseDate)}
+			return []string{version.Version, fctl.StringPointerToString(version.Digest), timeValue(version.ReleaseDate)}
 		})
 		versions = fctl.Prepend(versions, []string{"Version", "Digest", "Released"})
 		if err := pterm.DefaultTable.WithHasHeader().WithWriter(out).WithData(versions).Render(); err != nil {

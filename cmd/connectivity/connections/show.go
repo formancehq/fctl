@@ -82,9 +82,9 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 	if err := renderInstanceSection(out, "Desired Configuration", pterm.TableData{
-		{"Connector", stringValue(instance.ConnectionConfiguration.Connector)}, {"Version", stringValue(instance.ConnectionConfiguration.Version)},
-		{"Channel", enumStringValue(instance.ConnectionConfiguration.Channel)}, {"Ledger", stringValue(instance.ConnectionConfiguration.Ledger)},
-		{"Poll Interval", stringValue(instance.ConnectionConfiguration.PollInterval)}, {"Suspend", boolValue(instance.ConnectionConfiguration.Suspend)},
+		{"Connector", fctl.StringPointerToString(instance.ConnectionConfiguration.Connector)}, {"Version", fctl.StringPointerToString(instance.ConnectionConfiguration.Version)},
+		{"Channel", enumStringValue(instance.ConnectionConfiguration.Channel)}, {"Ledger", fctl.StringPointerToString(instance.ConnectionConfiguration.Ledger)},
+		{"Poll Interval", fctl.StringPointerToString(instance.ConnectionConfiguration.PollInterval)}, {"Suspend", boolValue(instance.ConnectionConfiguration.Suspend)},
 	}); err != nil {
 		return err
 	}
@@ -164,5 +164,5 @@ func connectionLastError(status *connectivity.ConnectionStatus) string {
 	if status == nil {
 		return ""
 	}
-	return stringValue(status.LastError)
+	return fctl.StringPointerToString(status.LastError)
 }
