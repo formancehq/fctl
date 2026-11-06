@@ -1,9 +1,7 @@
 package connectors
 
 import (
-	"errors"
 	"fmt"
-	"net/http"
 	"net/url"
 	"sort"
 	"strings"
@@ -17,7 +15,6 @@ import (
 	formance "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
-	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
 const (
@@ -113,20 +110,16 @@ func (c *ShowController) run(cmd *cobra.Command, args []string, client *formance
 	}
 	c.store.Versions = versions
 
-	// The server resolves the `latest` alias to the newest Validated version;
-	// published-but-unresolvable catalogues degrade to the no-version notice.
+	// An empty catalogue has no latest version to request.
 	if len(versions) > 0 {
 		response, err := client.GetConnectorVersion(cmd.Context(), operations.GetConnectorVersionRequest{Name: url.PathEscape(name), Version: connectivityinternal.VersionAliasLatest}, nil)
-		var sdkErr *sdkerrors.SDKError
-		switch {
-		case errors.As(err, &sdkErr) && sdkErr.StatusCode == http.StatusNotFound:
-		case err != nil:
+		if err != nil {
 			return nil, err
-		case response == nil || response.ConnectorVersion == nil:
-			return nil, fmt.Errorf("show connectivity connector %q: empty latest version response", name)
-		default:
-			c.store.Version = response.ConnectorVersion
 		}
+		if response == nil || response.ConnectorVersion == nil {
+			return nil, fmt.Errorf("show connectivity connector %q: empty latest version response", name)
+		}
+		c.store.Version = response.ConnectorVersion
 	}
 	return c, nil
 }

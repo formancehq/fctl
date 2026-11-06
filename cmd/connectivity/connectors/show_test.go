@@ -155,9 +155,8 @@ func TestShowConnectorWithoutVersionsReportsNoPublishedVersion(t *testing.T) {
 	}
 }
 
-// `latest` resolves to the newest Validated version; published-but-unvalidated
-// versions answer 404, which show degrades to the no-version notice.
-func TestShowConnectorTreatsUnresolvableLatestAsNoPublishedVersion(t *testing.T) {
+// A failed latest-version read is returned as the SDK error without inference.
+func TestShowConnectorReturnsUnresolvableLatestError(t *testing.T) {
 	connector := connectorFixture("pending")
 	client := connectorTransportMock{
 		get: func(context.Context, string) (*connectivity.Connector, error) {
@@ -172,11 +171,15 @@ func TestShowConnectorTreatsUnresolvableLatestAsNoPublishedVersion(t *testing.T)
 	}
 
 	output, err := executeCommand(testNewShowCommand(sdkFor(client)), "pending")
-	if err != nil {
-		t.Fatalf("execute show command: %v", err)
+	var apiError *connectivity.Error
+	if !errors.As(err, &apiError) {
+		t.Fatalf("expected native Connectivity error, got %T: %v", err, err)
 	}
-	if !strings.Contains(output, "No published version.") {
-		t.Fatalf("output missing the no-version notice:\n%s", output)
+	if err != apiError || apiError.ErrorCode == nil || *apiError.ErrorCode != "channel_empty" || apiError.ErrorMessage == nil || *apiError.ErrorMessage != "No validated version" {
+		t.Fatalf("native SDK error was changed: %#v", err)
+	}
+	if strings.Contains(output, "No published version.") {
+		t.Fatalf("an API failure must not render a catalogue notice: %s", output)
 	}
 }
 

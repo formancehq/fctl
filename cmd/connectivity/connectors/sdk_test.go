@@ -12,6 +12,7 @@ import (
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	formance "github.com/formancehq/fctl/v3/pkg/client"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
@@ -80,12 +81,19 @@ func TestConnectorCommandsRejectGeneratedErrorEnvelopes(t *testing.T) {
 				command.SetArgs(args)
 				err := command.Execute()
 				require.Error(t, err)
-				var apiErr *sdkerrors.SDKError
-				require.ErrorAs(t, err, &apiErr)
-				require.Equal(t, status, apiErr.StatusCode)
-				require.Same(t, rawResponse, apiErr.RawResponse)
-				if status == http.StatusBadRequest {
+				if status == http.StatusUnauthorized {
+					var apiErr *sdkerrors.SDKError
+					require.ErrorAs(t, err, &apiErr)
+					require.Same(t, apiErr, err)
+					require.Equal(t, status, apiErr.StatusCode)
+					require.Same(t, rawResponse, apiErr.RawResponse)
 					require.JSONEq(t, `{"errorCode":"invalid_query","errorMessage":"invalid filter"}`, apiErr.Body)
+				} else {
+					var apiErr *connectivity.Error
+					require.ErrorAs(t, err, &apiErr)
+					require.Same(t, apiErr, err)
+					require.Equal(t, "invalid_query", *apiErr.ErrorCode)
+					require.Equal(t, "invalid filter", *apiErr.ErrorMessage)
 				}
 				require.Empty(t, out.String())
 			}
@@ -93,7 +101,7 @@ func TestConnectorCommandsRejectGeneratedErrorEnvelopes(t *testing.T) {
 	}
 }
 
-func TestShowConnectorHandlesGeneratedLatestNotFound(t *testing.T) {
+func TestShowConnectorReturnsGeneratedLatestNotFound(t *testing.T) {
 	calls := 0
 	client := sdkWithTransport(func(request *http.Request) (*http.Response, error) {
 		calls++
@@ -110,9 +118,13 @@ func TestShowConnectorHandlesGeneratedLatestNotFound(t *testing.T) {
 		}
 	})
 	output, err := executeCommand(testNewShowCommand(client), "stripe")
-	require.NoError(t, err)
+	var apiErr *connectivity.Error
+	require.ErrorAs(t, err, &apiErr)
+	require.Same(t, apiErr, err)
+	require.Equal(t, "channel_empty", *apiErr.ErrorCode)
+	require.Equal(t, "No validated version", *apiErr.ErrorMessage)
 	require.Equal(t, 3, calls)
-	require.Contains(t, output, "No published version.")
+	require.NotContains(t, output, "No published version.")
 }
 
 func TestShowConnectorEscapesNameAsOnePathSegment(t *testing.T) {

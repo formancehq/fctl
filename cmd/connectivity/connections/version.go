@@ -2,9 +2,7 @@ package connections
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -14,7 +12,6 @@ import (
 	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
-	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
 const (
@@ -37,10 +34,6 @@ func resolveConnectorVersion(ctx context.Context, client *sdk.FormanceV1, connec
 	var version *connectivity.ConnectorVersion
 	if response != nil {
 		version = response.ConnectorVersion
-	}
-	var apiErr *sdkerrors.SDKError
-	if (pinned == "stable" || pinned == connectivityinternal.VersionAliasLatest) && errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusNotFound {
-		return nil, fmt.Errorf("connectivity connector %q has no published version: %w", connector, err)
 	}
 	if err != nil {
 		return nil, err

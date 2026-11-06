@@ -50,7 +50,7 @@ func NewInstallController(read configuration.ReadFileFunc) *InstallController {
 
 func NewInstallCommand(read configuration.ReadFileFunc, paths PathCompleter) *cobra.Command {
 	controller := NewInstallController(read)
-	command := fctl.NewCommand(
+	return fctl.NewCommand(
 		"install <connector>",
 		fctl.WithAliases("create", "in"),
 		fctl.WithShortDescription("Install a Connectivity connection"),
@@ -67,20 +67,11 @@ func NewInstallCommand(read configuration.ReadFileFunc, paths PathCompleter) *co
 		fctl.WithStringArrayFlag(setFlag, nil, "Configuration value KEY=VALUE (repeatable)"),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*InstallStore](controller),
+		connectivityinternal.WithRequiredFlag(ledgerFlag),
+		connectivityinternal.WithFlagCompletion(versionFlag, CompleteVersions(installConnectorArgument)),
+		connectivityinternal.WithFlagCompletion(channelFlag, connectivityinternal.CompleteChannels()),
+		connectivityinternal.WithFlagCompletion(setFlag, CompleteSetValues(resolveInstallConnectorVersion, paths)),
 	)
-	if err := command.MarkFlagRequired(ledgerFlag); err != nil {
-		panic(err)
-	}
-	if err := command.RegisterFlagCompletionFunc(versionFlag, CompleteVersions(installConnectorArgument)); err != nil {
-		panic(err)
-	}
-	if err := command.RegisterFlagCompletionFunc(channelFlag, connectivityinternal.CompleteChannels()); err != nil {
-		panic(err)
-	}
-	if err := command.RegisterFlagCompletionFunc(setFlag, CompleteSetValues(resolveInstallConnectorVersion, paths)); err != nil {
-		panic(err)
-	}
-	return command
 }
 
 func installConnectorArgument(_ *cobra.Command, args []string) string {

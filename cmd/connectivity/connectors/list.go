@@ -33,7 +33,7 @@ func NewListController() *ListController {
 
 func NewListCommand() *cobra.Command {
 	controller := NewListController()
-	command := fctl.NewCommand(
+	return fctl.NewCommand(
 		"list",
 		fctl.WithAliases("ls", "l"),
 		fctl.WithShortDescription("List available Connectivity connectors"),
@@ -43,14 +43,8 @@ func NewListCommand() *cobra.Command {
 		fctl.WithPageSizeFlag(),
 		fctl.WithCursorFlag(),
 		fctl.WithController[*ListStore](controller),
+		connectivityinternal.WithFlagCompletion(connectivityinternal.FilterFlag, connectivityinternal.CompleteFilterExpressions(connectivityinternal.ResourceConnectors)),
 	)
-	if err := command.RegisterFlagCompletionFunc(
-		connectivityinternal.FilterFlag,
-		connectivityinternal.CompleteFilterExpressions(connectivityinternal.ResourceConnectors),
-	); err != nil {
-		panic(err)
-	}
-	return command
 }
 
 func (c *ListController) GetStore() *ListStore {

@@ -33,7 +33,7 @@ func NewFacetsController() *FacetsController {
 
 func NewFacetsCommand() *cobra.Command {
 	controller := NewFacetsController()
-	command := fctl.NewCommand(
+	return fctl.NewCommand(
 		"facets",
 		fctl.WithAliases("facet", "f"),
 		fctl.WithShortDescription("Show the facet-value distribution of the connector catalogue"),
@@ -41,14 +41,8 @@ func NewFacetsCommand() *cobra.Command {
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		connectivityinternal.WithListQueryFlags(),
 		fctl.WithController[*FacetsStore](controller),
+		connectivityinternal.WithFlagCompletion(connectivityinternal.FilterFlag, connectivityinternal.CompleteFilterExpressions(connectivityinternal.ResourceConnectors)),
 	)
-	if err := command.RegisterFlagCompletionFunc(
-		connectivityinternal.FilterFlag,
-		connectivityinternal.CompleteFilterExpressions(connectivityinternal.ResourceConnectors),
-	); err != nil {
-		panic(err)
-	}
-	return command
 }
 
 func (c *FacetsController) GetStore() *FacetsStore {

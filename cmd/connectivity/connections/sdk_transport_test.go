@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
@@ -78,12 +79,19 @@ func TestConnectionCommandsHandleSDKErrorsAndEmptySuccess(t *testing.T) {
 			})})
 			_, err := executeCommand(testNewShowCommand(factoryWithSDK(api)), "example")
 			require.ErrorContains(t, err, tt.want)
-			if tt.status >= 400 {
+			if tt.name == "untyped error" {
 				var sdkError *sdkerrors.SDKError
 				require.ErrorAs(t, err, &sdkError)
+				require.Same(t, sdkError, err)
 				require.Equal(t, tt.status, sdkError.StatusCode)
 				require.NotNil(t, sdkError.RawResponse)
 				require.JSONEq(t, tt.body, sdkError.Body)
+			} else if tt.status >= 400 {
+				var apiError *connectivity.Error
+				require.ErrorAs(t, err, &apiError)
+				require.Same(t, apiError, err)
+				require.Equal(t, "not_found", *apiError.ErrorCode)
+				require.Equal(t, "fixture missing", *apiError.ErrorMessage)
 			}
 		})
 	}
@@ -139,16 +147,13 @@ func TestResolveConnectorVersionPreservesSDKNotFound(t *testing.T) {
 				return jsonHTTPResponse(r, http.StatusNotFound, body), nil
 			})})
 			_, err := resolveConnectorVersion(context.Background(), api, "stripe", version)
-			var sdkError *sdkerrors.SDKError
-			require.ErrorAs(t, err, &sdkError)
-			require.Equal(t, http.StatusNotFound, sdkError.StatusCode)
-			require.Equal(t, body, sdkError.Body)
-			require.NotNil(t, sdkError.RawResponse)
-			if version == "stable" || version == "latest" {
-				require.ErrorContains(t, err, `connectivity connector "stripe" has no published version`)
-			} else {
-				require.Same(t, sdkError, err)
-			}
+			var apiError *connectivity.Error
+			require.ErrorAs(t, err, &apiError)
+			require.Same(t, apiError, err)
+			require.Equal(t, "channel_empty", *apiError.ErrorCode)
+			require.Equal(t, "no stable release", *apiError.ErrorMessage)
+			require.Equal(t, `{"available":"v2.0.0-beta.1"}`, *apiError.Details)
+			require.JSONEq(t, body, err.Error())
 		})
 	}
 }

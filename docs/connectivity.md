@@ -228,7 +228,13 @@ without a JSON body. Check the selected profile and its permissions instead
 of assuming every `401` means an expired session.
 
 API error responses use `errorCode` and `errorMessage`; optional `details` is a
-string, which may itself contain a JSON object. FCTL preserves the response body
-and HTTP status in generated `sdkerrors.SDKError` values instead of interpreting
-provider-specific content. Commands use the generated error directly; authentication
-continues to use Connectivity’s unchanged go-libs middleware.
+string, which may itself contain a JSON object. Commands return generated SDK
+errors directly to FCTL’s standard error printer. JSON API errors retain the
+schema-defined fields in `connectivity.Error`; undocumented fields and HTTP
+metadata are not retained by that type. Responses without a matching JSON schema,
+including an empty-body `401`, use `sdkerrors.SDKError` with the status and body.
+A missing connector version propagates the API error without a CLI-specific
+conversion. Authentication uses Connectivity’s unchanged go-libs middleware.
+
+Required-flag and completion registration failures return a contextual command
+setup error before execution, rather than panicking during command construction.

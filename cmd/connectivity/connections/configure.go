@@ -38,7 +38,7 @@ func NewConfigureController(read configuration.ReadFileFunc) *ConfigureControlle
 
 func NewConfigureCommand(read configuration.ReadFileFunc, paths PathCompleter) *cobra.Command {
 	controller := NewConfigureController(read)
-	command := fctl.NewCommand(
+	return fctl.NewCommand(
 		"configure <connection>",
 		fctl.WithAliases("update", "c"),
 		fctl.WithShortDescription("Configure a Connectivity connection"),
@@ -53,17 +53,10 @@ func NewConfigureCommand(read configuration.ReadFileFunc, paths PathCompleter) *
 		fctl.WithStringArrayFlag(setFlag, nil, "Configuration value KEY=VALUE (repeatable)"),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*ConfigureStore](controller),
+		connectivityinternal.WithFlagCompletion(versionFlag, completeVersions(resolveConfigureConnector)),
+		connectivityinternal.WithFlagCompletion(channelFlag, connectivityinternal.CompleteChannels()),
+		connectivityinternal.WithFlagCompletion(setFlag, CompleteSetValues(resolveConfigureConnectorVersion, paths)),
 	)
-	if err := command.RegisterFlagCompletionFunc(versionFlag, completeVersions(resolveConfigureConnector)); err != nil {
-		panic(err)
-	}
-	if err := command.RegisterFlagCompletionFunc(channelFlag, connectivityinternal.CompleteChannels()); err != nil {
-		panic(err)
-	}
-	if err := command.RegisterFlagCompletionFunc(setFlag, CompleteSetValues(resolveConfigureConnectorVersion, paths)); err != nil {
-		panic(err)
-	}
-	return command
 }
 
 func resolveConfigureConnector(ctx context.Context, client *sdk.FormanceV1, _ *cobra.Command, args []string) (string, error) {

@@ -11,6 +11,7 @@ import (
 
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	sdk "github.com/formancehq/fctl/v3/pkg/client"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
@@ -58,57 +59,66 @@ func TestSDKListConnectionsTransmitsQueryAndCursor(t *testing.T) {
 	require.Equal(t, "stripe", resp.ConnectionCursor.Cursor.Data[0].Name)
 }
 
-func TestSDKStructuredErrorUsesResponseStatusAndCode(t *testing.T) {
+func TestSDKStructuredErrorPreservesKnownFields(t *testing.T) {
+	const details = `{"field":"query","id":9007199254740993}`
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = io.WriteString(w, `{"errorCode":"invalid_query","errorMessage":"bad query","details":"{\"field\":\"query\"}","unknown":9007199254740993}`)
+		_, _ = io.WriteString(w, `{"errorCode":"invalid_query","errorMessage":"bad query","details":"{\"field\":\"query\",\"id\":9007199254740993}","unknown":9007199254740993}`)
 	}))
 	defer server.Close()
 	resp, err := sdk.New(sdk.WithServerURL(server.URL), sdk.WithClient(server.Client())).Connectivity.V1.ListConnections(t.Context(), operations.ListConnectionsRequest{}, nil)
 	require.Error(t, err)
 	require.Nil(t, resp)
-	var apiErr *sdkerrors.SDKError
+	var apiErr *connectivity.Error
 	require.ErrorAs(t, err, &apiErr)
-	require.Equal(t, http.StatusBadRequest, apiErr.StatusCode)
-	require.Equal(t, `{"errorCode":"invalid_query","errorMessage":"bad query","details":"{\"field\":\"query\"}","unknown":9007199254740993}`, apiErr.Body)
-	require.NotNil(t, apiErr.RawResponse)
-	raw, err := io.ReadAll(apiErr.RawResponse.Body)
-	require.NoError(t, err)
-	require.Equal(t, apiErr.Body, string(raw))
+	require.Same(t, apiErr, err)
+	require.Equal(t, "invalid_query", *apiErr.ErrorCode)
+	require.Equal(t, "bad query", *apiErr.ErrorMessage)
+	require.Equal(t, details, *apiErr.Details)
+	require.Contains(t, err.Error(), "bad query")
 }
 
-func TestSDKFailureClassesReturnOnlySDKError(t *testing.T) {
+func TestSDKFailureClassesReturnNativeErrors(t *testing.T) {
 	for _, status := range []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound, http.StatusInternalServerError} {
 		t.Run(strconv.Itoa(status), func(t *testing.T) {
-			body := `{"errorCode":"probe_error","errorMessage":"probe message","details":"probe details","unknown":9007199254740993}`
-			if status == http.StatusUnauthorized {
-				body = ""
-			}
+			const body = `{"errorCode":"probe_error","errorMessage":"probe message","details":"probe details"}`
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(status)
-				_, _ = io.WriteString(w, body)
+				if status != http.StatusUnauthorized {
+					_, _ = io.WriteString(w, body)
+				}
 			}))
 			defer server.Close()
 			client := sdk.New(sdk.WithServerURL(server.URL), sdk.WithClient(server.Client()))
 			response, err := client.Connectivity.V1.ListConnections(t.Context(), operations.ListConnectionsRequest{}, nil)
 			require.Error(t, err)
 			require.Nil(t, response)
-			var apiError *sdkerrors.SDKError
+			if status == http.StatusUnauthorized {
+				var apiError *sdkerrors.SDKError
+				require.ErrorAs(t, err, &apiError)
+				require.Same(t, apiError, err)
+				require.Equal(t, status, apiError.StatusCode)
+				require.Empty(t, apiError.Body)
+				require.NotNil(t, apiError.RawResponse)
+				require.Equal(t, status, apiError.RawResponse.StatusCode)
+				raw, readErr := io.ReadAll(apiError.RawResponse.Body)
+				require.NoError(t, readErr)
+				require.Empty(t, raw)
+				return
+			}
+			var apiError *connectivity.Error
 			require.ErrorAs(t, err, &apiError)
-			require.Equal(t, status, apiError.StatusCode)
-			require.Equal(t, body, apiError.Body)
-			require.NotNil(t, apiError.RawResponse)
-			require.Equal(t, status, apiError.RawResponse.StatusCode)
-			raw, readErr := io.ReadAll(apiError.RawResponse.Body)
-			require.NoError(t, readErr)
-			require.Equal(t, body, string(raw))
+			require.Same(t, apiError, err)
+			require.Equal(t, "probe_error", *apiError.ErrorCode)
+			require.Equal(t, "probe message", *apiError.ErrorMessage)
+			require.Equal(t, "probe details", *apiError.Details)
 		})
 	}
 }
 
-func TestSDKHealthFailureReturnsOnlySDKError(t *testing.T) {
+func TestSDKHealthFailureReturnsNativeError(t *testing.T) {
 	const body = `{"storage":"database unavailable"}`
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, "/api/connectivity/_healthcheck", r.URL.Path)
@@ -121,13 +131,9 @@ func TestSDKHealthFailureReturnsOnlySDKError(t *testing.T) {
 	response, err := client.Connectivity.V1.Healthcheck(t.Context())
 	require.Error(t, err)
 	require.Nil(t, response)
-	var apiError *sdkerrors.SDKError
+	var apiError *connectivity.HealthError
 	require.ErrorAs(t, err, &apiError)
-	require.Equal(t, http.StatusInternalServerError, apiError.StatusCode)
-	require.Equal(t, body, apiError.Body)
-	require.NotNil(t, apiError.RawResponse)
-	require.Equal(t, http.StatusInternalServerError, apiError.RawResponse.StatusCode)
-	raw, readErr := io.ReadAll(apiError.RawResponse.Body)
-	require.NoError(t, readErr)
-	require.Equal(t, body, string(raw))
+	require.Same(t, apiError, err)
+	require.Equal(t, "database unavailable", apiError.Storage)
+	require.JSONEq(t, body, apiError.Error())
 }

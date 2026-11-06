@@ -15,7 +15,6 @@ import (
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
-	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
 type mutationClientMock struct {
@@ -124,16 +123,21 @@ func TestInstallWithChannelFlagTracksTheChannelAndUsesItsHeadForTheSchema(t *tes
 	require.Nil(t, gotBody.ConnectionConfiguration.Version)
 }
 
-func TestInstallReportsPrereleaseOnlyCataloguesAsMissingStableVersion(t *testing.T) {
+func TestInstallPreservesNativeMissingStableVersionError(t *testing.T) {
+	apiError := &connectivity.Error{ErrorCode: ptr("channel_empty"), ErrorMessage: ptr("only v2.0.0-beta.1 is published")}
 	client := mutationClientMock{connectorVersions: connectorVersions{
 		getVersion: func(context.Context, string, string) (*connectivity.ConnectorVersion, error) {
-			return nil, sdkerrors.NewSDKError("API error occurred", 404, `{"errorCode":"channel_empty","errorMessage":"only v2.0.0-beta.1 is published"}`, nil)
+			return nil, apiError
 		},
 	}}
 
 	_, err := executeCommand(testNewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "stripe", "--ledger=main", "--confirm")
 
-	require.ErrorContains(t, err, `connectivity connector "stripe" has no published version`)
+	require.ErrorIs(t, err, apiError)
+	var nativeError *connectivity.Error
+	require.ErrorAs(t, err, &nativeError)
+	require.Same(t, apiError, nativeError)
+	require.Equal(t, "only v2.0.0-beta.1 is published", *nativeError.ErrorMessage)
 }
 
 func TestInstallDefaultsNameToConnectorAndOmitsUnsetOptionalData(t *testing.T) {
@@ -214,8 +218,8 @@ func TestInstallValidationErrorPreventsCreate(t *testing.T) {
 }
 
 func TestInstallPreservesVersionAndCreateAPIErrorsAndRejectsEmptyResponses(t *testing.T) {
-	versionError := sdkerrors.NewSDKError("API error occurred", 404, `{"errorCode":"CONNECTOR_NOT_FOUND","errorMessage":"missing"}`, nil)
-	createError := sdkerrors.NewSDKError("API error occurred", 409, `{"errorCode":"CONNECTORINSTANCE_EXISTS","errorMessage":"duplicate"}`, nil)
+	versionError := &connectivity.Error{ErrorCode: ptr("CONNECTOR_NOT_FOUND"), ErrorMessage: ptr("missing")}
+	createError := &connectivity.Error{ErrorCode: ptr("CONNECTORINSTANCE_EXISTS"), ErrorMessage: ptr("duplicate")}
 	tests := map[string]struct {
 		client mutationClientMock
 		want   error

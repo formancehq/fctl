@@ -15,7 +15,6 @@ import (
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	formance "github.com/formancehq/fctl/v3/pkg/client"
 	connectivitymodel "github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
-	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
 type statusContextKey struct{}
@@ -113,7 +112,6 @@ func (f statusRoundTripper) RoundTrip(request *http.Request) (*http.Response, er
 
 func TestStatusUsesGeneratedSDKAndRejectsErrorEnvelope(t *testing.T) {
 	for _, status := range []int{http.StatusOK, http.StatusBadRequest, http.StatusUnauthorized} {
-		var rawResponse *http.Response
 		sdk := formance.New(formance.WithServerURL("https://stack.example.test"), formance.WithClient(&http.Client{Transport: statusRoundTripper(func(request *http.Request) (*http.Response, error) {
 			require.Equal(t, http.MethodGet, request.Method)
 			require.Equal(t, "/api/connectivity/_info", request.URL.Path)
@@ -121,7 +119,7 @@ func TestStatusUsesGeneratedSDKAndRejectsErrorEnvelope(t *testing.T) {
 			if status == http.StatusOK {
 				body = `{"version":"v1","commit":"abc","buildDate":"today"}`
 			}
-			rawResponse = &http.Response{StatusCode: status, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(body))}
+			rawResponse := &http.Response{StatusCode: status, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(body))}
 			return rawResponse, nil
 		})}))
 		out, err := executeStatus(t.Context(), sdk.Connectivity.V1, "--output", "json")
@@ -130,13 +128,11 @@ func TestStatusUsesGeneratedSDKAndRejectsErrorEnvelope(t *testing.T) {
 			require.JSONEq(t, `{"data":{"version":"v1","commit":"abc","buildDate":"today"}}`, out)
 		} else {
 			require.Error(t, err)
-			var apiErr *sdkerrors.SDKError
+			var apiErr *connectivitymodel.Error
 			require.ErrorAs(t, err, &apiErr)
-			require.Equal(t, status, apiErr.StatusCode)
-			require.Same(t, rawResponse, apiErr.RawResponse)
-			if status == http.StatusBadRequest {
-				require.JSONEq(t, `{"errorCode":"unavailable","errorMessage":"service unavailable"}`, apiErr.Body)
-			}
+			require.Same(t, apiErr, err)
+			require.Equal(t, "unavailable", *apiErr.ErrorCode)
+			require.Equal(t, "service unavailable", *apiErr.ErrorMessage)
 			require.Empty(t, out)
 		}
 	}
