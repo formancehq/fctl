@@ -98,17 +98,12 @@ func (c *ListController) run(cmd *cobra.Command, args []string, client *sdk.Form
 	if err != nil {
 		return nil, err
 	}
-	if response == nil {
-		return nil, fmt.Errorf("list connectivity connections: empty response")
-	}
-
-	if response.ConnectionCursor == nil || response.ConnectionCursor.Cursor.Data == nil {
+	if response == nil || response.ConnectionCursor == nil || response.ConnectionCursor.Cursor.Data == nil {
 		return nil, fmt.Errorf("list connectivity connections: empty response")
 	}
 	page := response.ConnectionCursor.Cursor
 	c.store.Connections = page.Data
-	c.store.Cursor = fctl.Cursor{PageSize: int64(page.PageSize), HasMore: page.HasMore}
-	c.store.Cursor.Next = page.Next
+	c.store.Cursor = fctl.Cursor{PageSize: int64(page.PageSize), HasMore: page.HasMore, Next: page.Next}
 	return c, nil
 }
 
@@ -136,4 +131,3 @@ func enumStringValue[T ~string](value *T) string {
 	}
 	return string(*value)
 }
-func ptr[T any](value T) *T { return &value }

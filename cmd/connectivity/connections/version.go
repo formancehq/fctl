@@ -59,7 +59,7 @@ func appliedChannelFloor(instance *connectivity.Connection) string {
 func resolveChannelVersion(ctx context.Context, client *sdk.FormanceV1, connector, channel, running string) (*connectivity.ConnectorVersion, error) {
 	versions, err := connectivityinternal.CollectPages(versionResolvePageSize, versionResolveMaxPages,
 		func(options connectivityinternal.ListOptions) ([]connectivity.ConnectorVersionSummary, bool, string, error) {
-			response, err := client.ListConnectorVersions(ctx, operations.ListConnectorVersionsRequest{Name: url.PathEscape(connector), Cursor: connectivityinternal.OptionalString(options.Cursor), PageSize: ptr(int(options.PageSize)), Query: connectivityinternal.OptionalString(options.Query)}, nil)
+			response, err := client.ListConnectorVersions(ctx, operations.ListConnectorVersionsRequest{Name: url.PathEscape(connector), Cursor: connectivityinternal.OptionalString(options.Cursor), PageSize: fctl.Ptr(int(options.PageSize)), Query: connectivityinternal.OptionalString(options.Query)}, nil)
 			var page *connectivity.ConnectorVersionCursor
 			if response != nil {
 				page = response.ConnectorVersionCursor
@@ -95,6 +95,7 @@ func selectChannelVersion(versions []string, channel, running string) (string, e
 		running = ""
 	}
 	seen := make(map[string]struct{})
+	chosen := ""
 	// The API rejects duplicate exact SemVer strings before channel filtering.
 	// Distinct spellings with equal precedence use the server's lexical tie-break.
 	for _, version := range versions {
@@ -105,12 +106,6 @@ func selectChannelVersion(versions []string, channel, running string) (string, e
 			return "", fmt.Errorf("multiple ConnectorVersions found for version %q", version)
 		}
 		seen[version] = struct{}{}
-	}
-	chosen := ""
-	for _, version := range versions {
-		if !isStrictSemver(version) {
-			continue
-		}
 		if !channelAdmits(version, allowed) || (running != "" && (xmodsemver.Major(normalizeSemver(version)) != xmodsemver.Major(normalizeSemver(running)) || compareSemver(version, running) < 0)) {
 			continue
 		}

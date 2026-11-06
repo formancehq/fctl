@@ -123,7 +123,7 @@ func TestInstallWithChannelFlagTracksTheChannelAndUsesItsHeadForTheSchema(t *tes
 }
 
 func TestInstallPreservesNativeMissingStableVersionError(t *testing.T) {
-	apiError := &connectivity.Error{ErrorCode: ptr("channel_empty"), ErrorMessage: ptr("only v2.0.0-beta.1 is published")}
+	apiError := &connectivity.Error{ErrorCode: fctl.Ptr("channel_empty"), ErrorMessage: fctl.Ptr("only v2.0.0-beta.1 is published")}
 	client := mutationClientMock{connectorVersions: connectorVersions{
 		getVersion: func(context.Context, string, string) (*connectivity.ConnectorVersion, error) {
 			return nil, apiError
@@ -217,8 +217,8 @@ func TestInstallValidationErrorPreventsCreate(t *testing.T) {
 }
 
 func TestInstallPreservesVersionAndCreateAPIErrorsAndRejectsEmptyResponses(t *testing.T) {
-	versionError := &connectivity.Error{ErrorCode: ptr("CONNECTOR_NOT_FOUND"), ErrorMessage: ptr("missing")}
-	createError := &connectivity.Error{ErrorCode: ptr("CONNECTORINSTANCE_EXISTS"), ErrorMessage: ptr("duplicate")}
+	versionError := &connectivity.Error{ErrorCode: fctl.Ptr("CONNECTOR_NOT_FOUND"), ErrorMessage: fctl.Ptr("missing")}
+	createError := &connectivity.Error{ErrorCode: fctl.Ptr("CONNECTORINSTANCE_EXISTS"), ErrorMessage: fctl.Ptr("duplicate")}
 	tests := map[string]struct {
 		client mutationClientMock
 		want   error

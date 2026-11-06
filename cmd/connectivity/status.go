@@ -47,10 +47,7 @@ func (c *StatusController) run(cmd *cobra.Command, client *formance.FormanceV1) 
 	if err != nil {
 		return nil, err
 	}
-	if response == nil {
-		return nil, fmt.Errorf("get Connectivity build information: empty response")
-	}
-	if response.Info == nil {
+	if response == nil || response.Info == nil {
 		return nil, fmt.Errorf("get Connectivity build information: empty response")
 	}
 	if response.RawResponse == nil || response.RawResponse.Body == nil {

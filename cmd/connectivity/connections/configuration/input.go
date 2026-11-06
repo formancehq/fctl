@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"maps"
 	"net/url"
 	"sort"
 	"strings"
@@ -446,7 +447,7 @@ func buildConfig(cmd *cobra.Command, version *connectivity.ConnectorVersion, bas
 			return nil, fmt.Errorf("configuration key %q: %w", key, err)
 		}
 		applyValue(config, field, parsed)
-		if err := recordValue(inputs.Patch, field, *parsed.value); err != nil {
+		if err := recordValue(inputs.Patch, field, parsed); err != nil {
 			return nil, err
 		}
 	}
@@ -468,26 +469,24 @@ func buildConfig(cmd *cobra.Command, version *connectivity.ConnectorVersion, bas
 	return config, nil
 }
 
-type parsedValue struct{ value *string }
-
-func literalValue(raw string) (parsedValue, error) {
+func literalValue(raw string) (string, error) {
 	if strings.HasPrefix(raw, "secret://") || strings.HasPrefix(raw, "configmap://") {
-		return parsedValue{}, fmt.Errorf("Kubernetes references are unsupported; supply a literal value or use @file / @- with --set")
+		return "", fmt.Errorf("Kubernetes references are unsupported; supply a literal value or use @file / @- with --set")
 	}
-	return parsedValue{value: stringPointer(raw)}, nil
+	return raw, nil
 }
 
-func parseSetValue(cmd *cobra.Command, read ReadFileFunc, raw string) (parsedValue, error) {
+func parseSetValue(cmd *cobra.Command, read ReadFileFunc, raw string) (string, error) {
 	if strings.HasPrefix(raw, "@") {
 		path := strings.TrimPrefix(raw, "@")
 		if path == "" {
-			return parsedValue{}, fmt.Errorf("file value path cannot be empty")
+			return "", fmt.Errorf("file value path cannot be empty")
 		}
 		contents, err := readInput(cmd, read, path)
 		if err != nil {
-			return parsedValue{}, fmt.Errorf("cannot read configuration value from file")
+			return "", fmt.Errorf("cannot read configuration value from file")
 		}
-		return parsedValue{value: stringPointer(contents)}, nil
+		return contents, nil
 	}
 	return literalValue(raw)
 }
@@ -749,17 +748,17 @@ func assignmentField(contract schemaContract, key string) (SchemaField, bool) {
 	return configField(contract, key, kind)
 }
 
-func applyValue(config *connectivity.ConnectionConfiguration, field SchemaField, value parsedValue) {
+func applyValue(config *connectivity.ConnectionConfiguration, field SchemaField, value string) {
 	if field.Kind == ConfigEnv {
 		if config.Env == nil {
 			config.Env = map[string]string{}
 		}
-		config.Env[field.Key] = *value.value
+		config.Env[field.Key] = value
 	} else {
 		if config.Files == nil {
 			config.Files = map[string]string{}
 		}
-		config.Files[field.Key] = *value.value
+		config.Files[field.Key] = value
 	}
 }
 
@@ -775,12 +774,8 @@ func hasValue(config *connectivity.ConnectionConfiguration, field SchemaField) b
 func cloneConfig(source *connectivity.ConnectionConfiguration) *connectivity.ConnectionConfiguration {
 	clone := &connectivity.ConnectionConfiguration{Env: map[string]string{}, Files: map[string]string{}}
 	if source != nil {
-		for key, value := range source.Env {
-			clone.Env[key] = value
-		}
-		for key, value := range source.Files {
-			clone.Files[key] = value
-		}
+		maps.Copy(clone.Env, source.Env)
+		maps.Copy(clone.Files, source.Files)
 	}
 	return clone
 }
@@ -819,10 +814,6 @@ func requiredSet(raw any) (map[string]bool, error) {
 func stringMap(raw any) (map[string]any, bool) {
 	value, ok := raw.(map[string]any)
 	return value, ok
-}
-
-func stringPointer(value string) *string {
-	return &value
 }
 
 func sortedKeys(values map[string]struct{}) []string {

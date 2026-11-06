@@ -42,7 +42,7 @@ func versionListFixture() *testConnectorVersionList {
 func instanceFixture(name string) connectivity.Connection {
 	return connectivity.Connection{Name: name,
 		ConnectionConfiguration: connectivity.ConnectionConfiguration{Connector: stringPtr("stripe"), Version: stringPtr("2.0.0"), Ledger: stringPtr("main"), PollInterval: stringPtr("5s"), InitialCursor: stringPtr("AP9h")},
-		ConnectionStatus:        &connectivity.ConnectionStatus{Lifecycle: "active", LastError: stringPtr("source temporarily unavailable"), AppliedVersion: stringPtr("2.0.0"), IngestionStatus: &connectivity.IngestionStatus{State: ptr(connectivity.State("running")), IngestionProgress: &connectivity.IngestionProgress{Current: 42}}},
+		ConnectionStatus:        &connectivity.ConnectionStatus{Lifecycle: "active", LastError: stringPtr("source temporarily unavailable"), AppliedVersion: stringPtr("2.0.0"), IngestionStatus: &connectivity.IngestionStatus{State: fctl.Ptr(connectivity.State("running")), IngestionProgress: &connectivity.IngestionProgress{Current: 42}}},
 	}
 }
 func instanceWithTwoFiles() *connectivity.Connection {
@@ -192,7 +192,7 @@ type testConnectorVersionList struct {
 func createdConfiguration(in connectivity.ConnectionCreateConnectionConfiguration) connectivity.ConnectionConfiguration {
 	out := connectivity.ConnectionConfiguration{Connector: &in.Connector, Ledger: &in.Ledger, Env: in.Env, Files: in.Files, Version: in.Version, InitialCursor: in.InitialCursor, PollInterval: in.PollInterval, Suspend: in.Suspend}
 	if in.Channel != nil {
-		out.Channel = ptr(connectivity.Channel(*in.Channel))
+		out.Channel = fctl.Ptr(connectivity.Channel(*in.Channel))
 	}
 	return out
 }

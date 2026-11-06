@@ -100,16 +100,16 @@ func TestConnectorCommandsRejectGeneratedErrorEnvelopes(t *testing.T) {
 	}
 }
 
-func TestShowConnectorReturnsGeneratedLatestNotFound(t *testing.T) {
+func TestShowConnectorReturnsGeneratedPublishedVersionNotFound(t *testing.T) {
 	calls := 0
 	client := sdkWithTransport(func(request *http.Request) (*http.Response, error) {
 		calls++
 		switch request.URL.Path {
 		case "/api/connectivity/connectors/stripe":
-			return connectorResponse(200, `{"name":"stripe"}`), nil
+			return connectorResponse(200, `{"name":"stripe","latestVersion":"1.0.0"}`), nil
 		case "/api/connectivity/connectors/stripe/versions":
 			return connectorResponse(200, `{"cursor":{"data":[{"version":"1.0.0"}],"hasMore":false,"pageSize":100}}`), nil
-		case "/api/connectivity/connectors/stripe/versions/latest":
+		case "/api/connectivity/connectors/stripe/versions/1.0.0":
 			return connectorResponse(404, `{"errorCode":"channel_empty","errorMessage":"No validated version"}`), nil
 		default:
 			t.Fatalf("unexpected SDK route %s", request.URL.Path)
@@ -126,20 +126,23 @@ func TestShowConnectorReturnsGeneratedLatestNotFound(t *testing.T) {
 	require.NotContains(t, output, "No published version.")
 }
 
-func TestShowConnectorEscapesNameAsOnePathSegment(t *testing.T) {
+func TestShowConnectorEscapesNameAndCatalogueVersionAsPathSegments(t *testing.T) {
 	paths := []string{}
 	client := sdkWithTransport(func(request *http.Request) (*http.Response, error) {
 		paths = append(paths, request.URL.EscapedPath())
 		require.Empty(t, request.URL.Query().Get("c"))
-		body := `{"name":"a/b?c#d"}`
-		if len(paths) == 2 {
-			body = `{"cursor":{"data":[],"hasMore":false,"pageSize":100}}`
+		body := `{"name":"a/b?c#d","latestVersion":"v/1?x%#"}`
+		switch len(paths) {
+		case 2:
+			body = `{"cursor":{"data":[{"version":"v/1?x%#"}],"hasMore":false,"pageSize":100}}`
+		case 3:
+			body = `{"version":"v/1?x%#"}`
 		}
 		return connectorResponse(200, body), nil
 	})
 	_, err := executeCommand(testNewShowCommand(client), "a/b?c#d")
 	require.NoError(t, err)
-	require.Equal(t, []string{"/api/connectivity/connectors/a%2Fb%3Fc%23d", "/api/connectivity/connectors/a%2Fb%3Fc%23d/versions"}, paths)
+	require.Equal(t, []string{"/api/connectivity/connectors/a%2Fb%3Fc%23d", "/api/connectivity/connectors/a%2Fb%3Fc%23d/versions", "/api/connectivity/connectors/a%2Fb%3Fc%23d/versions/v%2F1%3Fx%25%23"}, paths)
 }
 
 func TestConnectorSDKErrorPreservesResponseBody(t *testing.T) {
@@ -194,6 +197,32 @@ func TestConnectorCommandsValidateGeneratedSuccessPayloads(t *testing.T) {
 					}
 				})
 			}
+		})
+	}
+}
+
+func TestShowConnectorWithoutLatestVersionDoesNotInventAlias(t *testing.T) {
+	for _, metadata := range []string{``, `,"latestVersion":""`} {
+		t.Run(metadata, func(t *testing.T) {
+			calls := 0
+			client := sdkWithTransport(func(request *http.Request) (*http.Response, error) {
+				calls++
+				switch request.URL.Path {
+				case "/api/connectivity/connectors/stripe":
+					return connectorResponse(200, `{"name":"stripe"`+metadata+`}`), nil
+				case "/api/connectivity/connectors/stripe/versions":
+					return connectorResponse(200, `{"cursor":{"data":[{"version":"1.0.0"}],"hasMore":false,"pageSize":100}}`), nil
+				default:
+					t.Fatalf("unexpected version request %s", request.URL.Path)
+					return nil, nil
+				}
+			})
+			output, err := executeCommand(testNewShowCommand(client), "stripe")
+			require.NoError(t, err)
+			require.Equal(t, 2, calls)
+			require.Contains(t, output, "1.0.0")
+			require.Contains(t, output, "No latest version schema available.")
+			require.NotContains(t, output, "No published version.")
 		})
 	}
 }

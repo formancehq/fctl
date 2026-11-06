@@ -36,10 +36,7 @@ func completeConnectorNames(completionCommand *cobra.Command, client *formance.F
 			if err != nil {
 				return nil, false, "", err
 			}
-			if response == nil {
-				return nil, false, "", fmt.Errorf("empty connector list response")
-			}
-			if response.ConnectorCursor == nil {
+			if response == nil || response.ConnectorCursor == nil {
 				return nil, false, "", fmt.Errorf("empty connector list response")
 			}
 			page := response.ConnectorCursor.Cursor

@@ -140,7 +140,7 @@ func TestShowConnectionReturnsAPIAndEmptyResponseErrors(t *testing.T) {
 func TestShowRecordedErrorsDoNotTurnSuccessfulReadIntoFailure(t *testing.T) {
 	for _, state := range []string{"running", "error", "failed", "finished", "unknown"} {
 		instance := instanceFixture("stripe-eu")
-		instance.ConnectionStatus.IngestionStatus.State = ptr(connectivity.State(state))
+		instance.ConnectionStatus.IngestionStatus.State = fctl.Ptr(connectivity.State(state))
 		instance.ConnectionStatus.IngestionStatus.IngestionProgress = &connectivity.IngestionProgress{Current: 0}
 		output, err := executeCommand(testNewShowCommand(factoryWithInstance(instance)), "stripe-eu")
 		require.NoError(t, err)

@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/formancehq/fctl/v3/cmd/connectivity/connections/configuration"
+	fctl "github.com/formancehq/fctl/v3/pkg"
 	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 )
@@ -96,7 +97,7 @@ func TestConnectionConfigureSelectorSwitchClearsOppositeKey(t *testing.T) {
 			current := instanceFixture("stripe-eu")
 			if tt.key == "version" {
 				current.ConnectionConfiguration.Version = nil
-				current.ConnectionConfiguration.Channel = ptr(connectivity.Channel("beta"))
+				current.ConnectionConfiguration.Channel = fctl.Ptr(connectivity.Channel("beta"))
 			}
 			client := configureClientMock{
 				getInstance: func(context.Context, string) (*connectivity.Connection, error) { return &current, nil },
@@ -237,7 +238,7 @@ func TestConnectionConfigurePreservesOmittedRequiredPasswords(t *testing.T) {
 func TestConnectionConfigureCompletionUsesNewPinInsteadOfExistingChannel(t *testing.T) {
 	current := instanceFixture("stripe-eu")
 	current.ConnectionConfiguration.Version = nil
-	current.ConnectionConfiguration.Channel = ptr(connectivity.Channel("beta"))
+	current.ConnectionConfiguration.Channel = fctl.Ptr(connectivity.Channel("beta"))
 	client := configureClientMock{
 		getInstance: func(context.Context, string) (*connectivity.Connection, error) { return &current, nil },
 		connectorVersions: connectorVersions{

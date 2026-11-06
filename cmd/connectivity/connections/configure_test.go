@@ -120,7 +120,7 @@ func TestConfigureRequiresStoredOrExplicitSelector(t *testing.T) {
 
 func TestConfigureRequiresUnambiguousStoredSelector(t *testing.T) {
 	current := instanceFixture("stripe-eu")
-	current.ConnectionConfiguration.Channel = ptr(connectivity.Channel("stable"))
+	current.ConnectionConfiguration.Channel = fctl.Ptr(connectivity.Channel("stable"))
 	client := configureClientMock{
 		getInstance: func(context.Context, string) (*connectivity.Connection, error) { return &current, nil },
 	}
@@ -131,7 +131,7 @@ func TestConfigureRequiresUnambiguousStoredSelector(t *testing.T) {
 func TestConfigureChannelTracksTheResolvedSameMajorHeadAcrossPages(t *testing.T) {
 	current := instanceFixture("stripe-eu")
 	current.ConnectionConfiguration.Version = stringPtr("v1.0.0")
-	current.ConnectionConfiguration.Channel = ptr(connectivity.Channel("stable"))
+	current.ConnectionConfiguration.Channel = fctl.Ptr(connectivity.Channel("stable"))
 	current.ConnectionStatus.AppliedVersion = stringPtr("v1.0.0")
 	setInstanceConfig(&current, &connectivity.ConnectionConfiguration{})
 	var gotVersion string
@@ -309,9 +309,9 @@ func TestConfigureValidationAndArgumentsPreventPatch(t *testing.T) {
 }
 
 func TestConfigurePreservesGetAndPatchAPIErrorsAndRejectsEmptyResponses(t *testing.T) {
-	instanceError := &connectivity.Error{ErrorCode: ptr("CONNECTORINSTANCE_NOT_FOUND"), ErrorMessage: ptr("missing")}
-	versionError := &connectivity.Error{ErrorCode: ptr("CONNECTORVERSION_NOT_FOUND"), ErrorMessage: ptr("missing")}
-	patchError := &connectivity.Error{ErrorCode: ptr("CONFLICT"), ErrorMessage: ptr("stale")}
+	instanceError := &connectivity.Error{ErrorCode: fctl.Ptr("CONNECTORINSTANCE_NOT_FOUND"), ErrorMessage: fctl.Ptr("missing")}
+	versionError := &connectivity.Error{ErrorCode: fctl.Ptr("CONNECTORVERSION_NOT_FOUND"), ErrorMessage: fctl.Ptr("missing")}
+	patchError := &connectivity.Error{ErrorCode: fctl.Ptr("CONFLICT"), ErrorMessage: fctl.Ptr("stale")}
 	current := instanceFixture("stripe-eu")
 	tests := map[string]struct {
 		client configureClientMock

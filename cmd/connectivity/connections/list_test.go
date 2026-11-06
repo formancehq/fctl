@@ -24,7 +24,7 @@ func TestListConnectionsPassesFiltersAndPaginationAndRendersApprovedColumns(t *t
 	var gotOptions connectivityinternal.ListOptions
 	channelInstance := instanceFixture("stripe-eu")
 	channelInstance.ConnectionConfiguration.Version = nil
-	channelInstance.ConnectionConfiguration.Channel = ptr(connectivity.Channel("stable"))
+	channelInstance.ConnectionConfiguration.Channel = fctl.Ptr(connectivity.Channel("stable"))
 	channelInstance.ConnectionStatus.AppliedVersion = stringPtr("v1.3.0")
 	client := listInstanceClientMock{list: func(_ context.Context, options connectivityinternal.ListOptions) (*testConnectionList, error) {
 		gotOptions = options

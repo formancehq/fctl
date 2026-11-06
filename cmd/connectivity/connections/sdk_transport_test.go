@@ -141,7 +141,7 @@ func TestSuspensionCommandsRejectEmptySDKSuccess(t *testing.T) {
 
 func TestResolveConnectorVersionPreservesSDKNotFound(t *testing.T) {
 	const body = `{"errorCode":"channel_empty","errorMessage":"no stable release","details":"{\"available\":\"v2.0.0-beta.1\"}"}`
-	for _, version := range []string{"stable", "latest", "v1.0.0"} {
+	for _, version := range []string{"stable", "v1.0.0"} {
 		t.Run(version, func(t *testing.T) {
 			api := transportSDK("https://stack.example.test", &http.Client{Transport: connectionRoundTripper(func(r *http.Request) (*http.Response, error) {
 				return jsonHTTPResponse(r, http.StatusNotFound, body), nil

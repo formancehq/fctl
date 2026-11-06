@@ -71,8 +71,8 @@ func TestShowConnectorRendersPublicFieldsVersionsAndLatestVersionSchema(t *testi
 		t.Fatalf("execute show command: %v", err)
 	}
 
-	if gotVersion != connectivityinternal.VersionAliasLatest {
-		t.Fatalf("GetConnectorVersion version = %q, want the server-resolved latest alias", gotVersion)
+	if gotVersion != *connector.LatestVersion {
+		t.Fatalf("GetConnectorVersion version = %q, want the catalogue version %q", gotVersion, *connector.LatestVersion)
 	}
 	for _, expected := range []string{
 		"stripe", created.Format(time.RFC3339),
@@ -133,6 +133,7 @@ func TestShowConnectorFollowsVersionPagination(t *testing.T) {
 
 func TestShowConnectorWithoutVersionsReportsNoPublishedVersion(t *testing.T) {
 	connector := connectorFixture("fresh")
+	connector.LatestVersion = nil
 	client := connectorTransportMock{
 		get: func(context.Context, string) (*connectivity.Connector, error) {
 			return &connector, nil

@@ -74,10 +74,7 @@ func (c *ShowController) run(cmd *cobra.Command, args []string, client *formance
 	if err != nil {
 		return nil, err
 	}
-	if response == nil {
-		return nil, fmt.Errorf("show connectivity connector %q: empty response", name)
-	}
-	if response.Connector == nil {
+	if response == nil || response.Connector == nil {
 		return nil, fmt.Errorf("show connectivity connector %q: empty response", name)
 	}
 	c.store.Connector = *response.Connector
@@ -93,10 +90,7 @@ func (c *ShowController) run(cmd *cobra.Command, args []string, client *formance
 			if err != nil {
 				return nil, false, "", err
 			}
-			if response == nil {
-				return nil, false, "", fmt.Errorf("show connectivity connector %q: empty version list response", name)
-			}
-			if response.ConnectorVersionCursor == nil {
+			if response == nil || response.ConnectorVersionCursor == nil {
 				return nil, false, "", fmt.Errorf("show connectivity connector %q: empty version list response", name)
 			}
 			page := response.ConnectorVersionCursor.Cursor
@@ -110,9 +104,9 @@ func (c *ShowController) run(cmd *cobra.Command, args []string, client *formance
 	}
 	c.store.Versions = versions
 
-	// An empty catalogue has no latest version to request.
-	if len(versions) > 0 {
-		response, err := client.GetConnectorVersion(cmd.Context(), operations.GetConnectorVersionRequest{Name: url.PathEscape(name), Version: connectivityinternal.VersionAliasLatest}, nil)
+	// Fetch the exact release projected by the catalogue.
+	if version := fctl.StringPointerToString(c.store.Connector.LatestVersion); version != "" {
+		response, err := client.GetConnectorVersion(cmd.Context(), operations.GetConnectorVersionRequest{Name: url.PathEscape(name), Version: url.PathEscape(version)}, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -156,7 +150,11 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 
 	if c.store.Version == nil {
 		fctl.Section.WithWriter(out).Println("Configuration Schema")
-		_, err := fmt.Fprintln(out, "No published version.")
+		message := "No published version."
+		if len(c.store.Versions) > 0 {
+			message = "No latest version schema available."
+		}
+		_, err := fmt.Fprintln(out, message)
 		return err
 	}
 

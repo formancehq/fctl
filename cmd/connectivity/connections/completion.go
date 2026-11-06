@@ -44,7 +44,7 @@ func CompleteConnectionNames() cobra.CompletionFunc {
 func completeConnectionNamesWithClient(client *sdk.FormanceV1, completionCommand *cobra.Command, toComplete string) ([]string, cobra.ShellCompDirective) {
 	instances, err := connectivityinternal.CollectPagesBounded(connectivityinternal.CompletionPageSize, instanceCompletionMaxPages,
 		func(options connectivityinternal.ListOptions) ([]connectivity.Connection, bool, string, error) {
-			response, err := client.ListConnections(completionCommand.Context(), operations.ListConnectionsRequest{Cursor: connectivityinternal.OptionalString(options.Cursor), PageSize: ptr(int(options.PageSize)), Query: connectivityinternal.OptionalString(options.Query)}, nil)
+			response, err := client.ListConnections(completionCommand.Context(), operations.ListConnectionsRequest{Cursor: connectivityinternal.OptionalString(options.Cursor), PageSize: fctl.Ptr(int(options.PageSize)), Query: connectivityinternal.OptionalString(options.Query)}, nil)
 			var page *connectivity.ConnectionCursor
 			if response != nil {
 				page = response.ConnectionCursor
@@ -109,7 +109,7 @@ func completeVersionsWithClient(client *sdk.FormanceV1, completionCommand *cobra
 	}
 	versions, err := connectivityinternal.CollectPagesBounded(connectivityinternal.CompletionPageSize, instanceCompletionMaxPages,
 		func(options connectivityinternal.ListOptions) ([]connectivity.ConnectorVersionSummary, bool, string, error) {
-			response, err := client.ListConnectorVersions(completionCommand.Context(), operations.ListConnectorVersionsRequest{Name: url.PathEscape(connector), Cursor: connectivityinternal.OptionalString(options.Cursor), PageSize: ptr(int(options.PageSize)), Query: connectivityinternal.OptionalString(options.Query)}, nil)
+			response, err := client.ListConnectorVersions(completionCommand.Context(), operations.ListConnectorVersionsRequest{Name: url.PathEscape(connector), Cursor: connectivityinternal.OptionalString(options.Cursor), PageSize: fctl.Ptr(int(options.PageSize)), Query: connectivityinternal.OptionalString(options.Query)}, nil)
 			var page *connectivity.ConnectorVersionCursor
 			if response != nil {
 				page = response.ConnectorVersionCursor

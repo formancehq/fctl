@@ -85,11 +85,7 @@ func (c *ListController) run(cmd *cobra.Command, _ []string, client *formance.Fo
 	if err != nil {
 		return nil, err
 	}
-	if response == nil {
-		return nil, fmt.Errorf("list connectivity connectors: empty response")
-	}
-
-	if response.ConnectorCursor == nil {
+	if response == nil || response.ConnectorCursor == nil {
 		return nil, fmt.Errorf("list connectivity connectors: empty response")
 	}
 	page := response.ConnectorCursor.Cursor
@@ -97,12 +93,8 @@ func (c *ListController) run(cmd *cobra.Command, _ []string, client *formance.Fo
 		return nil, fmt.Errorf("list connectivity connectors: cursor.data must be an array")
 	}
 	c.store.Connectors = page.Data
-	c.store.Cursor = cursorFromList(page.PageSize, page.HasMore, page.Next)
+	c.store.Cursor = fctl.Cursor{PageSize: int64(page.PageSize), HasMore: page.HasMore, Next: connectivityinternal.OptionalString(fctl.StringPointerToString(page.Next))}
 	return c, nil
-}
-
-func cursorFromList(pageSize int, hasMore bool, next *string) fctl.Cursor {
-	return fctl.Cursor{PageSize: int64(pageSize), HasMore: hasMore, Next: connectivityinternal.OptionalString(fctl.StringPointerToString(next))}
 }
 
 func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
