@@ -79,38 +79,6 @@ func testNewUninstallCommand(load testSDKFactory) *cobra.Command {
 	cmd.ValidArgsFunction = testCompleteConnectionNames(load)
 	return cmd
 }
-func testNewCommand(load testSDKFactory, read configuration.ReadFileFunc, paths PathCompleter) *cobra.Command {
-	cmd := NewCommand(read, paths)
-	var attach func(*cobra.Command)
-	attach = func(c *cobra.Command) {
-		var fixture *cobra.Command
-		switch c.Name() {
-		case "list":
-			fixture = testNewListCommand(load)
-		case "show":
-			fixture = testNewShowCommand(load)
-		case "install":
-			fixture = testNewInstallCommand(load, read, paths)
-		case "update", "configure":
-			fixture = testNewConfigureCommand(load, read, paths)
-		case "suspend":
-			fixture = testNewSuspendCommand(load)
-		case "unsuspend":
-			fixture = testNewUnsuspendCommand(load)
-		case "uninstall":
-			fixture = testNewUninstallCommand(load)
-		}
-		if fixture != nil {
-			c.RunE = fixture.RunE
-			c.ValidArgsFunction = fixture.ValidArgsFunction
-		}
-		for _, child := range c.Commands() {
-			attach(child)
-		}
-	}
-	attach(cmd)
-	return cmd
-}
 func testCompletion(load testSDKFactory, run func(*sdk.FormanceV1, *cobra.Command, []string, string) ([]string, cobra.ShellCompDirective)) cobra.CompletionFunc {
 	return func(cmd *cobra.Command, args []string, prefix string) ([]string, cobra.ShellCompDirective) {
 		if load == nil {

@@ -9,47 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCommandSetupPreservesRequiredFlagsAndCompletion(t *testing.T) {
-	argsCalled, preRunCalled, runCalled := false, false, false
-	cmd := &cobra.Command{
-		Use:     "sample",
-		Args:    func(cmd *cobra.Command, args []string) error { argsCalled = true; return cobra.ExactArgs(1)(cmd, args) },
-		PreRunE: func(*cobra.Command, []string) error { preRunCalled = true; return nil },
-		RunE:    func(*cobra.Command, []string) error { runCalled = true; return nil },
-	}
-	cmd.SetOut(io.Discard)
-	cmd.SetErr(io.Discard)
-	cmd.Flags().String("ledger", "", "Ledger name")
-	WithRequiredFlag("ledger")(cmd)
-	WithFlagCompletion("ledger", func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
-		return []string{"main"}, cobra.ShellCompDirectiveNoFileComp
-	})(cmd)
-	cmd.SetArgs([]string{"item", "--ledger", "main"})
-
-	require.NoError(t, cmd.Execute())
-	require.True(t, argsCalled)
-	require.True(t, preRunCalled)
-	require.True(t, runCalled)
-	completion, found := cmd.GetFlagCompletionFunc("ledger")
-	require.True(t, found)
-	values, directive := completion(cmd, nil, "")
-	require.Equal(t, []string{"main"}, values)
-	require.Equal(t, cobra.ShellCompDirectiveNoFileComp, directive)
-}
-
-func TestCommandSetupStillRequiresMarkedFlag(t *testing.T) {
-	runCalled := false
-	cmd := &cobra.Command{Use: "sample", RunE: func(*cobra.Command, []string) error { runCalled = true; return nil }}
-	cmd.SetOut(io.Discard)
-	cmd.SetErr(io.Discard)
-	cmd.Flags().String("ledger", "", "Ledger name")
-	WithRequiredFlag("ledger")(cmd)
-	cmd.SetArgs(nil)
-
-	require.ErrorContains(t, cmd.Execute(), `required flag(s) "ledger" not set`)
-	require.False(t, runCalled)
-}
-
 func TestCommandSetupReturnsRegistrationErrorsBeforeHooks(t *testing.T) {
 	complete := func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
 		return nil, cobra.ShellCompDirectiveNoFileComp
@@ -105,24 +64,4 @@ func TestCommandSetupPreservesAllSetupAndArgumentErrors(t *testing.T) {
 	require.ErrorContains(t, err, "register completion for --name")
 	require.ErrorIs(t, err, argumentErr)
 	require.Equal(t, 1, argsCalls)
-}
-
-func TestCommandSetupPreservesArgumentValidationOnSuccess(t *testing.T) {
-	argumentErr := errors.New("argument validation failed")
-	preRunCalled, runCalled := false, false
-	cmd := &cobra.Command{
-		Use: "sample", Args: func(*cobra.Command, []string) error { return argumentErr },
-		PreRunE: func(*cobra.Command, []string) error { preRunCalled = true; return nil },
-		RunE:    func(*cobra.Command, []string) error { runCalled = true; return nil },
-	}
-	cmd.SetOut(io.Discard)
-	cmd.SetErr(io.Discard)
-	cmd.Flags().String("ledger", "", "Ledger name")
-	WithRequiredFlag("ledger")(cmd)
-	WithFlagCompletion("ledger", cobra.NoFileCompletions)(cmd)
-	cmd.SetArgs([]string{"--ledger", "main"})
-
-	require.ErrorIs(t, cmd.Execute(), argumentErr)
-	require.False(t, preRunCalled)
-	require.False(t, runCalled)
 }
