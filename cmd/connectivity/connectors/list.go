@@ -2,7 +2,6 @@ package connectors
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -102,13 +101,11 @@ func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
 		return []string{
 			connector.Name,
 			fctl.StringPointerToString(connector.DisplayName),
-			strings.Join(connector.Tags, ", "),
+			fctl.StringPointerToString(connector.LatestVersion),
 		}
 	})
-	// No description column: descriptions are full sentences, and pterm sizes
-	// columns to their content, so one connector wrapped every row and the
-	// table stopped lining up. `connectors show` prints the description.
-	rows = fctl.Prepend(rows, []string{"Name", "Display Name", "Tags"})
+	// Keep long descriptions and tag lists in connectors show.
+	rows = fctl.Prepend(rows, []string{"Name", "Display Name", "Latest Version"})
 	if err := pterm.DefaultTable.
 		WithHasHeader().
 		WithWriter(cmd.OutOrStdout()).

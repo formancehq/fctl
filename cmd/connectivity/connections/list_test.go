@@ -46,8 +46,8 @@ func TestListConnectionsPassesFiltersAndPaginationAndRendersApprovedColumns(t *t
 	}
 	require.Equal(t, wantOptions, gotOptions)
 	for _, expected := range []string{
-		"Name", "Connector", "Version", "Channel", "Applied Version", "Ledger", "Lifecycle", "Ingestion State", "Progress Current", "Last Error (may be historical)",
-		"stripe-eu", "stripe", "stable", "v1.3.0", "main", "active", "running", "42", "source temporarily unavailable",
+		"Name", "Connector", "Version", "Channel", "Applied Version", "Ledger", "Lifecycle", "Ingestion State",
+		"stripe-eu", "stripe", "stable", "v1.3.0", "main", "active", "running",
 		"HasMore", "true", "PageSize", "7", "Next", "next-page",
 	} {
 		require.Contains(t, output, expected)
@@ -147,7 +147,7 @@ func TestListConnectionsReturnsAPIAndEmptyResponseErrors(t *testing.T) {
 	}
 }
 
-func TestListRendersRawLastErrorWithoutIngestion(t *testing.T) {
+func TestListOmitsProgressAndErrorDetailsWithoutIngestion(t *testing.T) {
 	const rawError = `{"errorCode":"provider_failed","details":"still historical"}`
 	instance := instanceFixture("stripe-eu")
 	instance.ConnectionStatus.IngestionStatus = nil
@@ -157,7 +157,8 @@ func TestListRendersRawLastErrorWithoutIngestion(t *testing.T) {
 	}}
 	output, err := executeCommand(testNewListCommand(factoryReturning(client)))
 	require.NoError(t, err)
-	require.Contains(t, output, "Last Error (may be historical)")
-	require.Contains(t, output, rawError)
+	require.NotContains(t, output, "Progress Current")
+	require.NotContains(t, output, "Last Error")
+	require.NotContains(t, output, rawError)
 	require.NotContains(t, output, "Service Error")
 }

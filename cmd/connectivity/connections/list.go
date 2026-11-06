@@ -111,10 +111,9 @@ func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
 	rows := fctl.Map(c.store.Connections, func(instance connectivity.Connection) []string {
 		return []string{instance.Name, fctl.StringPointerToString(instance.ConnectionConfiguration.Connector), fctl.StringPointerToString(instance.ConnectionConfiguration.Version),
 			enumStringValue(instance.ConnectionConfiguration.Channel), appliedChannelFloor(&instance), fctl.StringPointerToString(instance.ConnectionConfiguration.Ledger),
-			lifecycleValue(instance.ConnectionStatus), ingestionState(instance.ConnectionStatus), ingestionProgress(instance.ConnectionStatus),
-			connectionLastError(instance.ConnectionStatus)}
+			lifecycleValue(instance.ConnectionStatus), ingestionState(instance.ConnectionStatus)}
 	})
-	rows = fctl.Prepend(rows, []string{"Name", "Connector", "Version", "Channel", "Applied Version", "Ledger", "Lifecycle", "Ingestion State", "Progress Current", "Last Error (may be historical)"})
+	rows = fctl.Prepend(rows, []string{"Name", "Connector", "Version", "Channel", "Applied Version", "Ledger", "Lifecycle", "Ingestion State"})
 	if err := pterm.DefaultTable.
 		WithHasHeader().
 		WithWriter(cmd.OutOrStdout()).

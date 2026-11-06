@@ -184,6 +184,13 @@ replica count is not a tenant setting.
 until operator cleanup completes; command success does not prove that the
 source has disappeared from Core.
 
+`connectors list` displays Name, Display Name and Latest Version. Full tag lists
+remain available through `connectors show`, JSON output and filter completion.
+
+`connections list` displays Name, Connector, Version, Channel, Applied Version,
+Ledger, Lifecycle and Ingestion State. Progress and last-error details are
+available through `connections show` and JSON output.
+
 ## Filtering, pagination and catalogue metadata
 
 List commands accept repeatable `--filter` expressions:
@@ -222,7 +229,7 @@ Lifecycle is the last recorded verdict (`pending`, `active`, `suspended`,
 `status.ingestion.progress.current` is the recorded ingestion progress.
 `status.lastError` is the raw last recorded worker or connector error. It may be
 historical after recovery and can be present without ingestion status. Show and
-list preserve this text without interpreting JSON-looking content; a successful
+JSON output preserve this text without interpreting JSON-looking content; a successful
 read does not fail merely because the recorded error is populated.
 Suspension sources identify a tenant request or a Policy by name.
 
