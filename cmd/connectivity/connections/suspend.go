@@ -6,7 +6,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
@@ -85,9 +84,6 @@ func (c *SuspensionController) run(cmd *cobra.Command, args []string, client *sd
 	}
 	if response == nil {
 		return nil, fmt.Errorf("suspend connectivity connection %q: empty response", name)
-	}
-	if err := connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse); err != nil {
-		return nil, err
 	}
 	if response.Connection == nil || response.Connection.Name == "" {
 		return nil, fmt.Errorf("suspend connectivity connection %q: empty response", name)

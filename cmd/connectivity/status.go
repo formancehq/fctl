@@ -8,7 +8,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	formance "github.com/formancehq/fctl/v3/pkg/client"
 	connectivitymodel "github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
@@ -50,9 +49,6 @@ func (c *StatusController) run(cmd *cobra.Command, client *formance.FormanceV1) 
 	}
 	if response == nil {
 		return nil, fmt.Errorf("get Connectivity build information: empty response")
-	}
-	if err := connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse); err != nil {
-		return nil, err
 	}
 	if response.Info == nil {
 		return nil, fmt.Errorf("get Connectivity build information: empty response")

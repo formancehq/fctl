@@ -212,9 +212,6 @@ func (c *InstallController) run(cmd *cobra.Command, args []string, client *sdk.F
 		return nil, fctl.ErrMissingApproval
 	}
 	response, err := client.CreateConnection(cmd.Context(), connectivity.ConnectionCreate{Name: name, ConnectionConfiguration: spec}, nil)
-	if err == nil && response != nil {
-		err = connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse)
-	}
 	var instance *connectivity.Connection
 	if response != nil {
 		instance = response.Connection

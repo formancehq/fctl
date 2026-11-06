@@ -95,9 +95,6 @@ func (c *ListController) run(cmd *cobra.Command, _ []string, client *formance.Fo
 		return nil, fmt.Errorf("list connectivity connectors: empty response")
 	}
 
-	if err := connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse); err != nil {
-		return nil, err
-	}
 	if response.ConnectorCursor == nil {
 		return nil, fmt.Errorf("list connectivity connectors: empty response")
 	}

@@ -44,9 +44,6 @@ func completeConnectionNamesWithClient(client *sdk.FormanceV1, completionCommand
 	instances, err := connectivityinternal.CollectPagesBounded(connectivityinternal.CompletionPageSize, instanceCompletionMaxPages,
 		func(options connectivityinternal.ListOptions) ([]connectivity.Connection, bool, string, error) {
 			response, err := client.ListConnections(completionCommand.Context(), operations.ListConnectionsRequest{Cursor: connectivityinternal.OptionalString(options.Cursor), PageSize: ptr(int(options.PageSize)), Query: connectivityinternal.OptionalString(options.Query)}, nil)
-			if err == nil && response != nil {
-				err = connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse)
-			}
 			var page *connectivity.ConnectionCursor
 			if response != nil {
 				page = response.ConnectionCursor
@@ -112,9 +109,6 @@ func completeVersionsWithClient(client *sdk.FormanceV1, completionCommand *cobra
 	versions, err := connectivityinternal.CollectPagesBounded(connectivityinternal.CompletionPageSize, instanceCompletionMaxPages,
 		func(options connectivityinternal.ListOptions) ([]connectivity.ConnectorVersionSummary, bool, string, error) {
 			response, err := client.ListConnectorVersions(completionCommand.Context(), operations.ListConnectorVersionsRequest{Name: url.PathEscape(connector), Cursor: connectivityinternal.OptionalString(options.Cursor), PageSize: ptr(int(options.PageSize)), Query: connectivityinternal.OptionalString(options.Query)}, nil)
-			if err == nil && response != nil {
-				err = connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse)
-			}
 			var page *connectivity.ConnectorVersionCursor
 			if response != nil {
 				page = response.ConnectorVersionCursor

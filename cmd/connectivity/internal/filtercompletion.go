@@ -77,7 +77,7 @@ func CompleteFilterExpressions(resource string) cobra.CompletionFunc {
 func completeFilterExpressions(ctx context.Context, client *sdk.FormanceV1, resource, toComplete string) ([]string, cobra.ShellCompDirective) {
 
 	capabilities, err := client.GetQueryCapabilities(ctx, nil)
-	if err != nil || capabilities == nil || ResponseError(capabilities.StatusCode, capabilities.Error, capabilities.RawResponse) != nil || capabilities.QueryCapabilities == nil {
+	if err != nil || capabilities == nil || capabilities.QueryCapabilities == nil {
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
 	fields, ok := capabilities.QueryCapabilities.Resources[resource]
@@ -127,7 +127,7 @@ func CompleteChannels() cobra.CompletionFunc {
 
 func completeChannels(ctx context.Context, client *sdk.FormanceV1, toComplete string) ([]string, cobra.ShellCompDirective) {
 	capabilities, err := client.GetQueryCapabilities(ctx, nil)
-	if err != nil || capabilities == nil || ResponseError(capabilities.StatusCode, capabilities.Error, capabilities.RawResponse) != nil || capabilities.QueryCapabilities == nil {
+	if err != nil || capabilities == nil || capabilities.QueryCapabilities == nil {
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
 	channels := capabilities.QueryCapabilities.Resources[ResourceConnections]["channel"].Enum
@@ -181,7 +181,7 @@ func filterValueCandidates(ctx context.Context, client *sdk.FormanceV1, resource
 
 func facetFilterValues(ctx context.Context, client *sdk.FormanceV1) []filterValue {
 	facets, err := client.GetConnectorFacets(ctx, operations.GetConnectorFacetsRequest{}, nil)
-	if err != nil || facets == nil || ResponseError(facets.StatusCode, facets.Error, facets.RawResponse) != nil || facets.FacetDistribution == nil {
+	if err != nil || facets == nil || facets.FacetDistribution == nil {
 		return nil
 	}
 	values := make([]filterValue, 0)
@@ -210,9 +210,6 @@ func connectorFilterValues(ctx context.Context, client *sdk.FormanceV1) []filter
 			}
 			if page == nil || page.ConnectorCursor == nil {
 				return nil, false, "", fmt.Errorf("empty connector completion response")
-			}
-			if err := ResponseError(page.StatusCode, page.Error, page.RawResponse); err != nil {
-				return nil, false, "", err
 			}
 			cursor := page.ConnectorCursor.Cursor
 			if cursor.Data == nil {

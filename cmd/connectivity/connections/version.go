@@ -34,9 +34,6 @@ func resolveConnectorVersion(ctx context.Context, client *sdk.FormanceV1, connec
 		pinned = "stable"
 	}
 	response, err := client.GetConnectorVersion(ctx, operations.GetConnectorVersionRequest{Name: url.PathEscape(connector), Version: url.PathEscape(pinned)}, nil)
-	if err == nil && response != nil {
-		err = connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse)
-	}
 	var version *connectivity.ConnectorVersion
 	if response != nil {
 		version = response.ConnectorVersion
@@ -69,9 +66,6 @@ func resolveChannelVersion(ctx context.Context, client *sdk.FormanceV1, connecto
 	versions, err := connectivityinternal.CollectPages(versionResolvePageSize, versionResolveMaxPages,
 		func(options connectivityinternal.ListOptions) ([]connectivity.ConnectorVersionSummary, bool, string, error) {
 			response, err := client.ListConnectorVersions(ctx, operations.ListConnectorVersionsRequest{Name: url.PathEscape(connector), Cursor: connectivityinternal.OptionalString(options.Cursor), PageSize: ptr(int(options.PageSize)), Query: connectivityinternal.OptionalString(options.Query)}, nil)
-			if err == nil && response != nil {
-				err = connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse)
-			}
 			var page *connectivity.ConnectorVersionCursor
 			if response != nil {
 				page = response.ConnectorVersionCursor

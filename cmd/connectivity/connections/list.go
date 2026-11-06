@@ -110,9 +110,6 @@ func (c *ListController) run(cmd *cobra.Command, args []string, client *sdk.Form
 		return nil, fmt.Errorf("list connectivity connections: empty response")
 	}
 
-	if err := connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse); err != nil {
-		return nil, err
-	}
 	if response.ConnectionCursor == nil || response.ConnectionCursor.Cursor.Data == nil {
 		return nil, fmt.Errorf("list connectivity connections: empty response")
 	}

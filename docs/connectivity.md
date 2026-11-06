@@ -229,4 +229,6 @@ of assuming every `401` means an expired session.
 
 API error responses use `errorCode` and `errorMessage`; optional `details` is a
 string, which may itself contain a JSON object. FCTL preserves the response body
-and HTTP status in SDK errors instead of interpreting provider-specific content.
+and HTTP status in generated `sdkerrors.SDKError` values instead of interpreting
+provider-specific content. Commands use the generated error directly; authentication
+continues to use Connectivity’s unchanged go-libs middleware.

@@ -80,9 +80,6 @@ func (c *ShowController) run(cmd *cobra.Command, args []string, client *formance
 	if response == nil {
 		return nil, fmt.Errorf("show connectivity connector %q: empty response", name)
 	}
-	if err := connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse); err != nil {
-		return nil, err
-	}
 	if response.Connector == nil {
 		return nil, fmt.Errorf("show connectivity connector %q: empty response", name)
 	}
@@ -102,9 +99,6 @@ func (c *ShowController) run(cmd *cobra.Command, args []string, client *formance
 			if response == nil {
 				return nil, false, "", fmt.Errorf("show connectivity connector %q: empty version list response", name)
 			}
-			if err := connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse); err != nil {
-				return nil, false, "", err
-			}
 			if response.ConnectorVersionCursor == nil {
 				return nil, false, "", fmt.Errorf("show connectivity connector %q: empty version list response", name)
 			}
@@ -123,9 +117,6 @@ func (c *ShowController) run(cmd *cobra.Command, args []string, client *formance
 	// published-but-unresolvable catalogues degrade to the no-version notice.
 	if len(versions) > 0 {
 		response, err := client.GetConnectorVersion(cmd.Context(), operations.GetConnectorVersionRequest{Name: url.PathEscape(name), Version: connectivityinternal.VersionAliasLatest}, nil)
-		if err == nil && response != nil {
-			err = connectivityinternal.ResponseError(response.StatusCode, response.Error, response.RawResponse)
-		}
 		var sdkErr *sdkerrors.SDKError
 		switch {
 		case errors.As(err, &sdkErr) && sdkErr.StatusCode == http.StatusNotFound:
